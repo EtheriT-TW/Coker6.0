@@ -24,6 +24,7 @@
                     .DataSource(d => d.RemoteController().Key("Id")
                     .LoadUrl("/api/Order/GetAllList").LoadMethod("Get")
                     )
+                    .ID("OrderListDx")
                     .RemoteOperations(true)
                     .ColumnHidingEnabled(true)
                     .ShowBorders(true)
@@ -40,10 +41,11 @@
                     .Columns(c =>
                     {
                         c.AddFor(e => e.Id).Caption("訂單編號");
+                        c.AddFor(e => e.MemberId).Caption("會員編號").Visible(true);
                         c.AddFor(e => e.CreationTime).Caption("訂單日期");
                         c.AddFor(e => e.Orderer).Caption("寄件人");
                         c.AddFor(e => e.RecipientAddress).Caption("收件者地址");
-                        c.AddFor(e => e.Shipping).Caption("運費方式");
+                        c.AddFor(e => e.Shipping).Caption("運送方式");
                         c.AddFor(e => e.Payment).Caption("付款方式");
                         c.AddFor(e => e.State).Caption("訂單狀態");
                         c.AddFor(e => e.Total).Caption("訂單金額").CellTemplate(

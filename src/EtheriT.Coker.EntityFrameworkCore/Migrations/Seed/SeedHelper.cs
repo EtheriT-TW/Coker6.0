@@ -746,6 +746,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     ser_no = 500,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new ThirdParty
+                {
+                    Id = 4,
+                    Title = "綠界支付",
+                    IsDeleted = false,
+                    ser_no = 500,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<ThirdPartyKeypair>().HasData(
@@ -811,6 +819,38 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     FK_TPid = 3,
                     Title = "Channel Secret Key",
                     Code = "code1",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 9,
+                    FK_TPid = 4,
+                    Title = "商店代號",
+                    Code = "MerchantID",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 10,
+                    FK_TPid = 4,
+                    Title = "平台代號(非專案合作請留空)",
+                    Code = "PlatformID ",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 11,
+                    FK_TPid = 4,
+                    Title = "HashKey",
+                    Code = "HashKey ",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 12,
+                    FK_TPid = 4,
+                    Title = "HashIV",
+                    Code = "HashIV ",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }
@@ -966,6 +1006,76 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Code = "PCHomeIBRCD",
                     SerNo = 13,
                     FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 16,
+                    Used = false,
+                    Title = "信用卡付款",
+                    Code = "ECPayCreditCard",
+                    SerNo = 14,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 17,
+                    Used = false,
+                    Title = "信用卡付款(銀聯卡)",
+                    Code = "ECPayUnionPay",
+                    SerNo = 15,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 18,
+                    Used = false,
+                    Title = "信用卡分期付款",
+                    Code = "ECPayCreditInstallment",
+                    SerNo = 16,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 19,
+                    Used = false,
+                    Title = "ATM(虛擬帳戶)",
+                    Code = "ECPayATM",
+                    SerNo = 17,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 20,
+                    Used = false,
+                    Title = "超商條碼付款",
+                    Code = "ECPayBarcode",
+                    SerNo = 18,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 21,
+                    Used = false,
+                    Title = "超商代碼付款",
+                    Code = "ECPayCVS",
+                    SerNo = 19,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 22,
+                    Used = false,
+                    Title = "ApplePay",
+                    Code = "ECPayApplePay",
+                    SerNo = 20,
+                    FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }

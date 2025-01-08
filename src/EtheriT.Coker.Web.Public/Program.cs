@@ -236,6 +236,10 @@ builder.Services.AddHttpClient("ThirdPartyClient_PCHome", client =>
 {
     client.BaseAddress = new Uri(configuration.GetValue<string>("ThirdParty:PCHomePay:PaymentUrl"));
 });
+builder.Services.AddHttpClient("ThirdPartyClient_ECPay", client =>
+{
+    client.BaseAddress = new Uri(configuration.GetValue<string>("ThirdParty:ECPay:PaymentUrl"));
+});
 
 var app = builder.Build();
 

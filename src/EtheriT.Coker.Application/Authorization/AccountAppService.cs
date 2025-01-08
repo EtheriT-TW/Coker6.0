@@ -487,7 +487,7 @@ namespace EtheriT.Coker.Application.Authorization
                                        where MapFrontUserAndWeb.FK_WebsiteId == dto.WebsiteId
                                        select user).FirstOrDefaultAsync();
 
-                var roleId = await db.Roles.Where(e => e.FK_WebsiteId == WebsiteID && e.Type == RoleTypeEnum.前台).FirstOrDefaultAsync();
+                var role = await db.Roles.Where(e => e.FK_WebsiteId == WebsiteID && e.Type == RoleTypeEnum.前台).FirstOrDefaultAsync();
 
                 string passwordError = checkPassword(dto.Password);
 
@@ -518,23 +518,20 @@ namespace EtheriT.Coker.Application.Authorization
                         newuser = user;
                     }
                     frontuser.FK_User = user.Id;
-                    frontuser.Level = roleId?.Id ?? 0;
+                    frontuser.Level = role?.Id ?? 2;
                     db.FrontUsers.Add(frontuser);
                     await loginUserData.SaveChanges(frontuser);
                     userid = frontuser.Id;
 
                     MappingUserAndRole mapuserrole = new MappingUserAndRole();
-                    if (roleId != null)
+                    mapuserrole = new MappingUserAndRole()
                     {
-                        mapuserrole = new MappingUserAndRole()
-                        {
-                            UserId = user.Id,
-                            UUID = frontuser.UUID,
-                            RoleId = roleId.Id,
-                        };
-                        db.MappingUserAndRoles.Add(mapuserrole);
-                        await loginUserData.SaveChanges(mapuserrole);
-                    }
+                        UserId = user.Id,
+                        UUID = frontuser.UUID,
+                        RoleId = role?.Id ?? 2,
+                    };
+                    db.MappingUserAndRoles.Add(mapuserrole);
+                    await loginUserData.SaveChanges(mapuserrole);
 
                     MappingFrontUserAndWebsite mapuserandweb = new MappingFrontUserAndWebsite()
                     {
@@ -568,11 +565,8 @@ namespace EtheriT.Coker.Application.Authorization
                         mapuserandweb.IsDeleted = true;
                         mapuserandweb.DeletionTime = DateTime.Now;
 
-                        if(roleId != null)
-                        {
-                            mapuserrole.IsDeleted = true;
-                            mapuserrole.DeletionTime = DateTime.Now;
-                        }
+                        mapuserrole.IsDeleted = true;
+                        mapuserrole.DeletionTime = DateTime.Now;
 
                         newuser.IsDeleted = true;
                         newuser.DeletionTime = DateTime.Now;

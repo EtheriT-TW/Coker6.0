@@ -726,7 +726,7 @@ namespace EtheriT.Coker.Application
         public async Task<PageTypeDto> GetPageTypeList()
         {
             PageTypeDto response = new PageTypeDto { Success = true };
-            List<string> enNames = new List<string> {"", "Home", "ShoppingCar", "Member" };
+            List<string> enNames = new List<string> {"", "Home", "ShoppingCar", "Member", "Search" };
             try
             {
                 response.Type = Enum.GetValues(typeof(PageTypeEnum))

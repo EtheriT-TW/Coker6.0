@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Web.Public.Middlewares
 {
@@ -15,11 +16,11 @@ namespace EtheriT.Coker.Web.Public.Middlewares
             _configuration = configuration;
         }
         public async Task InvokeAsync(HttpContext context) {
+            var nonce = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
             using (var scope = _serviceProvider.CreateScope()) {
                 long siteId = _configuration.GetValue<long>("WebConfig:SiteId");
                 var dbContext = scope.ServiceProvider.GetRequiredService<CokerDbContext>();
                 var item = dbContext.StoreSetDetail.Where(e => e.FK_WebsiteId == siteId && e.FK_StoreSetId == 2).FirstOrDefault();
-                var nonce = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
                 string selfInline = $"nonce-{nonce}";
                 context.Items["CSPNonce"] = nonce;
                 bool isSitemapRequest = context.Request.Path.HasValue &&
@@ -50,7 +51,27 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 //防止瀏覽器進行 MIME 嗅探
                 context.Response.Headers["X-Content-Type-Options"] = "nosniff";
             }
-            await _next(context);
+            var originalBodyStream = context.Response.Body;
+            using (var newBodyStream = new MemoryStream())
+            {
+                context.Response.Body = newBodyStream;
+
+                await _next(context); // 執行後續的管道（包括 Razor 渲染）
+
+                newBodyStream.Seek(0, SeekOrigin.Begin);
+                var responseBody = await new StreamReader(newBodyStream).ReadToEndAsync();
+
+                // 只替換不含 nonce 的 <script> 標籤
+                var modifiedBody = Regex.Replace(
+                    responseBody,
+                    @"<script(?![^>]*\bnonce=)(?![^>]*\bsrc=)[^>]*>",
+                    $"<script nonce=\"{nonce}\">",
+                    RegexOptions.IgnoreCase
+                );
+
+                context.Response.Body = originalBodyStream;
+                await context.Response.WriteAsync(modifiedBody);
+            }
         }
     }
 }

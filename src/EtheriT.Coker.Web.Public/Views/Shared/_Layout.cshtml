@@ -51,6 +51,13 @@
     <meta property="og:description" content="@Html.Raw(ViewData["Description"])" />
     <meta property="og:locale" content="zh-tw" />
     <meta name="csp-nonce" content="@Html.Raw(ViewBag.Nonce)" />
+    
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+	<script src="~/js/devextreme/dx.all.min.js" asp-append-version="true" nonce="@ViewBag.Nonce"></script>
+	<script src="~/js/devextreme/aspnet/dx.aspnet.mvc.js" nonce="@ViewBag.Nonce"></script> 
+    <script src="~/js/devextreme/aspnet/dx.aspnet.data.js" nonce="@ViewBag.Nonce"></script>
+    <script src="~/js/devextreme/localization/dx.messages.zh-tw.js"></script>
+	<script nonce="@ViewBag.Nonce"> DevExpress.localization.locale('zh-tw'); </script>
     <style nonce="@ViewBag.Nonce">
         :root {
             --orgName: @ViewData["OrgName"];
@@ -548,12 +555,6 @@
     <div>
         @await Component.InvokeAsync(nameof(SideFloating))
     </div>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-	<script src="~/js/devextreme/dx.all.min.js" asp-append-version="true" nonce="@ViewBag.Nonce"></script>
-	<script src="~/js/devextreme/aspnet/dx.aspnet.mvc.js" nonce="@ViewBag.Nonce"></script> 
-    <script src="~/js/devextreme/aspnet/dx.aspnet.data.js" nonce="@ViewBag.Nonce"></script>
-    <script src="~/js/devextreme/localization/dx.messages.zh-tw.js"></script>
-	<script> DevExpress.localization.locale('zh-tw'); </script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/swiper/swiper-bundle.min.js"></script>
     <script src="~/Shared/c-share.min.js"></script>

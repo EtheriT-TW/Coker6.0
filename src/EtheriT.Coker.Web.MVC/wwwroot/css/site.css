@@ -130,6 +130,14 @@ a {
     text-overflow: ellipsis;
 }
 
+    .webkit-box.line-1 {
+        -webkit-line-clamp: 1;
+    }
+
+    .webkit-box.line-2 {
+        -webkit-line-clamp: 2;
+    }
+
     .webkit-box.line-3 {
         -webkit-line-clamp: 3;
     }

@@ -155,5 +155,6 @@ function ImageSetData($select, file) {
             });
         });
         $select.find(".img_input_frame").prepend(input_frame);
+        if (typeof ($select.data("accept")) != "undefined") $select.find(".input_pic").attr("accept", $select.data("accept"));
     }
 }

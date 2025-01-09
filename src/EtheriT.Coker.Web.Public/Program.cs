@@ -188,6 +188,7 @@ builder.Services.AddScoped<IFreightAppService, FreightAppService>();
 builder.Services.AddScoped<IThirdPartyAppService, ThirdPartyAppService>();
 builder.Services.AddScoped<ILinePayAppService, LinePayAppService>();
 builder.Services.AddScoped<IPChomePayAppService, PChomePayAppService>();
+builder.Services.AddScoped<IECPayAppService, ECPayAppService>();
 builder.Services.AddScoped<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddScoped<LoginUserData>();
 builder.Services.AddScoped<StringHandler>();
@@ -235,6 +236,10 @@ builder.Services.AddHttpClient("ThirdPartyClient_Line", client =>
 builder.Services.AddHttpClient("ThirdPartyClient_PCHome", client =>
 {
     client.BaseAddress = new Uri(configuration.GetValue<string>("ThirdParty:PCHomePay:PaymentUrl"));
+});
+builder.Services.AddHttpClient("ThirdPartyClient_ECPay", client =>
+{
+    client.BaseAddress = new Uri(configuration.GetValue<string>("ThirdParty:ECPay:PaymentUrl"));
 });
 
 var app = builder.Build();

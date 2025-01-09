@@ -802,7 +802,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Id = 6,
                     FK_TPid = 2,
                     Title = "允許繳費有效天數",
-                    Code = "expire_day2",
+                    PromptText = "※預設為5天，最短1天，最長可設定為5天，超過一律以5天計算",
+                    Code = "expire_days",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
@@ -833,7 +834,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 10,
                     FK_TPid = 4,
-                    Title = "平台代號(非專案合作請留空)",
+                    Title = "平台代號",
+                    PromptText = "※非專案合作請留空",
                     Code = "PlatformID ",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
@@ -842,7 +844,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Id = 11,
                     FK_TPid = 4,
                     Title = "HashKey",
-                    Code = "HashKey ",
+                    Code = "HashKey",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
@@ -850,7 +852,34 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Id = 12,
                     FK_TPid = 4,
                     Title = "HashIV",
-                    Code = "HashIV ",
+                    Code = "HashIV",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 13,
+                    FK_TPid = 4,
+                    Title = "ATM允許繳費有效天數",
+                    PromptText = "※預設為3天，最短1天，最長可設定為60天，超過一律以60天計算",
+                    Code = "ExpireDate",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 14,
+                    FK_TPid = 4,
+                    Title = "超商條碼繳費截止時間",
+                    PromptText = "※預設為7天，最短1天，最長可設定為30天，超過一律以30天計算",
+                    Code = "StoreExpireDate_Barcode",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 15,
+                    FK_TPid = 4,
+                    Title = "超商代碼繳費截止時間",
+                    PromptText = "※預設為7天，最短1天，最長可設定為30天，超過一律以30天計算",
+                    Code = "StoreExpireDate_CVS",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }
@@ -1032,8 +1061,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 18,
                     Used = false,
-                    Title = "信用卡分期付款",
-                    Code = "ECPayCreditInstallment",
+                    Title = "信用卡分期付款3期",
+                    Code = "ECPayCreditInstallment_3",
                     SerNo = 16,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
@@ -1042,8 +1071,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 19,
                     Used = false,
-                    Title = "ATM(虛擬帳戶)",
-                    Code = "ECPayATM",
+                    Title = "信用卡分期付款6期",
+                    Code = "ECPayCreditInstallment_6",
                     SerNo = 17,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
@@ -1052,8 +1081,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 20,
                     Used = false,
-                    Title = "超商條碼付款",
-                    Code = "ECPayBarcode",
+                    Title = "信用卡分期付款12期",
+                    Code = "ECPayCreditInstallment_12",
                     SerNo = 18,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
@@ -1062,8 +1091,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 21,
                     Used = false,
-                    Title = "超商代碼付款",
-                    Code = "ECPayCVS",
+                    Title = "ATM(虛擬帳戶)",
+                    Code = "ECPayATM",
                     SerNo = 19,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
@@ -1072,9 +1101,59 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 22,
                     Used = false,
+                    Title = "超商條碼付款",
+                    Code = "ECPayBarcode",
+                    SerNo = 20,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 23,
+                    Used = false,
+                    Title = "超商代碼付款(OK)",
+                    Code = "ECPayCVS_OK",
+                    SerNo = 21,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 24,
+                    Used = false,
+                    Title = "超商代碼付款(全家)",
+                    Code = "ECPayCVS_FAMILY",
+                    SerNo = 22,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 25,
+                    Used = false,
+                    Title = "超商代碼付款(萊爾富)",
+                    Code = "ECPayCVS_HILIFE",
+                    SerNo = 23,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 26,
+                    Used = false,
+                    Title = "超商代碼付款(7-11)",
+                    Code = "ECPayCVS_IBON",
+                    SerNo = 24,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 27,
+                    Used = false,
                     Title = "ApplePay",
                     Code = "ECPayApplePay",
-                    SerNo = 20,
+                    SerNo = 25,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),

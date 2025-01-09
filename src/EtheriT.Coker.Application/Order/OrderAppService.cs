@@ -205,26 +205,28 @@ namespace EtheriT.Coker.Application.Order
 
                     var PaymentType = await (from pt in db.PaymentTypes
                                              join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
+                                             join tp in db.ThirdParties on pt.FK_ThirdPartyId equals tp.Id
                                              where ptv.FK_WebsiteId == WebsiteId
-                                             select pt).ToListAsync();
+                                             where pt.Id == oh.Payment
+                                             select tp.Title).FirstOrDefaultAsync();
                     var mailoutput = await SendMail(oh.Id);
                     if (PaymentType != null)
                     {
-                        switch (PaymentType.Find(e => e.Id == oh.Payment).Code)
+                        switch (PaymentType)
                         {
-                            case "LinePay":
+                            //case "轉帳":
+                            default:
+                                output.Message = $"Default,{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日,{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
+                                break;
+                            case "支付連":
+                                output.Message = $"PCHomePay,{oh.Id}";
+                                break;
+                            case "LINE Pay":
                                 output.Message = $"LinePay,{oh.Id}";
                                 break;
-                            default:
-                                if (PaymentType.Find(e => e.Id == oh.Payment).Code.StartsWith("PCHome") || PaymentType.Find(e => e.Id == oh.Payment).Code.StartsWith("Pchome"))
-                                {
-                                    output.Message = $"PCHomePay,{oh.Id}";
-                                }
-                                else
-                                {
-                                    output.Message = $"Default,{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日,{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
-                                }
-                                break;
+                                //case "綠界支付":
+                                //    output.Message = $"ECPay,{oh.Id}";
+                                //    break;
                         }
                     }
                     if (!mailoutput.Success) output.Error = mailoutput.Message;

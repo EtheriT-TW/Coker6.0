@@ -49,6 +49,15 @@ function PageReady() {
         });
     }
 
+    co.File.getImgFile({ Sid: $("#WebsiteID").val(), Type: 11, Size: 1, }).done(function (files) {
+        console.log("file", files)
+        if (files.length > 0) {
+            for (var i = files.length - 1; i > -1; i--) {
+                ImageUploadModalDataInsert($("#IconImageUpload"), files[i].id, files[i].link, files[i].name)
+            }
+        }
+    })
+
     co.WebSite.getPrivacyAndTerms().done(function (result) {
         if (result.success) {
             if (result.message.split(" ").length == 2) {
@@ -230,7 +239,29 @@ function WebsiteInfoSave(event) {
         event.stopPropagation()
     } else {
         co.WebSite.Save(co.Form.getJson("WebsiteData")).done(function (resut) {
-            if (resut.success) co.sweet.success("儲存成功");
+            if (resut.success) {
+                console.log($("#IconImageUpload").find(".img_input_frame").data("delectList"))
+                if (typeof ($("#IconImageUpload").find(".img_input_frame").data("delectList")) != "undefined" && $("#IconImageUpload").find(".img_input_frame").data("delectList") != null) {
+                    co.File.DeleteFileById({
+                        Sid: $("#WebsiteID").val(),
+                        Type: 11,
+                        Fid: $("#IconImageUpload").data("delectList")
+                    });
+                }
+                var icon = $("#IconImageUpload .img_input_frame > .img_input").data("file")?.File;
+                if (typeof (icon) != "undefined" && icon != null) {
+                    console.log(icon)
+                    var formData = new FormData();
+                    formData.append("files", icon);
+                    formData.append("type", 11);
+                    formData.append("sid", $("#WebsiteID").val());
+                    formData.append("serno", 500);
+                    co.File.Upload(formData).done(function (result) {
+                        if (result.success) co.sweet.success("儲存成功");
+                        else co.sweet.error(resut.message);
+                    });
+                } else co.sweet.success("儲存成功");
+            }
             else co.sweet.error(resut.error);
         });
     }

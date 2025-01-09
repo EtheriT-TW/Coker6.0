@@ -91,6 +91,7 @@
                     <div class="fs-5 fw-bold pb-2">網站資訊</div>
 
                     <form id="WebsiteData" class="needs-validation" novalidate>
+                        <input id="WebsiteID" name="Id" class="d-none" type="text" value="@Model.Website.Id">
                         <div class="form-floating mb-3">
                             <input id="InputWebsiteURL" name="DefaultUrl" class="website_URL form-control" type="text" placeholder="網址" value="@Model.Website.DefaultUrl" required>
                             <label class="required required_all" for="InputWebsiteURL">網址</label>
@@ -109,19 +110,18 @@
                             <label class="required" for="InputWebsiteContact">網站聯絡人</label>
                         </div>
                     </form>
-                    <div class="image_upload align-items-center d-none">
-                        <div id="IconImageUpload" class="d-flex image_upload flex-column" data-issinge="true" data-needcompress="false">
-                            <div class="title mb-2">新增頁籤Icon</div>
-                            @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
+                    <div class="image_upload align-items-center">
+                        <div id="IconImageUpload" class="d-flex image_upload flex-column align-items-center" data-issinge="true" data-needcompress="false" data-accept=".ico">
+                            <div class="title mb-2">網站圖示</div>
+                            @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadModal" })
                         </div>
-
                         <input class="input_logo d-none" type="file" accept="image/*" />
-                        <button class="btn_input_logo d-flex align-items-center justify-content-center bg-transparent">
+                        <button class="btn_input_logo align-items-center justify-content-center bg-transparent d-none">
                             <span class="fs-6 fw-bold material-icons">add</span>
                         </button>
-                        <div class="px-2 fw-bold">新增Logo</div>
+                        <div class="px-2 fw-bold d-none">新增Logo</div>
                     </div>
-                    <div class="form_btn justify-content-end mb-2">
+                    <div class="form_btn d-flex justify-content-end mb-2">
                         <button class="btn_save btn-primary border-0 px-3 py-1 mx-2">儲存</button>
                     </div>
                 </div>

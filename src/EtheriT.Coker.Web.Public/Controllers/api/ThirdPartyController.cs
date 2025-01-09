@@ -12,12 +12,15 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     {
         private readonly ILinePayAppService linePayAppService;
         private readonly IPChomePayAppService pchomePayAppService;
+        private readonly IECPayAppService ecPayAppService;
         public ThirdPartyController(
             ILinePayAppService linePayAppService,
-            IPChomePayAppService pchomePayAppService)
+            IPChomePayAppService pchomePayAppService,
+            IECPayAppService ecPayAppService)
         {
             this.linePayAppService = linePayAppService;
             this.pchomePayAppService = pchomePayAppService;
+            this.ecPayAppService = ecPayAppService;
         }
         [HttpGet]
         public async Task<ResponseMessageDto> PayRequest(long ohid, string paytype)
@@ -55,6 +58,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<string> PChomePayNotify(PChomePayNotifyDto dto)
         {
             return await pchomePayAppService.PChomePayNotify(dto);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> ECPayGetToken(long ohid)
+        {
+            return await ecPayAppService.ECPayGetToken(ohid);
         }
     }
 }

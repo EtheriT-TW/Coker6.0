@@ -9,6 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Webs
 {
     public class WebsiteEditDto
     {
+        public long? Id { get; set; }
         public string? DefaultUrl { get; set; }
         public string Title { get; set; }
         public string? Description { get; set; }

@@ -15,6 +15,7 @@ using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
 using Microsoft.AspNetCore.Http;
+using AutoMapper.Configuration.Conventions;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -156,7 +157,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             switch (jsonMessage["status"]?.ToString())
                             {
                                 case "S":
-                                    if(ohdata.State != OrderStatusEnum.已付款)
+                                    if (ohdata.State != OrderStatusEnum.已付款)
                                     {
                                         ohdata.State = OrderStatusEnum.已付款;
                                         DateTime paydate = jsonMessage["pay_date"] == null ? DateTime.Now : DateTime.ParseExact(jsonMessage["pay_date"].ToString(), "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
@@ -655,7 +656,16 @@ namespace EtheriT.Coker.Application.ThirdParty
                     PaymentBody.notify_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayNotify";
 
                     PaymentBody.buyer_email = ohdata.OrdererEmail;
-                    PaymentBody.atm_info = new PChomePayPaymentDto.PChomePayPaymentInfo() { expire_days = 5 };
+
+                    var tpkv_Value = await (from tpkv in db.ThirdPartyKeypairValues
+                                            join tpk in db.ThirdPartyKeypairs on tpkv.FK_ThirdPartyKeypairId equals tpk.Id
+                                            join tp in db.ThirdParties on tpk.FK_TPid equals tp.Id
+                                            where tp.Title == "支付連"
+                                            where tpkv.FK_WebsiteId == WebsiteId
+                                            where tpk.Code == "expire_days"
+                                            select tpkv.Value).FirstOrDefaultAsync();
+                    var expire_days = tpkv_Value == null ? 5 : int.Parse(tpkv_Value) < 1 ? 1 : int.Parse(tpkv_Value) > 5 ? 5 : int.Parse(tpkv_Value);
+                    PaymentBody.atm_info = new PChomePayPaymentDto.PChomePayPaymentInfo() { expire_days = expire_days };
 
                     PaymentBody.return_timer = "Y";
                     PaymentBody.member_key = ohdata.Fk_UserId?.ToString() ?? "";

@@ -11,6 +11,7 @@
 </script>
 <link rel="stylesheet" href="~/css/Search/Search.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
+<script src="~/js/LocalDb.min.js" asp-append-version="true"></script>
 <script src="~/js/Search/Search.min.js" asp-append-version="true"></script>
 
 @switch (Model.PageData.LayoutType)
@@ -53,6 +54,7 @@
             <a class="searchbtn" title="搜尋" href="#">
                 <i class="fas fa-search"></i>.
             </a>
+            <ul class="search-suggestions"></ul>
         </div>
     </div>
     <div class="container d-flex justify-content-center my-4 d-none">

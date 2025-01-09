@@ -1,8 +1,10 @@
 ﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Search;
 using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
+using EtheriT.Coker.Application.Shared.Dto.Search;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
@@ -13,9 +15,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     {
 
         private readonly IDirectoryAppService directoryAppService;
-        public DirectoryController(IDirectoryAppService directoryAppService)
+        private readonly ICustSearchAppService custSearchAppService;
+        public DirectoryController(IDirectoryAppService directoryAppService, ICustSearchAppService custSearchAppService)
         {
             this.directoryAppService = directoryAppService;
+            this.custSearchAppService = custSearchAppService;
         }
 
         [HttpPost]
@@ -38,6 +42,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<List<KeyValueDto>> SwitchPage(DirectorySwitchPageDto dto)
         {
             return await directoryAppService.SwitchPage(dto);
+        }
+        [HttpPost]
+        public async Task<SearchKeyListDto> GetSearchKeyList(SearchKeyInputDto dto)
+        {
+            return await custSearchAppService.GetSearchKeyList(dto);
         }
     }
 }

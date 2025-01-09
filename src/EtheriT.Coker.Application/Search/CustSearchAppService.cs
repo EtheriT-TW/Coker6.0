@@ -144,24 +144,33 @@ namespace EtheriT.Coker.Application.Search
                 await db.SaveChangesAsync();
             }
         }
-        public async Task<ResponseMessageDto> GetSearchKeyList(long websiteId) {
-            ResponseMessageDto response = new ResponseMessageDto();
+        public async Task<SearchKeyListDto> GetSearchKeyList(SearchKeyInputDto dto)
+        {
+            SearchKeyListDto response = new SearchKeyListDto();
             var minTimes = 10;
             var maxRecords = 10000;
+
             try
             {
+                long websiteId = loginUserData.GetFrontWebsiteId();
+
                 var resultQuery = db.SearchLogs
                     .Where(log => log.FK_WebsiteId == websiteId)
-                    .Where(log => !log.Key.All(char.IsDigit) &&
-                                  !log.Key.All(ch => char.IsSymbol(ch) || char.IsPunctuation(ch)))
+                    .Where(log => EF.Functions.Like(log.Key, "%[a-zA-Z0-9]%") ||
+                                  EF.Functions.Like(log.Key, "%[一-龥]%"))
+                    .Where(log => !dto.LastInsertTime.HasValue || log.CreationTime > dto.LastInsertTime.Value) // 增量更新邏輯
                     .OrderByDescending(log => log.CreationTime)
                     .Take(maxRecords);
 
-                var lastInsertTime = (await resultQuery.MaxAsync(log => log.CreationTime)).Date;
+                var lastInsertTime = await resultQuery.MaxAsync(log => log.CreationTime);
 
-                var result = await resultQuery
+                var filteredResults = resultQuery
+                    .AsEnumerable() // 客戶端處理細節篩選
+                    .Where(log => !log.Key.All(char.IsDigit))
+                    .Where(log => !log.Key.All(ch => char.IsSymbol(ch) || char.IsPunctuation(ch)))
                     .GroupBy(log => log.Key.ToUpper())
-                    .Select(group => new SearchKeyDto{
+                    .Select(group => new SearchKeyDto
+                    {
                         Key = group.Key,
                         Times = group.Count()
                     })
@@ -169,17 +178,18 @@ namespace EtheriT.Coker.Application.Search
                     .OrderByDescending(entry => entry.Times)
                     .ThenBy(entry => entry.Key)
                     .Take(1000)
-                    .ToListAsync();
-                response.Object = new SearchKeyListDto {
-                    Keys = result,
-                    LastInsertTime = lastInsertTime,
-                };
+                    .ToList();
+                response.Keys = filteredResults;
+                response.LastInsertTime = lastInsertTime;
                 response.Success = true;
             }
-            catch(Exception ex) { 
+            catch (Exception ex)
+            {
                 response.Error = ex.Message;
             }
+
             return response;
         }
+
     }
 }

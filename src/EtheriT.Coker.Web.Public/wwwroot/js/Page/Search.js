@@ -1,6 +1,5 @@
 ﻿function PageReady() {
     ShoppingCarModalInit();
-
     $(".btn_sort_price").on("click", SortByPrice);
     $(".btn_typography").on("click", Typography);
 

@@ -240,26 +240,30 @@ function WebsiteInfoSave(event) {
     } else {
         co.WebSite.Save(co.Form.getJson("WebsiteData")).done(function (resut) {
             if (resut.success) {
-                console.log($("#IconImageUpload").find(".img_input_frame").data("delectList"))
-                if (typeof ($("#IconImageUpload").find(".img_input_frame").data("delectList")) != "undefined" && $("#IconImageUpload").find(".img_input_frame").data("delectList") != null) {
-                    co.File.DeleteFileById({
-                        Sid: $("#WebsiteID").val(),
-                        Type: 11,
-                        Fid: $("#IconImageUpload").data("delectList")
-                    });
-                }
                 var icon = $("#IconImageUpload .img_input_frame > .img_input").data("file")?.File;
                 if (typeof (icon) != "undefined" && icon != null) {
-                    console.log(icon)
                     var formData = new FormData();
                     formData.append("files", icon);
                     formData.append("type", 11);
                     formData.append("sid", $("#WebsiteID").val());
                     formData.append("serno", 500);
-                    co.File.Upload(formData).done(function (result) {
-                        if (result.success) co.sweet.success("儲存成功");
-                        else co.sweet.error(resut.message);
-                    });
+                    if (typeof ($("#IconImageUpload").find(".img_input_frame").data("delectList")) != "undefined" && $("#IconImageUpload").find(".img_input_frame").data("delectList") != null) {
+                        co.File.DeleteFileById({
+                            Sid: $("#WebsiteID").val(),
+                            Type: 11,
+                            Fid: $("#IconImageUpload").data("delectList")
+                        }).done(function (result) {
+                            co.File.Upload(formData).done(function (result) {
+                                if (result.success) co.sweet.success("儲存成功");
+                                else co.sweet.error(resut.message);
+                            });
+                        });
+                    } else {
+                        co.File.Upload(formData).done(function (result) {
+                            if (result.success) co.sweet.success("儲存成功");
+                            else co.sweet.error(resut.message);
+                        });
+                    }
                 } else co.sweet.success("儲存成功");
             }
             else co.sweet.error(resut.error);

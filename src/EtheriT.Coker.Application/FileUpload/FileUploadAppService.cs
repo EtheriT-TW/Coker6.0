@@ -1279,7 +1279,7 @@ namespace EtheriT.Coker.Application
                         string ext = sp[sp.Length - 1];
                         var rootPath = $"{_folder}/{orgName}";
                         var directoryPath = $"{rootPath}/{directory}";
-                        var path = $"/{directory}/{key}.{ext}";
+                        var path = asotype == (int)FileBindTypeEnum.網站圖示 ? $"/favicon.ico" : $"/{directory}/{key}.{ext}";
                         if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
                         if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
                         using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))

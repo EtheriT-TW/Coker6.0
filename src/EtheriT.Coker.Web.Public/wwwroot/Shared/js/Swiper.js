@@ -551,12 +551,12 @@ function SwiperInit(obj) {
                 $header_text.text(activeSlide.find("img").attr("alt"));
             });
 
-            $('#SwiperModal').on('hidden.bs.modal', function () {
+            $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
                 pictureSwiper.removeAllSlides();
                 pictureSwiperThumbs.removeAllSlides();
-            });
+                pictureSwiper.update();
+                pictureSwiperThumbs.update();
 
-            $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
                 var $self = $(this).parents(".picture-category");
                 var index = $self.find("a").index(this);
                 var $images = [];
@@ -578,9 +578,7 @@ function SwiperInit(obj) {
                         pictureSwiperThumbs.appendSlide(newSlideThumbs);
                     }
                 }
-                // slide只有2會出現順序顛倒
-                if ($images.length == 2) index = (index === 0) ? 1 : 0;
-                pictureSwiper.slideTo(index, 0);
+                pictureSwiper.slideToLoop(index, 0);
                 pictureSwiperThumbs.slideTo(index, 0);
                 $('#SwiperModal').modal('show');
                 return false;

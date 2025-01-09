@@ -12,7 +12,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Authorizaion
         public string Name { get; set; }
         public string Password { get; set; }
         public string PasswordConfirm { get; set; }
-        public long RoleId { get; set; }
         public long WebsiteId { get; set; }
         public string WebsiteLink { get; set; }
         public string WebsiteName { get; set; }

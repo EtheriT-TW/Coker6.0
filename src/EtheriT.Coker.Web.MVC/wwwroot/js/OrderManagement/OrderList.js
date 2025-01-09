@@ -214,6 +214,15 @@ function FormDataClear() {
 }
 function contentReady(e) {
     order_list = e;
+    var urlParams = new URLSearchParams(window.location.search);
+    var filterValue = urlParams.get("mid");
+
+    if (filterValue !== null) {
+        $("#OrderListDx").dxDataGrid("instance").columnOption("MemberId", {
+            selectedFilterOperation: "=",
+            filterValue: filterValue
+        });
+    }
     HashDataEdit();
 }
 function hashChange(e) {

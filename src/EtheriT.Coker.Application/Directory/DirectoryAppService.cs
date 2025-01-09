@@ -1520,6 +1520,7 @@ namespace EtheriT.Coker.Application.Directory
                                                        where a.FK_WebsiteId == WebsiteID
                                                        where tagas.Type == TagAssociateTypeEnum.文章
                                                        where tagids.Contains(tagas.FK_TId)
+                                                       orderby a.SerNO, a.NodeDate descending, a.Id descending
                                                        select new { a, tagas }).ToListAsync();
                             datas = articles_tags.OrderBy(x => tagids.IndexOf(x.tagas.FK_TId)).Select(x => new KeyValueDto()
                             {

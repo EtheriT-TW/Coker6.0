@@ -2312,6 +2312,90 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             SerNo = 13,
                             Title = "超商條碼付款",
                             Used = false
+                        },
+                        new
+                        {
+                            Id = 16L,
+                            Code = "ECPayCreditCard",
+                            CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 4L,
+                            IsDeleted = false,
+                            SerNo = 14,
+                            Title = "信用卡付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 17L,
+                            Code = "ECPayUnionPay",
+                            CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 4L,
+                            IsDeleted = false,
+                            SerNo = 15,
+                            Title = "信用卡付款(銀聯卡)",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 18L,
+                            Code = "ECPayCreditInstallment",
+                            CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 4L,
+                            IsDeleted = false,
+                            SerNo = 16,
+                            Title = "信用卡分期付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 19L,
+                            Code = "ECPayATM",
+                            CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 4L,
+                            IsDeleted = false,
+                            SerNo = 17,
+                            Title = "ATM(虛擬帳戶)",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 20L,
+                            Code = "ECPayBarcode",
+                            CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 4L,
+                            IsDeleted = false,
+                            SerNo = 18,
+                            Title = "超商條碼付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 21L,
+                            Code = "ECPayCVS",
+                            CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 4L,
+                            IsDeleted = false,
+                            SerNo = 19,
+                            Title = "超商代碼付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 22L,
+                            Code = "ECPayApplePay",
+                            CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 4L,
+                            IsDeleted = false,
+                            SerNo = 20,
+                            Title = "ApplePay",
+                            Used = false
                         });
                 });
 
@@ -4499,6 +4583,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             Title = "LINE Pay",
                             ser_no = 500
+                        },
+                        new
+                        {
+                            Id = 4L,
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            IsDeleted = false,
+                            Title = "綠界支付",
+                            ser_no = 500
                         });
                 });
 
@@ -4633,6 +4726,46 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_TPid = 3L,
                             IsDeleted = false,
                             Title = "Channel Secret Key"
+                        },
+                        new
+                        {
+                            Id = 9L,
+                            Code = "MerchantID",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_TPid = 4L,
+                            IsDeleted = false,
+                            Title = "商店代號"
+                        },
+                        new
+                        {
+                            Id = 10L,
+                            Code = "PlatformID ",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_TPid = 4L,
+                            IsDeleted = false,
+                            Title = "平台代號(非專案合作請留空)"
+                        },
+                        new
+                        {
+                            Id = 11L,
+                            Code = "HashKey ",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_TPid = 4L,
+                            IsDeleted = false,
+                            Title = "HashKey"
+                        },
+                        new
+                        {
+                            Id = 12L,
+                            Code = "HashIV ",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_TPid = 4L,
+                            IsDeleted = false,
+                            Title = "HashIV"
                         });
                 });
 

@@ -487,6 +487,8 @@ namespace EtheriT.Coker.Application.Authorization
                                        where MapFrontUserAndWeb.FK_WebsiteId == dto.WebsiteId
                                        select user).FirstOrDefaultAsync();
 
+                var role = await db.Roles.Where(e => e.FK_WebsiteId == WebsiteID && e.Type == RoleTypeEnum.前台).FirstOrDefaultAsync();
+
                 string passwordError = checkPassword(dto.Password);
 
                 if (dto.Password != dto.PasswordConfirm) throw new Exception("輸入的密碼不相符");
@@ -516,16 +518,17 @@ namespace EtheriT.Coker.Application.Authorization
                         newuser = user;
                     }
                     frontuser.FK_User = user.Id;
-                    frontuser.Level = dto.RoleId;
+                    frontuser.Level = role?.Id ?? 2;
                     db.FrontUsers.Add(frontuser);
                     await loginUserData.SaveChanges(frontuser);
                     userid = frontuser.Id;
 
-                    MappingUserAndRole mapuserrole = new MappingUserAndRole()
+                    MappingUserAndRole mapuserrole = new MappingUserAndRole();
+                    mapuserrole = new MappingUserAndRole()
                     {
                         UserId = user.Id,
                         UUID = frontuser.UUID,
-                        RoleId = dto.RoleId,
+                        RoleId = role?.Id ?? 2,
                     };
                     db.MappingUserAndRoles.Add(mapuserrole);
                     await loginUserData.SaveChanges(mapuserrole);

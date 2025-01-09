@@ -463,6 +463,7 @@ function ready() {
                             Coker.sweet.custom("success", "", "會員帳號成功開通", "填寫會員資料", function () {
                                 window.location.href = `/${OrgName}/Member`;
                             }, "下次再說", function () {
+                                window.history.replaceState({}, document.title, window.location.pathname);
                                 location.reload();
                             })
                         } else {
@@ -716,7 +717,6 @@ function LoginAction() {
                         Coker.sweet.loading();
                         data.WebsiteLink = $(location).attr('origin');
                         data.WebsiteName = $("meta[property='og:site_name'").attr("content");
-                        data.RoleId = 2;
                         co.User.AccountReSendOpening(data).done(result => {
                             if (result.success) {
                                 Coker.sweet.success("系統將重新發送『加入會員通知』信函至您所登錄之E-Mail中。請靜候開通帳號通知信。", null, false);
@@ -742,7 +742,6 @@ function RegisterAction() {
     data.WebsiteId = SiteId;
     data.WebsiteLink = $(location).attr('origin');
     data.WebsiteName = $("meta[property='og:site_name'").attr("content");
-    data.RoleId = 2;
     co.User.AddUser(data).done((result) => {
         if (result.success) {
             Coker.sweet.success("<div>註冊成功</div><div>您將收到開通帳號的通知信</div><div>請至信箱確認以完成帳號開通</div>", null, false);

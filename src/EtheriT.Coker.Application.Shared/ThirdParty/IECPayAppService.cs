@@ -5,6 +5,6 @@ namespace EtheriT.Coker.Application.Shared.ThirdParty
 {
     public interface IECPayAppService
     {
-        public Task<ResponseMessageDto> ECPayHeaders(long ohid);
+        public Task<ResponseMessageDto> ECPayGetToken(long ohid);
     }
 }

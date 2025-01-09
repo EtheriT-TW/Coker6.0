@@ -63,7 +63,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                                                     Id = Id,
                                                     Code = k.Code ?? "",
                                                     Title = k.Title ?? "",
-                                                    Value = Value
+                                                    Value = Value,
+                                                    PromptText = k.PromptText ?? "",
                                                 }).ToList()
                              };
                 response.Object = new GetAllThirdPartyOutputDto
@@ -232,6 +233,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     Title = thirdpartykeypair.Title,
                                     Value = value.Value,
                                     Code = thirdpartykeypair.Code,
+                                    PromptText = thirdpartykeypair.PromptText,
                                 });
                             }
                         }

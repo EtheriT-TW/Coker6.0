@@ -188,6 +188,7 @@ builder.Services.AddScoped<IFreightAppService, FreightAppService>();
 builder.Services.AddScoped<IThirdPartyAppService, ThirdPartyAppService>();
 builder.Services.AddScoped<ILinePayAppService, LinePayAppService>();
 builder.Services.AddScoped<IPChomePayAppService, PChomePayAppService>();
+builder.Services.AddScoped<IECPayAppService, ECPayAppService>();
 builder.Services.AddScoped<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddScoped<LoginUserData>();
 builder.Services.AddScoped<StringHandler>();

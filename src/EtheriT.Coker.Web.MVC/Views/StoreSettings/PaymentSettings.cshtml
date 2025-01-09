@@ -31,14 +31,16 @@
                             <div id="ThirdParty_Body@(group.Id)" class="accordion-collapse collapse" aria-labelledby="ThirdParty_Head@(group.Id)" data-bs-parent="#ThirdParty">
                                 <div class="accordion-body">
                                     <fieldset id="thirdPartyForm_@group.Id">
-                                    @for (int j = 0; j < group.ThirdPartyKeypairs.Count; j++)
-                                    {
-                                        var item = group.ThirdPartyKeypairs[j];
-                                        <div class="d-flex align-items-center">
-                                            <label class="form-label m-0" for="@item.Code">@item.Title</label>
-                                            <input id="@item.Code" name="@item.Code" class="form-control text-center rounded mx-3" value="@item.Value" type="text" placeholder="">
-                                        </div>
-                                    }
+                                        @for (int j = 0; j < group.ThirdPartyKeypairs.Count; j++)
+                                        {
+                                            var item = group.ThirdPartyKeypairs[j];
+                                            var showPromptText = item.PromptText != "" ? "showPromptText" : "";
+                                            <div class="d-flex align-items-center @showPromptText">
+                                                <label class="form-label m-0" for="@item.Code">@item.Title</label>
+                                                <input id="@item.Code" name="@item.Code" class="form-control text-center rounded mx-3" value="@item.Value" type="text" placeholder="">
+                                                <span class="promptText">@item.PromptText</span>
+                                            </div>
+                                        }
                                     </fieldset>
                                     <div class="d-flex flex-column">
                                         <div class="form-label m-0">支付方式</div>

@@ -485,24 +485,39 @@ h3.title {
 }
 .search-suggestions {
     position: absolute;
-    left: 0;
+    left: 1rem;
     top: 100%;
     max-height: 10rem;
-    width: 100%;
+    width: calc(100% - 2rem);
     overflow: auto;
     background: #FFF;
-    list-style:none;
-    z-index:1;
+    list-style: none;
+    z-index: 1;
+    border: 1px solid #ccc; /* 加上邊框來區分建議清單 */
+    border-radius: 4px; /* 邊框圓角 */
+    padding:0.5rem 0;
 }
+
     .search-suggestions li {
-        padding: 8px;
+        padding: 0 0.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 5px; /* 新增間距 */
+        font-size: 1rem; /* 上層字體大小 */
     }
+
+        .search-suggestions li strong {
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
 
         .search-suggestions li a {
             text-decoration: none; /* 去除鏈接下劃線 */
             display: block; /* 使 <a> 填滿整個 li */
             padding: 8px;
             cursor: pointer;
+            border-radius: 4px; /* 加上圓角 */
+            color: #333; /* 默認文字顏色 */
         }
 
             .search-suggestions li a:hover,
@@ -510,10 +525,78 @@ h3.title {
                 background-color: #ddd; /* 高亮顯示的背景色 */
                 color: #333; /* 可選的文字顏色 */
             }
+
             .search-suggestions li a.highlighted {
                 background-color: #007bff; /* 高亮顏色 */
                 color: #fff; /* 高亮文字顏色 */
             }
+
+        /* 將刪除按鈕與 key 顯示在同一行 */
+        .search-suggestions li.local-record {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-direction: row;
+        }
+
+            .search-suggestions li.local-record a {
+                flex-grow: 1; /* 使 key 占據剩餘空間 */
+            }
+
+        .search-suggestions li button.delete-local {
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0;
+            text-align: left;
+        }
+
+            .search-suggestions li button.delete-local:hover {
+                text-decoration: underline;
+            }
+
+        /* 隱藏刪除按鈕在伺服器紀錄 */
+        .search-suggestions li .remote-record {
+            display: none;
+        }
+
+        /* 當顯示本機紀錄時，顯示刪除按鈕 */
+        .search-suggestions li.local-record button.delete-local {
+            display: inline-block;
+        }
+
+        /* 內層 ul 的樣式 */
+        .search-suggestions li ul {
+            padding-left: 20px; /* 加上縮排 */
+            font-size: 0.9rem; /* 內層字體大小稍微變小 */
+            color: #555; /* 內層文字顏色稍微變淡 */
+        }
+
+            .search-suggestions li ul li a {
+                color: #555; /* 內層項目的文字顏色 */
+            }
+
+                .search-suggestions li ul li a:hover {
+                    background-color: #f1f1f1; /* 內層項目高亮顏色 */
+                }
+
+                /* 高亮的內層項目 */
+                .search-suggestions li ul li a.highlighted {
+                    background-color: #007bff; /* 高亮顏色 */
+                    color: #fff; /* 高亮文字顏色 */
+                }
+    .search-suggestions .clear-local {
+        font-size: 0.8rem;
+        color: #aaa;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+        .search-suggestions .clear-local:focus {
+            border-bottom:none;
+        }
 
 @media(max-width:1200px) {
     .search-input-block {

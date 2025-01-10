@@ -5,6 +5,7 @@
     #lastInsertTime = null;
     #isReady = false;
     #readyResolve;
+    #db;
 
     constructor({ apiUrl, dbName, storeName }) {
         this.#apiUrl = apiUrl;
@@ -27,7 +28,7 @@
             console.log("資料已是今日最新，無需更新。");
             this.#lastInsertTime = lastInsertItem.lastInsertTime;
         } else {
-            const apiResponse = await this.fetchDataFromApi(lastInsertItem.lastInsertTime);
+            const apiResponse = await this.fetchDataFromApi(lastInsertItem == null ? lastInsertItem : lastInsertItem.lastInsertTime);
             if (this.shouldUpdateData(apiResponse.lastInsertTime)) {
                 await this.updateLocalData(apiResponse);
             }
@@ -57,32 +58,51 @@
 
     async updateLocalData(apiResponse) {
         const db = await this.openDatabase();
-
         const transaction = db.transaction([this.#storeName], "readwrite");
         const store = transaction.objectStore(this.#storeName);
 
-        // 儲存新資料
-        for (const item of apiResponse.keys) {
-            store.put({ Key: item.key });
-        }
-        // 儲存新的 lastInsertTime
-        store.put({ Key: "lastInsertTime", lastInsertTime: apiResponse.lastInsertTime });
-        store.put({ Key: "lastUpdateTime", lastUpdateTime: new Date()});
-
         return new Promise((resolve, reject) => {
+            apiResponse.keys.forEach((item) => {
+                item.type = "remote";
+                const compositeKey = `${item.key}|${item.type}`;
+                const getRequest = store.get(compositeKey);
+
+                getRequest.onsuccess = (e) => {
+                    const existingItem = e.target.result;
+
+                    if (existingItem) {
+                        existingItem.times += item.times || 0;
+                        store.put(existingItem);
+                    } else {
+                        store.put({
+                            compositeKey,
+                            key: item.key,
+                            type: item.type,
+                            times: item.times || 0,
+                        });
+                    }
+                };
+
+                getRequest.onerror = (err) => reject(err);
+            });
+
+            store.put({ compositeKey: "lastInsertTime", lastInsertTime: apiResponse.lastInsertTime });
+            store.put({ compositeKey: "lastUpdateTime", lastUpdateTime: new Date() });
+
             transaction.oncomplete = () => resolve();
             transaction.onerror = (e) => reject(e);
         });
     }
 
     async openDatabase() {
+        if (this.#db) return this.#db;
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(this.#dbName, 1);
 
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains(this.#storeName)) {
-                    db.createObjectStore(this.#storeName, { keyPath: "Key" });
+                    db.createObjectStore(this.#storeName, { keyPath: "compositeKey" });
                 }
             };
 
@@ -145,8 +165,125 @@
         return new Promise((resolve, reject) => {
             const request = store.getAll();
 
-            request.onsuccess = (e) => resolve(e.target.result);
+            request.onsuccess = (e) => {
+                const allData = e.target.result;
+                // 過濾掉系統資料
+                const filteredData = allData
+                    .filter(item => item.compositeKey !== "lastUpdateTime" && item.compositeKey !== "lastInsertTime")
+                    .map(item => ({
+                        key: item.key,
+                        type: item.type,
+                        times: item.times,
+                    }));
+                // 依據 times 欄位排序
+                const sortedData = filteredData.sort((a, b) => b.times - a.times);
+
+                resolve(sortedData);
+            };
+
             request.onerror = (e) => reject(e);
         });
     }
+
+    async addOrUpdateData(key, type = "local") {
+        if (!this.#isReady) {
+            await this.ready; // 等待資料載入完成
+        }
+
+        const db = await this.openDatabase();
+        const transaction = db.transaction([this.#storeName], "readwrite");
+        const store = transaction.objectStore(this.#storeName);
+
+        return new Promise((resolve, reject) => {
+            const compositeKey = `${key}|${type}`;
+
+            // 嘗試取得現有資料
+            const getRequest = store.get(compositeKey);
+
+            getRequest.onsuccess = (e) => {
+                const existingItem = e.target.result;
+
+                if (existingItem) {
+                    // 如果資料已存在，更新 times 值並儲存
+                    existingItem.times++;
+                    store.put(existingItem);
+                } else {
+                    // 如果資料不存在，新增資料
+                    store.put({
+                        compositeKey,
+                        key,
+                        type,
+                        times: 1,
+                    });
+                }
+
+                transaction.oncomplete = () => resolve(true);
+                transaction.onerror = (err) => reject(err);
+            };
+
+            getRequest.onerror = (err) => reject(err);
+        });
+    }
+
+    async deleteData(key) {
+        const compositeKey = `${key}|local`; // 在方法內組合 compositeKey
+        const db = await this.openDatabase();
+        console.log(this.#storeName);
+        const transaction = db.transaction([this.#storeName], "readwrite");
+        const store = transaction.objectStore(this.#storeName);
+
+        return new Promise((resolve, reject) => {
+            const request = store.delete(compositeKey); // 使用 compositeKey 執行刪除
+
+            request.onsuccess = () => {
+                console.log(`成功刪除本機資料: ${compositeKey}`);
+                resolve();
+            };
+
+            request.onerror = (error) => {
+                console.error(`刪除失敗: ${compositeKey}`, error);
+                reject(error);
+            };
+        });
+    }
+
+    async clearLocalData() {
+        try {
+            const db = await this.openDatabase();
+            const transaction = db.transaction([this.#storeName], "readwrite");
+            const store = transaction.objectStore(this.#storeName);
+
+            return new Promise((resolve, reject) => {
+                const request = store.openCursor();
+                const keysToDelete = [];
+
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        const key = cursor.key;
+                        if (key.endsWith("|local")) {
+                            keysToDelete.push(key);
+                        }
+                        cursor.continue(); // 繼續遍歷
+                    } else {
+                        // 開始刪除記錄
+                        keysToDelete.forEach((key) => {
+                            store.delete(key);
+                        });
+                        console.log("成功清空本地紀錄");
+                        resolve();
+                    }
+                };
+
+                request.onerror = (error) => {
+                    console.error("清空本地紀錄時發生錯誤:", error);
+                    reject(error);
+                };
+            });
+        } catch (error) {
+            console.error("清空本地資料時發生錯誤:", error);
+            throw error;
+        }
+    }
+
 }

@@ -1,32 +1,95 @@
 ﻿function PageReady() {
     const $tabs = $(".search-category>.container>button");
     const $search = $(".search-category .catalog_frame");
+    const $suggestionsList = $(".search-suggestions");
     let timer = null;
     (async () => {
+        //indexedDB.deleteDatabase("searchDB");
         const SearchDb = new LocalDb({
             apiUrl: "/api/Directory/GetSearchKeyList",
             dbName: "searchDB",
             storeName: "searchStore"
         });
+
         // 取得資料
         try {
-            const data = await SearchDb.getData();
-            // 監聽輸入框的鍵盤輸入事件
-            $(".search-input").on("input", function () {
-                const query = $(this).val().toLowerCase();
-                const suggestions = data.filter(item => item.Key.toLowerCase().includes(query));
+            let data = await SearchDb.getData();
 
-                const $suggestionsList = $(".search-suggestions");
+            // 監聽輸入框的 change 事件
+            $(".search-input").on("change",async function () {
+                // 插入關鍵字到資料庫
+                try {
+                    const query = $(this).val().toLowerCase();
+                    if (query.trim() != "") {
+                        await SearchDb.addOrUpdateData(query);
+                    }
+                } catch (error) {
+                    console.error("儲存關鍵字時發生錯誤:", error);
+                }
+                $search.data("search-text", $(this).val());
+                window.location.href = `/${OrgName}/Search/Get/${$search.data("dirid")}/${$search.data("search-text")}`;
+            });
+            $(".search-input").on("input", async function () {
+                const query = $(this).val().toLowerCase();
+
+                // 根據 type 分組資料
+                const localData = data.filter(item => item.type === "local" && item.key.toLowerCase().includes(query));
+                const remoteData = data.filter(item => item.type === "remote" && item.key.toLowerCase().includes(query));
                 $suggestionsList.empty(); // 清空舊的建議項目
 
-                if (suggestions.length > 0) {
-                    suggestions.forEach(item => {
-                        // 生成每個選項，添加 title 屬性
-                        $suggestionsList.append(`<li><a href="#" title="搜尋：${item.Key}關鍵字">${item.Key}</a></li>`);
-                    });
-                    $suggestionsList.show(); // 顯示清單
+                if (localData.length > 0 || remoteData.length > 0) {
+                    // 顯示本機資料
+                    if (localData.length > 0) {
+                        const localButton = $(`<button class='clear-local'>全部清空<span class="material-symbols-outlined">delete</span></button>`);
+                        const $localLi = $("<li><ul></ul></li>");
+                        localData.forEach(item => {
+                            const $item = $(`<li class="local-record"><a href="#" title="搜尋：${item.key}">${item.key}</a> <button class="delete-local"><span class="material-symbols-outlined">close</span></button></li>`);
+                            $localLi.find("ul").append($item);
+                        });
+                        $suggestionsList.append($("<li class='clearAll'>").append(localButton));
+                        $suggestionsList.append($localLi);
+                        // 綁定清空按鈕事件
+                        localButton.on("click", async () => {
+                            try {
+                                await SearchDb.clearLocalData();
+                                data = await SearchDb.getData();
+                                console.log("本地紀錄已清空");
+                                // 清空本地區域並重新渲染
+                                $localLi.remove();
+                                localButton.closest("li").remove();
+                            } catch (error) {
+                                console.error("清空本地紀錄失敗:", error);
+                            }
+                        });
+                    }
+
+                    // 顯示伺服器資料
+                    if (remoteData.length > 0) {
+                        const $remoteLi = $("<li><strong>熱門關鍵字</strong><ul></ul></li>");
+                        remoteData.forEach(item => {
+                            const $item = $(`<li><a href="#" title="搜尋：${item.key}">${item.key}</a></li>`);
+                            $remoteLi.find("ul").append($item);
+                        });
+                        $suggestionsList.append($remoteLi);
+                    }
+
+                    $suggestionsList.removeClass("d-none"); // 顯示清單
                 } else {
-                    $suggestionsList.hide(); // 如果沒有符合的結果，隱藏清單
+                    $suggestionsList.addClass("d-none"); // 如果沒有符合的結果，隱藏清單
+                }
+            });
+
+            // 刪除本機資料
+            $(document).on("click", ".delete-local", async function (event) {
+                event.preventDefault();
+                const keyToDelete = $(this).siblings("a").text(); // 取得要刪除的 key
+
+                try {
+                    await SearchDb.deleteData(keyToDelete); // 刪除本機資料
+                    $(this).closest("li").remove(); // 從 UI 中移除該項目
+                    data = await SearchDb.getData();
+                } catch (error) {
+                    console.error("刪除本機資料時發生錯誤:", error);
                 }
             });
 
@@ -34,10 +97,8 @@
             $(document).on("click", ".search-suggestions a", function (event) {
                 event.preventDefault(); // 關閉默認的超連結行為
                 const selectedKey = $(this).text();
-                $search.data("search-text", selectedKey);
                 $(".search-input").val(selectedKey);
                 $(".search-suggestions").hide(); // 隱藏提示清單
-                $(".search-suggestions a").removeClass("highlighted");
             });
 
             // 鍵盤操作，支持上下鍵選擇和 Enter 鍵確認
@@ -62,7 +123,6 @@
                         break;
 
                     case "Enter": // 選擇項目
-                        // 如果目前高亮的項目存在並且按下的是 Enter，停止事件冒泡
                         const $highlighted = $(".search-suggestions a.highlighted");
                         if (e.key === "Enter" && $highlighted.length > 0) {
                             e.preventDefault(); // 防止輸入框觸發多餘的行為
@@ -125,10 +185,7 @@
     $(".search-category .catalog_frame [name='endDate']").on("change", function () {
         $search.data("endDate", $(this).val());
     });
-    $(".search-category .search-input").on("change", function () {
-        $search.data("search-text", $(this).val());
-        window.location.href = `/${OrgName}/Search/Get/${$search.data("dirid")}/${$search.data("search-text")}`;
-    });
+    
     $(".search-category .catalog_frame").on("load", function () {
         const $fram = $(this);
         const temp = $("#filterTemp").html();

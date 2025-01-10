@@ -69,12 +69,12 @@ a {
 
     .selectedItem:checked + label {
         color: #4B89FC;
-        opacity:1;
+        opacity: 1;
     }
 
     .selectedItem + label {
         color: gray;
-        opacity:0.8;
+        opacity: 0.8;
         display: flex;
         align-items: center;
     }
@@ -86,6 +86,7 @@ a {
         .selectedItem + label > span:nth-child(2), .selectedItem + label > i:nth-child(2) {
             display: initial;
         }
+
         .selectedItem + label > span, .selectedItem + label > i {
             margin-right: 0.5rem;
         }
@@ -111,6 +112,12 @@ a {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 5;
     overflow: hidden;
+}
+
+#switchApp .webicon {
+    height: 48px;
+    width: auto;
+    margin-bottom: 0.5rem;
 }
 
 .noselect {
@@ -147,7 +154,7 @@ a {
     }
 
 .pointer-event-none {
-    pointer-events:none !important;
+    pointer-events: none !important;
 }
 /* line 21, ../../scss/bootstrap/_reboot.scss */
 .ConfirmKeyWord {

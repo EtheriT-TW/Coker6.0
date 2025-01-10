@@ -33,6 +33,5 @@
 }
 
 #IconImageUpload > .img_input_frame > .img_input > .file_name {
-    color: black !important;
-    font-weight: 400 !important;
+    display: none;
 }

@@ -28,7 +28,15 @@
                                 }
                                 <div class="card h-100 @action" data-id="@item.Id">
                                     <div class="card-body text-center">
-                                        <span class="material-icons md-48 " style="color:#21C3E0;">bubble_chart</span>
+                                        @if (@item.Images != "")
+                                        {
+                                            <img class="webicon" src="@item.Images" alt="@item.Name" />
+                                        }
+                                        else
+                                        {
+                                            <img class="webicon" src="/favicon.ico" alt="@item.Name" />
+                                            @* <span class="material-icons md-48 " style="color:#21C3E0;">bubble_chart</span> *@
+                                        }
                                         <p class="weight-400 m-0 webkit-box line-1">@item.Name</p>
                                         <small class="weight-300 text-start text-muted webkit-box line-2">@item.Description</small>
                                         @if (item.Check)

@@ -110,16 +110,15 @@
                             <label class="required" for="InputWebsiteContact">網站聯絡人</label>
                         </div>
                     </form>
-                    <div class="image_upload align-items-center">
+                    <div class="image_upload d-flex justify-content-evenly">
                         <div id="IconImageUpload" class="d-flex image_upload flex-column align-items-center" data-issinge="true" data-needcompress="false" data-accept=".ico">
                             <div class="title mb-2">網站圖示</div>
                             @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadModal" })
                         </div>
-                        <input class="input_logo d-none" type="file" accept="image/*" />
-                        <button class="btn_input_logo align-items-center justify-content-center bg-transparent d-none">
-                            <span class="fs-6 fw-bold material-icons">add</span>
-                        </button>
-                        <div class="px-2 fw-bold d-none">新增Logo</div>
+                        <div id="LogoImageUpload" class="d-flex image_upload flex-column align-items-center" data-issinge="true" data-needcompress="false">
+                            <div class="title mb-2">網站Logo</div>
+                            @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadModal" })
+                        </div>
                     </div>
                     <div class="form_btn d-flex justify-content-end mb-2">
                         <button class="btn_save btn-primary border-0 px-3 py-1 mx-2">儲存</button>

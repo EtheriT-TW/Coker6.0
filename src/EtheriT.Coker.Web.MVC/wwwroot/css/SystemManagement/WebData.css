@@ -22,16 +22,16 @@
     border: 1px solid #ced4da;
 }
 
-#IconImageUpload > .img_input_frame > .img_input .btn_input_pic.has_image {
+.image_upload > .img_input_frame > .img_input .btn_input_pic.has_image {
     height: 75px !important;
     width: 75px !important;
 }
 
-#IconImageUpload > .img_input_frame > .img_input .btn_input_pic > .img_preview {
+.image_upload > .img_input_frame > .img_input .btn_input_pic > .img_preview {
     max-width: 75px;
     max-height: 75px;
 }
 
-#IconImageUpload > .img_input_frame > .img_input > .file_name {
+.image_upload > .img_input_frame > .img_input > .file_name {
     display: none;
 }

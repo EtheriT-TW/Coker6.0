@@ -39,7 +39,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
             var website_str = website == null ? "" : website.ToString();
             var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
             var website_data = await websiteApplication.GetAllData(defaultData.Id);
-			var webmenus_data = (await webMenuApplication.GetDisplayAll(defaultData.Id)).Maps.ToList();
+            var webmenus_data = (await webMenuApplication.GetDisplayAll(defaultData.Id)).Maps.ToList();
 
             var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(website_data[0].Id, "Top")).Value));
             HeaderViewModel headerViewModel = new HeaderViewModel();
@@ -55,23 +55,25 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     headerViewModel = new HeaderViewModel
                     {
                         Title = website_data[0].Title,
-                        LogoImageUrl = "/upload/logo.png",
+                        LogoImageUrl = website_data[0].Logo?.Replace($"/{website_data[0].OrgName}/", "/") ?? "/upload/logo.png",
+                        //LogoImageUrl = "/upload/logo.png",
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                         marqueeModels = new List<MarqueeDisplayDto> { },
                     };
-                    switch (defaultData.Id) {
+                    switch (defaultData.Id)
+                    {
                         case 6:
-                            headerViewModel.Bannners.Add(new BannerImages { DisktopImage= "/upload/headertitile.jpg",PhoneImage= "/upload/headertitile_phone.jpg" });
+                            headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/headertitile.jpg", PhoneImage = "/upload/headertitile_phone.jpg" });
                             break;
                         case 7:
                             headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/headertitile.jpg", PhoneImage = "/upload/headertitile_phone.jpg" });
                             break;
                         case 10:
-							for(int i = 1;i <= 4;i++)
+                            for (int i = 1; i <= 4; i++)
                             {
-								headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/banner/banner"+i+".jpg"});
-							}
-							break;
+                                headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/banner/banner" + i + ".jpg" });
+                            }
+                            break;
                     }
 
                     if (marquee.Count > 0)

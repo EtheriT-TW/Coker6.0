@@ -137,8 +137,12 @@ namespace EtheriT.Coker.Application
                 switch (type)
                 {
                     case (int)FileBindTypeEnum.網站圖示:
-                        var db_website = await db.Websites.Where(e => e.Id == sid).FirstOrDefaultAsync();
-                        if (db_website != null) db_website.Icon = response.Files[0].Path;
+                        var icon_db_website = await db.Websites.Where(e => e.Id == sid).FirstOrDefaultAsync();
+                        if (icon_db_website != null) icon_db_website.Icon = response.Files[0].Path;
+                        break;
+                    case (int)FileBindTypeEnum.網站Logo:
+                        var logo_db_website = await db.Websites.Where(e => e.Id == sid).FirstOrDefaultAsync();
+                        if (logo_db_website != null) logo_db_website.Logo = response.Files[0].Path;
                         break;
                     case (int)FileBindTypeEnum.選單圖:
                         var db_bind = await db.WebMenus.Where(e => e.Id == sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
@@ -1068,30 +1072,26 @@ namespace EtheriT.Coker.Application
                         var websiteid = await loginUserData.GetWebsiteId();
                         switch (dto.Type)
                         {
+                            case (int)FileBindTypeEnum.網站圖示:
+                                var website_icon = await db.Websites.Where(e => e.Id == dto.Sid).FirstOrDefaultAsync();
+                                if (website_icon != null) website_icon.Icon = null;
+                                break;
+                            case (int)FileBindTypeEnum.網站Logo:
+                                var website_logo = await db.Websites.Where(e => e.Id == dto.Sid).FirstOrDefaultAsync();
+                                if (website_logo != null) website_logo.Logo = null;
+                                break;
                             case (int)FileBindTypeEnum.選單圖:
                                 var db_bind = await db.WebMenus.Where(e => e.Id == dto.Sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
-                                if (db_bind != null)
-                                {
-                                    db_bind.ImgId = null;
-                                    db.SaveChanges();
-                                }
+                                if (db_bind != null) db_bind.ImgId = null;
                                 break;
                             case (int)FileBindTypeEnum.選單覆蓋:
                                 var db_bind_over = await db.WebMenus.Where(e => e.Id == dto.Sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
-                                if (db_bind_over != null)
-                                {
-                                    db_bind_over.OverImgId = null;
-                                    db.SaveChanges();
-                                }
+                                if (db_bind_over != null) db_bind_over.OverImgId = null;
                                 break;
                             case (int)FileBindTypeEnum.右側浮動廣告:
                             case (int)FileBindTypeEnum.進入廣告:
                                 var db_html = await db.Html_Contents.Where(e => e.Id == dto.Sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
-                                if (db_html != null)
-                                {
-                                    db_html.Img = null;
-                                    db.SaveChanges();
-                                }
+                                if (db_html != null) db_html.Img = null;
                                 break;
                             case (int)FileBindTypeEnum.選單Icon:
                                 var db_menuicon = await db.WebMenus.Where(e => e.Id == dto.Sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
@@ -1099,6 +1099,7 @@ namespace EtheriT.Coker.Application
                                 break;
                         }
                     }
+                    db.SaveChanges();
                     return response;
                 }
                 else
@@ -1279,7 +1280,7 @@ namespace EtheriT.Coker.Application
                         string ext = sp[sp.Length - 1];
                         var rootPath = $"{_folder}/{orgName}";
                         var directoryPath = $"{rootPath}/{directory}";
-                        var path = asotype == (int)FileBindTypeEnum.網站圖示 ? $"/favicon.ico" : $"/{directory}/{key}.{ext}";
+                        var path = asotype == (int)FileBindTypeEnum.網站圖示 ? $"/favicon.ico" : asotype == (int)FileBindTypeEnum.網站Logo ? $"/logo.{ext}" : $"/{directory}/{key}.{ext}";
                         if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
                         if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
                         using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))

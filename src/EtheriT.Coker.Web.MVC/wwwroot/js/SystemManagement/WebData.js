@@ -50,10 +50,17 @@ function PageReady() {
     }
 
     co.File.getImgFile({ Sid: $("#WebsiteID").val(), Type: 11, Size: 1, }).done(function (files) {
-        console.log("file", files)
         if (files.length > 0) {
             for (var i = files.length - 1; i > -1; i--) {
                 ImageUploadModalDataInsert($("#IconImageUpload"), files[i].id, files[i].link, files[i].name)
+            }
+        }
+    })
+
+    co.File.getImgFile({ Sid: $("#WebsiteID").val(), Type: 12, Size: 1, }).done(function (files) {
+        if (files.length > 0) {
+            for (var i = files.length - 1; i > -1; i--) {
+                ImageUploadModalDataInsert($("#LogoImageUpload"), files[i].id, files[i].link, files[i].name)
             }
         }
     })
@@ -124,6 +131,7 @@ function PageReady() {
     })
 
     $("#IconImageUpload").ImageUploadModalClear();
+    $("#LogoImageUpload").ImageUploadModalClear();
     $(".btn_input_icon").on('click', function () {
         $(".input_icon").click();
     });
@@ -240,36 +248,60 @@ function WebsiteInfoSave(event) {
     } else {
         co.WebSite.Save(co.Form.getJson("WebsiteData")).done(function (resut) {
             if (resut.success) {
-                var icon = $("#IconImageUpload .img_input_frame > .img_input").data("file")?.File;
-                if (typeof (icon) != "undefined" && icon != null) {
-                    var formData = new FormData();
-                    formData.append("files", icon);
-                    formData.append("type", 11);
-                    formData.append("sid", $("#WebsiteID").val());
-                    formData.append("serno", 500);
-                    if (typeof ($("#IconImageUpload").find(".img_input_frame").data("delectList")) != "undefined" && $("#IconImageUpload").find(".img_input_frame").data("delectList") != null) {
-                        co.File.DeleteFileById({
-                            Sid: $("#WebsiteID").val(),
-                            Type: 11,
-                            Fid: $("#IconImageUpload").data("delectList")
-                        }).done(function (result) {
-                            co.File.Upload(formData).done(function (result) {
-                                if (result.success) co.sweet.success("儲存成功");
-                                else co.sweet.error(resut.message);
-                            });
+                handleFileUpload("#IconImageUpload", 11).then(function (result) {
+                    if (result.success) {
+                        handleFileUpload("#LogoImageUpload", 12).then(function (result) {
+                            if (result.success) {
+                                co.sweet.success("儲存成功");
+                            } else {
+                                co.sweet.error(result.message);
+                            }
                         });
                     } else {
-                        co.File.Upload(formData).done(function (result) {
-                            if (result.success) co.sweet.success("儲存成功");
-                            else co.sweet.error(resut.message);
-                        });
+                        co.sweet.error(result.message);
                     }
-                } else co.sweet.success("儲存成功");
+                }).catch(function (error) {
+                    co.sweet.error(error.message || "發生錯誤");
+                });
+
             }
             else co.sweet.error(resut.error);
         });
     }
     form.classList.add('was-validated');
+}
+
+function handleFileUpload(selector, type) {
+    var deleteList = $(selector).find(".img_input_frame").data("delectList");
+    var file = $(`${selector} .img_input_frame > .img_input`).data("file")?.File;
+
+    if (typeof (deleteList) != "undefined" && deleteList != null) {
+        return co.File.DeleteFileById({
+            Sid: $("#WebsiteID").val(),
+            Type: type,
+            Fid: deleteList
+        }).then(function (result) {
+            if (typeof (file) != "undefined" && file != null) {
+                var formData = new FormData();
+                formData.append("files", file);
+                formData.append("type", type);
+                formData.append("sid", $("#WebsiteID").val());
+                formData.append("serno", 500);
+                return co.File.Upload(formData); 
+            }
+            return Promise.resolve({ success: true });
+        });
+    } else {
+        if (typeof (file) != "undefined" && file != null) {
+            var formData = new FormData();
+            formData.append("files", file);
+            formData.append("type", type);
+            formData.append("sid", $("#WebsiteID").val());
+            formData.append("serno", 500);
+            return co.File.Upload(formData); 
+        }
+        return Promise.resolve({ success: true });
+    }
 }
 
 function MoveToCanvas(id) {

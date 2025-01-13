@@ -52,6 +52,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 case FileBindTypeEnum.自訂廣告:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "CustomAd");
                 case FileBindTypeEnum.網站圖示:
+                case FileBindTypeEnum.網站Logo:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Website");
                 default:
                     return await fileUploadAppService.uploadHtmlContentFiles(files);

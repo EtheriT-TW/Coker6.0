@@ -7,7 +7,8 @@ body {
 }
 
 .search-input-block {
-    width: 25%
+    width: 400px;
+    max-width: 85vw;
 }
 
 .search-category .catalog .type1 {
@@ -113,11 +114,16 @@ body {
     height: 40px;
     border: 1px solid #000;
     border-radius: 20px;
-    font-weight: bold;
     font-size: 1.2rem;
     padding-left: 30px;
     box-sizing: border-box;
 }
+
+    /*focus input取消加粗*/
+    .search-category .search-input:focus-visible {
+        outline: initial;
+        font-weight: 400;
+    }
 
     .search-category .search-input::placeholder {
         font-weight: lighter;
@@ -483,23 +489,22 @@ h3.title {
     color: gray;
     font-size: 0.95rem;
 }
+
 .search-suggestions {
     position: absolute;
-    left: 1rem;
     top: 100%;
-    max-height: 10rem;
-    width: calc(100% - 2rem);
+    max-height: 14.5rem;
+    width: 100%;
     overflow: auto;
     background: #FFF;
     list-style: none;
     z-index: 1;
     border: 1px solid #ccc; /* 加上邊框來區分建議清單 */
     border-radius: 4px; /* 邊框圓角 */
-    padding:0.5rem 0;
+    padding: 0.5rem 0;
 }
 
     .search-suggestions li {
-        padding: 0 0.5rem;
         display: flex;
         flex-direction: column;
         gap: 5px; /* 新增間距 */
@@ -507,14 +512,16 @@ h3.title {
     }
 
         .search-suggestions li strong {
+            padding: 0 0.5rem;
             font-weight: bold;
             font-size: 0.9rem;
+            padding-top: 8px;
         }
 
         .search-suggestions li a {
             text-decoration: none; /* 去除鏈接下劃線 */
             display: block; /* 使 <a> 填滿整個 li */
-            padding: 8px;
+            padding: 4px 0px; /*縮小縮排*/
             cursor: pointer;
             border-radius: 4px; /* 加上圓角 */
             color: #333; /* 默認文字顏色 */
@@ -533,6 +540,7 @@ h3.title {
 
         /* 將刪除按鈕與 key 顯示在同一行 */
         .search-suggestions li.local-record {
+            padding-right: 0.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -540,6 +548,7 @@ h3.title {
         }
 
             .search-suggestions li.local-record a {
+                padding-left: 0.5rem;
                 flex-grow: 1; /* 使 key 占據剩餘空間 */
             }
 
@@ -553,8 +562,8 @@ h3.title {
             text-align: left;
         }
 
-            .search-suggestions li button.delete-local:hover {
-                text-decoration: underline;
+            .search-suggestions li button.delete-local span {
+                font-size: 1.25rem; /*刪除按鈕縮小*/
             }
 
         /* 隱藏刪除按鈕在伺服器紀錄 */
@@ -564,45 +573,51 @@ h3.title {
 
         /* 當顯示本機紀錄時，顯示刪除按鈕 */
         .search-suggestions li.local-record button.delete-local {
-            display: inline-block;
+            display: flex; /*顯示並置中*/
         }
 
         /* 內層 ul 的樣式 */
         .search-suggestions li ul {
-            padding-left: 20px; /* 加上縮排 */
+            padding-left: 0px; /* 去掉縮排 */
             font-size: 0.9rem; /* 內層字體大小稍微變小 */
             color: #555; /* 內層文字顏色稍微變淡 */
         }
 
-            .search-suggestions li ul li a {
-                color: #555; /* 內層項目的文字顏色 */
+            .search-suggestions li ul li {
+                padding: 0px;
             }
 
-                .search-suggestions li ul li a:hover {
-                    background-color: #f1f1f1; /* 內層項目高亮顏色 */
+                .search-suggestions li ul li a {
+                    padding-left: 0.5rem;
+                    color: #555; /* 內層項目的文字顏色 */
                 }
 
-                /* 高亮的內層項目 */
-                .search-suggestions li ul li a.highlighted {
-                    background-color: #007bff; /* 高亮顏色 */
-                    color: #fff; /* 高亮文字顏色 */
-                }
+                    .search-suggestions li ul li a:hover {
+                        background-color: #f1f1f1; /* 內層項目高亮顏色 */
+                    }
+
+                    /* 高亮的內層項目 */
+                    .search-suggestions li ul li a.highlighted {
+                        background-color: #007bff; /* 高亮顏色 */
+                        color: #fff; /* 高亮文字顏色 */
+                    }
+
+    .search-suggestions .clearAll {
+        padding: 0 0.5rem;
+    }
+
     .search-suggestions .clear-local {
         font-size: 0.8rem;
         color: #aaa;
         display: flex;
         justify-content: flex-end;
         align-items: center;
+        padding: 0px;
     }
-        .search-suggestions .clear-local:focus {
-            border-bottom:none;
-        }
 
-@media(max-width:1200px) {
-    .search-input-block {
-        width: 50%;
-    }
-}
+        .search-suggestions .clear-local:focus {
+            border-bottom: none;
+        }
 
 @media(max-width:768px) {
     #filterBlock {
@@ -628,10 +643,6 @@ h3.title {
 }
 
 @media (max-width:576px) {
-    .search-input-block {
-        width: 75%
-    }
-
     .search-category .catalog.type2 .image_frame {
         height: 150px;
     }

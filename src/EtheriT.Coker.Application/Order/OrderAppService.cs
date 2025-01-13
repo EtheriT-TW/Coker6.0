@@ -78,36 +78,35 @@ namespace EtheriT.Coker.Application.Order
                                        where mapfrontweb.FK_WebsiteId == WebsiteID
                                        select fu).ToListAsync();
 
-                var dataQuery = from oh in db.Order_Headers
-                                where !oh.IsDeleted && oh.FK_WebsiteId == WebsiteID
-                                join ls in db.LogisticsSettings on oh.Shipping equals ls.Id
-                                select new OrderHeaderGetAllListDto
-                                {
-                                    UUID = oh.FK_UUID,
-                                    Id = ("000000000" + oh.Id.ToString()).Substring(oh.Id.ToString().Length, 9),
-                                    Orderer = oh.Orderer.Substring(0, 1) + "○" + oh.Orderer.Substring(oh.Orderer.Length - 1, 1),
-                                    RecipientAddress = oh.RecipientAddress.Substring(0, oh.RecipientAddress.LastIndexOf(" ")) + "***",
-                                    Shipping = oh.Shipping == 0 ? ShippingTypeEnum.郵寄掛號.ToString() : ((ShippingTypeEnum)ls.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11"),
-                                    Payment = db.PaymentTypes.Where(e => e.Id == oh.Payment).Select(e => e.Title).FirstOrDefault() ?? "",
-                                    State = ((OrderStatusEnum)oh.State).ToString(),
-                                    Total = oh.Subtotal + oh.Freight,
-                                    CreationTime = oh.CreationTime,
-                                };
-                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                var dataQuery = await (from oh in db.Order_Headers
+                                       where !oh.IsDeleted && oh.FK_WebsiteId == WebsiteID
+                                       join ls in db.LogisticsSettings on oh.Shipping equals ls.Id
+                                       select new OrderHeaderGetAllListDto
+                                       {
+                                           UUID = oh.FK_UUID,
+                                           Id = ("000000000" + oh.Id.ToString()).Substring(oh.Id.ToString().Length, 9),
+                                           Orderer = oh.Orderer.Substring(0, 1) + "○" + oh.Orderer.Substring(oh.Orderer.Length - 1, 1),
+                                           RecipientAddress = oh.RecipientAddress.Substring(0, oh.RecipientAddress.LastIndexOf(" ")) + "***",
+                                           Shipping = oh.Shipping == 0 ? ShippingTypeEnum.郵寄掛號.ToString() : ((ShippingTypeEnum)ls.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11"),
+                                           Payment = db.PaymentTypes.Where(e => e.Id == oh.Payment).Select(e => e.Title).FirstOrDefault() ?? "",
+                                           State = ((OrderStatusEnum)oh.State).ToString(),
+                                           Total = oh.Subtotal + oh.Freight,
+                                           CreationTime = oh.CreationTime,
+                                       }).ToListAsync();
 
-                if (output != null)
+                if (dataQuery.Any())
                 {
-                    foreach (var data in output.data)
+                    foreach (var data in dataQuery)
                     {
-                        Guid? uuid = data.GetType().GetProperty("UUID")?.GetValue(data, null) as Guid?;
-                        if (uuid.HasValue)
+                        if (data.UUID != Guid.Empty)
                         {
-                            var memberid = frontuser.FirstOrDefault(e => e.UUID == uuid)?.Id ?? 0;
+                            var memberid = frontuser.FirstOrDefault(e => e.UUID == data.UUID)?.Id ?? 0;
                             var memberid_str = ($"000000000{memberid}").Substring(memberid.ToString().Length);
-                            data.GetType().GetProperty("MemberId")?.SetValue(data, memberid_str);
+                            data.MemberId = memberid_str;
                         }
                     }
                 }
+                var output = DataSourceLoader.Load(dataQuery, loadOptions);
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
             catch (Exception e)

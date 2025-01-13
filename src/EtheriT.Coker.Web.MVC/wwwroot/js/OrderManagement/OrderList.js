@@ -222,6 +222,7 @@ function contentReady(e) {
             selectedFilterOperation: "=",
             filterValue: filterValue
         });
+        window.history.replaceState(null, "", "/OrderManagement");
     }
     HashDataEdit();
 }

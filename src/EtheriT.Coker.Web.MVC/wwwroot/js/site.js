@@ -15,7 +15,7 @@ var PreLoader;
                 if (!resule.success) {
                     co.sweet.error("連線失敗", "延遲時間過久，您的登入狀態已被登出，請重新登入。", function () {
                         location.href = "/";
-                    },false);
+                    }, false);
                 }
             });
             setTimeout(continueLoginState, co.Data.Time.ReCheckTime - 1000);

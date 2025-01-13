@@ -94,7 +94,7 @@ namespace EtheriT.Coker.Application.Order
                                            CreationTime = oh.CreationTime,
                                        }).ToListAsync();
 
-                if (dataQuery.Any())
+                if (dataQuery.Any())                                                                                                                                                                                              
                 {
                     foreach (var data in dataQuery)
                     {

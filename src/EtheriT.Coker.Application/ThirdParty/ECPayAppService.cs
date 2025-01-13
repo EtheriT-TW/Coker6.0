@@ -11,7 +11,6 @@ using Newtonsoft.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
-using Microsoft.AspNetCore.Server.IIS.Core;
 using static EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto.ECPayRequestDto;
 
 namespace EtheriT.Coker.Application.ThirdParty
@@ -42,31 +41,21 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
+                // var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
 
-                var RequestUri = "/CreatePayment";
-                var data = await ECPayRequestBody(ohid);
-                var RequestBody = data.Split(",");
-                if (RequestBody[0] == "Success")
-                {
-                    var content = new StringContent(RequestBody[1], Encoding.UTF8, "application/json");
-                    var PostResponse = await ThirdPartyClient_ECPay.PostAsync(RequestUri, content);
-                    PostResponse.EnsureSuccessStatusCode();
-                    var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-                    response.Message = jsonResponse.ToString();
-                }
-                else if (RequestBody[0] == "Error") throw new Exception(RequestBody[1]);
-                else throw new Exception("RequestBody發生錯誤");
+                var RequestUri = "/GetTokenbyTrade";
+                var RequestBody = await ECPayRequestBody(ohid);
+                var content = new StringContent(JsonConvert.SerializeObject(RequestBody), Encoding.UTF8, "application/json");
+                var PostResponse = await ThirdPartyClient_ECPay.PostAsync(RequestUri, content);
+                PostResponse.EnsureSuccessStatusCode();
+                var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
+                response.Message = jsonResponse.ToString();
+                //var tokenResponse = JsonConvert.DeserializeObject<ECPayResponseDto>(jsonResponse);
 
-                //var tokenPayResponse = JsonConvert.DeserializeObject<PChomePayTokenDto>(jsonResponse);
-
-                //if (tokenPayResponse != null)
+                //if (tokenResponse != null)
                 //{
-                //    ThirdPartyClient_ECPay.DefaultRequestHeaders.Add("pcpay-token", tokenPayResponse.token);
-
-                //    response.Message = $"{tokenPayResponse.token}; {tokenPayResponse.expired_in}; {tokenPayResponse.expired_timestamp}";
+                //    response.Message = $"{tokenResponse.Data}";
                 //    response.Success = true;
-
                 //}
                 //else throw new Exception("取得ECPayToken發生錯誤");
             }
@@ -80,9 +69,8 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
-        private async Task<string> ECPayRequestBody(long ohid)
+        private async Task<ECPayRequestDto> ECPayRequestBody(long ohid)
         {
-            var response = "";
             ECPayRequestDto RequestBody = new ECPayRequestDto();
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
             var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
@@ -100,7 +88,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (thirdPartyKeypairValues.Any())
                 {
                     var MerchantID = thirdPartyKeypairValues.Find(e => e.Key == "MerchantID")?.Value;
-                    var PlatformID = thirdPartyKeypairValues.Find(e => e.Key == "PlatformID")?.Value;
+                    var PlatformID = thirdPartyKeypairValues.Find(e => e.Key == "PlatformID ")?.Value;
                     var HashKey = thirdPartyKeypairValues.Find(e => e.Key == "HashKey")?.Value;
                     var HashIV = thirdPartyKeypairValues.Find(e => e.Key == "HashIV")?.Value;
                     var ExpireDate = thirdPartyKeypairValues.Find(e => e.Key == "ExpireDate")?.Value;
@@ -119,13 +107,19 @@ namespace EtheriT.Coker.Application.ThirdParty
                             else RequestBody.MerchantID = MerchantID;
 
                             RequestBody.RqHeader = new RqHeaderDto();
-                            RequestBody.RqHeader.Timestamp = DateTimeNow.ToString("yyyyMMddHHmmss");
+                            RequestBody.RqHeader.Timestamp = ((DateTimeOffset)DateTimeNow).ToUnixTimeSeconds().ToString();
 
                             ECPayDataDto PaymentBody = new ECPayDataDto();
                             PaymentBody.PlatformID = PlatformID;
                             PaymentBody.MerchantID = MerchantID;
                             PaymentBody.RememberCard = user == null ? 0 : 1;
                             PaymentBody.PaymentUIType = 2;
+
+                            ECPayCardInfoDto CardInfo = new ECPayCardInfoDto();
+                            ECPayUnionPayInfoDto UnionPayInfo = new ECPayUnionPayInfoDto();
+                            ECPAyATMInfoDto ATMInfo = new ECPAyATMInfoDto();
+                            ECPayCVSInfoDto CVSInfo = new ECPayCVSInfoDto();
+                            ECPayBarcodeInfoDto BarcodeInfo = new ECPayBarcodeInfoDto();
 
                             var paytype = await db.PaymentTypes.Where(e => e.Id == ohdata.Payment).Select(e => e.Code).FirstOrDefaultAsync();
                             if (paytype != null)
@@ -138,11 +132,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     paytype = temp[0];
                                     value = temp[1];
                                 }
-                                ECPayCardInfoDto CardInfo = new ECPayCardInfoDto();
-                                ECPayUnionPayInfoDto UnionPayInfo = new ECPayUnionPayInfoDto();
-                                ECPAyATMInfoDto ATMInfo = new ECPAyATMInfoDto();
-                                ECPayCVSInfoDto CVSInfo = new ECPayCVSInfoDto();
-                                ECPayBarcodeInfoDto BarcodeInfo = new ECPayBarcodeInfoDto();
                                 switch (paytype)
                                 {
                                     case "CreditCard":
@@ -194,8 +183,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 db.SaveChanges();
                                 OrderInfo.MerchantTradeNo = $"{DateTimeNow.ToString("yyyyMMdd")}{oid}-{ohdata.RepayTimes}";
                             }
-                            OrderInfo.TotalAmount = 0;
-                            OrderInfo.ReturnURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayReturn?ohid={oid}";
+                            OrderInfo.TotalAmount = ohdata.Subtotal + ohdata.Freight;
+                            OrderInfo.ReturnURL = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar?{oid}";
                             OrderInfo.TradeDesc = $"{Website.Title}-商品購買交易";
 
                             var itemlist = "";
@@ -217,16 +206,23 @@ namespace EtheriT.Coker.Application.ThirdParty
                             }
                             OrderInfo.ItemName = itemlist;
 
-                            ECPayConsumerInfoDto ConsumerInfo = new ECPayConsumerInfoDto();
-                            ConsumerInfo.MerchantMemberID = user?.Id.ToString();
-                            ConsumerInfo.Email = ohdata.OrdererEmail;
-                            ConsumerInfo.Phone = ohdata.OrdererCellPhone;
-                            ConsumerInfo.Name = ohdata.Orderer;
-                            ConsumerInfo.CountryCode = "158";
-                            ConsumerInfo.Address = ohdata.OrdererAddress;
+                            PaymentBody.OrderInfo = OrderInfo;
 
-                            var data = Encrypt(RequestBody, HashKey, HashIV);
-                            response = $"Success,{data}";
+                            PaymentBody.CardInfo = CardInfo;
+                            PaymentBody.UnionPayInfo = UnionPayInfo;
+                            PaymentBody.ATMInfo = ATMInfo;
+                            PaymentBody.CVSInfo = CVSInfo;
+                            PaymentBody.BarcodeInfo = BarcodeInfo;
+
+                            PaymentBody.ConsumerInfo = new ECPayConsumerInfoDto();
+                            PaymentBody.ConsumerInfo.MerchantMemberID = user?.Id.ToString();
+                            PaymentBody.ConsumerInfo.Email = ohdata.OrdererEmail;
+                            PaymentBody.ConsumerInfo.Phone = ohdata.OrdererCellPhone;
+                            PaymentBody.ConsumerInfo.Name = ohdata.Orderer;
+                            PaymentBody.ConsumerInfo.CountryCode = "158";
+                            PaymentBody.ConsumerInfo.Address = ohdata.OrdererAddress.Replace(" ", "");
+
+                            RequestBody.Data = Encrypt(PaymentBody, HashKey, HashIV);
                         }
                         else throw new Exception("查無訂單資訊");
                     }
@@ -236,9 +232,10 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (Exception ex)
             {
-                response = $"Error,{ex.Message}";
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"ECPay=>ECPayRequestBody回傳資料：{ex.Message}");
             }
-            return response;
+            return RequestBody;
         }
         private string Encrypt(object data, string hashKey, string hashIV)
         {

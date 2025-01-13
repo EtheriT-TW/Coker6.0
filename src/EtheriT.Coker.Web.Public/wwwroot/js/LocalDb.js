@@ -18,7 +18,81 @@
         });
 
         // 開始檢查並更新資料
-        this.checkAndFetchData();
+        this.#initializeDatabase();
+    }
+    async #initializeDatabase() {
+        try {
+            const dbExists = await this.#checkDatabaseExists();
+            if (!dbExists) {
+                console.warn("資料庫不存在，刪除舊版本並重新建立...");
+                await this.#deleteDatabase(); // 使用私有方法刪除舊資料庫
+            } else {
+                const isKeyPathValid = await this.#checkKeyPath();
+                if (!isKeyPathValid) {
+                    console.warn("資料庫 keyPath 不正確，刪除並重新建立資料庫。");
+                    await this.#deleteDatabase(); // 使用私有方法刪除舊資料庫
+                }
+            }
+
+            
+            await this.checkAndFetchData();
+        } catch (error) {
+            console.error("初始化資料庫時發生錯誤:", error);
+        }
+    }
+
+    async #checkDatabaseExists() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.#dbName);
+            request.onsuccess = (event) => {
+                const db = event.target.result;
+                const storeNames = Array.from(db.objectStoreNames);
+                db.close();
+                resolve(storeNames.includes(this.#storeName)); // 檢查是否包含目標 store
+            };
+            request.onerror = (event) => {
+                console.error("檢查資料庫存在時發生錯誤:", event.target.error);
+                reject(event.target.error);
+            };
+            request.onupgradeneeded = () => {
+                // 如果 onupgradeneeded 被觸發，代表資料庫不存在或需要升級
+                resolve(false);
+            };
+        });
+    }
+
+    async #checkKeyPath() {
+        return new Promise((resolve) => {
+            const request = indexedDB.open(this.#dbName);
+
+            request.onsuccess = (event) => {
+                const db = event.target.result;
+                const store = db.transaction(this.#storeName, "readonly").objectStore(this.#storeName);
+
+                // 檢查 keyPath
+                resolve(store.keyPath === "compositeKey");
+                db.close();
+            };
+
+            request.onerror = () => resolve(false);
+        });
+    }
+
+    async #deleteDatabase() {
+        return new Promise((resolve, reject) => {
+            const deleteRequest = indexedDB.deleteDatabase(this.#dbName);
+            deleteRequest.onsuccess = () => {
+                console.log(`資料庫 ${this.#dbName} 已刪除`);
+                resolve();
+            };
+            deleteRequest.onerror = (event) => {
+                console.error("刪除資料庫時發生錯誤:", event.target.error);
+                reject(event.target.error);
+            };
+            deleteRequest.onblocked = () => {
+                console.warn("刪除資料庫被阻塞。請關閉其他使用此資料庫的連線。");
+            };
+        });
     }
 
     async checkAndFetchData() {

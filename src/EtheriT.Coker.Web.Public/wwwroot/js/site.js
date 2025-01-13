@@ -149,7 +149,8 @@ function ready() {
         let url = $(self).attr("data-model-target");
         var r = url.match(rx);
         $body.find(".fa-duotone").removeClass("d-none");
-        $body.find(".fa-3x").addClass("d-none");
+        $body.find(".fa-3x")
+
         if (r != null && r.length > 0) key = r[1];
         if (key != "") {
             if ($body.find("iframe").length == 0) {

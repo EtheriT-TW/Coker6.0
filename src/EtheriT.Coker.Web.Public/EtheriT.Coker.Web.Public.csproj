@@ -9,10 +9,10 @@
 	<ItemGroup>
 		<Content Remove="appsettings.Defood.json" />
 		<Content Remove="appsettings.EPZA.json" />
-		<Content Remove="appsettings.kao-feng.json" />
 		<Content Remove="appsettings.kinglake.json" />
 		<Content Remove="appsettings.longtop.json" />
 		<Content Remove="appsettings.Museum.json" />
+		<Content Remove="appsettings.sing-jhen-yi.json" />
 		<Content Remove="appsettings.unitedtw.json" />
 		<Content Remove="Views\Page\OrderManagement.cshtml" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.css" />
@@ -70,7 +70,7 @@
 		<None Include="appsettings.Defood.json">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
-		<None Include="appsettings.kao-feng.json">
+		<None Include="appsettings.sing-jhen-yi.json">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
 		<None Include="appsettings.kinglake.json" />

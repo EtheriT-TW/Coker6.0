@@ -4,7 +4,6 @@
     const $suggestionsList = $(".search-suggestions");
     let timer = null;
     (async () => {
-        //indexedDB.deleteDatabase("searchDB");
         const SearchDb = new LocalDb({
             apiUrl: "/api/Directory/GetSearchKeyList",
             dbName: "searchDB",
@@ -16,18 +15,27 @@
             let data = await SearchDb.getData();
 
             // 監聽輸入框的 change 事件
-            $(".search-input").on("change",async function () {
-                // 插入關鍵字到資料庫
-                try {
-                    const query = $(this).val().toLowerCase();
-                    if (query.trim() != "") {
-                        await SearchDb.addOrUpdateData(query);
+            $(".search-input").on("change",function () {
+                const self = this;
+                setTimeout(async () => {
+                    const query = $(self).val().toLowerCase();
+                    if (query != "") {
+                        // 插入關鍵字到資料庫
+                        try {
+                            if (query.trim() != "") {
+                                await SearchDb.addOrUpdateData(query);
+                            }
+                        } catch (error) {
+                            console.error("儲存關鍵字時發生錯誤:", error);
+                        }
+                        $search.data("search-text", $(self).val());
+                        window.location.href = `/${OrgName}/Search/Get/${$search.data("dirid")}/${$search.data("search-text")}`;
                     }
-                } catch (error) {
-                    console.error("儲存關鍵字時發生錯誤:", error);
-                }
-                $search.data("search-text", $(this).val());
-                window.location.href = `/${OrgName}/Search/Get/${$search.data("dirid")}/${$search.data("search-text")}`;
+                },300);
+            });
+            $("body").on("click.search-suggestions", function (event) {
+                event.preventDefault();
+                $(".search-suggestions").addClass("d-none");
             });
             $(".search-input").on("input", async function () {
                 const query = $(this).val().toLowerCase();
@@ -98,7 +106,8 @@
                 event.preventDefault(); // 關閉默認的超連結行為
                 const selectedKey = $(this).text();
                 $(".search-input").val(selectedKey);
-                $(".search-suggestions").hide(); // 隱藏提示清單
+                $(".search-input").trigger("change");
+                $(".search-suggestions").addClass("d-none"); // 隱藏提示清單
             });
 
             // 鍵盤操作，支持上下鍵選擇和 Enter 鍵確認

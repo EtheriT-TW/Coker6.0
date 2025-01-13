@@ -302,6 +302,24 @@ static void ConfigureStaticFileHeaders(StaticFileResponseContext ctx)
     ctx.Context.Response.Headers["ETag"] = etag;
 }
 
+// 新增一個 Middleware 處理 favicon.ico 的請求
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/favicon.ico")
+    {
+        // 直接提供 /upload/favicon.ico 檔案
+        var filePath = Path.Combine(builder.Configuration.GetValue<string>("VirtualDirectory:upload"), "favicon.ico");
+
+        if (File.Exists(filePath))
+        {
+            context.Response.ContentType = "image/x-icon"; // 設定正確的 Content-Type
+            await context.Response.SendFileAsync(filePath); // 直接提供檔案
+            return; // 停止後續處理
+        }
+    }
+    await next(); // 否則繼續處理其他請求
+});
+
 app.UseDefaultFiles();
 //wwwroot資料夾下的文件
 app.UseStaticFiles(new StaticFileOptions()
@@ -323,23 +341,6 @@ app.UseStaticFiles(new StaticFileOptions()
     RequestPath = "/upload",
     OnPrepareResponse = ConfigureStaticFileHeaders,
     ContentTypeProvider = fileProvider
-});
-// 新增一個 Middleware 處理 favicon.ico 的請求
-app.Use(async (context, next) =>
-{
-    if (context.Request.Path == "/favicon.ico")
-    {
-        // 直接提供 /upload/favicon.ico 檔案
-        var filePath = Path.Combine(builder.Configuration.GetValue<string>("VirtualDirectory:upload"), "favicon.ico");
-
-        if (File.Exists(filePath))
-        {
-            context.Response.ContentType = "image/x-icon"; // 設定正確的 Content-Type
-            await context.Response.SendFileAsync(filePath); // 直接提供檔案
-            return; // 停止後續處理
-        }
-    }
-    await next(); // 否則繼續處理其他請求
 });
 //子站靜態文件
 List<string> childOrgNames = new List<string>();

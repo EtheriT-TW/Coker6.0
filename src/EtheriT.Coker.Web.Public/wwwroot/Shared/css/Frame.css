@@ -146,6 +146,22 @@ iframe {
     -webkit-line-clamp: 2;
 }
 
+.text_two_line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.text_three_line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
 .text_shadow {
     text-shadow: 2px 2px 4px #242424;
 }

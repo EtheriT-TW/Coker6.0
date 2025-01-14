@@ -36,6 +36,7 @@
             $(".search-input").on("blur", function (event) {
                 event.preventDefault();
                 $(".search-suggestions").addClass("d-none");
+                $(".search-category .search-input").removeClass("suggestions");
             });
             $(".search-input").on("focus", function (event) {
                 event.preventDefault();
@@ -87,8 +88,10 @@
                     }
 
                     $suggestionsList.removeClass("d-none"); // 顯示清單
+                    $(".search-category .search-input").addClass("suggestions");
                 } else {
                     $suggestionsList.addClass("d-none"); // 如果沒有符合的結果，隱藏清單
+                    $(".search-category .search-input").removeClass("suggestions");
                 }
             });
 
@@ -113,6 +116,7 @@
                 $(".search-input").val(selectedKey);
                 $(".search-input").trigger("change");
                 $(".search-suggestions").addClass("d-none"); // 隱藏提示清單
+                $(".search-category .search-input").removeClass("suggestions");
             });
 
             // 鍵盤操作，支持上下鍵選擇和 Enter 鍵確認

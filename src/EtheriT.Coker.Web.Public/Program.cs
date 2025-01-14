@@ -64,6 +64,7 @@ using EtheriT.Coker.Application.Shared.Recipients;
 using EtheriT.Coker.Application.Recipients;
 using Serilog;
 using Serilog.Filters;
+using static System.Formats.Asn1.AsnWriter;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -243,10 +244,11 @@ builder.Services.AddHttpClient("ThirdPartyClient_PCHome", client =>
 
 
 // 配置 Serilog
+string logPath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\logs\\{DateTime.Now.Date.ToString("yyyy-MM-dd")}.txt";
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information() // 設定最低記錄層級
     .WriteTo.Console()          // 在控制台顯示日誌
-    .WriteTo.File(@"D:\log.txt", rollingInterval: RollingInterval.Day) // 輸出到檔案
+    .WriteTo.File(logPath) // 輸出到檔案
     .Filter.ByIncludingOnly(logEvent =>
         logEvent.MessageTemplate.Text.Contains("IP:") &&
         logEvent.MessageTemplate.Text.Contains("URL:") &&
@@ -260,23 +262,7 @@ builder.Host.UseSerilog();
 var app = builder.Build();
 
 // 中間件來記錄流量
-app.Use(async (context, next) =>
-{
-    var request = context.Request;
-    var clientIp = context.Connection.RemoteIpAddress?.ToString(); // 獲取 IP 地址
-    var userAgent = request.Headers["User-Agent"].ToString();      // 獲取使用者代理
-    var url = $"{request.Scheme}://{request.Host}{request.Path}";  // 組合完整的 URL
-    var requestSize = request.ContentLength ?? 0;                  // 請求大小
-
-    // 執行下一個中間件
-    await next.Invoke();
-
-    var responseSize = context.Response.ContentLength ?? 0;        // 回應大小
-
-    // 使用 Serilog 記錄流量資料
-    Log.Information("IP: {Ip}, URL: {Url}, User-Agent: {UserAgent}, Request Size: {RequestSize} bytes, Response Size: {ResponseSize} bytes",
-        clientIp, url, userAgent, requestSize, responseSize);
-});
+app.UseMiddleware<FlowSizeLogMiddleware>();
 
 if (!app.Environment.IsProduction())
 {

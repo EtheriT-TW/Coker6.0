@@ -1084,14 +1084,6 @@ namespace EtheriT.Coker.Application.Directory
                 List<long> RoleIds = await loginUserData.GetUserRoleIds();
                 bool isSuperUser = await permissionsAppService.IsPowerUserPermissions();
                 IQueryable<Core.Models.Directory> result = db.Directory.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID);
-                if (!isSuperUser)
-                {
-                    var per = await db.PermissionDetail.Where(e => e.FK_WebsiteId == WebsiteID)
-                        .Where(e => e.FK_UserId == UserID || (e.FK_RoleId != null && RoleIds.Contains(e.FK_RoleId.Value)))
-                        .Where(e => e.Type == (int)PermissionDetailsTypeEnum.目錄)
-                        .Where(e => e.IsGranted).Select(e => e.FK_TargetId).ToListAsync();
-                    if (per != null && per.Any()) result = result.Where(e => per.Contains(e.Id));
-                }
                 if (result != null)
                 {
                     var dataQuery = from e in result

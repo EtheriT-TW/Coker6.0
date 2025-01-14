@@ -756,9 +756,8 @@ namespace EtheriT.Coker.Application.Authorization
                                                         $"<br/>" +
                                                         $"<div class='d-flex text-bold'><div>您的帳號：</div><u>{dto.Email}</u></div>" +
                                                         $"<br/>" +
-                                                        $"<div text-bold>開通帳號網址</div>" +
+                                                        $"<div text-bold>點選下方連結，完成會員驗證。</div>" +
                                                         $"<a href='{dto.WebsiteLink}/?useraction=accountoping&openid={dto.OpenId}' title='前往開通帳號'>{dto.WebsiteLink}/?useraction=accountoping&openid={dto.OpenId}</a>" +
-                                                        $"<div class='text-gray'>為了啟動您的帳號，請點選連結或是複製連結在瀏覽器貼上</div>" +
                                                         $"<div class='text-gray'>這個連結僅能使用一次，並於 {((DateTime)dto.OpenIdSendDate).AddDays(1)} 到期，請在期限內開通。</div>" +
                                                         $"<div class='text-gray'>感謝您的加入！~</div>" +
                                                         $"<br/>" +
@@ -781,7 +780,7 @@ namespace EtheriT.Coker.Application.Authorization
                                         Email = dto.Email,
                                     }
                                 },
-                    Subject = $"加入會員通知【{dto.WebsiteName}】",
+                    Subject = $"【{dto.WebsiteName}】註冊會員通知",
                     Body = mailhtml,
                     Css = mailcss,
                 }, dto.WebsiteId);

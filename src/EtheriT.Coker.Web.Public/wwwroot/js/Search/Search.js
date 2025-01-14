@@ -33,10 +33,15 @@
                     }
                 },300);
             });
-            $("body").on("click.search-suggestions", function (event) {
+            $(".search-input").on("blur", function (event) {
                 event.preventDefault();
                 $(".search-suggestions").addClass("d-none");
             });
+            $(".search-input").on("focus", function (event) {
+                event.preventDefault();
+                $(this).trigger("input");
+            });
+
             $(".search-input").on("input", async function () {
                 const query = $(this).val().toLowerCase();
 
@@ -228,7 +233,7 @@
         });
         $(filter).each((i, element) => {
             const $item = $(temp);
-            const tid = `filterType${element.type}`;
+            const tid = `filterType${element.type}-${element.id}`;
             const $tagTarget = $item.find("ul");
             const tagTemp = $tagTarget.html();
             $tagTarget.empty();

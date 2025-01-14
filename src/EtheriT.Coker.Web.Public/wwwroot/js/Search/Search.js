@@ -33,14 +33,15 @@
                     }
                 },300);
             });
-            $(".search-input").on("blur", function (event) {
-                event.preventDefault();
+            $("body").on("click.hideSuggestions", function (event) {
                 $(".search-suggestions").addClass("d-none");
                 $(".search-category .search-input").removeClass("suggestions");
             });
             $(".search-input").on("focus", function (event) {
                 event.preventDefault();
-                $(this).trigger("input");
+                setTimeout(() => {
+                    $(this).trigger("input");
+                },300);
             });
 
             $(".search-input").on("input", async function () {
@@ -280,7 +281,7 @@
                 const filters = $fram.data("filtered").filter(e => e.type == element.type);
                 if (filters.length != 0) {
                     const group = filters[0].group.filter(e => e.id == element.id);
-                    if (group.length != 0 && group[0].tags.length == element.tags.length)
+                    if (group.length != 0 && group[0].tags.length == element.tags.filter(e => e.count > 0).length)
                         $input.prop("checked", true).trigger("change");
                 }
             }

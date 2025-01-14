@@ -1224,7 +1224,7 @@ namespace EtheriT.Coker.Application.Order
                     };
                     if (!string.IsNullOrEmpty(cc.Email)) sendDto.Bcc.Add(cc);
 
-                    var sedResult = await mailAppService.sendMail(sendDto, WebsiteID);
+                    var sedResult = await mailAppService.sendMail(sendDto, Website.Contact);
 
                     response = sedResult;
                 }
@@ -1388,7 +1388,7 @@ namespace EtheriT.Coker.Application.Order
                         Subject = $"【{Website.Title}】付款完成通知信({Payment})",
                         Body = mailhtml,
                         Css = mailcss,
-                    }, WebsiteID);
+                    }, Website.Contact);
 
                     response = sedResult;
                 }

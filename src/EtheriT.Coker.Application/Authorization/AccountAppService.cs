@@ -747,6 +747,7 @@ namespace EtheriT.Coker.Application.Authorization
         }
         public async Task<ResponseMessageDto> SendOpening(SendOpeningDto dto)
         {
+            var website = await db.Websites.Where(e => e.Id == dto.WebsiteId).FirstOrDefaultAsync();
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
@@ -783,7 +784,7 @@ namespace EtheriT.Coker.Application.Authorization
                     Subject = $"【{dto.WebsiteName}】註冊會員通知",
                     Body = mailhtml,
                     Css = mailcss,
-                }, dto.WebsiteId);
+                }, website.Contact);
                 response.Success = sedResult.Success;
                 response.Message = sedResult.Message;
                 response.Error = sedResult.Error;
@@ -832,6 +833,7 @@ namespace EtheriT.Coker.Application.Authorization
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
+                var website = await db.Websites.Where(e => e.Id == dto.WebsiteId).FirstOrDefaultAsync();
                 var frontUser = await (from user in db.FrontUsers
                                        join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
                                        where user.Email == dto.Email && mapuserweb.FK_WebsiteId == dto.WebsiteId
@@ -877,7 +879,7 @@ namespace EtheriT.Coker.Application.Authorization
                         Subject = $"【{dto.WebsiteName}】 密碼重設通知",
                         Body = mailhtml,
                         Css = mailcss,
-                    }, dto.WebsiteId);
+                    }, website.Contact);
                     response.Success = true;
                 }
                 else throw new Exception("會員不存在");
@@ -1081,7 +1083,7 @@ namespace EtheriT.Coker.Application.Authorization
                                 Subject = $"【{Website.Title}】會員電子郵件修改通知",
                                 Body = mailhtml,
                                 Css = mailcss,
-                            }, WebsiteID);
+                            }, Website.Contact);
 
                             response.Success = sedResult.Success;
                             response.Message = sedResult.Message;

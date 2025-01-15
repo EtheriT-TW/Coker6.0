@@ -31,6 +31,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
         public async Task<IViewComponentResult> InvokeAsync()
         {
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            List<string> childOrgNames = new List<string>();
+            Configuration.GetSection("WebConfig:childSiteOrgName").Bind(childOrgNames);
             var website = HttpContext.GetRouteData().Values["website"];
             if (website == null)
             {
@@ -39,42 +41,56 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
             var website_str = website == null ? "" : website.ToString();
             var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
             var website_data = await websiteApplication.GetAllData(defaultData.Id);
-			var webmenus_data = (await webMenuApplication.GetDisplayAll(defaultData.Id)).Maps.ToList();
+            var webmenus_data = (await webMenuApplication.GetDisplayAll(defaultData.Id)).Maps.ToList();
 
             var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(website_data[0].Id, "Top")).Value));
             HeaderViewModel headerViewModel = new HeaderViewModel();
             switch (defaultData.Layout_Type)
             {
-                case 1:
-                case 5:
-                case 7:
-                case 8:
-                case 9:
-                case 10:
+                case 2:
+                    headerViewModel = new HeaderViewModel
+                    {
+                        Title = "入口網站",
+                        HomeLink = $"/{website_data[0].OrgName}/home",
+                        HomeTarget = false,
+                        menuItemModels = new List<MenuItem.MenuItemModel> {
+                            new MenuItem.MenuItemModel {Title="高雄軟體園區資訊服務網", Link="/ksp/home"},
+                            new MenuItem.MenuItemModel {Title="e++產業服務平台", Link="/eplus/home"},
+                        },
+                    };
+                    break;
+                default:
                     webmenus_data = webmenus_data.ToList();
+                    string uploadPath = childOrgNames.Count > 0 ? $"/upload/{website_data[0].OrgName}" : "/upload";
+                    string pathReplace = childOrgNames.Count > 0 ? "/upload" : $"/upload/{website_data[0].OrgName}";
                     headerViewModel = new HeaderViewModel
                     {
                         Title = website_data[0].Title,
-                        LogoImageUrl = "/upload/logo.png",
+                        LogoImageUrl = website_data[0].Logo?.Replace("/upload", uploadPath),
+                        //LogoImageUrl = "/upload/logo.png",
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                         marqueeModels = new List<MarqueeDisplayDto> { },
                     };
-                    switch (defaultData.Id) {
+                    if (string.IsNullOrEmpty(headerViewModel.LogoImageUrl)) {
+                        headerViewModel.LogoImageUrl = $"{uploadPath}/logo.png";
+                    }
+                    switch (defaultData.Id)
+                    {
                         case 6:
-                            headerViewModel.Bannners.Add(new BannerImages { DisktopImage= "/upload/headertitile.jpg",PhoneImage= "/upload/headertitile_phone.jpg" });
+                            headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/headertitile.jpg", PhoneImage = "/upload/headertitile_phone.jpg" });
                             break;
                         case 7:
                             headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/headertitile.jpg", PhoneImage = "/upload/headertitile_phone.jpg" });
                             break;
                         case 10:
-							for(int i = 1;i <= 4;i++)
+                            for (int i = 1; i <= 4; i++)
                             {
-								headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/banner/banner"+i+".jpg"});
-							}
-							break;
+                                headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/banner/banner" + i + ".jpg" });
+                            }
+                            break;
                     }
 
-                    if (marquee.Count > 0)
+                    if (marquee!=null && marquee.Count > 0)
                     {
                         marquee.ForEach(data =>
                         {
@@ -149,8 +165,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                         "javascript:void(0)",
                                     menuItemModels = secitemModels,
                                     Length = length,
-                                    imageUrl = (data_f.ImgUrl ?? ""),
-                                    hoverImageUrl = (data_f.OverImgUrl ?? ""),
+                                    imageUrl = (data_f.ImgUrl ?? "").Replace("/upload", uploadPath),
+                                    hoverImageUrl = (data_f.OverImgUrl ?? "").Replace("/upload", uploadPath),
                                 });
                             }
                             else
@@ -181,148 +197,11 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         }
                     });
                     break;
-                case 2:
-                    headerViewModel = new HeaderViewModel
-                    {
-                        Title = "入口網站",
-                        HomeLink = $"/{website_data[0].OrgName}/home",
-                        HomeTarget = false,
-                        menuItemModels = new List<MenuItem.MenuItemModel> {
-                            new MenuItem.MenuItemModel {Title="高雄軟體園區資訊服務網", Link="/ksp/home"},
-                            new MenuItem.MenuItemModel {Title="e++產業服務平台", Link="/eplus/home"},
-                        },
-                    };
-                    break;
-                case 3:
-                    webmenus_data = webmenus_data.ToList();
-                    headerViewModel = new HeaderViewModel
-                    {
-                        Title = website_data[0].Title,
-                        LogoImageUrl = $"/upload/{website_data[0].OrgName}/logo.png",
-                        HomeLink = $"/{website_data[0].OrgName}/home",
-                        menuItemModels = new List<MenuItem.MenuItemModel> { },
-                    };
-                    webmenus_data.ForEach(data_f =>
-                    {
-                        if (data_f.PageType == (int)PageTypeEnum.首頁)
-                        {
-                            headerViewModel.HomeLink = $"/{website_data[0].OrgName}/{data_f.RouterName}";
-                            headerViewModel.HomeTarget = data_f.Target;
-                        }
-                        else if (data_f.Children != null)
-                        {
-                            var tempmenuItemModels = new List<MenuItem.MenuItemModel> { };
-                            data_f.Children.ForEach(data_s =>
-                            {
-                                tempmenuItemModels.Add(new MenuItem.MenuItemModel
-                                {
-                                    Title = data_s.Title,
-                                    Link = data_s.RouterName != "" ? $"/{website_data[0].OrgName}/{data_s.RouterName}" : data_s.LinkUrl != "" ? data_s.LinkUrl : "",
-                                    Target = data_s.Target,
-                                });
-                            });
-                            headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
-                            {
-                                Title = data_f.Title,
-                                menuItemModels = tempmenuItemModels,
-                            });
-                        }
-                        else
-                        {
-                            headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
-                            {
-                                Title = data_f.Title,
-                                Target = data_f.Target,
-                                Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "",
-                            });
-                        }
-                    });
-                    break;
-                case 4:
-                    webmenus_data = webmenus_data.ToList();
-                    headerViewModel = new HeaderViewModel
-                    {
-                        Title = website_data[0].Title,
-                        LogoImageUrl = $"/upload/{website_data[0].OrgName}/logo.png",
-                        menuItemModels = new List<MenuItem.MenuItemModel> { },
-                    };
-                    webmenus_data.ForEach(data =>
-                    {
-                        if (data.PageType == (int)PageTypeEnum.首頁)
-                        {
-                            headerViewModel.HomeLink = $"/{website_data[0].OrgName}/{data.RouterName}";
-                            headerViewModel.HomeTarget = data.Target;
-                        }
-                        else if (data.LanBar)
-                        {
-                            headerViewModel.Sitemap_Link = data.RouterName != "" ? $"/{website_data[0].OrgName}/{data.RouterName}" : data.LinkUrl != "" ? data.LinkUrl : "";
-                            headerViewModel.Sitemap_Target = data.Target;
-                        }
-                        else
-                        {
-                            headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
-                            {
-                                Title = data.Title,
-                                Link = data.RouterName != "" ? $"/{website_data[0].OrgName}/{data.RouterName}" : data.LinkUrl != "" ? data.LinkUrl : "",
-                                Target = data.Target,
-                                imageUrl = data.ImgUrl != null ? data.ImgUrl.Replace("upload", $"upload/{website_data[0].OrgName}") : "",
-                            });
-                        }
-                    });
-                    break;
-                case 6:
-                    webmenus_data = webmenus_data.ToList();
-                    headerViewModel = new HeaderViewModel
-                    {
-                        Title = website_data[0].Title,
-                        LogoImageUrl = $"/upload/{website_data[0].OrgName}/logo.png",
-                        menuItemModels = new List<MenuItem.MenuItemModel> { },
-                        marqueeModels = new List<MarqueeDisplayDto> { },
-
-                    };
-                    webmenus_data.ForEach(data =>
-                    {
-                        if (data.PageType == (int)PageTypeEnum.首頁)
-                        {
-                            headerViewModel.HomeLink = $"/{website_data[0].OrgName}/{data.RouterName.ToLower()}";
-                            headerViewModel.HomeTarget = data.Target;
-                        }
-                        else if (data.LanBar)
-                        {
-                            headerViewModel.Sitemap_Link = data.RouterName != "" ? $"/{website_data[0].OrgName}/{data.RouterName}" : data.LinkUrl != "" ? data.LinkUrl : "";
-                            headerViewModel.Sitemap_Target = data.Target;
-                        }
-                        else
-                        {
-                            headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
-                            {
-                                Title = data.Title,
-                                Link = data.RouterName != "" ? $"/{website_data[0].OrgName}/{data.RouterName}" : data.LinkUrl != "" ? data.LinkUrl : "",
-                                Target = data.Target,
-                                imageUrl = data.ImgUrl != null ? data.ImgUrl.Replace("upload", $"upload/{website_data[0].OrgName}") : "",
-                            });
-                        }
-                    });
-
-                    if (marquee.Count > 0)
-                    {
-                        marquee.ForEach(data =>
-                        {
-                            headerViewModel.marqueeModels.Add(new MarqueeDisplayDto
-                            {
-                                title = data.title,
-                                link = data.link,
-                                target = data.target,
-                            });
-                        });
-                    }
-                    break;
-                default:
-                    break;
             }
             if (defaultData.Layout_Type == 1 && siteId == 2)
             {
-                headerViewModel.LogoImageUrl = "/upload/logo.svg";
+                headerViewModel.LogoImageUrl = website_data[0].Logo?.Replace($"/{website_data[0].OrgName}/", "/");
+                if (string.IsNullOrEmpty(headerViewModel.LogoImageUrl)) headerViewModel.LogoImageUrl = "/upload/logo.svg";
             }
             headerViewModel.SearchPath = $"/{website_data[0].OrgName}/Search";
             return View(defaultData.View, headerViewModel);

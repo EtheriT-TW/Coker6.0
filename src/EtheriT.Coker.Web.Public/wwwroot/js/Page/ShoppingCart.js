@@ -216,6 +216,10 @@ function PageReady() {
         }
     });
 
+    //ECPay.initialize("Stage", 1, function (errMsg) {
+    //    console.log("errMsg", errMsg)
+    //});
+
     $('#CollapsePurchase')
         .on('shown.bs.collapse', function () {
             buy_step_swiper.update();
@@ -1134,6 +1138,7 @@ function OrderHeaderAdd() {
                                 switch (paymenttype) {
                                     case "LinePay":
                                     case "PCHomePay":
+                                    //case "ECPay":
                                         Coker.sweet.loading();
                                         Coker.ThirdParty.Request(result.message.split(",")[1], paymenttype).done(function (result) {
                                             Swal.close();

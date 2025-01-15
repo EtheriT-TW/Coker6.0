@@ -12,4 +12,70 @@
             ajaxOptions.data = { 'dataKey': originData.key };
         }
     }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        let delayTimeout;
+
+        // 用來標記是否正在進行中文輸入
+        document.body.addEventListener('compositionstart', (e) => {
+            if (isFilterInput(e.target)) {
+                e.target.isComposing = true;
+            }
+        });
+
+        // 完成中文輸入後，觸發過濾
+        document.body.addEventListener('compositionend', (e) => {
+            if (isFilterInput(e.target)) {
+                e.target.isComposing = false;
+                triggerFilter(e.target); // 完成輸入後立即過濾
+            }
+        });
+
+        // 監聽 keydown 事件，處理 Enter 鍵觸發過濾
+        document.body.addEventListener('keydown', (e) => {
+            const target = e.target;
+            if (isFilterInput(target)) {
+                // 如果按的是 Enter 鍵，觸發過濾
+                if (e.key === "Enter") {
+                    triggerFilter(target);
+                }
+            }
+        });
+
+        // 監聽 input 事件，並進行延遲過濾
+        document.body.addEventListener('input', (e) => {
+            const target = e.target;
+            if (isFilterInput(target) && !target.isComposing) {
+                e.preventDefault(); // 取消原始 input 事件
+                triggerFilterDelayed(target); // 延遲觸發過濾邏輯
+            }
+        });
+
+        // 判斷是否為過濾輸入框
+        function isFilterInput(element) {
+            return element.classList.contains('dx-texteditor-input') &&
+                element.closest('.dx-datagrid'); // 確保是 dxDataGrid 的範圍
+        }
+
+        // 延遲觸發過濾邏輯
+        function triggerFilterDelayed(input) {
+            clearTimeout(delayTimeout); // 清除上次的延遲觸發
+            delayTimeout = setTimeout(() => {
+                triggerFilter(input);
+            }, 500); // 延遲 500 毫秒後觸發過濾
+        }
+
+        // 實際觸發過濾邏輯
+        function triggerFilter(input) {
+            const value = input.value;
+            const gridElement = input.closest('.dx-datagrid').closest('.dx-widget');
+            const gridInstance = $(gridElement).dxDataGrid("instance");
+
+            if (gridInstance) {
+                const columnIndex = Array.from(input.closest('tr').cells).indexOf(input.closest('td'));
+                const columnField = gridInstance.option('columns')[columnIndex].dataField;
+                gridInstance.filter([columnField, 'contains', value]);
+            }
+        }
+    });
 </script>

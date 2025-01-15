@@ -288,6 +288,11 @@ builder.Services.AddHttpClient("ThirdPartyClient_PCHome", client =>
     client.BaseAddress = new Uri("https://sandbox-api.pchomepay.com.tw");
     //client.BaseAddress = new Uri("https://api.pchomepay.com.tw");
 });
+builder.Services.AddHttpClient("ThirdPartyClient_ECPay", client =>
+{
+    client.BaseAddress = new Uri("https://ecpg-stage.ecpay.com.tw/Merchant");
+    //client.BaseAddress = new Uri("https://ecpg.ecpay.com.tw/Merchant");
+});
 
 var app = builder.Build();
 

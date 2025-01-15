@@ -747,6 +747,7 @@ namespace EtheriT.Coker.Application.Authorization
         }
         public async Task<ResponseMessageDto> SendOpening(SendOpeningDto dto)
         {
+            var website = await db.Websites.Where(e => e.Id == dto.WebsiteId).FirstOrDefaultAsync();
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
@@ -756,9 +757,8 @@ namespace EtheriT.Coker.Application.Authorization
                                                         $"<br/>" +
                                                         $"<div class='d-flex text-bold'><div>您的帳號：</div><u>{dto.Email}</u></div>" +
                                                         $"<br/>" +
-                                                        $"<div text-bold>開通帳號網址</div>" +
+                                                        $"<div text-bold>點選下方連結，完成會員驗證。</div>" +
                                                         $"<a href='{dto.WebsiteLink}/?useraction=accountoping&openid={dto.OpenId}' title='前往開通帳號'>{dto.WebsiteLink}/?useraction=accountoping&openid={dto.OpenId}</a>" +
-                                                        $"<div class='text-gray'>為了啟動您的帳號，請點選連結或是複製連結在瀏覽器貼上</div>" +
                                                         $"<div class='text-gray'>這個連結僅能使用一次，並於 {((DateTime)dto.OpenIdSendDate).AddDays(1)} 到期，請在期限內開通。</div>" +
                                                         $"<div class='text-gray'>感謝您的加入！~</div>" +
                                                         $"<br/>" +
@@ -781,10 +781,10 @@ namespace EtheriT.Coker.Application.Authorization
                                         Email = dto.Email,
                                     }
                                 },
-                    Subject = $"加入會員通知【{dto.WebsiteName}】",
+                    Subject = $"【{dto.WebsiteName}】註冊會員通知",
                     Body = mailhtml,
                     Css = mailcss,
-                }, dto.WebsiteId);
+                }, website.Contact);
                 response.Success = sedResult.Success;
                 response.Message = sedResult.Message;
                 response.Error = sedResult.Error;
@@ -833,6 +833,7 @@ namespace EtheriT.Coker.Application.Authorization
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
+                var website = await db.Websites.Where(e => e.Id == dto.WebsiteId).FirstOrDefaultAsync();
                 var frontUser = await (from user in db.FrontUsers
                                        join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
                                        where user.Email == dto.Email && mapuserweb.FK_WebsiteId == dto.WebsiteId
@@ -878,7 +879,7 @@ namespace EtheriT.Coker.Application.Authorization
                         Subject = $"【{dto.WebsiteName}】 密碼重設通知",
                         Body = mailhtml,
                         Css = mailcss,
-                    }, dto.WebsiteId);
+                    }, website.Contact);
                     response.Success = true;
                 }
                 else throw new Exception("會員不存在");
@@ -1082,7 +1083,7 @@ namespace EtheriT.Coker.Application.Authorization
                                 Subject = $"【{Website.Title}】會員電子郵件修改通知",
                                 Body = mailhtml,
                                 Css = mailcss,
-                            }, WebsiteID);
+                            }, Website.Contact);
 
                             response.Success = sedResult.Success;
                             response.Message = sedResult.Message;

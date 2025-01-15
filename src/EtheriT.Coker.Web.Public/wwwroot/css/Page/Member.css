@@ -16,7 +16,7 @@
 }
 
 .smailWrap {
-    display:none;
+    display: none;
 }
 
 #ReOrderAlertModal .orderlist img {
@@ -26,6 +26,7 @@
 #ReOrderAlertModal .orderlist .quantity::before {
     content: '\00d7';
 }
+
 #ReOrderAlertModal .orderlist .spec {
     color: var(--gray-text);
 }
@@ -102,6 +103,29 @@
         background: var(--bs-nav-pills-link-active-bg);
         border-radius: 0.8rem;
     }
+
+#info-tab-pane .btn_area > div:nth-of-type(2) {
+    padding: 0rem 1rem;
+}
+
+#info-tab-pane .btn_area button {
+    width: 12.5rem;
+}
+
+#info-tab-pane .btn_area .btn_logout {
+    background-color: var(--red-main);
+}
+
+    #info-tab-pane .btn_area .btn_logout:after {
+        padding-left: 1rem;
+        content: "\f08b";
+        font-weight: 900;
+        font-family: 'Font Awesome 6 Free';
+    }
+
+#info-tab-pane .btn_area .btn_modifi, #info-tab-pane .btn_area .btn_resetPassword {
+    margin-right: 1rem;
+}
 
 .btn_buyAgain {
     color: white;
@@ -391,22 +415,29 @@
     top: 2rem;
 }
 
+@media (max-width:1024px) {
+    #info-tab-pane .btn_area button {
+        width: calc(100% / 3);
+    }
+}
+
 @media (max-width:768px) {
     .collapse > .card-body > div > div:first-child {
-        width:7rem;
-        text-align-last:right;
+        width: 7rem;
+        text-align-last: right;
     }
+
     .collapse > .card-body > .list-group > li:first-child {
         display: none;
     }
 
-        .collapse > .card-body > .list-group > li:not(first-child) > a >  div > div:nth-child(2) {
-            width:auto;
-        }
+    .collapse > .card-body > .list-group > li:not(first-child) > a > div > div:nth-child(2) {
+        width: auto;
+    }
 
-        .quantity {
-            width: auto;
-        }
+    .quantity {
+        width: auto;
+    }
 
     #profile-tab-pane > .content .collapse {
         width: 100%;
@@ -465,14 +496,14 @@
         justify-content: end;
     }
 
-    .collapse > .card-body > div:nth-child(3) {
-        padding-left: 2.2rem;
-    }
+        .collapse > .card-body > div:nth-child(3) {
+            padding-left: 2.2rem;
+        }
 
-    .collapse > .card-body > div:nth-child(4) {
-        padding-left: .9rem;
-    }
-    
+        .collapse > .card-body > div:nth-child(4) {
+            padding-left: .9rem;
+        }
+
     #profile-tab-pane > .content > div {
         display: flex;
         flex-wrap: wrap;
@@ -540,8 +571,22 @@
 }
 
 @media (max-width:576px) {
-        .collapse > .card-body > .list-group > li:not(first-child) > a > div > div:nth-child(2) {
-        width:70%;
+
+    #info-tab-pane .btn_area button {
+        width: 80%;
+    }
+
+    #info-tab-pane .btn_area > div:nth-of-type(2) {
+        padding: 0rem;
+    }
+
+    #info-tab-pane .btn_area .btn_modifi, #info-tab-pane .btn_area .btn_resetPassword {
+        margin-right: 0rem;
+        margin-bottom: 1rem;
+    }
+
+    .collapse > .card-body > .list-group > li:not(first-child) > a > div > div:nth-child(2) {
+        width: 70%;
     }
 
     .collapse > .card-body > .list-group > li > a > div > .price {
@@ -597,16 +642,6 @@
         justify-content: center;
     }
 
-        #main > .container > #TabContent > #info-tab-pane > div > div > button {
-            width: 40%;
-            margin-right: 1rem;
-            margin-top: 0.5rem;
-        }
-
-    .btn_logout {
-        margin-left: unset !important;
-    }
-
     #history-tab-pane figure > figcaption > div > div:first-child {
         flex-direction: column;
     }
@@ -628,22 +663,28 @@
     .isHide:not(.hideTotal) {
         width: 50%;
     }
+
     .hideTotal {
-        width:50%;
-        text-align-last:end;
+        width: 50%;
+        text-align-last: end;
     }
+
     .smailWrap {
         display: unset;
     }
+
     .collapse > .card-body > div {
         justify-content: center;
     }
-        .collapse > .card-body > div {
+
+    .collapse > .card-body > div {
         padding: 0 !important;
     }
+
     .hideTotal {
-        padding-left:0;
+        padding-left: 0;
     }
+
     #TabContent .content.type_grid .type_change_frame {
         flex: 0 0 auto;
     }
@@ -659,10 +700,11 @@
 
 @media (max-width:400px) {
     .hideTotal {
-        flex:unset;
+        flex: unset;
         width: 55%;
     }
+
     .isHide:not(.hideTotal) {
-        width:55%;
+        width: 55%;
     }
 }

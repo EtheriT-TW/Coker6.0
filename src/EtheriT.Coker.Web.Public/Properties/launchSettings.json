@@ -36,11 +36,11 @@
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7195;http://localhost:5196"
     },
-    "EtheriT.Coker.Web.Public.kao-feng": {
+    "EtheriT.Coker.Web.Public.sing-jhen-yi": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "kao-feng"
+        "ASPNETCORE_ENVIRONMENT": "sing-jhen-yi"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7195;http://localhost:5197"

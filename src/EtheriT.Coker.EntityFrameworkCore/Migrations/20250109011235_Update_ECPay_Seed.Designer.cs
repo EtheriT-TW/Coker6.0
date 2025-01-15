@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250109011235_Update_ECPay_Seed")]
+    partial class Update_ECPay_Seed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -863,38 +865,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("FK_WebsiteId");
 
                     b.ToTable("FileUploads");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.FlowSize", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
-
-                    b.Property<long>("FK_WebsiteId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("RequestSize")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("ResponseSize")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("Total")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("actionTime")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FK_WebsiteId");
-
-                    b.HasIndex("actionTime");
-
-                    b.ToTable("FlowSizes");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.FrontUser", b =>
@@ -4848,7 +4818,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         new
                         {
                             Id = 11L,
-                            Code = "HashKey",
+                            Code = "HashKey ",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_TPid = 4L,
@@ -4858,7 +4828,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         new
                         {
                             Id = 12L,
-                            Code = "HashIV",
+                            Code = "HashIV ",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_TPid = 4L,
@@ -5624,17 +5594,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
                         .WithMany("Files")
-                        .HasForeignKey("FK_WebsiteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Website");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.FlowSize", b =>
-                {
-                    b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
-                        .WithMany("flowSizes")
                         .HasForeignKey("FK_WebsiteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -6469,8 +6428,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Users");
 
                     b.Navigation("WebMenus");
-
-                    b.Navigation("flowSizes");
 
                     b.Navigation("jsonObjects");
 

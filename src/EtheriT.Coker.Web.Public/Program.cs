@@ -193,6 +193,7 @@ builder.Services.AddScoped<IFreightAppService, FreightAppService>();
 builder.Services.AddScoped<IThirdPartyAppService, ThirdPartyAppService>();
 builder.Services.AddScoped<ILinePayAppService, LinePayAppService>();
 builder.Services.AddScoped<IPChomePayAppService, PChomePayAppService>();
+builder.Services.AddScoped<IECPayAppService, ECPayAppService>();
 builder.Services.AddScoped<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddScoped<LoginUserData>();
 builder.Services.AddScoped<StringHandler>();
@@ -240,6 +241,10 @@ builder.Services.AddHttpClient("ThirdPartyClient_Line", client =>
 builder.Services.AddHttpClient("ThirdPartyClient_PCHome", client =>
 {
     client.BaseAddress = new Uri(configuration.GetValue<string>("ThirdParty:PCHomePay:PaymentUrl"));
+});
+builder.Services.AddHttpClient("ThirdPartyClient_ECPay", client =>
+{
+    client.BaseAddress = new Uri(configuration.GetValue<string>("ThirdParty:ECPay:PaymentUrl"));
 });
 
 
@@ -321,6 +326,24 @@ static void ConfigureStaticFileHeaders(StaticFileResponseContext ctx)
     var etag = Convert.ToBase64String(Encoding.UTF8.GetBytes(ctx.File.PhysicalPath)); // 基於文件路徑生成 ETag
     ctx.Context.Response.Headers["ETag"] = etag;
 }
+
+// 新增一個 Middleware 處理 favicon.ico 的請求
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/favicon.ico")
+    {
+        // 直接提供 /upload/favicon.ico 檔案
+        var filePath = Path.Combine(builder.Configuration.GetValue<string>("VirtualDirectory:upload"), "favicon.ico");
+
+        if (File.Exists(filePath))
+        {
+            context.Response.ContentType = "image/x-icon"; // 設定正確的 Content-Type
+            await context.Response.SendFileAsync(filePath); // 直接提供檔案
+            return; // 停止後續處理
+        }
+    }
+    await next(); // 否則繼續處理其他請求
+});
 
 app.UseDefaultFiles();
 //wwwroot資料夾下的文件

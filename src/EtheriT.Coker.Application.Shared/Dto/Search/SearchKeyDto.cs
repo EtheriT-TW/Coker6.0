@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EtheriT.Coker.Application.Dto;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Search
 {
-    public class SearchKeyListDto: ResponseObject
+    public class SearchKeyListDto: ResponseMessageDto
     { 
         public List<SearchKeyDto> Keys { get; set; } = new List<SearchKeyDto>();
         public DateTime LastInsertTime {  get; set; }

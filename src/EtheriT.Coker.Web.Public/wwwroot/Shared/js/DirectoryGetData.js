@@ -80,7 +80,7 @@ function initElemntAndLoadDir($dir, page) {
     if (typeof ($self.data("page")) == "undefined" || $self.data("page") != hashPage) {
         if (isNaN(hashPage) || hashPage == "") page = "1";
         else page = hashPage;
-        if (!(dirid.length == 1 && dirid[0] == "")) {
+        if (!(dirid.length == 1 && dirid[0] === "")) {
             const option = {
                 Ids: dirid,
                 SiteId: typeof (SiteId) == "undefined" ? 0 : SiteId,

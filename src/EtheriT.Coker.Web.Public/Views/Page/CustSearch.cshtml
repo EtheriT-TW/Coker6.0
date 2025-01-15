@@ -11,6 +11,7 @@
 </script>
 <link rel="stylesheet" href="~/css/Search/Search.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
+<script src="~/js/LocalDb.min.js" asp-append-version="true"></script>
 <script src="~/js/Search/Search.min.js" asp-append-version="true"></script>
 
 @switch (Model.PageData.LayoutType)
@@ -49,10 +50,11 @@
     </div>
     <div class="d-flex justify-content-center align-items-center my-2 search-input-block container">
         <div class="input-container w-100 d-flex justify-content-center align-items-center">
-            <input type="text" value="@HttpUtility.HtmlEncode(Model.SearchPalameter.SearchText)" placeholder="@placeholder" title=@placeholder class="search-input p-2" />
+            <input type="text" value="@HttpUtility.HtmlEncode(Model.SearchPalameter.SearchText)" placeholder="@placeholder" title=@placeholder class="search-input p-2 ps-3" />
             <a class="searchbtn" title="搜尋" href="#">
                 <i class="fas fa-search"></i>.
             </a>
+            <ul class="search-suggestions d-none"></ul>
         </div>
     </div>
     <div class="container d-flex justify-content-center my-4 d-none">
@@ -101,7 +103,7 @@
     </div>
     <div id="Search_Title" data-key="" class="container d-flex justify-content-center my-4">
         <p>
-            @Html.Raw(string.Format(L.get("FindDescription"),$@"<span class=""px-1 searchText"">{@Model.SearchPalameter.SearchText}</span>", $@"<span class=""px-1 searchCount"">0</span>"))
+            @Html.Raw(string.Format(L.get("FindDescription"), $@"<span class=""px-1 searchText"">{@Model.SearchPalameter.SearchText}</span>", $@"<span class=""px-1 searchCount"">0</span>"))
         </p>
     </div>
     <div class="row">

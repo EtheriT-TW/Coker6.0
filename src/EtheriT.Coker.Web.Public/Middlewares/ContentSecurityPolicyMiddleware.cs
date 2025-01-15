@@ -7,12 +7,17 @@ namespace EtheriT.Coker.Web.Public.Middlewares
     {
         private readonly RequestDelegate _next;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IWebHostEnvironment _env;
         private readonly IConfiguration _configuration;
 
-        public ContentSecurityPolicyMiddleware(RequestDelegate next, IServiceProvider serviceProvider, IConfiguration configuration)
+        public ContentSecurityPolicyMiddleware(RequestDelegate next, 
+            IServiceProvider serviceProvider,
+            IWebHostEnvironment env,
+            IConfiguration configuration)
         {
             _next = next;
             _serviceProvider = serviceProvider;
+            _env = env;
             _configuration = configuration;
         }
         public async Task InvokeAsync(HttpContext context) {
@@ -22,12 +27,16 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 var dbContext = scope.ServiceProvider.GetRequiredService<CokerDbContext>();
                 var item = dbContext.StoreSetDetail.Where(e => e.FK_WebsiteId == siteId && e.FK_StoreSetId == 2).FirstOrDefault();
                 string selfInline = $"nonce-{nonce}";
+                string connectSrc = "*;";
                 context.Items["CSPNonce"] = nonce;
                 bool isSitemapRequest = context.Request.Path.HasValue &&
                         context.Request.Path.Value.ToLowerInvariant().EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase);
 
                 if ((item != null && !string.IsNullOrEmpty(item.value))|| isSitemapRequest) {
                     selfInline = $"unsafe-inline";
+                }
+                if (_env.IsProduction()) {
+                    connectSrc = "'self' *.google.com *.google-analytics.com *.googleapis.com;";
                 }
                 
                 // 將 nonce 存入 HttpContext.Items
@@ -41,7 +50,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     $"font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com; " +
                     $"img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.gstatic.com *.googleapis.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:; " +
                     $"frame-src 'self' *.ezsale.tw *.google.com *.youtube.com *.youtube-nocookie.com *.facebook.com *.instagram.com *.googletagmanager.com *.doubleclick.net;" +
-                    $"connect-src 'self' *.google.com *.google-analytics.com *.googleapis.com;" +
+                    $"connect-src {connectSrc}" +
                     $"frame-ancestors 'self' *.ezsale.tw;";
                 //cache 限制設定
                 context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private";

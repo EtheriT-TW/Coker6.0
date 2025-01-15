@@ -100,7 +100,7 @@ function SwiperInit(obj) {
                 }
                 swiper.autoplay.start()
             }
-            thisSwiper = $(this);
+            const thisSwiper = $(this);
             $(this).off("mouseover").on("mouseover", stop);
             $(this).find(".swiper-slide a,.swiper-slide").off("focus").on("focus", function () {
                 const $item = $(this).hasClass("swiper-slide") ? $(this) : $(this).parents(".swiper-slide");
@@ -135,7 +135,6 @@ function SwiperInit(obj) {
             const canNext = $template.length === 0 ? $(Id).find(".swiper-slide").length > 1 : $(Id).find(".swiper-slide").length > 2;
             var effect = $self.data("effect");
             var speed = $self.data("effect-speed");
-
             if (typeof effect === 'undefined' || effect === false) effect = "slide";
             if (typeof speed === 'undefined' || speed === false) speed = 300;
             else speed = parseInt(speed);
@@ -156,14 +155,14 @@ function SwiperInit(obj) {
                         var videoManager = () => {
                             slide.autoplay.stop();
                             videoElement.onended = function () {
-                                thisSwiper.on("mouseover");
-                                thisSwiper.on("mouseout");
+                                $self.on("mouseover");
+                                $self.on("mouseout");
                                 slide.autoplay.start();
                             };
                         };
                         if (videoAction.length > 0) {
-                            thisSwiper.off("mouseover");
-                            thisSwiper.off("mouseout");
+                            $self.off("mouseover");
+                            $self.off("mouseout");
                             videoManager();
                         }
                         $self.find(".swiper-slide").each(function () {
@@ -202,6 +201,7 @@ function SwiperInit(obj) {
                 loop: true
             } : {});
             var swiper = new Swiper(Id, selfConfig);
+            selfConfig.on.slideChangeTransitionEnd.call(swiper);
             $self.data("isInit", true)
             $self.swiperBindEven(swiper);
         }

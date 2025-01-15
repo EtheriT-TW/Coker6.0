@@ -1283,6 +1283,11 @@ namespace EtheriT.Coker.Application
                         var path = asotype == (int)FileBindTypeEnum.網站圖示 ? $"/favicon.ico" : asotype == (int)FileBindTypeEnum.網站Logo ? $"/logo.{ext}" : $"/{directory}/{key}.{ext}";
                         if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
                         if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
+                        else if (asotype == (int)FileBindTypeEnum.網站圖示 || asotype == (int)FileBindTypeEnum.網站Logo)
+                        {
+                            string fullPath = $"{rootPath}{path}";
+                            if (File.Exists(fullPath)) File.Delete(fullPath);
+                        }
                         using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))
                         {
                             FileUpload fileUpload = new FileUpload
@@ -1332,7 +1337,7 @@ namespace EtheriT.Coker.Application
                             {
                                 Id = fileUpload.Id,
                                 Name = fileUpload.OriginalFileName,
-                                Path = fileUpload.DownloadFileName.Replace("/upload/", $"/upload/{orgName}/"),
+                                Path = fileUpload.DownloadFileName,
                                 Guid = fileUpload.GuidKey,
                             });
                         }

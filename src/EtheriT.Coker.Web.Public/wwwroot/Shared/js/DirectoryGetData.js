@@ -542,7 +542,7 @@ function InsertAdDatat($frame, result) {
                 $frame.find(".title").removeClass("d-none");
             }
             $img_frame.removeClass("d-none");
-            $img_frame.parent().children().not(".img_frame").not(".title").remove();
+            $img_frame.parent().children().not(".img_frame").not(".keep").remove();
             break;
         case 2:
             var $video_frame = $frame.find(".video_frame");

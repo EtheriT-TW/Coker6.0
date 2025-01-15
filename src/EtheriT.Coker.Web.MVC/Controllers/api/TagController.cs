@@ -35,9 +35,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await tagAppService.TagGroupAddUp(dto);
         }
         [HttpGet]
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? tids)
         {
-            return await tagAppService.GetAllList(loadOptions);
+            return await tagAppService.GetAllList(loadOptions, tids);
         }
         [HttpGet]
         public async Task<JsonResult> GetAllGroupList(DataSourceLoadOptions loadOptions)

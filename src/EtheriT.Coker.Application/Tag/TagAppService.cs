@@ -12,6 +12,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Security.Cryptography;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using Org.BouncyCastle.Asn1.X509;
+using System.Linq;
 
 namespace EtheriT.Coker.Application.Tag
 {
@@ -180,26 +182,28 @@ namespace EtheriT.Coker.Application.Tag
 
             return output;
         }
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? tids)
         {
             try
             {
+                var list_tid = tids?.Split(',').Select(long.Parse).ToList() ?? new List<long>() { -1 };
                 long webid = await loginUserData.GetWebsiteId();
                 List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == webid).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
                 siteIds.Add(webid);
 
-                var dataQuery = from t in db.Tags
-                                join s in db.Websites on t.FK_WebsiteId equals s.Id
-                                where !t.IsDeleted && siteIds.Contains(t.FK_WebsiteId)
-                                orderby t.Id descending
-                                select new TagGetAllListDto
-                                {
-                                    Id = t.Id,
-                                    Title = t.Title,
-                                    SiteNameTitle = s.Title
-                                };
+                var dataQuery = await (from t in db.Tags
+                                       join s in db.Websites on t.FK_WebsiteId equals s.Id
+                                       where !t.IsDeleted && siteIds.Contains(t.FK_WebsiteId)
+                                       orderby t.Id descending
+                                       select new TagGetAllListDto
+                                       {
+                                           IsSelected = list_tid.Contains(t.Id),
+                                           Id = t.Id,
+                                           Title = t.Title,
+                                           SiteNameTitle = s.Title
+                                       }).ToListAsync();
 
-                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                var output = DataSourceLoader.Load(dataQuery, loadOptions);
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
             catch (Exception e)

@@ -610,7 +610,7 @@ function addImage(pro_self) {
 }
 function addYoutube(pro_self) {
     var pro_YoutubeLink = pro_self.data("youtube-link");
-    $("#Pro_Youtube").attr("src", "https://www.youtube-nocookie.com/embed/" + pro_YoutubeLink);
+    $("#Pro_Youtube").attr("src", `https://www.youtube-nocookie.com/embed/${pro_YoutubeLink}?&autoplay=1`);
 }
 function add360View(pro_self) {
     var pro360View_Self = $("#Pro_360View");

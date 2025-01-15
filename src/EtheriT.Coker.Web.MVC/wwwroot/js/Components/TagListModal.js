@@ -128,17 +128,18 @@ function TagListModalInit() {
 
     $btn_tag_save.on("click", function () {
         if (tag_check_list.length > 0) {
+            var new_list = tag_check_list.slice();
             tag_list.forEach(function (item) {
                 var index = tag_check_list.indexOf(item.FK_TId)
                 if (index > -1) {
                     item.IsDeleted = false;
-                    tag_check_list.splice(index, 1)
+                    new_list.splice(index, 1)
                 } else {
                     item.IsDeleted = true;
                 }
             })
-            if (tag_check_list.length > 0) {
-                tag_check_list.forEach(function (item) {
+            if (new_list.length > 0) {
+                new_list.forEach(function (item) {
                     var obj = {};
                     obj["Id"] = 0;
                     obj["FK_TId"] = item;
@@ -153,6 +154,7 @@ function TagListModalInit() {
         }
         $tag.val(tag_text);
         tagModal.hide();
+        tagContentRefresh();
     })
 }
 
@@ -226,6 +228,12 @@ function TagDataSet(datas) {
     }
     $tag.val(text == "" ? "無" : text);
 }
+function getSelectSort() {
+    if (tag_list.length > 0) {
+        var tag_list_str = tag_list.map(item => item.FK_TId).join(',');
+        return tag_list_str;
+    }
+}
 function TagInitSet(datas) {
     tag_check_list = [];
     if (datas.length > 0) {
@@ -245,6 +253,9 @@ function TagInitSet(datas) {
 function tagContentReady(e) {
     $(e.element).addClass("isReady");
     TagList_dxData = $("#TagList").dxDataGrid("instance");
+}
+function tagContentRefresh() {
+    TagList_dxData.refresh();
 }
 function dataSaving(e) {
     var first_char;

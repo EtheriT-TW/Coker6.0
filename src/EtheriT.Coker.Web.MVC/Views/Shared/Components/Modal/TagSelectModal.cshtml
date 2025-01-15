@@ -15,9 +15,11 @@
             </div>
             <div class="modal-body">
                 <div class="bg-white p-3">
-                    @(Html.DevExtreme().DataGrid<TagGetAllListDto>()
+                    @(
+                        Html.DevExtreme().DataGrid<TagGetAllListDto>()
                         .DataSource(d => d.RemoteController().Key("Id")
-                        .LoadUrl("/api/Tag/GetAllList").LoadMethod("Get")
+                        .LoadUrl("/api/Tag/GetAllList?tid=null").LoadMethod("Get")
+                        .LoadParams(new { tids = new JS("getSelectSort") })
                         .InsertUrl("/api/Tag/TagAddUp").InsertMethod("Post")
                         .OnBeforeSend("onBeforeSend")
                         )
@@ -45,6 +47,7 @@
                         })
                         .Columns(c =>
                         {
+                            c.AddFor(e => e.IsSelected).Caption("是否勾選").Visible(false).AllowEditing(false).SortOrder(SortOrder.Desc);
                             c.AddFor(e => e.Id).Caption("編號").Visible(false).AllowEditing(false).SortOrder(SortOrder.Desc);
                             c.AddFor(e => e.SiteNameTitle).Caption("網站名稱").Width(150).AllowEditing(false);
                             c.AddFor(e => e.Title).Caption("標籤名稱").Width(150);

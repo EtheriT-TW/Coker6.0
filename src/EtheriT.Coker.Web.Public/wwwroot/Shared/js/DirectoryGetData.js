@@ -576,7 +576,7 @@ function InsertAdDatat($frame, result) {
                 })
             }
             $YT_frame.on("click", function () {
-                var temp_ytlink = "https://www.youtube-nocookie.com/embed/" + result_File.name;
+                var temp_ytlink = `https://www.youtube-nocookie.com/embed/${result_File.name}?&autoplay=1`;
                 $("#YTPreviewModal").find(".modal-body").append(`<iframe src="${temp_ytlink}" class="w-100 h-100" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`)
             })
             $YT_frame.parent().children().not(".YT_frame").remove();

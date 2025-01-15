@@ -62,9 +62,9 @@
                 var temp_ytlink = "";
                 if ($self.attr("link").includes("v=")) {
                     // 保留原有 embed link 取得方法
-                    temp_ytlink = `https://www.youtube-nocookie.com/embed/${$self.attr("vid")}`;
+                    temp_ytlink = `https://www.youtube-nocookie.com/embed/${$self.attr("vid")}?&autoplay=1`;
                 } else {
-                    temp_ytlink = $self.attr("link");
+                    temp_ytlink = `${$self.attr("link")}?&autoplay=1`;
                 }
                 $("#YTPreviewModal").find(".modal-body").append(`<iframe src="${temp_ytlink}" class="w-100 h-100" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`)
             })

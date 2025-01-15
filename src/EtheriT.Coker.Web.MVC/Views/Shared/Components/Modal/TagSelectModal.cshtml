@@ -48,7 +48,6 @@
                         .Columns(c =>
                         {
                             c.AddFor(e => e.IsSelected).Caption("是否勾選").Visible(false).AllowEditing(false).SortOrder(SortOrder.Desc);
-                            c.AddFor(e => e.Id).Caption("編號").Visible(false).AllowEditing(false).SortOrder(SortOrder.Desc);
                             c.AddFor(e => e.SiteNameTitle).Caption("網站名稱").Width(150).AllowEditing(false);
                             c.AddFor(e => e.Title).Caption("標籤名稱").Width(150);
                         })

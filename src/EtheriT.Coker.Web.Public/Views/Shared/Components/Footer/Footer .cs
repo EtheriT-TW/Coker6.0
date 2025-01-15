@@ -92,6 +92,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 								Facebook_Link = "https://www.facebook.com/LCB.TW",
 								IG_Link = "https://www.instagram.com/tw_derek/?igshid=YmMyMTA2M2Y%3D",
 								YoutubeChannel_Link = "https://www.youtube.com/@derek6494",
+								LINE_Link = "https://line.me/R/ti/p/@417cnroq",
 								Content = new List<string>
 								{
 									"Copyright©",

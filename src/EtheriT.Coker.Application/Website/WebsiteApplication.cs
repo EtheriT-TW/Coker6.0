@@ -50,7 +50,7 @@ namespace EtheriT.Coker.Application
         {
             DefaultDataDto defaultData = new DefaultDataDto();
 
-			long fid = siteId;
+            long fid = siteId;
             string ParntOrgNames = "";
             if (website != null && !website.Equals("upload"))
             {
@@ -66,23 +66,23 @@ namespace EtheriT.Coker.Application
             {
                 L.local = site.Locale;
                 defaultData = new DefaultDataDto
-				{
-					Id = site.Id,
-					OrgName = site.OrgName,
-					ParntOrgNames = ParntOrgNames,
-					Layout_Type = site.LayoutType??0,
-					Level = (WebsiteLevelEnum)site.Level,
+                {
+                    Id = site.Id,
+                    OrgName = site.OrgName,
+                    ParntOrgNames = ParntOrgNames,
+                    Layout_Type = site.LayoutType ?? 0,
+                    Level = (WebsiteLevelEnum)site.Level,
                     locale = site.Locale,
                     Root = site.DefaultUrl,
                     Description = site.Description,
                     Css = site.Css
-				};
-                if(!string.IsNullOrEmpty(defaultData.Root))
-                    defaultData.Root = Regex.Replace(defaultData.Root,"/$","");
+                };
+                if (!string.IsNullOrEmpty(defaultData.Root))
+                    defaultData.Root = Regex.Replace(defaultData.Root, "/$", "");
                 defaultData.View = defaultData.Layout_Type == 0 ? "Default" : $"Layout_{defaultData.Layout_Type}";
-				defaultData.OrgName = (defaultData.OrgName == null || defaultData.OrgName == "") ? "Page" : defaultData.OrgName;
+                defaultData.OrgName = (defaultData.OrgName == null || defaultData.OrgName == "") ? "Page" : defaultData.OrgName;
 
-			}
+            }
             return defaultData;
         }
         public async Task<int> GetLayoutType(long Id)
@@ -105,7 +105,7 @@ namespace EtheriT.Coker.Application
         {
             var re = await db.MappingWebsiteRelationship
                 .Where(e => !e.IsDeleted)
-                .Where(e => e.FatherId== Id)
+                .Where(e => e.FatherId == Id)
                 .Select(e => e.WebsiteId).ToListAsync();
             var data = await (from w in db.Websites
                               where w.Id == Id || re.Contains(w.Id)
@@ -137,35 +137,42 @@ namespace EtheriT.Coker.Application
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
             string name = user.Identity?.Name;
             bool isysUser = await loginUserData.isSystemUser();
-            IQueryable<WebsDto> date;
+            IQueryable<WebsDto> datas;
             if (isysUser)
             {
-                date = from w in db.Websites
-                       select new WebsDto
-                       {
-                           Id = w.Id,
-                           Name = w.Title,
-                           Description = w.Description ?? "",
-                           Images = w.Icon ?? ""
-                       };
+                datas = from w in db.Websites
+                        select new WebsDto
+                        {
+                            Id = w.Id,
+                            Name = w.Title,
+                            OrgName = w.OrgName,
+                            Description = w.Description ?? "",
+                            Images = w.Icon ?? ""
+                        };
             }
-            else {
-                date = from w in db.Websites
-                       join bind in db.MappingUserAndWebsites on w.Id equals bind.WebsiteId
-                       join u in db.Users on bind.UserId equals u.Id
-                       where u.Account == name
-                       select new WebsDto
-                       {
-                           Id = w.Id,
-                           Name = w.Title,
-                           Description = w.Description ?? "",
-                           Images = w.Icon ?? ""
-                       };
+            else
+            {
+                datas = from w in db.Websites
+                        join bind in db.MappingUserAndWebsites on w.Id equals bind.WebsiteId
+                        join u in db.Users on bind.UserId equals u.Id
+                        where u.Account == name
+                        select new WebsDto
+                        {
+                            Id = w.Id,
+                            Name = w.Title,
+                            OrgName = w.OrgName,
+                            Description = w.Description ?? "",
+                            Images = w.Icon ?? ""
+                        };
             }
-            if (date.Any())
+            if (datas.Any())
             {
                 long siteId = await loginUserData.GetWebsiteId();
-                var output = await date.ToListAsync();
+                var output = await datas.ToListAsync();
+                foreach (var data in output)
+                {
+                    if (!data.Images.Contains(data.OrgName)) data.Images = data.Images.Replace("/upload/", $"/upload/{data.OrgName}/");
+                }
                 if (siteId == 0 && output.Any())
                 {
                     siteId = output.FirstOrDefault().Id;
@@ -212,12 +219,12 @@ namespace EtheriT.Coker.Application
                 response.Message = $"{privacy_id} {terms_id}";
                 return response;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 response.Error = ex.Message;
                 return response;
             }
-            
+
         }
         public async Task<ResponseMessageDto> Exchange(WebExchangeDto dto)
         {
@@ -252,7 +259,8 @@ namespace EtheriT.Coker.Application
             await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(responseMessageDto));
             return responseMessageDto;
         }
-        public async Task<GetFrontContenOutputDto> GetPrivacyConten(GetFrontContenInputDto dto) {
+        public async Task<GetFrontContenOutputDto> GetPrivacyConten(GetFrontContenInputDto dto)
+        {
             if (dto.siteId == null)
             {
                 dto.siteId = Configuration.GetValue<long>("WebConfig:SiteId");
@@ -265,7 +273,7 @@ namespace EtheriT.Coker.Application
                 {
                     result.SiteName = side.Title;
                     result.LastModificationTime = null;
-                    result.Html = (result.Html??"").Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
+                    result.Html = (result.Html ?? "").Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
                     result.CurrentUrl = $"/Privacy";
                     result.VisibleFooter = true;
                     result.VisibleHeader = true;
@@ -274,8 +282,9 @@ namespace EtheriT.Coker.Application
             catch { }
             return result;
         }
-        public async Task<WebsiteEditOutputDto> GetWebsiteData() {
-            WebsiteEditOutputDto result = new WebsiteEditOutputDto { Success=false, Website = new WebsiteEditDto(), Company = new Company.CompanyDto() };
+        public async Task<WebsiteEditOutputDto> GetWebsiteData()
+        {
+            WebsiteEditOutputDto result = new WebsiteEditOutputDto { Success = false, Website = new WebsiteEditDto(), Company = new Company.CompanyDto() };
             long siteId = await loginUserData.GetWebsiteId();
             try
             {
@@ -286,16 +295,18 @@ namespace EtheriT.Coker.Application
                     var com = await db.Companies.Where(e => cid.Contains(e.Id)).Where(e => !e.IsDeleted).FirstOrDefaultAsync();
                     mapper.Map(data, result.Website);
                     mapper.Map(com, result.Company);
-                    result.Success=true;
+                    result.Success = true;
                 }
                 else throw new Exception("網站不存在");
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 result.Error = e.Message;
             }
             return result;
         }
-        public async Task<ResponseMessageDto> Save(WebsiteEditDto dto) {
+        public async Task<ResponseMessageDto> Save(WebsiteEditDto dto)
+        {
             var response = new ResponseMessageDto() { Success = false };
             var websiteid = await loginUserData.GetWebsiteId();
             try
@@ -304,20 +315,23 @@ namespace EtheriT.Coker.Application
                 var data = await db.Websites.Where(e => e.Id == websiteid).Where(e => !e.IsDeleted).FirstOrDefaultAsync();
 
                 if (data == null) throw new Exception("網站不存在");
-                mapper.Map(dto,data);
+                mapper.Map(dto, data);
                 await loginUserData.SaveChanges(data);
                 response.Success = true;
-            }catch (Exception e)
+            }
+            catch (Exception e)
             {
                 response.Error = e.Message;
             }
             await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<ResponseMessageDto> LoadFrameCss() {
+        public async Task<ResponseMessageDto> LoadFrameCss()
+        {
             var response = new ResponseMessageDto() { Success = false };
             var websiteid = await loginUserData.GetWebsiteId();
-            try {
+            try
+            {
                 if (websiteid == 0) throw new Exception("未再登入狀態");
                 var data = await db.Websites.Where(e => e.Id == websiteid).FirstOrDefaultAsync();
                 if (data == null) throw new Exception("網站不存在");
@@ -330,7 +344,8 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-        public async Task<ResponseMessageDto> SettingCss(FrameCssDto dto) {
+        public async Task<ResponseMessageDto> SettingCss(FrameCssDto dto)
+        {
             var response = new ResponseMessageDto() { Success = false };
             var websiteid = await loginUserData.GetWebsiteId();
             try

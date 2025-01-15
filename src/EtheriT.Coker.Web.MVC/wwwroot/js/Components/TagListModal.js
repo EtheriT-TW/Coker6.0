@@ -89,7 +89,6 @@ $.fn.extend({
                     }
                 })
                 if ($self.data("tagCheckList").length > 0) {
-
                     $self.data("tagCheckList").forEach(function (item) {
                         if (!!!$self.data("tagList").find((element) => element.FK_TId === item)) {
                             var obj = {};
@@ -111,7 +110,6 @@ $.fn.extend({
         return $self;
     }
 });
-
 function TagListModalInit() {
     TagListModalElementInit();
 
@@ -130,7 +128,7 @@ function TagListModalInit() {
         if (tag_check_list.length > 0) {
             var new_list = tag_check_list.slice();
             tag_list.forEach(function (item) {
-                var index = tag_check_list.indexOf(item.FK_TId)
+                var index = new_list.indexOf(item.FK_TId)
                 if (index > -1) {
                     item.IsDeleted = false;
                     new_list.splice(index, 1)
@@ -157,20 +155,16 @@ function TagListModalInit() {
         tagContentRefresh();
     })
 }
-
 function TagListModalElementInit() {
     $tag = $("#InputTag");
     $btn_tag_save = $(".btn_tag_save");
 }
-
 function getTagListDataGridInstance() {
     return $("#TagList").dxDataGrid("instance");
 }
-
 function TagList_ClearBtnInit(e) {
     tag_clearSelectionButton = e.component;
 }
-
 function TagList_ClearBtnClick() {
     if (tag_list.length > 0) {
         tag_list.forEach(function (item) {
@@ -179,7 +173,6 @@ function TagList_ClearBtnClick() {
     }
     getTagListDataGridInstance().clearSelection();
 }
-
 function TagList_SelectChange(selectedItems) {
     const data = selectedItems.selectedRowsData;
     const $self = $("#TagModal").data("target");
@@ -202,7 +195,6 @@ function TagList_SelectChange(selectedItems) {
         });
     }
 }
-
 function TagDataClear() {
     tag_list = [];
     tag_check_list = [];
@@ -210,7 +202,6 @@ function TagDataClear() {
     $tag.val("")
     getTagListDataGridInstance().clearSelection();
 }
-
 function TagDataSet(datas) {
     var text = ""
     if (datas != null && datas.length > 0) {
@@ -230,7 +221,8 @@ function TagDataSet(datas) {
 }
 function getSelectSort() {
     if (tag_list.length > 0) {
-        var tag_list_str = tag_list.map(item => item.FK_TId).join(',');
+        var temp_list = tag_list.filter(e => e.IsDeleted == false).slice();
+        var tag_list_str = temp_list.map(item => item.FK_TId).join(',');
         return tag_list_str;
     }
 }
@@ -249,7 +241,6 @@ function TagInitSet(datas) {
     tag_clearSelectionButton.option('disabled', !datas.length);
     $btn_tag_save.trigger("click");
 }
-
 function tagContentReady(e) {
     $(e.element).addClass("isReady");
     TagList_dxData = $("#TagList").dxDataGrid("instance");

@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Webs.Dto
     {
         public long Id { get; set; }
         public string Name { get; set; }
+        public string OrgName { get; set; }
         public string Description { get; set; }
         public string Images { get; set; }
         public bool Check { get; set; }

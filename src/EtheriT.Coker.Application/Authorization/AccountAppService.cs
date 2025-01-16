@@ -1209,6 +1209,17 @@ namespace EtheriT.Coker.Application.Authorization
                 var token = await db.Tokens.Where(e => e.UUID == Temp_UUID && e.id == tokenItem.RefreshToken && e.websiteId == WebsiteId).FirstOrDefaultAsync();
                 if (token != null)
                 {
+
+                    if(frontuser.UUID == Guid.Empty)
+                    {
+                        var other_user = await db.FrontUsers.Where(e => e.UUID == token.UUID).FirstOrDefaultAsync();
+                        if (other_user != null)
+                        {
+                            frontuser.UUID = Guid.NewGuid();
+                        }
+                        else frontuser.UUID = token.UUID;
+                    }
+
                     token.UUID = frontuser.UUID;
                     token.UserID = frontuser.FK_User;
                     if (frontuser != null && !string.IsNullOrEmpty(frontuser.Email))
@@ -1235,7 +1246,7 @@ namespace EtheriT.Coker.Application.Authorization
                 db.Account_Logs.Add(account_Log);
                 db.SaveChanges();
 
-                if (frontuser.UUID != Temp_UUID && Temp_UUID != Guid.Empty)
+                if (frontuser.UUID != Temp_UUID && Temp_UUID != Guid.Empty && frontuser.UUID != Guid.Empty)
                 {
                     MappingOldNewUUID mapoldnew = new MappingOldNewUUID
                     {

@@ -1,6 +1,7 @@
 ﻿using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Webs;
+using EtheriT.Coker.Application.Webs.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

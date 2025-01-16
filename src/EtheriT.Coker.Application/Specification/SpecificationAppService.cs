@@ -131,7 +131,7 @@ namespace EtheriT.Coker.Application.Specification
                 output.Error = e.Message;
                 return output;
             }
-        }
+        } 
         public async Task<JsonResult> GetAllTypeList(DataSourceLoadOptions loadOptions)
         {
             try

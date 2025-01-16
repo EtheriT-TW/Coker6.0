@@ -133,10 +133,12 @@ body {
 
     .search-category .input-container.suggestions .search-input {
         border-radius: 4px 4px 0px 0px;
+        border-bottom-color: #b5b5b5;
     }
 
     .search-category .input-container.suggestions:after {
         border-radius: 0px 4px 0px 0px;
+        border-bottom-color: #b5b5b5;
     }
 
 /*focus input取消加粗*/

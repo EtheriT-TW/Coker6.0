@@ -950,7 +950,6 @@ function UploadListAdd(result, $target) {
 
     co.File.ListFile(item);
 }
-
 function UploadPreviewFrameClear($target) {
     var $self = $target.find(".preview_frame");
     $self.find(".default_frame").addClass("d-flex");
@@ -979,7 +978,6 @@ function SortChange(change, minindex, maxindex) {
     })
 
 }
-
 function AddUp(success_text, error_text, target) {
 
     var stock_addup_list = []
@@ -1230,7 +1228,6 @@ function AddUp(success_text, error_text, target) {
         })
     }
 }
-
 function setTotalFile(obj) {
     total_files.forEach((index, item) => {
         obj.data.forEach((index2, item2) => {
@@ -1240,7 +1237,6 @@ function setTotalFile(obj) {
         });
     });
 }
-
 function MoveToContent() {
     if (keyId == 0) $("#ProductContent .card-header .titile").text("新增商品")
     else $("#ProductContent .card-header .titile").text("編輯商品")
@@ -1248,8 +1244,8 @@ function MoveToContent() {
     $("#ProductList").addClass("d-none");
     $("#ProductCanvas").addClass("d-none");
     $("#ProductContent").removeClass("d-none");
+    tagContentRefresh();
 }
-
 function MoveToCanvas() {
     $("#gjs").data("id", keyId);
     setPage(keyId);
@@ -1258,7 +1254,6 @@ function MoveToCanvas() {
     $("#ProductContent").addClass("d-none");
     $("#ProductCanvas").removeClass("d-none");
 }
-
 function BackToList(refresh) {
     $("#TopLine > a").addClass("d-none");
     $("#ProductList").removeClass("d-none");

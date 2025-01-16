@@ -494,12 +494,15 @@ function DirectoryDataInsert($item, result) {
         content.find(".shareBlock > a").remove();
         content.find(".shareBlock").data("href", path);
 
-        if (IsLogin && data.link.indexOf("/product/") > -1) {
-            var html = `<button data-pid="${data.id}" class="btn_fav"></button>`
-            content.find(".shareBlock").after(html);
-            if (content.find(".shareBlock").hasClass("d-none")) content.find(".btn_fav").addClass("d-none")
-            else if (content.find(".shareBlock").hasClass("type5")) content.find(".btn_fav").addClass("type5")
-            FavButtonInit(content.find(".btn_fav"))
+        //console.log("data link: ", data.link)
+        if (typeof (IsLogin) != "undefined") {
+            if (IsLogin && data.link.indexOf("/product/") > -1) {
+                var html = `<button data-pid="${data.id}" class="btn_fav"></button>`
+                content.find(".shareBlock").after(html);
+                if (content.find(".shareBlock").hasClass("d-none")) content.find(".btn_fav").addClass("d-none")
+                else if (content.find(".shareBlock").hasClass("type5")) content.find(".btn_fav").addClass("type5")
+                FavButtonInit(content.find(".btn_fav"))
+            }
         }
 
         $item.find(".catalog").append(content);
@@ -529,36 +532,37 @@ function InsertAdDatat($frame, result) {
     var result_File = result.fileLink[0];
     var filetype = result_File.fileType;
     var html;
-    switch (parseInt(filetype)) {
-        case 1:
-            var $img_frame = $frame.find(".img_frame");
-            $img_frame.find("img").attr("src", result_File.link);
-            $img_frame.find("img").attr("alt", result.title);
-            $img_frame.find("a").attr("href", result.link);
-            $img_frame.find("a").attr("title", "連結至" + result.title + (result.target ? "(開新視窗)" : ""));
-            $img_frame.find("a").attr("target", (result.target ? "_blank" : "_self"));
-            if ($frame.find(".title").length > 0) {
-                $frame.find(".title").text(result.title);
-                $frame.find(".title").removeClass("d-none");
-            }
-            $img_frame.removeClass("d-none");
-            $img_frame.parent().children().not(".img_frame").not(".keep").remove();
-            break;
-        case 2:
-            var $video_frame = $frame.find(".video_frame");
-            $video_frame.find("video").attr("src", result_File.link);
-            $video_frame.find("video").attr("type", result_File.video_Type);
-            $video_frame.removeClass("d-none");
-            $video_frame.parent().children().not(".video_frame").remove();
-            break;
-        case 3:
-            var $YT_frame = $frame.find(".YT_frame");
-            $YT_frame.find("img").attr("src", "https://img.youtube.com/vi/" + result_File.name + "/maxresdefault.jpg");
-            $YT_frame.find("img").attr("alt", result.title);
-            $YT_frame.removeClass("d-none");
-            $YT_frame.parent().find("div").not(".YT_frame").remove();
-            if ($("body").find("#YTPreviewModal").length == 0) {
-                var html = `<div class="modal fade" id="YTPreviewModal" tabindex="-1" aria-labelledby="YTPreviewModal" aria-hidden="true">
+    if (isFront || typeof ($frame.data("init")) == "undefined") {
+        switch (parseInt(filetype)) {
+            case 1:
+                var $img_frame = $frame.find(".img_frame");
+                $img_frame.find("img").attr("src", result_File.link);
+                $img_frame.find("img").attr("alt", result.title);
+                $img_frame.find("a").attr("href", result.link);
+                $img_frame.find("a").attr("title", "連結至" + result.title + (result.target ? "(開新視窗)" : ""));
+                $img_frame.find("a").attr("target", (result.target ? "_blank" : "_self"));
+                if ($frame.find(".title").length > 0) {
+                    $frame.find(".title").text(result.title);
+                    $frame.find(".title").removeClass("d-none");
+                }
+                $img_frame.removeClass("d-none");
+                $img_frame.parent().children().not(".img_frame").not(".keep").remove();
+                break;
+            case 2:
+                var $video_frame = $frame.find(".video_frame");
+                $video_frame.find("video").attr("src", result_File.link);
+                $video_frame.find("video").attr("type", result_File.video_Type);
+                $video_frame.removeClass("d-none");
+                $video_frame.parent().children().not(".video_frame").remove();
+                break;
+            case 3:
+                var $YT_frame = $frame.find(".YT_frame");
+                $YT_frame.find("img").attr("src", "https://img.youtube.com/vi/" + result_File.name + "/maxresdefault.jpg");
+                $YT_frame.find("img").attr("alt", result.title);
+                $YT_frame.removeClass("d-none");
+                $YT_frame.parent().find("div").not(".YT_frame").remove();
+                if ($("body").find("#YTPreviewModal").length == 0) {
+                    var html = `<div class="modal fade" id="YTPreviewModal" tabindex="-1" aria-labelledby="YTPreviewModal" aria-hidden="true">
                                                   <div class="modal-dialog modal-xl">
                                                     <div class="modal-content position-relative bg-black">
                                                         <div class="modal-header">
@@ -568,71 +572,83 @@ function InsertAdDatat($frame, result) {
                                                     </div>
                                                   </div>
                                                 </div>`
-                $("body").prepend(html);
-                $("#YTPreviewModal").find(".modal-content").css("height", "90vh");
+                    $("body").prepend(html);
+                    $("#YTPreviewModal").find(".modal-content").css("height", "90vh");
 
-                document.getElementById('YTPreviewModal').addEventListener('hidden.bs.modal', function (event) {
-                    $("#YTPreviewModal").find(".modal-body").empty();
+                    document.getElementById('YTPreviewModal').addEventListener('hidden.bs.modal', function (event) {
+                        $("#YTPreviewModal").find(".modal-body").empty();
+                    })
+                }
+                $YT_frame.on("click", function () {
+                    var temp_ytlink = `https://www.youtube-nocookie.com/embed/${result_File.name}?&autoplay=1`;
+                    $("#YTPreviewModal").find(".modal-body").append(`<iframe src="${temp_ytlink}" class="w-100 h-100" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`)
+                })
+                $YT_frame.parent().children().not(".YT_frame").remove();
+                break;
+        }
+        if (result.describe != null && $frame.find(".describe").length > 0) {
+            var temp = (result.describe + "").split("\n");
+            var describe;
+            temp.forEach(function (v, i) {
+                if (i == 0) {
+                    describe = v;
+                } else {
+                    describe += `<br/>${v}`;
+                }
+            });
+            $frame.find(".describe").append(describe);
+        }
+        if ($frame.find(".tag").length > 0) {
+            var tags = "";
+            for (var i = 0; i < result.tagDatas.length; i++) {
+                var taglink = typeof (OrgName) == "undefined" ? "" : `/${OrgName}/Search/Get/${result.tagDatas[i].searchId}/${result.tagDatas[i].title}`;
+                tags += `<a href="${taglink}" title="連結至：${result.tagDatas[i].title}" class="pe-2">#${result.tagDatas[i].title}</a>`;
+            }
+            $frame.find(".tag").append(tags);
+        }
+
+        if (isFront) {
+            Advertise.ActivityExposure(result.id).done(function (result) {
+                //console.log(result)
+            })
+        }
+
+        $frame.find(".video_frame").find("video").on("play", function () {
+            var $this = $(this);
+            if (!$this.hasClass("playing")) {
+                $(this).addClass("playing")
+                Advertise.ActivityClick(result.id).done(function (result) {
+                    //console.log(result)
                 })
             }
-            $YT_frame.on("click", function () {
-                var temp_ytlink = `https://www.youtube-nocookie.com/embed/${result_File.name}?&autoplay=1`;
-                $("#YTPreviewModal").find(".modal-body").append(`<iframe src="${temp_ytlink}" class="w-100 h-100" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`)
-            })
-            $YT_frame.parent().children().not(".YT_frame").remove();
-            break;
-    }
-    if (result.describe != null && $frame.find(".describe").length > 0) {
-        var temp = (result.describe + "").split("\n");
-        var describe;
-        temp.forEach(function (v, i) {
-            if (i == 0) {
-                describe = v;
-            } else {
-                describe += `<br/>${v}`;
+        })
+
+        $frame.find(".video_frame").find("video").on("ended", function () {
+            var $this = $(this);
+            if ($this.hasClass("playing")) {
+                $(this).removeClass("playing")
+            }
+        })
+
+        $frame.on("click", function () {
+            if ($frame.find(".video_frame").length == 0) {
+                Advertise.ActivityClick(result.id).done(function (result) {
+                    //console.log(result)
+                })
             }
         });
-        $frame.find(".describe").append(describe);
-    }
-    if ($frame.find(".tag").length > 0) {
-        var tags = "";
-        for (var i = 0; i < result.tagDatas.length; i++) {
-            var taglink = typeof (OrgName) == "undefined" ? "" : `/${OrgName}/Search/Get/${result.tagDatas[i].searchId}/${result.tagDatas[i].title}`;
-            tags += `<a href="${taglink}" title="連結至：${result.tagDatas[i].title}" class="pe-2">#${result.tagDatas[i].title}</a>`;
-        }
-        $frame.find(".tag").append(tags);
-    }
 
-    if (isFront) {
-        Advertise.ActivityExposure(result.id).done(function (result) {
-            //console.log(result)
+        $frame.find(".detectLang").each(function () {
+            var $text = $(this);
+            var text_html = $text.html();
+
+            const cutting_text = text_html
+                .replace(/([a-zA-Z]+)/g, '<span class="english">$1</span>');
+
+            $text.html(cutting_text)
         })
+        $frame.data("init", true)
     }
-
-    $frame.find(".video_frame").find("video").on("play", function () {
-        var $this = $(this);
-        if (!$this.hasClass("playing")) {
-            $(this).addClass("playing")
-            Advertise.ActivityClick(result.id).done(function (result) {
-                //console.log(result)
-            })
-        }
-    })
-
-    $frame.find(".video_frame").find("video").on("ended", function () {
-        var $this = $(this);
-        if ($this.hasClass("playing")) {
-            $(this).removeClass("playing")
-        }
-    })
-
-    $frame.on("click", function () {
-        if ($frame.find(".video_frame").length == 0) {
-            Advertise.ActivityClick(result.id).done(function (result) {
-                //console.log(result)
-            })
-        }
-    });
 
     return $frame;
 }

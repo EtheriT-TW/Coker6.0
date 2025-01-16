@@ -185,17 +185,21 @@ i.fa-chevron-right {
     font-size: 1rem;
 }
 
+    #Product > .content > .specification > .collapsing {
+        height: 6rem;
+    }
+
     #Product > .content > .specification > .collapse:not(.show) {
         display: block;
         height: 6rem;
         overflow: hidden;
     }
 
-    #Product > .content > .specification > ul {
+    #Product > .content > .specification > div > ul {
         list-style: none;
     }
 
-        #Product > .content > .specification > ul > li {
+        #Product > .content > .specification > div > ul > li {
             line-height: 1.5rem;
         }
 
@@ -203,11 +207,15 @@ i.fa-chevron-right {
         background-color: var(--gray-light);
     }
 
-.icon_down::after {
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-    content: " \f107";
-}
+        #Product > .content > .specification > .btn_detailed::after {
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            content: " \f107";
+        }
+
+    #Product > .content > .specification > .collapse.show ~ .btn_detailed::after {
+        content: " \f106";
+    }
 
 #Product > .content > .pro_tc {
     color: var(--gray-text);

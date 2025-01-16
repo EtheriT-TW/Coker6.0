@@ -126,7 +126,7 @@ function ElementInit() {
     $pro_name = $prod_content.find('.pro_title');
     $pro_itemNo = $prod_content.find('.pro_itemNo');
     $pro_introduce = $prod_content.find('.introduce');
-    $pro_specification = $prod_content.find('.specification').children("ul");
+    $pro_specification = $("#SpecCollapse > ul").first();
     $pro_price = $prod_content.find(".ori_price");
     $pro_discount = $prod_content.find(".discount");
     $btn_detailed = $prod_content.find(".btn_detailed");
@@ -144,10 +144,10 @@ function PageDefaultSet(result) {
     $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")
     $pro_specification.append("<li>" + result.description.replaceAll("\n", "</li><li>") + "</li>")
     var spec_height = 0;
-    $pro_specification.children("li").each(function () {
+    $pro_specification.children("li").each(function (index) {
         spec_height += $(this).height();
     })
-    if (spec_height > $pro_specification.height()) {
+    if (spec_height > 96) {
         $btn_detailed.removeClass("d-none")
     }
     if (result.html != null && result.html.trim() != "") $("#ProductDescription > Content").removeClass("d-none").html($.htmlDecode(result.html));

@@ -194,7 +194,7 @@ namespace EtheriT.Coker.Application.Product
                 output.Success = false;
                 output.Error = e.Message;
             }
-
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
         public async Task<ResponseMessageDto> StockAddUp(long Pid, List<ProductStockDto> dto)

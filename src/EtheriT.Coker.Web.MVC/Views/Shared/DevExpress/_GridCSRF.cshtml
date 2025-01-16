@@ -54,7 +54,7 @@
         // 判斷是否為過濾輸入框
         function isFilterInput(element) {
             return element.classList.contains('dx-texteditor-input') &&
-                element.closest('.dx-datagrid'); // 確保是 dxDataGrid 的範圍
+                element.closest('.dx-datagrid-filter-row'); // 確保是 dxDataGrid filter的範圍
         }
 
         // 延遲觸發過濾邏輯

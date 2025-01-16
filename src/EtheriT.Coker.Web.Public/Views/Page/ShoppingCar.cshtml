@@ -32,107 +32,107 @@
             </div>
             <div class="modal-body text-center">
                 @* @(Html.DevExtreme().DataGrid<RecipientsDto>()
-                    .DataSource(d => d.RemoteController().Key("Id")
-                    .LoadUrl("/api/Recipients/GetAllList").LoadMethod("Get")
-                    )
-                    .ID("RecipientsList")
-                    .Selection(s =>
-                    s.Mode(SelectionMode.Single).ShowCheckBoxesMode(GridSelectionShowCheckBoxesMode.Always)
-                    )
-                    .RemoteOperations(true)
-                    .ColumnHidingEnabled(false)
-                    .ShowBorders(true)
-                    .FilterRow(filterRow => filterRow
-                    .Visible(true)
-                    .ApplyFilter(GridApplyFilterMode.Auto)
-                    )
-                    .SearchPanel(searchPanel => searchPanel
-                    .Visible(true)
-                    .Placeholder("請輸入要搜尋的資料")
-                    )
-                    .Editing(editing =>
-                    {
-                        editing.Mode(GridEditMode.Row);
-                        editing.AllowDeleting(true);
-                        editing.UseIcons(true);
-                    })
-                    .Columns(c =>
-                    {
-                        c.AddFor(e => e.Id).Caption("編號").Visible(false).AllowEditing(false).SortOrder(SortOrder.Desc);
-                        c.AddFor(e => e.Name).Caption("姓名").AllowEditing(false);
-                        c.AddFor(e => e.Email).Caption("電子郵件").AllowEditing(false);
-                        c.AddFor(e => e.Address).Caption("地址").AllowEditing(false);
-                        c.AddFor(e => e.Telephone).Caption("行動電話").AllowEditing(false);
-                        c.AddFor(e => e.Cellphone).Caption("聯絡電話").AllowEditing(false);
-                        c.Add()
-                        .Type(GridCommandColumnType.Buttons)
-                        .Buttons(b =>
-                        {
-                            b.Add().Name("delete").OnClick("RecipientsList_DeleteButtonClicked");
-                        });
-                    })
-                    .Toolbar(toolbar =>
-                    {
-                        toolbar.Items(i =>
-                        {
-                            i.Add()
-                        .Name(DataGridToolbarItem.SearchPanel)
-                        .ShowText(ToolbarItemShowTextMode.Always)
-                        .Location(ToolbarItemLocation.After);
-                        });
-                    })
-                    //.OnSelectionChanged("RecipientsList_SelectChange")
-                    .OnContentReady("RecipientsList_ContentReady")
-                    .Paging(paging => paging.PageSize(10))
-                    ) *@
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col" class="fw-normal">選擇</th>
-                            <th scope="col" class="fw-normal">姓名</th>
-                            <th scope="col" class="fw-normal">郵遞區號</th>
-                            <th scope="col" class="fw-normal">地址</th>
-                            <th scope="col" class="fw-normal">聯絡電話</th>
-                            <th scope="col" class="fw-normal">行動電話</th>
-                            <th scope="col" class="fw-normal">刪除</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th scope="row" class="fw-normal">
-                                <label class="d-none" for="radio_recipient1">選擇</label>
-                                <input id="radio_recipient1" class="form-check-input" type="radio" name="RecipientDataRadio" checked>
-                            </th>
-                            <td class="fw-normal">姓○</td>
-                            <td class="fw-normal">806</td>
-                            <td class="fw-normal">地址資料***</td>
-                            <td class="fw-normal">07-1234***</td>
-                            <td class="fw-normal">0912-******</td>
-                            <td class="fw-normal">
-                                <button type="button" class="btn_delete_recipient bg-transparent border-0">
-                                    <i class="fa-solid fa-xmark"></i>
-                                    <span class="d-none">送出</span>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row" class="fw-normal">
-                                <label class="d-none" for="radio_recipient2">選擇</label>
-                                <input id="radio_recipient2" class="form-check-input" type="radio" name="RecipientDataRadio">
-                            </th>
-                            <td class="fw-normal">姓○</td>
-                            <td class="fw-normal">806</td>
-                            <td class="fw-normal">地址資料***</td>
-                            <td class="fw-normal">07-1234***</td>
-                            <td class="fw-normal">0912-******</td>
-                            <td class="fw-normal">
-                                <button type="button" class="btn_delete_recipient bg-transparent border-0">
-                                    <i class="fa-solid fa-xmark"></i>
-                                    <span class="d-none">送出</span>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
+                .DataSource(d => d.RemoteController().Key("Id")
+                .LoadUrl("/api/Recipients/GetAllList").LoadMethod("Get")
+                )
+                .ID("RecipientsList")
+                .Selection(s =>
+                s.Mode(SelectionMode.Single).ShowCheckBoxesMode(GridSelectionShowCheckBoxesMode.Always)
+                )
+                .RemoteOperations(true)
+                .ColumnHidingEnabled(false)
+                .ShowBorders(true)
+                .FilterRow(filterRow => filterRow
+                .Visible(true)
+                .ApplyFilter(GridApplyFilterMode.Auto)
+                )
+                .SearchPanel(searchPanel => searchPanel
+                .Visible(true)
+                .Placeholder("請輸入要搜尋的資料")
+                )
+                .Editing(editing =>
+                {
+                editing.Mode(GridEditMode.Row);
+                editing.AllowDeleting(true);
+                editing.UseIcons(true);
+                })
+                .Columns(c =>
+                {
+                c.AddFor(e => e.Id).Caption("編號").Visible(false).AllowEditing(false).SortOrder(SortOrder.Desc);
+                c.AddFor(e => e.Name).Caption("姓名").AllowEditing(false);
+                c.AddFor(e => e.Email).Caption("電子郵件").AllowEditing(false);
+                c.AddFor(e => e.Address).Caption("地址").AllowEditing(false);
+                c.AddFor(e => e.Telephone).Caption("行動電話").AllowEditing(false);
+                c.AddFor(e => e.Cellphone).Caption("聯絡電話").AllowEditing(false);
+                c.Add()
+                .Type(GridCommandColumnType.Buttons)
+                .Buttons(b =>
+                {
+                b.Add().Name("delete").OnClick("RecipientsList_DeleteButtonClicked");
+                });
+                })
+                .Toolbar(toolbar =>
+                {
+                toolbar.Items(i =>
+                {
+                i.Add()
+                .Name(DataGridToolbarItem.SearchPanel)
+                .ShowText(ToolbarItemShowTextMode.Always)
+                .Location(ToolbarItemLocation.After);
+                });
+                })
+                //.OnSelectionChanged("RecipientsList_SelectChange")
+                .OnContentReady("RecipientsList_ContentReady")
+                .Paging(paging => paging.PageSize(10))
+                ) *@
+                @* <table class="table">
+                <thead>
+                <tr>
+                <th scope="col" class="fw-normal">選擇</th>
+                <th scope="col" class="fw-normal">姓名</th>
+                <th scope="col" class="fw-normal">郵遞區號</th>
+                <th scope="col" class="fw-normal">地址</th>
+                <th scope="col" class="fw-normal">聯絡電話</th>
+                <th scope="col" class="fw-normal">行動電話</th>
+                <th scope="col" class="fw-normal">刪除</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                <th scope="row" class="fw-normal">
+                <label class="d-none" for="radio_recipient1">選擇</label>
+                <input id="radio_recipient1" class="form-check-input" type="radio" name="RecipientDataRadio" checked>
+                </th>
+                <td class="fw-normal">姓○</td>
+                <td class="fw-normal">806</td>
+                <td class="fw-normal">地址資料***</td>
+                <td class="fw-normal">07-1234***</td>
+                <td class="fw-normal">0912-******</td>
+                <td class="fw-normal">
+                <button type="button" class="btn_delete_recipient bg-transparent border-0">
+                <i class="fa-solid fa-xmark"></i>
+                <span class="d-none">送出</span>
+                </button>
+                </td>
+                </tr>
+                <tr>
+                <th scope="row" class="fw-normal">
+                <label class="d-none" for="radio_recipient2">選擇</label>
+                <input id="radio_recipient2" class="form-check-input" type="radio" name="RecipientDataRadio">
+                </th>
+                <td class="fw-normal">姓○</td>
+                <td class="fw-normal">806</td>
+                <td class="fw-normal">地址資料***</td>
+                <td class="fw-normal">07-1234***</td>
+                <td class="fw-normal">0912-******</td>
+                <td class="fw-normal">
+                <button type="button" class="btn_delete_recipient bg-transparent border-0">
+                <i class="fa-solid fa-xmark"></i>
+                <span class="d-none">送出</span>
+                </button>
+                </td>
+                </tr>
+                </tbody>
                 </table> *@
             </div>
             <div class="modal-footer justify-content-center border-0">
@@ -170,10 +170,6 @@
                 <div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
                     <div class="fs-5 my-2">購物明細</div>
                 </div>
-
-                @*  <div id="ECPayPayment"></div>
-                <script src="https://code.jquery.com/jquery-3.5.1.min.js" nonce="@ViewBag.Nonce"></script>
-                <script src="https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116" nonce="@ViewBag.Nonce"></script> *@
 
                 <div class="card-body pt-5 d-none">
                     <div class="list_title row d-none d-lg-flex">

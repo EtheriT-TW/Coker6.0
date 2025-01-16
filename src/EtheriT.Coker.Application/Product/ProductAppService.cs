@@ -34,6 +34,8 @@ using Microsoft.CodeAnalysis.CSharp;
 using EtheriT.Coker.Application.Shared.Dto.Favorites;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using EtheriT.Coker.Application.Shared.Processor;
+using EtheriT.Coker.Application.Common;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -49,6 +51,8 @@ namespace EtheriT.Coker.Application.Product
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly ISpecificationAppService specificationAppService;
         private readonly ITokenAppService tokenAppService;
+        private readonly IHtmlProcessor htmlProcessor;
+        private readonly StringHandler stringHandler;
         private readonly ImportAppService importAppService;
         public ProductAppService(
             CokerDbContext db,
@@ -61,6 +65,8 @@ namespace EtheriT.Coker.Application.Product
             ISpecificationAppService specificationAppService,
             IWebMenuApplication webMenuApplication,
             ITokenAppService tokenAppService,
+            IHtmlProcessor htmlProcessor,
+            StringHandler stringHandler,
             ImportAppService importAppService
         )
         {
@@ -74,6 +80,7 @@ namespace EtheriT.Coker.Application.Product
             this.specificationAppService = specificationAppService;
             this.webMenuApplication = webMenuApplication;
             this.tokenAppService = tokenAppService;
+            this.stringHandler = stringHandler;
             this.mapper = mapper;
         }
         /* Add & Update */
@@ -2260,9 +2267,9 @@ namespace EtheriT.Coker.Application.Product
                     {
                         result.Id = (int)prod.Id;
                         result.Title = prod.Title;
-                        result.Description = prod.Description;
-                        result.Html = prod.Html;
-                        result.Css = prod.Css;
+                        result.Description = !string.IsNullOrEmpty(prod.Description)? prod.Description :
+                                                !string.IsNullOrEmpty(prod.Introduction) ? prod.Introduction : htmlProcessor.text(stringHandler.HtmlDecode(prod.Html));
+                        result.Css = prod.Css??"";
                         result.Html = result.Html == null ? "" : result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
                     }
                 }

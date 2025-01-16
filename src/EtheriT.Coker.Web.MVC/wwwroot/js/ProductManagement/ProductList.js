@@ -262,7 +262,6 @@ function PageReady() {
         })
     })
 }
-
 function ElementInit() {
     $name = $("#InputName");
     $name_count = $("#ProductForm > .name .name_count");
@@ -314,7 +313,6 @@ function ElementInit() {
         $(".alert_text").addClass("d-none");
     })
 }
-
 function FormDataClear() {
     TechCertDataClear();
     TagDataClear();
@@ -355,12 +353,10 @@ function FormDataClear() {
     $(".data_upload > ul").children(".upload_list").remove();
     total_files = [];
 }
-
 function contentReady(e) {
     product_list = e;
     HashDataEdit();
 }
-
 function hashChange(e) {
     if (!!e) {
         HashDataEdit();
@@ -369,7 +365,6 @@ function hashChange(e) {
         console.log("HashChange錯誤")
     }
 }
-
 function HashDataEdit() {
     FormDataClear();
     if (window.location.hash != "") {
@@ -408,20 +403,17 @@ function HashDataEdit() {
         BackToList(false);
     }
 }
-
 function editButtonClicked(e) {
     MoveToContent();
     keyId = e.row.key;
     window.location.hash = keyId
 }
-
 function paletteButtonClicked(e) {
     $("#gjs").data("id", e.row.key);
     setPage(e.row.key);
     keyId = e.row.key + "-1";
     window.location.hash = keyId;
 }
-
 function FormDataSet(result) {
     //console.log(result)
     //$("#ProductContent .card-header .titile").append(`編輯商品<span class="d-md-flex d-none">－${result.title}</span>`);
@@ -436,7 +428,6 @@ function FormDataSet(result) {
     result.files.forEach(file => {
         UploadListAdd(file, $("#ProdFiles"));
     })
-
 
     result.stocks.forEach(function (stock) {
         stock.prices.forEach(function (price) {
@@ -487,7 +478,6 @@ function FormDataSet(result) {
         endDate != null && $picker.data('daterangepicker').setEndDate(endDate);
     }
 }
-
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
         co.Product.Delete.Prod(e.row.key).done(function () {
@@ -497,7 +487,6 @@ function deleteButtonClicked(e) {
         });
     });
 }
-
 function SpecPriceAdd(result) {
     spec_price_num += 1;
 
@@ -542,7 +531,6 @@ function SpecPriceAdd(result) {
         $(this).val($(this).val() < 0 ? 0 : $(this).val())
     });
 }
-
 function SpecPriceSave() {
     var temp_list = []
     var save_success = true
@@ -585,7 +573,6 @@ function SpecPriceSave() {
         priceModal.hide();
     }
 }
-
 function SpecAdd(result) {
     spec_num += 1;
     var item = $($("#TemplateSpecification").html()).clone();
@@ -740,11 +727,10 @@ function SpecAdd(result) {
             })
         }
     })
-    $("#Spec_Frame .list").append(item);
 
-    $spec_select = $(".spec_select")
-    $spec_select.each(function () {
+    item.find(".spec_select").each(function () {
         $self = $(this);
+        var $spec_input = $self.siblings(".input_spec");
         $self.on("change", function () {
             var $spec_type = $(this);
             var $spec_bro = $spec_type.parents(".spec").first().siblings(".spec");
@@ -779,35 +765,12 @@ function SpecAdd(result) {
                 }
             }
         })
-
-        var $spec_input = $self.siblings(".input_spec");
-
-        $spec_input.blur(function () {
-            var $option; var id;
-            if ($spec_input.val() != "") {
-                id = 0;
-                $spec_input.each(function () {
-                    $self_input = $(this);
-                    $self_input.siblings("datalist").children("option").each(function () {
-                        $option = $(this);
-                        if ($option.val() == $self_input.val()) {
-                            id = $option.data("sid");
-                        }
-                    })
-                })
-                if (id == 0) {
-                    co.Spec.SpecAddUp({ FK_Tid: $spec_input.prev("select").val(), Title: $spec_input.val(), }).done(function (result) {
-                        if (result.success) {
-                            co.Spec.GetPickSpecList().done(function (pick_result) {
-                                spec_pick_list = pick_result;
-                                $self_input.siblings("datalist").append(`<option value="${$spec_input.val()}" data-sid="${result.message}"></option>`)
-                            });
-                        }
-                    });
-                }
-            }
+        $self.siblings(".input_spec").blur(function () {
+            SpecBlurFunction($(this));
         })
     })
+
+    $("#Spec_Frame .list").append(item);
 
     $price = $(".input_price");
     $stock_number = $(".input_stock_number");
@@ -818,7 +781,31 @@ function SpecAdd(result) {
         $(this).val($(this).val() < 0 ? 0 : $(this).val())
     });
 }
-
+function SpecBlurFunction($spec) {
+    var $option; var id;
+    if ($spec.val() != "") {
+        id = 0;
+        $spec.each(function () {
+            $self_input = $(this);
+            $self_input.siblings("datalist").children("option").each(function () {
+                $option = $(this);
+                if ($option.val() == $self_input.val()) {
+                    id = $option.data("sid");
+                }
+            })
+        })
+        if (id == 0) {
+            co.Spec.SpecAddUp({ FK_Tid: $spec.prev("select").val(), Title: $spec.val() }).done(function (result) {
+                if (result.success) {
+                    co.Spec.GetPickSpecList().done(function (pick_result) {
+                        spec_pick_list = pick_result;
+                        $self_input.siblings("datalist").append(`<option value="${$spec.val()}" data-sid="${result.message}"></option>`)
+                    });
+                }
+            });
+        }
+    }
+}
 function ISpecRepect() {
     var obj = []
     var temp_list = []
@@ -837,7 +824,6 @@ function ISpecRepect() {
     })
     return isRepect;
 }
-
 function UploadListAdd(result, $target) {
     var item = $($("#TemplateUploadList").html()).clone();
     var item_serno = item.find(".ser_no"),

@@ -496,13 +496,9 @@ namespace EtheriT.Coker.Application.Authorization
 
                 if (frontuser == null)
                 {
-
-                    var sameuuid = await db.FrontUsers.Where(e => e.UUID == UUID).FirstOrDefaultAsync() != null;
-                    if (sameuuid) UUID = Guid.NewGuid();
-
                     frontuser = mapper.Map<FrontUser>(dto);
                     frontuser.Password = passwordHasher.HashPassword(dto.Password);
-                    frontuser.UUID = UUID;
+                    frontuser.UUID = Guid.NewGuid();
                     frontuser.Status = (int)UserStatusEnum.未開通;
                     frontuser.OpenID = Guid.NewGuid();
                     frontuser.OpenIDSendDate = DateTime.Now;
@@ -576,7 +572,6 @@ namespace EtheriT.Coker.Application.Authorization
 
                         db.SaveChanges();
                     }
-
                 }
                 else
                 {
@@ -1248,14 +1243,18 @@ namespace EtheriT.Coker.Application.Authorization
 
                 if (frontuser.UUID != Temp_UUID && Temp_UUID != Guid.Empty && frontuser.UUID != Guid.Empty)
                 {
-                    MappingOldNewUUID mapoldnew = new MappingOldNewUUID
+                    var other_mapping = await db.MappingOldNewUUID.Where(e=> e.UserUUID == Temp_UUID || e.TempUUID == Temp_UUID).FirstOrDefaultAsync();
+                    if (other_mapping == null)
                     {
-                        TempUUID = Temp_UUID,
-                        UserUUID = frontuser.UUID
-                    };
-                    db.MappingOldNewUUID.Add(mapoldnew);
-                    await loginUserData.SaveChanges(mapoldnew);
-                    await shoppingCartAppService.UpdateUUID(frontuser.UUID, Temp_UUID);
+                        MappingOldNewUUID mapoldnew = new MappingOldNewUUID
+                        {
+                            TempUUID = Temp_UUID,
+                            UserUUID = frontuser.UUID
+                        };
+                        db.MappingOldNewUUID.Add(mapoldnew);
+                        await loginUserData.SaveChanges(mapoldnew);
+                        await shoppingCartAppService.UpdateUUID(frontuser.UUID, Temp_UUID);
+                    }
                 }
 
                 output.Success = true;

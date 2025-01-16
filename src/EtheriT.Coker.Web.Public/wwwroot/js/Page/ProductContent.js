@@ -652,6 +652,8 @@ function SwitchPage() {
                     title: result[1].value
                 })
             }
+        } else {
+            $('#SwitchPage').remove();
         }
     });
 } 

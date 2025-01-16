@@ -85,9 +85,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<UserTagStatistic> UserTagStatistics { get; set; }
         public DbSet<UserActivityTags> UserActivityTags { get; set; }
         public DbSet<UserGroupingDetail> UserGroupingDetails { get; set; }
-        
+		public DbSet<FlowSize> FlowSizes { get; set; }
 
-        public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
+
+		public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
 
         }
@@ -393,7 +394,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(f => f.Website).WithMany(u => u.Files).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
-            modelBuilder.Entity<FileBind>(o =>
+			modelBuilder.Entity<FlowSize>(o =>
+			{
+				o.HasOne(f => f.Website).WithMany(u => u.flowSizes).HasForeignKey(f => f.FK_WebsiteId);
+                o.HasIndex(e => e.actionTime);
+			});
+			modelBuilder.Entity<FileBind>(o =>
             {
                 o.HasOne(b => b.fileUpload).WithMany(f => f.fileBinds).HasForeignKey(f => f.FK_FileUploadId);
                 o.HasKey(b => b.Guid);
@@ -515,7 +521,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
 
-            new SeedHelper(modelBuilder).SeedHost();
+			new SeedHelper(modelBuilder).SeedHost();
         }
     }
 }

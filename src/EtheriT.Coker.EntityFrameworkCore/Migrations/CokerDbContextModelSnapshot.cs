@@ -865,6 +865,38 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.ToTable("FileUploads");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.FlowSize", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RequestSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ResponseSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Total")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("actionTime")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_WebsiteId");
+
+                    b.HasIndex("actionTime");
+
+                    b.ToTable("FlowSizes");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.FrontUser", b =>
                 {
                     b.Property<long>("Id")
@@ -5599,6 +5631,17 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.FlowSize", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
+                        .WithMany("flowSizes")
+                        .HasForeignKey("FK_WebsiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Website");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Html_Content", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
@@ -6426,6 +6469,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Users");
 
                     b.Navigation("WebMenus");
+
+                    b.Navigation("flowSizes");
 
                     b.Navigation("jsonObjects");
 

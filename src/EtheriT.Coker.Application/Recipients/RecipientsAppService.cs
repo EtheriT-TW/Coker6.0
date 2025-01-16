@@ -60,9 +60,9 @@ namespace EtheriT.Coker.Application.Recipients
                 var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                error = e.Message;
+                error = ex.Message;
             }
             return new JsonResult(new { error }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }

@@ -62,10 +62,15 @@ using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.ThirdParty;
 using EtheriT.Coker.Application.Shared.Recipients;
 using EtheriT.Coker.Application.Recipients;
+using Serilog;
+using Serilog.Filters;
+using static System.Formats.Asn1.AsnWriter;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
 var configuration = provider.GetRequiredService<IConfiguration>();
+
+
 
 builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Error);
 builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Error);
@@ -242,7 +247,27 @@ builder.Services.AddHttpClient("ThirdPartyClient_ECPay", client =>
     client.BaseAddress = new Uri(configuration.GetValue<string>("ThirdParty:ECPay:PaymentUrl"));
 });
 
+
+// 配置 Serilog
+string logPath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\logs\\{DateTime.Now.Date.ToString("yyyy-MM-dd")}.txt";
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information() // 設定最低記錄層級
+    .WriteTo.Console()          // 在控制台顯示日誌
+    .WriteTo.File(logPath) // 輸出到檔案
+    .Filter.ByIncludingOnly(logEvent =>
+        logEvent.MessageTemplate.Text.Contains("IP:") &&
+        logEvent.MessageTemplate.Text.Contains("URL:") &&
+        logEvent.MessageTemplate.Text.Contains("User-Agent:") &&
+        logEvent.MessageTemplate.Text.Contains("Request Size:") &&
+        logEvent.MessageTemplate.Text.Contains("Response Size:"))
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
 var app = builder.Build();
+
+// 中間件來記錄流量
+app.UseMiddleware<FlowSizeLogMiddleware>();
 
 if (!app.Environment.IsProduction())
 {

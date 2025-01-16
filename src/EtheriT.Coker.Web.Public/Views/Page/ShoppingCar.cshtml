@@ -23,9 +23,6 @@
 <link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
 <script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()
-<div id="PostCSS" class="d-none">
-    @HttpUtility.HtmlEncode(Model.PageData.Css)
-</div>
 <div id="RecipientModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -37,7 +34,6 @@
                 @* @(Html.DevExtreme().DataGrid<RecipientsDto>()
                     .DataSource(d => d.RemoteController().Key("Id")
                     .LoadUrl("/api/Recipients/GetAllList").LoadMethod("Get")
-                    .OnBeforeSend("onBeforeSend")
                     )
                     .ID("RecipientsList")
                     .Selection(s =>
@@ -85,7 +81,7 @@
                         .Location(ToolbarItemLocation.After);
                         });
                     })
-                    .OnSelectionChanged("RecipientsList_SelectChange")
+                    //.OnSelectionChanged("RecipientsList_SelectChange")
                     .OnContentReady("RecipientsList_ContentReady")
                     .Paging(paging => paging.PageSize(10))
                     ) *@
@@ -137,7 +133,7 @@
                             </td>
                         </tr>
                     </tbody>
-                </table>
+                </table> *@
             </div>
             <div class="modal-footer justify-content-center border-0">
                 <button type="button" class="text-white border-0 px-5 py-1" data-bs-dismiss="modal">確定</button>

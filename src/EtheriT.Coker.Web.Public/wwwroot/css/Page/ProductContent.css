@@ -307,7 +307,7 @@ input:disabled + .btn_radio {
 }
 
     #Product > .content > .btn_addToCar::after {
-        content: '我要購買';
+        content: '加入購物車';
     }
 
     #Product > .content > .btn_addToCar.close {

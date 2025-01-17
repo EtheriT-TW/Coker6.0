@@ -67,6 +67,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     {
                         Title = website_data[0].Title,
                         LogoImageUrl = website_data[0].Logo?.Replace("/upload", uploadPath),
+                        HomeLink = childOrgNames.Count > 0 ? $"/{website_data[0].OrgName}/" : "/",
+                        HomeTarget = false, 
                         //LogoImageUrl = "/upload/logo.png",
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                         marqueeModels = new List<MarqueeDisplayDto> { },
@@ -104,95 +106,87 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     }
                     webmenus_data.ForEach(data_f =>
                     {
-                        if (data_f.PageType == (int)PageTypeEnum.首頁)
+                        if (data_f.Children != null)
                         {
-                            headerViewModel.HomeLink = $"/{website_data[0].OrgName}/home";
-                            headerViewModel.HomeTarget = false;
-                        }
-                        else
-                        {
-                            if (data_f.Children != null)
+                            var secitemModels = new List<MenuItem.MenuItemModel> { };
+                            int length = 0;
+                            data_f.Children.ForEach(data_s =>
                             {
-                                var secitemModels = new List<MenuItem.MenuItemModel> { };
-                                int length = 0;
-                                data_f.Children.ForEach(data_s =>
+                                if (data_s.Children != null)
                                 {
-                                    if (data_s.Children != null)
+                                    var thirditemModels = new List<MenuItem.MenuItemModel> { };
+                                    length += data_s.Children.Count();
+                                    data_s.Children.ForEach(data_t =>
                                     {
-                                        var thirditemModels = new List<MenuItem.MenuItemModel> { };
-                                        length += data_s.Children.Count();
-                                        data_s.Children.ForEach(data_t =>
+                                        thirditemModels.Add(new MenuItem.MenuItemModel
                                         {
-                                            thirditemModels.Add(new MenuItem.MenuItemModel
-                                            {
-                                                Title = data_t.Title,
-                                                Link = data_t.RouterName != "" ? $"/{website_data[0].OrgName}/{data_t.RouterName}" : data_t.LinkUrl != "" ? data_t.LinkUrl : "",
-                                                Target = data_t.Target,
-                                                Icon = data_t.icon != "empty" ? data_t.icon.StartsWith("IconId", true, null) ? "" : data_t.icon.Split(' ')[1] : "",
-                                                IconClass = data_t.icon != "empty" ? data_t.icon.StartsWith("IconId", true, null) ? "" : data_t.icon.Split(' ')[0] : "",
-                                                ImageIcon = data_t.IconImage != null ? siteId == defaultData.Id ? data_t.IconImage : data_t.IconImage.Replace("upload", $"upload/{defaultData.OrgName}") : "",
-                                            }); ;
-                                        });
-                                        secitemModels.Add(new MenuItem.MenuItemModel
-                                        {
-                                            Title = data_s.Title,
-                                            Link = data_s.RouterName != "" ? $"/{website_data[0].OrgName}/{data_s.RouterName}" : data_s.LinkUrl != "" ? data_s.LinkUrl : "",
-                                            Target = data_s.Target,
-                                            Icon = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[1] : "",
-                                            IconClass = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[0] : "",
-                                            ImageIcon = data_s.IconImage != null ? siteId == defaultData.Id ? data_s.IconImage : data_s.IconImage.Replace("upload", $"upload/{defaultData.OrgName}") : "",
-                                            menuItemModels = thirditemModels,
-                                        });
-                                    }
-                                    else
+                                            Title = data_t.Title,
+                                            Link = data_t.RouterName != "" ? $"/{website_data[0].OrgName}/{data_t.RouterName}" : data_t.LinkUrl != "" ? data_t.LinkUrl : "",
+                                            Target = data_t.Target,
+                                            Icon = data_t.icon != "empty" ? data_t.icon.StartsWith("IconId", true, null) ? "" : data_t.icon.Split(' ')[1] : "",
+                                            IconClass = data_t.icon != "empty" ? data_t.icon.StartsWith("IconId", true, null) ? "" : data_t.icon.Split(' ')[0] : "",
+                                            ImageIcon = data_t.IconImage != null ? siteId == defaultData.Id ? data_t.IconImage : data_t.IconImage.Replace("upload", $"upload/{defaultData.OrgName}") : "",
+                                        }); ;
+                                    });
+                                    secitemModels.Add(new MenuItem.MenuItemModel
                                     {
-                                        secitemModels.Add(new MenuItem.MenuItemModel
-                                        {
-                                            Title = data_s.Title,
-                                            Link = data_s.RouterName != "" ? $"/{website_data[0].OrgName}/{data_s.RouterName}" : data_s.LinkUrl != "" ? data_s.LinkUrl : "",
-                                            Target = data_s.Target,
-                                            Icon = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[1] : "",
-                                            IconClass = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[0] : "",
-                                            ImageIcon = data_s.IconImage != null ? siteId == defaultData.Id ? data_s.IconImage : data_s.IconImage.Replace("upload", $"upload/{defaultData.OrgName}") : "",
-                                        });
-                                    }
-                                });
-                                headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
-                                {
-                                    Title = data_f.Title,
-                                    Link = data_f.hasContan ?
-                                        data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "" :
-                                        "javascript:void(0)",
-                                    menuItemModels = secitemModels,
-                                    Length = length,
-                                    imageUrl = (data_f.ImgUrl ?? "").Replace("/upload", uploadPath),
-                                    hoverImageUrl = (data_f.OverImgUrl ?? "").Replace("/upload", uploadPath),
-                                });
-                            }
-                            else
-                            {
-                                if (data_f.LanBar)
-                                {
-                                    headerViewModel.langMenuItemModels.Add(new MenuItem.MenuItemModel
-                                    {
-                                        Title = data_f.Title,
-                                        Target = data_f.Target,
-                                        Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "",
-                                        imageUrl = (data_f.ImgUrl ?? ""),
-                                        hoverImageUrl = (data_f.OverImgUrl ?? ""),
+                                        Title = data_s.Title,
+                                        Link = data_s.RouterName != "" ? $"/{website_data[0].OrgName}/{data_s.RouterName}" : data_s.LinkUrl != "" ? data_s.LinkUrl : "",
+                                        Target = data_s.Target,
+                                        Icon = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[1] : "",
+                                        IconClass = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[0] : "",
+                                        ImageIcon = data_s.IconImage != null ? siteId == defaultData.Id ? data_s.IconImage : data_s.IconImage.Replace("upload", $"upload/{defaultData.OrgName}") : "",
+                                        menuItemModels = thirditemModels,
                                     });
                                 }
                                 else
                                 {
-                                    headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
+                                    secitemModels.Add(new MenuItem.MenuItemModel
                                     {
-                                        Title = data_f.Title,
-                                        Target = data_f.Target,
-                                        Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "",
-                                        imageUrl = (data_f.ImgUrl ?? ""),
-                                        hoverImageUrl = (data_f.OverImgUrl ?? ""),
+                                        Title = data_s.Title,
+                                        Link = data_s.RouterName != "" ? $"/{website_data[0].OrgName}/{data_s.RouterName}" : data_s.LinkUrl != "" ? data_s.LinkUrl : "",
+                                        Target = data_s.Target,
+                                        Icon = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[1] : "",
+                                        IconClass = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[0] : "",
+                                        ImageIcon = data_s.IconImage != null ? siteId == defaultData.Id ? data_s.IconImage : data_s.IconImage.Replace("upload", $"upload/{defaultData.OrgName}") : "",
                                     });
                                 }
+                            });
+                            headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
+                            {
+                                Title = data_f.Title,
+                                Link = data_f.hasContan ?
+                                    data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "" :
+                                    "javascript:void(0)",
+                                menuItemModels = secitemModels,
+                                Length = length,
+                                imageUrl = (data_f.ImgUrl ?? "").Replace("/upload", uploadPath),
+                                hoverImageUrl = (data_f.OverImgUrl ?? "").Replace("/upload", uploadPath),
+                            });
+                        }
+                        else
+                        {
+                            if (data_f.LanBar)
+                            {
+                                headerViewModel.langMenuItemModels.Add(new MenuItem.MenuItemModel
+                                {
+                                    Title = data_f.Title,
+                                    Target = data_f.Target,
+                                    Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "",
+                                    imageUrl = (data_f.ImgUrl ?? ""),
+                                    hoverImageUrl = (data_f.OverImgUrl ?? ""),
+                                });
+                            }
+                            else
+                            {
+                                headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
+                                {
+                                    Title = data_f.Title,
+                                    Target = data_f.Target,
+                                    Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "",
+                                    imageUrl = (data_f.ImgUrl ?? ""),
+                                    hoverImageUrl = (data_f.OverImgUrl ?? ""),
+                                });
                             }
                         }
                     });

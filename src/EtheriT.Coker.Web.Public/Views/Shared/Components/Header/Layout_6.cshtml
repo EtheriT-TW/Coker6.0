@@ -22,7 +22,7 @@
                         menu
                     </span>
                 </a>
-                <a class="navbar-brand p-0 m-0 order-1" href="@Model.HomeLink" title="連結至:首頁">
+                <a class="navbar-brand p-0 m-0 order-1" href="/" title="連結至:首頁">
                     <img class="logoimg" src="@Model.LogoImageUrl" alt=" ">
                     <h1 class="sr-only">@Model.Title</h1>
                 </a>
@@ -51,8 +51,9 @@
         </div>
     </div>
 </div>
-
-<img class="titleimage m-auto d-block" src="@imgurl/headertitile.png" alt="Header Titile" />
+<a href="@Model.HomeLink" title="連結至:@Model.Title">
+    <img class="titleimage m-auto d-block" src="@imgurl/headertitile.png" alt="Header Titile" />
+</a>
 <div class="headernews m-auto d-block position-relative mb-5">
     <img class="d-md-flex d-none m-auto d-block" src="@imgurl/marqueeblockbig.png" alt="Header Marquee Background" />
     <img class="d-md-none m-auto d-block" src="@imgurl/marqueeblocksmall.png" alt="Header Marquee Background" />

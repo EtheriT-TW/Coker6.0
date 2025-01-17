@@ -123,6 +123,35 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
+        public async Task<SiteMapDto> GetSiteMap() {
+            SiteMapDto response = new SiteMapDto { Success = false };
+            try { 
+                var siteId = loginUserData.GetFrontWebsiteId();
+                var child = loginUserData.GetFrontChildOrgName();
+                response = await GetDisplayAll(siteId);
+                if (child != null && child.Any())
+                {
+                    child.ForEach(item => {
+                        item = item.ToLower().Trim();
+                    });
+                    foreach (var e in response.Maps) {
+                        var link = (e.LinkUrl ?? "").Replace("/", "").ToLower().Trim();
+                        if (child.Contains(link))
+                        {
+                            var website = await db.Websites.Where(e => e.OrgName.ToLower() == link).FirstOrDefaultAsync();
+                            if (website != null)
+                            {
+                                var map = await GetDisplayAll(website.Id);
+                                e.Children = map.Success ? map.Maps : null;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
         public async Task CheckDisplayAll(long WebsiteID)
         {
             try
@@ -585,12 +614,14 @@ namespace EtheriT.Coker.Application
                         result.LastModificationTime = null;
                         result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "").Replace("&lt;content&gt;", "").Replace("&lt;/content&gt;", "");
                         result.Description = htmlProcessor.text(
-                             htmlProcessor.RemoveNode(
+                            htmlProcessor.RemoveNode(
                                 htmlProcessor.RemoveNode(
-                                    stringHandler.HtmlDecode(result.Html), ".material-symbols-outlined"
-                                ),
-                                ".anchor_directory"
-                            ));
+                                    htmlProcessor.RemoveNode(
+                                        stringHandler.HtmlDecode(result.Html), ".material-symbols-outlined"
+                                    ),".anchor_directory"
+                                ), ".d-none"
+                            )
+                        );
                         result.CurrentUrl = $"/{menu.RouterName}";
                         result.VisibleFooter = menu.VisibleFooter;
                         result.VisibleHeader = menu.VisibleHeader;

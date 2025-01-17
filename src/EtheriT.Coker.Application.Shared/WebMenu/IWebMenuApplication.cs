@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application
     {
         public Task<SiteMapDto> GetAll();
         public Task<SiteMapDto> GetDisplayAll(long WebsiteID);
+        public Task<SiteMapDto> GetSiteMap();
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
         public Task<MenuGetAllListDto> GetSelectData(long Mid);
         public Task<MenuItemDto> GetDisplayOne(DataIdWebsiteIdDto dto);

@@ -365,6 +365,10 @@ table:not(.table) {
         background-color: #fff4;
     }
 
+.sitemap_hierarchical_frame ul {
+    list-style:none;
+}
+
 @media only screen and (max-width: 1400px) {
     .bottom_3-2 {
         top: calc(100% / 3* 1.8);

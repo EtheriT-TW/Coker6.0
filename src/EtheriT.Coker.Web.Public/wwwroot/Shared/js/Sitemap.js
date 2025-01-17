@@ -1,23 +1,16 @@
 ﻿function SitemapInit() {
     var WebMesnus = {
-        GetAllById: function (id) {
+        GetAllById: function () {
             return $.ajax({
                 url: "/api/WebMenu/GetAll/",
                 type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                data: { WebsiteID: id },
+                contentType: 'application/json; charset=utf-8'
             });
         },
     };
-    if (typeof (SiteId) != "undefined") {
-        WebMesnus.GetAllById(SiteId).done(function (result) {
-            CreateSitemap(result.maps);
-        });
-    } else {
-        WebMesnus.GetAllById(null).done(function (result) {
-            CreateSitemap(result.maps);
-        });
-    }
+    WebMesnus.GetAllById().done(function (result) {
+        CreateSitemap(result.maps);
+    });
 }
 
 function CreateSitemap(result) {
@@ -60,6 +53,21 @@ function CreateSitemap(result) {
                         third_item.text(`${index_f}-${index_s}-${index_t} ${third_data.title}`);
                         third_frame.append(third);
                         index_t++;
+
+                        if ($("#Hierarchical_Fourth_Item").length > 0 && third_data.children != null) {
+                            third.append(`<ul class="ps-5 ps-md-5 col-md-6"></ul>`);
+                            var fourth_frame = third.find("ul");
+                            var index_fo = 1;
+                            third_data.children.forEach(function (fourth_data) {
+                                var fourth = $($("#Hierarchical_Fourth_Item").html()).clone();
+                                var fourth_item = fourth.find(".fourth");
+                                fourth_item.attr("href", `${fourth_data.routerName}`);
+                                fourth_item.attr("alt", fourth_data.text);
+                                fourth_item.text(`${index_f}-${index_s}-${index_t}-${index_fo} ${fourth_data.title}`);
+                                fourth_frame.append(fourth);
+                                index_fo++;
+                            });
+                        }
                     });
 
                 } else {

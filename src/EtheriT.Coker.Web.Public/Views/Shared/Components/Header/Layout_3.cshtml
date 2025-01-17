@@ -6,14 +6,17 @@
 <script src="~/js/Header/Header_Layout_3.min.js" asp-append-version="true"></script>
 
 <div class="bg-white">
-    <div class="d-flex flex-column p-3 px-md-0 container">
+    <div class="d-flex flex-column pb-3 px-md-0 container">
         <nav class="navbar navbar-expand-lg bg-body-tertiary">
             <div class="container-fluid d-flex flex-wrap">
-                <div class="d-flex align-items-center w-auto justify-content-between me-5 me-md-0">
+                <div class="d-flex align-items-center flex-column w-auto justify-content-between me-5 me-md-0">
                     @{
                         var home_target = Model.HomeTarget == true ? "_blank" : "_self";
-                        var home_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+                        var home_title = Model.HomeTarget == true ? $"連結至：{Model.Title}(另開視窗)" : $"連結至：{@Model.Title}";
                     }
+                    <a class="d-flex navbar-brand" href="/" target="_self" title="連結至：首頁">
+                        <img class="rootlogo w-100" src="/upload/logo/ksp_logo.png" alt=" ">
+                    </a>
                     <a class="d-flex navbar-brand" href="@Model.HomeLink" target="@home_target" title="@home_title">
                         <img class="logo w-100" src="@Model.LogoImageUrl" alt=" ">
                         <h1 class="sr-only">@Model.Title</h1>
@@ -55,8 +58,8 @@
                 </div>
             </div>
         </nav>
-        <label accesskey="S" for="SearchInput" class="hide">:::</label>
         <div id="Search" class="d-flex lh-lg">
+            <label accesskey="S" for="SearchInput" class="hide">:::</label>
             <button class="btn_sear_text text_blue_middle fw-bold d-none d-md-flex text-nowrap fs-4 me-3 bg-transparent border-0">我想搜尋</button>
             <div class="d-flex border border-2  border-end-0 flex-grow-1">
                 <div class="dropdown">

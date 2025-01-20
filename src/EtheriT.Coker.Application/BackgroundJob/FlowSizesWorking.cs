@@ -2,6 +2,7 @@
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
@@ -12,6 +13,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using MiniExcelLibs;
 
 namespace EtheriT.Coker.Application.BackgroundJob
 {
@@ -20,11 +22,13 @@ namespace EtheriT.Coker.Application.BackgroundJob
 	{
 		private readonly CokerDbContext db;
 		private readonly ITokenAppService tokenAppService;
+		private readonly Microsoft.Extensions.Configuration.IConfiguration Configuration;
 
-		public FlowSizesWorking(CokerDbContext db, ITokenAppService tokenAppService)
+		public FlowSizesWorking(CokerDbContext db, ITokenAppService tokenAppService, Microsoft.Extensions.Configuration.IConfiguration Configuration)
 		{
 			this.db = db;
 			this.tokenAppService = tokenAppService;
+			this.Configuration = Configuration;
 		}
 		public void FlowSizeCollection()
 		{
@@ -57,7 +61,7 @@ namespace EtheriT.Coker.Application.BackgroundJob
 
 		private void addFlowSize(List<EtheriT.Coker.Core.Models.FlowSize> flowSizes, long id, string orgName, DateTime actionTime)
 		{
-			var logFilePath = "D:\\ET\\upload\\" + orgName + "\\logs\\" + actionTime.ToString("yyyy-MM-dd") + ".txt";
+			var logFilePath = $"{Configuration.GetValue<string>("VirtualDirectory:upload")}\\"+orgName+"\\logs\\" + actionTime.ToString("yyyy-MM-dd") + ".txt";
 			var totalResponse = 0;
 			var totalRequest = 0;
 			var total = 0;
@@ -87,14 +91,17 @@ namespace EtheriT.Coker.Application.BackgroundJob
 					total += int.Parse(Regex.Match(line, @"Total:\s*(\d+)\s*bytes").Groups[1].Value);
 				}
 			}
-			flowSizes.Add(new EtheriT.Coker.Core.Models.FlowSize
+			if (!db.FlowSizes.Any(f => f.FK_WebsiteId == id && f.actionTime.Date == actionTime.Date)) // 检查是否存在相同的 actionTime 日期
 			{
-				FK_WebsiteId = id,
-				RequestSize = totalRequest,
-				ResponseSize = totalResponse,
-				Total = total,
-				actionTime = actionTime
-			});
+				flowSizes.Add(new EtheriT.Coker.Core.Models.FlowSize
+				{
+					FK_WebsiteId = id,
+					RequestSize = totalRequest,
+					ResponseSize = totalResponse,
+					Total = total,
+					actionTime = actionTime
+				});
+			}
 		}
 	}
 }

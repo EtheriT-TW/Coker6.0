@@ -21,6 +21,29 @@ function jqueryExtend() {
                 })
             });
             return $self;
+        }, changeTagName: function (newTag) {
+            let newElements = [];
+            this.each(function () {
+                let $oldElement = $(this);
+                let $newElement = $(`<${newTag}>`);
+
+                // 複製所有屬性
+                $.each(this.attributes, function () {
+                    $newElement.attr(this.name, this.value);
+                });
+
+                // 複製內容
+                $newElement.html($oldElement.html());
+
+                // 替換舊的元素
+                $oldElement.replaceWith($newElement);
+
+                // 保存新元素以便返回
+                newElements.push($newElement[0]);
+            });
+
+            // 返回新元素的 jQuery 物件
+            return $(newElements);
         }
     });
     $.extend({

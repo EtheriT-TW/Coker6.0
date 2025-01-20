@@ -92,6 +92,7 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.RemovedFromShelves, option => option.MapFrom(c => !c.IsFromShelves))
                 .ReverseMap()
                 .ForMember(e => e.IsFromShelves, option => option.MapFrom(c => !c.RemovedFromShelves))
+                .ForMember(e => e.OrgName, option => option.MapFrom(c => c.Website.OrgName))
                 .ForMember(e => e.hasContan, option => option.MapFrom(c => !string.IsNullOrEmpty(c.Html)));
             CreateMap<MenuContenDto, WebMenu>().ReverseMap();
             CreateMap<MenuSaveContenDto, WebMenu>().ReverseMap();

@@ -112,6 +112,7 @@ namespace EtheriT.Coker.Application.Contact
 								Id=c.Id,
 								Name = c.Name,
                                 TargetEmail = c.TargetEmail,
+								Email = c.Email,
 								CreationTime = c.CreationTime
 							};
 			if (dataQuery.Any())

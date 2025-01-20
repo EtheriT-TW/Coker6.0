@@ -442,7 +442,7 @@ input:disabled + .btn_radio {
 
 /* SwitchPage */
 #SwitchPage {
-    display: none;
+    display: flex;
 }
 
     #SwitchPage a {

@@ -16,7 +16,7 @@
                 <div class="row align-items-stretch app-switcher">
                     @foreach (var item in Model.webs)
                     {
-                        <div class="col-lg-4 col-6 mb-4">
+                        <div class="col-lg-3 col-6 mb-4">
                             <a href="#" class="text-dark webitem">
                                 @if (item.Check)
                                 {
@@ -35,7 +35,6 @@
                                         else
                                         {
                                             <img class="webicon" src="/favicon.ico" alt="@item.Name" />
-                                            @* <span class="material-icons md-48 " style="color:#21C3E0;">bubble_chart</span> *@
                                         }
                                         <p class="weight-400 m-0 webkit-box line-1">@item.Name</p>
                                         <small class="weight-300 text-start text-muted webkit-box line-2">@item.Description</small>

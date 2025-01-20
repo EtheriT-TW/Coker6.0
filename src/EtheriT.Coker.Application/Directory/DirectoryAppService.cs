@@ -1488,16 +1488,30 @@ namespace EtheriT.Coker.Application.Directory
                                         where tag.FK_WebsiteId == WebsiteID
                                         orderby tagas.Id
                                         select tag.Id).ToListAsync();
+                    var not_tagids = await (from tag in db.Tags
+                                            join tagas in db.Tag_Associates on tag.Id equals tagas.FK_TId
+                                            where tagas.Type == TagAssociateTypeEnum.目錄拒絕
+                                            where dto.dirids.Contains(tagas.FK_AId)
+                                            where tag.FK_WebsiteId == WebsiteID
+                                            select tag.Id).ToListAsync();
                     List<KeyValueDto> datas = new List<KeyValueDto>();
 
                     switch (dto.type)
                     {
                         case 1:
+                            var not_tags_pid = await (from p in db.Prods
+                                                      join tagas in db.Tag_Associates on p.Id equals tagas.FK_AId
+                                                      where p.FK_WebsiteId == WebsiteID
+                                                      where tagas.Type == TagAssociateTypeEnum.商品
+                                                      where not_tagids.Contains(tagas.FK_TId)
+                                                      select p.Id).ToListAsync();
                             var products_tags = await (from p in db.Prods
                                                        join tagas in db.Tag_Associates on p.Id equals tagas.FK_AId
+                                                       where !not_tags_pid.Contains(p.Id)
                                                        where p.FK_WebsiteId == WebsiteID
-                                                       where tagas.Type == TagAssociateTypeEnum.商品
-                                                       where tagids.Contains(tagas.FK_TId)
+                                                       where !p.RemovedFromShelves && p.Visible
+                                                       where p.permanent || (DateTime.Now >= p.StartTime && DateTime.Now <= p.EndTime)
+                                                       where tagids.Contains(tagas.FK_TId) && tagas.Type == TagAssociateTypeEnum.商品
                                                        orderby p.Ser_No, p.Status == ProdStatusEnum.新品 descending, p.ItemNo, p.Title, p.Id descending
                                                        select new { p, tagas }).ToListAsync();
                             datas = products_tags.OrderBy(x => tagids.IndexOf(x.tagas.FK_TId)).Select(x => new KeyValueDto()
@@ -1507,11 +1521,19 @@ namespace EtheriT.Coker.Application.Directory
                             }).ToList();
                             break;
                         case 2:
+                            var not_tags_aid = await (from a in db.Article
+                                                      join tagas in db.Tag_Associates on a.Id equals tagas.FK_AId
+                                                      where a.FK_WebsiteId == WebsiteID
+                                                      where tagas.Type == TagAssociateTypeEnum.文章
+                                                      where not_tagids.Contains(tagas.FK_TId)
+                                                      select a.Id).ToListAsync();
                             var articles_tags = await (from a in db.Article
                                                        join tagas in db.Tag_Associates on a.Id equals tagas.FK_AId
+                                                       where !not_tags_aid.Contains(a.Id)
+                                                       where a.Visible
                                                        where a.FK_WebsiteId == WebsiteID
-                                                       where tagas.Type == TagAssociateTypeEnum.文章
-                                                       where tagids.Contains(tagas.FK_TId)
+                                                       where tagas.Type == TagAssociateTypeEnum.文章 && tagids.Contains(tagas.FK_TId)
+                                                       where a.permanent || (DateTime.Now >= a.StartTime && DateTime.Now <= a.EndTime)
                                                        orderby a.SerNO, a.NodeDate descending, a.Id descending
                                                        select new { a, tagas }).ToListAsync();
                             datas = articles_tags.OrderBy(x => tagids.IndexOf(x.tagas.FK_TId)).Select(x => new KeyValueDto()
@@ -1525,14 +1547,11 @@ namespace EtheriT.Coker.Application.Directory
                     var index = datas.FindIndex(d => long.Parse(d.Key) == dto.id);
                     if (index > -1)
                     {
-                        if (index == 0)
+                        if (index == 0 && datas.Count > 1)
                         {
+                            var keynext = $"{datas[index + 1].Key}?dirid={diridsStr}";
                             response.Add(new KeyValueDto());
-                            if (datas.Count > 1)
-                            {
-                                var keynext = $"{datas[index + 1].Key}?dirid={diridsStr}";
-                                response.Add(new KeyValueDto() { Key = keynext, Value = datas[index + 1].Value ?? "" });
-                            }
+                            response.Add(new KeyValueDto() { Key = keynext, Value = datas[index + 1].Value ?? "" });
                         }
                         else if (index == datas.Count - 1)
                         {

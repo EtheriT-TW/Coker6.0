@@ -2,7 +2,9 @@
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.FileManagement;
 using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.FlowSize;
 using EtheriT.Coker.Application.Shared.Dto.Remote;
+using EtheriT.Coker.Application.Shared.FlowSize;
 using EtheriT.Coker.Application.Shared.Remote;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.EntityFrameworkCore.Migrations;
@@ -22,25 +24,26 @@ namespace EtheriT.Coker.Web.MVC.Controllers
     {
         private readonly LoginUserData loginUserData;//獲取後台登入後選擇編輯哪個站點
 		private readonly IRemoteAppService remoteAppService;
+        private readonly IFlowSizeAppService flowSizeAppService;
         private readonly IConfiguration configuration;
         private List<long> remoteList = new List<long>();
         private List<DateTime> dateList = new List<DateTime>();
-		public DashboardController(LoginUserData loginUserData, IRemoteAppService remoteAppService, IConfiguration configuration) { 
+		public DashboardController(LoginUserData loginUserData, IRemoteAppService remoteAppService, IFlowSizeAppService flowSizeAppService, IConfiguration configuration) { 
             this.loginUserData = loginUserData;
             this.remoteAppService = remoteAppService;
+            this.flowSizeAppService = flowSizeAppService;
             this.configuration = configuration;
         }
         //非同步 用Task的模式讀取
         public async Task<IActionResult> Index()
         {			
 			string orgName = await loginUserData.GetWebsiteOrgName();//獲取後台登入後選擇編輯哪個站點
-			long orgId = loginUserData.GetFrontWebsiteId();//獲取站台Id
             string filePath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\{orgName}";
             var result = await remoteAppService.GetRemoteCount(new GetRemoteCountInputDto { 
                 StartDate = DateTime.Now.AddDays(-7),
                 EndDate = DateTime.Now
             });
-            var remoteItem = new List<long>();
+			var remoteItem = new List<long>();
             var remoteMemCount = new List<long>();
             var dateItem = new List<string>();
 			long totalRemoteCount = 0;
@@ -48,7 +51,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 			var today = DateTime.Today;
 
             List<DateTime> firstDate = new List<DateTime>(); 
-			var obj = await remoteAppService.GetPageList(new DevExtreme.AspNet.Mvc.DataSourceLoadOptions());
+			var obj = await remoteAppService.GetPageList(new DataSourceLoadOptions());
 			var loadResult = (DevExtreme.AspNet.Data.ResponseModel.LoadResult)obj.Value;
 			var getTotle = loadResult.data.Cast<RemoteListOtputDto>().ToList();
             if (getTotle != null && getTotle.Count != 0)
@@ -142,7 +145,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                     TotleCount = totalRemoteCount,
                     TotleMemCount = totalMemCount,
                     FirstTime = firstDate[0]
-                }
+                },
+                MonthTotalFlowSize = FormatSize((await flowSizeAppService.GetMonthFlowSizes()).Total),
+                ToMonth =  today.Year+"年 "+today.Month+"月"
             };
             return View(model);
         }

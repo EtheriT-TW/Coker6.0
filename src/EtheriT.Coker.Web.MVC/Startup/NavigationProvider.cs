@@ -396,6 +396,14 @@ namespace EtheriT.Coker.Web.MVC.Startup
 								Controller="Remote",
 								Action="Index",
 								Icon=""
+							},
+							new JobMenu
+							{
+								PageName="FlowSizesList",
+								Title="使用流量統計",
+								Controller="FlowSize",
+								Action="Index",
+								Icon=""
 							}
 						}
 					}

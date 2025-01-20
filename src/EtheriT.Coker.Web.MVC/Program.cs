@@ -68,6 +68,8 @@ using Hangfire.SqlServer;
 using EtheriT.Coker.Application.Filters;
 using Hangfire.Dashboard;
 using EtheriT.Coker.Application.BackgroundJob;
+using EtheriT.Coker.Application.Shared.FlowSize;
+using EtheriT.Coker.Application.FlowSize;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -210,6 +212,7 @@ builder.Services.AddScoped<IPChomePayAppService, PChomePayAppService>();
 builder.Services.AddScoped<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddScoped<IHtmlProcessor, HtmlProcessor>();
 builder.Services.AddScoped<IUserHabitsAppService, UserHabitsAppService>();
+builder.Services.AddScoped<IFlowSizeAppService, FlowSizeAppService>();
 builder.Services.AddTransient<IDashboardAuthorizationFilter, HangfireDashboardAuthorizationFilter>();
 builder.Services.AddScoped<UserHabitsWorking>();
 

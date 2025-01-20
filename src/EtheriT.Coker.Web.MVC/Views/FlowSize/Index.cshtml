@@ -1,0 +1,56 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.FlowSize
+@{
+	ViewData["Title"] = "FlowSize";
+}
+<div class="py-2 px-4 position-relative">
+	<div id="TopLine" class="d-flex justify-content-between mb-4">
+		<div class="d-flex">
+			<button class="btn_back bg-transparent border-0 align-items-center d-none">
+				<span class="material-symbols-outlined">
+					keyboard_backspace
+				</span>
+			</button>
+			<div class="title fw-bold fs-4">使用流量統計</div>
+		</div>
+	</div>
+	<div id="AuditLogList" class="card border-0">
+		<div class="card-body position-relative pb-5">
+			@(
+						Html.DevExtreme().DataGrid<FlowSizeDto>()
+						.DataSource(d => d.RemoteController()
+						.LoadUrl("/api/FlowSize/FlowSizes").LoadMethod("Get")
+						)
+						.RemoteOperations(true)
+						.ColumnHidingEnabled(true)
+						.ShowBorders(true)
+						.FilterRow(filterRow => filterRow
+						.Visible(true)
+						.ApplyFilter(GridApplyFilterMode.Auto)
+						)
+						.SearchPanel(searchPanel => searchPanel
+						.Visible(true)
+						.Width(480)
+						.Placeholder("請輸入要搜尋的資料")
+						)
+						.ShowRowLines(true)
+						.Columns(c =>
+						{
+							c.AddFor(e => e.ActionTime).Caption("日期");
+							c.AddFor(e => e.RequestSize).Caption("上傳流量");
+							c.AddFor(e => e.ResponseSize).Caption("下載流量");
+							c.AddFor(e => e.Total).Caption("總計");
+						})
+						.ColumnAutoWidth(true)
+						.Paging(paging => paging.PageSize(30))
+						.Pager(pager =>
+						{
+							pager.Visible(true);
+							pager.ShowPageSizeSelector(true);
+							pager.AllowedPageSizes(new[] { 10, 20, 30 });
+							pager.ShowInfo(true);
+						})
+						)
+		</div>
+	</div>
+</div>

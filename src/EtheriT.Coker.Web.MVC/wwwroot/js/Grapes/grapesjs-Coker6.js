@@ -480,7 +480,7 @@
                                         "yt_src": $self.find("iframe").attr("src"),
                                         "video_title": $self.find("iframe").length ? $self.find("iframe").attr("title") : $self.find("video").attr("title"),
                                         "start_time": $self.find('*').attr('data-start_time'),
-                                        "keep_time" : $self.find("img").length ? $self.find("img").data('keep_time') : $self.find("iframe").data('keep_time'),
+                                        "keep_time": $self.find("img").length ? $self.find("img").data('keep_time') : $self.find("iframe").data('keep_time'),
                                         "synopsis_title": $self.find('.synopsis_title').text(), //文章標題
                                         "synopsis_caption": $self.find('.synopsis_caption').text().trim(), //文章內容
                                         "visible": $self.hasClass("backstageType")
@@ -501,7 +501,7 @@
                                 const target = $("#CheckOpenWindow").prop("checked") ? "_blank" : "_self";
                                 const yt_src = $('#ytSrc').val() ? $('#ytSrc').val().replace("watch?v=", "embed/") : "";
                                 const start_time = $('#startTime').val() ? $('#startTime').val() : "";
-                                const keep_time =  $('#keepTime').val() ? $('#keepTime').val() : 5;
+                                const keep_time = $('#keepTime').val() ? $('#keepTime').val() : 5;
                                 const visible = $("#CheckHidden").prop("checked") ? true : false;
                                 $li.data({
                                     alt: title,
@@ -1434,7 +1434,7 @@
             command: function (editor) {
                 let t = editor.getHtml();
                 const $html = $("<div>").append(t);
-                $html.find(`[data-bs-target]`).attr("data-bs-toggle", "modal");
+                //$html.find(`[data-bs-target]`).attr("data-bs-toggle", "modal");
                 t = `<body>${$html.html()}</body>`;
                 settings.import(t, editor.getCss()).done(function () {
                     co.sweet.success("已儲存並發布");

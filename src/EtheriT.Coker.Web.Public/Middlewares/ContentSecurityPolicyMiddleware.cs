@@ -64,7 +64,10 @@ namespace EtheriT.Coker.Web.Public.Middlewares
             using (var newBodyStream = new MemoryStream())
             {
                 bool isSitemapRequest = context.Request.Path.HasValue &&
-                        context.Request.Path.Value.ToLowerInvariant().EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase);
+                        (
+                            context.Request.Path.Value.ToLowerInvariant().EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase)||
+                            context.Request.Path.Value.ToLowerInvariant().EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase)
+                        );
                 if (isSitemapRequest) await _next(context); // 執行後續的管道（包括 Razor 渲染）
                 else
                 {
@@ -78,7 +81,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     // 只替換不含 nonce 的 <script> 標籤
                     var modifiedBody = Regex.Replace(
                         responseBody,
-                        @"<script(?![^>]*\bnonce=)(?![^>]*\bsrc=)[^>]*>",
+                        @"<script(?![^>]*\bnonce=)(?![^>]*\bsrc=)([^>]*)>",
                         $"<script nonce=\"{nonce}\">",
                         RegexOptions.IgnoreCase
                     );

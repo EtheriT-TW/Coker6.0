@@ -415,6 +415,7 @@ function MoveToItemArticle() {
                     $("#DirectoryItemps").data("dir", result);
                     _dfr.resolve();
                 });
+                co.Form.clear("ArticletForm");
                 if (id > 0) {
                     co.Articles.GetDataOne(id).done(function (result) {
                         if (result != null) {
@@ -426,7 +427,6 @@ function MoveToItemArticle() {
                         } else BackToList();
                     })
                 } else {
-                    co.Form.clear("ArticletForm");
                     _dfr.promise().done(function () {
                         $ArticletTags.TagDataSet($("#DirectoryItemps").data("dir").tagDatas);
                     });

@@ -21,9 +21,11 @@
             color: orange;
         }
 
+/* SwitchPage */
 #SwitchPage {
-    display: none;
+    display: flex;
 }
+
     #SwitchPage a {
         font-family: 'Font Awesome 6 Free';
         font-weight: 900;

@@ -283,7 +283,7 @@ namespace EtheriT.Coker.Application
         {
             try
             {
-                IQueryable<WebMenu>? dataQuery = db.WebMenus.Where(m => m.FK_TopNodeId == id)
+                IQueryable<WebMenu>? dataQuery = db.WebMenus.Include(e => e.Website).Where(m => m.FK_TopNodeId == id)
                             .Where(m => m.FK_WebsiteId == WebsiteID)
                             .Where(m => !m.IsDeleted)
                             .Where(m => !m.RemovedFromShelves);

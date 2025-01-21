@@ -370,8 +370,10 @@ function PageReady() {
 
 
     $(".btn_inituser").on("click", function () {
+        var oricheck = $('#MemberUpdate').prop('checked');
+        co.Form.clear("Form_Orderer");
+        $('#MemberUpdate').prop('checked', oricheck);
         if (user_data == null) {
-            co.Form.clear("Form_Orderer");
             $('#Form_Orderer .gender input[type="radio"]').prop('checked', false);
             co.Zipcode.setData({
                 el: $("#Orderer_TWzipcode"),
@@ -380,7 +382,7 @@ function PageReady() {
         } else {
             $('#Form_Orderer .gender input[type="radio"]').prop('checked', false);
             var address = user_data.ordererAddress;
-            if (address.indexOf(" ") > 0) {
+            if (address && address.indexOf(" ") > 0) {
                 if (address.split(' ').length >= 3) user_data.ordererAddress = address.split(' ')[2];
                 else user_data.ordererAddress = "";
             }
@@ -1138,7 +1140,7 @@ function OrderHeaderAdd() {
                                 switch (paymenttype) {
                                     case "LinePay":
                                     case "PCHomePay":
-                                    //case "ECPay":
+                                        //case "ECPay":
                                         Coker.sweet.loading();
                                         Coker.ThirdParty.Request(result.message.split(",")[1], paymenttype).done(function (result) {
                                             Swal.close();

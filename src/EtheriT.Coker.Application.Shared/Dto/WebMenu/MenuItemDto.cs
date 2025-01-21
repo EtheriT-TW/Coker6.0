@@ -39,7 +39,7 @@ namespace EtheriT.Coker.Application.Dto
         public long? FK_TopNodeId { get; set; }
         public long? FK_RootNodeId { get; set; }
         public long FK_WebsiteId {  get; set; }
-        public string OrgName { get; set; }
+        public string? OrgName { get; set; }
         public bool ShowToMenu { get; set; }
         public DateTime? LastModificationTime { get; set; }
         public DateTime CreationTime { get; set; }

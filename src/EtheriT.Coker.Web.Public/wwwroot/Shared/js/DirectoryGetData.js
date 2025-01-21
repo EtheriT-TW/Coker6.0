@@ -494,26 +494,30 @@ function DirectoryDataInsert($item, result) {
         content.find(".shareBlock > a").remove();
         content.find(".shareBlock").data("href", path);
 
-        //console.log("data link: ", data.link)
-        if (typeof (IsLogin) != "undefined") {
-            if (IsLogin && data.type == 1) {
-                var html = `<button data-pid="${data.id}" class="btn_fav"></button>`
-                content.find(".shareBlock").after(html);
-                if (content.find(".shareBlock").hasClass("d-none")) content.find(".btn_fav").addClass("d-none")
-                else if (content.find(".shareBlock").hasClass("type5")) content.find(".btn_fav").addClass("type5")
-                if (data.fId != null) {
-                    content.find(".btn_fav").data("fid", data.fId);
-                    content.find(".btn_fav").addClass("check")
-                    content.find(".btn_fav").attr("title", "移除收藏")
-                }
-                FavButtonInit(content.find(".btn_fav"))
-            }
+        if (typeof (IsLogin) == "undefined") {
+            Coker.Token.CheckToken().done(function (result) {
+                if (result.success && result.isLogin && result.name != "" && data.type == 1) ProdFavBtnSet(content, data)
+            });
+        } else if (IsLogin) {
+            ProdFavBtnSet(content, data)
         }
 
         $item.find(".catalog").append(content);
     });
     HoverEffectInit();
     ShareBlockInit();
+}
+function ProdFavBtnSet(content, data) {
+    var html = `<button data-pid="${data.id}" class="btn_fav"></button>`
+    content.find(".shareBlock").after(html);
+    if (content.find(".shareBlock").hasClass("d-none")) content.find(".btn_fav").addClass("d-none")
+    else if (content.find(".shareBlock").hasClass("type5")) content.find(".btn_fav").addClass("type5")
+    if (data.fId != null) {
+        content.find(".btn_fav").data("fid", data.fId);
+        content.find(".btn_fav").addClass("check")
+        content.find(".btn_fav").attr("title", "移除收藏")
+    }
+    FavButtonInit(content.find(".btn_fav"))
 }
 function DirectoryAdDataInsert($item, result) {
     if ($item.find(".swiper").length > 0) {

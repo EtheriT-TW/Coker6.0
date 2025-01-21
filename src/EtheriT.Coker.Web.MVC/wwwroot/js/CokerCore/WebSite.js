@@ -1,5 +1,14 @@
 ﻿Coker.extend({
     WebSite: {
+        getPageAll: function (page) {
+            return $.ajax({
+                url: "/api/Website/GetPageAll/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { page: page },
+            });
+        },
         exchange: function (id) {
             var _dfr = $.Deferred();
             $.ajax({

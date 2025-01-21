@@ -17,6 +17,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             this.websiteApplication = websiteApplication;
         }
+
+        [HttpGet]
+        public async Task<WebsPageDto> GetPageAll(int? page)
+        {
+            return await websiteApplication.GetPageAll(page);
+        }
         [HttpPost]
         public async Task<ResponseMessageDto> Exchange(WebExchangeDto dto)
         {

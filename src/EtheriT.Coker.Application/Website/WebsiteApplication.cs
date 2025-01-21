@@ -19,6 +19,7 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using EtheriT.Coker.Application.Authorization;
 using System.Xml.Linq;
+using Hangfire.Storage;
 
 namespace EtheriT.Coker.Application
 {
@@ -183,6 +184,71 @@ namespace EtheriT.Coker.Application
                 return output;
             }
             else return new List<WebsDto>();
+        }
+        [Authorize]
+        public async Task<WebsPageDto> GetPageAll(int? page)
+        {
+            ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
+            string name = user.Identity?.Name;
+            bool isysUser = await loginUserData.isSystemUser();
+            WebsPageDto output = new WebsPageDto();
+            List<WebsDto> data;
+            if (isysUser)
+            {
+                data = await (from w in db.Websites
+                              select new WebsDto
+                              {
+                                  Id = w.Id,
+                                  Name = w.Title,
+                                  Description = w.Description ?? "",
+                                  Images = w.Icon ?? "/favicon.ico"
+                              }).ToListAsync();
+            }
+            else
+            {
+                data = await (from w in db.Websites
+                              join bind in db.MappingUserAndWebsites on w.Id equals bind.WebsiteId
+                              join u in db.Users on bind.UserId equals u.Id
+                              where u.Account == name
+                              select new WebsDto
+                              {
+                                  Id = w.Id,
+                                  Name = w.Title,
+                                  Description = w.Description ?? "",
+                                  Images = w.Icon ?? "/favicon.ico"
+                              }).ToListAsync();
+            }
+            if (data.Any())
+            {
+                long siteId = await loginUserData.GetWebsiteId();
+                if (siteId == 0 && data.Any())
+                {
+                    siteId = data.FirstOrDefault().Id;
+                    await Exchange(new WebExchangeDto { Id = siteId });
+                }
+                var item = data.Find(e => e.Id == siteId);
+                if (item != null)
+                {
+                    var item_index = data.FindIndex(e => e.Id == siteId);
+                    output.TotalPage = (int)Math.Ceiling((data.Count / 24.0));
+                    item.Check = true;
+                    if (page != null)
+                    {
+                        if (page <= Math.Ceiling((data.Count / 24.0))) data = data.Skip(((int)page - 1) * 24).Take(24).ToList();
+                        else data = data.Skip(((int)(Math.Ceiling(data.Count / 24.0)) - 1) * 24).Take(24).ToList();
+                        output.PageNow = (int)page;
+                    }
+                    else
+                    {
+                        data = data.Skip((item_index / 24) * 24).Take(24).ToList();
+                        output.PageNow = item_index / 24 + 1;
+                    }
+                }
+                else data = data.Take(24).ToList();
+                output.webs = data;
+                return output;
+            }
+            else return new WebsPageDto();
         }
         public async Task<List<WebsiteDataDto>> GetAllData(long SiteId)
         {

@@ -3,6 +3,9 @@
 @{
     string action = "";
 }
+<link rel="stylesheet" href="~/css/Components/WebApplication.min.css" asp-append-version="true" />
+<script src="~/js/Components/WebApplication.min.js" asp-append-version="true"></script>
+
 <div class="modal fade" id="switchApp" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -13,8 +16,21 @@
                 </button>
             </div>
             <div class="modal-body p-4">
+                <template id="TemplateApp">
+                    <div class="col-lg-3 col-6 mb-4">
+                        <a href="#" class="text-dark webitem">
+                            <div data-key="Id" class="card h-100" data-id="">
+                                <div class="card-body text-center">
+                                    <img data-key="image" class="webicon" src="/favicon.ico" alt="Icon" />
+                                    <p data-key="name" class="weight-400 m-0 webkit-box line-1"></p>
+                                    <small data-key="description" class="weight-300 text-start text-muted webkit-box line-2"></small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </template>
                 <div class="row align-items-stretch app-switcher">
-                    @foreach (var item in Model.webs)
+                    @* @foreach (var item in Model.webs)
                     {
                         <div class="col-lg-3 col-6 mb-4">
                             <a href="#" class="text-dark webitem">
@@ -46,8 +62,20 @@
                                 </div>
                             </a>
                         </div>
-                    }
+                    } *@
                 </div>
+                <ul class="page_btn d-none justify-content-center pagination mb-0">
+                    <li class="page-item btn_prev">
+                        <button class="page-link text-black" title="切換至上一頁">
+                            <i class="fa-solid fa-angle-left"></i>
+                        </button>
+                    </li>
+                    <li class="page-item btn_next">
+                        <button class="page-link text-black" title="切換至下一頁">
+                            <i class="fa-solid fa-angle-right"></i>
+                        </button>
+                    </li>
+                </ul>
             </div>
             <div class="modal-footer px-4">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>

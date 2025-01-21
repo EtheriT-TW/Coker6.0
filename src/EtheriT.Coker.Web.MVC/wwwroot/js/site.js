@@ -6,6 +6,7 @@
 var PreLoader;
 
 (function (a) {
+    typeof (SelectStationInit) === "function" && SelectStationInit();
     var keyValuePairs = document.cookie.split(';');
     var now = new Date();
     var edt = !!co.Cookie.Get("endDateTime") ? parseInt(co.Cookie.Get("endDateTime")) : 0;
@@ -85,13 +86,6 @@ var PreLoader;
         } else {
             b = a(".sidebar").detach()
         }
-    });
-    $(".app-switcher .webitem").on("click", function (e) {
-        e.preventDefault();
-        $(".active-app").removeClass("active-app");
-        $(".app-selected").remove();
-        $(this).find(".card").addClass("active-app");
-        $(this).find(".card-body").append(`<span class="material-icons app-selected md-16">check</span>`);
     });
     $("#switchApp .switch").on("click", function () {
         co.WebSite.exchange($(".active-app").first().data("id")).done(function (result) {

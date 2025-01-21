@@ -833,22 +833,12 @@ namespace EtheriT.Coker.Application.Directory
                     {
                         case DirectoryTypeEnum.商品:
                             var pd_notId = await (db.Tag_Associates.Where(e => notTagIds.Contains(e.FK_TId) && e.Type == TagAssociateTypeEnum.商品 && !e.IsDeleted)).Select(e => e.FK_AId).ToListAsync();
-                            foreach (var id in FKTIds)
-                            {
-                                var pd_as = await (db.Tag_Associates.Where(e => e.FK_TId == id && !pd_notId.Contains(e.FK_AId) && e.Type == TagAssociateTypeEnum.商品 && !e.IsDeleted)).ToListAsync();
-                                if (!allIds.Any()) allIds = pd_as.Select(e => e.FK_AId).ToList();
-                                else
-                                {
-                                    allIds = pd_as.Where(e => allIds.Contains(e.FK_AId)).Select(e => e.FK_AId).ToList();
-                                }
-                            }
+                            allIds = await db.Tag_Associates.Where(e => FKTIds.Contains(e.FK_TId) && !pd_notId.Contains(e.FK_AId) && e.Type == TagAssociateTypeEnum.商品).Select(e => e.FK_AId).ToListAsync();
                             if (allIds.Any())
                             {
                                 DataIds = db.Prods
                                     .Where(e => allIds.Contains(e.Id))
-                                    .Where(e => !e.IsDeleted)
-                                    .Where(e => !e.RemovedFromShelves)
-                                    .Where(e => e.Visible)
+                                    .Where(e => e.Visible && !e.RemovedFromShelves)
                                     .Where(e => siteIds.Contains(e.FK_WebsiteId))
                                     .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime))
                                     .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == ProdStatusEnum.新品).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)

@@ -1280,10 +1280,10 @@ namespace EtheriT.Coker.Application
                         string ext = sp[sp.Length - 1];
                         var rootPath = $"{_folder}/{orgName}";
                         var directoryPath = $"{rootPath}/{directory}";
-                        var path = asotype == (int)FileBindTypeEnum.網站圖示 ? $"/favicon.ico" : asotype == (int)FileBindTypeEnum.網站Logo ? $"/logo.{ext}" : $"/{directory}/{key}.{ext}";
+                        var path = asotype == (int)FileBindTypeEnum.網站圖示 ? $"/favicon.ico" : $"/{directory}/{key}.{ext}";
                         if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
                         if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
-                        else if (asotype == (int)FileBindTypeEnum.網站圖示 || asotype == (int)FileBindTypeEnum.網站Logo)
+                        else if (asotype == (int)FileBindTypeEnum.網站圖示)
                         {
                             string fullPath = $"{rootPath}{path}";
                             if (File.Exists(fullPath)) File.Delete(fullPath);

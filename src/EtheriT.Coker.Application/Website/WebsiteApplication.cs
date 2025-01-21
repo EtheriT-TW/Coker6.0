@@ -200,6 +200,7 @@ namespace EtheriT.Coker.Application
                               {
                                   Id = w.Id,
                                   Name = w.Title,
+                                  OrgName = w.OrgName,
                                   Description = w.Description ?? "",
                                   Images = w.Icon ?? "/favicon.ico"
                               }).ToListAsync();
@@ -214,12 +215,17 @@ namespace EtheriT.Coker.Application
                               {
                                   Id = w.Id,
                                   Name = w.Title,
+                                  OrgName = w.OrgName,
                                   Description = w.Description ?? "",
                                   Images = w.Icon ?? "/favicon.ico"
                               }).ToListAsync();
             }
             if (data.Any())
             {
+                foreach (var d in data)
+                {
+                    if (!d.Images.Contains(d.OrgName)) d.Images = d.Images.Replace("/upload/", $"/upload/{d.OrgName}/");
+                }
                 long siteId = await loginUserData.GetWebsiteId();
                 if (siteId == 0 && data.Any())
                 {

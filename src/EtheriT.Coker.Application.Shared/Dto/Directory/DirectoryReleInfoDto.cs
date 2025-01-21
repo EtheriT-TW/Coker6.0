@@ -7,6 +7,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
     public class DirectoryReleInfoDto
     {
         public long Id { get; set; }
+        public long? FId { get; set; }
         public DirectoryTypeEnum type { get; set; }
         public string? MainImage { get; set; }
         public string? Link { get; set; }

@@ -496,11 +496,16 @@ function DirectoryDataInsert($item, result) {
 
         //console.log("data link: ", data.link)
         if (typeof (IsLogin) != "undefined") {
-            if (IsLogin && data.link.indexOf("/product/") > -1) {
+            if (IsLogin && data.type == 1) {
                 var html = `<button data-pid="${data.id}" class="btn_fav"></button>`
                 content.find(".shareBlock").after(html);
                 if (content.find(".shareBlock").hasClass("d-none")) content.find(".btn_fav").addClass("d-none")
                 else if (content.find(".shareBlock").hasClass("type5")) content.find(".btn_fav").addClass("type5")
+                if (data.fId != null) {
+                    content.find(".btn_fav").data("fid", data.fId);
+                    content.find(".btn_fav").addClass("check")
+                    content.find(".btn_fav").attr("title", "移除收藏")
+                }
                 FavButtonInit(content.find(".btn_fav"))
             }
         }
@@ -653,13 +658,6 @@ function InsertAdDatat($frame, result) {
     return $frame;
 }
 function FavButtonInit($btn_favorites) {
-    Coker.Favorites.Check($btn_favorites.data("pid")).done(function (check) {
-        if (check.success) {
-            $btn_favorites.data("fid", check.message);
-            $btn_favorites.addClass("check")
-            $btn_favorites.attr("title", "移除收藏")
-        }
-    });
     $btn_favorites.on("click", function () {
         $self = $(this);
         if (!$self.hasClass("check")) {

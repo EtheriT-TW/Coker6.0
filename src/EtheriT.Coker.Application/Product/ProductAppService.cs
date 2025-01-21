@@ -741,9 +741,13 @@ namespace EtheriT.Coker.Application.Product
                 if (productData != null)
                 {
                     output = (from p in productData
+                              join f in db.Favorites on p.Id equals f.FK_AssocId into favoritesGroup
+                              from f in favoritesGroup.DefaultIfEmpty()
+                              where f == null || f.Type == (int)FavoritesTypeEnum.商品
                               select new DirectoryReleInfoDto
                               {
                                   Id = p.Id,
+                                  FId = f?.Id ?? null,
                                   Title = p.Title,
                                   ItemNo = p.ItemNo,
                                   Link = $"/product/{p.Id}",
@@ -2267,9 +2271,9 @@ namespace EtheriT.Coker.Application.Product
                     {
                         result.Id = (int)prod.Id;
                         result.Title = prod.Title;
-                        result.Description = !string.IsNullOrEmpty(prod.Description)? prod.Description :
+                        result.Description = !string.IsNullOrEmpty(prod.Description) ? prod.Description :
                                                 !string.IsNullOrEmpty(prod.Introduction) ? prod.Introduction : htmlProcessor.text(stringHandler.HtmlDecode(prod.Html));
-                        result.Css = prod.Css??"";
+                        result.Css = prod.Css ?? "";
                         result.Html = result.Html == null ? "" : result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
                     }
                 }

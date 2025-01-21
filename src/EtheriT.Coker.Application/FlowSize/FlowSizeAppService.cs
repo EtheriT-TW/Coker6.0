@@ -48,9 +48,9 @@ namespace EtheriT.Coker.Application.FlowSize
 				{
 					WebsiteId = g.Key, // 获取分组的WebsiteId
 					WebsiteName = g.First().WebsiteName, // 获取分组中的WebsiteName
-					RequestSize = g.Sum(f => f.RequestSize), // 总请求大小
-					ResponseSize = g.Sum(f => f.ResponseSize), // 总响应大小
-					Total = g.Sum(f => f.Total), // 总流量
+					RequestSize = g.Sum(f => (long)f.RequestSize), // 总请求大小
+					ResponseSize = g.Sum(f => (long)f.ResponseSize), // 总响应大小
+					Total = g.Sum(f => (long)f.Total), // 总流量
 					ActionTime = g.First().ActionTime // 获取最后的ActionTime
 				})
 				.FirstOrDefault()?? new FlowSizeDto();
@@ -66,9 +66,9 @@ namespace EtheriT.Coker.Application.FlowSize
 				 .Select(g => new
 				 {
 					 Date = g.Key, // 分組鍵 (日期)
-					 TotalRequest = g.Sum(x => x.RequestSize),  // 計算 RequestSize 的總和
-					 TotalResponse = g.Sum(x => x.ResponseSize), // 計算 ResponseSize 的總和
-					 Total = g.Sum(x => x.Total)  // 計算流量的總和
+					 TotalRequest = g.Sum(x => (long)x.RequestSize),  // 計算 RequestSize 的總和
+					 TotalResponse = g.Sum(x => (long)x.ResponseSize), // 計算 ResponseSize 的總和
+					 Total = g.Sum(x => (long)x.Total)  // 計算流量的總和
 				 });
 
 
@@ -80,10 +80,10 @@ namespace EtheriT.Coker.Application.FlowSize
 				var dataQuery = resultData.Select(d=>new 
 								{
 									ActionTime = d.Date,
-					RequestSize = FormatBytes(d.TotalRequest),
-					ResponseSize = FormatBytes(d.TotalResponse),
-					Total = FormatBytes(d.Total)
-				});
+									RequestSize = FormatBytes(d.TotalRequest),
+									ResponseSize = FormatBytes(d.TotalResponse),
+									Total = FormatBytes(d.Total)
+								});
 				if (loadOptions.Sort == null)
 				{
 					var Sort = new List<SortingInfo>{new SortingInfo

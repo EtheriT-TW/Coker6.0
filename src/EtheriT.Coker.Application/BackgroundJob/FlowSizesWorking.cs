@@ -62,9 +62,9 @@ namespace EtheriT.Coker.Application.BackgroundJob
 		private void addFlowSize(List<EtheriT.Coker.Core.Models.FlowSize> flowSizes, long id, string orgName, DateTime actionTime)
 		{
 			var logFilePath = $"{Configuration.GetValue<string>("VirtualDirectory:upload")}\\"+orgName+"\\logs\\" + actionTime.ToString("yyyy-MM-dd") + ".txt";
-			var totalResponse = 0;
-			var totalRequest = 0;
-			var total = 0;
+			long totalResponse = 0;
+			long totalRequest = 0;
+			long total = 0;
 			if (!File.Exists(logFilePath))
 			{
 				return;
@@ -80,15 +80,15 @@ namespace EtheriT.Coker.Application.BackgroundJob
 				// 查找包含 "Response Size" 的行
 				if (line.Contains("Total Response Size"))
 				{
-					totalResponse += int.Parse(Regex.Match(line, @"Total Response Size:\s*(\d+)\s*bytes").Groups[1].Value);  // 更新最後找到的符合條件的行
+					totalResponse += long.Parse(Regex.Match(line, @"Total Response Size:\s*(\d+)\s*bytes").Groups[1].Value);  // 更新最後找到的符合條件的行
 				}
 				if (line.Contains("Total Request Size"))
 				{
-					totalRequest += int.Parse(Regex.Match(line, @"Total Request Size:\s*(\d+)\s*bytes").Groups[1].Value);
+					totalRequest += long.Parse(Regex.Match(line, @"Total Request Size:\s*(\d+)\s*bytes").Groups[1].Value);
 				}
 				if (line.Contains("Total"))
 				{
-					total += int.Parse(Regex.Match(line, @"Total:\s*(\d+)\s*bytes").Groups[1].Value);
+					total += long.Parse(Regex.Match(line, @"Total:\s*(\d+)\s*bytes").Groups[1].Value);
 				}
 			}
 			if (!db.FlowSizes.Any(f => f.FK_WebsiteId == id && f.actionTime.Date == actionTime.Date)) // 检查是否存在相同的 actionTime 日期

@@ -15,7 +15,7 @@
             let data = await SearchDb.getData();
 
             // 監聽輸入框的 change 事件
-            $(".search-input").on("change",function () {
+            $(".search-input").on("change", function () {
                 const self = this;
                 setTimeout(async () => {
                     const query = $(self).val().toLowerCase();
@@ -31,7 +31,7 @@
                         $search.data("search-text", $(self).val());
                         window.location.href = `/${OrgName}/Search/Get/${$search.data("dirid")}/${$search.data("search-text")}`;
                     }
-                },300);
+                }, 300);
             });
             $("body").on("click.hideSuggestions", function (event) {
                 $(".search-suggestions").addClass("d-none");
@@ -41,7 +41,7 @@
                 event.preventDefault();
                 setTimeout(() => {
                     $(this).trigger("input");
-                },300);
+                }, 300);
             });
 
             $(".search-input").on("input", async function () {
@@ -204,7 +204,7 @@
     $(".search-category .catalog_frame [name='endDate']").on("change", function () {
         $search.data("endDate", $(this).val());
     });
-    
+
     $(".search-category .catalog_frame").on("load", function () {
         const $fram = $(this);
         const temp = $("#filterTemp").html();

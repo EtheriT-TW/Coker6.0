@@ -174,9 +174,11 @@ function ViewTypeChangeInit() {
                 })
             }
             var TypeButtonInit = false;
-            if (typeof (localStorage[`switchViewType-${pathname}`]) != "undefined" && pathname.indexOf("Search") < 0) {
-                var btnclass = localStorage[`switchViewType-${pathname}`];
-                $(`button.${btnclass}`).trigger("click");
+            if (typeof (localStorage[`switchViewType-${pathname}`]) != "undefined") {
+                if (pathname.indexOf("Search") < 0) {
+                    var btnclass = localStorage[`switchViewType-${pathname}`];
+                    $(`button.${btnclass}`).trigger("click");
+                }
                 TypeButtonInit = true;
             }
             if (!TypeButtonInit) {

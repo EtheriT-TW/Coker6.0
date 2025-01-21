@@ -506,6 +506,19 @@ function DirectoryDataInsert($item, result) {
     });
     HoverEffectInit();
     ShareBlockInit();
+    var pathname = window.location.pathname;
+    if (pathname.indexOf("Search") > 0) {
+        pathname = pathname.substring(0, pathname.indexOf("Search") + 6)
+    } else {
+        if (pathname.lastIndexOf("_") > 0) {
+            var temp_text = pathname.substring(pathname.lastIndexOf("_") + 1);
+            if ($.isNumeric(temp_text)) pathname = pathname.substring(0, pathname.lastIndexOf("_"))
+        }
+    }
+    if (typeof (localStorage[`switchViewType-${pathname}`]) != "undefined" && isSearch) {
+        var btnclass = localStorage[`switchViewType-${pathname}`];
+        $(`button.${btnclass}`).trigger("click");
+    }
 }
 function ProdFavBtnSet(content, data) {
     var html = `<button data-pid="${data.id}" class="btn_fav"></button>`

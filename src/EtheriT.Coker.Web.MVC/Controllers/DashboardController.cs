@@ -147,7 +147,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                     FirstTime = firstDate[0]
                 },
                 MonthTotalFlowSize = FormatSize((await flowSizeAppService.GetMonthFlowSizes()).Total),
-                ToMonth =  today.Year+"年 "+today.Month+"月"
+                ToMonth = $"{today.ToString("yyyy-MM")}-1 至 {today.ToString("yyyy-MM-dd")}"
             };
             return View(model);
         }

@@ -303,7 +303,7 @@ function DirectoryDataGet($item, option) {
 
         $item.data("init", "true");
 
-        if (result.releInfos[0].type == 1) {
+        if (result.releInfos.length > 0 && result.releInfos[0].type == 1) {
             if (typeof (islogin) == "undefined") {
                 Coker.Token.CheckToken().done(function (token_result) {
                     if (token_result.success) islogin = token_result.isLogin;

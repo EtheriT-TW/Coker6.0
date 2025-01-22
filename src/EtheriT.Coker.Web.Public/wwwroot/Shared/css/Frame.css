@@ -277,7 +277,7 @@ table:not(.table) {
         background-color: #FFF;
         z-index: 10000;
         display: inline-block;
-        color: #333;
+        color: #333 !important;
     }
 
 .collapse_menus {

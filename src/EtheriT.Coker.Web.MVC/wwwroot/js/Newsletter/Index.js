@@ -719,6 +719,12 @@ function initJson() {
                 "link": "/eplus/about",
                 "target": false,
                 "alert": "連結至:活動資訊"
+            },
+            {
+                "title": "網站導覽",
+                "link": "/eplus/website",
+                "target": false,
+                "alert": "連結至:網站導覽"
             }
         ],
         "logo": {

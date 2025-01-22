@@ -422,6 +422,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Article>(o =>
             {
                 o.HasIndex(a => a.Title);
+                o.HasIndex(a => a.RemovedFromShelves);
+                o.HasIndex(a => a.permanent);
+                o.HasIndex(a => a.Visible);
+                o.HasIndex(a => a.SerNO);
+                o.HasIndex(a => a.NodeDate);
+                o.HasIndex(a => a.StartTime);
+                o.HasIndex(a => a.EndTime);
                 o.HasOne(f => f.Website).WithMany(u => u.Articles).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });

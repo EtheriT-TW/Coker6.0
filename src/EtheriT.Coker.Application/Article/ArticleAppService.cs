@@ -308,23 +308,24 @@ namespace EtheriT.Coker.Application.Article
 
                 var output = new List<DirectoryReleInfoDto>();
                 var articleData = new List<ArticleListGetDto>();
-                var result = await db.Article
-                                    .Where(e => dto.Ids.Contains(e.Id))
-                                    .Where(e => !e.IsDeleted)
-                                    .Where(e => !e.RemovedFromShelves)
-                                    .Where(e => siteIds.Contains(e.FK_WebsiteId))
-                                    .Where(e => e.Visible)
-                                    .Where(e => e.permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartTime) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndTime) < 0))
-                                    .Where(e => dto.Target == null || !string.IsNullOrEmpty(e.DataJson))
-                                    .OrderBy(a => a.SerNO)
-                                    .ThenByDescending(a => a.NodeDate)
-                                    .ThenByDescending(e => e.Id)
-                                    .ToListAsync();
+                var query =  db.Article
+                                .AsNoTracking()
+                                .Where(e => siteIds.Contains(e.FK_WebsiteId))
+                                .Where(e => !e.RemovedFromShelves)
+                                .Where(e => e.Visible)
+                                .Where(e => dto.Ids.Contains(e.Id))
+                                .Where(e => e.permanent || e.StartTime < DateTime.Now && e.EndTime > DateTime.Now)
+                                .Where(e => dto.Target == null || !string.IsNullOrEmpty(e.DataJson))
+                                .OrderBy(a => a.SerNO)
+                                .ThenByDescending(a => a.NodeDate)
+                                .ThenByDescending(e => e.Id);
+                var result = new List<Core.Models.Article>();
+                int skip = ((dto.Page ?? 1) - 1) * dto.ShowNum ?? 12 - 1;
+                if (skip < 0) skip = 0;
                 if (dto.FindNearest == true)
                 {
                     var distance = new List<DistanceTempDto>();
-                    result.ForEach(data =>
-                    {
+                    foreach (var data in query) {
                         if (data.Longitude != null && data.Latitude != null)
                         {
                             var distemp = new DistanceTempDto();
@@ -332,22 +333,21 @@ namespace EtheriT.Coker.Application.Article
                             distemp.distance = Math.Sqrt(Math.Pow((double)data.Longitude - (double)dto.Longitude, 2) + Math.Pow((double)data.Latitude - (double)dto.Latitude, 2));
                             distance.Add(distemp);
                         }
-                    });
+                    }
                     distance.Sort((a, b) => a.distance < b.distance ? -1 : 1);
                     distance.Take(dto.MaxLen.Value).ToList();
                     var newresult = new List<Core.Models.Article>();
                     for (var i = 0; i < (dto.MaxLen.Value > distance.Count() ? distance.Count : dto.MaxLen.Value); i++)
                     {
-                        newresult.Add(result.Find(e => e.Id == distance[i].Id));
+                        newresult.Add(query.Where(e => e.Id == distance[i].Id).First());
                     }
                     result = newresult;
                 }
                 else
                 {
-                    if (dto.MaxLen != null && dto.MaxLen > 0) result = result.Take(dto.MaxLen.Value).ToList();
+                    if (dto.MaxLen != null && dto.MaxLen > 0) result = query.Take(dto.MaxLen.Value).ToList();
+                    else result = query.Skip(skip).Take(dto.ShowNum ?? 12).ToList();
                 }
-                int skip = ((dto.Page ?? 1) - 1) * dto.ShowNum ?? 12 - 1;
-                if (skip < 0) skip = 0;
                 if (string.IsNullOrEmpty(dto.Target))
                 {
                     articleData = mapper.Map(result, articleData).Skip(skip).Take(dto.ShowNum ?? 12).ToList();

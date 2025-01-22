@@ -53,11 +53,11 @@ namespace EtheriT.Coker.Application.FlowSize
 					Total = g.Sum(f => (long)f.Total), // 总流量
 					ActionTime = g.First().ActionTime // 获取最后的ActionTime
 				})
-				.FirstOrDefault()?? new FlowSizeDto();
+				.FirstOrDefault() ?? new FlowSizeDto();
 			return result;
 		}
 
-		public async Task<JsonResult> GetFlowSizesList(DataSourceLoadOptions loadOptions)
+		public async Task<JsonResult> GetFlowSizesList(string type, DataSourceLoadOptions loadOptions)
 		{
 			long siteId = await loginUserData.GetWebsiteId();
 			var data = _db.FlowSizes
@@ -70,20 +70,44 @@ namespace EtheriT.Coker.Application.FlowSize
 					 TotalResponse = g.Sum(x => (long)x.ResponseSize), // 計算 ResponseSize 的總和
 					 Total = g.Sum(x => (long)x.Total)  // 計算流量的總和
 				 });
-
+			switch(type)
+			{
+				case"year":
+					data = _db.FlowSizes
+					.GroupBy(f => f.actionTime.Year)
+					.Select(g => new
+					{
+						Date = new DateTime(g.Key, 1, 1),  // 按年份統計
+						TotalRequest = g.Sum(f => f.RequestSize),
+						TotalResponse = g.Sum(f => f.ResponseSize),
+						Total = g.Sum(f => f.Total)
+					});
+					break;
+				case "month":
+					data = _db.FlowSizes
+					.GroupBy(f => new { f.actionTime.Year, f.actionTime.Month })
+					.Select(g => new
+					{
+						Date = new DateTime(g.Key.Year, g.Key.Month, 1),  // 按月份統計
+						TotalRequest = g.Sum(f => f.RequestSize),
+						TotalResponse = g.Sum(f => f.ResponseSize),
+						Total = g.Sum(f => f.Total)
+					});
+					break;
+			}
 
 			if (data != null)
 			{
 				var resultData = await data.ToListAsync();
 
 				var firstRecordDate = data.Select(d => d.Date).FirstOrDefault();
-				var dataQuery = resultData.Select(d=>new 
-								{
-									ActionTime = d.Date,
-									RequestSize = FormatBytes(d.TotalRequest),
-									ResponseSize = FormatBytes(d.TotalResponse),
-									Total = FormatBytes(d.Total)
-								});
+				var dataQuery = resultData.Select(d => new
+				{
+					ActionTime = FormatDate(type, d.Date),
+					RequestSize = FormatBytes(d.TotalRequest),
+					ResponseSize = FormatBytes(d.TotalResponse),
+					Total = FormatBytes(d.Total)
+				});
 				if (loadOptions.Sort == null)
 				{
 					var Sort = new List<SortingInfo>{new SortingInfo
@@ -98,6 +122,86 @@ namespace EtheriT.Coker.Application.FlowSize
 				return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
 			}
 			else throw new Exception("查無資料");
+		}
+
+		private string FormatDate(string type, DateTime date)
+		{
+			switch (type)
+			{
+				case "year":
+					return $"西元{date.ToString("yyyy")}年";
+				case "month":
+					return $"西元{date.ToString("yyyy")}年 {date.ToString("MM")}月";
+				default:
+					return date.ToString("yyyy/MM/dd");
+			}
+		}
+		private async Task<List<FlowSizeDto>> GetFlowSizesList(string type)
+		{
+			long siteId = await loginUserData.GetWebsiteId();
+
+			switch (type)
+			{
+				case "year":
+					var yearlyData = await _db.FlowSizes
+					.GroupBy(f => f.actionTime.Year)
+					.Select(g => new FlowSizeDto
+					{
+						ActionTime = new DateTime(g.Key, 1, 1),  // 按年份統計
+						RequestSize = g.Sum(f => f.RequestSize),
+						ResponseSize = g.Sum(f => f.ResponseSize),
+						Total = g.Sum(f => f.Total)
+					})
+					.ToListAsync();
+
+					return yearlyData;
+				case "month":
+					var monthlyData = await _db.FlowSizes
+					.GroupBy(f => new { f.actionTime.Year, f.actionTime.Month })
+					.Select(g => new FlowSizeDto
+					{
+						ActionTime = new DateTime(g.Key.Year, g.Key.Month, 1),  // 按月份統計
+						RequestSize = g.Sum(f => f.RequestSize),
+						ResponseSize = g.Sum(f => f.ResponseSize),
+						Total = g.Sum(f => f.Total)
+					})
+					.ToListAsync();
+
+					return monthlyData;
+				default:
+					var data = _db.FlowSizes
+						 .Where(e => e.FK_WebsiteId == siteId)
+						 .GroupBy(f => f.actionTime.Date) // 按日期分組
+						 .Select(g => new
+						 {
+							 Date = g.Key, // 分組鍵 (日期)
+							 TotalRequest = g.Sum(x => (long)x.RequestSize),  // 計算 RequestSize 的總和
+							 TotalResponse = g.Sum(x => (long)x.ResponseSize), // 計算 ResponseSize 的總和
+							 Total = g.Sum(x => (long)x.Total)  // 計算流量的總和
+						 });
+
+					break;
+			}
+			if (type == "year")
+			{
+
+			}
+			else if (type == "month")
+			{
+				var monthlyData = await _db.FlowSizes
+			.GroupBy(f => new { f.actionTime.Year, f.actionTime.Month })
+			.Select(g => new FlowSizeDto
+			{
+				ActionTime = new DateTime(g.Key.Year, g.Key.Month, 1),  // 按月份統計
+				RequestSize = g.Sum(f => f.RequestSize),
+				ResponseSize = g.Sum(f => f.ResponseSize),
+				Total = g.Sum(f => f.Total)
+			})
+			.ToListAsync();
+
+				return monthlyData;
+			}
+			return null;
 		}
 
 		public static string FormatBytes(long bytes)

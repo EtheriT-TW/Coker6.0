@@ -1,124 +1,130 @@
 {
-  "scripts": [
-    {
-      "output": "lib/jquery/dist/jquery.min.js",
-      "input": [
-        "node_modules/jquery/dist/jquery.min.js",
-        "node_modules/chosen-js/chosen.jquery.min.js",
-        "node_modules/jquery-ui-dist/jquery-ui.min.js",
-        "node_modules/jquery.cookie/jquery.cookie.js"
-      ]
-    },
-    {
-      "output": "/js/CokerCore.min.js",
-      "input": [
-        "wwwroot/js/CokerCore/Initialize.js",
-        "wwwroot/js/CokerCore/Default.js",
-        "wwwroot/js/CokerCore/Advertise.js",
-        "wwwroot/js/CokerCore/Articles.js",
-        "wwwroot/js/CokerCore/Company.js",
-        "wwwroot/js/CokerCore/Contact.js",
-        "wwwroot/js/CokerCore/Directory.js",
-        "wwwroot/js/CokerCore/File.js",
-        "wwwroot/js/CokerCore/Form.js",
-        "wwwroot/js/CokerCore/HtmlContent.js",
-        "wwwroot/js/CokerCore/ListFile.js",
-        "wwwroot/js/CokerCore/Member.js",
-        "wwwroot/js/CokerCore/ObjectType.js",
-        "wwwroot/js/CokerCore/Order.js",
-        "wwwroot/js/CokerCore/ThirdParty.js",
-        "wwwroot/js/CokerCore/Others.js",
-        "wwwroot/js/CokerCore/PowerManagement.js",
-        "wwwroot/js/CokerCore/Product.js",
-        "wwwroot/js/CokerCore/Role.js",
-        "wwwroot/js/CokerCore/Remote.js",
-        "wwwroot/js/CokerCore/sweet.js",
-        "wwwroot/js/CokerCore/TechnicalCertificate.js",
-        "wwwroot/js/CokerCore/User.js",
-        "wwwroot/js/CokerCore/UserHabits.js",
-        "wwwroot/js/CokerCore/WebMesnus.js",
-        "wwwroot/js/CokerCore/WebSite.js"
-      ]
-    },
-    {
-      "output": "lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js",
-      "input": [
-        "wwwroot/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.js"
-      ]
-    },
-    {
-      "output": "lib/jquery-menu-editor/jquery-menu-editor.min.js",
-      "input": [
-        "wwwroot/lib/jquery-menu-editor/jquery-menu-editor.js"
-      ]
-    },
-    {
-      "output": "lib/sweetalert2/dist/sweetalert2.min.js",
-      "input": [
-        "node_modules/sweetalert2/dist/sweetalert2.min.js"
-      ]
-    },
-    {
-      "output": "lib/swiper/swiper-bundle.min.js",
-      "input": [
-        "node_modules/swiper/swiper-bundle.min.js"
-      ]
-    },
-    {
-      "output": "lib/chart.js/chart.min.js",
-      "input": [
-        "node_modules/chart.js/dist/chart.min.js"
-      ]
-    },
-    {
-      "output": "lib/jquery-twzipcode/jquery.twzipcode.min.js",
-      "input": [
-        "node_modules/jquery-twzipcode/jquery.twzipcode.min.js"
-      ]
-    },
-    {
-      "output": "lib/daterangepicker/moment.min.js",
-      "input": [
-        "node_modules/daterangepicker/moment.min.js"
-      ]
-    },
-    {
-      "output": "lib/daterangepicker/daterangepicker.min.js",
-      "input": [
-        "node_modules/daterangepicker/daterangepicker.js"
-      ]
-    },
-    {
-      "output": "lib/masonry-layout/dist/masonry.pkgd.min.js",
-      "input": [
-        "node_modules/masonry-layout/dist/masonry.pkgd.js"
-      ]
-    },
-    {
-      "output": "lib/file-upload-with-preview/file-upload-with-preview.min.js",
-      "input": [
-        "node_modules/file-upload-with-preview/dist/file-upload-with-preview.iife.js"
-      ]
-    },
-    {
-      "output": "lib/file-upload-with-preview/file-upload-with-preview.min.js",
-      "input": [
-        "node_modules/file-upload-with-preview/dist/file-upload-with-preview.iife.js"
-      ]
-    },
-    {
-      "output": "lib/html-image-compress/imageCompress.min.js",
-      "input": [
-        "node_modules/html-image-compress/dist/imageCompress.main.js"
-      ]
-    },
-    {
-      "output": "lib/jquery-plugin-c-share/dist/jquery.c-share.min.js",
-      "input": [
-        "node_modules/jquery-plugin-c-share/dist/jquery.c-share.js"
-      ]
-    }
-  ],
+    "scripts": [
+        {
+            "output": "lib/jquery/dist/jquery.min.js",
+            "input": [
+                "node_modules/jquery/dist/jquery.min.js",
+                "node_modules/chosen-js/chosen.jquery.min.js",
+                "node_modules/jquery-ui-dist/jquery-ui.min.js",
+                "node_modules/jquery.cookie/jquery.cookie.js"
+            ]
+        },
+        {
+            "output": "/js/CokerCore.min.js",
+            "input": [
+                "wwwroot/js/CokerCore/Initialize.js",
+                "wwwroot/js/CokerCore/Default.js",
+                "wwwroot/js/CokerCore/Advertise.js",
+                "wwwroot/js/CokerCore/Articles.js",
+                "wwwroot/js/CokerCore/Company.js",
+                "wwwroot/js/CokerCore/Contact.js",
+                "wwwroot/js/CokerCore/Directory.js",
+                "wwwroot/js/CokerCore/File.js",
+                "wwwroot/js/CokerCore/Form.js",
+                "wwwroot/js/CokerCore/HtmlContent.js",
+                "wwwroot/js/CokerCore/ListFile.js",
+                "wwwroot/js/CokerCore/Member.js",
+                "wwwroot/js/CokerCore/ObjectType.js",
+                "wwwroot/js/CokerCore/Order.js",
+                "wwwroot/js/CokerCore/ThirdParty.js",
+                "wwwroot/js/CokerCore/Others.js",
+                "wwwroot/js/CokerCore/PowerManagement.js",
+                "wwwroot/js/CokerCore/Product.js",
+                "wwwroot/js/CokerCore/Role.js",
+                "wwwroot/js/CokerCore/Remote.js",
+                "wwwroot/js/CokerCore/sweet.js",
+                "wwwroot/js/CokerCore/TechnicalCertificate.js",
+                "wwwroot/js/CokerCore/User.js",
+                "wwwroot/js/CokerCore/UserHabits.js",
+                "wwwroot/js/CokerCore/WebMesnus.js",
+                "wwwroot/js/CokerCore/WebSite.js"
+            ]
+        },
+        {
+            "output": "wwwroot\\js\\FlowSize\\Index.min.js",
+            "input": [
+                "wwwroot\\js\\FlowSize\\Index.js"
+            ]
+        },
+        {
+            "output": "lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js",
+            "input": [
+                "wwwroot/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.js"
+            ]
+        },
+        {
+            "output": "lib/jquery-menu-editor/jquery-menu-editor.min.js",
+            "input": [
+                "wwwroot/lib/jquery-menu-editor/jquery-menu-editor.js"
+            ]
+        },
+        {
+            "output": "lib/sweetalert2/dist/sweetalert2.min.js",
+            "input": [
+                "node_modules/sweetalert2/dist/sweetalert2.min.js"
+            ]
+        },
+        {
+            "output": "lib/swiper/swiper-bundle.min.js",
+            "input": [
+                "node_modules/swiper/swiper-bundle.min.js"
+            ]
+        },
+        {
+            "output": "lib/chart.js/chart.min.js",
+            "input": [
+                "node_modules/chart.js/dist/chart.min.js"
+            ]
+        },
+        {
+            "output": "lib/jquery-twzipcode/jquery.twzipcode.min.js",
+            "input": [
+                "node_modules/jquery-twzipcode/jquery.twzipcode.min.js"
+            ]
+        },
+        {
+            "output": "lib/daterangepicker/moment.min.js",
+            "input": [
+                "node_modules/daterangepicker/moment.min.js"
+            ]
+        },
+        {
+            "output": "lib/daterangepicker/daterangepicker.min.js",
+            "input": [
+                "node_modules/daterangepicker/daterangepicker.js"
+            ]
+        },
+        {
+            "output": "lib/masonry-layout/dist/masonry.pkgd.min.js",
+            "input": [
+                "node_modules/masonry-layout/dist/masonry.pkgd.js"
+            ]
+        },
+        {
+            "output": "lib/file-upload-with-preview/file-upload-with-preview.min.js",
+            "input": [
+                "node_modules/file-upload-with-preview/dist/file-upload-with-preview.iife.js"
+            ]
+        },
+        {
+            "output": "lib/file-upload-with-preview/file-upload-with-preview.min.js",
+            "input": [
+                "node_modules/file-upload-with-preview/dist/file-upload-with-preview.iife.js"
+            ]
+        },
+        {
+            "output": "lib/html-image-compress/imageCompress.min.js",
+            "input": [
+                "node_modules/html-image-compress/dist/imageCompress.main.js"
+            ]
+        },
+        {
+            "output": "lib/jquery-plugin-c-share/dist/jquery.c-share.min.js",
+            "input": [
+                "node_modules/jquery-plugin-c-share/dist/jquery.c-share.js"
+            ]
+        }
+    ],
   "styles": [
     {
       "output": "lib/sweetalert2/dist/sweetalert2.min.css",

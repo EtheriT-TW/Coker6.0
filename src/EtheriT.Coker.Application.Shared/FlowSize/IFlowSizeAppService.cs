@@ -12,6 +12,6 @@ namespace EtheriT.Coker.Application.Shared.FlowSize
 	{
 		public Task<FlowSizeDto> GetMonthFlowSizes();
 
-		public Task<JsonResult> GetFlowSizesList(DataSourceLoadOptions loadOptions);
+		public Task<JsonResult> GetFlowSizesList(string type,DataSourceLoadOptions loadOptions);
 	}
 }

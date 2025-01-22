@@ -47,7 +47,18 @@ namespace EtheriT.Coker.Web.Public.Middlewares
 
 				// 確保捕獲了完整的回應體
 				var responseSize = responseBody.Length; // 捕捉實際的回應體大小
+				var contentEncoding = context.Response.Headers["Content-Encoding"];
 				var statusCode = context.Response.StatusCode; // 獲取狀態碼
+				Console.WriteLine(url);
+				if (!string.IsNullOrEmpty(contentEncoding))
+				{
+					Console.WriteLine($"使用了壓縮方式: {contentEncoding}, 壓縮後大小: {responseSize} bytes");
+				}
+				else
+				{
+					Console.WriteLine($"未使用壓縮，大小: {responseSize} bytes");
+				}
+
 
 				total += responseSize + requestSize;
 				totalRequest += requestSize;

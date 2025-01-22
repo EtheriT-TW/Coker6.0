@@ -65,6 +65,7 @@ using EtheriT.Coker.Application.Recipients;
 using Serilog;
 using Serilog.Filters;
 using static System.Formats.Asn1.AsnWriter;
+using Microsoft.AspNetCore.ResponseCompression;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -247,9 +248,14 @@ builder.Services.AddHttpClient("ThirdPartyClient_ECPay", client =>
     client.BaseAddress = new Uri(configuration.GetValue<string>("ThirdParty:ECPay:PaymentUrl"));
 });
 
+builder.Services.AddResponseCompression(options =>
+{
+	options.EnableForHttps = true; // 啟用 HTTPS 壓縮
+});
+
 
 // 配置 Serilog
-string logPath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\logs\\{DateTime.Now.Date.ToString("yyyy-MM-dd")}.txt";
+string logPath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\logs\\{configuration.GetValue<string>("WebConfig:SiteId")}_{DateTime.Now.Date.ToString("yyyy-MM-dd")}.txt";
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information() // 設定最低記錄層級
     .WriteTo.Console()          // 在控制台顯示日誌
@@ -265,6 +271,9 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 var app = builder.Build();
+
+// 使用響應壓縮中間件
+app.UseResponseCompression();
 
 // 中間件來記錄流量
 app.UseMiddleware<FlowSizeLogMiddleware>();

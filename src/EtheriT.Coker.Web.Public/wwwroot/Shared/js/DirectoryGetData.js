@@ -302,7 +302,17 @@ function DirectoryDataGet($item, option) {
         }
 
         $item.data("init", "true");
-        DirectoryDataInsert($item, result.releInfos);
+
+        if (result.releInfos[0].type == 1) {
+            if (typeof (islogin) == "undefined") {
+                Coker.Token.CheckToken().done(function (token_result) {
+                    if (token_result.success) islogin = token_result.isLogin;
+                    DirectoryDataInsert($item, result.releInfos);
+                });
+            } else DirectoryDataInsert($item, result.releInfos);
+        } else {
+            DirectoryDataInsert($item, result.releInfos);
+        }
         $item.data({ filter: result.filter, directoryType: result.directoryType }).trigger("load");
 
         if ($item.hasClass("swiper") || $item.find(".swiper").length > 0 || $item.hasClass("swiper-wrapper")) {
@@ -494,13 +504,7 @@ function DirectoryDataInsert($item, result) {
         content.find(".shareBlock > a").remove();
         content.find(".shareBlock").data("href", path);
 
-        if (typeof (IsLogin) == "undefined") {
-            Coker.Token.CheckToken().done(function (result) {
-                if (result.success && result.isLogin && result.name != "" && data.type == 1) ProdFavBtnSet(content, data)
-            });
-        } else if (IsLogin) {
-            ProdFavBtnSet(content, data)
-        }
+        if (data.type == 1 && typeof (IsLogin) != "undefined" && IsLogin) ProdFavBtnSet(content, data)
 
         $item.find(".catalog").append(content);
     });

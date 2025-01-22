@@ -2,6 +2,15 @@
     const $tabs = $(".search-category>.container>button");
     const $search = $(".search-category .catalog_frame");
     const $suggestionsList = $(".search-suggestions");
+
+    for (var i = sessionStorage.length - 1; i >= 0; i--) {
+        var key = sessionStorage.key(i);
+
+        if (key.startsWith("product-") || key.startsWith("article-")) {
+            sessionStorage.removeItem(key);
+        }
+    }
+
     let timer = null;
     (async () => {
         const SearchDb = new LocalDb({

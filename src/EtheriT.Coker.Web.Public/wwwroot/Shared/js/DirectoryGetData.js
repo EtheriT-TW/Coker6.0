@@ -342,6 +342,9 @@ function DirectoryDataInsert($item, result) {
         var content = $(temp).clone();
         let path, target;
         if (isSearch || window.location.pathname.toLowerCase().indexOf("search") > 0 || window.location.pathname.toLowerCase().indexOf("techcert") > 0) {
+            var links = data.link.split("?filter=");
+            data.link = links[0];
+            var filter = links.length > 1 ? "?filter=" + links[1] : "";
             switch (data.type) {
                 case 3:
                     path = `${data.orgName == null ? "" : `/${data.orgName}`}/${data.link}`;
@@ -351,7 +354,7 @@ function DirectoryDataInsert($item, result) {
                     break;
             }
             if (typeof ($item.data("search-text")) != "undefined" && $item.data("search-text") != "") {
-                path = `${path}/${$item.data("search-text")}`;
+                path = `${path}/${$item.data("search-text")}${filter}`;
             }
 
             target = "_blank";

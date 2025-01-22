@@ -159,7 +159,7 @@
 }
 
 <Content id="main" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
-@if (Model.PageData != null && Model.option!="search" && Model.PageData.holdPage == HoldPageNameEnum.Article)
+@if (Model.PageData != null && Model.PageData.holdPage == HoldPageNameEnum.Article)
 {
     <div id="SwitchPage" class="container my-5 justify-content-center">
         <a href="" title="" target="_self" class="btn_prev disabled">上一則</a>

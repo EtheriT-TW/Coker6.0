@@ -628,32 +628,83 @@ function SwitchPage() {
     var currentUrl = window.location.pathname + window.location.search;
     var catalog = currentUrl.substring(0, currentUrl.indexOf('/product'));
     var productid = (currentUrl.split('/product/')[1]).split('?')[0].split('/')[0];
+    var searchtext = decodeURIComponent((currentUrl.split('/product/')[1]).split('?')[0].split('/')[1]);
     var urlParams = new URLSearchParams(window.location.search);
     var dirid = urlParams.get('dirid');
     var diridList = dirid == null ? null : dirid.split(',').map(Number);
+    var filter = urlParams.get('filter');
 
-    $("#SwitchPage .btn_list").attr("href", catalog)
+    var routername = catalog.substring(catalog.lastIndexOf("/") + 1)
 
-    Directory.SwitchPage({ id: productid, dirids: diridList, routername: catalog.substring(catalog.lastIndexOf("/") + 1), type: 1 }).done(function (result) {
-        if (result.length > 0) {
-            if (result[0].key != null) {
-                $("#SwitchPage .btn_prev").removeClass("disabled")
-                var link = `${catalog}/product/${result[0].key}`;
+    if (routername == "search" && sessionStorage.getItem(`product-${searchtext}`)) {
+        $("#SwitchPage .btn_list").attr("href", `${catalog}/Get/3/${searchtext}`)
+        var plist = JSON.parse(sessionStorage.getItem(`product-${searchtext}`));
+        var index = plist.findIndex(p => p.key == productid);
+        if (plist.length > 0) {
+            if (index > 0) {
+                var link = `${catalog}/product/${plist[index - 1].key}/${searchtext}`;
                 $("#SwitchPage .btn_prev").attr({
                     href: link,
-                    title: result[0].value
+                    title: plist[index - 1].value
                 })
+                $("#SwitchPage .btn_prev").removeClass("disabled")
             }
-            if (result[1].key != null) {
-                $("#SwitchPage .btn_next").removeClass("disabled")
-                var link = `${catalog}/product/${result[1].key}`;
+            if (index < plist.length - 1) {
+                var link = `${catalog}/product/${plist[index + 1].key}/${searchtext}`;
                 $("#SwitchPage .btn_next").attr({
                     href: link,
-                    title: result[1].value
+                    title: plist[index + 1].value
                 })
+                $("#SwitchPage .btn_next").removeClass("disabled")
             }
         } else {
             $('#SwitchPage').remove();
         }
-    });
+    } else {
+        $("#SwitchPage .btn_list").attr("href", catalog)
+        Directory.SwitchPage({ id: productid, dirids: diridList, routername: routername, searchtext: searchtext, filters: filter, type: 1 }).done(function (result) {
+            if (result.length > 0) {
+                if (routername == "search") {
+                    sessionStorage.setItem(`product-${searchtext}`, JSON.stringify(result));
+                    var index = result.findIndex(p => p.key == productid);
+                    if (index > 0) {
+                        $("#SwitchPage .btn_prev").removeClass("disabled")
+                        var link = `${catalog}/product/${result[index - 1].key}/${searchtext}`;
+                        $("#SwitchPage .btn_prev").attr({
+                            href: link,
+                            title: result[index - 1].value
+                        })
+                        $("#SwitchPage .btn_prev").removeClass("disabled")
+                    }
+                    if (index < result.length - 1) {
+                        var link = `${catalog}/product/${result[index + 1].key}/${searchtext}`;
+                        $("#SwitchPage .btn_next").attr({
+                            href: link,
+                            title: result[index + 1].value
+                        })
+                        $("#SwitchPage .btn_next").removeClass("disabled")
+                    }
+                } else {
+                    if (result[0].key != null) {
+                        $("#SwitchPage .btn_prev").removeClass("disabled")
+                        var link = `${catalog}/product/${result[0].key}`;
+                        $("#SwitchPage .btn_prev").attr({
+                            href: link,
+                            title: result[0].value
+                        })
+                    }
+                    if (result[1].key != null) {
+                        $("#SwitchPage .btn_next").removeClass("disabled")
+                        var link = `${catalog}/product/${result[1].key}`;
+                        $("#SwitchPage .btn_next").attr({
+                            href: link,
+                            title: result[1].value
+                        })
+                    }
+                }
+            } else {
+                $('#SwitchPage').remove();
+            }
+        });
+    }
 } 

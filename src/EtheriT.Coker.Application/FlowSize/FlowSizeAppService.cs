@@ -28,31 +28,17 @@ namespace EtheriT.Coker.Application.FlowSize
 		// 實現接口中的方法，用來查詢所有的 FlowSize 數據並轉換為 DTO
 		public async Task<FlowSizeDto> GetMonthFlowSizes()
 		{
-			long userWebsiteId = await loginUserData.GetWebsiteId();
+			long siteId = await loginUserData.GetWebsiteId();
 			var result = _db.FlowSizes
-				.Where(flow => flow.FK_WebsiteId == userWebsiteId)
-				.Join(_db.Websites,
-					  flow => flow.FK_WebsiteId,
-					  website => website.Id,
-					  (flow, website) => new FlowSizeDto
-					  {
-						  WebsiteId = flow.FK_WebsiteId,
-						  WebsiteName = website.OrgName,
-						  RequestSize = flow.RequestSize,
-						  ResponseSize = flow.ResponseSize,
-						  Total = flow.Total,
-						  ActionTime = flow.actionTime
-					  })
-				.GroupBy(f => f.WebsiteId)
-				.Select(g => new FlowSizeDto
-				{
-					WebsiteId = g.Key, // 获取分组的WebsiteId
-					WebsiteName = g.First().WebsiteName, // 获取分组中的WebsiteName
-					RequestSize = g.Sum(f => (long)f.RequestSize), // 总请求大小
-					ResponseSize = g.Sum(f => (long)f.ResponseSize), // 总响应大小
-					Total = g.Sum(f => (long)f.Total), // 总流量
-					ActionTime = g.First().ActionTime // 获取最后的ActionTime
-				})
+                .Where(f => f.FK_WebsiteId == siteId)
+                    .GroupBy(f => new { f.actionTime.Year, f.actionTime.Month })
+                    .Select(g => new FlowSizeDto()
+                    {
+                        ActionTime = new DateTime(g.Key.Year, g.Key.Month, 1),  // 按月份統計
+                        RequestSize = g.Sum(f => f.RequestSize),
+                        ResponseSize = g.Sum(f => f.ResponseSize),
+                        Total = g.Sum(f => f.Total)
+                    })
 				.FirstOrDefault() ?? new FlowSizeDto();
 			return result;
 		}
@@ -74,6 +60,7 @@ namespace EtheriT.Coker.Application.FlowSize
 			{
 				case"year":
 					data = _db.FlowSizes
+					.Where(f => f.FK_WebsiteId == siteId)
 					.GroupBy(f => f.actionTime.Year)
 					.Select(g => new
 					{
@@ -85,7 +72,8 @@ namespace EtheriT.Coker.Application.FlowSize
 					break;
 				case "month":
 					data = _db.FlowSizes
-					.GroupBy(f => new { f.actionTime.Year, f.actionTime.Month })
+                    .Where(f => f.FK_WebsiteId == siteId)
+                    .GroupBy(f => new { f.actionTime.Year, f.actionTime.Month })
 					.Select(g => new
 					{
 						Date = new DateTime(g.Key.Year, g.Key.Month, 1),  // 按月份統計

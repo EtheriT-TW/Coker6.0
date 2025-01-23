@@ -243,6 +243,9 @@ input[type="number"] {
     white-space: nowrap;
 }
 
+#RadioPayment .paymenticon {
+    height: 1.5rem;
+}
 /* Step3 */
 #Step3 > .card-header > a {
     font-size: 0.8rem;

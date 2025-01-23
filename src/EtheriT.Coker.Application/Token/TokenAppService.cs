@@ -109,6 +109,7 @@ namespace EtheriT.Coker.Application.Token
             if (string.IsNullOrEmpty(Accont)) Accont = Guid.NewGuid().ToString();
             if (UUID.IsNullOrEmpty()) UUID = generateUUID();
             DateTime date = DateTime.Now;
+            DateTime TokenEndTime = date.AddMinutes(15);
             DateTime EndDateTime = date.AddDays(30);
             var item = new TokenKeyItem { UUID = UUID.Value };
             Core.Models.Token? Token = new Core.Models.Token
@@ -123,8 +124,31 @@ namespace EtheriT.Coker.Application.Token
             db.Tokens.Add(Token);
             await db.SaveChangesAsync();
             item.RefreshToken = Token.id;
-            item.IsLogin = UserId != null;
+            item.IsLogin = httpContextAccessor.HttpContext.Request.Cookies["sessionId"] != null ? UserId != null : false;
             item.AccessToken = await CreateToken(Accont.ToString(), Token.id);
+
+            if (httpContextAccessor.HttpContext.Request.Cookies["sessionId"] != null)
+            {
+                bool remember = false;
+                if (httpContextAccessor.HttpContext.Request.Cookies.TryGetValue("sessionRemember", out var rememberValue)) bool.TryParse(rememberValue, out remember);
+                httpContextAccessor.HttpContext.Response.Cookies.Delete("sessionRemember");
+                httpContextAccessor.HttpContext.Response.Cookies.Append("sessionRemember", remember.ToString(), new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    Expires = remember ? Token.EndTime : TokenEndTime,
+                    SameSite = SameSiteMode.Strict
+                });
+                httpContextAccessor.HttpContext.Response.Cookies.Delete("sessionId");
+                httpContextAccessor.HttpContext.Response.Cookies.Append("sessionId", Token.id.ToString(), new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    Expires = remember ? Token.EndTime : TokenEndTime,
+                    SameSite = SameSiteMode.Strict
+                });
+            }
+
             return item;
         }
         public async Task<TokenResponseDto> CheckToken(string? token)
@@ -153,9 +177,13 @@ namespace EtheriT.Coker.Application.Token
                     if (Guid.TryParse(jwtToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value, out var Sid)) output.RefreshToken = Sid;
 
                     if (Guid.TryParse(jwtToken?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value, out var Sub)) output.IsLogin = false;
-                    else output.IsLogin = true;
+                    else
+                    {
+                        if (httpContextAccessor.HttpContext.Request.Cookies["sessionId"] != null) output.IsLogin = true;
+                        else output.IsLogin = false;
+                    }
 
-                    output.name = jwtToken?.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
+                    if (httpContextAccessor.HttpContext.Request.Cookies["sessionId"] != null) output.name = jwtToken?.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
 
                     var db_token = await db.Tokens.Where(e => e.id == Sid).FirstOrDefaultAsync();
                     if (db_token != null)

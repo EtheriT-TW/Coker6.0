@@ -11,5 +11,6 @@ namespace EtheriT.Coker.Application.Authorizaion.Dto
         public string Email { get; set; }
         public long WebsiteId { get; set; }
         public string Password { get; set; }
+        public bool Remember { get; set; } = true;
     }
 }

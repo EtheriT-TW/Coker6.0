@@ -182,12 +182,15 @@ namespace EtheriT.Coker.Application.Authorization
                             {
                                 output = await NoPasswordLogin(frontuser, dto.WebsiteId, dto);
 
-                                if (oldtoken != null && frontuser.PrivacyAgreeTime == null) frontuser.PrivacyAgreeTime = oldtoken.PrivacyAgreeTime;
-                                frontuser.ErrorTimes = 0;
-                                frontuser.LockTime = null;
-                                if (frontuser.Status == (int)UserStatusEnum.停權) frontuser.Status = (int)UserStatusEnum.開通;
+                                if (output.Success)
+                                {
+                                    if (oldtoken != null && frontuser.PrivacyAgreeTime == null) frontuser.PrivacyAgreeTime = oldtoken.PrivacyAgreeTime;
+                                    frontuser.ErrorTimes = 0;
+                                    frontuser.LockTime = null;
+                                    if (frontuser.Status == (int)UserStatusEnum.停權) frontuser.Status = (int)UserStatusEnum.開通;
 
-                                await loginUserData.SaveChanges(frontuser);
+                                    await loginUserData.SaveChanges(frontuser);
+                                }
                             }
                         }
                         else
@@ -375,6 +378,8 @@ namespace EtheriT.Coker.Application.Authorization
                     token.UserID = null;
                     db.SaveChanges();
                     output.Success = true;
+                    httpContextAccessor.HttpContext.Response.Cookies.Delete("sessionId");
+                    httpContextAccessor.HttpContext.Response.Cookies.Delete("sessionRemember");
                 }
             }
             catch (Exception e)
@@ -1199,13 +1204,15 @@ namespace EtheriT.Coker.Application.Authorization
                 Account_Log account_Log = new Account_Log();
 
                 DateTime dateTime = DateTime.Now;
+                DateTime TokenEndDateTime = dateTime.AddMinutes(15);
                 DateTime EndDateTime = dateTime.AddMinutes(30);
 
                 var token = await db.Tokens.Where(e => e.UUID == Temp_UUID && e.id == tokenItem.RefreshToken && e.websiteId == WebsiteId).FirstOrDefaultAsync();
+
                 if (token != null)
                 {
 
-                    if(frontuser.UUID == Guid.Empty)
+                    if (frontuser.UUID == Guid.Empty)
                     {
                         var other_user = await db.FrontUsers.Where(e => e.UUID == token.UUID).FirstOrDefaultAsync();
                         if (other_user != null)
@@ -1220,6 +1227,7 @@ namespace EtheriT.Coker.Application.Authorization
                     if (frontuser != null && !string.IsNullOrEmpty(frontuser.Email))
                     {
                         output.Token = await tokenAppService.CreateToken(frontuser.Email, token.id, 15);
+
                     }
                 }
                 db.SaveChanges();
@@ -1243,7 +1251,7 @@ namespace EtheriT.Coker.Application.Authorization
 
                 if (frontuser.UUID != Temp_UUID && Temp_UUID != Guid.Empty && frontuser.UUID != Guid.Empty)
                 {
-                    var other_mapping = await db.MappingOldNewUUID.Where(e=> e.UserUUID == Temp_UUID || e.TempUUID == Temp_UUID).FirstOrDefaultAsync();
+                    var other_mapping = await db.MappingOldNewUUID.Where(e => e.UserUUID == Temp_UUID || e.TempUUID == Temp_UUID).FirstOrDefaultAsync();
                     if (other_mapping == null)
                     {
                         MappingOldNewUUID mapoldnew = new MappingOldNewUUID
@@ -1258,6 +1266,23 @@ namespace EtheriT.Coker.Application.Authorization
                 }
 
                 output.Success = true;
+
+                httpContextAccessor.HttpContext.Response.Cookies.Delete("sessionRemember");
+                httpContextAccessor.HttpContext.Response.Cookies.Append("sessionRemember", dto == null ? "True" : dto?.Remember.ToString(), new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    Expires = dto != null && !dto.Remember ? TokenEndDateTime : token.EndTime,
+                    SameSite = SameSiteMode.Strict
+                });
+                httpContextAccessor.HttpContext.Response.Cookies.Delete("sessionId");
+                httpContextAccessor.HttpContext.Response.Cookies.Append("sessionId", token.id.ToString(), new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    Expires = dto != null && !dto.Remember ? TokenEndDateTime : token.EndTime,
+                    SameSite = SameSiteMode.Strict
+                });
             }
             catch (Exception ex)
             {

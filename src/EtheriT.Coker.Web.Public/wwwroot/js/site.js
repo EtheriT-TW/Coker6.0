@@ -281,6 +281,7 @@ function ready() {
         })
         LoginModal.addEventListener('hidden.bs.modal', function (event) {
             FormClear(LoginForms, $InputLoginVCode)
+            $("#CheckRemember").prop("checked", true);
         })
     }
 
@@ -706,6 +707,7 @@ function LoginAction() {
     loginModal.hide();
     var data = co.Form.getJson($("#LoginForm").attr("id"));
     data.WebsiteId = SiteId
+    data.Remember = $("#CheckRemember").prop("checked");
     co.User.Login(data).done((result) => {
         if (result.success) {
             Coker.sweet.success("歡迎回來！", function () {

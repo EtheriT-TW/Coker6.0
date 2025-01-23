@@ -252,8 +252,11 @@
 	</div>
 </nav>
 <div class="image-wh">
-	<img id="header-title" class="titleimage m-auto d-block" src="@imgurl/headertitile.jpg" alt="Header Titile" />
-	<img id="header-title-phone" class="titleimage m-auto d-block" src="@imgurl/headertitle_phone.jpg" alt="Header Titile" />
+	@foreach (var item in Model.Bannners)
+	{
+		<img id="header-title" class="titleimage m-auto d-block" src="@item.DisktopImage" alt="Header Titile" />
+		<img id="header-title-phone" class="titleimage m-auto d-block" src="@item.PhoneImage" alt="Header Titile" />
+	}
 </div>
 <div id="swiper-light" class="headernews m-auto d-block position-relative">
 	<img class="d-md-flex d-none m-auto d-block" src="@imgurl/marqueeblockbig.png" alt="Header Marquee Background" />

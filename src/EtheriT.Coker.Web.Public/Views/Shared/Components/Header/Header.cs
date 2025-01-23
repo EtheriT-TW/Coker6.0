@@ -79,12 +79,19 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     switch (defaultData.Id)
                     {
                         case 6:
-                            headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/headertitile.jpg", PhoneImage = "/upload/headertitile_phone.jpg" });
-                            break;
                         case 7:
-                            headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/headertitile.jpg", PhoneImage = "/upload/headertitile_phone.jpg" });
-                            break;
-                        case 10:
+                        case 9:
+                        case 12:
+							string headertitle = "/upload/headertitile.jpg";
+							string headertitile_phone = "/upload/headertitile_phone.jpg";
+							if (!System.IO.File.Exists(headertitle))
+							{
+								headertitle = "/upload/headertitile.png";
+								headertitile_phone = "/upload/headertitile_phone.png";
+							}
+							headerViewModel.Bannners.Add(new BannerImages { DisktopImage = headertitle, PhoneImage = headertitile_phone });
+							break;
+						case 10:
                             for (int i = 1; i <= 4; i++)
                             {
                                 headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/banner/banner" + i + ".jpg" });

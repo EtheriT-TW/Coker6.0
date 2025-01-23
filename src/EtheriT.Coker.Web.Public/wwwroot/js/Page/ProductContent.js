@@ -642,7 +642,7 @@ function SwitchPage() {
         var index = plist.findIndex(p => p.key == productid);
         if (plist.length > 0) {
             if (index > 0) {
-                var link = `${catalog}/product/${plist[index - 1].key}/${searchtext}`;
+                var link = `${catalog}/product/${plist[index - 1].key}/${searchtext}?filter=${filter}`;
                 $("#SwitchPage .btn_prev").attr({
                     href: link,
                     title: plist[index - 1].value
@@ -650,7 +650,7 @@ function SwitchPage() {
                 $("#SwitchPage .btn_prev").removeClass("disabled")
             }
             if (index < plist.length - 1) {
-                var link = `${catalog}/product/${plist[index + 1].key}/${searchtext}`;
+                var link = `${catalog}/product/${plist[index + 1].key}/${searchtext}?filter=${filter}`;
                 $("#SwitchPage .btn_next").attr({
                     href: link,
                     title: plist[index + 1].value
@@ -669,7 +669,7 @@ function SwitchPage() {
                     var index = result.findIndex(p => p.key == productid);
                     if (index > 0) {
                         $("#SwitchPage .btn_prev").removeClass("disabled")
-                        var link = `${catalog}/product/${result[index - 1].key}/${searchtext}`;
+                        var link = `${catalog}/product/${result[index - 1].key}/${searchtext}?filter=${filter}`;
                         $("#SwitchPage .btn_prev").attr({
                             href: link,
                             title: result[index - 1].value
@@ -677,7 +677,7 @@ function SwitchPage() {
                         $("#SwitchPage .btn_prev").removeClass("disabled")
                     }
                     if (index < result.length - 1) {
-                        var link = `${catalog}/product/${result[index + 1].key}/${searchtext}`;
+                        var link = `${catalog}/product/${result[index + 1].key}/${searchtext}?filter=${filter}`;
                         $("#SwitchPage .btn_next").attr({
                             href: link,
                             title: result[index + 1].value

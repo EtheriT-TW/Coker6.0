@@ -255,7 +255,7 @@ builder.Services.AddResponseCompression(options =>
 
 
 // 配置 Serilog
-string logPath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\logs\\{configuration.GetValue<string>("WebConfig:SiteId")}_{DateTime.Now.Date.ToString("yyyy-MM-dd")}.txt";
+string logPath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\logs\\{DateTime.Now.Date.ToString("yyyy-MM-dd")}.txt";
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information() // 設定最低記錄層級
     .WriteTo.Console()          // 在控制台顯示日誌

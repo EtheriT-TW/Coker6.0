@@ -196,6 +196,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                  Id = pt.Id,
                                  Title = pt.Title,
                                  Code = pt.Code,
+                                 Icon = pt.Icons != "" ?$"/images/paymenticon/{pt.Icons}" : "",
                                  Used = true,
                              };
 

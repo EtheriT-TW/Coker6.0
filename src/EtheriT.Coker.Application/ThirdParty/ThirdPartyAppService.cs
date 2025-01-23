@@ -198,6 +198,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                                  Code = pt.Code,
                                  Icon = pt.Icons != "" ?$"/images/paymenticon/{pt.Icons}" : "",
                                  Used = true,
+                                 MaxAmount= pt.MaxAmount,
+                                 MinAmount = pt.MinAmount,
                              };
 
                 if (output.Count() > 0) return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });

@@ -13,5 +13,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty
         public string Title { get; set; } = string.Empty;
         public string Code { get; set; } = string.Empty;
         public bool Used { get; set; }
+        public int MinAmount { get; set; }
+        public int? MaxAmount { get; set; }
     }
 }

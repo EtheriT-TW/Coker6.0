@@ -14,7 +14,6 @@
         }
     }
     $(".marqueeSwiper").each(function () {
-
         const marqueeContainer = $(this);
         const $marquee = $(this).find(".swiper-wrapper");
         $marquee.find(".swiper-slide").each(function () {
@@ -67,6 +66,8 @@
     const webid = typeof (SiteId) == "undefined" ? 0 : SiteId;
     const placement = "Top";
     Marquee.getMarqueeData(webid, placement).done(function (result) {
+        const marqueeContainer = $(".marqueeSwiper");
+        const $marquee = marqueeContainer.find(".swiper-wrapper");
         const marqueeModels = result.map(function (item) {
             return {
                 title: item.title,
@@ -74,9 +75,9 @@
                 target: item.target
             };
         });
+
         if (typeof (marqueeContainer) == "undefined") return;
         marqueeContainer.innerHTML = '';
-
         marqueeModels.forEach(marquee => {
             // 创建 swiper-slide
             const marqueeItem = document.createElement('div');
@@ -96,7 +97,7 @@
                 const title = marquee.target ? `連結至：${marquee.title}(另開視窗)` : `連結至：${marquee.title}`;
 
                 htmlContent = `
-                    <a class="overflow-hidden text" data-bs-toggle="tooltip" title="${title}" href="${marquee.link}" target="${target}">
+                    <a class="overflow-hidden text" data-bs-toggle="tooltip" title='${title}' href='${marquee.link}' target="${target}">
                         ${marquee.title}
                     </a>
                 `;

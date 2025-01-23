@@ -4,7 +4,7 @@
             $(this).find('#menuIcon').toggleClass('text-white');
         });
     }
-    if ($('.navbar').hasClass('position-fixed') && !$(".full-banner").length > 0) {
+    if (($('.navbar').hasClass('position-fixed') || $('.navbar').hasClass('fixed-top')) && !$(".full-banner").length > 0) {
         var mega_menu_height = $("nav").css("height");
         $("#ContainerBody").css("padding-top", mega_menu_height);
         $(window).resize(function () {

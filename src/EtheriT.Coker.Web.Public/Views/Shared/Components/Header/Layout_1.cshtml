@@ -256,3 +256,10 @@
         </div>
     </div>
 </nav>
+<div class="image-wh d-none">
+    @foreach (var item in Model.Bannners)
+    {
+        <img id="header-title" class="w-100 titleimage m-auto d-block" src="@item.DisktopImage" alt="Header Titile" />
+        <img id="header-title-phone" class="d-none titleimage m-auto d-block" src="@item.PhoneImage" alt="Header Titile" />
+    }
+</div>

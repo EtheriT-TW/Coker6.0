@@ -27,15 +27,10 @@
                     <h1 class="sr-only">@Model.Title</h1>
                 </a>
                 <div class="collapse navbar-collapse order-lg-2 order-3" id="headermenu">
-                    <ul class="navbar-nav">
-                        @if (Model.Sitemap_Link != null)
-                        {
-                            var sitemap_target = Model.Sitemap_Target == true ? "_blank" : "_self";
-                            var sitemap_title = Model.Sitemap_Target == true ? "連結至：網站導覽(另開視窗)" : "連結至：網站導覽";
-                            <li class="nav-item active">
-                                <a class="nav-link" href="@Model.Sitemap_Link" title="@sitemap_title" target="@sitemap_target">網站導覽 <span class="sr-only">(current)</span></a>
-                            </li>
-                        }
+                    <ul class="navbar-nav position-relative">
+                        <li class="">
+                            <a id="AU" accesskey="U" href="#AU" class="hide accesskey" title="上方區域">:::</a>
+                        </li>
                         @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
                         {
                             var target = menu.Target == true ? "_blank" : "_self";

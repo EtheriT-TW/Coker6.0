@@ -523,7 +523,7 @@ namespace EtheriT.Coker.Application.Product
             {
                 var output = await (from ps in db.Prod_Stocks
                                     where !ps.IsDeleted && ps.FK_Pid == PId
-                                    orderby ps.Id
+                                    orderby ps.Ser_No, ps.Id
                                     select new ProductStockDto
                                     {
                                         Pid = PId,
@@ -537,6 +537,7 @@ namespace EtheriT.Coker.Application.Product
                                         Stock = ps.Stock,
                                         Alert_Qty = ps.Alert_Qty,
                                         SubItemNo = ps.SubItemNo ?? "",
+                                        Ser_No = ps.Ser_No,
                                         Prices = new List<ProductPriceDto>(),
                                     }).ToListAsync();
 

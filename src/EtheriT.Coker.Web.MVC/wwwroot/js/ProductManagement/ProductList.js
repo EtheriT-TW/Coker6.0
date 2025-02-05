@@ -96,6 +96,9 @@ function PageReady() {
     /* File Upload */
     co.File.ListFileInit();
 
+    /* Spec List */
+    co.Product.Spec.ListInit();
+
     /* 日期選擇 */
     $picker = $("#InputDate");
 
@@ -168,9 +171,6 @@ function PageReady() {
             $self.children("span").text("expand_less")
         }
     })
-    $(".btn_spec_add").on("click", function () {
-        SpecAdd(null);
-    });
     $(".btn_spec_price_add").on("click", function () {
         SpecPriceAdd(null)
     });
@@ -316,7 +316,7 @@ function ElementInit() {
 function FormDataClear() {
     TechCertDataClear();
     TagDataClear();
-    $("#Spec_Frame .frame").each(function () {
+    $("#Spec_Frame .spec_list").each(function () {
         $(this).remove();
     })
     spec_num = 0;
@@ -575,6 +575,7 @@ function SpecPriceSave() {
 }
 function SpecAdd(result) {
     spec_num += 1;
+    $("#Spec_Frame").data("spec_num", spec_num)
     var item = $($("#TemplateSpecification").html()).clone();
     var item_topline = item.find(".topline"),
         item_select_input_1 = item.find(".input_spec").first(),
@@ -588,7 +589,34 @@ function SpecAdd(result) {
         item_alert = item.find(".input_alert_number"),
         item_collapse = item.find(".collapse"),
         item_btn_expand = item.find(".btn_expand"),
-        item_btn_delete = item.find(".btn_delete");
+        item_btn_delete = item.find(".btn_remove");
+
+    if (result != null) {
+        item.find(".ser_no").val(result.ser_No);
+        item.data("serno", result.ser_No);
+    } else {
+        item.find(".ser_no").val(spec_num);
+        item.data("serno", spec_num);
+    }
+
+    item.find(".ser_no").on("blur", function () {
+        var $self = $(this);
+        if ($self.val() < 1) {
+            $self.val(1);
+        } else if ($self.val() > $(".spec_list").length) {
+            $self.val($(".spec_list").length);
+        }
+        if ($self.val() != item.data("serno")) {
+            if ($self.val() > item.data("serno")) {
+                SortChange($(".spec_list"), "bigger", item.data("serno"), $self.val())
+                $("#Spec_Frame > ul").children("li").eq(parseInt($self.val()) - 1).after(item);
+            } else if ($self.val() < item.data("serno")) {
+                SortChange($(".spec_list"), "smaller", $self.val(), item.data("serno"))
+                $("#Spec_Frame > ul").children("li").eq(parseInt($self.val()) - 1).before(item);
+            }
+        }
+        item.data("serno", $self.val());
+    })
 
     item_topline.children(".spec").each(function () {
         var spectype = $($("#TemplateSpecType").html()).clone();
@@ -652,15 +680,15 @@ function SpecAdd(result) {
         }
     }
     if (result != null) {
-        item.data("psid", result.id);
-        item.data("oldstock", result.stock);
+        item.find(".frame").data("psid", result.id);
+        item.find(".frame").data("oldstock", result.stock);
     } else {
         temp_psid += 1;
-        item.data("temppsid", temp_psid);
-        item.data("oldstock", null);
+        item.find(".frame").data("temppsid", temp_psid);
+        item.find(".frame").data("oldstock", null);
     }
 
-    var index = modal_price_list.findIndex(mitem => mitem["FK_PSId"] == item.data("psid") || (mitem["TempPSid"] != null && mitem["TempPSid"] == item.data("temppsid")))
+    var index = modal_price_list.findIndex(mitem => mitem["FK_PSId"] == item.find(".frame").data("psid") || (mitem["TempPSid"] != null && mitem["TempPSid"] == item.find(".frame").data("temppsid")))
     if (index > -1) {
         text = "現金：" + co.String.thousandSign(modal_price_list[index]["Price"]);
         if (modal_price_list[index]["Bonus"] != 0) text += " 紅利：" + co.String.thousandSign(modal_price_list[index]["Bonus"]);
@@ -715,15 +743,20 @@ function SpecAdd(result) {
         }
     })
 
-    item_btn_delete.on("click", function () {
-        $self_p = $(this).parents(".frame").first();
+    item_btn_delete.on("click", function (e) {
+        e.preventDefault();
+        var $self = $(this);
+        var $self_p = $self.parents('.spec_list');
+        var $self_f = $self_p.find(".frame");
         if (spec_num == 1) {
             co.sweet.error("商品至少需有一種規格", null, false);
         } else {
             co.sweet.confirm("移除規格", "確定要移除此項規格嗎?", "　是　", "　否　", function () {
-                spec_remove_list.push($self_p.data("psid"));
+                spec_remove_list.push($self_f.data("psid"));
                 spec_num -= 1;
+                if (item.data("serno") < $("#Spec_Frame").data("spec_num")) { SortChange($(".spec_list"), "bigger", item.data("serno"), $("#Spec_Frame").data("spec_num")); }
                 $self_p.remove();
+                $("#Spec_Frame").data("spec_num", spec_num)
             })
         }
     })
@@ -770,7 +803,7 @@ function SpecAdd(result) {
         })
     })
 
-    $("#Spec_Frame .list").append(item);
+    $("#Spec_Frame ul .btn_spec_add").before(item);
 
     $price = $(".input_price");
     $stock_number = $(".input_stock_number");
@@ -901,10 +934,10 @@ function UploadListAdd(result, $target) {
         }
         if ($self.val() != item.data("serno")) {
             if ($self.val() > item.data("serno")) {
-                SortChange("bigger", item.data("serno"), $self.val())
+                SortChange($(".upload_list"), "bigger", item.data("serno"), $self.val())
                 $("#ProductForm > .data_upload > ul").children("li").eq(parseInt($self.val()) - 1).after(item);
             } else if ($self.val() < item.data("serno")) {
-                SortChange("smaller", $self.val(), item.data("serno"))
+                SortChange($(".upload_list"), "smaller", $self.val(), item.data("serno"))
                 $("#ProductForm > .data_upload > ul").children("li").eq(parseInt($self.val()) - 1).before(item);
             }
         }
@@ -914,7 +947,7 @@ function UploadListAdd(result, $target) {
     item_btn_remove.on("click", function (e) {
         e.preventDefault();
         var $self = $(this).parents("li").first();
-        if (item.data("serno") < $target.data("file_num")) { SortChange("bigger", item.data("serno"), $target.data("file_num")); }
+        if (item.data("serno") < $target.data("file_num")) { SortChange($(".upload_list"), "bigger", item.data("serno"), $target.data("file_num")); }
         if (typeof ($self.data("id")) != "undefined") {
             total_files.find(item => item["Id"] == $self.data("id"))["IsDelete"] = true;
         } else if (typeof ($self.data("tempid")) != "undefined") {
@@ -947,8 +980,8 @@ function UploadPreviewFrameClear($target) {
 /* ********** *****************
 排序 沒有資料的情況下依舊可以拖動 需修改
 ***************************/
-function SortChange(change, minindex, maxindex) {
-    $(".upload_list").each(function () {
+function SortChange($self, change, minindex, maxindex) {
+    $self.each(function () {
         var $li_self = $(this)
         if (change == "bigger") {
             if ($li_self.data("serno") > minindex && $li_self.data("serno") <= maxindex) {
@@ -962,13 +995,11 @@ function SortChange(change, minindex, maxindex) {
             }
         }
     })
-
 }
 function AddUp(success_text, error_text, target) {
-
     var stock_addup_list = []
-    var temp_serno = 1;
-    $("#Spec_Frame .frame").each(function () {
+
+    $("#Spec_Frame ul li.spec_list").each(function () {
         var $self = $(this);
         var obj = {};
         var fk_sid = [];
@@ -983,19 +1014,18 @@ function AddUp(success_text, error_text, target) {
             })
             fk_sid.push(id)
         })
-        obj["Id"] = $self.data("psid") == "" ? 0 : $self.data("psid");
+        obj["Id"] = $self.find(".frame").data("psid") == "" ? 0 : $self.find(".frame").data("psid");
         obj["FK_S1id"] = fk_sid[0];
         obj["FK_S2id"] = fk_sid[1];
         obj["Stock"] = $self.find(".input_stock_number").val();
         obj["Alert_Qty"] = $self.find(".input_alert_number").val();
         obj["Min_Qty"] = $self.find(".input_min_number").val();
-        obj["Ser_No"] = temp_serno;
+        obj["Ser_No"] = $self.find(".ser_no").val();
         obj['OldStock'] = $self.data("oldstock");
-        temp_serno++;
 
         var price_list = [];
         modal_price_list.forEach(function (item) {
-            if (item.FK_PSId == $self.data("psid") || item.TempPSid == $self.data("temppsid")) {
+            if (item.FK_PSId == $self.find(".frame").data("psid") || item.TempPSid == $self.find(".frame").data("temppsid")) {
                 var price_object = {};
                 price_object["Id"] = item.Id;
                 price_object["FK_PSId"] = item.FK_PSId;

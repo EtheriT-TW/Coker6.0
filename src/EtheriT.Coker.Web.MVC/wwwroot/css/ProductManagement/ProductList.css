@@ -123,9 +123,28 @@ input[type="number"] {
 }
 
 #Spec_Frame .frame:not(:last-child) {
-    border-bottom: #ccc solid 1px;
     padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+#Spec_Frame .spec_list {
+    border-bottom: #ccc solid 1px;
+    box-shadow: 0 0.125rem 0.25rem -0.125rem rgba(0, 0, 0, 0.075) !important;
+}
+
+#Spec_Frame input.ser_no {
+    width: 5rem;
+}
+
+#Spec_Frame span.chang_ser {
+    cursor: move;
+    width: 1.5rem;
+    text-align: start;
+}
+
+#Spec_Frame .btn_remove {
+    width: auto;
+    text-align: end;
 }
 
 #Spec_Frame .frame .price > input {

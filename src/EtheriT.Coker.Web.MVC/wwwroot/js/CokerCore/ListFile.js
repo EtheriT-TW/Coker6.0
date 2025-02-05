@@ -1,6 +1,5 @@
 ﻿Coker.Object.merge(Coker.File, {
     ListFileInit: function () {
-
         co.File.fileUploadWithPreview();
         $(".btn_upload_add > button").on("click", function (e) {
             e.preventDefault();
@@ -66,11 +65,11 @@
                         var $ser_no = ui.item.find(".ser_no");
                         if (move > 0) {
                             $ser_no.val(parseInt($ser_no.val()) + move)
-                            SortChange("bigger", ui.item.data("serno"), $ser_no.val())
+                            SortChange($(".upload_list"), "bigger", ui.item.data("serno"), $ser_no.val())
                             ui.item.data("serno", $ser_no.val())
                         } else if (move < 0) {
                             $ser_no.val(parseInt($ser_no.val()) + move)
-                            SortChange("smaller", $ser_no.val(), ui.item.data("serno"))
+                            SortChange($(".upload_list"), "smaller", $ser_no.val(), ui.item.data("serno"))
                             ui.item.data("serno", $ser_no.val())
                         }
                     }
@@ -293,7 +292,7 @@
                 var $root = $(this).parents(".data_upload");
                 let file_num = $root.data("file_num");
                 if ($self.data("edit")) {
-                    if ($self.data("serno") < file_num) { SortChange("bigger", $self.data("serno"), file_num); }
+                    if ($self.data("serno") < file_num) { SortChange($(".upload_list"), "bigger", $self.data("serno"), file_num); }
                     if (typeof ($self.data("id")) != "undefined") {
                         total_files.find(item => item["Id"] == $self.data("id"))["IsDelete"] = true;
                     } else if (typeof ($self.data("tempid")) != "undefined") {

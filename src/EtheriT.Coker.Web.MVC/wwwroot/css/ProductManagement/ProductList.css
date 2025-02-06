@@ -129,22 +129,36 @@ input[type="number"] {
 
 #Spec_Frame .spec_list {
     border-bottom: #ccc solid 1px;
-    box-shadow: 0 0.125rem 0.25rem -0.125rem rgba(0, 0, 0, 0.075) !important;
+    box-shadow: 0 0.125rem 0.25rem -0.125rem rgba(0, 0, 0, 0.075);
 }
 
+    #Spec_Frame .spec_list.ui-sortable-helper {
+        background-color: white;
+        box-shadow: 0px 0px 32px black;
+    }
+
+    #Spec_Frame .spec_list:not(.ui-sortable-helper):nth-child(odd) {
+        background-color: #F2F2F2;
+    }
+
+    #Spec_Frame .spec_list:not(.ui-sortable-helper):nth-child(even) {
+        background-color: #D9D9D9;
+    }
+
 #Spec_Frame input.ser_no {
-    width: 5rem;
+    width: 4rem;
 }
 
 #Spec_Frame span.chang_ser {
     cursor: move;
-    width: 1.5rem;
+    width: fit-content;
     text-align: start;
 }
 
 #Spec_Frame .btn_remove {
     width: auto;
     text-align: end;
+    margin-right: calc(0.25rem + 6rem);
 }
 
 #Spec_Frame .frame .price > input {

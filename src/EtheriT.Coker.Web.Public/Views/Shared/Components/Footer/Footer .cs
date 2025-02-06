@@ -430,13 +430,30 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 					};
 					break;
 				case 7:
-					footerViewModel = new FooterViewModel
+					switch (defaultData.Id)
 					{
-						Content = new List<string>
-								{
-									"Copyright© 高鋒開發有限公司 版權所有 |<br id=\"iswrap\"> KaoFeng Development Co., Ltd. ALL Rights Reservd<br>電話：<a href=\"tel:07-3737909\">07-3737909</a> &nbsp; 傳真：07-3737915<br id=\"iswrap\"> &nbsp; 地址：<a href=\"https://maps.app.goo.gl/6Q8ggmAWi6VCQ9us5\" target=\"_blank\"> 高雄市仁武區鳳仁路177-2號</a>",
-								}
-					};
+						case 5:
+                            footerViewModel = new FooterViewModel
+                            {
+                                Content = new List<string>
+                                {
+                                    "Copyright© 高鋒開發有限公司 版權所有 |<br id=\"iswrap\"> KaoFeng Development Co., Ltd. ALL Rights Reservd<br>電話：<a href=\"tel:07-3737909\">07-3737909</a> &nbsp; 傳真：07-3737915<br id=\"iswrap\"> &nbsp; 地址：<a href=\"https://maps.app.goo.gl/6Q8ggmAWi6VCQ9us5\" target=\"_blank\"> 高雄市仁武區鳳仁路177-2號</a>",
+                                }
+                            };
+                            break;
+						case 15:
+                            footerViewModel = new FooterViewModel
+                            {
+                                Content = new List<string>
+                                {
+                                    "Copyright© 寶順保全(股)公司 版權所有 |<br id=\"iswrap\"> 高雄總公司：高雄市前鎮區民權二路6號5樓-2\r\n<br>TEL:<a href=\"tel:07-3306396\">(07)3306396 轉 552~557</a> &nbsp; FAX:(07)3306506\r\n<br id=\"iswrap\">",
+                                }
+                            };
+                            break;
+                        default:
+                            footerViewModel = new FooterViewModel();
+                            break;
+                    }
 					break;
 				case 8:
 					string footerMessage = "";

@@ -246,7 +246,7 @@ namespace EtheriT.Coker.Application.Product
                     {
                         var db_ps = await db.Prod_Stocks.Where(e => e.Id == item.Id).FirstOrDefaultAsync();
 
-                        if (db_ps.Stock != item.OldStock)
+                        if (db_ps.Stock != item.OldStock && item.OldStock!=null)
                         {
                             output.Message = "庫存變動";
                             item.Stock -= item.OldStock - db_ps.Stock;

@@ -110,6 +110,17 @@ function PageReady() {
         endDate = picker.endDate.format("");
     });
 
+    $(document).on("wheel", "input[type=number]", function (event) {
+        event.preventDefault();
+    });
+
+    $(document).on('blur', 'input[type="number"]', function () {
+        var $self = $(this);
+        var value = $self.val();
+        if (value.length > 1) $self.val(value.replace(/^0+/, ''));
+        if (Number(value) > 100000000) $self.val(100000000);
+    });
+
     /*Form觸發*/
     const forms = $('#ProductForm');
     (() => {
@@ -546,13 +557,15 @@ function SpecPriceSave() {
         obj["Bonus"] = $self.find(".input_bonus").val();
         obj["IsDelete"] = false;
         if (obj["Price"] == 0 && obj["Bonus"] == 0) {
+            co.sweet.error("商品現金與紅利不可同時為空", null, true)
             $(".alert_text").text("商品現金與紅利不可同時為空")
             $(".alert_text").removeClass("d-none");
             save_success = false
         } else {
-            if (temp_list.find(item => item["FK_RId"] == obj["FK_RId"] && item["Price"] == obj["Price"] && item["Bonus"] == obj["Bonus"]) != null) {
+            if (temp_list.find(item => item["FK_RId"] == obj["FK_RId"] && (item["Price"] == obj["Price"] || item["Bonus"] == obj["Bonus"])) != null) {
+                co.sweet.error("商品現金或紅利不可重複", null, true)
                 $(".alert_text").removeClass("d-none");
-                $(".alert_text").text("價格不可重複");
+                $(".alert_text").text("同個會員等級下商品現金或紅利不可重複");
                 save_success = false
             } else {
                 temp_list.push(obj)

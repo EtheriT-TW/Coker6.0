@@ -116,9 +116,13 @@ function PageReady() {
 
     $(document).on('blur', 'input[type="number"]', function () {
         var $self = $(this);
-        var value = $self.val();
-        if (value.length > 1) $self.val(value.replace(/^0+/, ''));
-        if (Number(value) > 100000000) $self.val(100000000);
+        var value = $self.val().trim();
+
+        if (/^0+\d/.test(value)) value = value.replace(/^0+/, '');
+        if ($self.attr("step") == "1" && value.includes(".")) value = value.substring(0,value.indexOf("."));
+        if (parseFloat(value) > 100000000) value = "100000000";
+
+        $self.val(value);
     });
 
     /*Form觸發*/
@@ -539,7 +543,9 @@ function SpecPriceAdd(result) {
     $("#PriceModal > .modal-dialog > .modal-content > .modal-body > .price_option").append(item);
 
     $("input[type='number']").on("input", function () {
-        $(this).val($(this).val() < 0 ? 0 : $(this).val())
+        var $self = $(this);
+        var value = $self.val();
+        if (value !== "" && parseFloat(value) < 0) $self.val("0");
     });
 }
 function SpecPriceSave() {
@@ -824,7 +830,9 @@ function SpecAdd(result) {
     $alert_number = $(".input_alert_number");
 
     $("input[type='number']").on("input", function () {
-        $(this).val($(this).val() < 0 ? 0 : $(this).val())
+        var $self = $(this);
+        var value = $self.val();
+        if (value !== "" && parseFloat(value) < 0) $self.val("0");
     });
 }
 function SpecBlurFunction($spec) {

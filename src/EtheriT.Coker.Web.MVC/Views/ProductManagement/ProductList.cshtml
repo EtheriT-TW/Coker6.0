@@ -49,12 +49,12 @@
 
                     <div class="col cash input-group">
                         <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">現金</div>
-                        <input class="input_cash form-control rounded" type="number" aria-label="Input Cash Price of Product" maxlength="9" value="0">
+                        <input class="input_cash form-control rounded" type="number" aria-label="Input Cash Price of Product" maxlength="9" value="0" step="any">
                     </div>
 
                     <div class="col bonus input-group">
                         <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">紅利</div>
-                        <input class="input_bonus form-control rounded" type="number" aria-label="Input Bonus Price of Product" maxlength="9" value="0">
+                        <input class="input_bonus form-control rounded" type="number" aria-label="Input Bonus Price of Product" maxlength="9" value="0" step="any">
                     </div>
 
                     <button class="col-auto btn_price_delete bg-transparent border-0 d-flex p-0">
@@ -196,7 +196,7 @@
                             <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                                 <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
                             </div>
-                            <input class="form-control disableHidenValue rounded" type="number" name="serNo" aria-label="Input Sort of Article" disabled="disabled" required>
+                            <input class="form-control disableHidenValue rounded" type="number" name="serNo" aria-label="Input Sort of Article" disabled="disabled" required step="1">
                             <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
                                 <input class="form-check-input" id="SortCheck" name="SortCheck" type="checkbox" value="">
                                 <label class="form-check-label fs-6 pe-2" for="SortCheck">自訂排序</label>
@@ -257,7 +257,7 @@
                     </ul>
                     <template id="TemplateUploadList">
                         <li class="upload_list d-flex align-items-center border bg-white shadow-sm p-1 mb-1">
-                            <input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="">
+                            <input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="" step="1">
                             <span class="material-symbols-outlined" title="變更順序">open_with</span>
                             <span class="title flex-grow-1 overflow-auto"></span>
                             <a class="btn_link d-flex bg-transparent border-0 p-0" target="_blank" title="開啟檔案">
@@ -365,7 +365,7 @@
                     <li class="spec_list list-unstyled d-flex align-items-start p-1 py-3 mb-3 rounded">
                         <div class="d-flex">
                             <span class="chang_ser bg-transparent border-0 form-control fs-4 material-symbols-outlined px-1 py-0" title="變更順序">open_with</span>
-                            <input class="ser_no me-1 form-control rounded text-center" type="number" aria-label="Upload data sort number" title="排序號碼" value="" min="1">
+                            <input class="ser_no me-1 form-control rounded text-center" type="number" aria-label="Upload data sort number" title="排序號碼" value="">
                         </div>
                         <div class="frame w-100 px-1">
                             <div class="topline row">
@@ -398,27 +398,27 @@
                                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                                         <span class="material-symbols-outlined me-1">inventory_2</span>商品可銷售量
                                     </div>
-                                    <input class="input_stock_number form-control rounded" type="number" aria-label="Input Number of Product">
+                                    <input class="input_stock_number form-control rounded" type="number" aria-label="Input Number of Product" step="1">
                                 </div>
 
                                 <div class="min_number input-group mb-3 col-12 col-lg-4">
                                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                                         <span class="material-symbols-outlined me-1">bubble_chart</span>最低購買量
                                     </div>
-                                    <input class="input_min_number form-control rounded" type="number" aria-label="Input MinNumber of Product">
+                                    <input class="input_min_number form-control rounded" type="number" aria-label="Input MinNumber of Product" step="1">
                                 </div>
 
                                 <div class="alert_number input-group mb-3 col-12 col-lg-4">
                                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                                         <span class="material-symbols-outlined me-1">warning</span>可銷售警示量
                                     </div>
-                                    <input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product">
+                                    <input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product" step="1">
                                 </div>
                             </div>
 
                             <div class="d-flex justify-content-center">
                                 @* <span class="chang_ser bg-transparent border-0 form-control fs-4 material-symbols-outlined px-1 py-0" title="變更順序">open_with</span>
-                                <input class="ser_no me-1 form-control rounded text-center" type="number" aria-label="Upload data sort number" title="排序號碼" value="" min="1"> *@
+                                <input class="ser_no me-1 form-control rounded text-center" type="number" aria-label="Upload data sort number" title="排序號碼" value=""> *@
                                 <button class="btn_expand d-flex border-0 bg-transparent align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseDetail1" aria-expanded="false" aria-controls="CollapseDetail1">
                                     <span class="material-symbols-outlined fs-3">expand_less</span>
                                 </button>

@@ -441,6 +441,15 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                 }
                             };
                             break;
+						case 12:
+                            footerViewModel = new FooterViewModel
+                            {
+                                Content = new List<string>
+                                {
+                                    "Copyright© 湛盛度量衡器企業社 版權所有 |<br id=\"iswrap\"> 湛盛電子秤 ALL Rights Reservd<br>電話：<a href=\"tel:06-3128599\">06-3128599</a> &nbsp; 傳真：06-312-9399<br id=\"iswrap\"> &nbsp; Email：<a href=\"MAILTO:L2730520@yahoo.com.tw\" target=\"_blank\"> L2730520@yahoo.com.tw</a>",
+                                }
+                            };
+                            break;
 						case 15:
                             footerViewModel = new FooterViewModel
                             {

@@ -82,14 +82,17 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         case 7:
                         case 9:
                         case 12:
-							string headertitle = "/upload/headertitile.jpg";
+                            string uploadDirectory = Configuration.GetValue<string>("VirtualDirectory:upload") ?? "";
+                            string headertitle = Path.Combine(uploadDirectory, "headertitile.jpg");
 							string headertitile_phone = "/upload/headertitile_phone.jpg";
-							if (!System.IO.File.Exists(headertitle))
-							{
-								headertitle = "/upload/headertitile.png";
-								headertitile_phone = "/upload/headertitile_phone.png";
-							}
-							headerViewModel.Bannners.Add(new BannerImages { DisktopImage = headertitle, PhoneImage = headertitile_phone });
+                            if (!File.Exists(headertitle))
+                            {
+                                headertitle = "/upload/headertitile.png";
+                                headertitile_phone = "/upload/headertitile_phone.png";
+                            }
+                            else headertitle = "/upload/headertitile.jpg";
+
+                            headerViewModel.Bannners.Add(new BannerImages { DisktopImage = headertitle, PhoneImage = headertitile_phone });
 							break;
 						case 10:
                             for (int i = 1; i <= 4; i++)

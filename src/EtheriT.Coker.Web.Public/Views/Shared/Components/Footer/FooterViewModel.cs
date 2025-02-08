@@ -20,7 +20,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
         public string? IG_Link { get; set; }
         public string? YoutubeChannel_Link { get; set; }
         public string locale { get; set; } = "zh-tw";
-        public List<string>? Content { get; set; }
+        public List<string>? Content { get; set; } = new List<string>();
         public List<FooterViewModel>? footerViewModels { get; set; }
         public string? Copyright { get; set; }
     }

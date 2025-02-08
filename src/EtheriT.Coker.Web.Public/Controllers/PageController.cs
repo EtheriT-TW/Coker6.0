@@ -467,6 +467,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["Id"] = model.PageData.Id;
             ViewData["bodyClass"] = model.option?.ToLower() == "home" ? model.option.ToLower() : "page";
             var nonce = HttpContext.Items["CSPNonce"] as string;
+            ViewBag.SearchWord = search;
             ViewBag.Nonce = nonce;
             ViewData["nonce"] = nonce;
             ViewBag.storeBuyState = model.storeSet.storeBuyState;

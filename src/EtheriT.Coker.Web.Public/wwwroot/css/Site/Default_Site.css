@@ -86,6 +86,14 @@ a[href="https://translate.google.com"] {
     height: 90vh;
 }
 
+.highlight {
+    background-color: #eaeaea;
+    color: #215f9a;
+    font-weight: bold;
+    padding: 2px;
+    border-radius: 3px;
+}
+
 @media only screen and (max-width: 768px) {
     #YTPreviewModal .modal-dialog {
         max-width: 95vw !important;

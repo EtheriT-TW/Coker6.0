@@ -50,7 +50,7 @@
                 const $label = $("<label for='jampSelect' class='d-none'>").text("前往：");
                 $self.find("select").remove();
                 if ($self.find('a[href^="#"]').length > 0) {
-                    $select.append($("<option>").val("").text("請選擇將前往的標籤"))
+                    $select.append($("<option>").val("").text("請選擇將前往的項目"))
                 } else {
                     const text = $self.data("option-text") || "請選擇前往的頁面";
                     $select.append($("<option>").val("").text(text));

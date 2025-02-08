@@ -76,6 +76,7 @@
     }
     <script nonce="@ViewBag.Nonce">
         sessionStorage.setItem("PageKey","@ViewBag.PageKey");
+        const SearchWord = "@Html.Raw(ViewBag.SearchWord)";
         window.CI360 = { notInitOnLoad: true }
         window.onload = function () {
             ready();

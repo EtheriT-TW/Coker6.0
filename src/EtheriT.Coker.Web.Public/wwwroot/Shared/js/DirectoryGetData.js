@@ -354,7 +354,7 @@ function DirectoryDataInsert($item, result) {
                     break;
             }
             if (typeof ($item.data("search-text")) != "undefined" && $item.data("search-text") != "") {
-                path = `${path}/${$item.data("search-text")}${filter}`;
+                path = `${path}/${encodeURIComponent($item.data("search-text"))}${filter}`;
             }
 
             target = "_blank";

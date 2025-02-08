@@ -22,7 +22,6 @@
         // 取得資料
         try {
             let data = await SearchDb.getData();
-
             // 監聽輸入框的 change 事件
             $(".search-input").on("change", function () {
                 const self = this;
@@ -31,14 +30,14 @@
                     if (query != "") {
                         // 插入關鍵字到資料庫
                         try {
-                            if (query.trim() != "") {
+                            if (query.trim() != "" && typeof (query) !== "undefined") {
                                 await SearchDb.addOrUpdateData(query);
                             }
                         } catch (error) {
                             console.error("儲存關鍵字時發生錯誤:", error);
                         }
                         $search.data("search-text", $(self).val());
-                        window.location.href = `/${OrgName}/Search/Get/${$search.data("dirid")}/${$search.data("search-text")}`;
+                        window.location.href = `/${OrgName}/Search/Get/${$search.data("dirid")}/${encodeURIComponent($search.data("search-text"))}`;
                     }
                 }, 300);
             });

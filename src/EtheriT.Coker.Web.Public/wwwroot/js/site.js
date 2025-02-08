@@ -70,6 +70,11 @@ function ready() {
     }
     $(".editTime,.popular").appendTo($conten);
     $(".backstageType").remove();
+    if ($(".search-input").val() != "") {
+        $(".search-input").val(decodeURIComponent($(".search-input").val()));
+        $(".searchText").text($(".search-input").val());
+        $("#Search_Result .catalog_frame").attr("data-search-text", $(".search-input").val());
+    }
     if ($(".catalog_frame").length > 0 || $(".menu_directory").length > 0 || $(".advertise_directory").length > 0) DirectoryGetDataInit();
     //swiper內的元素有一個以上就開啟自動輪播(autoplay:true)
     if ($(".one_swiper,.one_swiper_thumbs,.two_swiper,.three_swiper,.four_swiper,.five_swiper,.six_swiper,.picture-category,.three_two_grid_swiper,.vertical_swiper_thumbs").length > 0) SwiperInit({ autoplay: true });
@@ -239,6 +244,70 @@ function ready() {
         }
     });
 
+
+    if (typeof (SearchWord) !== "undefined" && SearchWord !== "") {
+        // 取得 URL 關鍵字
+        const searchText = decodeURIComponent(SearchWord);
+        const highlightClass = "highlight";
+        const mainContainer = document.querySelector("#main");
+        function highlightText(node) {
+            const regex = new RegExp(`(${searchText})`, "g");
+
+            // 確保 node 是純文字節點，且未被標記過
+            if (node.nodeType === Node.TEXT_NODE && regex.test(node.nodeValue)) {
+                // 檢查父節點是否已包含 highlight 樣式，避免重複替換
+                if (node.parentNode && node.parentNode.classList.contains(highlightClass)) {
+                    return; // 已處理過則跳過
+                }
+
+                const textParts = node.nodeValue.split(regex);
+                const fragment = document.createDocumentFragment();
+
+                textParts.forEach((part) => {
+                    if (part === searchText) {
+                        const span = document.createElement("span");
+                        span.className = highlightClass;
+                        span.textContent = part;
+                        fragment.appendChild(span);
+                    } else {
+                        fragment.appendChild(document.createTextNode(part));
+                    }
+                });
+
+                node.parentNode.replaceChild(fragment, node);
+            }
+        }
+
+        function traverseAndHighlight(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                highlightText(node);
+            } else {
+                for (let child of node.childNodes) {
+                    traverseAndHighlight(child);
+                }
+            }
+        }
+
+        // 初次載入時執行高亮
+        if (!!mainContainer) {
+            traverseAndHighlight(mainContainer);
+
+            // 監聽 DOM 變化 (適用於 AJAX 或動態內容)
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === Node.TEXT_NODE) {
+                            highlightText(node);
+                        } else if (node.nodeType === Node.ELEMENT_NODE) {
+                            traverseAndHighlight(node);
+                        }
+                    });
+                });
+            });
+
+            observer.observe(mainContainer, { childList: true, subtree: true });
+        }
+    }
 
     const enterAdModalEl = $('#EnterAdModal')
     var enteradid = enterAdModalEl.data("enteradid")

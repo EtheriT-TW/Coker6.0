@@ -36,6 +36,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Shared.Dto.Role;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -246,7 +247,7 @@ namespace EtheriT.Coker.Application.Product
                     {
                         var db_ps = await db.Prod_Stocks.Where(e => e.Id == item.Id).FirstOrDefaultAsync();
 
-                        if (db_ps.Stock != item.OldStock && item.OldStock!=null)
+                        if (db_ps.Stock != item.OldStock && item.OldStock != null)
                         {
                             output.Message = "庫存變動";
                             item.Stock -= item.OldStock - db_ps.Stock;
@@ -571,11 +572,36 @@ namespace EtheriT.Coker.Application.Product
             }
 
         }
-        public async Task<List<ProductPriceDto>> GetPriceDataAll(long PSId)
+        public async Task<JsonResult> GetRolesAll()
         {
+            List<AddRoleDto> output = new List<AddRoleDto>();
             try
             {
-                var output = await (from pp in db.Prod_Prices
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                var roles = await db.Roles.Where(e => e.Id == 1 || (e.Type == RoleTypeEnum.前台 && e.FK_WebsiteId == WebsiteID)).ToListAsync();
+                if (roles.Any())
+                {
+                    foreach (var role in roles)
+                    {
+                        var tmep_output = mapper.Map<AddRoleDto>(role);
+                        output.Add(tmep_output);
+
+                        if (!output.Any()) throw new Exception("查無角色資料");
+                    }
+                }
+            }catch(Exception ex)
+            {
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"Product=>GetRolesAll回傳資料：{ex.Message}");
+            }
+            return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public async Task<List<ProductPriceDto>> GetPriceDataAll(long PSId)
+        {
+            List<ProductPriceDto> output = new List<ProductPriceDto>();
+            try
+            {
+                output = await (from pp in db.Prod_Prices
                                     where !pp.IsDeleted && pp.FK_PSId == PSId
                                     orderby pp.FK_PSId
                                     select new ProductPriceDto
@@ -587,14 +613,12 @@ namespace EtheriT.Coker.Application.Product
                                         Bonus = pp.Bonus ?? 0,
                                     }).ToListAsync();
 
-                return output;
             }
             catch (Exception e)
             {
 
             }
-
-            return null;
+            return output;
         }
         public async Task<ProdGetMainDisplayDto> GetMainDisplayOne(long Id)
         {

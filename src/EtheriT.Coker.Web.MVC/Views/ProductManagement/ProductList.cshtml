@@ -1,5 +1,6 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Product
+@using EtheriT.Coker.Application.Shared.Dto.Role
 @using EtheriT.Coker.Application.Shared.Dto.Specification
 @using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
 @using EtheriT.Coker.Web.MVC.Models.ProductManagement
@@ -43,8 +44,19 @@
             <template id="ModalTemplatePrice">
                 <div class="modal_price frame row align-items-center mb-3" data_ppid="">
                     <select class="col select_role form-select" aria-label="Role Select">
-                        <option selected value="1">非會員</option>
-                        <option value="2">一般會員</option>
+                        @{
+                            if (Model.Roles != null && Model.Roles.Any())
+                            {
+                                foreach (var role in Model.Roles ?? new List<AddRoleDto>())
+                                {
+                                    <option value="@role.Id">@role.Name</option>
+                                }
+                            }
+                            else
+                            {
+                                <option selected value="1">非會員</option>
+                            }
+                        }
                     </select>
 
                     <div class="col cash input-group">

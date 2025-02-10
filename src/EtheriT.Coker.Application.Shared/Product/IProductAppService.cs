@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Role;
 
 namespace EtheriT.Coker.Application.Shared.Product
 {
@@ -19,6 +20,7 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
         public Task<ProdGetDataDto> GetProdDataOne(long Id);
         public Task<List<ProductStockDto>> GetStockDataAll(long PId);
+        public Task<JsonResult> GetRolesAll();
         public Task<List<ProductPriceDto>> GetPriceDataAll(long PSId);
         public Task<ProdGetMainDisplayDto> GetMainDisplayOne(long Id);
         public Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto);

@@ -1,10 +1,12 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Application.Shared.Dto.Specification;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Specification;
 using EtheriT.Coker.Web.MVC.Models.ProductManagement;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
@@ -23,8 +25,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             ProductManagementModel model = new ProductManagementModel
             {
                 SpecType = spec_type,
-                ProdStatus = Enum.GetValues(typeof(ProdStatusEnum)).Cast<ProdStatusEnum>().ToList()
-
+                ProdStatus = Enum.GetValues(typeof(ProdStatusEnum)).Cast<ProdStatusEnum>().ToList(),
+                Roles = JsonConvert.DeserializeObject<List<AddRoleDto>>(JsonConvert.SerializeObject((await productAppService.GetRolesAll()).Value))
             };
             return View("ProductList", model);
         }

@@ -481,25 +481,29 @@ function DirectoryDataInsert($item, result) {
         data.tags.slice(0, 2).forEach((tag) => {
             let badge = $(temp_tag).clone();
             badge.text(tag.tag_Name.slice(0, 4));
+            badge.data("tagname", tag.tag_Name)
             $tags.append(badge);
         });
         data.tags.slice(2).forEach((tag) => {
             let badge = $(temp_tag).clone();
             badge.text(tag.tag_Name.slice(0, 4));
+            badge.data("tagname", tag.tag_Name)
             badge.addClass("more-tag d-none");
             $tags.append(badge);
         });
         if (data.tags.length > 2) {
             let badge = $(temp_tag).clone();
             badge.text("...");
+            badge.data("tagname", "...")
             badge.addClass("less-tag");
             $tags.append(badge);
         }
         $tags.children().each(function () {
             var $self = $(this);
             if (!$self.hasClass("less-tag")) {
-                $(this).on("click", function () {
-                    location.href = `/${OrgName}/Search/Get/3/${$(this).text()}`;
+                $self.on("click", function () {
+                    var text = $self.data("tagname");
+                    location.href = `/${OrgName}/Search/Get/3/${encodeURIComponent(text)}`;
                     return false;
                 })
             }

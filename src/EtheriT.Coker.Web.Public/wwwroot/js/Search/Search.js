@@ -27,7 +27,7 @@
                 const self = this;
                 setTimeout(async () => {
                     const query = $(self).val().toLowerCase();
-                    if (query != "") {
+                    if (query != "" && $search.data("search-text") != query) {
                         // 插入關鍵字到資料庫
                         try {
                             if (query.trim() != "" && typeof (query) !== "undefined") {
@@ -300,8 +300,9 @@
         else $("#filterBlock").removeClass("d-none");
         clearTimeout(timer);
     })
-    $(".searchbtn").on("click", function () {
-        window.location.href = `/${OrgName}/Search/Get/${$search.data("dirid")}/${$search.data("search-text")}`;
+    $(".searchbtn").on("click", function (e) {
+        e.preventDefault();
+        $(".search-input").trigger("change");
     });
 }
 function filteredPush(data, item) {

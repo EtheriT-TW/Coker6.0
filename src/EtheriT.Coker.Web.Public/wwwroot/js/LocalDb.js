@@ -101,6 +101,7 @@
         if (lastUpdateItem && this.isToday(lastUpdateItem.lastUpdateTime)) {
             console.log("資料已是今日最新，無需更新。");
             this.#lastInsertTime = lastInsertItem.lastInsertTime;
+            this.deleteData("UNDEFINED","remote");
         } else {
             const apiResponse = await this.fetchDataFromApi(lastInsertItem == null ? lastInsertItem : lastInsertItem.lastInsertTime);
             if (this.shouldUpdateData(apiResponse.lastInsertTime)) {
@@ -243,7 +244,7 @@
                 const allData = e.target.result;
                 // 過濾掉系統資料
                 const filteredData = allData
-                    .filter(item => item.compositeKey !== "lastUpdateTime" && item.compositeKey !== "lastInsertTime")
+                    .filter(item => item.compositeKey !== "lastUpdateTime" && item.compositeKey !== "lastInsertTime" && item.key.toLowerCase() != "undefined")
                     .map(item => ({
                         key: item.key,
                         type: item.type,
@@ -299,10 +300,9 @@
         });
     }
 
-    async deleteData(key) {
-        const compositeKey = `${key}|local`; // 在方法內組合 compositeKey
+    async deleteData(key, type = "local") {
+        const compositeKey = `${key}|${type}`; // 在方法內組合 compositeKey
         const db = await this.openDatabase();
-        console.log(this.#storeName);
         const transaction = db.transaction([this.#storeName], "readwrite");
         const store = transaction.objectStore(this.#storeName);
 
@@ -310,7 +310,7 @@
             const request = store.delete(compositeKey); // 使用 compositeKey 執行刪除
 
             request.onsuccess = () => {
-                console.log(`成功刪除本機資料: ${compositeKey}`);
+                if (type === "local") console.log(`成功刪除本機資料: ${compositeKey}`);
                 resolve();
             };
 

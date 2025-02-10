@@ -156,6 +156,7 @@ namespace EtheriT.Coker.Application.Search
 
                 var resultQuery = db.SearchLogs
                     .Where(log => log.FK_WebsiteId == websiteId)
+                    .Where(log => log.Key != "undefined")
                     .Where(log => EF.Functions.Like(log.Key, "%[a-zA-Z0-9]%") ||
                                   EF.Functions.Like(log.Key, "%[一-龥]%"))
                     .Where(log => !dto.LastInsertTime.HasValue || log.CreationTime > dto.LastInsertTime.Value) // 增量更新邏輯

@@ -46,7 +46,8 @@ function SwiperInit(obj) {
                     const activeIndex = swiper.activeIndex;
                     const $focusedSlide = $swiper.find(":focus").parents(".swiper-slide");
                     const focusIndex = $sliders.index($focusedSlide);
-                    if (typeof (focusIndex) != "undefined" && swiper.isLoopActive) {
+                    
+                    if (typeof (focusIndex) != "undefined" && focusIndex >=0 && swiper.isLoopActive) {
                         swiper.isLoopActive = false;
                         swiper.loopDestroy();
                     } else if (typeof (focusIndex) == "undefined" && !swiper.isLoopActive) {
@@ -219,7 +220,6 @@ function SwiperInit(obj) {
             var speed = $self.data("effect-speed");
 
             var swiperThumbs = new Swiper(".six_thumbs", {
-                loop: false, //改為false阻止thumbs跳過太多張圖
                 spaceBetween: 10,
                 slidesPerView: 6,
                 freeMode: true,
@@ -274,7 +274,7 @@ function SwiperInit(obj) {
                 }
             }
             swiperThumbs.slideTo(index, 0);
-
+            console.log(selfConfig);
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
             if (autoplay && swiper.slides.length - 2 > 1) {

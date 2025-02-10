@@ -71,7 +71,12 @@ function ready() {
     $(".editTime,.popular").appendTo($conten);
     $(".backstageType").remove();
     if ($(".search-input").val() != "") {
-        $(".search-input").val(decodeURIComponent($(".search-input").val()));
+        let encodedString = decodeURIComponent($(".search-input").val());
+        const textArea = document.createElement('textarea');
+        textArea.innerHTML = encodedString;
+        const searchKey = textArea.value;
+
+        $(".search-input").val(searchKey);
         $(".searchText").text($(".search-input").val());
         $("#Search_Result .catalog_frame").attr("data-search-text", $(".search-input").val());
     }

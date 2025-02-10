@@ -496,10 +496,13 @@ function DirectoryDataInsert($item, result) {
             $tags.append(badge);
         }
         $tags.children().each(function () {
-            $(this).on("click", function () {
-                location.href = `/${OrgName}/Search/Get/3/${$(this).text()}`;
-                return false;
-            })
+            var $self = $(this);
+            if (!$self.hasClass("less-tag")) {
+                $(this).on("click", function () {
+                    location.href = `/${OrgName}/Search/Get/3/${$(this).text()}`;
+                    return false;
+                })
+            }
         });
         // Clear content of shareBlock and re-init
         // because content.find("a").attr(linkData); will replace the badly initialized share buttons

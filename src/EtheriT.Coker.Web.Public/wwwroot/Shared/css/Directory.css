@@ -1,4 +1,9 @@
 ﻿
+
+.tags .badge.less-tag {
+    cursor: default;
+}
+
 .price.notshow::before {
     content: '';
 }

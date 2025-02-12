@@ -354,9 +354,12 @@ function ready() {
             NewCaptcha($LoginImgCaptcha, $InputLoginVCode);
         })
         LoginModal.addEventListener('hidden.bs.modal', function (event) {
+            localStorage.removeItem('gotoMember');
             FormClear(LoginForms, $InputLoginVCode)
             $("#CheckRemember").prop("checked", true);
         })
+    } else {
+        $("footer a[href*='Member']").closest("li").addClass("d-none");
     }
 
     var OtherLoginModal = document.getElementById('OtherLoginModal')
@@ -613,6 +616,17 @@ function ready() {
         ig_script.async = true;
         document.head.appendChild(ig_script);
     }
+
+    $("footer a[href*='Member']").on("click", function (e) {
+        e.preventDefault();
+        var $self = $(this);
+        if (IsLogin) {
+            window.location.href = $self.attr("href");
+        } else {
+            localStorage.setItem('gotoMember', 'true');
+            loginModal.show();
+        }
+    });
 }
 
 function SiteElementInit() {
@@ -778,6 +792,7 @@ function CaptchaVerify($self, $input, SuccessAction) {
 }
 function LoginAction() {
     Coker.sweet.loading();
+    var gotoMember = localStorage.getItem('gotoMember');
     loginModal.hide();
     var data = co.Form.getJson($("#LoginForm").attr("id"));
     data.WebsiteId = SiteId
@@ -785,7 +800,11 @@ function LoginAction() {
     co.User.Login(data).done((result) => {
         if (result.success) {
             Coker.sweet.success("歡迎回來！", function () {
-                location.reload()
+                if (gotoMember == "true") {
+                    window.location.href = `/${OrgName}/Member`;
+                } else {
+                    location.reload()
+                }
             }, false);
         } else {
             switch (result.message) {

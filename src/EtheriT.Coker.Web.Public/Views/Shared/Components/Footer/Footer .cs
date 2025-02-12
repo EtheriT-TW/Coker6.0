@@ -101,6 +101,58 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 								}
 							};
 							break;
+						case 9:
+                            footerViewModel = new FooterViewModel
+                            {
+                                footerViewModels = new List<FooterViewModel> {
+                                    new FooterViewModel { Title = "夯酷客", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "香辛與調味料", Link = "/yuanjer/Flavorings" },
+                                            new FooterViewModel { Title = "高湯鮮味", Link = "/yuanjer/umami" },
+                                            new FooterViewModel { Title = "炸粉", Link = "/yuanjer/batter" },
+                                            new FooterViewModel { Title = "飲品、烘焙及零嘴", Link = "/yuanjer/baking" },
+                                            new FooterViewModel { Title = "清潔蔬果", Link = "/yuanjer/vegclean" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "BELGA專區", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "全產品", Link = "/yuanjer/pro_belga" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "關於我們", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "公司介紹", Link = "/yuanjer/company" },
+                                            new FooterViewModel { Title = "產品介紹", Link = "/yuanjer/yuanjer_pro" },
+                                            new FooterViewModel { Title = "專業證照", Link = "/yuanjer/certification" },
+                                            new FooterViewModel { Title = "產品自主性檢驗報告", Link = "/yuanjer/report" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "客戶服務", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "會員專區", Link = "/yuanjer/Member" },
+                                            new FooterViewModel { Title = "常見問題", Link = "/yuanjer/faq" },
+                                            new FooterViewModel { Title = "購物須知", Link = "/yuanjer/shoppingnotic" },
+                                            new FooterViewModel { Title = "聯絡我們", Link = "/yuanjer/contact_us" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "最新消息", Link = "/yuanjer/News", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel(),
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "美味生活", Link = "/yuanjer/howliving", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel(),
+                                        }
+                                    }
+                                },
+                                Logo_Image = "/upload/yulogo.png",
+                                Facebook_Link = "https://www.facebook.com/BELGADELIGHTS/",
+                                IG_Link = "https://www.instagram.com/belgadelights/",
+                                YoutubeChannel_Link = "",
+                                LINE_Link = "https://line.me/ti/p/%40ezu9806k",
+                                Content = new List<string>
+                                {
+                                    "Copyright©",
+                                    "2025 沅哲有限公司",
+                                    "版權所有"
+                                }
+                            };
+                            break;
 						case 13:
 							footerViewModel = new FooterViewModel
 							{

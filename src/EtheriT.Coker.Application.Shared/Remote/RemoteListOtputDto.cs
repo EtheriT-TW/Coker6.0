@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Application.Shared.Remote
 		public string name { get; set; }
 		public long count { get; set; }
 		public long MemCount { get; set; }
-		public DateTime date { get; set; }
+		public double TotalTimeOnPagePerTime { get; set; }
+        public DateTime date { get; set; }
 	}
 }

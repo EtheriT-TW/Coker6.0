@@ -29,8 +29,10 @@ namespace EtheriT.Coker.Application.FlowSize
 		public async Task<FlowSizeDto> GetMonthFlowSizes()
 		{
 			long siteId = await loginUserData.GetWebsiteId();
+			DateTime dateTime = DateTime.Now;
 			var result = _db.FlowSizes
                 .Where(f => f.FK_WebsiteId == siteId)
+				.Where(f => f.actionTime.Year == dateTime.Year && f.actionTime.Month == dateTime.Month)
                     .GroupBy(f => new { f.actionTime.Year, f.actionTime.Month })
                     .Select(g => new FlowSizeDto()
                     {

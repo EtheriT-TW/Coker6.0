@@ -26,6 +26,7 @@ using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Core.Models;
 using Microsoft.Extensions.Caching.Memory;
 using EtheriT.Coker.Application.Shared.Dto.UserHabits;
+using static Azure.Core.HttpHeader;
 
 namespace EtheriT.Coker.Application.Remote
 {
@@ -81,96 +82,74 @@ namespace EtheriT.Coker.Application.Remote
 		}
 		public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions) {
 			long siteId =  await loginUserData.GetWebsiteId();
-			var data = await (
-                from d in db.Remotes
-                join m in db.WebMenus on d.FK_WebmenuId equals m.Id
-                where m.FK_WebsiteId == siteId
-                group d by new
-                {
-                    d.FK_ProdId,
-                    d.FK_WebmenuId,
-                    d.FK_ArticleId,
-                    d.FK_TechCertId,
-                    d.ExecutionTime.Date
-                } into g
-                select new
-                {
-                    g.Key.FK_ProdId,
-                    g.Key.FK_WebmenuId,
-                    g.Key.FK_ArticleId,
-                    g.Key.FK_TechCertId,
-                    g.Key.Date,
-                    Count = g.Count()
-                }
-            ).ToListAsync();
-            ;
+            var query = from r in db.Remotes
+                        where r.FK_WebsiteId == siteId
+                        join a in db.Article.Where(e => !e.IsDeleted) on r.FK_ArticleId equals a.Id into articles
+                        from article in articles.DefaultIfEmpty()
+                        join p in db.Prods.Where(e => !e.IsDeleted) on r.FK_ProdId equals p.Id into products
+                        from product in products.DefaultIfEmpty()
+                        join m in db.WebMenus.Where(e => !e.IsDeleted) on r.FK_WebmenuId equals m.Id into menus
+                        from menu in menus.DefaultIfEmpty()
+                        join t in db.TechnicalCertificates.Where(e => !e.IsDeleted) on r.FK_TechCertId equals t.Id into certs
+                        from cert in certs.DefaultIfEmpty()
+                        select new
+                        {
+                            r.ExecutionTime.Date,
+                            PageType = article != null ? "文章" :
+                                       product != null ? "商品" :
+                                       cert != null ? "標章認證" :
+                                       menu != null ? "選單" : "其他",
+                            Title = article != null ? article.Title :
+                                    product != null ? product.Title :
+                                    cert != null ? cert.Title :
+                                    menu != null ? menu.Title : "其他",
+                            r.FK_UserId,
+                            r.UUID,
+                            r.TimeOnPage
+                        };
 
-            if (data != null)
-			{
-                IEnumerable<RemoteListOtputDto>? dataQuery = from d in data
-								join a in db.Article.Where(e => !e.IsDeleted) on d.FK_ArticleId equals a.Id
-								select new RemoteListOtputDto{ 
-									date = d.Date,
-									type = "文章",
-									name = a.Title??"",
-									count = d.Count
-								};
-                dataQuery = dataQuery.Concat(
-                    from d in data
-                    join a in db.Prods.Where(e => !e.IsDeleted) on d.FK_ProdId equals a.Id
-                    select new RemoteListOtputDto
-                    {
-                        date = d.Date,
-                        type = "商品",
-                        name = a.Title ?? "",
-                        count = d.Count
-                    }
-				);
-                dataQuery = dataQuery.Concat(
-                    from d in data
-                    join a in db.WebMenus.Where(e => !e.IsDeleted) on d.FK_WebmenuId equals a.Id
-					where d.FK_ProdId == null && d.FK_ArticleId == null && d.FK_TechCertId == null
-                    select new RemoteListOtputDto
-                    {
-                        date = d.Date,
-                        type = "選單",
-                        name = a.Title ?? "",
-                        count = d.Count
-                    }
-                );
-                dataQuery = dataQuery.Concat(
-                    from d in data
-                    join a in db.TechnicalCertificates.Where(e => !e.IsDeleted) on d.FK_TechCertId equals a.Id
-                    select new RemoteListOtputDto
-                    {
-                        date = d.Date,
-                        type = "標章認證",
-                        name = a.Title ?? "",
-                        count = d.Count
-                    }
-                );
-                if (loadOptions.Sort == null)
+            // **讓 EF Core 先查詢所有數據**
+            var rawData = await query.ToListAsync();
+
+            // **記憶體中分組 & 計算**
+            var result = rawData
+                .GroupBy(r => new { r.Date, r.PageType, r.Title })
+                .Select(g =>
                 {
-                    var Sort = new List<SortingInfo>{
-                        new SortingInfo
-                        {
-                            Selector = "date",
-                            Desc = true
-                        },new SortingInfo
-                        {
-                            Selector = "count",
-                            Desc = true
-                        } 
+                    int uniqueUserCount = g.Select(r => r.FK_UserId)
+                                           .Concat(g.Select(r => (long?)r.UUID.GetHashCode()))
+                                           .Distinct()
+                                           .Count();  // **計算不重複的用戶數**
+
+                    return new RemoteListOtputDto
+                    {
+                        date = g.Key.Date,
+                        type = g.Key.PageType,
+                        name = g.Key.Title,
+                        count = g.Count(),  // **總瀏覽次數**
+                        MemCount = uniqueUserCount,  // **不重複的用戶數**
+                        TotalTimeOnPagePerTime = uniqueUserCount > 0
+                            ? (double)g.Sum(r => r.TimeOnPage) / uniqueUserCount  // **每個人平均停留時間**
+                            : 0  // **避免除以 0**
                     };
-                    loadOptions.Sort = Sort.ToArray();
-                }
-                var output = DataSourceLoader.Load(dataQuery, loadOptions);
-				return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-			}
-			else throw new Exception("查無資料");
-		}
+                })
+                .ToList();
+
+            if (loadOptions.Sort == null)
+            {
+                var Sort = new List<SortingInfo>
+                {
+                    new SortingInfo { Selector = "date", Desc = true },
+                    new SortingInfo { Selector = "count", Desc = true }
+                };
+                loadOptions.Sort = Sort.ToArray();
+            }
+
+            var output = DataSourceLoader.Load(result, loadOptions);
+            return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
         //從資料庫撈使用者紀錄
-		public async Task<JsonResult> GetPageList(DataSourceLoadOptions loadOptions) {
+        public async Task<JsonResult> GetPageList(DataSourceLoadOptions loadOptions) {
 			long siteId = await loginUserData.GetWebsiteId();
 			var data =
                 from d in db.Remotes //使用者瀏覽紀錄

@@ -276,7 +276,7 @@ var app = builder.Build();
 app.UseResponseCompression();
 
 // 中間件來記錄流量
-app.UseMiddleware<FlowSizeLogMiddleware>();
+//app.UseMiddleware<FlowSizeLogMiddleware>();
 
 if (!app.Environment.IsProduction())
 {

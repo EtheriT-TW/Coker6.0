@@ -42,8 +42,6 @@ function SwiperInit(obj) {
                 if (swiper.params.loop) {
                     const $swiper = $(swiper.el);
                     const $sliders = $swiper.find(".swiper-slide");
-                    const totalLength = swiper.slides.length;
-                    const activeIndex = swiper.activeIndex;
                     const $focusedSlide = $swiper.find(":focus").parents(".swiper-slide");
                     const focusIndex = $sliders.index($focusedSlide);
                     

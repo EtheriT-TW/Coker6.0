@@ -36,6 +36,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 			var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
 
 			FooterViewModel footerViewModel;
+			ViewData["OrgName"] = defaultData.OrgName;
 
 			switch (defaultData.Layout_Type)
 			{
@@ -131,14 +132,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                             new FooterViewModel { Title = "聯絡我們", Link = "/yuanjer/contact_us" },
                                         }
                                     },
-                                    new FooterViewModel { Title = "最新消息", Link = "/yuanjer/News", footerViewModels = new List<FooterViewModel> {
-                                            new FooterViewModel(),
-                                        }
-                                    },
-                                    new FooterViewModel { Title = "美味生活", Link = "/yuanjer/howliving", footerViewModels = new List<FooterViewModel> {
-                                            new FooterViewModel(),
-                                        }
-                                    }
+                                    new FooterViewModel { Title = "最新消息", Link = "/yuanjer/News"},
+                                    new FooterViewModel { Title = "美味生活", Link = "/yuanjer/howliving"}
                                 },
                                 Logo_Image = "/upload/yulogo.png",
                                 Facebook_Link = "https://www.facebook.com/BELGADELIGHTS/",

@@ -41,7 +41,7 @@
 <div id="Footer_Bottom" class="center">
     <div id="Logo_Bottom">
         <div></div>
-        <span><img src="@Model.Logo_Image" width="120" alt="Derek" /></span>
+        <span><a href="/" title="連結至：首頁"><img src="@Model.Logo_Image" width="120" alt="@ViewData["OrgName"]" /></a></span>
     </div>
     <div id="Other_Web_Button" class=" center">
         @if (!string.IsNullOrEmpty(Model.Facebook_Link))

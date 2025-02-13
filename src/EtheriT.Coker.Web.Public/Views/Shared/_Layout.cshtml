@@ -112,16 +112,19 @@
             return originalInsertBefore.call(this, newNode, referenceNode);
         };
     </script>
-    @if (ViewData["GA4"] != null && !string.IsNullOrEmpty(ViewData["GA4"].ToString() ?? ""))
+    @if (!string.IsNullOrEmpty(ViewBag.GA4))
     {
         <!-- Google tag (gtag.js) -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=@ViewData["GA4"]"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=@ViewBag.GA4"></script>
         <script nonce="@ViewBag.Nonce">
             window.dataLayer = window.dataLayer || [];
             function gtag() { dataLayer.push(arguments); }
             gtag('js', new Date());
 
-            gtag('config', "@ViewData["GA4"]");
+            gtag('config', "@ViewBag.GA4");
+            @if (!string.IsNullOrEmpty(ViewBag.GoogleAds)){
+                @: gtag('config', '@ViewBag.GoogleAds');
+            }
         </script>
     }
     @if (ViewData["google.translate"] != null && !string.IsNullOrEmpty(ViewData["google.translate"]!.ToString() ?? ""))
@@ -175,7 +178,7 @@
             loadGoogleTranslateScript();
         </script>
     }
-    @if (ViewData["GTM"] != null && !string.IsNullOrEmpty(ViewData["GTM"].ToString() ?? ""))
+    @if (!string.IsNullOrEmpty(ViewBag.GTM))
     {
         <!-- Google Tag Manager -->
         <script nonce="@ViewBag.Nonce">
@@ -186,16 +189,16 @@
                 }); var f = d.getElementsByTagName(s)[0],
                     j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
                         'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
-            })(window, document, 'script', 'dataLayer', '@ViewData["GTM"]');</script>
+            })(window, document, 'script', 'dataLayer', '@ViewBag.GTM');</script>
         <!-- End Google Tag Manager -->
     }
 </head>
 <body id="@ViewData["Layout"]" class="@ViewData["bodyClass"]">
-    @if (ViewData["GTM"] != null && !string.IsNullOrEmpty(ViewData["GTM"].ToString() ?? ""))
+    @if (!string.IsNullOrEmpty(ViewBag.GTM))
     {
         <!-- Google Tag Manager (noscript) -->
         <noscript>
-            <iframe class="gtmIframe" src="https://www.googletagmanager.com/ns.html?id=@ViewData["GTM"]" height="0" width="0"></iframe>
+            <iframe class="gtmIframe" src="https://www.googletagmanager.com/ns.html?id=@ViewBag.GTM" height="0" width="0"></iframe>
         </noscript>
         <!-- End Google Tag Manager (noscript) -->
     }

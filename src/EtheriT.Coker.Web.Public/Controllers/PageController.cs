@@ -126,6 +126,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var GA4 = SEO.storeSetDetails?.Find(e => e.key == "GA4");
             var GoogleTranslate = SEO.storeSetDetails?.Find(e => e.key == "google.translate");
             var GTM = SEO.storeSetDetails?.Find(e => e.key == "GTM");
+            var GoogleAds = SEO.storeSetDetails?.Find(e => e.key == "GoogleAds");
 
             var StoreSet = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 2, SiteId = siteId });
             var storeBuyState = StoreSet.storeSetDetails?.Find(e => e.key == "storeBuyState");
@@ -152,6 +153,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 storeSet = new StoreSetFrontDto
                 {
                     GA4 = (GA4 != null && GA4.value != null) ? String.Join(",", GA4.value!) : "",
+                    GoogleAds = (GoogleAds != null && GoogleAds.value != null) ? String.Join(",", GoogleAds.value!) : "",
                     GoogleTranslate = (GoogleTranslate != null && GoogleTranslate.value != null) ? String.Join(",", GoogleTranslate.value!) : "",
                     GTM = (GTM != null && GTM.value != null) ? String.Join(",", GTM.value!) : "",
                     storeBuyState = (storeBuyState != null && storeBuyState.value != null) ? String.Join(",", storeBuyState.value!) : "",
@@ -454,8 +456,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["PageTagNameName"] = key == "home" ? model.PageData.SiteName : $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
             ViewData["PageTagNameName"] = HttpUtility.HtmlEncode(ViewData["PageTagNameName"]).Trim().Replace("&quot;","''");
             ViewData["Description"] = model.PageData.Description;
-            ViewData["GA4"] = model.storeSet.GA4;
-            ViewData["GTM"] = model.storeSet.GTM;
+            ViewBag.GA4 = model.storeSet.GA4;
+            ViewBag.GTM = model.storeSet.GTM;
+            ViewBag.GoogleAds = model.storeSet.GoogleAds;
             ViewData["google.translate"] = model.storeSet.GoogleTranslate;
             ViewData["CurrentUrl"] = model.PageData.CurrentUrl;
             ViewData["Root"] = model.root;

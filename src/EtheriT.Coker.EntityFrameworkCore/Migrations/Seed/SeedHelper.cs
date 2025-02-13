@@ -620,6 +620,20 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     jobID = "S001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 12, 05, 06, 00, 00, 00, DateTimeKind.Local)
+                }, new StoreSet
+                {
+                    Id = 13,
+                    key = "GoogleAds",
+                    name = "Google Ads",
+                    memo = "需先埋入GA，再輸入GOOGLE提供之轉換 ID：AW-xxxxxxxxxxx",
+                    FK_StoreSetGroupId = 1,
+                    type = SeoSetDataTypeEnum.text,
+                    maxlength = 14,
+                    pattern = "^AW-\\w+",
+                    IsDeleted = false,
+                    jobID = "S001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2023, 7, 25, 19, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(

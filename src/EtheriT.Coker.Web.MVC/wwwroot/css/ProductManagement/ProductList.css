@@ -54,8 +54,12 @@ input[type="number"] {
     cursor: default;
 }
 
-    .data_upload > ul > .upload_list > .ser_no {
-        width: 2.5rem;
+    .data_upload > ul > .upload_list .ser_no {
+        width: 1.5rem;
+    }
+
+    .data_upload > ul > .upload_list > .title {
+        font-size: 0.7rem;
     }
 
 
@@ -77,109 +81,156 @@ input[type="number"] {
     height: auto;
 }
 
-#ProductForm > div > div > .btn_input_pic {
-    height: 3.5rem;
-    width: 3.5rem;
-    color: var(--bs-gray);
-    border: 1px solid #ced4da;
-    border: 1px solid var(--color-gray-bg-dark);
+#ProductForm {
+    background-color: var(--color-gray-bg-dark);
 }
 
-#ProductForm > div > .ytlink > input {
-    padding-left: 9.5rem;
-}
-
-#ProductForm > div > .yt_preview > iframe {
-    max-width: 300px;
-    height: auto;
-}
-
-#ProductForm > .name .name_count::after {
-    content: '/150';
-}
-
-#ProductForm > .itemNo .itemNo_count::after {
-    content: '/100';
-}
-
-#ProductForm > .introduction .introduction_count::after {
-    content: '/3000';
-}
-
-#ProductForm > .illustrate .illustrate_count::after {
-    content: '/3000';
-}
-
-#ProductForm > .marks > input {
-    padding-left: 8.5rem;
-}
-
-#ProductForm > .tag > input {
-    padding-left: 4.5rem;
-}
-
-#Spec_Frame > .border {
-    padding: 0.5rem;
-}
-
-#Spec_Frame .frame:not(:last-child) {
-    padding-bottom: 0.5rem;
-    margin-bottom: 0.5rem;
-}
-
-#Spec_Frame .spec_list {
-    border-bottom: #ccc solid 1px;
-    box-shadow: 0 0.125rem 0.25rem -0.125rem rgba(0, 0, 0, 0.075);
-}
-
-    #Spec_Frame .spec_list.ui-sortable-helper {
-        background-color: white;
-        box-shadow: 0px 0px 32px black;
+    #ProductForm .btn_input_pic {
+        height: 3.5rem;
+        width: 3.5rem;
+        color: var(--bs-gray);
+        border: 1px solid #ced4da;
+        border: 1px solid var(--color-gray-bg-dark);
     }
 
-    #Spec_Frame .spec_list:not(.ui-sortable-helper):nth-child(odd) {
-        background-color: #F2F2F2;
+    #ProductForm .ytlink > input {
+        padding-left: 9.5rem;
     }
 
-    #Spec_Frame .spec_list:not(.ui-sortable-helper):nth-child(even) {
-        background-color: #D9D9D9;
+    #ProductForm .yt_preview > iframe {
+        max-width: 300px;
+        height: auto;
     }
 
-#Spec_Frame input.ser_no {
-    width: 4rem;
+    #ProductForm .name .name_count::after {
+        content: '/150';
+    }
+
+    #ProductForm .itemNo .itemNo_count::after {
+        content: '/100';
+    }
+
+    #ProductForm .introduction .introduction_count::after {
+        content: '/3000';
+    }
+
+    #ProductForm .illustrate .illustrate_count::after {
+        content: '/3000';
+    }
+
+    #ProductForm > .marks > input {
+        padding-left: 8.5rem;
+    }
+
+    #ProductForm > .tag > input {
+        padding-left: 4.5rem;
+    }
+
+#Spec_Frame {
+    margin: 1rem;
+    padding: 1.5rem;
 }
 
-#Spec_Frame span.chang_ser {
-    cursor: move;
-    width: fit-content;
-    text-align: start;
-}
+    #Spec_Frame > .border {
+        padding: 0.5rem;
+    }
+    #Spec_Frame .sortable-placeholder {
+        width: 100%;
+        height: 100px; /* 可根據需要調整 */
+    }
 
-#Spec_Frame .btn_remove {
-    width: auto;
-    text-align: end;
-    margin-right: calc(0.25rem + 6rem);
-}
+    #Spec_Frame .frame:not(:last-child) {
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
 
-#Spec_Frame .frame .price > input {
-    padding-left: 5.5rem;
-}
+    #Spec_Frame .spec_list {
+        border-bottom: #ccc solid 1px;
+        box-shadow: 0 0.125rem 0.25rem -0.125rem rgba(0, 0, 0, 0.075);
+    }
 
-#Spec_Frame .frame .input_subItemNo {
-    padding-left: 4rem;
-}
+        #Spec_Frame .spec_list.ui-sortable-helper {
+            background-color: white;
+            box-shadow: 0px 0px 32px black;
+        }
 
-#Spec_Frame .frame .input_stock_number {
-    padding-left: 8.5rem;
-}
+        #Spec_Frame .spec_list:not(.ui-sortable-helper):nth-child(odd) {
+            background-color: #F2F2F2;
+        }
 
-#Spec_Frame .frame .input_min_number {
-    padding-left: 7.5rem;
-}
+        #Spec_Frame .spec_list:not(.ui-sortable-helper):nth-child(even) {
+            background-color: #D9D9D9;
+        }
 
-#Spec_Frame .frame .input_alert_number {
-    padding-left: 8.5rem;
-}
+    #Spec_Frame input.ser_no {
+        width: 4rem;
+    }
+
+    #Spec_Frame span.chang_ser {
+        cursor: move;
+        width: fit-content;
+        text-align: start;
+    }
+
+    #Spec_Frame .btn_remove {
+        width: auto;
+        text-align: end;
+        margin-right: calc(0.25rem + 6rem);
+    }
+
+    #Spec_Frame .frame > .topline {
+        gap: 20px;
+    }
+
+    #Spec_Frame .frame .spec {
+        flex-wrap: nowrap;
+    }
+
+        #Spec_Frame .frame .spec > select, #Spec_Frame .frame .spec > input {
+            width: 170px;
+        }
+
+    #Spec_Frame .frame .price > textarea {
+        padding-left: 2.5rem;
+        width: 180px;
+        height: 2rem;
+    }
+
+        #Spec_Frame .frame .price > textarea.multi-price {
+            height: 3rem;
+        }
+
+    #Spec_Frame .frame .price > .count {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        background: #F33;
+        color: #FFF;
+        border-radius: 100%;
+        font-size: 0.8rem;
+        width: 20px;
+        height: 20px;
+        right: -5px;
+        top: -5px;
+    }
+
+    #Spec_Frame .frame .input_subItemNo {
+        width: 120px;
+    }
+
+    #Spec_Frame .frame .input_stock_number {
+        width: 75px;
+    }
+
+    #Spec_Frame .frame .input_min_number {
+        width: 75px;
+    }
+
+    #Spec_Frame .frame .input_alert_number {
+        padding-left: 2.5rem;
+        width: 100px;
+    }
 
 #ProductForm > .date > input {
     padding-left: 9.5rem;
@@ -190,6 +241,166 @@ input[type="number"] {
     line-height: 1.5rem;
     top: -0.75rem;
 }
+
+#Spec_Frame > .specHeader {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+
+    #Spec_Frame > .specHeader > li {
+        width: 75px;
+    }
+
+    #Spec_Frame > .specHeader > .serNo {
+        width: 4rem;
+    }
+
+    #Spec_Frame > .specHeader > .spec {
+        width: 43.5rem;
+    }
+
+    #Spec_Frame > .specHeader > .price {
+        width: 180px;
+    }
+
+    #Spec_Frame > .specHeader > .subItem {
+        width: 120px;
+    }
+
+.field-gropu {
+    position: relative;
+}
+
+    .field-gropu > .field-header {
+        position: absolute;
+        top: -0.8rem;
+        left: 0.8rem;
+        right: 0.5rem;
+    }
+
+        .field-gropu > .field-header > * {
+            background-color: #fff;
+            padding: 0 0.5rem;
+        }
+
+textarea.dobuleHeight {
+    min-height: 6rem;
+}
+
+textarea.minHeight {
+    height: 2rem;
+}
+
+#ProdMedia > ul {
+    display: flex;
+    gap:20px;
+    list-style: none;
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: center;
+}
+    #ProdMedia > ul > li{
+        position:relative;
+    }
+    #ProdMedia > ul:last-child {
+        width: 50px;
+        height: 50px;
+    }
+
+    #ProdMedia > ul .btn_link, #ProdMedia > ul .title {
+        display: none !important;
+    }
+
+    #ProdMedia > ul .thumb_img {
+        width:100px;
+        height:100px;
+        object-fit:cover;
+    }
+    #ProdMedia > ul .btn_remove {
+        position: absolute;
+        background: #FFF !important;
+        border-radius:100%;
+        color: red;
+        right: -5px;
+        top: -5px;
+    }
+    #ProdMedia > ul .serNoTool {
+        position: absolute;
+        z-index: 2;
+        top: -5px;
+        left: -5px;
+        display: flex;
+        justify-content: center;
+        background: #FFF;
+    }
+    #ProdMedia > ul .sortable-placeholder {
+        width: 100px;
+        height: 100px; /* 可根據需要調整 */
+    }
+
+#ProdFiles .thumb_img {
+    display: none;
+}
+#ProdFiles > ul .sortable-placeholder {
+    width: 100%;
+    height: 50px; /* 可根據需要調整 */
+}
+.sortable-placeholder {
+    background: #f0f0f0;
+    border: 2px dashed #ccc;
+    margin: 5px 0;
+    visibility: visible !important;
+}
+.serNoTool {
+    cursor: move;
+}
+@media only screen and (max-width: 1400px) {
+    #Spec_Frame > .specHeader {
+        padding: 0.5rem;
+        gap: 10px;
+    }
+
+        #Spec_Frame > .specHeader > .serNo {
+            width: 35px;
+        }
+
+        #Spec_Frame > .specHeader > .spec {
+            width: 16.5rem;
+        }
+
+        #Spec_Frame > .specHeader > .subItem {
+            width: 85px;
+        }
+
+    #Spec_Frame .spec_list {
+        align-items: center;
+        flex-wrap: nowrap;
+        flex-direction: row;
+    }
+
+    #Spec_Frame .frame > .topline {
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    #Spec_Frame .frame .spec {
+        flex-wrap: wrap;
+    }
+
+    #Spec_Frame input.ser_no {
+        display: none;
+    }
+
+    #Spec_Frame .frame .spec > select, #Spec_Frame .frame .spec > input {
+        width: 150px;
+    }
+
+    #Spec_Frame .frame .input_subItemNo {
+        width: 85px;
+    }
+}
+
 
 @media only screen and (max-width: 576px) {
     .data_upload > ul {

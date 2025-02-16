@@ -176,9 +176,11 @@
                     //var drap_sy, drap_ey, drap_itemh;
                     $("#Spec_Frame > ul").each(function (index, element) {
                         $(element).sortable({
-                            items: "> .spec_list",
+                            items: " > .spec_list",
                             axis: "y",
                             cursor: "move",
+                            handle: ".chang_ser",
+                            placeholder: "sortable-placeholder",
                             dropOnEmpty: false,
                             start: function (event, ui) {
                                 //drap_sy = ui.item.offset().top;

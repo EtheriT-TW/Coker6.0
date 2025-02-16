@@ -384,7 +384,6 @@ namespace EtheriT.Coker.Application
                 });
                 db.SaveChanges();
             }
-            else throw new Exception("記錄錯誤");
         }
         public async Task SetLogs(long? UsetId,long? WebsiteId, string Paramater, string response)
         {

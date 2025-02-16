@@ -279,11 +279,11 @@ function PageReady() {
 }
 function ElementInit() {
     $name = $("#InputName");
-    $name_count = $("#ProductForm > .name .name_count");
+    $name_count = $("#ProductForm .name .name_count");
     $introduction = $("#InputIntroduction");
-    $introduction_count = $("#ProductForm > .introduction .introduction_count");
+    $introduction_count = $("#ProductForm .introduction .introduction_count");
     $illustrate = $("#InputIllustrate");
-    $illustrate_count = $("#ProductForm > .illustrate .illustrate_count");
+    $illustrate_count = $("#ProductForm .illustrate .illustrate_count");
     $marks = $("#InputMarks");
     $spec_select = $(".spec_select")
     $price = $(".input_price");
@@ -294,7 +294,7 @@ function ElementInit() {
     $date = $("#InputDate");
     $permanent = $("#PermanentCheck");
     $itemNo = $("#InputItemNo");
-    $itemNo_count = $("#ProductForm > .itemNo .itemNo_count");
+    $itemNo_count = $("#ProductForm .itemNo .itemNo_count");
     $display = $(`#ProductForm [name="Visible"]`);
     $removedFromShelves = $(`#ProductForm [name="RemovedFromShelves"]`);
 
@@ -314,11 +314,20 @@ function ElementInit() {
         $(".input_price").each(function () {
             var $self = $(this)
             var psid = $self.parents(".frame").data("psid")
-            var temppsid = $self.parents(".frame").data("temppsid")
-            var index = modal_price_list.findIndex(item => item["FK_PSId"] == psid || (item["TempPSid"] != null && item["TempPSid"] == temppsid))
-            if (index > -1) {
-                text = "現金：" + co.String.thousandSign(modal_price_list[index]["Price"]);
-                if (modal_price_list[index]["Bonus"] != 0) text += " 紅利：" + co.String.thousandSign(modal_price_list[index]["Bonus"]);
+            var count = $self.parents(".price").find(".count");
+            var text = "";
+            var filter = modal_price_list.filter(item => item["FK_PSId"] == psid);
+            $self.removeClass("multi-price");
+            if (filter.length > 1) {
+                count.removeClass("d-none").text(filter.length);
+                $self.addClass("multi-price");
+            } else count.addClass("d-none");
+            filter.map(item => {
+                if (text != "") text += "\n";
+                text += "現金：" + co.String.thousandSign(item["Price"]);
+                if (item["Bonus"] != 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
+            });
+            if (filter.length>0) {
                 $self.val(text);
             } else {
                 $self.val("");
@@ -602,6 +611,7 @@ function SpecAdd(result) {
         item_select_list_1 = item.find("datalist").first(),
         item_select_list_2 = item.find("datalist").last(),
         item_price = item.find(".input_price"),
+        item_price_count = item.find(".price > .count"),
         item_subItemNo = item.find(".input_subItemNo"),
         item_min = item.find(".input_min_number"),
         item_stock = item.find(".input_stock_number"),
@@ -628,10 +638,10 @@ function SpecAdd(result) {
         if ($self.val() != item.data("serno")) {
             if ($self.val() > item.data("serno")) {
                 SortChange($(".spec_list"), "bigger", item.data("serno"), $self.val())
-                $("#Spec_Frame > ul").children("li").eq(parseInt($self.val()) - 1).after(item);
+                $("#Spec_Frame > ul.specList").children("li").eq(parseInt($self.val()) - 1).after(item);
             } else if ($self.val() < item.data("serno")) {
                 SortChange($(".spec_list"), "smaller", $self.val(), item.data("serno"))
-                $("#Spec_Frame > ul").children("li").eq(parseInt($self.val()) - 1).before(item);
+                $("#Spec_Frame > ul.specList").children("li").eq(parseInt($self.val()) - 1).before(item);
             }
         }
         item.data("serno", $self.val());
@@ -706,16 +716,25 @@ function SpecAdd(result) {
         item.find(".frame").data("temppsid", temp_psid);
         item.find(".frame").data("oldstock", null);
     }
+    var text = "";
+    var filter = modal_price_list.filter(mitem => mitem["FK_PSId"] == item.find(".frame").data("psid"));
+    item_price.removeClass("multi-price");
+    if (filter.length > 1) {
+        item_price.addClass("multi-price");
+        item_price_count.removeClass("d-none").text(filter.length);
+    } else item_price_count.addClass("d-none");
+    filter.map(item => {
+        if (text != "") text += "\n";
+        text += "現金：" + co.String.thousandSign(item["Price"]);
+        if (item["Bonus"] != 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
+    });
 
-    var index = modal_price_list.findIndex(mitem => mitem["FK_PSId"] == item.find(".frame").data("psid") || (mitem["TempPSid"] != null && mitem["TempPSid"] == item.find(".frame").data("temppsid")))
-    if (index > -1) {
-        text = "現金：" + co.String.thousandSign(modal_price_list[index]["Price"]);
-        if (modal_price_list[index]["Bonus"] != 0) text += " 紅利：" + co.String.thousandSign(modal_price_list[index]["Bonus"]);
+    if (filter.length > 0) {
         item_price.val(text);
     } else {
         item_price.val("");
     }
-    item_subItemNo.val(result != null ? result.subItemNo : "")
+    item_subItemNo.val(result != null ? result.subItemNo : "");
     item_min.val(result != null ? result.min_Qty : "");
     item_stock.val(result != null ? result.stock + result.orderStock : "");
     item_alert.val("");
@@ -913,7 +932,10 @@ function UploadListAdd(result, $target) {
         item.data("uploadtype", result.Type);
         item.data("edit", false);
         item.find(".title").text(result.Name);
-
+        if (!!result.Link) {
+            item.find(".thumb_img").attr("src", result.Link);
+        }
+        console.log(result);
         item.on("click", function () {
             co.File.ListFile($(this));
         })
@@ -938,7 +960,10 @@ function UploadListAdd(result, $target) {
         }
         obj["Type"] = result.fileType;
         obj["IsDelete"] = false;
-        item.find(".btn_link").attr("href", obj["File"]);
+        if (!!obj["File"]) {
+            item.find(".thumb_img").attr("src", obj["File"]);
+            item.find(".btn_link").removeClass("d-none").attr("href", obj["File"]);
+        } else item.find(".btn_link").addClass("d-none");
         total_files.push(obj);
 
         item.on("click", function () {
@@ -1083,7 +1108,7 @@ function AddUp(success_text, error_text, target) {
         if (result.success) {
             Coker.sweet.success(success_text, null, true);
             if (total_files.length > 0) {
-                $("#ProductForm > .data_upload > ul > li").each(function () {
+                $("#ProductForm .data_upload > ul > li").each(function () {
                     var $self = $(this);
                     if (!$self.hasClass("btn_upload_add")) {
                         var data = [];

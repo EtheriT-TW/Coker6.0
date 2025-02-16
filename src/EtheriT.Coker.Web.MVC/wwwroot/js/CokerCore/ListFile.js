@@ -52,26 +52,31 @@
             $(".data_upload > ul").each(function (index,element) {
                 $(element).sortable({
                     items: "> .upload_list",
-                    axis: "y",
+                    handle: ".serNoTool",
                     cursor: "move",
                     dropOnEmpty: false,
+                    placeholder: "sortable-placeholder",
+                    tolerance:"pointer",
                     start: function (event, ui) {
+                        ui.item.data("startIndex",ui.item.index() + 1);
                         drap_sy = ui.item.offset().top;
                         drap_itemh = ui.item.height() * 1.5
                     },
                     stop: function (event, ui) {
                         drap_ey = ui.item.offset().top;
-                        var move = Math.trunc((drap_ey - drap_sy) / drap_itemh);
+                        var $uploadList = ui.item.parents(".data_upload").find(".upload_list");
                         var $ser_no = ui.item.find(".ser_no");
-                        if (move > 0) {
-                            $ser_no.val(parseInt($ser_no.val()) + move)
-                            SortChange($(".upload_list"), "bigger", ui.item.data("serno"), $ser_no.val())
-                            ui.item.data("serno", $ser_no.val())
-                        } else if (move < 0) {
-                            $ser_no.val(parseInt($ser_no.val()) + move)
-                            SortChange($(".upload_list"), "smaller", $ser_no.val(), ui.item.data("serno"))
-                            ui.item.data("serno", $ser_no.val())
+                        var startIndex = ui.item.data("startIndex");
+                        var newIndex = ui.item.index() + 1;
+                        var move = startIndex - newIndex;
+                        $ser_no.val(newIndex);
+                        if (move < 0) {
+                            SortChange($uploadList, "bigger", ui.item.data("serno"), $ser_no.val());
+                        } else if (move >= 0) {
+                            SortChange($uploadList, "smaller", $ser_no.val(), ui.item.data("serno"));
                         }
+                        ui.item.data("serno", $ser_no.val());
+                        ui.item.data("startIndex", newIndex)
                     }
                 });
             });

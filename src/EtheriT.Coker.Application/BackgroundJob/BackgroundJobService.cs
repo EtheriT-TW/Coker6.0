@@ -17,7 +17,8 @@ namespace EtheriT.Coker.Application.BackgroundJob
         public void InitializeJobs()
         {
             _recurringJobManager.AddOrUpdate<UserHabitsWorking>("UserHabits", job => job.HabitCollection(), Cron.Daily(18,30));
-            _recurringJobManager.AddOrUpdate<FlowSizesWorking>("FlowSizes", job => job.FlowSizeCollection(), Cron.Daily(17, 00));
-		}
+            _recurringJobManager.RemoveIfExists("FlowSizes"); //暫時移除該工作
+            //_recurringJobManager.AddOrUpdate<FlowSizesWorking>("FlowSizes", job => job.FlowSizeCollection(), Cron.Daily(17, 00));
+        }
 	}
 }

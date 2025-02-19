@@ -401,7 +401,7 @@ textarea.minHeight {
         gap: 10px;
     }
 
-        #Spec_Frame > .specHeader > li {
+        #Spec_Frame > .specHeader > li:not([class]) {
             width: 110px;
         }
 
@@ -453,10 +453,13 @@ textarea.minHeight {
         width: 18rem;
     }
     #Spec_Frame > .specHeader > .price {
-        width: 165px;
+        width: 140px;
     }
     #Spec_Frame > .specHeader > .subItem {
-        width: 160px;
+        width: 140px;
+    }
+    #Spec_Frame > .specHeader > li:not([class]) {
+        width: 138px;
     }
     .sidebar.collapsed + .content-area #Spec_Frame > .specHeader > .spec {
         width: 20.5rem;
@@ -464,11 +467,37 @@ textarea.minHeight {
     .sidebar.collapsed + .content-area #Spec_Frame > .specHeader > .price {
         width: 155px;
     }
+    .sidebar.collapsed + .content-area #Spec_Frame > .specHeader > .subItem {
+        width: 165px;
+    }
     .sidebar.collapsed + .content-area #Spec_Frame > .specHeader > li:not([class]) {
-        width: 150px;
+        width: 163px;
     }
 }
-
+@media only screen and (max-width: 1400px) {
+    #Spec_Frame > .specHeader > .serNo {
+        font-size: 0;
+        width: 30px;
+    }
+    #Spec_Frame > .specHeader > .spec {
+        width: 16.5rem;
+    }
+    #Spec_Frame > .specHeader > .subItem {
+        width: 120px;
+    }
+    .sidebar.collapsed + .content-area #Spec_Frame > .specHeader > .spec {
+        width: 16.5rem;
+    }
+    .sidebar.collapsed + .content-area #Spec_Frame > .specHeader > .price {
+        width: 130px;
+    }
+    .sidebar.collapsed + .content-area #Spec_Frame > .specHeader > .subItem {
+        width: 130px;
+    }
+    .sidebar.collapsed + .content-area #Spec_Frame > .specHeader > li:not([class]) {
+        width: 130px;
+    }
+}
 
 @media only screen and (max-width: 576px) {
     .data_upload > ul {

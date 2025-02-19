@@ -204,47 +204,50 @@ function PageDefaultSet(result) {
 
         var hasstock = false;
         result.stocks.forEach(data => {
-            obj = {
-                s1id: data.fK_S1id,
-                s2id: data.fK_S2id,
-                stock: data.stock,
-                minQty: data.min_Qty,
-                price: data.prices[0].price
-            };
-            price_list.push(obj);
-            maxprice = obj["price"] > maxprice ? obj["price"] : maxprice;
-            minprice = obj["price"] < minprice || minprice == 0 ? obj["price"] : minprice;
-            obj = {}
-            var nostock = "";
-            if (data.stock <= 0 && CanShop) {
-                nostock = 'disabled="disabled"'
-            } else {
-                hasstock = true;
-            }
-
-            if (data.fK_S1id > 0) {
-                if (s1_list.indexOf(data.fK_S1id) < 0) {
-                    item1_control.append(`<input id="s1_${data.fK_S1id}" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="${data.fK_S1id}" ${nostock}>`);
-                    item1_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + data.fK_S1id + '">' + data.s1_Title + '</label>');
-                    s1_list.push(data.fK_S1id);
+            console.log("data", data);
+            if (data.prices[0].price != null) {
+                obj = {
+                    s1id: data.fK_S1id,
+                    s2id: data.fK_S2id,
+                    stock: data.stock,
+                    minQty: data.min_Qty,
+                    price: data.prices[0].price
+                };
+                price_list.push(obj);
+                maxprice = obj["price"] > maxprice ? obj["price"] : maxprice;
+                minprice = obj["price"] < minprice || minprice == 0 ? obj["price"] : minprice;
+                obj = {}
+                var nostock = "";
+                if (data.stock <= 0 && CanShop) {
+                    nostock = 'disabled="disabled"'
                 } else {
-                    if (data.stock > 0) item1_control.find(`#s1_${data.fK_S1id}`).prop("disabled", false);
+                    hasstock = true;
                 }
-            } else {
-                if (!s1 >= 0) {
-                    s1 = 0;
-                }
-            }
 
-            if (data.fK_S2id > 0) {
-                if (s2_list.indexOf(data.fK_S2id) < 0) {
-                    item2_control.append(`<input id="s2_${data.fK_S2id}" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="${data.fK_S2id}" ${nostock}>`);
-                    item2_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + data.fK_S2id + '">' + data.s2_Title + '</label>');
-                    s2_list.push(data.fK_S2id);
+                if (data.fK_S1id > 0) {
+                    if (s1_list.indexOf(data.fK_S1id) < 0) {
+                        item1_control.append(`<input id="s1_${data.fK_S1id}" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="${data.fK_S1id}" ${nostock}>`);
+                        item1_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + data.fK_S1id + '">' + data.s1_Title + '</label>');
+                        s1_list.push(data.fK_S1id);
+                    } else {
+                        if (data.stock > 0) item1_control.find(`#s1_${data.fK_S1id}`).prop("disabled", false);
+                    }
+                } else {
+                    if (!s1 >= 0) {
+                        s1 = 0;
+                    }
                 }
-            } else {
-                if (!s2 >= 0) {
-                    s2 = 0;
+
+                if (data.fK_S2id > 0) {
+                    if (s2_list.indexOf(data.fK_S2id) < 0) {
+                        item2_control.append(`<input id="s2_${data.fK_S2id}" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="${data.fK_S2id}" ${nostock}>`);
+                        item2_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + data.fK_S2id + '">' + data.s2_Title + '</label>');
+                        s2_list.push(data.fK_S2id);
+                    }
+                } else {
+                    if (!s2 >= 0) {
+                        s2 = 0;
+                    }
                 }
             }
         });
@@ -271,11 +274,15 @@ function PageDefaultSet(result) {
                 $pro_discount.text(minprice.toLocaleString('en-US') + " ~ " + maxprice.toLocaleString('en-US'));
             }
         } else $pro_discount.text(maxprice.toLocaleString('en-US'));
-    } else {
+    } else if (result.stocks[0].prices[0].price != null) {
         s1 = result.stocks[0].fK_S1id;
         s2 = result.stocks[0].fK_S2id;
         var price = result.stocks[0].prices[0].price;
         $pro_discount.text(price.toLocaleString('en-US'));
+    } else {
+        $(".btn_addToCar").addClass("d-none");
+        $(".priceframe").addClass("d-none");
+        $(".options").addClass("d-none");
     }
     if (result.stocks.length > 0) {
         $input_quantity.attr({

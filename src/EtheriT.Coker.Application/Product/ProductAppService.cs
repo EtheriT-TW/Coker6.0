@@ -677,18 +677,35 @@ namespace EtheriT.Coker.Application.Product
                         long role = 0;
                         if (token != null && token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
                         role = role == 0 ? 1 : role;
+
+                        // Role加上Serno serno越大等級越高
+                        var role_level = new List<long>() { 1, 49, 48, 50 };
+                        var roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
+
                         foreach (var stock in stockDatas)
                         {
-                            if (stock.Prices.Count > 1)
+                            var prices = new List<Prod_Price>();
+                            var cash = await db.Prod_Prices.Where(e => e.FK_PSId == stock.Id).Where(e => e.Bonus == 0).ToListAsync();
+                            if (cash.Any())
                             {
-                                var temp_prices = stock.Prices;
-                                stock.Prices = new List<ProductPriceDto>();
-                                foreach (var price in temp_prices)
+                                if (roleid != null && role_level.IndexOf(roleid) >= 0)
                                 {
-                                    if (price.FK_RId == role) stock.Prices.Add(price);
+                                    for (var index = role_level.IndexOf(roleid); index >= 0; index--)
+                                    {
+                                        if (cash.Where(e => e.FK_RId == role_level[index]).Any())
+                                        {
+                                            prices.Add(cash.Where(e => e.FK_RId == role_level[index]).FirstOrDefault());
+                                            break;
+                                        }
+                                    }
                                 }
-                                if (stock.Prices.Count == 0) stock.Prices = temp_prices;
+                                else
+                                {
+                                    if (cash.Any()) prices.Add(cash.Find(e => e.FK_RId == 1) ?? new Prod_Price());
+                                }
                             }
+
+                            stock.Prices = mapper.Map<List<ProductPriceDto>>(prices);
                         }
                         output.Stocks = stockDatas;
                     }

@@ -37,6 +37,7 @@ using Microsoft.Extensions.Logging;
 using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Shared.Dto.Role;
+using System;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -589,7 +590,8 @@ namespace EtheriT.Coker.Application.Product
                         if (!output.Any()) throw new Exception("查無角色資料");
                     }
                 }
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
                 Console.WriteLine($"Product=>GetRolesAll回傳資料：{ex.Message}");
@@ -602,16 +604,16 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 output = await (from pp in db.Prod_Prices
-                                    where !pp.IsDeleted && pp.FK_PSId == PSId
-                                    orderby pp.FK_PSId
-                                    select new ProductPriceDto
-                                    {
-                                        Id = pp.Id,
-                                        FK_PSId = pp.FK_PSId,
-                                        FK_RId = pp.FK_RId,
-                                        Price = pp.Price,
-                                        Bonus = pp.Bonus ?? 0,
-                                    }).ToListAsync();
+                                where !pp.IsDeleted && pp.FK_PSId == PSId
+                                orderby pp.FK_PSId
+                                select new ProductPriceDto
+                                {
+                                    Id = pp.Id,
+                                    FK_PSId = pp.FK_PSId,
+                                    FK_RId = pp.FK_RId,
+                                    Price = pp.Price,
+                                    Bonus = pp.Bonus ?? 0,
+                                }).ToListAsync();
 
             }
             catch (Exception e)
@@ -750,6 +752,7 @@ namespace EtheriT.Coker.Application.Product
 
             try
             {
+                var UUID = await tokenAppService.GetUUID();
                 long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
                 string orgName = await loginUserData.GetWebsiteOrgName();
                 var output = new List<DirectoryReleInfoDto>();
@@ -804,10 +807,37 @@ namespace EtheriT.Coker.Application.Product
                     for (int i = 0; i < output.Count; i++)
                     {
                         var data = output[i];
-                        var s = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
-                        var p = await db.Prod_Prices.Where(x => s.Contains(x.FK_PSId)).Where(e => !e.IsDeleted).ToListAsync();
-                        double min = p.Min(e => e.Price) ?? 0;
-                        double max = p.Max(e => e.Price) ?? 0;
+                        var stockids = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Select(e => e.Id).ToListAsync();
+
+                        // Role加上Serno serno越大等級越高
+                        var role_level = new List<long>() { 1, 49, 48, 50 };
+                        var roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
+                        var prices = new List<Prod_Price>();
+                        foreach (var stockid in stockids)
+                        {
+                            var cash = await db.Prod_Prices.Where(e => e.FK_PSId == stockid).Where(e => e.Bonus == 0).ToListAsync();
+                            if (cash.Any())
+                            {
+                                if (roleid != null && role_level.IndexOf(roleid) >= 0)
+                                {
+                                    for (var index = role_level.IndexOf(roleid); index >= 0; index--)
+                                    {
+                                        if (cash.Where(e => e.FK_RId == role_level[index]).Any())
+                                        {
+                                            prices.Add(cash.Where(e => e.FK_RId == role_level[index]).FirstOrDefault());
+                                            break;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    if (cash.Any()) prices.Add(cash.Find(e => e.FK_RId == 1) ?? new Prod_Price());
+                                }
+                            }
+                        }
+
+                        double min = prices.Min(e => e.Price) ?? 0;
+                        double max = prices.Max(e => e.Price) ?? 0;
                         if (min == max) data.Price = $"{max}";
                         else data.Price = $"{min} ~ {max}";
                     }

@@ -678,8 +678,8 @@ namespace EtheriT.Coker.Application.Product
                         if (token != null && token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
                         role = role == 0 ? 1 : role;
 
-                        // Role加上Serno serno越大等級越高
-                        var role_level = new List<long>() { 1, 49, 48, 50 };
+                        var role_level = await db.Roles.Where(e => e.Type == RoleTypeEnum.前台 && e.FK_WebsiteId == websiteId).OrderBy(e => e.Ser_No).Select(e => e.Id).ToListAsync();
+                        role_level.Insert(0, 1);
                         var roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
 
                         foreach (var stock in stockDatas)
@@ -826,8 +826,8 @@ namespace EtheriT.Coker.Application.Product
                         var data = output[i];
                         var stockids = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Select(e => e.Id).ToListAsync();
 
-                        // Role加上Serno serno越大等級越高
-                        var role_level = new List<long>() { 1, 49, 48, 50 };
+                        var role_level = await db.Roles.Where(e => e.Type == RoleTypeEnum.前台 && e.FK_WebsiteId == WebsiteID).OrderBy(e => e.Ser_No).Select(e => e.Id).ToListAsync();
+                        role_level.Insert(0, 1);
                         var roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
                         var prices = new List<Prod_Price>();
                         foreach (var stockid in stockids)

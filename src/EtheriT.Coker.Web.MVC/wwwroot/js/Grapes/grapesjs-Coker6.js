@@ -1,4 +1,6 @@
-﻿grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
+﻿var $gjs_select = null;
+
+grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
     let settings = {
         save: function () { return false; },
         import: function () { return false; },
@@ -36,15 +38,17 @@
             CKEDITOR.dtd.$removeEmpty.i = 0;
         }
     }, 200);
+
     editor.on("run:modal-open:modalckeditor", function () {
-        console.log("in");
+        //console.log("run:modal-open:modalckeditor");
     });
 
     editor.on('asset:add', (option) => {
-        //console.log(option);
+        //console.log("asset:add");
     });
 
     editor.on('run:open-assets', () => {
+        //console.log("run:open-assets");
         const modal = editor.Modal;
         const modalBody = modal.getContentEl();
         const uploader = modalBody.querySelector('.gjs-am-file-uploader');
@@ -75,6 +79,12 @@
             assetsHeader.style.display = 'none'
             assetsBody.insertBefore(filter[0], assetsHeader);
         }
+        AssetManager.onSelect((result) => {
+            //console.log("result", result)
+            var name = result.attributes.name;
+            $gjs_select.addAttributes({ alt: name.substring(0, name.lastIndexOf(".")) });
+            $gjs_select = null;
+        });
     });
 
     //檔案刪除
@@ -97,7 +107,7 @@
     });
 
     editor.on('component:selected', () => {
-
+        //console.log("component:selected")
         // whenever a component is selected in the editor
 
         // set your command and icon here
@@ -106,6 +116,7 @@
 
         // get the selected componnet and its default toolbar
         const selectedComponent = editor.getSelected();
+        $gjs_select = editor.getSelected();
         const defaultToolbar = selectedComponent.get('toolbar');
 
         // check if this command already exists on this component toolbar
@@ -117,7 +128,6 @@
                 toolbar: [...defaultToolbar, { attributes: { class: commandIcon }, command: commandToAdd }]
             });
         }
-
     });
 
     editor.DomComponents.addType('image', {
@@ -128,11 +138,7 @@
                     { name: 'alt', type: 'text', label: '圖片名稱(Alt)', placeholder: '請輸入圖片名稱' }
                 ]
             },
-            init() {
-                this.on('change:alt', function (component) {
-                    //console.log('Alt 設定為: ', component.get('alt'));
-                });
-            }
+            init() { }
         }
     });
 

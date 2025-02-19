@@ -337,7 +337,6 @@ namespace EtheriT.Coker.Application.HtmlContent
                 {
                     bool othersOnly = await loginUserData.IsExtraSuperUser();
                     response.Type = (from o in db.ObjectTypes.Where(e => !e.IsDeleted)
-                                    where !(new List<long> { 8, 12 }).Contains(o.Id)
                                     orderby o.SerNo
                                     select new EnumDictionaryDto { 
                                         Key =o.Title,

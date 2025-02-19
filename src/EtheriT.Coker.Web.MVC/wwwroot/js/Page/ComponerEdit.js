@@ -183,6 +183,7 @@
     co.ObjectType.GetAll().done(function (result) {
         if (result.success) {
             $(result.list).each((i, e) => {
+                console.log(e);
                 const $s = $("#classType");
                 $s.append(`<option value="${e.id}">${e.title}</option>`);
             });

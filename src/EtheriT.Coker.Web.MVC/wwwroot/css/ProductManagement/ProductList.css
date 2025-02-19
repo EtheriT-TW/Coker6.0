@@ -134,6 +134,7 @@ input[type="number"] {
     #Spec_Frame > .border {
         padding: 0.5rem;
     }
+
     #Spec_Frame .sortable-placeholder {
         width: 100%;
         height: 100px; /* 可根據需要調整 */
@@ -250,6 +251,7 @@ input[type="number"] {
 
     #Spec_Frame > .specHeader > li {
         width: 75px;
+        min-width: 0;
     }
 
     #Spec_Frame > .specHeader > .serNo {
@@ -268,6 +270,10 @@ input[type="number"] {
         width: 120px;
     }
 
+.sidebar.collapsed + .content-area #Spec_Frame > .specHeader > li:not([class]) {
+    width: 105px;
+}
+
 .field-gropu {
     position: relative;
 }
@@ -280,9 +286,25 @@ input[type="number"] {
     }
 
         .field-gropu > .field-header > * {
-            background-color: #fff;
+            background-color: #e8e8e8;
             padding: 0 0.5rem;
+            color: #888;
+            font-size: 0.9rem;
+            border-radius: 0.25rem;
         }
+
+#InputName {
+    font-size: 1.3rem;
+    font-weight: bold;
+}
+
+textarea.form-control {
+    color: #000;
+}
+
+    textarea.form-control:focus {
+        color: #054973;
+    }
 
 textarea.dobuleHeight {
     min-height: 6rem;
@@ -294,18 +316,25 @@ textarea.minHeight {
 
 #ProdMedia > ul {
     display: flex;
-    gap:20px;
+    gap: 15px;
     list-style: none;
     flex-wrap: wrap;
     flex-direction: row;
     align-items: center;
+    color: #888;
 }
-    #ProdMedia > ul > li{
-        position:relative;
+
+    #ProdMedia > ul > li {
+        position: relative;
     }
+
     #ProdMedia > ul:last-child {
         width: 50px;
         height: 50px;
+    }
+
+    #ProdMedia > ul > li button {
+        color: #888;
     }
 
     #ProdMedia > ul .btn_link, #ProdMedia > ul .title {
@@ -313,18 +342,20 @@ textarea.minHeight {
     }
 
     #ProdMedia > ul .thumb_img {
-        width:100px;
-        height:100px;
-        object-fit:cover;
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
     }
+
     #ProdMedia > ul .btn_remove {
         position: absolute;
         background: #FFF !important;
-        border-radius:100%;
+        border-radius: 100%;
         color: red;
         right: -5px;
         top: -5px;
     }
+
     #ProdMedia > ul .serNoTool {
         position: absolute;
         z-index: 2;
@@ -334,6 +365,11 @@ textarea.minHeight {
         justify-content: center;
         background: #FFF;
     }
+
+        #ProdMedia > ul .serNoTool > .material-symbols-outlined {
+            font-size: 20px;
+        }
+
     #ProdMedia > ul .sortable-placeholder {
         width: 100px;
         height: 100px; /* 可根據需要調整 */
@@ -342,35 +378,43 @@ textarea.minHeight {
 #ProdFiles .thumb_img {
     display: none;
 }
+
 #ProdFiles > ul .sortable-placeholder {
     width: 100%;
     height: 50px; /* 可根據需要調整 */
 }
+
 .sortable-placeholder {
     background: #f0f0f0;
     border: 2px dashed #ccc;
     margin: 5px 0;
     visibility: visible !important;
 }
+
 .serNoTool {
     cursor: move;
 }
-@media only screen and (max-width: 1400px) {
+
+@media only screen and (max-width: 1900px) {
     #Spec_Frame > .specHeader {
         padding: 0.5rem;
         gap: 10px;
     }
+
+        #Spec_Frame > .specHeader > li {
+            width: 110px;
+        }
 
         #Spec_Frame > .specHeader > .serNo {
             width: 35px;
         }
 
         #Spec_Frame > .specHeader > .spec {
-            width: 16.5rem;
+            width: 19.5rem;
         }
 
         #Spec_Frame > .specHeader > .subItem {
-            width: 85px;
+            width: 115px;
         }
 
     #Spec_Frame .spec_list {
@@ -383,6 +427,10 @@ textarea.minHeight {
         gap: 10px;
         align-items: flex-start;
     }
+
+        #Spec_Frame .frame > .topline > * {
+            min-width: 0;
+        }
 
     #Spec_Frame .frame .spec {
         flex-wrap: wrap;
@@ -398,6 +446,26 @@ textarea.minHeight {
 
     #Spec_Frame .frame .input_subItemNo {
         width: 85px;
+    }
+}
+@media only screen and (max-width: 1600px) {
+    #Spec_Frame > .specHeader > .spec {
+        width: 18rem;
+    }
+    #Spec_Frame > .specHeader > .price {
+        width: 165px;
+    }
+    #Spec_Frame > .specHeader > .subItem {
+        width: 160px;
+    }
+    .sidebar.collapsed + .content-area #Spec_Frame > .specHeader > .spec {
+        width: 20.5rem;
+    }
+    .sidebar.collapsed + .content-area #Spec_Frame > .specHeader > .price {
+        width: 155px;
+    }
+    .sidebar.collapsed + .content-area #Spec_Frame > .specHeader > li:not([class]) {
+        width: 150px;
     }
 }
 

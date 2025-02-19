@@ -44,7 +44,7 @@ namespace EtheriT.Coker.Application
                 bool othersOnly = await loginUserData.IsExtraSuperUser();
                 var user = await loginUserData.GetUser();
                 if (user == null) throw new Exception("會員尚未登入");
-                var result = db.ObjectTypes.Where(e => !e.IsDeleted && !(new List<long> {8,12 }).Contains(e.Id));
+                var result = db.ObjectTypes.Where(e => !e.IsDeleted);
                 if (othersOnly) result = result.Where(e => e.Id == 999);
                 websiteId = await loginUserData.GetWebsiteId();
                 result = result.OrderBy(e => e.SerNo);

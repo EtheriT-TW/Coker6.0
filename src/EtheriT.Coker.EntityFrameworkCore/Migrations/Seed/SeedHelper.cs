@@ -356,7 +356,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 }, new ObjectType
                 {
                     Id = 3,
-                    Title = "編排",
+                    Title = "編排樣式",
                     SerNo = 500,
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
@@ -383,22 +383,50 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     CreationTime = new DateTime(2024, 7, 12, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ObjectType
                 {
-                    Id = 8,
-                    Title = "進入廣告",
+                    Id = 7,
+                    Title = "廣告Banner",
                     SerNo = 500,
                     CreatorUserId = 2,
-                    CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                    CreationTime = new DateTime(2024, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ObjectType
+                {
+                    Id = 8,
+                    Title = "標題設計",
+                    SerNo = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2024, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ObjectType
+                {
+                    Id = 9,
+                    Title = "按鈕設計",
+                    SerNo = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2024, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ObjectType
+                {
+                    Id = 10,
+                    Title = "目錄",
+                    SerNo = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2024, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ObjectType
+                {
+                    Id = 11,
+                    Title = "進階",
+                    SerNo = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2024, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ObjectType
                 {
                     Id = 12,
-                    Title = "浮動廣告",
+                    Title = "廣告(加購項目)",
                     SerNo = 500,
                     CreatorUserId = 2,
-                    CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                    CreationTime = new DateTime(2024, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ObjectType
                 {
                     Id = 99,
-                    Title = "更多",
+                    Title = "小工具",
                     SerNo = 500,
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),

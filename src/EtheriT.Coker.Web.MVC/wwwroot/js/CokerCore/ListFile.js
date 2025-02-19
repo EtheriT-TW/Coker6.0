@@ -38,6 +38,7 @@
                     obj["Type"] = $self_list.data("uploadtype");
                     obj["IsDelete"] = false;
                     total_files.push(obj);
+                    $self_list.find(".thumb_img").attr("src", `https://img.youtube.com/vi/${obj["File"]}/hqdefault.jpg`);
                 }
             } else {
                 var error_html = "<div class='w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-25 fw-bold'>請輸入正確的Youtube連結</div>"

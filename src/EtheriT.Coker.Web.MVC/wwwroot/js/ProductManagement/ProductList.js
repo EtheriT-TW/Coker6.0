@@ -314,9 +314,10 @@ function ElementInit() {
         $(".input_price").each(function () {
             var $self = $(this)
             var psid = $self.parents(".frame").data("psid")
+            var temppsid = $self.parents(".frame").data("temppsid")
             var count = $self.parents(".price").find(".count");
             var text = "";
-            var filter = modal_price_list.filter(item => item["FK_PSId"] == psid);
+            var filter = modal_price_list.filter(item => item["FK_PSId"] == psid || item["TempPSid"] == temppsid);
             $self.removeClass("multi-price");
             if (filter.length > 1) {
                 count.removeClass("d-none").text(filter.length);
@@ -597,6 +598,7 @@ function SpecPriceSave() {
             }
         }
     })
+    console.log(modal_price_list);
     if (save_success) {
         priceModal.hide();
     }
@@ -755,7 +757,7 @@ function SpecAdd(result) {
         $price_modal.parents(".modal-body").first().data("psid", psid != null ? psid : "")
         $price_modal.parents(".modal-body").first().data("temppsid", temppsid != null ? temppsid : "")
         modal_price_list.forEach(function (item) {
-            if (item.FK_PSId == psid || (item.TempPsid != null && item.TempPsid == temppsid)) {
+            if (item.FK_PSId == psid || (item.TempPSid != null && item.TempPSid == temppsid)) {
                 SpecPriceAdd(item)
                 isnull = false;
             }
@@ -904,6 +906,7 @@ function UploadListAdd(result, $target) {
 
     var file_num = $target.find("ul > li").length - 1;
     if (typeof (file_num) == "undefined") file_num = 0;
+    console.log(result);
     if (result == null) {
         $target.find("ul > li").each(function () {
             var $self = $(this);
@@ -935,7 +938,6 @@ function UploadListAdd(result, $target) {
         if (!!result.Link) {
             item.find(".thumb_img").attr("src", result.Link);
         }
-        console.log(result);
         item.on("click", function () {
             co.File.ListFile($(this));
         })
@@ -961,7 +963,17 @@ function UploadListAdd(result, $target) {
         obj["Type"] = result.fileType;
         obj["IsDelete"] = false;
         if (!!obj["File"]) {
-            item.find(".thumb_img").attr("src", obj["File"]);
+            switch (obj.Type) {
+                case 3:
+                    item.find(".thumb_img").attr("src", `/images/defaultImage/video.jpg`);
+                    break;
+                case 4:
+                    item.find(".thumb_img").attr("src", `https://img.youtube.com/vi/${obj["File"]}/hqdefault.jpg`);
+                    break;
+                default:
+                    item.find(".thumb_img").attr("src", obj["File"]);
+                    break;
+            }
             item.find(".btn_link").removeClass("d-none").attr("href", obj["File"]);
         } else item.find(".btn_link").addClass("d-none");
         total_files.push(obj);
@@ -1195,7 +1207,7 @@ function AddUp(success_text, error_text, target) {
                                         Type: 1,
                                         SerNo: $self.find(".ser_no").val(),
                                     }).done(function (result) {
-                                        if (result.success) {
+                                        if (result.success && typeof (result.files) != "undefined") {
                                             data[0].Id = result.files[0].id;
                                         }
                                     });

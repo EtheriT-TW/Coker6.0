@@ -273,7 +273,7 @@ builder.Host.UseSerilog();
 var app = builder.Build();
 
 // 使用響應壓縮中間件
-app.UseResponseCompression();
+//app.UseResponseCompression();
 
 // 中間件來記錄流量
 //app.UseMiddleware<FlowSizeLogMiddleware>();

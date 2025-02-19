@@ -497,6 +497,7 @@ namespace EtheriT.Coker.Application.Directory
         }
         private async Task<DirectoryReleInfoGetDto> SearchProd(DirectoryReleInfoInputDto dto)
         {
+            var UUID = await tokenAppService.GetUUID();
             var output = new DirectoryReleInfoGetDto { ReleInfos = new List<DirectoryReleInfoDto>() };
             if (string.IsNullOrEmpty(dto.SearchText)) return output;
             long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
@@ -671,7 +672,6 @@ namespace EtheriT.Coker.Application.Directory
             output.TotalCount = prods.Count();
             if (shownum == -500) shownum = prods.Count();
             output.TotalPage = (int)Math.Ceiling(output.TotalCount / (double)shownum);
-            var UUID = await tokenAppService.GetUUID();
 
             // 取得當前使用者的分群資訊
             var Groping = db.UserGroupingDetails.Include(e => e.userGrouping)
@@ -757,7 +757,7 @@ namespace EtheriT.Coker.Application.Directory
                 if (imgs.Any()) data.MainImage = imgs[0].Link;
                 else data.MainImage = imgRegex.Match(data.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "");
 
-                var s = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
+                var stockids = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
                 var sotreset = await (from sd in db.StoreSetDetail
                                       join ss in db.StoreSet on sd.FK_StoreSetId equals ss.Id
                                       where sd.FK_WebsiteId == WebsiteID
@@ -767,9 +767,35 @@ namespace EtheriT.Coker.Application.Directory
                 var showprice = !(sotreset == "noPayNoShow");
                 if (showprice)
                 {
-                    var p = await db.Prod_Prices.Where(x => s.Contains(x.FK_PSId)).Where(e => !e.IsDeleted).ToListAsync();
-                    double min = p.Min(e => e.Price) ?? 0;
-                    double max = p.Max(e => e.Price) ?? 0;
+                    // Role加上Serno serno越大等級越高
+                    var role_level = new List<long>() { 1, 49, 48, 50 };
+                    var roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
+                    var prices = new List<Prod_Price>();
+                    foreach (var stockid in stockids)
+                    {
+                        var cash = await db.Prod_Prices.Where(e => e.FK_PSId == stockid).Where(e => e.Bonus == 0).ToListAsync();
+                        if (cash.Any())
+                        {
+                            if (roleid != null && role_level.IndexOf(roleid) >= 0)
+                            {
+                                for (var index = role_level.IndexOf(roleid); index >= 0; index--)
+                                {
+                                    if (cash.Where(e => e.FK_RId == role_level[index]).Any())
+                                    {
+                                        prices.Add(cash.Where(e => e.FK_RId == role_level[index]).FirstOrDefault());
+                                        break;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (cash.Any()) prices.Add(cash.Find(e => e.FK_RId == 1) ?? new Prod_Price());
+                            }
+                        }
+                    }
+
+                    double min = prices.Min(e => e.Price) ?? 0;
+                    double max = prices.Max(e => e.Price) ?? 0;
                     if (min == max) data.Price = $"{max}";
                     else data.Price = $"{min} ~ {max}";
                 }
@@ -851,7 +877,7 @@ namespace EtheriT.Coker.Application.Directory
                     {
                         case DirectoryTypeEnum.商品:
                             var pd_notId = await (db.Tag_Associates.Where(e => notTagIds.Contains(e.FK_TId) && e.Type == TagAssociateTypeEnum.商品 && !e.IsDeleted)).Select(e => e.FK_AId).ToListAsync();
-                            
+
                             var allProducts = await db.Tag_Associates.Where(e => FKTIds.Contains(e.FK_TId) && !pd_notId.Contains(e.FK_AId) && e.Type == TagAssociateTypeEnum.商品).Select(e => new { e.FK_AId, e.FK_TId }).ToListAsync();
 
                             // 按商品 ID 分群
@@ -883,7 +909,7 @@ namespace EtheriT.Coker.Application.Directory
                                     .Where(e => FKTIds.Contains(e.FK_TId))
                                     .ToListAsync();
 
-                            
+
                             var tempcorr = new List<CorrDTAID>();
                             db_as.ForEach(a =>
                             {
@@ -1505,7 +1531,7 @@ namespace EtheriT.Coker.Application.Directory
                         Page = 0,
                     };
                     var releinfo = await GetReleInfo(searchdto);
-                    if(dto.type == 1)
+                    if (dto.type == 1)
                     {
                         foreach (var info in releinfo.ReleInfos)
                         {

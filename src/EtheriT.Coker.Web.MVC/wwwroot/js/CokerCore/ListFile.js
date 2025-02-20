@@ -15,6 +15,7 @@
                 var $temp_self = $(this);
                 if ($temp_self.data("edit")) { $self_list = $temp_self; }
             })
+            if ($self_list.data("uploadtype") != 4) return;
             var value = $(this).prev().val();
             var index = value.indexOf("watch?v=") + 8;
             $self.find(".youtube_preview").children("*").remove();
@@ -23,23 +24,24 @@
                 var iframe_html = `<iframe class="yt_preview w-100 h-100" src="${url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
                 $self.find(".youtube_preview").append(iframe_html);
                 $self_list.find(".title").text(value);
-                if (typeof (total_files.find(item => item["Id"] == $self_list.data("id"))) != "undefined") {
+                var obj = {
+                    File: value.substring(index),
+                };
+                if (typeof (total_files.find(item => typeof (item["Id"]) != "undefined" &&  item["Id"] == $self_list.data("id"))) != "undefined") {
                     if (total_files.find(item => item["Id"] == $self_list.data("id"))["File"] != value.substring(index)) {
-                        total_files.find(item => item["Id"] == $self_list.data("id"))["File"] = value.substring(index)
+                        total_files.find(item => item["Id"] == $self_list.data("id"))["File"] = obj["File"]
                     }
                 } else if (typeof (total_files.find(item => item["TempId"] == $self_list.data("tempid"))) != "undefined") {
                     if (total_files.find(item => item["TempId"] == $self_list.data("tempid"))["File"] != value.substring(index)) {
-                        total_files.find(item => item["TempId"] == $self_list.data("tempid"))["File"] = value.substring(index)
+                        total_files.find(item => item["TempId"] == $self_list.data("tempid"))["File"] = obj["File"]
                     }
                 } else {
-                    var obj = {};
-                    obj["File"] = value.substring(index);
                     obj["TempId"] = $self_list.data("tempid");
                     obj["Type"] = $self_list.data("uploadtype");
                     obj["IsDelete"] = false;
                     total_files.push(obj);
-                    $self_list.find(".thumb_img").attr("src", `https://img.youtube.com/vi/${obj["File"]}/hqdefault.jpg`);
                 }
+                $self_list.find(".thumb_img").attr("src", `https://img.youtube.com/vi/${obj["File"]}/hqdefault.jpg`);
             } else {
                 var error_html = "<div class='w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-25 fw-bold'>請輸入正確的Youtube連結</div>"
                 $self.find(".youtube_preview").append(error_html);
@@ -295,10 +297,11 @@
         $(window).on("fileUploadWithPreview:clearButtonClicked", function (event) {
             $(".data_upload > ul > li").each(function () {
                 var $self = $(this);
+                var $uploadList = $self.parents(".data_upload").find(".upload_list");
                 var $root = $(this).parents(".data_upload");
                 let file_num = $root.data("file_num");
                 if ($self.data("edit")) {
-                    if ($self.data("serno") < file_num) { SortChange($(".upload_list"), "bigger", $self.data("serno"), file_num); }
+                    if ($self.data("serno") < file_num) { SortChange($uploadList, "bigger", $self.data("serno"), file_num); }
                     if (typeof ($self.data("id")) != "undefined") {
                         total_files.find(item => item["Id"] == $self.data("id"))["IsDelete"] = true;
                     } else if (typeof ($self.data("tempid")) != "undefined") {
@@ -441,7 +444,7 @@
                     }
                     break;
                 case 4:
-                    if (typeof (total_files.find(item => item["Id"] == $self.data("id"))) != "undefined") {
+                    if (typeof (total_files.find(item => typeof (item["Id"]) != "undefined" && item["Id"] == $self.data("id"))) != "undefined") {
                         var file = total_files.find(item => item["Id"] == $self.data("id"))["File"];
                         var url = "https://www.youtube.com/watch?v=" + file;
                         $parent.find(".youtube_frame").find("input").val(url);

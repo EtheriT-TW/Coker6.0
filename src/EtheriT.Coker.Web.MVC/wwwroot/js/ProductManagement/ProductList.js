@@ -453,6 +453,7 @@ function FormDataSet(result) {
     result.files.forEach(file => {
         UploadListAdd(file, $("#ProdFiles"));
     })
+    $("#ProdMedia > ul > li:first-child").trigger("click");
 
     result.stocks.forEach(function (stock) {
         stock.prices.forEach(function (price) {
@@ -903,7 +904,6 @@ function UploadListAdd(result, $target) {
     var item = $($("#TemplateUploadList").html()).clone();
     var item_serno = item.find(".ser_no"),
         item_btn_remove = item.find(".btn_remove");
-
     var file_num = $target.find("ul > li").length - 1;
     if (typeof (file_num) == "undefined") file_num = 0;
     if (result == null) {
@@ -936,7 +936,10 @@ function UploadListAdd(result, $target) {
         item.find(".title").text(result.Name);
         if (!!result.Link) {
             item.find(".thumb_img").attr("src", result.Link);
-        }
+        } else if (result.Type == 2)
+            item.find(".thumb_img").attr("src", `/images/defaultImage/360.jpg`);
+        else if (result.Type == 3)
+            item.find(".thumb_img").attr("src", `/images/defaultImage/video.jpg`);
         item.on("click", function () {
             co.File.ListFile($(this));
         })
@@ -963,6 +966,9 @@ function UploadListAdd(result, $target) {
         obj["IsDelete"] = false;
         if (!!obj["File"]) {
             switch (obj.Type) {
+                case 2:
+                    item.find(".thumb_img").attr("src", `/images/defaultImage/360.jpg`);
+                    break;
                 case 3:
                     item.find(".thumb_img").attr("src", `/images/defaultImage/video.jpg`);
                     break;
@@ -984,17 +990,18 @@ function UploadListAdd(result, $target) {
     $target.data("file_num", file_num);
     item_serno.on("blur", function () {
         var $self = $(this);
+        var $uploadList = $target.find(".upload_list");
         if ($self.val() < 1) {
             $self.val(1);
-        } else if ($self.val() > $(".upload_list").length) {
-            $self.val($(".upload_list").length);
+        } else if ($self.val() > $uploadList.length) {
+            $self.val($uploadList.length);
         }
         if ($self.val() != item.data("serno")) {
             if ($self.val() > item.data("serno")) {
-                SortChange($(".upload_list"), "bigger", item.data("serno"), $self.val())
+                SortChange($uploadList, "bigger", item.data("serno"), $self.val())
                 $("#ProductForm > .data_upload > ul").children("li").eq(parseInt($self.val()) - 1).after(item);
             } else if ($self.val() < item.data("serno")) {
-                SortChange($(".upload_list"), "smaller", $self.val(), item.data("serno"))
+                SortChange($uploadList, "smaller", $self.val(), item.data("serno"))
                 $("#ProductForm > .data_upload > ul").children("li").eq(parseInt($self.val()) - 1).before(item);
             }
         }
@@ -1004,7 +1011,10 @@ function UploadListAdd(result, $target) {
     item_btn_remove.on("click", function (e) {
         e.preventDefault();
         var $self = $(this).parents("li").first();
-        if (item.data("serno") < $target.data("file_num")) { SortChange($(".upload_list"), "bigger", item.data("serno"), $target.data("file_num")); }
+        var $uploadList = $target.find(".upload_list");
+        if (item.data("serno") < $target.data("file_num")) {
+            SortChange($uploadList, "bigger", item.data("serno"), $target.data("file_num"));
+        }
         if (typeof ($self.data("id")) != "undefined") {
             total_files.find(item => item["Id"] == $self.data("id"))["IsDelete"] = true;
         } else if (typeof ($self.data("tempid")) != "undefined") {
@@ -1023,7 +1033,6 @@ function UploadListAdd(result, $target) {
     })
 
     $target.find("ul > .btn_upload_add").before(item);
-
     co.File.ListFile(item);
 }
 function UploadPreviewFrameClear($target) {

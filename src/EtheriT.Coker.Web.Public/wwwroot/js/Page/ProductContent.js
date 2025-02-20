@@ -1,5 +1,5 @@
 ﻿var $input_quantity
-var Pid, s1, s2
+var Pid, s1, s2, bonus
 var s1_list = [], s2_list = [], spectype_list, spec_list, price_list = [], img_origin_list
 var preview_swiper, product_swiper, $pro_itemNo, $counter_input;
 var CanShop;
@@ -13,6 +13,9 @@ function PageReady() {
 
     if ($(".btn_addToCar").length > 0) CanShop = true;
     else CanShop = false;
+
+    /* 讀取使用者剩餘紅利點數 */
+    bonus = 0;
 
     window.CI360.init();
     if (ProdId != null && !isNaN(ProdId)) Pid = ProdId;
@@ -43,7 +46,7 @@ function PageReady() {
     })
 
     $(".btn_addToCar").on("click", function () {
-        if (!$(".btn_addToCar").hasClass("close")) AddToCart();
+        if (!$(".btn_addToCar").hasClass("close") && !$(".btn_addToCar").hasClass("bonus_lack")) AddToCart();
     });
 
     $('#shareBlock').cShare({
@@ -204,47 +207,61 @@ function PageDefaultSet(result) {
 
         var hasstock = false;
         result.stocks.forEach(data => {
-            obj = {
-                s1id: data.fK_S1id,
-                s2id: data.fK_S2id,
-                stock: data.stock,
-                minQty: data.min_Qty,
-                price: data.prices[0].price
-            };
-            price_list.push(obj);
-            maxprice = obj["price"] > maxprice ? obj["price"] : maxprice;
-            minprice = obj["price"] < minprice || minprice == 0 ? obj["price"] : minprice;
-            obj = {}
-            var nostock = "";
-            if (data.stock <= 0 && CanShop) {
-                nostock = 'disabled="disabled"'
-            } else {
-                hasstock = true;
-            }
-
-            if (data.fK_S1id > 0) {
-                if (s1_list.indexOf(data.fK_S1id) < 0) {
-                    item1_control.append(`<input id="s1_${data.fK_S1id}" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="${data.fK_S1id}" ${nostock}>`);
-                    item1_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + data.fK_S1id + '">' + data.s1_Title + '</label>');
-                    s1_list.push(data.fK_S1id);
+            if (data.prices.length > 0 && data.prices[0].price != null) {
+                var prices = [];
+                data.prices.forEach(function (self_data) {
+                    var temp_obj = {
+                        priceid: self_data.id,
+                        price: self_data.price,
+                        oriprice: self_data.oriPrice,
+                        bonus: self_data.bonus
+                    }
+                    prices.push(temp_obj);
+                })
+                obj = {
+                    priceid: data.prices[0].id,
+                    s1id: data.fK_S1id,
+                    s2id: data.fK_S2id,
+                    stock: data.stock,
+                    minQty: data.min_Qty,
+                    price: data.prices[0].price,
+                    prices: prices
+                };
+                price_list.push(obj);
+                maxprice = obj["price"] > maxprice ? obj["price"] : maxprice;
+                minprice = obj["price"] < minprice || minprice == 0 ? obj["price"] : minprice;
+                obj = {}
+                var nostock = "";
+                if (data.stock <= 0 && CanShop) {
+                    nostock = 'disabled="disabled"'
                 } else {
-                    if (data.stock > 0) item1_control.find(`#s1_${data.fK_S1id}`).prop("disabled", false);
+                    hasstock = true;
                 }
-            } else {
-                if (!s1 >= 0) {
-                    s1 = 0;
-                }
-            }
 
-            if (data.fK_S2id > 0) {
-                if (s2_list.indexOf(data.fK_S2id) < 0) {
-                    item2_control.append(`<input id="s2_${data.fK_S2id}" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="${data.fK_S2id}" ${nostock}>`);
-                    item2_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + data.fK_S2id + '">' + data.s2_Title + '</label>');
-                    s2_list.push(data.fK_S2id);
+                if (data.fK_S1id > 0) {
+                    if (s1_list.indexOf(data.fK_S1id) < 0) {
+                        item1_control.append(`<input id="s1_${data.fK_S1id}" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="${data.fK_S1id}" ${nostock}>`);
+                        item1_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + data.fK_S1id + '">' + data.s1_Title + '</label>');
+                        s1_list.push(data.fK_S1id);
+                    } else {
+                        if (data.stock > 0) item1_control.find(`#s1_${data.fK_S1id}`).prop("disabled", false);
+                    }
+                } else {
+                    if (!s1 >= 0) {
+                        s1 = 0;
+                    }
                 }
-            } else {
-                if (!s2 >= 0) {
-                    s2 = 0;
+
+                if (data.fK_S2id > 0) {
+                    if (s2_list.indexOf(data.fK_S2id) < 0) {
+                        item2_control.append(`<input id="s2_${data.fK_S2id}" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="${data.fK_S2id}" ${nostock}>`);
+                        item2_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + data.fK_S2id + '">' + data.s2_Title + '</label>');
+                        s2_list.push(data.fK_S2id);
+                    }
+                } else {
+                    if (!s2 >= 0) {
+                        s2 = 0;
+                    }
                 }
             }
         });
@@ -264,18 +281,62 @@ function PageDefaultSet(result) {
                 $(this).on("change", SpecRadio)
             })
         })
+        $(".priceframe").empty();
+        var price_temp = $($("#PriceListTemplate").html()).clone();
         if (showRange) {
-            if (maxprice == minprice) {
-                $pro_discount.text(minprice.toLocaleString('en-US'));
-            } else {
-                $pro_discount.text(minprice.toLocaleString('en-US') + " ~ " + maxprice.toLocaleString('en-US'));
-            }
-        } else $pro_discount.text(maxprice.toLocaleString('en-US'));
-    } else {
+            if (maxprice == minprice) price_temp.find(".discount").text(minprice.toLocaleString('en-US'));
+            else price_temp.find(".discount").text(minprice.toLocaleString('en-US') + " ~ " + maxprice.toLocaleString('en-US'));
+        } else price_temp.find(".discount").text(maxprice.toLocaleString('en-US'));
+        price_temp.find("input").addClass("d-none");
+        $(".priceframe").append(price_temp);
+    } else if (result.stocks[0].prices.length > 0 && result.stocks[0].prices[0].price != null) {
         s1 = result.stocks[0].fK_S1id;
         s2 = result.stocks[0].fK_S2id;
-        var price = result.stocks[0].prices[0].price;
-        $pro_discount.text(price.toLocaleString('en-US'));
+
+        $(".priceframe").empty();
+        result.stocks[0].prices.forEach(function (item) {
+            var price = item.price;
+            var oriprice = item.oriPrice;
+            var price_temp = $($("#PriceListTemplate").html()).clone();
+
+            price_temp.data("priceid", item.id)
+            price_temp.find("input").attr("id", `price_${item.id}`);
+            price_temp.find("label").attr("for", `price_${item.id}`);
+
+            var price_text = "";
+            if (item.bonus > 0) {
+                price_text = `${price.toLocaleString('en-US')}+紅利${item.bonus}點`;
+                if (CanShop) {
+                    if (bonus > item.bonus) {
+                        price_temp.find(".discount").removeClass("bonus_lack");
+                        price_temp.find("input").prop("disabled", false);
+                    }
+                    else {
+                        price_temp.find(".discount").addClass("bonus_lack");
+                        price_temp.find("input").prop("disabled", true);
+                    }
+                }
+            } else price_text = price.toLocaleString('en-US');
+            price_temp.find(".discount").text(price_text);
+
+            if (oriprice > price) {
+                price_temp.find(".ori_price").text(oriprice.toLocaleString('en-US'));
+                price_temp.find(".ori_price").removeClass("d-none")
+            }
+
+            if ($(".priceframe").children().length == 0) price_temp.find("input").prop("checked", true);
+            $(".priceframe").append(price_temp);
+        });
+
+        if ($(".priceframe input").length == 1) $(".priceframe input").addClass("d-none");
+        else $(".priceframe input").removeClass("d-none");
+        if ($(".priceframe input:checked").length == 0) $(".btn_addToCar").addClass("bonus_lack")
+        else $(".btn_addToCar").removeClass("bonus_lack")
+
+    } else {
+        $(".btn_addToCar").addClass("d-none");
+        $(".priceframe").addClass("d-none");
+        $(".options").addClass("d-none");
     }
     if (result.stocks.length > 0) {
         $input_quantity.attr({
@@ -478,8 +539,8 @@ function SpecRadio() {
                 } else $radio.removeAttr("disabled");
             })
             if (radioclosenum == $self_s.find("input").length) {
-                if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
-                if (!$counter_input.hasClass("isEmpty")) $counter_input.addClass("isEmpty");
+                $(".btn_addToCar").addClass("close")
+                $counter_input.addClass("isEmpty");
             }
             break;
     }
@@ -487,7 +548,46 @@ function SpecRadio() {
     if (s1 != null) {
         price_list.forEach(function (item) {
             if (item.s1id == s1 && (item.s2id == 0 || item.s2id == s2)) {
-                $pro_discount.text(item.price.toLocaleString('en-US'));
+                $(".priceframe").empty();
+                item.prices.forEach(function (self_item) {
+                    var price = self_item.price;
+                    var oriprice = self_item.oriPrice;
+                    var price_temp = $($("#PriceListTemplate").html()).clone();
+
+                    price_temp.data("priceid", self_item.priceid)
+                    price_temp.find("input").attr("id", `price_${self_item.priceid}`);
+                    price_temp.find("label").attr("for", `price_${self_item.priceid}`);
+
+                    var price_text = "";
+                    if (self_item.bonus > 0) {
+                        price_text = `${price.toLocaleString('en-US')}+紅利${self_item.bonus}點`;
+                        if (CanShop) {
+                            if (bonus > self_item.bonus) {
+                                price_temp.find(".discount").removeClass("bonus_lack");
+                                price_temp.find("input").prop("disabled", false);
+                            }
+                            else {
+                                price_temp.find(".discount").addClass("bonus_lack");
+                                price_temp.find("input").prop("disabled", true);
+                            }
+                        }
+                    } else price_text = price.toLocaleString('en-US');
+                    price_temp.find(".discount").text(price_text);
+
+                    if (oriprice > price) {
+                        price_temp.find(".ori_price").text(oriprice.toLocaleString('en-US'));
+                        price_temp.find(".ori_price").removeClass("d-none")
+                    }
+
+                    if ($(".priceframe").children().length == 0 && !price_temp.find("input").prop("disabled")) price_temp.find("input").prop("checked", true);
+                    $(".priceframe").append(price_temp);
+                });
+
+                if ($(".priceframe input").length == 1) $(".priceframe input").addClass("d-none");
+                else $(".priceframe input").removeClass("d-none");
+                if ($(".priceframe input:checked").length == 0) $(".btn_addToCar").addClass("bonus_lack")
+                else $(".btn_addToCar").removeClass("bonus_lack")
+
                 $input_quantity.attr({
                     min: 0,
                     max: item.stock - (item.stock % item.minQty),
@@ -503,7 +603,7 @@ function SpecRadio() {
     if (s2 == null) s2 = 0
     var this_price_list = price_list.find(e => e.s1id == s1 && e.s2id == s2);
     if (this_price_list.stock <= 0) {
-        if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
+        $(".btn_addToCar").addClass("close")
     }
     else {
         $(".btn_addToCar").removeClass("close")

@@ -492,8 +492,7 @@ namespace EtheriT.Coker.Application.Authorization
                                        where MapFrontUserAndWeb.FK_WebsiteId == dto.WebsiteId
                                        select user).FirstOrDefaultAsync();
 
-                // Role加上Serno 要改抓Serno最小的那筆
-                var role = await db.Roles.Where(e => e.FK_WebsiteId == WebsiteID && e.Type == RoleTypeEnum.前台).FirstOrDefaultAsync();
+                var role = await db.Roles.Where(e => e.FK_WebsiteId == WebsiteID && e.Type == RoleTypeEnum.前台).OrderBy(e => e.Ser_No).FirstOrDefaultAsync();
 
                 string passwordError = checkPassword(dto.Password);
 

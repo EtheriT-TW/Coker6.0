@@ -233,9 +233,23 @@ i.fa-chevron-right {
     color: var(--gray-text);
 }
 
-#Product > .content > .priceframe > div > .discount {
+#Product > .content > .priceframe .discount {
     white-space: nowrap;
 }
+
+    #Product > .content > .priceframe .discount.bonus_lack {
+        text-decoration: line-through;
+        position: relative;
+    }
+
+        #Product > .content > .priceframe .discount.bonus_lack::after {
+            position: absolute;
+            content: "紅利點數不足";
+            padding-left: 1rem;
+            font-size: 1rem;
+            bottom: 0.15rem;
+            right: -7rem;
+        }
 
 #Product > .content > .priceframe > .model {
     white-space: nowrap;
@@ -310,7 +324,7 @@ input:disabled + .btn_radio {
         content: '加入購物車';
     }
 
-    #Product > .content > .btn_addToCar.close {
+    #Product > .content > .btn_addToCar.close, #Product > .content > .btn_addToCar.bonus_lack {
         background-color: gray;
         cursor: default;
         line-height: 3;
@@ -320,6 +334,11 @@ input:disabled + .btn_radio {
             content: '已售完';
             opacity: 50%;
         }
+
+    #Product > .content > .btn_addToCar.bonus_lack:not(.close)::after {
+        content: '紅利點數不足';
+        opacity: 50%;
+    }
 
 #Product > .content .btn_favorites {
     background-color: gray;

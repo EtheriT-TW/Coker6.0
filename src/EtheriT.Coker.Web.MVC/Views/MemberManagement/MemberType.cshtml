@@ -46,7 +46,8 @@
                     .Columns(c =>
                     {
                     c.AddFor(e => e.Id).Caption("編號").Width(90).Alignment(HorizontalAlignment.Center).AllowEditing(false);
-                    c.AddFor(e => e.Name).Caption("角色名稱");
+                    c.AddFor(e => e.Ser_No).Caption("排序").Width(90).Alignment(HorizontalAlignment.Center).AllowEditing(true);
+                    c.AddFor(e => e.Name).Caption("角色名稱").AllowEditing(true);
                     c.Add()
                     .Type(GridCommandColumnType.Buttons)
                     .Buttons(b =>

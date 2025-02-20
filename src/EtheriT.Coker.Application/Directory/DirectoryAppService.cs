@@ -767,32 +767,7 @@ namespace EtheriT.Coker.Application.Directory
                 var showprice = !(sotreset == "noPayNoShow");
                 if (showprice)
                 {
-                    // Role加上Serno serno越大等級越高
-                    var role_level = new List<long>() { 1, 49, 48, 50 };
-                    var roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
-                    var prices = new List<Prod_Price>();
-                    foreach (var stockid in stockids)
-                    {
-                        var cash = await db.Prod_Prices.Where(e => e.FK_PSId == stockid).Where(e => e.Bonus == 0).ToListAsync();
-                        if (cash.Any())
-                        {
-                            if (roleid != null && role_level.IndexOf(roleid) >= 0)
-                            {
-                                for (var index = role_level.IndexOf(roleid); index >= 0; index--)
-                                {
-                                    if (cash.Where(e => e.FK_RId == role_level[index]).Any())
-                                    {
-                                        prices.Add(cash.Where(e => e.FK_RId == role_level[index]).FirstOrDefault());
-                                        break;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                if (cash.Any()) prices.Add(cash.Find(e => e.FK_RId == 1) ?? new Prod_Price());
-                            }
-                        }
-                    }
+                    var prices = await productAppService.GetPriceByStock(stockids);
 
                     double min = prices.Min(e => e.Price) ?? 0;
                     double max = prices.Max(e => e.Price) ?? 0;

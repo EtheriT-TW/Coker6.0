@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Role
     {
         public long? Id { get; set; }
         public bool IsSuperUser { get; set; } = false;
+        public int? Ser_No { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 }

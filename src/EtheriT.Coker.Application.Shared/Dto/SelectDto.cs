@@ -9,6 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Dto
 	public class SelectDto
 	{
 		public long Id { get; set; }
+		public int? Ser_No { get; set; }
 		public string Name { get; set; }
 	}
 }

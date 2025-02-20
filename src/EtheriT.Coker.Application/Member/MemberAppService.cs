@@ -111,7 +111,7 @@ namespace EtheriT.Coker.Application.Member
                                                 )
                                             select order
                                         ).Sum(e => e.Payment),
-                                        Level = e.Level == null? roleId : e.Level
+                                        Level = e.Level == null ? roleId : e.Level
                                         ,
                                         CreationTime = e.CreationTime,
                                     };
@@ -237,16 +237,17 @@ namespace EtheriT.Coker.Application.Member
                 {
                     if (dto.Status == null) dto.Status = result.Status;
                     if (dto.TelPhone == null) dto.TelPhone = result.TelPhone;
-                    
+
                     mapper.Map(dto, result);
                     await loginUserData.SaveChanges(result);
 
                     var role = await db.MappingUserAndRoles.Where(e => e.UUID == result.UUID).FirstOrDefaultAsync();
-                    if(dto.RoleId != null && role != null && role.RoleId != dto.RoleId) {
+                    if (dto.RoleId != null && role != null && role.RoleId != dto.RoleId)
+                    {
                         role.RoleId = (long)dto.RoleId;
                         await loginUserData.SaveChanges(role);
                     }
-                    
+
                     output.Success = true;
                 }
                 else throw new Exception("查無會員資料");
@@ -305,9 +306,11 @@ namespace EtheriT.Coker.Application.Member
                 output = await (from role in db.Roles
                                 where role.FK_WebsiteId == websideId
                                 where role.Type == RoleTypeEnum.前台
+                                orderby role.Ser_No
                                 select new SelectDto()
                                 {
                                     Id = role.Id,
+                                    Ser_No = role.Ser_No,
                                     Name = role.Name
                                 }).ToListAsync();
             }
@@ -323,27 +326,34 @@ namespace EtheriT.Coker.Application.Member
             var output = DataSourceLoader.Load(dataQuery, loadOptions);
             return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        public async Task<ResponseMessageDto> RoleAddUp([FromForm] DevExpressDto dto) {
+        public async Task<ResponseMessageDto> RoleAddUp([FromForm] DevExpressDto dto)
+        {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
             try
             {
                 var data = JsonConvert.DeserializeObject<AddRoleDto>(dto.Values);
-                if (string.IsNullOrEmpty(data?.Name)) throw new Exception("角色名稱不可為空");
                 var websiteId = await loginUserData.GetWebsiteId();
                 var id = dto.Key;
-                if (data != null) {
+                if (data != null)
+                {
                     Role? role;
                     if (id == null || id == 0)
                     {
+                        if (string.IsNullOrEmpty(data?.Name)) throw new Exception("角色名稱不可為空");
                         role = mapper.Map<Role>(data);
                         role.Type = RoleTypeEnum.前台;
                         role.FK_WebsiteId = websiteId;
                         db.Roles.Add(role);
                     }
-                    else {
+                    else
+                    {
                         data.Id = id;
                         role = await db.Roles.Where(e => e.FK_WebsiteId == websiteId && e.Id == id).FirstOrDefaultAsync();
-                        if(role != null) mapper.Map(data,role);
+                        if (role != null)
+                        {
+                            if (string.IsNullOrEmpty(data?.Name)) data.Name = role.Name;
+                            mapper.Map(data, role);
+                        }
                     }
                     if (role == null) throw new Exception("角色不存在");
                     await loginUserData.SaveChanges(role);
@@ -351,14 +361,17 @@ namespace EtheriT.Coker.Application.Member
                     await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
                 }
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 output.Error = e.Message;
             }
             return output;
         }
-        public async Task<ResponseMessageDto> RoleDelete(long id) {
+        public async Task<ResponseMessageDto> RoleDelete(long id)
+        {
             ResponseMessageDto output = new ResponseMessageDto();
-            try {
+            try
+            {
                 var websiteId = await loginUserData.GetWebsiteId();
                 var role = await db.Roles.Where(e => e.FK_WebsiteId == websiteId && e.Id == id).FirstOrDefaultAsync();
                 if (role != null)
@@ -369,8 +382,10 @@ namespace EtheriT.Coker.Application.Member
                     await loginUserData.SetLogs(JsonConvert.SerializeObject(new { id }), JsonConvert.SerializeObject(output));
                 }
                 else throw new Exception();
-            } catch (Exception e) {
-                output.Error=e.Message;
+            }
+            catch (Exception e)
+            {
+                output.Error = e.Message;
             }
             return output;
         }

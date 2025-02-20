@@ -674,8 +674,7 @@ namespace EtheriT.Coker.Application.Product
                         if (!output_this.Any() || output_this.Find(e => e.Price > temp.Price) != null) bonus.Add(temp);
                     }
                 }
-                bonus.OrderByDescending(e => e.Price);
-                output.AddRange(mapper.Map<List<ProductPriceDto>>(bonus));
+                output.AddRange(mapper.Map<List<ProductPriceDto>>(bonus.OrderByDescending(e => e.Price)));
             }
             catch (Exception ex)
             {

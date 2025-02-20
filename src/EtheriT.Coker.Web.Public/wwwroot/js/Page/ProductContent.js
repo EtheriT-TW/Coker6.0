@@ -327,6 +327,9 @@ function PageDefaultSet(result) {
             if ($(".priceframe").children().length == 0) price_temp.find("input").prop("checked", true);
             $(".priceframe").append(price_temp);
         });
+
+        if ($(".priceframe input").length == 1) $(".priceframe input").addClass("d-none");
+        else $(".priceframe input").removeClass("d-none");
         if ($(".priceframe input:checked").length == 0) $(".btn_addToCar").addClass("bonus_lack")
         else $(".btn_addToCar").removeClass("bonus_lack")
 
@@ -547,7 +550,6 @@ function SpecRadio() {
             if (item.s1id == s1 && (item.s2id == 0 || item.s2id == s2)) {
                 $(".priceframe").empty();
                 item.prices.forEach(function (self_item) {
-
                     var price = self_item.price;
                     var oriprice = self_item.oriPrice;
                     var price_temp = $($("#PriceListTemplate").html()).clone();
@@ -581,6 +583,8 @@ function SpecRadio() {
                     $(".priceframe").append(price_temp);
                 });
 
+                if ($(".priceframe input").length == 1) $(".priceframe input").addClass("d-none");
+                else $(".priceframe input").removeClass("d-none");
                 if ($(".priceframe input:checked").length == 0) $(".btn_addToCar").addClass("bonus_lack")
                 else $(".btn_addToCar").removeClass("bonus_lack")
 

@@ -306,6 +306,7 @@ namespace EtheriT.Coker.Application.Member
                 output = await (from role in db.Roles
                                 where role.FK_WebsiteId == websideId
                                 where role.Type == RoleTypeEnum.前台
+                                orderby role.Ser_No
                                 select new SelectDto()
                                 {
                                     Id = role.Id,

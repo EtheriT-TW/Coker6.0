@@ -343,12 +343,12 @@ namespace EtheriT.Coker.Application.Product
                     for (int i = 0; i < dto.Count; i++)
                     {
                         var item = dto[i];
-                        var allPrice = db.Prod_Prices.Where(e => !e.IsDeleted);
-                        var thePrice = await allPrice
-                                .Where(e => e.FK_PSId == item.FK_PSId)
-                                .Where(e => e.FK_RId == item.FK_RId)
-                                .FirstOrDefaultAsync();
-                        if (thePrice != null && !item.IsDelete) item.Id = thePrice.Id;
+                        //var allPrice = db.Prod_Prices.Where(e => !e.IsDeleted);
+                        //var thePrice = await allPrice
+                        //        .Where(e => e.FK_PSId == item.FK_PSId)
+                        //        .Where(e => e.FK_RId == item.FK_RId)
+                        //        .FirstOrDefaultAsync();
+                        //if (thePrice != null && !item.IsDelete) item.Id = thePrice.Id;
 
                         if (item.Id == 0 && !item.IsDelete)
                         {
@@ -579,7 +579,7 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 long WebsiteID = await loginUserData.GetWebsiteId();
-                var roles = await db.Roles.Where(e => e.Id == 1 || (e.Type == RoleTypeEnum.前台 && e.FK_WebsiteId == WebsiteID)).ToListAsync();
+                var roles = await db.Roles.Where(e => e.Id == 1 || (e.Type == RoleTypeEnum.前台 && e.FK_WebsiteId == WebsiteID)).OrderBy(e => e.Ser_No).ToListAsync();
                 if (roles.Any())
                 {
                     foreach (var role in roles)
@@ -604,8 +604,9 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 output = await (from pp in db.Prod_Prices
-                                where !pp.IsDeleted && pp.FK_PSId == PSId
-                                orderby pp.FK_PSId
+                                join r in db.Roles on pp.FK_RId equals r.Id
+                                where pp.FK_PSId == PSId
+                                orderby r.Ser_No, pp.Price descending
                                 select new ProductPriceDto
                                 {
                                     Id = pp.Id,
@@ -614,7 +615,6 @@ namespace EtheriT.Coker.Application.Product
                                     Price = pp.Price,
                                     Bonus = pp.Bonus ?? 0,
                                 }).ToListAsync();
-
             }
             catch (Exception e)
             {
@@ -633,6 +633,8 @@ namespace EtheriT.Coker.Application.Product
                 var role_level = await db.Roles.Where(e => e.Type == RoleTypeEnum.前台 && e.FK_WebsiteId == WebsiteId).OrderBy(e => e.Ser_No).Select(e => e.Id).ToListAsync();
                 role_level.Insert(0, 1);
                 var roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
+                if (roleid == 0) roleid = 1;
+                var role_index = role_level.IndexOf(roleid);
 
                 foreach (var stockid in PSIds)
                 {
@@ -640,11 +642,11 @@ namespace EtheriT.Coker.Application.Product
                     if (cash.Any())
                     {
                         var tempori = mapper.Map<ProductPriceDto>(cash.Find(e => e.FK_RId == 1));
-                        if(tempori != null) tempori.OriPrice = tempori.Price;
+                        if (tempori != null) tempori.OriPrice = tempori.Price;
 
-                        if (role_level.IndexOf(roleid) >= 0)
+                        if (role_index >= 0)
                         {
-                            for (var index = role_level.IndexOf(roleid); index >= 0; index--)
+                            for (var index = role_index; index >= 0; index--)
                             {
                                 if (cash.Where(e => e.FK_RId == role_level[index]).Any())
                                 {
@@ -661,6 +663,19 @@ namespace EtheriT.Coker.Application.Product
                         }
                     }
                 }
+
+                var temp_bonus = await db.Prod_Prices.Where(e => PSIds.Contains(e.FK_PSId)).Where(e => e.Bonus > 0).Where(e => role_level.Take(role_index + 1).Contains(e.FK_RId)).OrderBy(e => e.Price).ThenBy(e => e.Bonus).ToListAsync();
+                var bonus = new List<Prod_Price>();
+                foreach (var temp in temp_bonus)
+                {
+                    if (bonus.Find(e => e.Bonus == temp.Bonus || e.Price == temp.Price) == null)
+                    {
+                        var output_this = output.FindAll(e => e.FK_PSId == temp.FK_PSId && e.Bonus == 0);
+                        if (!output_this.Any() || output_this.Find(e => e.Price > temp.Price) != null) bonus.Add(temp);
+                    }
+                }
+                bonus.OrderByDescending(e => e.Price);
+                output.AddRange(mapper.Map<List<ProductPriceDto>>(bonus));
             }
             catch (Exception ex)
             {

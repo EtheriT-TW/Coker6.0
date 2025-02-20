@@ -651,7 +651,7 @@ namespace EtheriT.Coker.Application.Product
                                 if (cash.Where(e => e.FK_RId == role_level[index]).Any())
                                 {
                                     var temp = mapper.Map<ProductPriceDto>(cash.Where(e => e.FK_RId == role_level[index]).FirstOrDefault());
-                                    temp.OriPrice = tempori?.Price ?? 0;
+                                    temp.OriPrice = tempori?.OriPrice ?? 0;
                                     output.Add(temp);
                                     break;
                                 }

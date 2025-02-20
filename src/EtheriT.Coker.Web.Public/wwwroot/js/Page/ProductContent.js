@@ -551,7 +551,8 @@ function SpecRadio() {
                 $(".priceframe").empty();
                 item.prices.forEach(function (self_item) {
                     var price = self_item.price;
-                    var oriprice = self_item.oriPrice;
+                    var oriprice = self_item.oriprice;
+                    console.log("oriprice", oriprice)
                     var price_temp = $($("#PriceListTemplate").html()).clone();
 
                     price_temp.data("priceid", self_item.priceid)

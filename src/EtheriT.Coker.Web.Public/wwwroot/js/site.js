@@ -699,15 +699,22 @@ function CheckToken() {
                 var search = window.location.search;
                 if (search == "") CardDataGet();
                 else if ($.isNumeric(search.substring(1))) {
-                    if (!localStorage.getItem("lastSaveToken") == result.token && localStorage.getItem("lastSaveTime") != null) {
+                    if (localStorage.getItem("lastSaveToken") == result.token && localStorage.getItem("lastSaveTime") != null) {
                         var tokenSaveTime = new Date(localStorage.getItem('lastSaveTime'));
                         var fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
                         if (tokenSaveTime > fifteenMinutesAgo) {
                             Coker.Token.CheckToken(localStorage.getItem("lastSaveToken")).done(function (result) {
                                 if (result.success) {
+                                    if (result.isLogin && result.name != "") {
+                                        IsLogin = true;
+                                        $("#HiUser > .name").text(`${result.name} 您好!`);
+                                        $("#HiUser").removeClass("d-none");
+                                        $("#UserLogin").addClass("d-none");
+                                        $("#memberLogin").addClass("d-none");
+                                    }
                                     localStorage.setItem("token", result.token);
-                                    localStorage.setItem("lastSaveTime", null)
+                                    localStorage.setItem("lastSaveTime", null);
                                 }
                             });
                         }

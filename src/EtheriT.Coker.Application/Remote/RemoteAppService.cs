@@ -27,6 +27,7 @@ using EtheriT.Coker.Core.Models;
 using Microsoft.Extensions.Caching.Memory;
 using EtheriT.Coker.Application.Shared.Dto.UserHabits;
 using static Azure.Core.HttpHeader;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace EtheriT.Coker.Application.Remote
 {
@@ -62,6 +63,19 @@ namespace EtheriT.Coker.Application.Remote
 				Core.Models.Remote r = mapper.Map<Core.Models.Remote>(dto);
                 if (httpContextAccessor.HttpContext != null)
 					r.BrowserInfo = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].ToString();
+                List<string> botKeywords = new List<string> { 
+                    "Googlebot", "Bingbot", "AhrefsBot", "ImagesiftBot", "DotBot", "SemrushBot", "PetalBot", "OAI-SearchBot", 
+                    "Applebot", "CCBot", "MJ12bot", "AdsBot-Google", "Slurp","perplexitybot", "coccocbot","https://openai.com/bot","GPTBot",
+                    "YandexBot","Google-Read-Aloud","DataForSeoBot","ClaudeBot", "facebookexternalhit", "line-poker", "UptimeRobot","ZoominfoBot",
+                    "KStandBot","ZoominfoBot","reurl-bot","BacklinksExtendedBot","serpstatbot","Qwantbot","Slackbot","SMTBot","aiHitBot","BLEXBot",
+                    "TelegramBot","trendictionbot","INETDEX-BOT","Spider_Bot","msnbot","Facebot","http://yandex.com/bots","2ip bot","SpringserveBot",
+                    "DuckDuckBot","wpbot","SurdotlyBot","Discordbot","bot.html","bitlybot","adsbot.html","WellKnownBot","Orbbot","Timpibot","YodaoBot",
+                    "org_bot","AliyunSecBot","RU_Bot","/bot/","/bots","/robots","BitSightBot","MixrankBot","StorygizeBot","StorygizeBot","Dcard-link-preview-bot",
+                    "Baidu-YunGuanCe-Bot","domainsbot","robot","Bravebot","DuckDuckGo-Favicons-Bot","Sansanbot"
+                };
+                if (string.IsNullOrEmpty(r.BrowserInfo) || botKeywords.Any(bot => r.BrowserInfo.Contains(bot))) { 
+                    throw new Exception("不接受機器人訪問");
+                }
 				r.ClientIpAddress = loginUserData.GetClientIP();
                 r.UUID = await tokenAppService.GetUUID();
                 db.Add(r);
@@ -151,49 +165,35 @@ namespace EtheriT.Coker.Application.Remote
         //從資料庫撈使用者紀錄
         public async Task<JsonResult> GetPageList(DataSourceLoadOptions loadOptions) {
 			long siteId = await loginUserData.GetWebsiteId();
-			var data =
-                from d in db.Remotes //使用者瀏覽紀錄
-                join m in db.WebMenus.Where(e => e.FK_WebsiteId == siteId && !e.IsDeleted) on d.FK_WebmenuId equals m.Id
-                group d by new
-                {
-                    d.ExecutionTime.Date,
-                    d.ClientIpAddress
-                } into g
-                select new
-                {
-                    g.Key.Date,
-                    count = g.Count(),
-                };
-
-            if (data != null)
-			{
-				var firstRecordDate = data.Select(d => d.Date).FirstOrDefault();
-				var dataQuery = from d in data
-								group d by new
-								{
-									d.Date,
-								} into d
-								select new RemoteListOtputDto
-								{
-									date = d.Key.Date,
-									count = d.Where(e => e.Date == d.Key.Date).Sum(e => e.count),
-									MemCount = d.Count(),
-								};
-                if (loadOptions.Sort == null)
-                {
-                    var Sort = new List<SortingInfo>{new SortingInfo
+            var query = db.Remotes
+                    .Where(e => e.FK_WebsiteId == siteId)
+                    .Join(db.WebMenus.Where(e => e.FK_WebsiteId == siteId && !e.IsDeleted),
+                          d => d.FK_WebmenuId,
+                          m => m.Id,
+                          (d, m) => new {
+                              d.ExecutionTime.Date,
+                              UserIdentifier = d.UUID == Guid.Empty ? d.ClientIpAddress : d.UUID.ToString()
+                          })
+                    .GroupBy(d => d.Date)
+                    .Select(g => new RemoteListOtputDto
+                    {
+                        date = g.Key.Date,
+                        count = g.Count(),   // 人次
+                        MemCount = g.Select(d => d.UserIdentifier).Distinct().Count() // 人數
+                    });
+            if (loadOptions.Sort == null)
+            {
+                var Sort = new List<SortingInfo>{new SortingInfo
                     {
                         Selector = "date",
                         Desc = true
                     } };
-                    loadOptions.Sort = Sort.ToArray();
-                }
-                var output = DataSourceLoader.Load(dataQuery, loadOptions);
-                //取日期跟時間
-				return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-			}
-			else throw new Exception("查無資料");
-		}
+                loadOptions.Sort = Sort.ToArray();
+            }
+            var output = DataSourceLoader.Load(query, loadOptions);
+            //取日期跟時間
+            return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
 
         public async Task<ResponseMessageDto> GetRemoteCount(GetRemoteCountInputDto dto)
         { 

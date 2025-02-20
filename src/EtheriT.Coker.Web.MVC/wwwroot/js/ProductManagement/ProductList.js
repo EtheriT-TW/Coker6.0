@@ -906,7 +906,6 @@ function UploadListAdd(result, $target) {
 
     var file_num = $target.find("ul > li").length - 1;
     if (typeof (file_num) == "undefined") file_num = 0;
-    console.log(result);
     if (result == null) {
         $target.find("ul > li").each(function () {
             var $self = $(this);

@@ -622,6 +622,53 @@ namespace EtheriT.Coker.Application.Product
             }
             return output;
         }
+        public async Task<List<ProductPriceDto>> GetPriceByStock(List<long> PSIds)
+        {
+            var output = new List<ProductPriceDto>();
+            try
+            {
+                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                Guid UUID = await tokenAppService.GetUUID();
+
+                var role_level = await db.Roles.Where(e => e.Type == RoleTypeEnum.前台 && e.FK_WebsiteId == WebsiteId).OrderBy(e => e.Ser_No).Select(e => e.Id).ToListAsync();
+                role_level.Insert(0, 1);
+                var roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
+
+                foreach (var stockid in PSIds)
+                {
+                    var cash = await db.Prod_Prices.Where(e => e.FK_PSId == stockid).Where(e => e.Bonus == 0).ToListAsync();
+                    if (cash.Any())
+                    {
+                        var tempori = mapper.Map<ProductPriceDto>(cash.Find(e => e.FK_RId == 1));
+                        if(tempori != null) tempori.OriPrice = tempori.Price;
+
+                        if (role_level.IndexOf(roleid) >= 0)
+                        {
+                            for (var index = role_level.IndexOf(roleid); index >= 0; index--)
+                            {
+                                if (cash.Where(e => e.FK_RId == role_level[index]).Any())
+                                {
+                                    var temp = mapper.Map<ProductPriceDto>(cash.Where(e => e.FK_RId == role_level[index]).FirstOrDefault());
+                                    temp.OriPrice = tempori?.Price ?? 0;
+                                    output.Add(temp);
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (tempori != null) output.Add(mapper.Map<ProductPriceDto>(tempori));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"Product=>GetPriceByStock回傳資料：{ex.Message}");
+            }
+            return output;
+        }
         public async Task<ProdGetMainDisplayDto> GetMainDisplayOne(long Id)
         {
             ProdGetMainDisplayDto output = new ProdGetMainDisplayDto();
@@ -672,40 +719,11 @@ namespace EtheriT.Coker.Application.Product
                     var stockDatas = await this.GetStockDataAll(output.Id);
                     if (stockDatas != null)
                     {
-                        Guid UUID = await tokenAppService.GetUUID();
-                        var token = await tokenAppService.CheckToken(null);
-                        long role = 0;
-                        if (token != null && token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
-                        role = role == 0 ? 1 : role;
-
-                        var role_level = await db.Roles.Where(e => e.Type == RoleTypeEnum.前台 && e.FK_WebsiteId == websiteId).OrderBy(e => e.Ser_No).Select(e => e.Id).ToListAsync();
-                        role_level.Insert(0, 1);
-                        var roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
+                        var prices = await GetPriceByStock(stockDatas.Select(e => e.Id).ToList());
 
                         foreach (var stock in stockDatas)
                         {
-                            var prices = new List<Prod_Price>();
-                            var cash = await db.Prod_Prices.Where(e => e.FK_PSId == stock.Id).Where(e => e.Bonus == 0).ToListAsync();
-                            if (cash.Any())
-                            {
-                                if (roleid != null && role_level.IndexOf(roleid) >= 0)
-                                {
-                                    for (var index = role_level.IndexOf(roleid); index >= 0; index--)
-                                    {
-                                        if (cash.Where(e => e.FK_RId == role_level[index]).Any())
-                                        {
-                                            prices.Add(cash.Where(e => e.FK_RId == role_level[index]).FirstOrDefault());
-                                            break;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (cash.Any()) prices.Add(cash.Find(e => e.FK_RId == 1) ?? new Prod_Price());
-                                }
-                            }
-
-                            stock.Prices = mapper.Map<List<ProductPriceDto>>(prices);
+                            stock.Prices = prices.Where(e => e.FK_PSId == stock.Id).ToList();
                         }
                         output.Stocks = stockDatas;
                     }
@@ -826,32 +844,7 @@ namespace EtheriT.Coker.Application.Product
                         var data = output[i];
                         var stockids = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Select(e => e.Id).ToListAsync();
 
-                        var role_level = await db.Roles.Where(e => e.Type == RoleTypeEnum.前台 && e.FK_WebsiteId == WebsiteID).OrderBy(e => e.Ser_No).Select(e => e.Id).ToListAsync();
-                        role_level.Insert(0, 1);
-                        var roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
-                        var prices = new List<Prod_Price>();
-                        foreach (var stockid in stockids)
-                        {
-                            var cash = await db.Prod_Prices.Where(e => e.FK_PSId == stockid).Where(e => e.Bonus == 0).ToListAsync();
-                            if (cash.Any())
-                            {
-                                if (roleid != null && role_level.IndexOf(roleid) >= 0)
-                                {
-                                    for (var index = role_level.IndexOf(roleid); index >= 0; index--)
-                                    {
-                                        if (cash.Where(e => e.FK_RId == role_level[index]).Any())
-                                        {
-                                            prices.Add(cash.Where(e => e.FK_RId == role_level[index]).FirstOrDefault());
-                                            break;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (cash.Any()) prices.Add(cash.Find(e => e.FK_RId == 1) ?? new Prod_Price());
-                                }
-                            }
-                        }
+                        var prices = await GetPriceByStock(stockids);
 
                         double min = prices.Min(e => e.Price) ?? 0;
                         double max = prices.Max(e => e.Price) ?? 0;

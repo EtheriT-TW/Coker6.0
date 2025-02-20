@@ -204,14 +204,14 @@ function PageDefaultSet(result) {
 
         var hasstock = false;
         result.stocks.forEach(data => {
-            console.log("data", data);
-            if (data.prices[0].price != null) {
+            if (data.prices.length > 0 && data.prices[0].price != null) {
                 obj = {
                     s1id: data.fK_S1id,
                     s2id: data.fK_S2id,
                     stock: data.stock,
                     minQty: data.min_Qty,
-                    price: data.prices[0].price
+                    price: data.prices[0].price,
+                    oriprice: data.prices[0].oriPrice
                 };
                 price_list.push(obj);
                 maxprice = obj["price"] > maxprice ? obj["price"] : maxprice;
@@ -278,7 +278,14 @@ function PageDefaultSet(result) {
         s1 = result.stocks[0].fK_S1id;
         s2 = result.stocks[0].fK_S2id;
         var price = result.stocks[0].prices[0].price;
+        var oriprice = result.stocks[0].prices[0].oriPrice;
         $pro_discount.text(price.toLocaleString('en-US'));
+        if (oriprice > price) {
+            $pro_price.text(oriprice.toLocaleString('en-US'));
+            $pro_price.removeClass("d-none")
+        } else {
+            $pro_price.addClass("d-none")
+        }
     } else {
         $(".btn_addToCar").addClass("d-none");
         $(".priceframe").addClass("d-none");
@@ -495,6 +502,12 @@ function SpecRadio() {
         price_list.forEach(function (item) {
             if (item.s1id == s1 && (item.s2id == 0 || item.s2id == s2)) {
                 $pro_discount.text(item.price.toLocaleString('en-US'));
+                if (item.oriprice > item.price) {
+                    $pro_price.text(item.oriprice.toLocaleString('en-US'));
+                    $pro_price.removeClass("d-none")
+                } else {
+                    $pro_price.addClass("d-none")
+                }
                 $input_quantity.attr({
                     min: 0,
                     max: item.stock - (item.stock % item.minQty),

@@ -1,8 +1,9 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
+using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
@@ -19,12 +20,14 @@ namespace EtheriT.Coker.Application.ShoppingCart
         private readonly ITokenAppService tokenAppService;
         private readonly IConfiguration configuration;
         private readonly IMapper mapper;
+        private readonly IProductAppService productAppService;
         public ShoppingCartAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             ITokenAppService tokenAppService,
             IConfiguration configuration,
-            IMapper mapper
+            IMapper mapper,
+            IProductAppService productAppService
         )
         {
             this.db = db;
@@ -32,6 +35,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             this.tokenAppService = tokenAppService;
             this.configuration = configuration;
             this.mapper = mapper;
+            this.productAppService = productAppService;
         }
         public async Task<ResponseMessageDto> UpdateUUID(Guid UserUUID, Guid TempUUID)
         {
@@ -341,16 +345,12 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     }
 
                     var psid = shoppingCart.Prod_Stock?.Id;
-                    var db_price = await db.Prod_Prices.Where(e => e.FK_PSId == psid).ToListAsync();
-                    if (db_price.Any())
+                    var prices = new List<ProductPriceDto>();
+                    if (psid != null) prices = await productAppService.GetPriceByStock(new List<long> { (long)psid });
+                    if (prices.Any())
                     {
-                        if (roleid == 1) temp_output.DynamicPrice = (int)(db_price[0]?.Price);
-                        else
-                        {
-                            var temp_price = db_price.Find(e => e.FK_RId == roleid)?.Price;
-                            if (temp_price == null) temp_output.DynamicPrice = (int)(db_price[0]?.Price ?? 0);
-                            else temp_output.DynamicPrice = (int)(temp_price ?? 0);
-                        }
+                        if (prices[0].Price != null) temp_output.DynamicPrice = (int)prices[0].Price;
+                        else temp_output.DynamicPrice = 0;
                     }
 
                     if (temp_output.Price == 0) temp_output.Price = temp_output.DynamicPrice;

@@ -424,7 +424,7 @@ function GetOrderPage() {
                         break;
                     case "付款失敗":
                         $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單付款失敗！");
-                        if ($('.buyagain_text').length > 0) {
+                        if ($('.buyagain_text').length > 0  && !IsLogin) {
                             $('.buyagain_text').removeClass("d-none");
                             $('.buyagain_text span').on("click", function () {
                                 var ohid = parseInt($("#Step4 .card-header .order_number").text());

@@ -363,6 +363,8 @@
             })
             $self.data("edit", true)
             $parent.find(".default_frame").removeClass("d-flex");
+            $parent.find(".youtube_preview").empty();
+            $parent.find(".media_preview > div").children().remove();
             switch ($self.data("uploadtype")) {
                 case 0:
                     var $select_frame = $parent.find(".select_frame")
@@ -388,7 +390,6 @@
                             var file = total_files.find(item => item["Id"] == $self.data("id"))["File"];
                             $parent.find(".media_frame").addClass("d-flex");
                             $parent.find(".media_frame").find("input").val(name);
-                            $parent.find(".media_preview > div").children().remove();
                             $parent.find(".media_preview > div").children().remove();
                             $parent.find(".media_preview > div").append(`<img src="${file}" class=""></img>`);
                         } else if (typeof ($self.data("tempid")) != "undefined") {

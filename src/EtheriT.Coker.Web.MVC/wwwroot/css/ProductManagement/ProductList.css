@@ -55,6 +55,7 @@ input[type="number"] {
 }
 
     .data_upload > ul > .upload_list .ser_no {
+        font-size: 0.8rem;
         width: 1.5rem;
     }
 
@@ -241,6 +242,7 @@ input[type="number"] {
     width: fit-content;
     line-height: 1.5rem;
     top: -0.75rem;
+    color: #888;
 }
 
 #Spec_Frame > .specHeader {
@@ -259,6 +261,7 @@ input[type="number"] {
     }
 
     #Spec_Frame > .specHeader > .spec {
+        color: #888;
         width: 43.5rem;
     }
 
@@ -351,10 +354,13 @@ textarea.minHeight {
         position: absolute;
         background: #FFF !important;
         border-radius: 100%;
-        color: red;
+        color: #888;
         right: -5px;
         top: -5px;
     }
+        #ProdMedia > ul .btn_remove > .material-symbols-outlined {
+            font-size: 17px;
+        }
 
     #ProdMedia > ul .serNoTool {
         position: absolute;
@@ -367,7 +373,7 @@ textarea.minHeight {
     }
 
         #ProdMedia > ul .serNoTool > .material-symbols-outlined {
-            font-size: 20px;
+            font-size: 17px;
         }
 
     #ProdMedia > ul .sortable-placeholder {
@@ -383,6 +389,13 @@ textarea.minHeight {
     width: 100%;
     height: 50px; /* 可根據需要調整 */
 }
+#ProdFiles > ul > li .material-symbols-outlined {
+    font-size: 1rem;
+}
+#ProdFiles .serNoTool > .material-symbols-outlined {
+    font-size: 1rem;
+    margin-right: 0.5rem;
+}
 
 .sortable-placeholder {
     background: #f0f0f0;
@@ -393,6 +406,8 @@ textarea.minHeight {
 
 .serNoTool {
     cursor: move;
+    display: flex;
+    align-items: center;
 }
 
 @media only screen and (max-width: 1900px) {

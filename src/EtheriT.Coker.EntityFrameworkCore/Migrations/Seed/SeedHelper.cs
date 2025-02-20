@@ -405,7 +405,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 }, new ObjectType
                 {
                     Id = 10,
-                    Title = "目錄",
+                    Title = "進階(程式)",
                     SerNo = 500,
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2024, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),

@@ -324,7 +324,7 @@ function PageDefaultSet(result) {
                 price_temp.find(".ori_price").removeClass("d-none")
             }
 
-            if ($(".priceframe").children().length == 0) price_temp.find("input").prop("checked", true);
+            if ($(".priceframe").children().length == 0 && !price_temp.find("input").prop("disabled")) price_temp.find("input").prop("checked", true);
             $(".priceframe").append(price_temp);
         });
 
@@ -552,7 +552,6 @@ function SpecRadio() {
                 item.prices.forEach(function (self_item) {
                     var price = self_item.price;
                     var oriprice = self_item.oriprice;
-                    console.log("oriprice", oriprice)
                     var price_temp = $($("#PriceListTemplate").html()).clone();
 
                     price_temp.data("priceid", self_item.priceid)

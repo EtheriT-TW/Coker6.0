@@ -333,7 +333,7 @@
                             {
                                 <div class="form-check text-start col-12 col-sm-3 my-2 py-2">
                                     <input id="radio_payment_@payment.Code" class="form-check-input" type="radio" name="RadioPayment" data-maxamount="@payment.MaxAmount" data-minamount="@payment.MinAmount" value="@payment.Id" required>
-                                    <label class="form-check-label" for="radio_payment_@payment.Code">
+                                    <label class="form-check-label d-flex" for="radio_payment_@payment.Code">
                                         @if (payment.Icon != "")
                                         {
                                             <img class="paymenticon px-1" src="@payment.Icon" alt="@payment.Title">

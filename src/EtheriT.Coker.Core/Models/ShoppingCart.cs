@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Core.Models
         public Guid UUID { get; set; }
         public long? FK_Uid { get; set; }
         public long FK_PSid { get; set; }
+        public long? FK_PriceId { get; set; }
         public long? FK_S1id { get; set; }
         public long? FK_S2id { get; set; }
         public int OldQuantity { get; set; }
@@ -23,6 +24,7 @@ namespace EtheriT.Coker.Core.Models
         public int Ser_No { get; set; }
         public ICollection<Token> Tokens { get; set; }
         public Prod_Stock Prod_Stock { get; set; }
+        public Prod_Price? Prod_Price { get; set; }
         public List<Order_Details> Order_Details { get; set; }
     }
 }

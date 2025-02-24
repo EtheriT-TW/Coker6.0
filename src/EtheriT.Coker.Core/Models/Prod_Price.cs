@@ -11,5 +11,6 @@ namespace EtheriT.Coker.Core.Models
         public double? Bonus { get; set; }
         public Prod_Stock? Prod_Stock { get; set; }
         public Role? Role { get; set; }
+        public List<ShoppingCart> ShoppingCarts { get; set; }
     }
 }

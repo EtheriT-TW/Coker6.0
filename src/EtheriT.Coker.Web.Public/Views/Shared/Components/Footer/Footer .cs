@@ -198,7 +198,54 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 								}
 							};
 							break;
-						default:
+                        case 16:
+                            footerViewModel = new FooterViewModel
+                            {
+                                footerViewModels = new List<FooterViewModel> {
+                                    new FooterViewModel { Title = "關於華生", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "公司簡介 ", Link = "/watsbio/company" },
+                                            new FooterViewModel { Title = "經營理念", Link = "/watsbio/philosophy" },
+                                            new FooterViewModel { Title = "研發團隊", Link = "/watsbio/team" },
+                                            new FooterViewModel { Title = "專業認證", Link = "/watsbio/certification" },
+                                            new FooterViewModel { Title = "自愈力學堂", Link = "/watsbio/LearningCenter" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "商品介紹", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "保健食品 ", Link = "/watsbio/product" },
+                                            new FooterViewModel { Title = "購物流程", Link = "/watsbio/shopflow" },
+                                            new FooterViewModel { Title = "付款方式", Link = "/watsbio/payment" },
+                                            new FooterViewModel { Title = "訂購資訊", Link = "/watsbio/orderinfo" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "保健醫美", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "關於牛樟芝 ", Link = "/watsbio/aboutpro1" },
+                                            new FooterViewModel { Title = "關於鹿角靈芝", Link = "/watsbio/aboutpro2" },
+                                            new FooterViewModel { Title = "醫美訊息", Link = "/watsbio/MedicalAestheticInfo" },
+                                            new FooterViewModel { Title = "養生保健", Link = "/watsbio/HolisticHealth" },
+                                            new FooterViewModel { Title = "生活分享", Link = "/watsbio/lifeshare" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "更多", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "最新消息", Link = "/watsbio/news" },
+                                            new FooterViewModel { Title = "聯絡我們", Link = "/watsbio/contact" },
+                                        }
+                                    },
+                                },
+                                Logo_Image = "/upload/logo.png",
+                                LINE_Link = "https://line.me/ti/p/T11xUWo0DU",
+                                Facebook_Link = "",
+                                IG_Link = "",
+                                YoutubeChannel_Link = "",
+                                Content = new List<string>
+                                {
+                                    "Copyright©",
+                                    "2024 華生國際生技股份有限公司 版權所有",
+                                    "Watson Biotech",
+                                    "ALL Rights Reserved"
+                                }
+                            };
+                            break;
+                        default:
 							footerViewModel = new FooterViewModel();
 							break;
 					}

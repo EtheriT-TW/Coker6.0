@@ -6,19 +6,20 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public long PId { get; set; }
         public long SCId { get; set; }
         public long PSId { get; set; }
+        public long? PPId { get; set; }
         public string Title { get; set; }
         public string Describe { get; set; }
         public string S1Title { get; set; }
         public string S2Title { get; set; }
         public string ImagePath { get; set; }
-        public int Price { get; set; }
-        public int DynamicPrice { get; set; }
-        public int OldPrice { get; set; }
-        public int Discont { get; set; }
-        public int Bonus { get; set; }
+        public double Price { get; set; }
+        public double DynamicPrice { get; set; }
+        public double OldPrice { get; set; }
+        public double Discont { get; set; }
+        public double Bonus { get; set; }
         public int Quantity { get; set; }
         public int OldQuantity { get; set; }
-        public int Subtotal { get; set; }
+        public double Subtotal { get; set; }
         public int Stock { get; set; }
     }
 }

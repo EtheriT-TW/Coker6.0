@@ -8,6 +8,7 @@ using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -136,12 +137,13 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                 Core.Models.ShoppingCart? sc = new Core.Models.ShoppingCart();
 
                                 if (dto.Id != null) sc = await db.ShoppingCarts.Where(e => e.Id == dto.Id).FirstOrDefaultAsync();
-                                else sc = await db.ShoppingCarts.Where(e => e.UUID == UUID && e.FK_PSid == pro_stock.Id && !e.IsOrder).FirstOrDefaultAsync();
+                                else sc = await db.ShoppingCarts.Where(e => e.UUID == UUID && e.FK_PSid == pro_stock.Id && e.FK_PriceId == dto.FK_PriceId && !e.IsOrder).FirstOrDefaultAsync();
 
                                 if (sc == null)
                                 {
                                     sc = mapper.Map<Core.Models.ShoppingCart>(pro_stock);
                                     sc.Id = 0;
+                                    sc.FK_PriceId = dto.FK_PriceId;
                                     sc.Price = 0;
                                     if (pro_stock.Stock >= dto.Quantity)
                                     {
@@ -347,11 +349,27 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     var psid = shoppingCart.Prod_Stock?.Id;
                     var prices = new List<ProductPriceDto>();
                     if (psid != null) prices = await productAppService.GetPriceByStock(new List<long> { (long)psid });
-                    if (prices.Any())
+                    var prod_price = await db.Prod_Prices.Where(e => e.Id == temp_output.PPId).FirstOrDefaultAsync();
+                    if (prices.Any() && prod_price != null)
                     {
-                        if (prices[0].Price != null) temp_output.DynamicPrice = (int)prices[0].Price;
-                        else temp_output.DynamicPrice = 0;
+                        var temp_price = prices.Find(e => e.Bonus == prod_price.Bonus);
+
+                        if (temp_price != null && temp_price.Id != prod_price.Id)
+                        {
+                            var sc = await db.ShoppingCarts.FirstOrDefaultAsync(e => e.Id == shoppingCart.Id);
+                            if (sc != null)
+                            {
+                                sc.FK_PriceId = temp_price.Id;
+                                await db.SaveChangesAsync();
+                            }
+                            prod_price.Price = temp_price.Price;
+                        }
+
+                        temp_output.DynamicPrice = prod_price.Price ?? 0;
+                        temp_output.Bonus = prod_price.Bonus ?? 0;
                     }
+                    else temp_output.DynamicPrice = 0;
+
 
                     if (temp_output.Price == 0) temp_output.Price = temp_output.DynamicPrice;
                     temp_output.Subtotal = temp_output.Price * temp_output.Quantity;

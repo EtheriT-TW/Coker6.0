@@ -239,6 +239,7 @@ namespace EtheriT.Coker.Application
             CreateMap<Core.Models.ShoppingCart, ShoppingCartDisplayDto>()
                  .ForMember(e => e.SCId, option => option.MapFrom(c => c.Id))
                  .ForMember(e => e.PSId, option => option.MapFrom(c => c.FK_PSid))
+                 .ForMember(e => e.PPId, option => option.MapFrom(c => c.FK_PriceId))
                 .ReverseMap();
 
             //Tags

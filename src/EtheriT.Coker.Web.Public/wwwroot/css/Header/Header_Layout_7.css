@@ -116,6 +116,11 @@
 #is-block {
     display: block;
 }
+
+#header-title {
+    display: block;
+}
+
 /* Button Car Dropdown */
 #btn_car_dropdown > i.open {
     color: var(--red-popup);
@@ -766,7 +771,7 @@
     }
 
     #header-title {
-        display:none !important;
+        display: none;
     }
 
     #header-title-phone {

@@ -53,7 +53,7 @@
                         @if (subItems.Count() > 0)
                         {
                             <a href="@menu.Link" id="collapse-header-@menu.Title" class="m-0 nav-link p-0 text-nowrap text-black menu-item collapsed"
-                            data-bs-toggle="collapse" data-bs-target="#collapse-@menu.Title" aria-expanded="true" aria-controls="collapse-@menu.Title">
+                               data-bs-toggle="collapse" data-bs-target="#collapse-@menu.Title" aria-expanded="true" aria-controls="collapse-@menu.Title">
                                 @if (string.IsNullOrEmpty(menu.imageUrl))
                                 {
                                     @menu.Title
@@ -89,7 +89,7 @@
                                             }
                                             <li class="subtitle nav-item my-0 @titleClass">
                                                 <a id="collapse-header-@secItem.Title" class="subtitle_title justify-content-between nav-link text-black py-0 text-nowrap text-start d-flex align-items-center collapsed" href="@secItem.Link" title="@title" target="@target"
-                                                data-bs-toggle="" data-bs-target="#collapse-@secItem.Title" aria-expanded="true">
+                                                   data-bs-toggle="" data-bs-target="#collapse-@secItem.Title" aria-expanded="true">
                                                     <div>
                                                         <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
                                                         <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
@@ -102,7 +102,7 @@
                                                 @if (secItem.menuItemModels != null && secItem.menuItemModels.Count() > 0)
                                                 {
                                                     <ul id="collapse-@secItem.Title" aria-labelledby="collapse-header-@secItem.Title" data-bs-parent="#collapse-@menu.Title"
-                                                    class="row collapse px-3 mx-1@($" hasRow{secItem.menuItemModels.Count()/3 + 1}")@($"{(menu.Link.ToLower().Contains("product")?" d-lg-none":"")}")">
+                                                        class="row collapse px-3 mx-1@($" hasRow{secItem.menuItemModels.Count()/3 + 1}")@($"{(menu.Link.ToLower().Contains("product")?" d-lg-none":"")}")">
                                                         @foreach (var thirdItem in secItem.menuItemModels ?? new List<MenuItemModel>())
                                                         {
                                                             iconclass = thirdItem.Icon == "" ? "d-none" : "";
@@ -254,7 +254,7 @@
         </div>
     </div>
 </nav>
-<div class="image-wh d-none">
+<div class="image-wh">
     @foreach (var item in Model.Bannners)
     {
         <img id="header-title" class="w-100 titleimage m-auto d-block" src="@item.DisktopImage" alt="Header Titile" />

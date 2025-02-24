@@ -4,6 +4,9 @@
 header .navbar {
     top:0;
 }
+header .image-wh{
+    display: none;
+}
 
 #Mega_Menu {
     transition: background-color 0s;

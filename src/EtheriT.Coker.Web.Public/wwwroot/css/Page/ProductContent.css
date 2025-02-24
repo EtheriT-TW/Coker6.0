@@ -237,6 +237,10 @@ i.fa-chevron-right {
     white-space: nowrap;
 }
 
+    #Product > .content > .priceframe .discount.mprice::before {
+        content: '會員價 $';
+    }
+
     #Product > .content > .priceframe .discount.bonus_lack {
         text-decoration: line-through;
         position: relative;

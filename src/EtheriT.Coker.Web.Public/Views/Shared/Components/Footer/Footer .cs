@@ -1,6 +1,7 @@
 ﻿
 using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Marquee;
+using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Core.Models;
@@ -232,10 +233,41 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                     },
                                 },
                                 Logo_Image = "/upload/logo.png",
-                                LINE_Link = "https://line.me/ti/p/T11xUWo0DU",
+                                LINE_Link = "",
                                 Facebook_Link = "",
                                 IG_Link = "",
                                 YoutubeChannel_Link = "",
+								Other_Image_Link=new List<ImageListDto>()
+								{
+									new ImageListDto
+									{
+										Name="華生國際QRCode",
+										Source="/upload/ComLine.jpg",
+										Link="https://line.me/ti/p/T11xUWo0DU",
+										Title="華生國際Line",
+									},
+                                    new ImageListDto
+                                    {
+                                        Name="自愈力QRCode",
+                                        Source="/upload/CEOLine.jpg",
+                                        Link="https://line.me/ti/p/mAcLSVb_KN",
+                                        Title="自愈力Line",
+                                    },
+                                    new ImageListDto
+                                    {
+                                        Name="自愈力QRCode",
+                                        Source="/upload/wechat_qr.png",
+                                        Link="/upload/wechat_qr.png",
+                                        Title="自愈力WeChat",
+                                    },
+                                    new ImageListDto
+                                    {
+                                        Name="自愈力學堂QRCode",
+                                        Source="/upload/C_qr.png",
+                                        Link="/upload/C_qr.png",
+                                        Title="自愈力學堂WeChat",
+                                    },
+                                },
                                 Content = new List<string>
                                 {
                                     "Copyright©",

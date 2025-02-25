@@ -334,7 +334,7 @@
                                         <textarea id="InputIllustrate" class="form-control border-0 dobuleHeight" aria-label="With textarea" maxlength="3000" placeholder="輸入詳細說明" required></textarea>
                                     </div>
                                 </div>
-                                @await Component.InvokeAsync(nameof(Modal), new { dispaly = "TechCertListModal" })
+                                @await Component.InvokeAsync(nameof(Modal), new { dispaly = "TagListModal" })
                             </div>
                         </div>
                     </div>
@@ -346,7 +346,7 @@
                             </div>
                             <textarea id="InputItemNo" class="form-control border-0 minHeight" aria-label="With textarea" maxlength="100" placeholder="輸入銷帳編號"></textarea>
                         </div>
-                        @await Component.InvokeAsync(nameof(Modal), new { dispaly = "TagListModal" })
+                        @await Component.InvokeAsync(nameof(Modal), new { dispaly = "TechCertListModal" })
                         <div id="ProdFiles" class="data_upload row mx-0 border rounded mb-3 p-3 position-relative" data-uploadtype="5">
                             <ul class="col-12 p-0 overflow-auto mb-0">
                                 <li class="btn_upload_add border mb-1 p-1 shadow-sm">
@@ -365,17 +365,17 @@
                 </div>
                 <div class="card mt-3">
                     <div id="Spec_Frame" class="data_upload mx-2 border rounded position-relative">
-                        <ul class="specHeader">
-                            <li class="serNo">排序</li>
-                            <li class="spec">規格</li>
-                            <li class="price">金額</li>
-                            <li class="subItem">子料號</li>
-                            <li>可銷售量</li>
-                            <li>最低購買量</li>
-                            <li>銷售警示量</li>
-                            <li class="del"></li>
-                        </ul>
                         <ul class="px-1 specList mb-0 border-0">
+                            <li class="specHeader">
+                                <div class="serNo">排序</div>
+                                <div class="spec">規格</div>
+                                <div class="price">金額</div>
+                                <div class="subItem">子料號</div>
+                                <div>可銷售量</div>
+                                <div>最低購買量</div>
+                                <div>銷售警示量</div>
+                                <div class="del"></div>
+                            </li>
                             <li class="btn_spec_add list-unstyled mt-3 p-1 d-flex justify-content-end">
                                 <button class="btn-success border-0 d-flex align-items-center p-2" title="新增規格">
                                     <span class="fs-3 material-symbols-outlined">add</span>新增規格
@@ -401,52 +401,55 @@
                 </template>
 
                 <template id="TemplateSpecification">
-                    <li class="spec_list list-unstyled d-flex p-1 py-3 mb-3 rounded">
-                        <div class="d-flex">
-                            <span class="chang_ser bg-transparent border-0 form-control fs-4 material-symbols-outlined px-1 py-0" title="變更順序">open_with</span>
-                            <input class="ser_no me-1 form-control rounded text-center" type="number" aria-label="Upload data sort number" title="排序號碼" value="">
-                        </div>
-                        <div class="frame w-100 px-1">
-                            <div class="topline d-flex">
-                                <div class="spec input-group">
-                                    <input class="input_spec form-control rounded-right" list="" placeholder="規格選項" disabled required>
-                                    <datalist id=""></datalist>
-                                </div>
-
-                                <div class="spec input-group">
-                                    <input class="input_spec form-control rounded-right" list="" placeholder="規格選項" disabled required>
-                                    <datalist id=""></datalist>
-                                </div>
-
-                                <div class="price input-group">
-                                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-                                        <span class="material-symbols-outlined me-1 required_sign">attach_money</span>
-                                    </div>
-                                    <textarea class="input_price form-control rounded text-start" type="button" aria-label="Input Price of Product" required></textarea>
-                                    <span class="count"></span>
-                                </div>
-                                <div class="SubItemNo input-group">
-                                    <input class="input_subItemNo form-control rounded text-start" type="text" aria-label="Input SubItemNo of Product">
-                                </div>
-                                <div class="number input-group">
-                                    <input class="input_stock_number form-control rounded" type="number" aria-label="Input Number of Product" step="1">
-                                </div>
-
-                                <div class="min_number input-group">
-                                    <input class="input_min_number form-control rounded" type="number" aria-label="Input MinNumber of Product" step="1">
-                                </div>
-
-                                <div class="alert_number input-group">
-                                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-                                        <span class="material-symbols-outlined me-1">warning</span>
-                                    </div>
-                                    <input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product" step="1">
-                                </div>
-
-                                <button class="btn_remove form-control border-0 px-1  d-flex bg-transparent" title="移除規格">
-                                    <span class="material-symbols-outlined">delete</span>
-                                </button>
+                    <li class="spec_list p-1 py-3 mb-3 rounded">
+                        <div class="upload_list">
+                            <div>
+                                <span class="chang_ser bg-transparent border-0 form-control fs-4 material-symbols-outlined px-1 py-0" title="變更順序">open_with</span>
+                                <input class="ser_no me-1 form-control rounded text-center" type="number" aria-label="Upload data sort number" title="排序號碼" value="">
                             </div>
+                        </div>
+                        <div class="specs">
+                            <div>
+                                <div class="spec input-group">
+                                    <input class="input_spec form-control rounded-right" list="" placeholder="規格選項" disabled required>
+                                    <datalist id=""></datalist>
+                                </div>
+
+                                <div class="spec input-group">
+                                    <input class="input_spec form-control rounded-right" list="" placeholder="規格選項" disabled required>
+                                    <datalist id=""></datalist>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="price input-group">
+                            <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                                <span class="material-symbols-outlined me-1 required_sign">attach_money</span>
+                            </div>
+                            <textarea class="input_price form-control rounded text-start" type="button" aria-label="Input Price of Product" required></textarea>
+                            <span class="count"></span>
+                        </div>
+                        <div class="SubItemNo input-group">
+                            <input class="input_subItemNo form-control rounded text-start" type="text" aria-label="Input SubItemNo of Product">
+                        </div>
+                        <div class="number input-group">
+                            <input class="input_stock_number form-control rounded" type="number" aria-label="Input Number of Product" step="1">
+                        </div>
+
+                        <div class="min_number input-group">
+                            <input class="input_min_number form-control rounded" type="number" aria-label="Input MinNumber of Product" step="1">
+                        </div>
+
+                        <div class="alert_number input-group">
+                            <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                                <span class="material-symbols-outlined me-1">warning</span>
+                            </div>
+                            <input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product" step="1">
+                        </div>
+                        <div>
+                            <button class="btn_remove form-control border-0 px-1 bg-transparent" title="移除規格">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
                         </div>
                     </li>
                 </template>

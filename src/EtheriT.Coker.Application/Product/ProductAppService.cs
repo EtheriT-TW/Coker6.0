@@ -234,6 +234,7 @@ namespace EtheriT.Coker.Application.Product
                             Alert_Qty = item.Alert_Qty,
                             Ser_No = item.Ser_No,
                             Price = item.Price,
+                            SubItemNo = item.SubItemNo,
                             CreatorUserId = usetId,
                         };
                         db.Prod_Stocks.Add(ps);
@@ -309,6 +310,7 @@ namespace EtheriT.Coker.Application.Product
                             db_ps.Min_Qty = item.Min_Qty;
                             db_ps.Alert_Qty = item.Alert_Qty;
                             db_ps.Ser_No = item.Ser_No;
+                            db_ps.SubItemNo = item.SubItemNo;
                             db_ps.Price = item.Price;
                             db_ps.LastModificationTime = DateTime.Now;
                             db_ps.LastModifierUserId = usetId;

@@ -313,11 +313,11 @@ function ElementInit() {
 
         $(".input_price").each(function () {
             var $self = $(this)
-            var psid = $self.parents(".frame").data("psid")
-            var temppsid = $self.parents(".frame").data("temppsid")
+            var psid = $self.parents(".spec_list").data("psid")
+            var temppsid = $self.parents(".spec_list").data("temppsid")
             var count = $self.parents(".price").find(".count");
             var text = "";
-            var filter = modal_price_list.filter(item => item["FK_PSId"] == psid || item["TempPSid"] == temppsid);
+            var filter = modal_price_list.filter(item => !item.IsDelete && (item["FK_PSId"] == psid || item["TempPSid"] == temppsid));
             $self.removeClass("multi-price");
             if (filter.length > 1) {
                 count.removeClass("d-none").text(filter.length);
@@ -375,7 +375,7 @@ function FormDataClear() {
     $(".data_upload").each(function () {
         UploadPreviewFrameClear($(this));
     });
-    $(".data_upload > ul").children(".upload_list").remove();
+    $(".data_upload > ul > .upload_list").remove();
     total_files = [];
 }
 function contentReady(e) {
@@ -531,7 +531,7 @@ function SpecPriceAdd(result) {
     }
 
     item_btn_delete.on("click", function () {
-        var $self_p = $(this).parents(".frame").first();
+        var $self_p = $(this).parents(".modal_price").first();
         if (spec_price_num == 1) {
             co.sweet.error("商品至少需有一種價格", null, false);
         } else {
@@ -599,7 +599,6 @@ function SpecPriceSave() {
             }
         }
     })
-    console.log(modal_price_list);
     if (save_success) {
         priceModal.hide();
     }
@@ -608,8 +607,7 @@ function SpecAdd(result) {
     spec_num += 1;
     $("#Spec_Frame").data("spec_num", spec_num)
     var item = $($("#TemplateSpecification").html()).clone();
-    var item_topline = item.find(".topline"),
-        item_select_input_1 = item.find(".input_spec").first(),
+    var item_select_input_1 = item.find(".input_spec").first(),
         item_select_input_2 = item.find(".input_spec").last(),
         item_select_list_1 = item.find("datalist").first(),
         item_select_list_2 = item.find("datalist").last(),
@@ -622,7 +620,6 @@ function SpecAdd(result) {
         item_collapse = item.find(".collapse"),
         item_btn_expand = item.find(".btn_expand"),
         item_btn_delete = item.find(".btn_remove");
-
     if (result != null) {
         item.find(".ser_no").val(result.ser_No);
         item.data("serno", result.ser_No);
@@ -649,12 +646,11 @@ function SpecAdd(result) {
         }
         item.data("serno", $self.val());
     })
-
-    item_topline.children(".spec").each(function () {
+    item.find(".spec").each(function () {
         var spectype = $($("#TemplateSpecType").html()).clone();
         $(this).prepend(spectype);
     })
-
+    
     var item_select_1 = item.find(".spec_select").first(),
         item_select_2 = item.find(".spec_select").last();
 
@@ -712,15 +708,15 @@ function SpecAdd(result) {
         }
     }
     if (result != null) {
-        item.find(".frame").data("psid", result.id);
-        item.find(".frame").data("oldstock", result.stock);
+        item.data("psid", result.id);
+        item.data("oldstock", result.stock);
     } else {
         temp_psid += 1;
-        item.find(".frame").data("temppsid", temp_psid);
-        item.find(".frame").data("oldstock", null);
+        item.data("temppsid", temp_psid);
+        item.data("oldstock", null);
     }
     var text = "";
-    var filter = modal_price_list.filter(mitem => mitem["FK_PSId"] == item.find(".frame").data("psid"));
+    var filter = modal_price_list.filter(mitem => !mitem.IsDelete && (mitem["FK_PSId"] == item.data("psid")));
     item_price.removeClass("multi-price");
     if (filter.length > 1) {
         item_price.addClass("multi-price");
@@ -731,7 +727,6 @@ function SpecAdd(result) {
         text += "現金：" + co.String.thousandSign(item["Price"]);
         if (item["Bonus"] != 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
     });
-
     if (filter.length > 0) {
         item_price.val(text);
     } else {
@@ -753,8 +748,8 @@ function SpecAdd(result) {
     item_price.on("click", function () {
         var isnull = true;
         var $self = $(this)
-        var psid = $self.parents(".frame").data("psid")
-        var temppsid = $self.parents(".frame").data("temppsid")
+        var psid = $self.parents(".spec_list").data("psid")
+        var temppsid = $self.parents(".spec_list").data("temppsid")
         $price_modal.parents(".modal-body").first().data("psid", psid != null ? psid : "")
         $price_modal.parents(".modal-body").first().data("temppsid", temppsid != null ? temppsid : "")
         modal_price_list.forEach(function (item) {
@@ -788,12 +783,11 @@ function SpecAdd(result) {
         e.preventDefault();
         var $self = $(this);
         var $self_p = $self.parents('.spec_list');
-        var $self_f = $self_p.find(".frame");
         if (spec_num == 1) {
             co.sweet.error("商品至少需有一種規格", null, false);
         } else {
             co.sweet.confirm("移除規格", "確定要移除此項規格嗎?", "　是　", "　否　", function () {
-                spec_remove_list.push($self_f.data("psid"));
+                spec_remove_list.push($self_p.data("psid"));
                 spec_num -= 1;
                 if (item.data("serno") < $("#Spec_Frame").data("spec_num")) { SortChange($(".spec_list"), "bigger", item.data("serno"), $("#Spec_Frame").data("spec_num")); }
                 $self_p.remove();
@@ -886,7 +880,7 @@ function ISpecRepect() {
     var obj = []
     var temp_list = []
     var isRepect = false;
-    $("#Spec_Frame .frame").each(function () {
+    $("#Spec_Frame .spec_list").each(function () {
         $self = $(this);
         $self.find(".input_spec").each(function () {
             obj.push($(this).val());
@@ -1080,7 +1074,7 @@ function AddUp(success_text, error_text, target) {
             })
             fk_sid.push(id)
         })
-        obj["Id"] = $self.find(".frame").data("psid") == "" ? 0 : $self.find(".frame").data("psid");
+        obj["Id"] = $self.data("psid") == "" ? 0 : $self.data("psid");
         obj["FK_S1id"] = fk_sid[0];
         obj["FK_S2id"] = fk_sid[1];
         obj["Stock"] = $self.find(".input_stock_number").val();
@@ -1088,10 +1082,10 @@ function AddUp(success_text, error_text, target) {
         obj["Min_Qty"] = $self.find(".input_min_number").val();
         obj["Ser_No"] = $self.find(".ser_no").val();
         obj['OldStock'] = $self.data("oldstock");
-
+        obj['SubItemNo'] = $self.find(".input_subItemNo").val();
         var price_list = [];
         modal_price_list.forEach(function (item) {
-            if (item.FK_PSId == $self.find(".frame").data("psid") || item.TempPSid == $self.find(".frame").data("temppsid")) {
+            if (item.FK_PSId == $self.data("psid") || item.TempPSid == $self.data("temppsid")) {
                 var price_object = {};
                 price_object["Id"] = item.Id;
                 price_object["FK_PSId"] = item.FK_PSId;
@@ -1297,6 +1291,7 @@ function AddUp(success_text, error_text, target) {
                         break;
                 }
             }
+            HashDataEdit();
         } else {
             Coker.sweet.error("錯誤", error_text, null, true);
         }

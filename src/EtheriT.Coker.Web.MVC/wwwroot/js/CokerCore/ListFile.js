@@ -348,7 +348,7 @@
             }
         } else {
             if ($self.hasClass("upload_list") && $self.find(".title").text() != "") {
-                $(".upload_list").each(function () {
+                $parent.find(".upload_list").each(function () {
                     var $li_self = $(this);
                     if ($li_self.hasClass("upload_list") && $li_self.find(".title").text() == "") {
                         $li_self.remove();
@@ -358,7 +358,7 @@
             }
             upload_file = null;
             $parent.find(".upload_frame").children("*").remove();
-            $(".upload_list").each(function () {
+            $parent.find(".upload_list").each(function () {
                 $(this).data("edit", false);
             })
             $self.data("edit", true)

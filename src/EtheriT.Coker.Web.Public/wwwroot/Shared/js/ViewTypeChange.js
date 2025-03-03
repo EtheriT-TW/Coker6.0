@@ -102,7 +102,7 @@ const display_configurations = {
         ".shareBlock": "type4",
         ".btn_fav": "type4",
         ".tags": "align-text-bottom",
-        ".title": "type4-title d-inline fs-6",
+        ".title": "type4-title d-inline",
         "figcaption": "pb1 type4-caption d-flex flex-column",
         "figure": "flex-column",
     }],
@@ -130,7 +130,7 @@ const display_configurations = {
         ".shareBlock": "type5",
         ".btn_fav": "type5",
         ".tags": "mt-auto mb-2 align-text-bottom d-lg-flex",
-        ".title": "type4-title d-inline fs-6 p-2",
+        ".title": "type4-title d-inline p-2",
         "figcaption": "flex-grow-1 d-flex flex-column",
     }],
 }

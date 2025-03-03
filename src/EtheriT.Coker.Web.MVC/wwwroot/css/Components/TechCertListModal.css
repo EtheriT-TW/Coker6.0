@@ -12,9 +12,13 @@
     padding-left: 3rem;
 }
 
-.techcert > input {
+.techcert > textarea {
     padding-left: 6.5rem;
+    height: 2rem;
 }
+    .techcert > textarea.multiple {
+        height: 4rem;
+    }
 
 .dx-datagrid-search-panel {
     width: fit-content !important;

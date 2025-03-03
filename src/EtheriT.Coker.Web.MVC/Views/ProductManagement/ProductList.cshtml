@@ -341,10 +341,10 @@
                     <div class="col card px-2 py-3">
                         <div class="itemNo border mb-3 p-2 field-gropu rounded">
                             <div class="d-flex field-header justify-content-between">
-                                <span class="input-group-text border-0">銷帳編號</span>
+                                <span class="input-group-text border-0">產品型號</span>
                                 <div class="itemNo_count">0</div>
                             </div>
-                            <textarea id="InputItemNo" class="form-control border-0 minHeight" aria-label="With textarea" maxlength="100" placeholder="輸入銷帳編號"></textarea>
+                            <textarea id="InputItemNo" class="form-control border-0 minHeight" aria-label="With textarea" maxlength="100" placeholder="輸入產品型號"></textarea>
                         </div>
                         @await Component.InvokeAsync(nameof(Modal), new { dispaly = "TechCertListModal" })
                         <div id="ProdFiles" class="data_upload row mx-0 border rounded mb-3 p-3 position-relative" data-uploadtype="5">
@@ -355,7 +355,7 @@
                                     </button>
                                 </li>
                             </ul>
-                            <div class="preview_frame col-12 border p-2 mb-2">
+                            <div class="preview_frame col-12 border p-2 mb-2 d-none">
                                 <div class="default_frame h-100 d-none d-flex justify-content-center align-items-center"><span>點選 + 號新增檔案</span></div>
                                 <div class="upload_frame custom-file-container" data-upload-id="ProdFile"></div>
                             </div>

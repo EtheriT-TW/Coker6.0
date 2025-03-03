@@ -44,6 +44,11 @@ function TechCertListModalInit() {
             })
         }
         $techcert.val(techcert_text);
+        const textarea = $techcert[0];
+        $techcert.removeClass("multiple");
+        if (textarea.scrollHeight > textarea.offsetHeight) {
+            $techcert.addClass("multiple");
+        }
         techcertModal.hide();
     })
 }
@@ -112,4 +117,11 @@ function TechCertDataSet(datas) {
         getTechCertListDataGridInstance().selectRows(temp_list);
     }
     $techcert.val(text == "" ? "無" : text);
+    const textarea = $techcert[0];
+    setTimeout(function () {
+        $tag.removeClass("multiple");
+        if (textarea.scrollHeight > textarea.offsetHeight) {
+            $techcert.addClass("multiple");
+        }
+    }, 300);
 }

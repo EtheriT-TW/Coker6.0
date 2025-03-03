@@ -25,6 +25,39 @@ var PreLoader;
         });
     }
     setTimeout(continueLoginState, co.Data.Time.ReCheckTime - 1000);
+    // Ctrl + S 儲存表單
+    document.addEventListener("keydown", function (event) {
+        // 檢查是否按下 Ctrl + S
+        if (event.ctrlKey && event.key === "s") {
+            event.preventDefault(); // 阻止瀏覽器的預設儲存行為
+
+            // 找到目前頁面內的 form（可以指定特定 form，或是選擇第一個 form）
+            const form = document.querySelector("form");
+
+            if (form) {
+                form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+            }
+        }
+    });
+    // 防止表單重複提交
+    document.addEventListener("submit", function (event) {
+        const form = event.target;  // 取得觸發的表單
+
+        // 如果該表單正在提交，阻止再次提交
+        if (form.dataset.submitting === "true") {
+            event.preventDefault();  // 阻止表單提交
+            event.stopImmediatePropagation(); // 阻止後續事件處理
+            return;
+        }
+
+        // 標記為提交中
+        form.dataset.submitting = "true";
+
+        // 模擬表單提交延遲，1 秒後取消標記
+        setTimeout(() => {
+            form.dataset.submitting = "false";
+        }, 1000);
+    });
     if (!!!co.Cookie.Get("token")) {
         if (location.pathname != "/" && !/^\/Account/.test(location.pathname)) location.href = "/";
         else co.Page.Ready();

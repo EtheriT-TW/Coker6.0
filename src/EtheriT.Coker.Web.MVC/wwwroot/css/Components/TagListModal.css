@@ -12,9 +12,13 @@
     padding-left: 3rem;
 }
 
-.tag > input {
+.tag > textarea, .tag > input {
     padding-left: 4.5rem;
+    height: 2rem;
 }
+    .tag > textarea.multiple {
+        height: 4rem;
+    }
 
 .dx-datagrid-search-panel {
     width: fit-content !important;

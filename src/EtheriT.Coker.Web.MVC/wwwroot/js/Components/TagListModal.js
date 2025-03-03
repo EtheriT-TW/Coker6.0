@@ -29,6 +29,7 @@ $.fn.extend({
                 tagCheckList: [],
                 tagText: ""
             });
+            $self.removeClass("multiple");
             $self.val("");
             getTagListDataGridInstance().done(function (result) {
                 result.clearSelection()
@@ -151,6 +152,12 @@ function TagListModalInit() {
             })
         }
         $tag.val(tag_text);
+        const textarea = $tag[0];
+        if (textarea.scrollHeight > textarea.offsetHeight) {
+            $tag.addClass("multiple");
+        } else {
+            $tag.removeClass("multiple");
+        }
         tagModal.hide();
         tagContentRefresh();
     })
@@ -218,6 +225,13 @@ function TagDataSet(datas) {
         getTagListDataGridInstance().selectRows(temp_list);
     }
     $tag.val(text == "" ? "無" : text);
+    const textarea = $tag[0];
+    setTimeout(function () {
+        $tag.removeClass("multiple");
+        if (textarea.scrollHeight > textarea.offsetHeight) {
+            $tag.addClass("multiple");
+        }
+    }, 300);
 }
 function getSelectSort() {
     if (tag_list.length > 0) {

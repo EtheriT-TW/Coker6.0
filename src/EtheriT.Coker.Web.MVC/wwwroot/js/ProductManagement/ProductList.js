@@ -119,7 +119,7 @@ function PageReady() {
         var value = $self.val().trim();
 
         if (/^0+\d/.test(value)) value = value.replace(/^0+/, '');
-        if ($self.attr("step") == "1" && value.includes(".")) value = value.substring(0,value.indexOf("."));
+        if ($self.attr("step") == "1" && value.includes(".")) value = value.substring(0, value.indexOf("."));
         if (parseFloat(value) > 100000000) value = "100000000";
 
         $self.val(value);
@@ -328,7 +328,7 @@ function ElementInit() {
                 text += "現金：" + co.String.thousandSign(item["Price"]);
                 if (item["Bonus"] != 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
             });
-            if (filter.length>0) {
+            if (filter.length > 0) {
                 $self.val(text);
             } else {
                 $self.val("");
@@ -650,7 +650,7 @@ function SpecAdd(result) {
         var spectype = $($("#TemplateSpecType").html()).clone();
         $(this).prepend(spectype);
     })
-    
+
     var item_select_1 = item.find(".spec_select").first(),
         item_select_2 = item.find(".spec_select").last();
 
@@ -899,6 +899,7 @@ function UploadListAdd(result, $target) {
     var item_serno = item.find(".ser_no"),
         item_btn_remove = item.find(".btn_remove");
     var file_num = $target.find("ul > li").length - 1;
+    var tempId = total_files.length;
     if (typeof (file_num) == "undefined") file_num = 0;
     if (result == null) {
         $target.find("ul > li").each(function () {
@@ -910,7 +911,7 @@ function UploadListAdd(result, $target) {
         })
 
         file_num += 1;
-        item.data("tempid", file_num);
+        item.data("tempid", tempId);
         item.data("serno", file_num);
         item_serno.val(file_num);
         if ($target.find(".select_frame").length == 0 && typeof ($target.data("uploadtype")) != "undefined")
@@ -1036,6 +1037,8 @@ function UploadPreviewFrameClear($target) {
     $self.find(".media_frame").removeClass("d-flex");
     $self.find(".youtube_frame").removeClass("d-flex");
     $self.find(".select_frame").removeClass("d-flex");
+    $self.find(".youtube_preview").empty();
+    $self.find(".media_preview > div").empty();
 }
 /* ********** *****************
 排序 沒有資料的情況下依舊可以拖動 需修改
@@ -1121,6 +1124,7 @@ function AddUp(success_text, error_text, target) {
         var pid = parseInt(result.message);
         if (result.success) {
             Coker.sweet.success(success_text, null, true);
+            var fileListSave = [];
             if (total_files.length > 0) {
                 $("#ProductForm .data_upload > ul > li").each(function () {
                     var $self = $(this);
@@ -1149,14 +1153,19 @@ function AddUp(success_text, error_text, target) {
                                             for (var i = 0; i < item["File"].length; i++) {
                                                 formData.append("files", item["File"][i]);
                                             }
-                                            co.File.Upload(formData).done(function (result) {
-                                                if (result.success) {
-                                                    for (let n = 0; n < data.length; n++) {
-                                                        data[n].Id = result.files[n].id;
-                                                        data[n].File = result.files[n].path;
-                                                    }
-                                                }
-                                            });
+                                            fileListSave.push(
+                                                co.File.Upload(formData).done(function (result) {
+                                                    var _dfr = $.Deferred()
+                                                    if (result.success) {
+                                                        for (let n = 0; n < data.length; n++) {
+                                                            data[n].Id = result.files[n].id;
+                                                            data[n].File = result.files[n].path;
+                                                        }
+                                                        return _dfr.resolve();
+                                                    } else return _dfr.reject();
+                                                    return _dfr.promise();
+                                                })
+                                            );
                                             formData.delete('files');
                                         })
                                     }
@@ -1192,27 +1201,34 @@ function AddUp(success_text, error_text, target) {
                                         formData.append("type", 1);
                                         formData.append("sid", pid);
                                         formData.append("serno", $self.find(".ser_no").val());
-                                        co.File.Upload(formData).done(function (result) {
-                                            if (result.success) {
-                                                data[0].Id = result.files[0].id;
-                                                data[0].File = result.files[0].path;
-                                            }
-                                        });
+                                        fileListSave.push(
+                                            co.File.Upload(formData).done(function (result) {
+                                                if (result.success) {
+                                                    data[0].Id = result.files[0].id;
+                                                    data[0].File = result.files[0].path;
+                                                }
+                                            })
+                                        );
                                     }
                                     break;
                                 case 4:
                                     var Id = typeof (data[0]["Id"]) == "undefined" ? 0 : data[0]["Id"];
-                                    co.File.UploadYTLink({
-                                        Id: Id,
-                                        File: data[0]["File"] + "",
-                                        SId: pid,
-                                        Type: 1,
-                                        SerNo: $self.find(".ser_no").val(),
-                                    }).done(function (result) {
-                                        if (result.success && typeof (result.files) != "undefined") {
-                                            data[0].Id = result.files[0].id;
-                                        }
-                                    });
+                                    fileListSave.push(
+                                        co.File.UploadYTLink({
+                                            Id: Id,
+                                            File: data[0]["File"] + "",
+                                            SId: pid,
+                                            Type: 1,
+                                            SerNo: $self.find(".ser_no").val(),
+                                        }).done(function (result) {
+                                            var _dfr = $.Deferred();
+                                            if (result.success && typeof (result.files) != "undefined") {
+                                                data[0].Id = result.files[0].id;
+                                                return _dfr.resolve();
+                                            } else return _dfr.reject();
+                                            return _dfr.promise();
+                                        })
+                                    );
                                     break;
                                 case 5:
                                     if (typeof (data[0]["File"]) == "string") {
@@ -1227,12 +1243,17 @@ function AddUp(success_text, error_text, target) {
                                         formData.append("type", 8);
                                         formData.append("sid", pid);
                                         formData.append("serno", $self.find(".ser_no").val());
-                                        co.File.Upload(formData).done(function (result) {
-                                            if (result.success) {
-                                                data[0].Id = result.files[0].id;
-                                                data[0].File = result.files[0].path;
-                                            }
-                                        });
+                                        fileListSave.push(
+                                            co.File.Upload(formData).done(function (result) {
+                                                var _dfr = $.Deferred();
+                                                if (result.success) {
+                                                    data[0].Id = result.files[0].id;
+                                                    data[0].File = result.files[0].path;
+                                                    return _dfr.resolve();
+                                                } else return _dfr.reject();
+                                                return _dfr.promise();
+                                            })
+                                        );
                                     }
                             }
                         }
@@ -1254,11 +1275,13 @@ function AddUp(success_text, error_text, target) {
                                 if (typeof (file["Id"]) != "undefined") {
                                     var deleteid_list = [];
                                     deleteid_list.push(file["Id"]);
-                                    co.File.DeleteFileById({
-                                        Sid: parseInt(result.message),
-                                        Type: (file["Type"] == 5 ? 8 : 1),
-                                        Fid: deleteid_list,
-                                    });
+                                    fileListSave.push(
+                                        co.File.DeleteFileById({
+                                            Sid: parseInt(result.message),
+                                            Type: (file["Type"] == 5 ? 8 : 1),
+                                            Fid: deleteid_list,
+                                        })
+                                    );
                                 }
                                 break;
                         }
@@ -1291,7 +1314,9 @@ function AddUp(success_text, error_text, target) {
                         break;
                 }
             }
-            HashDataEdit();
+            $.when.apply(null, fileListSave).done(function () {
+                HashDataEdit();
+            });
         } else {
             Coker.sweet.error("錯誤", error_text, null, true);
         }

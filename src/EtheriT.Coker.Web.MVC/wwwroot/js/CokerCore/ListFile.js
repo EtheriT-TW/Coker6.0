@@ -5,6 +5,9 @@
             e.preventDefault();
             var $self = $(this).parents(".data_upload");
             UploadListAdd(null, $self);
+            if ($self.data("uploadtype") == 5) {
+                $self.find(".preview_frame>.upload_frame input").trigger("click");
+            }
         })
 
         $(".youtube_frame .btn").on("click", function (e) {
@@ -267,7 +270,6 @@
                             break;
                     }
                     $root.data("file_num", file_num);
-                    UploadPreviewFrameClear($root);
                 }
             })
         })
@@ -358,9 +360,9 @@
             }
             upload_file = null;
             $parent.find(".upload_frame").children("*").remove();
-            $parent.find(".upload_list").each(function () {
+            $(".upload_list").each(function () {
                 $(this).data("edit", false);
-            })
+            });
             $self.data("edit", true)
             $parent.find(".default_frame").removeClass("d-flex");
             $parent.find(".youtube_preview").empty();
@@ -437,6 +439,17 @@
                             var file;
                             if (typeof (data) != "undefined") {
                                 file = total_files.find(item => item["TempId"] == $self.data("tempid"))["File"];
+                                if (typeof (file) != "undefined") {
+                                    const objectUrl = URL.createObjectURL(file);
+                                    var video = $("<video>", {
+                                        class: "h-100 w-100",
+                                        controls: true,
+                                        preload: "metadata",
+                                        src: objectUrl
+                                    });
+                                    $parent.find(".media_frame").addClass("d-flex");
+                                    $parent.find(".media_preview > div").append(video);
+                                }
                                 $parent.find(".upload_frame").find("span").text(file.name);
                                 $parent.find(".media_frame").find("input").val(total_files.find(item => item["TempId"] == $self.data("tempid"))["Name"]);
                             }

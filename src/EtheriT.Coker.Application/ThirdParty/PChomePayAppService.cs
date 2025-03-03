@@ -116,7 +116,8 @@ namespace EtheriT.Coker.Application.ThirdParty
         public async Task<IActionResult> PChomePayReturn(string ohid)
         {
             var orderid = long.Parse(ohid);
-            var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            //var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            var WebsiteId = await db.Order_Headers.Where(e => e.Id == orderid).Select(e => e.FK_WebsiteId).FirstOrDefaultAsync();
             var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
             try
             {
@@ -132,7 +133,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
                 Console.WriteLine($"PChomePay=>PChomePayReturn回傳資料：{ex.Message}");
             }
-            return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{ohid}");
+            //return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{ohid}");
+            return new LocalRedirectResult($"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar?{ohid}");
         }
         public async Task<string> PChomePayNotify(PChomePayNotifyDto dto)
         {
@@ -651,9 +653,15 @@ namespace EtheriT.Coker.Application.ThirdParty
                     }
                     PaymentBody.items = items;
 
-                    PaymentBody.return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn?ohid={oid}";
-                    PaymentBody.fail_return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn?ohid={oid}";
-                    PaymentBody.notify_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayNotify";
+                    //PaymentBody.return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn?ohid={oid}";
+                    //PaymentBody.fail_return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn?ohid={oid}";
+                    //PaymentBody.notify_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayNotify";
+
+                    var BackstageUrl = configuration.GetValue<string>("WebConfig:BackstageUrl");
+                    PaymentBody.return_url = $"{BackstageUrl}/api/ThirdParty/PChomePayReturn?ohid={oid}";
+                    PaymentBody.fail_return_url = $"{BackstageUrl}/api/ThirdParty/PChomePayReturn?ohid={oid}";
+                    PaymentBody.notify_url = $"{BackstageUrl}/api/ThirdParty/PChomePayNotify";
+
 
                     PaymentBody.buyer_email = ohdata.OrdererEmail;
 

@@ -303,6 +303,41 @@
             border-radius: 20%;
         }
 
+
+.btn_addToCar button {
+    border: none;
+    border-radius: 5px;
+    color: white;
+    padding: 5px 20px;
+    background-color: #4A4A4A;
+}
+
+    .btn_addToCar button:before {
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 400;
+        content: "\f0fe ";
+        padding-right: .25rem;
+    }
+
+.hasBuyBtn figure figcaption.type4-caption {
+    padding-bottom: 50px;
+}
+
+.type4 .btn_addToCar {
+    padding: 0.5rem 0rem;
+    position: absolute;
+    text-align: center;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%);
+}
+
+.type5 .btn_addToCar {
+    padding: 0.5rem 0rem;
+    position: relative;
+    text-align: end;
+}
+
 /* Button Favorites*/
 .btn_fav {
     position: absolute;

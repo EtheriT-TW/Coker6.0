@@ -990,7 +990,8 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                         }
                     },
                     { name: 'data-shownum', type: 'text', label: '單頁筆數', placeholder: '一個分頁要抓幾筆資料' },
-                    { name: 'data-maxlen', type: 'text', label: '最大筆數', placeholder: '該目錄僅抓幾筆資料' }
+                    { name: 'data-maxlen', type: 'text', label: '最大筆數', placeholder: '該目錄僅抓幾筆資料' },
+                    { name: 'data-hasbuybtn', type: 'checkbox', label: '購物按鈕(僅作用於商品目錄)', valueTrue: "true", valueFalse: "false" }
                 ],
             },
             init() {
@@ -1001,7 +1002,8 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                         let attr = component.getAttributes();
                         fWindow.$(`#${component.getId()}`).data({
                             "prevdirid": attr["data-prevdirid"],
-                            "shownum": attr["data-shownum"]
+                            "shownum": attr["data-shownum"],
+                            "hasbuybtn": attr["data-hasbuybtn"]
                         });
                         fWindow.DirectoryGetDataInit();
                     }, 200);
@@ -1012,7 +1014,8 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                         let attr = component.getAttributes();
                         fWindow.$(`#${component.getId()}`).data({
                             "prevdirid": attr["data-prevdirid"],
-                            "maxlen": attr["data-maxlen"]
+                            "maxlen": attr["data-maxlen"],
+                            "hasbuybtn": attr["data-hasbuybtn"]
                         });
                         fWindow.DirectoryGetDataInit();
                     }, 200);
@@ -1027,6 +1030,18 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                             });
                             fWindow.DirectoryGetDataInit();
                         }
+                    }, 200);
+                });
+                self.on(`change:attributes:data-hasbuybtn`, component => {
+                    setTimeout(() => {
+                        const fWindow = $(".gjs-frame")[0].contentWindow;
+                        let attr = component.getAttributes();
+                        fWindow.$(`#${component.getId()}`).data({
+                            "prevdirid": attr["data-prevdirid"],
+                            "maxlen": attr["data-maxlen"],
+                            "hasbuybtn": attr["data-hasbuybtn"]
+                        });
+                        fWindow.DirectoryGetDataInit();
                     }, 200);
                 });
             }

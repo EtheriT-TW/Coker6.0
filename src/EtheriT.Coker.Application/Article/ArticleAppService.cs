@@ -49,8 +49,8 @@ namespace EtheriT.Coker.Application.Article
             IConfiguration configuration,
             ITagAppService tagAppService,
             IFileUploadAppService fileUploadAppService,
-			IHtmlProcessor htmlProcessor
-		)
+            IHtmlProcessor htmlProcessor
+        )
         {
             this.db = db;
             this.loginUserData = loginUserData;
@@ -59,8 +59,8 @@ namespace EtheriT.Coker.Application.Article
             this.tagAppService = tagAppService;
             this.fileUploadAppService = fileUploadAppService;
             this.stringHandler = stringHandler;
-			this.htmlProcessor = htmlProcessor;
-			ServiceName = "Article";
+            this.htmlProcessor = htmlProcessor;
+            ServiceName = "Article";
         }
         public async Task<ResponseMessageDto> AddUp(ArticleDto dto)
         {
@@ -271,7 +271,7 @@ namespace EtheriT.Coker.Application.Article
                                             permanent = e.permanent,
                                             DataJson = string.IsNullOrEmpty(e.DataJson) ? null : JsonConvert.DeserializeObject<NewsletterFrameDto>(e.DataJson)
                                         }).FirstOrDefaultAsync();
-                    
+
                     if (output != null)
                     {
                         var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
@@ -308,7 +308,7 @@ namespace EtheriT.Coker.Application.Article
 
                 var output = new List<DirectoryReleInfoDto>();
                 var articleData = new List<ArticleListGetDto>();
-                var query =  db.Article
+                var query = db.Article
                                 .AsNoTracking()
                                 .Where(e => siteIds.Contains(e.FK_WebsiteId))
                                 .Where(e => !e.RemovedFromShelves)
@@ -319,13 +319,15 @@ namespace EtheriT.Coker.Application.Article
                                 .OrderBy(a => a.SerNO)
                                 .ThenByDescending(a => a.NodeDate)
                                 .ThenByDescending(e => e.Id);
+                if (dto.MaxLen != null && dto.MaxLen > 0) query = (IOrderedQueryable<Core.Models.Article>)query.Take((int)dto.MaxLen);
                 var result = new List<Core.Models.Article>();
                 int skip = ((dto.Page ?? 1) - 1) * dto.ShowNum ?? 12 - 1;
-                if (skip < 0) skip = 0;
+                skip = skip < 0 ? 0 : skip;
                 if (dto.FindNearest == true)
                 {
                     var distance = new List<DistanceTempDto>();
-                    foreach (var data in query) {
+                    foreach (var data in query)
+                    {
                         if (data.Longitude != null && data.Latitude != null)
                         {
                             var distemp = new DistanceTempDto();
@@ -343,11 +345,7 @@ namespace EtheriT.Coker.Application.Article
                     }
                     result = newresult;
                 }
-                else
-                {
-                    if (dto.MaxLen != null && dto.MaxLen > 0) result = query.Take(dto.MaxLen.Value).ToList();
-                    else result = query.Skip(skip).Take(dto.ShowNum ?? 12).ToList();
-                }
+                else result = query.ToList();
                 if (string.IsNullOrEmpty(dto.Target))
                 {
                     articleData = mapper.Map(result, articleData).Skip(skip).Take(dto.ShowNum ?? 12).ToList();
@@ -527,16 +525,16 @@ namespace EtheriT.Coker.Application.Article
                 if (article != null)
                 {
                     string Orgname = await loginUserData.GetWebsiteOrgName();
-					importDto.Html = stringHandler.HtmlDecode(importDto.Html);
-					importDto.Html = htmlProcessor.RemoveNode(importDto.Html ?? "", ".backstageType");
+                    importDto.Html = stringHandler.HtmlDecode(importDto.Html);
+                    importDto.Html = htmlProcessor.RemoveNode(importDto.Html ?? "", ".backstageType");
 
-					importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
+                    importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
                     importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
 
                     article.Css = importDto.Css;
-					article.PageText = htmlProcessor.text(importDto.Html);
-					article.Html = stringHandler.HtmlEncode(importDto.Html);
-					article.LastModificationTime = DateTime.Now;
+                    article.PageText = htmlProcessor.text(importDto.Html);
+                    article.Html = stringHandler.HtmlEncode(importDto.Html);
+                    article.LastModificationTime = DateTime.Now;
                     article.LastModifierUserId = userId;
 
                     await loginUserData.SaveChanges(article);

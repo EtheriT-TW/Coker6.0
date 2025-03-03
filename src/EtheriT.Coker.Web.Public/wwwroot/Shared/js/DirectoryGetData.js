@@ -304,7 +304,13 @@ function DirectoryDataGet($item, option) {
         $item.data("init", "true");
 
         if (result.releInfos.length > 0 && result.releInfos[0].type == 1) {
-            if (typeof (islogin) == "undefined") {
+            var hasbuybtn = false;
+            if (typeof ($item.data("hasbuybtn")) == "string") hasbuybtn = $item.data("hasbuybtn").toLowerCase() === "true";
+            else hasbuybtn = $item.data("hasbuybtn");
+            if (hasbuybtn && ($("#btn_car_dropdown").length > 0 || typeof (OrgName) == "undefined")) $item.addClass("hasBuyBtn");
+            else $item.removeClass("hasBuyBtn");
+
+            if (typeof (islogin) == "undefined" && typeof (OrgName) != "undefined") {
                 Coker.Token.CheckToken().done(function (token_result) {
                     if (token_result.success) islogin = token_result.isLogin;
                     DirectoryDataInsert($item, result.releInfos);
@@ -340,6 +346,17 @@ function DirectoryDataInsert($item, result) {
     else $item.find(".catalog").removeClass("empty");
     result != null && result.forEach(function (data) {
         var content = $(temp).clone();
+
+        if ($item.hasClass("hasBuyBtn")) {
+            if (content.find(".btn_addToCar").length > 0) content.find(".btn_addToCar").removeClass("d-none");
+            else {
+                var btn_addToCarHtml = '<div class="btn_addToCar"><button>加入購物車</button></div>';
+                content.find("div").first().find("a").first().after(btn_addToCarHtml);
+            }
+        } else {
+            if (content.find(".btn_addToCar").length > 0) content.find(".btn_addToCar").addClass("d-none");
+        }
+
         let path, target;
         if (isSearch || window.location.pathname.toLowerCase().indexOf("search") > 0 || window.location.pathname.toLowerCase().indexOf("techcert") > 0) {
             var links = data.link.split("?filter=");
@@ -517,6 +534,13 @@ function DirectoryDataInsert($item, result) {
         if (data.type == 1 && typeof (IsLogin) != "undefined" && IsLogin) ProdFavBtnSet(content, data)
 
         $item.find(".catalog").append(content);
+
+        if (data.type == 1 && content.find(".btn_addToCar").length > 0) {
+            content.find(".btn_addToCar").on("click", function () {
+                window.location.href = path;
+            });
+        }
+
     });
     HoverEffectInit();
     ShareBlockInit();

@@ -104,6 +104,16 @@
     border-left: solid 6px #919191;
 }
 
+    .type_change_frame .catalog .type1 .title {
+        font-weight: 450;
+        font-size: 1.08rem !important;
+    }
+
+    .type_change_frame .catalog .type1 .more-btn {
+        width: 24px;
+        height: 24px;
+    }
+
 .type_change_frame .catalog .type2 {
     height: 100%;
 }
@@ -141,11 +151,6 @@
     word-break: break-all;
 }
 
-.type_change_frame .type2 .more-btn {
-    width: 24px;
-    height: 24px;
-}
-
 .type_change_frame .type2-title {
     overflow: hidden;
     display: -webkit-box;
@@ -153,8 +158,6 @@
     -webkit-line-clamp: 3;
     max-height: calc(1rem * 5.1);
     position: relative;
-    font-weight: 450;
-    font-size: 1.08rem;
 }
 
 .type_change_frame .type4-title {

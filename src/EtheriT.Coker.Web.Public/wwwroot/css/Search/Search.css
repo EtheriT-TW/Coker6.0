@@ -25,10 +25,10 @@ body {
         font-size: 1.08rem;
     }
 
-.search-category .type1 .more-btn {
-    width: 24px;
-    height: 24px;
-}
+    .search-category .catalog .type1 .more-btn {
+        width: 24px;
+        height: 24px;
+    }
 
 .search-category .catalog .type2 {
     height: auto;

@@ -317,6 +317,7 @@ function DirectoryDataGet($item, option) {
                 });
             } else DirectoryDataInsert($item, result.releInfos);
         } else {
+            if ($item.find(".btn_addToCar").length > 0) $item.find(".btn_addToCar").addClass("d-none");
             DirectoryDataInsert($item, result.releInfos);
         }
         $item.data({ filter: result.filter, directoryType: result.directoryType }).trigger("load");

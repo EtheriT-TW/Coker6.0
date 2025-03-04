@@ -168,7 +168,8 @@ function ViewTypeChangeInit() {
                     if (!$btn.data("activate")) {
                         var btn_list = $btn.attr("class").split(" ");
                         var btn_list_str = btn_list.filter(item => item.startsWith("btn_")).toString().replaceAll(",", ".");
-                        localStorage.setItem(`switchViewType-${pathname}`, btn_list_str);
+                        var count = $self.find(".switch_control > button:not(.d-none)").length;
+                        if (count > 1) localStorage.setItem(`switchViewType-${pathname}`, btn_list_str);
                         typeChange($btn, $btns, $content, config);
                     }
                 })
@@ -176,8 +177,14 @@ function ViewTypeChangeInit() {
             var TypeButtonInit = false;
             if (typeof (localStorage[`switchViewType-${pathname}`]) != "undefined") {
                 if (pathname.indexOf("Search") < 0) {
-                    var btnclass = localStorage[`switchViewType-${pathname}`];
-                    $(`button.${btnclass}`).trigger("click");
+                    var count = $self.find(".switch_control > button:not(.d-none)").length;
+                    if (count > 1) {
+                        var btnclass = localStorage[`switchViewType-${pathname}`];
+                        $(`button.${btnclass}`).trigger("click");
+                    } else {
+                        localStorage.removeItem(`switchViewType-${pathname}`);
+                        $self.find(".switch_control > button:not(.d-none)").trigger("click");
+                    }
                 }
                 TypeButtonInit = true;
             }

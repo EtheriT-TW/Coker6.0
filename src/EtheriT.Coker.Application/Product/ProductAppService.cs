@@ -800,7 +800,6 @@ namespace EtheriT.Coker.Application.Product
         }
         public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto)
         {
-
             try
             {
                 var UUID = await tokenAppService.GetUUID();
@@ -820,13 +819,10 @@ namespace EtheriT.Coker.Application.Product
                 if (productData != null)
                 {
                     output = (from p in productData
-                              join f in db.Favorites on p.Id equals f.FK_AssocId into favoritesGroup
-                              from f in favoritesGroup.DefaultIfEmpty()
-                              where f == null || f.Type == (int)FavoritesTypeEnum.商品
                               select new DirectoryReleInfoDto
                               {
                                   Id = p.Id,
-                                  FId = f?.Id ?? null,
+                                  FId = null,
                                   Title = p.Title,
                                   ItemNo = p.ItemNo,
                                   Link = $"/product/{p.Id}",
@@ -858,8 +854,10 @@ namespace EtheriT.Coker.Application.Product
                     for (int i = 0; i < output.Count; i++)
                     {
                         var data = output[i];
-                        var stockids = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Select(e => e.Id).ToListAsync();
+                        var favorites = await db.Favorites.Where(e => e.UUID == UUID & e.FK_AssocId == data.Id && e.Type == (int)FavoritesTypeEnum.商品).FirstOrDefaultAsync();
+                        if (favorites != null) data.FId = favorites.Id;
 
+                        var stockids = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Select(e => e.Id).ToListAsync();
                         var prices = await GetPriceByStock(stockids);
 
                         double min = prices.Min(e => e.Price) ?? 0;
@@ -868,7 +866,6 @@ namespace EtheriT.Coker.Application.Product
                         else data.Price = $"{min} ~ {max}";
                     }
                 }
-
                 return output;
             }
             catch (Exception e)

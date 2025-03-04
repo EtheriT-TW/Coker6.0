@@ -351,7 +351,8 @@ function DirectoryDataInsert($item, result) {
         if ($item.hasClass("hasBuyBtn")) {
             if (content.find(".btn_addToCar").length > 0) content.find(".btn_addToCar").removeClass("d-none");
             else {
-                var btn_addToCarHtml = '<div class="btn_addToCar"><button>加入購物車</button></div>';
+                //var btn_addToCarHtml = '<div class="btn_addToCar"><button>加入購物車</button></div>';
+                var btn_addToCarHtml = '<div class="btn_addToCar"><button>瀏覽商品</button></div>';
                 content.find("div").first().find("a").first().after(btn_addToCarHtml);
             }
         } else {

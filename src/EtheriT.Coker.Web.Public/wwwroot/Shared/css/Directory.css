@@ -325,8 +325,10 @@
 
     .btn_addToCar button:before {
         font-family: 'Font Awesome 6 Free';
-        font-weight: 400;
-        content: "\f0fe ";
+        font-weight: 900;
+        content: "\f002";
+        /*font-weight: 400;*/
+        /*content: "\f0fe ";*/
         padding-right: .25rem;
     }
 

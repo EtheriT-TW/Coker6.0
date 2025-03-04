@@ -41,7 +41,7 @@
 <div id="Footer_Bottom" class="center">
     <div id="Logo_Bottom">
         <div></div>
-        <span><a href="/" title="連結至：首頁"><img src="@Model.Logo_Image" width="120" alt="@ViewData["OrgName"]" /></a></span>
+        <span><a href="/" title="連結至：首頁"><img src="@Model.Logo_Image" width="120" alt="@ViewData["OrgName"]" asp-append-version="true" /></a></span>
     </div>
     <div id="Other_Web_Button" class=" center">
         @if (!string.IsNullOrEmpty(Model.Facebook_Link))
@@ -64,7 +64,7 @@
         {
             @foreach (var data in Model.Other_Image_Link)
             {
-                <a href="@data.Link" title="連結至:@data.Title" target="_blank" class="link_image"><img src="@data.Source" alt="@data.Name" /></a>
+                <a href="@data.Link" title="連結至:@data.Title" target="_blank" class="link_image"><img src="@data.Source" alt="@data.Name" asp-append-version="true" /></a>
             }
         }
     </div>

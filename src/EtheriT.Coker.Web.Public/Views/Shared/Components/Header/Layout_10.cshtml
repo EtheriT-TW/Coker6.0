@@ -41,7 +41,7 @@
 					}
 					else
 					{
-						<img class="" src="@Model.LogoImageUrl" alt="@Model.Title" />
+						<img class="" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
 						<h1 class="sr-only">@Model.Title</h1>
 					}
 				</a>
@@ -68,7 +68,7 @@
 						}
 						else
 						{
-							<img src="@Model.LogoImageUrl" alt="@Model.Title" class="logo-img" />
+							<img src="@Model.LogoImageUrl" alt="@Model.Title" class="logo-img" asp-append-version="true" />
 							<h1 class="d-none">@Model.Title</h1>
 						}
 					</a>
@@ -258,7 +258,7 @@
 				@foreach (var imageSrc in Model.Bannners)
 				{
 					<div class="swiper-slide image_link_slide d-flex align-self-center">
-						<a class="w-100"><img src="@imageSrc.DisktopImage" class="w-100" /></a>
+						<a class="w-100"><img src="@imageSrc.DisktopImage" class="w-100" asp-append-version="true" /></a>
 					</div>
 				}
 			</div>

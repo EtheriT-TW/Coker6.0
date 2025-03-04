@@ -24,7 +24,7 @@
                 }
                 else
                 {
-                    <img src="@Model.LogoImageUrl" alt="@Model.Title" />
+                    <img src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
                     <h1 class="sr-only">@Model.Title</h1>
                 }
             </a>
@@ -182,7 +182,7 @@
                 }
                 else
                 {
-                    <img class="" src="@Model.LogoImageUrl" alt="@Model.Title" />
+                    <img class="" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
                     <h1 class="d-none">@Model.Title</h1>
                 }
             </a>
@@ -257,7 +257,7 @@
 <div class="image-wh">
     @foreach (var item in Model.Bannners)
     {
-        <img id="header-title" class="w-100 titleimage m-auto d-block" src="@item.DisktopImage" alt="Header Titile" />
-        <img id="header-title-phone" class="d-none titleimage m-auto d-block" src="@item.PhoneImage" alt="Header Titile" />
+        <img id="header-title" class="w-100 titleimage m-auto d-block" src="@item.DisktopImage" alt="Header Titile" asp-append-version="true" />
+        <img id="header-title-phone" class="d-none titleimage m-auto d-block" src="@item.PhoneImage" alt="Header Titile" asp-append-version="true" />
     }
 </div>

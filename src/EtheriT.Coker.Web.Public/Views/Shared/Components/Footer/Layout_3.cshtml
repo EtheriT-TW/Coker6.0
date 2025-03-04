@@ -25,7 +25,7 @@
 		<div class="footer_right d-flex flex-column flex-sm-row  justify-content-center line_break">
 			@if (Model.line_qr != null)
 			{
-				<div class="text-center"><img class="pb-3 qr_img" alt="加入Line@@" src="@Model.line_qr" /></div>
+				<div class="text-center"><img class="pb-3 qr_img" alt="加入Line@@" src="@Model.line_qr" asp-append-version="true" /></div>
 				<div class="d-flex flex-column mx-4">
 					<div class="fs-3 fw-bold text-center text-md-start">@Model.line_title</div>
 					<div class="lh-lg text-center text-md-start">@Model.line_describe</div>
@@ -62,7 +62,7 @@
 		@if (Model.Accessibility_Link != null && Model.Accessibility_Badge != null)
 		{
 			<a href="@Model.Accessibility_Link" targer="_blank" title="連結至:無障礙網站AA認證(另開新視窗)">
-				<img class="px-3 my-3" alt="通過AA無障礙網頁檢測" src="@Model.Accessibility_Badge" />
+				<img class="px-3 my-3" alt="通過AA無障礙網頁檢測" src="@Model.Accessibility_Badge" asp-append-version="true" />
 			</a>
 		}
 	</div>

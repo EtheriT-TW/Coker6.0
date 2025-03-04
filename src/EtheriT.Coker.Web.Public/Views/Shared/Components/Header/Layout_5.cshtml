@@ -45,7 +45,7 @@
                     }
                     else
                     {
-                        <img class="" src="@Model.LogoImageUrl" alt="@Model.Title" />
+                        <img class="" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
                         <h1 class="sr-only">@Model.Title</h1>
                     }
                 </a>
@@ -71,7 +71,7 @@
                     }
                     else
                     {
-                        <img src="@Model.LogoImageUrl" alt="@Model.Title" class="logo-img" />
+                        <img src="@Model.LogoImageUrl" alt="@Model.Title" class="logo-img" asp-append-version="true" />
                         <h1 class="d-none">@Model.Title</h1>
                     }
                 </a>

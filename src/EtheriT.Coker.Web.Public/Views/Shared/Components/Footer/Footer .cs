@@ -467,8 +467,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 									"<span><i class=\"fa-solid fa-phone\"></i></span><a href=\"tel:03-3179599\" target=\"_blank\" title=\"撥打電話至:07-3737909(另開新視窗)\" class=\"tel\">03-3179599</a><br>" +
 									"<span><i class=\"fa-solid fa-at\"></i></span>電子郵件：<a href=\"mailto:unitedte168@gmail.com\" target=\"_blank\" title=\"發送電子郵件至:unitedte168@gmail.com(另開新視窗)\">unitedte168@gmail.com</a><br>" +
 									"<span><i class=\"fa-solid fa-house\"></i></span>地址：<a href=\"https://goo.gl/maps/eoGMYGKvxetaReKX8\" target=\"_blank\" title=\"連結至:google地圖(另開新視窗)\">330桃園市桃園區經國路168號</a><br>" +
-									"<div id=\"qrcode\"><a href=\"/unitedtw/home\"><img src=\"/upload/footer_qrcode.png\"></a></div>"
-								},
+                                    "<div id=\"qrcode\"><a href=\"/unitedtw/home\"><img src=\"/upload/footer_qrcode.png\" asp-append-version=\"true\" ></a></div>"
+                                },
 								Copyright = "Copyright © 2020 UNITED MEDICAL FOUNDATION TAIWAN. All Rights Reserved"
 							};
 							break;
@@ -572,7 +572,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                             {
                                 Content = new List<string>
                                 {
-                                    "Copyright© 湛盛度量衡器企業社 版權所有 |<br id=\"iswrap\"> 湛盛電子秤 ALL Rights Reservd<br>電話：<a href=\"tel:06-3128599\">06-3128599</a> &nbsp; 傳真：06-312-9399<br id=\"iswrap\"> &nbsp; Email：<a href=\"MAILTO:L2730520@yahoo.com.tw\" target=\"_blank\"> L2730520@yahoo.com.tw</a>",
+                                    "Copyright© 湛盛度量衡器企業社 版權所有 |<br id=\"iswrap\"> 湛盛電子秤 ALL Rights Reservd<br>電話：<a href=\"tel:06-3128599\">06-312-8599</a> &nbsp; 傳真：06-312-9399<br id=\"iswrap\"> &nbsp; Email：<a href=\"MAILTO:L2730520@yahoo.com.tw\" target=\"_blank\"> L2730520@yahoo.com.tw</a>",
                                 }
                             };
                             break;
@@ -608,7 +608,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 							break;
 						case 11:
 							footerMessage =
-									"<div class=\"d-flex my-2\"><div id=\"tonight-block\"><a id=\"tonight-logo\" href=\"https://www.tonight-motel.com.tw/default1.asp\" title=\"連結至:晶夜官方網站(另開新視窗)\" target=\"_blank\"><img src = \"/upload/footer_image.png\"></a></div>" +
+                                    "<div class=\"d-flex my-2\"><div id=\"tonight-block\"><a id=\"tonight-logo\" href=\"https://www.tonight-motel.com.tw/default1.asp\" title=\"連結至:晶夜官方網站(另開新視窗)\" target=\"_blank\"><img src = \"/upload/footer_image.png\" asp-append-version=\"true\" ></a></div>" +
 									"<div id=\"message-block\"><span>興震億建設．震億營造 ALL Rights Reserved</span></br>" +
 									"<span>電話:</span><a href=\"tel:(08)751-7125\" target=\"_blank\" title=\"撥打電話至:(08)751-7125(另開新視窗)\" class=\"tel\">(08)751-7125</a> <span> &nbsp;&nbsp;傳真:(08)751-7135</span><br>" +
 									"<span>地址:</span><a href=\"https://g.co/kgs/D83qX5m\" target=\"_blank\" title=\"連結至:google地圖(另開新視窗)\">屏東縣屏東市清溪里清寧街223號</a></div></div>";

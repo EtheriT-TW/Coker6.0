@@ -315,6 +315,7 @@
 
 
 .btn_addToCar button {
+    white-space: nowrap;
     border: none;
     border-radius: 5px;
     color: white;

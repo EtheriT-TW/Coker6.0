@@ -1,7 +1,9 @@
 ﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
 using EtheriT.Coker.Application.Shared.ThirdParty;
+using EtheriT.Coker.Application.Specification;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
@@ -55,7 +57,8 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await pchomePayAppService.PChomePayReturn(ohid);
         }
         [HttpPost]
-        public async Task<string> PChomePayNotify(PChomePayNotifyDto dto)
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<string> PChomePayNotify([FromForm] PChomePayNotifyDto dto)
         {
             return await pchomePayAppService.PChomePayNotify(dto);
         }

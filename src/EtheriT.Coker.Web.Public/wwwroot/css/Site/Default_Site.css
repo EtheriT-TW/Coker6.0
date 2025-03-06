@@ -94,6 +94,10 @@ a[href="https://translate.google.com"] {
     border-radius: 3px;
 }
 
+#TermsModal .modal-body .content {
+    white-space: pre-wrap;
+}
+
 @media only screen and (max-width: 768px) {
     #YTPreviewModal .modal-dialog {
         max-width: 95vw !important;

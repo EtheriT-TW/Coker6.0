@@ -58,21 +58,23 @@ namespace EtheriT.Coker.Application.StoreSet
                              Description = g.Description!,
                              Title = g.Title,
                              storeSets = (from s in db.StoreSet.Where(e => !e.IsDeleted && e.FK_StoreSetGroupId == g.Id).OrderBy(e => e.jobID)
-                                         select new StoreSetOutputDto { 
-                                            key = s.key,
-                                            name = s.name,
-                                            maxlength = s.maxlength,
-                                            memo = s.memo,
-                                            pattern = s.pattern,
-                                            type = s.type!,
-                                            storeSetItemOutputDtos = (
-                                                from item in db.StoreSetItems.Where(e => !e.IsDeleted && e.FK_StoreSetId == s.Id)
-                                                select new StoreSetItemOutputDto { 
-                                                    Key = item.Key,
-                                                    Value = item.Value,
-                                                }
-                                            ).ToList()
-                                         }).ToList()
+                                          select new StoreSetOutputDto
+                                          {
+                                              key = s.key,
+                                              name = s.name,
+                                              maxlength = s.maxlength,
+                                              memo = s.memo,
+                                              pattern = s.pattern,
+                                              type = s.type!,
+                                              storeSetItemOutputDtos = (
+                                                 from item in db.StoreSetItems.Where(e => !e.IsDeleted && e.FK_StoreSetId == s.Id)
+                                                 select new StoreSetItemOutputDto
+                                                 {
+                                                     Key = item.Key,
+                                                     Value = item.Value,
+                                                 }
+                                             ).ToList()
+                                          }).ToList()
                          };
             if (result != null)
             {
@@ -83,24 +85,25 @@ namespace EtheriT.Coker.Application.StoreSet
 
             return output;
         }
-        public async Task<StoreSetResponseMessageDto> getValues(StoreSetGetValueInput dto) {
+        public async Task<StoreSetResponseMessageDto> getValues(StoreSetGetValueInput dto)
+        {
             StoreSetResponseMessageDto output;
             long websiteId;
             if (dto.SiteId == null || dto.SiteId == 0) websiteId = await loginUserData.GetWebsiteId();
             else websiteId = dto.SiteId.Value;
             if (dto.StoreSetGroupId != null) output = await getValuesByGroupId(dto.StoreSetGroupId.Value, websiteId);
-            else if(dto.keys !=null && dto.keys.Count>0) output = await getValuesByKeys(dto.keys, websiteId);
-            else if(!string.IsNullOrEmpty(dto.key)) output = await getValueByKey(dto.key, websiteId);
+            else if (dto.keys != null && dto.keys.Count > 0) output = await getValuesByKeys(dto.keys, websiteId);
+            else if (!string.IsNullOrEmpty(dto.key)) output = await getValueByKey(dto.key, websiteId);
             else
             {
-                output = new StoreSetResponseMessageDto { Message = "缺少搜尋條件"};
+                output = new StoreSetResponseMessageDto { Message = "缺少搜尋條件" };
             }
             return output;
         }
-        private async Task<StoreSetResponseMessageDto> getValuesByGroupId(long StoreSetGroupId,long websiteId)
+        private async Task<StoreSetResponseMessageDto> getValuesByGroupId(long StoreSetGroupId, long websiteId)
         {
             StoreSetResponseMessageDto output = new StoreSetResponseMessageDto();
-            
+
             try
             {
                 var result = await db.StoreSetDetail
@@ -114,7 +117,7 @@ namespace EtheriT.Coker.Application.StoreSet
                     select new StoreSetDetailOutputDto
                     {
                         key = s.StoreSet.key,
-                        value = s.value!.Split(",").ToList().ConvertAll(e => e.Trim())
+                        value = s.StoreSet.type != SeoSetDataTypeEnum.textarea ? s.value!.Split(",").ToList().ConvertAll(e => e.Trim()) : s.value != null ? new List<string> { s.value } : new List<string>(),
                     }
                 ).ToList();
                 output.Success = true;
@@ -212,9 +215,10 @@ namespace EtheriT.Coker.Application.StoreSet
                                           }).ToListAsync();
                         if (data.Any())
                         {
-                            data.ForEach(e => {
+                            data.ForEach(e =>
+                            {
                                 StoreSetDetailOutputDto? item = notHas.Find(n => n.key == e.StoreSet.key);
-                                if (item != null && item.value!=null)
+                                if (item != null && item.value != null)
                                 {
                                     e.value = String.Join(", ", item.value.ToArray());
                                 }
@@ -226,7 +230,8 @@ namespace EtheriT.Coker.Application.StoreSet
                 }
                 output.Success = true;
             }
-            catch(Exception ex) {
+            catch (Exception ex)
+            {
                 output.Message = ex.Message;
             }
             return output;

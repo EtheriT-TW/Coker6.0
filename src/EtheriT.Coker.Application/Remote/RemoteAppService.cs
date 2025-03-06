@@ -31,40 +31,43 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace EtheriT.Coker.Application.Remote
 {
-	public class RemoteAppService: IRemoteAppService
-	{
-		private readonly CokerDbContext db;
-		private readonly LoginUserData loginUserData;
+    public class RemoteAppService : IRemoteAppService
+    {
+        private readonly CokerDbContext db;
+        private readonly LoginUserData loginUserData;
         private readonly StringHandler stringHandler;
         private readonly ITokenAppService tokenAppService;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IMemoryCache memoryCache;
         private readonly IMapper mapper;
-		public RemoteAppService(
-            CokerDbContext db, 
+        public RemoteAppService(
+            CokerDbContext db,
             LoginUserData loginUserData,
             StringHandler stringHandler,
-            ITokenAppService tokenAppService, 
+            ITokenAppService tokenAppService,
             IMapper mapper,
             IMemoryCache memoryCache,
             IHttpContextAccessor httpContextAccessor
-        ) { 
-			this.db = db;
-			this.loginUserData = loginUserData;
+        )
+        {
+            this.db = db;
+            this.loginUserData = loginUserData;
             this.stringHandler = stringHandler;
-			this.mapper = mapper;
-			this.httpContextAccessor = httpContextAccessor;
+            this.mapper = mapper;
+            this.httpContextAccessor = httpContextAccessor;
             this.tokenAppService = tokenAppService;
             this.memoryCache = memoryCache;
-		}
-		public async Task<ResponseMessageDto> insertRemote(RemoteInputDto dto) {
-			ResponseMessageDto response= new ResponseMessageDto();
-			try {
-				Core.Models.Remote r = mapper.Map<Core.Models.Remote>(dto);
+        }
+        public async Task<ResponseMessageDto> insertRemote(RemoteInputDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                Core.Models.Remote r = mapper.Map<Core.Models.Remote>(dto);
                 if (httpContextAccessor.HttpContext != null)
-					r.BrowserInfo = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].ToString();
-                List<string> botKeywords = new List<string> { 
-                    "Googlebot", "Bingbot", "AhrefsBot", "ImagesiftBot", "DotBot", "SemrushBot", "PetalBot", "OAI-SearchBot", 
+                    r.BrowserInfo = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].ToString();
+                List<string> botKeywords = new List<string> {
+                    "Googlebot", "Bingbot", "AhrefsBot", "ImagesiftBot", "DotBot", "SemrushBot", "PetalBot", "OAI-SearchBot",
                     "Applebot", "CCBot", "MJ12bot", "AdsBot-Google", "Slurp","perplexitybot", "coccocbot","https://openai.com/bot","GPTBot",
                     "YandexBot","Google-Read-Aloud","DataForSeoBot","ClaudeBot", "facebookexternalhit", "line-poker", "UptimeRobot","ZoominfoBot",
                     "KStandBot","ZoominfoBot","reurl-bot","BacklinksExtendedBot","serpstatbot","Qwantbot","Slackbot","SMTBot","aiHitBot","BLEXBot",
@@ -73,14 +76,15 @@ namespace EtheriT.Coker.Application.Remote
                     "org_bot","AliyunSecBot","RU_Bot","/bot/","/bots","/robots","BitSightBot","MixrankBot","StorygizeBot","StorygizeBot","Dcard-link-preview-bot",
                     "Baidu-YunGuanCe-Bot","domainsbot","robot","Bravebot","DuckDuckGo-Favicons-Bot","Sansanbot"
                 };
-                if (string.IsNullOrEmpty(r.BrowserInfo) || botKeywords.Any(bot => r.BrowserInfo.Contains(bot))) { 
+                if (string.IsNullOrEmpty(r.BrowserInfo) || botKeywords.Any(bot => r.BrowserInfo.Contains(bot)))
+                {
                     throw new Exception("不接受機器人訪問");
                 }
-				r.ClientIpAddress = loginUserData.GetClientIP();
+                r.ClientIpAddress = loginUserData.GetClientIP();
                 r.UUID = await tokenAppService.GetUUID();
                 db.Add(r);
-				await db.SaveChangesAsync();
-                string PageKey = stringHandler.RandonCode(RandomStringType.數字加英文大小寫 ,8);
+                await db.SaveChangesAsync();
+                string PageKey = stringHandler.RandonCode(RandomStringType.數字加英文大小寫, 8);
                 memoryCache.Set($"RemoteId-{PageKey}-{r.UUID}", r.Id, new MemoryCacheEntryOptions
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1), // 最多存活 1 小時
@@ -88,14 +92,16 @@ namespace EtheriT.Coker.Application.Remote
                 });
                 response.Message = PageKey;
                 response.Success = true;
-			}catch (Exception ex)
-			{
-				response.Error = ex.Message;
-			}
-			return response;
-		}
-		public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions) {
-			long siteId =  await loginUserData.GetWebsiteId();
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        {
+            long siteId = await loginUserData.GetWebsiteId();
             var query = from r in db.Remotes
                         where r.FK_WebsiteId == siteId
                         join a in db.Article.Where(e => !e.IsDeleted) on r.FK_ArticleId equals a.Id into articles
@@ -163,14 +169,16 @@ namespace EtheriT.Coker.Application.Remote
             return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         //從資料庫撈使用者紀錄
-        public async Task<JsonResult> GetPageList(DataSourceLoadOptions loadOptions) {
-			long siteId = await loginUserData.GetWebsiteId();
+        public async Task<JsonResult> GetPageList(DataSourceLoadOptions loadOptions)
+        {
+            long siteId = await loginUserData.GetWebsiteId();
             var query = db.Remotes
                     .Where(e => e.FK_WebsiteId == siteId)
                     .Join(db.WebMenus.Where(e => e.FK_WebsiteId == siteId && !e.IsDeleted),
                           d => d.FK_WebmenuId,
                           m => m.Id,
-                          (d, m) => new {
+                          (d, m) => new
+                          {
                               d.ExecutionTime.Date,
                               UserIdentifier = d.UUID == Guid.Empty ? d.ClientIpAddress : d.UUID.ToString()
                           })
@@ -196,7 +204,7 @@ namespace EtheriT.Coker.Application.Remote
         }
 
         public async Task<ResponseMessageDto> GetRemoteCount(GetRemoteCountInputDto dto)
-        { 
+        {
             ResponseMessageDto response = new ResponseMessageDto();
             long siteId = await loginUserData.GetWebsiteId();
             var data =
@@ -225,7 +233,6 @@ namespace EtheriT.Coker.Application.Remote
                                 {
                                     date = d.Key.Date,//時間
                                     count = d.Where(e => e.Date == d.Key.Date).Sum(e => e.count),//人次
-
                                     MemCount = d.Count(),  //人數
                                 };
                 response.Object = new GetRemoteCountOutputDto
@@ -236,15 +243,66 @@ namespace EtheriT.Coker.Application.Remote
                 //取日期跟時間
                 return response;
             }
-			else throw new Exception("查無資料");
-		}
-        public async Task UpdateRemoteTime(SetTrackTimeDto dto) {
+            else throw new Exception("查無資料");
+        }
+        public async Task<ResponseMessageDto> GetTotalRemoteCount()
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                long siteId = await loginUserData.GetWebsiteId();
+                var first = db.Remotes.Include(r => r.WebMenu)
+                    .Where(r => r.WebMenu.FK_WebsiteId == siteId)
+                    .OrderBy(r => r.ExecutionTime).FirstOrDefault();
+
+                var result = db.Remotes.Include(r => r.WebMenu)
+                    .Where(r => r.WebMenu.FK_WebsiteId == siteId)
+                    .GroupBy(r => new
+                    {
+                        r.ExecutionTime.Date,
+                        UserIdentifier = r.UUID == Guid.Empty ? r.ClientIpAddress : r.UUID.ToString()
+                    })
+                    .Select(g => new
+                    {
+                        g.Key.UserIdentifier,
+                        VisitCount = g.Count()  // 當日每個使用者的瀏覽次數
+                    }).GroupBy(r => 1)  // 將所有結果分組為一個組
+                    .Select(g => new
+                    {
+                        AllCount = g.Sum(r => r.VisitCount),  // 總瀏覽人次
+                        AllMemCount = g.Count()  // 總人數
+                    })
+                    .FirstOrDefault();  // 取得最終統計結果
+                var output = new GetRemoteCountOutputDto
+                {
+                    remoteListOtputDtos = new List<RemoteListOtputDto> { new RemoteListOtputDto
+                    {
+                        date = first == null ? DateTime.Now : first.ExecutionTime,
+                        count = 0,
+                        MemCount = 0
+                    }},
+                    AllCount = result?.AllCount??0,  // 總瀏覽人次
+                    AllMemCount = result?.AllMemCount ?? 0 // 總人數
+                };
+                response.Object = output;
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+        public async Task UpdateRemoteTime(SetTrackTimeDto dto)
+        {
             Guid UUID = await tokenAppService.GetUUID();
             long id = memoryCache.Get<long>($"RemoteId-{dto.PageKey}-{UUID}");
             int maxspan = 5 * 60;
-            if (id != 0) {
+            if (id != 0)
+            {
                 var remote = await db.Remotes.Where(e => e.Id == id).FirstOrDefaultAsync();
-                if (remote != null) {
+                if (remote != null)
+                {
                     remote.LeaveTime = DateTime.Now;
                     remote.TimeOnPage += (int)Math.Round(dto.TimeSpan / 1000.0);
                     remote.TimeOnPage = Math.Min(remote.TimeOnPage, maxspan);
@@ -264,7 +322,8 @@ namespace EtheriT.Coker.Application.Remote
                                     Weight = (float)(0.5 * Math.Pow(1 + 0.1, TimeOnPage))
                                 }).ToList();
                     }
-                    else if (!remote.FK_ArticleId.IsNullOrEmpty()) {
+                    else if (!remote.FK_ArticleId.IsNullOrEmpty())
+                    {
                         tags = (from t in db.Tag_Associates.Where(e => e.FK_AId == remote.FK_ArticleId && e.Type == TagAssociateTypeEnum.文章)
                                 select new UserActivityTags
                                 {
@@ -273,9 +332,11 @@ namespace EtheriT.Coker.Application.Remote
                                     Weight = (float)(0.5 * Math.Pow(1 + 0.1, TimeOnPage))
                                 }).ToList();
                     }
-                    if (tags.Any()) {
+                    if (tags.Any())
+                    {
                         List<UserActivityTags> AddUserActivityTags = new List<UserActivityTags>();
-                        tags.ForEach(e => {
+                        tags.ForEach(e =>
+                        {
                             double daysSinceLastInteraction = 0;
                             var last = db.UserActivityTags.Include(u => u.Remote).Where(u => u.FK_TId == e.FK_TId && u.Remote.UUID == UUID).OrderByDescending(u => u.CreateTime).FirstOrDefault();
                             if (last != null)
@@ -296,7 +357,7 @@ namespace EtheriT.Coker.Application.Remote
                     }
                 }
             }
-            
+
         }
     };
 }

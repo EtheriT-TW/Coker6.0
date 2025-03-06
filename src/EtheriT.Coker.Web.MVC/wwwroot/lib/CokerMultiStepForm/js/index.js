@@ -65,6 +65,11 @@ $.fn.extend({
                 settings.btn.submit.addClass("d-none");
             }
         }
+        $header.on("click", function () {
+            const $self = $(this);
+            settings.activeIndex = $header.index($self);
+            changeView();
+        });
         settings.btn.next.on("click", function () {
             settings.activeIndex++;
             if (settings.activeIndex > $header.length - 1) settings.activeIndex = $header.length - 1;

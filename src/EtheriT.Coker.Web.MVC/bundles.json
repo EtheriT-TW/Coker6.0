@@ -263,6 +263,24 @@
         "node_modules/ace-builds/src-min-noconflict/worker-css.js",
         "node_modules/ace-builds/src-min-noconflict/ext-language_tools.js"
       ]
+    },
+    {
+      "outputFolder": "lib/bootstrap/",
+      "input": [
+        "node_modules/bootstrap/LICENSE"
+      ]
+    },
+    {
+      "outputFolder": "lib/bootstrap/dist/js/",
+      "input": [
+        "node_modules/bootstrap/dist/js/*"
+      ]
+    },
+    {
+      "outputFolder": "lib/bootstrap/dist/css/",
+      "input": [
+        "node_modules/bootstrap/dist/css/*"
+      ]
     }
   ]
 }

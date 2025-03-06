@@ -424,7 +424,7 @@ function GetOrderPage() {
                         break;
                     case "付款失敗":
                         $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單付款失敗！");
-                        if ($('.buyagain_text').length > 0  && !IsLogin) {
+                        if ($('.buyagain_text').length > 0 && !IsLogin) {
                             $('.buyagain_text').removeClass("d-none");
                             $('.buyagain_text span').on("click", function () {
                                 var ohid = parseInt($("#Step4 .card-header .order_number").text());
@@ -568,7 +568,6 @@ function PaymentHideShow() {
     })
 }
 function CartListAdd(data) {
-
     if (data.quantity > 0) {
         if (shopping_cart_data.find(e => e.Id == data.scId) != null) {
             data.price = shopping_cart_data.find(e => e.Id == data.scId).Price;
@@ -1155,7 +1154,7 @@ function OrderSuccess(result) {
     CartClear();
 
     $("#Step4 > .card-header > .order_number").text(("000000000" + order_header_id).substring(order_header_id.length));
-    $("#Step4 > .card-body .pruchase_content .order_time").text(`訂單成立時間：${message[4]}`);
+    $("#Step4 > .card-body .pruchase_content .order_time").text(`訂單成立時間：${message[2]}`);
 
     $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
 
@@ -1209,7 +1208,7 @@ function OrderSuccess(result) {
             break;
     }
 
-    $("#PaymentData .pay_info .paid_date").append(`${message[2]}<span>${message[3]}23點59分</span>`);
+    $("#PaymentData .pay_info .paid_date").append(message[3]);
     var tempmail = order_header_data.ordererEmail;
     $("#PaymentData .pay_mail").append(`如因交易條件有誤、商品缺貨或價格物刊或有其他本公司無法接受訂單之情形,本公司保留商品出貨與否的權利。<br />．隨後我們也會將轉帳的資料mail到您指定的電子信箱:${tempmail.substr(0, 1)}******${tempmail.substr(tempmail.indexOf("@") - 1)}`);
 

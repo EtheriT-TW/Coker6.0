@@ -215,13 +215,13 @@ namespace EtheriT.Coker.Application.Order
                         {
                             //case "轉帳":
                             default:
-                                output.Message = $"Default,{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日,{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
+                                output.Message = $"Default,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}, {oh.CreationTime.Year}年<span>{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日23點59分</span>";
                                 break;
                             case "支付連":
-                                output.Message = $"PCHomePay,{oh.Id}";
+                                output.Message = $"PCHomePay,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
                                 break;
                             case "LINE Pay":
-                                output.Message = $"LinePay,{oh.Id}";
+                                output.Message = $"LinePay,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
                                 break;
                                 //case "綠界支付":
                                 //    output.Message = $"ECPay,{oh.Id}";

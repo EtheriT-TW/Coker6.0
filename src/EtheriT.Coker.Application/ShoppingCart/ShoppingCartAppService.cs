@@ -333,10 +333,11 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                            join fb in db.FileBinds on fu.Id equals fb.FK_FileUploadId
                                            where fb.Sid == pid && fb.type == (int)FileBindTypeEnum.產品
                                            where fu.FK_WebsiteId == WebsiteId
-                                           orderby fb.SerNo
-                                           orderby fb.CreationTime
+                                           where fu.ContentType.StartsWith("image")
+                                           orderby fb.SerNo, fb.CreationTime
                                            select fu.DownloadFileName).FirstOrDefaultAsync();
-                    temp_output.ImagePath = imagepath?.ToString() ?? "";
+
+                    temp_output.ImagePath = imagepath?.ToString() ?? "/images/noImg.jpg";
                     if (temp_output.ImagePath != "") temp_output.ImagePath = $"{temp_output.ImagePath}";
 
                     var db_sp = await db.Prod_Specs.ToListAsync();

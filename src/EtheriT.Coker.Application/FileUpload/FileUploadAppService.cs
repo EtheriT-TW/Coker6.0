@@ -732,9 +732,9 @@ namespace EtheriT.Coker.Application
             }
             return output;
         }
-        public async Task<List<FileGetAdvertiseDisplayDto>> getAdvertiseFiles(long Aid, int type)
+        public async Task<List<FileGetDisplayDto>> getAdvertiseFiles(long Aid, int type)
         {
-            var output = new List<FileGetAdvertiseDisplayDto>();
+            var output = new List<FileGetDisplayDto>();
             string orgName = await loginUserData.GetWebsiteOrgName();
             try
             {
@@ -760,7 +760,7 @@ namespace EtheriT.Coker.Application
                             }
                             var filetype = 0;
                             var temp_index = fu.ContentType.IndexOf("/");
-                            var obj = new FileGetAdvertiseDisplayDto();
+                            var obj = new FileGetDisplayDto();
                             if (temp_index == -1 && fu.ContentType == "youtube")
                             {
                                 filetype = 3;

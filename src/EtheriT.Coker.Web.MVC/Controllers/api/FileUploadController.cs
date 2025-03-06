@@ -95,7 +95,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await fileUploadAppService.getImgFiles(dto);
         }
         [HttpGet]
-        public async Task<List<FileGetAdvertiseDisplayDto>> getAdvertiseFiles(long Aid, int type)
+        public async Task<List<FileGetDisplayDto>> getAdvertiseFiles(long Aid, int type)
         {
             return await fileUploadAppService.getAdvertiseFiles(Aid, type);
         }

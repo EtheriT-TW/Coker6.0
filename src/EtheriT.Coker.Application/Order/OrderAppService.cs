@@ -81,6 +81,7 @@ namespace EtheriT.Coker.Application.Order
                 var dataQuery = await (from oh in db.Order_Headers
                                        where !oh.IsDeleted && oh.FK_WebsiteId == WebsiteID
                                        join ls in db.LogisticsSettings on oh.Shipping equals ls.Id
+                                       orderby oh.Id descending
                                        select new OrderHeaderGetAllListDto
                                        {
                                            UUID = oh.FK_UUID,

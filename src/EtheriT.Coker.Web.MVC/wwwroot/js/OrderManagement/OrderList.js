@@ -226,6 +226,22 @@ function contentReady(e) {
     }
     HashDataEdit();
 }
+function onCellPrepared(e) {
+    if (e.rowType === "data" && e.column.dataField === "State") {
+        var $cell = $(e.cellElement);
+        if (e.value == "已付款") {
+            $cell.addClass("hasPay")
+        }
+    }
+}
+function onRowPrepared(e) {
+    if (e.rowType === "data") {
+        let $row = $(e.rowElement);
+        if (e.data.State === "付款失敗") {
+            $row.addClass("isFail");
+        }
+    }
+}
 function hashChange(e) {
     if (!!e) {
         HashDataEdit();

@@ -404,8 +404,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
                             if (!oldsc.Prod_Stock.Prod.RemovedFromShelves && oldsc.Prod_Stock.Stock > 0)
                             {
                                 ShoppingCartAddUpDto newsc = new ShoppingCartAddUpDto();
+                                newsc = mapper.Map<ShoppingCartAddUpDto>(oldsc);
                                 newsc.Id = null;
-                                newsc.FK_PSid = oldsc.FK_PSid;
                                 if (newsc.Quantity > oldsc.Prod_Stock.Stock) newsc.Quantity = (int)oldsc.Prod_Stock.Stock;
                                 else newsc.Quantity = oldsc.Quantity;
                                 var temp_response = await AddUp(newsc);

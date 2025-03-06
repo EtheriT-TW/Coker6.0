@@ -138,6 +138,9 @@ namespace EtheriT.Coker.Application.ThirdParty
         {
             try
             {
+                Console.WriteLine($"-------------訊息查看-------------");
+                Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：{dto}");
+
                 if (dto.notify_type == "refund_success")
                 {
                     Console.WriteLine($"-------------訊息查看-------------");
@@ -669,6 +672,8 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                     PaymentBody.return_timer = "Y";
                     PaymentBody.member_key = ohdata.Fk_UserId?.ToString() ?? "";
+                    Console.WriteLine($"-------------訊息查看-------------");
+                    Console.WriteLine($"PChomePay=>PChomePayPaymentBody：{PaymentBody}");
                 }
             }
             catch (Exception ex)

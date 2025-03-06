@@ -370,6 +370,7 @@ upload/**/*.*
 **/wwwroot/lib/grapesjs/**/*.*
 **/wwwroot/lib/swiper/**/*.*
 **/wwwroot/lib/bootstrap/dist/**/*
+**/wwwroot/lib/ace-builds/*.*
 !**/wwwroot/lib/jquery/**/*.min.js.map
 !**/wwwroot/lib/devextreme/**/*.min.js
 !**/wwwroot/css/devextreme/**/*.min.css

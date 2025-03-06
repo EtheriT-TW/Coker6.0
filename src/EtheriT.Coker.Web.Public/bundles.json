@@ -121,6 +121,24 @@
       "input": [
         "node_modules/counterup2/dist/*.*"
       ]
+    },
+    {
+      "outputFolder": "lib/bootstrap/",
+      "input": [
+        "node_modules/bootstrap/LICENSE"
+      ]
+    },
+    {
+      "outputFolder": "lib/bootstrap/dist/js/",
+      "input": [
+        "node_modules/bootstrap/dist/js/*"
+      ]
+    },
+    {
+      "outputFolder": "lib/bootstrap/dist/css/",
+      "input": [
+        "node_modules/bootstrap/dist/css/*"
+      ]
     }
   ]
 }

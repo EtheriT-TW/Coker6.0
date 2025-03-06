@@ -78,6 +78,7 @@
 
 	<ItemGroup>
 		<Folder Include="wwwroot\images\" />
+		<Folder Include="wwwroot\lib\bootstrap\" />
 	</ItemGroup>
 
 	<ItemGroup>

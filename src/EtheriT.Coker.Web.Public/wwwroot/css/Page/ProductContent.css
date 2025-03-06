@@ -197,6 +197,7 @@ i.fa-chevron-right {
 
     #Product > .content > .specification > div > ul {
         list-style: none;
+        padding-left: 0;
     }
 
         #Product > .content > .specification > div > ul > li {
@@ -204,6 +205,8 @@ i.fa-chevron-right {
         }
 
     #Product > .content > .specification > .btn_detailed {
+        color: var(--gray-text);
+        font-size: 0.8rem;
         background-color: var(--gray-light);
     }
 

@@ -138,6 +138,26 @@ i.fa-chevron-right {
     #Product > .content > .describe > .introduce, #ProductDescription {
         list-style: none;
     }
+
+    #Product > .content > .describe > .track {
+        height: 100%;
+        top: 50%;
+        right: -1rem;
+        transform: translate(-50%, -50%);
+    }
+
+    #Product > .content > .describe:has(> .track) > .introduce {
+        padding-right: 4rem;
+    }
+
+    #Product > .content > .describe > .track > .btn_favorites {
+        height: 100%;
+        line-height: unset;
+    }
+
+        #Product > .content > .describe > .track > .btn_favorites > .icon_love {
+            height: 100%;
+        }
 /*
         #Product > .content > .describe > .introduce > li::before {
             content: '\ff0e';
@@ -197,6 +217,7 @@ i.fa-chevron-right {
 
     #Product > .content > .specification > div > ul {
         list-style: none;
+        padding-left: 0;
     }
 
         #Product > .content > .specification > div > ul > li {
@@ -204,6 +225,8 @@ i.fa-chevron-right {
         }
 
     #Product > .content > .specification > .btn_detailed {
+        color: var(--gray-text);
+        font-size: 0.8rem;
         background-color: var(--gray-light);
     }
 
@@ -536,11 +559,12 @@ input:disabled + .btn_radio {
         right: -10% !important;
     }
 
-    .describe > .track {
-        top: -6rem !important;
+
+    #Product > .content > .describe:has(> .track) > .introduce {
+        padding-right: 2.25rem;
     }
 
-    .btn_favorites .icon_love::before {
+    #Product > .content > .describe > .track > .btn_favorites .icon_love::before {
         font-size: 2rem;
     }
 
@@ -569,13 +593,6 @@ input:disabled + .btn_radio {
         display: flex;
         justify-content: center;
         align-items: center;
-    }
-}
-
-@media(max-width:448px) {
-    .describe > .track {
-        top: -8rem !important;
-        right: -1rem !important;
     }
 }
 

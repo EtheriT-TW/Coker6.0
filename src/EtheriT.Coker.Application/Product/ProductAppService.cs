@@ -846,13 +846,12 @@ namespace EtheriT.Coker.Application.Product
                                               Tag_Name = g.Key.Title
                                           }).ToList(),
                                   MainImage = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                                  .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteID)
-                                                  .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
                                                   .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
+                                                  .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteID && e.fileUpload.ContentType.StartsWith("image"))
                                                   .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
                                                 select new DirectoryReleInfoDto
                                                 {
-                                                    Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}").Replace("//", "/")
+                                                    Link = (f.fileUpload.DownloadFileName ?? "/images/noImg.jpg").Replace("upload", $"upload/{orgName}").Replace("//", "/")
                                                 }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
                               }).ToList();
                     for (int i = 0; i < output.Count; i++)

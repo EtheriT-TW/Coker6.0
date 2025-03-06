@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Files
 {
-    public class FileGetAdvertiseDisplayDto
+    public class FileGetDisplayDto
     {
         public long Id { get; set; }
         public int FileType { get; set; }

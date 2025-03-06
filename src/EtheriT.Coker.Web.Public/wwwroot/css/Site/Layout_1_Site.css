@@ -28,11 +28,6 @@
     --gray-path: #bababa;
 }
 
-
-.modal-body > #RegisterForm > #RegisterNewPassFeedBack {
-    font-size: 0.8rem;
-}
-
 .gray_text {
     color: var(--gray-text);
 }

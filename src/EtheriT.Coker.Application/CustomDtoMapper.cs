@@ -234,6 +234,8 @@ namespace EtheriT.Coker.Application
             CreateMap<Core.Models.ShoppingCart, Core.Models.Prod_Stock>()
                  .ForMember(e => e.Id, option => option.MapFrom(c => c.FK_PSid))
                 .ReverseMap();
+            CreateMap<Core.Models.ShoppingCart, ShoppingCartAddUpDto>()
+                .ReverseMap();
             CreateMap<Core.Models.ShoppingCart, ShoppingCartAddUpOldDto>()
                 .ReverseMap();
             CreateMap<Core.Models.ShoppingCart, ShoppingCartDisplayDto>()

@@ -808,7 +808,11 @@ namespace EtheriT.Coker.Application.Product
                 var output = new List<DirectoryReleInfoDto>();
                 var productData = new List<ProdGetDataDto>();
                 var result = await db.Prods.Where(e => dto.Ids.Contains(e.Id) && !e.IsDeleted && e.FK_WebsiteId == WebsiteID)
-                    .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == ProdStatusEnum.新品).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
+                    .OrderBy(e => e.Ser_No)
+                    .ThenByDescending(e => e.Status == ProdStatusEnum.新品)
+                    .ThenByDescending(e => e.Status != ProdStatusEnum.售完)
+                    .ThenByDescending(e => e.Status != ProdStatusEnum.停產)
+                    .ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
                     .ToListAsync();
                 if (result != null)
                 {

@@ -249,28 +249,30 @@ namespace EtheriT.Coker.Application.Article
 
                 if (result != null)
                 {
-                    var output = await (from e in result
-                                        where e.Id == Id
-                                        where !e.IsDeleted
-                                        select new ArticleGetDataDto
-                                        {
-                                            Id = e.Id,
-                                            Title = e.Title,
-                                            Subtitle = e.Subtitle,
-                                            Description = e.Description,
-                                            Longitude = e.Longitude,
-                                            Latitude = e.Latitude,
-                                            Visible = e.Visible,
-                                            SerNO = e.SerNO,
-                                            PopularVisible = e.PopularVisible,
-                                            TagDatas = new List<TagGetSelectedDto>(),
-                                            StartTime = e.StartTime,
-                                            EndTime = e.EndTime,
-                                            NodeDate = e.NodeDate,
-                                            RemovedFromShelves = !e.RemovedFromShelves,
-                                            permanent = e.permanent,
-                                            DataJson = string.IsNullOrEmpty(e.DataJson) ? null : JsonConvert.DeserializeObject<NewsletterFrameDto>(e.DataJson)
-                                        }).FirstOrDefaultAsync();
+                    var output = await (
+                        from e in result
+                        where e.Id == Id
+                        where !e.IsDeleted
+                        select new ArticleGetDataDto
+                        {
+                            Id = e.Id,
+                            Title = e.Title,
+                            Subtitle = e.Subtitle,
+                            Description = e.Description,
+                            Longitude = e.Longitude,
+                            Latitude = e.Latitude,
+                            Visible = e.Visible,
+                            SerNO = e.SerNO,
+                            PopularVisible = e.PopularVisible,
+                            TagDatas = new List<TagGetSelectedDto>(),
+                            StartTime = e.StartTime,
+                            EndTime = e.EndTime,
+                            NodeDate = e.NodeDate,
+                            RemovedFromShelves = !e.RemovedFromShelves,
+                            permanent = e.permanent,
+                            DataJson = string.IsNullOrEmpty(e.DataJson) ? null : JsonConvert.DeserializeObject<NewsletterFrameDto>(e.DataJson)
+                        }
+                    ).FirstOrDefaultAsync();
 
                     if (output != null)
                     {

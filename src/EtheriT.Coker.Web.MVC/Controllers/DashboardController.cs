@@ -43,37 +43,20 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                 StartDate = DateTime.Now.AddDays(-7),
                 EndDate = DateTime.Now
             });
-			var remoteItem = new List<long>();
+            var totalRemote = await remoteAppService.GetTotalRemoteCount();
+            var remoteItem = new List<long>();
             var remoteMemCount = new List<long>();
             var dateItem = new List<string>();
 			long totalRemoteCount = 0;
 			long totalMemCount = 0;
 			var today = DateTime.Today;
+            DateTime firstDate = today;
 
-            List<DateTime> firstDate = new List<DateTime>(); 
-			var obj = await remoteAppService.GetPageList(new DataSourceLoadOptions());
-			var loadResult = (DevExtreme.AspNet.Data.ResponseModel.LoadResult)obj.Value;
-			var getTotle = loadResult.data.Cast<RemoteListOtputDto>().ToList();
-            if (getTotle != null && getTotle.Count != 0)
-            {
-                DateTime? earliestDate = getTotle.OrderBy(e => e.date).FirstOrDefault().date;
-                if (earliestDate != null)
-				{
-					firstDate.Add((DateTime)earliestDate);
-					// 从最早日期开始到今天
-					for (DateTime d = earliestDate.Value.Date; d <= DateTime.Today; d = d.AddDays(1))
-                    {
-                        RemoteListOtputDto? item = getTotle.Find(e => e.date.Date == d.Date);
-                        if (item != null)
-                        {
-							totalRemoteCount += item.count;
-							totalMemCount += item.MemCount;
-						}
-                    }
-                }
-            } else
-            {
-                firstDate.Add(DateTime.Now);
+            if (totalRemote.Success) {
+                var obj = (GetRemoteCountOutputDto)(totalRemote.Object??new GetRemoteCountOutputDto());
+                totalRemoteCount = obj.AllCount;
+                totalMemCount = obj.AllMemCount;
+                if(obj.remoteListOtputDtos.Any()) firstDate = obj.remoteListOtputDtos[0].date;
             }
 
 			if (result.Success) {
@@ -144,7 +127,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                     LastUpdateDate = today.ToString("MM-01") + " 至 " + today.ToString("MM-dd"),
                     TotleCount = totalRemoteCount,
                     TotleMemCount = totalMemCount,
-                    FirstTime = firstDate[0]
+                    FirstTime = firstDate
                 },
                 MonthTotalFlowSize = FormatSize((await flowSizeAppService.GetMonthFlowSizes()).Total),
                 ToMonth = $"{today.ToString("yyyy-MM")}-1 至 {today.ToString("yyyy-MM-dd")}"

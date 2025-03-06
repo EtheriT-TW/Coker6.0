@@ -707,6 +707,7 @@ namespace EtheriT.Coker.Application.Directory
                         .ToList()
                 })
                 .OrderBy(e => e.Prod.Status == ProdStatusEnum.售完)
+                .OrderBy(e => e.Prod.Status == ProdStatusEnum.停產)
                 .ThenByDescending(p => p.MatchingTags.Count) // 按符合標籤數量排序
                 .ThenBy(p => p.Prod.Ser_No) // 次要排序
                 .ThenBy(p => p.Prod.ItemNo)
@@ -872,7 +873,12 @@ namespace EtheriT.Coker.Application.Directory
                                     .Where(e => e.Visible && !e.RemovedFromShelves)
                                     .Where(e => siteIds.Contains(e.FK_WebsiteId))
                                     .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime))
-                                    .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == ProdStatusEnum.新品).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
+                                    .OrderBy(e => e.Ser_No)
+                                    .ThenByDescending(e => e.Status == ProdStatusEnum.新品)
+                                    .ThenByDescending(e => e.Status != ProdStatusEnum.售完)
+                                    .ThenByDescending(e => e.Status != ProdStatusEnum.停產)
+                                    .ThenBy(e => e.ItemNo)
+                                    .ThenBy(e => e.Title).ThenByDescending(e => e.Id)
                                     .Select(e => e.Id).ToList();
                             }
                             break;

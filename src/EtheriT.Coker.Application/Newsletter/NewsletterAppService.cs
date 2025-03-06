@@ -22,6 +22,7 @@ using System.Xml.Linq;
 using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using System.Security.Cryptography;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
+using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Application.Newsletter
 {
@@ -165,6 +166,7 @@ namespace EtheriT.Coker.Application.Newsletter
             try
             {
                 if (dto.Id == 0) throw new Exception("資料不存在");
+                var orgName = await loginUserData.GetWebsiteOrgName();
                 var data = await db.Article
                 .Where(e => e.Id == dto.Id)
                 .Where(e => e.FK_WebsiteId == sideId)
@@ -172,6 +174,7 @@ namespace EtheriT.Coker.Application.Newsletter
                 if (data != null)
                 {
                     data.DataJson = JsonConvert.SerializeObject(dto);
+                    data.DataJson = data.DataJson = Regex.Replace(data.DataJson, $@"/upload/(?:{orgName}/)?", $"/upload/{orgName}/"); ;
                     await loginUserData.SaveChanges(data);
                     output.Success = true;
                 }

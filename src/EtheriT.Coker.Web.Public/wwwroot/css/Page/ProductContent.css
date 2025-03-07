@@ -157,7 +157,10 @@ i.fa-chevron-right {
 
         #Product > .content > .describe > .track > .btn_favorites > .icon_love {
             height: 100%;
+            display: flex;
+            align-items: center;
         }
+
 /*
         #Product > .content > .describe > .introduce > li::before {
             content: '\ff0e';

@@ -8,10 +8,6 @@
     background-color: var(--bs-secondary-bg-subtle);
 }
 
-#OrderListDx td.hasPay {
-    background-color: #69BA6D;
-}
-
 /* Order List */
 .btn_back {
     color: #4E565A;

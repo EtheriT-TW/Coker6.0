@@ -230,7 +230,7 @@ function onCellPrepared(e) {
     if (e.rowType === "data" && e.column.dataField === "State") {
         var $cell = $(e.cellElement);
         if (e.value == "已付款") {
-            $cell.addClass("hasPay")
+            $cell.addClass("text-bg-success")
         }
     }
 }

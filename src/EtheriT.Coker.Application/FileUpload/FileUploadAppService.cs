@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Text.RegularExpressions;
+using ImageMagick;
 
 namespace EtheriT.Coker.Application
 {
@@ -1214,9 +1215,29 @@ namespace EtheriT.Coker.Application
                 var path = $"/{directory}/{key}.{ext}";
                 if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception("Type Error");
                 if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
-                using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))
+                using (var stream = file.OpenReadStream())
                 {
-                    await file.CopyToAsync(stream);
+                    string ContentType = file.ContentType;
+                    long fileLength = file.Length;
+                    if (IsAllowedFileType(file.ContentType))
+                    {
+                        using (var image = new MagickImage(stream))
+                        {
+                            string newFilePath = Path.Combine(directoryPath, $"{key}.avif");
+                            image.Format = MagickFormat.Avif; // 轉成 avif
+                            image.Settings.SetDefine(MagickFormat.Avif, "lossless", "true"); //設定無損壓縮
+                            await image.WriteAsync(newFilePath); // 儲存轉換後的檔案
+                            path = $"/{directory}/{key}.avif";
+                            ContentType = "image/avif";
+                            fileLength = new FileInfo(newFilePath).Length;
+                        }
+                    }
+                    else {
+                        using (var fileStream = new FileStream($"{rootPath}{path}", FileMode.Create))
+                        {
+                            await file.CopyToAsync(fileStream);
+                        }
+                    }
                     if (isTemp)
                     {
                         return new FileItemDto
@@ -1237,8 +1258,8 @@ namespace EtheriT.Coker.Application
                                 GuidKey = Guid.NewGuid(),
                                 DownloadFileName = $@"/upload{path}",
                                 OriginalFileName = file.FileName,
-                                ContentType = file.ContentType,
-                                Size = file.Length
+                                ContentType = ContentType,
+                                Size = fileLength
                             };
 
                             db.FileUploads.Add(fileUpload);
@@ -1288,8 +1309,31 @@ namespace EtheriT.Coker.Application
                             string fullPath = $"{rootPath}{path}";
                             if (File.Exists(fullPath)) File.Delete(fullPath);
                         }
-                        using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))
+                        using (var stream = file.OpenReadStream())
                         {
+                            string ContentType = file.ContentType;
+                            long fileLength = file.Length;
+                            if (asotype != (int)FileBindTypeEnum.網站圖示 && IsAllowedFileType(file.ContentType))
+                            {
+                                using (var image = new MagickImage(stream))
+                                {
+                                    string newFilePath = Path.Combine(directoryPath, $"{key}.avif");
+                                    image.Format = MagickFormat.Avif; // 轉成 WebP
+                                    image.Quality = 100; // 設定壓縮品質（0-100）
+                                    image.Settings.SetDefine(MagickFormat.Avif, "lossless", "true"); //設定無損壓縮
+                                    await image.WriteAsync(newFilePath); // 儲存轉換後的檔案
+                                    path = $"/{directory}/{key}.avif";
+                                    ContentType = "image/avif";
+                                    fileLength = new FileInfo(newFilePath).Length;
+                                }
+                            }
+                            else {
+                                using (var fileStream = new FileStream($"{rootPath}{path}", FileMode.Create))
+                                {
+                                    await file.CopyToAsync(fileStream);
+                                }
+                            }
+
                             FileUpload fileUpload = new FileUpload
                             {
                                 FK_WebsiteId = await loginUserData.GetWebsiteId(),
@@ -1297,10 +1341,9 @@ namespace EtheriT.Coker.Application
                                 GuidKey = Guid.NewGuid(),
                                 DownloadFileName = $@"/upload{path}",
                                 OriginalFileName = file.FileName,
-                                ContentType = file.ContentType,
-                                Size = file.Length
+                                ContentType = ContentType,
+                                Size = fileLength
                             };
-                            await file.CopyToAsync(stream);
                             db.FileUploads.Add(fileUpload);
                             await loginUserData.SaveChanges(fileUpload);
                             if (faimg_id != Guid.Empty)
@@ -1350,6 +1393,11 @@ namespace EtheriT.Coker.Application
                 }
             }
             else throw new Exception("上傳失敗");
+        }
+        private bool IsAllowedFileType(string contentType)
+        {
+            string[] allowedTypes = { "image/png", "image/jpeg", "image/gif", "image/webp" };
+            return Array.Exists(allowedTypes, type => type == contentType);
         }
     }
 }

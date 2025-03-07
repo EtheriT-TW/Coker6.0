@@ -117,6 +117,9 @@
     <None Include="wwwroot\js\CokerCore\**" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="AspNet.Security.OAuth.Apple" Version="6.0.15" />
+    <PackageReference Include="AspNet.Security.OAuth.Instagram" Version="6.0.15" />
+    <PackageReference Include="AspNet.Security.OAuth.Line" Version="6.0.15" />
     <PackageReference Include="BuildBundlerMinifier" Version="3.2.449" />
     <PackageReference Include="DevExpress.Xpo" Version="21.2.14" />
     <PackageReference Include="DevExtreme.AspNet.Core" Version="21.2.14" />
@@ -125,6 +128,8 @@
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.17" />
     <PackageReference Include="Hangfire.SqlServer" Version="1.8.17" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.72" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="6.0.36" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="6.0.36" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />

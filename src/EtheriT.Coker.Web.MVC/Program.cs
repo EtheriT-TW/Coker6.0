@@ -74,6 +74,7 @@ using EtheriT.Coker.Application.FlowSize;
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
 var configuration = provider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+var authenticationConfig = builder.Configuration.GetSection("Authentication");
 
 builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Error);
 builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Error);
@@ -93,8 +94,10 @@ builder.Services
     .AddAuthentication(options =>
     {
         // custom scheme defined in .AddPolicyScheme() below
-        options.DefaultScheme = "JWT_OR_COOKIE";
-        options.DefaultChallengeScheme = "JWT_OR_COOKIE";
+        options.DefaultScheme = "JWT_OR_COOKIE";  // 讓 API 可以使用 JWT 或 Cookie
+        options.DefaultAuthenticateScheme = "JWT_OR_COOKIE";
+        options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme; // 遇到 401 時優先跳轉登入
+        options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     })
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
@@ -125,13 +128,27 @@ builder.Services
             ValidateLifetime = true,
 
             // 如果 Token 中包含 key 才需要驗證，一般都只有簽章而已
-            ValidateIssuerSigningKey = false,
+            ValidateIssuerSigningKey = true,
 
             // "1234567890123456" 應該從 IConfiguration 取得
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetValue<string>("JwtSettings:SignKey")))
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine($"JWT 驗證失敗: {context.Exception.Message}");
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                Console.WriteLine($"JWT 驗證成功: {context.Principal?.Identity?.Name}");
+                return Task.CompletedTask;
+            }
+        };
     })
-    .AddPolicyScheme("JWT_OR_COOKIE", "JWT_OR_COOKIE", options =>
+    .AddPolicyScheme("JWT_OR_COOKIE", "Select JWT or Cookie dynamically", options =>
     {
         // runs on each request
         options.ForwardDefaultSelector = context =>
@@ -139,11 +156,18 @@ builder.Services
             // filter by auth type
             string authorization = context.Request.Headers[HeaderNames.Authorization];
             if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
-                return "Bearer";
+                return JwtBearerDefaults.AuthenticationScheme;
 
             // otherwise always check for cookie auth
-            return "Cookies";
+            return CookieAuthenticationDefaults.AuthenticationScheme;
         };
+    }).AddLine(options => {
+        var lineConfig = authenticationConfig.GetSection("Line");
+        if (!string.IsNullOrEmpty(lineConfig["ChannelId"]) && !string.IsNullOrEmpty(lineConfig["ChannelSecret"]))
+        {
+            options.ClientId = lineConfig["ChannelId"]??"";
+            options.ClientSecret = lineConfig["ChannelSecret"]??"";
+        }
     });
 
 builder.Services.AddAntiforgery(options =>
@@ -299,9 +323,6 @@ builder.Services.AddHttpClient("ThirdPartyClient_ECPay", client =>
 
 var app = builder.Build();
 
-// 添加 AntiforgeryDebugMiddleware
-app.UseMiddleware<AntiforgeryDebugMiddleware>();
-
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -360,6 +381,10 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// 添加 AntiforgeryDebugMiddleware
+app.UseMiddleware<AntiforgeryDebugMiddleware>();
+app.UseMiddleware<AuthenticationMiddleware>();
 
 // 設定 Hangfire 儀表板（可以設置需要權限控制的路徑）
 app.UseHangfireDashboard("/hangfire", new DashboardOptions

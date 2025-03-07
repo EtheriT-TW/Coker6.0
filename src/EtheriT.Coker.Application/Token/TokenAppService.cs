@@ -387,6 +387,11 @@ namespace EtheriT.Coker.Application.Token
             );
             return true;
         }
+        public async Task<bool> IsTokenRevoked(string token)
+        {
+            var revoked = await cache.GetStringAsync(GetKey(token));
+            return !string.IsNullOrEmpty(revoked);
+        }
         private static string GetKey(string token)
         {
             return $"tokens:{token}:deactivated";

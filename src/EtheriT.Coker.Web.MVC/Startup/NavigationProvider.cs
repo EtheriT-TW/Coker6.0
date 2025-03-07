@@ -600,7 +600,21 @@ namespace EtheriT.Coker.Web.MVC.Startup
 			}
 			ThePermission.Initable = true;
 		}
-		private void SetJobs(List<JobMenu> jobs, List<JobMenu> seting)
+		public JobMenu? FindJob(List<JobMenu> jobs, string Controller,string Action) {
+			JobMenu? m = null;
+
+            jobs.ForEach(e =>
+            {
+				if(m!=null) return;
+                if (e.Controller == Controller && e.Action == Action) m = e;
+                if (e.jobItemModels != null)
+                {
+					m = FindJob(e.jobItemModels, Controller, Action);
+                }
+            });
+			return m;
+        }
+        private void SetJobs(List<JobMenu> jobs, List<JobMenu> seting)
 		{
 			if (seting.Count() == 0) return;
 			jobs.ForEach(job =>

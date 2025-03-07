@@ -994,7 +994,6 @@ namespace EtheriT.Coker.Application.Order
                     if (order_header.State != (OrderStatusEnum)state)
                     {
                         if (order_header.State == OrderStatusEnum.已付款) response.Message = "已付款";
-                        order_header.State = (OrderStatusEnum)state;
                         switch (state)
                         {
                             case (int)OrderStatusEnum.已取消:
@@ -1022,6 +1021,13 @@ namespace EtheriT.Coker.Application.Order
                                 order_header.CompletedDate = DateTime.Now;
                                 break;
                         }
+
+                        if (state == (int)OrderStatusEnum.已取消 && (order_header.State == OrderStatusEnum.待確認 || order_header.State == OrderStatusEnum.待付款))
+                        {
+                            order_header.TransactionId = null;
+                        }
+                        order_header.State = (OrderStatusEnum)state;
+
                         db.SaveChanges();
                     }
                     response.Success = true;

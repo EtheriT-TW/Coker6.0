@@ -32,6 +32,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public ProdStatusEnum Status { get; set; }
         public string StatusName { get; set; } = string.Empty;
         public bool Visible { get; set; }
+        public bool Available { get; set; }
         public List<TagGetSelectedDto>? tags { get; set; }
 
     }

@@ -240,9 +240,6 @@ i.fa-chevron-right {
         content: " \f106";
     }
 
-#Product > .content > .pro_tc {
-    color: var(--gray-text);
-}
 
     #Product > .content > .pro_tc > .image {
         list-style: none;

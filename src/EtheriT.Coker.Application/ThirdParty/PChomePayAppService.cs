@@ -93,18 +93,19 @@ namespace EtheriT.Coker.Application.ThirdParty
                             }
                             else throw new Exception("PChomePayRequest錯誤");
                         }
+                        else throw new Exception("PChomePayHeader錯誤");
                     }
                 }
             }
             catch (HttpRequestException ex)
             {
                 // Http 請求錯誤
-                response.Message = $"Request failed: {ex.Message}";
+                response.Message = $"Request Request failed: {ex.Message}";
             }
             catch (Exception ex)
             {
                 // 其他未知錯誤
-                response.Message = $"Other Error: {ex.Message}";
+                response.Message = $"Request Other Error: {ex.Message}";
             }
             if (!response.Success && ohdata != null)
             {
@@ -493,10 +494,13 @@ namespace EtheriT.Coker.Application.ThirdParty
                 }
                 else throw new Exception("查無訂單資訊");
             }
+            catch (HttpRequestException ex)
+            {
+                response.Message = $"CancelOrder Request failed: {ex.Message}";
+            }
             catch (Exception ex)
             {
-                response.Error = "Other Error";
-                response.Message = ex.Message;
+                response.Message = $"CancelOrder Other failed: {ex.Message}";
             }
             return response;
         }
@@ -556,11 +560,11 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (HttpRequestException ex)
             {
-                response.Message = $"Request failed: {ex.Message}";
+                response.Message = $"Headers Request failed: {ex.Message}";
             }
             catch (Exception ex)
             {
-                response.Message = $"Other failed: {ex.Message}";
+                response.Message = $"Headers Other failed: {ex.Message}";
             }
             return response;
         }

@@ -1132,11 +1132,11 @@ function OrderHeaderAdd() {
                         })
                     } else {
                         console.log(result);
-                        Coker.sweet.error("錯誤", "訂購商品發生未知錯誤", null, true);
+                        Coker.sweet.error("錯誤", result.error, null, true);
                     }
                 }).fail(function (result) {
                     console.log(result);
-                    Coker.sweet.error("錯誤", "訂購商品發生未知錯誤", null, true);
+                    Coker.sweet.error("錯誤", result.error, null, true);
                 });
             }
         } else {

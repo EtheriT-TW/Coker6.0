@@ -233,9 +233,9 @@ namespace EtheriT.Coker.Application.Order
                 }
                 else throw new Exception("查無Token");
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                output.Error = e.Message;
+                output.Error = ex.Message;
             }
 
             return output;

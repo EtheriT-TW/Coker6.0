@@ -67,9 +67,9 @@
 }
 
 #frmEdit {
-    .form-check{
-        padding-left:0;
-        padding-right:0;
+    .form-check {
+        padding-left: 0;
+        padding-right: 0;
     }
 }
 
@@ -78,10 +78,17 @@
         width: 600px;
     }
 
+    &.offcanvas-lg .offcanvas-header {
+        display: flex;
+    }
+
     &.offcanvas-lg.menu-bg {
         width: 80%;
+        background-color: #2f4f4f !important;
 
         #EditBlock {
+            width: 100%;
+
             > .item-menu {
                 width: 49%;
 
@@ -109,19 +116,21 @@
         margin-bottom: 1rem;
     }
 }
-.form-floating{
-    label{
-        
+
+.form-floating {
+    label {
     }
 }
+
 .modal-backdrop {
     z-index: 1045;
 }
 
 .modal-open {
-    .offcanvas-backdrop{
-        opacity:0;
+    .offcanvas-backdrop {
+        opacity: 0;
     }
+
     .wrapper {
         transition: unset !important;
         filter: unset !important;
@@ -179,6 +188,7 @@
         color: #000;
     }
 }
+
 .offcanvas-header {
     .offcanvas-title {
         font-size: 2rem;
@@ -186,56 +196,63 @@
         color: #fff;
     }
 }
+
 #MenuEditorForm {
     padding: 0px;
     margin-left: 1%;
 }
+
 div.card-header {
     font-size: 1.25rem;
     background: #daa520;
     font-weight: 600;
 }
+
 .card-header:first-child {
     border-radius: 0px;
 }
+
 .form-check {
     label {
         color: #fff;
         font-weight: 600;
     }
 }
+
 .sortableLists {
     padding-right: 0;
 
     li {
         background-color: #faebd7;
         border-bottom: 2px solid #2f4f4f;
-        .btn-group{
-            padding-right:1rem;
+
+        .btn-group {
+            padding-right: 1rem;
         }
     }
 }
+
 .card-footer {
-    border-top:1px solid #fff;
+    border-top: 1px solid #fff;
+
     button {
         background: #daa520;
         color: #FFF;
-        width:30%;
+        width: 30%;
     }
 
     button:hover {
         background: #c8971c;
         color: #FFF;
-        border:3px solid #fff;
+        border: 3px solid #fff;
     }
 }
+
 #myEditor, #MenuEditorForm {
     border: 2px solid #daa520;
 }
+
 .border1 {
     border: 5px solid #faebd7;
     border-radius: 5px;
 }
-
-
-

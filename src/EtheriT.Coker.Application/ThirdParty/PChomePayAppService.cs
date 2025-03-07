@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
 using Microsoft.AspNetCore.Http;
 using AutoMapper.Configuration.Conventions;
+using MailKit.Search;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -232,14 +233,16 @@ namespace EtheriT.Coker.Application.ThirdParty
                             PChomePayState = JsonConvert.DeserializeObject<PChomePayStateDto>(jsonResponse);
 
                             var message = "";
+                            var return_status = "fail";
                             switch (PChomePayState.status)
                             {
                                 case "W":
                                     if (ohdata.State == OrderStatusEnum.待確認)
                                     {
                                         ohdata.State = OrderStatusEnum.待付款;
-                                        message = "交易處理中";
                                     }
+                                    message = "交易處理中";
+                                    return_status = "success";
                                     break;
                                 case "S":
                                     if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
@@ -247,19 +250,20 @@ namespace EtheriT.Coker.Application.ThirdParty
                                         ohdata.State = OrderStatusEnum.已付款;
                                         DateTime paydate = PChomePayState.pay_date == null ? DateTime.Now : DateTime.ParseExact(PChomePayState.pay_date.ToString(), "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
                                         var send_mail = await orderAppService.PaySuccessMailSend(ohdata.Id, paydate);
-                                        message = "交易已完成";
                                     }
+                                    message = "交易已完成";
+                                    return_status = "success";
                                     break;
                                 default:
                                     if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
                                     {
                                         ohdata.State = OrderStatusEnum.付款失敗;
-                                        message = "交易失敗：";
                                     }
+                                    message = "交易失敗：";
                                     break;
                             }
                             db.SaveChanges();
-                            if (PChomePayState.status != null)
+                            if (PChomePayState.status != null && return_status == "fail")
                             {
                                 switch (PChomePayState.status_code)
                                 {
@@ -481,16 +485,34 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
                 if (ohdata != null)
                 {
-                    if (ohdata.TransactionId != null)
+
+                    ResponseMessageDto statusresponse = await PChomePayCheckPaymentStatus(ohid);
+
+                    if (statusresponse.Success == true)
                     {
-                        response = await PChomePayRefund(ohdata.Id, null);
-                        if (response.Success) response.Message = "訂單已取消並送出退款申請。";
+                        if (ohdata.TransactionId != null)
+                        {
+                            switch (ohdata.State)
+                            {
+                                case OrderStatusEnum.已付款:
+                                case OrderStatusEnum.已出貨:
+                                case OrderStatusEnum.已完成:
+                                    response = await PChomePayRefund(ohdata.Id, null);
+                                    if (response.Success) response.Message = "訂單已取消並送出退款申請。";
+                                    break;
+                                default:
+                                    response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
+                                    if (response.Success) response.Message = "訂單已取消。";
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
+                            if (response.Success) response.Message = "訂單已取消。";
+                        }
                     }
-                    else
-                    {
-                        response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
-                        if (response.Success) response.Message = "訂單已取消。";
-                    }
+                    else throw new Exception($"查詢訂單狀態發生錯誤：{statusresponse.Message}");
                 }
                 else throw new Exception("查無訂單資訊");
             }

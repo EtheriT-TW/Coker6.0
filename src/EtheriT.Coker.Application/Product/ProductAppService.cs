@@ -414,6 +414,7 @@ namespace EtheriT.Coker.Application.Product
                                     Id = p.Id,
                                     Title = p.Title,
                                     Visible = p.Visible,
+                                    Available = !p.RemovedFromShelves,
                                     Ser_No = p.Ser_No,
                                     ItemNo = p.ItemNo ?? "",
                                     Price = "",

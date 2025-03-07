@@ -178,7 +178,6 @@ function PageReady() {
         setInterval(hashChange, 1000);
     }
 }
-
 function ElementInit() {
     $ad_type = $("#AdType");
     $btn_display = $(".btn_display");
@@ -187,7 +186,6 @@ function ElementInit() {
     $description = $(".description");
     $description_text = $description.children("textarea");
 }
-
 function hashChange(e) {
     if (!!e) {
         HashDataEdit();
@@ -196,7 +194,6 @@ function hashChange(e) {
         console.log("HashChange錯誤")
     }
 }
-
 function HashDataEdit() {
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
@@ -235,7 +232,6 @@ function HashDataEdit() {
         BackToList();
     }
 }
-
 function contentReady(e) {
     directory_list = e;
     HashDataEdit();
@@ -243,13 +239,11 @@ function contentReady(e) {
 function DirectoryDatailListReady(e) {
     directoryDatailList = e;
 }
-
 function editButtonClicked(e) {
     MoveToContent();
     keyId = e.row.key;
     window.location.hash = keyId;
 }
-
 function reladataButtonClicked(e) {
     keyId = `Advertise_${e.row.key}`;
     window.location.hash = keyId;
@@ -260,7 +254,6 @@ function GetDirectoryId() {
 function GetDirectoryType() {
     return DirectoryType;
 }
-
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
         co.Directory.Delete(e.row.key).done(function (result) {
@@ -282,7 +275,6 @@ function FormDataClear() {
 }
 
 function FormDataSet(result) {
-    console.log(result);
     FormDataClear();
     keyId = result.id;
     disp_opt = result.visible;
@@ -296,7 +288,6 @@ function FormDataSet(result) {
     $title_text.val(result.title);
     $description_text.val(result.description);
 }
-
 function AddUp(success_text, error_text) {
     co.Directory.AddUp({
         Id: keyId,
@@ -370,13 +361,11 @@ function AddUpAdvertise(success_text, error_text) {
         }
     });
 }
-
 function MoveToContent() {
     $(DirectoryForms).removeClass("was-validated");
     $("#pages>.card,#TopLine").addClass("d-none");
     $("#DirectoryContent").removeClass("d-none");
 }
-
 function BackToList() {
     $("#pages>.card,#TopLine").addClass("d-none");
     $("#DirectoryList").removeClass("d-none");
@@ -384,7 +373,6 @@ function BackToList() {
     DirectoryType = "n";
     window.location.hash = ""
 }
-
 function MoveToItemList() {
     const para = window.location.hash.replace("#", "").split("_");
     $("#pages>.card,#TopLine").addClass("d-none");
@@ -454,12 +442,14 @@ function MoveToItemAdvertise() {
                                         break;
                                 }
                                 $AdvertiseTags.TagDataSet(result.tagDatas);
+                                $("#TargetCheck").prop("checked", result.target);
                             });
                         } else BackToList();
                     })
                 } else {
                     co.Form.clear("AdvertiseForm");
                     $("#AdvertiseForm > input[name='id'").val("");
+                    $("#TargetCheck").prop("checked", false);
                     _dfr.promise().done(function () {
                         $AdvertiseTags.TagDataSet($("#DirectoryItemps").data("dir").tagDatas);
                     });
@@ -484,7 +474,6 @@ function deleteAdvertiseButtonClicked(e) {
         });
     });
 }
-
 function FileTypeInit() {
     $(".ad_preview > div").each(function (i) {
         $(this).addClass("d-none");
@@ -504,7 +493,6 @@ function FileTypeInit() {
     $(".video_preview").attr("type", "");
     $(".video_preview").attr("src", "");
 }
-
 function ImageTypeInit() {
     $(".ad_preview > .preview").addClass("d-none");
     $(".ad_preview > .image").removeClass("d-none");
@@ -513,12 +501,10 @@ function ImageTypeInit() {
     $(".ad_link > input").attr("placeholder", "輸入連結網址");
     $(".ad_link > .checkbox").removeClass("d-none");
 }
-
 function VideoTypeInit() {
     $(".ad_preview > .preview").addClass("d-none");
     $(".ad_preview > .video").removeClass("d-none");
 }
-
 function YoutubeTypeInit() {
     // 影片預覽才顯示iframe
     $(".ad_preview > .preview").addClass("d-none");

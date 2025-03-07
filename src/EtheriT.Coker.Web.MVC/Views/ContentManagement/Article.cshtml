@@ -43,13 +43,15 @@
                 .ShowRowLines(true)
                 .Columns(c =>
                 {
-                    c.AddFor(e => e.Id).Caption("編號").Width(90);
+                    c.AddFor(e => e.Id).Caption("編號").Width(75);
+                    c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90);
+                    c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90);
                     c.AddFor(e => e.Title).Caption("標題");
-                    c.AddFor(e => e.Tags).Caption("標籤").MinWidth(200);
+                    c.AddFor(e => e.Tags).Caption("標籤").MinWidth(150);
                     c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90);
                     c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(false);
                     c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(false);
-                    c.AddFor(e => e.permanent).Caption("永久顯示").Width(90);
+                    c.AddFor(e => e.permanent).Caption("永久顯示").Width(125);
                     c.AddFor(e => e.SerNO).Caption("排序").Width(90);
                     c.AddFor(e => e.Popular).Caption("人氣值").Width(90);
                     c.AddFor(e => e.PopularVisible).Caption("是否顯示人氣值").Width(150);

@@ -144,6 +144,7 @@ namespace EtheriT.Coker.Application.Article
                                                Longitude = e.Longitude,
                                                Latitude = e.Latitude,
                                                Visible = e.Visible,
+                                               Available = !e.RemovedFromShelves,
                                                SerNO = e.SerNO,
                                                Popular = e.Popular,
                                                PopularVisible = e.PopularVisible,

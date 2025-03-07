@@ -17,6 +17,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
         public double? Longitude { get; set; }
         public double? Latitude { get; set; }
         public bool Visible { get; set; }
+        public bool Available { get; set; }
         public int SerNO { get; set; }
         public int Popular { get; set; }
         public bool PopularVisible { get; set; }

@@ -128,15 +128,16 @@
                     .ShowRowLines(true)
                     .Columns(c =>
                     {
-                        c.AddFor(e => e.Visible).Caption("是否顯示").AllowSearch(false).Width(90);
                         c.AddFor(e => e.Id).Caption("id").Width(50);
-                        c.AddFor(e => e.Ser_No).Caption("排序").Width(50);
+                        c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90);
+                        c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90);
+                        c.AddFor(e => e.Ser_No).Caption("排序").Width(75);
                         c.AddFor(e => e.ItemNo).Caption("銷貨編號");
                         c.AddFor(e => e.Title).Caption("商品名稱");
                         c.AddFor(e => e.Price).Caption("價格").AllowSearch(false);
                         c.AddFor(e => e.StartTime).Caption("起始日期").AllowSearch(false);
                         c.AddFor(e => e.EndTime).Caption("結束日期").AllowSearch(false);
-                        c.AddFor(e => e.Permanent).Caption("永久顯示").AllowSearch(false).Width(90);
+                        c.AddFor(e => e.Permanent).Caption("永久顯示").AllowSearch(false).Width(125);
                         c.Add()
                         .Type(GridCommandColumnType.Buttons)
                         .Buttons(b =>

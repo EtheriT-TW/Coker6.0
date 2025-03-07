@@ -770,10 +770,9 @@ namespace EtheriT.Coker.Application.Directory
                 {
                     var prices = await productAppService.GetPriceByStock(stockids);
 
-                    double min = prices.Min(e => e.Price) ?? 0;
-                    double max = prices.Max(e => e.Price) ?? 0;
-                    if (min == max) data.Price = $"{max}";
-                    else data.Price = $"{min} ~ {max}";
+                    var temp_price = prices.Where(e => e.Price == (prices.Max(e => e.Price))).FirstOrDefault();
+                    data.Price = temp_price?.Price?.ToString("N0") ?? "0";
+                    data.OriPrice = temp_price?.OriPrice?.ToString("N0") ?? "0";
                 }
             }
             output.ReleInfos = list;

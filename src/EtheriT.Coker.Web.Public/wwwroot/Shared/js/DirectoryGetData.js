@@ -474,18 +474,12 @@ function DirectoryDataInsert($item, result) {
             });
         }
         if (data.price != null) {
-            const get_high_price = (price) => {
-                if (price.includes("~")) {
-                    [price_low, price_mid, price_high] = price.split(" ");
-                    return price_high
-                }
-                else return price;
-            }
-            const convert_price = (price) => {
-                return Intl.NumberFormat().format(get_high_price(price));
-            }
-            content.find(".normal-price").text(convert_price(data.price));
-            content.find(".price-grid").text(convert_price(data.price));
+            content.find(".normal-price").text(data.price.toLocaleString());
+            if (data.oriPrice != 0 && data.oriPrice != null && data.price != data.oriPrice) {
+                content.find(".price-grid").removeClass("price")
+                content.find(".price-grid").empty();
+                content.find(".price-grid").append(`<div class="text-decoration-line-through">$${data.oriPrice}</div><div class="text-danger">會員價 $${data.price}</div>`);
+            } else content.find(".price-grid").text(data.price);
         } else {
             content.find(".price").addClass("notshow");
             content.find(".price").text("");

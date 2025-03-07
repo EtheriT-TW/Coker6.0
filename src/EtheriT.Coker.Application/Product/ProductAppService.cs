@@ -864,10 +864,9 @@ namespace EtheriT.Coker.Application.Product
                         var stockids = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Select(e => e.Id).ToListAsync();
                         var prices = await GetPriceByStock(stockids);
 
-                        double min = prices.Min(e => e.Price) ?? 0;
-                        double max = prices.Max(e => e.Price) ?? 0;
-                        if (min == max) data.Price = $"{max}";
-                        else data.Price = $"{min} ~ {max}";
+                        var temp_price = prices.Where(e => e.Price == (prices.Max(e => e.Price))).FirstOrDefault();
+                        data.Price = temp_price?.Price?.ToString("N0") ?? "0";
+                        data.OriPrice = temp_price?.OriPrice?.ToString("N0") ?? "0";
                     }
                 }
                 return output;

@@ -1281,7 +1281,7 @@
         transition: background-color 0.01s 0.3s linear;
     }
 
-.bg_gray {
+/*.bg_gray {
     background-color: #ececec;
 }
 
@@ -1306,7 +1306,7 @@
 .hover_inside_scale:hover img {
     transform: scale(1.025);
     filter: saturate(150%);
-}
+}*/
 
 .catalog-line div {
     overflow: hidden;

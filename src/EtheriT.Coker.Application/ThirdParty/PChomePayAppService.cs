@@ -17,6 +17,8 @@ using System.Globalization;
 using Microsoft.AspNetCore.Http;
 using AutoMapper.Configuration.Conventions;
 using MailKit.Search;
+using System.Text.Json;
+using System;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -422,15 +424,11 @@ namespace EtheriT.Coker.Application.ThirdParty
                 response.Message = $"Refund Request failed: {ex.Message}";
 
                 Console.WriteLine("(PChomePay Refund)HTTP Error: " + ex.Message);
-                if (ex.Data.Contains("StatusCode"))
-                {
-                    Console.WriteLine("(PChomePay Refund)Status Code: " + ex.Data["StatusCode"]);
-                }
 
-                if (ex.Data.Contains("ResponseBody"))
-                {
-                    Console.WriteLine("(PChomePay Refund)Response Body: " + ex.Data["ResponseBody"]);
-                }
+                string ex_json = System.Text.Json.JsonSerializer.Serialize(ex.Data, new JsonSerializerOptions { WriteIndented = true });
+
+                Console.WriteLine($"-------------(PChomePay Refund)EX Data-------------");
+                Console.WriteLine(ex_json);
             }
             catch (Exception ex)
             {

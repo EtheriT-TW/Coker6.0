@@ -124,7 +124,7 @@
 
 /* Mega Menu Offcanvas */
 #Offcanvas_Mega_Menu {
-    background: rgba(100,128,108,.9);
+    background: rgba(100,128,108,.9) !important;
 }
 
     #Offcanvas_Mega_Menu > * {

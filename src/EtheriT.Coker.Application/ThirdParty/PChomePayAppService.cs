@@ -388,7 +388,16 @@ namespace EtheriT.Coker.Application.ThirdParty
                             response = new ResponseMessageDto();
                             var RefundContent = new StringContent(RefundBodyStr, Encoding.UTF8, "application/json");
                             var PostResponse = await ThirdPartyClient_PCHome.PostAsync(RefundUri, RefundContent);
-                            PostResponse.EnsureSuccessStatusCode();
+                            if (!PostResponse.IsSuccessStatusCode)
+                            {
+                                string responseBody = await PostResponse.Content.ReadAsStringAsync();
+                                Console.WriteLine($"❌ 請求失敗: {PostResponse.StatusCode}");
+                                Console.WriteLine($"🔹 Headers: {string.Join("\n", PostResponse.Headers)}");
+                                Console.WriteLine($"🔹 Response Body: {responseBody}");
+
+                                // 可以拋出自訂例外，包含回應內容
+                                throw new Exception($"API 錯誤: {PostResponse.StatusCode}\n{responseBody}");
+                            }else PostResponse.EnsureSuccessStatusCode();
                             var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
                             var pchomePayResponse = JsonConvert.DeserializeObject<PChomeRefundDto>(jsonResponse);
 
@@ -420,17 +429,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                 Console.WriteLine($"-------------Refund Request failed-------------");
 
                 response.Message = $"Refund Request failed: {ex.Message}";
-
                 Console.WriteLine("(PChomePay Refund)HTTP Error: " + ex.Message);
-                if (ex.Data.Contains("StatusCode"))
-                {
-                    Console.WriteLine("(PChomePay Refund)Status Code: " + ex.Data["StatusCode"]);
-                }
-
-                if (ex.Data.Contains("ResponseBody"))
-                {
-                    Console.WriteLine("(PChomePay Refund)Response Body: " + ex.Data["ResponseBody"]);
-                }
+                Console.WriteLine("(PChomePay Refund)Status Code: " + ex.StatusCode);
+                Console.WriteLine("Response Body: " + ex.Data);
             }
             catch (Exception ex)
             {

@@ -255,7 +255,7 @@
 }
 /* Mega Menu Offcanvas */
 #Offcanvas_Mega_Menu {
-    background-color: #c7ce38;
+    background-color: #c7ce38 !important;
 }
 
     #Offcanvas_Mega_Menu > * {

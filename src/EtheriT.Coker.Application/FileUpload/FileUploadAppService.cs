@@ -1319,7 +1319,6 @@ namespace EtheriT.Coker.Application
                                 {
                                     string newFilePath = Path.Combine(directoryPath, $"{key}.avif");
                                     image.Format = MagickFormat.Avif; // 轉成 WebP
-                                    image.Quality = 100; // 設定壓縮品質（0-100）
                                     image.Settings.SetDefine(MagickFormat.Avif, "lossless", "true"); //設定無損壓縮
                                     await image.WriteAsync(newFilePath); // 儲存轉換後的檔案
                                     path = $"/{directory}/{key}.avif";

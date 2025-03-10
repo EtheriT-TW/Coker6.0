@@ -316,7 +316,7 @@
 }
 /* Mega Menu Offcanvas */
 #Offcanvas_Mega_Menu {
-    background-color: #D36C6C;
+    background-color: #D36C6C !important;
 }
 
     #Offcanvas_Mega_Menu > * {

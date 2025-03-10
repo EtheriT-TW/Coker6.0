@@ -96,7 +96,7 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-        public async Task<UploadFileOutputDto> uploadMediaFiles(IList<IFormFile> files, int type, long sid, int serno, string page)
+        public async Task<UploadFileOutputDto> uploadMediaFiles(IList<IFormFile> files, int type, long sid, int serno, string page,bool convert)
         {
             long usetId = await loginUserData.GetUserId();
             ResponseMessageDto DeleResponse;
@@ -127,7 +127,7 @@ namespace EtheriT.Coker.Application
                         db.SaveChanges();
                     }
                 }
-                List<FileItemDto> items = await SaveImage(files, type, (int)FileBindMoreEnum.壓縮圖片, serno, page, sid);
+                List<FileItemDto> items = await SaveImage(files, type, (int)FileBindMoreEnum.壓縮圖片, serno, page, sid, convert);
                 foreach (var item in items)
                 {
                     response.Files.Add(item);
@@ -1202,7 +1202,7 @@ namespace EtheriT.Coker.Application
             db.SaveChanges();
             return outputs;
         }
-        private async Task<FileItemDto> SaveFile(IFormFile file, string directory, bool isTemp = false)
+        private async Task<FileItemDto> SaveFile(IFormFile file, string directory, bool isTemp = false,bool convert = true)
         {
             if (file.Length > 0)
             {
@@ -1219,7 +1219,7 @@ namespace EtheriT.Coker.Application
                 {
                     string ContentType = file.ContentType;
                     long fileLength = file.Length;
-                    if (IsAllowedFileType(file.ContentType))
+                    if (convert && IsAllowedFileType(file.ContentType))
                     {
                         using (var image = new MagickImage(stream))
                         {
@@ -1285,7 +1285,7 @@ namespace EtheriT.Coker.Application
             }
             else throw new Exception("上傳失敗");
         }
-        private async Task<List<FileItemDto>> SaveImage(IList<IFormFile> files, int asotype, int bindtype, int serno, string directory, long sid)
+        private async Task<List<FileItemDto>> SaveImage(IList<IFormFile> files, int asotype, int bindtype, int serno, string directory, long sid,bool convert = true)
         {
             if (files.Count() > 0)
             {
@@ -1313,7 +1313,7 @@ namespace EtheriT.Coker.Application
                         {
                             string ContentType = file.ContentType;
                             long fileLength = file.Length;
-                            if (asotype != (int)FileBindTypeEnum.網站圖示 && IsAllowedFileType(file.ContentType))
+                            if (convert &&  asotype != (int)FileBindTypeEnum.網站圖示 && IsAllowedFileType(file.ContentType))
                             {
                                 using (var image = new MagickImage(stream))
                                 {

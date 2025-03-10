@@ -367,6 +367,7 @@ fileProvider.Mappings[".properties"] = "application/octet-stream";
 fileProvider.Mappings[".bcmap"] = "image/svg+xml";
 fileProvider.Mappings[".ftl"] = "application/l10n";
 fileProvider.Mappings[".dwg"] = "image/vnd.dwg";
+fileProvider.Mappings[".avif"] = "image/avif";
 
 //app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
 app.UseStaticFiles(new StaticFileOptions()

@@ -26,34 +26,34 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpPost]
         //[ValidateAntiForgeryToken]
-        public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files, [FromForm] int type, [FromForm] long? id, [FromForm] long? sid, [FromForm] int serno)
+        public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files, [FromForm] int type, [FromForm] long? id, [FromForm] long? sid, [FromForm] int serno, [FromForm] bool convert = true)
         {
             FileBindTypeEnum s = (FileBindTypeEnum)type;
             switch (s)
             {
                 case FileBindTypeEnum.產品:
-                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Product");
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Product", convert);
                 case FileBindTypeEnum.產品檔案:
                     return await fileUploadAppService.uploadFiles(files, type, (long)sid, serno, "Product/File");
                 case FileBindTypeEnum.選單圖:
-                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Menu");
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Menu", convert);
                 case FileBindTypeEnum.選單Icon:
-                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "MenuIcon");
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "MenuIcon", convert);
                 case FileBindTypeEnum.選單覆蓋:
-                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "MenuMouseOver");
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "MenuMouseOver", convert);
                 case FileBindTypeEnum.技術證照:
-                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "TechnicalCertificate");
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "TechnicalCertificate", convert);
                 case FileBindTypeEnum.右側浮動廣告:
-                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "RightSideAd");
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "RightSideAd", convert);
                 case FileBindTypeEnum.文章管理:
-                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Article");
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Article", convert);
                 case FileBindTypeEnum.進入廣告:
-                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "EnterAd");
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "EnterAd", convert);
                 case FileBindTypeEnum.自訂廣告:
-                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "CustomAd");
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "CustomAd", convert);
                 case FileBindTypeEnum.網站圖示:
                 case FileBindTypeEnum.網站Logo:
-                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Website");
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Website", convert);
                 default:
                     return await fileUploadAppService.uploadHtmlContentFiles(files);
             }

@@ -9,16 +9,11 @@ namespace EtheriT.Coker.Web.MVC.Middleware
     public class AuthenticationMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly NavigationProvider _navigation;
-        private readonly IConfiguration _configuration;
-        private readonly ITokenAppService _tokenAppService;
-        private readonly IAccountAppService _accountAppService;
-        public AuthenticationMiddleware(RequestDelegate next, NavigationProvider navigation, IConfiguration configuration, IAccountAppService accountAppService)
+        private readonly IServiceScopeFactory _scopeFactory;
+        public AuthenticationMiddleware(RequestDelegate next, IServiceScopeFactory scopeFactory)
         {
             _next = next;
-            _navigation = navigation;
-            _configuration = configuration;
-            _accountAppService = accountAppService;
+            _scopeFactory = scopeFactory;
         }
         public async Task InvokeAsync(HttpContext context)
         {
@@ -29,38 +24,44 @@ namespace EtheriT.Coker.Web.MVC.Middleware
             }
             else
             {
-                var isAuthenticated = await _accountAppService.Chech();
-                var controllerName = context.GetRouteData()?.Values["controller"]?.ToString();
-                var actionName = context.GetRouteData()?.Values["action"]?.ToString();
-                if (isAuthenticated.Success && !string.IsNullOrEmpty(controllerName) && !string.IsNullOrEmpty(actionName) && !(controllerName == "Account" && actionName == "Index"))
+                using (var scope = _scopeFactory.CreateScope())
                 {
-                    var site = await _navigation.getMenus();
-                    await _navigation.SetPower(site);
-                    await _navigation.setUserJob(site);
-                    var menu = _navigation.FindJob(site.Jobs, controllerName, actionName);
-                    if (menu == null || !menu.CanVisble)
+                    var _accountAppService = scope.ServiceProvider.GetRequiredService<IAccountAppService>();
+                    var isAuthenticated = await _accountAppService.Chech();
+                    var controllerName = context.GetRouteData()?.Values["controller"]?.ToString();
+                    var actionName = context.GetRouteData()?.Values["action"]?.ToString();
+                    if (isAuthenticated.Success && !string.IsNullOrEmpty(controllerName) && !string.IsNullOrEmpty(actionName) && !(controllerName == "Account" && actionName == "Index"))
                     {
-                        var firstMenu = site.Jobs.FirstOrDefault(m => m.CanVisble);
-                        if (firstMenu == null) context.Response.Redirect($"/Welcome");
-                        else context.Response.Redirect($"/{firstMenu.Controller}/{firstMenu.Action}");
-                        return;
-                    }
-                    // 用戶已登入，跳過
-                    await _next(context);
-                }
-                else
-                {
-                    // 如果未登入，進行第三方認證或顯示登入頁面
-                    var redirectUrl = context.Request.Path.ToString();
-                    var returnUrl = context.Request.Query["returnUrl"];
 
-                    if (!string.IsNullOrEmpty(returnUrl))
+                        var _navigation = scope.ServiceProvider.GetRequiredService<NavigationProvider>();
+                        var site = await _navigation.getMenus();
+                        await _navigation.SetPower(site);
+                        await _navigation.setUserJob(site);
+                        var menu = _navigation.FindJob(site.Jobs, controllerName, actionName);
+                        if (menu == null || !menu.CanVisble)
+                        {
+                            var firstMenu = site.Jobs.FirstOrDefault(m => m.CanVisble);
+                            if (firstMenu == null) context.Response.Redirect($"/Welcome");
+                            else context.Response.Redirect($"/{firstMenu.Controller}/{firstMenu.Action}");
+                            return;
+                        }
+                        // 用戶已登入，跳過
+                        await _next(context);
+                    }
+                    else
                     {
-                        // 這裡可以根據需要處理認證重定向邏輯
-                        context.Response.Redirect("/");
-                    }
+                        // 如果未登入，進行第三方認證或顯示登入頁面
+                        var redirectUrl = context.Request.Path.ToString();
+                        var returnUrl = context.Request.Query["returnUrl"];
 
-                    await _next(context);
+                        if (!string.IsNullOrEmpty(returnUrl))
+                        {
+                            // 這裡可以根據需要處理認證重定向邏輯
+                            context.Response.Redirect("/");
+                        }
+
+                        await _next(context);
+                    }
                 }
             }
         }

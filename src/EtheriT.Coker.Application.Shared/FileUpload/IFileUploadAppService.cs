@@ -10,7 +10,7 @@ namespace EtheriT.Coker.Application
     {
         public Task<UploadFileOutputDto> uploadTempFiles(IList<IFormFile> files);
         public Task<UploadFileOutputDto> uploadHtmlContentFiles(IList<IFormFile> files);
-        public Task<UploadFileOutputDto> uploadMediaFiles(IList<IFormFile> files, int type, long sid, int serno, string page);
+        public Task<UploadFileOutputDto> uploadMediaFiles(IList<IFormFile> files, int type, long sid, int serno, string page, bool convert);
         public Task<UploadFileOutputDto> uploadFiles(IList<IFormFile> files, int type, long sid, int serno, string page);
         public Task<UploadFileOutputDto> upload360Files(IList<IFormFile> files, int type, long? sid, string page);
         public Task<ResponseMessageDto> uploadYTLink(FileYTLinkUploadDto dto);

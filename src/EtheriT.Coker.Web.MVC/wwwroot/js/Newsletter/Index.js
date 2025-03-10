@@ -3,7 +3,7 @@ var startDate, endDate, keyId;
 var article_list, initTag_list;
 var setPage, initPageData, AllPageData;
 var devCom = {};
-let $form;
+let $form, tempHtml,tempMailHtml;
 
 function PageReady() {
     // 啟動
@@ -24,7 +24,6 @@ function PageReady() {
                 Conten2Title: contenText($(html).find("#support .title")),
                 Conten2Conten: contenText($(html).find("#support .text-left"))
             };
-            console.log(data);
             co.Articles.SaveConten({
                 Id: $("#gjs").data("id"),
                 SaveHtml: html,
@@ -91,7 +90,11 @@ function PageReady() {
     co.ObjectType.GetNewsletterAllConten().done(function (result) {
         if (result.success) {
             AllPageData = result.conten
-            if (AllPageData.length > 1) initPageData = AllPageData[1];
+            tempMailHtml = AllPageData[0].html;
+            if (AllPageData.length > 1) {
+                initPageData = AllPageData[1];
+                tempHtml = AllPageData[1].html;
+            }
         }
     });
 
@@ -419,6 +422,7 @@ function AddUp(success_text, error_text, place) {
                     formData.append("type", 6);
                     formData.append("sid", result.message);
                     formData.append("serno", 500);
+                    formData.append("convert", false);
                     co.File.Upload(formData).done(function (response) {
                         if (response.success) {
                             if (response.files.length > 0) {
@@ -462,8 +466,8 @@ function AddUp(success_text, error_text, place) {
 }
 function setNewsletter(data) {
     var list = [];
-    let web = $(co.Data.HtmlDecode(AllPageData[1].html));
-    let email = $("<div>").append(co.Data.HtmlDecode(AllPageData[0].html));
+    let web = $(co.Data.HtmlDecode(tempHtml));
+    let email = $("<div>").append(co.Data.HtmlDecode(tempMailHtml));
     $(web).setWebHtml(data);
     $(email).setEmailHtml(data);
 
@@ -664,6 +668,7 @@ $.fn.extend({
         $footer.find(".conten").html(`${data.footer.Conten.replace(/\n/g, "<br />")}`);
         $footer.find(".lineLink").setLink(data.footer.List[0]);
         $footer.find(".homeLink").setLink(data.footer.List[1]);
+        console.log($self.find("#navbarNav a").length);
     },
     setLink: function (data) {
         const $link = $(this);

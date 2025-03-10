@@ -416,13 +416,26 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (HttpRequestException ex)
             {
-                // Http 請求錯誤
-                response.Message = $"Request failed: {ex.Message}";
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"-------------Refund Request failed-------------");
+
+                response.Message = $"Refund Request failed: {ex.Message}";
+
+                Console.WriteLine("(PChomePay Refund)HTTP Error: " + ex.Message);
+                if (ex.Data.Contains("StatusCode"))
+                {
+                    Console.WriteLine("(PChomePay Refund)Status Code: " + ex.Data["StatusCode"]);
+                }
+
+                if (ex.Data.Contains("ResponseBody"))
+                {
+                    Console.WriteLine("(PChomePay Refund)Response Body: " + ex.Data["ResponseBody"]);
+                }
             }
             catch (Exception ex)
             {
                 // 其他未知錯誤
-                response.Message = $"Other Error: {ex.Message}";
+                response.Message = $"Refund Other Error: {ex.Message}";
             }
             return response;
         }

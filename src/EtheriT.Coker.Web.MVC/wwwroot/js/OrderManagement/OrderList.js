@@ -331,8 +331,7 @@ function HeaderDataSet(result) {
 
     if (result.refundTransactionId != null) $(".btn_checkrefund").removeClass("d-none");
     else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock) {
-        console.log("Code", result.paymentCode);
-        if (![5, 7, 8, 9, 10, 15].includes(result.paymentCode)) $(".btn_refund").removeClass("d-none");
+        if (![7, 8, 10, 15].includes(result.paymentCode)) $(".btn_refund").removeClass("d-none");
     }
     else OrderStateChange(oristate)
 

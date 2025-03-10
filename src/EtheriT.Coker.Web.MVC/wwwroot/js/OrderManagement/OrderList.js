@@ -275,7 +275,6 @@ function HashDataEdit() {
             });
             co.Order.GetHeaderOld(parseInt(hash)).done(function (result) {
                 if (result != null) {
-                    console.log(result);
                     FormDataClear();
                     keyId = result.id;
                     HeaderDataSet(result);
@@ -331,7 +330,10 @@ function HeaderDataSet(result) {
     }
 
     if (result.refundTransactionId != null) $(".btn_checkrefund").removeClass("d-none");
-    else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock) $(".btn_refund").removeClass("d-none");
+    else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock) {
+        console.log("Code", result.paymentCode);
+        if (![5, 7, 8, 9, 10, 15].includes(result.paymentCode)) $(".btn_refund").removeClass("d-none");
+    }
     else OrderStateChange(oristate)
 
     $order_notes.text(result.remark)
@@ -345,7 +347,8 @@ function HeaderDataSet(result) {
     $orderer_name.text(result.orderer)
     $orderer_cellphone.text(result.ordererCellPhone)
     var or_telIndex = result.ordererTelephone.indexOf("-", 5)
-    $orderer_telphone.text(result.ordererTelephone.substr(or_telIndex + 1).length > 0 ? result.ordererTelephone : result.ordererTelephone.subtotal(0, or_telIndex))
+    if (result.ordererTelephone != "") $orderer_telphone.text(result.ordererTelephone.substr(or_telIndex + 1).length > 0 ? result.ordererTelephone : result.ordererTelephone.subtotal(0, or_telIndex))
+    else $orderer_telphone.text("-");
 
     $memo_block.val(result.memo);
 

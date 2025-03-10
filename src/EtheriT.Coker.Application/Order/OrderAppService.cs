@@ -298,6 +298,7 @@ namespace EtheriT.Coker.Application.Order
                         UniformId = result.UniformId,
                         InvoiceAddress = result.InvoiceAddress,
                         Payment = result.Payment == 0 ? "" : result.Payment.ToString(),
+                        PaymentCode = result.Payment,
                         Shipping = ship_text,
                         State = result.State,
                         CompletedDate = result.CompletedDate,

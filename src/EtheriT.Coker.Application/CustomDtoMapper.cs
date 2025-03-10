@@ -219,6 +219,7 @@ namespace EtheriT.Coker.Application
                 .ReverseMap();
             CreateMap<Order_Header, OrderHeaderDisplayDto>()
                 .ForMember(e => e.RefundTransactionId, option => option.MapFrom(c => c.refundTransactionId))
+                .ForMember(e => e.PaymentCode, option => option.MapFrom(c => c.Payment))
                 .ReverseMap();
             CreateMap<ShoppingCartDisplayDto, OrderDetailDisplayDto>()
                  .ForMember(e => e.ProdId, option => option.MapFrom(c => c.PId))

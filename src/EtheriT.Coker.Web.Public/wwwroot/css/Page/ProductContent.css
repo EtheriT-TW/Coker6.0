@@ -105,6 +105,12 @@ i.fa-chevron-right {
         display: block;
     }
 
+    .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_video {
+        font-size: 4.5rem;
+        Opacity: 0.8;
+        pointer-events: none
+    }
+
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_youtube {
         font-size: 4.5rem;
         color: #FF0000;
@@ -243,14 +249,13 @@ i.fa-chevron-right {
         content: " \f106";
     }
 
+#Product > .content > .pro_tc > .image {
+    list-style: none;
+}
 
-    #Product > .content > .pro_tc > .image {
-        list-style: none;
+    #Product > .content > .pro_tc > .image > li > button > img {
+        height: 3.25rem;
     }
-
-        #Product > .content > .pro_tc > .image > li > button > img {
-            height: 3.25rem;
-        }
 
 #Product > .content > .priceframe > div > .price {
     color: var(--gray-text);
@@ -362,10 +367,10 @@ input:disabled + .btn_radio {
             opacity: 50%;
         }
 
-    #Product > .content > .btn_addToCar.bonus_lack:not(.close)::after {
-        content: '紅利點數不足';
-        opacity: 50%;
-    }
+        #Product > .content > .btn_addToCar.bonus_lack:not(.close)::after {
+            content: '紅利點數不足';
+            opacity: 50%;
+        }
 
 #Product > .content .btn_favorites {
     background-color: gray;

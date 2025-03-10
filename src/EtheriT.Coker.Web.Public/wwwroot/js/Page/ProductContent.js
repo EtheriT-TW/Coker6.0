@@ -43,6 +43,7 @@ function PageReady() {
     proDisplayModal.addEventListener('hidden.bs.modal', event => {
         window.CI360.destroy();
         $("#Pro_Youtube").attr("src", "");
+        $("#Pro_Video").attr("src", "");
     })
 
     $(".btn_addToCar").on("click", function () {
@@ -368,7 +369,17 @@ function PageDefaultSet(result) {
                 "data-id": img_med.id
             });
             switch (img_med.fileType) {
+                case 3:
+                    slide = $($("#TemplateVideoSlide").html()).clone();
+                    var slide_video = slide.find(".pro_display");
+                    slide_video.attr({
+                        "alt": img_med.name,
+                        "data-id": img_med.id,
+                        "src": img_med.link[0],
+                    })
+                    break;
                 case 4:
+                    slide.addClass("bg-black")
                     slide_image.attr({
                         "data-display-protype": "youtube",
                         "data-youtube-link": img_med.name,
@@ -389,6 +400,9 @@ function PageDefaultSet(result) {
             var pre_slide_image = pre_slide.find("img");
             pre_slide_image.attr("alt", img_small.name);
             switch (img_small.fileType) {
+                case 3:
+                    pre_slide_image.attr("src", "/images/videopreview.jpg");
+                    break;
                 case 4:
                     pre_slide_image.attr({ src: `https://img.youtube.com/vi/${img_small.name}/3.jpg` })
                     break;
@@ -679,18 +693,28 @@ function ShowBigPro() {
     pro_viewModalSpace.children(".pro_360view").addClass("d-none");
     switch (pro_self.data("display-protype")) {
         case "image":
-            if ($(".modal-dialog").hasClass("ytshow")) $(".modal-dialog").removeClass("ytshow")
+            $(".modal-dialog").removeClass("ytshow")
             pro_viewModalSpace.children(".pro_img").removeClass("d-none");
+            pro_viewModalSpace.children(".pro_video").addClass("d-none");
             addImage(pro_self);
             break;
+        case "video":
+            $(".modal-dialog").removeClass("ytshow")
+            pro_viewModalSpace.children(".pro_img").addClass("d-none");
+            pro_viewModalSpace.children(".pro_video").removeClass("d-none");
+            addVideo(pro_self);
+            break;
         case "youtube":
-            if (!$(".modal-dialog").hasClass("ytshow")) $(".modal-dialog").addClass("ytshow")
+            $(".modal-dialog").addClass("ytshow")
             pro_viewModalSpace.children(".pro_youtube").removeClass("d-none");
+            pro_viewModalSpace.children(".pro_img").addClass("d-none");
+            pro_viewModalSpace.children(".pro_video").addClass("d-none");
             addYoutube(pro_self);
             break;
         case "360view":
             if ($(".modal-dialog").hasClass("ytshow")) $(".modal-dialog").removeClass("ytshow")
             pro_viewModalSpace.children(".pro_360view").removeClass("d-none");
+            pro_viewModalSpace.children(".pro_video").removeClass("d-none");
             add360View(pro_self);
             break;
     }
@@ -710,6 +734,10 @@ function addImage(pro_self) {
         proImage.classList.add("cloudimage-360");
         window.CI360.add("Pro_Image");
     });
+}
+function addVideo(pro_self) {
+    var img_data = img_origin_list.find(item => item.id == pro_self.data("id"));
+    $("#Pro_Video").attr("src", img_data.link[0])
 }
 function addYoutube(pro_self) {
     var pro_YoutubeLink = pro_self.data("youtube-link");

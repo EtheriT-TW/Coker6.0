@@ -1111,6 +1111,8 @@ function OrderHeaderAdd() {
                                                     buy_step_swiper.slideNext();
                                                     buy_step_swiper.disable();
                                                 }, 300);
+                                                $("#Step4 > .card-body .thirdpay_link a").attr("href", result.message);
+                                                $("#Step4 > .card-body .thirdpay_link").removeClass("d-none");
                                                 window.open(result.message, "_blank");
                                             } else {
                                                 $("#Step4 > .card-body > .pruchase_content > .status_alert").text("付款流程發生未知錯誤，請稍後重新嘗試，或直接聯繫客服人員。");

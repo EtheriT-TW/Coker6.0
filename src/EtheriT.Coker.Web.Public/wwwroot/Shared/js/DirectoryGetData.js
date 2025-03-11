@@ -493,7 +493,7 @@ function DirectoryDataInsert($item, result) {
         if (data.tags == null) data.tags = [];
         data.tags.slice(0, 2).forEach((tag) => {
             let badge = $(temp_tag).clone();
-            badge.text(tag.tag_Name.slice(0, 4));
+            badge.text(tag.tag_Name);
             badge.data("tagname", tag.tag_Name)
             $tags.append(badge);
         });

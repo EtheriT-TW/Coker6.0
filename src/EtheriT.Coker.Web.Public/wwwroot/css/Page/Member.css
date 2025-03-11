@@ -134,6 +134,7 @@
 
     .btn_buyAgain:hover {
         color: white !important;
+        background-color: var(--red-main) !important;
     }
 
     .btn_buyAgain::after {

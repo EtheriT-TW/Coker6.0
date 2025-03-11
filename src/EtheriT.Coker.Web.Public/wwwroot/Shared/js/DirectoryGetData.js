@@ -390,6 +390,9 @@ function DirectoryDataInsert($item, result) {
                     window.location.pathname :
                     `${data.orgName == null ? "" : `/${data.orgName}`}${dirPath == "" ? data.orgName == null ? window.location.pathname : window.location.pathname.toLowerCase().replace(`${data.orgName.toLowerCase()}`, "") : `/${dirPath}`}`
             ) + data.link;
+            if (path.split('/')[2] == "" && typeof ($item.data("pageto")) != "undefined") {
+                path = path.replace("//", `/${$item.data("pageto")}/`)
+            }
             target = "_self";
         }
         if (data.type == 1 && data.status != 0) {

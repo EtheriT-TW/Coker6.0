@@ -16,10 +16,12 @@ namespace EtheriT.Coker.Core.Models
         // 最高折抵
         public double? MaxDiscount { get; set; }
         // 起始時間
-        public virtual DateTime? StartTime { get; set; }
+        public DateTime? StartTime { get; set; }
         // 結束時間
-        public virtual DateTime? EndTime { get; set; }
+        public DateTime? EndTime { get; set; }
         // 是否永久顯示
         public bool Permanent { get; set; }
+        public long FK_WebsiteId { get; set; }
+        public Website? Website { get; set; }
     }
 }

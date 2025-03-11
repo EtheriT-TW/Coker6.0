@@ -385,14 +385,14 @@ function DirectoryDataInsert($item, result) {
                 data.mainImage = "https://img.youtube.com/vi/" + key + "/mqdefault.jpg";
             }
         } else {
-            path = (
-                window.location.pathname.indexOf(data.orgName) > 0 && window.location.pathname.toLowerCase().indexOf("home") < 0 && window.location.pathname.toLowerCase().indexOf(dirPath) >= 0 ?
-                    window.location.pathname :
-                    `${data.orgName == null ? "" : `/${data.orgName}`}${dirPath == "" ? data.orgName == null ? window.location.pathname : window.location.pathname.toLowerCase().replace(`${data.orgName.toLowerCase()}`, "") : `/${dirPath}`}`
-            ) + data.link;
-            if (path.split('/')[2] == "" && typeof ($item.data("pageto")) != "undefined") {
-                path = path.replace("//", `/${$item.data("pageto")}/`)
+            path = window.location.pathname.indexOf(data.orgName) > 0 && window.location.pathname.toLowerCase().indexOf("home") < 0 && window.location.pathname.toLowerCase().indexOf(dirPath) >= 0 ?
+                window.location.pathname :
+                `${data.orgName == null ? "" : `/${data.orgName}`}${dirPath == "" ? data.orgName == null ? window.location.pathname : window.location.pathname.toLowerCase().replace(`${data.orgName.toLowerCase()}`, "") : `/${dirPath}`}`;
+            if (typeof ($item.data("pageto")) != "undefined" && $item.data("pageto") != "") {
+                var index = path.substring(1).indexOf("/") + 1;
+                path = path.substring(0, index + 1) + $item.data("pageto");
             }
+            path += data.link;
             target = "_self";
         }
         if (data.type == 1 && data.status != 0) {

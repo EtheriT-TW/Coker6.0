@@ -362,13 +362,14 @@ function HistoryTemplateDataInsert(Datas) {
         var order_header = data.orderHeader;
         var order_details = data.orderDetails;
         var frame = $($("#Template_Order_List").html()).clone();
-        frame.find(".number").text(("000000000" + order_header.id).substr(order_header.id.length));
+        frame.find(".number").text(("000000000" + order_header.id).substring(order_header.id.length));
         frame.find(".date").text(((order_header.creationTime).substr(0, 16).replaceAll("-", "/")));
         frame.find(".amount").text((order_header.total).toLocaleString());
         frame.find(".payment").text(order_header.payment);
 
         if (order_header.creationTime.split(' ')[0] == date_now && [1, 2, 6].includes(order_header.state)) {
-            frame.find(".state").prepend(`${order_header.stateStr}<button class="btn_cancelOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
+            if (![7, 8, 10, 15].includes(order_header.paymentCode)) frame.find(".state").prepend(`${order_header.stateStr}<button class="btn_cancelOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
+            else frame.find(".state").prepend(order_header.stateStr)
             frame.find(".state button").data("ohid", order_header.id)
             frame.find(".state .btn_cancelOrder").on("click", function () {
                 var $this = $(this);

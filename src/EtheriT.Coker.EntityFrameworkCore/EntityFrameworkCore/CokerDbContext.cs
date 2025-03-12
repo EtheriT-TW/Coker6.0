@@ -27,6 +27,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<MappingOldNewUUID> MappingOldNewUUID { get; set; }
         public DbSet<Token> Tokens { get; set; }
         public DbSet<Prod> Prods { get; set; }
+        public DbSet<Marketing> Marketing { get; set; }
         public DbSet<Marquee> Marquees { get; set; }
         public DbSet<WebMenu> WebMenus { get; set; }
         public DbSet<Order_Header> Order_Headers { get; set; }
@@ -163,6 +164,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<MappingOldNewUUID>(o =>
             {
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<Marketing>(o =>
+            {
+                o.HasOne(u => u.Website).WithMany(u => u.Marketing).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<Marquee>(o =>

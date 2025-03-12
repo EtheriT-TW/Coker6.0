@@ -385,11 +385,14 @@ function DirectoryDataInsert($item, result) {
                 data.mainImage = "https://img.youtube.com/vi/" + key + "/mqdefault.jpg";
             }
         } else {
-            path = (
-                window.location.pathname.indexOf(data.orgName) > 0 && window.location.pathname.toLowerCase().indexOf("home") < 0 && window.location.pathname.toLowerCase().indexOf(dirPath) >= 0 ?
-                    window.location.pathname :
-                    `${data.orgName == null ? "" : `/${data.orgName}`}${dirPath == "" ? data.orgName == null ? window.location.pathname : window.location.pathname.toLowerCase().replace(`${data.orgName.toLowerCase()}`, "") : `/${dirPath}`}`
-            ) + data.link;
+            path = window.location.pathname.indexOf(data.orgName) > 0 && window.location.pathname.toLowerCase().indexOf("home") < 0 && window.location.pathname.toLowerCase().indexOf(dirPath) >= 0 ?
+                window.location.pathname :
+                `${data.orgName == null ? "" : `/${data.orgName}`}${dirPath == "" ? data.orgName == null ? window.location.pathname : window.location.pathname.toLowerCase().replace(`${data.orgName.toLowerCase()}`, "") : `/${dirPath}`}`;
+            if (typeof ($item.data("pageto")) != "undefined" && $item.data("pageto") != "") {
+                var index = path.substring(1).indexOf("/") + 1;
+                path = path.substring(0, index + 1) + $item.data("pageto");
+            }
+            path += data.link;
             target = "_self";
         }
         if (data.type == 1 && data.status != 0) {
@@ -493,7 +496,7 @@ function DirectoryDataInsert($item, result) {
         if (data.tags == null) data.tags = [];
         data.tags.slice(0, 2).forEach((tag) => {
             let badge = $(temp_tag).clone();
-            badge.text(tag.tag_Name.slice(0, 4));
+            badge.text(tag.tag_Name);
             badge.data("tagname", tag.tag_Name)
             $tags.append(badge);
         });

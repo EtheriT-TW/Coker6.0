@@ -44,8 +44,8 @@ function SwiperInit(obj) {
                     const $sliders = $swiper.find(".swiper-slide");
                     const $focusedSlide = $swiper.find(":focus").parents(".swiper-slide");
                     const focusIndex = $sliders.index($focusedSlide);
-                    
-                    if (typeof (focusIndex) != "undefined" && focusIndex >=0 && swiper.isLoopActive) {
+
+                    if (typeof (focusIndex) != "undefined" && focusIndex >= 0 && swiper.isLoopActive) {
                         swiper.isLoopActive = false;
                         swiper.loopDestroy();
                     } else if (typeof (focusIndex) == "undefined" && !swiper.isLoopActive) {
@@ -272,12 +272,12 @@ function SwiperInit(obj) {
                 }
             }
             swiperThumbs.slideTo(index, 0);
-            console.log(selfConfig);
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
             if (autoplay && swiper.slides.length - 2 > 1) {
                 $self.swiperBindEven(swiper);
             }
+            if (autoplay) PauseOnMouseEnter(swiper, $self.find(".swiper"))
         }
     });
     $(".two_swiper").each(function () {
@@ -568,7 +568,9 @@ function SwiperInit(obj) {
                 if ($images.length == 1) {
                     var newSlide = `<div class="swiper-slide"><img src="${$images[0]['src']}" alt="${$images[0]['alt']}" /></div>`;
                     pictureSwiper.appendSlide(newSlide);
+                    pictureSwiper.autoplay.stop();
                 } else {
+                    PauseOnMouseEnter(pictureSwiper, $("#pictureSwiper"))
                     for (let i = 0; i < $images.length; i++) {
                         var newSlide = `<div class="swiper-slide"><img src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
                         pictureSwiper.appendSlide(newSlide);
@@ -712,4 +714,14 @@ function SwiperInit(obj) {
             swiper.update();
         }
     });
+}
+
+/*滑鼠覆蓋暫停輪播 pauseOnMouseEnter: true 無作用時使用*/
+function PauseOnMouseEnter(swiper, $container) {
+    $container.on("mouseenter", function () {
+        swiper.autoplay.stop();
+    })
+    $container.on("mouseleave", function () {
+        swiper.autoplay.start();
+    })
 }

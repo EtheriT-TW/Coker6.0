@@ -1,4 +1,15 @@
 ﻿
+/* Tags */
+.tags .badge {
+    max-width: 5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.catalog.type1 .col.type5 .tags .badge {
+    max-width: fit-content;
+}
 
 .tags .badge.less-tag {
     cursor: default;
@@ -36,25 +47,29 @@
         border-radius: 1.5rem;
     }
 
-        .catalog .status.status1 {
-            background: rgba(166,166,166,1);
-        }
+    .catalog.type3 .col.type1 .status {
+        display: none;
+    }
 
-        .catalog .status.status2 {
-            background: rgba(64,64,64,1);
-        }
+    .catalog .status.status1 {
+        background: rgba(166,166,166,1);
+    }
 
-        .catalog .status.status3 {
-            background: rgba(134,178,198,1);
-        }
+    .catalog .status.status2 {
+        background: rgba(64,64,64,1);
+    }
 
-        .catalog .status.status4 {
-            background: rgba(215,154,95,1);
-        }
+    .catalog .status.status3 {
+        background: rgba(134,178,198,1);
+    }
 
-        .catalog .status.status5 {
-            background: rgba(186,88,85,1);
-        }
+    .catalog .status.status4 {
+        background: rgba(215,154,95,1);
+    }
+
+    .catalog .status.status5 {
+        background: rgba(186,88,85,1);
+    }
 
 .menu_directory .active {
     background-color: #f8f9fa;
@@ -165,9 +180,14 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
-    max-height: calc(1rem * 5.1);
+    max-height: calc(1.75rem * 3);
     position: relative;
 }
+
+    .type_change_frame .type4-title.itemNo {
+        white-space: nowrap;
+        min-width: fit-content;
+    }
 
 .type_change_frame .type2-content {
     overflow: hidden;
@@ -198,6 +218,10 @@
 .type_change_frame .catalog .type5-image-frame {
     width: 25%;
     height: 100%;
+}
+
+.type_change_frame .catalog.type1 .col.type5 figure figcaption {
+    padding-right: 2.5rem;
 }
 
 .type_change_frame .btn_favorites {
@@ -313,7 +337,7 @@
             border-radius: 20%;
         }
 
-
+/* AddToCar Button */
 .btn_addToCar button {
     white-space: nowrap;
     border: none;

@@ -806,14 +806,12 @@ namespace EtheriT.Coker.Application.Directory
             siteIds.Add(WebsiteID);
             var output = new DirectoryReleInfoGetDto();
             var db_d = db.Directory.Where(e => dto.Ids.Contains(e.Id) && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).ToList();
-            db_d.ForEach(e =>
-            {
-                corr.Add(new CorrDTAID
-                {
-                    DirectoryId = e.Id,
-                    DirectoryName = e.Title,
-                });
-            });
+            corr = (from d in db_d
+                   select new CorrDTAID
+                   {
+                       DirectoryId = d.Id,
+                       DirectoryName = d.Title,
+                   }).ToList();
 
             if (db_d != null)
             {
@@ -827,13 +825,27 @@ namespace EtheriT.Coker.Application.Directory
 
                 // 在記憶體中進行分組
                 var tags = tagsData
-                    .GroupBy(e => e.FK_AId)
-                    .ToDictionary(g => g.Key, g => g.Select(e => e.FK_TId).ToHashSet());
+                    .GroupBy(e => e.Tag.FK_WebsiteId)  // 先依網站分組
+                    .ToDictionary(
+                        g => g.Key, // WebsiteId
+                        g => g.GroupBy(e => e.FK_AId)  // 然後依目錄 ID 分組
+                            .ToDictionary(
+                                innerGroup => innerGroup.Key, // 目錄 ID
+                                innerGroup => innerGroup.Select(e => e.FK_TId).ToHashSet() // 標籤 ID
+                            )
+                    );
 
-                foreach (var t in tags)
+                foreach (var site in tags) // site.Key 是 WebsiteId
                 {
-                    corr[corr.FindIndex(c => c.DirectoryId == t.Key)].TagId = t.Key;
-                };
+                    foreach (var dir in site.Value) // dir.Key 是 FK_AId
+                    {
+                        int index = corr.FindIndex(c => c.DirectoryId == dir.Key);
+                        if (index != -1)
+                        {
+                            corr[index].TagId = dir.Value.First();
+                        }
+                    }
+                }
 
                 var notTags = await db.Tag_Associates.Include(e => e.Tag)
                     .Where(e => dto.Ids.Contains(e.FK_AId))
@@ -847,23 +859,30 @@ namespace EtheriT.Coker.Application.Directory
                 if (tags != null)
                 {
                     List<long> allIds = new List<long>();
-                    var FKTIds = tags.Values.SelectMany(x => x).ToHashSet();
                     switch ((DirectoryTypeEnum)db_d[0].Type)
                     {
                         case DirectoryTypeEnum.商品:
                             var pd_notId = await (db.Tag_Associates.Where(e => notTagIds.Contains(e.FK_TId) && e.Type == TagAssociateTypeEnum.商品 && !e.IsDeleted)).Select(e => e.FK_AId).ToListAsync();
 
-                            var allProducts = await db.Tag_Associates.Where(e => FKTIds.Contains(e.FK_TId) && !pd_notId.Contains(e.FK_AId) && e.Type == TagAssociateTypeEnum.商品).Select(e => new { e.FK_AId, e.FK_TId }).ToListAsync();
-
-                            // 按商品 ID 分群
-                            var groupedProducts = allProducts
-                                .GroupBy(e => e.FK_AId)
-                                .ToDictionary(g => g.Key, g => g.Select(e => e.FK_TId).ToHashSet());
-
-                            allIds = groupedProducts
-                                .Where(g => tags.Values.Any(tagSet => tagSet.IsSubsetOf(g.Value))) // 至少符合一個目錄標籤
-                                .Select(g => g.Key)
-                                .ToList();
+                            foreach (var site in tags) {
+                                long siteId = site.Key;
+                                var FKTIds = site.Value.Values.SelectMany(tags => tags).ToHashSet();
+                                var allProducts = await db.Tag_Associates.Include(e => e.Tag)
+                                    .Where(e => FKTIds.Contains(e.FK_TId) && !pd_notId.Contains(e.FK_AId) && e.Type == TagAssociateTypeEnum.商品)
+                                    .Where(e => siteId == e.Tag.FK_WebsiteId)
+                                    .Select(e => new { e.FK_AId, e.FK_TId })
+                                    .ToListAsync();
+                                // 按商品 ID 分群
+                                var groupedProducts = allProducts
+                                    .GroupBy(e => e.FK_AId)
+                                    .ToDictionary(g => g.Key, g => g.Select(e => e.FK_TId).ToHashSet());
+                                allIds.AddRange(
+                                    groupedProducts.Where(g => site.Value.Values.Any(tagSet => tagSet.IsSubsetOf(g.Value))) // 至少符合一個目錄標籤
+                                        .Select(g => g.Key)
+                                        .ToList()
+                                );
+                            }
+                            //var allProducts = await db.Tag_Associates.Where(e => FKTIds.Contains(e.FK_TId) && !pd_notId.Contains(e.FK_AId) && e.Type == TagAssociateTypeEnum.商品).Select(e => new { e.FK_AId, e.FK_TId }).ToListAsync();
 
                             if (allIds.Any())
                             {
@@ -882,51 +901,52 @@ namespace EtheriT.Coker.Application.Directory
                             }
                             break;
                         case DirectoryTypeEnum.文章:
-
-                            var db_as = await db.Tag_Associates
+                            var tempcorr = new List<CorrDTAID>();
+                            foreach (var site in tags)
+                            {
+                                long siteId = site.Key;
+                                var FKTIds = site.Value.Values.SelectMany(tags => tags).ToHashSet();
+                                var db_as = await db.Tag_Associates
                                     .Where(e => !e.IsDeleted)
                                     .Where(e => e.Type == TagAssociateTypeEnum.文章)
                                     .Where(e => FKTIds.Contains(e.FK_TId))
                                     .ToListAsync();
-
-
-                            var tempcorr = new List<CorrDTAID>();
-                            db_as.ForEach(a =>
-                            {
-                                var dindex = corr.FindIndex(c => c.TagId == a.FK_TId);
-                                if (dindex != -1)
+                                db_as.ForEach(a =>
                                 {
-                                    tempcorr.Add(new CorrDTAID
+                                    var dindex = corr.FindIndex(c => c.TagId == a.FK_TId);
+                                    if (dindex != -1)
                                     {
-                                        DirectoryId = corr[dindex].DirectoryId,
-                                        DirectoryName = corr[dindex].DirectoryName,
-                                        TagId = corr[dindex].TagId,
-                                        ArticleId = a.FK_AId,
-                                    });
+                                        tempcorr.Add(new CorrDTAID
+                                        {
+                                            DirectoryId = corr[dindex].DirectoryId,
+                                            DirectoryName = corr[dindex].DirectoryName,
+                                            TagId = corr[dindex].TagId,
+                                            ArticleId = a.FK_AId,
+                                        });
+                                    }
+                                });
+                                if (db_as != null)
+                                {
+                                    // 按商品 ID 分群
+                                    var groupedArticle = db_as
+                                        .GroupBy(e => e.FK_AId)
+                                        .ToDictionary(g => g.Key, g => g.Select(e => e.FK_TId).ToHashSet());
+                                    allIds.AddRange(
+                                        groupedArticle
+                                            .Where(g => site.Value.Values.Any(tagSet => tagSet.IsSubsetOf(g.Value))) // 至少符合一個目錄標籤
+                                            .Select(g => g.Key)
+                                            .ToList()
+                                    );                                   
                                 }
-                            });
-                            corr = tempcorr;
-
-                            if (db_as != null)
-                            {
-                                // 按商品 ID 分群
-                                var groupedArticle = db_as
-                                    .GroupBy(e => e.FK_AId)
-                                    .ToDictionary(g => g.Key, g => g.Select(e => e.FK_TId).ToHashSet());
-
-                                allIds = groupedArticle
-                                    .Where(g => tags.Values.Any(tagSet => tagSet.IsSubsetOf(g.Value))) // 至少符合一個目錄標籤
-                                    .Select(g => g.Key)
-                                    .ToList();
-
-                                DataIds = db.Article
-                                    .Where(e => allIds.Contains(e.Id) && !notTagIds.Contains(e.Id))
-                                    .Where(e => !e.IsDeleted)
-                                    .Where(e => e.Visible)
-                                    .Where(e => siteIds.Contains(e.FK_WebsiteId))
-                                    .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime))
-                                    .Select(e => e.Id).ToList();
                             }
+                            corr = tempcorr;
+                            DataIds = db.Article
+                                       .Where(e => allIds.Contains(e.Id) && !notTagIds.Contains(e.Id))
+                                       .Where(e => !e.IsDeleted)
+                                       .Where(e => e.Visible)
+                                       .Where(e => siteIds.Contains(e.FK_WebsiteId))
+                                       .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime))
+                                       .Select(e => e.Id).ToList();
                             break;
                         default:
                             break;

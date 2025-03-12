@@ -63,9 +63,6 @@ using EtheriT.Coker.Application.ThirdParty;
 using EtheriT.Coker.Application.Shared.Recipients;
 using EtheriT.Coker.Application.Recipients;
 using Serilog;
-using Serilog.Filters;
-using static System.Formats.Asn1.AsnWriter;
-using Microsoft.AspNetCore.ResponseCompression;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -227,11 +224,6 @@ if (!builder.Environment.IsDevelopment())
     {
         options.SuppressModelStateInvalidFilter = true;
     });
-}
-
-if (builder.Environment.EnvironmentName == "EPZA")
-{
-    builder.WebHost.UseStaticWebAssets();
 }
 
 //註冊HttpClient
@@ -415,8 +407,8 @@ if (!app.Environment.IsDevelopment())
     app.UseMiddleware<CustomBadRequestMiddleware>();
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 }
-app.UseHsts();
 app.UseHttpsRedirection();
+app.UseHsts();
 app.UseMiddleware<ContentSecurityPolicyMiddleware>();
 
 app.UseRouting();

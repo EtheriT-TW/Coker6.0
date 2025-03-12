@@ -252,11 +252,6 @@ builder.Services.AddControllersWithViews();
 
 //item.UseSqlServer(configuration.GetConnectionString("Default"))
 
-if (builder.Environment.EnvironmentName == "EPZA")
-{
-    builder.WebHost.UseStaticWebAssets();
-}
-
 builder.Services.AddDbContext<CokerDbContext>(options =>
     {
         options.UseSqlServer(configuration.GetConnectionString("Default"),

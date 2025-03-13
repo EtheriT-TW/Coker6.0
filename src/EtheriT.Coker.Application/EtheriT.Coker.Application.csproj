@@ -7,7 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Reporting\R001檢貨單.vsrepx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Reporting\R001檢貨單.vsrepx" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="13.0.1" />
+    <PackageReference Include="DevExpress.Reporting.Core" Version="21.2.14" />
     <PackageReference Include="DevExtreme.AspNet.Core" Version="21.2.14" />
     <PackageReference Include="DevExtreme.AspNet.Data" Version="2.8.6" />
     <PackageReference Include="Hangfire.Core" Version="1.8.17" />
@@ -32,6 +41,15 @@
   <ItemGroup>
     <ProjectReference Include="..\EtheriT.Coker.Application.Shared\EtheriT.Coker.Application.Shared.csproj" />
     <ProjectReference Include="..\EtheriT.Coker.EntityFrameworkCore\EtheriT.Coker.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Reporting\R001檢貨單.cs">
+      <DependentUpon>R001檢貨單.vsrepx</DependentUpon>
+    </Compile>
+    <Compile Update="Reporting\R001檢貨單.Designer.cs">
+      <DependentUpon>R001檢貨單.vsrepx</DependentUpon>
+    </Compile>
   </ItemGroup>
 
 </Project>

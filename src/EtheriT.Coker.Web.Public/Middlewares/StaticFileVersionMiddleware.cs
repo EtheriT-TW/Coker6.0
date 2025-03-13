@@ -46,7 +46,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
         private async Task<string> ReplaceStaticFileUrlsAsync(string html)
         {
             // 匹配原生雙引號和被編碼的雙引號
-            var regex = new Regex(@"""(/upload/[^""'?#]+\.(?:jpg|jpeg|png|gif|css|js|pdf|svg|avif|webp))""|&amp;amp;quot;(/upload/[^""'?#]+\.(?:jpg|jpeg|png|gif|css|js|pdf|svg|avif|webp))&amp;amp;quot;", RegexOptions.Compiled);
+            var regex = new Regex(@"""(/upload/[^""'?#]+\.(?:jpg|jpeg|png|gif|pdf|svg|avif|webp))""|&amp;amp;quot;(/upload/[^""'?#]+\.(?:jpg|jpeg|png|gif|pdf|svg|avif|webp))&amp;amp;quot;", RegexOptions.Compiled);
             var matches = regex.Matches(html);
 
             var replacements = new Dictionary<string, string>();

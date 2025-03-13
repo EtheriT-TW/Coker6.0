@@ -309,6 +309,7 @@ function HeaderDataInsert(data) {
 }
 function HeaderDataSet(result) {
     thirdparty = result.thirdParties;
+    $("#PrintR001").attr({ href: `/Remort/R001?id=${result.id}`});
     if (result.payment.indexOf("-") > 0) {
         payment = result.payment.substring(0, result.payment.indexOf("-"));
     } else {
@@ -424,6 +425,7 @@ function DataInsert(data, frame) {
 }
 function MoveToContent() {
     $("#OrderList").addClass("d-none");
+    $("#PrintR001").removeClass("d-none");
     $("#OrderContent").removeClass("d-none");
     $btn_reSend.removeClass("d-none");
     $btn_save.removeClass("d-none");
@@ -431,10 +433,10 @@ function MoveToContent() {
 function BackToList() {
     $("#OrderList").removeClass("d-none");
     $("#OrderContent").addClass("d-none");
+    $("#PrintR001").addClass("d-none");
     $btn_reSend.addClass("d-none");
     $btn_save.addClass("d-none");
     window.location.hash = ""
-
     $("#OrderDetails > .card-body > .purchase_list > .purchase_item").each(function () {
         $(this).remove();
     })

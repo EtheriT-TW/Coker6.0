@@ -1,0 +1,38 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using DevExpress.AspNetCore
+@model EtheriT.Coker.Web.MVC.Models.Report.R001ViewModel
+<div class="content d-flex flex-column flex-column-fluid">
+    @{
+        var viewerRender = Html.DevExpress().WebDocumentViewer("DocumentViewer")
+        .ClientSideModelSettings(x => x.IncludeLocalization = false)
+        .ClientSideEvents(x => x.CustomizeExportOptions("customizeExportOptions")
+        .CustomizeElements("previewCustomizeElements")
+        .CustomizeMenuActions("customizeActions")
+        .CustomizeLocalization("CustomizeLocalization")
+        .BeforeRender("beforeRender"))
+        .Bind(Model.ReportObject);
+
+        @section scripts {
+        @{
+                await Html.RenderPartialAsync(@"DevExpressCommons\_ReportingLocalization");
+            }
+            @if (Model.ReportObject != null)
+            {
+                await Html.RenderPartialAsync(@"DevExpressCommons\_ReportingCommonScript");
+                await Html.RenderPartialAsync(@"DevExpressCommons\_ReportingCSRF");
+                @viewerRender.RenderScripts()
+            }
+        }
+
+        if (Model.ReportObject != null)
+        {
+            @viewerRender.RenderHtml()
+
+            @section styles {
+            @{
+                    await Html.RenderPartialAsync(@"DevExpressCommons\_ReportingCommonStyle");
+                }
+        }
+        }
+    }
+</div>

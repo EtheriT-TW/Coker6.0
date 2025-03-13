@@ -364,16 +364,16 @@ function HistoryTemplateDataInsert(Datas) {
         var frame = $($("#Template_Order_List").html()).clone();
         frame.find(".number").text(("000000000" + order_header.id).substring(order_header.id.length));
         frame.find(".date").text(((order_header.creationTime).substr(0, 16).replaceAll("-", "/")));
-        frame.find(".amount").text((order_header.total).toLocaleString());
+        frame.find(".amount").text(`$${(order_header.total).toLocaleString()}`);
         frame.find(".payment").text(order_header.payment);
 
         if (order_header.creationTime.split(' ')[0] == date_now && [1, 2, 6].includes(order_header.state)) {
-            if (![7, 8, 10, 15].includes(order_header.paymentCode)) frame.find(".state").prepend(`${order_header.stateStr}<button class="btn_cancelOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
-            else frame.find(".state").prepend(order_header.stateStr)
+            if (![7, 8, 10, 15].includes(order_header.paymentCode)) frame.find(".state").prepend(`<span>${order_header.stateStr}</span><button class="btn_cancelOrder bg-transparent border-0 text-decoration-underline" title="取消此筆訂單">取消訂單</button>`)
+            else frame.find(".state").prepend(`<span>${order_header.stateStr}</span>`)
             frame.find(".state button").data("ohid", order_header.id)
             frame.find(".state .btn_cancelOrder").on("click", function () {
                 var $this = $(this);
-                var confirm_text = [2, 6].includes(order_header.state) ? order_header.thirdParties != 1 ? "並退回款項?" : "？(退款事宜請聯繫客服處理)" : "?";
+                var confirm_text = [2, 6].includes(order_header.state) ? order_header.thirdParties != 1 ? "?(若已付款將退回款項)" : "？(退款事宜請聯繫客服處理)" : "?";
                 Coker.sweet.confirm("取消訂單", `確定要取消這筆訂單${confirm_text}`, "確定", "取消", function () {
                     Coker.sweet.loading();
                     Coker.Member.CancelOrder($this.data("ohid"), order_header.thirdParties).done(function (result) {
@@ -388,7 +388,7 @@ function HistoryTemplateDataInsert(Datas) {
                 })
             });
         } else if (order_header.thirdParties != 1 && order_header.state == 5) {
-            frame.find(".state").prepend(`${order_header.stateStr}<button class="btn_payAgain bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">重新付款</button>`)
+            frame.find(".state").prepend(`<span>${order_header.stateStr}</span><button class="btn_payAgain text-danger bg-transparent border-0 text-decoration-underline text-danger" title="取消此筆訂單">重新付款</button>`)
             frame.find(".state .btn_payAgain").on("click", function () {
                 var $this = $(this);
                 Coker.sweet.confirm("確定要重新付款？", "", "確定", "取消", function () {
@@ -435,10 +435,20 @@ function HistoryTemplateDataInsert(Datas) {
             });
         }
         else {
-            frame.find(".state").text(order_header.stateStr);
+            frame.find(".state").append(`<span>${order_header.stateStr}</span>`);
         }
-        if (order_header.state == 4 || order_header.state == 5) {
-            frame.find(".state").addClass("text-danger fw-bold");
+
+        switch (order_header.state) {
+            case 1:
+            case 6:
+                frame.find(".state span").addClass("bg-warning text-black");
+                break;
+            case 5:
+                frame.find(".state span").addClass("bg-danger text-white");
+                break;
+            default:
+                if (order_header.state != 4) frame.find(".state span").addClass("bg-success text-white");
+                break;
         }
 
         frame.find(".collapse").addClass(`collapse_${order_header.id}`);

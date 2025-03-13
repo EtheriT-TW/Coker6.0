@@ -69,7 +69,7 @@ function PageReady() {
     })()
 
     $(".btn_back").on("click", function () {
-        Coker.sweet.confirm("返回商品列表", "資料將不被保存", "確定", "取消", function () {
+        Coker.sweet.confirm("返回運費列表", "資料將不被保存", "確定", "取消", function () {
             history.back();
         });
     })

@@ -238,9 +238,10 @@
 .mega_menu_canvas .nav-link::after {
     display: none;
 }
+
 /* Mega Menu Offcanvas */
 #Offcanvas_Mega_Menu {
-    background-color: #3b73ca !important;
+    background-color: #3b73ca;
 }
 
     #Offcanvas_Mega_Menu > * {

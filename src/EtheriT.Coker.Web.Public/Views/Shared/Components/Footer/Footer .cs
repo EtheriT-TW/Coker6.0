@@ -121,14 +121,13 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                     },
                                     new FooterViewModel { Title = "關於我們", Link = "", footerViewModels = new List<FooterViewModel> {
                                             new FooterViewModel { Title = "公司介紹", Link = "/yuanjer/company" },
-                                            new FooterViewModel { Title = "產品介紹", Link = "/yuanjer/yuanjer_pro" },
+                                            new FooterViewModel { Title = "商品介紹", Link = "/yuanjer/yuanjer_pro" },
                                             new FooterViewModel { Title = "專業證照", Link = "/yuanjer/certification" },
-                                            new FooterViewModel { Title = "產品自主性檢驗報告", Link = "/yuanjer/report" },
+                                            new FooterViewModel { Title = "食安專區", Link = "/yuanjer/report" },
                                         }
                                     },
                                     new FooterViewModel { Title = "客戶服務", Link = "", footerViewModels = new List<FooterViewModel> {
                                             new FooterViewModel { Title = "會員專區", Link = "/yuanjer/Member" },
-                                            new FooterViewModel { Title = "常見問題", Link = "/yuanjer/faq" },
                                             new FooterViewModel { Title = "購物須知", Link = "/yuanjer/shoppingnotic" },
                                             new FooterViewModel { Title = "聯絡我們", Link = "/yuanjer/contact_us" },
                                         }

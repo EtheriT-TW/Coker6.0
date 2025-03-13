@@ -149,10 +149,22 @@ footer {
     padding: 10px 0;
 }
 
-    #Copyright > p {
-        margin-right: 5px;
-        margin-left: 5px;
-    }
+html[lang="en"] #Copyright:has(+ #Copyright_EN) {
+    display: none;
+}
+
+#Copyright_EN {
+    display: none;
+}
+
+html[lang="en"] #Copyright_EN {
+    display: flex;
+}
+
+#Copyright > p {
+    margin-right: 5px;
+    margin-left: 5px;
+}
 
 /* Floating Objects */
 #Floating_Objects {
@@ -255,7 +267,7 @@ footer {
 
 @media only screen and (max-width: 576px) {
 
-     #Footer_Menu {
+    #Footer_Menu {
         height: 600px;
     }
 
@@ -278,7 +290,7 @@ footer {
     #Logo_Bottom::before, #Logo_Bottom::after {
         width: 12.5%;
     }
-}   
+}
 
 @media only screen and (max-width: 368px) {
 
@@ -297,7 +309,8 @@ footer {
         margin-left: 2.5%;
         margin-right: 5%;
     }
-    .menu-item{
-       width:200px;
+
+    .menu-item {
+        width: 200px;
     }
 }

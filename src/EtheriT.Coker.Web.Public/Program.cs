@@ -306,6 +306,7 @@ app.UseCookiePolicy(
     }
 );
 //app.UseMiddleware<CookieHandlingMiddleware>();
+app.UseMiddleware<StaticFileVersionMiddleware>();
 
 //禁用X-HTTP-Method-Override
 app.Use(async (context, next) =>

@@ -36,6 +36,10 @@
     padding-right: 1.5rem !important;
 }
 
+    #profile-tab-pane .order_list_header, #profile-tab-pane .btn_detailed {
+        color: #555;
+    }
+
 .isHide, .isWrap {
     display: none;
 }

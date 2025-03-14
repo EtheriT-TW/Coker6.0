@@ -234,7 +234,7 @@ function AddToCart() {
                     });
                 } else {
                     if (result.error = "庫存不足") {
-                        Coker.sweet.error(result.error, result.message, function () {
+                        Coker.sweet.warning(result.error, result.message, function () {
                             location.reload(true);
                         }, false);
                     } else {

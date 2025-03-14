@@ -205,15 +205,13 @@ namespace EtheriT.Coker.Application
             CreateMap<OrderHeaderAddDto, FrontEditUserDto>()
                 .ForMember(e => e.Name, option => option.MapFrom(c => c.Orderer))
                 .ForMember(e => e.Sex, option => option.MapFrom(c => c.OrdererSex))
-                .ForMember(e => e.TelPhone, option => option.MapFrom(c => c.OrdererTelephone))
+                .ForMember(e => e.TelPhone, option => option.MapFrom(c => c.OrdererTelePhone))
                 .ForMember(e => e.CellPhone, option => option.MapFrom(c => c.OrdererCellPhone))
                 .ForMember(e => e.Address, option => option.MapFrom(c => c.OrdererAddress))
                 .ReverseMap();
 
             //Order
             CreateMap<OrderHeaderDataDto, Order_Header>()
-                .ForMember(e => e.OrdererCellPhone, option => option.MapFrom(c => c.OrdererCellphone))
-                .ForMember(e => e.RecipientCellPhone, option => option.MapFrom(c => c.RecipientCellphone))
                 .ReverseMap();
             CreateMap<Order_Header, OrderHeaderAddDto>()
                 .ReverseMap();
@@ -312,8 +310,8 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.Name, option => option.MapFrom(c => c.Recipient))
                 .ForMember(e => e.Email, option => option.MapFrom(c => c.RecipientEmail))
                 .ForMember(e => e.Address, option => option.MapFrom(c => c.RecipientAddress))
-                .ForMember(e => e.Cellphone, option => option.MapFrom(c => c.RecipientCellPhone))
-                .ForMember(e => e.Telephone, option => option.MapFrom(c => c.RecipientTelephone))
+                .ForMember(e => e.CellPhone, option => option.MapFrom(c => c.RecipientCellPhone))
+                .ForMember(e => e.TelePhone, option => option.MapFrom(c => c.RecipientTelePhone))
                 .ForMember(e => e.Sex, option => option.MapFrom(c => c.RecipientSex))
                 .ReverseMap();
 

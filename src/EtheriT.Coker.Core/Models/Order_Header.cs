@@ -16,7 +16,7 @@ namespace EtheriT.Coker.Core.Models
         [StringLength(150)]
         public string OrdererEmail { get; set; }
         [StringLength(50)]
-        public string? OrdererTelephone { get; set; }
+        public string? OrdererTelePhone { get; set; }
         [StringLength(50)]
         public string OrdererCellPhone { get; set; }
         [StringLength(250)]
@@ -27,7 +27,7 @@ namespace EtheriT.Coker.Core.Models
         [StringLength(150)]
         public string RecipientEmail { get; set; }
         [StringLength(50)]
-        public string? RecipientTelephone { get; set; }
+        public string? RecipientTelePhone { get; set; }
         [StringLength(50)]
         public string RecipientCellPhone { get; set; }
         [StringLength(250)]

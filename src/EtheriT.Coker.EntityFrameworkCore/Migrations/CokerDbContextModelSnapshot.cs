@@ -2219,7 +2219,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int>("OrdererSex")
                         .HasColumnType("int");
 
-                    b.Property<string>("OrdererTelephone")
+                    b.Property<string>("OrdererTelePhone")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
@@ -2249,7 +2249,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int>("RecipientSex")
                         .HasColumnType("int");
 
-                    b.Property<string>("RecipientTelephone")
+                    b.Property<string>("RecipientTelePhone")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
@@ -3661,7 +3661,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
-                    b.Property<string>("Cellphone")
+                    b.Property<string>("CellPhone")
                         .IsRequired()
                         .HasMaxLength(16)
                         .HasColumnType("nvarchar(16)");
@@ -3707,7 +3707,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int>("Sex")
                         .HasColumnType("int");
 
-                    b.Property<string>("Telephone")
+                    b.Property<string>("TelePhone")
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");

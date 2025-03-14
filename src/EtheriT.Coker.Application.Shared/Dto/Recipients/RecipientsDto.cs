@@ -9,8 +9,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Recipients
         public string Name { get; set; }
         public string Email { get; set; }
         public string Address { get; set; }
-        public string Cellphone { get; set; }
-        public string Telephone { get; set; }
+        public string CellPhone { get; set; }
+        public string TelePhone { get; set; }
         public SexEnum Sex { get; set; }
         public long FK_WebsiteId { get; set; }
     }

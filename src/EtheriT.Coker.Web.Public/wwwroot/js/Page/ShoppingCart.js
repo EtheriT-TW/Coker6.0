@@ -253,11 +253,11 @@ function PageReady() {
 
                 if (result.data.telPhone != null) {
                     user_data['zone'] = (result.data.telPhone).split('-')[0];
-                    user_data['ordererTelephone'] = (result.data.telPhone).split('-')[1];
+                    user_data['ordererTelePhone'] = (result.data.telPhone).split('-')[1];
                     user_data['ext'] = (result.data.telPhone).split('-')[2];
                 } else {
                     user_data['zone'] = null;
-                    user_data['ordererTelephone'] = null;
+                    user_data['ordererTelePhone'] = null;
                     user_data['ext'] = null;
                 }
 
@@ -1006,13 +1006,13 @@ function OrderHeaderAdd() {
             order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
             order_data.ordererAddress = `${order_data.county} ${order_data.district} ${order_data.ordererAddress}`;
 
-            if (order_data.zone == "" ^ order_data.ordererTelephone == "") {
+            if (order_data.zone == "" ^ order_data.ordererTelePhone == "") {
                 Coker.sweet.warning("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null);
                 checksuccess = false;
-            } else if (order_data.zone == "" && order_data.ordererTelephone == "") {
-                order_data.ordererTelephone = null;
+            } else if (order_data.zone == "" && order_data.ordererTelePhone == "") {
+                order_data.ordererTelePhone = null;
             } else {
-                order_data.ordererTelephone = `${order_data.zone}-${order_data.ordererTelephone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
+                order_data.ordererTelePhone = `${order_data.zone}-${order_data.ordererTelePhone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
             }
 
             for (var key in order_data) {
@@ -1027,13 +1027,13 @@ function OrderHeaderAdd() {
                     recipient_data = co.Form.getJson($("#Form_Recipient").attr("id"));
                     recipient_data.recipientAddress = `${recipient_data.county} ${recipient_data.district} ${recipient_data.recipientAddress}`;
 
-                    if (recipient_data.zone == "" ^ recipient_data.recipientTelephone == "") {
+                    if (recipient_data.zone == "" ^ recipient_data.recipientTelePhone == "") {
                         Coker.sweet.warning("資料填寫錯誤", "如要提供收件人電話資訊，請確實填寫區碼與聯絡電話。", null);
                         checksuccess = false;
-                    } else if (recipient_data.zone == "" && recipient_data.recipientTelephone == "") {
-                        recipient_data.recipientTelephone = null;
+                    } else if (recipient_data.zone == "" && recipient_data.recipientTelePhone == "") {
+                        recipient_data.recipientTelePhone = null;
                     } else {
-                        recipient_data.recipientTelephone = `${recipient_data.zone}-${recipient_data.recipientTelephone}` + (recipient_data.ext == "" ? "" : `-${recipient_data.ext}`);
+                        recipient_data.recipientTelePhone = `${recipient_data.zone}-${recipient_data.recipientTelePhone}` + (recipient_data.ext == "" ? "" : `-${recipient_data.ext}`);
                     }
                     break;
             }

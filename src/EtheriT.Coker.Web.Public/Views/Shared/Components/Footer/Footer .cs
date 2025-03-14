@@ -143,14 +143,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                 Content = new List<string>
                                 {
                                     "Copyright©",
-                                    "2025 沅哲有限公司",
+                                    "YUAN JER CO., LTD",
                                     "版權所有"
-                                },
-                                Content_EN = new List<string>
-                                {
-                                    "Copyright©",
-                                    "2025 Yuanjer Co., Ltd.",
-                                    "All rights reserved"
                                 }
                             };
                             break;

@@ -19,9 +19,9 @@ namespace EtheriT.Coker.Core.Models
 		[StringLength(300)]
 		public string Address {  get; set; }
 		[StringLength(16)]
-		public string Cellphone { get; set; }
+		public string CellPhone { get; set; }
 		[StringLength(30)]
-		public string Telephone { get; set; }
+		public string TelePhone { get; set; }
         public SexEnum Sex { get; set; }
 		public long FK_WebsiteId { get; set; }
         public Website Website { get; set; }

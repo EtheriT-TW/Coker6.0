@@ -5,6 +5,11 @@ html, body {
     position: relative;
 }
 
+/* Bootstrap label backgound-color replicate */
+label::after {
+    background-color: transparent !important;
+}
+
 /* Universal */
 a {
     text-decoration: none;

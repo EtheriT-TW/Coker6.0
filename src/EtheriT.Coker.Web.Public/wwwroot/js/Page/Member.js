@@ -112,27 +112,27 @@ function Member(data) {
     $(".btn_modifi").on("click", function () {
         var data = co.Form.getJson($("#UserDataForm").attr("id"));
         if (data.name == "") {
-            co.sweet.error("輸入資料錯誤", "姓名不可為空", null, false);
+            co.sweet.warning("請注意", "姓名不可為空", null);
         } else if ($("#Email").val() == "") {
-            co.sweet.error("輸入資料錯誤", "電子郵件不可為空", null, false);
+            co.sweet.warning("請注意", "電子郵件不可為空", null);
         } else if (data.zone == "" ^ data.telPhone == "") {
-            co.sweet.error("輸入資料錯誤", "如要填入電話資訊，請確實填寫區碼與聯絡電話", null, false);
+            co.sweet.warning("請注意", "如要填入電話資訊，請確實填寫區碼與聯絡電話", null);
         } else if (((data.county == "") ^ (data.address == ""))) {
-            co.sweet.error("輸入資料錯誤", "如要填入地址資訊，請確實填寫縣市、鄉鎮與地址", null, false);
+            co.sweet.warning("請注意", "如要填入地址資訊，請確實填寫縣市、鄉鎮與地址", null);
         }
         else {
             var datacheck = true;
             if (data.birthday == "") data.birthday = null;
             data.address = `${data.county} ${data.district} ${data.address}`;
             if (data.cellPhone != "" && (!$.isNumeric(data.cellPhone) || data.cellPhone.length != 10)) {
-                co.sweet.error("輸入資料錯誤", "手機格式不正確，請重新輸入", null, false);
+                co.sweet.warning("請注意", "手機格式不正確，請重新輸入", null);
                 datacheck = false;
             }
             if (data.telPhone != "") {
                 if ($.isNumeric(data.zone) && $.isNumeric(data.telPhone) && ((data.ext != "" && $.isNumeric(data.ext)) || data.ext == "")) {
                     data.telPhone = `${data.zone}-${data.telPhone}-${data.ext}`;
                 } else {
-                    co.sweet.error("輸入資料錯誤", "電話格式不正確，請重新輸入", null, false);
+                    co.sweet.warning("請注意", "電話格式不正確，請重新輸入", null);
                     datacheck = false;
                 }
             }
@@ -194,7 +194,7 @@ function Member(data) {
             $InputResetEmailVCode.siblings("div").addClass("me-4 pe-2");
             NewCaptcha($ResetEmailImgCaptcha, $InputResetEmailVCode)
             $InputResetEmailVCode.val("");
-            Coker.sweet.error("錯誤", "請確實填寫資料", null, true);
+            Coker.sweet.warning("請注意", "請確實填寫資料", null, true);
         }
     });
     $(".btn_switchViewType button").on("click", function () {
@@ -470,7 +470,7 @@ function HistoryTemplateDataInsert(Datas) {
                         window.location.href = `/${OrgName}/ShoppingCar?reorder${ohidstr}`;
                     } else {
                         if (result.message == "該商品規格庫存量已在瀏覽期間被更動，按下確定後將重整頁面。") {
-                            Coker.sweet.error("錯誤", "商品庫存不足")
+                            Coker.sweet.warning("商品庫存不足", result.message, null)
                         }
                     }
                 });

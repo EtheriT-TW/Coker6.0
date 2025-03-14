@@ -629,7 +629,7 @@ function SpecRadio() {
 }
 function AddToCart() {
     if (localStorage.getItem('AgreePrivacy') == null) {
-        Coker.sweet.error("錯誤", "若要進行商品選購，請先同意隱私權政策", null, false);
+        Coker.sweet.warning("請注意", "若要進行商品選購，請先同意隱私權政策", null);
     } else {
         if (s1 != null && s2 != null && $input_quantity.val() != 0) {
             Product.AddUp.Cart({
@@ -670,7 +670,7 @@ function AddToCart() {
                     $input_quantity.val(1);
                 } else {
                     if (result.error == "商品庫存不足") {
-                        Coker.sweet.error(result.error, result.message, function () {
+                        Coker.sweet.warning(result.error, result.message, function () {
                             location.reload(true);
                         }, false);
                     } else {
@@ -681,7 +681,7 @@ function AddToCart() {
                 Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
             });
         } else {
-            Coker.sweet.error("錯誤", "請確實選擇規格及購買數量", null, false);
+            Coker.sweet.warning("請注意", "請確實選擇規格及購買數量", null, false);
         }
     }
 }

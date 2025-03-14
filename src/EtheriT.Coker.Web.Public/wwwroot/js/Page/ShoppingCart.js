@@ -169,23 +169,23 @@ function PageReady() {
         switch (buy_step_swiper.activeIndex) {
             case 1:
                 if (!hasProds) {
-                    Coker.sweet.error("錯誤", "無可購買商品。", null, false);
+                    Coker.sweet.warning("錯誤", "無可購買商品。", null, false);
                     buy_step_swiper.slideTo(0);
                 }
                 break;
             case 2:
                 RadioPayment();
                 if (ShippingForms.find(".noshipping").length > 0) {
-                    Coker.sweet.error("錯誤", "店家尚未設置運費方式，無法繼續", null, false);
+                    Coker.sweet.warning("請注意", "店家尚未設置運費方式，無法繼續", null);
                     buy_step_swiper.slideTo(1);
                 } else if (PaymentForms.find(".nopayment").length > 0) {
-                    Coker.sweet.error("錯誤", "店家尚未設置付款方式，無法繼續", null, false);
+                    Coker.sweet.warning("請注意", "店家尚未設置付款方式，無法繼續", null);
                     buy_step_swiper.slideTo(1);
                 } else {
                     shipMethodsChosen = FormCheck(ShippingForms);
                     payMethodsChosen = FormCheck(PaymentForms);
                     if (!(shipMethodsChosen && payMethodsChosen)) {
-                        Coker.sweet.error("請確實選擇運送及付款方式！", null, true);
+                        Coker.sweet.warning("請注意", "請確實選擇運送及付款方式！", null);
                         setTimeout(function () {
                             buy_step_swiper.slideTo(1);
                         }, 1500);
@@ -207,7 +207,7 @@ function PageReady() {
                     if (OrdererOpen) { OrdererFilled = FormCheck(OrdererForms) };
                     if (RecipientOpen) { RecipientFilled = FormCheck(RecipientForms) };
                     if (InvoiceOpen) { InvoiceFilled = FormCheck(InvoiceForms) };
-                    Coker.sweet.error("未完成結帳流程！", "若資料已確實填寫完畢，請點選下方[確認付款]按鈕進入付款程序", null, false);
+                    Coker.sweet.warning("未完成結帳流程！", "若資料已確實填寫完畢，請點選下方[確認付款]按鈕進入付款程序", null);
                     setTimeout(function () {
                         buy_step_swiper.slideTo(2);
                     }, 1500);
@@ -742,7 +742,7 @@ function CartQuantityUpdate(self, price, scid, quantity) {
                 });
             } else {
                 if (result.error == "商品庫存不足") {
-                    Coker.sweet.error(result.error, result.message, function () {
+                    Coker.sweet.warning(result.error, result.message, function () {
                         location.reload(true);
                     }, false);
                 } else {
@@ -798,7 +798,7 @@ function Step2Monitor() {
     payMethodsChosen = FormCheck(PaymentForms);
 
     if (!(shipMethodsChosen && payMethodsChosen)) {
-        Coker.sweet.error("請確實選擇運送及付款方式！", null, true);
+        Coker.sweet.warning("請注意", "請確實選擇運送及付款方式！", null);
     } else {
         buy_step_swiper.slideNext();
     }
@@ -856,11 +856,11 @@ function Step3Monitor() {
 
     if (!OrdererFilled) {
         if (!OrdererOpen) OrdererEdit(true);
-        Coker.sweet.error("請確實填寫訂購人資料！", null, true);
+        Coker.sweet.warning("請注意", "請確實填寫訂購人資料！", null);
     } else if (!RecipientFilled) {
-        Coker.sweet.error("請確實填寫收件人資料！", null, true);
+        Coker.sweet.warning("請注意", "請確實填寫收件人資料！", null);
     } else if (!InvoiceFilled) {
-        Coker.sweet.error("請確實填寫發票寄送資料！", null, true);
+        Coker.sweet.warning("請注意", "請確實填寫發票寄送資料！", null);
     } else {
         Coker.sweet.confirm("是否確定結帳？", "點選確認進入付款流程", "是，開始付款", "否", function () {
             OrderHeaderAdd();
@@ -1007,7 +1007,7 @@ function OrderHeaderAdd() {
             order_data.ordererAddress = `${order_data.county} ${order_data.district} ${order_data.ordererAddress}`;
 
             if (order_data.zone == "" ^ order_data.ordererTelephone == "") {
-                Coker.sweet.error("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null, false);
+                Coker.sweet.warning("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null);
                 checksuccess = false;
             } else if (order_data.zone == "" && order_data.ordererTelephone == "") {
                 order_data.ordererTelephone = null;
@@ -1028,7 +1028,7 @@ function OrderHeaderAdd() {
                     recipient_data.recipientAddress = `${recipient_data.county} ${recipient_data.district} ${recipient_data.recipientAddress}`;
 
                     if (recipient_data.zone == "" ^ recipient_data.recipientTelephone == "") {
-                        Coker.sweet.error("資料填寫錯誤", "如要提供收件人電話資訊，請確實填寫區碼與聯絡電話。", null, false);
+                        Coker.sweet.warning("資料填寫錯誤", "如要提供收件人電話資訊，請確實填寫區碼與聯絡電話。", null);
                         checksuccess = false;
                     } else if (recipient_data.zone == "" && recipient_data.recipientTelephone == "") {
                         recipient_data.recipientTelephone = null;
@@ -1170,18 +1170,18 @@ function OrderSuccess(result) {
         }).then((confirm) => {
             if (result.error != null) {
                 if (!islogin) {
-                    Coker.sweet.error("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。")
+                    Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。", null)
                 } else {
-                    Coker.sweet.error("信件發送失敗", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。")
+                    Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。", null)
                 }
             }
         });
     } else {
         if (result.error != null) {
             if (!islogin) {
-                Coker.sweet.error("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。")
+                Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。", null)
             } else {
-                Coker.sweet.error("信件發送失敗", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。")
+                Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。", null)
             }
         }
     }

@@ -2,7 +2,7 @@
 @charset "UTF-8";
 
 /* Bootstrap label backgound-color replicate */
-label::after{
+label::after {
     background-color: transparent !important;
 }
 

@@ -149,18 +149,6 @@ footer {
     padding: 10px 0;
 }
 
-html[lang="en"] #Copyright:has(+ #Copyright_EN) {
-    display: none;
-}
-
-#Copyright_EN {
-    display: none;
-}
-
-html[lang="en"] #Copyright_EN {
-    display: flex;
-}
-
 #Copyright > p {
     margin-right: 5px;
     margin-left: 5px;

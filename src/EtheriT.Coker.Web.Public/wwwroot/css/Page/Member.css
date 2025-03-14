@@ -40,6 +40,21 @@
         color: #555;
     }
 
+    #profile-tab-pane .content .payment {
+        display: flex;
+        justify-content: center;
+    }
+
+        #profile-tab-pane .content .payment img {
+            height: 1.5rem;
+            margin-top: 0rem;
+            padding-right: 0.5rem;
+        }
+
+        #profile-tab-pane .content .payment span {
+            white-space: nowrap;
+        }
+
 .isHide, .isWrap {
     display: none;
 }
@@ -394,6 +409,14 @@
     #TabContent .content.type_grid .type_change_frame {
         width: 33.33% !important;
     }
+
+    #profile-tab-pane .content .payment {
+        flex-wrap: wrap;
+    }
+
+        #profile-tab-pane .content .payment span {
+            white-space: normal;
+        }
 }
 
 @media (max-width:992px) {
@@ -445,6 +468,10 @@
 }
 
 @media (max-width:768px) {
+    #profile-tab-pane .content .payment {
+        justify-content: end;
+    }
+
     .collapse > .card-body > div > div:first-child {
         width: 7rem;
         text-align-last: right;

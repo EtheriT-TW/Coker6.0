@@ -335,6 +335,10 @@ namespace EtheriT.Coker.Application.Order
                                 output.Payment = payment.Title?.ToString() ?? "";
                             }
                             output.ThirdParties = payment.FK_ThirdPartyId;
+
+                            List<long> neediconpayment = new List<long> { 2, 7, 8, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20 };
+                            if (neediconpayment.Contains(output.PaymentCode)) output.PaymentIcon = $"/images/paymenticon/{payment.Icons}";
+                            else output.PaymentIcon = "";
                         }
                     }
 

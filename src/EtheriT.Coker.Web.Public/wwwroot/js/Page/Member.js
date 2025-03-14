@@ -365,7 +365,10 @@ function HistoryTemplateDataInsert(Datas) {
         frame.find(".number").text(("000000000" + order_header.id).substring(order_header.id.length));
         frame.find(".date").text(((order_header.creationTime).substr(0, 16).replaceAll("-", "/")));
         frame.find(".amount").text(`$${(order_header.total).toLocaleString()}`);
-        frame.find(".payment").text(order_header.payment);
+        if (typeof (order_header.paymentIcon) != "undefined" && order_header.paymentIcon != "") {
+            frame.find(".payment").append(`<img src="${order_header.paymentIcon}"/><span>${order_header.payment}</span>`);
+        } else frame.find(".payment").text(order_header.payment);
+
 
         if (order_header.creationTime.split(' ')[0] == date_now && [1, 2, 6].includes(order_header.state)) {
             if (![7, 8, 10, 15].includes(order_header.paymentCode)) frame.find(".state").prepend(`<span>${order_header.stateStr}</span><button class="btn_cancelOrder bg-transparent border-0 text-decoration-underline" title="取消此筆訂單">取消訂單</button>`)

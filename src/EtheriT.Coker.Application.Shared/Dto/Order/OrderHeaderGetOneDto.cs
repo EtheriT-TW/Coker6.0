@@ -19,6 +19,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string InvoiceAddress { get; set; }
         public string Payment { get; set; }
         public long PaymentCode { get; set; }
+        public string PaymentIcon { get; set; }
         public long ThirdParties { get; set; }
         public string Shipping { get; set; }
         public OrderStatusEnum State { get; set; }

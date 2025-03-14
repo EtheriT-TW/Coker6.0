@@ -23,6 +23,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
         public string locale { get; set; } = "zh-tw";
         public List<ImageListDto>? Other_Image_Link { get; set; }
         public List<string>? Content { get; set; } = new List<string>();
+        public List<string>? Content_EN { get; set; } = new List<string>();
         public List<FooterViewModel>? footerViewModels { get; set; }
         public string? Copyright { get; set; }
     }

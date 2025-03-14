@@ -145,6 +145,12 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                     "Copyright©",
                                     "2025 沅哲有限公司",
                                     "版權所有"
+                                },
+                                Content_EN = new List<string>
+                                {
+                                    "Copyright©",
+                                    "2025 Yuanjer Co., Ltd.",
+                                    "All rights reserved"
                                 }
                             };
                             break;

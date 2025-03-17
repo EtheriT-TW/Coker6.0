@@ -576,10 +576,26 @@ function DirectoryDataInsert($item, result) {
         });
         $item.find('.catalog > div:not(.templatecontent)').on('mouseenter', function () {
             var $this = $(this);
-            if ($this.data("img_link") != "") $item.find(".details_display").attr("src", $this.data("img_link"));
+            var newImg = $this.data("img_link");
+            var $img = $item.find(".details_display");
+            var nowImg = $img.attr("src");
+
+            if (newImg != nowImg && newImg && newImg != "") {
+                $img.stop(true, true).fadeOut(200, function () {
+                    $img.attr("src", newImg).fadeIn(100);
+                });
+            }
         }).on('mouseleave', function () {
             var $this = $(this);
-            $item.find(".details_display").attr("src", $item.data("default_img_link"));
+            var defaultImg = $item.data("default_img_link");
+            var $img = $item.find(".details_display");
+            var nowImg = $img.attr("src");
+
+            if (defaultImg != nowImg) {
+                $img.stop(true, true).fadeOut(200, function () {
+                    $img.attr("src", defaultImg).fadeIn(100);
+                });
+            }
         });
     }
 }

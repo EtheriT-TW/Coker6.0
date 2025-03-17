@@ -36,5 +36,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             ViewData["Title"] = "SMTPServer";
             return View("~/Views/SystemManagement/SEO.cshtml", response);
         }
+        public IActionResult BonusSettings() {
+            return View();
+        }
     }
 }

@@ -5,6 +5,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
 @using EtheriT.Coker.Web.MVC.Models.ProductManagement
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
+@using EtheriT.Coker.Web.MVC.Startup
 @model ProductManagementModel
 @{
     ViewData["Title"] = "ProductList";
@@ -63,11 +64,17 @@
                         <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">現金</div>
                         <input class="input_cash form-control rounded" type="number" aria-label="Input Cash Price of Product" maxlength="9" value="0" step="any">
                     </div>
-
-                    <div class="col bonus input-group">
-                        <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">紅利</div>
-                        <input class="input_bonus form-control rounded" type="number" aria-label="Input Bonus Price of Product" maxlength="9" value="0" step="any">
-                    </div>
+                    @if (BonusPermission.CanExe)
+                    {
+                        <div class="col bonus input-group">
+                            <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">紅利</div>
+                            <input class="input_bonus form-control rounded" type="number" aria-label="Input Bonus Price of Product" maxlength="9" value="0" step="any">
+                        </div>
+                    }
+                    else
+                    {
+                        <input class="input_bonus form-control rounded" type="hidden" aria-label="Input Bonus Price of Product" maxlength="9" value="0" step="any">
+                    }
 
                     <button class="col-auto btn_price_delete bg-transparent border-0 d-flex p-0">
                         <span class="material-symbols-outlined">delete</span>

@@ -2,12 +2,11 @@
     position: fixed;
     right: 0rem;
     z-index: 1001;
-    top: 50%;
-    transform: translate(0, -50%);
+    bottom: 100px;
 }
 
     #Floating_Center > div img {
-        width: 8rem;
+        width: 6rem;
         height: auto;
     }
 

@@ -396,8 +396,8 @@
 
                 <template id="TemplateSpecType">
                     <select class="spec_select form-select rounded-left" aria-label="規格類型" required="required">
-                        <option selected="" value="" disabled="disabled">規格類型</option>
-                        <option value="0">無</option>
+                        <option  value="" disabled="disabled">規格類型</option>
+                        <option selected="" value="0">無</option>
                         @if (Model.SpecType.Count > 0)
                         {
                             @foreach (var spectype in Model.SpecType ?? new List<SpecTypeListDto>())

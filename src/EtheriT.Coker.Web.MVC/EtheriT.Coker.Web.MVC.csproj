@@ -58,6 +58,8 @@
     <Content Remove="wwwroot\js\SystemManagement\SEOSetting.js" />
     <Content Remove="wwwroot\js\SystemManagement\WebData.js" />
     <Content Remove="wwwroot\js\vendor.js" />
+    <Content Remove="wwwroot\lib\swiper-bundle.esm.browser.min.js.map" />
+    <Content Remove="wwwroot\lib\swiper-bundle.min.js.map" />
     <Content Remove="wwwroot\js\CokerCore\**" />
   </ItemGroup>
   <ItemGroup>
@@ -121,6 +123,7 @@
     <PackageReference Include="AspNet.Security.OAuth.Instagram" Version="6.0.15" />
     <PackageReference Include="AspNet.Security.OAuth.Line" Version="6.0.15" />
     <PackageReference Include="BuildBundlerMinifier" Version="3.2.449" />
+    <PackageReference Include="DevExpress.AspNetCore.Reporting" Version="21.2.14" />
     <PackageReference Include="DevExpress.Xpo" Version="21.2.14" />
     <PackageReference Include="DevExtreme.AspNet.Core" Version="21.2.14" />
     <PackageReference Include="DevExtreme.AspNet.Data" Version="2.8.6" />

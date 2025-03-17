@@ -270,6 +270,8 @@ function FormDataClear() {
     $sort_input.attr("disabled", "disabled");
     $sort_checkbox.prop("checked", false);
     $permanent.prop("checked", true);
+    $picker.val('');
+    $picker.attr("disabled", "disabled");
     $removedFromShelves.prop("checked", true);
     pop_visible = false;
     disp_opt = false;
@@ -372,6 +374,8 @@ function AddUp(success_text, error_text, place) {
         NodeDate: $nodeDate.val(),
         RemovedFromShelves: $removedFromShelves.is(":checked")
     }).done(function (result) {
+        keyId = result.message;
+        window.location.hash = `${keyId}`;
         if (result.success) {
             if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").id == 0) {
                 var formData = new FormData();
@@ -385,14 +389,12 @@ function AddUp(success_text, error_text, place) {
                         setTimeout(function () {
                             if (place == "canvas") {
                                 setTimeout(function () {
-                                    if (keyId == 0) window.location.hash = `${result.message}-1`;
+                                    if (keyId == 0 || window.location.hash.indexOf("-1") >= 0) window.location.hash = `${result.message}-1`;
                                     else window.location.hash += "-1";
                                 }, 1000);
                             } else {
-                                setTimeout(function () {
-                                    article_list.component.refresh();
-                                    BackToList();
-                                }, 1000);
+                                article_list.component.refresh();
+                                BackToList();
                             }
                         }, 1000);
                     }
@@ -402,14 +404,12 @@ function AddUp(success_text, error_text, place) {
                 setTimeout(function () {
                     if (place == "canvas") {
                         setTimeout(function () {
-                            if (keyId == 0) window.location.hash = `${result.message}-1`;
+                            if (keyId == 0 || window.location.hash.indexOf("-1") >= 0) window.location.hash = `${result.message}-1`;
                             else window.location.hash += "-1";
                         }, 1000);
                     } else {
-                        setTimeout(function () {
-                            article_list.component.refresh();
-                            BackToList();
-                        }, 1000);
+                        article_list.component.refresh();
+                        BackToList();
                     }
                 }, 1000);
             }

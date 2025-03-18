@@ -1,0 +1,11 @@
+﻿<script src="~/lib/devextreme/localization/dx.messages.zh-tw.js"></script>
+<script src="~/lib/devextreme/localization/dx.messages.zh.js"></script>
+
+<script>
+    function CustomizeLocalization(s, e) {
+        e.LoadMessages($.get('@Url.Content("/js/devextreme/localization/dx-analytics-core.zh-tw.json")'));
+        e.LoadMessages($.get('@Url.Content("/js/devextreme/localization/dx-reporting.zh-tw.json")'));
+    }
+
+    DevExpress.localization.locale("zh-tw");
+</script>

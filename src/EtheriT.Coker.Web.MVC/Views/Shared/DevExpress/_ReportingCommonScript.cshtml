@@ -1,0 +1,37 @@
+﻿<script src="/lib/devextreme/reporting/js/dx-webdocumentviewer.min.js" asp-append-version="true"></script>
+
+<script>
+    @* 移除右邊的功能列 *@
+    function previewCustomizeElements(s, e) {
+        var rightPanel = e.GetById(DevExpress.Reporting.Viewer.PreviewElements.RightPanel);
+        var index = e.Elements.indexOf(rightPanel);
+        e.Elements.splice(index, 1);
+    }
+
+    @* 移除不需要的匯出格式 *@
+    function customizeExportOptions(s, e) {
+        e.HideFormat(DevExpress.Reporting.Viewer.ExportFormatID.MHT);
+        e.HideFormat(DevExpress.Reporting.Viewer.ExportFormatID.RTF);
+        e.HideFormat(DevExpress.Reporting.Viewer.ExportFormatID.HTML);
+        e.HideFormat(DevExpress.Reporting.Viewer.ExportFormatID.Text);
+        e.HideFormat(DevExpress.Reporting.Viewer.ExportFormatID.CSV);
+        e.HideFormat(DevExpress.Reporting.Viewer.ExportFormatID.Image);
+    }
+
+    @* 移除上方功能列不需要的功能 *@
+    function customizeActions(s, e) {
+        var actionSearch = e.GetById(DevExpress.Reporting.Viewer.ActionId.Search);
+        if (actionSearch)
+            actionSearch.visible = false;
+
+        var actionHighlightEditingFields = e.GetById(DevExpress.Reporting.Viewer.ActionId.HighlightEditingFields);
+        if (actionHighlightEditingFields)
+            actionHighlightEditingFields.visible = false;
+    }
+
+    @* 報表預覽設定為頁面寬度 *@
+    function beforeRender(s, e) {
+        e.reportPreview.zoom(-1);
+        s.previewModel.reportPreview.usePdfPrinting = false;
+    }
+</script>

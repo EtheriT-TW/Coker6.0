@@ -18,9 +18,6 @@
             @section scripts {
                 @{
                     await Html.RenderPartialAsync(@"DevExpress\_ReportingLocalization");
-                }
-                @if (Model.ReportObject != null)
-                {
                     await Html.RenderPartialAsync(@"DevExpress\_ReportingCommonScript");
                     await Html.RenderPartialAsync(@"DevExpress\_ReportingCSRF");
                     @viewerRender.RenderScripts()
@@ -29,10 +26,10 @@
             @viewerRender.RenderHtml()
 
             @section styles {
-            @{
+                @{
                     await Html.RenderPartialAsync(@"DevExpress\_ReportingCommonStyle");
                 }
-        }
+            }
         }
     }
 </div>

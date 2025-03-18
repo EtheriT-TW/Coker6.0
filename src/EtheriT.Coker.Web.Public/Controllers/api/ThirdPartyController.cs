@@ -69,16 +69,18 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             Console.WriteLine($"-------------進入PChomePayNotify-------------");
             var remoteIp = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString();
-            var allowedIps = configuration.GetValue<List<string>>("WebConfig:SourceIP");
+            var allowedIps = configuration.GetValue<List<string>>("ThirdParty:PCHomePay:SourceIP");
 
             Console.WriteLine($"-------------PChomePayNotify來源查看-------------");
+            Console.WriteLine($"remoteIp：{remoteIp}");
+            Console.WriteLine($"allowedIps：{allowedIps}");
 
             if (string.IsNullOrEmpty(remoteIp) || !allowedIps.Contains(remoteIp))
             {
-                Console.WriteLine($"不允許的來源：{remoteIp}");
+                Console.WriteLine($"不允許");
                 return "Forbidden: IP not allowed";
             }
-            else Console.WriteLine($"允許的來源：{remoteIp}");
+            else Console.WriteLine($"允許");
 
             return await pchomePayAppService.PChomePayNotify(dto);
         }

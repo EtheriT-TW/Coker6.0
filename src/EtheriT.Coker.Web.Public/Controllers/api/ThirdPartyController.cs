@@ -67,6 +67,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<string> PChomePayNotify([FromForm] PChomePayNotifyDto dto)
         {
+            Console.WriteLine($"-------------進入PChomePayNotify-------------");
             var remoteIp = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString();
             var allowedIps = configuration.GetValue<List<string>>("WebConfig:SourceIP");
 

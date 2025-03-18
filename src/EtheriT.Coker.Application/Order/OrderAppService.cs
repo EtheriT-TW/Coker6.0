@@ -993,7 +993,7 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-                DateTime now = DateTime.Now.AddDays(-7);
+                DateTime datetimenow = DateTime.Now;
                 if (order_header != null)
                 {
                     if (order_header.State != (OrderStatusEnum)state)
@@ -1023,7 +1023,7 @@ namespace EtheriT.Coker.Application.Order
                                 }
                                 break;
                             case (int)OrderStatusEnum.已完成:
-                                order_header.CompletedDate = DateTime.Now;
+                                order_header.CompletedDate = datetimenow;
                                 break;
                         }
 
@@ -1032,6 +1032,8 @@ namespace EtheriT.Coker.Application.Order
                             order_header.TransactionId = null;
                         }
                         order_header.State = (OrderStatusEnum)state;
+
+                        if (order_header.State == OrderStatusEnum.已取消) await CancelOrderMailSend(order_header.Id, datetimenow);
 
                         db.SaveChanges();
                     }
@@ -1415,6 +1417,98 @@ namespace EtheriT.Coker.Application.Order
         public async Task<ResponseMessageDto> PayFailMailSend(long ohid, DateTime date)
         {
             ResponseMessageDto response = new ResponseMessageDto();
+            return response;
+        }
+        public async Task<ResponseMessageDto> CancelOrderMailSend(long ohid, DateTime date)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId") == 0 ? await loginUserData.GetWebsiteId() : configuration.GetValue<long>("WebConfig:SiteId");
+                var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
+                var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+
+                if (order_header != null)
+                {
+                    var PaymentType = await db.PaymentTypes.Where(e => e.Id == order_header.Payment).FirstOrDefaultAsync();
+                    var ThirdParty = await db.ThirdParties.Where(e => e.Id == PaymentType.FK_ThirdPartyId).FirstOrDefaultAsync();
+                    var Payment = PaymentType?.Title ?? "";
+
+                    var RefundTransactionId = "";
+                    var AmountTitle = "訂單金額";
+                    var Remind = "";
+                    var MailTitle = "取消訂單通知";
+                    if (order_header.refundTransactionId != null)
+                    {
+                        RefundTransactionId = $@"<tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>{ThirdParty?.Title.Replace(" ", "") ?? ""}退款序號</td>
+                                                                        <td>{order_header.refundTransactionId}</td>
+                                                                    </tr>";
+                        AmountTitle = "退款金額";
+                        Remind = "若欲詢問退貨退款相關問題，請您與原訂購商店/網站聯繫。";
+                        var RefundText = PaymentType.RefundWorkDay < 0 ? "如有貨款需退回，請聯繫原訂購商店/網站聯繫。" : PaymentType.RefundWorkDay == 0 ? $"貨款將已成功退回，{Remind}" : $"貨款將在{PaymentType.RefundWorkDay}個工作天內退回，{Remind}";
+                        Remind = $"<div class='text-bold text-red'>貼心提醒：{RefundText}</div>";
+                        MailTitle = "退款通知";
+                    }
+
+                    var mailhtml = $@"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>
+                                                            <br/>
+                                                             <div>您於【{Website?.Title ?? ""}】有筆訂單已取消，以下為取消訂單資訊：</div>
+                                                            <br/>
+                                                            <table>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>商店訂單編號</td>
+                                                                        <td>{("000000000" + order_header.Id).Substring((order_header.Id.ToString()).Length)}</td>
+                                                                    </tr>
+                                                                    {RefundTransactionId}
+                                                                    <tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>{AmountTitle}</td>
+                                                                        <td>{(order_header.Freight + order_header.Subtotal).ToString("$#,##0")}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>支付方式</td>
+                                                                        <td>{Payment}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>取消訂單日期</td>
+                                                                        <td>{date.ToString("yyyy/MM/dd HH:mm")}</td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                            <br/>
+                                                             {Remind}
+                                                            <br/>
+                                                             <hr/>
+                                                             <div class='text-bold text-red'>提醒您：此封『{MailTitle}』為系統發出，請勿直接回覆。</div>
+                                                             <div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>
+                                                             <div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>
+                                                             <hr/>
+                                                        </div>";
+                    var mailcss = "*{ font-family: sans-serif; } .text-size1{ font-size: 1rem; } .text-bold {  font-weight: bold; } .text-red {  color: red; } table { border-collapse: collapse; border: 2px solid #8c8c8c; letter-spacing: 1px; width: 600px; margin: 1rem 0 1rem 0; } th,td { border: 1px solid #a0a0a0; padding: 8px 10px; }";
+
+                    var sedResult = await mailAppService.sendMail(new SenderDto
+                    {
+                        Recipients = new List<MailUserDataDto>(){
+                                        new MailUserDataDto()
+                                        {
+                                            Name = order_header.Orderer,
+                                            Email = order_header.OrdererEmail,
+                                        }
+                                    },
+                        Subject = $"【{Website.Title}】{MailTitle}信",
+                        Body = mailhtml,
+                        Css = mailcss,
+                    }, Website.Contact);
+
+                    response = sedResult;
+                }
+                else throw new Exception("查無訂購資料");
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
             return response;
         }
     }

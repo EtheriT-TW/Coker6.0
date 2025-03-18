@@ -600,7 +600,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 							footerMessage = "<div class=\"d-flex\" id=\"footrow\">" +
 												 "<div class=\"span6\" id=\"footword\">" +
 													"<div class=\"wordfoot\">83163 高雄市大寮區濃公路79號</div>" +
-													"<div class=\"wordfoot wordleft\">電話：(07)7884882-4 &nbsp;&nbsp;傳真：(07)788-4885-6</div>" +
+													"<div class=\"wordfoot wordleft\">電話：(07)788-4882~4 &nbsp;&nbsp;傳真：(07)788-4885~6</div>" +
 													"<div class=\"wordfoot\">No.79, Nonggong Rd., Daliao Dist., Kaohsiung City 831, Taiwan (R.O.C.)</div>" +
 												 "</div>" +
 											 "</div>";

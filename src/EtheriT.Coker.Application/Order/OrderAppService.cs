@@ -182,15 +182,19 @@ namespace EtheriT.Coker.Application.Order
                     List<Core.Models.Prod_Log> pls = new List<Core.Models.Prod_Log>();
                     for (int i = 0; i < scs.Count; i++)
                     {
+                        var prodid = await db.Prod_Stocks.Where(e => e.Id == scs[i].FK_PSid).Select(e => e.FK_Pid).FirstOrDefaultAsync();
+                        var prod = await db.Prods.Where(e => e.Id == prodid).FirstOrDefaultAsync();
+
                         scs[i].Quantity = dto.OrderDetails[i].Quantity;
                         scs[i].Price = dto.OrderDetails[i].Price;
                         scs[i].IsOrder = true;
+                        scs[i].ProdName = prod?.Title;
                         scs[i].LastModifierUserId = oh.CreatorUserId;
                         scs[i].LastModificationTime = datetime_now;
 
                         pls.Add(new Core.Models.Prod_Log()
                         {
-                            FK_Pid = await db.Prod_Stocks.Where(e => e.Id == scs[i].FK_PSid).Select(e => e.FK_Pid).FirstOrDefaultAsync(),
+                            FK_Pid = prodid,
                             FK_UserId = oh.CreatorUserId,
                             UUID = UUID,
                             Action = (int)LogActionEnum.加入訂單,

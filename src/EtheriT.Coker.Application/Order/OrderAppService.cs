@@ -1449,7 +1449,7 @@ namespace EtheriT.Coker.Application.Order
                                                                     </tr>";
                         AmountTitle = "退款金額";
                         Remind = "若欲詢問退貨退款相關問題，請您與原訂購商店/網站聯繫。";
-                        var RefundText = PaymentType.RefundWorkDay < 0 ? "如有貨款需退回，請聯繫原訂購商店/網站聯繫。" : PaymentType.RefundWorkDay == 0 ? $"貨款將已成功退回，{Remind}" : $"貨款將在{PaymentType.RefundWorkDay}個工作天內退回，{Remind}";
+                        var RefundText = PaymentType.RefundWorkDay < 0 ? "如有貨款需退回，請聯繫原訂購商店/網站聯繫。" : PaymentType.RefundWorkDay == 0 ? $"貨款將即時退回，{Remind}" : $"貨款將在{PaymentType.RefundWorkDay}個工作天內退回，{Remind}";
                         Remind = $"<div class='text-bold text-red'>貼心提醒：{RefundText}</div>";
                         MailTitle = "退款通知";
                     }

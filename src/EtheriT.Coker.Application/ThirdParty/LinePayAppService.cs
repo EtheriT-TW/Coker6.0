@@ -276,6 +276,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             {
                                 response.Success = true;
                                 ohdata.State = OrderStatusEnum.已取消;
+                                await orderAppService.CancelOrderMailSend(ohid, DateTime.Now);
                                 db.SaveChanges();
                             }
                             response.Error = linePayResponse.ReturnCode;
@@ -390,6 +391,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 ohdata.refundTransactionId = linePayResponse.info.refundTransactionId;
                                 ohdata.refundTransactionDate = linePayResponse.info.refundTransactionDate != null ? DateTime.Parse(linePayResponse.info.refundTransactionDate).ToLocalTime() : null;
                                 ohdata.State = OrderStatusEnum.已取消;
+                                await orderAppService.CancelOrderMailSend(ohid, DateTime.Parse(linePayResponse.info.refundTransactionDate).ToLocalTime());
                                 db.SaveChanges();
                             }
                             else

@@ -714,6 +714,18 @@ function SwiperInit(obj) {
             swiper.update();
         }
     });
+
+    $(".swiper_same_height").each(function () {
+        var $self = $(this);
+        SameHeight($self);
+    });
+
+    $(window).resize(function () {
+        $(".swiper_same_height").each(function () {
+            var $self = $(this);
+            SameHeight($self);
+        });
+    });
 }
 
 /*滑鼠覆蓋暫停輪播 pauseOnMouseEnter: true 無作用時使用*/
@@ -724,4 +736,13 @@ function PauseOnMouseEnter(swiper, $container) {
     $container.on("mouseleave", function () {
         swiper.autoplay.start();
     })
+}
+
+/* 強制高度設置 */
+function SameHeight($swiper) {
+    var height = $swiper.find(".swiper-wrapper").css("height");
+    $swiper.find(".swiper-wrapper .swiper-slide").each(function () {
+        var $slide = $(this);
+        $slide.css("min-height", height);
+    });
 }

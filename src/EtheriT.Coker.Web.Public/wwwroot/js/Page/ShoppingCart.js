@@ -667,6 +667,10 @@ function CartListInsert($frame, data) {
         if (typeof ($self.data("key")) != "undefined") {
             var key = $self.data("key");
             switch (key) {
+                case "title":
+                    if (data[key] != data['oldTitle'] && data['oldTitle'] != null) $self.addClass("text-danger");
+                    $self.text(data[key]);
+                    break;
                 case "link":
                     $self.attr({
                         href: `/${OrgName}/home/product/${data['pId']}`,

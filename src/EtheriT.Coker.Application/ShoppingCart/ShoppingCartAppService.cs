@@ -170,6 +170,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                         Db_Name = "ShoppingCart"
                                     };
 
+                                    sc.ProdName = dto.ProdName;
                                     db.ShoppingCarts.Add(sc);
                                     db.SaveChanges();
                                     response.Message = "N" + sc.Id.ToString();
@@ -324,16 +325,14 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     var prods = prod_stocks.Prod;
                     var temp_output = mapper.Map<ShoppingCartDisplayDto>(shoppingCart);
 
-
                     temp_output.Stock = prod_stocks?.Stock ?? 0;
 
+                    temp_output.Title = prods?.Title ?? "";
                     if (shoppingCart.IsOrder)
                     {
-                        if (shoppingCart.ProdName != null && shoppingCart.ProdName != "") temp_output.Title = shoppingCart.ProdName;
+                        if (shoppingCart.ProdName != null && shoppingCart.ProdName != "") temp_output.Title= shoppingCart.ProdName;
                         else
                         {
-                            temp_output.Title = prods?.Title ?? "";
-
                             // 先前ShoppingCart尚未實際存ProdName要回存
                             var sc = await db.ShoppingCarts.FirstOrDefaultAsync(e => e.Id == shoppingCart.Id);
                             if (sc != null)
@@ -343,7 +342,10 @@ namespace EtheriT.Coker.Application.ShoppingCart
                             }
                         }
                     }
-                    else temp_output.Title = prods?.Title ?? "";
+                    else
+                    {
+                        if (shoppingCart.ProdName != null && shoppingCart.ProdName != "") temp_output.OldTitle = shoppingCart.ProdName;
+                    }
 
                     var pid = prod_stocks?.Prod?.Id;
                     temp_output.PId = pid ?? 0;

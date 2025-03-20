@@ -1441,7 +1441,8 @@ namespace EtheriT.Coker.Application.Order
                     var AmountTitle = "訂單金額";
                     var Remind = "";
                     var MailTitle = "取消訂單通知";
-                    if (order_header.refundTransactionId != null)
+                    if (PaymentType.Id == 1) Remind = "如有貨款需退回，請您與原訂購商店/網站聯繫。";
+                    else if (order_header.refundTransactionId != null)
                     {
                         RefundTransactionId = $@"<tr>
                                                                         <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>{ThirdParty?.Title.Replace(" ", "") ?? ""}退款序號</td>
@@ -1449,10 +1450,33 @@ namespace EtheriT.Coker.Application.Order
                                                                     </tr>";
                         AmountTitle = "退款金額";
                         Remind = "若欲詢問退貨退款相關問題，請您與原訂購商店/網站聯繫。";
-                        var RefundText = PaymentType.RefundWorkDay < 0 ? "如有貨款需退回，請聯繫原訂購商店/網站聯繫。" : PaymentType.RefundWorkDay == 0 ? $"貨款將即時退回，{Remind}" : $"貨款將在{PaymentType.RefundWorkDay}個工作天內退回，{Remind}";
+                        var RefundText = PaymentType.RefundWorkDay < 0 ? "如有貨款需退回，請您與原訂購商店/網站聯繫。" : PaymentType.RefundWorkDay == 0 ? $"貨款將即時退回，{Remind}" : $"貨款將在{PaymentType.RefundWorkDay}個工作天內退回，{Remind}";
                         Remind = $"<div class='text-bold text-red'>貼心提醒：{RefundText}</div>";
                         MailTitle = "退款通知";
                     }
+
+                    var DetailsTable = @"<table>
+                                                                <tbody>
+                                                                <tr class='text-bold' style='text-align: center; background-color: #F2F2F2;'>
+                                                                     <td scope='col' colspan='2' class='text-center'>購物明細</td>
+                                                                     <td scope='col' class='text-center'>規格</td>
+                                                                     <td scope='col' class='text-center'>單價</td>
+                                                                     <td scope='col' class='text-center'>數量</td>
+                                                                     <td scope='col' class='text-center'>小計</td>
+                                                                 </tr>";
+                    var order_details = await GetOrderDetails(ohid);
+                    foreach (var data in order_details)
+                    {
+                        var Specification = data.S1Title != "" ? data.S2Title != "" ? $"{data.S1Title}、{data.S2Title}" : data.S1Title : "";
+                        DetailsTable += $"<tr>" +
+                                                        $"<td  colspan='2'>{data.Title}</td>" +
+                                                        $"<td style='text-align: center;'>{Specification}</td>" +
+                                                        $"<td style='text-align: right;'>{data.Price.ToString("$#,##0")}</td>" +
+                                                        $"<td style='text-align: center;'>{data.Quantity}</td>" +
+                                                        $"<td style='text-align: right;'>{(data.Price * data.Quantity).ToString("$#,##0")}</td>" +
+                                                        $"</tr>";
+                    }
+                    DetailsTable += "</tbody></table>";
 
                     var mailhtml = $@"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>
                                                             <br/>
@@ -1480,6 +1504,8 @@ namespace EtheriT.Coker.Application.Order
                                                                 </tbody>
                                                             </table>
                                                             <br/>
+                                                            {DetailsTable}
+                                                            <br/>
                                                              {Remind}
                                                             <br/>
                                                              <hr/>
@@ -1488,7 +1514,7 @@ namespace EtheriT.Coker.Application.Order
                                                              <div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>
                                                              <hr/>
                                                         </div>";
-                    var mailcss = "*{ font-family: sans-serif; } .text-size1{ font-size: 1rem; } .text-bold {  font-weight: bold; } .text-red {  color: red; } table { border-collapse: collapse; border: 2px solid #8c8c8c; letter-spacing: 1px; width: 600px; margin: 1rem 0 1rem 0; } th,td { border: 1px solid #a0a0a0; padding: 8px 10px; }";
+                    var mailcss = "*{ font-family: sans-serif; } .text-bold {  font-weight: bold; } .text-red {  color: red; } table { border-collapse: collapse; border: 2px solid #8c8c8c; letter-spacing: 1px; width: 600px; margin: 1rem 0 1rem 0; } th,td { border: 1px solid #a0a0a0; padding: 8px 10px; }";
 
                     var sedResult = await mailAppService.sendMail(new SenderDto
                     {

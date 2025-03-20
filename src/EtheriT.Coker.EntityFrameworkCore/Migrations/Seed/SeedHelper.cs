@@ -499,7 +499,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Id = 2,
                     key = "google.translate",
                     name = "Google自動翻譯",
-                    memo = "請選擇需要翻譯的語系",
+                    memo = "請選擇需要翻譯的語系（請洽詢客服加購功能）",
                     FK_StoreSetGroupId = 1,
                     type = SeoSetDataTypeEnum.checkBox,
                     maxlength = 50,

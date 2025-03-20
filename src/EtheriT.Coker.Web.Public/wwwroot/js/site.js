@@ -662,9 +662,11 @@ function SiteElementInit() {
 }
 function scrollFunction() {
     if (document.body.scrollTop > 350 || document.documentElement.scrollTop > 350) {
-        $("#btn_gotop").css('display', 'block');
+        $("#btn_gotop").addClass("show");
+        $("#Floating_Center").addClass("show");
     } else {
-        $("#btn_gotop").css('display', 'none');
+        $("#btn_gotop").removeClass("show");
+        $("#Floating_Center").removeClass("show");
     }
 }
 function cookie_accept(isnew) {

@@ -1,9 +1,16 @@
 ﻿#Floating_Center {
+    display: block;
     position: fixed;
     right: 0rem;
     z-index: 1001;
     bottom: 100px;
+    opacity: 0;
+    transition: all 0.25s ease-in-out;
 }
+
+    #Floating_Center.show {
+        opacity: 1;
+    }
 
     #Floating_Center > div img {
         width: 6rem;
@@ -50,6 +57,16 @@
     will-change: transform;
 }
 
+#btn_gotop {
+    display: block;
+    opacity: 0;
+    transition: all 0.25s ease-in-out;
+}
+
+    #btn_gotop.show {
+        opacity: 1;
+    }
+
 /* Button Chat */
 #btn_chat {
     width: 4.5rem;
@@ -78,9 +95,6 @@
 /*RWD*/
 @media only screen and (max-width: 992px) {
     #Floating_Center {
-        top: auto;
-        transform: initial;
-        bottom: 0;
-        right: 0rem;
+        display: none;
     }
 }

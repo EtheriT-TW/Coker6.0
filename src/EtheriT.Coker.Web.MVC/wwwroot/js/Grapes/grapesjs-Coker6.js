@@ -336,10 +336,16 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                         name: 'file', type: 'button',
                         text: "選擇檔案",
                         command: editor => {
+                            var OldName = "";
+                            if (editor.getSelected().get("attributes").download != "" && editor.getSelected().get("attributes").download != "未命名") OldName = editor.getSelected().get("attributes").download;
                             AssetManager.open();
-                            AssetManager.onSelect((resule) => {
+                            AssetManager.onSelect((result) => {
                                 var LinkWithIconInit = $(".gjs-frame")[0].contentWindow.LinkWithIconInit;
-                                editor.getSelected().set("attributes", { "href": resule.id });
+                                if (OldName == "") OldName = result.attributes.name;
+                                editor.getSelected().set("attributes", {
+                                    "href": result.id,
+                                    "download": OldName
+                                });
                                 LinkWithIconInit();
                                 AssetManager.close();
                             });
@@ -348,8 +354,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                 ],
             }, init() {
                 this.on('change:attributes:download', function (component) {
-                    if (typeof (component.getEl()) != "undefined")
-                        component.find(".name")[0].components(component.getAttributes().download);
+                    if (typeof (component.getEl()) != "undefined") component.find(".name")[0].components(component.getAttributes().download);
                 });
             }
         },

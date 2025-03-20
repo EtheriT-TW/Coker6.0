@@ -3,6 +3,10 @@
         var $self = $(this)
         if (typeof ($self.data("isrun")) != "undefined" || $self.data("isrun")) return true;
         var data_url = $self.attr("href");
+        if (data_url.indexOf("?v=") > -1) {
+            data_url = data_url.substring(0, data_url.indexOf("?v="));
+            $self.attr("href", data_url)
+        }
         $self.find(".icon").empty();
         if (typeof (data_url) != "undefined") {
             var type = data_url.substring(data_url.lastIndexOf('.') + 1, data_url.length);
@@ -25,6 +29,7 @@
                 case "pptx":
                 case "odp":
                     $self.find(".icon").append('<i class="fa-solid fa-file-powerpoint font-orange"></i>');
+                    break;
                 case "xls":
                 case "xlsx":
                 case "ods":
@@ -43,11 +48,11 @@
             $self.attr("download", local.UnnamedFile);
         }
         $self.attr("title", local.LinkToAndBlank.format($self.attr("download")));
-        $self.find(".name").text($self.attr("download").replace(`.${type}`,""));
+        $self.find(".name").text($self.attr("download").replace(`.${type}`, ""));
         if (type == "pdf")
             $self.attr({ target: "_blank" }).removeAttr("download");
         else if (!(new RegExp(`[\.]{1}${type}$`, "gi")).test($self.attr("download"))) $self.attr("download", `${$self.attr("download")}.${type}`);
         else $self.attr("download", `${$self.attr("download")}`);
-        $self.data("isrun",true);
+        $self.data("isrun", true);
     })
 }

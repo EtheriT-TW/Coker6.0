@@ -499,7 +499,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Id = 2,
                     key = "google.translate",
                     name = "Google自動翻譯",
-                    memo = "請選擇需要翻譯的語系",
+                    memo = "請選擇需要翻譯的語系（請洽詢客服加購功能）",
                     FK_StoreSetGroupId = 1,
                     type = SeoSetDataTypeEnum.checkBox,
                     maxlength = 50,
@@ -771,7 +771,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     ser_no = 500,
                     CreatorUserId = 1,
-                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+
                 }, new ThirdParty
                 {
                     Id = 2,
@@ -939,6 +940,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 1,
                     FK_ThirdPartyId = 1,
                     CreatorUserId = 1,
+                    RefundWorkDay = -1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -952,6 +954,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 3,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    RefundWorkDay = 0,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -965,6 +968,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 8,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    RefundWorkDay = 3,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -978,6 +982,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 7,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    RefundWorkDay = 0,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -992,6 +997,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
                     IsDeleted = true,
+                    RefundWorkDay = 0,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1005,6 +1011,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 9,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    RefundWorkDay = 3,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1018,6 +1025,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 10,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    RefundWorkDay = 3,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1031,6 +1039,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 11,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    RefundWorkDay = 3,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1045,6 +1054,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
                     IsDeleted = true,
+                    RefundWorkDay = 3,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1058,6 +1068,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 12,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    RefundWorkDay = 3,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1071,6 +1082,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 4,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    RefundWorkDay = 0,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1084,6 +1096,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 5,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    RefundWorkDay = 0,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1097,6 +1110,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 6,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    RefundWorkDay = 0,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1110,6 +1124,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 2,
                     FK_ThirdPartyId = 3,
                     CreatorUserId = 1,
+                    RefundWorkDay = 0,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1123,6 +1138,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 13,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    RefundWorkDay = 3,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1136,6 +1152,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 14,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
+                    RefundWorkDay = 21,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1149,6 +1166,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 15,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
+                    RefundWorkDay = 21,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1162,6 +1180,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 16,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
+                    RefundWorkDay = 21,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1175,6 +1194,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 17,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
+                    RefundWorkDay = 21,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1188,6 +1208,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 18,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
+                    RefundWorkDay = 21,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1201,6 +1222,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 19,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
+                    RefundWorkDay = -1,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1214,6 +1236,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 20,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
+                    RefundWorkDay = -1,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1227,6 +1250,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 21,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
+                    RefundWorkDay = -1,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1240,6 +1264,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 22,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
+                    RefundWorkDay = -1,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1253,6 +1278,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 23,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
+                    RefundWorkDay = -1,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1266,6 +1292,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 24,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
+                    RefundWorkDay = -1,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -1279,6 +1306,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 25,
                     FK_ThirdPartyId = 4,
                     CreatorUserId = 1,
+                    RefundWorkDay = -1,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }
             );

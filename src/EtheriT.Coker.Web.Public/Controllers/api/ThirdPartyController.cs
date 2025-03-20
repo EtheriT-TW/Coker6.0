@@ -15,14 +15,20 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         private readonly ILinePayAppService linePayAppService;
         private readonly IPChomePayAppService pchomePayAppService;
         private readonly IECPayAppService ecPayAppService;
+        private readonly IConfiguration configuration;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         public ThirdPartyController(
             ILinePayAppService linePayAppService,
             IPChomePayAppService pchomePayAppService,
-            IECPayAppService ecPayAppService)
+            IECPayAppService ecPayAppService,
+            IConfiguration configuration,
+            IHttpContextAccessor _httpContextAccessor)
         {
             this.linePayAppService = linePayAppService;
             this.pchomePayAppService = pchomePayAppService;
             this.ecPayAppService = ecPayAppService;
+            this.configuration = configuration;
+            this._httpContextAccessor = _httpContextAccessor;
         }
         [HttpGet]
         public async Task<ResponseMessageDto> PayRequest(long ohid, string paytype)
@@ -56,10 +62,26 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             return await pchomePayAppService.PChomePayReturn(ohid);
         }
+
         [HttpPost]
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<string> PChomePayNotify([FromForm] PChomePayNotifyDto dto)
         {
+            //Console.WriteLine($"-------------進入PChomePayNotify-------------");
+            //var remoteIp = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString();
+            //var allowedIps = configuration.GetSection("ThirdParty:PCHomePay:SourceIP").Get<List<string>>();
+
+            //Console.WriteLine($"-------------PChomePayNotify來源查看-------------");
+            //Console.WriteLine($"remoteIp：{remoteIp}");
+            //Console.WriteLine($"allowedIps：{allowedIps}");
+
+            //if (string.IsNullOrEmpty(remoteIp) || !allowedIps.Contains(remoteIp))
+            //{
+            //    Console.WriteLine($"不允許");
+            //    return "Forbidden: IP not allowed";
+            //}
+            //else Console.WriteLine($"允許");
+
             return await pchomePayAppService.PChomePayNotify(dto);
         }
         [HttpGet]

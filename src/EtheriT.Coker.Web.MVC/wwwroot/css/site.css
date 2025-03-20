@@ -1,6 +1,11 @@
 /*[Master Stylesheet]Project:    Cosmo AdminVersion:    1.1Last change:    01/08/18 [minor fixes]ThemeName v1.1.0 (https://freakpixels.com/)Copyright 2014-2018 Freakpixels, Inc.*/ /*------------------------------------------------------------------[Table of contents]1. Importing Files    1.1 Variables (custom & bootstrap)    1.2 Bootstrap 4.1.1    1.3 Override Bootstrap    1.4 Fonts Files    1.5 Components        1.5.1 Sidebar        1.5.2 Header        1.5.3 Footer    1.6 Custom Controls        1.6.1 Switch        1.6.2 Loader        1.6.3 Toast    1.7 Utilities2. Some Basic Style    2.1 User Initials Circle    2.2 Status Circle    2.3 Horizontal Overflow Scroll3. Page Title & Controls    3.1 Title & Desc    3.2 Page Controls4. Step by Step Wizard5. Recent Activites6. Generating Lighten Color7. Fixed width columns8. Demo purpose css (you can remove)    8.1 Icon Preview    8.2 Buy Now button    8.3 Theme Setting Color Swatch-------------------------------------------------------------------*/ /****************************************Importing Files****************************************/ /*------------------------------------------------------------------[Table of contents]1. Bootstrap Variables	1.1 Theme Colors	1.2 Font Style	1.3 Spaceing2. Custom Variables-------------------------------------------------------------------*/ /*Theme Colors*/ /* Font Style */ /* Spaceing */ /* Custom Variables */ /*! * Bootstrap v4.1.0 (https://bootstrapmb.com/) * Copyright 2011-2018 The Bootstrap Authors * Copyright 2011-2018 Twitter, Inc. * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE) */ /* line 1, ../../scss/bootstrap/_root.scss */
 @charset "UTF-8";
 
+/* Bootstrap label backgound-color replicate */
+label::after {
+    background-color: transparent !important;
+}
+
 :root {
     --colors-red-text: #B8230F;
     --color-gray-bg-dark: #E2E2E2;

@@ -52,8 +52,8 @@ namespace EtheriT.Coker.Application.Recipients
                                     Name = r.Name,
                                     Email = r.Email,
                                     Address = r.Address,
-                                    Cellphone = r.Cellphone,
-                                    Telephone = r.Telephone,
+                                    CellPhone = r.CellPhone,
+                                    TelePhone = r.TelePhone,
                                     Sex = r.Sex,
                                 };
 
@@ -73,7 +73,7 @@ namespace EtheriT.Coker.Application.Recipients
             {
                 if (dto.Id == null)
                 {
-                    var recipients = await db.Recipients.Where(e => e.UUID == dto.UUID && e.Name == dto.Name && e.Email == dto.Email && e.Address == dto.Address && e.Cellphone == dto.Cellphone && e.Telephone == dto.Telephone && e.Sex == dto.Sex).FirstOrDefaultAsync();
+                    var recipients = await db.Recipients.Where(e => e.UUID == dto.UUID && e.Name == dto.Name && e.Email == dto.Email && e.Address == dto.Address && e.CellPhone == dto.CellPhone && e.TelePhone == dto.TelePhone && e.Sex == dto.Sex).FirstOrDefaultAsync();
                     if (recipients == null)
                     {
                         recipients = mapper.Map<Core.Models.Recipient>(dto);

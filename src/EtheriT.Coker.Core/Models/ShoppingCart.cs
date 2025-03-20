@@ -20,8 +20,11 @@ namespace EtheriT.Coker.Core.Models
         public int? Bonus { get; set; }
         public int? PriceType { get; set; }
         public bool IsAdditional { get; set; }
-        public bool IsOrder { get; set; }
         public int Ser_No { get; set; }
+        // 是否已結帳
+        public bool IsOrder { get; set; }
+        // 結帳後才存入
+        public string? ProdName { get; set; }
         public ICollection<Token> Tokens { get; set; }
         public Prod_Stock Prod_Stock { get; set; }
         public Prod_Price? Prod_Price { get; set; }

@@ -117,9 +117,10 @@ namespace EtheriT.Coker.Application.Advertise
             string error = string.Empty;
             try
             {
-                var dataQuery = from a in db.Advertise.Where(e => !e.IsDeleted)
+                var dataQuery = from a in db.Advertise
                                 where a.Type == Type
                                 where a.IsDeleted == false
+                                where a.FK_WebsiteId == WebsiteID
                                 select new AdvertiseDto
                                 {
                                     Id = a.Id,

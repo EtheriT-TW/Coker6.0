@@ -5,6 +5,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
 @using EtheriT.Coker.Web.MVC.Models.ProductManagement
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
+@using EtheriT.Coker.Web.MVC.Startup
 @model ProductManagementModel
 @{
     ViewData["Title"] = "ProductList";
@@ -63,11 +64,17 @@
                         <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">現金</div>
                         <input class="input_cash form-control rounded" type="number" aria-label="Input Cash Price of Product" maxlength="9" value="0" step="any">
                     </div>
-
-                    <div class="col bonus input-group">
-                        <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">紅利</div>
-                        <input class="input_bonus form-control rounded" type="number" aria-label="Input Bonus Price of Product" maxlength="9" value="0" step="any">
-                    </div>
+                    @if (BonusPermission.CanExe)
+                    {
+                        <div class="col bonus input-group">
+                            <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">紅利</div>
+                            <input class="input_bonus form-control rounded" type="number" aria-label="Input Bonus Price of Product" maxlength="9" value="0" step="any">
+                        </div>
+                    }
+                    else
+                    {
+                        <input class="input_bonus form-control rounded" type="hidden" aria-label="Input Bonus Price of Product" maxlength="9" value="0" step="any">
+                    }
 
                     <button class="col-auto btn_price_delete bg-transparent border-0 d-flex p-0">
                         <span class="material-symbols-outlined">delete</span>
@@ -76,6 +83,18 @@
             </template>
 
             <div class="modal-body p-4">
+
+                <div class="suggest_price align-items-center row mb-3">
+                    <div class="col text text-end">商品建議售價(非必填)</div>
+                    <div class="col cash input-group">
+                        <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">現金</div>
+                        <input class="form-control rounded" type="number" aria-label="Input Cash Price of Product" maxlength="9" value="0" step="any">
+                    </div>
+                    <button class="col-auto btn_suggest_price_delete bg-transparent border-0 d-flex p-0">
+                        <span class="material-symbols-outlined">delete</span>
+                    </button>
+                </div>
+
                 <div class="price_option"></div>
                 <div class="d-flex justify-content-center my-2">
                     <button class="btn btn_spec_price_add align-items-center d-flex">
@@ -328,11 +347,11 @@
                                 </div>
                                 <div class="illustrate border mb-3 p-2 field-gropu rounded">
                                     <div class="d-flex justify-content-between field-header">
-                                        <span class="input-group-text border-0 required_all">詳細說明</span>
+                                        <span class="input-group-text border-0">詳細說明</span>
                                         <div class="illustrate_count">0</div>
                                     </div>
                                     <div id="CollapseIllustrate" class="collapse show">
-                                        <textarea id="InputIllustrate" class="form-control border-0 dobuleHeight" aria-label="With textarea" maxlength="3000" placeholder="輸入詳細說明" required></textarea>
+                                        <textarea id="InputIllustrate" class="form-control border-0 dobuleHeight" aria-label="With textarea" maxlength="3000" placeholder="輸入詳細說明"></textarea>
                                     </div>
                                 </div>
                                 @await Component.InvokeAsync(nameof(Modal), new { dispaly = "TagListModal" })
@@ -389,8 +408,8 @@
 
                 <template id="TemplateSpecType">
                     <select class="spec_select form-select rounded-left" aria-label="規格類型" required="required">
-                        <option selected="" value="" disabled="disabled">規格類型</option>
-                        <option value="0">無</option>
+                        <option value="" disabled="disabled">規格類型</option>
+                        <option selected="" value="0">無</option>
                         @if (Model.SpecType.Count > 0)
                         {
                             @foreach (var spectype in Model.SpecType ?? new List<SpecTypeListDto>())

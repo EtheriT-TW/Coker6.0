@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250314023319_Update_Recipient_phoneToPhone")]
+    partial class Update_Recipient_phoneToPhone
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2342,9 +2344,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int>("MinAmount")
                         .HasColumnType("int");
 
-                    b.Property<int>("RefundWorkDay")
-                        .HasColumnType("int");
-
                     b.Property<int>("SerNo")
                         .HasColumnType("int");
 
@@ -2375,7 +2374,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Icons = "pay05.jpg",
                             IsDeleted = false,
                             MinAmount = 1,
-                            RefundWorkDay = -1,
                             SerNo = 1,
                             Title = "ATM",
                             Used = false
@@ -2391,7 +2389,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 199999,
                             MinAmount = 30,
-                            RefundWorkDay = 0,
                             SerNo = 3,
                             Title = "信用卡付款",
                             Used = false
@@ -2407,7 +2404,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 49999,
                             MinAmount = 1,
-                            RefundWorkDay = 3,
                             SerNo = 8,
                             Title = "ATM(虛擬帳戶)",
                             Used = false
@@ -2423,7 +2419,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 199999,
                             MinAmount = 1,
-                            RefundWorkDay = 0,
                             SerNo = 7,
                             Title = "PI錢包付款",
                             Used = false
@@ -2438,7 +2433,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Icons = "",
                             IsDeleted = true,
                             MinAmount = 1,
-                            RefundWorkDay = 0,
                             SerNo = 500,
                             Title = "支付連餘額付款",
                             Used = false
@@ -2454,7 +2448,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 49999,
                             MinAmount = 1,
-                            RefundWorkDay = 3,
                             SerNo = 9,
                             Title = "支付連銀行支付付款",
                             Used = false
@@ -2470,7 +2463,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 20000,
                             MinAmount = 65,
-                            RefundWorkDay = 3,
                             SerNo = 10,
                             Title = "7-11貨到付款",
                             Used = false
@@ -2486,7 +2478,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 20000,
                             MinAmount = 65,
-                            RefundWorkDay = 3,
                             SerNo = 11,
                             Title = "全家貨到付款",
                             Used = false
@@ -2502,7 +2493,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = true,
                             MaxAmount = 20000,
                             MinAmount = 65,
-                            RefundWorkDay = 3,
                             SerNo = 500,
                             Title = "OK貨到付款",
                             Used = false
@@ -2518,7 +2508,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 20000,
                             MinAmount = 65,
-                            RefundWorkDay = 3,
                             SerNo = 12,
                             Title = "萊爾富貨到付款",
                             Used = false
@@ -2534,7 +2523,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 199999,
                             MinAmount = 30,
-                            RefundWorkDay = 0,
                             SerNo = 4,
                             Title = "線上刷卡3期分期付款",
                             Used = false
@@ -2550,7 +2538,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 199999,
                             MinAmount = 30,
-                            RefundWorkDay = 0,
                             SerNo = 5,
                             Title = "線上刷卡6期分期付款",
                             Used = false
@@ -2566,7 +2553,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 199999,
                             MinAmount = 30,
-                            RefundWorkDay = 0,
                             SerNo = 6,
                             Title = "線上刷卡12期分期付款",
                             Used = false
@@ -2582,7 +2568,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 50000,
                             MinAmount = 1,
-                            RefundWorkDay = 0,
                             SerNo = 2,
                             Title = "LINEPay",
                             Used = false
@@ -2598,7 +2583,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 20000,
                             MinAmount = 25,
-                            RefundWorkDay = 3,
                             SerNo = 13,
                             Title = "超商條碼付款",
                             Used = false
@@ -2614,7 +2598,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 199999,
                             MinAmount = 6,
-                            RefundWorkDay = 21,
                             SerNo = 14,
                             Title = "信用卡付款",
                             Used = false
@@ -2630,7 +2613,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 199999,
                             MinAmount = 6,
-                            RefundWorkDay = 21,
                             SerNo = 15,
                             Title = "信用卡付款(銀聯卡)",
                             Used = false
@@ -2646,7 +2628,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 199999,
                             MinAmount = 6,
-                            RefundWorkDay = 21,
                             SerNo = 16,
                             Title = "信用卡分期付款3期",
                             Used = false
@@ -2662,7 +2643,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 199999,
                             MinAmount = 6,
-                            RefundWorkDay = 21,
                             SerNo = 17,
                             Title = "信用卡分期付款6期",
                             Used = false
@@ -2678,7 +2658,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 199999,
                             MinAmount = 6,
-                            RefundWorkDay = 21,
                             SerNo = 18,
                             Title = "信用卡分期付款12期",
                             Used = false
@@ -2694,7 +2673,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 49999,
                             MinAmount = 17,
-                            RefundWorkDay = -1,
                             SerNo = 19,
                             Title = "ATM(虛擬帳戶)",
                             Used = false
@@ -2710,7 +2688,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 20000,
                             MinAmount = 16,
-                            RefundWorkDay = -1,
                             SerNo = 20,
                             Title = "超商條碼付款",
                             Used = false
@@ -2726,7 +2703,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 20000,
                             MinAmount = 31,
-                            RefundWorkDay = -1,
                             SerNo = 21,
                             Title = "超商代碼付款(OK)",
                             Used = false
@@ -2742,7 +2718,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 20000,
                             MinAmount = 31,
-                            RefundWorkDay = -1,
                             SerNo = 22,
                             Title = "超商代碼付款(全家)",
                             Used = false
@@ -2758,7 +2733,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 20000,
                             MinAmount = 31,
-                            RefundWorkDay = -1,
                             SerNo = 23,
                             Title = "超商代碼付款(萊爾富)",
                             Used = false
@@ -2774,7 +2748,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 20000,
                             MinAmount = 31,
-                            RefundWorkDay = -1,
                             SerNo = 24,
                             Title = "超商代碼付款(7-11)",
                             Used = false
@@ -2790,7 +2763,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             MaxAmount = 199999,
                             MinAmount = 6,
-                            RefundWorkDay = -1,
                             SerNo = 25,
                             Title = "ApplePay",
                             Used = false
@@ -4006,9 +3978,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<int?>("PriceType")
                         .HasColumnType("int");
-
-                    b.Property<string>("ProdName")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");

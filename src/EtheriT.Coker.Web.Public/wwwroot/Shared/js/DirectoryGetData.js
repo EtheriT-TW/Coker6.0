@@ -345,8 +345,21 @@ function DirectoryDataInsert($item, result) {
     const dirPath = typeof ($item.data("dirpath")) == "undefined" ? "" : $item.data("dirpath").toLowerCase();
     if (result.length == 0) $item.find(".catalog").addClass("empty");
     else $item.find(".catalog").removeClass("empty");
+
+    if ($item.hasClass("hover_display_details") && typeof (OrgName) != "undefined") {
+        if (result.length > 0) {
+            if (result[0].mainImage != "") {
+                $item.data("default_img_link", result[0].mainImage);
+                $item.find(".details_display").attr("src", result[0].mainImage);
+            }
+            else $item.data("default_img_link", $item.find(".details_display").attr("src"));
+        }
+    }
+
     result != null && result.forEach(function (data) {
         var content = $(temp).clone();
+
+        if ($item.hasClass("hover_display_details") && typeof (OrgName) != "undefined") content.data("img_link", data.mainImage);
 
         if ($item.hasClass("hasBuyBtn")) {
             if (content.find(".btn_addToCar").length > 0) content.find(".btn_addToCar").removeClass("d-none");
@@ -555,6 +568,35 @@ function DirectoryDataInsert($item, result) {
     if (typeof (localStorage[`switchViewType-${pathname}`]) != "undefined" && isSearch) {
         var btnclass = localStorage[`switchViewType-${pathname}`];
         $(`button.${btnclass}`).trigger("click");
+    }
+    if ($item.hasClass("hover_display_details") && typeof (OrgName) != "undefined") {
+        $item.find(".details_display_frame").css('height', $item.find(".details_display_frame").height());
+        $(window).resize(function () {
+            $item.find(".details_display_frame").css('height', $item.find(".details_display_frame").height());
+        });
+        $item.find('.catalog > div:not(.templatecontent)').on('mouseenter', function () {
+            var $this = $(this);
+            var newImg = $this.data("img_link");
+            var $img = $item.find(".details_display");
+            var nowImg = $img.attr("src");
+
+            if (newImg != nowImg && newImg && newImg != "") {
+                $img.stop(true, true).fadeOut(200, function () {
+                    $img.attr("src", newImg).fadeIn(100);
+                });
+            }
+        }).on('mouseleave', function () {
+            var $this = $(this);
+            var defaultImg = $item.data("default_img_link");
+            var $img = $item.find(".details_display");
+            var nowImg = $img.attr("src");
+
+            if (defaultImg != nowImg) {
+                $img.stop(true, true).fadeOut(200, function () {
+                    $img.attr("src", defaultImg).fadeIn(100);
+                });
+            }
+        });
     }
 }
 function ProdFavBtnSet(content, data) {

@@ -340,14 +340,14 @@ function HeaderDataSet(result) {
 
     $recipient_name.text(result.recipient)
     $recipient_cellphone.text(result.recipientCellPhone)
-    var re_telIndex = result.recipientTelephone.indexOf("-", 5)
-    $recipient_telphone.text(result.recipientTelephone.substr(re_telIndex + 1).length > 0 ? result.recipientTelephone : result.recipientTelephone.subtotal(0, re_telIndex))
+    var re_telIndex = result.recipientTelePhone.indexOf("-", 5)
+    $recipient_telphone.text(result.recipientTelePhone.substr(re_telIndex + 1).length > 0 ? result.recipientTelePhone : result.recipientTelePhone.subtotal(0, re_telIndex))
     $recipient_address.text(result.recipientAddress)
 
     $orderer_name.text(result.orderer)
     $orderer_cellphone.text(result.ordererCellPhone)
-    var or_telIndex = result.ordererTelephone.indexOf("-", 5)
-    if (result.ordererTelephone != "") $orderer_telphone.text(result.ordererTelephone.substr(or_telIndex + 1).length > 0 ? result.ordererTelephone : result.ordererTelephone.subtotal(0, or_telIndex))
+    var or_telIndex = result.ordererTelePhone.indexOf("-", 5)
+    if (result.ordererTelePhone != "") $orderer_telphone.text(result.ordererTelePhone.substr(or_telIndex + 1).length > 0 ? result.ordererTelePhone : result.ordererTelePhone.subtotal(0, or_telIndex))
     else $orderer_telphone.text("-");
 
     $memo_block.val(result.memo);

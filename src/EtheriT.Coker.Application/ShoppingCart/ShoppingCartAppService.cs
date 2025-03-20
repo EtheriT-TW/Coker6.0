@@ -8,7 +8,6 @@ using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using EtheriT.Coker.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -171,6 +170,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                         Db_Name = "ShoppingCart"
                                     };
 
+                                    sc.ProdName = dto.ProdName;
                                     db.ShoppingCarts.Add(sc);
                                     db.SaveChanges();
                                     response.Message = "N" + sc.Id.ToString();
@@ -321,13 +321,33 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                 foreach (var shoppingCart in shoppingCarts)
                 {
+                    var prod_stocks = shoppingCart.Prod_Stock;
+                    var prods = prod_stocks.Prod;
                     var temp_output = mapper.Map<ShoppingCartDisplayDto>(shoppingCart);
 
-                    temp_output.Stock = shoppingCart.Prod_Stock?.Stock ?? 0;
+                    temp_output.Stock = prod_stocks?.Stock ?? 0;
 
-                    temp_output.Title = shoppingCart.Prod_Stock?.Prod?.Title ?? "";
+                    temp_output.Title = prods?.Title ?? "";
+                    if (shoppingCart.IsOrder)
+                    {
+                        if (shoppingCart.ProdName != null && shoppingCart.ProdName != "") temp_output.Title= shoppingCart.ProdName;
+                        else
+                        {
+                            // 先前ShoppingCart尚未實際存ProdName要回存
+                            var sc = await db.ShoppingCarts.FirstOrDefaultAsync(e => e.Id == shoppingCart.Id);
+                            if (sc != null)
+                            {
+                                sc.ProdName = temp_output.Title;
+                                await db.SaveChangesAsync();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (shoppingCart.ProdName != null && shoppingCart.ProdName != "") temp_output.OldTitle = shoppingCart.ProdName;
+                    }
 
-                    var pid = shoppingCart.Prod_Stock?.Prod?.Id;
+                    var pid = prod_stocks?.Prod?.Id;
                     temp_output.PId = pid ?? 0;
                     var imagepath = await (from fu in db.FileUploads
                                            join fb in db.FileBinds on fu.Id equals fb.FK_FileUploadId
@@ -347,35 +367,39 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         temp_output.S2Title = shoppingCart.FK_S2id != null ? db_sp.Find(e => e.Id == shoppingCart.FK_S2id)?.Title ?? "" : "";
                     }
 
-                    var psid = shoppingCart.Prod_Stock?.Id;
+                    var psid = prod_stocks?.Id;
                     var prices = new List<ProductPriceDto>();
                     if (psid != null) prices = await productAppService.GetPriceByStock(new List<long> { (long)psid });
                     var prod_price = await db.Prod_Prices.Where(e => e.Id == temp_output.PPId).FirstOrDefaultAsync();
-                    if (prices.Any() && prod_price != null)
+                    if (prices.Any())
                     {
-                        var temp_price = prices.Find(e => e.Bonus == prod_price.Bonus);
-
-                        if (temp_price != null && temp_price.Id != prod_price.Id)
+                        if (prod_price != null)
                         {
-                            var sc = await db.ShoppingCarts.FirstOrDefaultAsync(e => e.Id == shoppingCart.Id);
-                            if (sc != null)
+                            var temp_price = prices.Find(e => e.Bonus == prod_price?.Bonus);
+
+                            if (temp_price != null && temp_price.Id != prod_price?.Id)
                             {
-                                sc.FK_PriceId = temp_price.Id;
-                                await db.SaveChangesAsync();
+                                var sc = await db.ShoppingCarts.FirstOrDefaultAsync(e => e.Id == shoppingCart.Id);
+                                if (sc != null)
+                                {
+                                    sc.FK_PriceId = temp_price.Id;
+                                    await db.SaveChangesAsync();
+                                }
+                                prod_price.Price = temp_price.Price;
                             }
-                            prod_price.Price = temp_price.Price;
                         }
 
-                        temp_output.DynamicPrice = prod_price.Price ?? 0;
-                        temp_output.Bonus = prod_price.Bonus ?? 0;
+                        temp_output.DynamicPrice = prod_price?.Price ?? 0;
+                        temp_output.Bonus = prod_price?.Bonus ?? 0;
                     }
                     else temp_output.DynamicPrice = 0;
 
-
                     if (temp_output.Price == 0) temp_output.Price = temp_output.DynamicPrice;
+
                     temp_output.Subtotal = temp_output.Price * temp_output.Quantity;
 
-                    temp_output.Describe = shoppingCart.Prod_Stock?.Prod?.Description ?? "";
+                    temp_output.Describe = prods?.Description ?? "";
+
 
                     output.Add(temp_output);
                 }

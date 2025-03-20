@@ -265,8 +265,16 @@ namespace EtheriT.Coker.Web.MVC.Startup
 								Controller="StoreSettings",
 								Action="PaymentSettings",
 								Icon="credit_card",
-							}
-						}
+							},
+                            new JobMenu{
+                                PageName="BonusSettings",
+                                Title="紅利設定",
+                                Controller="StoreSettings",
+                                Action="BonusSettings",
+                                Icon="savings",
+								Enable=false
+                            }
+                        }
 					},
 					new JobMenu{
 						PageName="MemberData",
@@ -596,7 +604,9 @@ namespace EtheriT.Coker.Web.MVC.Startup
 				string ControllerName = (_httpContextAccessor.HttpContext.Request.RouteValues["controller"] ?? "").ToString();
 				string ActionName = (_httpContextAccessor.HttpContext.Request.RouteValues["action"] ?? "").ToString();
 				JobMenu? item = null;
-				site.Jobs.ForEach(e =>
+                JobMenu? Bonus = site.Jobs.Find(e => e.PageName == "BonusSettings");
+                if (Bonus != null && Bonus.CanVisble) BonusPermission.CanExe = true;
+                site.Jobs.ForEach(e =>
 				{
 					if (e.Controller == ControllerName && e.Action == ActionName) item = e;
 					else if (e.jobItemModels != null)

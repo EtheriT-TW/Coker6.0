@@ -36,6 +36,25 @@
     padding-right: 1.5rem !important;
 }
 
+    #profile-tab-pane .order_list_header, #profile-tab-pane .btn_detailed {
+        color: #555;
+    }
+
+    #profile-tab-pane .content .payment {
+        display: flex;
+        justify-content: center;
+    }
+
+        #profile-tab-pane .content .payment img {
+            height: 1.5rem;
+            margin-top: 0rem;
+            padding-right: 0.5rem;
+        }
+
+        #profile-tab-pane .content .payment span {
+            white-space: nowrap;
+        }
+
 .isHide, .isWrap {
     display: none;
 }
@@ -127,14 +146,24 @@
     margin-right: 1rem;
 }
 
+#info-tab-pane .btn_area .btn_resetPassword {
+    margin-right: 1rem;
+    border: none;
+    background-color: #B8B8B8;
+}
+
 .btn_buyAgain {
+    width: calc(100% / 12 * 3 - 1.25rem);
+    min-width: fit-content;
+    padding-right: 2.5rem;
+    padding-left: 2.5rem;
     color: white;
-    background-color: var(--red-main);
+    background-color: #ACACAC;
 }
 
     .btn_buyAgain:hover {
         color: white !important;
-        background-color: var(--red-main) !important;
+        background-color: #ACACAC !important;
     }
 
     .btn_buyAgain::after {
@@ -193,6 +222,10 @@
     content: '';
 }
 
+#profile-tab-pane .btn_cancelOrder {
+    color: #555;
+}
+
 #profile-tab-pane .type_list img {
     width: 75px;
 }
@@ -203,6 +236,10 @@
 
 #profile-tab-pane .quantity::before {
     content: '\00d7';
+}
+
+#profile-tab-pane .state span {
+    padding: 0.25rem 1rem;
 }
 
 #history-tab-pane .type_list img {
@@ -372,6 +409,14 @@
     #TabContent .content.type_grid .type_change_frame {
         width: 33.33% !important;
     }
+
+    #profile-tab-pane .content .payment {
+        flex-wrap: wrap;
+    }
+
+        #profile-tab-pane .content .payment span {
+            white-space: normal;
+        }
 }
 
 @media (max-width:992px) {
@@ -423,6 +468,10 @@
 }
 
 @media (max-width:768px) {
+    #profile-tab-pane .content .payment {
+        justify-content: end;
+    }
+
     .collapse > .card-body > div > div:first-child {
         width: 7rem;
         text-align-last: right;
@@ -574,7 +623,7 @@
 @media (max-width:576px) {
 
     #info-tab-pane .btn_area button {
-        width: 80%;
+        width: 100%;
     }
 
     #info-tab-pane .btn_area > div:nth-of-type(2) {
@@ -707,5 +756,9 @@
 
     .isHide:not(.hideTotal) {
         width: 55%;
+    }
+
+    .btn_buyAgain {
+        width: 100%;
     }
 }

@@ -142,19 +142,17 @@ namespace EtheriT.Coker.Application.ThirdParty
         {
             try
             {
+                JObject jsonMessage = JObject.Parse(dto.notify_message);
+
                 Console.WriteLine($"-------------訊息查看-------------");
-                Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：{dto}");
+                Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：{jsonMessage}");
 
                 if (dto.notify_type == "refund_success")
                 {
-                    Console.WriteLine($"-------------訊息查看-------------");
-                    Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：{dto.notify_message}");
                     return "success";
                 }
                 else
                 {
-                    JObject jsonMessage = JObject.Parse(dto.notify_message);
-
                     if (jsonMessage.ContainsKey("order_id"))
                     {
                         string orderId = jsonMessage["order_id"] != null && !string.IsNullOrEmpty(jsonMessage["order_id"].ToString()) ? jsonMessage["order_id"].ToString() : "0";

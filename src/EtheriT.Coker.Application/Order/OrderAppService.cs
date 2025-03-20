@@ -182,15 +182,19 @@ namespace EtheriT.Coker.Application.Order
                     List<Core.Models.Prod_Log> pls = new List<Core.Models.Prod_Log>();
                     for (int i = 0; i < scs.Count; i++)
                     {
+                        var prodid = await db.Prod_Stocks.Where(e => e.Id == scs[i].FK_PSid).Select(e => e.FK_Pid).FirstOrDefaultAsync();
+                        var prod = await db.Prods.Where(e => e.Id == prodid).FirstOrDefaultAsync();
+
                         scs[i].Quantity = dto.OrderDetails[i].Quantity;
                         scs[i].Price = dto.OrderDetails[i].Price;
                         scs[i].IsOrder = true;
+                        scs[i].ProdName = prod?.Title;
                         scs[i].LastModifierUserId = oh.CreatorUserId;
                         scs[i].LastModificationTime = datetime_now;
 
                         pls.Add(new Core.Models.Prod_Log()
                         {
-                            FK_Pid = await db.Prod_Stocks.Where(e => e.Id == scs[i].FK_PSid).Select(e => e.FK_Pid).FirstOrDefaultAsync(),
+                            FK_Pid = prodid,
                             FK_UserId = oh.CreatorUserId,
                             UUID = UUID,
                             Action = (int)LogActionEnum.加入訂單,
@@ -287,10 +291,10 @@ namespace EtheriT.Coker.Application.Order
                     {
                         Id = result.Id,
                         Orderer = result.Orderer,
-                        OrdererTelephone = result.OrdererTelephone == null ? "-" : result.OrdererTelephone,
+                        OrdererTelePhone = result.OrdererTelePhone == null ? "-" : result.OrdererTelePhone,
                         OrdererCellPhone = result.OrdererCellPhone,
                         Recipient = result.Recipient,
-                        RecipientTelephone = result.RecipientTelephone == null ? "-" : result.RecipientTelephone,
+                        RecipientTelePhone = result.RecipientTelePhone == null ? "-" : result.RecipientTelePhone,
                         RecipientCellPhone = result.RecipientCellPhone,
                         RecipientAddress = result.RecipientAddress.Replace(" ", ""),
                         InvoiceRecipient = result.InvoiceRecipient,
@@ -335,6 +339,10 @@ namespace EtheriT.Coker.Application.Order
                                 output.Payment = payment.Title?.ToString() ?? "";
                             }
                             output.ThirdParties = payment.FK_ThirdPartyId;
+
+                            List<long> neediconpayment = new List<long> { 2, 7, 8, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20 };
+                            if (neediconpayment.Contains(output.PaymentCode)) output.PaymentIcon = $"/images/paymenticon/{payment.Icons}";
+                            else output.PaymentIcon = "";
                         }
                     }
 
@@ -389,8 +397,8 @@ namespace EtheriT.Coker.Application.Order
                     var userdata = await db.FrontUsers.Where(e => e.UUID == order_header.FK_UUID).FirstOrDefaultAsync();
                     if (userdata != null)
                     {
-                        if (order_header.OrdererTelephone == null) order_header.OrdererTelephone = "";
-                        if (userdata.Name == order_header.Orderer && userdata.Sex == order_header.OrdererSex && userdata.Email == order_header.OrdererEmail && userdata.TelPhone == order_header.OrdererTelephone && userdata.CellPhone == order_header.OrdererCellPhone && userdata.Address == order_header.OrdererAddress) temp_output.OrdererId = userdata.Id;
+                        if (order_header.OrdererTelePhone == null) order_header.OrdererTelePhone = "";
+                        if (userdata.Name == order_header.Orderer && userdata.Sex == order_header.OrdererSex && userdata.Email == order_header.OrdererEmail && userdata.TelPhone == order_header.OrdererTelePhone && userdata.CellPhone == order_header.OrdererCellPhone && userdata.Address == order_header.OrdererAddress) temp_output.OrdererId = userdata.Id;
                     }
 
                     temp_output.Subtotal = order_header.Subtotal.ToString("#,##0");
@@ -495,13 +503,12 @@ namespace EtheriT.Coker.Application.Order
                                         Quantity = sc.Quantity,
                                         Subtotal = ps.Price * sc.Quantity,
                                         ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                              .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == p.FK_WebsiteId)
-                                              .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
-                                              .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
-                                              .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
+                                                        .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
+                                                        .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == p.FK_WebsiteId && e.fileUpload.ContentType.StartsWith("image"))
+                                                        .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
                                                       select new DirectoryReleInfoDto
                                                       {
-                                                          Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}").Replace("//", "/")
+                                                          Link = (f.fileUpload.DownloadFileName ?? "/images/noImg.jpg").Replace("upload", $"upload/{orgName}").Replace("//", "/")
                                                       }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
                                     }).ToListAsync();
 
@@ -989,7 +996,7 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-                DateTime now = DateTime.Now.AddDays(-7);
+                DateTime datetimenow = DateTime.Now;
                 if (order_header != null)
                 {
                     if (order_header.State != (OrderStatusEnum)state)
@@ -1019,7 +1026,7 @@ namespace EtheriT.Coker.Application.Order
                                 }
                                 break;
                             case (int)OrderStatusEnum.已完成:
-                                order_header.CompletedDate = DateTime.Now;
+                                order_header.CompletedDate = datetimenow;
                                 break;
                         }
 
@@ -1028,6 +1035,8 @@ namespace EtheriT.Coker.Application.Order
                             order_header.TransactionId = null;
                         }
                         order_header.State = (OrderStatusEnum)state;
+
+                        if (order_header.State == OrderStatusEnum.已取消) await CancelOrderMailSend(order_header.Id, datetimenow);
 
                         db.SaveChanges();
                     }
@@ -1120,11 +1129,11 @@ namespace EtheriT.Coker.Application.Order
 
                     var OrdererEmailSecret = (order_header.OrdererEmail.Length > 5 ? order_header.OrdererEmail.Substring(0, 4) : order_header.OrdererEmail.Substring(0, 1)) + "**********";
                     order_header.OrdererCellPhone = (order_header.OrdererCellPhone.Length > 4 ? order_header.OrdererCellPhone.Substring(0, 4) : order_header.OrdererCellPhone.Substring(0, 1)) + "******";
-                    order_header.OrdererTelephone = order_header.OrdererTelephone != null ? order_header.OrdererTelephone.Length > 3 ? order_header.OrdererTelephone?.Substring(0, 3) + "******" : order_header.OrdererTelephone?.Substring(0, 1) + "******" : "";
+                    order_header.OrdererTelePhone = order_header.OrdererTelePhone != null ? order_header.OrdererTelePhone.Length > 3 ? order_header.OrdererTelePhone?.Substring(0, 3) + "******" : order_header.OrdererTelePhone?.Substring(0, 1) + "******" : "";
                     var OrdererSex = order_header.OrdererSex == 1 ? "先生" : order_header.OrdererSex == 2 ? "小姐" : "君";
                     order_header.RecipientAddress = order_header.RecipientAddress.Replace(" ", "").Substring(0, 6) + "**********";
                     order_header.RecipientCellPhone = (order_header.RecipientCellPhone.Length > 4 ? order_header.RecipientCellPhone.Substring(0, 4) : order_header.RecipientCellPhone.Substring(0, 1)) + "******";
-                    order_header.RecipientTelephone = order_header.RecipientTelephone != null ? order_header.RecipientTelephone.Length > 3 ? order_header.RecipientTelephone?.Substring(0, 3) + "******" : order_header.RecipientTelephone?.Substring(0, 1) + "******" : "";
+                    order_header.RecipientTelePhone = order_header.RecipientTelePhone != null ? order_header.RecipientTelePhone.Length > 3 ? order_header.RecipientTelePhone?.Substring(0, 3) + "******" : order_header.RecipientTelePhone?.Substring(0, 1) + "******" : "";
                     var RecipientSex = order_header.RecipientSex == 1 ? "先生" : order_header.RecipientSex == 2 ? "小姐" : "君";
 
                     var mailhtml = @$"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>
@@ -1149,7 +1158,7 @@ namespace EtheriT.Coker.Application.Order
                  <td colspan='1'>手機</td>
                  <td colspan='2'>{order_header.OrdererCellPhone}</td>
                  <td colspan='1''>電話</td>
-                 <td colspan='2'>{order_header.OrdererTelephone}</td>
+                 <td colspan='2'>{order_header.OrdererTelePhone}</td>
                  </tr>
                  <tr class='thead'><td scope='col' colspan='6'>收件人：{order_header.Recipient.Substring(0, 1) + "*****"} {RecipientSex}</td></tr>
                  <tr>
@@ -1160,7 +1169,7 @@ namespace EtheriT.Coker.Application.Order
                  <td colspan='1'>手機</td>
                  <td colspan='2'>{order_header.RecipientCellPhone}</td>
                  <td colspan='1'>電話</td>
-                 <td colspan='2'>{order_header.RecipientTelephone}</td>
+                 <td colspan='2'>{order_header.RecipientTelePhone}</td>
                  </tr>
                  <tr class='thead'><td scope='col' colspan='6'>發票寄送：{InvoiceRecipient}</td></tr>
                  {InvoiceTable}
@@ -1411,6 +1420,124 @@ namespace EtheriT.Coker.Application.Order
         public async Task<ResponseMessageDto> PayFailMailSend(long ohid, DateTime date)
         {
             ResponseMessageDto response = new ResponseMessageDto();
+            return response;
+        }
+        public async Task<ResponseMessageDto> CancelOrderMailSend(long ohid, DateTime date)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId") == 0 ? await loginUserData.GetWebsiteId() : configuration.GetValue<long>("WebConfig:SiteId");
+                var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
+                var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+
+                if (order_header != null)
+                {
+                    var PaymentType = await db.PaymentTypes.Where(e => e.Id == order_header.Payment).FirstOrDefaultAsync();
+                    var ThirdParty = await db.ThirdParties.Where(e => e.Id == PaymentType.FK_ThirdPartyId).FirstOrDefaultAsync();
+                    var Payment = PaymentType?.Title ?? "";
+
+                    var RefundTransactionId = "";
+                    var AmountTitle = "訂單金額";
+                    var Remind = "";
+                    var MailTitle = "取消訂單通知";
+                    if (PaymentType.Id == 1) Remind = "如有貨款需退回，請您與原訂購商店/網站聯繫。";
+                    else if (order_header.refundTransactionId != null)
+                    {
+                        RefundTransactionId = $@"<tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>{ThirdParty?.Title.Replace(" ", "") ?? ""}退款序號</td>
+                                                                        <td>{order_header.refundTransactionId}</td>
+                                                                    </tr>";
+                        AmountTitle = "退款金額";
+                        Remind = "若欲詢問退貨退款相關問題，請您與原訂購商店/網站聯繫。";
+                        var RefundText = PaymentType.RefundWorkDay < 0 ? "如有貨款需退回，請您與原訂購商店/網站聯繫。" : PaymentType.RefundWorkDay == 0 ? $"貨款將即時退回，{Remind}" : $"貨款將在{PaymentType.RefundWorkDay}個工作天內退回，{Remind}";
+                        Remind = $"<div class='text-bold text-red'>貼心提醒：{RefundText}</div>";
+                        MailTitle = "退款通知";
+                    }
+
+                    var DetailsTable = @"<table>
+                                                                <tbody>
+                                                                <tr class='text-bold' style='text-align: center; background-color: #F2F2F2;'>
+                                                                     <td scope='col' colspan='2' class='text-center'>購物明細</td>
+                                                                     <td scope='col' class='text-center'>規格</td>
+                                                                     <td scope='col' class='text-center'>單價</td>
+                                                                     <td scope='col' class='text-center'>數量</td>
+                                                                     <td scope='col' class='text-center'>小計</td>
+                                                                 </tr>";
+                    var order_details = await GetOrderDetails(ohid);
+                    foreach (var data in order_details)
+                    {
+                        var Specification = data.S1Title != "" ? data.S2Title != "" ? $"{data.S1Title}、{data.S2Title}" : data.S1Title : "";
+                        DetailsTable += $"<tr>" +
+                                                        $"<td  colspan='2'>{data.Title}</td>" +
+                                                        $"<td style='text-align: center;'>{Specification}</td>" +
+                                                        $"<td style='text-align: right;'>{data.Price.ToString("$#,##0")}</td>" +
+                                                        $"<td style='text-align: center;'>{data.Quantity}</td>" +
+                                                        $"<td style='text-align: right;'>{(data.Price * data.Quantity).ToString("$#,##0")}</td>" +
+                                                        $"</tr>";
+                    }
+                    DetailsTable += "</tbody></table>";
+
+                    var mailhtml = $@"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>
+                                                            <br/>
+                                                             <div>您於【{Website?.Title ?? ""}】有筆訂單已取消，以下為取消訂單資訊：</div>
+                                                            <br/>
+                                                            <table>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>商店訂單編號</td>
+                                                                        <td>{("000000000" + order_header.Id).Substring((order_header.Id.ToString()).Length)}</td>
+                                                                    </tr>
+                                                                    {RefundTransactionId}
+                                                                    <tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>{AmountTitle}</td>
+                                                                        <td>{(order_header.Freight + order_header.Subtotal).ToString("$#,##0")}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>支付方式</td>
+                                                                        <td>{Payment}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>取消訂單日期</td>
+                                                                        <td>{date.ToString("yyyy/MM/dd HH:mm")}</td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                            <br/>
+                                                            {DetailsTable}
+                                                            <br/>
+                                                             {Remind}
+                                                            <br/>
+                                                             <hr/>
+                                                             <div class='text-bold text-red'>提醒您：此封『{MailTitle}』為系統發出，請勿直接回覆。</div>
+                                                             <div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>
+                                                             <div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>
+                                                             <hr/>
+                                                        </div>";
+                    var mailcss = "*{ font-family: sans-serif; } .text-bold {  font-weight: bold; } .text-red {  color: red; } table { border-collapse: collapse; border: 2px solid #8c8c8c; letter-spacing: 1px; width: 600px; margin: 1rem 0 1rem 0; } th,td { border: 1px solid #a0a0a0; padding: 8px 10px; }";
+
+                    var sedResult = await mailAppService.sendMail(new SenderDto
+                    {
+                        Recipients = new List<MailUserDataDto>(){
+                                        new MailUserDataDto()
+                                        {
+                                            Name = order_header.Orderer,
+                                            Email = order_header.OrdererEmail,
+                                        }
+                                    },
+                        Subject = $"【{Website.Title}】{MailTitle}信",
+                        Body = mailhtml,
+                        Css = mailcss,
+                    }, Website.Contact);
+
+                    response = sedResult;
+                }
+                else throw new Exception("查無訂購資料");
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
             return response;
         }
     }

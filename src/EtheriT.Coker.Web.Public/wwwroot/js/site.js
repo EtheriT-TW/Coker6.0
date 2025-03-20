@@ -417,7 +417,7 @@ function ready() {
             $InputLoginVCode.siblings("div").addClass("me-4 pe-2");
             NewCaptcha($LoginImgCaptcha, $InputLoginVCode)
             $InputLoginVCode.val("");
-            Coker.sweet.error("錯誤", "請確實填寫登入資料", null, true);
+            Coker.sweet.warning("請注意", "請確實填寫登入資料", null);
         }
     })
     $("#RegisterForm input").on("keypress", function (event) {
@@ -441,13 +441,13 @@ function ready() {
         if (passcheck && formcheck) {
             if (!$RegisterAccept.prop("checked")) {
                 NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
-                Coker.sweet.error("錯誤", "請詳閱並同意會員條款", null, true);
+                Coker.sweet.warning("請注意", "請詳閱並同意會員條款", null, true);
             } else {
                 CaptchaVerify($RegisterImgCaptcha, $InputRegisterVCode, RegisterAction)
             }
         } else {
             NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
-            Coker.sweet.error("錯誤", "請確實填寫註冊資料", null, true);
+            Coker.sweet.warning("請注意", "請確實填寫註冊資料", null);
         }
     })
     $("#ForgetForm input").on("keypress", function (event) {
@@ -488,10 +488,10 @@ function ready() {
             })
         } else if (!passcheck) {
             NewCaptcha($ResetImgCaptcha, $InputResetVCode);
-            Coker.sweet.error("錯誤", "密碼格式有誤", null, true);
+            Coker.sweet.warning("請注意", "密碼格式有誤", null);
         } else if (!formcheck) {
             NewCaptcha($ResetImgCaptcha, $InputResetVCode);
-            Coker.sweet.error("錯誤", "驗證碼輸入錯誤", null, true);
+            Coker.sweet.warning("請注意", "驗證碼輸入錯誤", null);
         }
     })
 
@@ -627,6 +627,14 @@ function ready() {
             loginModal.show();
         }
     });
+
+    if ($(".noImageHide").length > 0) {
+        $(".noImageHide").each(function () {
+            var $self = $(this);
+            $self.find("[src='/images/noImg.jpg']").addClass("custom_visibility_hidden");
+            $self.find("[src='/images/UploadImg.png']").addClass("custom_visibility_hidden");
+        });
+    }
 }
 
 function SiteElementInit() {
@@ -654,9 +662,11 @@ function SiteElementInit() {
 }
 function scrollFunction() {
     if (document.body.scrollTop > 350 || document.documentElement.scrollTop > 350) {
-        $("#btn_gotop").css('display', 'block');
+        $("#btn_gotop").addClass("show");
+        $("#Floating_Center").addClass("show");
     } else {
-        $("#btn_gotop").css('display', 'none');
+        $("#btn_gotop").removeClass("show");
+        $("#Floating_Center").removeClass("show");
     }
 }
 function cookie_accept(isnew) {
@@ -785,7 +795,7 @@ function CaptchaVerify($self, $input, SuccessAction) {
                     $input.siblings("div").addClass("me-4 pe-2");
                     NewCaptcha($self, $input)
                     $input.val("");
-                    Coker.sweet.error("錯誤", "驗證碼錯誤", null, true);
+                    Coker.sweet.warning("請注意", "驗證碼輸入錯誤", null);
                 }
             }
         })
@@ -794,7 +804,7 @@ function CaptchaVerify($self, $input, SuccessAction) {
         $input.siblings("div").addClass("me-4 pe-2");
         NewCaptcha($self, $input)
         $input.val("");
-        Coker.sweet.error("錯誤", "請確實填寫驗證碼", null, true);
+        Coker.sweet.warning("請注意", "請確實填寫驗證碼", null);
     }
 }
 function LoginAction() {
@@ -1460,7 +1470,7 @@ var Coker = {
                 title: title,
                 text: text,
                 icon: "warning",
-                showCancelButton: true,
+                showCancelButton: typeof (action) == "function",
                 confirmButtonColor: "#3085d6",
                 confirmButtonText: "確定"
             }).then((result) => {
@@ -1497,7 +1507,7 @@ var Coker = {
             });
             $e.find(".btn_sear").on("click", function () {
                 if ($t.val() == "") {
-                    co.sweet.error("錯誤", "請輸入搜尋文字", function () {
+                    co.sweet.warning("請注意", "請輸入搜尋文字", function () {
                         setTimeout(function () { $t2.trigger("focus"); }, 300);
                     }, false);
                 } else {

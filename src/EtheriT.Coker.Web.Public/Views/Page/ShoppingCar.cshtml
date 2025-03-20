@@ -62,8 +62,8 @@
                 c.AddFor(e => e.Name).Caption("姓名").AllowEditing(false);
                 c.AddFor(e => e.Email).Caption("電子郵件").AllowEditing(false);
                 c.AddFor(e => e.Address).Caption("地址").AllowEditing(false);
-                c.AddFor(e => e.Telephone).Caption("行動電話").AllowEditing(false);
-                c.AddFor(e => e.Cellphone).Caption("聯絡電話").AllowEditing(false);
+                c.AddFor(e => e.TelePhone).Caption("行動電話").AllowEditing(false);
+                c.AddFor(e => e.CellPhone).Caption("聯絡電話").AllowEditing(false);
                 c.Add()
                 .Type(GridCommandColumnType.Buttons)
                 .Buttons(b =>
@@ -461,7 +461,7 @@
                                     <label class="px-4" for="OrdererInputTelPhoneArea">電話區碼</label>
                                 </div>
                                 <div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0 tel-phone">
-                                    <input id="OrdererInputTelPhone" class="orderer_cellphone form-control" name="ordererTelephone" type="tel" placeholder="請輸入聯繫電話" value="" pattern="\d{7}" maxlength="7">
+                                    <input id="OrdererInputTelPhone" class="orderer_cellphone form-control" name="ordererTelePhone" type="tel" placeholder="請輸入聯繫電話" value="" pattern="\d{7}" maxlength="7">
                                     <label for="OrdererInputTelPhone">聯絡電話</label>
                                 </div>
                                 <div class="form-floating mb-3 col-6 col-sm-3 phone-ext">
@@ -567,7 +567,7 @@
                                     <label class="px-4" for="RecipientInputTelPhoneArea">區碼</label>
                                 </div>
                                 <div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
-                                    <input id="RecipientInputTelPhone" name="recipientTelephone" class="recipient_cellphone form-control" type="tel" placeholder="請輸入連絡電話" value="" pattern="\d{7}" maxlength="7">
+                                    <input id="RecipientInputTelPhone" name="recipientTelePhone" class="recipient_cellphone form-control" type="tel" placeholder="請輸入連絡電話" value="" pattern="\d{7}" maxlength="7">
                                     <label for="RecipientInputTelPhone">聯絡電話</label>
                                 </div>
                                 <div class="form-floating mb-3 col-6 col-sm-3">

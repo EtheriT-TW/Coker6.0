@@ -5,6 +5,28 @@ html, body {
     position: relative;
 }
 
+/* Bootstrap label backgound-color replicate */
+label::after {
+    background-color: transparent !important;
+}
+
+/* Custom English translation */
+.translate_ch {
+    display: inline;
+}
+
+.translate_en {
+    display: none;
+}
+
+html[lang="en"] .translate_ch {
+    display: none;
+}
+
+html[lang="en"] .translate_en {
+    display: inline;
+}
+
 /* Universal */
 a {
     text-decoration: none;
@@ -17,6 +39,10 @@ a {
 
 p {
     margin: 0;
+}
+
+.custom_visibility_hidden {
+    visibility: hidden;
 }
 
 .price::before {

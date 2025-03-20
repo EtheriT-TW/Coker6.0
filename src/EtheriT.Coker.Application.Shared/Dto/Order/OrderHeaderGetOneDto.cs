@@ -7,10 +7,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
     {
         public long Id { get; set; }
         public string Orderer { get; set; }
-        public string? OrdererTelephone { get; set; }
+        public string? OrdererTelePhone { get; set; }
         public string OrdererCellPhone { get; set; }
         public string Recipient { get; set; }
-        public string? RecipientTelephone { get; set; }
+        public string? RecipientTelePhone { get; set; }
         public string RecipientCellPhone { get; set; }
         public string RecipientAddress { get; set; }
         public int InvoiceRecipient { get; set; }
@@ -19,6 +19,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string InvoiceAddress { get; set; }
         public string Payment { get; set; }
         public long PaymentCode { get; set; }
+        public string PaymentIcon { get; set; }
         public long ThirdParties { get; set; }
         public string Shipping { get; set; }
         public OrderStatusEnum State { get; set; }

@@ -1,7 +1,7 @@
 ﻿var $display, $removedFromShelves, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count,
     $marks, $price, $subItemNo, $stock_number, $alert_number, $min_number, $date, $picker, $permanent, $itemNo, $itemNo_count;
 var startDate, endDate, keyId, price_tid, temp_psid
-var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], spec_pick_list
+var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], spec_pick_list, suggest_price_list = []
 var $price_modal, priceModal
 var total_files = [];
 let importProdPopup = null;
@@ -456,6 +456,12 @@ function FormDataSet(result) {
     $("#ProdMedia > ul > li:first-child").trigger("click");
 
     result.stocks.forEach(function (stock) {
+        var suggest_price_obj = {};
+        suggest_price_obj["FK_PSId"] = stock.id;
+        suggest_price_obj["TempPSid"] = 0;
+        suggest_price_obj["Price"] = stock.price
+        suggest_price_list.push(suggest_price_obj);
+
         stock.prices.forEach(function (price) {
             var price_obj = {};
             price_obj["Id"] = price.id;
@@ -562,13 +568,23 @@ function SpecPriceAdd(result) {
 function SpecPriceSave() {
     var temp_list = []
     var save_success = true
+    var psid = $price_modal.parents(".modal-body").first().data("psid");
+    var temppsid = $price_modal.parents(".modal-body").first().data("temppsid");
+    if (psid != "") {
+        var index = suggest_price_list.findIndex(item => item["FK_PSId"] == psid)
+        suggest_price_list[index]["Price"] = $("#PriceModal .suggest_price input").val()
+    }
+    else {
+        var index = suggest_price_list.findIndex(item => item["TempPSid"] == temppsid)
+        suggest_price_list[index]["Price"] = $("#PriceModal .suggest_price input").val()
+    }
     $price_modal.children(".frame").each(function () {
         $self = $(this);
         var obj = {};
         obj["Id"] = $self.data("ppid");
         obj["Tempid"] = price_tid;
-        obj["FK_PSId"] = $self.parents(".modal-body").first().data("psid");
-        obj["TempPSid"] = $self.parents(".modal-body").first().data("temppsid");
+        obj["FK_PSId"] = psid;
+        obj["TempPSid"] = temppsid;
         obj["FK_RId"] = $self.find(".select_role").val();
         obj["Price"] = $self.find(".input_cash").val();
         obj["Bonus"] = $self.find(".input_bonus").val();
@@ -714,6 +730,12 @@ function SpecAdd(result) {
         temp_psid += 1;
         item.data("temppsid", temp_psid);
         item.data("oldstock", null);
+
+        var suggest_price_obj = {};
+        suggest_price_obj["FK_PSId"] = "";
+        suggest_price_obj["TempPSid"] = temp_psid;
+        suggest_price_obj["Price"] = 0;
+        suggest_price_list.push(suggest_price_obj);
     }
     var text = "";
     var filter = modal_price_list.filter(mitem => !mitem.IsDelete && (mitem["FK_PSId"] == item.data("psid")));
@@ -752,6 +774,15 @@ function SpecAdd(result) {
         var temppsid = $self.parents(".spec_list").data("temppsid")
         $price_modal.parents(".modal-body").first().data("psid", psid != null ? psid : "")
         $price_modal.parents(".modal-body").first().data("temppsid", temppsid != null ? temppsid : "")
+
+        if (psid != null) {
+            var index = suggest_price_list.findIndex(item => item["FK_PSId"] == psid)
+            $("#PriceModal .suggest_price input").val(suggest_price_list[index]["Price"]);
+        } else {
+            var index = suggest_price_list.findIndex(item => item["TempPSid"] == temppsid)
+            $("#PriceModal .suggest_price input").val(suggest_price_list[index]["Price"]);
+        }
+
         modal_price_list.forEach(function (item) {
             if (item.FK_PSId == psid || (item.TempPSid != null && item.TempPSid == temppsid)) {
                 SpecPriceAdd(item)
@@ -767,7 +798,6 @@ function SpecAdd(result) {
     if (result != null) {
         item_btn_expand.children("span").text("expand_more");
         item_btn_expand.parents("div").first().prev().removeClass("show")
-
     }
 
     item_btn_expand.on("click", function () {
@@ -1077,7 +1107,14 @@ function AddUp(success_text, error_text, target) {
             })
             fk_sid.push(id)
         })
-        obj["Id"] = $self.data("psid") == "" ? 0 : $self.data("psid");
+        obj["Id"] = $self.data("psid") == "" || typeof ($self.data("psid")) == "undefined" ? 0 : $self.data("psid");
+        if (obj["Id"] != 0) {
+            var index = suggest_price_list.findIndex(item => item["FK_PSId"] == obj["Id"])
+            obj["Price"] = suggest_price_list[index]["Price"];
+        } else {
+            var index = suggest_price_list.findIndex(item => item["TempPSid"] == $self.data("temppsid"))
+            obj["Price"] = suggest_price_list[index]["Price"];
+        }
         obj["FK_S1id"] = fk_sid[0];
         obj["FK_S2id"] = fk_sid[1];
         obj["Stock"] = $self.find(".input_stock_number").val();
@@ -1099,9 +1136,7 @@ function AddUp(success_text, error_text, target) {
                 price_list.push(price_object)
             }
         })
-
         obj["Prices"] = price_list;
-
         stock_addup_list.push(obj);
     })
     co.Product.AddUp.Product({

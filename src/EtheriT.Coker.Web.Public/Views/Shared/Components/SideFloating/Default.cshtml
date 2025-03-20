@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="~/css/SideFloating/SideFloating.min.css" asp-append-version="true" />
 <script src="~/js/SideFloating/SideFloating.min.js" asp-append-version="true"></script>
 
-<div id="Floating_Center" class="position-fixed d-flex flex-column align-items-center d-none d-lg-block">
+<div id="Floating_Center" class="position-fixed flex-column align-items-center">
 	@if (Model.rightSideAd.Count > 0)
 	{
 		@foreach (var rightSideAd in Model.rightSideAd ?? new List<AdvertiseDisplayDto>())

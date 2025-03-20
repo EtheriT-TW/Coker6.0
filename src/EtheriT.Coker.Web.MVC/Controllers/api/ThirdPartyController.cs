@@ -78,12 +78,6 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await pchomePayAppService.PChomePayReturn(ohid);
         }
-        [HttpPost]
-        [Consumes("application/x-www-form-urlencoded")]
-        public async Task<string> PChomePayNotify([FromForm] PChomePayNotifyDto dto)
-        {
-            return await pchomePayAppService.PChomePayNotify(dto);
-        }
         [HttpGet]
         public async Task<ResponseMessageDto> PChomePayBalance()
         {

@@ -13,6 +13,19 @@ input[type="number"] {
 }
 
 /* Product List */
+
+.suggest_price .text {
+    padding-left: 2.25rem;
+}
+
+.suggest_price input {
+    padding-left: 3rem;
+}
+
+.btn_suggest_price_delete {
+    visibility: hidden;
+}
+
 #PriceModal > .modal-dialog {
     min-width: 40vw;
 }
@@ -138,6 +151,7 @@ input[type="number"] {
         table-layout: fixed; /* 固定表格寬度 */
         border-collapse: collapse;
     }
+
         #Spec_Frame > .specList > .specHeader > div:not(.spec), #Spec_Frame > .specList > .ui-sortable-helper > div:not(.specs) {
             width: 100px;
         }
@@ -153,13 +167,16 @@ input[type="number"] {
         #Spec_Frame > .specList > .specHeader > div.del, #Spec_Frame > .specList > .ui-sortable-helper > div.del {
             width: 75px;
         }
+
         #Spec_Frame > .specList > .ui-sortable-helper > .specs,
         #Spec_Frame > .specList > .ui-sortable-helper > .specs > div {
             width: 42rem;
         }
+
         #Spec_Frame > .specList > li {
             display: table-row;
         }
+
             #Spec_Frame > .specList > li.ui-sortable-helper {
                 display: flex;
                 align-items: center;
@@ -184,9 +201,10 @@ input[type="number"] {
                 display: flex;
                 gap: 10px;
             }
-            #Spec_Frame > .specList > .btn_spec_add {
-                width: 150px;
-            }
+
+        #Spec_Frame > .specList > .btn_spec_add {
+            width: 150px;
+        }
 
     #Spec_Frame .spec {
         display: flex;
@@ -274,7 +292,7 @@ input[type="number"] {
         width: auto;
         text-align: end;
         margin: auto;
-        text-align:center;
+        text-align: center;
     }
 
 #ProductForm .date > input {
@@ -427,11 +445,13 @@ textarea.minHeight {
     display: flex;
     align-items: center;
 }
+
 @media only screen and (min-width: 2000px) {
     #Spec_Frame .spec > select, #Spec_Frame .spec > input {
         max-width: 100%;
     }
 }
+
 @media only screen and (max-width: 1600px) {
     #Spec_Frame .spec > select, #Spec_Frame .spec > input {
         max-width: 300px;
@@ -440,21 +460,26 @@ textarea.minHeight {
 
 @media only screen and (max-width: 1400px) {
     #Spec_Frame > .specList > .ui-sortable-helper > .specs, #Spec_Frame > .specList > .ui-sortable-helper > .specs > div {
-        width:unset;
+        width: unset;
     }
+
     #Spec_Frame > .specList > .ui-sortable-helper > .specs, #Spec_Frame > .specList > .ui-sortable-helper > .input-group {
         display: flex;
         align-items: center;
     }
+
     #Spec_Frame .specs > div {
         flex-direction: column;
     }
+
     .sidebar:not(.collapsed) + .content-area #Spec_Frame > .specList > .specHeader > div.serNo {
-        width:50px;
+        width: 50px;
     }
+
     .sidebar:not(.collapsed) + .content-area #Spec_Frame > .specList > .specHeader > div.price {
         width: 180px;
     }
+
     .sidebar:not(.collapsed) + .content-area #Spec_Frame input.ser_no {
         display: none;
     }

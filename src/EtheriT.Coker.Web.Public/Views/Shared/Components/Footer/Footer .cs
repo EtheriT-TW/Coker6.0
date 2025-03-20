@@ -143,7 +143,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                 Content = new List<string>
                                 {
                                     "Copyright©",
-                                    "沅哲(Yunjer) 有限公司",
+                                    "沅哲(Yuanjer) 有限公司",
                                     "版權所有"
                                 }
                             };

@@ -67,20 +67,20 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<string> PChomePayNotify([FromForm] PChomePayNotifyDto dto)
         {
-            Console.WriteLine($"-------------進入PChomePayNotify-------------");
-            var remoteIp = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString();
-            var allowedIps = configuration.GetSection("ThirdParty:PCHomePay:SourceIP").Get<List<string>>();
+            //Console.WriteLine($"-------------進入PChomePayNotify-------------");
+            //var remoteIp = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString();
+            //var allowedIps = configuration.GetSection("ThirdParty:PCHomePay:SourceIP").Get<List<string>>();
 
-            Console.WriteLine($"-------------PChomePayNotify來源查看-------------");
-            Console.WriteLine($"remoteIp：{remoteIp}");
-            Console.WriteLine($"allowedIps：{allowedIps}");
+            //Console.WriteLine($"-------------PChomePayNotify來源查看-------------");
+            //Console.WriteLine($"remoteIp：{remoteIp}");
+            //Console.WriteLine($"allowedIps：{allowedIps}");
 
-            if (string.IsNullOrEmpty(remoteIp) || !allowedIps.Contains(remoteIp))
-            {
-                Console.WriteLine($"不允許");
-                return "Forbidden: IP not allowed";
-            }
-            else Console.WriteLine($"允許");
+            //if (string.IsNullOrEmpty(remoteIp) || !allowedIps.Contains(remoteIp))
+            //{
+            //    Console.WriteLine($"不允許");
+            //    return "Forbidden: IP not allowed";
+            //}
+            //else Console.WriteLine($"允許");
 
             return await pchomePayAppService.PChomePayNotify(dto);
         }

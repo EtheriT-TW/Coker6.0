@@ -344,7 +344,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                 if (OldName == "") OldName = result.attributes.name;
                                 editor.getSelected().set("attributes", {
                                     "href": result.id,
-                                    "download": OldName
+                                    "download": OldName,
                                 });
                                 LinkWithIconInit();
                                 AssetManager.close();
@@ -1501,6 +1501,11 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                 else setTimeout(timmer, 100);
             }
             setTimeout(timmer, 100);
+        } else if (classList.indexOf("link_with_icon") > -1) {
+            obj.set("attributes", {
+                "href": "",
+                "download": "未命名"
+            });
         }
     });
 

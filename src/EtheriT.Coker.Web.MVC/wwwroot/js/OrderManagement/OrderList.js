@@ -309,7 +309,7 @@ function HeaderDataInsert(data) {
 }
 function HeaderDataSet(result) {
     thirdparty = result.thirdParties;
-    $("#PrintR001").attr({ href: `/Remort/R001?id=${result.id}`});
+    $("#PrintR001").attr({ href: `/Report/R001?id=${result.id}`});
     if (result.payment.indexOf("-") > 0) {
         payment = result.payment.substring(0, result.payment.indexOf("-"));
     } else {

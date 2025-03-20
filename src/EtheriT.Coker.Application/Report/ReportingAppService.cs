@@ -1,6 +1,6 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Reporting;
-using EtheriT.Coker.Application.Shared.ReportingModels;
+using EtheriT.Coker.Application.Shared.Dto.ReportingModels;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -57,7 +57,8 @@ namespace EtheriT.Coker.Application.Report
                                 商品規格 = $"{x.ShoppingCart.FK_S1id} / {x.ShoppingCart.FK_S2id}",
                                 商品單價 = x.ShoppingCart.Price,
                                 商品數量 = x.ShoppingCart.Quantity,
-                                商品小計 = x.ShoppingCart.Price * x.ShoppingCart.Quantity
+                                商品小計 = x.ShoppingCart.Price * x.ShoppingCart.Quantity,
+                                商品折扣 = 0,
                             }
                         ).ToList()
                     };
@@ -66,7 +67,7 @@ namespace EtheriT.Coker.Application.Report
             }
             catch (Exception ex)
             {
-
+                string msg = ex.Message;
             }
             return r001;
         }

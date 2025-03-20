@@ -41,8 +41,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
 					new JobMenu{
 						PageName="OrderManagement",
 						Title="訂單管理",
-						Controller="OrderManagement",
-						Action="Index",
 						Icon="receipt_long",
 						CollapseId="#OrderManagement",
 						jobItemModels= new List<JobMenu> {
@@ -52,14 +50,19 @@ namespace EtheriT.Coker.Web.MVC.Startup
 								Controller="OrderManagement",
 								Action="Index",
 								Icon="",
-							}
-						}
+							},new JobMenu{
+                                PageName="Report",
+                                Title="列印檢貨單",
+                                Controller="Report",
+                                Action="R001",
+                                Icon="",
+								IsView=false
+                            }
+                        }
 					},
 					new JobMenu{
 						PageName="ProductManagement",
 						Title="商品管理",
-						Controller="Dashboard",
-						Action="Index",
 						Icon="local_mall",
 						CollapseId="#ProductManagement",
 						jobItemModels= new List<JobMenu> {
@@ -89,8 +92,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
 					new JobMenu{
 						PageName="PageManagement",
 						Title="頁面管理",
-						Controller="Page",
-						Action="Index",
 						Icon="web",
 						CollapseId="#PageManagement",
 						jobItemModels= new List<JobMenu> {
@@ -113,8 +114,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
 					new JobMenu{
 						PageName="ContentManagement",
 						Title="內容管理",
-						Controller="ContentManagement",
-						Action="Index",
 						Icon="sticky_note_2",
 						CollapseId="#ContentManagement",
 						jobItemModels= new List<JobMenu> {
@@ -165,8 +164,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
 					new JobMenu{
 						PageName="AdvertisementManagement",
 						Title="廣告管理",
-						Controller="AdvertisementManagement",
-						Action="Index",
 						Icon="campaign",
 						CollapseId="#AdvertisementManagement",
 						jobItemModels= new List<JobMenu> {
@@ -196,7 +193,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
 					new JobMenu{
 						PageName="NewsletterManagement",
 						Title="電子報管理",
-						Controller="Newsletter",
 						Icon="mail",
 						CollapseId="#NewsletterManagement",
 						jobItemModels= new List<JobMenu>{
@@ -218,8 +214,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
 					new JobMenu{
 						PageName="MemberManagement",
 						Title="管理者管理",
-						Controller="MemberManagement",
-						Action="Index",
 						Icon="people_alt",
 						CollapseId="#MemberManagement",
 						jobItemModels= new List<JobMenu> {
@@ -248,8 +242,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
 					new JobMenu{
 						PageName="StoreSettings",
 						Title="商店管理",
-						Controller="Dashboard",
-						Action="Index",
 						Icon="store",
 						CollapseId="#StoreSettings",
 						jobItemModels= new List<JobMenu> {
@@ -279,8 +271,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
 					new JobMenu{
 						PageName="MemberData",
 						Title="會員管理",
-						Controller="MemberManagement",
-						Action="Index",
 						Icon="diversity_1",
 						CollapseId="#MemberManagement",
 						jobItemModels= new List<JobMenu> {
@@ -334,8 +324,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
 					new JobMenu{
 						PageName="SystemManagement",
 						Title="系統管理",
-						Controller="SystemManagement",
-						Action="Index",
 						Icon="settings",
 						CollapseId="#SystemManagement",
 						jobItemModels= new List<JobMenu> {
@@ -378,8 +366,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
 					},new JobMenu{
 						PageName="RemoteManagement",
 						Title="網站瀏覽報告",
-						Controller="RemoteManagement",
-						Action="Index",
 						Icon="manage_search",
 						CollapseId="#RemoteManagement",
 						jobItemModels= new List<JobMenu> {
@@ -417,17 +403,51 @@ namespace EtheriT.Coker.Web.MVC.Startup
 			List<JobMenu> seting = new List<JobMenu>();
 			switch (level)
 			{
-				case WebsiteLevelEnum.形象:
+				case WebsiteLevelEnum.簡約:
+					seting.AddRange(new List<JobMenu>
+					{
+                        new JobMenu{
+                            PageName="NewsletterManagement",
+                            Enable=false,
+                        },new JobMenu
+                        {
+                            PageName="ProductManagement",
+                            Enable=false
+                        },new JobMenu{
+                            PageName="OrderManagement",
+                            Enable=false,
+                        },new JobMenu{
+                            PageName="ManagerList",
+                            Enable=false
+                        },new JobMenu
+                        {
+                            PageName="MemberData",
+                            Enable=false
+                        }, new JobMenu
+                        {
+                            PageName="StoreSettings",
+                            Enable=false,
+                        },new JobMenu{
+                            PageName="CustSearch",
+                            Enable=false,
+                        },
+                        new JobMenu{
+                            PageName="TypographyTheme",
+                            Enable=false
+                        },
+                        new JobMenu{
+                            PageName="MemberSet",
+                            Enable=false
+                        },new JobMenu
+                        {
+                            PageName = "Report",
+                            Enable = false
+                        }
+                    });
+                    break;
+                case WebsiteLevelEnum.形象:
 					seting.AddRange(new List<JobMenu> {
 						new JobMenu{
-							PageName="OrderManagement",
-							Enable=false,
-						},
-						new JobMenu
-						{
-							PageName="ProductManagement",
-							Enable=false
-						},new JobMenu{
 							PageName="OrderManagement",
 							Enable=false,
 						},new JobMenu{
@@ -452,16 +472,15 @@ namespace EtheriT.Coker.Web.MVC.Startup
 						new JobMenu{
 							PageName="MemberSet",
 							Enable=false
-						}
-					});
+						},new JobMenu
+                        {
+                            PageName = "Report",
+                            Enable = false
+                        }
+                    });
 					break;
 				case WebsiteLevelEnum.會員:
 					seting.AddRange(new List<JobMenu> {
-						new JobMenu
-						{
-							PageName="ProductManagement",
-							Enable=false
-						},
 						new JobMenu
 						{
 							PageName="OrderManagement",
@@ -480,8 +499,12 @@ namespace EtheriT.Coker.Web.MVC.Startup
 						new JobMenu{
 							PageName="TypographyTheme",
 							Enable=false
-						}
-					});
+						},new JobMenu
+                        {
+                            PageName = "Report",
+                            Enable = false
+                        }
+                    });
 					break;
 				case WebsiteLevelEnum.購物:
 					seting.AddRange(new List<JobMenu> {
@@ -490,7 +513,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
 							PageName = "TypographyTheme",
 							Enable = false
 						}
-					});
+                    });
 					break;
 			}
 			SetJobs(site.Jobs, seting);

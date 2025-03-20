@@ -4,26 +4,29 @@
 @model EtheriT.Coker.Web.MVC.Models.Report.R001ViewModel
 <div class="content d-flex flex-column flex-column-fluid">
     @{
+        ViewData["Title"] = "OrderList";
         var viewerRender = Html.DevExpress().WebDocumentViewer("DocumentViewer")
         .ClientSideModelSettings(x => x.IncludeLocalization = false)
         .ClientSideEvents(x => x.CustomizeExportOptions("customizeExportOptions")
         .CustomizeElements("previewCustomizeElements")
         .CustomizeMenuActions("customizeActions")
         .CustomizeLocalization("CustomizeLocalization")
-        .BeforeRender("beforeRender"))
-        .Bind(Model.ReportObject);
+        .BeforeRender("beforeRender"));
 
-        if (Model.ReportObject != null)
+        if (Model.ReportObject != null && Model.ReportModel != null)
         {
+            viewerRender = viewerRender.Bind(Model.ReportObject);
+            @viewerRender.RenderHtml()
             @section scripts {
                 @{
                     await Html.RenderPartialAsync(@"DevExpress\_ReportingLocalization");
                     await Html.RenderPartialAsync(@"DevExpress\_ReportingCommonScript");
                     await Html.RenderPartialAsync(@"DevExpress\_ReportingCSRF");
-                    @viewerRender.RenderScripts()
+
+                    @viewerRender.RenderScripts();
                 }
             }
-            @viewerRender.RenderHtml()
+
 
             @section styles {
                 @{

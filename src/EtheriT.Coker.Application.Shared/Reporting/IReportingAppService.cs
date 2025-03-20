@@ -1,4 +1,4 @@
-﻿using EtheriT.Coker.Application.Shared.ReportingModels;
+﻿using EtheriT.Coker.Application.Shared.Dto.ReportingModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;

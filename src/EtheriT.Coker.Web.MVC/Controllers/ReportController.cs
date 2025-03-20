@@ -17,14 +17,22 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             R001ViewModel r001ViewModel = new R001ViewModel();
             r001ViewModel.ReportModel = await _reportingAppService.GetR001ModelAsync(id);
             r001ViewModel.ReportObject = new R001檢貨單();
+            if (r001ViewModel.ReportModel != null) {
+                // 設定匯出的檔名
+                r001ViewModel.ReportObject.ExportOptions.PrintPreview.DefaultFileName = "R001檢貨單";
+                r001ViewModel.ReportObject.DataSource = r001ViewModel.ReportModel.訂單明細;
+                r001ViewModel.ReportObject.Parameters["網站名稱"].Value = r001ViewModel.ReportModel.網站名稱;
+                r001ViewModel.ReportObject.Parameters["列印時間"].Value = r001ViewModel.ReportModel.列印時間;
+                r001ViewModel.ReportObject.Parameters["訂單編號"].Value = r001ViewModel.ReportModel.訂單編號;
+                r001ViewModel.ReportObject.Parameters["收件人"].Value = r001ViewModel.ReportModel.收件人;
+                r001ViewModel.ReportObject.Parameters["訂單日期"].Value = r001ViewModel.ReportModel.訂單日期;
+                r001ViewModel.ReportObject.Parameters["客戶名稱"].Value = r001ViewModel.ReportModel.客戶名稱;
 
-            // 設定匯出的檔名
-            r001ViewModel.ReportObject.ExportOptions.PrintPreview.DefaultFileName = "R001檢貨單";
-            // crossTab的資料來源需另外給
-            var crossTab1 = r001ViewModel.ReportObject.FindControl("crossTab1", true) as DevExpress.XtraReports.UI.XRCrossTab;
-            var crossTab2 = r001ViewModel.ReportObject.FindControl("crossTab2", true) as DevExpress.XtraReports.UI.XRCrossTab;
-            crossTab1.DataSource = r001ViewModel.ReportModel;
-            crossTab2.DataSource = r001ViewModel.ReportModel;
+            }
+            foreach (var param in r001ViewModel.ReportObject.Parameters)
+            {
+                Console.WriteLine($"{param.Name} - {param.Value} (可寫入: {param.MultiValue})");
+            }
             return View(r001ViewModel);
         }
     }

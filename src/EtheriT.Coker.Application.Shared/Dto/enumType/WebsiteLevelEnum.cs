@@ -8,7 +8,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
 {
 	public enum WebsiteLevelEnum
 	{
-		形象 = 1,
+        簡約 = 0,
+        形象 = 1,
 		會員 = 2,
 		購物 = 3
 	}

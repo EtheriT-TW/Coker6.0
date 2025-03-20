@@ -378,6 +378,7 @@ upload/**/*.*
 !**/wwwroot/lib/**/js-cloudimage-360-view.min.js
 **/wwwroot/lib/grapesjs/**/*.*
 **/wwwroot/lib/devextreme/reporting/**/*.*
+**/wwwroot/lib/devextreme/analytics-core/**/*.*
 */*/wwwroot/dist/
 **/package-lock.json
 *.lock

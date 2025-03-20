@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace EtheriT.Coker.Application.Shared.ReportingModels
+﻿namespace EtheriT.Coker.Application.Shared.Dto.ReportingModels
 {
     public class R001檢貨單Model
     {

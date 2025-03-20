@@ -1,5 +1,5 @@
 ﻿using EtheriT.Coker.Application.Reporting;
-using EtheriT.Coker.Application.Shared.ReportingModels;
+using EtheriT.Coker.Application.Shared.Dto.ReportingModels;
 
 namespace EtheriT.Coker.Web.MVC.Models.Report
 {

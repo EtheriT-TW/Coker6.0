@@ -9,6 +9,7 @@
         public string Action { get; set; }
         public string? CollapseId { get; set; }
         public bool Enable { get; set; } = true;
+        public bool IsView { get; set; } = true;
         public bool CanCreate { get; set; }
         public bool CanRemove { get; set; }
         public bool CanUpdate { get; set; }

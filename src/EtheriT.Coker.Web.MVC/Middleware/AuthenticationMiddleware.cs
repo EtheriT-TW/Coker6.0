@@ -1,6 +1,7 @@
 ﻿using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Web.MVC.Startup;
+using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
@@ -30,9 +31,8 @@ namespace EtheriT.Coker.Web.MVC.Middleware
                     var isAuthenticated = await _accountAppService.Chech();
                     var controllerName = context.GetRouteData()?.Values["controller"]?.ToString();
                     var actionName = context.GetRouteData()?.Values["action"]?.ToString();
-                    if (isAuthenticated.Success && !string.IsNullOrEmpty(controllerName) && !string.IsNullOrEmpty(actionName) && !(controllerName == "Account" && actionName == "Index"))
+                    if (isAuthenticated.Success && !string.IsNullOrEmpty(controllerName) && !string.IsNullOrEmpty(actionName) && !(controllerName == "Account" && actionName == "Index") && controllerName != "Welcome")
                     {
-
                         var _navigation = scope.ServiceProvider.GetRequiredService<NavigationProvider>();
                         var site = await _navigation.getMenus();
                         await _navigation.SetPower(site);
@@ -40,7 +40,7 @@ namespace EtheriT.Coker.Web.MVC.Middleware
                         var menu = _navigation.FindJob(site.Jobs, controllerName, actionName);
                         if (menu == null || !menu.CanVisble)
                         {
-                            var firstMenu = site.Jobs.FirstOrDefault(m => m.CanVisble);
+                            var firstMenu = FindFirstVisibleMenu(site.Jobs);
                             if (firstMenu == null) context.Response.Redirect($"/Welcome");
                             else context.Response.Redirect($"/{firstMenu.Controller}/{firstMenu.Action}");
                             return;
@@ -64,6 +64,28 @@ namespace EtheriT.Coker.Web.MVC.Middleware
                     }
                 }
             }
+        }
+        private JobMenu? FindFirstVisibleMenu(IEnumerable<JobMenu> menus)
+        {
+            foreach (var menu in menus)
+            {
+                // 檢查當前節點是否符合條件
+                if (menu.CanVisble && !string.IsNullOrEmpty(menu.Action) && menu.IsView)
+                {
+                    return menu;
+                }
+
+                // 如果當前節點有子節點，遞迴搜尋
+                if (menu.jobItemModels != null)
+                {
+                    var foundMenu = FindFirstVisibleMenu(menu.jobItemModels);
+                    if (foundMenu != null)
+                    {
+                        return foundMenu;
+                    }
+                }
+            }
+            return null; // 沒有符合條件的項目
         }
     }
 }

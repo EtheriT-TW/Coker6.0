@@ -19,7 +19,7 @@
 			{
 				@if (item.jobItemModels == null)
 				{
-					if (item.CanVisble)
+					if (item.CanVisble && item.IsView)
 					{
 						string myClass = item.PageName == ViewData["Title"].ToString() ? "active" : "";
 						<li class="@myClass">
@@ -46,7 +46,7 @@
 						<ul class="sub-nav">
 							@foreach (var subJob in item.jobItemModels ?? new List<JobMenu>())
 							{
-								if (subJob.CanVisble)
+								if (subJob.CanVisble && subJob.IsView)
 								{
 									string myClass = subJob.PageName == ViewData["Title"].ToString() ? "active" : "";
 									<li class="@myClass">

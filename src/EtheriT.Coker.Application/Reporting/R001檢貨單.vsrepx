@@ -3,129 +3,137 @@
   <Extensions>
     <Item1 Ref="2" Key="VSReportExtInfo" Value=".vsrepx" />
   </Extensions>
+  <Parameters>
+    <Item1 Ref="4" Description="Parameter1" Name="網站名稱" />
+    <Item2 Ref="5" Description="Parameter1" Name="列印時間" />
+    <Item3 Ref="6" Description="Parameter1" Name="訂單編號" />
+    <Item4 Ref="7" Description="Parameter1" Name="收件人" />
+    <Item5 Ref="8" Description="Parameter1" Name="訂單日期" />
+    <Item6 Ref="9" Description="Parameter1" Name="客戶名稱" />
+  </Parameters>
   <Bands>
-    <Item1 Ref="3" ControlType="TopMarginBand" Name="TopMargin" />
-    <Item2 Ref="4" ControlType="BottomMarginBand" Name="BottomMargin" />
-    <Item3 Ref="5" ControlType="DetailBand" Name="Detail" HeightF="167.708328">
+    <Item1 Ref="10" ControlType="TopMarginBand" Name="TopMargin" />
+    <Item2 Ref="11" ControlType="BottomMarginBand" Name="BottomMargin" />
+    <Item3 Ref="12" ControlType="DetailBand" Name="Detail" HeightF="167.708328">
       <Controls>
-        <Item1 Ref="6" ControlType="XRTable" Name="table1" TextAlignment="MiddleJustify" SizeF="606.999939,75" LocationFloat="10.0000067,10.0000067" Padding="2,2,0,0,96">
+        <Item1 Ref="13" ControlType="XRTable" Name="table1" TextAlignment="MiddleJustify" SizeF="606.999939,75" LocationFloat="10.0000067,10.0000067" Padding="2,2,0,0,96">
           <Rows>
-            <Item1 Ref="7" ControlType="XRTableRow" Name="tableRow1" Weight="1">
+            <Item1 Ref="14" ControlType="XRTableRow" Name="tableRow1" Weight="1">
               <Cells>
-                <Item1 Ref="8" ControlType="XRTableCell" Name="tableCell1" Weight="1" Multiline="true" Text="訂單編號：" TextAlignment="MiddleJustify" Font="微軟正黑體, 12pt, style=Bold, charSet=136">
-                  <StylePriority Ref="9" UseFont="false" UseTextAlignment="false" />
+                <Item1 Ref="15" ControlType="XRTableCell" Name="tableCell1" Weight="1" Multiline="true" Text="訂單編號：" TextAlignment="MiddleJustify" Font="微軟正黑體, 12pt, style=Bold, charSet=136">
+                  <StylePriority Ref="16" UseFont="false" UseTextAlignment="false" />
                 </Item1>
-                <Item2 Ref="10" ControlType="XRTableCell" Name="tableCell2" Weight="1" Multiline="true" Text="tableCell2" TextAlignment="MiddleLeft">
+                <Item2 Ref="17" ControlType="XRTableCell" Name="tableCell2" Weight="1" Multiline="true" Text="tableCell2" TextAlignment="MiddleLeft">
                   <ExpressionBindings>
-                    <Item1 Ref="11" EventName="BeforePrint" PropertyName="Text" Expression="[訂單編號]" />
+                    <Item1 Ref="18" EventName="BeforePrint" PropertyName="Text" Expression="?訂單編號" />
                   </ExpressionBindings>
-                  <StylePriority Ref="12" UseTextAlignment="false" />
+                  <StylePriority Ref="19" UseTextAlignment="false" />
                 </Item2>
-                <Item3 Ref="13" ControlType="XRTableCell" Name="tableCell3" Weight="1" Multiline="true" Text="訂單日期：" Font="微軟正黑體, 12pt, style=Bold, charSet=136">
-                  <StylePriority Ref="14" UseFont="false" />
+                <Item3 Ref="20" ControlType="XRTableCell" Name="tableCell3" Weight="1" Multiline="true" Text="訂單日期：" Font="微軟正黑體, 12pt, style=Bold, charSet=136">
+                  <StylePriority Ref="21" UseFont="false" />
                 </Item3>
-                <Item4 Ref="15" ControlType="XRTableCell" Name="tableCell4" Weight="1" Multiline="true" Text="tableCell4" TextAlignment="MiddleLeft">
+                <Item4 Ref="22" ControlType="XRTableCell" Name="tableCell4" Weight="1" Multiline="true" Text="tableCell4" TextAlignment="MiddleLeft">
                   <ExpressionBindings>
-                    <Item1 Ref="16" EventName="BeforePrint" PropertyName="Text" Expression="[訂單日期]" />
+                    <Item1 Ref="23" EventName="BeforePrint" PropertyName="Text" Expression="?訂單日期" />
                   </ExpressionBindings>
-                  <StylePriority Ref="17" UseTextAlignment="false" />
+                  <StylePriority Ref="24" UseTextAlignment="false" />
                 </Item4>
               </Cells>
             </Item1>
-            <Item2 Ref="18" ControlType="XRTableRow" Name="tableRow2" Weight="1">
+            <Item2 Ref="25" ControlType="XRTableRow" Name="tableRow2" Weight="1">
               <Cells>
-                <Item1 Ref="19" ControlType="XRTableCell" Name="tableCell5" Weight="1" Multiline="true" Text="收件人：" TextAlignment="MiddleJustify" Font="微軟正黑體, 12pt, style=Bold, charSet=136">
-                  <StylePriority Ref="20" UseFont="false" UseTextAlignment="false" />
+                <Item1 Ref="26" ControlType="XRTableCell" Name="tableCell5" Weight="1" Multiline="true" Text="收件人：" TextAlignment="MiddleJustify" Font="微軟正黑體, 12pt, style=Bold, charSet=136">
+                  <StylePriority Ref="27" UseFont="false" UseTextAlignment="false" />
                 </Item1>
-                <Item2 Ref="21" ControlType="XRTableCell" Name="tableCell6" Weight="1" Multiline="true" Text="tableCell6" TextAlignment="MiddleLeft">
+                <Item2 Ref="28" ControlType="XRTableCell" Name="tableCell6" Weight="1" Multiline="true" Text="tableCell6" TextAlignment="MiddleLeft">
                   <ExpressionBindings>
-                    <Item1 Ref="22" EventName="BeforePrint" PropertyName="Text" Expression="[收件人]" />
+                    <Item1 Ref="29" EventName="BeforePrint" PropertyName="Text" Expression="?收件人" />
                   </ExpressionBindings>
-                  <StylePriority Ref="23" UseTextAlignment="false" />
+                  <StylePriority Ref="30" UseTextAlignment="false" />
                 </Item2>
-                <Item3 Ref="24" ControlType="XRTableCell" Name="tableCell7" Weight="1" Multiline="true" Text="客戶姓名：" Font="微軟正黑體, 12pt, style=Bold, charSet=136">
-                  <StylePriority Ref="25" UseFont="false" />
+                <Item3 Ref="31" ControlType="XRTableCell" Name="tableCell7" Weight="1" Multiline="true" Text="客戶姓名：" Font="微軟正黑體, 12pt, style=Bold, charSet=136">
+                  <StylePriority Ref="32" UseFont="false" />
                 </Item3>
-                <Item4 Ref="26" ControlType="XRTableCell" Name="tableCell8" Weight="1" Multiline="true" Text="tableCell8" TextAlignment="MiddleLeft">
+                <Item4 Ref="33" ControlType="XRTableCell" Name="tableCell8" Weight="1" Multiline="true" Text="tableCell8" TextAlignment="MiddleLeft">
                   <ExpressionBindings>
-                    <Item1 Ref="27" EventName="BeforePrint" PropertyName="Text" Expression="[客戶名稱]" />
+                    <Item1 Ref="34" EventName="BeforePrint" PropertyName="Text" Expression="?客戶名稱" />
                   </ExpressionBindings>
-                  <StylePriority Ref="28" UseTextAlignment="false" />
+                  <StylePriority Ref="35" UseTextAlignment="false" />
                 </Item4>
               </Cells>
             </Item2>
           </Rows>
-          <StylePriority Ref="29" UseTextAlignment="false" />
+          <StylePriority Ref="36" UseTextAlignment="false" />
         </Item1>
       </Controls>
     </Item3>
-    <Item4 Ref="30" ControlType="ReportHeaderBand" Name="ReportHeader">
+    <Item4 Ref="37" ControlType="ReportHeaderBand" Name="ReportHeader">
       <Controls>
-        <Item1 Ref="31" ControlType="XRLabel" Name="label2" Multiline="true" Text="報表時間" SizeF="100,23" LocationFloat="0,0" Padding="2,2,0,0,100">
+        <Item1 Ref="38" ControlType="XRLabel" Name="label2" Multiline="true" Text="報表時間" SizeF="100,23" LocationFloat="0,0" Padding="2,2,0,0,100">
           <ExpressionBindings>
-            <Item1 Ref="32" EventName="BeforePrint" PropertyName="Text" Expression="[列印時間]" />
+            <Item1 Ref="39" EventName="BeforePrint" PropertyName="Text" Expression="?列印時間" />
           </ExpressionBindings>
         </Item1>
-        <Item2 Ref="33" ControlType="XRLabel" Name="label1" TextFormatString="{0}-檢貨單" Multiline="true" Text="網站名稱" TextAlignment="MiddleCenter" SizeF="627,77.0000153" LocationFloat="1.58945713E-05,22.9999866" Font="微軟正黑體, 21.75pt, style=Bold, charSet=0" Padding="2,2,0,0,100">
+        <Item2 Ref="40" ControlType="XRLabel" Name="label1" TextFormatString="{0}-檢貨單" Multiline="true" Text="網站名稱" TextAlignment="MiddleCenter" SizeF="627,77.0000153" LocationFloat="1.58945713E-05,22.9999866" Font="微軟正黑體, 21.75pt, style=Bold, charSet=0" Padding="2,2,0,0,100">
           <ExpressionBindings>
-            <Item1 Ref="34" EventName="BeforePrint" PropertyName="Text" Expression="[網站名稱]" />
+            <Item1 Ref="41" EventName="BeforePrint" PropertyName="Text" Expression="?網站名稱" />
           </ExpressionBindings>
-          <StylePriority Ref="35" UseFont="false" UseTextAlignment="false" />
+          <StylePriority Ref="42" UseFont="false" UseTextAlignment="false" />
         </Item2>
       </Controls>
     </Item4>
-    <Item5 Ref="36" ControlType="DetailReportBand" Name="DetailReport" Level="0" DataMember="訂單明細" DataSource="#Ref-0">
+    <Item5 Ref="43" ControlType="DetailReportBand" Name="DetailReport" Level="0" DataSource="#Ref-0">
       <Bands>
-        <Item1 Ref="37" ControlType="DetailBand" Name="Detail1">
+        <Item1 Ref="44" ControlType="DetailBand" Name="Detail1">
           <Controls>
-            <Item1 Ref="38" ControlType="XRTable" Name="table2" SizeF="627,50" LocationFloat="0,0" Padding="2,2,0,0,96">
+            <Item1 Ref="45" ControlType="XRTable" Name="table2" SizeF="627,50" LocationFloat="0,0" Padding="2,2,0,0,96">
               <Rows>
-                <Item1 Ref="39" ControlType="XRTableRow" Name="tableRow3" Weight="1">
+                <Item1 Ref="46" ControlType="XRTableRow" Name="tableRow3" Weight="1">
                   <Cells>
-                    <Item1 Ref="40" ControlType="XRTableCell" Name="tableCell9" Weight="1" Multiline="true" Text="項次" />
-                    <Item2 Ref="41" ControlType="XRTableCell" Name="tableCell10" Weight="1" Multiline="true" Text="商品名稱" />
-                    <Item3 Ref="42" ControlType="XRTableCell" Name="tableCell11" Weight="1" Multiline="true" Text="規格" />
-                    <Item4 Ref="43" ControlType="XRTableCell" Name="tableCell12" Weight="1" Multiline="true" Text="數量" />
-                    <Item5 Ref="44" ControlType="XRTableCell" Name="tableCell13" Weight="1" Multiline="true" Text="單價" />
-                    <Item6 Ref="45" ControlType="XRTableCell" Name="tableCell14" Weight="1" Multiline="true" Text="折扣" />
-                    <Item7 Ref="46" ControlType="XRTableCell" Name="tableCell15" Weight="1" Multiline="true" Text="小計" />
+                    <Item1 Ref="47" ControlType="XRTableCell" Name="tableCell9" Weight="1" Multiline="true" Text="項次" />
+                    <Item2 Ref="48" ControlType="XRTableCell" Name="tableCell10" Weight="1" Multiline="true" Text="商品名稱" />
+                    <Item3 Ref="49" ControlType="XRTableCell" Name="tableCell11" Weight="1" Multiline="true" Text="規格" />
+                    <Item4 Ref="50" ControlType="XRTableCell" Name="tableCell12" Weight="1" Multiline="true" Text="數量" />
+                    <Item5 Ref="51" ControlType="XRTableCell" Name="tableCell13" Weight="1" Multiline="true" Text="單價" />
+                    <Item6 Ref="52" ControlType="XRTableCell" Name="tableCell14" Weight="1" Multiline="true" Text="折扣" />
+                    <Item7 Ref="53" ControlType="XRTableCell" Name="tableCell15" Weight="1" Multiline="true" Text="小計" />
                   </Cells>
                 </Item1>
-                <Item2 Ref="47" ControlType="XRTableRow" Name="tableRow4" Weight="1">
+                <Item2 Ref="54" ControlType="XRTableRow" Name="tableRow4" Weight="1">
                   <Cells>
-                    <Item1 Ref="48" ControlType="XRTableCell" Name="tableCell16" Weight="1" Multiline="true" Text="tableCell16">
+                    <Item1 Ref="55" ControlType="XRTableCell" Name="tableCell16" Weight="1" Multiline="true" Text="tableCell16">
                       <ExpressionBindings>
-                        <Item1 Ref="49" EventName="BeforePrint" PropertyName="Text" Expression="[DataSource].[RowIndex]+1" />
+                        <Item1 Ref="56" EventName="BeforePrint" PropertyName="Text" Expression="[DataSource].[RowIndex]+1" />
                       </ExpressionBindings>
                     </Item1>
-                    <Item2 Ref="50" ControlType="XRTableCell" Name="tableCell17" Weight="1" Multiline="true" Text="tableCell17">
+                    <Item2 Ref="57" ControlType="XRTableCell" Name="tableCell17" Weight="1" Multiline="true" Text="tableCell17">
                       <ExpressionBindings>
-                        <Item1 Ref="51" EventName="BeforePrint" PropertyName="Text" Expression="[商品名稱]" />
+                        <Item1 Ref="58" EventName="BeforePrint" PropertyName="Text" Expression="[商品名稱]" />
                       </ExpressionBindings>
                     </Item2>
-                    <Item3 Ref="52" ControlType="XRTableCell" Name="tableCell18" Weight="1" Multiline="true" Text="tableCell18">
+                    <Item3 Ref="59" ControlType="XRTableCell" Name="tableCell18" Weight="1" Multiline="true" Text="tableCell18">
                       <ExpressionBindings>
-                        <Item1 Ref="53" EventName="BeforePrint" PropertyName="Text" Expression="[商品規格]" />
+                        <Item1 Ref="60" EventName="BeforePrint" PropertyName="Text" Expression="[商品規格]" />
                       </ExpressionBindings>
                     </Item3>
-                    <Item4 Ref="54" ControlType="XRTableCell" Name="tableCell19" Weight="1" Multiline="true" Text="tableCell19">
+                    <Item4 Ref="61" ControlType="XRTableCell" Name="tableCell19" Weight="1" Multiline="true" Text="tableCell19">
                       <ExpressionBindings>
-                        <Item1 Ref="55" EventName="BeforePrint" PropertyName="Text" Expression="[商品數量]" />
+                        <Item1 Ref="62" EventName="BeforePrint" PropertyName="Text" Expression="[商品數量]" />
                       </ExpressionBindings>
                     </Item4>
-                    <Item5 Ref="56" ControlType="XRTableCell" Name="tableCell20" Weight="1" Multiline="true" Text="tableCell20">
+                    <Item5 Ref="63" ControlType="XRTableCell" Name="tableCell20" Weight="1" Multiline="true" Text="tableCell20">
                       <ExpressionBindings>
-                        <Item1 Ref="57" EventName="BeforePrint" PropertyName="Text" Expression="[商品單價]" />
+                        <Item1 Ref="64" EventName="BeforePrint" PropertyName="Text" Expression="[商品單價]" />
                       </ExpressionBindings>
                     </Item5>
-                    <Item6 Ref="58" ControlType="XRTableCell" Name="tableCell21" Weight="1" Multiline="true" Text="tableCell21">
+                    <Item6 Ref="65" ControlType="XRTableCell" Name="tableCell21" Weight="1" Multiline="true" Text="tableCell21">
                       <ExpressionBindings>
-                        <Item1 Ref="59" EventName="BeforePrint" PropertyName="Text" Expression="[商品折扣]" />
+                        <Item1 Ref="66" EventName="BeforePrint" PropertyName="Text" Expression="[商品折扣]" />
                       </ExpressionBindings>
                     </Item6>
-                    <Item7 Ref="60" ControlType="XRTableCell" Name="tableCell22" Weight="1" Multiline="true" Text="tableCell22">
+                    <Item7 Ref="67" ControlType="XRTableCell" Name="tableCell22" Weight="1" Multiline="true" Text="tableCell22">
                       <ExpressionBindings>
-                        <Item1 Ref="61" EventName="BeforePrint" PropertyName="Text" Expression="[商品小計]" />
+                        <Item1 Ref="68" EventName="BeforePrint" PropertyName="Text" Expression="[商品小計]" />
                       </ExpressionBindings>
                     </Item7>
                   </Cells>

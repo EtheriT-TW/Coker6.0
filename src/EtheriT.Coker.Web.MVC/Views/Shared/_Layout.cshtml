@@ -25,9 +25,11 @@
 	<link rel="stylesheet" href="~/lib/daterangepicker/daterangepicker.min.css" />
 	<link rel="stylesheet" href="~/lib/file-upload-with-preview/file-upload-with-preview.min.css" />
 	<script src="~/lib/jquery/dist/jquery.min.js"></script>
+	<script src="/lib/knockout/knockout.min.js" asp-append-version="true"></script>
 	<script src="~/js/devextreme/dx.all.min.js" asp-append-version="true"></script>
 	<script src="~/js/devextreme/aspnet/dx.aspnet.mvc.js"></script> 
-    <script src="~/js/devextreme/aspnet/dx.aspnet.data.js"></script>
+	<script src="~/js/devextreme/aspnet/dx.aspnet.data.js"></script>
+	@RenderSection("styles", required: false)
 </head>
 <body>
 	<section class="wrapper">
@@ -62,12 +64,12 @@
 	<script src="~/lib/devextreme/localization/dx.messages.zh-tw.js"></script>
 	<script src="~/lib/masonry-layout/dist/masonry.pkgd.min.js"></script>
 	<script src="~/lib/file-upload-with-preview/file-upload-with-preview.min.js"></script>
-	<script src="~/lib/html-image-compress/imageCompress.min.js"></script>
 	<script src="~/js/CokerCore.min.js" asp-append-version="true"></script>
+	<script src="~/lib/html-image-compress/imageCompress.min.js"></script>
 	<script src="~/js/site.min.js" asp-append-version="true"></script>
 	<script>
 		DevExpress.localization.locale('zh-tw');
 	</script>
-	@await RenderSectionAsync("Scripts", required: false)
+    @await RenderSectionAsync("scripts", required: false)
 </body>
 </html>

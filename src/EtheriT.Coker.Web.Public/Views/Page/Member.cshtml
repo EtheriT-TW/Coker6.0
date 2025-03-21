@@ -162,7 +162,7 @@
             </li>
         </ul>
         <div id="TabContent" class="tab-content">
-            <div id="info-tab-pane" class="tab-pane fade show active p-5" role="tabpanel" aria-labelledby="info-tab" tabindex="0">
+            <div id="info-tab-pane" class="tab-pane fade show active" role="tabpanel" aria-labelledby="info-tab" tabindex="0">
                 <form id="UserDataForm" class="">
                     <div class="row">
                         <div class="form-floating mb-3 col-12  col-sm-6">
@@ -242,13 +242,13 @@
                         @* <button class="btn_resetEmail btn btn-secondary rounded">電子郵件修改</button> *@
                     </div>
                     <div class="d-flex justify-content-center mt-5">
-                        <button class="btn_logout btn btn-secondary rounded">登　　出</button>
+                        <button class="btn_logout btn btn-secondary rounded border-0">登　　出</button>
                     </div>
                 </div>
             </div>
             @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
             {
-                <div id="profile-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="profile-tab" tabindex="1">
+                <div id="profile-tab-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="profile-tab" tabindex="1">
                     <div class="nodata h5 text-center fw-bold d-none">查無歷史訂單</div>
 
                     <ul class="page_btn d-flex justify-content-center mb-4 pagination d-none" data-init="false">
@@ -341,7 +341,7 @@
 
                 </div>
             }
-            <div id="favorite-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="favorite-tab" tabindex="2">
+            <div id="favorite-tab-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="favorite-tab" tabindex="2">
                 <div class="nodata h5 text-center fw-bold  d-none">查無收藏紀錄</div>
 
                 <div class="btn_switchViewType d-flex justify-content-end m-3 mt-0 d-none">
@@ -364,7 +364,7 @@
                                         <div data-key="title" class="fw-bold"></div>
                                     </div>
                                     <div data-key="description"></div>
-                                    <div data-key="price" class="fw-bold"></div>
+                                    <div data-key="price" class="fw-bold text-danger"></div>
                                 </figcaption>
                             </figure>
                         </a>
@@ -398,7 +398,7 @@
                     </li>
                 </ul>
             </div>
-            <div id="history-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="history-tab" tabindex="3">
+            <div id="history-tab-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="history-tab" tabindex="3">
                 <div class="nodata h5 text-center fw-bold d-none">查無瀏覽紀錄</div>
 
                 <div class="ps-sm-5 ps-3">※僅提供六個月紀錄資料</div>
@@ -422,7 +422,7 @@
                                         <div data-key="title" class="fw-bold"></div>
                                     </div>
                                     <div data-key="description"></div>
-                                    <div data-key="price" class="fw-bold"></div>
+                                    <div data-key="price" class="fw-bold text-danger"></div>
                                 </figcaption>
                             </figure>
                         </a>

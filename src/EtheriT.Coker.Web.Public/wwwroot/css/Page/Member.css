@@ -31,6 +31,10 @@
     color: var(--gray-text);
 }
 
+#main > .container > .tab-content > .tab-pane {
+    padding: 3rem;
+}
+
 #profile-tab-pane {
     padding-left: 1.5rem !important;
     padding-right: 1.5rem !important;
@@ -606,7 +610,7 @@
     }
 
         #main > .container > #TabContent > #info-tab-pane {
-            padding: 1rem !important;
+            padding: 1rem;
         }
 
             #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child {
@@ -621,6 +625,16 @@
 }
 
 @media (max-width:576px) {
+    #main > .container {
+        padding-right: 0rem;
+        padding-left: 0rem;
+        padding-bottom: 0rem;
+        border-radius: unset;
+    }
+
+    #TabContent > .tab-pane {
+        border-radius: unset;
+    }
 
     #info-tab-pane .btn_area button {
         width: 100%;
@@ -635,9 +649,29 @@
         margin-bottom: 1rem;
     }
 
-    .collapse > .card-body > .list-group > li:not(first-child) > a > div > div:nth-child(2) {
-        width: 70%;
+    #favorite-tab-pane .type_grid .row:nth-of-type(odd) {
+        padding-right: calc(var(--bs-gutter-x)* .5 / 2);
     }
+
+    #favorite-tab-pane .type_grid .row:nth-of-type(even) {
+        padding-left: calc(var(--bs-gutter-x)* .5 / 2);
+    }
+
+    #main > .container > .tab-content > #history-tab-pane {
+        padding-top: 2rem;
+    }
+
+        #history-tab-pane .type_grid .row:nth-of-type(odd) {
+            padding-right: calc(var(--bs-gutter-x)* .5 / 2);
+        }
+
+        #history-tab-pane .type_grid .row:nth-of-type(even) {
+            padding-left: calc(var(--bs-gutter-x)* .5 / 2);
+        }
+
+        .collapse > .card-body > .list-group > li:not(first-child) > a > div > div:nth-child(2) {
+            width: 70%;
+        }
 
     .collapse > .card-body > .list-group > li > a > div > .price {
         width: auto;

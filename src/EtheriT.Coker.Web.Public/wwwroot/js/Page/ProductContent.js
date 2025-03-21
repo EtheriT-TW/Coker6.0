@@ -234,7 +234,8 @@ function PageDefaultSet(result) {
                     stock: data.stock,
                     minQty: data.min_Qty,
                     price: data.prices[0].price,
-                    prices: prices
+                    prices: prices,
+                    suggestprice: data.price,
                 };
                 price_list.push(obj);
                 maxprice = obj["price"] > maxprice ? obj["price"] : maxprice;
@@ -335,6 +336,13 @@ function PageDefaultSet(result) {
                 price_temp.find(".ori_price").text(oriprice.toLocaleString('en-US'));
                 price_temp.find(".ori_price").removeClass("d-none")
             }
+
+            if (!IsLogin && result.stocks[0].suggestPrice > 0 && result.stocks[0].suggestPrice != price) {
+                price_temp.find(".discount").empty();
+                price_temp.find(".discount").removeClass("price");
+                price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${result.stocks[0].suggestPrice.toLocaleString('en-US')}</div><div class="text-danger">折扣後 $${price_text}</div>`);
+            }
+            else price_temp.find(".discount").text(price_text);
 
             if ($(".priceframe").children().length == 0 && !price_temp.find("input").prop("disabled")) price_temp.find("input").prop("checked", true);
             $(".priceframe").append(price_temp);
@@ -577,6 +585,7 @@ function SpecRadio() {
             if (item.s1id == s1 && (item.s2id == 0 || item.s2id == s2)) {
                 $(".priceframe").empty();
                 item.prices.forEach(function (self_item) {
+
                     var price = self_item.price;
                     var oriprice = self_item.oriprice;
                     var price_temp = $($("#PriceListTemplate").html()).clone();
@@ -599,7 +608,14 @@ function SpecRadio() {
                             }
                         }
                     } else price_text = price.toLocaleString('en-US');
-                    price_temp.find(".discount").text(price_text);
+
+                    if (!IsLogin && item.suggestprice > 0 && item.suggestprice != price) {
+                        price_temp.find(".discount").empty();
+                        price_temp.find(".discount").removeClass("price");
+                        price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${item.suggestprice.toLocaleString('en-US')}</div><div class="text-danger">折扣後 $${price_text}</div>`);
+                    }
+                    else price_temp.find(".discount").text(price_text);
+
                     if (self_item.fK_RId != 1) price_temp.find(".discount").addClass("mprice");
 
                     if (oriprice > price) {
@@ -767,7 +783,6 @@ function add360View(pro_self) {
         window.CI360.add("Pro_360View");
     });
 }
-
 function SwitchPage() {
     var currentUrl = window.location.pathname + window.location.search;
     var catalog = currentUrl.substring(0, currentUrl.indexOf('/product'));

@@ -543,6 +543,7 @@ namespace EtheriT.Coker.Application.Product
                                         Alert_Qty = ps.Alert_Qty,
                                         SubItemNo = ps.SubItemNo ?? "",
                                         Ser_No = ps.Ser_No,
+                                        SuggestPrice = ps.Price,
                                         Prices = new List<ProductPriceDto>(),
                                     }).ToListAsync();
 

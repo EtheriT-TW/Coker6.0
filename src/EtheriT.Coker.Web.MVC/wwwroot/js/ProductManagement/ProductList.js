@@ -1115,7 +1115,7 @@ function AddUp(success_text, error_text, target) {
             var index = suggest_price_list.findIndex(item => item["TempPSid"] == $self.data("temppsid"))
             obj["Price"] = suggest_price_list[index]["Price"];
         }
-        if (typeof (obj["Price"]) != "number") obj["Price"] = 0;
+        obj["Price"] = isNaN(obj["Price"]) ? 0 : Number(obj["Price"]);
         obj["FK_S1id"] = fk_sid[0];
         obj["FK_S2id"] = fk_sid[1];
         obj["Stock"] = $self.find(".input_stock_number").val();

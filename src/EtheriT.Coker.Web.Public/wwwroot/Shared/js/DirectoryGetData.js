@@ -39,7 +39,6 @@
         });
     },
 }
-
 var Advertise = {
     ActivityClick: function (FK_Aid) {
         return $.ajax({
@@ -58,7 +57,6 @@ var Advertise = {
         });
     },
 }
-
 function initElemntAndLoadDir($dir, page) {
     const $self = $dir || $(".catalog_frame").first();
     var temp_siblings = $self.find(".templatecontent").siblings();
@@ -490,12 +488,30 @@ function DirectoryDataInsert($item, result) {
             });
         }
         if (data.price != null) {
-            content.find(".normal-price").text(data.price.toLocaleString());
+            console.log("data", data)
             if (data.oriPrice != 0 && data.oriPrice != null && data.price != data.oriPrice) {
                 content.find(".price-grid").removeClass("price")
+                content.find(".normal-price").removeClass("price")
+                content.find(".normal-price").addClass("text-end");
                 content.find(".price-grid").empty();
-                content.find(".price-grid").append(`<div class="text-decoration-line-through">$${data.oriPrice}</div><div class="text-danger">會員價 $${data.price}</div>`);
-            } else content.find(".price-grid").text(data.price);
+                content.find(".normal-price").empty();
+                var price_text = `<div class="text-decoration-line-through">$${data.oriPrice}</div><div class="text-danger">會員價 $${data.price}</div>`;
+                content.find(".price-grid").append(price_text);
+                content.find(".normal-price").append(price_text);
+            } else if (data.suggestPrice != null && data.suggestPrice != data.price) {
+                content.find(".price-grid").removeClass("price")
+                content.find(".normal-price").removeClass("price")
+                content.find(".normal-price").addClass("text-end");
+                content.find(".price-grid").empty();
+                content.find(".normal-price").empty();
+                var price_text = `<div class="text-body-tertiary text-decoration-line-through">建議售價$${data.suggestPrice}</div><div class="text-danger">折扣後 $${data.price}</div>`;
+                content.find(".price-grid").append(price_text);
+                content.find(".normal-price").append(price_text);
+            }
+            else {
+                content.find(".normal-price").text(data.price);
+                content.find(".price-grid").text(data.price);
+            }
         } else {
             content.find(".price").addClass("notshow");
             content.find(".price").text("");

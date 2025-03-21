@@ -804,6 +804,7 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 var UUID = await tokenAppService.GetUUID();
+                var token = await db.Tokens.Where(e => e.UUID == UUID).FirstOrDefaultAsync();
                 long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
                 string orgName = await loginUserData.GetWebsiteOrgName();
                 var output = new List<DirectoryReleInfoDto>();
@@ -861,10 +862,16 @@ namespace EtheriT.Coker.Application.Product
                         var favorites = await db.Favorites.Where(e => e.UUID == UUID & e.FK_AssocId == data.Id && e.Type == (int)FavoritesTypeEnum.商品).FirstOrDefaultAsync();
                         if (favorites != null) data.FId = favorites.Id;
 
-                        var stockids = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Select(e => e.Id).ToListAsync();
+                        var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).ToListAsync();
+                        var stockids = stocks.Where(e => e.FK_Pid == data.Id).Select(e => e.Id).ToList();
                         var prices = await GetPriceByStock(stockids);
 
                         var temp_price = prices.Where(e => e.Price == (prices.Max(e => e.Price))).FirstOrDefault();
+                        if (temp_price?.FK_RId == 1)
+                        {
+                            var SuggestPrice = stocks.Where(e => e.Id == temp_price.FK_PSId).Select(e => e.Price).FirstOrDefault();
+                            if (SuggestPrice > 0) data.SuggestPrice = (SuggestPrice).ToString("N0");
+                        }
                         data.Price = temp_price?.Price?.ToString("N0") ?? "0";
                         data.OriPrice = temp_price?.OriPrice?.ToString("N0") ?? "0";
                     }

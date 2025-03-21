@@ -498,6 +498,7 @@ namespace EtheriT.Coker.Application.Directory
         private async Task<DirectoryReleInfoGetDto> SearchProd(DirectoryReleInfoInputDto dto)
         {
             var UUID = await tokenAppService.GetUUID();
+            var token = await db.Tokens.Where(e => e.UUID == UUID).FirstOrDefaultAsync();
             var output = new DirectoryReleInfoGetDto { ReleInfos = new List<DirectoryReleInfoDto>() };
             if (string.IsNullOrEmpty(dto.SearchText)) return output;
             long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
@@ -758,7 +759,8 @@ namespace EtheriT.Coker.Application.Directory
                 if (imgs.Any()) data.MainImage = imgs[0].Link;
                 else data.MainImage = imgRegex.Match(data.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "");
 
-                var stockids = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
+                var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).ToListAsync();
+                var stockids = stocks.Select(e => e.Id).ToList();
                 var sotreset = await (from sd in db.StoreSetDetail
                                       join ss in db.StoreSet on sd.FK_StoreSetId equals ss.Id
                                       where sd.FK_WebsiteId == WebsiteID
@@ -771,6 +773,12 @@ namespace EtheriT.Coker.Application.Directory
                     var prices = await productAppService.GetPriceByStock(stockids);
 
                     var temp_price = prices.Where(e => e.Price == (prices.Max(e => e.Price))).FirstOrDefault();
+                    if (temp_price?.FK_RId == 1)
+                    {
+                        var SuggestPrice = stocks.Where(e => e.Id == temp_price.FK_PSId).Select(e => e.Price).FirstOrDefault();
+                        if (SuggestPrice > 0) data.SuggestPrice = (SuggestPrice).ToString("N0");
+                    }
+
                     data.Price = temp_price?.Price?.ToString("N0") ?? "0";
                     data.OriPrice = temp_price?.OriPrice?.ToString("N0") ?? "0";
                 }
@@ -807,11 +815,11 @@ namespace EtheriT.Coker.Application.Directory
             var output = new DirectoryReleInfoGetDto();
             var db_d = db.Directory.Where(e => dto.Ids.Contains(e.Id) && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).ToList();
             corr = (from d in db_d
-                   select new CorrDTAID
-                   {
-                       DirectoryId = d.Id,
-                       DirectoryName = d.Title,
-                   }).ToList();
+                    select new CorrDTAID
+                    {
+                        DirectoryId = d.Id,
+                        DirectoryName = d.Title,
+                    }).ToList();
 
             if (db_d != null)
             {
@@ -864,7 +872,8 @@ namespace EtheriT.Coker.Application.Directory
                         case DirectoryTypeEnum.商品:
                             var pd_notId = await (db.Tag_Associates.Where(e => notTagIds.Contains(e.FK_TId) && e.Type == TagAssociateTypeEnum.商品 && !e.IsDeleted)).Select(e => e.FK_AId).ToListAsync();
 
-                            foreach (var site in tags) {
+                            foreach (var site in tags)
+                            {
                                 long siteId = site.Key;
                                 var FKTIds = site.Value.Values.SelectMany(tags => tags).ToHashSet();
                                 var allProducts = await db.Tag_Associates.Include(e => e.Tag)
@@ -936,7 +945,7 @@ namespace EtheriT.Coker.Application.Directory
                                             .Where(g => site.Value.Values.Any(tagSet => tagSet.IsSubsetOf(g.Value))) // 至少符合一個目錄標籤
                                             .Select(g => g.Key)
                                             .ToList()
-                                    );                                   
+                                    );
                                 }
                             }
                             corr = tempcorr;

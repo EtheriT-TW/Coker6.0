@@ -107,7 +107,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                             footerViewModel = new FooterViewModel
                             {
                                 footerViewModels = new List<FooterViewModel> {
-                                    new FooterViewModel { Title = "夯酷客(HomeCook)", Link = "", footerViewModels = new List<FooterViewModel> {
+                                    new FooterViewModel { Title = "夯酷客(HomeCook)", Link = "/yuanjer/HomeCook", footerViewModels = new List<FooterViewModel> {
                                             new FooterViewModel { Title = "香辛與調味料", Link = "/yuanjer/Flavorings" },
                                             new FooterViewModel { Title = "高湯鮮味", Link = "/yuanjer/umami" },
                                             new FooterViewModel { Title = "炸粉", Link = "/yuanjer/batter" },
@@ -115,7 +115,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                             new FooterViewModel { Title = "清潔蔬果", Link = "/yuanjer/vegclean" },
                                         }
                                     },
-                                    new FooterViewModel { Title = "BELGA專區", Link = "", footerViewModels = new List<FooterViewModel> {
+                                    new FooterViewModel { Title = "BELGA專區", Link = "/yuanjer/BELGA", footerViewModels = new List<FooterViewModel> {
                                             new FooterViewModel { Title = "全產品", Link = "/yuanjer/pro_belga" },
                                         }
                                     },

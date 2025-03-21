@@ -585,35 +585,64 @@ function DirectoryDataInsert($item, result) {
         var btnclass = localStorage[`switchViewType-${pathname}`];
         $(`button.${btnclass}`).trigger("click");
     }
+
     if ($item.hasClass("hover_display_details") && typeof (OrgName) != "undefined") {
         $item.find(".details_display_frame").css('height', $item.find(".details_display_frame").height());
         $(window).resize(function () {
             $item.find(".details_display_frame").css('height', $item.find(".details_display_frame").height());
-        });
-        $item.find('.catalog > div:not(.templatecontent)').on('mouseenter', function () {
-            var $this = $(this);
-            var newImg = $this.data("img_link");
-            var $img = $item.find(".details_display");
-            var nowImg = $img.attr("src");
+            if (typeof ($item.find(".details_display_frame").css("display")) != "undefined" && $item.find(".details_display_frame").css("display") != "none") {
 
-            if (newImg != nowImg && newImg && newImg != "") {
-                $img.stop(true, true).fadeOut(200, function () {
-                    $img.attr("src", newImg).fadeIn(100);
-                });
-            }
-        }).on('mouseleave', function () {
-            var $this = $(this);
-            var defaultImg = $item.data("default_img_link");
-            var $img = $item.find(".details_display");
-            var nowImg = $img.attr("src");
-
-            if (defaultImg != nowImg) {
-                $img.stop(true, true).fadeOut(200, function () {
-                    $img.attr("src", defaultImg).fadeIn(100);
-                });
             }
         });
+        if (typeof ($item.find(".details_display_frame").css("display")) != "undefined" && $item.find(".details_display_frame").css("display") != "none") {
+            $item.find('.catalog > div:not(.templatecontent)').on('mouseenter', function () {
+                var $this = $(this);
+                var newImg = $this.data("img_link");
+                var $img = $item.find(".details_display");
+                var nowImg = $img.attr("src");
+
+                if (newImg != nowImg && newImg != "") {
+                    $img.stop(true, true).fadeOut(200, function () {
+                        $img.attr("src", newImg).fadeIn(100);
+                    });
+                }
+            }).on('mouseleave', function () {
+                var defaultImg = $item.data("default_img_link");
+                var $img = $item.find(".details_display");
+                var nowImg = $img.attr("src");
+
+                if (defaultImg != nowImg) {
+                    $img.stop(true, true).fadeOut(200, function () {
+                        $img.attr("src", defaultImg).fadeIn(100);
+                    });
+                }
+            });
+        }
     }
+
+    if ($item.hasClass("swiper_display_details") && typeof (OrgName) != "undefined") {
+        var $swiper = $item.find(".details_swiper_display_frame");
+        if (typeof ($swiper.css("display")) != "undefined" && $swiper.css("display") != "none") {
+            var $template_slide = $swiper.find(".template_slide");
+            var swiper = $swiper.find(".swiper")[0].swiper;
+            if (typeof (swiper) != "undefined") {
+                swiper.autoplay.stop();
+                swiper.removeAllSlides();
+                result.forEach(function (data) {
+                    if (data.mainImage != "") {
+                        var newSlide = $($template_slide.html()).clone();
+                        newSlide.find("img").attr({
+                            "src": data.mainImage,
+                            "alt": data.title
+                        });
+                        swiper.appendSlide(newSlide);
+                    }
+                });
+                if (result.length > 1) swiper.autoplay.start();
+            }
+        }
+    }
+
 }
 function ProdFavBtnSet(content, data) {
     var html = `<button data-pid="${data.id}" class="btn_fav"></button>`

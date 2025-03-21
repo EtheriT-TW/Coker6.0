@@ -186,7 +186,7 @@
 
     .type_change_frame .type4-title.itemNo {
         white-space: nowrap;
-        min-width: fit-content;
+        text-overflow: ellipsis;
     }
 
 .type_change_frame .type2-content {

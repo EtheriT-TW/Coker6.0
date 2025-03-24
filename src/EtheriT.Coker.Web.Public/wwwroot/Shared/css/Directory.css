@@ -95,6 +95,10 @@
     background-position: center center;
 }
 
+    .type_change_frame > .catalog .image_frame img {
+        border-radius: 0.25rem;
+    }
+
 .type_change_frame > .catalog .img-fluid {
     max-width: 100%;
     max-height: 100%;
@@ -1787,6 +1791,10 @@
     .type_change_frame .catalog.type4 {
         padding-left: 0 !important;
         padding-right: 0 !important;
+    }
+
+    .type_change_frame .catalog.rounded-lg {
+        border-radius: 0em;
     }
 
     .type_change_frame .shareBlock.type5 {

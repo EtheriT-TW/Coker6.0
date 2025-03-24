@@ -378,7 +378,7 @@
 
 /* Button Share */
 .shareBlock {
-    margin-right: 1rem;
+    margin-right: 0.5rem;
     right: 0rem;
 }
 
@@ -475,6 +475,7 @@
 
 /* Button Favorites*/
 .favbtn {
+    margin-right: 0.5rem;
     top: 1.5rem;
     right: 0rem;
 }
@@ -828,7 +829,7 @@
     #TabContent .content.type_list .type_change_frame .favbtn {
         top: auto;
         bottom: calc(1px + 0.25rem);
-        right: 2rem;
+        right: 2.5rem;
     }
 }
 

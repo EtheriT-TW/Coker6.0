@@ -133,3 +133,10 @@ a[href="https://translate.google.com"] {
         max-width: 95vw !important;
     }
 }
+
+@media only screen and (max-width: 576px) {
+    .containe_phone_nopx {
+        padding-right: 0px;
+        padding-left: 0px;
+    }
+}

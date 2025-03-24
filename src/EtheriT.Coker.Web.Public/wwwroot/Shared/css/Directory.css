@@ -1727,10 +1727,6 @@
         padding: 0rem;
     }
 
-        .type_change_frame .catalog.type1 > div {
-            padding: 0rem !important;
-        }
-
         .type_change_frame .catalog.type1 .col.type5 {
             border-bottom: 1px #c6c6c6 solid;
             border-radius: 0em;

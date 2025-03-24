@@ -691,7 +691,7 @@ h3.title {
         height: calc(1rem * 3.6);
     }
 
-    .catalog_frame button {
+    .catalog_frame .switch_control button {
         width: 100%;
     }
 }

@@ -6,6 +6,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
     public class OrderHeaderGetOneDto
     {
         public long Id { get; set; }
+        public string Action {  get; set; }
         public string Orderer { get; set; }
         public string? OrdererTelePhone { get; set; }
         public string OrdererCellPhone { get; set; }

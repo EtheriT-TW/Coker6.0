@@ -878,6 +878,19 @@ namespace EtheriT.Coker.Application.Order
 
                     foreach (var order_header in order_headers)
                     {
+                        // 判斷訂單在Member可執行的動作 取消訂單/重新付款
+                        var temp_OrderHeader = await GetHeaderOne(order_header.Id);
+                        DateTime past24Hours = (DateTime.Now).AddHours(-24);
+                        var isintime = false;
+                        // 按照重新付款、完成訂單、創建訂單的順序判斷24小時內
+                        if (order_header.RepayDate != null && order_header.RepayDate >= past24Hours) isintime = true;
+                        else if (order_header.CompletedDate != null && order_header.CompletedDate >= past24Hours) isintime = true;
+                        else if (order_header.CreationTime >= past24Hours) isintime = true;
+
+                        if (isintime && new List<int>() { 1, 2, 6 }.Contains((int)order_header.State)) temp_OrderHeader.Action = "Cancel";
+                        else if (temp_OrderHeader.ThirdParties != 1 && order_header.State == OrderStatusEnum.付款失敗) temp_OrderHeader.Action = "Repay";
+                        else temp_OrderHeader.Action = "";
+
                         var temp_OrderDetails = new List<ShoppingCartDisplayDto>();
                         var order_details = await db.Order_Details.Where(e => e.FK_OId == order_header.Id).ToListAsync();
                         foreach (var order_detail in order_details)
@@ -890,7 +903,7 @@ namespace EtheriT.Coker.Application.Order
                         }
                         output.Add(new OrderDataGetDto()
                         {
-                            OrderHeader = await GetHeaderOne(order_header.Id),
+                            OrderHeader = temp_OrderHeader,
                             OrderDetails = temp_OrderDetails
                         });
                     }

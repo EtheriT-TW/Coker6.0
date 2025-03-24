@@ -631,6 +631,7 @@ function DirectoryDataInsert($item, result) {
                 result.forEach(function (data) {
                     if (data.mainImage != "") {
                         var newSlide = $($template_slide.html()).clone();
+                        newSlide = DirectoryTemplateDataInsert(newSlide, data);
                         newSlide.find("img").attr({
                             "src": data.mainImage,
                             "alt": data.title
@@ -643,6 +644,42 @@ function DirectoryDataInsert($item, result) {
         }
     }
 
+}
+function DirectoryTemplateDataInsert($template, data) {
+    var year = "", month = "", date = "";
+
+    if (typeof (data.nodeDate) != "undefined") {
+        var nodeDate = new Date(data.nodeDate);
+        year = nodeDate.getFullYear().toString();
+        month = (nodeDate.getMonth() + 1).toString();
+        date = nodeDate.getDate().toString();
+    }
+
+    $template.find("*").each(function () {
+        var $self = $(this);
+        if (typeof ($self.data("key")) != "undefined") {
+            var key = $self.data("key");
+            switch (key) {
+                case "year":
+                    $self.text(year);
+                    break;
+                case "month":
+                    $self.text(month);
+                    break;
+                case "date":
+                    $self.text(date);
+                    break;
+                case "link":
+                    $self.attr("href", `${data[key]}`);
+                    $self.attr("title", `連結至：${data['title']}`);
+                    break;
+                default:
+                    $self.text(data[key]);
+                    break;
+            }
+        }
+    });
+    return $template;
 }
 function ProdFavBtnSet(content, data) {
     var html = `<button data-pid="${data.id}" class="btn_fav"></button>`

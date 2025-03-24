@@ -72,6 +72,10 @@ using EtheriT.Coker.Application.Shared.FlowSize;
 using EtheriT.Coker.Application.FlowSize;
 using EtheriT.Coker.Application.Shared.Reporting;
 using EtheriT.Coker.Application.Report;
+using DevExpress.AspNetCore;
+using DevExpress.XtraCharts;
+using EtheriT.Coker.Web.MVC.Controllers.DevExpress;
+using DevExpress.AspNetCore.Reporting;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -318,6 +322,18 @@ builder.Services.AddHttpClient("ThirdPartyClient_ECPay", client =>
     client.BaseAddress = new Uri("https://ecpg-stage.ecpay.com.tw/Merchant");
     //client.BaseAddress = new Uri("https://ecpg.ecpay.com.tw/Merchant");
 });
+builder.Services.AddDevExpressControls();
+// DevExpress Reporting
+builder.Services.ConfigureReportingServices(configurator => {
+    configurator.ConfigureWebDocumentViewer(viewerConfigurator => {
+        viewerConfigurator.UseCachedReportSourceBuilder();
+    });
+    configurator.UseAsyncEngine();
+    configurator.UseDevelopmentMode();
+});
+builder.Services.AddTransient<CustomWebDocumentViewerController>();
+builder.Services.AddTransient<CustomReportDesignerController>();
+builder.Services.AddTransient<CustomQueryBuilderController>();
 
 var app = builder.Build();
 
@@ -380,6 +396,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseDevExpressControls();
 // 添加 AntiforgeryDebugMiddleware
 app.UseMiddleware<AntiforgeryDebugMiddleware>();
 app.UseMiddleware<AuthenticationMiddleware>();

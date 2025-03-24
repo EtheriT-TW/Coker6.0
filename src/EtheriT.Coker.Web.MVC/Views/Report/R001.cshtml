@@ -7,15 +7,18 @@
         ViewData["Title"] = "OrderList";
         var viewerRender = Html.DevExpress().WebDocumentViewer("DocumentViewer")
         .ClientSideModelSettings(x => x.IncludeLocalization = false)
-        .ClientSideEvents(x => x.CustomizeExportOptions("customizeExportOptions")
-        .CustomizeElements("previewCustomizeElements")
-        .CustomizeMenuActions("customizeActions")
-        .CustomizeLocalization("CustomizeLocalization")
-        .BeforeRender("beforeRender"));
+        .ClientSideEvents(x => x
+            .CustomizeExportOptions("customizeExportOptions")
+            .CustomizeElements("previewCustomizeElements")
+            .CustomizeMenuActions("customizeActions")
+            .CustomizeLocalization("CustomizeLocalization")
+            .BeforeRender("beforeRender")
+        )
+        .Height("1000px")
+        .Bind(Model.ReportObject);
 
         if (Model.ReportObject != null && Model.ReportModel != null)
         {
-            viewerRender = viewerRender.Bind(Model.ReportObject);
             @viewerRender.RenderHtml()
             @section scripts {
                 @{

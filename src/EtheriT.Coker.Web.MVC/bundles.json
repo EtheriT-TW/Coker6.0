@@ -41,12 +41,6 @@
       ]
     },
     {
-      "output": "wwwroot\\js\\FlowSize\\Index.min.js",
-      "input": [
-        "wwwroot\\js\\FlowSize\\Index.js"
-      ]
-    },
-    {
       "output": "lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js",
       "input": [
         "wwwroot/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.js"

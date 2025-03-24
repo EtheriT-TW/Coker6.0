@@ -282,7 +282,7 @@
 /* Button Share */
 .type_change_frame .shareBlock {
     position: absolute;
-    right: 0.5em;
+    right: 0rem;
     top: 0;
 }
 
@@ -398,7 +398,7 @@
 .btn_fav {
     position: absolute;
     top: 1.75rem;
-    right: 0.5rem;
+    right: 0rem;
     border: 0;
     background-color: transparent;
 }
@@ -1783,6 +1783,11 @@
                         height: fit-content;
                         text-align: start !important;
                     }
+
+    .type_change_frame .catalog.type4 {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
 
     .type_change_frame .shareBlock.type5 {
         top: auto;

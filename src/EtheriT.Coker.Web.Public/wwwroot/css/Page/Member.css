@@ -476,7 +476,7 @@
 /* Button Favorites*/
 .favbtn {
     top: 1.5rem;
-    right: 0;
+    right: 0rem;
 }
 
     .favbtn .btn_favorite {
@@ -766,6 +766,24 @@
         padding-top: 0rem;
     }
 
+    #TabContent .content.type_grid > .type_change_frame > a {
+        padding: 0px;
+    }
+
+    #TabContent .content.type_grid > .type_change_frame .image_frame {
+        padding: 0.25rem;
+    }
+
+        #TabContent .content.type_grid > .type_change_frame .image_frame img {
+            margin-top: 0rem;
+        }
+
+    #TabContent .content.type_grid > .type_change_frame figcaption {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        margin-top: 0rem;
+    }
+
     .type_list > .type_change_frame {
         padding-left: 0rem;
         padding-right: 0rem;
@@ -790,7 +808,7 @@
             width: 50%;
         }
 
-    #TabContent .content .type_change_frame div[data-key='price'] {
+    #TabContent .content.type_list .type_change_frame div[data-key='price'] {
         margin-top: 0.5rem;
         margin-bottom: 30px;
         text-align: start !important;

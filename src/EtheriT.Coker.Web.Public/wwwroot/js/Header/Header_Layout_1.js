@@ -129,6 +129,12 @@
             $self.parents(".subtitle").first().css("width", str_width);
         }
     });*/
+
+    $('#Mega_Menu .btn_menu').on("click", function () {
+        var $self = $(this);
+        if ($self.hasClass("show")) $self.removeClass("show");
+        else $self.addClass("show");
+    })
 }
 function moveHiUserToMenu() {
     const hiUser = document.getElementById('HiUser');

@@ -1,13 +1,13 @@
 ﻿.bg-img {
-    position:relative;
-    z-index:2;
+    position: relative;
+    z-index: 2;
     background: url(/upload/20170818112557.jpg) no-repeat top;
 }
 
 .temp-div {
     visibility: hidden;
-    position: absolute; 
-    top : -99999px;
+    position: absolute;
+    top: -99999px;
 }
 
 .bg-color {
@@ -38,12 +38,12 @@
     overflow: hidden; /* 确保超出的部分被裁剪 */
 }
 
-.home, .page{
+.home, .page {
     padding-top: 128px;
 }
 
 #swiper-light {
-    margin-top :15px !important;
+    margin-top: 15px !important;
 }
 
 .image-wh {
@@ -106,7 +106,7 @@
         top: calc(50% - 0.9rem);
         padding-left: 5rem;
         padding-right: 1rem;
-        margin-top:1px;
+        margin-top: 1px;
     }
 
 #iswrap {
@@ -195,24 +195,11 @@
         #Car_Dropdown > .btn_car_buy[disabled] {
             background-color: var(--gray-bg-dark);
         }
-/* Button Mega Menu */
-#Mega_Menu > .btn_menu {
-    margin-top: 0.25rem;
-    transition: 0.3s;
-    z-index: 1046;
-}
 
-    #Mega_Menu > .btn_menu > .bar {
-        position: relative;
-        display: block;
-        width: 1.75rem;
-        height: 0.2rem;
-        margin: 0.35rem auto;
-        background-color: black;
-        border-radius: 10px;
-        -webkit-transition: 0.3s;
-        transition: 0.3s;
-    }
+/* Button Mega Menu */
+#Mega_Menu > .btn_menu > .bar {
+    width: 1.75rem;
+}
 
 #Mega_Menu > .offcanvas.show + .btn_menu > .bar:nth-of-type(1) {
     -webkit-transform: translateY(0.525rem) rotate(-45deg);
@@ -439,64 +426,64 @@
         width: 85% !important;
     }
 
-    #Offcanvas_Mega_Menu > ul {
-        padding: 1em 1.5em;
-    }
-
-        #Offcanvas_Mega_Menu > ul *:focus:not(:focus-visible) {
-            outline: none;
+        #Offcanvas_Mega_Menu > ul {
+            padding: 1em 1.5em;
         }
 
-        #Offcanvas_Mega_Menu > ul > .title {
-            font-size: 1.25rem;
-            font-weight: bold;
-        }
-
-            #Offcanvas_Mega_Menu > ul > .title > .text-black {
-                color: unset;
+            #Offcanvas_Mega_Menu > ul *:focus:not(:focus-visible) {
+                outline: none;
             }
 
-            #Offcanvas_Mega_Menu > ul > .title:hover {
-                background-color: unset;
+            #Offcanvas_Mega_Menu > ul > .title {
+                font-size: 1.25rem;
+                font-weight: bold;
             }
 
-                #Offcanvas_Mega_Menu > ul > .title:hover > .text-black {
+                #Offcanvas_Mega_Menu > ul > .title > .text-black {
                     color: unset;
-                    font-weight: unset;
                 }
 
-            #Offcanvas_Mega_Menu > ul > .title > .menu-item {
-                display: flex;
-            }
-
-                #Offcanvas_Mega_Menu > ul > .title > .menu-item::after {
-                    display: inline-flex;
-                    width: 1.25rem;
-                    height: 1.25rem;
-                    margin-top: 0.5rem;
-                    margin-left: auto;
-                    margin-right: 0.5rem;
-                    content: "";
-                    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
-                    background-repeat: no-repeat;
-                    background-size: 1.25rem;
-                    background-position: left;
-                    transition: transform 0.2s ease-in-out;
+                #Offcanvas_Mega_Menu > ul > .title:hover {
+                    background-color: unset;
                 }
 
-                #Offcanvas_Mega_Menu > ul > .title > .menu-item.collapsed::after {
-                    transform: rotate(-180deg);
-                    background-position: right;
+                    #Offcanvas_Mega_Menu > ul > .title:hover > .text-black {
+                        color: unset;
+                        font-weight: unset;
+                    }
+
+                #Offcanvas_Mega_Menu > ul > .title > .menu-item {
+                    display: flex;
                 }
 
-            #Offcanvas_Mega_Menu > ul > .title > .content {
-                /*原色是#555*/
-                border-bottom: 1px solid black;
-            }
+                    #Offcanvas_Mega_Menu > ul > .title > .menu-item::after {
+                        display: inline-flex;
+                        width: 1.25rem;
+                        height: 1.25rem;
+                        margin-top: 0.5rem;
+                        margin-left: auto;
+                        margin-right: 0.5rem;
+                        content: "";
+                        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+                        background-repeat: no-repeat;
+                        background-size: 1.25rem;
+                        background-position: left;
+                        transition: transform 0.2s ease-in-out;
+                    }
 
-                #Offcanvas_Mega_Menu > ul > .title > .content .text-black {
-                    color: #222 !important;
+                    #Offcanvas_Mega_Menu > ul > .title > .menu-item.collapsed::after {
+                        transform: rotate(-180deg);
+                        background-position: right;
+                    }
+
+                #Offcanvas_Mega_Menu > ul > .title > .content {
+                    /*原色是#555*/
+                    border-bottom: 1px solid black;
                 }
+
+                    #Offcanvas_Mega_Menu > ul > .title > .content .text-black {
+                        color: #222 !important;
+                    }
 
     .mega_menu_canvas {
         margin: 0;
@@ -732,8 +719,9 @@
 
 @media only screen and (max-width: 768px) {
     .headernews .content {
-        padding-left:3rem !important;
+        padding-left: 3rem !important;
     }
+
     #Offcanvas_Mega_Menu > ul > .title > .text-black {
         text-align: start;
     }
@@ -752,6 +740,7 @@
     .headernews .content {
         padding-left: 3rem !important;
     }
+
     #Offcanvas_Mega_Menu > ul > .title > .content > ul {
         justify-content: space-between;
         flex-direction: column;
@@ -776,7 +765,7 @@
     }
 
     #header-title-phone {
-        display:unset !important;
+        display: unset !important;
     }
 
     #swiper-light {

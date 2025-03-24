@@ -35,8 +35,10 @@
         <!-- Menu Canvas -->
         <div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start visible" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
             <!-- Menu Canvas Search Block -->
-            <div class="offcanvas-header pt-3 ps-5">
-                <h5 class="offcanvas-title mx-auto fs-5 fw-bold" id="offcanvasLabel">@Model.Title</h5>
+            <div class="offcanvas-header pt-3 mx-3">
+                <div class="offcanvas-title fs-5 fw-bold" id="offcanvasLabel">
+                    <img class="logo" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
+                </div>
             </div>
 
             <!-- Menu Canvas Menu -->

@@ -13,5 +13,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public string StartTime { get; set; }
         public string EndTime { get; set; }
         public bool Permanent { get; set; }
+        public DateTime LastModificationTime { get; set; }
     }
 }

@@ -504,7 +504,7 @@ function DirectoryDataInsert($item, result) {
                 content.find(".normal-price").addClass("text-end");
                 content.find(".price-grid").empty();
                 content.find(".normal-price").empty();
-                var price_text = `<div class="text-body-tertiary text-decoration-line-through">建議售價$${data.suggestPrice}</div><div class="text-danger">折扣後 $${data.price}</div>`;
+                var price_text = `<div class="text-body-tertiary text-decoration-line-through">建議售價$${data.suggestPrice}</div><div class="text-danger"> $${data.price}</div>`;
                 content.find(".price-grid").append(price_text);
                 content.find(".normal-price").append(price_text);
             }
@@ -631,6 +631,7 @@ function DirectoryDataInsert($item, result) {
                 result.forEach(function (data) {
                     if (data.mainImage != "") {
                         var newSlide = $($template_slide.html()).clone();
+                        newSlide = DirectoryTemplateDataInsert(newSlide, data);
                         newSlide.find("img").attr({
                             "src": data.mainImage,
                             "alt": data.title
@@ -643,6 +644,43 @@ function DirectoryDataInsert($item, result) {
         }
     }
 
+}
+/* 新寫法 原先寫法未調整 */
+function DirectoryTemplateDataInsert($template, data) {
+    var year = "", month = "", date = "";
+
+    if (typeof (data.nodeDate) != "undefined") {
+        var nodeDate = new Date(data.nodeDate);
+        year = nodeDate.getFullYear().toString();
+        month = (nodeDate.getMonth() + 1).toString();
+        date = nodeDate.getDate().toString();
+    }
+
+    $template.find("*").each(function () {
+        var $self = $(this);
+        if (typeof ($self.data("key")) != "undefined") {
+            var key = $self.data("key");
+            switch (key) {
+                case "year":
+                    $self.text(year);
+                    break;
+                case "month":
+                    $self.text(month);
+                    break;
+                case "date":
+                    $self.text(date);
+                    break;
+                case "link":
+                    $self.attr("href", `${data[key]}`);
+                    $self.attr("title", `連結至：${data['title']}`);
+                    break;
+                default:
+                    $self.text(data[key]);
+                    break;
+            }
+        }
+    });
+    return $template;
 }
 function ProdFavBtnSet(content, data) {
     var html = `<button data-pid="${data.id}" class="btn_fav"></button>`

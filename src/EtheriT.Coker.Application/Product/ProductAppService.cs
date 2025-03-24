@@ -420,7 +420,8 @@ namespace EtheriT.Coker.Application.Product
                                     Price = "",
                                     StartTime = p.StartTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.StartTime),
                                     EndTime = p.EndTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.EndTime),
-                                    Permanent = p.permanent
+                                    Permanent = p.permanent,
+                                    LastModificationTime = p.LastModificationTime ?? p.CreationTime
                                 };
 
                 var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);

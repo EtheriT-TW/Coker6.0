@@ -340,7 +340,7 @@ function PageDefaultSet(result) {
             if (!IsLogin && result.stocks[0].suggestPrice > 0 && result.stocks[0].suggestPrice != price) {
                 price_temp.find(".discount").empty();
                 price_temp.find(".discount").removeClass("price");
-                price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${result.stocks[0].suggestPrice.toLocaleString('en-US')}</div><div class="text-danger">折扣後 $${price_text}</div>`);
+                price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${result.stocks[0].suggestPrice.toLocaleString('en-US')}</div><div class="text-danger">  $${price_text}</div>`);
             }
             else price_temp.find(".discount").text(price_text);
 
@@ -612,7 +612,7 @@ function SpecRadio() {
                     if (!IsLogin && item.suggestprice > 0 && item.suggestprice != price) {
                         price_temp.find(".discount").empty();
                         price_temp.find(".discount").removeClass("price");
-                        price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${item.suggestprice.toLocaleString('en-US')}</div><div class="text-danger">折扣後 $${price_text}</div>`);
+                        price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${item.suggestprice.toLocaleString('en-US')}</div><div class="text-danger"> $${price_text}</div>`);
                     }
                     else price_temp.find(".discount").text(price_text);
 

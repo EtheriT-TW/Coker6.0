@@ -263,6 +263,7 @@ i.fa-chevron-right {
 
 #Product > .content > .priceframe .discount {
     white-space: nowrap;
+    font-size: 1.2rem;
 }
 
     #Product > .content > .priceframe .discount.mprice::before {

@@ -504,7 +504,7 @@ function DirectoryDataInsert($item, result) {
                 content.find(".normal-price").addClass("text-end");
                 content.find(".price-grid").empty();
                 content.find(".normal-price").empty();
-                var price_text = `<div class="text-body-tertiary text-decoration-line-through">建議售價$${data.suggestPrice}</div><div class="text-danger">折扣後 $${data.price}</div>`;
+                var price_text = `<div class="text-body-tertiary text-decoration-line-through">建議售價$${data.suggestPrice}</div><div class="text-danger"> $${data.price}</div>`;
                 content.find(".price-grid").append(price_text);
                 content.find(".normal-price").append(price_text);
             }

@@ -102,7 +102,7 @@ const display_configurations = {
         ".shareBlock": "type4",
         ".btn_fav": "type4",
         ".tags": "align-text-bottom",
-        ".title": "type4-title d-inline",
+        ".title": "type4-title",
         "figcaption": "pb1 type4-caption d-flex flex-column",
         "figure": "flex-column",
     }],

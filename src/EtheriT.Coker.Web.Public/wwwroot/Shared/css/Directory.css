@@ -163,27 +163,22 @@
 }
 
 .type_change_frame .type2-title {
+    min-height: calc(1.5rem * 2);
+}
+
+.type_change_frame .type4-title.title {
     overflow: hidden;
-    display: -webkit-box;
+    display: -webkit-box !important;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    max-height: calc(1rem * 5.1);
+    -webkit-line-clamp: 2;
+    height: calc(1.75rem * 2);
     position: relative;
 }
 
-.type_change_frame .type4-title {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    max-height: calc(1.75rem * 3);
-    position: relative;
+.type_change_frame .type4-title.itemNo {
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
-
-    .type_change_frame .type4-title.itemNo {
-        white-space: nowrap;
-        text-overflow: ellipsis;
-    }
 
 .type_change_frame .type2-content {
     overflow: hidden;
@@ -236,6 +231,11 @@
 
                 .type_change_frame .catalog.type1 .col.type5 figure figcaption .item-title > div {
                     display: inline;
+                    height: auto;
+                }
+
+                .type_change_frame .catalog.type1 .col.type5 figure figcaption .item-title .like-and-share {
+                    display: none;
                 }
 
             .type_change_frame .catalog.type1 .col.type5 figure figcaption .bottom-row .tags {
@@ -245,6 +245,11 @@
             .type_change_frame .catalog.type1 .col.type5 figure figcaption .bottom-row .purchase {
                 margin-left: auto;
             }
+
+.type_change_frame .catalog.type4 .col.type4 figure figcaption .bottom-row .tags {
+    overflow: hidden;
+    height: 1.5rem;
+}
 
 .type_change_frame .btn_favorites {
     color: var(--gray-icon);
@@ -1716,7 +1721,6 @@
     .type_change_frame > .catalog .title {
         font-size: 1.2rem !important;
         line-height: 1.5rem;
-        max-height: 4.5rem;
     }
 
     .type_change_frame > .catalog .description {
@@ -1875,10 +1879,6 @@
     .type_change_frame .catalog .type4-image-frame {
         height: 130px;
         max-height: 130px;
-    }
-
-    .type_change_frame .type4-caption {
-        height: auto;
     }
 }
 

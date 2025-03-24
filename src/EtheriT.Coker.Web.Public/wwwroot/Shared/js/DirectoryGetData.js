@@ -509,8 +509,10 @@ function DirectoryDataInsert($item, result) {
                 content.find(".normal-price").append(price_text);
             }
             else {
-                content.find(".normal-price").text(data.price);
-                content.find(".price-grid").text(data.price);
+                content.find(".normal-price").removeClass("price")
+                content.find(".price-grid").removeClass("price")
+                content.find(".normal-price").text(`$${data.price}`);
+                content.find(".price-grid").text(`$${data.price}`);
             }
         } else {
             content.find(".price").addClass("notshow");

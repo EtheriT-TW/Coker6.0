@@ -645,6 +645,7 @@ function DirectoryDataInsert($item, result) {
     }
 
 }
+/* 新寫法 原先寫法未調整 */
 function DirectoryTemplateDataInsert($template, data) {
     var year = "", month = "", date = "";
 

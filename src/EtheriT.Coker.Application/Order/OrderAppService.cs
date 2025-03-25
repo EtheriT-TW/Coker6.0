@@ -508,7 +508,7 @@ namespace EtheriT.Coker.Application.Order
                                                         .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
                                                       select new DirectoryReleInfoDto
                                                       {
-                                                          Link = (f.fileUpload.DownloadFileName ?? "/images/noImg.jpg").Replace("upload", $"upload/{orgName}").Replace("//", "/")
+                                                          Link = (f.fileUpload != null ? (f.fileUpload.DownloadFileName ?? "/images/noImg.jpg") : "/images/noImg.jpg").Replace("upload", $"upload/{orgName}").Replace("//", "/")
                                                       }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
                                     }).ToListAsync();
 

@@ -100,13 +100,12 @@ namespace EtheriT.Coker.Application.Favorites
                                               Description = prod.Description,
                                               Link = "/product/" + prod.Id,
                                               Image = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                                      .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId)
-                                                      .Where(e => e.fileUpload != null)
-                                                      .Where(e => e.Sid == prod.Id && e.type == (int)FileBindTypeEnum.產品)
-                                                      .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
+                                                              .Where(e => e.Sid == prod.Id && e.type == (int)FileBindTypeEnum.產品)
+                                                              .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId && e.fileUpload.ContentType.StartsWith("image"))
+                                                              .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
                                                         select new DirectoryReleInfoDto
                                                         {
-                                                            Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
+                                                            Link = (f.fileUpload != null ? (f.fileUpload.DownloadFileName ?? "/images/noImg.jpg") : "/images/noImg.jpg")
                                                         }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
                                               Price = null,
                                               ItemNo = prod.ItemNo,

@@ -869,7 +869,7 @@ namespace EtheriT.Coker.Application.Product
                         var prices = await GetPriceByStock(stockids);
 
                         var temp_price = prices.Where(e => e.Price == (prices.Max(e => e.Price))).FirstOrDefault();
-                        if (temp_price?.FK_RId == 1)
+                        if (token?.UserID == null && temp_price?.FK_RId == 1)
                         {
                             var SuggestPrice = stocks.Where(e => e.Id == temp_price.FK_PSId).Select(e => e.Price).FirstOrDefault();
                             if (SuggestPrice > 0) data.SuggestPrice = (SuggestPrice).ToString("N0");

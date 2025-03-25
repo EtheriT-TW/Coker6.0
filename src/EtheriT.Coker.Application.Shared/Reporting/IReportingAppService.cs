@@ -9,6 +9,6 @@ namespace EtheriT.Coker.Application.Shared.Reporting
 {
     public interface IReportingAppService
     {
-        public Task<R001檢貨單Model?> GetR001ModelAsync(long id);
+        public Task<R001撿貨單Model?> GetR001ModelAsync(long id);
     }
 }

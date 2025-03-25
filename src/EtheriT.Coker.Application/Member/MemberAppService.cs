@@ -21,6 +21,7 @@ using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Core.Models;
 using System.Data;
+using DevExpress.Printing.Core.PdfExport.Metafile;
 
 namespace EtheriT.Coker.Application.Member
 {
@@ -110,7 +111,7 @@ namespace EtheriT.Coker.Application.Member
                                                     order.FK_UUID == e.UUID
                                                 )
                                             select order
-                                        ).Sum(e => e.Payment),
+                                        ).Sum(e => e.Subtotal - e.Discount + e.Freight),
                                         Level = e.Level == null ? roleId : e.Level
                                         ,
                                         CreationTime = e.CreationTime,

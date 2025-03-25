@@ -341,6 +341,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Order_Header>(o =>
             {
+                o.HasOne(u => u.PaymentType).WithMany(u => u.Order_Headers).HasForeignKey(f => f.Payment);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<SearchLog>(o =>

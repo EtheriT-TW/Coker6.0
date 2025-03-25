@@ -1,6 +1,6 @@
 ﻿namespace EtheriT.Coker.Application.Shared.Dto.ReportingModels
 {
-    public class R001檢貨單Model
+    public class R001撿貨單Model
     {
         public string 網站名稱 { get; set; }
         public string 列印時間 { get; set; }

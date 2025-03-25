@@ -24,5 +24,6 @@ namespace EtheriT.Coker.Core.Models
         public ThirdParty? ThirdParty { get; set; }
         public List<LogisticsType_PaymentType>? LogisticsType_Payments { get; set; }
         public List<PaymentTypesValue>? paymentTypesValues { get; set; }
+        public List<Order_Header>? Order_Headers { get; set; }
     }
 }

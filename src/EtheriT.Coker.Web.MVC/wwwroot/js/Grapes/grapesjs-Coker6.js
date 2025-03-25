@@ -991,6 +991,16 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                     });
                                 }, 200);
                             }
+                            var data_dirid = editor.getSelected().get("attributes")['data-dirid'];
+                            var dirids = typeof (data_dirid) == "string" ? data_dirid.split(',').map(Number) : data_dirid;
+                            PopupDirectory.option({
+                                onShown: function () {
+                                    var grid = $("#DirectoryList2").dxDataGrid("instance");
+                                    if (grid) {
+                                        grid.selectRows(dirids);
+                                    }
+                                }
+                            });
                             PopupDirectory.show();
                         }
                     },

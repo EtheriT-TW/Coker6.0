@@ -488,7 +488,6 @@ function DirectoryDataInsert($item, result) {
             });
         }
         if (data.price != null) {
-            console.log("data", data)
             if (data.suggestPrice != null && data.suggestPrice != data.price) {
                 content.find(".price-grid").removeClass("price")
                 content.find(".normal-price").removeClass("price")

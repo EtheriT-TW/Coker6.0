@@ -8,6 +8,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.Favorites;
 using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.Application.Shared.Product;
 
 namespace EtheriT.Coker.Application.Favorites
 {
@@ -17,16 +18,19 @@ namespace EtheriT.Coker.Application.Favorites
         private readonly LoginUserData loginUserData;
         private readonly ITokenAppService tokenAppService;
         private readonly IConfiguration configuration;
+        private readonly IProductAppService productAppService;
         public FavoritesAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             ITokenAppService tokenAppService,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IProductAppService productAppService)
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.tokenAppService = tokenAppService;
             this.configuration = configuration;
+            this.productAppService = productAppService;
         }
 
         public async Task<ResponseMessageDto> Add(long Pid)
@@ -107,7 +111,8 @@ namespace EtheriT.Coker.Application.Favorites
                                                         {
                                                             Link = (f.fileUpload != null ? (f.fileUpload.DownloadFileName ?? "/images/noImg.jpg") : "/images/noImg.jpg")
                                                         }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
-                                              Price = null,
+                                              Price = "",
+                                              OriPrice = "",
                                               ItemNo = prod.ItemNo,
                                           }).ToList();
                     output.Page_Total = (int)Math.Ceiling(favorites_data.Count / 8.0);
@@ -125,23 +130,19 @@ namespace EtheriT.Coker.Application.Favorites
                     {
                         for (var i = 0; i < favorites_data.Count; i++)
                         {
-                            favorites_data[i].Price = new List<double>() { };
-                            var prod_prices = await (from prod_stock in db.Prod_Stocks
-                                                     join prod_price in db.Prod_Prices on prod_stock.Id equals prod_price.FK_PSId
-                                                     where prod_stock.FK_Pid == favorites_data[i].PId
-                                                     where prod_price.Price > 0
-                                                     orderby prod_price descending
-                                                     select prod_price).ToListAsync();
-                            if (prod_prices.Count > 1)
-                            {
-                                favorites_data[i].Price.Add((double)prod_prices[0].Price);
-                                favorites_data[i].Price.Add((double)prod_prices[prod_prices.Count - 1].Price);
-                            }
-                            else if (prod_prices.Count == 1)
-                            {
-                                favorites_data[i].Price.Add((double)prod_prices[0].Price);
-                            }
-                            else favorites_data[i].Price.Add(0);
+                            var data = favorites_data[i];
+                            //var favorites = await db.Favorites.Where(e => e.UUID == UUID & e.FK_AssocId == data.Id && e.Type == (int)FavoritesTypeEnum.商品).FirstOrDefaultAsync();
+                            //if (favorites != null) data.FId = favorites.Id;
+
+                            var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == data.PId).ToListAsync();
+                            var stockids = stocks.Select(e => e.Id).ToList();
+                            var prices = await productAppService.GetPriceByStock(stockids);
+
+                            var temp_price = prices.Where(e => e.Price == (prices.Max(e => e.Price))).FirstOrDefault();
+                            data.OriPrice = temp_price?.OriPrice.HasValue == true ? "$" + temp_price.OriPrice.Value.ToString("N0") : "";
+                            data.Price = temp_price?.Price.HasValue == true ? "$" + temp_price.Price.Value.ToString("N0") : "$0";
+                            if (data.OriPrice == data.Price) data.OriPrice = "";
+                            if (data.OriPrice != "") data.Price = $"會員價 {data.Price}";
                         }
                     }
 

@@ -1271,7 +1271,8 @@ namespace EtheriT.Coker.Application.Product
                                                        {
                                                            Link = (f.fileUpload != null ? (f.fileUpload.DownloadFileName ?? "/images/noImg.jpg") : "/images/noImg.jpg")
                                                        }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
-                                             Price = null,
+                                             OriPrice = "",
+                                             Price = "",
                                              ItemNo = prod.ItemNo,
                                          }).ToList();
 
@@ -1290,23 +1291,19 @@ namespace EtheriT.Coker.Application.Product
                     {
                         for (var i = 0; i < prod_log_data.Count; i++)
                         {
-                            prod_log_data[i].Price = new List<double>();
-                            var prod_prices = await (from prod_stock in db.Prod_Stocks
-                                                     join prod_price in db.Prod_Prices on prod_stock.Id equals prod_price.FK_PSId
-                                                     where prod_stock.FK_Pid == prod_log_data[i].PId
-                                                     where prod_price.Price > 0
-                                                     orderby prod_price descending
-                                                     select prod_price).ToListAsync();
-                            if (prod_prices.Count > 1)
-                            {
-                                prod_log_data[i].Price.Add((double)prod_prices[0].Price);
-                                prod_log_data[i].Price.Add((double)prod_prices[prod_prices.Count - 1].Price);
-                            }
-                            else if (prod_prices.Count == 1)
-                            {
-                                prod_log_data[i].Price.Add((double)prod_prices[0].Price);
-                            }
-                            else prod_log_data[i].Price.Add(0);
+                            var data = prod_log_data[i];
+                            //var favorites = await db.Favorites.Where(e => e.UUID == UUID & e.FK_AssocId == data.Id && e.Type == (int)FavoritesTypeEnum.商品).FirstOrDefaultAsync();
+                            //if (favorites != null) data.FId = favorites.Id;
+
+                            var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == data.PId).ToListAsync();
+                            var stockids = stocks.Select(e => e.Id).ToList();
+                            var prices = await GetPriceByStock(stockids);
+
+                            var temp_price = prices.Where(e => e.Price == (prices.Max(e => e.Price))).FirstOrDefault();
+                            data.OriPrice = temp_price?.OriPrice.HasValue == true ? "$" + temp_price.OriPrice.Value.ToString("N0") : "";
+                            data.Price = temp_price?.Price.HasValue == true ? "$" + temp_price.Price.Value.ToString("N0") : "$0";
+                            if (data.OriPrice == data.Price) data.OriPrice = "";
+                            if (data.OriPrice != "") data.Price = $"會員價 {data.Price}";
                         }
                     }
 

@@ -294,7 +294,6 @@
 
 #TabContent .content img {
     height: auto;
-    margin-top: 0.5rem;
 }
 
 #TabContent .content figure figcaption {
@@ -311,7 +310,9 @@
 }
 
 #TabContent .content.type_grid figure figcaption {
-    padding-top: 0;
+    padding-top: 0.5rem;
+    height: 100%;
+    justify-content: space-between
 }
 
 #TabContent .content.type_grid .type_change_frame {
@@ -319,6 +320,38 @@
     flex: 0 0 auto;
     width: 25%;
 }
+
+#TabContent .content.type_list > .type_change_frame figure {
+    padding-top: 1rem;
+}
+
+#TabContent .content.type_grid > .type_change_frame figure {
+    padding-top: 0.5rem;
+}
+
+    #TabContent .content.type_grid > .type_change_frame figure .image_frame {
+        padding: 0.25rem;
+    }
+
+        #TabContent .content.type_grid > .type_change_frame figure .image_frame > div {
+            position: relative;
+            height: 0;
+            width: 100%;
+            overflow: hidden;
+            padding-bottom: 100%;
+        }
+
+            #TabContent .content.type_grid > .type_change_frame figure .image_frame > div > img {
+                margin-top: 0rem;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                height: 100%;
+                width: 100%;
+                transform: translate(-50%, -50%);
+                object-fit: cover;
+                object-position: center;
+            }
 
 #TabContent .content .type_change_frame div[data-key='itemNo'] {
     font-weight: bold;
@@ -348,9 +381,14 @@
     display: none;
 }
 
-#TabContent .content.type_grid .type_change_frame div[data-key='price'] {
+#TabContent .content.type_grid .type_change_frame .price_group {
     margin-top: 1rem;
     text-align: start;
+}
+
+#TabContent .content.type_list .type_change_frame .price_group {
+    margin-top: 1rem;
+    text-align: end;
 }
 
 #TabContent .content.type_list figure {
@@ -369,11 +407,6 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
-}
-
-#TabContent .content.type_list .type_change_frame div[data-key='price'] {
-    margin-top: 0;
-    text-align: end;
 }
 
 /* Button Share */
@@ -763,6 +796,14 @@
         flex-direction: column;
     }
 
+    #TabContent .content.type_grid > .type_change_frame figure {
+        padding-top: 0rem;
+    }
+
+    #TabContent .content.type_list > .type_change_frame figure {
+        padding-top: 0rem;
+    }
+
     #TabContent .content.type_list figure figcaption {
         padding-top: 0rem;
     }
@@ -771,13 +812,9 @@
         padding: 0px;
     }
 
-    #TabContent .content.type_grid > .type_change_frame .image_frame {
-        padding: 0.25rem;
+    #TabContent .content.type_grid > .type_change_frame figure .image_frame > div > img {
+        margin-top: 0rem;
     }
-
-        #TabContent .content.type_grid > .type_change_frame .image_frame img {
-            margin-top: 0rem;
-        }
 
     #TabContent .content.type_grid > .type_change_frame figcaption {
         padding-left: 0.5rem;
@@ -800,7 +837,6 @@
             border-bottom: 1px #C6C6C6 solid;
             padding-bottom: 1rem;
             margin-bottom: 0rem;
-            margin-top: 1rem;
             padding-left: 1rem;
             padding-right: 1rem;
         }
@@ -809,10 +845,9 @@
             width: 50%;
         }
 
-    #TabContent .content.type_list .type_change_frame div[data-key='price'] {
+    #TabContent .content.type_list .type_change_frame .price_group {
         margin-top: 0.5rem;
-        margin-bottom: 30px;
-        text-align: start !important;
+        text-align: start;
     }
 
     #TabContent .content.type_list .type_change_frame div[data-key='description'] {

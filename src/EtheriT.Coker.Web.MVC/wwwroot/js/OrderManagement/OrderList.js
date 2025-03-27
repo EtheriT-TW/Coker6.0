@@ -237,7 +237,7 @@ function onCellPrepared(e) {
 function onRowPrepared(e) {
     if (e.rowType === "data") {
         let $row = $(e.rowElement);
-        if (e.data.State === "付款失敗") {
+        if (e.data.State === "付款失敗" || e.data.State === "已取消") {
             $row.addClass("isFail");
         }
     }
@@ -309,7 +309,7 @@ function HeaderDataInsert(data) {
 }
 function HeaderDataSet(result) {
     thirdparty = result.thirdParties;
-    $("#PrintR001").attr({ href: `/Report/R001?id=${result.id}`});
+    $("#PrintR001").attr({ href: `/Report/R001?id=${result.id}` });
     if (result.payment.indexOf("-") > 0) {
         payment = result.payment.substring(0, result.payment.indexOf("-"));
     } else {

@@ -145,6 +145,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 JObject jsonMessage = JObject.Parse(dto.notify_message);
 
                 Console.WriteLine($"-------------訊息查看-------------");
+                Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：{dto}");
                 Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：{jsonMessage}");
 
                 if (dto.notify_type == "refund_success")
@@ -171,7 +172,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     }
                                     break;
                                 case "W":
-                                    if (ohdata.State != OrderStatusEnum.待付款)
+                                    if (ohdata.State != OrderStatusEnum.已付款 && ohdata.State != OrderStatusEnum.待付款)
                                     {
                                         ohdata.State = OrderStatusEnum.待付款;
                                         db.SaveChanges();
@@ -228,6 +229,18 @@ namespace EtheriT.Coker.Application.ThirdParty
                         {
                             response = new ResponseMessageDto();
                             var GetResponse = await ThirdPartyClient_PCHome.GetAsync(RequestUri);
+
+                            if (!GetResponse.IsSuccessStatusCode)
+                            {
+                                string responseBody = await GetResponse.Content.ReadAsStringAsync();
+                                Console.WriteLine($"❌ 請求失敗: {GetResponse.StatusCode}");
+                                Console.WriteLine($"🔹 Headers: {string.Join("\n", GetResponse.Headers)}");
+                                Console.WriteLine($"🔹 Response Body: {responseBody}");
+
+                                throw new Exception($"API 錯誤: {GetResponse.StatusCode}\n{responseBody}");
+                            }
+                            else GetResponse.EnsureSuccessStatusCode();
+
                             GetResponse.EnsureSuccessStatusCode();
                             var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
                             PChomePayState = JsonConvert.DeserializeObject<PChomePayStateDto>(jsonResponse);
@@ -397,7 +410,8 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                                 // 可以拋出自訂例外，包含回應內容
                                 throw new Exception($"API 錯誤: {PostResponse.StatusCode}\n{responseBody}");
-                            }else PostResponse.EnsureSuccessStatusCode();
+                            }
+                            else PostResponse.EnsureSuccessStatusCode();
                             var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
                             var pchomePayResponse = JsonConvert.DeserializeObject<PChomeRefundDto>(jsonResponse);
 

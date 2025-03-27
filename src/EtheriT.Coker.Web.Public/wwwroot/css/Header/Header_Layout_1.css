@@ -282,9 +282,10 @@ header .image-wh {
         }
 
         .metaMenu .collapse_menus > .container > ul ul {
+            height: 180px;
             flex-wrap: wrap;
             flex-direction: column;
-            height: 180px;
+            column-gap: 1rem;
         }
 
             .metaMenu .collapse_menus > .container > ul ul > li {

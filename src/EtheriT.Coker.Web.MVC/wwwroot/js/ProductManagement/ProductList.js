@@ -784,7 +784,7 @@ function SpecAdd(result) {
         }
 
         modal_price_list.forEach(function (item) {
-            if (item.FK_PSId == psid || (item.TempPSid != null && item.TempPSid == temppsid)) {
+            if (!item.IsDelete && (item.FK_PSId == psid || (item.TempPSid != null && item.TempPSid == temppsid))) {
                 SpecPriceAdd(item)
                 isnull = false;
             }

@@ -469,6 +469,18 @@ namespace EtheriT.Coker.Application.ThirdParty
                     {
                         response = new ResponseMessageDto();
                         var GetResponse = await ThirdPartyClient_PCHome.GetAsync(RequestUri);
+
+                        if (!GetResponse.IsSuccessStatusCode)
+                        {
+                            string responseBody = await GetResponse.Content.ReadAsStringAsync();
+                            Console.WriteLine($"❌ 請求失敗: {GetResponse.StatusCode}");
+                            Console.WriteLine($"🔹 Headers: {string.Join("\n", GetResponse.Headers)}");
+                            Console.WriteLine($"🔹 Response Body: {responseBody}");
+
+                            throw new Exception($"API 錯誤: {GetResponse.StatusCode}\n{responseBody}");
+                        }
+                        else GetResponse.EnsureSuccessStatusCode();
+
                         GetResponse.EnsureSuccessStatusCode();
                         var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
                         var pchomePayResponse = JsonConvert.DeserializeObject<PChomePayRefundStateDto>(jsonResponse);

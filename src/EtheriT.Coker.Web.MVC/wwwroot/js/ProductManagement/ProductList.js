@@ -359,9 +359,9 @@ function FormDataClear() {
     $marks.val("");
     $price.val("");
     $subItemNo.val("");
-    $stock_number.val("");
+    $stock_number.val(0);
     $alert_number.val("");
-    $min_number.val("");
+    $min_number.val(1);
     $permanent.prop("checked", false);
     $date.val("");
     $date.removeAttr("disabled");
@@ -755,8 +755,12 @@ function SpecAdd(result) {
         item_price.val("");
     }
     item_subItemNo.val(result != null ? result.subItemNo : "");
-    item_min.val(result != null ? result.min_Qty : "");
-    item_stock.val(result != null ? result.stock + result.orderStock : "");
+    item_min.val(result != null ? result.min_Qty ?? 1 : 1);
+    item_min.on("change", function () {
+        var $self = $(this);
+        if ($self.val() < 1 || $self.val() == "") $self.val(1);
+    });
+    item_stock.val(result != null ? (result.stock ?? 0) + result.orderStock : 0);
     item_alert.val("");
     item_alert.val(result != null ? result.alert_Qty : "");
     item_collapse.attr("id", "CollapseDetail" + spec_num);

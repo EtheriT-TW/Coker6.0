@@ -365,7 +365,7 @@ function PageDefaultSet(result) {
         $input_quantity.attr({
             min: result.stocks[0].min_Qty,
             max: result.stocks[0].stock - (result.stocks[0].stock % result.stocks[0].min_Qty),
-            step: result.stocks[0].min_Qty
+            step: result.stocks[0].min_Qty ?? 1
         });
         if (result.stocks[0].stock > result.stocks[0].min_Qty) {
             $counter_input.removeClass("isEmpty");
@@ -633,7 +633,7 @@ function SpecRadio() {
                 $input_quantity.attr({
                     min: item.minQty,
                     max: item.stock - (item.stock % item.minQty),
-                    step: item.minQty
+                    step: item.minQty ?? 1
                 });
                 if (item.stock < item.minQty) $counter_input.addClass("isEmpty");
                 else {

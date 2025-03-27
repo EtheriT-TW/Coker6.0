@@ -67,10 +67,13 @@ function PageReady() {
         $input_quantity.trigger("change");
     });
     $input_quantity.on("change", function () {
-        let v = $(this).val() - $(this).val() % $(this).attr("step");
-        if (v > parseInt($(this).attr("max"))) v = parseInt($(this).attr("max"));
-        if (v < parseInt($(this).attr("min"))) v = parseInt($(this).attr("min"));
-        $(this).val(v);
+        var $self = $(this);
+        let v = $self.val() - $self.val() % $self.attr("step");
+        if (v > parseInt($self.attr("max"))) {
+            v = parseInt($self.attr("max")) - parseInt($self.attr("max")) % $self.attr("step");
+        }
+        if (v < parseInt($self.attr("min"))) v = parseInt($self.attr("min"));
+        $self.val(v);
     });
 
     var $radio_btn = $('#Product > .content > .options > .radio > .control')
@@ -330,7 +333,7 @@ function PageDefaultSet(result) {
                 }
             } else price_text = price.toLocaleString('en-US');
             price_temp.find(".discount").text(price_text);
-            if (item.fK_RId != 1) price_temp.find(".discount").addClass("mprice");
+            if (item.fK_RId != 1 && oriprice > price) price_temp.find(".discount").addClass("mprice");
 
             if (oriprice > price) {
                 price_temp.find(".ori_price").text(oriprice.toLocaleString('en-US'));
@@ -360,11 +363,11 @@ function PageDefaultSet(result) {
     }
     if (result.stocks.length > 0) {
         $input_quantity.attr({
-            min: 0,
+            min: result.stocks[0].min_Qty,
             max: result.stocks[0].stock - (result.stocks[0].stock % result.stocks[0].min_Qty),
-            step: result.stocks[0].min_Qty
+            step: result.stocks[0].min_Qty ?? 1
         });
-        if (result.stocks[0].stock > 0) {
+        if (result.stocks[0].stock > result.stocks[0].min_Qty) {
             $counter_input.removeClass("isEmpty");
             $input_quantity.trigger("change");
         }
@@ -518,7 +521,7 @@ function SpecRadio() {
     $self = $(this);
     $self_p = $self.parents(".radio").first();
     $self_s = $self_p.siblings(".radio");
-    $input_quantity.val(1);
+    $input_quantity.val($input_quantity.attr("step"));
 
     switch ($self_p.data("stype")) {
         case 1:
@@ -628,11 +631,11 @@ function SpecRadio() {
                 });
 
                 $input_quantity.attr({
-                    min: 0,
+                    min: item.minQty,
                     max: item.stock - (item.stock % item.minQty),
-                    step: item.minQty
+                    step: item.minQty ?? 1
                 });
-                if (item.stock <= 0) $counter_input.addClass("isEmpty");
+                if (item.stock < item.minQty) $counter_input.addClass("isEmpty");
                 else {
                     $counter_input.removeClass("isEmpty");
                 }
@@ -696,7 +699,7 @@ function AddToCart() {
                             $input_quantity.attr("max", stock)
                         }
                     }
-                    $input_quantity.val(1);
+                    $input_quantity.val($input_quantity.attr("step"));
                 } else {
                     if (result.error == "商品庫存不足") {
                         Coker.sweet.warning(result.error, result.message, function () {

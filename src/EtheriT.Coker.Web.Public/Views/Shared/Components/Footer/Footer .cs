@@ -108,9 +108,10 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                             {
                                 footerViewModels = new List<FooterViewModel> {
                                     new FooterViewModel { Title = "夯酷客(HomeCook)", Link = "/yuanjer/HomeCook", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "全產品", Link = "/yuanjer/homecookproducts" },
                                             new FooterViewModel { Title = "香辛與調味料", Link = "/yuanjer/Flavorings" },
                                             new FooterViewModel { Title = "高湯鮮味", Link = "/yuanjer/umami" },
-                                            new FooterViewModel { Title = "炸粉", Link = "/yuanjer/batter" },
+                                            new FooterViewModel { Title = "炸粉醃漬料", Link = "/yuanjer/batter" },
                                             new FooterViewModel { Title = "飲品、烘焙及零嘴", Link = "/yuanjer/baking" },
                                             new FooterViewModel { Title = "清潔蔬果", Link = "/yuanjer/vegclean" },
                                         }
@@ -128,11 +129,11 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                     },
                                     new FooterViewModel { Title = "客戶服務", Link = "", footerViewModels = new List<FooterViewModel> {
                                             new FooterViewModel { Title = "會員專區", Link = "/yuanjer/Member" },
-                                            new FooterViewModel { Title = "購物須知", Link = "/yuanjer/shoppingnotic" },
+                                            new FooterViewModel { Title = "購買須知", Link = "/yuanjer/shoppingnotic" },
                                             new FooterViewModel { Title = "聯絡我們", Link = "/yuanjer/contact_us" },
                                         }
                                     },
-                                    new FooterViewModel { Title = "最新消息", Link = "/yuanjer/News"},
+                                    new FooterViewModel { Title = "訊息公告", Link = "/yuanjer/News"},
                                     new FooterViewModel { Title = "美味生活", Link = "/yuanjer/howliving"}
                                 },
                                 Logo_Image = "/upload/yulogo.png",

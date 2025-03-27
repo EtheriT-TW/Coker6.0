@@ -147,14 +147,13 @@ header .image-wh {
 /* Button Mega Menu */
 #Mega_Menu .btn_menu {
     left: 0px;
-    /*transform: translateX(0);*/
     transition: all 0.25s ease-in-out;
 }
 
     #Mega_Menu .btn_menu.show {
         position: absolute;
-        left: 325px;
-        /*transform: translateX(325px);*/
+        left: 315.5px;
+        top: 1rem;
     }
 
         #Mega_Menu .btn_menu.show > .bar:nth-of-type(1) {
@@ -221,7 +220,11 @@ header .image-wh {
         }
 
     #Offcanvas_Mega_Menu .offcanvas-header .logo {
-        width: 40%;
+        max-height: 60px;
+        max-width: 70%;
+        height: auto;
+        width: auto;
+        object-fit: contain;
     }
 
 .subtitle > .subtitle_title {
@@ -282,9 +285,10 @@ header .image-wh {
         }
 
         .metaMenu .collapse_menus > .container > ul ul {
+            height: 180px;
             flex-wrap: wrap;
             flex-direction: column;
-            height: 180px;
+            column-gap: 1rem;
         }
 
             .metaMenu .collapse_menus > .container > ul ul > li {

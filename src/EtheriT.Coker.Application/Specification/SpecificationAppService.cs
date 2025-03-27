@@ -77,7 +77,7 @@ namespace EtheriT.Coker.Application.Specification
             try
             {
                 output = await this.SpecAddUp(data);
-                
+
                 return output;
             }
             catch (Exception e)
@@ -131,7 +131,7 @@ namespace EtheriT.Coker.Application.Specification
                 output.Error = e.Message;
                 return output;
             }
-        } 
+        }
         public async Task<JsonResult> GetAllTypeList(DataSourceLoadOptions loadOptions)
         {
             try
@@ -252,6 +252,26 @@ namespace EtheriT.Coker.Application.Specification
             return output;
 
         }
+        // 規格類型刪除前檢查底下是否有規格
+        public async Task<ResponseMessageDto> CheckRelatSpec(long Id)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var specs = await db.Prod_Specs.Where(e => e.FK_Tid == Id).ToListAsync();
+                if (specs.Any())
+                {
+                    var specnum = specs.Count > 1 ? (specs.Count - 1).ToString() : ",";
+                    response.Message = $"{specs[0].Title},{specnum}";
+                }
+                else response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
         public async Task<ResponseMessageDto> TypeDelete(long Id)
         {
 
@@ -294,6 +314,31 @@ namespace EtheriT.Coker.Application.Specification
             }
 
             return output;
+        }
+        // 規格刪除前檢查是否有商品綁定
+        public async Task<ResponseMessageDto> CheckRelatProd(long Id)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var prodids = await db.Prod_Stocks.Where(e => e.FK_S1id == Id || e.FK_S2id == Id).Select(e => e.FK_Pid).Distinct().ToListAsync();
+                if (prodids.Any())
+                {
+                    var prods = await db.Prods.Where(e => prodids.Contains(e.Id)).ToListAsync();
+                    if (prods.Any())
+                    {
+                        response.Message = $"{prods[0].Id},{prods[0].Title}";
+                        response.Message += prods.Count > 1 ? $",{prods.Count - 1}" : ",";
+                    }
+                    else response.Success = true;
+                }
+                else response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
         }
         public async Task<ResponseMessageDto> SpecDelete(long Id)
         {

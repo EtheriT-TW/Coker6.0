@@ -597,21 +597,22 @@ function CartListAdd(data) {
     $template.find(".btn_count_plus").on("click", function () {
         var $self_bro = $(this).siblings(".pro_quantity");
         if ($self_bro.val() < max_quantity) {
-            $self_bro.val(parseInt($self_bro.val()) + 1)
+            $self_bro.val(parseInt($self_bro.val()) + parseInt($self_bro.attr("step")))
             CartQuantityUpdate($template.find(".pro_subtotal"), data.price, $template.data("scId"), $self_bro.val());
         }
     });
     $template.find(".btn_count_minus").on("click", function () {
         var $self_bro = $(this).siblings(".pro_quantity");
-        if ($self_bro.val() > 1) {
-            $self_bro.val(parseInt($self_bro.val()) - 1)
+        if ($self_bro.val() > parseInt($self_bro.attr("step"))) {
+            $self_bro.val(parseInt($self_bro.val()) - parseInt($self_bro.attr("step")))
             CartQuantityUpdate($template.find(".pro_subtotal"), data.price, $template.data("scId"), $self_bro.val());
         }
     });
     $template.find(".pro_quantity").on("change", function () {
         var $self = $(this);
-        if ($self.val() < 1) $self.val(1);
-        if ($self.val() > max_quantity) $self.val(max_quantity)
+        if ($self.val() < parseInt($self.attr("step"))) $self.val(parseInt($self.attr("step")));
+        else if ($self.val() > max_quantity) $self.val(max_quantity - (max_quantity % parseInt($self.attr("step"))))
+        else $self.val($self.val() - ($self.val() % parseInt($self.attr("step"))))
         CartQuantityUpdate($template.find(".pro_subtotal"), data.price, $template.data("scId"), $self.val());
     });
 
@@ -706,6 +707,7 @@ function CartListInsert($frame, data) {
                     break;
                 case "quantity":
                     $self.val(data[key]);
+                    $self.attr({ step: data.step })
                     break;
                 default:
                     $self.text(data[key]);
@@ -737,12 +739,13 @@ function CartQuantityUpdate(self, price, scid, quantity) {
             if (result.success) {
                 Product.GetOne.Cart(result.message).done(function (result) {
                     shopping_cart_data.find(e => e.Id == result.scId).Price = price;
+                    shopping_cart_data.find(e => e.Id == result.scId).Bonus = bonus;
                     shopping_cart_data.find(e => e.Id == result.scId).Quantity = quantity;
-                    self.data("subtotal", price * quantity)
-                    self.text((price * quantity).toLocaleString())
+                    var sub_price = price * quantity;
+                    self.data("subtotal", sub_price)
+                    self.text(sub_price.toLocaleString())
                     TotalCount();
                     CartDropReset(scid, quantity)
-
                 });
             } else {
                 if (result.error == "商品庫存不足") {
@@ -1002,7 +1005,6 @@ function DeleteRecipient() {
     $this_parent.remove();
 }
 function OrderHeaderAdd() {
-
     Coker.Order.CheckStock(shopping_cart_data).done(function (result) {
         if (result.success) {
             var checksuccess = true;

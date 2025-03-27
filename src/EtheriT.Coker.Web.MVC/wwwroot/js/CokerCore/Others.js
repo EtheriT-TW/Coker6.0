@@ -105,9 +105,27 @@
                 dataType: "json"
             });
         },
+        CheckRelatSpec: function (id) {
+            return $.ajax({
+                url: "/api/Specification/CheckRelatSpec/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { Id: id }
+            });
+        },
         TypeDelect: function (id) {
             return $.ajax({
                 url: "/api/Specification/TypeDelete/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { Id: id }
+            });
+        },
+        CheckRelatProd: function (id) {
+            return $.ajax({
+                url: "/api/Specification/CheckRelatProd/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,

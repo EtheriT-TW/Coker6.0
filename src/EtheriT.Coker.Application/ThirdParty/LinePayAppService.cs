@@ -13,6 +13,7 @@ using EtheriT.Coker.Application.Shared.Order;
 using static EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto.LinePayRequestBodyDto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Microsoft.AspNetCore.Mvc;
+using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -75,7 +76,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 ohdata.State = OrderStatusEnum.付款失敗;
                                 db.SaveChanges();
                                 response.Error = linePayResponse.ReturnCode;
-                                response.Message = linePayResponse.ReturnMessage;
+                                response.Message = $"{(LinePayErrorCodeEnum)int.Parse(linePayResponse.ReturnCode)}({linePayResponse.ReturnMessage})";
                             }
                         }
                     }
@@ -201,7 +202,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             ohdata.State = OrderStatusEnum.付款失敗;
                             db.SaveChanges();
                             response.Error = linePayResponse.ReturnCode;
-                            response.Message = linePayResponse.ReturnMessage;
+                            response.Message = $"{(LinePayErrorCodeEnum)int.Parse(linePayResponse.ReturnCode)}({linePayResponse.ReturnMessage})";
                         }
                     }
                 }
@@ -280,7 +281,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 db.SaveChanges();
                             }
                             response.Error = linePayResponse.ReturnCode;
-                            response.Message = linePayResponse.ReturnMessage;
+                            response.Message = $"{(LinePayErrorCodeEnum)int.Parse(linePayResponse.ReturnCode)}({linePayResponse.ReturnMessage})";
                         }
                     }
                 }
@@ -441,15 +442,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                             response.Success = true;
                             response.Message = $"退款編號{linePayResponse.info[0].refundList[0].refundTransactionId}已於{linePayResponse.info[0].refundList[0].refundTransactionDate.ToString("yyyy/MM/dd")}退款，退款金額為{(linePayResponse.info[0].refundList[0].refundAmount * -1).ToString("$#,##0")}";
                         }
-                        else
-                        {
-                            response.Message = "該筆訂單不存在退款資訊";
-                        }
+                        else response.Message = "該筆訂單不存在退款資訊";
                     }
-                    else
-                    {
-                        response.Message = linePayResponse.ReturnMessage;
-                    }
+                    else response.Message = $"{(LinePayErrorCodeEnum)int.Parse(linePayResponse.ReturnCode)}({linePayResponse.ReturnMessage})";
                     response.Error = linePayResponse.ReturnCode;
                 }
             }

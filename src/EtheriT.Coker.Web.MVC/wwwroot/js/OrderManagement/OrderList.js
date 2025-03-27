@@ -330,8 +330,9 @@ function HeaderDataSet(result) {
         }
     }
 
-    if (result.refundTransactionId != null) $(".btn_checkrefund").removeClass("d-none");
-    else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock) {
+    //if (result.refundTransactionId != null) $(".btn_checkrefund").removeClass("d-none");
+    //else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock) {
+    if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock) {
         if (![7, 8, 10, 15].includes(result.paymentCode)) $(".btn_refund").removeClass("d-none");
     }
     else OrderStateChange(oristate)
@@ -472,7 +473,7 @@ function OrderStateChange(state) {
             if (thirdparty == 3) $(".btn_recheck").removeClass("d-none");
             break;
         case 5:
-            if (thirdparty != 1) $(".btn_failReason").removeClass("d-none");
+            //if (thirdparty != 1) $(".btn_failReason").removeClass("d-none");
             break;
         case 6:
             switch (payment) {

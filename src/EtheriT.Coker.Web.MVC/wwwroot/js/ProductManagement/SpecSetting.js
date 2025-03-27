@@ -43,21 +43,41 @@ function editButtonVisible(e) {
 }
 
 function typeDeleteButtonClicked(e) {
-    co.sweet.confirm("刪除規格", "規格類型刪除後將一併清除該類型下的所有規格名稱以及相關商品的規格", "確　定", "取　消", function () {
-        co.Spec.TypeDelect(e.row.key).done(function () {
-            TypeList_dxData.refresh();
-            SpecList_dxData.refresh();
-        })
-    })
+    co.Spec.CheckRelatSpec(e.row.key).done(function (result) {
+        if (result.error != null) co.sweet.error("發生錯誤", result.error, null, false);
+        else if (result.success) {
+            co.sweet.confirm("刪除規格類型", "確定刪除？規格類型刪除後不可復原", "確　定", "取　消", function () {
+                co.Spec.SpecDelect(e.row.key).done(function () {
+                    TypeList_dxData.refresh();
+                    SpecList_dxData.refresh();
+                })
+            })
+        } else {
+            var message = result.message.split(",");
+            var wraning_text = `已有規格綁定此類型：【${message[0]}】`
+            if (message[1] != "") wraning_text += `以及其他共${message[1]}個`
+            co.sweet.error("規格類型已綁定", wraning_text, null, false);
+        }
+    });
 }
 
 function specDeleteButtonClicked(e) {
-    co.sweet.confirm("刪除規格", "確定刪除？規格刪除後不可復原", "確　定", "取　消", function () {
-        co.Spec.SpecDelect(e.row.key).done(function () {
-            TypeList_dxData.refresh();
-            SpecList_dxData.refresh();
-        })
-    })
+    co.Spec.CheckRelatProd(e.row.key).done(function (result) {
+        if (result.error != null) co.sweet.error("發生錯誤", result.error, null, false);
+        else if (result.success) {
+            co.sweet.confirm("刪除規格", "確定刪除？規格刪除後不可復原", "確　定", "取　消", function () {
+                co.Spec.SpecDelect(e.row.key).done(function () {
+                    TypeList_dxData.refresh();
+                    SpecList_dxData.refresh();
+                })
+            })
+        } else {
+            var message = result.message.split(",");
+            var wraning_text = `已有商品綁定此規格：【${message[1]}(商品編號${message[0]})】`
+            if (message[2] > 0) wraning_text += `以及其他共${message[2]}個`
+            co.sweet.error("規格已綁定", wraning_text, null, false);
+        }
+    });
 }
 
 function getType(options) {

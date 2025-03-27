@@ -15,7 +15,9 @@ namespace EtheriT.Coker.Application.Shared.Specification
         public Task<JsonResult> GetAllSpecList(DataSourceLoadOptions loadOptions);
         public Task<List<SpecTypeListDto>> GetPickTypeList();
         public Task<List<SpecTypePickListDto>> GetPickSpecList();
+        public Task<ResponseMessageDto> CheckRelatSpec(long Id);
         public Task<ResponseMessageDto> TypeDelete(long Id);
+        public Task<ResponseMessageDto> CheckRelatProd(long Id);
         public Task<ResponseMessageDto> SpecDelete(long Id);
 
     }

@@ -55,9 +55,19 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await specificationAppService.GetPickSpecList();
         }
         [HttpGet]
+        public async Task<ResponseMessageDto> CheckRelatSpec(long Id)
+        {
+            return await specificationAppService.CheckRelatSpec(Id);
+        }
+        [HttpGet]
         public async Task<ResponseMessageDto> TypeDelete(long Id)
         {
             return await specificationAppService.TypeDelete(Id);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> CheckRelatProd(long Id)
+        {
+            return await specificationAppService.CheckRelatProd(Id);
         }
         [HttpGet]
         public async Task<ResponseMessageDto> SpecDelete(long Id)

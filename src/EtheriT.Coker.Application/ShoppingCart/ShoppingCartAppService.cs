@@ -330,7 +330,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     temp_output.Title = prods?.Title ?? "";
                     if (shoppingCart.IsOrder)
                     {
-                        if (shoppingCart.ProdName != null && shoppingCart.ProdName != "") temp_output.Title= shoppingCart.ProdName;
+                        if (shoppingCart.ProdName != null && shoppingCart.ProdName != "") temp_output.Title = shoppingCart.ProdName;
                         else
                         {
                             // 先前ShoppingCart尚未實際存ProdName要回存
@@ -400,6 +400,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                     temp_output.Describe = prods?.Description ?? "";
 
+                    temp_output.Step = prod_stocks?.Min_Qty ?? 1;
 
                     output.Add(temp_output);
                 }

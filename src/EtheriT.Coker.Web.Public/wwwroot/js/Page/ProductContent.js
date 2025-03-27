@@ -330,7 +330,7 @@ function PageDefaultSet(result) {
                 }
             } else price_text = price.toLocaleString('en-US');
             price_temp.find(".discount").text(price_text);
-            if (item.fK_RId != 1) price_temp.find(".discount").addClass("mprice");
+            if (item.fK_RId != 1 && oriprice > price) price_temp.find(".discount").addClass("mprice");
 
             if (oriprice > price) {
                 price_temp.find(".ori_price").text(oriprice.toLocaleString('en-US'));

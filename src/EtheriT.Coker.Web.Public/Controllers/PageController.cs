@@ -453,12 +453,13 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["PageName"] = model.PageData.Title;
             ViewData["OrgName"] = model.orgName;
             ViewData["Layout"] = model.layout;
-            ViewData["PageTagNameName"] = key == "home" ? model.PageData.SiteName : $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
-            ViewData["PageTagNameName"] = HttpUtility.HtmlEncode(ViewData["PageTagNameName"]).Trim().Replace("&quot;","''");
+            ViewBag.PageTagNameName = key == "home" ? model.PageData.SiteName : $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
+            ViewBag.PageTagNameName = HttpUtility.HtmlAttributeEncode(ViewBag.PageTagNameName.Trim());
             ViewData["Description"] = model.PageData.Description;
             ViewBag.GA4 = model.storeSet.GA4;
             ViewBag.GTM = model.storeSet.GTM;
             ViewBag.GoogleAds = model.storeSet.GoogleAds;
+            ViewBag.ImageUrl = string.IsNullOrEmpty(model.PageData.ImageUrl) ? "" : new Uri(new Uri(model.root), model.PageData.ImageUrl).AbsoluteUri;
             ViewData["google.translate"] = model.storeSet.GoogleTranslate;
             ViewData["CurrentUrl"] = model.PageData.CurrentUrl;
             ViewData["Root"] = model.root;

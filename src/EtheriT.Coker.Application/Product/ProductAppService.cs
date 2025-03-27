@@ -2359,6 +2359,11 @@ namespace EtheriT.Coker.Application.Product
                         result.Title = prod.Title;
                         result.Description = !string.IsNullOrEmpty(prod.Description) ? prod.Description :
                                                 !string.IsNullOrEmpty(prod.Introduction) ? prod.Introduction : htmlProcessor.text(stringHandler.HtmlDecode(prod.Html));
+                        var images = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { Sid = prod.Id, Type = (int)FileBindTypeEnum.產品, Size = 1});
+                        if(images.Count > 0)
+                        {
+                            result.ImageUrl = images[0].Link;
+                        }
                         result.Css = prod.Css ?? "";
                         result.Html = result.Html == null ? "" : result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
                     }

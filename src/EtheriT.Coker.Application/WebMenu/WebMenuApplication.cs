@@ -625,6 +625,12 @@ namespace EtheriT.Coker.Application
                         result.CurrentUrl = $"/{menu.RouterName}";
                         result.VisibleFooter = menu.VisibleFooter;
                         result.VisibleHeader = menu.VisibleHeader;
+                        var html = stringHandler.HtmlDecode(result.Html);
+                        var images = htmlProcessor.Find(htmlProcessor.LoadHtml(html), "img");
+                        if (images != null && images.Any())
+                        {
+                            result.ImageUrl = images[0].Attributes["src"].Value;
+                        }
                     }
                 }
             }

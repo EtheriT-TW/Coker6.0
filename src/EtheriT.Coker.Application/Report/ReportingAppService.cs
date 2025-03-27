@@ -34,7 +34,7 @@ namespace EtheriT.Coker.Application.Report
                     r001 = new R001撿貨單Model
                     {
                         列印時間 = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"),
-                        訂單日期 = order.CreationTime.ToString("yyyy/MM/dd"),
+                        訂單日期 = order.CreationTime.ToString("yyyy/MM/dd HH:mm"),
                         訂單編號 = ("000000000" + order.Id.ToString()).Substring(order.Id.ToString().Length, 9),
                         客戶名稱 = order.Orderer,
                         收件人 = order.Recipient,
@@ -47,7 +47,7 @@ namespace EtheriT.Coker.Application.Report
                         訂單折抵 = order.Discount ?? 0,
                         紅利折抵 = order.Bonus ?? 0,
                         訂單總金額 = order.Subtotal + order.Freight - (order.Discount ?? 0),
-                        發票載具 = order.InvoiceRecipient == 1 ? "訂購人" : order.InvoiceRecipient == 2 ? "收件人" : "公司(三聯)",
+                        發票載具 = order.InvoiceRecipient == 1 ? "訂購人" : order.InvoiceRecipient == 2 ? "收件人" : $"公司(三聯){order.UniformId}\n{order.InvoiceTitle}\n{order.InvoiceAddress}",
                         優惠券折抵 = 0,
                         送貨方式 = ((ShippingTypeEnum)order.Shipping).ToString(),
                         訂單明細 = (from x in order.Order_Details

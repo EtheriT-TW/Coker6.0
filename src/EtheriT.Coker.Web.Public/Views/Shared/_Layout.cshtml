@@ -13,7 +13,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["PageTagNameName"]</title>
+    <title>@Html.Raw(ViewBag.PageTagNameName)</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/lib/fortawesome/css/all.min.css" />
     <link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" />
@@ -44,15 +44,23 @@
     <meta name="author" content="易碩網際科技股份有限公司" />
     <meta name="copyright" content="易碩網際科技股份有限公司" />
     <meta name="description" content="@Html.Raw(ViewData["Description"])">
-    <meta itemprop="name" content="@Html.Raw(ViewData["PageTagNameName"])" />
+    <meta itemprop="name" content="@Html.Raw(ViewBag.PageTagNameName)" />
     <meta itemprop="description" content="@Html.Raw(ViewData["Description"])" />
-    <meta name="twitter:title" content="@Html.Raw(ViewData["PageTagNameName"])" />
+    <meta name="twitter:title" content="@Html.Raw(ViewBag.PageTagNameName)" />
     <meta name="twitter:description" content="@Html.Raw(ViewData["Description"])" />
-    <meta property="og:title" content="@Html.Raw(ViewData["PageTagNameName"])" />
+    @if (!string.IsNullOrEmpty(ViewBag.ImageUrl))
+    {
+        <meta name="twitter:image" content="@Html.Raw(ViewBag.ImageUrl)">
+    }
+    <meta property="og:title" content="@Html.Raw(ViewBag.PageTagNameName)" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="@ViewData["CurrentUrl"]" />
     <meta property="og:site_name" content="@Html.Raw(ViewData["SideName"])" />
     <meta property="og:description" content="@Html.Raw(ViewData["Description"])" />
+    @if (!string.IsNullOrEmpty(ViewBag.ImageUrl))
+    {
+        <meta property="og:image" content="@Html.Raw(ViewBag.ImageUrl)">
+    }
     <meta property="og:locale" content="zh-tw" />
     <meta name="csp-nonce" content="@Html.Raw(ViewBag.Nonce)" />
 

@@ -46,13 +46,13 @@ namespace EtheriT.Coker.Application.Processor
 			return cleanedText;
 		}
 
-		private HtmlDocument LoadHtml(string htmlContent)
+		public HtmlDocument LoadHtml(string htmlContent)
 		{
 			var doc = new HtmlDocument();
 			doc.LoadHtml(htmlContent);
 			return doc;
 		}
-		private List<HtmlNode> Find(HtmlDocument document, string selector)
+		public List<HtmlNode> Find(HtmlDocument document, string selector)
 		{
 			if (string.IsNullOrEmpty(selector)) return new List<HtmlNode>();
 			string xpath = CssSelectorToXPath(selector);

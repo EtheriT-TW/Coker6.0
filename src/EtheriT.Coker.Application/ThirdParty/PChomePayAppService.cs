@@ -19,6 +19,8 @@ using AutoMapper.Configuration.Conventions;
 using MailKit.Search;
 using System.Text.Json;
 using System;
+using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
+using DevExpress.CodeParser;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -237,7 +239,10 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 Console.WriteLine($"🔹 Headers: {string.Join("\n", GetResponse.Headers)}");
                                 Console.WriteLine($"🔹 Response Body: {responseBody}");
 
-                                throw new Exception($"API 錯誤: {GetResponse.StatusCode}\n{responseBody}");
+                                JObject obj = JObject.Parse(responseBody);
+                                var errorcode = obj["code"]?.Value<int>();
+                                if (errorcode.HasValue) throw new Exception($"{(PChomePayErrorCodeEnum)errorcode}");
+                                else throw new Exception($"API 錯誤: {GetResponse.StatusCode}\n{responseBody}");
                             }
                             else GetResponse.EnsureSuccessStatusCode();
 
@@ -408,8 +413,10 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 Console.WriteLine($"🔹 Headers: {string.Join("\n", PostResponse.Headers)}");
                                 Console.WriteLine($"🔹 Response Body: {responseBody}");
 
-                                // 可以拋出自訂例外，包含回應內容
-                                throw new Exception($"API 錯誤: {PostResponse.StatusCode}\n{responseBody}");
+                                JObject obj = JObject.Parse(responseBody);
+                                var errorcode = obj["code"]?.Value<int>();
+                                if (errorcode.HasValue) throw new Exception($"{(PChomePayErrorCodeEnum)errorcode}");
+                                else throw new Exception($"API 錯誤: {PostResponse.StatusCode}\n{responseBody}");
                             }
                             else PostResponse.EnsureSuccessStatusCode();
                             var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
@@ -450,7 +457,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             catch (Exception ex)
             {
                 // 其他未知錯誤
-                response.Message = $"Refund Other Error: {ex.Message}";
+                response.Message = $"Refund Error: {ex.Message}";
             }
             return response;
         }
@@ -477,7 +484,10 @@ namespace EtheriT.Coker.Application.ThirdParty
                             Console.WriteLine($"🔹 Headers: {string.Join("\n", GetResponse.Headers)}");
                             Console.WriteLine($"🔹 Response Body: {responseBody}");
 
-                            throw new Exception($"API 錯誤: {GetResponse.StatusCode}\n{responseBody}");
+                            JObject obj = JObject.Parse(responseBody);
+                            var errorcode = obj["code"]?.Value<int>();
+                            if (errorcode.HasValue) throw new Exception($"{(PChomePayErrorCodeEnum)errorcode}");
+                            else throw new Exception($"API 錯誤: {GetResponse.StatusCode}\n{responseBody}");
                         }
                         else GetResponse.EnsureSuccessStatusCode();
 

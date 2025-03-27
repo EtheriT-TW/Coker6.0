@@ -285,7 +285,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                             {
                                 switch (PChomePayState.status_code)
                                 {
+                                    case null:
                                     case "FE":
+                                        // API規格是沒有提供超商條碼付款IBRCD這類的錯誤代碼所以會收到null 暫時先歸類到這
                                         message += "訂單逾時";
                                         break;
                                     case "FT":

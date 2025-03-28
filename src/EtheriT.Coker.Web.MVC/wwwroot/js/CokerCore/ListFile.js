@@ -20,22 +20,39 @@
             })
             if ($self_list.data("uploadtype") != 4) return;
             var value = $(this).prev().val();
+            var videoId = "";
+            var starttime = "";
+            var urlParams = new URLSearchParams(value.split('?')[1]);
+            // 處理不同格式的 YouTube 網址
+            if (value.startsWith('https://www.youtube.com/watch?')) {
+                videoId = urlParams.get('v');
+                starttime = urlParams.get('t');
+            } else if (value.startsWith('https://youtu.be/') ||
+                value.startsWith("https://www.youtube.com/shorts/") ||
+                value.startsWith("https://youtube.com/shorts/") ||
+                value.startsWith('https://www.youtube.com/live/')) {
+                var urlParts = value.split('/');
+                videoId = urlParts[urlParts.length - 1].split('?')[0];
+                starttime = urlParams.get('t') == null ? urlParams.get('start') : urlParams.get('t');
+            }
             var index = value.indexOf("watch?v=") + 8;
             $self.find(".youtube_preview").children("*").remove();
-            if (value != "" && index > -1 && value.substring(index) != "") {
-                var url = "https://www.youtube-nocookie.com/embed/" + value.substring(index);
+            if (value != "" && index > -1 && videoId != "") {
+                var url = "https://www.youtube-nocookie.com/embed/" + videoId;
+                if (starttime != null) url += `?start=${starttime}`;
                 var iframe_html = `<iframe class="yt_preview w-100 h-100" src="${url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
                 $self.find(".youtube_preview").append(iframe_html);
                 $self_list.find(".title").text(value);
+                var videofile = starttime == null ? videoId : `${videoId}&t=${starttime}`;
                 var obj = {
-                    File: value.substring(index),
+                    File: videofile,
                 };
-                if (typeof (total_files.find(item => typeof (item["Id"]) != "undefined" &&  item["Id"] == $self_list.data("id"))) != "undefined") {
-                    if (total_files.find(item => item["Id"] == $self_list.data("id"))["File"] != value.substring(index)) {
+                if (typeof (total_files.find(item => typeof (item["Id"]) != "undefined" && item["Id"] == $self_list.data("id"))) != "undefined") {
+                    if (total_files.find(item => item["Id"] == $self_list.data("id"))["File"].split("?")[0] != videoId) {
                         total_files.find(item => item["Id"] == $self_list.data("id"))["File"] = obj["File"]
                     }
                 } else if (typeof (total_files.find(item => item["TempId"] == $self_list.data("tempid"))) != "undefined") {
-                    if (total_files.find(item => item["TempId"] == $self_list.data("tempid"))["File"] != value.substring(index)) {
+                    if (total_files.find(item => item["TempId"] == $self_list.data("tempid"))["File"].split("?")[0] != videoId) {
                         total_files.find(item => item["TempId"] == $self_list.data("tempid"))["File"] = obj["File"]
                     }
                 } else {
@@ -44,7 +61,7 @@
                     obj["IsDelete"] = false;
                     total_files.push(obj);
                 }
-                $self_list.find(".thumb_img").attr("src", `https://img.youtube.com/vi/${obj["File"]}/hqdefault.jpg`);
+                $self_list.find(".thumb_img").attr("src", `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`);
             } else {
                 var error_html = "<div class='w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-25 fw-bold'>請輸入正確的Youtube連結</div>"
                 $self.find(".youtube_preview").append(error_html);
@@ -55,16 +72,16 @@
 
         $(function () {
             var drap_sy, drap_ey, drap_itemh;
-            $(".data_upload > ul").each(function (index,element) {
+            $(".data_upload > ul").each(function (index, element) {
                 $(element).sortable({
                     items: "> .upload_list",
                     handle: ".serNoTool",
                     cursor: "move",
                     dropOnEmpty: false,
                     placeholder: "sortable-placeholder",
-                    tolerance:"pointer",
+                    tolerance: "pointer",
                     start: function (event, ui) {
-                        ui.item.data("startIndex",ui.item.index() + 1);
+                        ui.item.data("startIndex", ui.item.index() + 1);
                         drap_sy = ui.item.offset().top;
                         drap_itemh = ui.item.height() * 1.5
                     },
@@ -322,7 +339,7 @@
             })
         })
     },
-    ListFile:function($self) {
+    ListFile: function ($self) {
         /***************
          uploadtype：
             1 = 圖片;
@@ -407,9 +424,9 @@
                         }
                     }
                     break;
-                 /* ********** *****************
-                須重打，360顯示的部分
-                ***************************/
+                /* ********** *****************
+               須重打，360顯示的部分
+               ***************************/
                 case 2:
                     upload_file = co.File.Upload360Init("FileUpload");
                     if ($self.data("file")) {
@@ -419,9 +436,9 @@
                     }
                     $parent.find(".upload_frame").removeClass("d-none");
                     break;
-                 /* ********** *****************
-               須重打，影片顯示的部分
-               ***************************/
+                /* ********** *****************
+              須重打，影片顯示的部分
+              ***************************/
                 case 3:
                     if ($self.find(".title").text() == "") {
                         upload_file = co.File.UploadVideoInit("FileUpload");

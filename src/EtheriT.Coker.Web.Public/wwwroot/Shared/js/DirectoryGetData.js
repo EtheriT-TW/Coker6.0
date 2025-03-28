@@ -341,8 +341,9 @@ function DirectoryDataInsert($item, result) {
     const temp_tag = $item.find(".templatecontent-tag").html();
     const isSearch = $item.data("type") == "search";
     const dirPath = typeof ($item.data("dirpath")) == "undefined" ? "" : $item.data("dirpath").toLowerCase();
-    if (result.length == 0) $item.find(".catalog").addClass("empty");
-    else $item.find(".catalog").removeClass("empty");
+    const $catalog = $item.find(".catalog");
+    if (result.length == 0) $catalog.addClass("empty");
+    else $catalog.removeClass("empty");
 
     if ($item.hasClass("hover_display_details") && typeof (OrgName) != "undefined") {
         if (result.length > 0) {
@@ -534,14 +535,16 @@ function DirectoryDataInsert($item, result) {
             let badge = $(temp_tag).clone();
             badge.text(tag.tag_Name.slice(0, 4));
             badge.data("tagname", tag.tag_Name)
-            badge.addClass("more-tag d-none");
+            if ($catalog.hasClass("type1")) badge.addClass("more-tag");
+            else badge.addClass("more-tag d-none");
             $tags.append(badge);
         });
         if (data.tags.length > 2) {
             let badge = $(temp_tag).clone();
             badge.text("...");
             badge.data("tagname", "...")
-            badge.addClass("less-tag");
+            if ($catalog.hasClass("type1")) badge.addClass("less-tag d-none");
+            else badge.addClass("less-tag");
             $tags.append(badge);
         }
         $tags.children().each(function () {
@@ -562,7 +565,7 @@ function DirectoryDataInsert($item, result) {
 
         if (data.type == 1 && typeof (IsLogin) != "undefined" && IsLogin) ProdFavBtnSet(content, data)
 
-        $item.find(".catalog").append(content);
+        $catalog.append(content);
 
         if (data.type == 1 && content.find(".btn_addToCar").length > 0) {
             content.find(".btn_addToCar").on("click", function () {

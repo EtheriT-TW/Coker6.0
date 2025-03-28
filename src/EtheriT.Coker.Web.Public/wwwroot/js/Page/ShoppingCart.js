@@ -576,6 +576,7 @@ function CartListAdd(data) {
             obj['Id'] = data.scId;
             obj['Price'] = data.price;
             obj['Quantity'] = data.quantity;
+            obj['Bonus'] = data.bonus;
             shopping_cart_data.push(obj);
             hasProds = true;
         }
@@ -598,14 +599,14 @@ function CartListAdd(data) {
         var $self_bro = $(this).siblings(".pro_quantity");
         if ($self_bro.val() < max_quantity) {
             $self_bro.val(parseInt($self_bro.val()) + parseInt($self_bro.attr("step")))
-            CartQuantityUpdate($template.find(".pro_subtotal"), data.price, $template.data("scId"), $self_bro.val());
+            CartQuantityUpdate($template.find(".pro_subtotal"), data.price, data.bonus, $template.data("scId"), $self_bro.val());
         }
     });
     $template.find(".btn_count_minus").on("click", function () {
         var $self_bro = $(this).siblings(".pro_quantity");
         if ($self_bro.val() > parseInt($self_bro.attr("step"))) {
             $self_bro.val(parseInt($self_bro.val()) - parseInt($self_bro.attr("step")))
-            CartQuantityUpdate($template.find(".pro_subtotal"), data.price, $template.data("scId"), $self_bro.val());
+            CartQuantityUpdate($template.find(".pro_subtotal"), data.price, data.bonus, $template.data("scId"), $self_bro.val());
         }
     });
     $template.find(".pro_quantity").on("change", function () {
@@ -613,7 +614,7 @@ function CartListAdd(data) {
         if ($self.val() < parseInt($self.attr("step"))) $self.val(parseInt($self.attr("step")));
         else if ($self.val() > max_quantity) $self.val(max_quantity - (max_quantity % parseInt($self.attr("step"))))
         else $self.val($self.val() - ($self.val() % parseInt($self.attr("step"))))
-        CartQuantityUpdate($template.find(".pro_subtotal"), data.price, $template.data("scId"), $self.val());
+        CartQuantityUpdate($template.find(".pro_subtotal"), data.price, data.bonus, $template.data("scId"), $self.val());
     });
 
     if ($template.find(".btn_move_to_favorites").length > 0) {
@@ -700,10 +701,28 @@ function CartListInsert($frame, data) {
                         $self.siblings("div[data-key='price']").addClass("red_text");
                     }
                     break;
+                case "price":
+                    var price_text = "";
+                    if (data['bonus'] > 0) {
+                        price_text = `$${data[key].toLocaleString()}+紅利${data['bonus'].toLocaleString()}`;
+                    } else {
+                        price_text = `$${data[key].toLocaleString()}`;
+                    }
+                    $self.text(price_text);
+                    break;
                 case "subtotal":
-                    $self.text(data['price'] * data['quantity']);
-                    $self.data("subtotal", data['price'] * data['quantity'])
-                    CartQuantityUpdate($self, data['price'], $frame.data("scId"), data['quantity']);
+                    var sub_price = (data['price'] * data['quantity']);
+                    var sub_bonus = (data['bonus'] * data['quantity']);
+                    var price_text = "";
+                    if (sub_bonus > 0) {
+                        price_text = `$${sub_price.toLocaleString()}+紅利${sub_bonus.toLocaleString()}`
+                    } else {
+                        price_text = `$${sub_price.toLocaleString()}`
+                    }
+                    $self.text(price_text);
+                    $self.data("subtotal", sub_price);
+                    $self.data("subtotal_bonus", sub_bonus);
+                    CartQuantityUpdate($self, data['price'], data['bonus'], $frame.data("scId"), data['quantity']);
                     break;
                 case "quantity":
                     $self.val(data[key]);
@@ -719,18 +738,11 @@ function CartListInsert($frame, data) {
                 $frame.find(".content").addClass("d-none");
                 $frame.find(".btn_side_icon").addClass("d-none");
             }
-
-            var type = $self.data("type");
-            switch (type) {
-                case "price":
-                    $self.text(parseInt($self.text()).toLocaleString())
-                    break;
-            };
         }
     });
     return $frame;
 }
-function CartQuantityUpdate(self, price, scid, quantity) {
+function CartQuantityUpdate(self, price, bonus, scid, quantity) {
     if (quantity > 0) {
         Product.Update.Cart({
             Id: scid,
@@ -742,8 +754,16 @@ function CartQuantityUpdate(self, price, scid, quantity) {
                     shopping_cart_data.find(e => e.Id == result.scId).Bonus = bonus;
                     shopping_cart_data.find(e => e.Id == result.scId).Quantity = quantity;
                     var sub_price = price * quantity;
+                    var sub_bonus = bonus * quantity;
                     self.data("subtotal", sub_price)
-                    self.text(sub_price.toLocaleString())
+                    self.data("subtotal_bonus", sub_bonus)
+                    var price_text = "";
+                    if (sub_bonus > 0) {
+                        price_text = `$${sub_price.toLocaleString()}+紅利${sub_bonus}`;
+                    } else {
+                        price_text = `$${sub_price.toLocaleString()}`;
+                    }
+                    self.text(price_text)
                     TotalCount();
                     CartDropReset(scid, quantity)
                 });

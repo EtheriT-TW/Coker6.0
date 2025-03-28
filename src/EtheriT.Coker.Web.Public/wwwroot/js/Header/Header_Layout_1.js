@@ -210,6 +210,7 @@ function CartDropInit() {
 }
 function CartDropAdd(result) {
     var $template = $($("#Template_Car_Dropdown").html()).clone();
+    if (!result.available) $template.addClass("unavailable");
     $template = HeaderDataInsert($template, result)
     $template.data("scid", result.scId);
     $template.find(".btn_cart_delete").on("click", function () {
@@ -277,10 +278,12 @@ function HeaderDataInsert($frame, data) {
             var key = $self.data("key");
             switch (key) {
                 case "link":
-                    $self.attr({
-                        href: `/${OrgName}/home/product/${data['pId']}`,
-                        title: `連結至：${data['title']}`
-                    });
+                    if (data.available) {
+                        $self.attr({
+                            href: `/${OrgName}/home/product/${data['pId']}`,
+                            title: `連結至：${data['title']}`
+                        });
+                    }
                     break;
                 case "spec":
                     $self.append(data['s1Title'] == "" ? "" : `<span class="border px-1 me-1">${data['s1Title']}</span>`)
@@ -294,19 +297,25 @@ function HeaderDataInsert($frame, data) {
                     });
                     break;
                 case "oldQuantity":
-                    // Layout 已拿掉
-                    if (data[key] != data['quantity']) $self.removeClass("d-none");
-                    $self.text(data[key]);
+                    if (data.available) {
+                        if (data[key] != data['quantity']) $self.removeClass("d-none");
+                        $self.text(data[key]);
+                    }
                     break;
                 default:
                     $self.text(data[key]);
+                    if (!data.available && (key == "price" || key == "quantity")) {
+                        $self.text("");
+                    }
                     break;
             }
             var type = $self.data("type");
             switch (type) {
                 case "price":
-                    if (data.bonus > 0) $self.text(`${parseInt($self.text()).toLocaleString()}+紅利${data.bonus}`)
-                    else $self.text(parseInt($self.text()).toLocaleString())
+                    if (data.available) {
+                        if (data.bonus > 0) $self.text(`${parseInt($self.text()).toLocaleString()}+紅利${data.bonus}`)
+                        else $self.text(parseInt($self.text()).toLocaleString())
+                    }
                     break;
             };
         }

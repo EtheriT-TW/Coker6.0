@@ -49,6 +49,10 @@ p {
     content: '$';
 }
 
+.unavailable .price::before {
+    content: none;
+}
+
 .navbar .dropdown-menu[data-bs-popper] {
     top: 92%;
     border-radius: 0;

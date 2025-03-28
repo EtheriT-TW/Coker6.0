@@ -215,10 +215,10 @@
 
                                     <div class=" col-12 col-lg-4 my-3 my-lg-0 fw-bold align-self-center text-start text-lg-center">
                                         <div data-key="oldPrice" data-type="price" class="pro_old_unit price fw-light text-decoration-line-through d-none"></div>
-                                        <div data-key="price" data-type="price" class="pro_unit price"></div>
+                                        <div data-key="price" data-type="price" class="pro_unit"></div>
                                     </div>
 
-                                    <div class="counter_input col-12 col-lg-4 d-flex justify-content-start justify-content-lg-center">
+                                    <div class="counter_input col-12 col-lg-4 d-flex justify-content-start justify-content-lg-center align-items-center">
                                         <button class="btn_count_minus bg-white border-end-0">
                                             <i class="fa-solid fa-minus"></i>
                                             <span class="d-none">減少</span>
@@ -232,7 +232,7 @@
                                         </button>
                                     </div>
 
-                                    <div data-key="subtotal" data-type="price" class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none" data-subtotal=""></div>
+                                    <div data-key="subtotal" data-type="price" class="pro_subtotal col-4 fw-bold fs-5 d-lg-block d-none" data-subtotal=""></div>
                                 </div>
 
                                 <div class="btn_side_icon position-absolute d-flex flex-column top-50 translate-middle-y end-0 p-2">
@@ -261,11 +261,15 @@
                     </ul>
 
                     <div class="priceline pe-sm-5 col-12 col-md-6 offset-md-6">
-                        <div class="border-bottom py-2 d-flex justify-content-end text-end">
+                        <div class="py-2 d-flex justify-content-end text-end">
                             <div>商品金額</div>
                             <div data-key="subtotal" data-type="price" class="subtotal price"></div>
                         </div>
-                        <div class="py-2 d-flex justify-content-end text-end">
+                        @* <div class="py-2 d-flex justify-content-end text-end">
+                            <div>紅利點數</div>
+                            <div data-key="subtotal" data-type="price" class="subtotal price"></div>
+                        </div> *@
+                        <div class="border-top  py-2 d-flex justify-content-end text-end">
                             <div>小計</div>
                             <div data-key="total" data-type="price" class="subtotal price fs-5 fw-bold red_text"></div>
                         </div>
@@ -715,11 +719,11 @@
                                         </div>
                                     </a>
 
-                                    <div data-key="price" class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center"></div>
+                                    <div data-key="price" class="pro_unit col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center"></div>
 
                                     <div data-key="quantity" class="pro_quantity col-12 col-lg-4 fs-5 d-flex justify-content-start justify-content-lg-center"></div>
 
-                                    <div data-key="subtotal" class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none text-center" data-subtotal=""></div>
+                                    <div data-key="subtotal" class="pro_subtotal col-4 fw-bold fs-5 d-lg-block d-none text-center" data-subtotal=""></div>
                                 </div>
                             </li>
                         </template>

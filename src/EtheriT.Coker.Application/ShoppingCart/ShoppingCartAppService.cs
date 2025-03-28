@@ -324,7 +324,9 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     var prod_stocks = shoppingCart.Prod_Stock;
                     var prods = prod_stocks.Prod;
                     var temp_output = mapper.Map<ShoppingCartDisplayDto>(shoppingCart);
+                    var date_now = DateTime.Now;
 
+                    temp_output.Available = prods.Visible && !prods.RemovedFromShelves && (prods.permanent || (date_now > prods.StartTime && date_now < prods.EndTime));
                     temp_output.Stock = prod_stocks?.Stock ?? 0;
 
                     temp_output.Title = prods?.Title ?? "";
@@ -396,6 +398,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                     if (temp_output.Price == 0) temp_output.Price = temp_output.DynamicPrice;
 
+                    if (!temp_output.Available) temp_output.Quantity = 0;
                     temp_output.Subtotal = temp_output.Price * temp_output.Quantity;
 
                     temp_output.Describe = prods?.Description ?? "";

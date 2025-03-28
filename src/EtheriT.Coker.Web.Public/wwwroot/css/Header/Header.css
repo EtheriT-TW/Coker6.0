@@ -19,6 +19,108 @@
         transition: 0.3s;
     }
 
+/* Button Car Dropdown */
+#btn_car_dropdown > i.open {
+    color: var(--red-popup);
+}
+
+#btn_car_dropdown > .badge {
+    border: 0.15rem black solid;
+    background-color: var(--red-popup);
+    top: 0.5rem !important;
+    left: 1rem !important;
+    -webkit-transform: scale(0.75);
+    transform: scale(0.75);
+    z-index: 1;
+    height: 1.8rem;
+    min-width: 1.8rem;
+    line-height: 1rem;
+}
+
+/* Cart Dropdown*/
+#Car_Dropdown {
+    z-index: 1070;
+    width: 280px;
+    max-width: 80vw;
+    max-height: 90vh;
+}
+
+    #Car_Dropdown > ul {
+        list-style: none;
+    }
+
+        #Car_Dropdown > ul > li.unavailable {
+            position: relative;
+        }
+
+            #Car_Dropdown > ul > li.unavailable::before {
+                content: '已下架';
+                color: white;
+                font-weight: bolder;
+                display: flex;
+                position: absolute;
+                background-color: #00000078;
+                width: 100%;
+                height: 100%;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 1;
+                justify-content: center;
+                align-items: center;
+            }
+
+        #Car_Dropdown > ul > li > figure > a > .pro_image {
+            max-width: 80px;
+        }
+
+        #Car_Dropdown > ul > li > figure > a > figcaption > .pro_name {
+            color: var(--black-text);
+            height: 3rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #Car_Dropdown > ul > li > figure > a > figcaption > .pro_spec {
+            color: var(--black-text);
+            height: 3rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #Car_Dropdown > ul > li > figure > a > figcaption > .number {
+            color: var(--red-number);
+        }
+
+        #Car_Dropdown > ul > li:not(.unavailable) > figure > a > figcaption > .number > .pro_quantity::before {
+            content: '\00d7';
+        }
+
+        #Car_Dropdown > ul > li > figure > a > figcaption > .number > .pro_oldquantity::before {
+            content: '\00d7';
+        }
+
+        #Car_Dropdown > ul > li > figure > .btn_cart_delete {
+            top: 50%;
+            right: -1.5rem;
+            transform: translate(0, -50%);
+            color: var(--gray-icon);
+        }
+
+            #Car_Dropdown > ul > li > figure > .btn_cart_delete:hover {
+                color: var(--red-main);
+            }
+
+    #Car_Dropdown > .btn_car_buy {
+        background-color: var(--black-text);
+    }
+
+        #Car_Dropdown > .btn_car_buy[disabled] {
+            background-color: var(--gray-bg-dark);
+        }
+
 @media (min-width: 992px) {
     .navbar-expand-lg .offcanvas.w-100 {
         width: 100% !important;

@@ -3,6 +3,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
 {
     public class ShoppingCartDisplayDto
     {
+        public bool Available { get; set; } = true;
         public long PId { get; set; }
         public long SCId { get; set; }
         public long PSId { get; set; }

@@ -400,10 +400,11 @@ function PageDefaultSet(result) {
                     break;
                 case 4:
                     slide.addClass("bg-black")
+                    var videoid = img_med.name.split("&t=")[0];
                     slide_image.attr({
                         "data-display-protype": "youtube",
                         "data-youtube-link": img_med.name,
-                        src: `https://img.youtube.com/vi/${img_med.name}/0.jpg`
+                        src: `https://img.youtube.com/vi/${videoid}/hqdefault.jpg`
                     })
                     slide_image.siblings(".schematic_image").replaceWith('<div class="schematic_youtube position-absolute"><i class="fa-brands fa-youtube"></i></div>');
                     break;
@@ -424,7 +425,8 @@ function PageDefaultSet(result) {
                     pre_slide_image.attr("src", "/images/videopreview.jpg");
                     break;
                 case 4:
-                    pre_slide_image.attr({ src: `https://img.youtube.com/vi/${img_small.name}/3.jpg` })
+                    var videoid = img_small.name.split("&t=")[0];
+                    pre_slide_image.attr({ src: `https://img.youtube.com/vi/${videoid}/hqdefault.jpg` })
                     break;
                 default:
                     pre_slide_image.attr("src", img_small.link[0]);
@@ -772,8 +774,11 @@ function addVideo(pro_self) {
     $("#Pro_Video").attr("src", img_data.link[0])
 }
 function addYoutube(pro_self) {
-    var pro_YoutubeLink = pro_self.data("youtube-link");
-    $("#Pro_Youtube").attr("src", `https://www.youtube-nocookie.com/embed/${pro_YoutubeLink}?&autoplay=1`);
+    var pro_YoutubeLink = pro_self.data("youtube-link").split("&t=");
+    pro_YoutubeLink
+    var url = "https://www.youtube-nocookie.com/embed/" + pro_YoutubeLink[0];
+    if (typeof (pro_YoutubeLink[1]) != "undefined") url += `?start=${pro_YoutubeLink[1]}`;
+    $("#Pro_Youtube").attr("src", url);
 }
 function add360View(pro_self) {
     var pro360View_Self = $("#Pro_360View");

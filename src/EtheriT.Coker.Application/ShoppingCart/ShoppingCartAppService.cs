@@ -321,6 +321,14 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                 foreach (var shoppingCart in shoppingCarts)
                 {
+                    var prod_price_id = await db.Prod_Prices.Where(e => e.Id == shoppingCart.FK_PriceId).Select(e => e.Id).FirstOrDefaultAsync();
+                    if (prod_price_id == 0) //原先綁定的金額被刪掉就要重抓
+                    {
+                        var prices_data = await productAppService.GetPriceDataAll(shoppingCart.FK_PSid);
+                        shoppingCart.FK_PriceId = prices_data[0].Id;
+                        await db.SaveChangesAsync();
+                    }
+
                     var prod_stocks = shoppingCart.Prod_Stock;
                     var prods = prod_stocks.Prod;
                     var temp_output = mapper.Map<ShoppingCartDisplayDto>(shoppingCart);
@@ -415,6 +423,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             }
             return output;
         }
+
         public async Task<ResponseMessageDto> Reorder(List<long> scids)
         {
             ResponseMessageDto output = new ResponseMessageDto();

@@ -261,7 +261,6 @@ header #Search {
 .type_change_frame .type2-title {
     -webkit-line-clamp: 2;
     max-height: calc(1.25rem * 2.6);
-    max-width: calc(100% - 2rem);
 }
 
 #filterList, #filterList ul {

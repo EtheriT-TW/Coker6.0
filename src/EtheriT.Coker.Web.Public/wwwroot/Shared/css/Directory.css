@@ -120,6 +120,11 @@
 }
 
     .type_change_frame .catalog .type1 .title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
         font-weight: 450;
         font-size: 1.08rem !important;
     }

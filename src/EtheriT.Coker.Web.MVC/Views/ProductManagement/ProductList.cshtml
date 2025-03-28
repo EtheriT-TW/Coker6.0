@@ -12,20 +12,9 @@
 }
 
 <link rel="stylesheet" href="~/css/ProductManagement/ProductList.min.css" asp-append-version="true" />
-<!--導入grapesjs-->
-<link rel="stylesheet" href="/lib/grapesjs/css/grapes.min.css">
-<script src="/lib/grapesjs/grapes.min.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-preset-webpage/index.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-blocks-basic/index.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-style-bg/grapesjs-style-bg.min.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-tabs/grapesjs-tabs.min.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-blocks-table/grapesjs-blocks-table.min.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-custom-code/index.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-tui-image-editor/index.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-parser-postcss/index.js"></script>
-<script src="~/js/Grapes/locale/tw.min.js" asp-append-version="true"></script>
-<script src="~/js/Grapes/grapesjs-Coker6.min.js" charset="utf-8" asp-append-version="true"></script>
-<script src="~/js/Grapes/Index.min.js" asp-append-version="true"></script>
+@{
+    await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
+}
 
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>

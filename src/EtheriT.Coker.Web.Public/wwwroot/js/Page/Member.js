@@ -385,7 +385,7 @@ function HistoryTemplateDataInsert(Datas) {
                                 $this.parent(".state").text("已取消");
                                 Coker.sweet.success(result.message, null, false);
                             } else {
-                                Coker.sweet.error("取消訂單發生錯誤", result.message);
+                                Coker.sweet.error("取消訂單失敗", "取消訂單時發生錯誤，請聯繫客服協助處理。");
                             }
                         })
                     })

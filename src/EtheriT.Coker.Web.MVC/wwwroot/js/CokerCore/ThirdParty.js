@@ -1,5 +1,15 @@
 ﻿Coker.extend({
     ThirdParty: {
+        HandleThirdPartyPayment: function (data) {
+            return $.ajax({
+                url: "/api/ThirdParty/HandleThirdPartyPayment/",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+            });
+        },
         PayRefund: function (payment, ohid, refund) {
             return $.ajax({
                 url: "/api/ThirdParty/PayRefund/",

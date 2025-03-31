@@ -397,7 +397,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             }
                             else
                             {
-                                response.Message = linePayResponse.ReturnMessage;
+                                response.Message = $"{(LinePayErrorCodeEnum)int.Parse(linePayResponse.ReturnCode)}({linePayResponse.ReturnMessage})";
                             }
                             response.Error = linePayResponse.ReturnCode;
                         }
@@ -416,37 +416,42 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
-        public async Task<ResponseMessageDto> LinePayRefundState(string transactionId)
+        public async Task<ResponseMessageDto> LinePayRefundState(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
                 var RequestUri = $"/v3/payments";
-                string queryString = $"transactionId={transactionId}";
-                response = await LinePayDefaultRequestHeaders(RequestUri, queryString);
-                RequestUri += $"?{queryString}";
-
-                if (response.Success)
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                if (ohdata != null)
                 {
-                    response = new ResponseMessageDto();
-                    var GetResponse = await ThirdPartyClient_Line.GetAsync(RequestUri);
-                    GetResponse.EnsureSuccessStatusCode();
-                    var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
-                    response.Message = jsonResponse.ToString();
-                    var linePayResponse = JsonConvert.DeserializeObject<LinePayRefundCheckResponseDto>(jsonResponse);
+                    string queryString = $"transactionId={ohdata.TransactionId}";
+                    response = await LinePayDefaultRequestHeaders(RequestUri, queryString);
+                    RequestUri += $"?{queryString}";
 
-                    if (linePayResponse.ReturnCode == "0000")
+                    if (response.Success)
                     {
-                        if (linePayResponse.info[0].refundList != null)
+                        response = new ResponseMessageDto();
+                        var GetResponse = await ThirdPartyClient_Line.GetAsync(RequestUri);
+                        GetResponse.EnsureSuccessStatusCode();
+                        var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
+                        response.Message = jsonResponse.ToString();
+                        var linePayResponse = JsonConvert.DeserializeObject<LinePayRefundCheckResponseDto>(jsonResponse);
+
+                        if (linePayResponse.ReturnCode == "0000")
                         {
-                            response.Success = true;
-                            response.Message = $"退款編號{linePayResponse.info[0].refundList[0].refundTransactionId}已於{linePayResponse.info[0].refundList[0].refundTransactionDate.ToString("yyyy/MM/dd")}退款，退款金額為{(linePayResponse.info[0].refundList[0].refundAmount * -1).ToString("$#,##0")}";
+                            if (linePayResponse.info[0].refundList != null)
+                            {
+                                response.Success = true;
+                                response.Message = $"退款編號{linePayResponse.info[0].refundList[0].refundTransactionId}已於{linePayResponse.info[0].refundList[0].refundTransactionDate.ToString("yyyy/MM/dd")}退款，退款金額為{(linePayResponse.info[0].refundList[0].refundAmount * -1).ToString("$#,##0")}";
+                            }
+                            else response.Message = "該筆訂單不存在退款資訊";
                         }
-                        else response.Message = "該筆訂單不存在退款資訊";
+                        else response.Message = $"{(LinePayErrorCodeEnum)int.Parse(linePayResponse.ReturnCode)}({linePayResponse.ReturnMessage})";
+                        response.Error = linePayResponse.ReturnCode;
                     }
-                    else response.Message = $"{(LinePayErrorCodeEnum)int.Parse(linePayResponse.ReturnCode)}({linePayResponse.ReturnMessage})";
-                    response.Error = linePayResponse.ReturnCode;
                 }
+                else throw new Exception("查無訂單資訊");
             }
             catch (HttpRequestException ex)
             {

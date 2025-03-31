@@ -1,10 +1,14 @@
-﻿using EtheriT.Coker.Application.Dto;
+﻿using DevExpress.XtraRichEdit.Commands.Internal;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.Specification;
+using EtheriT.Coker.Application.Token;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
 {
@@ -12,18 +16,21 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     [ApiController]
     public class ThirdPartyController : Controller
     {
+        private readonly IThirdPartyAppService thirdPartyAppService;
         private readonly ILinePayAppService linePayAppService;
         private readonly IPChomePayAppService pchomePayAppService;
         private readonly IECPayAppService ecPayAppService;
         private readonly IConfiguration configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
         public ThirdPartyController(
+            IThirdPartyAppService thirdPartyAppService,
             ILinePayAppService linePayAppService,
             IPChomePayAppService pchomePayAppService,
             IECPayAppService ecPayAppService,
             IConfiguration configuration,
             IHttpContextAccessor _httpContextAccessor)
         {
+            this.thirdPartyAppService = thirdPartyAppService;
             this.linePayAppService = linePayAppService;
             this.pchomePayAppService = pchomePayAppService;
             this.ecPayAppService = ecPayAppService;
@@ -62,7 +69,6 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             return await pchomePayAppService.PChomePayReturn(ohid);
         }
-
         [HttpPost]
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<string> PChomePayNotify([FromForm] PChomePayNotifyDto dto)
@@ -88,6 +94,57 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<ResponseMessageDto> ECPayGetToken(long ohid)
         {
             return await ecPayAppService.ECPayGetToken(ohid);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> HandleThirdPartyPayment(HandleThirdPartyPaymentDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            var CheckSource = await thirdPartyAppService.CheckSource(dto.Token);
+            if (CheckSource.Success)
+            {
+                switch (dto.ThirdParties)
+                {
+                    case "LINEPay":
+                         switch (dto.Action)
+                        {
+                            case "Refund":
+                                response = await linePayAppService.LinePayRefund(dto.OrderId, null);
+                                break;
+                            case "CheckRefund":
+                                response = await linePayAppService.LinePayRefundState(dto.OrderId);
+                                break;
+                            case "CheckStatus":
+                                response = await linePayAppService.LinePayCheckPaymentStatus(dto.OrderId);
+                                break;
+                            default:
+                                response.Message = $"查詢動作【{dto.Action}】不支援";
+                                break;
+                        }
+                        break;
+                    case "支付連":
+                        switch (dto.Action)
+                        {
+                            case "Refund":
+                                response = await pchomePayAppService.PChomePayRefund(dto.OrderId, null);
+                                break;
+                            case "CheckRefund":
+                                response = await pchomePayAppService.PChomePayRefundState(dto.OrderId);
+                                break;
+                            case "CheckStatus":
+                                response = await pchomePayAppService.PChomePayCheckPaymentStatus(dto.OrderId);
+                                break;
+                            default:
+                                response.Message = $"查詢動作【{dto.Action}】不支援";
+                                break;
+                        }
+                        break;
+                    default:
+                        response.Message = $"付款方式【{dto.ThirdParties}】不存在";
+                        break;
+                }
+            }
+            else response.Error = "Token 驗證錯誤";
+            return response;
         }
     }
 }

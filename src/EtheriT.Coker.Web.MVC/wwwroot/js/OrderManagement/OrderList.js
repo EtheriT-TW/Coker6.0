@@ -94,13 +94,19 @@ function PageReady() {
     $(".btn_refund").on("click", function () {
         co.sweet.confirm("退回貨款", "確定退回貨款?", "確定", "取消", function () {
             co.sweet.loading();
-            Coker.ThirdParty.PayRefund(payment, keyId).done(function (result) {
+            Coker.ThirdParty.HandleThirdPartyPayment({
+                Action: "Refund",
+                OrderId: keyId,
+                ThirdParties: payment,
+            }).done(function (result) {
+                console.log("result", result)
                 if (result.success) {
                     $(".btn_refund").addClass("d-none");
                     $order_status.val(4);
                     oristate = 4;
                     OrderStateChange(oristate)
-                    updateOrder();
+                    $order_status.prop("disabled", true)
+                    co.sweet.success("儲存成功");
                 } else {
                     co.sweet.error(result.error, result.message, null, false);
                 }
@@ -110,25 +116,55 @@ function PageReady() {
 
     $(".btn_checkrefund").on("click", function () {
         co.sweet.loading();
-        Coker.ThirdParty.CheckRefund(payment, transactionId).done(function (result) {
+        Coker.ThirdParty.HandleThirdPartyPayment({
+            Action: "CheckRefund",
+            OrderId: keyId,
+            ThirdParties: payment,
+        }).done(function (result) {
+            console.log("result", result)
             if (result.success) {
                 Swal.fire({
                     title: `退款狀態查詢`,
                     text: result.message,
                 });
             } else {
-                co.sweet.error("錯誤", result.message, null, false);
+                co.sweet.error(result.error, result.message, null, false);
             }
         });
+        //Coker.ThirdParty.CheckRefund(payment, transactionId).done(function (result) {
+        //    if (result.success) {
+        //        Swal.fire({
+        //            title: `退款狀態查詢`,
+        //            text: result.message,
+        //        });
+        //    } else {
+        //        co.sweet.error("錯誤", result.message, null, false);
+        //    }
+        //});
     });
     $(".btn_failReason").on("click", function () {
         co.sweet.loading();
-        Coker.ThirdParty.CheckPaymentStatus(keyId, thirdparty).done(function (result) {
-            Swal.fire({
-                title: `Code: ${result.error}`,
-                text: result.message.split(",")[1],
-            });
+        Coker.ThirdParty.HandleThirdPartyPayment({
+            Action: "CheckStatus",
+            OrderId: keyId,
+            ThirdParties: payment,
+        }).done(function (result) {
+            console.log("result", result)
+            if (result.success) {
+                Swal.fire({
+                    title: `Code: ${result.error}`,
+                    text: result.message.split(",")[1],
+                });
+            } else {
+                co.sweet.error(result.error, result.message, null, false);
+            }
         });
+        //Coker.ThirdParty.CheckPaymentStatus(keyId, thirdparty).done(function (result) {
+        //    Swal.fire({
+        //        title: `Code: ${result.error}`,
+        //        text: result.message.split(",")[1],
+        //    });
+        //});
     });
 
     if ("onhashchange" in window) {
@@ -330,12 +366,14 @@ function HeaderDataSet(result) {
         }
     }
 
-    //if (result.refundTransactionId != null) $(".btn_checkrefund").removeClass("d-none");
-    //else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock) {
-    if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock) {
-        if (![7, 8, 10, 15].includes(result.paymentCode)) $(".btn_refund").removeClass("d-none");
-    }
+    if (result.refundTransactionId != null) $(".btn_checkrefund").removeClass("d-none");
+    else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock && ![7, 8, 10, 15].includes(result.paymentCode)) $(".btn_refund").removeClass("d-none");
     else OrderStateChange(oristate)
+
+    //if (result.refundTransactionId == null && result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock) {
+    //    if (![7, 8, 10, 15].includes(result.paymentCode)) $(".btn_refund").removeClass("d-none");
+    //}
+    //else OrderStateChange(oristate)
 
     $order_notes.text(result.remark)
 
@@ -473,7 +511,7 @@ function OrderStateChange(state) {
             if (thirdparty == 3) $(".btn_recheck").removeClass("d-none");
             break;
         case 5:
-            //if (thirdparty != 1) $(".btn_failReason").removeClass("d-none");
+            if (thirdparty != 1) $(".btn_failReason").removeClass("d-none");
             break;
         case 6:
             switch (payment) {

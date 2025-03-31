@@ -43,36 +43,36 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await linePayAppService.LinePayVoid(ohid);
         }
-        [HttpGet]
-        public async Task<ResponseMessageDto> PayRefund(string payment, long ohid, int? refund)
-        {
-            ResponseMessageDto response = new ResponseMessageDto();
-            switch (payment)
-            {
-                case "LINEPay":
-                    return await linePayAppService.LinePayRefund(ohid, refund);
-                case "支付連":
-                    return await pchomePayAppService.PChomePayRefund(ohid, refund);
-            }
-            response.Success = false;
-            response.Message = "支付方式不存在";
-            return response;
-        }
-        [HttpGet]
-        public async Task<ResponseMessageDto> CheckPaymentStatus(long ohid, int thirdparty)
-        {
-            ResponseMessageDto response = new ResponseMessageDto();
-            switch (thirdparty)
-            {
-                case 2:
-                    return await pchomePayAppService.PChomePayCheckPaymentStatus(ohid);
-                case 3:
-                    return await linePayAppService.LinePayCheckPaymentStatus(ohid);
-            }
-            response.Success = false;
-            response.Message = "支付方式不存在";
-            return response;
-        }
+        //[HttpGet]
+        //public async Task<ResponseMessageDto> PayRefund(string payment, long ohid, int? refund)
+        //{
+        //    ResponseMessageDto response = new ResponseMessageDto();
+        //    switch (payment)
+        //    {
+        //        case "LINEPay":
+        //            return await linePayAppService.LinePayRefund(ohid, refund);
+        //        case "支付連":
+        //            return await pchomePayAppService.PChomePayRefund(ohid, refund);
+        //    }
+        //    response.Success = false;
+        //    response.Message = "支付方式不存在";
+        //    return response;
+        //}
+        //[HttpGet]
+        //public async Task<ResponseMessageDto> CheckPaymentStatus(long ohid, int thirdparty)
+        //{
+        //    ResponseMessageDto response = new ResponseMessageDto();
+        //    switch (thirdparty)
+        //    {
+        //        case 2:
+        //            return await pchomePayAppService.PChomePayCheckPaymentStatus(ohid);
+        //        case 3:
+        //            return await linePayAppService.LinePayCheckPaymentStatus(ohid);
+        //    }
+        //    response.Success = false;
+        //    response.Message = "支付方式不存在";
+        //    return response;
+        //}
         [HttpGet]
         public async Task<IActionResult> PChomePayReturn(string ohid)
         {
@@ -83,20 +83,25 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await pchomePayAppService.PChomePayBalance();
         }
-        [HttpGet]
-        public async Task<ResponseMessageDto> CheckRefund(string payment, string transactionId)
+        //[HttpGet]
+        //public async Task<ResponseMessageDto> CheckRefund(string payment, string transactionId)
+        //{
+        //    ResponseMessageDto response = new ResponseMessageDto();
+        //    switch (payment)
+        //    {
+        //        case "LINEPay":
+        //            return await linePayAppService.LinePayRefundState(transactionId);
+        //        case "支付連":
+        //            return await pchomePayAppService.PChomePayRefundState(transactionId);
+        //    }
+        //    response.Success = false;
+        //    response.Message = "支付方式不存在";
+        //    return response;
+        //}
+        [HttpPost]
+        public async Task<ResponseMessageDto> HandleThirdPartyPayment(HandleThirdPartyPaymentDto dto)
         {
-            ResponseMessageDto response = new ResponseMessageDto();
-            switch (payment)
-            {
-                case "LINEPay":
-                    return await linePayAppService.LinePayRefundState(transactionId);
-                case "支付連":
-                    return await pchomePayAppService.PChomePayRefundState(transactionId);
-            }
-            response.Success = false;
-            response.Message = "支付方式不存在";
-            return response;
+            return await thirdPartyAppService.HandleThirdPartyPayment(dto);
         }
     }
 }

@@ -165,7 +165,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             switch (jsonMessage["status"]?.ToString())
                             {
                                 case "S":
-                                    if (ohdata.State != OrderStatusEnum.已付款)
+                                    if (ohdata.State == OrderStatusEnum.付款失敗 || ohdata.State != OrderStatusEnum.待付款 || ohdata.State != OrderStatusEnum.待確認)
                                     {
                                         ohdata.State = OrderStatusEnum.已付款;
                                         DateTime paydate = jsonMessage["pay_date"] == null ? DateTime.Now : DateTime.ParseExact(jsonMessage["pay_date"].ToString(), "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
@@ -174,7 +174,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     }
                                     break;
                                 case "W":
-                                    if (ohdata.State != OrderStatusEnum.已付款 && ohdata.State != OrderStatusEnum.待付款)
+                                    if (ohdata.State == OrderStatusEnum.付款失敗 || ohdata.State != OrderStatusEnum.待確認)
                                     {
                                         ohdata.State = OrderStatusEnum.待付款;
                                         db.SaveChanges();
@@ -463,13 +463,13 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
-        public async Task<ResponseMessageDto> PChomePayRefundState(string transactionId)
+        public async Task<ResponseMessageDto> PChomePayRefundState(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();
-            var ohdata = await db.Order_Headers.Where(e => e.TransactionId == transactionId).FirstOrDefaultAsync();
+            var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
             try
             {
-                if (ohdata != null)
+                if (ohdata != null && ohdata.refundTransactionId != null)
                 {
                     var RequestUri = $"/v1/refund/{ohdata.refundTransactionId}";
                     response = await PChomePayHeaders();

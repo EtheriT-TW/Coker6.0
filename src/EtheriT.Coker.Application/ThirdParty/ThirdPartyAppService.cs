@@ -8,6 +8,13 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
+using EtheriT.Coker.Application.Token;
+using DevExpress.Data.Mask;
+using Microsoft.Extensions.Logging;
+using System.Net.Http;
+using System.Security.Policy;
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -16,15 +23,21 @@ namespace EtheriT.Coker.Application.ThirdParty
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
         private readonly IConfiguration configuration;
+        private readonly ITokenAppService tokenAppService;
+        private readonly HttpClient ThirdPartyClient_Front;
         public ThirdPartyAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
-            IConfiguration configuration
+            IConfiguration configuration,
+            ITokenAppService tokenAppService,
+            IHttpClientFactory httpClientFactory
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.configuration = configuration;
+            this.tokenAppService = tokenAppService;
+            ThirdPartyClient_Front = httpClientFactory.CreateClient("ThirdPartyClient_Front");
         }
 
         public async Task<ResponseMessageDto> GetAllThirdParty()
@@ -196,9 +209,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                                  Id = pt.Id,
                                  Title = pt.Title,
                                  Code = pt.Code,
-                                 Icon = pt.Icons != "" ?$"/images/paymenticon/{pt.Icons}" : "",
+                                 Icon = pt.Icons != "" ? $"/images/paymenticon/{pt.Icons}" : "",
                                  Used = true,
-                                 MaxAmount= pt.MaxAmount,
+                                 MaxAmount = pt.MaxAmount,
                                  MinAmount = pt.MinAmount,
                              };
 
@@ -248,6 +261,90 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
             }
             return output;
+        }
+        public async Task<ResponseMessageDto> CheckSource(string token)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+
+                if (jsonToken == null) return response;
+
+                string tokenid = jsonToken.Claims.FirstOrDefault(c => c.Type == "sid")?.Value;
+                string username = jsonToken.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
+                long expTimestamp = long.Parse(jsonToken.Claims.FirstOrDefault(c => c.Type == "exp")?.Value ?? "0");
+                DateTime expDate = DateTimeOffset.FromUnixTimeSeconds(expTimestamp).UtcDateTime;
+
+                if (expDate < DateTime.UtcNow) throw new Exception("Token 已過期");
+                else
+                {
+                    response.Success = true;
+                    var db_token = await db.Tokens.Where(e => e.id.ToString() == tokenid).FirstOrDefaultAsync();
+                    if (db_token != null && db_token.UserID != null)
+                    {
+                        var user = await db.Users.Where(e => e.Id == db_token.UserID && e.Name == username).FirstOrDefaultAsync();
+                        if (user != null) response.Success = true;
+                        else throw new Exception("查無使用者資訊");
+                    }
+                    else throw new Exception("Token資訊錯誤");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> HandleThirdPartyPayment(HandleThirdPartyPaymentDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+
+            try
+            {
+                var Token = await tokenAppService.CheckToken(null);
+                var websiteId = await loginUserData.GetWebsiteId();
+                var website = await db.Websites.Where(e => e.Id == websiteId).FirstOrDefaultAsync();
+
+                if (Token != null)
+                {
+                    if (website != null)
+                    {
+                        dto.Token = Token.Token;
+
+                        var frontApiUrl = $"{website.DefaultUrl}/api/ThirdParty/HandleThirdPartyPayment";
+                        //var frontApiUrl = $"https://lcb.develop.coker.ezsale.tw/api/ThirdParty/HandleThirdPartyPayment";
+                        var jsonContent = new StringContent(JsonConvert.SerializeObject(dto), Encoding.UTF8, "application/json");
+
+                        try
+                        {
+                            var postresponse = await ThirdPartyClient_Front.PostAsync(frontApiUrl, jsonContent);
+
+                            if (postresponse.IsSuccessStatusCode)
+                            {
+                                response.Success = true;
+                                var content = await postresponse.Content.ReadAsStringAsync();
+                                var temp_response = JsonConvert.DeserializeObject<ResponseMessageDto>(content);
+                                response = temp_response;
+                            }
+                            else response.Message = $"{postresponse.StatusCode}, Failed to call front API";
+                        }
+                        catch (Exception ex)
+                        {
+                            response.Message = $"Error calling front API: {ex.Message}";
+                        }
+                    }
+                    else throw new Exception("取得網站內容發生錯誤");
+                }
+                else throw new Exception("取得Token發生錯誤");
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
         }
     }
 }

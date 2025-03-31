@@ -183,7 +183,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             switch (jsonMessage["status"]?.ToString())
                             {
                                 case "S":
-                                    if (ohdata.State == OrderStatusEnum.付款失敗 || ohdata.State != OrderStatusEnum.待付款 || ohdata.State != OrderStatusEnum.待確認)
+                                    if (ohdata.State == OrderStatusEnum.付款失敗 || ohdata.State == OrderStatusEnum.待付款 || ohdata.State == OrderStatusEnum.待確認)
                                     {
                                         ohdata.State = OrderStatusEnum.已付款;
                                         DateTime paydate = jsonMessage["pay_date"] == null ? DateTime.Now : DateTime.ParseExact(jsonMessage["pay_date"].ToString(), "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
@@ -206,7 +206,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     }
                                     break;
                             }
-                            await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(ohdata));
+                            //await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(ohdata));
                             return "success";
                         }
                         else

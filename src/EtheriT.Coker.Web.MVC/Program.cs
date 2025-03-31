@@ -167,12 +167,13 @@ builder.Services
             // otherwise always check for cookie auth
             return CookieAuthenticationDefaults.AuthenticationScheme;
         };
-    }).AddLine(options => {
+    }).AddLine(options =>
+    {
         var lineConfig = authenticationConfig.GetSection("Line");
         if (!string.IsNullOrEmpty(lineConfig["ChannelId"]) && !string.IsNullOrEmpty(lineConfig["ChannelSecret"]))
         {
-            options.ClientId = lineConfig["ChannelId"]??"";
-            options.ClientSecret = lineConfig["ChannelSecret"]??"";
+            options.ClientId = lineConfig["ChannelId"] ?? "";
+            options.ClientSecret = lineConfig["ChannelSecret"] ?? "";
         }
     });
 
@@ -307,6 +308,10 @@ if (builder.Configuration.GetValue<bool>("Verify:HttpOnly"))
 }
 
 //註冊HttpClient
+builder.Services.AddHttpClient("ThirdPartyClient_Front", client =>
+{
+    client.BaseAddress = new Uri("https://defaultFrontApi.com");
+});
 builder.Services.AddHttpClient("ThirdPartyClient_Line", client =>
 {
     client.BaseAddress = new Uri("https://sandbox-api-pay.line.me");
@@ -324,8 +329,10 @@ builder.Services.AddHttpClient("ThirdPartyClient_ECPay", client =>
 });
 builder.Services.AddDevExpressControls();
 // DevExpress Reporting
-builder.Services.ConfigureReportingServices(configurator => {
-    configurator.ConfigureWebDocumentViewer(viewerConfigurator => {
+builder.Services.ConfigureReportingServices(configurator =>
+{
+    configurator.ConfigureWebDocumentViewer(viewerConfigurator =>
+    {
         viewerConfigurator.UseCachedReportSourceBuilder();
     });
     configurator.UseAsyncEngine();
@@ -406,7 +413,7 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
     Authorization = new[] { app.Services.GetRequiredService<IDashboardAuthorizationFilter>() },  // 使用 DI 解析授權過濾器
     IgnoreAntiforgeryToken = true,
-    StatsPollingInterval = 60*1000
+    StatsPollingInterval = 60 * 1000
 });
 
 app.MapControllerRoute(

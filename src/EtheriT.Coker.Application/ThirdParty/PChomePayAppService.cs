@@ -21,6 +21,7 @@ using System.Text.Json;
 using System;
 using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 using DevExpress.CodeParser;
+using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -152,6 +153,23 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (dto.notify_type == "refund_success")
                 {
+                    if (jsonMessage.ContainsKey("refund_id"))
+                    {
+                        string refundId = jsonMessage["refund_id"] != null && !string.IsNullOrEmpty(jsonMessage["refund_id"].ToString()) ? jsonMessage["refund_id"].ToString() : "0";
+                        var ohdata = await db.Order_Headers.Where(e => e.refundTransactionId == refundId).FirstOrDefaultAsync();
+                        if (ohdata != null)
+                        {
+                            switch (jsonMessage["status"]?.ToString())
+                            {
+                                case "S":
+                                    if (ohdata.State != OrderStatusEnum.已取消)
+                                    {
+                                        var cancelresponse = await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
+                                    }
+                                    break;
+                            }
+                        }
+                    }
                     return "success";
                 }
                 else
@@ -188,6 +206,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     }
                                     break;
                             }
+                            await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(ohdata));
                             return "success";
                         }
                         else

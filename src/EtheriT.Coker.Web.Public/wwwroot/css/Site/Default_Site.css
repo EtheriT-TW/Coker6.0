@@ -27,6 +27,18 @@ html[lang="en"] .translate_en {
     display: inline;
 }
 
+.no-right-click {
+    /* 禁用選取 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+    /* 禁用拖曳 */
+    .no-right-click img, .no-right-click a {
+        -webkit-user-drag: none;
+    }
+
 /* Universal */
 a {
     text-decoration: none;

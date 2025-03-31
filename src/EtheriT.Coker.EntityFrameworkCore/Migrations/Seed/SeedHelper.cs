@@ -470,12 +470,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 }, new StoreSetGroup
                 {
                     Id = 4,
-                    Title = "框架設定",
+                    Title = "版型設定",
                     Image = "",
                     Description = "",
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 12, 5, 18, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSetGroup
+                {
+                    Id = 5,
+                    Title = "其他設定",
+                    Image = "",
+                    Description = "",
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2025, 03, 28, 18, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
 
@@ -660,6 +669,20 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     pattern = "^AW-\\w+",
                     IsDeleted = false,
                     jobID = "S001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2023, 7, 25, 19, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 14,
+                    key = "NoCopy",
+                    name = "鎖右鍵",
+                    memo = "右鍵鎖定，文字圖片禁止圈選",
+                    FK_StoreSetGroupId = 5,
+                    type = SeoSetDataTypeEnum.checkBox,
+                    maxlength = 14,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "Y001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2023, 7, 25, 19, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }

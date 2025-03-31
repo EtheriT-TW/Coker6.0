@@ -752,6 +752,45 @@ function CheckToken() {
     })
 }
 
+function updateRightClickLock() {
+    if (document.body.classList.contains("no-right-click")) {
+        // 禁用右鍵
+        document.addEventListener("contextmenu", disableContextMenu);
+        // 禁用複製
+        document.addEventListener("copy", disableCopy);
+        // 禁用開發者工具
+        document.addEventListener("keydown", disableDevTools);
+    } else {
+        // 解除所有限制
+        document.removeEventListener("contextmenu", disableContextMenu);
+        document.removeEventListener("copy", disableCopy);
+        document.removeEventListener("keydown", disableDevTools);
+    }
+}
+
+// 禁用右鍵
+function disableContextMenu(event) {
+    event.preventDefault();
+}
+
+// 禁用複製
+function disableCopy(event) {
+    event.preventDefault();
+    alert("禁止複製內容！");
+}
+
+// 禁用 F12、Ctrl+U、Ctrl+Shift+I
+function disableDevTools(event) {
+    if (event.key === "F12" ||
+        (event.ctrlKey && event.shiftKey && event.key === "I") ||
+        (event.ctrlKey && event.key === "U")) {
+        event.preventDefault();
+    }
+}
+
+// 頁面載入時檢查
+document.addEventListener("DOMContentLoaded", updateRightClickLock);
+
 //function AddFavorites() {
 //    var $self = $(this).children('i');
 //    var $self_parent = $self.parents("li").first();

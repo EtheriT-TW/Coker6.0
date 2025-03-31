@@ -203,7 +203,7 @@
         <!-- End Google Tag Manager -->
     }
 </head>
-<body id="@ViewData["Layout"]" class="@ViewData["bodyClass"]">
+<body id="@ViewData["Layout"]" class="@ViewData["bodyClass"] @ViewBag.NoCopy">
     @if (!string.IsNullOrEmpty(ViewBag.GTM))
     {
         <!-- Google Tag Manager (noscript) -->

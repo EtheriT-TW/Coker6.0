@@ -123,10 +123,12 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var payment = JsonConvert.DeserializeObject<List<PaymentTypeItemOutputDto>>(JsonConvert.SerializeObject((await thirdPartyAppService.GetDisplayPayment()).Value));
             var enterAds = JsonConvert.DeserializeObject<List<AdvertiseDisplayDto>>(JsonConvert.SerializeObject((await advertiseAppService.GetDisplay(defaultData.Id, 1, 1)).Value));
             var SEO = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 1, SiteId = siteId });
+            var SystemSet = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 5, SiteId = siteId });
             var GA4 = SEO.storeSetDetails?.Find(e => e.key == "GA4");
             var GoogleTranslate = SEO.storeSetDetails?.Find(e => e.key == "google.translate");
             var GTM = SEO.storeSetDetails?.Find(e => e.key == "GTM");
             var GoogleAds = SEO.storeSetDetails?.Find(e => e.key == "GoogleAds");
+            var NoCopyItem = SystemSet.storeSetDetails?.Find(e => e.key == "NoCopy");
 
             var StoreSet = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 2, SiteId = siteId });
             var storeBuyState = StoreSet.storeSetDetails?.Find(e => e.key == "storeBuyState");
@@ -460,6 +462,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.GTM = model.storeSet.GTM;
             ViewBag.GoogleAds = model.storeSet.GoogleAds;
             ViewBag.ImageUrl = string.IsNullOrEmpty(model.PageData.ImageUrl) ? "" : new Uri(new Uri(model.root), model.PageData.ImageUrl).AbsoluteUri;
+            ViewBag.NoCopy = NoCopyItem != null && NoCopyItem.value != null && NoCopyItem.value.Count > 0 && NoCopyItem.value[0] == "1" ? "no-right-click" : "";
             ViewData["google.translate"] = model.storeSet.GoogleTranslate;
             ViewData["CurrentUrl"] = model.PageData.CurrentUrl;
             ViewData["Root"] = model.root;

@@ -254,6 +254,10 @@ body {
     padding-right: 3rem;
 }
 
+html[lang="en"] .type_change_frame .switch_control {
+    flex-wrap: unset;
+}
+
 header #Search {
     display: none !important;
 }

@@ -192,7 +192,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     }
                                     break;
                                 case "W":
-                                    if (ohdata.State == OrderStatusEnum.付款失敗 || ohdata.State != OrderStatusEnum.待確認)
+                                    if (ohdata.State == OrderStatusEnum.付款失敗 || ohdata.State == OrderStatusEnum.待確認)
                                     {
                                         ohdata.State = OrderStatusEnum.待付款;
                                         db.SaveChanges();

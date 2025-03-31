@@ -826,6 +826,7 @@ namespace EtheriT.Coker.Application.Order
                                     if (temp_new_order_detail.Price != old_order_detail.Price) temp_new_order_detail.OldPrice = old_order_detail.Price;
                                     else temp_new_order_detail.OldPrice = 0;
                                     if (temp_new_order_detail.Quantity != old_order_detail.Quantity) temp_new_order_detail.OldQuantity = old_order_detail.Quantity;
+                                    temp_new_order_detail.Step = old_order_detail.Step;
                                     output.OrderDetails.Add(temp_new_order_detail);
                                 }
                                 else

@@ -423,7 +423,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
             }
             return output;
         }
-
         public async Task<ResponseMessageDto> Reorder(List<long> scids)
         {
             ResponseMessageDto output = new ResponseMessageDto();

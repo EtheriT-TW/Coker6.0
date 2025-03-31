@@ -38,14 +38,17 @@
 
     #SwitchPage .btn_prev::before {
         content: "\f104";
+        padding-right: 5px;
     }
 
     #SwitchPage .btn_list::before {
         content: "\f03a";
+        padding-right: 5px;
     }
 
     #SwitchPage .btn_next::after {
         content: "\f105";
+        padding-left: 5px;
     }
 
 /* Enter Ad Modal */

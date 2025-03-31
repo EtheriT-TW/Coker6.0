@@ -14,6 +14,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public string S1Title { get; set; }
         public string S2Title { get; set; }
         public string ImagePath { get; set; }
+        // 價格前綴字(目前僅購物車有用到)
+        public string? PriceLabel { get; set; }
         public double Price { get; set; }
         public double DynamicPrice { get; set; }
         public double OldPrice { get; set; }

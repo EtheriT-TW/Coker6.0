@@ -704,10 +704,11 @@ function CartListInsert($frame, data) {
                 case "price":
                     var price_text = "";
                     if (data['bonus'] > 0) {
-                        price_text = `$${data[key].toLocaleString()}+紅利${data['bonus'].toLocaleString()}`;
+                        price_text = `${data[key].toLocaleString()}+紅利${data['bonus'].toLocaleString()}`;
                     } else {
-                        price_text = `$${data[key].toLocaleString()}`;
+                        price_text = `${data[key].toLocaleString()}`;
                     }
+                    price_text = data['priceLabel'] != null ? `${data['priceLabel']} $${price_text}` : `$${price_text}`
                     $self.text(price_text);
                     break;
                 case "subtotal":

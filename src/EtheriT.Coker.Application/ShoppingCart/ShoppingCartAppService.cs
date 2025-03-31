@@ -386,6 +386,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         if (prod_price != null)
                         {
                             var temp_price = prices.Find(e => e.Bonus == prod_price?.Bonus);
+                            if (prod_price.FK_RId != 1) temp_output.PriceLabel = "會員價";
 
                             if (temp_price != null && temp_price.Id != prod_price?.Id)
                             {

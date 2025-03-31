@@ -248,7 +248,7 @@ function reladataButtonClicked(e) {
     if (type == "Articles") {
         keyId = `${type}_${e.row.key}`;
         window.location.hash = keyId;
-    } else co.sweet.warn("尚未開放","目前僅文章可編輯查看");
+    } else co.sweet.warn("尚未開放", "目前僅文章可編輯查看");
 }
 function GetDirectoryId() {
     return DirectoryId;
@@ -343,7 +343,7 @@ function AddUpArticlet(success_text, error_text) {
             directoryDatailList.component.refresh();
             location.hash = `Articles_${DirectoryId}`;
         }
-        
+
         if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").id == 0) {
             var formData = new FormData();
             formData.append("files", $("#ImageUpload .img_input").data("file").File);
@@ -410,7 +410,7 @@ function MoveToItemArticle() {
         DirectoryId = parseInt(para[1]);
         switch (para[0]) {
             case "ArticlesEditor":
-                const _dfr = $.Deferred(); 
+                const _dfr = $.Deferred();
                 co.Directory.Get(DirectoryId).done((result) => {
                     $("#DirectoryItemps").data("dir", result);
                     _dfr.resolve();

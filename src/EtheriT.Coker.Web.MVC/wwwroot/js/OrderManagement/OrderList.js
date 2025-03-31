@@ -70,26 +70,56 @@ function PageReady() {
     });
     $(".btn_recheck").on("click", function () {
         co.sweet.loading();
-        Coker.ThirdParty.CheckPaymentStatus(keyId, thirdparty).done(function (result) {
-            if (result.success) {
-                var state = result.message.split(",")[0];
-                if (state != oristate) {
-                    $(".btn_recheck").addClass("d-none");
-                    $order_status.val(state);
-                    oristate = state;
-                    OrderStateChange(oristate)
-                    co.sweet.success(`訂單狀態變更為【${$order_status.find("option:selected").text()}】`, function () {
-                        updateOrder();
-                        console.log(result.message.split(",")[1]);
-                    });
-                } else {
-                    Swal.fire({
-                        title: `訂單狀態`,
-                        text: `訂單狀態未更動。`,
-                    });
-                }
+        Coker.ThirdParty.HandleThirdPartyPayment({
+            Action: "CheckStatus",
+            OrderId: keyId,
+            ThirdParties: payment,
+        }).done(function (result) {
+            console.log("result", result)
+            var state = result.message.split(",")[0];
+            if (state != oristate) {
+                $(".btn_recheck").addClass("d-none");
+                $order_status.val(state);
+                oristate = state;
+                OrderStateChange(oristate)
+                co.sweet.success(`訂單狀態變更為【${$order_status.find("option:selected").text()}】`, function () {
+                    updateOrder();
+                });
+            } else {
+                Swal.fire({
+                    title: `訂單狀態`,
+                    text: `訂單狀態未更動。`,
+                });
             }
+            //if (result.success) {
+            //    Swal.fire({
+            //        title: `Code: ${result.error}`,
+            //        text: result.message.split(",")[1],
+            //    });
+            //} else {
+            //    co.sweet.error(result.error, result.message, null, false);
+            //}
         });
+        //Coker.ThirdParty.CheckPaymentStatus(keyId, thirdparty).done(function (result) {
+        //    if (result.success) {
+        //        var state = result.message.split(",")[0];
+        //        if (state != oristate) {
+        //            $(".btn_recheck").addClass("d-none");
+        //            $order_status.val(state);
+        //            oristate = state;
+        //            OrderStateChange(oristate)
+        //            co.sweet.success(`訂單狀態變更為【${$order_status.find("option:selected").text()}】`, function () {
+        //                updateOrder();
+        //                console.log(result.message.split(",")[1]);
+        //            });
+        //        } else {
+        //            Swal.fire({
+        //                title: `訂單狀態`,
+        //                text: `訂單狀態未更動。`,
+        //            });
+        //        }
+        //    }
+        //});
     });
     $(".btn_refund").on("click", function () {
         co.sweet.confirm("退回貨款", "確定退回貨款?", "確定", "取消", function () {

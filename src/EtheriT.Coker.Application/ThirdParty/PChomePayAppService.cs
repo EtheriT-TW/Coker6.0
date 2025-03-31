@@ -240,6 +240,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (ohid > 0)
                 {
                     var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                    var ohid_str = "000000000" + ohid.ToString();
 
                     if (ohdata != null)
                     {
@@ -387,6 +388,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                             response.Success = true;
                             response.Error = PChomePayState.status_code;
                             response.Message = $"{(int)ohdata.State},{message}";
+
+                            await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"訂單編號：{ohid_str.Substring(ohid_str.Length - 9)}", JsonConvert.SerializeObject(response));
                         }
                     }
                 }
@@ -414,6 +417,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (ohdata != null)
                 {
                     var ohidstr = ohdata.TransactionId;
+                    var ohid_str = "000000000" + ohid.ToString();
                     var RefundBody = new { order_id = ohidstr, refund_id = $"{ohidstr}-Refund", trade_amount = refund == null ? ohdata.Subtotal + ohdata.Freight : refund };
 
                     if (RefundBody != null)
@@ -456,6 +460,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     response.Message = $"【{temp_response.Message}】{response.Message}";
                                 }
                                 db.SaveChanges();
+
+                                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"訂單編號：{ohid_str.Substring(ohid_str.Length - 9)}", JsonConvert.SerializeObject(response));
                             }
                             else
                             {
@@ -554,6 +560,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             try
             {
                 var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                var ohid_str = "000000000" + ohid.ToString();
                 if (ohdata != null)
                 {
 
@@ -582,6 +589,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                             response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
                             if (response.Success) response.Message = "訂單已取消。";
                         }
+
+                        await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"訂單編號：{ohid_str.Substring(ohid_str.Length - 9)}", JsonConvert.SerializeObject(response));
                     }
                     else throw new Exception($"查詢訂單狀態發生錯誤：{statusresponse.Message}");
                 }

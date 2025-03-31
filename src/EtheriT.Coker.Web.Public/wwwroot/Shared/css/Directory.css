@@ -1,4 +1,7 @@
-﻿
+﻿html[lang="en"] .type_change_frame .switch_control {
+    flex-wrap: wrap;
+}
+
 /* Tags */
 .tags .badge {
     max-width: 5rem;

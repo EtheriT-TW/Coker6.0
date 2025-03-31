@@ -35,6 +35,7 @@
                 videoId = urlParts[urlParts.length - 1].split('?')[0];
                 starttime = urlParams.get('t') == null ? urlParams.get('start') : urlParams.get('t');
             }
+            starttime = starttime.replaceAll('s', "");
             var index = value.indexOf("watch?v=") + 8;
             $self.find(".youtube_preview").children("*").remove();
             if (value != "" && index > -1 && videoId != "") {

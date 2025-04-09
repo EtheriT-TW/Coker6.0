@@ -33,6 +33,7 @@ using EtheriT.Coker.Application.Token;
 using System.Linq;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
+using EtheriT.Coker.Application.Shared.Dto.Files;
 
 namespace EtheriT.Coker.Web.Public.Controllers
 {
@@ -55,6 +56,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly ITechnicalCertificateAppService technicalCertificateAppService;
         private readonly ITokenAppService tokenAppService;
         private readonly IAdvertiseAppService advertiseAppService;
+        private readonly IFileUploadAppService fileUploadAppService;
         private readonly StringHandler stringHandler;
         public PageController(
             ILogger<PageController> logger,
@@ -73,6 +75,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ITechnicalCertificateAppService technicalCertificateAppService,
             IAdvertiseAppService advertiseAppService,
             ITokenAppService tokenAppService,
+            IFileUploadAppService fileUploadAppService,
             StringHandler stringHandler
         )
         {
@@ -93,6 +96,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.technicalCertificateAppService = technicalCertificateAppService;
             this.tokenAppService = tokenAppService;
             this.advertiseAppService = advertiseAppService;
+            this.fileUploadAppService = fileUploadAppService;
         }
         private bool UseLegacyPathHandling(string website, string key, string option)
         {
@@ -136,6 +140,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var linkMore = StoreSet.storeSetDetails?.Find(e => e.key == "linkMore");
             var prodCatalog = StoreSet.storeSetDetails?.Find(e => e.key == "prodCatalog");
             var membershipTerms = StoreSet.storeSetDetails?.Find(e => e.key == "membershipTerms");
+            var shareImage = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { Sid = siteId, Type = 13 });
 
             RemoteInputDto remoteInputDto = new RemoteInputDto { FK_WebsiteId = siteId };
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.FileLink.Count; i++) if (enterAd.FileLink[i].Link != null) enterAd.FileLink[i].Link = enterAd.FileLink[i].Link.Replace("upload", $"upload/{defaultData.OrgName}");
@@ -461,7 +466,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.GA4 = model.storeSet.GA4;
             ViewBag.GTM = model.storeSet.GTM;
             ViewBag.GoogleAds = model.storeSet.GoogleAds;
-            ViewBag.ImageUrl = string.IsNullOrEmpty(model.PageData.ImageUrl) ? "" : new Uri(new Uri(model.root), model.PageData.ImageUrl).AbsoluteUri;
+            if (shareImage!=null && shareImage.Any()) {
+                ViewBag.ImageUrl = new Uri(new Uri(model.root), shareImage[0].Link).AbsoluteUri;
+            }
+            else ViewBag.ImageUrl = string.IsNullOrEmpty(model.PageData.ImageUrl) ? "" : new Uri(new Uri(model.root), model.PageData.ImageUrl).AbsoluteUri;
             ViewBag.NoCopy = NoCopyItem != null && NoCopyItem.value != null && NoCopyItem.value.Count > 0 && NoCopyItem.value[0] == "1" ? "no-right-click" : "";
             ViewData["google.translate"] = model.storeSet.GoogleTranslate;
             ViewData["CurrentUrl"] = model.PageData.CurrentUrl;

@@ -1313,7 +1313,7 @@ namespace EtheriT.Coker.Application
                         {
                             string ContentType = file.ContentType;
                             long fileLength = file.Length;
-                            if (convert &&  asotype != (int)FileBindTypeEnum.網站圖示 && IsAllowedFileType(file.ContentType))
+                            if (convert &&  asotype != (int)FileBindTypeEnum.網站圖示 && asotype != (int)FileBindTypeEnum.分享圖示 && IsAllowedFileType(file.ContentType))
                             {
                                 using (var image = new MagickImage(stream))
                                 {

@@ -117,7 +117,11 @@
                         </div>
                         <div id="LogoImageUpload" class="d-flex image_upload flex-column align-items-center" data-issinge="true" data-needcompress="false">
                             <div class="title mb-2">網站Logo</div>
-                            @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadModal" })
+                            @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadTemplateModal" })
+                        </div>
+                        <div id="ShareImageUpload" class="d-flex image_upload flex-column align-items-center" data-issinge="true" data-needcompress="false">
+                            <div class="title mb-2">網站分享預設圖</div>
+                            @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadTemplateModal" })
                         </div>
                     </div>
                     <div class="form_btn d-flex justify-content-end mb-2">

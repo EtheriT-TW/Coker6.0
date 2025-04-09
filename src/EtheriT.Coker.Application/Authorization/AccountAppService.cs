@@ -124,7 +124,7 @@ namespace EtheriT.Coker.Application.Authorization
                         db.Tokens.Add(t);
                         db.SaveChanges();
                         output.Success = true;
-                        output.Token = await tokenAppService.CreateToken(user.Account, t.id);
+                        output.Token = await tokenAppService.CreateToken(user.Account, t.id, 30, "Backstage");
                         output.Secret = t.id;
                         output.EndDateTime = EndDateTime;
                     }
@@ -305,7 +305,7 @@ namespace EtheriT.Coker.Application.Authorization
                                 db.SaveChanges();
                             }
                             response.Success = true;
-                            response.Token = await tokenAppService.CreateToken(users.Account, t.id);
+                            response.Token = await tokenAppService.CreateToken(users.Account, t.id, 30, "Backstage");
                             response.Secret = t.id;
                             response.EndDateTime = t.EndTime.Value;
                         }

@@ -156,7 +156,7 @@ namespace EtheriT.Coker.Application.Token
             TokenResponseDto output = new TokenResponseDto();
             try
             {
-                if (string.IsNullOrEmpty(token)) httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                if (string.IsNullOrEmpty(token)) token = httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
                 if (string.IsNullOrEmpty(token)) httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Token", out token);
                 if (string.IsNullOrEmpty(token)) token = httpContextAccessor.HttpContext?.Items["Token"]?.ToString();
                 if (!string.IsNullOrEmpty(token))
@@ -336,7 +336,7 @@ namespace EtheriT.Coker.Application.Token
             }
             return output;
         }
-        public async Task<string> CreateToken(string account, Guid secret, int expireMinutes = 30)
+        public async Task<string> CreateToken(string account, Guid secret, int expireMinutes = 30,string position = "")
         {
             List<KeyValuePair<string, string>> custClaims = new List<KeyValuePair<string, string>>();
             if (account.IndexOf("@") < 0)
@@ -362,15 +362,15 @@ namespace EtheriT.Coker.Application.Token
                 "Users"
             };
             string token = await jwt.GenerateToken(account, roles, secret, expireMinutes, custClaims);
-            httpContextAccessor.HttpContext?.Response.Cookies.Append("Token", token, new CookieOptions
+            httpContextAccessor.HttpContext?.Response.Cookies.Append($"{position}Token", token, new CookieOptions
             {
                 Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 設定過期時間
             });
-            httpContextAccessor.HttpContext?.Response.Cookies.Append("RefreshToken", secret.ToString(), new CookieOptions
+            httpContextAccessor.HttpContext?.Response.Cookies.Append($"{position}RefreshToken", secret.ToString(), new CookieOptions
             {
                 Expires = DateTimeOffset.UtcNow.AddMonths(3) // 設定過期時間
             });
-            httpContextAccessor.HttpContext?.Items.Add("Token", token);
+            httpContextAccessor.HttpContext?.Items.Add($"{position}Token", token);
             return token;
         }
         public async Task<bool> DelToken()

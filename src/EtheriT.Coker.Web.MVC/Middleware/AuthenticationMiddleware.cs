@@ -18,7 +18,7 @@ namespace EtheriT.Coker.Web.MVC.Middleware
         }
         public async Task InvokeAsync(HttpContext context)
         {
-            bool isApiRequest = context.Request.Path.StartsWithSegments("/api") || (context.Request.Path.Value??"").StartsWith("/DXX", StringComparison.OrdinalIgnoreCase);
+            bool isApiRequest = context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/front") || (context.Request.Path.Value??"").StartsWith("/DXX", StringComparison.OrdinalIgnoreCase);
             if (isApiRequest)
             {
                 await _next(context); return;

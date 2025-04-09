@@ -27,6 +27,7 @@
             if (value.startsWith('https://www.youtube.com/watch?')) {
                 videoId = urlParams.get('v');
                 starttime = urlParams.get('t');
+                if(starttime == null) starttime = "0";
             } else if (value.startsWith('https://youtu.be/') ||
                 value.startsWith("https://www.youtube.com/shorts/") ||
                 value.startsWith("https://youtube.com/shorts/") ||

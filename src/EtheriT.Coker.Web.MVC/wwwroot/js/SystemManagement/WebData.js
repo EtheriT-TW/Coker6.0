@@ -65,6 +65,14 @@ function PageReady() {
         }
     })
 
+    co.File.getImgFile({ Sid: $("#WebsiteID").val(), Type: 13, Size: 1, }).done(function (files) {
+        if (files.length > 0) {
+            for (var i = files.length - 1; i > -1; i--) {
+                ImageUploadModalDataInsert($("#ShareImageUpload"), files[i].id, files[i].link, files[i].name)
+            }
+        }
+    })
+
     co.WebSite.getPrivacyAndTerms().done(function (result) {
         if (result.success) {
             if (result.message.split(" ").length == 2) {
@@ -132,6 +140,7 @@ function PageReady() {
 
     $("#IconImageUpload").ImageUploadModalClear();
     $("#LogoImageUpload").ImageUploadModalClear();
+    $("#ShareImageUpload").ImageUploadModalClear();
     $(".btn_input_icon").on('click', function () {
         $(".input_icon").click();
     });
@@ -248,22 +257,23 @@ function WebsiteInfoSave(event) {
     } else {
         co.WebSite.Save(co.Form.getJson("WebsiteData")).done(function (resut) {
             if (resut.success) {
-                handleFileUpload("#IconImageUpload", 11).then(function (result) {
-                    if (result.success) {
-                        handleFileUpload("#LogoImageUpload", 12).then(function (result) {
-                            if (result.success) {
-                                co.sweet.success("儲存成功");
-                            } else {
-                                co.sweet.error(result.message);
-                            }
-                        });
+                var imageUploadList = [];
+                imageUploadList.push(handleFileUpload("#IconImageUpload", 11));
+                imageUploadList.push(handleFileUpload("#LogoImageUpload", 12));
+                imageUploadList.push(handleFileUpload("#ShareImageUpload", 13));
+                $.when.apply(null, imageUploadList).done(function (result, result2, result3) {
+                    console.log(result, result2, result3);
+                    if (result.success && result2.success && result3.success) {
+                        co.sweet.success("儲存成功");
                     } else {
-                        co.sweet.error(result.message);
+                        if (!result.success) co.sweet.error(result.message);
+                        else if (!result2.success) co.sweet.error(result2.message);
+                        else if (!result3.success) co.sweet.error(result3.message);
+                        else co.sweet.error("發生錯誤");
                     }
                 }).catch(function (error) {
                     co.sweet.error(error.message || "發生錯誤");
                 });
-
             }
             else co.sweet.error(resut.error);
         });
@@ -282,23 +292,31 @@ function handleFileUpload(selector, type) {
             Fid: deleteList
         }).then(function (result) {
             if (typeof (file) != "undefined" && file != null) {
+                var _dfr = $.Deferred();
                 var formData = new FormData();
                 formData.append("files", file);
                 formData.append("type", type);
                 formData.append("sid", $("#WebsiteID").val());
                 formData.append("serno", 500);
-                return co.File.Upload(formData); 
+                co.File.Upload(formData).then(function (result) {
+                    return _dfr.resolve(result);
+                });
+                return _dfr.promise();
             }
             return Promise.resolve({ success: true });
         });
     } else {
         if (typeof (file) != "undefined" && file != null) {
+            var _dfr = $.Deferred();
             var formData = new FormData();
             formData.append("files", file);
             formData.append("type", type);
             formData.append("sid", $("#WebsiteID").val());
             formData.append("serno", 500);
-            return co.File.Upload(formData); 
+            co.File.Upload(formData).then(function (result) {
+                return _dfr.resolve(result);
+            });
+            return _dfr.promise();
         }
         return Promise.resolve({ success: true });
     }

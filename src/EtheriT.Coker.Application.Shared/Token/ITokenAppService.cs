@@ -10,7 +10,7 @@ namespace EtheriT.Coker.Application.Token
 {
     public interface ITokenAppService
     {
-        public Task<string> CreateToken(string account,Guid secret, int expireMinutes = 30);
+        public Task<string> CreateToken(string account,Guid secret, int expireMinutes = 30, string position = "");
         public Task<bool> DelToken();
         public Task<bool> IsTokenRevoked(string token);
         public Task<TokenResponseDto> CreateToken();

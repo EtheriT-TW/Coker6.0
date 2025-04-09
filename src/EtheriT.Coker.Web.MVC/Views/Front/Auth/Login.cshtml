@@ -1,0 +1,52 @@
+﻿@{
+    ViewData["Title"] = "登入";
+    Layout = "~/Views/Front/Auth/_Layout.cshtml";
+}
+<style>
+    .container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .list {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+
+        .list > button{
+            width:100%;
+            margin: 1rem 0;
+            padding: 0.5rem 0;
+            font-size: 1.25rem;
+            text-align: center;
+            border-radius: 0.375rem;
+            border: none;
+            color: white;
+            font-weight: bold;
+        }
+
+    .btn_line {
+        background-color: #00c300;
+    }
+
+    .btn_google {
+        background-color: #db4437;
+    }
+
+    .btn_facebook {
+        background-color: #3b5998;
+    }
+</style>
+<div class="container">
+    <h1>快速登入</h1>
+    <div class="list">
+        <button class="btn_line">LINE</button>
+        <button class="btn_google">Google</button>
+        <button class="btn_facebook">Facebook</button>
+    </div>
+</div>

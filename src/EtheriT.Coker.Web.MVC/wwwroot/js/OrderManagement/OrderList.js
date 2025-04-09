@@ -15,7 +15,9 @@ function PageReady() {
     })
     $btn_reSend.on("click", function () {
         co.sweet.confirm("重新發送通知信", "是否確認重發訂單通知信?", "確定", "取消", function () {
-            co.Order.SendMail(keyId);
+            co.Order.SendMail(keyId).done(function (result) {
+                if (result.success) co.sweet.success("通知信已重發", function () { }, false);
+            });
         });
     });
     $btn_save.on("click", function () {

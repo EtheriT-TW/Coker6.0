@@ -16,6 +16,7 @@ namespace EtheriT.Coker.Application.Dto
         自訂廣告 = 10,
         網站圖示 = 11,
         網站Logo = 12,
+        分享圖示 = 13,
         資料暫存 = 99
 	}
 }

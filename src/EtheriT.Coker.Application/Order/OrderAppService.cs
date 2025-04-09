@@ -1132,18 +1132,22 @@ namespace EtheriT.Coker.Application.Order
                     foreach (var data in order_details)
                     {
                         var Specification = data.S1Title != "" ? data.S2Title != "" ? $"{data.S1Title}、{data.S2Title}" : data.S1Title : "";
-                        DetailsTable += $"<tr>" +
-                                                        $"<td  colspan='2' class='text-start'>{data.Title}</td>" +
-                                                        $"<td>{Specification}</td>" +
-                                                        $"<td class='text-end'>{data.Price.ToString("$#,##0")}</td>" +
-                                                        $"<td class='text-center'>{data.Quantity}</td>" +
-                                                        $"<td class='text-end'>{(data.Price * data.Quantity).ToString("$#,##0")}</td>" +
-                                                        $"</tr>";
+                        DetailsTable += $@"<tr>
+                            <td  colspan='2' class='text-start'>{data.Title}</td>
+                            <td>{Specification}</td>
+                            <td class='text-end'>{data.Price.ToString("$#,##0")}</td>
+                            <td class='text-center'>{data.Quantity}</td>
+                            <td class='text-end'>{(data.Price * data.Quantity).ToString("$#,##0")}</td>
+                        </tr>";
                     }
 
                     var OrdererEmailSecret = (order_header.OrdererEmail.Length > 5 ? order_header.OrdererEmail.Substring(0, 4) : order_header.OrdererEmail.Substring(0, 1)) + "**********";
                     order_header.OrdererCellPhone = (order_header.OrdererCellPhone.Length > 4 ? order_header.OrdererCellPhone.Substring(0, 4) : order_header.OrdererCellPhone.Substring(0, 1)) + "******";
-                    order_header.OrdererTelePhone = order_header.OrdererTelePhone != null ? order_header.OrdererTelePhone.Length > 3 ? order_header.OrdererTelePhone?.Substring(0, 3) + "******" : order_header.OrdererTelePhone?.Substring(0, 1) + "******" : "";
+                    order_header.OrdererTelePhone = !string.IsNullOrEmpty(order_header.OrdererTelePhone) ? 
+                        order_header.OrdererTelePhone.Length > 3 ? 
+                            order_header.OrdererTelePhone?.Substring(0, 3) + "******" :
+                            string.IsNullOrEmpty(order_header.OrdererTelePhone)? "" : order_header.OrdererTelePhone?.Substring(0, 1) + "******" : 
+                        "";
                     var OrdererSex = order_header.OrdererSex == 1 ? "先生" : order_header.OrdererSex == 2 ? "小姐" : "君";
                     order_header.RecipientAddress = order_header.RecipientAddress.Replace(" ", "").Substring(0, 6) + "**********";
                     order_header.RecipientCellPhone = (order_header.RecipientCellPhone.Length > 4 ? order_header.RecipientCellPhone.Substring(0, 4) : order_header.RecipientCellPhone.Substring(0, 1)) + "******";

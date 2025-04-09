@@ -697,7 +697,6 @@ function CreateToken() {
 function CheckToken() {
     Coker.Token.CheckToken().done(function (result) {
         if (result.success) {
-            console.log("userData:", result);
             if (result.isLogin && result.name != "") {
                 IsLogin = true;
                 $("#HiUser > .name").text(`${result.name} 您好!`);

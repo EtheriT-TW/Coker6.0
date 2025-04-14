@@ -37,6 +37,23 @@
     position: relative;
     overflow: hidden; /* 确保超出的部分被裁剪 */
 }
+    .image-wh .title {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #fff;
+        text-align: center;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px #242424;
+    }
+        .image-wh .title > .mainTitle {
+            font-size: 2.5rem;
+        }
+        .image-wh .title > .subTitle {
+            font-size: 1.7rem;
+        }
+
 
 .home, .page {
     padding-top: 128px;
@@ -44,16 +61,6 @@
 
 #swiper-light {
     margin-top: 15px !important;
-}
-
-.image-wh {
-    width: 100%;
-    /* 容器的宽度 */
-    height: 100%;
-    /* 容器的高度 */
-    position: relative;
-    overflow: hidden;
-    /* 确保超出的部分被裁剪 */
 }
 
 .marqueeSwiper {
@@ -269,11 +276,11 @@
                 margin-left: 0;
             }
 
-        #Offcanvas_Mega_Menu > ul > .title > a {
+        #Offcanvas_Mega_Menu > ul > .title > div > a {
             color: black;
         }
 
-            #Offcanvas_Mega_Menu > ul > .title > a > img + span {
+            #Offcanvas_Mega_Menu > ul > .title > div > a > img + span {
                 display: none;
             }
         /* Mega Menu Content */
@@ -532,16 +539,6 @@
 
         .subtitle > .subtitle_title.collapsed > .material-symbols-outlined {
             transform: rotate(90deg);
-        }
-
-    #Offcanvas_Mega_Menu > ul > .title > a > img {
-        display: none;
-    }
-
-        #Offcanvas_Mega_Menu > ul > .title > a > img + span {
-            display: unset;
-            height: 2em;
-            font-size: 1.1em;
         }
 
     #Offcanvas_Mega_Menu > ul > .title > .content {

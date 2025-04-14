@@ -35,6 +35,10 @@
 <div id="footer" class="w-100 d-flex justify-content-center align-items-center flex-column footer-bg">
 	<h5 class="my-1">@Model.Title</h5>
 	<div id="" class="abreast my-1 d-flex justify-content-center align-items-center">
+		@if (!string.IsNullOrEmpty(Model.Logo_Image))
+		{
+            <img src="@Model.Logo_Image" alt="Logo" class="footer-logo pe-3" />
+        }
 		@if (Model.Content!=null){
 			@for (int i = 0; i < Model.Content.Count; i++)
 			{

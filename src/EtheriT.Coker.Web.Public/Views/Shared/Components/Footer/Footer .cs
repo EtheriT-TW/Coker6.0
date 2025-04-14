@@ -585,6 +585,20 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                 }
                             };
                             break;
+                        case 25:
+                            footerViewModel = new FooterViewModel
+                            {
+                                Logo_Image = "/upload/footLogo.jpg",
+                                Content = new List<string>
+                                {
+                                    $@"
+										<a href=""https://maps.app.goo.gl/oHM8mFcQMUmQCXBPA"" target=""_blank"" title=""連結至:google地圖(另開新視窗)"">640 雲林縣斗六市鎮西路3號</a> 電話:<a href=""tel:05-5341621"" title=""撥打至：05-5341621"">05-5341-621</a> 信箱：<a href=""mailTo:shinyun@sygas.com.tw"" tltle=""發送電子郵件"">shinyun@sygas.com.tw</a><br />
+										<a href=""https://maps.app.goo.gl/oHM8mFcQMUmQCXBPA"" target=""_blank"" title=""連結至:google地圖(另開新視窗)"">No.3, Zhenxi Rd., Douliu City, Yunlin County 640, Taiwan (R.O.C.) </a> TEL:<a href=""tel:05-5341621"" title=""撥打至：886-5-5341621"">886-5-5341621</a>
+										<br />
+									",
+                                }
+                            };
+                            break;
                         default:
                             footerViewModel = new FooterViewModel();
                             break;
@@ -613,7 +627,14 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 									"<span>電話:</span><a href=\"tel:(08)751-7125\" target=\"_blank\" title=\"撥打電話至:(08)751-7125(另開新視窗)\" class=\"tel\">(08)751-7125</a> <span> &nbsp;&nbsp;傳真:(08)751-7135</span><br>" +
 									"<span>地址:</span><a href=\"https://g.co/kgs/D83qX5m\" target=\"_blank\" title=\"連結至:google地圖(另開新視窗)\">屏東縣屏東市清溪里清寧街223號</a></div></div>";
 							break;
-					}
+						case 29:
+							footerMessage = $@"
+								楠崧企業有限公司 NansonTechnic Co.,Ltd. ALL Rights Reserved. <br />
+								地址：<a href=""https://maps.app.goo.gl/uo36KnwZp6zAb7Rw6"" target=""_blank"" title=""連結至google Map"">80045高雄市新興區民生一路52號7樓之2 電話：<a href=""tel:07-2269629"" target=""_blank"" title=""撥打電話至:(07)2269629(另開新視窗)"" class=""tel"">+886-7-2269629</a> / <a href=""tel:07-2269793"" target=""_blank"" title=""撥打電話至:(07)2269793(另開新視窗)"" class=""tel"">+886-7-2269793</a> 傳真：+886-7-2262688<br />
+								螢幕解析度請設為 1280*1024 以上│Design by EtheriT
+							";
+							break;
+                    }
 					footerViewModel = new FooterViewModel
 					{
 						Content = new List<string>

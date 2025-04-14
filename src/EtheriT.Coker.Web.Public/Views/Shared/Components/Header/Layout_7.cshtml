@@ -53,7 +53,7 @@
 			</div>
 		</div>
 		<!-- Logo -->
-		<div class="bg-color w-100">
+		<div class="w-100">
 			<div class="d-flex justify-content-around align-items-center  py-2 bg-img w50 w-100">
 				<div class="d-none d-lg-flex logo m-2 justify-content-end">
 					@{
@@ -111,7 +111,28 @@
 						}
 						@if (subItems.Count() > 0)
 						{
-							<div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap text-white font">@menu.Title</div>
+							<div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap font">
+								<a href="@menu.Link" id="collapse-header-@menu.Title" class="m-0 nav-link p-0 text-nowrap text-white menu-item collapsed"
+								   data-bs-toggle="collapse" data-bs-target="#collapse-@menu.Title" aria-expanded="true" aria-controls="collapse-@menu.Title">
+									@if (string.IsNullOrEmpty(menu.imageUrl))
+									{
+										@menu.Title
+									}
+									else
+									{
+										if (string.IsNullOrEmpty(menu.hoverImageUrl))
+										{
+											<img src="@menu.imageUrl" alt="@menu.Title" />
+											<span class="justify-content-center">@menu.Title</span>
+										}
+										else
+										{
+											<img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
+											<span>@menu.Title</span>
+										}
+									}
+								</a>
+							</div>
 							<div class="content collapse_menus translate-middle-x">
 								<ul class="@justifyContent" data-count-theme="@(menu.menuItemModels != null ? menu.menuItemModels.Count() : "0")">
 									@foreach (var secItem in subItems)
@@ -173,8 +194,24 @@
 						else
 						{
 							<div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap text-white font">
-								<a class="p-0 nav-link text-nowrap text-white" href="@menu.Link" target="@(menu.Target == true?"_blank":"_self")" title="@(menu.Target == true? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title))">
-									@menu.Title
+								<a class="p-0 nav-link text-nowrap text-white menu-item" href="@menu.Link" target="@(menu.Target == true?"_blank":"_self")" title="@(menu.Target == true? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title))">
+									@if (string.IsNullOrEmpty(menu.imageUrl))
+									{
+										@menu.Title
+									}
+									else
+									{
+										if (string.IsNullOrEmpty(menu.hoverImageUrl))
+										{
+											<img src="@menu.imageUrl" alt="@menu.Title" />
+											<span class="justify-content-center">@menu.Title</span>
+										}
+										else
+										{
+											<img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
+											<span>@menu.Title</span>
+										}
+									}
 								</a>
 							</div>
 						}
@@ -198,11 +235,11 @@
 		<!-- <div class="col-lg-2 col-4 d-flex justify-content-center mt-0 mt-lg-3 pb-0 pb-lg-2"> -->
 		<!-- Search Block -->
 		<!-- <button class="d-flex bg-transparent border-0">
-				<span class="material-symbols-outlined bg-secondary bg-opacity-25 text-muted rounded-circle p-1 fs-5">search</span>
-			</button>
-			<button class="align-items-center bg-transparent border-0 d-flex p-0 p-lg-1">
-				<div class="d-lg-flex d-none text-nowrap">智慧搜尋</div>
-			</button>-->
+		<span class="material-symbols-outlined bg-secondary bg-opacity-25 text-muted rounded-circle p-1 fs-5">search</span>
+		</button>
+		<button class="align-items-center bg-transparent border-0 d-flex p-0 p-lg-1">
+		<div class="d-lg-flex d-none text-nowrap">智慧搜尋</div>
+		</button>-->
 		@if (Model.HasShoppingCar == true)
 		{
 			<div id="Cart_Dropdown_Parent" class="d-flex px-1">
@@ -244,43 +281,88 @@
 
 		<!-- Login Button -->
 		<!--<div class="d-flex">
-				<button class="bg-transparent border-0 d-flex align-items-center" type="button">
-					<span class="material-symbols-outlined">person</span>
-				</button>
-			</div>
+		<button class="bg-transparent border-0 d-flex align-items-center" type="button">
+		<span class="material-symbols-outlined">person</span>
+		</button>
+		</div>
 		</div> -->
 	</div>
 </nav>
-<div class="image-wh">
-	@foreach (var item in Model.Bannners)
+@if (Model.Bannners != null && Model.Bannners.Count > 0)
+{
+	@if (Model.Bannners.Count == 1)
 	{
-		<img id="header-title" class="titleimage m-auto" src="@item.DisktopImage" alt="Header Titile" asp-append-version="true" />
-		<img id="header-title-phone" class="titleimage m-auto d-block" src="@item.PhoneImage" alt="Header Titile" asp-append-version="true" />
+		<div class="image-wh">
+			@foreach (var item in Model.Bannners)
+			{
+				<img id="header-title" class="titleimage m-auto" src="@item.DisktopImage" alt="Header Titile" asp-append-version="true" />
+				<img id="header-title-phone" class="titleimage m-auto d-block" src="@item.PhoneImage" alt="Header Titile" asp-append-version="true" />
+				@if (!string.IsNullOrEmpty(item.Title))
+				{
+					<div class="title">
+						<div class="mainTitle">@item.Title</div>
+						<div class="subTitle">@item.subTitle</div>
+					</div>	
+				}
+			}
+		</div>
 	}
-</div>
-<div id="swiper-light" class="headernews m-auto d-block position-relative">
-	<img class="d-md-flex d-none m-auto d-block" src="@imgurl/marqueeblockbig.png" alt="Header Marquee Background" asp-append-version="true" />
-	<img class="d-md-none m-auto d-block" src="@imgurl/marqueeblocksmall.png" alt="Header Marquee Background" asp-append-version="true" />
-	<div class="content position-absolute row align-items-center w-100">
-		<div class="text overflow-hidden text-white p-0 col">
-			<div class="swiper marqueeSwiper swiper-initialized swiper-vertical swiper-pointer-events swiper-backface-hidden">
-				<div class="swiper-wrapper">
-					@foreach (var marquee in Model.marqueeModels ?? new List<MarqueeDisplayDto>())
-					{
-						var target = marquee.target == true ? "_blank" : "_self";
-						var title = marquee.target == true ? $"連結至：{marquee.title}(另開視窗)" : $"連結至：{marquee.title}";
-						var link = marquee.link;
-						if (string.IsNullOrEmpty(link))
+	else
+	{
+		<div id="banner" class="vh-75">
+			<div class="one_swiper edit_lock">
+				<div class="swiper d-flex swiper-initialized swiper-horizontal swiper-pointer-events swiper-backface-hidden">
+					<div class="swiper-wrapper align-self-center">
+						@foreach (var imageSrc in Model.Bannners)
 						{
-							<div class="swiper-slide"><div class="overflow-hidden text" data-bs-toggle="tooltip" title="@marquee.title">@marquee.title <span class="sr-only">(current)</span></div></div>
+							<div class="swiper-slide image_link_slide d-flex align-self-center">
+								<a class="w-100"><img src="@imageSrc.DisktopImage" class="w-100" asp-append-version="true" /></a>
+							</div>
 						}
-						else
+					</div>
+					<div tabindex="-1" role="button" aria-label="Previous slide" aria-controls="iw0z" aria-disabled="true" class="swiper_button_prev start-0 position-absolute top-50 translate-middle-y swiper-button-disabled">
+						<button class="align-items-center bg-dark bg-opacity-25 border-0 d-flex justify-content-center rounded-circle swiper_btn_circle_small text-opacity-75 text-white"><span class="material-symbols-outlined">navigate_before</span></button>
+					</div>
+					<div tabindex="0" role="button" aria-label="Next slide" aria-controls="iw0z" aria-disabled="false" class="swiper_button_next end-0 position-absolute top-50 translate-middle-y">
+						<button class="align-items-center bg-dark bg-opacity-25 border-0 d-flex justify-content-center rounded-circle swiper_btn_circle_small text-opacity-75 text-white"><span id="izqng-2-2-2" draggable="true" class="material-symbols-outlined">navigate_next</span></button>
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+}
+@if (Model.marqueeModels != null && Model.marqueeModels.Count > 0)
+{
+	<div id="swiper-light" class="headernews m-auto d-block position-relative">
+		@if (!string.IsNullOrEmpty(Model.marqueeBagroundImage))
+		{
+			<img class="d-md-flex d-none m-auto d-block" src="@Model.marqueeBagroundImage" alt="Header Marquee Background" asp-append-version="true" />
+		}
+		@if (!string.IsNullOrEmpty(Model.marqueeIcon))
+		{
+			<img class="d-md-none m-auto d-block" src="@Model.marqueeIcon" alt="Header Marquee Background" asp-append-version="true" />
+		}
+		<div class="content position-absolute row align-items-center w-100">
+			<div class="text overflow-hidden text-white p-0 col">
+				<div class="swiper marqueeSwiper swiper-initialized swiper-vertical swiper-pointer-events swiper-backface-hidden">
+					<div class="swiper-wrapper">
+						@foreach (var marquee in Model.marqueeModels ?? new List<MarqueeDisplayDto>())
 						{
-							<div class="swiper-slide"><a class="overflow-hidden text" data-bs-toggle="tooltip" title="@title" href="@link" target="@target">@marquee.title <span class="sr-only">(current)</span></a></div>
+							var target = marquee.target == true ? "_blank" : "_self";
+							var title = marquee.target == true ? $"連結至：{marquee.title}(另開視窗)" : $"連結至：{marquee.title}";
+							var link = marquee.link;
+							if (string.IsNullOrEmpty(link))
+							{
+								<div class="swiper-slide"><div class="overflow-hidden text" data-bs-toggle="tooltip" title="@marquee.title">@marquee.title <span class="sr-only">(current)</span></div></div>
+							}
+							else
+							{
+								<div class="swiper-slide"><a class="overflow-hidden text" data-bs-toggle="tooltip" title="@title" href="@link" target="@target">@marquee.title <span class="sr-only">(current)</span></a></div>
+							}
 						}
-					}
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-</div>
+}

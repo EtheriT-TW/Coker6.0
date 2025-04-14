@@ -4,5 +4,7 @@
     {
         public string? DisktopImage {  get; set; }
         public string? PhoneImage { get; set; }
+        public string? Title { get; set; }
+        public string? subTitle { get; set; }
     }
 }

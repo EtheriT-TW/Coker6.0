@@ -63,16 +63,24 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     webmenus_data = webmenus_data.ToList();
                     string uploadPath = childOrgNames.Count > 0 ? $"/upload/{website_data[0].OrgName}" : "/upload";
                     string pathReplace = childOrgNames.Count > 0 ? "/upload" : $"/upload/{website_data[0].OrgName}";
+                    string uploadDirectory = Configuration.GetValue<string>("VirtualDirectory:upload") ?? "";
                     headerViewModel = new HeaderViewModel
                     {
                         Title = website_data[0].Title,
+                        UploadPath = uploadPath+"/",
                         LogoImageUrl = website_data[0].Logo?.Replace("/upload", uploadPath),
                         HomeLink = childOrgNames.Count > 0 ? $"/{website_data[0].OrgName}/" : "/",
-                        HomeTarget = false, 
-                        //LogoImageUrl = "/upload/logo.png",
+                        HomeTarget = false,
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                         marqueeModels = new List<MarqueeDisplayDto> { },
                     };
+                    if (File.Exists(Path.Combine(uploadDirectory, "marqueeblockbig.png"))) {
+                        headerViewModel.marqueeBagroundImage = $"{uploadPath}/marqueeblockbig.png";
+                    }
+                    if (File.Exists(Path.Combine(uploadDirectory, "marqueeblocksmall.png")))
+                    {
+                        headerViewModel.marqueeIcon = $"{uploadPath}/marqueeblocksmall.png";
+                    }
                     if (string.IsNullOrEmpty(headerViewModel.LogoImageUrl)) {
                         headerViewModel.LogoImageUrl = $"{uploadPath}/logo.png";
                     }
@@ -82,7 +90,6 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         case 7:
                         case 9:
                         case 12:
-                            string uploadDirectory = Configuration.GetValue<string>("VirtualDirectory:upload") ?? "";
                             string headertitle = Path.Combine(uploadDirectory, "headertitile.jpg");
 							string headertitile_phone = "/upload/headertitile_phone.jpg";
                             if (!File.Exists(headertitle))
@@ -99,6 +106,28 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             {
                                 headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/banner/banner" + i + ".jpg" });
                             }
+                            break;
+                        case 25:
+                            headerViewModel.Bannners.Add(new BannerImages { 
+                                DisktopImage = "/upload/headertitile.png", 
+                                PhoneImage = "/upload/headertitile_phone.png", 
+                                Title = "欣雲服務用心",
+                                subTitle = "用戶滿意放心",
+                            });
+                            break;
+                        case 29:
+                            string LogoImage = Path.Combine(uploadDirectory, headerViewModel.LogoImageUrl.Replace("/upload/",""));
+                            if (!File.Exists(LogoImage)) {
+                                headerViewModel.LogoImageUrl = "";
+                            }
+                            headerViewModel.Bannners.AddRange(new List<BannerImages> {
+                                new BannerImages{
+                                    DisktopImage = "/upload/headertitile1.png"
+                                },new BannerImages
+                                {
+                                    DisktopImage = "/upload/headertitile2.png"
+                                }
+                            });
                             break;
                     }
 

@@ -459,7 +459,7 @@ function DirectoryDataInsert($item, result) {
         else content.find(".address").text(data.address);
         if (data.startTime != null && data.startTime != "") {
             var startTime = new Date(data.startTime);
-            content.find(".startTime").text(`${startTime.getFullYear()}/${startTime.getMonth() + 1}/${startTime.getDate()}`);
+            content.find(".startTime").text(`${startTime.getFullYear()}/${String(startTime.getMonth() + 1).padStart(2, '0')}/${String(startTime.getDate()).padStart(2, '0') }`);
         } else {
             content.find(".startTime").each((i, e) => {
                 if (e.tagName.toLowerCase() == "span") $(e).parent().remove();
@@ -468,19 +468,16 @@ function DirectoryDataInsert($item, result) {
         }
         if (data.nodeDate != null && data.nodeDate != "") {
             var noteDate = new Date(data.nodeDate);
-            content.find(".date").text(`${noteDate.getFullYear()}/${noteDate.getMonth() + 1}/${noteDate.getDate()}`);
-            content.find(".date-month").text(`${noteDate.getMonth() + 1}月`);
-            content.find(".date-monthyear").text(`${noteDate.getMonth() + 1}/${noteDate.getFullYear()}`);
-            if (noteDate.getDate() < 10) {
-                content.find(".date-day").text(`0${noteDate.getDate()}`);
-            } else {
-                content.find(".date-day").text(`${noteDate.getDate()}`);
-            }
-            if (noteDate.getMonth() < 9) {
-                content.find(".date-month-number").text(`0${noteDate.getMonth() + 1}`);
-            } else {
-                content.find(".date-month-number").text(`${noteDate.getMonth() + 1}`);
-            }
+            // 幫月和日補零
+            const year = noteDate.getFullYear();
+            const month = String(noteDate.getMonth() + 1).padStart(2, '0');
+            const day = String(noteDate.getDate()).padStart(2, '0');
+
+            content.find(".date").text(`${year}/${month}/${day}`);
+            content.find(".date-month").text(`${month}月`);
+            content.find(".date-monthyear").text(`${month}/${year}`);
+            content.find(".date-day").text(`${day}`);
+            content.find(".date-month-number").text(`${month}`);
             content.find(".date-year").text(`${noteDate.getFullYear()}`);
         } else {
             content.find(".date,.date-month,date-monthyear,date-day").each((i, e) => {

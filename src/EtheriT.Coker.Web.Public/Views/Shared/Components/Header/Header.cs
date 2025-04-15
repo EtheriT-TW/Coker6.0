@@ -109,8 +109,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             break;
                         case 25:
                             headerViewModel.Bannners.Add(new BannerImages { 
-                                DisktopImage = "/upload/headertitile.png", 
-                                PhoneImage = "/upload/headertitile_phone.png", 
+                                DisktopImage = "/upload/headertitile.jpg", 
+                                PhoneImage = "/upload/headertitile_phone.jpg", 
                                 Title = "欣雲服務用心",
                                 subTitle = "用戶滿意放心",
                             });

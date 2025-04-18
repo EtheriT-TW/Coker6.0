@@ -14,7 +14,11 @@
         });
         var navbarHeight = $('.navbar').outerHeight();
         if (!$('#swiper-light').length) {
-            $('#ContainerBody').css('padding-top', navbarHeight);
+            if ($('#banner > .one_swiper').length) {
+                $('#banner').css('padding-top', navbarHeight);
+            } else {
+                $('#ContainerBody').css('padding-top', navbarHeight);
+            }
         } else if ($('#header-title').length) {
             $('#header-title').css('padding-top', navbarHeight);
             $('#header-title-phone').css('padding-top', navbarHeight);

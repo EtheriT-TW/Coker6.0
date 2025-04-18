@@ -116,8 +116,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             });
                             break;
                         case 29:
-                            string LogoImage = Path.Combine(uploadDirectory, headerViewModel.LogoImageUrl.Replace("/upload/",""));
-                            if (!File.Exists(LogoImage)) {
+                            string LogoImage = Path.Combine(uploadDirectory, headerViewModel.LogoImageUrl.Replace("/upload/", ""));
+                            if (!File.Exists(LogoImage))
+                            {
                                 headerViewModel.LogoImageUrl = "";
                             }
                             headerViewModel.Bannners.AddRange(new List<BannerImages> {
@@ -126,6 +127,19 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                 },new BannerImages
                                 {
                                     DisktopImage = "/upload/headertitile2.png"
+                                }
+                            });
+                            break;
+                        case 30:
+                            headerViewModel.Bannners.AddRange(new List<BannerImages> {
+                                new BannerImages{
+                                    DisktopImage = "/upload/headertitile1.jpg"
+                                },new BannerImages
+                                {
+                                    DisktopImage = "/upload/headertitile2.jpg"
+                                },new BannerImages
+                                {
+                                    DisktopImage = "/upload/headertitile3.jpg"
                                 }
                             });
                             break;

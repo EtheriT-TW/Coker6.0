@@ -141,7 +141,13 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var prodCatalog = StoreSet.storeSetDetails?.Find(e => e.key == "prodCatalog");
             var membershipTerms = StoreSet.storeSetDetails?.Find(e => e.key == "membershipTerms");
             var shareImage = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { Sid = siteId, Type = 13 });
-
+            if (string.IsNullOrEmpty(defaultData.Root) || !defaultData.Root.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                var request = HttpContext.Request;
+                var baseUri = new Uri($"{request.Scheme}://{request.Host}/");
+                var combinedUri = new Uri(baseUri, defaultData.Root);
+                defaultData.Root = combinedUri.ToString();
+            }
             RemoteInputDto remoteInputDto = new RemoteInputDto { FK_WebsiteId = siteId };
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.FileLink.Count; i++) if (enterAd.FileLink[i].Link != null) enterAd.FileLink[i].Link = enterAd.FileLink[i].Link.Replace("upload", $"upload/{defaultData.OrgName}");
             PageViewModel model = new PageViewModel

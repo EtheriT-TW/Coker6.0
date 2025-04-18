@@ -203,7 +203,7 @@ table:not(.table) {
     width: 100% !important;
     height: unset !important;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     flex-direction: column;
 }
 
@@ -214,11 +214,13 @@ table:not(.table) {
     }
 
         table:not(.table) tr > td, table:not(.table) tr > th {
-            flex: 1 1 100%;
+            flex: 1 1 0;
+            min-width: 0;
             min-height: 30px;
             border: #000 solid 1px;
             border-bottom-width: 0;
-            border-right-width: 0
+            border-right-width: 0;
+            padding: 0.5rem;
         }
 
             table:not(.table) tr > td:last-child, table:not(.table) tr > th:last-child {

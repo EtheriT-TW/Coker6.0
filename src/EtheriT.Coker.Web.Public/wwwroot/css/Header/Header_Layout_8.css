@@ -407,6 +407,9 @@ header {
 
     #Offcanvas_Mega_Menu > ul > .title > .text-black {
         text-align: center;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
     }
 }
 

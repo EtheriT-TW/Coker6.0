@@ -634,6 +634,13 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 								螢幕解析度請設為 1280*1024 以上│Design by EtheriT
 							";
 							break;
+                        case 30:
+                            footerMessage = $@"
+								日大調理設備有限公司 日大工程行 <a href=""https://maps.app.goo.gl/uo36KnwZp6zAb7Rw6"" target=""_blank"" title=""連結至google Map"">嘉義縣六腳鄉六斗村10鄰六斗尾150號</a><br />
+								電話:<a href=""tel:05-7812176"" target=""_blank"" title=""撥打電話至:(05)7812176(另開新視窗)"" class=""tel"">(05)781-2176</a> 傳真專線:(05)781-2786<br />
+								電子信箱:<a href=""mailto:Ryh.Dah@Gmail.com"" target=""_blank"" title=""發送電子郵件至:Ryh.Dah@Gmail.com(另開新視窗)"">Ryh.Dah@Gmail.com</a> ALL CONTENTS RYH-DAH COPYRIGHT 2016. RESERVED.
+							";
+                            break;
                     }
 					footerViewModel = new FooterViewModel
 					{

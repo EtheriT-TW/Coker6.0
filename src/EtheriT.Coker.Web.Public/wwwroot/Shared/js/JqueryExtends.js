@@ -50,7 +50,8 @@ function jqueryExtend() {
         htmlDecode: function (encodedString) {
             var textArea = document.createElement('textarea');
             textArea.innerHTML = encodedString;
-            return textArea.value.replace(/\n/g, "<br />");
+            const isHtml = /<[^>/]+>/.test(textArea.value.replace(`<div class="container">`, ""));
+            return isHtml ? textArea.value : textArea.value.replace(/\n/g, "<br />");
         },
         loadCss: function (src) {
             const _dfr = $.Deferred();

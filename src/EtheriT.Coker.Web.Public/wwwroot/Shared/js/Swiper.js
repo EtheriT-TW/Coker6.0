@@ -502,28 +502,17 @@ function SwiperInit(obj) {
         if (!!!$(this).data("isinit")) {
             const $header_text = $("#SwiperModal .modal-header .imgalt");
             $header_text.text("");
-            const pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", {
+            let pictureSwiperThumbsOptions = {
                 spaceBetween: 10,
-                breakpoints: {
-                    375: {
-                        slidesPerView: 2,
-                    },
-                    576: {
-                        slidesPerView: 3,
-                    },
-                    769: {
-                        slidesPerView: 4,
-                    },
-                    1024: {
-                        slidesPerView: 6, //modal顯示縮圖的數量
-
-                    }
-                },
+                slidesPerView: 'auto',
                 freeMode: true,
+                centeredSlides: false,
+                centeredSlidesBounds: false,
                 watchSlidesProgress: true,
-            });
-
-            const pictureSwiper = new Swiper("#pictureSwiper", {
+                watchOverflow: true
+            };
+            let pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", pictureSwiperThumbsOptions);
+            let pictureSwiperOptions = {
                 centeredSlides: true,
                 spaceBetween: 10,
                 loop: true,
@@ -542,7 +531,8 @@ function SwiperInit(obj) {
                     delay: 5000,
                     disableOnInteraction: false,
                 }
-            });
+            };
+            let pictureSwiper = new Swiper("#pictureSwiper", pictureSwiperOptions);
 
             pictureSwiper.on('slideChange', function () {
                 var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
@@ -578,9 +568,41 @@ function SwiperInit(obj) {
                         pictureSwiperThumbs.appendSlide(newSlideThumbs);
                     }
                 }
-                pictureSwiper.slideToLoop(index, 0);
-                pictureSwiperThumbs.slideTo(index, 0);
-                $('#SwiperModal').modal('show');
+                const images = document.querySelectorAll('#pictureSwiperThumbs .swiper-slide img');
+                let loadedCount = 0;
+                images.forEach(img => {
+                    img.onload = () => {
+                        loadedCount++;
+                        if (loadedCount === images.length) {
+                            // 確保全部圖片都載入後再測量
+                            $('#SwiperModal').modal('show');
+                        }
+                    };
+                });
+                $('#SwiperModal').off("shown.bs.modal").on("shown.bs.modal", function () {
+                    const wrapper = document.querySelector('#pictureSwiperThumbs .swiper-wrapper');
+                    const container = document.querySelector('#pictureSwiperThumbs');
+                    const wrapperWidth = wrapper.scrollWidth;
+                    const containerWidth = container.clientWidth;
+                    if (wrapperWidth > containerWidth) {
+                        pictureSwiperThumbs.destroy(false, false);
+                        pictureSwiperThumbsOptions.centeredSlides = true;
+                        pictureSwiperThumbsOptions.centeredSlidesBounds = true;
+                        pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", pictureSwiperThumbsOptions);
+                        pictureSwiperThumbs.update();
+                        pictureSwiperOptions.thumbs.swiper = pictureSwiperThumbs;
+                        pictureSwiper.destroy(false, false);
+                        pictureSwiper = new Swiper("#pictureSwiper", pictureSwiperOptions);
+                        pictureSwiper.update();
+                        pictureSwiper.on('slideChange', function () {
+                            const index = pictureSwiper.realIndex;
+                            pictureSwiperThumbs.slideTo(index - 1); // 預留一格避免卡邊
+                        });
+                        $('#pictureSwiper').swiperBindEven(pictureSwiper);
+                    }
+                    pictureSwiper.slideToLoop(index, 0,false);
+                    pictureSwiperThumbs.slideTo(index, 0,false);
+                });
                 return false;
             });
             $(this).data("isinit", true);

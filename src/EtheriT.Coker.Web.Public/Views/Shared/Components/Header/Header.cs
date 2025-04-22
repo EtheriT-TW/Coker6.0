@@ -107,14 +107,6 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                 headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/banner/banner" + i + ".jpg" });
                             }
                             break;
-                        case 25:
-                            headerViewModel.Bannners.Add(new BannerImages { 
-                                DisktopImage = "/upload/headertitile.jpg", 
-                                PhoneImage = "/upload/headertitile_phone.jpg", 
-                                Title = "欣雲服務用心",
-                                subTitle = "用戶滿意放心",
-                            });
-                            break;
                         case 29:
                             string LogoImage = Path.Combine(uploadDirectory, headerViewModel.LogoImageUrl.Replace("/upload/", ""));
                             if (!File.Exists(LogoImage))

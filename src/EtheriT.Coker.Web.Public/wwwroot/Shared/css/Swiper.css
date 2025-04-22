@@ -137,9 +137,27 @@
         width: fit-content !important;
     }
 
+    #pictureSwiperThumbs .swiper-slide {
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
+    }
+
+    #pictureSwiperThumbs .swiper-slide-thumb-active {
+        opacity: 1;
+    }
+
         #pictureSwiperThumbs .swiper-slide img {
             max-height: 100%;
         }
+
+.swiper-slide img {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: auto;
+}
 
 @media only screen and (max-width: 979px) {
     .one_swiper > .swiper > .swiper-wrapper > .swiper-slide > figure > figcaption > .swiper_title {

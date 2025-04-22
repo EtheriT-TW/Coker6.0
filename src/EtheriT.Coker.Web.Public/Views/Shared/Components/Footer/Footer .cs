@@ -129,7 +129,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                     },
                                     new FooterViewModel { Title = "客戶服務", Link = "", footerViewModels = new List<FooterViewModel> {
                                             new FooterViewModel { Title = "會員專區", Link = "/yuanjer/Member" },
-                                            new FooterViewModel { Title = "購買須知", Link = "/yuanjer/shoppingnotic" },
+                                            new FooterViewModel { Title = "購買須知", Link = "/yuanjer/shoppingnotice" },
                                             new FooterViewModel { Title = "聯絡我們", Link = "/yuanjer/contact_us" },
                                         }
                                     },

@@ -36,7 +36,7 @@ namespace EtheriT.Coker.Application.Authorization
         /// Creates a new instance of <see cref="PasswordHasher"/>.
         /// </summary>
         /// <param name="optionsAccessor">The options for this instance.</param>
-        public PasswordHasher(IOptions<PasswordHasherOptions> optionsAccessor = null)
+        public PasswordHasher(IOptions<PasswordHasherOptions>? optionsAccessor = null)
         {
             var options = optionsAccessor?.Value ?? new PasswordHasherOptions();
             _iterCount = options.IterationCount;

@@ -44,14 +44,14 @@
       // Uncomment to enable client-side export
       //"wwwroot/js/devextreme/jszip.js",
 
-      "wwwroot/lib/devextreme/dx.all.js",
+      "wwwroot/js/devextreme/dx.all.js",
 
       // Uncomment to provide geo-data for the VectorMap control
       // Docs: https://js.devexpress.com/DevExtreme/Guide/Widgets/VectorMap/Providing_Data/#Data_for_Areas
       //"wwwroot/js/devextreme/vectormap-data/world.js",
 
-      "wwwroot/lib/devextreme/aspnet/dx.aspnet.mvc.js",
-      "wwwroot/lib/devextreme/aspnet/dx.aspnet.data.js"
+      "wwwroot/js/devextreme/aspnet/dx.aspnet.mvc.js",
+      "wwwroot/js/devextreme/aspnet/dx.aspnet.data.js"
     ],
     "minify": {
       "enabled": false

@@ -1,5 +1,5 @@
-﻿<script src="/lib/devextreme/analytics-core/js/dx-analytics-core.min.js" asp-append-version="true"></script>
-<script src="/lib/devextreme/reporting/js/dx-webdocumentviewer.min.js" asp-append-version="true"></script>
+﻿<script src="/js/devextreme/analytics-core/js/dx-analytics-core.min.js" asp-append-version="true"></script>
+<script src="/js/devextreme/reporting/js/dx-webdocumentviewer.min.js" asp-append-version="true"></script>
 
 <script>
     @* 移除右邊的功能列 *@
@@ -32,7 +32,7 @@
 
     @* 報表預覽設定為頁面寬度 *@
     function beforeRender(s, e) {
-        e.reportPreview.zoom(-1);
+        e.reportPreview.zoom = -1;
         s.previewModel.reportPreview.usePdfPrinting = false;
     }
 </script>

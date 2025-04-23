@@ -21,7 +21,6 @@ using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Core.Models;
 using System.Data;
-using DevExpress.Printing.Core.PdfExport.Metafile;
 
 namespace EtheriT.Coker.Application.Member
 {

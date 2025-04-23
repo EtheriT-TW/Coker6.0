@@ -283,31 +283,31 @@
       ]
     },
     {
-      "outputFolder": "lib/devextreme/reporting/css",
+      "outputFolder": "js/devextreme/reporting/css",
       "input": [
         "node_modules/devexpress-reporting/dist/**/*.css"
       ]
     },
     {
-      "outputFolder": "lib/devextreme/reporting/js",
+      "outputFolder": "js/devextreme/reporting/js",
       "input": [
         "node_modules/devexpress-reporting/dist/**/*.js"
       ]
     },
     {
-      "outputFolder": "lib/devextreme/reporting/html",
+      "outputFolder": "js/devextreme/reporting/html",
       "input": [
         "node_modules/devexpress-reporting/dist/**/*.html"
       ]
     },
     {
-      "outputFolder": "lib/devextreme/analytics-core/css",
+      "outputFolder": "js/devextreme/analytics-core/css",
       "input": [
         "node_modules/@devexpress/analytics-core/dist/**/*.css"
       ]
     },
     {
-      "outputFolder": "lib/devextreme/analytics-core/js",
+      "outputFolder": "js/devextreme/analytics-core/js",
       "input": [
         "node_modules/@devexpress/analytics-core/dist/**/*.js"
       ]

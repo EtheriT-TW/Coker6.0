@@ -1,9 +1,9 @@
 /*!
  * DevExtreme (dx.vectormaputils.debug.js)
- * Version: 21.2.14
- * Build date: Tue Jun 20 2023
+ * Version: 24.2.6
+ * Build date: Mon Mar 17 2025
  *
- * Copyright (c) 2012 - 2023 Developer Express Inc. ALL RIGHTS RESERVED
+ * Copyright (c) 2012 - 2025 Developer Express Inc. ALL RIGHTS RESERVED
  * Read about DevExtreme licensing here: https://js.devexpress.com/Licensing/
  */
 "use strict";
@@ -296,6 +296,7 @@
             var errorArray = [];
             var dataArray = [];
             var counter = 1;
+            var lock = true;
             actions.forEach((function(action, i) {
                 ++counter;
                 action((function(e, data) {
@@ -304,12 +305,12 @@
                     massDone()
                 }))
             }));
-            false;
+            lock = false;
             massDone();
 
             function massDone() {
                 --counter;
-                if (0 === counter && true) {
+                if (0 === counter && !lock) {
                     callback(errorArray, dataArray)
                 }
             }

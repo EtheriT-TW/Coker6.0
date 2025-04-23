@@ -372,8 +372,10 @@ upload/**/*.*
 **/wwwroot/lib/bootstrap/dist/**/*
 **/wwwroot/lib/ace-builds/*.*
 !**/wwwroot/lib/jquery/**/*.min.js.map
-!**/wwwroot/lib/devextreme/**/*.min.js
+!**/wwwroot/js/devextreme/**/*.min.js
 !**/wwwroot/css/devextreme/**/*.min.css
+**/wwwroot/js/devextreme/analytics-core/**
+**/wwwroot/js/devextreme/reporting/**
 !**/wwwroot/lib/tui-code/**/*.*
 !**/wwwroot/lib/**/js-cloudimage-360-view.min.js
 **/wwwroot/lib/grapesjs/**/*.*

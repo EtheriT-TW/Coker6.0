@@ -23,6 +23,7 @@ var viewScripts = globby.sync([
 	'./wwwroot/lib/Coker*/**/*.js',
 	'./wwwroot/lib/bootstrap/iconpicker/js/iconset/fontawesome6-2-1.js',
 	'./wwwroot/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.js',
+	'!./wwwroot/js/devextreme/**/*.js',
 	'!./wwwroot/js/**/*.min.js',
 	'!./wwwroot/lib/Coker*/**/*.min.js',
 ]);

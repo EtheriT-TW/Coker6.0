@@ -49,7 +49,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     $"style-src 'self' '{selfInline}' *.googleapis.com  *.google.com *.gstatic.com cdnjs.cloudflare.com cdn.ckeditor.com; " +
                     $"font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com; " +
                     $"img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.gstatic.com *.googleapis.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:; " +
-                    $"frame-src 'self' *.ezsale.tw *.google.com *.youtube.com *.youtube-nocookie.com *.facebook.com *.instagram.com *.googletagmanager.com *.doubleclick.net v.qq.com;" +
+                    $"frame-src 'self' *.ezsale.tw *.google.com *.google.com.tw *.youtube.com *.youtube-nocookie.com *.facebook.com *.instagram.com *.googletagmanager.com *.doubleclick.net v.qq.com;" +
                     $"connect-src {connectSrc}" +
                     $"frame-ancestors 'self' *.ezsale.tw;";
                 //cache 限制設定

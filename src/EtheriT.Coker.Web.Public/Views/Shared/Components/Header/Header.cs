@@ -86,54 +86,77 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     }
                     switch (defaultData.Id)
                     {
-                        case 6:
-                        case 7:
-                        case 9:
-                        case 12:
-                            string headertitle = Path.Combine(uploadDirectory, "headertitile.jpg");
-							string headertitile_phone = "/upload/headertitile_phone.jpg";
-                            if (!File.Exists(headertitle))
+                        default:
+                            if (!string.IsNullOrEmpty(headerViewModel.LogoImageUrl))
                             {
-                                headertitle = "/upload/headertitile.png";
-                                headertitile_phone = "/upload/headertitile_phone.png";
+                                string LogoImage = Path.Combine(uploadDirectory, headerViewModel.LogoImageUrl.Replace("/upload/", ""));
+                                if (!File.Exists(LogoImage))
+                                {
+                                    headerViewModel.LogoImageUrl = "";
+                                }
                             }
-                            else headertitle = "/upload/headertitile.jpg";
+                            var supportedExtensions = new[] { ".jpg", ".jpeg", ".png", ".avif", ".gif" };
+                            var bannerDir = Path.Combine(uploadDirectory, "banner");
+                            var allFiles = new List<FileInfo>();
 
-                            headerViewModel.Bannners.Add(new BannerImages { DisktopImage = headertitle, PhoneImage = headertitile_phone });
-							break;
-						case 10:
-                            for (int i = 1; i <= 4; i++)
+                            if (Directory.Exists(uploadDirectory))
                             {
-                                headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/banner/banner" + i + ".jpg" });
+                                allFiles.AddRange(
+                                    Directory.GetFiles(uploadDirectory, "headertitile*.*", SearchOption.TopDirectoryOnly)
+                                        .Where(file => supportedExtensions.Contains(Path.GetExtension(file).ToLowerInvariant()))
+                                        .Select(file => new FileInfo(file))
+                                );
                             }
-                            break;
-                        case 29:
-                            string LogoImage = Path.Combine(uploadDirectory, headerViewModel.LogoImageUrl.Replace("/upload/", ""));
-                            if (!File.Exists(LogoImage))
+
+                            if (Directory.Exists(bannerDir))
                             {
-                                headerViewModel.LogoImageUrl = "";
+                                allFiles.AddRange(
+                                    Directory.GetFiles(bannerDir, "banner*.*", SearchOption.TopDirectoryOnly)
+                                        .Where(file => supportedExtensions.Contains(Path.GetExtension(file).ToLowerInvariant()))
+                                        .Select(file => new FileInfo(file))
+                                );
                             }
-                            headerViewModel.Bannners.AddRange(new List<BannerImages> {
-                                new BannerImages{
-                                    DisktopImage = "/upload/headertitile1.png"
-                                },new BannerImages
+                            var sortedFiles = allFiles.OrderByDescending(f => f.Name);
+                            var fileDict = allFiles.ToDictionary(
+                                f => f.Name,
+                                f =>
                                 {
-                                    DisktopImage = "/upload/headertitile2.png"
+                                    var virtualPath = f.FullName.Contains("banner" + Path.DirectorySeparatorChar)
+                                        ? "/upload/banner/" + f.Name
+                                        : "/upload/" + f.Name;
+
+                                    return virtualPath.Replace("\\", "/");
                                 }
-                            });
-                            break;
-                        case 30:
-                            headerViewModel.Bannners.AddRange(new List<BannerImages> {
-                                new BannerImages{
-                                    DisktopImage = "/upload/headertitile1.jpg"
-                                },new BannerImages
+                            );
+
+                            var handledSet = new HashSet<string>();
+                            foreach (var file in sortedFiles) {
+                                var fileName = file.Name;
+                                if (handledSet.Contains(fileName)) continue;
+                                string baseName;
+                                bool isPhone = fileName.Contains("_phone.");
+                                if (isPhone) baseName = fileName.Replace("_phone", "");
+                                else baseName = fileName;
+
+                                var phoneVersion = baseName.Replace(".", "_phone.");
+                                handledSet.Add(fileName);
+                                handledSet.Add(phoneVersion);
+                                var banner = new BannerImages();
+                                if (!isPhone && fileDict.ContainsKey(fileName))
                                 {
-                                    DisktopImage = "/upload/headertitile2.jpg"
-                                },new BannerImages
-                                {
-                                    DisktopImage = "/upload/headertitile3.jpg"
+                                    banner.DisktopImage = fileDict[fileName];
                                 }
-                            });
+
+                                if (fileDict.ContainsKey(phoneVersion))
+                                {
+                                    banner.PhoneImage = fileDict[phoneVersion];
+                                }
+
+                                if (banner.DisktopImage != null || banner.PhoneImage != null)
+                                {
+                                    headerViewModel.Bannners.Add(banner);
+                                }
+                            }
                             break;
                     }
 

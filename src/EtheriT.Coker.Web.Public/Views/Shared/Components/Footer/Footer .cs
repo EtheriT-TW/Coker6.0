@@ -599,6 +599,15 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                 }
                             };
                             break;
+                        case 28:
+                            footerViewModel = new FooterViewModel
+                            {
+                                Content = new List<string>
+                                {
+                                    "星福科技 ALL Rights Reser.｜TEL：<a href=\"tel:02-2430-3119\" title=\"撥打至：886-2-2430-3119\">886-2-2430-3119</a> FAX：886-2-3401-0231｜信箱：<a href=\"mailTo:william.lu@elf-techs.com\" tltle=\"發送電子郵件\">william.lu@elf-techs.com</a>｜Design by EtheriT",
+                                }
+                            };
+                            break;
                         default:
                             footerViewModel = new FooterViewModel();
                             break;

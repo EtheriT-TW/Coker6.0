@@ -9,11 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
 <script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
 <script src="~/js/Header/Header_Layout_7.min.js" asp-append-version="true"></script>
-
 @{
-	string imgurl = Model.LogoImageUrl.Substring(0, Model.LogoImageUrl.LastIndexOf("/"));
+	string imgurl = Model.UploadPath;
 }
-
 <nav class="navbar navbar-expand-lg flex-column p-0 fixed-top shadow">
 	<!-- Mega Menu -->
 	<div id="Mega_Menu" class=" navbar navbar-expand-lg w-100">

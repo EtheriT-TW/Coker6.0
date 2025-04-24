@@ -571,6 +571,7 @@
 
 .navbar-expand-lg {
     flex-direction: column;
+    background-color: #fff;
 }
 
 #Search a {

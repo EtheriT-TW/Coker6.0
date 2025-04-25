@@ -17,6 +17,7 @@ namespace EtheriT.Coker.Core.Models
         public string name { get; set; }
         public string? memo { get; set; }
         public SeoSetDataTypeEnum type { get; set; }
+        public WebsiteLevelEnum? Level { get; set; }
         public long FK_StoreSetGroupId { get; set; }
         public int? maxlength { get; set; }
         public string? pattern { get; set; }

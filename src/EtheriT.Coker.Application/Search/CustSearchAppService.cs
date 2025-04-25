@@ -101,7 +101,7 @@ namespace EtheriT.Coker.Application.Search
 						);
 						break;
 				}
-                if ((int)site.Level >= 2)
+                if ((int)site.Level >= 1)
                 {
                     bool hasProds = await db.Prods.Where(e => e.FK_WebsiteId == site.Id).Where(e => !e.IsDeleted).Where(e => !e.RemovedFromShelves).AnyAsync();
                     if (hasProds) {

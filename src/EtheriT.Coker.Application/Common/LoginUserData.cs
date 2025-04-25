@@ -272,9 +272,14 @@ namespace EtheriT.Coker.Application
             if (site != null) return site.DefaultUrl ?? "";
             else return "";
         }
+        public async Task<WebsiteLevelEnum> GetWebsiteLevel(long id)
+        {
+            if (id != 0) return await db.Websites.Where(e => e.Id == id).Select(e => e.Level).FirstOrDefaultAsync();
+            else return WebsiteLevelEnum.形象;
+        }
         public async Task<WebsiteLevelEnum> GetWebsiteLevel() {
             long id = await GetWebsiteId();
-            if (id != 0) return (WebsiteLevelEnum)await db.Websites.Where(e => e.Id == id).Select(e => e.Level).FirstOrDefaultAsync();
+            if (id != 0) return await GetWebsiteLevel(id);
             else return WebsiteLevelEnum.形象;
         }
         public string GetAuthorization() {

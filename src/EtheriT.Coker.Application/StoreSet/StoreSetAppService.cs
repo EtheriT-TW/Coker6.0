@@ -51,13 +51,14 @@ namespace EtheriT.Coker.Application.StoreSet
         public async Task<StoreSetResponseMessageDto> getAll(List<long> StoreSetGroupId)
         {
             StoreSetResponseMessageDto output = new StoreSetResponseMessageDto();
+            var level = await loginUserData.GetWebsiteLevel();
             var result = from g in db.StoreSetGroup.Where(e => !e.IsDeleted && StoreSetGroupId.Contains(e.Id))
                          select new StoreSetGroupOutputDto
                          {
                              Image = g.Image,
                              Description = g.Description!,
                              Title = g.Title,
-                             storeSets = (from s in db.StoreSet.Where(e => !e.IsDeleted && e.FK_StoreSetGroupId == g.Id).OrderBy(e => e.jobID)
+                             storeSets = (from s in db.StoreSet.Where(e => (e.Level == null || level >= e.Level) && e.FK_StoreSetGroupId == g.Id).OrderBy(e => e.jobID)
                                           select new StoreSetOutputDto
                                           {
                                               key = s.key,
@@ -67,7 +68,7 @@ namespace EtheriT.Coker.Application.StoreSet
                                               pattern = s.pattern,
                                               type = s.type!,
                                               storeSetItemOutputDtos = (
-                                                 from item in db.StoreSetItems.Where(e => !e.IsDeleted && e.FK_StoreSetId == s.Id)
+                                                 from item in db.StoreSetItems.Where(e => (e.Level == null || level >= e.Level) && e.FK_StoreSetId == s.Id)
                                                  select new StoreSetItemOutputDto
                                                  {
                                                      Key = item.Key,

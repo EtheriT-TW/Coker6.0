@@ -44,7 +44,7 @@
 					}
 				</a>
 			</div>
-			<div id="icon-search is-block">
+			<div class="icon-search is-block">
 				<div class="icon-search-bg d-flex justify-content-center align-items-center">
 					<a href="/@ViewData["OrgName"]/Search" class="fa-solid fa-search mx-2"></a>
 				</div>
@@ -79,7 +79,25 @@
 						{
 							var target = menu.Target ?? false ? "_blank" : "_self";
 							var targetStr = menu.Target ?? false ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title);
-							<a href="@menu.Link" class="mx-2 switch-button" title="@targetStr" target="@target">@menu.Title</a>
+							<a href="@menu.Link" class="mx-2 switch-button" title="@targetStr" target="@target">
+								@if (string.IsNullOrEmpty(menu.imageUrl))
+								{
+									@menu.Title
+								}
+								else
+								{
+									if (string.IsNullOrEmpty(menu.hoverImageUrl))
+									{
+										<img src="@menu.imageUrl" alt="@menu.Title" />
+										<span class="justify-content-center">@menu.Title</span>
+									}
+									else
+									{
+										<img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
+										<span>@menu.Title</span>
+									}
+								}
+							</a>
 						}
 					</div>
 				</div>

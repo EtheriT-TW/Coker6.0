@@ -81,7 +81,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<NotFoundImage> NotFoundImage { get; set; }
         public DbSet<Core.Models.JsonObject> JsonObjects { get; set; }
         public DbSet<Contact> Contacts { get; set; }
-        public DbSet<Theme> Themes { get; set; }
+        public DbSet<Template> Templates { get; set; }
+        public DbSet<TemplateSections> TemplateSections { get; set; }
+        public DbSet<TemplateSections> FooterTemplates { get; set; }
+
         public DbSet<UserGrouping> UserGroupings { get; set; }
         public DbSet<UserTagStatistic> UserTagStatistics { get; set; }
         public DbSet<UserActivityTags> UserActivityTags { get; set; }
@@ -144,10 +147,20 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(w => w.Level).HasDefaultValue(WebsiteLevelEnum.形象).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
-            modelBuilder.Entity<Theme>(o =>
+            modelBuilder.Entity<Template>(o =>
             {
                 o.Property(w => w.Css).HasDefaultValue("").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-                o.HasOne(w => w.Website).WithMany(t => t.Themes).HasForeignKey(f => f.FK_WebsiteID);
+                o.HasOne(w => w.Website).WithMany(t => t.Templates).HasForeignKey(f => f.FK_WebsiteID);
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<TemplateSections>(o =>
+            {
+                o.HasOne(w => w.template).WithMany(t => t.templateSections).HasForeignKey(f => f.FK_TemplateID);
+                o.HasQueryFilter(e => !e.IsDeleted);
+            }); 
+            modelBuilder.Entity<FooterTemplate>(o =>
+            {
+                o.HasOne(w => w.templateSections).WithOne(t => t.footerTemplates).HasForeignKey<FooterTemplate>(f => f.FK_TemplateSectionsId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<MappingUserAndWebsite>(o =>

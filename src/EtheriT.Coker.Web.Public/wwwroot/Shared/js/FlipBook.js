@@ -87,6 +87,3 @@ function FlipBookModalInit(pare) {
         PDFViewerApplication.open({ url: target_pdf, originalUrl: target_pdf });
     });
 }
-
-
-

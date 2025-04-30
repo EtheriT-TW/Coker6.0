@@ -317,7 +317,7 @@
 				{
 					<div class="title">
 						<div class="mainTitle">@item.Title</div>
-						<div class="subTitle">@item.subTitle</div>
+						<div class="subTitle">@item.SubTitle</div>
 					</div>	
 				}
 			}
@@ -332,7 +332,7 @@
 						@foreach (var imageSrc in Model.Bannners)
 						{
 							<div class="swiper-slide image_link_slide d-flex align-self-center">
-								<a class="w-100"><img src="@imageSrc.DisktopImage" class="w-100" asp-append-version="true" /></a>
+								<a href="@imageSrc.LinkUrl" class="w-100"><img src="@imageSrc.DisktopImage" class="w-100" asp-append-version="true" /></a>
 							</div>
 						}
 					</div>

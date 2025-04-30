@@ -1,28 +1,23 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
-using EtheriT.Coker.Core.Entity;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EtheriT.Coker.Core.Models
+namespace EtheriT.Coker.Application.Shared.Dto.Templates
 {
-    public class Template: FullAuditedEntity
+    public class TemplatesDto
     {
-        [MaxLength(150)]
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public long FK_WebsiteID {  get; set; }
+        public long FK_WebsiteID { get; set; }
         public LayoutTypeEnum LayoutType { get; set; }
         public HeadTypeEnum HeadType { get; set; }
         public TemplateTypeEnum templateTypeEnum { get; set; }
         public long? FK_ThemeId { get; set; }
         public string LayoutConfig { get; set; } = string.Empty;
         public string Css { get; set; } = string.Empty;
-        public bool Enable { get; set; }
-        public Website Website { get; set; }
-        public List<TemplateSections> templateSections { get; set; }
+        public List<TemplateSectionsDto> templateSections { get; set; } = new List<TemplateSectionsDto>();
     }
 }

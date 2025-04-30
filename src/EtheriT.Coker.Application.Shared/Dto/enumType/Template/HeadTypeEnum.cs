@@ -10,7 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType.Template
     {
         logo在左選單在右 = 0,
         logo在上選單在下 = 1,
-        logo與選單重疊 = 2,
+        logo與Banner重疊 = 2,
         banner在上選單在下 = 3,
     }
 }

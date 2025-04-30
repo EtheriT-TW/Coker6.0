@@ -1,8 +1,11 @@
 ﻿using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
+using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Application.Shared.Dto.Webs;
 using EtheriT.Coker.Application.Shared.Marquee;
+using EtheriT.Coker.Application.Shared.Templates;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Data;
@@ -16,17 +19,20 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
         private readonly IWebsiteApplication websiteApplication;
         private readonly IWebMenuApplication webMenuApplication;
         private readonly IConfiguration Configuration;
+        private readonly ITemplatesApplicationService templatesApplicationService;
         public Header(
             IMarqueeAppService marqueeAppService,
             IWebsiteApplication websiteApplication,
             IWebMenuApplication webMenuApplication,
-            IConfiguration Configuration
-            )
+            IConfiguration Configuration,
+            ITemplatesApplicationService templatesApplicationService
+        )
         {
             this.marqueeAppService = marqueeAppService;
             this.websiteApplication = websiteApplication;
             this.webMenuApplication = webMenuApplication;
             this.Configuration = Configuration;
+            this.templatesApplicationService = templatesApplicationService;
         }
         public async Task<IViewComponentResult> InvokeAsync()
         {
@@ -42,7 +48,6 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
             var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
             var website_data = await websiteApplication.GetAllData(defaultData.Id);
             var webmenus_data = (await webMenuApplication.GetDisplayAll(defaultData.Id)).Maps.ToList();
-
             var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(website_data[0].Id, "Top")).Value));
             HeaderViewModel headerViewModel = new HeaderViewModel();
             switch (defaultData.Layout_Type)
@@ -67,100 +72,128 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     headerViewModel = new HeaderViewModel
                     {
                         Title = website_data[0].Title,
-                        UploadPath = uploadPath+"/",
+                        UploadPath = uploadPath + "/",
                         LogoImageUrl = website_data[0].Logo?.Replace("/upload", uploadPath),
                         HomeLink = childOrgNames.Count > 0 ? $"/{website_data[0].OrgName}/" : "/",
                         HomeTarget = false,
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                         marqueeModels = new List<MarqueeDisplayDto> { },
+                        templates = await templatesApplicationService.GetDefaultTemplatesAsync()
                     };
-                    if (File.Exists(Path.Combine(uploadDirectory, "marqueeblockbig.png"))) {
+                    if (File.Exists(Path.Combine(uploadDirectory, "marqueeblockbig.png")))
+                    {
                         headerViewModel.marqueeBagroundImage = $"{uploadPath}/marqueeblockbig.png";
                     }
                     if (File.Exists(Path.Combine(uploadDirectory, "marqueeblocksmall.png")))
                     {
                         headerViewModel.marqueeIcon = $"{uploadPath}/marqueeblocksmall.png";
                     }
-                    if (string.IsNullOrEmpty(headerViewModel.LogoImageUrl)) {
+                    if (string.IsNullOrEmpty(headerViewModel.LogoImageUrl))
+                    {
                         headerViewModel.LogoImageUrl = $"{uploadPath}/logo.png";
                     }
                     switch (defaultData.Id)
                     {
                         default:
-                            if (!string.IsNullOrEmpty(headerViewModel.LogoImageUrl))
+                            if (headerViewModel.templates != null && headerViewModel.templates.templateSections.Exists(e => e.sectionType == SectionTypeEnum.Banner))
                             {
-                                string LogoImage = Path.Combine(uploadDirectory, headerViewModel.LogoImageUrl.Replace("/upload/", ""));
-                                if (!File.Exists(LogoImage))
-                                {
-                                    headerViewModel.LogoImageUrl = "";
+                                var bannerSection = headerViewModel.templates.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.Banner);
+                                if (bannerSection != null) {
+                                    var list = JsonConvert.DeserializeObject<TemplateBanner>(bannerSection.ContentConfig);
+                                    if (list != null && list.Items.Count > 0)
+                                    {
+                                        foreach (var item in list.Items)
+                                        {
+                                            if (item.DisktopImage != null)
+                                            {
+                                                item.DisktopImage = item.DisktopImage.Replace(pathReplace, uploadPath);
+                                            }
+                                            if (item.PhoneImage != null)
+                                            {
+                                                item.PhoneImage = item.PhoneImage.Replace(pathReplace, uploadPath);
+                                            }
+                                        }
+                                        headerViewModel.Bannners = list.Items;
+                                    }
                                 }
-                            }
-                            var supportedExtensions = new[] { ".jpg", ".jpeg", ".png", ".avif", ".gif" };
-                            var bannerDir = Path.Combine(uploadDirectory, "banner");
-                            var allFiles = new List<FileInfo>();
+                            } 
+                            if(!headerViewModel.Bannners.Any()) {
+                                if (!string.IsNullOrEmpty(headerViewModel.LogoImageUrl))
+                                {
+                                    string LogoImage = Path.Combine(uploadDirectory, headerViewModel.LogoImageUrl.Replace("/upload/", ""));
+                                    if (!File.Exists(LogoImage))
+                                    {
+                                        headerViewModel.LogoImageUrl = "";
+                                    }
+                                }
+                                var supportedExtensions = new[] { ".jpg", ".jpeg", ".png", ".avif", ".gif" };
+                                var bannerDir = Path.Combine(uploadDirectory, "banner");
+                                var allFiles = new List<FileInfo>();
 
-                            if (Directory.Exists(uploadDirectory))
-                            {
-                                allFiles.AddRange(
-                                    Directory.GetFiles(uploadDirectory, "headertitile*.*", SearchOption.TopDirectoryOnly)
-                                        .Where(file => supportedExtensions.Contains(Path.GetExtension(file).ToLowerInvariant()))
-                                        .Select(file => new FileInfo(file))
+                                if (Directory.Exists(uploadDirectory))
+                                {
+                                    allFiles.AddRange(
+                                        Directory.GetFiles(uploadDirectory, "headertitile*.*", SearchOption.TopDirectoryOnly)
+                                            .Where(file => supportedExtensions.Contains(Path.GetExtension(file).ToLowerInvariant()))
+                                            .Select(file => new FileInfo(file))
+                                    );
+                                }
+
+                                if (Directory.Exists(bannerDir))
+                                {
+                                    allFiles.AddRange(
+                                        Directory.GetFiles(bannerDir, "banner*.*", SearchOption.TopDirectoryOnly)
+                                            .Where(file => supportedExtensions.Contains(Path.GetExtension(file).ToLowerInvariant()))
+                                            .Select(file => new FileInfo(file))
+                                    );
+                                }
+                                var sortedFiles = allFiles.OrderByDescending(f => f.Name);
+                                var fileDict = allFiles.ToDictionary(
+                                    f => f.Name,
+                                    f =>
+                                    {
+                                        var virtualPath = f.FullName.Contains("banner" + Path.DirectorySeparatorChar)
+                                            ? "/upload/banner/" + f.Name
+                                            : "/upload/" + f.Name;
+
+                                        return virtualPath.Replace("\\", "/");
+                                    }
                                 );
-                            }
 
-                            if (Directory.Exists(bannerDir))
-                            {
-                                allFiles.AddRange(
-                                    Directory.GetFiles(bannerDir, "banner*.*", SearchOption.TopDirectoryOnly)
-                                        .Where(file => supportedExtensions.Contains(Path.GetExtension(file).ToLowerInvariant()))
-                                        .Select(file => new FileInfo(file))
-                                );
-                            }
-                            var sortedFiles = allFiles.OrderByDescending(f => f.Name);
-                            var fileDict = allFiles.ToDictionary(
-                                f => f.Name,
-                                f =>
+                                var handledSet = new HashSet<string>();
+                                foreach (var file in sortedFiles)
                                 {
-                                    var virtualPath = f.FullName.Contains("banner" + Path.DirectorySeparatorChar)
-                                        ? "/upload/banner/" + f.Name
-                                        : "/upload/" + f.Name;
+                                    var fileName = file.Name;
+                                    if (handledSet.Contains(fileName)) continue;
+                                    string baseName;
+                                    bool isPhone = fileName.Contains("_phone.");
+                                    if (isPhone) baseName = fileName.Replace("_phone", "");
+                                    else baseName = fileName;
 
-                                    return virtualPath.Replace("\\", "/");
-                                }
-                            );
+                                    var phoneVersion = baseName.Replace(".", "_phone.");
+                                    handledSet.Add(fileName);
+                                    handledSet.Add(phoneVersion);
+                                    var banner = new TemplateBannerItem();
+                                    if (!isPhone && fileDict.ContainsKey(fileName))
+                                    {
+                                        banner.DisktopImage = fileDict[fileName];
+                                    }
 
-                            var handledSet = new HashSet<string>();
-                            foreach (var file in sortedFiles) {
-                                var fileName = file.Name;
-                                if (handledSet.Contains(fileName)) continue;
-                                string baseName;
-                                bool isPhone = fileName.Contains("_phone.");
-                                if (isPhone) baseName = fileName.Replace("_phone", "");
-                                else baseName = fileName;
+                                    if (fileDict.ContainsKey(phoneVersion))
+                                    {
+                                        banner.PhoneImage = fileDict[phoneVersion];
+                                    }
 
-                                var phoneVersion = baseName.Replace(".", "_phone.");
-                                handledSet.Add(fileName);
-                                handledSet.Add(phoneVersion);
-                                var banner = new BannerImages();
-                                if (!isPhone && fileDict.ContainsKey(fileName))
-                                {
-                                    banner.DisktopImage = fileDict[fileName];
-                                }
-
-                                if (fileDict.ContainsKey(phoneVersion))
-                                {
-                                    banner.PhoneImage = fileDict[phoneVersion];
-                                }
-
-                                if (banner.DisktopImage != null || banner.PhoneImage != null)
-                                {
-                                    headerViewModel.Bannners.Add(banner);
+                                    if (banner.DisktopImage != null || banner.PhoneImage != null)
+                                    {
+                                        headerViewModel.Bannners.Add(banner);
+                                    }
                                 }
                             }
                             break;
                     }
 
-                    if (marquee!=null && marquee.Count > 0)
+                    if (marquee != null && marquee.Count > 0)
                     {
                         marquee.ForEach(data =>
                         {
@@ -266,7 +299,21 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                 if (string.IsNullOrEmpty(headerViewModel.LogoImageUrl)) headerViewModel.LogoImageUrl = "/upload/logo.svg";
             }
             headerViewModel.SearchPath = $"/{website_data[0].OrgName}/Search";
-            return View(defaultData.View, headerViewModel);
+            var view = defaultData.View;
+            if (headerViewModel.templates != null)
+            {
+                switch (headerViewModel.templates.HeadType)
+                {
+                    case HeadTypeEnum.logo在左選單在右:
+                    case HeadTypeEnum.logo與Banner重疊:
+                        view = "Layout_8";
+                        break;
+                    default:
+                        view = "Layout_7";
+                        break;
+                }
+            }
+            return View(view, headerViewModel);
         }
     }
 }

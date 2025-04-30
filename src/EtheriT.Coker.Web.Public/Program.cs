@@ -63,6 +63,8 @@ using EtheriT.Coker.Application.ThirdParty;
 using EtheriT.Coker.Application.Shared.Recipients;
 using EtheriT.Coker.Application.Recipients;
 using Serilog;
+using EtheriT.Coker.Application.Shared.Templates;
+using EtheriT.Coker.Application.Templates;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -216,6 +218,7 @@ builder.Services.AddScoped<IPermissionsAppService, PermissionsAppService>();
 builder.Services.AddScoped<IJsonObjectAppService, JsonObjectAppService>();
 builder.Services.AddScoped<ISitemap, Sitemap>();
 builder.Services.AddScoped<IHtmlProcessor, HtmlProcessor>();
+builder.Services.AddScoped<ITemplatesApplicationService, TemplatesApplicationService> ();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 if (!builder.Environment.IsDevelopment())

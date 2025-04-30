@@ -34,6 +34,7 @@ using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Application.Shared.Dto.UserHabits;
 using EtheriT.Coker.Application.Shared.Dto.Recipients;
+using EtheriT.Coker.Application.Shared.Dto.Templates;
 
 namespace EtheriT.Coker.Application
 {
@@ -335,6 +336,12 @@ namespace EtheriT.Coker.Application
             //MappingFrontUserAndWebsite
             CreateMap<FrontAddUserDto, Core.Models.MappingFrontUserAndWebsite>()
                 .ForMember(e => e.FK_WebsiteId, option => option.MapFrom(c => c.WebsiteId))
+                .ReverseMap();
+
+            //Template
+            CreateMap<TemplatesDto, Template>()
+                .ReverseMap();
+            CreateMap<TemplateSections, TemplateSectionsDto>()
                 .ReverseMap();
         }
     }

@@ -1,4 +1,6 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.Marquee;
+﻿using DevExpress.XtraCharts.Native;
+using EtheriT.Coker.Application.Shared.Dto.Marquee;
+using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem;
 
 namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
@@ -16,7 +18,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
         public bool? HasShoppingCar { get; set; }
         public string marqueeBagroundImage { get; set; } = string.Empty;
         public string marqueeIcon { get; set; } = string.Empty;
-        public List<BannerImages> Bannners { get; set; } = new List<BannerImages>();
+        public TemplatesDto? templates { get; set; }
+        public List<TemplateBannerItem> Bannners { get; set; } = new List<TemplateBannerItem>();
         public List<MenuItemModel>? menuItemModels { get; set; }
         public List<MenuItemModel> langMenuItemModels { get; set; } = new List<MenuItemModel>();
         public List<MarqueeDisplayDto>? marqueeModels { get; set; }

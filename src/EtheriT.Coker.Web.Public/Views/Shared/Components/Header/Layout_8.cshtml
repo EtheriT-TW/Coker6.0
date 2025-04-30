@@ -1,4 +1,5 @@
 ﻿@using EtheriT.Coker.Application.Shared.Dto.Marquee
+@using EtheriT.Coker.Application.Shared.Dto.enumType.Template
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem
 @model HeaderViewModel
@@ -257,9 +258,12 @@
 </nav>
 @if (Model.Bannners != null && Model.Bannners.Count > 0)
 {
+    string fullClass = Model.Bannners.Count == 1 ? "image-wh" : "one_swiper edit_lock";
+    if (Model.templates != null && Model.templates.HeadType == HeadTypeEnum.logo與Banner重疊)
+        fullClass += " full-banner";
     @if (Model.Bannners.Count == 1)
     {
-        <div class="image-wh">
+        <div class="@fullClass">
             @foreach (var item in Model.Bannners)
             {
                 <img id="header-title" class="titleimage m-auto" src="@item.DisktopImage" alt="Header Titile" asp-append-version="true" />
@@ -268,7 +272,7 @@
                 {
                     <div class="title">
                         <div class="mainTitle">@item.Title</div>
-                        <div class="subTitle">@item.subTitle</div>
+                        <div class="subTitle">@item.SubTitle</div>
                     </div>
                 }
             }
@@ -277,13 +281,13 @@
     else
     {
         <div id="banner" class="vh-75">
-            <div class="one_swiper edit_lock">
+            <div class="@fullClass">
                 <div class="swiper d-flex swiper-initialized swiper-horizontal swiper-pointer-events swiper-backface-hidden">
                     <div class="swiper-wrapper align-self-center">
                         @foreach (var imageSrc in Model.Bannners)
                         {
                             <div class="swiper-slide image_link_slide d-flex align-self-center">
-                                <a class="w-100"><img src="@imageSrc.DisktopImage" class="w-100" asp-append-version="true" /></a>
+                                            <a href="@imageSrc.LinkUrl" class="w-100"><img src="@imageSrc.DisktopImage" class="w-100" asp-append-version="true" /></a>
                             </div>
                         }
                     </div>

@@ -83,8 +83,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<Template> Templates { get; set; }
         public DbSet<TemplateSections> TemplateSections { get; set; }
-        public DbSet<TemplateSections> FooterTemplates { get; set; }
-
+        public DbSet<FooterTemplate> FooterTemplates { get; set; }
         public DbSet<UserGrouping> UserGroupings { get; set; }
         public DbSet<UserTagStatistic> UserTagStatistics { get; set; }
         public DbSet<UserActivityTags> UserActivityTags { get; set; }

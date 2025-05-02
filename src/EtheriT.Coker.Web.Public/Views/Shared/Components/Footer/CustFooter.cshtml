@@ -1,0 +1,9 @@
+﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
+@using EtheriT.Coker.Application.Shared.i18n;
+@model FooterViewModel
+@{
+    var nonce = ViewContext.HttpContext.Items["CSPNonce"] as string;
+    ViewBag.Nonce = nonce;
+}
+<style nonce="@ViewBag.Nonce">@Html.Raw(Model.css)</style>
+<div id="footer" class="w-100 d-flex justify-content-center align-items-center flex-column footer-bg">@Html.Raw(Model.html)</div>

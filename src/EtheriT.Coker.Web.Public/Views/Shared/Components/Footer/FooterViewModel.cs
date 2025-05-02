@@ -21,6 +21,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
         public string? IG_Link { get; set; }
         public string? YoutubeChannel_Link { get; set; }
         public string locale { get; set; } = "zh-tw";
+        public string html { get; set; } = string.Empty;
+        public string css { get; set; } = string.Empty;
         public List<ImageListDto>? Other_Image_Link { get; set; }
         public List<string>? Content { get; set; } = new List<string>();
         public List<FooterViewModel>? footerViewModels { get; set; }

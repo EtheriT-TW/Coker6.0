@@ -2,6 +2,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.enumType.Template
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem
+@using EtheriT.Coker.Application.Shared.i18n;
 @model HeaderViewModel
 
 <link rel="stylesheet" href="~/css/Header/Header_Layout_8.min.css" asp-append-version="true" />
@@ -197,6 +198,30 @@
                 <span class="material-symbols-outlined bg-secondary bg-grey text-muted rounded-circle p-1 fs-5 notranslate">search</span>
                 <span class="text-nowrap ms-2 d-none d-lg-flex">搜尋</span>
             </a>
+            @foreach (var menu in Model.langMenuItemModels)
+            {
+                var target = menu.Target ?? false ? "_blank" : "_self";
+                var targetStr = menu.Target ?? false ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title);
+                <a href="@menu.Link" class="mx-2" title="@targetStr" target="@target">
+                    @if (string.IsNullOrEmpty(menu.imageUrl))
+                    {
+                        @menu.Title
+                    }
+                    else
+                    {
+                        if (string.IsNullOrEmpty(menu.hoverImageUrl))
+                        {
+                            <img src="@menu.imageUrl" alt="@menu.Title" />
+                            <span class="d-none">@menu.Title</span>
+                        }
+                        else
+                        {
+                            <img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
+                            <span class="d-none">@menu.Title</span>
+                        }
+                    }
+                </a>
+            }
             <div id="google_translate_element"></div>
             @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
             {

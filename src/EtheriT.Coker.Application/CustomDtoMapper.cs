@@ -343,6 +343,8 @@ namespace EtheriT.Coker.Application
                 .ReverseMap();
             CreateMap<TemplateSections, TemplateSectionsDto>()
                 .ReverseMap();
+            CreateMap<FooterTemplate, FooterTemplateDto>()
+                .ReverseMap();
         }
     }
 }

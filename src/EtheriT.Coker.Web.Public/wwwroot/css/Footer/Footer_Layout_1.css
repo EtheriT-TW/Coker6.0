@@ -41,10 +41,6 @@ footer {
     z-index: 500;
 }
 
-#ContainerBody {
-    padding-top: 96px;
-}
-
 .footer_pack_up #Collapse_Button > i {
     transform: rotate(360deg);
     transition: all 1s;
@@ -219,6 +215,12 @@ footer {
     }
 }
 
+@media only screen and (min-width: 1200px) {
+    #ContainerBody {
+        padding-top: 15px;
+    }
+}
+
 @media only screen and (max-width: 1200px) {
     .paging_frame {
         margin: 2rem 1rem 1rem;
@@ -226,10 +228,6 @@ footer {
 }
 
 @media only screen and (max-width: 992px) {
-    #ContainerBody {
-        padding-top: 58px !important;
-    }
-
     #Footer_Menu {
         justify-content: flex-start;
         margin: auto;

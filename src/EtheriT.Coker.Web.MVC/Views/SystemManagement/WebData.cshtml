@@ -39,7 +39,7 @@
                             <div class="invalid-feedback">請輸入公司名稱!</div>
                         </div>
                         <div class="form-floating mb-3">
-                            <input id="TaxID" name="TaxID" class="bill_guinum form-control" type="tel" placeholder="GUINum" value="@Model.Company.TaxID" pattern="\d{8}" maxlength="8" disabled="disabled" required>
+                            <input id="TaxID" name="TaxID" class="bill_guinum form-control" type="tel" placeholder="請輸入 8 碼統一編號或 10 碼醫療機構代碼" value="@Model.Company.TaxID" pattern="\d{8}|\d{10}" maxlength="10" disabled="disabled" required>
                             <label class="required required_all" for="TaxID">統　　編</label>
                             <div class="invalid-feedback">請輸入統編!</div>
                         </div>

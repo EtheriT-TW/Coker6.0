@@ -1,8 +1,4 @@
-﻿.home, .page {
-    padding-top: 0 !important;
-}
-
-.no-arrow::after {
+﻿.no-arrow::after {
     content: none !important;
     background-image: none !important;
 }
@@ -10,6 +6,15 @@
 header {
     background: url("/upload/background.jpg") center top;
 }
+    header.overlap-banner > .shadow:not(:hover):not(.show-menu) {
+        box-shadow: none !important;
+        position: absolute !important;
+        width: 100% !important;
+    }
+
+    header.overlap-banner > nav:not(.show-menu) > #Mega_Menu:not(:hover) {
+        background-color: transparent !important;
+    }
 
 #footrow {
     text-align-last: start;
@@ -107,10 +112,14 @@ header {
     background: url("/upload/Menu.jpg");
     background-size:cover;
 }
+    .navbar.fixed-top, .navbar.position-fixed {
+        position: fixed;
+        top: 0;
+    }
 
-.navbar span {
-    color: #ffffff !important;
-}
+    .navbar span {
+        color: #ffffff !important;
+    }
 
 /* Button Car Dropdown */
 #btn_car_dropdown > i.open {

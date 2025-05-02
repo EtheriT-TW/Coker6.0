@@ -1,9 +1,15 @@
 ﻿
 using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
+using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Application.Shared.Marquee;
+using EtheriT.Coker.Application.Shared.Processor;
+using EtheriT.Coker.Application.Shared.Templates;
+using EtheriT.Coker.Application.Templates;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Web.Public.Views.Shared.Components.Header;
 using Microsoft.AspNetCore.Mvc;
@@ -16,14 +22,23 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 	{
 		private readonly IWebsiteApplication websiteApplication;
 		private readonly IConfiguration Configuration;
-		public Footer(
+        private readonly ITemplatesApplicationService templatesApplicationService;
+        private readonly IHtmlProcessor htmlProcessor;
+        private readonly StringHandler stringHandler;
+        public Footer(
 			IWebsiteApplication websiteApplication,
-			IConfiguration Configuration
-			)
+			IConfiguration Configuration,
+            ITemplatesApplicationService templatesApplicationService,
+            IHtmlProcessor htmlProcessor,
+            StringHandler stringHandler
+        )
 		{
 			this.websiteApplication = websiteApplication;
 			this.Configuration = Configuration;
-		}
+			this.templatesApplicationService = templatesApplicationService;
+            this.htmlProcessor = htmlProcessor;
+            this.stringHandler = stringHandler;
+        }
 		public async Task<IViewComponentResult> InvokeAsync()
 		{
 			var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
@@ -638,8 +653,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 							break;
 						case 29:
 							footerMessage = $@"
-								楠崧企業有限公司 NansonTechnic Co.,Ltd. ALL Rights Reserved. <br />
-								地址：<a href=""https://maps.app.goo.gl/uo36KnwZp6zAb7Rw6"" target=""_blank"" title=""連結至google Map"">80045高雄市新興區民生一路52號7樓之2 電話：<a href=""tel:07-2269629"" target=""_blank"" title=""撥打電話至:(07)2269629(另開新視窗)"" class=""tel"">+886-7-2269629</a> / <a href=""tel:07-2269793"" target=""_blank"" title=""撥打電話至:(07)2269793(另開新視窗)"" class=""tel"">+886-7-2269793</a> 傳真：+886-7-2262688<br />
+								楠崧企業有限公司 NansonTechnic Co.,Ltd. ALL Rights Reserved. <br>
+								地址：<a href=""https://maps.app.goo.gl/uo36KnwZp6zAb7Rw6"" target=""_blank"" title=""連結至google Map"">80045高雄市新興區民生一路52號7樓之2 <br class=""d-sm-none d-block"">電話：</a><a href=""tel:07-2269629"" target=""_blank"" title=""撥打電話至:(07)2269629(另開新視窗)"" class=""tel"">+886-7-2269629</a> / <a href=""tel:07-2269793"" target=""_blank"" title=""撥打電話至:(07)2269793(另開新視窗)"" class=""tel"">+886-7-2269793</a> <br class=""d-md-none d-block"">傳真：+886-7-2262688<br>
 								螢幕解析度請設為 1280*1024 以上│Design by EtheriT
 							";
 							break;
@@ -651,19 +666,31 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 							";
                             break;
                     }
-					footerViewModel = new FooterViewModel
-					{
-						Content = new List<string>
-								 {
-									 footerMessage,
-								 }
-					};
+					footerViewModel = new FooterViewModel();
+					if (!string.IsNullOrEmpty(footerMessage)) footerViewModel.Content = new List<string> { footerMessage };
 					break;
 				default:
 					footerViewModel = new FooterViewModel();
 					break;
 			}
-			return View(defaultData.View, footerViewModel);
+            if (footerViewModel.Content==null || !footerViewModel.Content.Any() || string.IsNullOrEmpty(footerViewModel.Content.FirstOrDefault()))
+            {
+                var template = await templatesApplicationService.GetDefaultTemplatesAsync();
+                if (template != null)
+                {
+                    var footerSection = template.templateSections.Find(e => e.sectionType == SectionTypeEnum.頁尾);
+                    if (footerSection != null &&
+                        footerSection.footerTemplateDto != null &&
+                        !string.IsNullOrEmpty(htmlProcessor.text(stringHandler.HtmlDecode(footerSection.footerTemplateDto.html)))
+                    )
+                    {
+                        footerViewModel.html = stringHandler.HtmlDecode(footerSection.footerTemplateDto.html) ?? "";
+                        footerViewModel.css = footerSection.footerTemplateDto.css ?? "";
+                        defaultData.View = "CustFooter";
+                    }
+                }
+            }
+            return View(defaultData.View, footerViewModel);
 		}
 	}
 }

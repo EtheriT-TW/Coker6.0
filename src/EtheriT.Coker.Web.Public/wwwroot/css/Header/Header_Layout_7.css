@@ -54,6 +54,11 @@
             font-size: 1.7rem;
         }
 
+#Mega_Menu img {
+    max-height: 100%;
+    height: 100%;
+    max-width: unset;
+}
 
 .home, .page {
     padding-top: 128px;

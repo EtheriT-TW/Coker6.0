@@ -6,23 +6,12 @@
     }
     if (($('.navbar').hasClass('position-fixed') || $('.navbar').hasClass('fixed-top')) && !$(".full-banner").length > 0) {
         var mega_menu_height = $("nav").css("height");
-        $("#ContainerBody").css("padding-top", mega_menu_height);
+        $("body").css("padding-top", mega_menu_height);
         $(window).resize(function () {
             var mega_menu_height = $("nav").css("height");
-            $("#ContainerBody").css("padding-top", mega_menu_height);
+            $("body").css("padding-top", mega_menu_height);
             MenuLiSize();
         });
-        var navbarHeight = $('.navbar').outerHeight();
-        if (!$('#swiper-light').length) {
-            if ($('#banner > .one_swiper').length) {
-                $('#banner').css('padding-top', navbarHeight);
-            } else {
-                $('#ContainerBody').css('padding-top', navbarHeight);
-            }
-        } else if ($('#header-title').length) {
-            $('#header-title').css('padding-top', navbarHeight);
-            $('#header-title-phone').css('padding-top', navbarHeight);
-        }
         /*setTimeout(function () {
             if ($('.full-banner').length>0 && (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop) == 0) {
                 // 頁面加載完畢後滾動到目標元素
@@ -35,20 +24,21 @@
 
     const showNav = document.querySelectorAll('.full-banner');
     if (showNav.length) {
+        $("header").addClass("overlap-banner");
         function hoverOff() {
-            $('nav').off('mouseleave');
-            $('nav').off('mouseover');
+            $('header>nav').off('mouseleave');
+            $('header>nav').off('mouseover');
         }
         function hoverOn() {
-            $('nav').on('mouseover', () => {
-                $('nav').removeClass('hide-menu');
+            $('header>nav').on('mouseover', () => {
+                $('header>nav').removeClass('hide-menu');
             });
-            $('nav').on('mouseleave', () => {
-                $('nav').addClass('hide-menu');
+            $('header>nav').on('mouseleave', () => {
+                $('header>nav').addClass('hide-menu');
             });
         }
-        if ($('nav').hasClass('position-fixed')) {
-            $('nav').addClass('hide-menu');
+        if ($('header>nav').hasClass('position-fixed')) {
+            $('header>nav').addClass('hide-menu');
             hoverOn();
         }
         window.addEventListener('scroll', () => {
@@ -60,10 +50,10 @@
 
                 // 檢查當前滾動位置是否在這個區塊範圍內
                 if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-                    $('nav').removeClass('show-menu').addClass('hide-menu');
+                    $('header>nav').removeClass('show-menu').addClass('hide-menu');
                     hoverOn();
                 } else {
-                    $('nav').addClass('show-menu').removeClass('hide-menu');
+                    $('header>nav').addClass('show-menu').removeClass('hide-menu');
                     hoverOff();
                 }
             });

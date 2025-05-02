@@ -71,35 +71,35 @@
 						}
 					</a>
 				</div>
-				<div class="position-relative">
-					<div id="Search" class="d-flex lh-lg justify-content-center align-items-center">
-						<input id="SearchInput" class="input_sear form-control   fs_change  input-pd" type="search" placeholder="" aria-label="Search">
+				<div class="d-flex">
+					<div id="Search" class="position-relative d-flex lh-lg justify-content-center align-items-center">
+						<input id="SearchInput" class="input_sear form-control fs_change  input-pd" type="search" placeholder="" aria-label="Search">
 						<span class="material-symbols-outlined icon position-absolute">search</span>
-						@foreach (var menu in Model.langMenuItemModels)
-						{
-							var target = menu.Target ?? false ? "_blank" : "_self";
-							var targetStr = menu.Target ?? false ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title);
-							<a href="@menu.Link" class="mx-2 switch-button" title="@targetStr" target="@target">
-								@if (string.IsNullOrEmpty(menu.imageUrl))
+					</div>
+					@foreach (var menu in Model.langMenuItemModels)
+					{
+						var target = menu.Target ?? false ? "_blank" : "_self";
+						var targetStr = menu.Target ?? false ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title);
+						<a href="@menu.Link" class="mx-2" title="@targetStr" target="@target">
+							@if (string.IsNullOrEmpty(menu.imageUrl))
+							{
+								@menu.Title
+							}
+							else
+							{
+								if (string.IsNullOrEmpty(menu.hoverImageUrl))
 								{
-									@menu.Title
+									<img src="@menu.imageUrl" alt="@menu.Title" />
+									<span class="d-none">@menu.Title</span>
 								}
 								else
 								{
-									if (string.IsNullOrEmpty(menu.hoverImageUrl))
-									{
-										<img src="@menu.imageUrl" alt="@menu.Title" />
-										<span class="justify-content-center">@menu.Title</span>
-									}
-									else
-									{
-										<img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
-										<span>@menu.Title</span>
-									}
+									<img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
+									<span class="d-none">@menu.Title</span>
 								}
-							</a>
-						}
-					</div>
+							}
+						</a>
+					}
 				</div>
 			</div>
 		</div>

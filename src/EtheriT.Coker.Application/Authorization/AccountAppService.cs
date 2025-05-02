@@ -319,9 +319,13 @@ namespace EtheriT.Coker.Application.Authorization
                 response.Success = false;
                 response.Error = e.Message;
             }
-            var removeToken = db.Tokens.Where(e => e.EndTime < DateTime.Now);
-            db.Tokens.RemoveRange(removeToken);
-            db.SaveChanges();
+            try
+            {
+                var removeToken = db.Tokens.Where(e => e.EndTime < DateTime.Now);
+                db.Tokens.RemoveRange(removeToken);
+                db.SaveChanges();
+            }
+            catch (Exception e) { }
             return response;
         }
         public async Task<ResponseMessageDto> Logout()

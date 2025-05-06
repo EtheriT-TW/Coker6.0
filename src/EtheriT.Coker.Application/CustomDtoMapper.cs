@@ -35,6 +35,7 @@ using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Application.Shared.Dto.UserHabits;
 using EtheriT.Coker.Application.Shared.Dto.Recipients;
 using EtheriT.Coker.Application.Shared.Dto.Templates;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
 
 namespace EtheriT.Coker.Application
 {
@@ -344,6 +345,9 @@ namespace EtheriT.Coker.Application
             CreateMap<TemplateSections, TemplateSectionsDto>()
                 .ReverseMap();
             CreateMap<FooterTemplate, FooterTemplateDto>()
+                .ReverseMap();
+
+            CreateMap<ECPayCreditDetailDataDto, ECPayQueryTradeDataDto>()
                 .ReverseMap();
         }
     }

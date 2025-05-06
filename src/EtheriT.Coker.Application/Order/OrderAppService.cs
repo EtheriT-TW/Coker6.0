@@ -228,9 +228,9 @@ namespace EtheriT.Coker.Application.Order
                             case "LINE Pay":
                                 output.Message = $"LinePay,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
                                 break;
-                                //case "綠界支付":
-                                //    output.Message = $"ECPay,{oh.Id}";
-                                //    break;
+                            case "綠界支付":
+                                output.Message = $"ECPay,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
+                                break;
                         }
                     }
                     if (!mailoutput.Success) output.Error = mailoutput.Message;
@@ -334,11 +334,17 @@ namespace EtheriT.Coker.Application.Order
                             {
                                 output.Payment = "支付連-" + payment.Title?.ToString() ?? "";
                             }
+                            else if (payment.Code.ToLower().StartsWith("ecpay"))
+                            {
+                                output.Payment = "綠界支付-" + payment.Title?.ToString() ?? "";
+                            }
                             else
                             {
                                 output.Payment = payment.Title?.ToString() ?? "";
                             }
                             output.ThirdParties = payment.FK_ThirdPartyId;
+
+                            output.CanRefund = payment.CanRefund;
 
                             List<long> neediconpayment = new List<long> { 2, 7, 8, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20 };
                             if (neediconpayment.Contains(output.PaymentCode)) output.PaymentIcon = $"/images/paymenticon/{payment.Icons}";

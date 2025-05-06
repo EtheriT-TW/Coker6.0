@@ -11,6 +11,23 @@
     const local = @Html.Raw(L.getAllJsonString());
 </script>
 @Html.AntiForgeryToken()
+<!-- Modal -->
+<div class="modal fade" id="ECPayModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ECPayModal" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5 mx-auto" id="ECPayModalLabel">選擇支付方式</h1>
+            </div>
+            <div class="modal-body">
+                <div id="ECPayPayment"></div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn_pay btn-primary rounded px-4">確認付款</button>
+                <button type="button" class="btn btn_cancel btn-danger rounded px-4">取消付款</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="top_title_1 p-3">
     <nav class="bread d-none d-md-block container">
         <ol class="list-unstyled d-flex my-0">
@@ -475,3 +492,6 @@
         </div>
     </div>
 </Content>
+
+<script src="https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"></script>
+@* <script src="https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"></script>*@

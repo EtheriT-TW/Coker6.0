@@ -91,10 +91,12 @@
         $("#menuButton").removeClass("collapsed");
     });
 
-    $('#News_Marquee > .news_box').verticalLoop({
-        delay: 3000,
-        order: 'asc'
-    });
+    if ($('#News_Marquee > .news_box').length > 0) {
+        $('#News_Marquee > .news_box').verticalLoop({
+            delay: 3000,
+            order: 'asc'
+        });
+    }
 
     /*
     $("#Offcanvas_Mega_Menu > ul > .title > .content > ul").each(function () {

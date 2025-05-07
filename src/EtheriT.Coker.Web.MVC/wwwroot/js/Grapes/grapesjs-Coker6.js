@@ -970,10 +970,12 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                     data = selectedItems.selectedRowsData;
                                 }
                                 window.setTimeout(function () {
-                                    $("#PopupDirectory .cancel").on("click", function () {
+                                    var popup = $("#PopupDirectory").dxPopup("instance");
+                                    var content = popup.content();
+                                    $(content).find(".cancel").on("click", function () {
                                         PopupDirectory.hide();
                                     });
-                                    $("#PopupDirectory .Sure").on("click", function (component) {
+                                    $(content).find(".Sure").on("click", function (component) {
                                         var oldlist = editor.getSelected().getAttributes()["data-dirid"];
                                         editor.getSelected().set("attributes", {
                                             "data-dirid": data.map(function (item) {

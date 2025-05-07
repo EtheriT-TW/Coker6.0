@@ -267,19 +267,39 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Icon="credit_card",
                             },
                             new JobMenu{
-                                PageName="BonusSettings",
-                                Title="紅利設定",
-                                Controller="StoreSettings",
-                                Action="BonusSettings",
-                                Icon="savings",
-                                Enable=false
-                            },
-                            new JobMenu{
                                 PageName="MarketingSettings",
                                 Title="行銷活動",
                                 Controller="StoreSettings",
                                 Action="MarketingSettings",
                                 Icon="confirmation_number",
+                            }
+                        }
+                    },
+                    new JobMenu{ 
+                        PageName="Bonus",
+                        Title="紅利管理",
+                        Icon="redeem",
+                        CollapseId="#BonusManagement",
+                        jobItemModels= new List<JobMenu> {
+                            new JobMenu{
+                                PageName="BonusSettings",
+                                Title="紅利設定",
+                                Controller="BonusManagement",
+                                Action="Settings",
+                                Icon="savings"
+                            },
+                            new JobMenu{
+                                PageName="BonusTransaction",
+                                Title="紅利異動",
+                                Controller="BonusManagement",
+                                Action="Transaction",
+                                Icon=""
+                            },new JobMenu{
+                                PageName="BonusRecord",
+                                Title="歷史紅利查詢",
+                                Controller="BonusManagement",
+                                Action="Record",
+                                Icon=""
                             }
                         }
                     },
@@ -457,6 +477,10 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         {
                             PageName = "Report",
                             Enable = false
+                        },new JobMenu
+                        {
+                            PageName = "Bonus",
+                            Enable = false
                         }
                     });
                     break;
@@ -503,6 +527,10 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         {
                             PageName = "Report",
                             Enable = false
+                        },new JobMenu
+                        {
+                            PageName = "Bonus",
+                            Enable = false
                         }
                     });
                     break;
@@ -529,6 +557,10 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         },new JobMenu
                         {
                             PageName = "Report",
+                            Enable = false
+                        },new JobMenu
+                        {
+                            PageName = "Bonus",
                             Enable = false
                         }
                     });

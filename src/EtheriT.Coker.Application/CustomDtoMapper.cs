@@ -303,8 +303,14 @@ namespace EtheriT.Coker.Application
             CreateMap<CuseSearchListDto, CustSearch>().ReverseMap();
 
             //Recipients
-            CreateMap<RecipientsDto, Recipient>().ReverseMap();
-            CreateMap<RecipientsListDto, Recipient>().ReverseMap();
+            CreateMap<RecipientsDto, Recipient>()
+                .ReverseMap();
+            CreateMap<RecipientsListDto, Recipient>()
+                .ForMember(e => e.Address, option => option.MapFrom(c => ""))
+                .ForMember(e => e.CellPhone, option => option.MapFrom(c => ""))
+                .ForMember(e => e.TelePhone, option => option.MapFrom(c => ""))
+                .ForMember(e => e.Sex, option => option.MapFrom(c => SexEnum.其他))
+                .ReverseMap();
             CreateMap<MailUserDataDto, Recipient>().ReverseMap();
             CreateMap<OrderHeaderAddDto, RecipientsDto>()
                 .ForMember(e => e.Id, option => option.MapFrom(c => c.RecipientId))

@@ -487,7 +487,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     CreationTime = new DateTime(2025, 03, 28, 18, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
-
             modelBuilder.Entity<StoreSet>().HasData(
                 new StoreSet
                 {

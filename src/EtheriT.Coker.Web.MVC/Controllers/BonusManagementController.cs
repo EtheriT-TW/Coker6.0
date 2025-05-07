@@ -1,12 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using EtheriT.Coker.Application.StoreSet;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
     public class BonusManagementController : Controller
     {
-        public IActionResult Settings()
+        private readonly IStoreSetAppService _storeSetAppService;
+        public BonusManagementController(IStoreSetAppService storeSetAppService) {
+            _storeSetAppService = storeSetAppService;
+        }
+        public async Task<IActionResult> Settings()
         {
-            return View();
+            var response = await _storeSetAppService.getAll(new List<long> { 6 });
+            response.StoreSetGroupId = 6;
+            ViewData["Title"] = "BonusSettings";
+            return View("~/Views/SystemManagement/SEO.cshtml", response);
         }
         public IActionResult Transaction()
         {

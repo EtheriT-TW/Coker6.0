@@ -1,0 +1,590 @@
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Core.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
+{
+    public static class ThirdPartySeed
+    {
+        public static void Seed(ModelBuilder modelBuilder) {
+            //金流
+            modelBuilder.Entity<ThirdParty>().HasData(
+                new ThirdParty
+                {
+                    Id = 1,
+                    Title = "轉帳",
+                    IsDeleted = false,
+                    ser_no = 500,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+
+                }, new ThirdParty
+                {
+                    Id = 2,
+                    Title = "支付連",
+                    IsDeleted = false,
+                    ser_no = 500,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new ThirdParty
+                {
+                    Id = 3,
+                    Title = "LINE Pay",
+                    IsDeleted = false,
+                    ser_no = 500,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new ThirdParty
+                {
+                    Id = 4,
+                    Title = "綠界支付",
+                    IsDeleted = false,
+                    ser_no = 500,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }
+            );
+            modelBuilder.Entity<ThirdPartyKeypair>().HasData(
+                new ThirdPartyKeypair
+                {
+                    Id = 1,
+                    FK_TPid = 1,
+                    Title = "匯款銀行代號",
+                    Code = "bankNo",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 2,
+                    FK_TPid = 1,
+                    Title = "匯款帳號",
+                    Code = "account",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 3,
+                    FK_TPid = 1,
+                    Title = "戶名",
+                    Code = "shopID",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 4,
+                    FK_TPid = 2,
+                    Title = "PchomePayAppId",
+                    Code = "account",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 5,
+                    FK_TPid = 2,
+                    Title = "PchomePaySecre",
+                    Code = "code1",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 6,
+                    FK_TPid = 2,
+                    Title = "允許繳費有效天數",
+                    PromptText = "※預設為5天，最短1天，最長可設定為5天，超過一律以5天計算",
+                    Code = "expire_days",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 7,
+                    FK_TPid = 3,
+                    Title = "Channel ID",
+                    Code = "account",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 8,
+                    FK_TPid = 3,
+                    Title = "Channel Secret Key",
+                    Code = "code1",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 9,
+                    FK_TPid = 4,
+                    Title = "商店代號",
+                    Code = "MerchantID",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 10,
+                    FK_TPid = 4,
+                    Title = "平台代號",
+                    PromptText = "※非專案合作請留空",
+                    Code = "PlatformID ",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 11,
+                    FK_TPid = 4,
+                    Title = "HashKey",
+                    Code = "HashKey",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 12,
+                    FK_TPid = 4,
+                    Title = "HashIV",
+                    Code = "HashIV",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 13,
+                    FK_TPid = 4,
+                    Title = "ATM允許繳費有效天數",
+                    PromptText = "※預設為3天，最短1天，最長可設定為60天，超過一律以60天計算",
+                    Code = "ExpireDate",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 14,
+                    FK_TPid = 4,
+                    Title = "超商條碼繳費截止時間",
+                    PromptText = "※預設為7天，最短1天，最長可設定為30天，超過一律以30天計算",
+                    Code = "StoreExpireDate_Barcode",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 15,
+                    FK_TPid = 4,
+                    Title = "超商代碼繳費截止時間",
+                    PromptText = "※預設為7天，最短1天，最長可設定為30天，超過一律以30天計算",
+                    Code = "StoreExpireDate_CVS",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }
+            );
+            modelBuilder.Entity<PaymentType>().HasData(
+                new PaymentType
+                {
+                    Id = 1,
+                    Used = false,
+                    Title = "ATM",
+                    Code = "atm",
+                    MinAmount = 1,
+                    MaxAmount = null,
+                    Icons = "pay05.jpg",
+                    SerNo = 1,
+                    FK_ThirdPartyId = 1,
+                    CreatorUserId = 1,
+                    RefundWorkDay = -1,
+                    CanRefund = false,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 2,
+                    Used = false,
+                    Title = "信用卡付款",
+                    Code = "PchomePayCARD",
+                    MinAmount = 30,
+                    MaxAmount = 199999,
+                    Icons = "pay_08_信用卡.jpg",
+                    SerNo = 3,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 0,
+                    CanRefund = true,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 3,
+                    Used = false,
+                    Title = "ATM(虛擬帳戶)",
+                    Code = "PchomePayATM",
+                    MinAmount = 1,
+                    MaxAmount = 49999,
+                    Icons = "pay05.jpg",
+                    SerNo = 8,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 3,
+                    CanRefund = true,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 4,
+                    Used = false,
+                    Title = "PI錢包付款",
+                    Code = "PchomePayPI",
+                    MinAmount = 1,
+                    MaxAmount = 199999,
+                    Icons = "pay02.jpg",
+                    SerNo = 7,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 0,
+                    CanRefund = true,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 5,
+                    Used = false,
+                    Title = "支付連餘額付款",
+                    Code = "PchomePayACCT",
+                    MinAmount = 1,
+                    MaxAmount = null,
+                    Icons = "",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    IsDeleted = true,
+                    RefundWorkDay = 0,
+                    CanRefund = true,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 6,
+                    Used = false,
+                    Title = "支付連銀行支付付款",
+                    Code = "PchomePayEACH",
+                    MinAmount = 1,
+                    MaxAmount = 49999,
+                    Icons = "pay06_支付連銀行.jpg",
+                    SerNo = 9,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 3,
+                    CanRefund = true,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 7,
+                    Used = false,
+                    Title = "7-11貨到付款",
+                    Code = "PCHomeIPL7",
+                    MinAmount = 65,
+                    MaxAmount = 20000,
+                    Icons = "pay03.jpg",
+                    SerNo = 10,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 3,
+                    CanRefund = false,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 8,
+                    Used = false,
+                    Title = "全家貨到付款",
+                    Code = "PCHomeIPLFM",
+                    MinAmount = 65,
+                    MaxAmount = 20000,
+                    Icons = "pay04.jpg",
+                    SerNo = 11,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 3,
+                    CanRefund = false,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 9,
+                    Used = false,
+                    Title = "OK貨到付款",
+                    Code = "PCHomeIPLOK",
+                    MinAmount = 65,
+                    MaxAmount = 20000,
+                    Icons = "ok1_0.jpg",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    IsDeleted = true,
+                    RefundWorkDay = 3,
+                    CanRefund = false,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 10,
+                    Used = false,
+                    Title = "萊爾富貨到付款",
+                    Code = "PCHomeIPLHL",
+                    MinAmount = 65,
+                    MaxAmount = 20000,
+                    Icons = "life_0.jpg",
+                    SerNo = 12,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 3,
+                    CanRefund = false,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 11,
+                    Used = false,
+                    Title = "線上刷卡3期分期付款",
+                    Code = "PchomePayInstallment3",
+                    MinAmount = 30,
+                    MaxAmount = 199999,
+                    Icons = "pay_08_信用卡.jpg",
+                    SerNo = 4,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 0,
+                    CanRefund = true,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 12,
+                    Used = false,
+                    Title = "線上刷卡6期分期付款",
+                    Code = "PchomePayInstallment6",
+                    MinAmount = 30,
+                    MaxAmount = 199999,
+                    Icons = "pay_08_信用卡.jpg",
+                    SerNo = 5,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 0,
+                    CanRefund = true,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 13,
+                    Used = false,
+                    Title = "線上刷卡12期分期付款",
+                    Code = "PchomePayInstallment12",
+                    MinAmount = 30,
+                    MaxAmount = 199999,
+                    Icons = "pay_08_信用卡.jpg",
+                    SerNo = 6,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 0,
+                    CanRefund = true,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 14,
+                    Used = false,
+                    Title = "LINEPay",
+                    Code = "LinePay",
+                    MinAmount = 1,
+                    MaxAmount = 50000,
+                    Icons = "pay01.jpg",
+                    SerNo = 2,
+                    FK_ThirdPartyId = 3,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 0,
+                    CanRefund = true,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 15,
+                    Used = false,
+                    Title = "超商條碼付款",
+                    Code = "PCHomeIBRCD",
+                    MinAmount = 25,
+                    MaxAmount = 20000,
+                    Icons = "pay_07.jpg",
+                    SerNo = 13,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 3,
+                    CanRefund = false,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 16,
+                    Used = false,
+                    Title = "信用卡付款",
+                    Code = "ECPayCreditCard",
+                    MinAmount = 6,
+                    MaxAmount = 199999,
+                    Icons = "pay_08_信用卡.jpg",
+                    SerNo = 14,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 21,
+                    CanRefund = true,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 17,
+                    Used = false,
+                    Title = "信用卡付款(銀聯卡)",
+                    Code = "ECPayUnionPay",
+                    MinAmount = 6,
+                    MaxAmount = 199999,
+                    Icons = "pay_08_信用卡.jpg",
+                    SerNo = 15,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 21,
+                    CanRefund = true,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 18,
+                    Used = false,
+                    Title = "信用卡分期付款3期",
+                    Code = "ECPayCreditInstallment_3",
+                    MinAmount = 6,
+                    MaxAmount = 199999,
+                    Icons = "pay_08_信用卡.jpg",
+                    SerNo = 16,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 21,
+                    CanRefund = true,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 19,
+                    Used = false,
+                    Title = "信用卡分期付款6期",
+                    Code = "ECPayCreditInstallment_6",
+                    MinAmount = 6,
+                    MaxAmount = 199999,
+                    Icons = "pay_08_信用卡.jpg",
+                    SerNo = 17,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 21,
+                    CanRefund = true,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 20,
+                    Used = false,
+                    Title = "信用卡分期付款12期",
+                    Code = "ECPayCreditInstallment_12",
+                    MinAmount = 6,
+                    MaxAmount = 199999,
+                    Icons = "pay_08_信用卡.jpg",
+                    SerNo = 18,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    RefundWorkDay = 21,
+                    CanRefund = true,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 21,
+                    Used = false,
+                    Title = "ATM(虛擬帳戶)",
+                    Code = "ECPayATM",
+                    MinAmount = 17,
+                    MaxAmount = 49999,
+                    Icons = "pay05.jpg",
+                    SerNo = 19,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    RefundWorkDay = -1,
+                    CanRefund = false,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 22,
+                    Used = false,
+                    Title = "超商條碼付款",
+                    Code = "ECPayBarcode",
+                    MinAmount = 16,
+                    MaxAmount = 20000,
+                    Icons = "pay_07.jpg",
+                    SerNo = 20,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    RefundWorkDay = -1,
+                    CanRefund = false,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 23,
+                    Used = false,
+                    Title = "超商代碼付款",
+                    Code = "ECPayCVS",
+                    MinAmount = 31,
+                    MaxAmount = 20000,
+                    Icons = "",
+                    SerNo = 21,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    RefundWorkDay = -1,
+                    CanRefund = false,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 24,
+                    Used = false,
+                    Title = "超商代碼付款(全家)",
+                    Code = "ECPayCVS_FAMILY",
+                    MinAmount = 31,
+                    MaxAmount = 20000,
+                    Icons = "pay04.jpg",
+                    SerNo = 22,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    RefundWorkDay = -1,
+                    CanRefund = false,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                    IsDeleted = true,
+                }, new PaymentType
+                {
+                    Id = 25,
+                    Used = false,
+                    Title = "超商代碼付款(萊爾富)",
+                    Code = "ECPayCVS_HILIFE",
+                    MinAmount = 31,
+                    MaxAmount = 20000,
+                    Icons = "life_0.jpg",
+                    SerNo = 23,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    RefundWorkDay = -1,
+                    CanRefund = false,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                    IsDeleted = true,
+                }, new PaymentType
+                {
+                    Id = 26,
+                    Used = false,
+                    Title = "超商代碼付款(7-11)",
+                    Code = "ECPayCVS_IBON",
+                    MinAmount = 31,
+                    MaxAmount = 20000,
+                    Icons = "pay03.jpg",
+                    SerNo = 24,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    RefundWorkDay = -1,
+                    CanRefund = false,
+                    IsDeleted = true,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 27,
+                    Used = false,
+                    Title = "ApplePay",
+                    Code = "ECPayApplePay",
+                    MinAmount = 6,
+                    MaxAmount = 199999,
+                    Icons = "",
+                    SerNo = 25,
+                    FK_ThirdPartyId = 4,
+                    CreatorUserId = 1,
+                    RefundWorkDay = -1,
+                    CanRefund = false,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }
+            );
+        }
+    }
+}

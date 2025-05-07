@@ -293,13 +293,13 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Title="紅利異動",
                                 Controller="BonusManagement",
                                 Action="Transaction",
-                                Icon=""
+                                Icon="savings"
                             },new JobMenu{
                                 PageName="BonusRecord",
                                 Title="歷史紅利查詢",
                                 Controller="BonusManagement",
                                 Action="Record",
-                                Icon=""
+                                Icon="savings"
                             }
                         }
                     },

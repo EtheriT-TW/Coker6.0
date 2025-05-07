@@ -15,6 +15,8 @@ using System.Net.Http;
 using System.Security.Policy;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -25,18 +27,21 @@ namespace EtheriT.Coker.Application.ThirdParty
         private readonly IConfiguration configuration;
         private readonly ITokenAppService tokenAppService;
         private readonly HttpClient ThirdPartyClient_Front;
+        private readonly IWebHostEnvironment _env;
         public ThirdPartyAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IConfiguration configuration,
             ITokenAppService tokenAppService,
-            IHttpClientFactory httpClientFactory
+            IHttpClientFactory httpClientFactory,
+            IWebHostEnvironment env
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.configuration = configuration;
             this.tokenAppService = tokenAppService;
+            this._env = env;
             ThirdPartyClient_Front = httpClientFactory.CreateClient("ThirdPartyClient_Front");
         }
 
@@ -355,8 +360,11 @@ namespace EtheriT.Coker.Application.ThirdParty
                     {
                         dto.Token = Token.Token;
 
-                        //var frontApiUrl = $"{website.DefaultUrl}/api/ThirdParty/HandleThirdPartyPayment";
-                        var frontApiUrl = $"https://lcb.develop.coker.ezsale.tw/api/ThirdParty/HandleThirdPartyPayment";
+
+                        var frontApiUrl = "";
+                        if (_env.IsProduction()) frontApiUrl = $"{website.DefaultUrl}/api/ThirdParty/HandleThirdPartyPayment";
+                        else frontApiUrl = $"https://lcb.develop.coker.ezsale.tw/api/ThirdParty/HandleThirdPartyPayment";
+
                         var jsonContent = new StringContent(JsonConvert.SerializeObject(dto), Encoding.UTF8, "application/json");
 
                         try

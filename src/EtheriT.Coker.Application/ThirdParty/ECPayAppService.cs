@@ -16,6 +16,8 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
 using AutoMapper;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -27,13 +29,15 @@ namespace EtheriT.Coker.Application.ThirdParty
         private readonly IConfiguration configuration;
         private readonly IOrderAppService orderAppService;
         private readonly IMapper mapper;
+        private readonly IWebHostEnvironment _env;
         public ECPayAppService(
             IHttpClientFactory httpClientFactory,
             CokerDbContext db,
             LoginUserData loginUserData,
             IConfiguration configuration,
             IOrderAppService orderAppService,
-            IMapper mapper
+            IMapper mapper,
+            IWebHostEnvironment env
         )
         {
             ThirdPartyClient_ECPay = httpClientFactory.CreateClient("ThirdPartyClient_ECPay");
@@ -42,6 +46,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             this.configuration = configuration;
             this.orderAppService = orderAppService;
             this.mapper = mapper;
+            this._env = env;
         }
         // 查詢訂單明細
         public async Task<ResponseMessageDto> ECPayOrderState(long ohid)
@@ -309,34 +314,24 @@ namespace EtheriT.Coker.Application.ThirdParty
             var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
             try
             {
-                var ThirdPartyData = await ECPayGetThirdPartyData();
+                var ThirdPartyData = await ECPayGetThirdPartyData() ?? throw new Exception("商家未確實設置綠界支付資料");
 
-                if (ThirdPartyData != null)
-                {
-                    ECPayResponseDto ResultResponseData = JsonConvert.DeserializeObject<ECPayResponseDto>(ResultData);
+                ECPayResponseDto ResultResponseData = JsonConvert.DeserializeObject<ECPayResponseDto>(ResultData);
 
-                    if (ResultResponseData != null)
-                    {
-                        if (ResultResponseData.TransMsg.ToLower().Contains("success"))
-                        {
-                            var data = Decrypt(ResultResponseData.Data, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
-                            var ResponseData = JsonConvert.DeserializeObject<ECPayResponseDataDto>(data as string);
-                            if (ResponseData.RtnCode == 1)
-                            {
-                                var ohdata = await db.Order_Headers.Where(e => e.TransactionId == ResponseData.OrderInfo.MerchantTradeNo).FirstOrDefaultAsync();
-                                if (ResponseData.OrderInfo.PaymentType == "CreditInstallment") ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains($"CreditInstallment_{ResponseData.CardInfo.Stage}")).Select(e => e.Id).FirstOrDefaultAsync();
-                                else ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains(ResponseData.OrderInfo.PaymentType)).Select(e => e.Id).FirstOrDefaultAsync();
-                                db.SaveChanges();
-                                return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{("000000000" + ohdata.Id).Substring(ohdata.Id.ToString().Length)}");
-                            }
-                            else throw new Exception($"取得ECPayOrderResult發生錯誤，{JsonConvert.SerializeObject(ResponseData, Formatting.Indented)}");
-                        }
-                        else throw new Exception($"取得ECPayOrderResult發生錯誤，{JsonConvert.SerializeObject(ResultResponseData, Formatting.Indented)}");
-                    }
-                    else throw new Exception("無法取得ECPayOrderResult");
-                    //await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayOrderResult 測試", JsonConvert.SerializeObject(response));
-                }
-                else throw new Exception("商家未確實設置綠界支付資料");
+                if (ResultResponseData == null) throw new Exception("無法取得ECPayOrderResult");
+
+                if (!ResultResponseData.TransMsg.ToLower().Contains("success")) throw new Exception($"取得ECPayOrderResult發生錯誤，{JsonConvert.SerializeObject(ResultResponseData, Formatting.Indented)}");
+
+                var data = Decrypt(ResultResponseData.Data, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
+                var ResponseData = JsonConvert.DeserializeObject<ECPayResponseDataDto>(data as string);
+                if (ResponseData.RtnCode != 1) throw new Exception($"取得ECPayOrderResult發生錯誤，{JsonConvert.SerializeObject(ResponseData, Formatting.Indented)}");
+
+                var ohdata = await db.Order_Headers.Where(e => e.TransactionId == ResponseData.OrderInfo.MerchantTradeNo).FirstOrDefaultAsync();
+                if (ResponseData.OrderInfo.PaymentType == "CreditInstallment") ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains($"CreditInstallment_{ResponseData.CardInfo.Stage}")).Select(e => e.Id).FirstOrDefaultAsync();
+                else ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains(ResponseData.OrderInfo.PaymentType)).Select(e => e.Id).FirstOrDefaultAsync();
+                db.SaveChanges();
+
+                return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{("000000000" + ohdata.Id).Substring(ohdata.Id.ToString().Length)}");
             }
             catch (Exception ex)
             {
@@ -351,34 +346,20 @@ namespace EtheriT.Coker.Application.ThirdParty
             Console.WriteLine($"ECPayReturn回傳資料：{ResultResponseData}");
             try
             {
-                var ThirdPartyData = await ECPayGetThirdPartyData();
+                var ThirdPartyData = await ECPayGetThirdPartyData() ?? throw new Exception("商家未確實設置綠界支付資料");
+                if (!ResultResponseData.TransMsg.ToLower().Contains("success")) throw new Exception($"取得ECPayReturn發生錯誤，{JsonConvert.SerializeObject(ResultResponseData, Formatting.Indented)}");
+                var data = Decrypt(ResultResponseData.Data, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
+                var ResponseData = JsonConvert.DeserializeObject<ECPayResponseDataDto>(data as string);
+                if (ResponseData.RtnCode != 1) throw new Exception($"取得ECPayReturn發生錯誤，{JsonConvert.SerializeObject(ResponseData, Formatting.Indented)}");
 
-                if (ThirdPartyData != null)
-                {
-                    if (ResultResponseData != null)
-                    {
-                        if (ResultResponseData.TransMsg.ToLower().Contains("success"))
-                        {
-                            var data = Decrypt(ResultResponseData.Data, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
-                            var ResponseData = JsonConvert.DeserializeObject<ECPayResponseDataDto>(data as string);
-                            if (ResponseData.RtnCode == 1)
-                            {
-                                var ohdata = await db.Order_Headers.Where(e => e.TransactionId == ResponseData.OrderInfo.MerchantTradeNo).FirstOrDefaultAsync();
-                                if (ResponseData.OrderInfo.TradeStatus == "1") ohdata.CompletedDate = DateTime.ParseExact(ResponseData.OrderInfo.TradeDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
-                                if (ohdata.State == OrderStatusEnum.待付款 && ResponseData.OrderInfo.TradeStatus == "1") ohdata.State = OrderStatusEnum.已付款;
-                                db.SaveChanges();
-                                DateTime paydate = DateTime.ParseExact(ResponseData.OrderInfo.TradeDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
-                                var send_mail = await orderAppService.PaySuccessMailSend(ohdata.Id, paydate);
-                                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayReturn", JsonConvert.SerializeObject(ResponseData));
-                                return "OK";
-                            }
-                            else throw new Exception($"取得ECPayReturn發生錯誤，{JsonConvert.SerializeObject(ResponseData, Formatting.Indented)}");
-                        }
-                        else throw new Exception($"取得ECPayReturn發生錯誤，{JsonConvert.SerializeObject(ResultResponseData, Formatting.Indented)}");
-                    }
-                    else throw new Exception("無法取得ECPayReturn");
-                }
-                else throw new Exception("商家未確實設置綠界支付資料");
+                var ohdata = await db.Order_Headers.Where(e => e.TransactionId == ResponseData.OrderInfo.MerchantTradeNo).FirstOrDefaultAsync();
+                if (ResponseData.OrderInfo.TradeStatus == "1") ohdata.CompletedDate = DateTime.ParseExact(ResponseData.OrderInfo.TradeDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
+                if (ohdata.State == OrderStatusEnum.待付款 && ResponseData.OrderInfo.TradeStatus == "1") ohdata.State = OrderStatusEnum.已付款;
+                db.SaveChanges();
+                DateTime paydate = DateTime.ParseExact(ResponseData.OrderInfo.TradeDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
+                var send_mail = await orderAppService.PaySuccessMailSend(ohdata.Id, paydate);
+                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayReturn", JsonConvert.SerializeObject(ResponseData));
+                return "OK";
             }
             catch (Exception ex)
             {
@@ -562,14 +543,19 @@ namespace EtheriT.Coker.Application.ThirdParty
                                               where pt.FK_ThirdPartyId == 4
                                               select pt).ToListAsync();
 
-                        //var paytype = await db.PaymentTypes.Where(e => e.Id == ohdata.Payment).Select(e => e.Code).FirstOrDefaultAsync();
-                        //if (paytype != null)
                         if (paytypes.Any())
                         {
-                            CardInfo.OrderResultURL = "https://lcb.develop.coker.ezsale.tw/api/ThirdParty/ECPayOrderResult";
-                            //CardInfo.OrderResultURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayOrderResult";
-                            UnionPayInfo.OrderResultURL = "https://lcb.develop.coker.ezsale.tw/api/ThirdParty/ECPayOrderResult";
-                            //UnionPayInfo.OrderResultURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayOrderResult";
+
+                            if (_env.IsProduction())
+                            {
+                                CardInfo.OrderResultURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayOrderResult";
+                                UnionPayInfo.OrderResultURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayOrderResult";
+                            }
+                            else
+                            {
+                                CardInfo.OrderResultURL = "https://lcb.develop.coker.ezsale.tw/api/ThirdParty/ECPayOrderResult";
+                                UnionPayInfo.OrderResultURL = "https://lcb.develop.coker.ezsale.tw/api/ThirdParty/ECPayOrderResult";
+                            }
 
                             foreach (var paytype in paytypes)
                             {
@@ -622,14 +608,17 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 else ohdata.RepayTimes += 1;
                                 db.SaveChanges();
                                 OrderInfo.MerchantTradeNo = $"{DateTimeNow.ToString("yyyyMMdd")}{oid}R{ohdata.RepayTimes}";
+                                ohdata.RepayDate = DateTimeNow;
                             }
 
                             ohdata.TransactionId = OrderInfo.MerchantTradeNo;
                             db.SaveChanges();
 
                             OrderInfo.TotalAmount = ohdata.Subtotal + ohdata.Freight;
-                            OrderInfo.ReturnURL = "https://lcb.develop.coker.ezsale.tw/api/ThirdParty/ECPayReturn";
-                            //OrderInfo.ReturnURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayReturn";
+
+                            if (_env.IsProduction()) OrderInfo.ReturnURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayReturn";
+                            else OrderInfo.ReturnURL = "https://lcb.develop.coker.ezsale.tw/api/ThirdParty/ECPayReturn";
+
                             OrderInfo.TradeDesc = $"{Website.Title}-商品購買交易";
 
                             var itemlist = "";

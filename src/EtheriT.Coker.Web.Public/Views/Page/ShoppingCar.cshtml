@@ -24,7 +24,8 @@
 <script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()
 <!-- Modal -->
-<div class="modal fade" id="ECPayModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ECPayModal" aria-hidden="true">
+
+<div class="modal fade" id="ECPayModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ECPayModal" aria-hidden="true" data-server-type="@(ViewBag.IsProduction ? "Prod" : "Stage")">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
@@ -913,5 +914,7 @@
     </div>
 </div>
 
-<script src="https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"></script>
-@* <script src="https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"></script>*@
+
+<script src="@(ViewBag.IsProduction
+    ? "https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"
+    : "https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116")"></script>

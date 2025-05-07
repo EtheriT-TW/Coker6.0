@@ -9,19 +9,20 @@ using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 
 namespace EtheriT.Coker.Web.Public.Models
 {
-	public class PageViewModel
-	{
-		public long? id { get; set; }
+    public class PageViewModel
+    {
+        public long? id { get; set; }
         public string? option { get; set; }
         public string? search { get; set; }
         public string? orgName { get; set; }
         public string layout { get; set; }
-		public string? token { get; set; }
+        public string? token { get; set; }
         public string locale { get; set; } = "zh-tw";
-        public string root {  get; set; }
+        public string root { get; set; }
+        public bool IsProduction { get; set; }
         public WebsiteLevelEnum Level { get; set; }
-		public List<AdvertiseDisplayDto>? enterAd { get; set; }
-		public GetFrontContenOutputDto? ParentData { get; set; }
+        public List<AdvertiseDisplayDto>? enterAd { get; set; }
+        public GetFrontContenOutputDto? ParentData { get; set; }
         public GetFrontContenOutputDto? PageData { get; set; }
         public FrontSearchPalameterDro? SearchPalameter { get; set; }
         public List<FreightDisplayDto>? freightModels { get; set; }

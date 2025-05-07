@@ -309,10 +309,6 @@ function PageReady() {
         }
     });
 
-    //ECPay.initialize("Stage", 1, function (errMsg) {
-    //    console.log("errMsg", errMsg)
-    //});
-
     $('#CollapsePurchase')
         .on('shown.bs.collapse', function () {
             buy_step_swiper.update();
@@ -1247,7 +1243,7 @@ function OrderHeaderAdd() {
                                         Coker.ThirdParty.ECPayGetToken(result.message.split(",")[1]).done(function (result) {
                                             if (result.success) {
                                                 if (ECPayModal != null) {
-                                                    ECPay.initialize("Stage", 1, function (errMsg) {
+                                                    ECPay.initialize($("#ECPayModal").data("server-type"), 1, function (errMsg) {
                                                         console.log(`Initialize errMsg : ${errMsg}`)
                                                         ECPay.createPayment(result.message, ECPay.Language.zhTW, function (errMsg) {
                                                             console.log(`Create Payment errMsg : ${errMsg}`)

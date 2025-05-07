@@ -531,7 +531,7 @@ function OrderRepay(datas) {
                         ECPayModal = $("#ECPayModal").length > 0 ? new bootstrap.Modal($("#ECPayModal")) : null;
 
                         if (ECPayModal != null) {
-                            ECPay.initialize("Stage", 1, function (errMsg) {
+                            ECPay.initialize($("#ECPayModal").data("server-type"), 1, function (errMsg) {
                                 console.log(`Initialize errMsg : ${errMsg}`)
                                 ECPay.createPayment(result.message, ECPay.Language.zhTW, function (errMsg) {
                                     console.log(`Create Payment errMsg : ${errMsg}`)
@@ -555,20 +555,28 @@ function OrderRepay(datas) {
                                                         localStorage.setItem("lastSaveTime", new Date().toISOString())
                                                         localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
                                                         var VerifyURL = result_obj.ThreeDInfo?.ThreeDURL ?? result_obj.UnionPayInfo?.UnionPayURL;
-                                                        co.sweet.confirm("即將進入驗證流程", `<div class="text-start">如未自動跳轉，請點此<a class="fw-bold text-primary px-1" href="${VerifyURL} target="_blank" title="連結至：驗證頁面(開新視窗)">連結</a>進行跳轉</div>`, "確定", "", null);
-                                                        window.open(VerifyURL, "_blank");
+                                                        co.sweet.confirm("即將進入驗證流程", `<div class="text-start">如未自動跳轉，請點此<a class="fw-bold text-primary px-1" href="${VerifyURL} target="_blank" title="連結至：驗證頁面(開新視窗)">連結</a>進行跳轉</div>`, "確定", "", function () {
+                                                            window.open(VerifyURL, "_blank");
+                                                            location.reload();
+                                                        });
                                                         break;
                                                     case "ATM":
                                                         var ATMInfo = result_obj.ATMInfo;
-                                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費銀行代碼：${ATMInfo.BankCode}<br>繳費虛擬帳號：${ATMInfo.vAccount}<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${ATMInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", null);
+                                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費銀行代碼：${ATMInfo.BankCode}<br>繳費虛擬帳號：${ATMInfo.vAccount}<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${ATMInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", function () {
+                                                            location.reload();
+                                                        });
                                                         break;
                                                     case "CVS":
                                                         var CVSInfo = result_obj.CVSInfo;
-                                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費代碼：${CVSInfo.PaymentNo}<br>或點此<a class="fw-bold text-primary px-1" href="${CVSInfo.PaymentURL} target="_blank" title="連結至：繳費條碼(開新分頁)">連結</a>取得繳費條碼<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${CVSInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", null);
+                                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費代碼：${CVSInfo.PaymentNo}<br>或點此<a class="fw-bold text-primary px-1" href="${CVSInfo.PaymentURL} target="_blank" title="連結至：繳費條碼(開新分頁)">連結</a>取得繳費條碼<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${CVSInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", function () {
+                                                            location.reload();
+                                                        });
                                                         break;
                                                     case "BARCODE":
                                                         var BarcodeInfo = result_obj.BarcodeInfo;
-                                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="w-100"></svg><svg id="barcode2" class="w-100"></svg><svg id="barcode3" class="w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", null);
+                                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="w-100"></svg><svg id="barcode2" class="w-100"></svg><svg id="barcode3" class="w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", function () {
+                                                            location.reload();
+                                                        });
                                                         $.getScript("https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js", function () {
                                                             JsBarcode("#barcode1", BarcodeInfo.Barcode1, { format: "CODE39", displayValue: true });
                                                             JsBarcode("#barcode2", BarcodeInfo.Barcode2, { format: "CODE39", displayValue: true });
@@ -593,7 +601,9 @@ function OrderRepay(datas) {
                                     co.Member.CancelOrder(datas.orderHeader.id, 4).done(function (result) {
                                         if (result.success) {
                                             ECPayModal.hide();
-                                            co.sweet.confirm("訂單已取消", "")
+                                            co.sweet.confirm("訂單已取消", "", "確定", "", function () {
+                                                location.reload();
+                                            });
                                         }
                                     })
                                 }, "否", null);

@@ -1243,13 +1243,21 @@ function OrderHeaderAdd() {
                                         Coker.ThirdParty.ECPayGetToken(result.message.split(",")[1]).done(function (result) {
                                             if (result.success) {
                                                 if (ECPayModal != null) {
+                                                    console.log("ServerType", $("#ECPayModal").data("server-type"))
                                                     ECPay.initialize($("#ECPayModal").data("server-type"), 1, function (errMsg) {
-                                                        console.log(`Initialize errMsg : ${errMsg}`)
-                                                        ECPay.createPayment(result.message, ECPay.Language.zhTW, function (errMsg) {
-                                                            console.log(`Create Payment errMsg : ${errMsg}`)
-                                                        }, 'V2');
+                                                        if (errMsg == null) {
+                                                            ECPay.createPayment(result.message, ECPay.Language.zhTW, function (errMsg) {
+                                                                if (errMsg != null) {
+                                                                    console.log(`Create Payment errMsg : ${errMsg}`)
+                                                                    co.sweet.error("串接綠界發生錯誤");
+                                                                }
+                                                            }, 'V2');
+                                                        }
+                                                        else {
+                                                            console.log(`Initialize errMsg : ${errMsg}`)
+                                                            co.sweet.error("串接綠界發生錯誤");
+                                                        }
                                                     });
-                                                    //ECPay.getPayToken(callBack(paymentInfo, errMsg));
                                                     ECPayModal.show();
                                                     Swal.close();
                                                 }

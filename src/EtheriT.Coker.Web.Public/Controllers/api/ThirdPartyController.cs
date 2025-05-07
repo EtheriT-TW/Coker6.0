@@ -2,6 +2,7 @@
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
 using EtheriT.Coker.Application.Shared.ThirdParty;
@@ -43,16 +44,29 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             ResponseMessageDto response = new ResponseMessageDto();
             switch (paytype)
             {
-                case "3":
-                case "LinePay":
-                    return await linePayAppService.LinePayRequest(ohid);
                 case "2":
                 case "PCHomePay":
                     return await pchomePayAppService.PChomePayRequest(ohid);
+                case "3":
+                case "LinePay":
+                    return await linePayAppService.LinePayRequest(ohid);
+                case "4":
+                case "ECPay":
+                    return await ecPayAppService.ECPayGetToken(ohid);
             }
             response.Success = false;
             response.Message = "支付方式不存在";
             return response;
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> ECPayCreatePayment(ECPayPaymentInfoDto PaymentInfo)
+        {
+            return await ecPayAppService.ECPayCreatePayment(PaymentInfo);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> ECPayGetToken(long ohid)
+        {
+            return await ecPayAppService.ECPayGetToken(ohid);
         }
         [HttpGet]
         public async Task<IActionResult> LinePayConfirm(string transactionId, string orderId)
@@ -90,10 +104,21 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
 
             return await pchomePayAppService.PChomePayNotify(dto);
         }
-        [HttpGet]
-        public async Task<ResponseMessageDto> ECPayGetToken(long ohid)
+        [HttpPost]
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<IActionResult> ECPayOrderResult([FromForm] string ResultData)
         {
-            return await ecPayAppService.ECPayGetToken(ohid);
+            return await ecPayAppService.ECPayOrderResult(ResultData);
+        }
+        [HttpPost]
+        public async Task<String> ECPayReturn(ECPayResponseDto ResultResponseData)
+        {
+            return await ecPayAppService.ECPayReturn(ResultResponseData);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> ECPayOrderState(long ohid)
+        {
+            return await ecPayAppService.ECPayOrderState(ohid);
         }
         [HttpPost]
         public async Task<ResponseMessageDto> HandleThirdPartyPayment(HandleThirdPartyPaymentDto dto)
@@ -105,7 +130,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                 switch (dto.ThirdParties)
                 {
                     case "LINEPay":
-                         switch (dto.Action)
+                        switch (dto.Action)
                         {
                             case "Refund":
                                 response = await linePayAppService.LinePayRefund(dto.OrderId, null);
@@ -132,6 +157,23 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                                 break;
                             case "CheckStatus":
                                 response = await pchomePayAppService.PChomePayCheckPaymentStatus(dto.OrderId);
+                                break;
+                            default:
+                                response.Message = $"查詢動作【{dto.Action}】不支援";
+                                break;
+                        }
+                        break;
+                    case "綠界支付":
+                        switch (dto.Action)
+                        {
+                            case "Refund":
+                                response = await ecPayAppService.ECPayRefund(dto.OrderId);
+                                break;
+                            case "CheckRefund":
+                                //response = await pchomePayAppService.PChomePayRefundState(dto.OrderId);
+                                break;
+                            case "CheckStatus":
+                                response = await ecPayAppService.ECPayOrderState(dto.OrderId);
                                 break;
                             default:
                                 response.Message = $"查詢動作【{dto.Action}】不支援";

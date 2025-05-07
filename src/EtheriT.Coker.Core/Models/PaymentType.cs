@@ -18,6 +18,8 @@ namespace EtheriT.Coker.Core.Models
         public int? MaxAmount { get; set; }
         // Icon
         public string Icons { get; set; }
+        // 是否允許退款
+        public bool CanRefund { get; set; }
         // 退款所需時間(日)
         public int RefundWorkDay { get; set; }
         public long FK_ThirdPartyId { get; set; }

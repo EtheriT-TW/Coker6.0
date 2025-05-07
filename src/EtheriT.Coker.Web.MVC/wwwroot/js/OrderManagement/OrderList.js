@@ -77,7 +77,6 @@ function PageReady() {
             OrderId: keyId,
             ThirdParties: payment,
         }).done(function (result) {
-            console.log("result", result)
             var state = result.message.split(",")[0];
             if (state != oristate) {
                 $(".btn_recheck").addClass("d-none");
@@ -383,6 +382,7 @@ function HeaderDataSet(result) {
     } else {
         payment = result.payment
     }
+
     transactionId = result.transactionId;
     $order_status.val(result.state);
     oristate = parseInt(result.state);
@@ -399,13 +399,8 @@ function HeaderDataSet(result) {
     }
 
     if (result.refundTransactionId != null) $(".btn_checkrefund").removeClass("d-none");
-    else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock && ![7, 8, 10, 15].includes(result.paymentCode)) $(".btn_refund").removeClass("d-none");
+    else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock && result.canRefund) $(".btn_refund").removeClass("d-none");
     else OrderStateChange(oristate)
-
-    //if (result.refundTransactionId == null && result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock) {
-    //    if (![7, 8, 10, 15].includes(result.paymentCode)) $(".btn_refund").removeClass("d-none");
-    //}
-    //else OrderStateChange(oristate)
 
     $order_notes.text(result.remark)
 
@@ -531,7 +526,6 @@ function OrderDataCollapse() {
     }
 }
 function OrderStateChange(state) {
-
     $(".confirm").addClass("d-none");
     $(".btn_recheck").addClass("d-none");
     $(".btn_refund").addClass("d-none");
@@ -543,7 +537,7 @@ function OrderStateChange(state) {
             if (thirdparty == 3) $(".btn_recheck").removeClass("d-none");
             break;
         case 5:
-            if (thirdparty != 1) $(".btn_failReason").removeClass("d-none");
+            if (thirdparty != 1 && thirdparty != 4) $(".btn_failReason").removeClass("d-none");
             break;
         case 6:
             switch (payment) {
@@ -551,6 +545,9 @@ function OrderStateChange(state) {
                     $(".confirm").removeClass("d-none");
                     break;
                 case "支付連":
+                    $(".btn_recheck").removeClass("d-none");
+                    break;
+                case "綠界支付":
                     $(".btn_recheck").removeClass("d-none");
                     break;
             }

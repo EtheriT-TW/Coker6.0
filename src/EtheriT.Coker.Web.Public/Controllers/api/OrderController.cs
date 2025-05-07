@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Dto;
+﻿using DevExpress.Xpo.DB.Helpers;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Order;
@@ -15,15 +16,18 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         private readonly IOrderAppService orderAppService;
         private readonly ILinePayAppService linePayAppService;
         private readonly IPChomePayAppService pchomePayAppService;
+        private readonly IECPayAppService eCPayAppService;
         public OrderController(
             IOrderAppService orderAppService,
             ILinePayAppService linePayAppService,
-            IPChomePayAppService pchomePayAppService
+            IPChomePayAppService pchomePayAppService,
+            IECPayAppService eCPayAppService
             )
         {
             this.orderAppService = orderAppService;
             this.linePayAppService = linePayAppService;
             this.pchomePayAppService = pchomePayAppService;
+            this.eCPayAppService = eCPayAppService;
         }
 
         [HttpPost]
@@ -108,6 +112,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                     break;
                 case 3:
                     response = await linePayAppService.LinePayPayCancelOrder(ohid);
+                    break;
+                case 4:
+                    response = await eCPayAppService.ECPayRefund(ohid);
                     break;
             }
             if (response.Message == "") response.Message = "支付方式不存在";

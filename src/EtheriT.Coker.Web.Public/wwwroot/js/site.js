@@ -1166,7 +1166,30 @@ var Coker = {
                 },
                 data: { ohid: ohid, paytype: paytype },
             });
-        }
+        },
+        ECPayGetToken: function (ohid) {
+            return $.ajax({
+                url: "/api/ThirdParty/ECPayGetToken",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: { ohid: ohid },
+            });
+        },
+        ECPayCreatePayment: function (data) {
+            return $.ajax({
+                url: "/api/ThirdParty/ECPayCreatePayment",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
     },
     Favorites: {
         Add: function (Pid) {
@@ -1475,7 +1498,7 @@ var Coker = {
                 icon: 'info',
                 title: title,
                 html: text,
-                showCancelButton: true,
+                showCancelButton: cancanceltext == "" ? false : true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
                 confirmButtonText: confirmtexet,

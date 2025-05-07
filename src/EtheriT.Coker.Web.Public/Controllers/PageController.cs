@@ -34,6 +34,8 @@ using System.Linq;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.Files;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 
 namespace EtheriT.Coker.Web.Public.Controllers
 {
@@ -58,6 +60,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IAdvertiseAppService advertiseAppService;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly StringHandler stringHandler;
+        private readonly IWebHostEnvironment _env;
+
         public PageController(
             ILogger<PageController> logger,
             IFreightAppService freightAppService,
@@ -76,7 +80,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IAdvertiseAppService advertiseAppService,
             ITokenAppService tokenAppService,
             IFileUploadAppService fileUploadAppService,
-            StringHandler stringHandler
+            StringHandler stringHandler,
+            IWebHostEnvironment env
         )
         {
             this._logger = logger;
@@ -97,6 +102,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.tokenAppService = tokenAppService;
             this.advertiseAppService = advertiseAppService;
             this.fileUploadAppService = fileUploadAppService;
+            this._env = env;
         }
         private bool UseLegacyPathHandling(string website, string key, string option)
         {
@@ -174,7 +180,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     linkMore = (linkMore != null && linkMore.value != null) ? String.Join(",", linkMore.value!) : "",
                     prodCatalog = (prodCatalog != null && prodCatalog.value != null) ? String.Join(",", prodCatalog.value!) : "",
                     membershipTerms = (membershipTerms != null && membershipTerms.value != null) ? String.Join(",", membershipTerms.value!) : "",
-                }
+                },
+                IsProduction = _env.IsProduction()
             };
             ViewData["membershipTerms"] = model.storeSet.membershipTerms;
             string view;
@@ -492,6 +499,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.Nonce = nonce;
             ViewData["nonce"] = nonce;
             ViewBag.storeBuyState = model.storeSet.storeBuyState;
+            ViewBag.IsProduction = model.IsProduction;
             switch (model.Level)
             {
                 case WebsiteLevelEnum.會員:

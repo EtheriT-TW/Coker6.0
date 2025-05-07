@@ -23,6 +23,24 @@
 <link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
 <script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()
+<!-- Modal -->
+
+<div class="modal fade" id="ECPayModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ECPayModal" aria-hidden="true" data-server-type="@(ViewBag.IsProduction ? "Prod" : "Stage")">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5 mx-auto" id="ECPayModalLabel">選擇支付方式</h1>
+            </div>
+            <div class="modal-body">
+                <div id="ECPayPayment"></div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn_pay btn-primary rounded px-4">確認付款</button>
+                <button type="button" class="btn btn_cancel btn-danger rounded px-4">取消付款</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div id="RecipientModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -208,7 +226,7 @@
                                             <div data-key="title" class="pro_name single_line fw-bold"></div>
                                             <div class="pro_detail d-flex flex-wrap">
                                                 <div data-key="spec" class="pro_specification pe-3"></div>
-                                                @* <div class="pro_instructions single_line"></div> *@
+                                                @*<div class="pro_instructions single_line"></div>*@
                                             </div>
                                         </div>
                                     </a>
@@ -895,3 +913,8 @@
         </div>
     </div>
 </div>
+
+
+<script src="@(ViewBag.IsProduction
+    ? "https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"
+    : "https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116")"></script>

@@ -15,6 +15,8 @@ using System.Net.Http;
 using System.Security.Policy;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -25,18 +27,21 @@ namespace EtheriT.Coker.Application.ThirdParty
         private readonly IConfiguration configuration;
         private readonly ITokenAppService tokenAppService;
         private readonly HttpClient ThirdPartyClient_Front;
+        private readonly IWebHostEnvironment _env;
         public ThirdPartyAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IConfiguration configuration,
             ITokenAppService tokenAppService,
-            IHttpClientFactory httpClientFactory
+            IHttpClientFactory httpClientFactory,
+            IWebHostEnvironment env
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.configuration = configuration;
             this.tokenAppService = tokenAppService;
+            this._env = env;
             ThirdPartyClient_Front = httpClientFactory.CreateClient("ThirdPartyClient_Front");
         }
 
@@ -200,22 +205,63 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
 
-                var output = from pv in db.PaymentTypesValues
-                             join pt in db.PaymentTypes on pv.FK_PaymentTypesId equals pt.Id
-                             where pv.FK_WebsiteId == WebsiteId && pv.Used
-                             orderby pt.SerNo
-                             select new PaymentTypeItemOutputDto
-                             {
-                                 Id = pt.Id,
-                                 Title = pt.Title,
-                                 Code = pt.Code,
-                                 Icon = pt.Icons != "" ? $"/images/paymenticon/{pt.Icons}" : "",
-                                 Used = true,
-                                 MaxAmount = pt.MaxAmount,
-                                 MinAmount = pt.MinAmount,
-                             };
+                var output = await (from pv in db.PaymentTypesValues
+                                    join pt in db.PaymentTypes on pv.FK_PaymentTypesId equals pt.Id
+                                    where pv.FK_WebsiteId == WebsiteId && pv.Used
+                                    orderby pt.SerNo
+                                    select new PaymentTypeItemOutputDto
+                                    {
+                                        Id = pt.Id,
+                                        Title = pt.Title,
+                                        Code = pt.Code,
+                                        Icon = pt.Icons != "" ? $"/images/paymenticon/{pt.Icons}" : "",
+                                        Used = true,
+                                        MaxAmount = pt.MaxAmount,
+                                        MinAmount = pt.MinAmount,
+                                    }).ToListAsync();
 
-                if (output.Count() > 0) return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                if (output.Any())
+                {
+                    const int defaultMax = 20000;
+                    const int defaultMin = 31;
+
+                    var ecpayItems = output
+                        .Where(x => x.Code?.ToLower().Contains("ecpay") == true)
+                        .ToList();
+
+                    var nonEcpayItems = output
+                        .Where(x => x.Code?.ToLower().Contains("ecpay") != true)
+                        .ToList();
+
+                    if (ecpayItems.Any())
+                    {
+                        int maxAmount = ecpayItems
+                            .Where(x => x.MaxAmount.HasValue)
+                            .Select(x => x.MaxAmount.Value)
+                            .DefaultIfEmpty(defaultMax)
+                            .Max();
+
+                        int minAmount = ecpayItems
+                            .Select(x => x.MinAmount)
+                            .DefaultIfEmpty(defaultMin)
+                            .Min();
+
+                        nonEcpayItems.Add(new PaymentTypeItemOutputDto
+                        {
+                            Id = ecpayItems.First().Id,
+                            Title = "綠界支付",
+                            Code = "ECPay",
+                            Icon = "",
+                            Used = true,
+                            MaxAmount = maxAmount,
+                            MinAmount = minAmount
+                        });
+                    }
+
+                    output = nonEcpayItems;
+
+                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                }
                 else throw new Exception("查無運費資料");
             }
             catch (Exception e)
@@ -314,8 +360,11 @@ namespace EtheriT.Coker.Application.ThirdParty
                     {
                         dto.Token = Token.Token;
 
-                        var frontApiUrl = $"{website.DefaultUrl}/api/ThirdParty/HandleThirdPartyPayment";
-                        //var frontApiUrl = $"https://lcb.develop.coker.ezsale.tw/api/ThirdParty/HandleThirdPartyPayment";
+
+                        var frontApiUrl = "";
+                        if (_env.IsProduction()) frontApiUrl = $"{website.DefaultUrl}/api/ThirdParty/HandleThirdPartyPayment";
+                        else frontApiUrl = $"https://lcb.develop.coker.ezsale.tw/api/ThirdParty/HandleThirdPartyPayment";
+
                         var jsonContent = new StringContent(JsonConvert.SerializeObject(dto), Encoding.UTF8, "application/json");
 
                         try

@@ -7,7 +7,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto
         public RpHeaderDto RpHeader { get; set; }
         public class RpHeaderDto
         {
-            public string Timestamp { get; set; }
+            public long Timestamp { get; set; }
         }
         public int TransCode { get; set; }
         public string TransMsg { get; set; }

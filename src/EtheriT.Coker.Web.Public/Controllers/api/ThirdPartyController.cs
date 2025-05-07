@@ -111,7 +111,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await ecPayAppService.ECPayOrderResult(ResultData);
         }
         [HttpPost]
-        public async Task<String> ECPayReturn(ECPayReturnResponseDto ResultResponseData)
+        public async Task<String> ECPayReturn([FromBody]  ECPayReturnResponseDto ResultResponseData)
         {
             return await ecPayAppService.ECPayReturn(ResultResponseData);
         }

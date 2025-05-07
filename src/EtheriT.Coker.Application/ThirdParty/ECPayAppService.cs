@@ -316,7 +316,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 var ThirdPartyData = await ECPayGetThirdPartyData() ?? throw new Exception("商家未確實設置綠界支付資料");
 
-                ECPayResponseDto ResultResponseData = JsonConvert.DeserializeObject<ECPayResponseDto>(ResultData);
+                ECPayReturnResponseDto ResultResponseData = JsonConvert.DeserializeObject<ECPayReturnResponseDto>(ResultData);
 
                 if (ResultResponseData == null) throw new Exception("無法取得ECPayOrderResult");
 
@@ -340,7 +340,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar");
         }
-        public async Task<String> ECPayReturn(ECPayResponseDto ResultResponseData)
+        public async Task<String> ECPayReturn(ECPayReturnResponseDto ResultResponseData)
         {
             Console.WriteLine($"-------------ECPayReturn訊息查看-------------");
             Console.WriteLine($"ECPayReturn回傳資料：{ResultResponseData}");

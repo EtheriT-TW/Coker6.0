@@ -49,12 +49,6 @@ namespace EtheriT.Coker.Application.ThirdParty
             this.orderAppService = orderAppService;
             this.tokenAppService = tokenAppService;
         }
-        public async Task<ResponseMessageDto> PChomePayGetToken()
-        {
-            ResponseMessageDto response = new ResponseMessageDto();
-
-            return response;
-        }
         public async Task<ResponseMessageDto> PChomePayRequest(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();

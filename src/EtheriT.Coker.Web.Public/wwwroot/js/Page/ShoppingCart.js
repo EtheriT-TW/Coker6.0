@@ -155,59 +155,67 @@ function PageReady() {
                         ECPayModal.hide();
                         co.sweet.loading();
                         co.ThirdParty.ECPayCreatePayment(paymentInfo).done(function (result) {
-                            var result_obj = JSON.parse(result.message);
-                            var SwalClose = false;
-                            switch (result_obj.OrderInfo.PaymentType) {
-                                case null:
-                                    localStorage.setItem("lastSaveTime", new Date().toISOString())
-                                    localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
-
-                                    var VerifyURL = result_obj.ThreeDInfo?.ThreeDURL ?? result_obj.UnionPayInfo?.UnionPayURL;
-                                    $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，即將進入驗證流程。");
-                                    $("#Step4 > .card-body .thirdpay_link a").attr({
-                                        href: VerifyURL,
-                                        title: "連結至：驗證頁面(開新視窗)",
-                                    });
-                                    $("#Step4 > .card-body .thirdpay_link").removeClass("d-none");
-                                    SwalClose = true;
-                                    $("#Step4 .payment_method").text("信用卡付款");
-                                    window.open(VerifyURL, "_blank");
-                                    break;
-                                case "ATM":
-                                    var ATMInfo = result_obj.ATMInfo;
-                                    $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${ATMInfo.ExpireDate}前完成付款。`);
-                                    co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費銀行代碼：${ATMInfo.BankCode}<br>繳費虛擬帳號：${ATMInfo.vAccount}<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${ATMInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", null);
-                                    $("#Step4 .payment_method").text("虛擬ATM");
-                                    break;
-                                case "CVS":
-                                    var CVSInfo = result_obj.CVSInfo;
-                                    $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${CVSInfo.ExpireDate}前完成付款。`);
-                                    co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費代碼：${CVSInfo.PaymentNo}<br>或點此<a class="fw-bold text-primary px-1" href="${CVSInfo.PaymentURL}" target="_blank" title="連結至：繳費條碼(開新分頁)">連結</a>取得繳費條碼<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${CVSInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", null);
-                                    $("#Step4 .payment_method").text("超商代碼");
-                                    break;
-                                case "BARCODE":
-                                    var BarcodeInfo = result_obj.BarcodeInfo;
-                                    $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${BarcodeInfo.ExpireDate}前完成付款。`);
-                                    co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="w-100"></svg><svg id="barcode2" class="w-100"></svg><svg id="barcode3" class="w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", null);
-                                    $.getScript("https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js", function () {
-                                        JsBarcode("#barcode1", BarcodeInfo.Barcode1, { format: "CODE39", displayValue: true });
-                                        JsBarcode("#barcode2", BarcodeInfo.Barcode2, { format: "CODE39", displayValue: true });
-                                        JsBarcode("#barcode3", BarcodeInfo.Barcode3, { format: "CODE39", displayValue: true });
-                                    });
-                                    $("#Step4 .payment_method").text("超商條碼");
-                                    break;
-                                case "APPLEPAY":
-                                    //var BarcodeInfo = result_obj.BarcodeInfo;
-                                    $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於......前完成付款。`);
-                                    //co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="w-100"></svg><svg id="barcode2" class="w-100"></svg><svg id="barcode3" class="w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", null);
-                                    $("#Step4 .payment_method").text("ApplePay");
-                                    break;
+                            if (result.success) {
+                                var result_obj = JSON.parse(result.message);
+                                var SwalClose = false;
+                                switch (result_obj.OrderInfo.PaymentType) {
+                                    case null:
+                                        localStorage.setItem("lastSaveTime", new Date().toISOString())
+                                        localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
+                                        var VerifyURL = result_obj.ThreeDInfo?.ThreeDURL ?? result_obj.UnionPayInfo?.UnionPayURL;
+                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，即將進入驗證流程。");
+                                        $("#Step4 > .card-body .thirdpay_link a").attr({
+                                            href: VerifyURL,
+                                            title: "連結至：驗證頁面(開新視窗)",
+                                        });
+                                        $("#Step4 > .card-body .thirdpay_link").removeClass("d-none");
+                                        SwalClose = true;
+                                        $("#Step4 .payment_method").text("信用卡付款");
+                                        window.open(VerifyURL, "_blank");
+                                        break;
+                                    case "ATM":
+                                        var ATMInfo = result_obj.ATMInfo;
+                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${ATMInfo.ExpireDate}前完成付款。`);
+                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費銀行代碼：${ATMInfo.BankCode}<br>繳費虛擬帳號：${ATMInfo.vAccount}<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${ATMInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", null);
+                                        $("#Step4 .payment_method").text("虛擬ATM");
+                                        break;
+                                    case "CVS":
+                                        var CVSInfo = result_obj.CVSInfo;
+                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${CVSInfo.ExpireDate}前完成付款。`);
+                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費代碼：${CVSInfo.PaymentNo}<br>或點此<a class="fw-bold text-primary px-1" href="${CVSInfo.PaymentURL}" target="_blank" title="連結至：繳費條碼(開新分頁)">連結</a>取得繳費條碼<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${CVSInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", null);
+                                        $("#Step4 .payment_method").text("超商代碼");
+                                        break;
+                                    case "BARCODE":
+                                        var BarcodeInfo = result_obj.BarcodeInfo;
+                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${BarcodeInfo.ExpireDate}前完成付款。`);
+                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="w-100"></svg><svg id="barcode2" class="w-100"></svg><svg id="barcode3" class="w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", null);
+                                        $.getScript("https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js", function () {
+                                            JsBarcode("#barcode1", BarcodeInfo.Barcode1, { format: "CODE39", displayValue: true });
+                                            JsBarcode("#barcode2", BarcodeInfo.Barcode2, { format: "CODE39", displayValue: true });
+                                            JsBarcode("#barcode3", BarcodeInfo.Barcode3, { format: "CODE39", displayValue: true });
+                                        });
+                                        $("#Step4 .payment_method").text("超商條碼");
+                                        break;
+                                    case "APPLEPAY":
+                                        //var BarcodeInfo = result_obj.BarcodeInfo;
+                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於......前完成付款。`);
+                                        //co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="w-100"></svg><svg id="barcode2" class="w-100"></svg><svg id="barcode3" class="w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", null);
+                                        $("#Step4 .payment_method").text("ApplePay");
+                                        break;
+                                }
+                                setTimeout(function () {
+                                    buy_step_swiper.slideNext();
+                                    buy_step_swiper.disable();
+                                    if (SwalClose) Swal.close();
+                                }, 300);
+                            } else {
+                                $("#Step4 > .card-body > .pruchase_content > .status_alert").text("付款流程發生未知錯誤，請稍後重新嘗試，或直接聯繫客服人員。");
+                                setTimeout(function () {
+                                    buy_step_swiper.slideNext();
+                                    buy_step_swiper.disable();
+                                    Swal.close();
+                                }, 300);
                             }
-                            setTimeout(function () {
-                                buy_step_swiper.slideNext();
-                                buy_step_swiper.disable();
-                                if (SwalClose) Swal.close();
-                            }, 300);
                         })
                     } else {
                         co.sweet.warning("請確實填寫資料", errMsg, null);
@@ -218,13 +226,15 @@ function PageReady() {
 
         $("#ECPayModal .btn_cancel").on("click", function () {
             co.sweet.custom("warning", "取消付款", "是否確認取消本筆訂單之付款？", "是", function () {
-                $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已取消");
                 co.Order.CancelOrder(parseInt($("#Step4 .order_number ").text(), 10), 4).done(function (result) {
-                    setTimeout(function () {
-                        ECPayModal.hide();
-                        buy_step_swiper.slideNext();
-                        buy_step_swiper.disable();
-                    }, 300);
+                    if (result.success) $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已取消");
+                    else {
+                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("取消訂單發生錯誤");
+                        console.log(result);
+                    }
+                    ECPayModal.hide();
+                    buy_step_swiper.slideNext();
+                    buy_step_swiper.disable();
                 })
             }, "否", null);
         })

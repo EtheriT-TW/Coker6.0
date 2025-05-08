@@ -411,7 +411,13 @@ namespace EtheriT.Coker.Application.ThirdParty
                             ohdata.State = OrderStatusEnum.待付款;
                             db.SaveChanges();
                         }
-                        else throw new Exception(createPaymentResponse.Message);
+                        else
+                        {
+                            ohdata.Payment = 16;
+                            ohdata.State = OrderStatusEnum.付款失敗;
+                            db.SaveChanges();
+                            throw new Exception(createPaymentResponse.Message);
+                        }
                     }
                     else throw new Exception("查無訂單資訊");
                 }

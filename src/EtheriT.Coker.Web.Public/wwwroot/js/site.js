@@ -707,7 +707,7 @@ function CheckToken() {
             if (window.location.pathname == `/${OrgName}/ShoppingCar`) {
                 var search = window.location.search;
                 if (search == "") CardDataGet();
-                else if ($.isNumeric(search.substring(1))) {
+                else if ($.isNumeric(search.substring(1)) || window.location.search.substring(1).startsWith("ECPayError")) {
                     if (localStorage.getItem("lastSaveToken") == result.token && localStorage.getItem("lastSaveTime") != null) {
                         var tokenSaveTime = new Date(localStorage.getItem('lastSaveTime'));
                         var fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);

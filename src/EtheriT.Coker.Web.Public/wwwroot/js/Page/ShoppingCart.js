@@ -158,8 +158,13 @@ function PageReady() {
                             if (result.success) {
                                 var result_obj = JSON.parse(result.message);
                                 var SwalClose = false;
+                                console.log("綠界回傳資料")
+                                console.log("Object", result_obj);
+                                console.log("PaymentType", result_obj.OrderInfo.PaymentType);
                                 switch (result_obj.OrderInfo.PaymentType) {
                                     case null:
+                                    case Credit:
+                                    case UnionPay:
                                         localStorage.setItem("lastSaveTime", new Date().toISOString())
                                         localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
                                         var VerifyURL = result_obj.ThreeDInfo?.ThreeDURL ?? result_obj.UnionPayInfo?.UnionPayURL;
@@ -196,10 +201,8 @@ function PageReady() {
                                         });
                                         $("#Step4 .payment_method").text("超商條碼");
                                         break;
-                                    case "APPLEPAY":
-                                        //var BarcodeInfo = result_obj.BarcodeInfo;
-                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於......前完成付款。`);
-                                        //co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="w-100"></svg><svg id="barcode2" class="w-100"></svg><svg id="barcode3" class="w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", null);
+                                    case "ApplePay":
+                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，謝謝您的訂購！。`);
                                         $("#Step4 .payment_method").text("ApplePay");
                                         break;
                                 }
@@ -566,6 +569,8 @@ function GetOrderPage() {
                 window.location.href = `/${OrgName}/ShoppingCar`;
             }
         })
+    } else if (window.location.search.substring(1).startsWith("ECPayError")) {
+        co.sweet.confirm("訂單付款發生錯誤", "", "確認", "", null);
     }
 }
 function SuccessPageDataInsert(data) {

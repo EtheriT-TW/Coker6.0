@@ -474,9 +474,7 @@ function HistoryTemplateDataInsert(Datas) {
                         var ohidstr = `000000000${result.message}`.substring(result.message.length);
                         window.location.href = `/${OrgName}/ShoppingCar?reorder${ohidstr}`;
                     } else {
-                        if (result.message == "該商品規格庫存量已在瀏覽期間被更動，按下確定後將重整頁面。") {
-                            Coker.sweet.warning("商品庫存不足", result.message, null)
-                        }
+                        Coker.sweet.warning("商品庫存不足", result.message, null)
                     }
                 });
             })
@@ -560,6 +558,9 @@ function OrderRepay(datas) {
                                             co.ThirdParty.ECPayCreatePayment(paymentInfo).done(function (result) {
                                                 if (result.success) {
                                                     var result_obj = JSON.parse(result.message);
+                                                    console.log("綠界回傳資料")
+                                                    console.log("Object", result_obj);
+                                                    console.log("PaymentType", result_obj.OrderInfo.PaymentType);
                                                     switch (result_obj.OrderInfo.PaymentType) {
                                                         case null:
                                                             localStorage.setItem("lastSaveTime", new Date().toISOString())
@@ -593,9 +594,10 @@ function OrderRepay(datas) {
                                                                 JsBarcode("#barcode3", BarcodeInfo.Barcode3, { format: "CODE39", displayValue: true });
                                                             });
                                                             break;
-                                                        case "APPLEPAY":
-                                                            //var BarcodeInfo = result_obj.BarcodeInfo;
-                                                            //co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="w-100"></svg><svg id="barcode2" class="w-100"></svg><svg id="barcode3" class="w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", null);
+                                                        case "ApplePay":
+                                                            co.sweet.confirm("訂單已成立，謝謝您的訂購！", "", "確定", "", function () {
+                                                                location.reload();
+                                                            });
                                                             break;
                                                     }
                                                 } else {

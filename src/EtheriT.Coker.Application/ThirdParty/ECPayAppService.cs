@@ -338,7 +338,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
                 Console.WriteLine($"ECPay=>ECPayOrderResult回傳資料：{ex.Message}");
             }
-            return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar");
+            return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?ECPayError");
         }
         public async Task<String> ECPayReturn(ECPayReturnResponseDto ResultResponseData)
         {

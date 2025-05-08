@@ -76,6 +76,8 @@ using DevExpress.AspNetCore;
 using DevExpress.XtraCharts;
 using EtheriT.Coker.Web.MVC.Controllers.DevExpress;
 using DevExpress.AspNetCore.Reporting;
+using EtheriT.Coker.Application.Shared.BonusManagement;
+using EtheriT.Coker.Application.BonusManagement;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -247,6 +249,8 @@ builder.Services.AddScoped<IFlowSizeAppService, FlowSizeAppService>();
 builder.Services.AddScoped<IReportingAppService, ReportingAppService>();
 builder.Services.AddTransient<IDashboardAuthorizationFilter, HangfireDashboardAuthorizationFilter>();
 builder.Services.AddScoped<UserHabitsWorking>();
+builder.Services.AddScoped<IBonusManagementAppService, BonusManagementAppService>();
+
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

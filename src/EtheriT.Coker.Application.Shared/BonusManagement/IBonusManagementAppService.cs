@@ -1,4 +1,6 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.BonusManagement;
+﻿using EtheriT.Coker.Application.Company;
+using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.BonusManagement;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,5 +16,18 @@ namespace EtheriT.Coker.Application.Shared.BonusManagement
         /// </summary>
         /// <returns></returns>
         Task<GetBonusSettingForEditOutput> GetBonusSettingForEdit();
+
+        /// <summary>
+        /// 取得紅利設定說明
+        /// </summary>
+        /// <returns></returns>
+        Task<GetBonusSettingHelpTextForEditOutput> GetBonusSettingHelpTextForEdit();
+
+        /// <summary>
+        /// 儲存紅利設定
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        Task<ResponseMessageDto> Save(CreateOrUpdateSettingsDto input);
     }
 }

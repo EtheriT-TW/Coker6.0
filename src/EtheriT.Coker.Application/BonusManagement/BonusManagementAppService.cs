@@ -1,7 +1,12 @@
-﻿using EtheriT.Coker.Application.Dto.StoreSet;
+﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.BonusManagement;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.StoreSet;
+using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,14 +17,17 @@ namespace EtheriT.Coker.Application.BonusManagement
 {
     public class BonusManagementAppService : IBonusManagementAppService
     {
+        private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
         private readonly IStoreSetAppService _storeSetAppService;
 
         public BonusManagementAppService(IStoreSetAppService storeSetAppService,
-                                         LoginUserData loginUserData)
+                                         LoginUserData loginUserData,
+                                         CokerDbContext db)
         {
             _storeSetAppService = storeSetAppService;
             this.loginUserData = loginUserData;
+            this.db = db;
         }
 
         public async Task<GetBonusSettingForEditOutput> GetBonusSettingForEdit()
@@ -46,6 +54,60 @@ namespace EtheriT.Coker.Application.BonusManagement
             }
 
             return new GetBonusSettingForEditOutput();
+        }
+
+        public async Task<GetBonusSettingHelpTextForEditOutput> GetBonusSettingHelpTextForEdit()
+        {
+            long websiteID = await loginUserData.GetWebsiteId();
+            var bonusSettingItem = await _storeSetAppService.getAll(new List<long> { 6 });
+            if (bonusSettingItem?.Success == true)
+            {
+                return new GetBonusSettingHelpTextForEditOutput
+                {
+                    SignupBonusPointsHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.SignupBonusPoints))?.memo,                    
+                    MinOrderForRedemptionHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MinOrderForRedemption))?.memo,
+                    MaxRedemptionPercentHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MaxRedemptionPercent))?.memo,
+                    MinOrderForEarnPointsHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MinOrderForEarnPoints))?.memo,
+                    RewardRatePercentHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.RewardRatePercent))?.memo,
+                    RewardPointsExpireDaysHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.RewardPointsExpireDays))?.memo
+                };
+            }
+
+            return new GetBonusSettingHelpTextForEditOutput();
+        }
+
+        public async Task<ResponseMessageDto> Save(CreateOrUpdateSettingsDto input)
+        {
+            ResponseMessageDto result = new ResponseMessageDto { Success = false };
+            long websiteID = await loginUserData.GetWebsiteId();
+            try
+            {
+                var createOrUpdateDto = new List<StoreSetDetailOutputDto>();
+                var properties = typeof(CreateOrUpdateSettingsDto).GetProperties();
+                foreach (var property in properties)
+                {
+                    //使用自己的Service來更新或插入資料
+                    //var value = property.GetValue(input)?.ToString() ?? string.Empty;
+                    //UpdateOrInsertStoreSetDetail(websiteID, property.Name, value);
+
+                    //使用 StoreSetAppService 來更新或插入資料
+                    createOrUpdateDto.Add(new StoreSetDetailOutputDto
+                    {
+                        key = property.Name,
+                        value = new List<string> { property.GetValue(input)?.ToString() ?? string.Empty }
+                    });
+
+                }
+                result = await _storeSetAppService.CreateOrUpdate(createOrUpdateDto);
+
+                //result.Success = true;
+            }
+            catch (Exception ex)
+            {
+                result.Error = ex.Message;
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -112,6 +174,46 @@ namespace EtheriT.Coker.Application.BonusManagement
                 .value?.FirstOrDefault();
 
             return value;
+        }
+
+
+        private bool UpdateOrInsertStoreSetDetail(long websiteID, string key, string value)
+        {
+            try
+            {
+                long userId = loginUserData.GetUserId().Result;
+                var updateRow = db.StoreSetDetail.FirstOrDefault(x => x.FK_WebsiteId == websiteID && x.StoreSet.key == key);
+                if (updateRow != null)
+                {
+                    updateRow.value = value;
+                    updateRow.LastModifierUserId = userId;
+                    updateRow.LastModificationTime = DateTime.Now;
+                    db.StoreSetDetail.Update(updateRow);
+                }
+                else
+                {
+                    if (userId > 0)
+                    {
+                        var newRow = new StoreSetDetail
+                        {
+                            CreatorUserId = userId,
+                            FK_WebsiteId = websiteID,
+                            StoreSet = db.StoreSet.First(x => x.key == key),
+                            value = value
+                        };
+                        db.StoreSetDetail.Add(newRow);
+                    }
+                    else
+                    {
+                        throw new Exception("使用者未登入");
+                    }
+                }
+                return db.SaveChanges() > 0;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
     }
 }

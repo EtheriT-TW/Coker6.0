@@ -1,3 +1,107 @@
-﻿@{
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Web.MVC.Models.BonusManagement
+@model EtheriT.Coker.Web.MVC.Models.BonusManagement.SettingsModel
+
+@{
     ViewData["Title"] = "BonusSettings";
+}
+
+@(Html.DevExtreme().Form<SettingsModel>()
+        .FormData(Model)
+        .ID("bonusSettingsForm")
+        .Items(items =>
+        {
+            // 群組1：迎新禮設定
+            items.AddGroup()
+                .Caption("迎新禮設定")
+                .Items(groupItems =>
+                {
+                    groupItems.AddSimpleFor(m => m.SignupBonusPoints)
+                        .Label(l => l.Text("加入會員贈送紅利")
+                                     .Alignment(HorizontalAlignment.Right))
+                        .Editor(e => e.NumberBox()
+                            .Min(0)
+                            .ShowSpinButtons(true)
+                            .ShowClearButton(true))
+                        .HelpText(Model.SignupBonusPointsHelpText);
+                });
+
+            // 群組2：紅利扣抵基本設定
+            items.AddGroup()
+                .Caption("紅利扣抵基本設定")
+                .ColCount(2)
+                .Items(groupItems =>
+                {
+                    groupItems.AddSimpleFor(m => m.MinOrderForRedemption)
+                        .Label(l => l.Text("消費滿(元)")
+                                     .Alignment(HorizontalAlignment.Right))
+                        .Editor(e => e.NumberBox()
+                            .Min(0)
+                            .Format("#,##0")
+                            .ShowSpinButtons(true))
+                        .HelpText(Model.MinOrderForRedemptionHelpText);
+
+                    groupItems.AddSimpleFor(m => m.MaxRedemptionPercent)
+                        .Label(l => l.Text("可使用紅利扣抵(%)")
+                                     .Alignment(HorizontalAlignment.Right))
+                        .Editor(e => e.NumberBox()
+                            .Min(0)
+                            .Max(100)
+                            .Step(0.1)
+                            .Format("#,##0.#")
+                            .ShowSpinButtons(true))
+                        .HelpText(Model.MaxRedemptionPercentHelpText);
+                });
+
+            // 群組3：紅利回饋設定
+            items.AddGroup()
+                .Caption("紅利回饋設定")
+                .ColCount(2)
+                .Items(groupItems =>
+                {
+                    groupItems.AddSimpleFor(m => m.MinOrderForEarnPoints)
+                        .Label(l => l.Text("購物滿額送，購物滿(元)")
+                                     .Alignment(HorizontalAlignment.Right))
+                        .Editor(e => e.NumberBox()
+                            .Min(0)
+                            .Format("#,##0")
+                            .ShowSpinButtons(true))
+                        .HelpText(Model.MinOrderForEarnPointsHelpText);
+
+                    groupItems.AddSimpleFor(m => m.RewardRatePercent)
+                        .Label(l => l.Text("贈送回饋金(%)")
+                                     .Alignment(HorizontalAlignment.Right))
+                        .Editor(e => e.NumberBox()
+                            .Min(0)
+                            .Max(100)
+                            .Step(0.1)
+                            .Format("#,##0.#")
+                            .ShowSpinButtons(true))
+                        .HelpText(Model.RewardRatePercentHelpText);
+                });
+
+            // 群組4：有效期限設定
+            items.AddGroup()
+                .Caption("有效期限設定")
+                .Items(groupItems =>
+                {
+                    groupItems.AddSimpleFor(m => m.RewardPointsExpireDays)
+                        .Label(l => l.Text("紅利有效天數")
+                                     .Alignment(HorizontalAlignment.Right))
+                        .HelpText("紅利有效期限，單位：天")
+                        .Editor(e => e.NumberBox()
+                            .Min(0)
+                            .Max(999)
+                            .ShowSpinButtons(true))
+                        .HelpText(Model.RewardPointsExpireDaysHelpText);
+                });
+        })
+    )
+
+<div class="form-group mt-3">
+    <button type="button" id="submitButton" class="btn btn-primary">儲存設定</button>
+</div>
+
+@section scripts {
+    <script src="~/js/BonusManagement/Settings.min.js" asp-append-version="true"></script>
 }

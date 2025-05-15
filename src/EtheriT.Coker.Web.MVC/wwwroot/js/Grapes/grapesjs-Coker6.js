@@ -415,11 +415,11 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                                                 </div>
                                                             </div>
 
-                                                            <div class="align-items-center d-flex position-absolute top-50 end-0 translate-middle-y mr-1">
-                                                                <a class="mr-1 show-form isPointer" title="編輯內容">
+                                                            <div class="align-items-center d-flex position-absolute top-50 end-0 translate-middle-y me-1">
+                                                                <a class="me-1 show-form isPointer" title="編輯內容">
                                                                     <span class="material-symbols-outlined text-black button">border_color</span>
                                                                 </a>
-                                                                <a class="mr-1 delete-slide isPointer" title="刪除">
+                                                                <a class="me-1 delete-slide isPointer" title="刪除">
                                                                     <span class="material-symbols-outlined text-black button">delete</span>
                                                                 </a>
                                                             </div>

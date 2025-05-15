@@ -161,9 +161,9 @@ var PreLoader;
         var d = a(this).attr("data-content");
         var f = a(this).attr("data-style");
         if (a(".toast." + c + "-" + e).length) {
-            a(".toast." + c + "-" + e).append('<div class="alert alert-dismissible fade show alert-' + f + ' "> ' + d + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true" class="material-icons md-18">clear</span></button></div>')
+            a(".toast." + c + "-" + e).append('<div class="alert alert-dismissible fade show alert-' + f + ' "> ' + d + '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>')
         } else {
-            a("body").append('<div class="toast ' + c + "-" + e + '"> <div class="alert alert-dismissible fade show alert-' + f + ' "> ' + d + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true" class="material-icons md-18">clear</span></button></div> </div>')
+            a("body").append('<div class="toast ' + c + "-" + e + '"> <div class="alert alert-dismissible fade show alert-' + f + ' "> ' + d + '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div> </div>')
         }
     });
     a(".form-control-chosen").chosen({ allow_single_deselect: true, width: "100%" });

@@ -7,6 +7,11 @@
             if (!$self.is("template")) $self.remove();
         })
         ImageSetData($select, null);
+    }, ImageUploadModalDataInsert: function (id, link, name) {
+        var $select = $(this);
+        ImageUploadModalDataInsert($select, id, link, name)
+    }, getPath: function () {
+        return $(this).find(".img_preview").attr("src");
     }
 });
 function ImageUploadModalClear($select) {

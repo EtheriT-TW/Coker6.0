@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Templates
 {
-    public class TemplateSectionsDto
+    public class TemplateSectionsDto: ResponseObject
     {
         public long Id { get; set; }
         public long FK_TemplateID { get; set; }

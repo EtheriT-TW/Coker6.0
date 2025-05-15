@@ -18,6 +18,8 @@ using System.Linq;
 using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 using ImageMagick;
+using EtheriT.Coker.Application.Shared.Templates;
+using EtheriT.Coker.Application.Shared.Dto.Templates;
 
 namespace EtheriT.Coker.Application
 {
@@ -28,11 +30,13 @@ namespace EtheriT.Coker.Application
         private readonly LoginUserData loginUserData;
         private readonly string _folder;
         private readonly string AppName;
+        private readonly ITemplatesApplicationService templatesApplicationService;
         private readonly IConfiguration configuration;
         public FileUploadAppService(
             IOptions<VirtualDirectory> fileAllow,
             LoginUserData loginUserData,
             CokerDbContext db,
+            ITemplatesApplicationService templatesApplicationService,
             IConfiguration configuration
         )
         {
@@ -41,6 +45,7 @@ namespace EtheriT.Coker.Application
             this.loginUserData = loginUserData;
             _folder = fileAllow.Value.upload;
             AppName = "FileUpload";
+            this.templatesApplicationService = templatesApplicationService;
             this.configuration = configuration;
         }
         public async Task<UploadFileOutputDto> uploadTempFiles(IList<IFormFile> files)
@@ -480,6 +485,12 @@ namespace EtheriT.Coker.Application
                     case GrapesPageTypeEnum.技術文件:
                         var tech = await db.TechnicalCertificates.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
                         if (tech != null) html = tech.Css + tech.Html;
+                        break;
+                    case GrapesPageTypeEnum.頁尾:
+                        var footer = await templatesApplicationService.GetDefaultFooterTemplatesAsync();
+                        if (footer != null && footer.Success && footer.Object != null) html =
+                                 ((TemplateSectionsDto)footer.Object).footerTemplateDto?.css ?? "" +
+                                ((TemplateSectionsDto)footer.Object).footerTemplateDto?.html ?? "";
                         break;
                 }
                 if (!string.IsNullOrEmpty(html))

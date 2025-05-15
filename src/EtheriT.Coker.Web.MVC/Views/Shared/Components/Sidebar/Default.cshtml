@@ -9,7 +9,7 @@
 <nav class="navbar navbar-dark bg-primary">
 	<a class="navbar-brand m-0 py-2 brand-title" href="#">@Model.Title</a>
 	<span></span>
-	<a class="navbar-brand py-2 material-icons toggle-sidebar" href="#">menu</a>
+	<a class="navbar-brand py-2 material-symbols-outlined toggle-sidebar" href="#">menu</a>
 </nav>
 <nav class="navigation">
 	<ul>
@@ -24,7 +24,7 @@
 						string myClass = item.PageName == ViewData["Title"].ToString() ? "active" : "";
 						<li class="@myClass">
 								<a title="@item.Title" asp-controller="@item.Controller" asp-action="@item.Action">
-								<span class="nav-icon material-icons">@item.Icon</span>@item.Title
+								<span class="nav-icon material-symbols-outlined">@item.Icon</span>@item.Title
 							</a>
 						</li>
 					}
@@ -41,7 +41,7 @@
 					<li class="@brighten">
 
 						<a title="@item.Title" asp-controller="@item.Controller" asp-action="@item.Action">
-							<span class="nav-icon material-icons "> @item.Icon </span>@item.Title<span class="toogle-sub-nav material-icons"> keyboard_arrow_right </span>
+							<span class="nav-icon material-symbols-outlined"> @item.Icon </span>@item.Title<span class="toogle-sub-nav material-symbols-outlined"> keyboard_arrow_right </span>
 						</a>
 						<ul class="sub-nav">
 							@foreach (var subJob in item.jobItemModels ?? new List<JobMenu>())
@@ -51,7 +51,7 @@
 									string myClass = subJob.PageName == ViewData["Title"].ToString() ? "active" : "";
 									<li class="@myClass">
 										<a title="@subJob.Title" asp-controller="@subJob.Controller" asp-action="@subJob.Action">
-											<span class="nav-icon material-icons">@subJob.Icon</span>@subJob.Title
+											<span class="nav-icon material-symbols-outlined">@subJob.Icon</span>@subJob.Title
 										</a>
 									</li>
 								}

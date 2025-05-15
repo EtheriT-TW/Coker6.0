@@ -11,6 +11,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
 		頁面 = 1,
 		文章 = 2,
 		商品 = 3,
-		技術文件 = 4
-	}
+		技術文件 = 4,
+        頁尾 = 5
+    }
 }

@@ -18,7 +18,7 @@ function StationPageSet(data) {
         var $frame = $($("#TemplateApp").html()).clone();
         if (web.check) {
             $frame.find("[data-key='Id']").addClass("active-app");
-            $frame.find("[data-key='description']").after("<span class='material-icons app-selected md-16'>check</span>")
+            $frame.find("[data-key='description']").after("<span class='material-symbols-outlined app-selected md-16'>check</span>")
         }
         $frame.find("[data-key='Id']").data("id", web.id);
         $frame.find("[data-key='image']").attr({ src: web.images, alt: web.name })
@@ -38,7 +38,7 @@ function WebitemClick($frame) {
     $(".app-switcher .active-app").removeClass("active-app");
     $(".app-switcher .app-selected").remove();
     $frame.find(".card").addClass("active-app");
-    $frame.find(".card-body").append(`<span class="material-icons app-selected md-16">check</span>`);
+    $frame.find(".card-body").append(`<span class="material-symbols-outlined app-selected md-16">check</span>`);
 }
 function StationPageBtnInit($btn_page, page_total) {
     $btn_page.addClass("d-flex");

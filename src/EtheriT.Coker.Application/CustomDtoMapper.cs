@@ -36,6 +36,7 @@ using EtheriT.Coker.Application.Shared.Dto.UserHabits;
 using EtheriT.Coker.Application.Shared.Dto.Recipients;
 using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
 
 namespace EtheriT.Coker.Application
 {
@@ -348,11 +349,18 @@ namespace EtheriT.Coker.Application
             //Template
             CreateMap<TemplatesDto, Template>()
                 .ReverseMap();
-            CreateMap<TemplateSections, TemplateSectionsDto>()
-                .ReverseMap();
             CreateMap<FooterTemplate, FooterTemplateDto>()
                 .ReverseMap();
-
+            CreateMap<TemplateSections, TemplateSectionsDto>()
+            .ForMember(dest => dest.footerTemplateDto, opt =>
+                opt.MapFrom(src => src.sectionType == SectionTypeEnum.頁尾
+                    ? new FooterTemplateDto
+                    {
+                        id = src.footerTemplates != null ? src.footerTemplates.Id : null,
+                        html = src.footerTemplates != null ? src.footerTemplates.saveHtml??"" : "",
+                        css = src.footerTemplates != null ? src.footerTemplates.saveCss??"" : ""
+                    } : null
+                ));
             CreateMap<ECPayCreditDetailDataDto, ECPayQueryTradeDataDto>()
                 .ReverseMap();
         }

@@ -192,6 +192,11 @@
             });
             form.reset();
             if ($(form).find("[name='id']").length > 0) $(form).find("[name='id']").val(0);
+        }, getFileForm: function (id,type = 0) {
+            var formData = new FormData();
+            formData.append("files", $(`#${id} .img_input`).data("file").File);
+            formData.append("type", type);
+            return formData;
         }
     }
 });

@@ -16,7 +16,7 @@
 			<div class="card">
 				<div class="card-header p-3 pt-2">
 					<div class="icon icon-lg icon-shape bg-gradient-warning shadow-dark text-center border-radius-xl mt-n4 position-absolute">
-						<i class="material-icons opacity-10">storage</i>
+						<i class="material-symbols-outlined opacity-10">storage</i>
 					</div>
 					<div class="text-end pt-1">
 						<p class="text-sm mb-0 text-capitalize">使用空間</p>
@@ -33,7 +33,7 @@
 			<div class="card">
 				<div class="card-header p-3 pt-2">
 					<div class="icon icon-lg icon-shape bg-gradient-info shadow-primary text-center border-radius-xl mt-n4 position-absolute">
-						<i class="material-icons opacity-10">insert_chart</i>
+						<i class="material-symbols-outlined opacity-10">insert_chart</i>
 					</div>
 					<div class="text-end pt-1">
 						<p class="text-sm mb-0 text-capitalize">使用流量</p>
@@ -62,9 +62,9 @@
 							<h6 class="mb-0 ">全站瀏覽人數</h6>
 						</div>
 						<div class="d-flex">
-							<form method="post" action="/DashboardController/Index" class="flex-grow-1 mr-5 date-range">
+							<form method="post" action="/DashboardController/Index" class="flex-grow-1 me-5 date-range">
 								<div class="d-flex align-content-center">
-									<i class="material-icons text-sm my-auto me-1">schedule</i>
+									<i class="material-symbols-outlined text-sm my-auto me-1">schedule</i>
 									<p class="mb-0">&nbsp;統計區間</p>
 								</div>
 								<div class="date input-group mb-3 w-75">
@@ -72,7 +72,7 @@
 								</div>
 							</form>
 							<div class="text-end pt-1 d-flex ">
-								<p class="mb-0 mr-3">累計人數：<span class="text-success font-weight-bolder fs-1 dateRange-sum-mem-count">@Model.Remote.SumMemCount</span></p>
+								<p class="mb-0 me-3">累計人數：<span class="text-success font-weight-bolder fs-1 dateRange-sum-mem-count">@Model.Remote.SumMemCount</span></p>
 								<p class="mb-0 ">人次：<span class="text-success font-weight-bolder fs-1 dateRange-sum-count">@Model.Remote.SumCount</span></p>
 							</div>
 						</div>
@@ -83,7 +83,7 @@
 								<span>統計 @Model.Remote.FirstTime 至今</span>
 							</div>
 							<div class="text-end pt-1 d-flex ">
-								<p class="mb-0 mr-3">累計總人數：<span class="text-success totle-sum-mem-count font-weight-bolder fs-1">@Model.Remote.TotleMemCount</span></p>
+								<p class="mb-0 me-3">累計總人數：<span class="text-success totle-sum-mem-count font-weight-bolder fs-1">@Model.Remote.TotleMemCount</span></p>
 								<p class="mb-0 ">總人次：<span class="text-success totle-sum-count font-weight-bolder fs-1">@Model.Remote.TotleCount</span></p>
 							</div>
 						</div>

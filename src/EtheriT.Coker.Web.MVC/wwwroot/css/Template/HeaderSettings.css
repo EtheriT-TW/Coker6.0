@@ -1,0 +1,177 @@
+﻿.slider-container {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 1rem 0;
+}
+.slider-preview-wrapper {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.slider-preview {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: opacity 0.2s ease;
+}
+
+.slider-preview-wrapper:hover .slider-preview {
+    opacity: 0.75;
+}
+    
+.slider-item {
+    position: relative;
+    width: 200px;
+    height: 120px;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #f8f9fa;
+    flex-shrink: 0;
+}
+    .slider-item img {
+        cursor: grab;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .slider-item:active {
+        cursor: grabbing;
+    }
+    .slider-item.ui-sortable-helper {
+        cursor: grabbing;
+        opacity: 0.8;
+        box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+.ui-sortable-helper * {
+    cursor: grabbing !important;
+}
+.slider-placeholder {
+    width: 200px;
+    height: 120px;
+    border: 2px dashed #999;
+    border-radius: 8px;
+    background-color: #eee;
+    opacity: 0.5;
+}
+
+.slider-item .delete-icon {
+    position: absolute;
+    top: 4px;
+    background: white;
+    border-radius: 50%;
+    padding: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    box-shadow: 0 0 3px rgba(0,0,0,0.2);
+    color: #333;
+
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slider-item .delete-icon {
+    right: 4px;
+}
+
+.slider-item .material-icons {
+    vertical-align: middle;
+    font-size: 20px;
+}
+/* 新增卡片的外觀與大小 */
+.slider-item.add-new {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 200px;
+    height: 120px;
+    border: 2px dashed #00acc1;
+    border-radius: 8px;
+    background-color: #e0f7fa;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+    /* 滑過時改變背景，提供互動感 */
+    .slider-item.add-new:hover {
+        background-color: #b2ebf2;
+    }
+
+    /* 裡面的 icon 外觀 */
+    .slider-item.add-new .material-icons.add-icon {
+        font-size: 36px;
+        color: #00acc1;
+    }
+
+/* 圖片容器樣式 */
+.image-upload-container {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+    .image-upload-container img {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        transition: opacity 0.2s;
+    }
+
+    .image-upload-container:hover img {
+        opacity: 0.7;
+    }
+
+    /* 編輯提示 icon（可選） */
+    .image-upload-container::after {
+        content: "點擊更換圖片";
+        position: absolute;
+        bottom: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        font-size: 12px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+    }
+
+    .image-upload-container:hover::after {
+        opacity: 1;
+    }
+
+/* X 刪除 icon */
+.image-remove-icon {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: #fff;
+    border-radius: 50%;
+    color: #d32f2f;
+    font-size: 18px;
+    padding: 0;
+    line-height: 1;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .image-remove-icon:hover {
+        background: #fbe9e7;
+    }

@@ -346,7 +346,30 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         Title="搜尋設定",
                         Controller="SearchManagement",
                         Action="CustSearch",
-                        Icon="search",
+                        Icon="search"
+                    },
+
+                    new JobMenu{
+                        PageName="Layout",
+                        Title="版型設定",
+                        Controller="Template",
+                        Icon="palette",
+                        CollapseId="#Layout",
+                        jobItemModels = new List<JobMenu>{
+                            new JobMenu{
+                                PageName="HeaderSettings",
+                                Title="版頭設定",
+                                Controller="Template",
+                                Action="HeaderSettings",
+                                Icon="toolbar"
+                            },new JobMenu{
+                                PageName="FooterSettings",
+                                Title="頁尾設定",
+                                Controller="Template",
+                                Action="FooterSettings",
+                                Icon="bottom_navigation"
+                            }
+                        }
                     },
                     new JobMenu{
                         PageName="TypographyTheme",

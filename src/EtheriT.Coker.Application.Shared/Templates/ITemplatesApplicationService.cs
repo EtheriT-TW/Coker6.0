@@ -14,5 +14,7 @@ namespace EtheriT.Coker.Application.Shared.Templates
         public Task<ResponseMessageDto> GetDefaultFooterTemplatesAsync();
         public Task<ResponseMessageDto> importDefaultFooter(MenuSaveContenDto dto);
         public Task<ResponseMessageDto> saveDefaultFooter(MenuSaveContenDto dto);
+        public Task<ResponseMessageDto> saveDefaultHeader(HeaderTemplateDto dto);
+        public Task<ResponseMessageDto> getDefaultHeader();
     }
 }

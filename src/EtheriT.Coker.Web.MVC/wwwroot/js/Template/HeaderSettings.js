@@ -161,42 +161,46 @@
         const desktopFile = $('#editDesktopImageInput')[0].files[0];
         const mobileFile = $('#editMobileImageInput')[0].files[0];
 
-        if (desktopFile instanceof File) {
+        if (desktopFile instanceof File && !s.desktopImage.startsWith('http')) {
             s.desktopFile = desktopFile;
             s.desktopImage = URL.createObjectURL(desktopFile);
         }
 
-        if (mobileFile instanceof File) {
+        if (mobileFile instanceof File && !s.mobileImage.startsWith('http')) {
             s.mobileFile = mobileFile;
             s.mobileImage = URL.createObjectURL(mobileFile);
         }
-        console.log(s);
+
         bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
         renderSliders();
     }
 
     function loadTemplateSetting(data) {
-        $('#showMarquee').prop('checked', data.showMarquee);
-        $('#showPagePath').prop('checked', data.showPagePath);
-        $(`input[name="logoPosition"][value="${data.logoPosition}"]`).prop('checked', true);
+        const config = data.contentConfig || {};
+        $('#showMarquee').prop('checked', config.showMarquee);
+        $('#showPagePath').prop('checked', config.showPagePath);
+        $(`input[name="headType"][value="${data.headType}"]`).prop('checked', true);
         sliders.length = 0;
-        sliders.push(...data.slider);
+        (config.sliders || []).forEach(addSlider); // ✅ 只呼叫 addSlider，統一預設邏輯
+
         renderSliders();
     }
 
     function getTemplateSetting() {
         return {
-            showMarquee: $('#showMarquee').prop('checked'),
-            showPagePath: $('#showPagePath').prop('checked'),
-            logoPosition: $('input[name="logoPosition"]:checked').val(),
-            sliders: sliders.map(s => ({
-                title: s.title,
-                subtitle: s.subtitle,
-                link: s.link,
-                enabled: s.enabled,
-                desktopImage: s.desktopDeleted ? null : s.desktopImage,
-                mobileImage: s.mobileDeleted ? null : s.mobileImage
-            }))
+            headType: parseInt($('input[name="headType"]:checked').val()),
+            contentConfig: {
+                showMarquee: $('#showMarquee').prop('checked'),
+                showPagePath: $('#showPagePath').prop('checked'),
+                sliders: sliders.map(s => ({
+                    title: s.title,
+                    subtitle: s.subtitle,
+                    link: s.link,
+                    enabled: s.enabled,
+                    desktopImage: s.desktopDeleted ? null : s.desktopImage,
+                    mobileImage: s.mobileDeleted ? null : s.mobileImage
+                }))
+            }
         };
     }
 
@@ -229,7 +233,7 @@
         previewImage(this, 'mobile');
     });
 
-    $("#editModal .btn-primary").on("click", saveEdit);
+    $("#editModal .modal-footer .btn-primary").on("click", saveEdit);
 
     function uploadImages() {
         const imageList = [];
@@ -287,16 +291,87 @@
         e.preventDefault();
         uploadImages().done(function () {
             var data = getTemplateSetting();
-            console.log(data);
+            co.Templates.saveDefaultHeader(data).then(result => {
+                if (result.success) {
+                    co.sweet.success("儲存成功");
+                } else co.sweet.error("儲存失敗",result.error);
+            });
         });
     }, false);
 
-    /*loadTemplateSetting({
-        logoPosition: top,
-        showPagePath: true,
-        showMarquee: true,
-        slider:[{
-            desktopImage: 'https://i.imgur.com/KPMpU29.jpeg?text=Desktop'
-        }]});*/
+    co.Templates.getDefaultHeader().then(result => {
+        if (result.success) {
+            loadTemplateSetting(result.object);
+        }
+    });
+
+    const $box = $('#customLinkBox');
+    let currentTarget = null;
+
+    $('.image-link-icon').on('click', function (e) {
+        const $target = $(e.currentTarget);
+        const type = $target.data('type');
+        const targetOffset = $target.offset(); // 絕對位置
+        const containerOffset = $target.closest('.modal-body').offset(); // modal 內的參考座標
+
+        currentTarget = $target;
+        $('#customLinkBox')
+            .removeClass('d-none')
+            .css({
+                top: targetOffset.top - containerOffset.top + $target.outerHeight() + 4,
+                left: targetOffset.left - containerOffset.left,
+                position: 'absolute'
+            })
+            .attr('data-type', type)
+            .find('input')
+            .val('')
+            .focus();
+    });
+
+    // 點擊確認按鈕
+    $('#customLinkBox .btn-primary').on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const url = $('#customLinkBox input').val().trim();
+        if (url && isValidUrl(url)) {
+            const type = $('#customLinkBox').attr('data-type');
+            const index = $('#editIndex').val();
+            const s = sliders[index];
+
+            if (type === 'desktop') {
+                $('#editDesktopImagePreview').attr('src', url);
+                s.desktopFile = null;
+                s.desktopImage = url;
+                s.desktopDeleted = false;
+            } else if (type === 'mobile') {
+                $('#editMobileImagePreview').attr('src', url);
+                s.mobileFile = null;
+                s.mobileImage = url;
+                s.mobileDeleted = false;
+            }
+
+            $('#customLinkBox').addClass('d-none');
+        } else {
+            co.sweet.error("請輸入有效的圖片網址");
+        }
+    });
+
+    // 點擊外部隱藏
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('.url-input-box, .image-link-icon').length) {
+            $box.addClass('d-none');
+        }
+    });
+
+    function isValidUrl(str) {
+        try {
+            new URL(str);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    
     refreshSortable();
 }

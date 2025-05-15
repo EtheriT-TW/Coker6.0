@@ -9,6 +9,7 @@
         版頭管理
         <button class="btn_done btn-primary border-0 px-3 py-1 text-white me-3 btn" type="submit" form="headerSetting">儲　存</button>
     </h2>
+
     <!-- ✅ 基本設定 -->
     <div class="card mb-4">
         <div class="card-header">基本設定</div>
@@ -29,11 +30,11 @@
             </div>
             <label class="form-label mt-3">Logo 位置：</label>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="logoPosition" value="top" id="logoTop" checked>
+                <input class="form-check-input" type="radio" name="headType" value="1" id="logoTop" checked>
                 <label class="form-check-label" for="logoTop">上</label>
             </div>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="logoPosition" value="left" id="logoLeft">
+                <input class="form-check-input" type="radio" name="headType" value="0" id="logoLeft">
                 <label class="form-check-label" for="logoLeft">左</label>
             </div>
         </div>
@@ -76,21 +77,32 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editIndex">
-
+                <div id="customLinkBox" class="url-input-box d-none">
+                    <input type="text" class="form-control form-control-sm" placeholder="貼上圖片網址" />
+                    <div class="text-end mt-1">
+                        <button class="btn btn-sm btn-primary">確認</button>
+                    </div>
+                </div>
                 <!-- 桌機圖片 -->
                 <div class="mb-3 image-upload-container">
                     <label class="form-label">桌機版圖片</label>
-                    <img id="editDesktopImagePreview" src="/images/noImg.jpg" class="img-fluid rounded mb-2" style="height:100px;">
-                    <div class="material-symbols-outlined image-remove-icon">close</div>
-                    <input id="editDesktopImageInput" type="file" class="form-control">
+                    <div class="position-relative">
+                        <img id="editDesktopImagePreview" src="/images/noImg.jpg" class="img-fluid rounded mb-2">
+                        <div class="image-remove-icon material-symbols-outlined">close</div>
+                        <div class="image-link-icon material-symbols-outlined" data-type="desktop">link</div>
+                    </div>
+                    <input id="editDesktopImageInput" type="file" class="form-control d-none">
                 </div>
 
                 <!-- 手機圖片 -->
                 <div class="mb-3 image-upload-container">
                     <label class="form-label">手機版圖片</label>
-                    <img id="editMobileImagePreview" src="/images/noImg.jpg" class="img-fluid rounded mb-2" style="height:100px;">
-                    <div class="material-symbols-outlined image-remove-icon">close</div>
-                    <input id="editMobileImageInput" type="file" class="form-control">
+                    <div class="position-relative">
+                        <img id="editMobileImagePreview" src="/images/noImg.jpg" class="img-fluid rounded mb-2">
+                        <div class="image-remove-icon material-symbols-outlined">close</div>
+                        <div class="image-link-icon material-symbols-outlined" data-type="mobile">link</div>
+                    </div>
+                    <input id="editMobileImageInput" type="file" class="form-control d-none">
                 </div>
 
                 <!-- 標題 -->
@@ -121,6 +133,25 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                 <button class="btn btn-primary">儲存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ 圖片連結輸入小視窗 -->
+<div class="modal fade" id="urlModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">輸入圖片網址</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control" id="imageUrlInput" placeholder="https://...">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button class="btn btn-primary" id="confirmUrlButton">確定</button>
             </div>
         </div>
     </div>

@@ -123,8 +123,10 @@
 
     .image-upload-container img {
         border: 1px solid #ccc;
-        border-radius: 4px;
         transition: opacity 0.2s;
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
     }
 
     .image-upload-container:hover img {
@@ -152,8 +154,8 @@
         opacity: 1;
     }
 
-/* X 刪除 icon */
-.image-remove-icon {
+/* icon */
+.image-remove-icon, .image-link-icon {
     position: absolute;
     top: 4px;
     right: 4px;
@@ -175,3 +177,37 @@
     .image-remove-icon:hover {
         background: #fbe9e7;
     }
+
+.image-link-icon {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background: #fff;
+    border-radius: 50%;
+    color: #1976d2;
+    font-size: 18px;
+    padding: 0;
+    line-height: 1;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .image-link-icon:hover {
+        background: #e3f2fd;
+    }
+
+.url-input-box {
+    position: absolute;
+    z-index: 1050; /* 高於 modal，但低於 tooltip */
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px;
+    width: 240px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}

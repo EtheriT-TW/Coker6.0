@@ -51,6 +51,35 @@
                 }
                 return response.json();
             })
+        },
+        getDefaultHeader: function () {
+            return fetch('/api/Template/getDefaultHeader', {
+                method: 'GET',
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    ..._c.Data.Header
+                }
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
+        },
+        saveDefaultHeader: function (data) {
+            return fetch('/api/Template/saveDefaultHeader', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    ..._c.Data.Header
+                },
+                body: JSON.stringify(data)
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
         }
     }
 });

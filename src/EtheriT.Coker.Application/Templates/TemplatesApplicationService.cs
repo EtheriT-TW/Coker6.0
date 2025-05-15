@@ -140,23 +140,25 @@ namespace EtheriT.Coker.Application.Templates
         private async Task<TemplateSections> getDefaultTemplateSections(long TempId, SectionTypeEnum typeEnum)
         {
             var section = await db.TemplateSections
+                .Include(x => x.template)
                 .Include(x => x.footerTemplates)
                 .Where(x => x.FK_TemplateID == TempId && x.sectionType == typeEnum)
                 .FirstOrDefaultAsync();
 
             if (section == null)
             {
+                var temp = await getDefaultTemplate();
                 section = new TemplateSections
                 {
                     FK_TemplateID = TempId,
                     sectionType = typeEnum,
                     ContentConfig = string.Empty,
+                    template = temp
                 };
                 if (typeEnum == SectionTypeEnum.頁尾)
                 {
                     var footer = new FooterTemplate
                     {
-                        FK_TemplateSectionsId = section.Id,
                         saveCss = string.Empty,
                         saveHtml = string.Empty,
                     };
@@ -233,6 +235,50 @@ namespace EtheriT.Coker.Application.Templates
             finally
             {
                 await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> saveDefaultHeader(HeaderTemplateDto dto) {
+            var response = new ResponseMessageDto();
+            try
+            {
+                var temp = await getDefaultTemplate();
+                var header = await getDefaultTemplateSections(temp.Id, SectionTypeEnum.表頭);
+                if (header != null)
+                {
+                    header.template.HeadType = dto.HeadType;
+                    header.ContentConfig = JsonConvert.SerializeObject(dto.ContentConfig);
+                    await loginUserData.SaveChanges(header);
+                    response.Success = true;
+                }
+                else throw new Exception("找不到頁首資料");
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message, e);
+            }
+            finally
+            {
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> getDefaultHeader() {
+            var response = new ResponseMessageDto();
+            try
+            {
+                var temp = await getDefaultTemplate();
+                var header = await getDefaultTemplateSections(temp.Id, SectionTypeEnum.表頭);
+                if (header != null)
+                {
+                    response.Object = mapper.Map<HeaderTemplateDto>(header);
+                    response.Success = true;
+                }
+                else throw new Exception("找不到頁首資料");
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message, e);
             }
             return response;
         }

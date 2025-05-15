@@ -37,6 +37,7 @@ using EtheriT.Coker.Application.Shared.Dto.Recipients;
 using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
+using Newtonsoft.Json;
 
 namespace EtheriT.Coker.Application
 {
@@ -361,6 +362,23 @@ namespace EtheriT.Coker.Application
                         css = src.footerTemplates != null ? src.footerTemplates.saveCss??"" : ""
                     } : null
                 ));
+            CreateMap<TemplateSections, HeaderTemplateDto>()
+                .ForMember(dest => dest.HeadType, opt => opt.MapFrom(src => src.template.HeadType))
+                .ForMember(dest => dest.ContentConfig, opt => opt.MapFrom(src =>
+                    string.IsNullOrEmpty(src.ContentConfig)
+                        ? new HeaderContentConfigDto()
+                        : JsonConvert.DeserializeObject<HeaderContentConfigDto>(src.ContentConfig)
+                ));
+
+            CreateMap<HeaderTemplateDto, TemplateSections>()
+                .ForMember(dest => dest.ContentConfig, opt => opt.MapFrom(src =>
+                    JsonConvert.SerializeObject(src.ContentConfig)
+                ))
+                .ForMember(dest => dest.FK_TemplateID, opt => opt.Ignore())  // 這個視情況而定
+                .ForMember(dest => dest.template, opt => opt.Ignore());
+
+
+            //綠界
             CreateMap<ECPayCreditDetailDataDto, ECPayQueryTradeDataDto>()
                 .ReverseMap();
         }

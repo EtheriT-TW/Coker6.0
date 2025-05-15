@@ -87,6 +87,7 @@ function StationPageBtnInit($btn_page, page_total) {
             StationPageSet(result);
         });
     })
+    if (page_total > 1) $btn_page.removeClass("d-none");
 }
 
 function StationContentPageChage($self, page, page_total) {

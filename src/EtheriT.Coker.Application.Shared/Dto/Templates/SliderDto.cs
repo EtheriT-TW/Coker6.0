@@ -8,11 +8,14 @@ namespace EtheriT.Coker.Application.Shared.Dto.Templates
 {
     public class SliderDto
     {
-        public string? desktopImage { get; set; }
-        public string? mobileImage { get; set; }
-        public string? title { get; set; }
-        public string? subtitle { get; set; }
-        public string? link { get; set; }
-        public bool enabled { get; set; }
+        public string? DesktopImage { get; set; }
+        public string? MobileImage { get; set; }
+        public string? Title { get; set; }
+        public string? Subtitle { get; set; }
+        public string? Description { get; set; }
+        public string? ButtonText { get; set; }
+        public string? ButtonLinkUrl { get; set; }
+        public string? Link { get; set; }
+        public bool Enabled { get; set; }
     }
 }

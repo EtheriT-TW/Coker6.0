@@ -16,10 +16,12 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
         public string? UploadPath { get; set; }
         public bool? Sitemap_Target { get; set; }
         public bool? HasShoppingCar { get; set; }
+        public bool ShowPagePath { get; set; } = true;
+        public bool ShowMarquee { get; set; } = true;
         public string marqueeBagroundImage { get; set; } = string.Empty;
         public string marqueeIcon { get; set; } = string.Empty;
         public TemplatesDto? templates { get; set; }
-        public List<TemplateBannerItem> Bannners { get; set; } = new List<TemplateBannerItem>();
+        public List<SliderDto> Bannners { get; set; } = new List<SliderDto>();
         public List<MenuItemModel>? menuItemModels { get; set; }
         public List<MenuItemModel> langMenuItemModels { get; set; } = new List<MenuItemModel>();
         public List<MarqueeDisplayDto>? marqueeModels { get; set; }

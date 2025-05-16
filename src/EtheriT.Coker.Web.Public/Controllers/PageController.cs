@@ -36,6 +36,10 @@ using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using EtheriT.Coker.Application.Templates;
+using EtheriT.Coker.Application.Shared.Templates;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
+using EtheriT.Coker.Application.Shared.Dto.Templates;
 
 namespace EtheriT.Coker.Web.Public.Controllers
 {
@@ -59,6 +63,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly ITokenAppService tokenAppService;
         private readonly IAdvertiseAppService advertiseAppService;
         private readonly IFileUploadAppService fileUploadAppService;
+        private readonly ITemplatesApplicationService templatesApplicationService;
         private readonly StringHandler stringHandler;
         private readonly IWebHostEnvironment _env;
 
@@ -80,6 +85,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IAdvertiseAppService advertiseAppService,
             ITokenAppService tokenAppService,
             IFileUploadAppService fileUploadAppService,
+            ITemplatesApplicationService templatesApplicationService,
             StringHandler stringHandler,
             IWebHostEnvironment env
         )
@@ -102,6 +108,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.tokenAppService = tokenAppService;
             this.advertiseAppService = advertiseAppService;
             this.fileUploadAppService = fileUploadAppService;
+            this.templatesApplicationService = templatesApplicationService;
             this._env = env;
         }
         private bool UseLegacyPathHandling(string website, string key, string option)
@@ -147,6 +154,16 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var prodCatalog = StoreSet.storeSetDetails?.Find(e => e.key == "prodCatalog");
             var membershipTerms = StoreSet.storeSetDetails?.Find(e => e.key == "membershipTerms");
             var shareImage = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { Sid = siteId, Type = 13 });
+            var template = await templatesApplicationService.GetDefaultTemplatesAsync();
+            ViewBag.ShowPagePath = true;
+            if (template != null)
+            {
+                var header = template.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.Banner);
+                if (header != null) {
+                    var ContentConfig = JsonConvert.DeserializeObject<HeaderContentConfigDto>(header.ContentConfig);
+                    if(ContentConfig!=null) ViewBag.ShowPagePath = ContentConfig.ShowPagePath;
+                }
+            }
             if (string.IsNullOrEmpty(defaultData.Root) || !defaultData.Root.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
                 var request = HttpContext.Request;

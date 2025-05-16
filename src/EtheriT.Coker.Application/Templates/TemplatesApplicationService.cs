@@ -56,6 +56,10 @@ namespace EtheriT.Coker.Application.Templates
             var WebsiteID = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
             try
             {
+                var website = await db.Websites.FirstOrDefaultAsync(e => e.Id == WebsiteID);
+                if (website == null) throw new Exception("找不到網站資料");
+                else if (!new List<int?> { 7, 8 }.Contains(website.LayoutType)) return null;
+
                 var qurry = await db.Templates.Include(e => e.Website).Where(x => x.FK_WebsiteID == WebsiteID && x.Enable).OrderByDescending(e => e.LastModificationTime ?? e.CreationTime).FirstOrDefaultAsync();
                 if (qurry != null)
                 {

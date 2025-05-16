@@ -8,6 +8,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Templates
 {
     public class TemplateBanner
     {
-        public List<TemplateBannerItem> Items { get; set; } = new List<TemplateBannerItem>();
+        public List<SliderDto> Sliders { get; set; } = new List<SliderDto>();
     }
 }

@@ -1378,8 +1378,7 @@ function OrderHeaderAdd() {
                                                         setTimeout(function () {
                                                             buy_step_swiper.slideNext();
                                                             buy_step_swiper.disable();
-                                                            co.sweet.confirm(`回傳的PaymentType：${result_obj.OrderInfo.PaymentType}`, "此為測試訊息，正式站會隱藏", "確認", "", null)
-                                                            //if (SwalClose) Swal.close();
+                                                            if (SwalClose) Swal.close();
                                                         }, 300);
                                                     } else {
                                                         $("#Step4 > .card-body > .pruchase_content > .status_alert").text("付款流程發生未知錯誤，請稍後重新嘗試，或直接聯繫客服人員。");

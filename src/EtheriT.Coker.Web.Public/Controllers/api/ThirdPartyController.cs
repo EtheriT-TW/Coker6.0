@@ -59,6 +59,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             response.Message = "支付方式不存在";
             return response;
         }
+        [HttpGet]
+        public async Task<ResponseMessageDto> ECPayGetPaymentInfo(long ohid)
+        {
+            return await ecPayAppService.ECPayGetPaymentInfo(ohid);
+        }
         [HttpPost]
         public async Task<ResponseMessageDto> ECPayCreatePayment(ECPayPaymentInfoDto PaymentInfo)
         {

@@ -57,6 +57,14 @@ function PageReady() {
                 contentType: 'application/json; charset=utf-8',
                 data: { ohid: ohid, payment: payment },
             });
+        },
+        GetECPayPaymentInfo: function (ohid) {
+            return $.ajax({
+                url: "/api/ThirdParty/ECPayGetPaymentInfo",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                data: { ohid: ohid },
+            });
         }
     }
 
@@ -479,6 +487,32 @@ function HistoryTemplateDataInsert(Datas) {
                 });
             })
         })
+
+        if (order_header.state == 6 && [21, 22, 23].includes(order_header.paymentCode)) {
+            frame.find(".btn_buyInfo").data("ohid", order_header.id);
+            frame.find(".btn_buyInfo").removeClass("d-none");
+            frame.find(".btn_buyInfo").on("click", function () {
+                var $this = $(this);
+                Coker.Member.GetECPayPaymentInfo($this.data("ohid")).done(function (result) {
+                    if (result.success) {
+                        if (order_header.paymentCode == 22) {
+                            var message = result.message.split(",");
+                            co.sweet.confirm("訂單付款資訊", message[0], "確定", "", null);
+                            $.getScript("https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js", function () {
+                                JsBarcode("#barcode1", message[1], { format: "CODE39", displayValue: true });
+                                JsBarcode("#barcode2", message[2], { format: "CODE39", displayValue: true });
+                                JsBarcode("#barcode3", message[3], { format: "CODE39", displayValue: true });
+                            });
+                        } else {
+                            co.sweet.confirm("訂單付款資訊", result.message, "確定", "", null);
+                        }
+                    } else {
+                        Coker.sweet.warning("取得付款資訊失敗", result.message, null)
+                    }
+                });
+            })
+        }
+
         $.each(order_details, function (index, detail) {
             if (detail != null) {
                 var list_frame = $($("#Template_Order_Details_List").html()).clone();

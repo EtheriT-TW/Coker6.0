@@ -53,7 +53,58 @@ namespace EtheriT.Coker.Application.ThirdParty
             this.mapper = mapper;
             this._env = env;
         }
-        // 查詢訂單明細
+        public async Task<ResponseMessageDto> ECPayGetPaymentInfo(long ohid)
+        {
+            ResponseMessageDto resopnse = new ResponseMessageDto();
+            try
+            {
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync() ?? throw new Exception("查無訂單資訊");
+                var ThirdPartyData = await ECPayGetThirdPartyData() ?? throw new Exception("取得綠界支付資料發生錯誤，請確認是否正確設置");
+
+                ECPayRequestDto RequestBody = new ECPayRequestDto();
+                var DateTimeNow = DateTime.Now;
+                var RequestUri = ThirdPartyClient_ECPay.BaseAddress?.ToString().Replace("ecpg", "ecpayment") + "/1.0.0/Cashier/QueryPaymentInfo";
+
+                if (ThirdPartyData.PlatformID != "") RequestBody.MerchantID = ThirdPartyData.PlatformID;
+                else RequestBody.MerchantID = ThirdPartyData.MerchantID;
+                RequestBody.RqHeader = new RqHeaderDto();
+                RequestBody.RqHeader.Timestamp = ((DateTimeOffset)DateTimeNow).ToUnixTimeSeconds().ToString();
+
+                ECPayQueryTradeDataDto requestData = new ECPayQueryTradeDataDto();
+                requestData.PlatformID = ThirdPartyData.PlatformID;
+                requestData.MerchantID = ThirdPartyData.MerchantID;
+                requestData.MerchantTradeNo = ohdata.TransactionId ?? "";
+
+                RequestBody.Data = Encrypt(requestData, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
+
+                var queryTradeResponse = await ECPaySendRequest("ECPayGetQueryTrade", RequestUri, RequestBody);
+                if (!queryTradeResponse.Success) throw new Exception(queryTradeResponse.Message);
+
+                switch (ohdata.Payment)
+                {
+                    case 21:
+                        var ATMInfo = queryTradeResponse.ATMInfo;
+                        resopnse.Message = $"<div class='text-start'>繳費銀行代碼：{ATMInfo.BankCode}<br>繳費虛擬帳號：{ATMInfo.vAccount}<br><br>請將此付款資訊截圖保存，並於繳費期限<span class='text-danger fw-bold'>{ATMInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>";
+                        resopnse.Success = true;
+                        break;
+                    case 22:
+                        var BarcodeInfo = queryTradeResponse.BarcodeInfo;
+                        resopnse.Message = $"<div class='text-start'><svg id='barcode1' class='w-100'></svg><svg id='barcode2' class='w-100'></svg><svg id='barcode3' class='w-100'></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class='text-danger fw-bold'>${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>,{BarcodeInfo.Barcode1},{BarcodeInfo.Barcode2},{BarcodeInfo.Barcode3}";
+                        resopnse.Success = true;
+                        break;
+                    case 23:
+                        var CVSInfo = queryTradeResponse.CVSInfo;
+                        resopnse.Message = $"<div class='text-start'>繳費代碼：${CVSInfo.PaymentNo}<br>或點此<a class='fw-bold text-primary px-1' href='${CVSInfo.PaymentURL}' target='_blank' title='連結至：繳費條碼(開新分頁)'>連結</a>取得繳費條碼<br><br>請將此付款資訊截圖保存，並於繳費期限<span class='text-danger fw-bold'>${CVSInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>";
+                        resopnse.Success = true;
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                resopnse.Message = ex.Message;
+            }
+            return resopnse;
+        }
         public async Task<ResponseMessageDto> ECPayOrderState(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();

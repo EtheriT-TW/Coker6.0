@@ -1167,15 +1167,16 @@ var Coker = {
                 data: { ohid: ohid, paytype: paytype },
             });
         },
-        ECPayGetToken: function (ohid) {
+        ECPayGetToken: function (data) {
             return $.ajax({
                 url: "/api/ThirdParty/ECPayGetToken",
-                type: "GET",
+                type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 headers: {
                     Authorization: 'Bearer ' + localStorage.getItem("token")
                 },
-                data: { ohid: ohid },
+                data: JSON.stringify(data),
+                dataType: "json"
             });
         },
         ECPayCreatePayment: function (data) {

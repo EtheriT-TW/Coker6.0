@@ -79,7 +79,7 @@ namespace EtheriT.Coker.Application.Order
                                        select fu).ToListAsync();
 
                 var dataQuery = await (from oh in db.Order_Headers
-                                       where !oh.IsDeleted && oh.FK_WebsiteId == WebsiteID
+                                       where !oh.IsTemp && oh.FK_WebsiteId == WebsiteID
                                        join ls in db.LogisticsSettings on oh.Shipping equals ls.Id
                                        orderby oh.Id descending
                                        select new OrderHeaderGetAllListDto
@@ -146,23 +146,40 @@ namespace EtheriT.Coker.Application.Order
 
             try
             {
-                Guid UUID = await tokenAppService.GetUUID();
-                var Token = await tokenAppService.CheckToken(null);
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                var Token = await tokenAppService.CheckToken(null) ?? throw new Exception("查無Token");
+                Guid UUID = await tokenAppService.GetUUID();
                 var datetime_now = DateTime.Now;
 
-                if (Token != null)
+                Core.Models.Order_Header oh = new Order_Header();
+
+                if (dto.OrderId != null)
                 {
-                    Core.Models.Order_Header oh = mapper.Map<Order_Header>(dto);
+                    var ohdata = db.Order_Headers.Where(e => e.Id == dto.OrderId && e.IsTemp).FirstOrDefault();
+                    oh = db.Order_Headers.Where(e => e.Id == dto.OrderId && e.IsTemp).FirstOrDefault();
+                    mapper.Map(dto, ohdata);
+                    ohdata.FK_WebsiteId = oh.FK_WebsiteId;
+                    ohdata.FK_UUID = oh.FK_UUID;
+                    ohdata.Fk_Tid = oh.Fk_Tid;
+                    ohdata.Fk_UserId = oh.Fk_UserId;
+                    ohdata.CreationTime = datetime_now;
+                    await loginUserData.SaveChanges(ohdata);
+                    oh = ohdata;
+                }
+                else
+                {
+                    oh = mapper.Map<Order_Header>(dto);
                     oh.FK_WebsiteId = WebsiteId;
                     oh.FK_UUID = UUID;
                     oh.Fk_Tid = (Guid)Token.RefreshToken;
                     oh.Fk_UserId = await db.Tokens.Where(e => e.id == Token.RefreshToken).Select(e => e.UserID).FirstOrDefaultAsync();
                     oh.CreationTime = datetime_now;
-
                     db.Order_Headers.Add(oh);
                     db.SaveChanges();
+                }
 
+                if (!oh.IsTemp)
+                {
                     List<Core.Models.Order_Details> ods = new List<Core.Models.Order_Details>();
                     List<long> scids = new List<long>();
                     foreach (var data in dto.OrderDetails)
@@ -204,44 +221,46 @@ namespace EtheriT.Coker.Application.Order
                     }
                     db.Prod_Logs.AddRange(pls);
                     db.SaveChanges();
-
-                    output.Success = true;
-
-                    var PaymentType = await (from pt in db.PaymentTypes
-                                             join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
-                                             join tp in db.ThirdParties on pt.FK_ThirdPartyId equals tp.Id
-                                             where ptv.FK_WebsiteId == WebsiteId
-                                             where pt.Id == oh.Payment
-                                             select tp.Title).FirstOrDefaultAsync();
-                    var mailoutput = await SendMail(oh.Id);
-                    if (PaymentType != null)
-                    {
-                        switch (PaymentType)
-                        {
-                            //case "轉帳":
-                            default:
-                                output.Message = $"Default,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}, {oh.CreationTime.Year}年<span>{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日23點59分</span>";
-                                break;
-                            case "支付連":
-                                output.Message = $"PCHomePay,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
-                                break;
-                            case "LINE Pay":
-                                output.Message = $"LinePay,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
-                                break;
-                            case "綠界支付":
-                                output.Message = $"ECPay,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
-                                break;
-                        }
-                    }
-                    if (!mailoutput.Success) output.Error = mailoutput.Message;
                 }
-                else throw new Exception("查無Token");
+
+                output.Success = true;
+
+                var PaymentType = await (from pt in db.PaymentTypes
+                                         join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
+                                         join tp in db.ThirdParties on pt.FK_ThirdPartyId equals tp.Id
+                                         where ptv.FK_WebsiteId == WebsiteId
+                                         where pt.Id == oh.Payment
+                                         select tp.Title).FirstOrDefaultAsync();
+
+                var mailoutput = new ResponseMessageDto();
+                if (!dto.IsTemp) mailoutput = await SendMail(oh.Id);
+                else mailoutput.Success = true;
+
+                if (PaymentType != null)
+                {
+                    switch (PaymentType)
+                    {
+                        //case "轉帳":
+                        default:
+                            output.Message = $"Default,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}, {oh.CreationTime.Year}年<span>{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日23點59分</span>";
+                            break;
+                        case "支付連":
+                            output.Message = $"PCHomePay,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
+                            break;
+                        case "LINE Pay":
+                            output.Message = $"LinePay,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
+                            break;
+                        case "綠界支付":
+                            output.Message = $"ECPay,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
+                            break;
+                    }
+                }
+                if (!mailoutput.Success) output.Error = mailoutput.Message;
             }
             catch (Exception ex)
             {
                 output.Error = ex.Message;
             }
-
             return output;
         }
         public async Task<ResponseMessageDto> FrontUserUpdate(OrderHeaderAddDto dto)
@@ -301,7 +320,7 @@ namespace EtheriT.Coker.Application.Order
                         InvoiceTitle = result.InvoiceTitle,
                         UniformId = result.UniformId,
                         InvoiceAddress = result.InvoiceAddress,
-                        Payment = result.Payment == 0 ? "" : result.Payment.ToString(),
+                        Payment = result.Payment.ToString(),
                         PaymentCode = result.Payment,
                         Shipping = ship_text,
                         State = result.State,
@@ -877,7 +896,7 @@ namespace EtheriT.Coker.Application.Order
                 if (uuids.Any())
                 {
                     var order_headers = await db.Order_Headers
-                        .Where(e => uuids.Contains(e.FK_UUID))
+                        .Where(e => uuids.Contains(e.FK_UUID) && !e.IsTemp)
                         .OrderByDescending(e => e.CreationTime).ToListAsync();
 
                     response.Page_Total = (int)Math.Ceiling(order_headers.Count / 8.0);
@@ -1149,10 +1168,10 @@ namespace EtheriT.Coker.Application.Order
 
                     var OrdererEmailSecret = (order_header.OrdererEmail.Length > 5 ? order_header.OrdererEmail.Substring(0, 4) : order_header.OrdererEmail.Substring(0, 1)) + "**********";
                     order_header.OrdererCellPhone = (order_header.OrdererCellPhone.Length > 4 ? order_header.OrdererCellPhone.Substring(0, 4) : order_header.OrdererCellPhone.Substring(0, 1)) + "******";
-                    order_header.OrdererTelePhone = !string.IsNullOrEmpty(order_header.OrdererTelePhone) ? 
-                        order_header.OrdererTelePhone.Length > 3 ? 
+                    order_header.OrdererTelePhone = !string.IsNullOrEmpty(order_header.OrdererTelePhone) ?
+                        order_header.OrdererTelePhone.Length > 3 ?
                             order_header.OrdererTelePhone?.Substring(0, 3) + "******" :
-                            string.IsNullOrEmpty(order_header.OrdererTelePhone)? "" : order_header.OrdererTelePhone?.Substring(0, 1) + "******" : 
+                            string.IsNullOrEmpty(order_header.OrdererTelePhone) ? "" : order_header.OrdererTelePhone?.Substring(0, 1) + "******" :
                         "";
                     var OrdererSex = order_header.OrdererSex == 1 ? "先生" : order_header.OrdererSex == 2 ? "小姐" : "君";
                     order_header.RecipientAddress = order_header.RecipientAddress.Replace(" ", "").Substring(0, 6) + "**********";
@@ -1315,7 +1334,7 @@ namespace EtheriT.Coker.Application.Order
             {
                 output = await (from oh in db.Order_Headers
                                 join pt in db.PaymentTypes on oh.Payment equals pt.Id
-                                where oh.FK_UUID == UUID
+                                where oh.FK_UUID == UUID && !oh.IsTemp
                                 select new MemberOrderDto()
                                 {
                                     Id = oh.Id,

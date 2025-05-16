@@ -18,6 +18,8 @@ using System.Globalization;
 using AutoMapper;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using EtheriT.Coker.Application.Shared.Dto.Order;
+using EtheriT.Coker.Application.Shared.ShoppingCart;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -28,6 +30,7 @@ namespace EtheriT.Coker.Application.ThirdParty
         private readonly LoginUserData loginUserData;
         private readonly IConfiguration configuration;
         private readonly IOrderAppService orderAppService;
+        private readonly IShoppingCartAppService shoppingCartAppService;
         private readonly IMapper mapper;
         private readonly IWebHostEnvironment _env;
         public ECPayAppService(
@@ -36,6 +39,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             LoginUserData loginUserData,
             IConfiguration configuration,
             IOrderAppService orderAppService,
+            IShoppingCartAppService shoppingCartAppService,
             IMapper mapper,
             IWebHostEnvironment env
         )
@@ -45,6 +49,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             this.loginUserData = loginUserData;
             this.configuration = configuration;
             this.orderAppService = orderAppService;
+            this.shoppingCartAppService = shoppingCartAppService;
             this.mapper = mapper;
             this._env = env;
         }
@@ -428,7 +433,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
-        public async Task<ResponseMessageDto> ECPayGetToken(long ohid)
+        public async Task<ResponseMessageDto> ECPayGetToken(OrderHeaderAddDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
@@ -438,7 +443,17 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (ThirdPartyData != null)
                 {
                     var RequestUri = "/Merchant/GetTokenbyTrade";
-                    var RequestBody = await ECPayRequestBody(ThirdPartyData, ohid);
+                    dto.Payment = 16;
+
+                    if (dto.OrderId == null)
+                    {
+                        dto.IsTemp = true;
+                        var orderMessage = await orderAppService.AddHeader(dto);
+                        if (!orderMessage.Success) throw new Exception("建立訂單發生錯誤");
+                        dto.OrderId = long.Parse(orderMessage.Message.Split(",")[1]);
+                    }
+
+                    var RequestBody = await ECPayRequestBody(ThirdPartyData, dto);
 
                     if (RequestBody != null)
                     {
@@ -447,7 +462,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                         if (tokenResponse.Success)
                         {
                             response.Success = true;
-                            response.Message = tokenResponse.Token;
+                            response.Message = $"{dto.OrderId},{tokenResponse.Token}";
                         }
                         else throw new Exception(tokenResponse.Message);
                     }
@@ -507,7 +522,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
-        private async Task<ECPayRequestDto> ECPayRequestBody(ECPayThirdPartyDataDto ThirdPartyData, long ohid)
+        private async Task<ECPayRequestDto> ECPayRequestBody(ECPayThirdPartyDataDto ThirdPartyData, OrderHeaderAddDto dto)
         {
             ECPayRequestDto RequestBody = new ECPayRequestDto();
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
@@ -518,8 +533,8 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 if (ThirdPartyData.MerchantID != "" && ThirdPartyData.HashKey != "" && ThirdPartyData.HashIV != "")
                 {
-                    var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-                    var oddatas = await orderAppService.GetOrderDetails(ohid);
+                    var ohdata = await db.Order_Headers.Where(e => e.Id == dto.OrderId).FirstOrDefaultAsync();
+                    var oddatas = await shoppingCartAppService.GetDisplay(dto.OrderDetails.Select(e => e.Id).ToList());
 
                     if (ThirdPartyData.PlatformID != "") RequestBody.MerchantID = ThirdPartyData.PlatformID;
                     else RequestBody.MerchantID = ThirdPartyData.MerchantID;
@@ -599,7 +614,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                                         PaymentBody.ChoosePaymentList += "6";
                                         break;
                                     case "ApplePay":
-                                        PaymentBody.ChoosePaymentList += "7";
+                                        if (dto.SupportApplePay == true) PaymentBody.ChoosePaymentList += "7";
+                                        else PaymentBody.ChoosePaymentList = PaymentBody.ChoosePaymentList.TrimEnd(',');
                                         break;
                                 }
                             }
@@ -666,7 +682,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                         }
                         else throw new Exception("付款資訊錯誤");
                     }
-                    else throw new Exception($"查無訂單({ohid})資訊");
+                    else throw new Exception($"查無訂單({("000000000" + ohdata.Id).Substring(ohdata.Id.ToString().Length)})資訊");
                 }
                 else throw new Exception("查無ECPay所需參數");
             }

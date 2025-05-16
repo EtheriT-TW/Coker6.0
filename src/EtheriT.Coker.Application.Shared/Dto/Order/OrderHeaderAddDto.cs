@@ -3,6 +3,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
 {
     public class OrderHeaderAddDto
     {
+        public bool? SupportApplePay { get; set; }
+        public long? OrderId { get; set; }
+        public bool IsTemp { get; set; } = false;
         public string Orderer { get; set; }
         public int OrdererSex { get; set; }
         public string OrdererEmail { get; set; }

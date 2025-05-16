@@ -623,13 +623,13 @@ namespace EtheriT.Coker.Application.ThirdParty
                             ECPayOrderInfoDto OrderInfo = new ECPayOrderInfoDto();
                             OrderInfo.MerchantTradeDate = DateTimeNow.ToString("yyyy/MM/dd HH:mm:ss");
                             var oid = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
-                            if (ohdata.TransactionId == null) OrderInfo.MerchantTradeNo = $"{DateTimeNow.ToString("yyyyMMddHHmmssfff")}{oid}";
+                            if (ohdata.TransactionId == null) OrderInfo.MerchantTradeNo = $"{DateTimeNow.ToString("yyyyMMdd")}{oid}";
                             else
                             {
                                 if (ohdata.RepayTimes == null) ohdata.RepayTimes = 1;
                                 else ohdata.RepayTimes += 1;
                                 db.SaveChanges();
-                                OrderInfo.MerchantTradeNo = $"{DateTimeNow.ToString("yyyyMMddHHmmssfff")}{oid}R{ohdata.RepayTimes}";
+                                OrderInfo.MerchantTradeNo = $"{DateTimeNow.ToString("yyyyMMdd")}{oid}R{ohdata.RepayTimes}";
                                 ohdata.RepayDate = DateTimeNow;
                             }
 

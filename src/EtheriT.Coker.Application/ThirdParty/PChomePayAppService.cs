@@ -677,13 +677,13 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (oddatas.Any())
                 {
                     var oid = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
-                    if (ohdata.TransactionId == null) PaymentBody.order_id = $"{DateTime.Now.ToString("yyyyMMddHHmmssfff")}{oid}";
+                    if (ohdata.TransactionId == null) PaymentBody.order_id = $"{DateTime.Now.ToString("yyyyMMdd")}{oid}";
                     else
                     {
                         if (ohdata.RepayTimes == null) ohdata.RepayTimes = 1;
                         else ohdata.RepayTimes += 1;
                         db.SaveChanges();
-                        PaymentBody.order_id = $"{DateTime.Now.ToString("yyyyMMddHHmmssfff")}{oid}-{ohdata.RepayTimes}";
+                        PaymentBody.order_id = $"{DateTime.Now.ToString("yyyyMMdd")}{oid}-{ohdata.RepayTimes}";
                     }
 
                     var paytype = await db.PaymentTypes.Where(e => e.Id == ohdata.Payment).FirstOrDefaultAsync();

@@ -7,6 +7,7 @@ using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Freight;
+using EtheriT.Coker.Application.Shared.HtmlContent;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography;
@@ -19,10 +20,13 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
     public class FileUploadController : Controller
     {
         private readonly IFileUploadAppService fileUploadAppService;
+        private readonly IHtmlContentAppService htmlContentAppService;
 
-        public FileUploadController(IFileUploadAppService fileUploadAppService)
+
+        public FileUploadController(IFileUploadAppService fileUploadAppService, IHtmlContentAppService htmlContentAppService)
         {
             this.fileUploadAppService = fileUploadAppService;
+            this.htmlContentAppService = htmlContentAppService;
         }
         [HttpPost]
         //[ValidateAntiForgeryToken]
@@ -89,7 +93,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         [HttpPost]
         public async Task<ResponseMessageDto> getFileList(GetFileListDto dto)
         {
-            return await fileUploadAppService.getHtmlContentFiles(dto);
+            return await htmlContentAppService.getHtmlContentFiles(dto);
         }
         [HttpPost]
         public async Task<List<FileGetImgDto>> getImgFiles(FileGetImgInputDto dto)

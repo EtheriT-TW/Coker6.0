@@ -30,13 +30,11 @@ namespace EtheriT.Coker.Application
         private readonly LoginUserData loginUserData;
         private readonly string _folder;
         private readonly string AppName;
-        private readonly ITemplatesApplicationService templatesApplicationService;
         private readonly IConfiguration configuration;
         public FileUploadAppService(
             IOptions<VirtualDirectory> fileAllow,
             LoginUserData loginUserData,
             CokerDbContext db,
-            ITemplatesApplicationService templatesApplicationService,
             IConfiguration configuration
         )
         {
@@ -45,7 +43,6 @@ namespace EtheriT.Coker.Application
             this.loginUserData = loginUserData;
             _folder = fileAllow.Value.upload;
             AppName = "FileUpload";
-            this.templatesApplicationService = templatesApplicationService;
             this.configuration = configuration;
         }
         public async Task<UploadFileOutputDto> uploadTempFiles(IList<IFormFile> files)
@@ -101,7 +98,7 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-        public async Task<UploadFileOutputDto> uploadMediaFiles(IList<IFormFile> files, int type, long sid, int serno, string page,bool convert)
+        public async Task<UploadFileOutputDto> uploadMediaFiles(IList<IFormFile> files, int type, long sid, int serno, string page, bool convert)
         {
             long usetId = await loginUserData.GetUserId();
             ResponseMessageDto DeleResponse;
@@ -455,79 +452,6 @@ namespace EtheriT.Coker.Application
                 response.Error = e.Message;
             }
 
-            return response;
-        }
-        public async Task<UploadFileOutputDto> getHtmlContentFiles(GetFileListDto dto)
-        {
-            UploadFileOutputDto response = new UploadFileOutputDto
-            {
-                Files = new List<FileItemDto>()
-            };
-            try
-            {
-                long websiteId = await loginUserData.GetWebsiteId();
-                string orgName = await loginUserData.GetWebsiteOrgName();
-                string html = string.Empty;
-                switch (dto.type)
-                {
-                    case GrapesPageTypeEnum.頁面:
-                        var menu = await db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
-                        if (menu != null) html = menu.SaveCss + menu.SaveHtml;
-                        break;
-                    case GrapesPageTypeEnum.文章:
-                        var art = await db.Article.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
-                        if (art != null) html = art.SaveCss + art.SaveHtml;
-                        break;
-                    case GrapesPageTypeEnum.商品:
-                        var prod = await db.Prods.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
-                        if (prod != null) html = prod.SaveCss + prod.SaveHtml;
-                        break;
-                    case GrapesPageTypeEnum.技術文件:
-                        var tech = await db.TechnicalCertificates.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
-                        if (tech != null) html = tech.Css + tech.Html;
-                        break;
-                    case GrapesPageTypeEnum.頁尾:
-                        var footer = await templatesApplicationService.GetDefaultFooterTemplatesAsync();
-                        if (footer != null && footer.Success && footer.Object != null) html =
-                                 ((TemplateSectionsDto)footer.Object).footerTemplateDto?.css ?? "" +
-                                ((TemplateSectionsDto)footer.Object).footerTemplateDto?.html ?? "";
-                        break;
-                }
-                if (!string.IsNullOrEmpty(html))
-                {
-                    List<string> list = new List<string>();
-                    Regex r = new Regex(@"\/upload\/(.*?)(\.)");
-                    var match = r.Match(html);
-                    while (match.Success)
-                    {
-                        var s = match.Value.ToString().Split("/");
-                        if (s.Length != 0)
-                        {
-                            list.Add(s[s.Length - 1].Replace(".", "").ToLower());
-                        }
-                        match = match.NextMatch();
-                    }
-                    var files = db.FileUploads
-                                .Where(e => e.FK_WebsiteId == websiteId)
-                                .Where(e => !e.IsDeleted)
-                                .Where(e => e.FileGuid != null && list.Contains(e.FileGuid.ToString().ToLower()));
-                    var result = from file in files
-                                 select new FileItemDto
-                                 {
-                                     Guid = file.GuidKey,
-                                     Name = file.OriginalFileName,
-                                     Path = (file.DownloadFileName ?? "").Replace(@"\", "/").Replace("/upload/", $"/upload/{orgName}/"),
-                                 };
-                    response.Files = await result.ToListAsync();
-                }
-                else response.Files = new List<FileItemDto>();
-
-                response.Success = true;
-            }
-            catch (Exception ex)
-            {
-                response.Error = ex.Message;
-            }
             return response;
         }
         // size = 1 原圖 2中縮圖 3小縮圖
@@ -1189,7 +1113,8 @@ namespace EtheriT.Coker.Application
             foreach (var file in files)
             {
                 outputs.Add(await SaveFile(file, directory));
-            };
+            }
+            ;
             outputs.ForEach(e =>
             {
                 if (e.Id != 0)
@@ -1213,7 +1138,7 @@ namespace EtheriT.Coker.Application
             db.SaveChanges();
             return outputs;
         }
-        private async Task<FileItemDto> SaveFile(IFormFile file, string directory, bool isTemp = false,bool convert = true)
+        private async Task<FileItemDto> SaveFile(IFormFile file, string directory, bool isTemp = false, bool convert = true)
         {
             if (file.Length > 0)
             {
@@ -1236,14 +1161,17 @@ namespace EtheriT.Coker.Application
                         {
                             string newFilePath = Path.Combine(directoryPath, $"{key}.avif");
                             image.Format = MagickFormat.Avif; // 轉成 avif
+                            image.Quality = 100;
                             image.Settings.SetDefine(MagickFormat.Avif, "lossless", "true"); //設定無損壓縮
+                            image.Settings.SetDefine(MagickFormat.Avif, "chroma-subsampling", "4:4:4"); // 關鍵！！
                             await image.WriteAsync(newFilePath); // 儲存轉換後的檔案
                             path = $"/{directory}/{key}.avif";
                             ContentType = "image/avif";
                             fileLength = new FileInfo(newFilePath).Length;
                         }
                     }
-                    else {
+                    else
+                    {
                         using (var fileStream = new FileStream($"{rootPath}{path}", FileMode.Create))
                         {
                             await file.CopyToAsync(fileStream);
@@ -1296,7 +1224,7 @@ namespace EtheriT.Coker.Application
             }
             else throw new Exception("上傳失敗");
         }
-        private async Task<List<FileItemDto>> SaveImage(IList<IFormFile> files, int asotype, int bindtype, int serno, string directory, long sid,bool convert = true)
+        private async Task<List<FileItemDto>> SaveImage(IList<IFormFile> files, int asotype, int bindtype, int serno, string directory, long sid, bool convert = true)
         {
             if (files.Count() > 0)
             {
@@ -1324,20 +1252,23 @@ namespace EtheriT.Coker.Application
                         {
                             string ContentType = file.ContentType;
                             long fileLength = file.Length;
-                            if (convert &&  asotype != (int)FileBindTypeEnum.網站圖示 && asotype != (int)FileBindTypeEnum.分享圖示 && IsAllowedFileType(file.ContentType))
+                            if (convert && asotype != (int)FileBindTypeEnum.網站圖示 && asotype != (int)FileBindTypeEnum.分享圖示 && IsAllowedFileType(file.ContentType))
                             {
                                 using (var image = new MagickImage(stream))
                                 {
                                     string newFilePath = Path.Combine(directoryPath, $"{key}.avif");
+                                    image.Quality = 100;
                                     image.Format = MagickFormat.Avif; // 轉成 WebP
                                     image.Settings.SetDefine(MagickFormat.Avif, "lossless", "true"); //設定無損壓縮
+                                    image.Settings.SetDefine(MagickFormat.Avif, "chroma-subsampling", "4:4:4"); // 關鍵！！
                                     await image.WriteAsync(newFilePath); // 儲存轉換後的檔案
                                     path = $"/{directory}/{key}.avif";
                                     ContentType = "image/avif";
                                     fileLength = new FileInfo(newFilePath).Length;
                                 }
                             }
-                            else {
+                            else
+                            {
                                 using (var fileStream = new FileStream($"{rootPath}{path}", FileMode.Create))
                                 {
                                     await file.CopyToAsync(fileStream);
@@ -1406,7 +1337,14 @@ namespace EtheriT.Coker.Application
         }
         private bool IsAllowedFileType(string contentType)
         {
-            string[] allowedTypes = { "image/png", "image/jpeg", "image/gif", "image/webp" };
+            string[] allowedTypes = {
+                "image/jpeg",
+                "image/jpg",
+                "image/pjpeg",
+                "image/png",
+                "image/gif",
+                "image/webp"
+            };
             return Array.Exists(allowedTypes, type => type == contentType);
         }
     }

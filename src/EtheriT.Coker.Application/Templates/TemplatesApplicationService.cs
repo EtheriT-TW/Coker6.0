@@ -16,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -31,10 +32,12 @@ namespace EtheriT.Coker.Application.Templates
         private readonly IMapper mapper;
         private readonly IConfiguration configuration;
         private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly IFileUploadAppService fileUploadAppService;
         private readonly IHtmlProcessor htmlProcessor;
         public TemplatesApplicationService(
             CokerDbContext db, LoginUserData loginUserData, StringHandler stringHandler,
-            IMapper mapper, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IHtmlProcessor htmlProcessor
+            IMapper mapper, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IHtmlProcessor htmlProcessor,
+            IFileUploadAppService fileUploadAppService
         ) {
             this.db = db;
             this.loginUserData = loginUserData;
@@ -43,6 +46,7 @@ namespace EtheriT.Coker.Application.Templates
             this.configuration = configuration;
             this.httpContextAccessor = httpContextAccessor;
             this.htmlProcessor = htmlProcessor;
+            this.fileUploadAppService = fileUploadAppService;
         }
         public async Task<TemplatesDto?> GetDefaultTemplatesAsync()
         {
@@ -250,7 +254,38 @@ namespace EtheriT.Coker.Application.Templates
                 var header = await getDefaultTemplateSections(temp.Id, SectionTypeEnum.表頭);
                 if (header != null)
                 {
+                    var orgName = await loginUserData.GetWebsiteOrgName();
                     header.template.HeadType = dto.HeadType;
+                    dto.ContentConfig.Sliders.ForEach(e =>
+                    {
+                        if (!string.IsNullOrEmpty(e.DesktopImage) && !e.DesktopImage.StartsWith("http"))
+                            e.DesktopImage = e.DesktopImage.Replace($"/upload/{orgName}/", "/upload/");
+                        if (!string.IsNullOrEmpty(e.MobileImage) && !e.MobileImage.StartsWith("http"))
+                            e.MobileImage = e.MobileImage.Replace($"/upload/{orgName}/", $"/upload/");
+                    });
+
+                    if (!string.IsNullOrEmpty(header.ContentConfig))
+                    {
+                        var config = JsonConvert.DeserializeObject<HeaderContentConfigDto>(header.ContentConfig);
+                        if (config != null)
+                        {
+                            foreach (var e in config.Sliders)
+                            {
+                                var isDeleted = !dto.ContentConfig.Sliders.Any(x => x.DesktopImage == e.DesktopImage);
+                                if (!string.IsNullOrEmpty(e.DesktopImage) && !e.DesktopImage.StartsWith("http") && isDeleted) {
+                                    var file = db.FileUploads.Where(f => f.DownloadFileName == e.DesktopImage).FirstOrDefault();
+                                    if(file!=null) await fileUploadAppService.deleteFile(file.GuidKey);
+                                }
+
+                                isDeleted = !dto.ContentConfig.Sliders.Any(x => x.MobileImage == e.MobileImage);
+                                if (!string.IsNullOrEmpty(e.MobileImage) && !e.MobileImage.StartsWith("http") && isDeleted)
+                                {
+                                    var file = db.FileUploads.Where(f => f.DownloadFileName == e.MobileImage).FirstOrDefault();
+                                    if (file != null) await fileUploadAppService.deleteFile(file.GuidKey);
+                                }
+                            }
+                        }
+                    }
                     header.ContentConfig = JsonConvert.SerializeObject(dto.ContentConfig);
                     await loginUserData.SaveChanges(header);
                     response.Success = true;
@@ -275,7 +310,20 @@ namespace EtheriT.Coker.Application.Templates
                 var header = await getDefaultTemplateSections(temp.Id, SectionTypeEnum.表頭);
                 if (header != null)
                 {
-                    response.Object = mapper.Map<HeaderTemplateDto>(header);
+                    var dto = mapper.Map<HeaderTemplateDto>(header);
+                    HeaderContentConfigDto? config = JsonConvert.DeserializeObject<HeaderContentConfigDto>(header.ContentConfig);
+                    if (config != null) {
+                        var orgName = await loginUserData.GetWebsiteOrgName();
+                        config.Sliders.ForEach(e =>
+                        {
+                            if(!string.IsNullOrEmpty(e.DesktopImage) && !e.DesktopImage.StartsWith("http"))
+                                e.DesktopImage = e.DesktopImage.Replace("/upload/", $"/upload/{orgName}/");
+                            if (!string.IsNullOrEmpty(e.MobileImage) && !e.MobileImage.StartsWith("http"))
+                                e.MobileImage = e.MobileImage.Replace("/upload/", $"/upload/{orgName}/");
+                        });
+                        dto.ContentConfig = config;
+                    }
+                    response.Object = dto;
                     response.Success = true;
                 }
                 else throw new Exception("找不到頁首資料");

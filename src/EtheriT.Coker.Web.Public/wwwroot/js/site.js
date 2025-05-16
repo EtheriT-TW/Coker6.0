@@ -70,6 +70,7 @@ function ready() {
     }
     $(".editTime,.popular").appendTo($conten);
     $(".backstageType").remove();
+    if (typeof AOS !== 'undefined' && AOS && typeof AOS.init === 'function') AOS.init();
     if ($(".search-input").val() != "") {
         let encodedString = decodeURIComponent($(".search-input").val());
         const textArea = document.createElement('textarea');

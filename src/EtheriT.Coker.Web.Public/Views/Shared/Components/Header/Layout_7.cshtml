@@ -311,8 +311,16 @@
 		<div class="image-wh">
 			@foreach (var item in Model.Bannners)
 			{
-				<img id="header-title" class="titleimage m-auto" src="@item.DesktopImage" alt="Header Titile" asp-append-version="true" />
-				<img id="header-title-phone" class="titleimage m-auto d-block" src="@item.MobileImage" alt="Header Titile" asp-append-version="true" />
+				@if (!string.IsNullOrEmpty(item.MobileImage))
+				{
+					<img id="header-title" class="titleimage m-auto  d-none d-md-block" src="@item.DesktopImage" alt="Header Titile" asp-append-version="true" />
+					<img id="header-title-phone" class="titleimage m-auto d-block d-md-none" src="@item.MobileImage" alt="Header Titile" asp-append-version="true" />
+				}
+				else
+				{
+					<!-- Mobile image不存在時，Desktop image永遠顯示 -->
+					<img id="header-title" class="titleimage m-auto" src="@item.DesktopImage" alt="Header Titile" asp-append-version="true" />
+				}
 				@if (!string.IsNullOrEmpty(item.Title))
 				{
 					<div class="title">
@@ -333,10 +341,21 @@
 						{
 							<div class="swiper-slide image_link_slide d-flex align-self-center">
 								<a href="@imageSrc.Link" class="w-100">
-									<img src="@imageSrc.DesktopImage" class="w-100" asp-append-version="true" />
 									@if (!string.IsNullOrEmpty(imageSrc.MobileImage))
 									{
-										<img id="header-title-phone" class="titleimage m-auto d-block" src="@imageSrc.MobileImage" alt="Header Titile" asp-append-version="true" />
+										<img src="@imageSrc.DesktopImage" class="w-100 d-none d-md-block" alt="Desktop Image" asp-append-version="true" />
+										<img src="@imageSrc.MobileImage" class="w-100 d-block d-md-none" id="header-title-phone" alt="Mobile Image" asp-append-version="true" />
+									}
+									else
+									{
+										<img src="@imageSrc.DesktopImage" class="w-100" alt="Desktop Image" asp-append-version="true" />
+									}
+									@if (!string.IsNullOrEmpty(imageSrc.Title))
+									{
+										<div class="title">
+											<div class="mainTitle">@imageSrc.Title</div>
+											<div class="subTitle">@imageSrc.Subtitle</div>
+										</div>
 									}
 								</a>
 							</div>

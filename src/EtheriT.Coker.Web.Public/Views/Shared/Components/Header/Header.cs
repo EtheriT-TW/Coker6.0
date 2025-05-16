@@ -95,9 +95,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     switch (defaultData.Id)
                     {
                         default:
-                            if (headerViewModel.templates != null && headerViewModel.templates.templateSections.Exists(e => e.sectionType == SectionTypeEnum.Banner))
+                            if (headerViewModel.templates != null && headerViewModel.templates.templateSections.Exists(e => e.sectionType == SectionTypeEnum.表頭))
                             {
-                                var bannerSection = headerViewModel.templates.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.Banner);
+                                var bannerSection = headerViewModel.templates.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.表頭);
                                 if (bannerSection != null) {
                                     var list = JsonConvert.DeserializeObject<HeaderContentConfigDto>(bannerSection.ContentConfig);
                                     if (list != null )

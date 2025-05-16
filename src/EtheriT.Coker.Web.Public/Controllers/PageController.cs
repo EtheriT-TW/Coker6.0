@@ -158,7 +158,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.ShowPagePath = true;
             if (template != null)
             {
-                var header = template.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.Banner);
+                var header = template.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.表頭);
                 if (header != null) {
                     var ContentConfig = JsonConvert.DeserializeObject<HeaderContentConfigDto>(header.ContentConfig);
                     if(ContentConfig!=null) ViewBag.ShowPagePath = ContentConfig.ShowPagePath;

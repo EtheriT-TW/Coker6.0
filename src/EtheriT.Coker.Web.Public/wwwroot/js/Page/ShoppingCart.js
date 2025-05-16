@@ -1299,7 +1299,7 @@ function OrderHeaderAdd() {
                                     case "LinePay":
                                     case "PCHomePay":
                                         Coker.sweet.loading();
-                                        Coker.ThirdParty.Request(result.message.split(",")[1], paymenttype).done(function (result) {
+                                        Coker.ThirdParty.Request(result.message.split(",")[1], paymenttype, null).done(function (result) {
                                             Swal.close();
                                             if (result.success) {
                                                 localStorage.setItem("lastSaveTime", new Date().toISOString())

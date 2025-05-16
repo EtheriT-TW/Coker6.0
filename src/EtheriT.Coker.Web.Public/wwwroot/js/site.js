@@ -1156,7 +1156,7 @@ var Coker = {
         },
     },
     ThirdParty: {
-        Request: function (ohid, paytype) {
+        Request: function (ohid, paytype, support) {
             return $.ajax({
                 url: "/api/ThirdParty/PayRequest",
                 type: "GET",
@@ -1164,7 +1164,7 @@ var Coker = {
                 headers: {
                     Authorization: 'Bearer ' + localStorage.getItem("token")
                 },
-                data: { ohid: ohid, paytype: paytype },
+                data: { ohid: ohid, paytype: paytype, support: support },
             });
         },
         ECPayGetToken: function (data) {

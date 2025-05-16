@@ -520,7 +520,15 @@ function OrderRepay(datas) {
 
     Coker.Member.OrderRepay(data).done(function (result) {
         if (result.success) {
-            Coker.ThirdParty.Request(datas.orderHeader.id, datas.orderHeader.thirdParties).done(function (result) {
+            var support = false;
+            if (window.ApplePaySession && typeof ApplePaySession.canMakePayments === "function") {
+                ApplePaySession.canMakePayments().then(function (canPay) {
+                    if (canPay) {
+                        support = true;
+                    }
+                });
+            }
+            Coker.ThirdParty.Request(datas.orderHeader.id, datas.orderHeader.thirdParties, support).done(function (result) {
                 if (result.success) {
                     if (datas.orderHeader.thirdParties != 4) {
                         localStorage.setItem("lastSaveTime", new Date().toISOString())
@@ -532,7 +540,7 @@ function OrderRepay(datas) {
                             console.log("ServerType", $("#ECPayModal").data("server-type"))
                             ECPay.initialize($("#ECPayModal").data("server-type"), 1, function (errMsg) {
                                 if (errMsg == null) {
-                                    ECPay.createPayment(result.message, ECPay.Language.zhTW, function (errMsg) {
+                                    ECPay.createPayment(result.message.split(",")[1], ECPay.Language.zhTW, function (errMsg) {
                                         if (errMsg != null) {
                                             console.log(`Create Payment errMsg : ${errMsg}`)
                                             co.sweet.error("串接綠界發生錯誤");
@@ -558,15 +566,12 @@ function OrderRepay(datas) {
                                             co.ThirdParty.ECPayCreatePayment(paymentInfo).done(function (result) {
                                                 if (result.success) {
                                                     var result_obj = JSON.parse(result.message);
-                                                    console.log("綠界回傳資料")
-                                                    console.log("Object", result_obj);
-                                                    console.log("PaymentType", result_obj.OrderInfo.PaymentType);
                                                     switch (result_obj.OrderInfo.PaymentType) {
                                                         case null:
                                                             localStorage.setItem("lastSaveTime", new Date().toISOString())
                                                             localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
                                                             var VerifyURL = result_obj.ThreeDInfo?.ThreeDURL ?? result_obj.UnionPayInfo?.UnionPayURL;
-                                                            co.sweet.confirm("即將進入驗證流程", `<div class="text-start">如未自動跳轉，請點此<a class="fw-bold text-primary px-1" href="${VerifyURL} target="_blank" title="連結至：驗證頁面(開新視窗)">連結</a>進行跳轉</div>`, "確定", "", function () {
+                                                            co.sweet.confirm("即將進入驗證流程", `<div class="text-start">如未自動跳轉，請點此<a class="fw-bold text-primary px-1" href="${VerifyURL}" target="_blank" title="連結至：驗證頁面(開新視窗)">連結</a>進行跳轉</div>`, "確定", "", function () {
                                                                 window.open(VerifyURL, "_blank");
                                                                 location.reload();
                                                             });

@@ -433,6 +433,23 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
+        public async Task<ResponseMessageDto> ECPayGetTokenById(long ohid, bool Support)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var OrderHeader = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync() ?? throw new Exception("查無訂單資訊");
+                var ohdata = mapper.Map<OrderHeaderAddDto>(OrderHeader);
+                ohdata.OrderId = ohid;
+                ohdata.SupportApplePay = Support;
+                response = await ECPayGetToken(ohdata);
+            }
+            catch (Exception ex)
+            {
+                response.Message = $"Other failed: {ex.Message}";
+            }
+            return response;
+        }
         public async Task<ResponseMessageDto> ECPayGetToken(OrderHeaderAddDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
@@ -534,7 +551,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (ThirdPartyData.MerchantID != "" && ThirdPartyData.HashKey != "" && ThirdPartyData.HashIV != "")
                 {
                     var ohdata = await db.Order_Headers.Where(e => e.Id == dto.OrderId).FirstOrDefaultAsync();
-                    var oddatas = await shoppingCartAppService.GetDisplay(dto.OrderDetails.Select(e => e.Id).ToList());
+                    var prod_titles = ohdata.IsTemp == true ? (await shoppingCartAppService.GetDisplay(dto.OrderDetails.Select(e => e.Id).ToList())).Select(e => e.Title) : (await orderAppService.GetOrderDetails(ohdata.Id)).Select(e => e.Title);
+                    prod_titles = prod_titles.Distinct();
 
                     if (ThirdPartyData.PlatformID != "") RequestBody.MerchantID = ThirdPartyData.PlatformID;
                     else RequestBody.MerchantID = ThirdPartyData.MerchantID;
@@ -542,7 +560,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                     RequestBody.RqHeader = new RqHeaderDto();
                     RequestBody.RqHeader.Timestamp = ((DateTimeOffset)DateTimeNow).ToUnixTimeSeconds().ToString();
 
-                    if (ohdata != null & oddatas.Any())
+                    if (ohdata != null & prod_titles.Any())
                     {
                         var user = await db.FrontUsers.Where(e => e.UUID == ohdata.FK_UUID).FirstOrDefaultAsync();
 
@@ -644,9 +662,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                             OrderInfo.TradeDesc = $"{Website.Title}-商品購買交易";
 
                             var itemlist = "";
-                            foreach (var oddata in oddatas)
+                            foreach (var prod_title in prod_titles)
                             {
-                                var title = oddata.Title.Length > 200 ? $"{oddata.Title.Substring(0, 197)}..." : oddata.Title;
+                                var title = prod_title.Length > 200 ? $"{prod_title.Substring(0, 197)}..." : prod_title;
                                 if (string.IsNullOrEmpty(itemlist)) itemlist = title;
                                 else
                                 {

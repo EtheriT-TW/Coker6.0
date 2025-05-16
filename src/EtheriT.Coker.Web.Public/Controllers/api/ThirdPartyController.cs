@@ -40,7 +40,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             this._httpContextAccessor = _httpContextAccessor;
         }
         [HttpGet]
-        public async Task<ResponseMessageDto> PayRequest(long ohid, string paytype)
+        public async Task<ResponseMessageDto> PayRequest(long ohid, string paytype, bool? support)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             switch (paytype)
@@ -51,6 +51,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                 case "3":
                 case "LinePay":
                     return await linePayAppService.LinePayRequest(ohid);
+                case "4":
+                case "ECPay":
+                    return await ecPayAppService.ECPayGetTokenById(ohid, support ?? false);
             }
             response.Success = false;
             response.Message = "支付方式不存在";

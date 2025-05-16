@@ -560,13 +560,13 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                     RequestBody.amount = (ohdata.Subtotal + ohdata.Freight).ToString();
                     var oid = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
-                    if (ohdata.TransactionId == null) RequestBody.orderId = $"{DateTime.Now.ToString("yyyyMMdd")}{oid}";
+                    if (ohdata.TransactionId == null) RequestBody.orderId = $"{DateTime.Now.ToString("yyyyMMddHHmmssfff")}{oid}";
                     else
                     {
                         if (ohdata.RepayTimes == null) ohdata.RepayTimes = 1;
                         else ohdata.RepayTimes += 1;
                         db.SaveChanges();
-                        RequestBody.orderId = $"{DateTime.Now.ToString("yyyyMMdd")}{oid}-{ohdata.RepayTimes}";
+                        RequestBody.orderId = $"{DateTime.Now.ToString("yyyyMMddHHmmssfff")}{oid}-{ohdata.RepayTimes}";
                     }
 
                     var Packages = new List<LinePayPackageDto>();

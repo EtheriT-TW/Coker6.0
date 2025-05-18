@@ -376,25 +376,31 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (ResultResponseData == null) throw new Exception("無法取得ECPayOrderResult");
 
-                if (!ResultResponseData.TransMsg.ToLower().Contains("success")) throw new Exception($"取得ECPayOrderResult發生錯誤，{JsonConvert.SerializeObject(ResultResponseData, Formatting.Indented)}");
+                if (!ResultResponseData.TransMsg.ToLower().Contains("success")) await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayOrderResultFail", JsonConvert.SerializeObject(ResultResponseData));
 
                 var data = Decrypt(ResultResponseData.Data, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
                 var ResponseData = JsonConvert.DeserializeObject<ECPayResponseDataDto>(data as string);
-                if (ResponseData.RtnCode != 1) throw new Exception($"取得ECPayOrderResult發生錯誤，{JsonConvert.SerializeObject(ResponseData, Formatting.Indented)}");
 
-                var ohdata = await db.Order_Headers.Where(e => e.TransactionId == ResponseData.OrderInfo.MerchantTradeNo).FirstOrDefaultAsync();
-                if (ResponseData.OrderInfo.PaymentType == "CreditInstallment") ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains($"CreditInstallment_{ResponseData.CardInfo.Stage}")).Select(e => e.Id).FirstOrDefaultAsync();
-                else ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains(ResponseData.OrderInfo.PaymentType)).Select(e => e.Id).FirstOrDefaultAsync();
+                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayOrderResultFail", JsonConvert.SerializeObject(ResponseData));
+
+                var ohdata = await db.Order_Headers.Where(e => e.TransactionId == ResponseData.OrderInfo.MerchantTradeNo).FirstOrDefaultAsync() ?? throw new Exception("查無訂單資訊");
+
+                if (ResponseData.RtnCode != 1) ohdata.State = OrderStatusEnum.付款失敗;
+                else if (ResponseData.CardInfo != null)
+                {
+                    if (ResponseData.OrderInfo.PaymentType == "CreditInstallment") ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains($"CreditInstallment_{ResponseData.CardInfo.Stage}")).Select(e => e.Id).FirstOrDefaultAsync();
+                    else ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains(ResponseData.OrderInfo.PaymentType)).Select(e => e.Id).FirstOrDefaultAsync();
+                }
+
                 db.SaveChanges();
-
                 return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{("000000000" + ohdata.Id).Substring(ohdata.Id.ToString().Length)}");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
                 Console.WriteLine($"ECPay=>ECPayOrderResult回傳資料：{ex.Message}");
+                return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?ECPayError");
             }
-            return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?ECPayError");
         }
         public async Task<String> ECPayReturn(ECPayReturnResponseDto ResultResponseData)
         {

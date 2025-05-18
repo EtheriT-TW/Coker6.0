@@ -384,8 +384,18 @@ function HistoryTemplateDataInsert(Datas) {
                 frame.find(".state button").data("ohid", order_header.id)
                 frame.find(".state .btn_cancelOrder").on("click", function () {
                     var $this = $(this);
-                    var confirm_text = [2, 6].includes(order_header.state) ? order_header.thirdParties != 1 ? "?(若已付款將退回款項)" : "？(退款事宜請聯繫客服處理)" : "?";
-                    Coker.sweet.confirm("取消訂單", `確定要取消這筆訂單${confirm_text}`, "確定", "取消", function () {
+                    var confirm_text = "?";
+                    if ([2, 6].includes(order_header.state)) {
+                        if (
+                            order_header.thirdParties === 1 ||
+                            (order_header.thirdParties === 4 && [21, 22, 23].includes(order_header.paymentCode))
+                        ) {
+                            confirm_text += "<br><br><span class='fw-bold text-danger'>※退款事宜請聯繫客服處理※</span>";
+                        } else {
+                            confirm_text += "<br><br><span class='fw-bold'>※若已付款將退回款項※</span>";
+                        }
+                    }
+                    Coker.sweet.confirm("取消訂單", `<div>確定要取消這筆訂單${confirm_text}</div>`, "確定", "取消", function () {
                         Coker.sweet.loading();
                         Coker.Member.CancelOrder($this.data("ohid"), order_header.thirdParties).done(function (result) {
                             if (result.success) {

@@ -784,7 +784,6 @@ namespace EtheriT.Coker.Application.ThirdParty
             try
             {
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
-                var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
 
                 var thirdPartyKeypairValues = await (from tpkv in db.ThirdPartyKeypairValues
                                                      join tpk in db.ThirdPartyKeypairs on tpkv.FK_ThirdPartyKeypairId equals tpk.Id
@@ -792,28 +791,21 @@ namespace EtheriT.Coker.Application.ThirdParty
                                                      where tp.Title == "綠界支付"
                                                      where tpkv.FK_WebsiteId == WebsiteId
                                                      select new KeyValueDto() { Key = tpk.Code, Value = tpkv.Value }).ToListAsync();
-                if (thirdPartyKeypairValues != null)
-                {
-                    var MerchantID = thirdPartyKeypairValues.Find(e => e.Key == "MerchantID")?.Value;
-                    var HashKey = thirdPartyKeypairValues.Find(e => e.Key == "HashKey")?.Value;
-                    var HashIV = thirdPartyKeypairValues.Find(e => e.Key == "HashIV")?.Value;
-                    if (MerchantID == null || HashKey == null || HashIV == null) throw new Exception("查無ThirdParty資料缺漏");
-                    else
-                    {
-                        var thirdPartyDict = thirdPartyKeypairValues.ToDictionary(e => e.Key, e => e.Value);
-                        ThirdPartyData.MerchantID = thirdPartyDict.GetValueOrDefault("MerchantID") ?? "";
-                        ThirdPartyData.PlatformID = thirdPartyDict.GetValueOrDefault("PlatformID") ?? "";
-                        ThirdPartyData.HashKey = thirdPartyDict.GetValueOrDefault("HashKey") ?? "";
-                        ThirdPartyData.HashIV = thirdPartyDict.GetValueOrDefault("HashIV") ?? "";
-                        ThirdPartyData.ExpireDate = thirdPartyDict.GetValueOrDefault("ExpireDate") ?? "";
-                        ThirdPartyData.ExpireDate = GetExpireDate(ThirdPartyData.ExpireDate, 3, 1, 60).ToString();
-                        ThirdPartyData.StoreExpireDate_CVS = thirdPartyDict.GetValueOrDefault("StoreExpireDate_CVS") ?? "";
-                        ThirdPartyData.StoreExpireDate_CVS = GetExpireDate(ThirdPartyData.StoreExpireDate_CVS, 7, 1, 30).ToString();
-                        ThirdPartyData.StoreExpireDate_Barcode = thirdPartyDict.GetValueOrDefault("StoreExpireDate_Barcode") ?? "";
-                        ThirdPartyData.StoreExpireDate_Barcode = GetExpireDate(ThirdPartyData.StoreExpireDate_Barcode, 7, 1, 30).ToString();
-                    }
-                }
-                else throw new Exception("查無ThirdParty資料");
+
+                if (thirdPartyKeypairValues == null) throw new Exception("查無ThirdParty資料");
+
+                var thirdPartyDict = thirdPartyKeypairValues.ToDictionary(e => e.Key, e => e.Value);
+                ThirdPartyData.MerchantID = thirdPartyDict.GetValueOrDefault("MerchantID") ?? throw new Exception("商家未確實設置綠界支付資料");
+                ThirdPartyData.PlatformID = thirdPartyDict.GetValueOrDefault("PlatformID") ?? "";
+                ThirdPartyData.HashKey = thirdPartyDict.GetValueOrDefault("HashKey") ?? throw new Exception("商家未確實設置綠界支付資料");
+                ThirdPartyData.HashIV = thirdPartyDict.GetValueOrDefault("HashIV") ?? throw new Exception("商家未確實設置綠界支付資料");
+                ThirdPartyData.ExpireDate = thirdPartyDict.GetValueOrDefault("ExpireDate") ?? "";
+                ThirdPartyData.ExpireDate = GetExpireDate(ThirdPartyData.ExpireDate, 3, 1, 60).ToString();
+                ThirdPartyData.StoreExpireDate_CVS = thirdPartyDict.GetValueOrDefault("StoreExpireDate_CVS") ?? "";
+                ThirdPartyData.StoreExpireDate_CVS = GetExpireDate(ThirdPartyData.StoreExpireDate_CVS, 7, 1, 30).ToString();
+                ThirdPartyData.StoreExpireDate_Barcode = thirdPartyDict.GetValueOrDefault("StoreExpireDate_Barcode") ?? "";
+                ThirdPartyData.StoreExpireDate_Barcode = GetExpireDate(ThirdPartyData.StoreExpireDate_Barcode, 7, 1, 30).ToString();
+
             }
             catch (Exception ex)
             {

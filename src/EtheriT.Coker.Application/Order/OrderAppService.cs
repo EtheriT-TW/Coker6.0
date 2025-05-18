@@ -30,6 +30,7 @@ using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.StoreSet;
 using Microsoft.CodeAnalysis.CSharp;
 using EtheriT.Coker.Application.Shared.Dto.Files;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -107,6 +108,7 @@ namespace EtheriT.Coker.Application.Order
                         }
                     }
                 }
+                await CheckECPayExpiredOrders(false);
                 var output = DataSourceLoader.Load(dataQuery, loadOptions);
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
@@ -936,6 +938,8 @@ namespace EtheriT.Coker.Application.Order
                 }
                 response.OrderData = output;
                 response.Success = true;
+
+                await CheckECPayExpiredOrders(true);
             }
             catch (Exception ex)
             {
@@ -1582,6 +1586,90 @@ namespace EtheriT.Coker.Application.Order
                 response.Error = ex.Message;
             }
             return response;
+        }
+        public async Task<ResponseMessageDto> CheckECPayExpiredOrders(bool isuser)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            ECPayThirdPartyDataDto ThirdPartyData = new ECPayThirdPartyDataDto();
+
+            try
+            {
+                DateTime DateTimeNow = DateTime.Now;
+                var WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
+                if (WebsiteID == 0) WebsiteID = await loginUserData.GetWebsiteId();
+                Guid UUID = await tokenAppService.GetUUID();
+
+                var thirdPartyKeypairValues = await (from tpkv in db.ThirdPartyKeypairValues
+                                                     join tpk in db.ThirdPartyKeypairs on tpkv.FK_ThirdPartyKeypairId equals tpk.Id
+                                                     join tp in db.ThirdParties on tpk.FK_TPid equals tp.Id
+                                                     where tp.Title == "綠界支付"
+                                                     where tpkv.FK_WebsiteId == WebsiteID
+                                                     select new KeyValueDto() { Key = tpk.Code, Value = tpkv.Value }).ToListAsync();
+
+                if (!thirdPartyKeypairValues.Any()) throw new Exception("查無ThirdParty資料");
+
+                var thirdPartyDict = thirdPartyKeypairValues.ToDictionary(e => e.Key, e => e.Value);
+                ThirdPartyData.MerchantID = thirdPartyDict.GetValueOrDefault("MerchantID") ?? throw new Exception("商家未確實設置綠界支付資料");
+                ThirdPartyData.PlatformID = thirdPartyDict.GetValueOrDefault("PlatformID") ?? "";
+                ThirdPartyData.HashKey = thirdPartyDict.GetValueOrDefault("HashKey") ?? throw new Exception("商家未確實設置綠界支付資料");
+                ThirdPartyData.HashIV = thirdPartyDict.GetValueOrDefault("HashIV") ?? throw new Exception("商家未確實設置綠界支付資料");
+
+                ThirdPartyData.ExpireDate = thirdPartyDict.GetValueOrDefault("ExpireDate") ?? "";
+                double expireDate = GetExpireDate(ThirdPartyData.ExpireDate, 3, 1, 60);
+
+                ThirdPartyData.StoreExpireDate_CVS = thirdPartyDict.GetValueOrDefault("StoreExpireDate_CVS") ?? "";
+                double storeExpireCVS = GetExpireDate(ThirdPartyData.StoreExpireDate_CVS, 7, 1, 30);
+
+                ThirdPartyData.StoreExpireDate_Barcode = thirdPartyDict.GetValueOrDefault("StoreExpireDate_Barcode") ?? "";
+                double storeExpireBarcode = GetExpireDate(ThirdPartyData.StoreExpireDate_Barcode, 7, 1, 30);
+
+                var payments = new List<long>([21, 22, 23]);
+                var query = db.Order_Headers.Where(e => e.FK_WebsiteId == WebsiteID && payments.Contains(e.Payment) && e.State == OrderStatusEnum.待付款 && !e.IsTemp);
+                if (isuser) query = query.Where(e => e.FK_UUID == UUID);
+                List<Order_Header> order_Headers = await query.ToListAsync();
+                var hasChange = false;
+
+                foreach (var order in order_Headers)
+                {
+                    switch (order.Payment)
+                    {
+                        case 21:
+                            if (DateTimeNow > order.CreationTime.AddDays(expireDate).AddHours(1))
+                            {
+                                order.State = OrderStatusEnum.付款失敗;
+                                hasChange = true;
+                            }
+                            break;
+                        case 22:
+                            if (DateTimeNow > order.CreationTime.AddDays(storeExpireBarcode + 2).AddHours(1))
+                            {
+                                order.State = OrderStatusEnum.付款失敗;
+                                hasChange = true;
+                            }
+                            break;
+                        case 23:
+                            if (DateTimeNow > order.CreationTime.AddDays(storeExpireCVS).AddHours(1))
+                            {
+                                order.State = OrderStatusEnum.付款失敗;
+                                hasChange = true;
+                            }
+                            break;
+                    }
+                }
+                if (hasChange) db.SaveChanges();
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
+        }
+        private int GetExpireDate(string value, int defaultValue, int min, int max)
+        {
+            if (string.IsNullOrEmpty(value)) return defaultValue;
+            if (!int.TryParse(value, out var parsed)) return defaultValue;
+            return Math.Clamp(parsed, min, max);
         }
     }
 }

@@ -415,7 +415,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 DateTime paydate = DateTime.ParseExact(ResponseData.OrderInfo.TradeDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
                 var send_mail = await orderAppService.PaySuccessMailSend(ohdata.Id, paydate);
                 await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayReturn", JsonConvert.SerializeObject(ResponseData));
-                return "OK";
+                return "1|OK";
             }
             catch (Exception ex)
             {

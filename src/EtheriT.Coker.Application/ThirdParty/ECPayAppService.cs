@@ -404,29 +404,37 @@ namespace EtheriT.Coker.Application.ThirdParty
         }
         public async Task<String> ECPayReturn(ECPayReturnResponseDto ResultResponseData)
         {
-            Console.WriteLine($"-------------ECPayReturn訊息查看-------------");
-            Console.WriteLine($"ECPayReturn回傳資料：{ResultResponseData}");
             try
             {
                 var ThirdPartyData = await ECPayGetThirdPartyData() ?? throw new Exception("商家未確實設置綠界支付資料");
-                if (!ResultResponseData.TransMsg.ToLower().Contains("success")) throw new Exception($"取得ECPayReturn發生錯誤，{JsonConvert.SerializeObject(ResultResponseData, Formatting.Indented)}");
                 var data = Decrypt(ResultResponseData.Data, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
                 var ResponseData = JsonConvert.DeserializeObject<ECPayResponseDataDto>(data as string);
+
+                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayReturn", JsonConvert.SerializeObject(ResponseData));
                 if (ResponseData.RtnCode != 1) throw new Exception($"取得ECPayReturn發生錯誤，{JsonConvert.SerializeObject(ResponseData, Formatting.Indented)}");
 
                 var ohdata = await db.Order_Headers.Where(e => e.TransactionId == ResponseData.OrderInfo.MerchantTradeNo).FirstOrDefaultAsync();
-                if (ResponseData.OrderInfo.TradeStatus == "1") ohdata.CompletedDate = DateTime.ParseExact(ResponseData.OrderInfo.TradeDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
-                if (ohdata.State == OrderStatusEnum.待付款 && ResponseData.OrderInfo.TradeStatus == "1") ohdata.State = OrderStatusEnum.已付款;
+
+                if (ResponseData.RtnCode == 1 && ohdata.State == OrderStatusEnum.待付款 && ResponseData.OrderInfo.TradeStatus == "1")
+                {
+                    ohdata.State = OrderStatusEnum.已付款;
+                    ohdata.CompletedDate = DateTime.ParseExact(ResponseData.OrderInfo.TradeDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
+                    var send_mail = await orderAppService.PaySuccessMailSend(ohdata.Id, DateTime.ParseExact(ResponseData.OrderInfo.TradeDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture));
+                }
+                else
+                {
+                    ohdata.LastModificationTime = DateTime.Now;
+                    ohdata.State = OrderStatusEnum.付款失敗;
+                }
                 db.SaveChanges();
-                DateTime paydate = DateTime.ParseExact(ResponseData.OrderInfo.TradeDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
-                var send_mail = await orderAppService.PaySuccessMailSend(ohdata.Id, paydate);
-                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayReturn", JsonConvert.SerializeObject(ResponseData));
+
                 return "1|OK";
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
                 Console.WriteLine($"ECPay=>ECPayReturn回傳資料：{ex.Message}");
+                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayReturnFail", JsonConvert.SerializeObject($"ECPay=>ECPayReturn回傳資料：{ex.Message}"));
                 return "Fail";
             }
         }

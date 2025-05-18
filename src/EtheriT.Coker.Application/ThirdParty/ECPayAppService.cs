@@ -98,6 +98,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                         resopnse.Success = true;
                         break;
                 }
+
+                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayGetPaymentInfo", JsonConvert.SerializeObject(queryTradeResponse));
             }
             catch (Exception ex)
             {
@@ -685,7 +687,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                         break;
                                     case "CVS":
                                         PaymentBody.ChoosePaymentList += "4";
-                                        CVSInfo.StoreExpireDate = int.Parse(ThirdPartyData.StoreExpireDate_CVS);
+                                        CVSInfo.StoreExpireDate = int.Parse(ThirdPartyData.StoreExpireDate_CVS) * 60 * 24;
                                         CVSInfo.CVSCode = "CVS";
                                         CVSInfo.Desc_1 = $"{Website.Title}-商品購買交易";
                                         break;

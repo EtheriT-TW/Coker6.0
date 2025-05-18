@@ -80,6 +80,8 @@ using EtheriT.Coker.Application.Shared.Templates;
 using EtheriT.Coker.Application.Templates;
 using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.BonusManagement;
+using EtheriT.Coker.Application.Shared.FileManagement;
+using EtheriT.Coker.Application.FileManagement;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -253,6 +255,7 @@ builder.Services.AddTransient<IDashboardAuthorizationFilter, HangfireDashboardAu
 builder.Services.AddTransient<ITemplatesApplicationService, TemplatesApplicationService>();
 builder.Services.AddScoped<UserHabitsWorking>();
 builder.Services.AddScoped<IBonusManagementAppService, BonusManagementAppService>();
+builder.Services.AddScoped<IFileManagementAppService, FileManagementAppService>();
 
 
 //多語系

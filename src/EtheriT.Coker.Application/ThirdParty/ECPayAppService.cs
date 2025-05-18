@@ -89,12 +89,12 @@ namespace EtheriT.Coker.Application.ThirdParty
                         break;
                     case 22:
                         var BarcodeInfo = queryTradeResponse.BarcodeInfo;
-                        resopnse.Message = $"<div class='text-start'><svg id='barcode1' class='w-100'></svg><svg id='barcode2' class='w-100'></svg><svg id='barcode3' class='w-100'></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class='text-danger fw-bold'>${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>,{BarcodeInfo.Barcode1},{BarcodeInfo.Barcode2},{BarcodeInfo.Barcode3}";
+                        resopnse.Message = $"<div class='text-start'><svg id='barcode1' class='w-100'></svg><svg id='barcode2' class='w-100'></svg><svg id='barcode3' class='w-100'></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class='text-danger fw-bold'>{BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>,{BarcodeInfo.Barcode1},{BarcodeInfo.Barcode2},{BarcodeInfo.Barcode3}";
                         resopnse.Success = true;
                         break;
                     case 23:
                         var CVSInfo = queryTradeResponse.CVSInfo;
-                        resopnse.Message = $"<div class='text-start'>繳費代碼：${CVSInfo.PaymentNo}<br>或點此<a class='fw-bold text-primary px-1' href='${CVSInfo.PaymentURL}' target='_blank' title='連結至：繳費條碼(開新分頁)'>連結</a>取得繳費條碼<br><br>請將此付款資訊截圖保存，並於繳費期限<span class='text-danger fw-bold'>${CVSInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>";
+                        resopnse.Message = $"<div class='text-start'>繳費代碼：{CVSInfo.PaymentNo}<br>或點此<a class='fw-bold text-primary px-1' href='{CVSInfo.PaymentURL}' target='_blank' title='連結至：繳費條碼(開新分頁)'>連結</a>取得繳費條碼<br><br>請將此付款資訊截圖保存，並於繳費期限<span class='text-danger fw-bold'>{CVSInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>";
                         resopnse.Success = true;
                         break;
                 }

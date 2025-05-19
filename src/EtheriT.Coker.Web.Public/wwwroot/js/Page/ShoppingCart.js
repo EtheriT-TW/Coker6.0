@@ -1362,7 +1362,7 @@ function OrderHeaderAdd() {
                                                             case "BARCODE":
                                                                 var BarcodeInfo = result_obj.BarcodeInfo;
                                                                 $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${BarcodeInfo.ExpireDate}前完成付款。`);
-                                                                co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="w-100"></svg><svg id="barcode2" class="w-100"></svg><svg id="barcode3" class="w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", null);
+                                                                co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="barcode_svg w-100"></svg><svg id="barcode2" class="barcode_svg w-100"></svg><svg id="barcode3" class="barcode_svg w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", null);
                                                                 $.getScript("https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js", function () {
                                                                     JsBarcode("#barcode1", BarcodeInfo.Barcode1, { format: "CODE39", displayValue: true });
                                                                     JsBarcode("#barcode2", BarcodeInfo.Barcode2, { format: "CODE39", displayValue: true });

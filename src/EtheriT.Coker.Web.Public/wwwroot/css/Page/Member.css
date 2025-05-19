@@ -11,6 +11,14 @@
         padding: 0.5rem;
     }
 
+.barcode_svg {
+    max-height: 7.5rem;
+}
+
+    .barcode_svg > g > rect {
+        height: 5rem;
+    }
+
 .red_text {
     color: var(--red-number);
 }

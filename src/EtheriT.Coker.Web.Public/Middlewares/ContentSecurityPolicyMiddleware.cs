@@ -56,7 +56,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 // google 翻譯 script-src、style-src要加上 'unsafe-inline' 目前還找不到解決方案 
                 context.Response.Headers["Content-Security-Policy"] =
                     $"default-src 'self';" +
-                    $"script-src 'self' '{selfInline}' *.google.com *.googletagmanager.com *.googleadservices.com *.googleapis.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com www.instagram.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw; " +
+                    $"script-src 'self' '{selfInline}' *.google.com *.googletagmanager.com *.googleadservices.com *.googleapis.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com www.instagram.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://cdn.jsdelivr.net; " +
                     $"style-src 'self' '{selfInline}' *.googleapis.com  *.google.com *.gstatic.com cdnjs.cloudflare.com cdn.ckeditor.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw; " +
                     $"font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw;  " +
                     $"img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.gstatic.com *.googleapis.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:  https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw ;  " +

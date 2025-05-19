@@ -89,7 +89,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                         break;
                     case 22:
                         var BarcodeInfo = queryTradeResponse.BarcodeInfo;
-                        resopnse.Message = $"<div class='text-start'><svg id='barcode1' class='w-100'></svg><svg id='barcode2' class='w-100'></svg><svg id='barcode3' class='w-100'></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class='text-danger fw-bold'>{BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>,{BarcodeInfo.Barcode1},{BarcodeInfo.Barcode2},{BarcodeInfo.Barcode3}";
+                        resopnse.Message = $"<div class='text-start'><svg id='barcode1' class='barcode_svg w-100'></svg><svg id='barcode2' class='barcode_svg w-100'></svg><svg id='barcode3' class='barcode_svg w-100'></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class='text-danger fw-bold'>{BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br><span class='fs-6 ''> 條碼載入可能需要一段時間，請耐心等候</span></div>,{BarcodeInfo.Barcode1},{BarcodeInfo.Barcode2},{BarcodeInfo.Barcode3}";
                         resopnse.Success = true;
                         break;
                     case 23:

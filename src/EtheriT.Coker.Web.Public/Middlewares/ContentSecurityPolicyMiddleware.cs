@@ -10,7 +10,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
         private readonly IWebHostEnvironment _env;
         private readonly IConfiguration _configuration;
 
-        public ContentSecurityPolicyMiddleware(RequestDelegate next, 
+        public ContentSecurityPolicyMiddleware(RequestDelegate next,
             IServiceProvider serviceProvider,
             IWebHostEnvironment env,
             IConfiguration configuration)
@@ -20,9 +20,11 @@ namespace EtheriT.Coker.Web.Public.Middlewares
             _env = env;
             _configuration = configuration;
         }
-        public async Task InvokeAsync(HttpContext context) {
+        public async Task InvokeAsync(HttpContext context)
+        {
             var nonce = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-            using (var scope = _serviceProvider.CreateScope()) {
+            using (var scope = _serviceProvider.CreateScope())
+            {
                 long siteId = _configuration.GetValue<long>("WebConfig:SiteId");
                 var dbContext = scope.ServiceProvider.GetRequiredService<CokerDbContext>();
                 var item = dbContext.StoreSetDetail.Where(e => e.FK_WebsiteId == siteId && e.FK_StoreSetId == 2).FirstOrDefault();
@@ -33,20 +35,23 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 bool isSitemapRequest = context.Request.Path.HasValue && (
                     context.Request.Path.Value.EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase) ||
                     (
-                        context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase) &&
+                        (context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase) ||
+                        context.Request.Path.Value.Equals("/Member", StringComparison.OrdinalIgnoreCase)) &&
                         otherPayElement != null && !string.IsNullOrEmpty(otherPayElement.Value)
                     )
                 );
 
-                if ((item != null && !string.IsNullOrEmpty(item.value))|| isSitemapRequest) {
+                if ((item != null && !string.IsNullOrEmpty(item.value)) || isSitemapRequest)
+                {
                     selfInline = $"unsafe-inline";
                 }
-                if (_env.IsProduction()) {
+                if (_env.IsProduction())
+                {
                     connectSrc = "'self' *.google.com *.google-analytics.com *.googleapis.com;";
                 }
-                
+
                 // 將 nonce 存入 HttpContext.Items
-                
+
                 // 添加 CSP(內容限制) header
                 // google 翻譯 script-src、style-src要加上 'unsafe-inline' 目前還找不到解決方案 
                 context.Response.Headers["Content-Security-Policy"] =
@@ -71,9 +76,10 @@ namespace EtheriT.Coker.Web.Public.Middlewares
             {
                 bool isSitemapRequest = context.Request.Path.HasValue &&
                         (
-                            context.Request.Path.Value.EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase)||
+                            context.Request.Path.Value.EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase) ||
                             context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase) ||
-                            context.Request.Path.Value.EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase)
+                            context.Request.Path.Value.EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase) ||
+                             context.Request.Path.Value.Equals("/Member", StringComparison.OrdinalIgnoreCase)
                         );
                 if (isSitemapRequest) await _next(context); // 執行後續的管道（包括 Razor 渲染）
                 else

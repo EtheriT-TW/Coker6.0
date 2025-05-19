@@ -10,7 +10,6 @@ using EtheriT.Coker.Application.Shared.FileManagement;
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
     [Route("api/[controller]/[action]")]
-    [ApiController]
     [Authorize]
     public class FileManagementController : Controller
     {

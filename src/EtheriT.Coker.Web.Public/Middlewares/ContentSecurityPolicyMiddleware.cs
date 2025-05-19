@@ -26,11 +26,17 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 long siteId = _configuration.GetValue<long>("WebConfig:SiteId");
                 var dbContext = scope.ServiceProvider.GetRequiredService<CokerDbContext>();
                 var item = dbContext.StoreSetDetail.Where(e => e.FK_WebsiteId == siteId && e.FK_StoreSetId == 2).FirstOrDefault();
+                var otherPayElement = dbContext.ThirdPartyKeypairValues.Where(e => e.FK_WebsiteId == siteId && e.FK_ThirdPartyKeypairId == 11).FirstOrDefault();
                 string selfInline = $"nonce-{nonce}";
                 string connectSrc = "*;";
                 context.Items["CSPNonce"] = nonce;
-                bool isSitemapRequest = context.Request.Path.HasValue &&
-                        context.Request.Path.Value.ToLowerInvariant().EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase);
+                bool isSitemapRequest = context.Request.Path.HasValue && (
+                    context.Request.Path.Value.EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase) ||
+                    (
+                        context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase) &&
+                        otherPayElement != null && !string.IsNullOrEmpty(otherPayElement.Value)
+                    )
+                );
 
                 if ((item != null && !string.IsNullOrEmpty(item.value))|| isSitemapRequest) {
                     selfInline = $"unsafe-inline";
@@ -65,8 +71,9 @@ namespace EtheriT.Coker.Web.Public.Middlewares
             {
                 bool isSitemapRequest = context.Request.Path.HasValue &&
                         (
-                            context.Request.Path.Value.ToLowerInvariant().EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase)||
-                            context.Request.Path.Value.ToLowerInvariant().EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase)
+                            context.Request.Path.Value.EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase)||
+                            context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase) ||
+                            context.Request.Path.Value.EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase)
                         );
                 if (isSitemapRequest) await _next(context); // 執行後續的管道（包括 Razor 渲染）
                 else

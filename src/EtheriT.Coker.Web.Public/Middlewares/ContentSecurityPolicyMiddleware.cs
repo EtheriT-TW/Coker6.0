@@ -36,7 +36,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     context.Request.Path.Value.EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase) ||
                     (
                         (context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase) ||
-                        context.Request.Path.Value.Equals("/Member", StringComparison.OrdinalIgnoreCase)) &&
+                        context.Request.Path.Value.EndsWith("/Member", StringComparison.OrdinalIgnoreCase)) &&
                         otherPayElement != null && !string.IsNullOrEmpty(otherPayElement.Value)
                     )
                 );
@@ -78,8 +78,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                         (
                             context.Request.Path.Value.EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase) ||
                             context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase) ||
-                            context.Request.Path.Value.EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase) ||
-                             context.Request.Path.Value.Equals("/Member", StringComparison.OrdinalIgnoreCase)
+                            context.Request.Path.Value.EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase)
                         );
                 if (isSitemapRequest) await _next(context); // 執行後續的管道（包括 Razor 渲染）
                 else

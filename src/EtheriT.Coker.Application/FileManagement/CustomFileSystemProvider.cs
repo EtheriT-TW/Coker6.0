@@ -52,10 +52,11 @@ namespace EtheriT.Coker.Application.FileManagement
                 if (!item.IsDirectory)
                 {
                     var matchingFileUpload = dbFileUploads.FirstOrDefault(x => x.DownloadFileName != null &&
-                                                                          x.DownloadFileName.EndsWith(item.Name));
+                                                                               x.DownloadFileName.EndsWith(item.Name));
                     if (matchingFileUpload != null)
                     {
-                        item.CustomFields["GuidKey"] = matchingFileUpload.FileGuid;
+                        item.CustomFields[nameof(matchingFileUpload.OriginalFileName)] = matchingFileUpload.OriginalFileName;
+                        item.CustomFields[nameof(matchingFileUpload.DownloadFileName)] = matchingFileUpload.DownloadFileName;
                     }
                 }
             }
@@ -151,6 +152,10 @@ namespace EtheriT.Coker.Application.FileManagement
             return path?.Replace('/', '\\').Trim('\\') ?? string.Empty;
         }
 
+        /// <summary>
+        /// 覆寫上傳檔案的方法，將檔案上傳到指定的目錄並在資料庫中建立 FileUpload 記錄。
+        /// </summary>
+        /// <param name="options"></param>
         public override void UploadFile(FileSystemUploadFileOptions options)
         {
             // 產生唯一識別碼，這會被用作 GuidKey
@@ -200,7 +205,7 @@ namespace EtheriT.Coker.Application.FileManagement
                     GuidKey = Guid.NewGuid(),
                     ContentType = GetContentType(fileInfo.Extension),
                     OriginalFileName = options.FileName,
-                    DownloadFileName = Path.Combine(_downloadFilePath, guidFileName).Replace("\\", "/"),
+                    DownloadFileName = Path.Combine(_downloadFilePath, options.DestinationDirectory.Path, guidFileName).Replace("\\", "/"),
                     Size = fileInfo.Length,
                     FileGuid = fileGuid,
                     CreatorUserId = _userId,

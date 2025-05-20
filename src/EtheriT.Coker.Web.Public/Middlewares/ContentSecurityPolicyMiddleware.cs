@@ -10,7 +10,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
         private readonly IWebHostEnvironment _env;
         private readonly IConfiguration _configuration;
 
-        public ContentSecurityPolicyMiddleware(RequestDelegate next, 
+        public ContentSecurityPolicyMiddleware(RequestDelegate next,
             IServiceProvider serviceProvider,
             IWebHostEnvironment env,
             IConfiguration configuration)
@@ -20,35 +20,46 @@ namespace EtheriT.Coker.Web.Public.Middlewares
             _env = env;
             _configuration = configuration;
         }
-        public async Task InvokeAsync(HttpContext context) {
+        public async Task InvokeAsync(HttpContext context)
+        {
             var nonce = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-            using (var scope = _serviceProvider.CreateScope()) {
+            using (var scope = _serviceProvider.CreateScope())
+            {
                 long siteId = _configuration.GetValue<long>("WebConfig:SiteId");
                 var dbContext = scope.ServiceProvider.GetRequiredService<CokerDbContext>();
                 var item = dbContext.StoreSetDetail.Where(e => e.FK_WebsiteId == siteId && e.FK_StoreSetId == 2).FirstOrDefault();
+                var otherPayElement = dbContext.ThirdPartyKeypairValues.Where(e => e.FK_WebsiteId == siteId && e.FK_ThirdPartyKeypairId == 11).FirstOrDefault();
                 string selfInline = $"nonce-{nonce}";
                 string connectSrc = "*;";
                 context.Items["CSPNonce"] = nonce;
-                bool isSitemapRequest = context.Request.Path.HasValue &&
-                        context.Request.Path.Value.ToLowerInvariant().EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase);
+                bool isSitemapRequest = context.Request.Path.HasValue && (
+                    context.Request.Path.Value.EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase) ||
+                    (
+                        (context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase) ||
+                        context.Request.Path.Value.EndsWith("/Member", StringComparison.OrdinalIgnoreCase)) &&
+                        otherPayElement != null && !string.IsNullOrEmpty(otherPayElement.Value)
+                    )
+                );
 
-                if ((item != null && !string.IsNullOrEmpty(item.value))|| isSitemapRequest) {
+                if ((item != null && !string.IsNullOrEmpty(item.value)) || isSitemapRequest)
+                {
                     selfInline = $"unsafe-inline";
                 }
-                if (_env.IsProduction()) {
+                if (_env.IsProduction())
+                {
                     connectSrc = "'self' *.google.com *.google-analytics.com *.googleapis.com;";
                 }
-                
+
                 // 將 nonce 存入 HttpContext.Items
-                
+
                 // 添加 CSP(內容限制) header
                 // google 翻譯 script-src、style-src要加上 'unsafe-inline' 目前還找不到解決方案 
                 context.Response.Headers["Content-Security-Policy"] =
                     $"default-src 'self';" +
-                    $"script-src 'self' '{selfInline}' *.google.com *.googletagmanager.com *.googleadservices.com *.googleapis.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com www.instagram.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw; " +
+                    $"script-src 'self' '{selfInline}' *.google.com *.googletagmanager.com *.googleadservices.com *.googleapis.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com www.instagram.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://cdn.jsdelivr.net; " +
                     $"style-src 'self' '{selfInline}' *.googleapis.com  *.google.com *.gstatic.com cdnjs.cloudflare.com cdn.ckeditor.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw; " +
                     $"font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw;  " +
-                    $"img-src 'self' data: blob: *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.gstatic.com *.googleapis.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:  https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw ;  " +
+                    $"img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.gstatic.com *.googleapis.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com i.imgur.com lh3.googleusercontent.com cdn.discordapp.com githubusercontent.com images.unsplash.com cdn.pixabay.com res.cloudinary.com scaleflex.cloudimg.io data: blob:  https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw; " +
                     $"frame-src 'self' *.ezsale.tw *.google.com *.google.com.tw *.youtube.com *.youtube-nocookie.com *.facebook.com *.instagram.com *.googletagmanager.com *.doubleclick.net v.qq.com;" +
                     $"connect-src {connectSrc}" +
                     $"frame-ancestors 'self' *.ezsale.tw;";
@@ -64,10 +75,11 @@ namespace EtheriT.Coker.Web.Public.Middlewares
             using (var newBodyStream = new MemoryStream())
             {
                 bool isSitemapRequest = context.Request.Path.HasValue &&
-                    (
-                        context.Request.Path.Value.ToLowerInvariant().EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase)||
-                        context.Request.Path.Value.ToLowerInvariant().EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase)
-                    );
+                        (
+                            context.Request.Path.Value.EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase) ||
+                            context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase) ||
+                            context.Request.Path.Value.EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase)
+                        );
                 if (isSitemapRequest) await _next(context); // 執行後續的管道（包括 Razor 渲染）
                 else
                 {

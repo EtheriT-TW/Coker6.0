@@ -708,7 +708,7 @@ function CheckToken() {
             if (window.location.pathname == `/${OrgName}/ShoppingCar`) {
                 var search = window.location.search;
                 if (search == "") CardDataGet();
-                else if ($.isNumeric(search.substring(1))) {
+                else if ($.isNumeric(search.substring(1)) || window.location.search.substring(1).startsWith("ECPayError")) {
                     if (localStorage.getItem("lastSaveToken") == result.token && localStorage.getItem("lastSaveTime") != null) {
                         var tokenSaveTime = new Date(localStorage.getItem('lastSaveTime'));
                         var fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
@@ -1157,7 +1157,7 @@ var Coker = {
         },
     },
     ThirdParty: {
-        Request: function (ohid, paytype) {
+        Request: function (ohid, paytype, support) {
             return $.ajax({
                 url: "/api/ThirdParty/PayRequest",
                 type: "GET",
@@ -1165,18 +1165,19 @@ var Coker = {
                 headers: {
                     Authorization: 'Bearer ' + localStorage.getItem("token")
                 },
-                data: { ohid: ohid, paytype: paytype },
+                data: { ohid: ohid, paytype: paytype, support: support },
             });
         },
-        ECPayGetToken: function (ohid) {
+        ECPayGetToken: function (data) {
             return $.ajax({
                 url: "/api/ThirdParty/ECPayGetToken",
-                type: "GET",
+                type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 headers: {
                     Authorization: 'Bearer ' + localStorage.getItem("token")
                 },
-                data: { ohid: ohid },
+                data: JSON.stringify(data),
+                dataType: "json"
             });
         },
         ECPayCreatePayment: function (data) {

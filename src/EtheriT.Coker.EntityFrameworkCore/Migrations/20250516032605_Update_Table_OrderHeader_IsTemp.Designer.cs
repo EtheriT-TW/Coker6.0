@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250516032605_Update_Table_OrderHeader_IsTemp")]
+    partial class Update_Table_OrderHeader_IsTemp
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -402,11 +405,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<int>("Amount")
-                        .HasColumnType("int");
+                    b.Property<double>("Amount")
+                        .HasColumnType("float");
 
-                    b.Property<int>("Balance")
-                        .HasColumnType("int");
+                    b.Property<double>("Balance")
+                        .HasColumnType("float");
 
                     b.Property<DateTime>("CreationTime")
                         .ValueGeneratedOnAdd()
@@ -4403,96 +4406,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             name = "鎖右鍵",
                             pattern = "",
                             type = 4
-                        },
-                        new
-                        {
-                            Id = 15L,
-                            CreationTime = new DateTime(2023, 7, 25, 19, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetGroupId = 6L,
-                            IsDeleted = false,
-                            jobID = "B001",
-                            key = "SignupBonusPoints",
-                            maxlength = 8,
-                            memo = "加入會員贈送紅利點數",
-                            name = "迎新禮",
-                            pattern = "",
-                            type = 8
-                        },
-                        new
-                        {
-                            Id = 16L,
-                            CreationTime = new DateTime(2023, 7, 25, 19, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetGroupId = 6L,
-                            IsDeleted = false,
-                            jobID = "B001",
-                            key = "MinOrderForRedemption",
-                            maxlength = 6,
-                            memo = "單筆訂單消費滿足多少可使用紅利扣抵金額",
-                            name = "紅利扣抵條件",
-                            pattern = "",
-                            type = 8
-                        },
-                        new
-                        {
-                            Id = 17L,
-                            CreationTime = new DateTime(2023, 7, 25, 19, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetGroupId = 6L,
-                            IsDeleted = false,
-                            jobID = "B001",
-                            key = "MaxRedemptionPercent",
-                            maxlength = 2,
-                            memo = "單筆訂單抵扣%數上限",
-                            name = "最高抵扣%",
-                            pattern = "",
-                            type = 8
-                        },
-                        new
-                        {
-                            Id = 18L,
-                            CreationTime = new DateTime(2023, 7, 25, 19, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetGroupId = 6L,
-                            IsDeleted = false,
-                            jobID = "B001",
-                            key = "MinOrderForEarnPoints",
-                            maxlength = 8,
-                            memo = "消費滿額多少金額贈送紅利回饋金",
-                            name = "消費條件",
-                            pattern = "",
-                            type = 8
-                        },
-                        new
-                        {
-                            Id = 19L,
-                            CreationTime = new DateTime(2023, 7, 25, 19, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetGroupId = 6L,
-                            IsDeleted = false,
-                            jobID = "B001",
-                            key = "RewardRatePercent",
-                            maxlength = 2,
-                            memo = "消費滿足條件贈送幾%紅利回饋金",
-                            name = "獲得%數紅利",
-                            pattern = "",
-                            type = 8
-                        },
-                        new
-                        {
-                            Id = 20L,
-                            CreationTime = new DateTime(2023, 7, 25, 19, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetGroupId = 6L,
-                            IsDeleted = false,
-                            jobID = "B001",
-                            key = "RewardPointsExpireDays",
-                            maxlength = 3,
-                            memo = "每一筆紅利的有效天數",
-                            name = "有效天數",
-                            pattern = "",
-                            type = 8
                         });
                 });
 
@@ -4650,16 +4563,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Image = "",
                             IsDeleted = false,
                             Title = "其他設定"
-                        },
-                        new
-                        {
-                            Id = 6L,
-                            CreationTime = new DateTime(2025, 5, 7, 17, 7, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            Description = "",
-                            Image = "",
-                            IsDeleted = false,
-                            Title = "紅利設定"
                         });
                 });
 

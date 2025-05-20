@@ -249,7 +249,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                         nonEcpayItems.Add(new PaymentTypeItemOutputDto
                         {
                             Id = ecpayItems.First().Id,
-                            Title = "綠界支付",
+                            Title = "其他支付方式",
                             Code = "ECPay",
                             Icon = "",
                             Used = true,

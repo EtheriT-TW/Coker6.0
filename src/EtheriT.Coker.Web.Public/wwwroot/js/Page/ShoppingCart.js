@@ -160,9 +160,14 @@ function PageReady() {
                 $("input[name='RadioPayment']").on("change", function () {
                     if ($("#radio_payment_ECPay").is(":checked")) {
                         $("#ECPayPayment").show();
+                        console.log($(".swiper_button"))
+                        $(".swiper_button").addClass("mb_10");
                         buy_step_swiper.update();
                     } else {
                         $("#ECPayPayment").hide();
+                        console.log($(".swiper_button"))
+                        $(".swiper_button").removeClass("mb_10");
+                        buy_step_swiper.update();
                     }
                 });
             }
@@ -1003,6 +1008,7 @@ function ECPaymentChange() {
                                 } else {
                                     var checkPayExist = setInterval(function () {
                                         if (typeof window.Pay !== "undefined") {
+                                            $(".swiper_button").addClass("mb_10");
                                             buy_step_swiper.update();
                                             clearInterval(checkPayExist);
                                             $(".ecpay_loading").addClass("d-none");

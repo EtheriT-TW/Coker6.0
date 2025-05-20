@@ -384,7 +384,7 @@ function HistoryTemplateDataInsert(Datas) {
                 frame.find(".state button").data("ohid", order_header.id)
                 frame.find(".state .btn_cancelOrder").on("click", function () {
                     var $this = $(this);
-                    var $orderFrame = $this.closest(".order_frame");;
+                    var $orderFrame = $this.closest(".order_frame");
                     var confirm_text = "?";
                     if ([2, 6].includes(order_header.state)) {
                         if (

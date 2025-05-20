@@ -7,13 +7,17 @@ input::-webkit-inner-spin-button {
     -webkit-appearance: none;
 }
 
+.mb_10 {
+    margin-bottom: 10rem !important;
+}
+
 .barcode_svg {
     max-height: 7.5rem;
 }
 
-.barcode_svg > g > rect {
-    height: 5rem;
-}
+    .barcode_svg > g > rect {
+        height: 5rem;
+    }
 
 .pro_name {
     font-size: 1.2rem;

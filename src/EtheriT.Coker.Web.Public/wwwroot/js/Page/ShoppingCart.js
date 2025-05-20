@@ -19,7 +19,7 @@ var hasProds = false;
 
 var islogin = false;
 
-var datachange = true, HasECPay = false, ECPayInit = false;
+var datachange = true, HasECPay = false, ECPayInit = false, ECPayMonitor = false;
 
 var RecipientsList_dxData;
 
@@ -221,6 +221,7 @@ function PageReady() {
                         $("#radio_bill_orderer").trigger("change");
                     }
                     if (datachange && HasECPay) {
+                        ECPayMonitor = true;
                         ECPaymentChange();
                         datachange = false;
                     }
@@ -379,6 +380,9 @@ function PageReady() {
     InvoiceForms = $('#InvoiceForm > form');
 
     $(".btn_checkout").on("click", function () {
+        var temp_val = true;
+        ECPayMonitor = false;
+
         Step3Monitor();
 
         if (!OrdererFilled) {
@@ -397,10 +401,12 @@ function PageReady() {
                 co.sweet.warning("付款模組尚未載入完成，請稍候再試。", "", null);
             } else {
                 Coker.sweet.confirm("是否確定結帳？", "點選確認進入付款流程", "是，開始付款", "否", function () {
+                    temp_val = false;
                     OrderHeaderAdd();
                 });
             }
         }
+        ECPayMonitor = temp_val;
 
         buy_step_swiper.update();
     });
@@ -963,6 +969,9 @@ function Step3Monitor() {
     payMethodsChosen = FormCheck(PaymentForms);
 }
 function ECPaymentChange() {
+    console.log("ECPaymentChange")
+    console.log("ECPayMonitor", ECPayMonitor)
+    if (!ECPayMonitor) return;
     var checksuccess = true;
 
     Step3Monitor();

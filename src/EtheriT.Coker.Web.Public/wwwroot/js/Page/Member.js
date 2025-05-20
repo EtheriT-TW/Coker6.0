@@ -384,6 +384,7 @@ function HistoryTemplateDataInsert(Datas) {
                 frame.find(".state button").data("ohid", order_header.id)
                 frame.find(".state .btn_cancelOrder").on("click", function () {
                     var $this = $(this);
+                    var $orderFrame = $this.closest(".order_frame");;
                     var confirm_text = "?";
                     if ([2, 6].includes(order_header.state)) {
                         if (
@@ -401,6 +402,7 @@ function HistoryTemplateDataInsert(Datas) {
                             if (result.success) {
                                 $this.parent(".state").addClass("text-danger fw-bold");
                                 $this.parent(".state").text("已取消");
+                                if ($orderFrame.find(".btn_buyInfo").length > 0) $orderFrame.find(".btn_buyInfo").addClass("d-none");
                                 Coker.sweet.success(result.message, null, false);
                             } else {
                                 Coker.sweet.error("取消訂單失敗", "取消訂單時發生錯誤，請聯繫客服協助處理。");
@@ -615,8 +617,8 @@ function OrderRepay(datas) {
                                                             localStorage.setItem("lastSaveTime", new Date().toISOString())
                                                             localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
                                                             var VerifyURL = result_obj.ThreeDInfo?.ThreeDURL ?? result_obj.UnionPayInfo?.UnionPayURL;
+                                                            window.open(VerifyURL, "_blank");
                                                             co.sweet.confirm("即將進入驗證流程", `<div class="text-start">如未自動跳轉，請點此<a class="fw-bold text-primary px-1" href="${VerifyURL}" target="_blank" title="連結至：驗證頁面(開新視窗)">連結</a>進行跳轉</div>`, "確定", "", function () {
-                                                                window.open(VerifyURL, "_blank");
                                                                 location.reload();
                                                             });
                                                             break;

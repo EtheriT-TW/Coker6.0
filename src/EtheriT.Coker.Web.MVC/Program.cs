@@ -80,6 +80,9 @@ using EtheriT.Coker.Application.Shared.Templates;
 using EtheriT.Coker.Application.Templates;
 using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.BonusManagement;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
+using EtheriT.Coker.Application.Shared.Dto.Authorizaion.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -100,7 +103,7 @@ builder.Services.AddMemoryCache()
         builder.UseMemoryStore();
     });
 
-builder.Services
+var OAuth = builder.Services
     .AddAuthentication(options =>
     {
         // custom scheme defined in .AddPolicyScheme() below
@@ -171,15 +174,47 @@ builder.Services
             // otherwise always check for cookie auth
             return CookieAuthenticationDefaults.AuthenticationScheme;
         };
-    }).AddLine(options =>
-    {
-        var lineConfig = authenticationConfig.GetSection("Line");
-        if (!string.IsNullOrEmpty(lineConfig["ChannelId"]) && !string.IsNullOrEmpty(lineConfig["ChannelSecret"]))
-        {
-            options.ClientId = lineConfig["ChannelId"] ?? "";
-            options.ClientSecret = lineConfig["ChannelSecret"] ?? "";
-        }
     });
+var LineConfig = authenticationConfig.GetSection("Line");
+if (!string.IsNullOrEmpty(LineConfig["ChannelId"]) && !string.IsNullOrEmpty(LineConfig["ChannelSecret"])) {
+    OAuth.AddLine(options =>
+    {
+        options.ClientId = LineConfig["ChannelId"] ?? "";
+        options.ClientSecret = LineConfig["ChannelSecret"] ?? "";
+    });
+}
+var GoogleConfig = authenticationConfig.GetSection("Google");
+if (!string.IsNullOrEmpty(GoogleConfig["ClientId"]) && !string.IsNullOrEmpty(GoogleConfig["ClientSecret"]))
+{
+    OAuth.AddGoogle(options =>
+    {
+        options.ClientId = GoogleConfig["ClientId"] ?? "";
+        options.ClientSecret = GoogleConfig["ClientSecret"] ?? "";
+    });
+}
+var FacebookConfig = authenticationConfig.GetSection("Facebook");
+if (!string.IsNullOrEmpty(FacebookConfig["AppId"]) && !string.IsNullOrEmpty(FacebookConfig["AppSecret"]))
+{
+    OAuth.AddFacebook(options =>
+    {
+        options.AppId = FacebookConfig["AppId"] ?? "";
+        options.AppSecret = FacebookConfig["AppSecret"] ?? "";
+    });
+}
+var AppleConfig = authenticationConfig.GetSection("Apple");
+var privateKeyPath = AppleConfig["PrivateKeyPath"];
+if (!string.IsNullOrEmpty(AppleConfig["ClientId"]) && !string.IsNullOrEmpty(AppleConfig["KeyId"]) && !string.IsNullOrEmpty(AppleConfig["TeamId"]) && !string.IsNullOrEmpty(privateKeyPath)) {
+    OAuth.AddApple("Apple", options => {
+        options.ClientId = AppleConfig["ClientId"] ?? "";
+        options.KeyId = AppleConfig["KeyId"] ?? "";
+        options.TeamId = AppleConfig["TeamId"] ?? "";
+        var fileProvider = new PhysicalFileProvider(Directory.GetCurrentDirectory());
+        options.UsePrivateKey(fileName =>
+        {
+            return fileProvider.GetFileInfo(privateKeyPath);
+        });
+    });
+}
 
 builder.Services.AddAntiforgery(options =>
 {
@@ -253,7 +288,7 @@ builder.Services.AddTransient<IDashboardAuthorizationFilter, HangfireDashboardAu
 builder.Services.AddTransient<ITemplatesApplicationService, TemplatesApplicationService>();
 builder.Services.AddScoped<UserHabitsWorking>();
 builder.Services.AddScoped<IBonusManagementAppService, BonusManagementAppService>();
-
+builder.Services.Configure<AuthenticationSettings>(builder.Configuration.GetSection("Authentication"));
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

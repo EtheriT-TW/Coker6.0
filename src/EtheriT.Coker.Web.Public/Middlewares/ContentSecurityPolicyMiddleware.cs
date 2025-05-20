@@ -48,7 +48,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     $"script-src 'self' '{selfInline}' *.google.com *.googletagmanager.com *.googleadservices.com *.googleapis.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com www.instagram.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw; " +
                     $"style-src 'self' '{selfInline}' *.googleapis.com  *.google.com *.gstatic.com cdnjs.cloudflare.com cdn.ckeditor.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw; " +
                     $"font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw;  " +
-                    $"img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.gstatic.com *.googleapis.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:  https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw ;  " +
+                    $"img-src 'self' data: blob: *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.gstatic.com *.googleapis.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:  https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw ;  " +
                     $"frame-src 'self' *.ezsale.tw *.google.com *.google.com.tw *.youtube.com *.youtube-nocookie.com *.facebook.com *.instagram.com *.googletagmanager.com *.doubleclick.net v.qq.com;" +
                     $"connect-src {connectSrc}" +
                     $"frame-ancestors 'self' *.ezsale.tw;";
@@ -64,10 +64,10 @@ namespace EtheriT.Coker.Web.Public.Middlewares
             using (var newBodyStream = new MemoryStream())
             {
                 bool isSitemapRequest = context.Request.Path.HasValue &&
-                        (
-                            context.Request.Path.Value.ToLowerInvariant().EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase)||
-                            context.Request.Path.Value.ToLowerInvariant().EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase)
-                        );
+                    (
+                        context.Request.Path.Value.ToLowerInvariant().EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase)||
+                        context.Request.Path.Value.ToLowerInvariant().EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase)
+                    );
                 if (isSitemapRequest) await _next(context); // 執行後續的管道（包括 Razor 渲染）
                 else
                 {

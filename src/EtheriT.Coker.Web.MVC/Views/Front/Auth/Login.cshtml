@@ -3,50 +3,96 @@
     Layout = "~/Views/Front/Auth/_Layout.cshtml";
 }
 <style>
-    .container {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+    body {
+        font-family: sans-serif;
+        text-align: center;
+        padding-top: 100px;
+        background-color: #f9f9f9;
     }
 
-    .list {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
+    h1 {
+        margin-bottom: 1rem;
     }
 
-        .list > button{
-            width:100%;
-            margin: 1rem 0;
-            padding: 0.5rem 0;
-            font-size: 1.25rem;
-            text-align: center;
-            border-radius: 0.375rem;
-            border: none;
-            color: white;
-            font-weight: bold;
-        }
-
-    .btn_line {
-        background-color: #00c300;
+    p {
+        color: #444;
+        margin-bottom: 2rem;
     }
 
-    .btn_google {
-        background-color: #db4437;
+    .btn-login {
+        display: block;
+        margin: 10px auto;
+        width: 300px;
+        padding: 1rem;
+        border-radius: 6px;
+        color: white;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 1rem;
     }
 
-    .btn_facebook {
-        background-color: #3b5998;
+    .btn-facebook {
+        background-color: #4267B2;
+    }
+
+    .btn-google {
+        background-color: #DB4437;
+    }
+
+    .btn-line {
+        background-color: #00C300;
+    }
+
+    .btn-apple {
+        background-color: #000000;
+    }
+
+    .notice {
+        margin-top: 2rem;
+        color: #666;
+        font-size: 0.9rem;
     }
 </style>
 <div class="container">
-    <h1>快速登入</h1>
-    <div class="list">
-        <button class="btn_line">LINE</button>
-        <button class="btn_google">Google</button>
-        <button class="btn_facebook">Facebook</button>
-    </div>
+    <h1>快速登入功能展示</h1>
+    <p>本頁用於展示第三方登入整合，供平台審核參考</p>
+    <div id="login-buttons"></div>
+
+    <p class="notice">
+        注意：目前為展示模式，登入後不會跳轉回使用者系統。<br />
+        實際登入功能僅限由前台網站使用並傳入 redirect 回呼參數。<br />
+        本頁僅用於登入功能展示與平台審核用途。
+    </p>
+
+    <script>
+        const loginBaseUrl = "/oauth/ExternalLogin";
+        const redirectUrl = encodeURIComponent("https://your-frontend-site.com/login/callback");
+
+        fetch("/api/OAuth/GetEnabledProviders")
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById("login-buttons");
+
+                if (data.lineEnabled) {
+                    container.appendChild(createButton("使用 LINE 登入", "Line", "btn-line"));
+                }
+                if (data.googleEnabled) {
+                    container.appendChild(createButton("使用 Google 登入", "Google", "btn-google"));
+                }
+                if (data.facebookEnabled) {
+                    container.appendChild(createButton("使用 Facebook 登入", "Facebook", "btn-facebook"));
+                }
+                if (data.appleEnabled) {
+                    container.appendChild(createButton("使用 Apple 登入", "Apple", "btn-apple"));
+                }
+            });
+
+        function createButton(text, provider, cssClass) {
+            const a = document.createElement("a");
+            a.href = `${loginBaseUrl}?provider=${provider}&redirect=${redirectUrl}`;
+            a.className = `btn-login ${cssClass}`;
+            a.textContent = text;
+            return a;
+        }
+    </script>
 </div>

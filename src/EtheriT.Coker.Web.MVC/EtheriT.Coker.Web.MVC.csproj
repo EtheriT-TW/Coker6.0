@@ -1,172 +1,172 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="Views\UserManagement\**" />
-    <Content Remove="Views\UserManagement\**" />
-    <EmbeddedResource Remove="Views\UserManagement\**" />
-    <None Remove="Views\UserManagement\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Remove="appsettings.EPZA.json" />
-    <Content Remove="wwwroot\css\Account\login.less" />
-    <Content Remove="wwwroot\css\Account\site.less" />
-    <Content Remove="wwwroot\css\AdvertisementManagement\CustomAd.css" />
-    <Content Remove="wwwroot\css\AdvertisementManagement\EnterAd.css" />
-    <Content Remove="wwwroot\css\AdvertisementManagement\RightSideAd.css" />
-    <Content Remove="wwwroot\js\Account\Index.js" />
-    <Content Remove="wwwroot\js\AdvertisementManagement\CustomAd.js" />
-    <Content Remove="wwwroot\js\Components\ImageUploadModal.js" />
-    <Content Remove="wwwroot\js\Components\PermissionDetailsModal.js" />
-    <Content Remove="wwwroot\js\Components\TagListModal.js" />
-    <Content Remove="wwwroot\js\Components\TagSelectModal.js" />
-    <Content Remove="wwwroot\js\Components\TechCertListModal.js" />
-    <Content Remove="wwwroot\js\Components\WebmenuListModal.js" />
-    <Content Remove="wwwroot\js\AdvertisementManagement\EnterAd.js" />
-    <Content Remove="wwwroot\js\AdvertisementManagement\RightSideAd.js" />
-    <Content Remove="wwwroot\js\ContentManagement\Article.js" />
-    <Content Remove="wwwroot\js\ContentManagement\ContactUsReply.js" />
-    <Content Remove="wwwroot\js\ContentManagement\Directory.js" />
-    <Content Remove="wwwroot\js\ContentManagement\EnterAd.js" />
-    <Content Remove="wwwroot\js\ContentManagement\EnterAd.min.js" />
-    <Content Remove="wwwroot\js\ContentManagement\Marquee.js" />
-    <Content Remove="wwwroot\js\ContentManagement\RightSideAd.js" />
-    <Content Remove="wwwroot\js\ContentManagement\RightSideAd.min.js" />
-    <Content Remove="wwwroot\js\ContentManagement\Tag.js" />
-    <Content Remove="wwwroot\js\Dashboard\Index.js" />
-    <Content Remove="wwwroot\js\Grapes\grapesjs-Coker6.js" />
-    <Content Remove="wwwroot\js\Grapes\index.js" />
-    <Content Remove="wwwroot\js\Grapes\locale\tw.js" />
-    <Content Remove="wwwroot\js\MemberManagement\ManagerList.js" />
-    <Content Remove="wwwroot\js\MemberManagement\MemberData.js" />
-    <Content Remove="wwwroot\js\MemberManagement\SelfData.js" />
-    <Content Remove="wwwroot\js\Newsletter\Index.js" />
-    <Content Remove="wwwroot\js\Newsletter\Recipient.js" />
-    <Content Remove="wwwroot\js\OrderManagement\OrderList.js" />
-    <Content Remove="wwwroot\js\Page\ComponerEdit.js" />
-    <Content Remove="wwwroot\js\Page\Index.js" />
-    <Content Remove="wwwroot\js\PowerManagement\Index.js" />
-    <Content Remove="wwwroot\js\ProductManagement\ProductList.js" />
-    <Content Remove="wwwroot\js\ProductManagement\SpecSetting.js" />
-    <Content Remove="wwwroot\js\ProductManagement\TechnicalCertificate.js" />
-    <Content Remove="wwwroot\js\SearchManagement\CustSearch.js" />
-    <Content Remove="wwwroot\js\site.js" />
-    <Content Remove="wwwroot\js\StoreSettings\FreightSettings.js" />
-    <Content Remove="wwwroot\js\SystemManagement\SEOSetting.js" />
-    <Content Remove="wwwroot\js\SystemManagement\WebData.js" />
-    <Content Remove="wwwroot\js\vendor.js" />
-    <Content Remove="wwwroot\lib\swiper-bundle.esm.browser.min.js.map" />
-    <Content Remove="wwwroot\lib\swiper-bundle.min.js.map" />
-    <Content Remove="wwwroot\js\CokerCore\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Resources\" />
-    <Folder Include="wwwroot\css\Dashboard\" />
-    <Folder Include="wwwroot\lib\fortawesome\css\" />
-    <Folder Include="wwwroot\lib\jquery-menu-editor\" />
-    <Folder Include="wwwroot\lib\tui-code\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="appsettings.EPZA.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-    <None Include="wwwroot\css\Account\login.less" />
-    <None Include="wwwroot\css\Account\site.less" />
-    <None Include="wwwroot\css\AdvertisementManagement\CustomAd.css" />
-    <None Include="wwwroot\css\AdvertisementManagement\EnterAd.css" />
-    <None Include="wwwroot\css\AdvertisementManagement\RightSideAd.css" />
-    <None Include="wwwroot\js\Account\Index.js" />
-    <None Include="wwwroot\js\AdvertisementManagement\CustomAd.js" />
-    <None Include="wwwroot\js\Components\ImageUploadModal.js" />
-    <None Include="wwwroot\js\Components\PermissionDetailsModal.js" />
-    <None Include="wwwroot\js\Components\TagListModal.js" />
-    <None Include="wwwroot\js\Components\TagSelectModal.js" />
-    <None Include="wwwroot\js\Components\TechCertListModal.js" />
-    <None Include="wwwroot\js\Components\WebmenuListModal.js" />
-    <None Include="wwwroot\js\AdvertisementManagement\EnterAd.js" />
-    <None Include="wwwroot\js\AdvertisementManagement\RightSideAd.js" />
-    <None Include="wwwroot\js\ContentManagement\Article.js" />
-    <None Include="wwwroot\js\ContentManagement\ContactUsReply.js" />
-    <None Include="wwwroot\js\ContentManagement\Directory.js" />
-    <None Include="wwwroot\js\ContentManagement\Marquee.js" />
-    <None Include="wwwroot\js\ContentManagement\Tag.js" />
-    <None Include="wwwroot\js\Dashboard\Index.js" />
-    <None Include="wwwroot\js\FlowSize\Index.js" />
-    <None Include="wwwroot\js\Grapes\grapesjs-Coker6.js" />
-    <None Include="wwwroot\js\Grapes\index.js" />
-    <None Include="wwwroot\js\Grapes\locale\tw.js" />
-    <None Include="wwwroot\js\MemberManagement\ManagerList.js" />
-    <None Include="wwwroot\js\MemberManagement\MemberData.js" />
-    <None Include="wwwroot\js\MemberManagement\SelfData.js" />
-    <None Include="wwwroot\js\Newsletter\Index.js" />
-    <None Include="wwwroot\js\Newsletter\Recipient.js" />
-    <None Include="wwwroot\js\OrderManagement\OrderList.js" />
-    <None Include="wwwroot\js\Page\ComponerEdit.js" />
-    <None Include="wwwroot\js\Page\Index.js" />
-    <None Include="wwwroot\js\PowerManagement\Index.js" />
-    <None Include="wwwroot\js\ProductManagement\ProductList.js" />
-    <None Include="wwwroot\js\ProductManagement\SpecSetting.js" />
-    <None Include="wwwroot\js\ProductManagement\TechnicalCertificate.js" />
-    <None Include="wwwroot\js\SearchManagement\CustSearch.js" />
-    <None Include="wwwroot\js\site.js" />
-    <None Include="wwwroot\js\StoreSettings\FreightSettings.js" />
-    <None Include="wwwroot\js\SystemManagement\SEOSetting.js" />
-    <None Include="wwwroot\js\SystemManagement\WebData.js" />
-    <None Include="wwwroot\js\vendor.js" />
-    <None Include="wwwroot\js\CokerCore\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="AspNet.Security.OAuth.Apple" Version="9.2.0" />
-    <PackageReference Include="AspNet.Security.OAuth.Instagram" Version="9.2.0" />
-    <PackageReference Include="AspNet.Security.OAuth.Line" Version="9.2.0" />
-    <PackageReference Include="BuildBundlerMinifier" Version="3.2.449" />
-    <PackageReference Include="DevExpress.AspNetCore.Reporting" Version="24.2.6" />
-    <PackageReference Include="DevExpress.Xpo" Version="24.2.6" />
-    <PackageReference Include="DevExtreme.AspNet.Core" Version="24.2.6" />
-    <PackageReference Include="DevExtreme.AspNet.Data" Version="5.0.0" />
-    <PackageReference Include="GoogleAuthenticatorService.Core" Version="1.0.2" />
-    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.18" />
-    <PackageReference Include="Hangfire.SqlServer" Version="1.8.18" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="9.0.4" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.4" />
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.4" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.4" />
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.8.0" />
-    <PackageReference Include="MiniExcel" Version="1.41.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="8.1.1" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
-    <PackageReference Include="System.Drawing.Common" Version="9.0.4" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.8.0" />
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.4" />
-    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\EtheriT.Coker.Application.Shared\EtheriT.Coker.Application.Shared.csproj" />
-    <ProjectReference Include="..\EtheriT.Coker.Application\EtheriT.Coker.Application.csproj" />
-    <ProjectReference Include="..\EtheriT.Coker.EntityFrameworkCore\EtheriT.Coker.EntityFrameworkCore.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Update="appsettings.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ProjectExtensions>
-    <VisualStudio>
-      <UserProperties appsettings_1json__JsonSchema="" />
-    </VisualStudio>
-  </ProjectExtensions>
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+	<ItemGroup>
+		<Compile Remove="Views\UserManagement\**" />
+		<Content Remove="Views\UserManagement\**" />
+		<EmbeddedResource Remove="Views\UserManagement\**" />
+		<None Remove="Views\UserManagement\**" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Remove="appsettings.EPZA.json" />
+		<Content Remove="wwwroot\css\Account\login.less" />
+		<Content Remove="wwwroot\css\Account\site.less" />
+		<Content Remove="wwwroot\css\AdvertisementManagement\CustomAd.css" />
+		<Content Remove="wwwroot\css\AdvertisementManagement\EnterAd.css" />
+		<Content Remove="wwwroot\css\AdvertisementManagement\RightSideAd.css" />
+		<Content Remove="wwwroot\js\Account\Index.js" />
+		<Content Remove="wwwroot\js\AdvertisementManagement\CustomAd.js" />
+		<Content Remove="wwwroot\js\Components\ImageUploadModal.js" />
+		<Content Remove="wwwroot\js\Components\PermissionDetailsModal.js" />
+		<Content Remove="wwwroot\js\Components\TagListModal.js" />
+		<Content Remove="wwwroot\js\Components\TagSelectModal.js" />
+		<Content Remove="wwwroot\js\Components\TechCertListModal.js" />
+		<Content Remove="wwwroot\js\Components\WebmenuListModal.js" />
+		<Content Remove="wwwroot\js\AdvertisementManagement\EnterAd.js" />
+		<Content Remove="wwwroot\js\AdvertisementManagement\RightSideAd.js" />
+		<Content Remove="wwwroot\js\ContentManagement\Article.js" />
+		<Content Remove="wwwroot\js\ContentManagement\ContactUsReply.js" />
+		<Content Remove="wwwroot\js\ContentManagement\Directory.js" />
+		<Content Remove="wwwroot\js\ContentManagement\EnterAd.js" />
+		<Content Remove="wwwroot\js\ContentManagement\EnterAd.min.js" />
+		<Content Remove="wwwroot\js\ContentManagement\Marquee.js" />
+		<Content Remove="wwwroot\js\ContentManagement\RightSideAd.js" />
+		<Content Remove="wwwroot\js\ContentManagement\RightSideAd.min.js" />
+		<Content Remove="wwwroot\js\ContentManagement\Tag.js" />
+		<Content Remove="wwwroot\js\Dashboard\Index.js" />
+		<Content Remove="wwwroot\js\Grapes\grapesjs-Coker6.js" />
+		<Content Remove="wwwroot\js\Grapes\index.js" />
+		<Content Remove="wwwroot\js\Grapes\locale\tw.js" />
+		<Content Remove="wwwroot\js\MemberManagement\ManagerList.js" />
+		<Content Remove="wwwroot\js\MemberManagement\MemberData.js" />
+		<Content Remove="wwwroot\js\MemberManagement\SelfData.js" />
+		<Content Remove="wwwroot\js\Newsletter\Index.js" />
+		<Content Remove="wwwroot\js\Newsletter\Recipient.js" />
+		<Content Remove="wwwroot\js\OrderManagement\OrderList.js" />
+		<Content Remove="wwwroot\js\Page\ComponerEdit.js" />
+		<Content Remove="wwwroot\js\Page\Index.js" />
+		<Content Remove="wwwroot\js\PowerManagement\Index.js" />
+		<Content Remove="wwwroot\js\ProductManagement\ProductList.js" />
+		<Content Remove="wwwroot\js\ProductManagement\SpecSetting.js" />
+		<Content Remove="wwwroot\js\ProductManagement\TechnicalCertificate.js" />
+		<Content Remove="wwwroot\js\SearchManagement\CustSearch.js" />
+		<Content Remove="wwwroot\js\site.js" />
+		<Content Remove="wwwroot\js\StoreSettings\FreightSettings.js" />
+		<Content Remove="wwwroot\js\SystemManagement\SEOSetting.js" />
+		<Content Remove="wwwroot\js\SystemManagement\WebData.js" />
+		<Content Remove="wwwroot\js\vendor.js" />
+		<Content Remove="wwwroot\lib\swiper-bundle.esm.browser.min.js.map" />
+		<Content Remove="wwwroot\lib\swiper-bundle.min.js.map" />
+		<Content Remove="wwwroot\js\CokerCore\**" />
+	</ItemGroup>
+	<ItemGroup>
+		<Folder Include="Resources\" />
+		<Folder Include="wwwroot\css\Dashboard\" />
+		<Folder Include="wwwroot\lib\fortawesome\css\" />
+		<Folder Include="wwwroot\lib\jquery-menu-editor\" />
+		<Folder Include="wwwroot\lib\tui-code\" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="appsettings.EPZA.json">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
+		<None Include="wwwroot\css\Account\login.less" />
+		<None Include="wwwroot\css\Account\site.less" />
+		<None Include="wwwroot\css\AdvertisementManagement\CustomAd.css" />
+		<None Include="wwwroot\css\AdvertisementManagement\EnterAd.css" />
+		<None Include="wwwroot\css\AdvertisementManagement\RightSideAd.css" />
+		<None Include="wwwroot\js\Account\Index.js" />
+		<None Include="wwwroot\js\AdvertisementManagement\CustomAd.js" />
+		<None Include="wwwroot\js\Components\ImageUploadModal.js" />
+		<None Include="wwwroot\js\Components\PermissionDetailsModal.js" />
+		<None Include="wwwroot\js\Components\TagListModal.js" />
+		<None Include="wwwroot\js\Components\TagSelectModal.js" />
+		<None Include="wwwroot\js\Components\TechCertListModal.js" />
+		<None Include="wwwroot\js\Components\WebmenuListModal.js" />
+		<None Include="wwwroot\js\AdvertisementManagement\EnterAd.js" />
+		<None Include="wwwroot\js\AdvertisementManagement\RightSideAd.js" />
+		<None Include="wwwroot\js\ContentManagement\Article.js" />
+		<None Include="wwwroot\js\ContentManagement\ContactUsReply.js" />
+		<None Include="wwwroot\js\ContentManagement\Directory.js" />
+		<None Include="wwwroot\js\ContentManagement\Marquee.js" />
+		<None Include="wwwroot\js\ContentManagement\Tag.js" />
+		<None Include="wwwroot\js\Dashboard\Index.js" />
+		<None Include="wwwroot\js\FlowSize\Index.js" />
+		<None Include="wwwroot\js\Grapes\grapesjs-Coker6.js" />
+		<None Include="wwwroot\js\Grapes\index.js" />
+		<None Include="wwwroot\js\Grapes\locale\tw.js" />
+		<None Include="wwwroot\js\MemberManagement\ManagerList.js" />
+		<None Include="wwwroot\js\MemberManagement\MemberData.js" />
+		<None Include="wwwroot\js\MemberManagement\SelfData.js" />
+		<None Include="wwwroot\js\Newsletter\Index.js" />
+		<None Include="wwwroot\js\Newsletter\Recipient.js" />
+		<None Include="wwwroot\js\OrderManagement\OrderList.js" />
+		<None Include="wwwroot\js\Page\ComponerEdit.js" />
+		<None Include="wwwroot\js\Page\Index.js" />
+		<None Include="wwwroot\js\PowerManagement\Index.js" />
+		<None Include="wwwroot\js\ProductManagement\ProductList.js" />
+		<None Include="wwwroot\js\ProductManagement\SpecSetting.js" />
+		<None Include="wwwroot\js\ProductManagement\TechnicalCertificate.js" />
+		<None Include="wwwroot\js\SearchManagement\CustSearch.js" />
+		<None Include="wwwroot\js\site.js" />
+		<None Include="wwwroot\js\StoreSettings\FreightSettings.js" />
+		<None Include="wwwroot\js\SystemManagement\SEOSetting.js" />
+		<None Include="wwwroot\js\SystemManagement\WebData.js" />
+		<None Include="wwwroot\js\vendor.js" />
+		<None Include="wwwroot\js\CokerCore\**" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="AspNet.Security.OAuth.Apple" Version="9.2.0" />
+		<PackageReference Include="AspNet.Security.OAuth.Instagram" Version="9.2.0" />
+		<PackageReference Include="AspNet.Security.OAuth.Line" Version="9.2.0" />
+		<PackageReference Include="BuildBundlerMinifier" Version="3.2.449" />
+		<PackageReference Include="DevExpress.AspNetCore.Reporting" Version="24.2.6" />
+		<PackageReference Include="DevExpress.Xpo" Version="24.2.6" />
+		<PackageReference Include="DevExtreme.AspNet.Core" Version="24.2.6" />
+		<PackageReference Include="DevExtreme.AspNet.Data" Version="5.0.0" />
+		<PackageReference Include="GoogleAuthenticatorService.Core" Version="1.0.2" />
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.18" />
+		<PackageReference Include="Hangfire.SqlServer" Version="1.8.18" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="9.0.4" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.4" />
+		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
+		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.4" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.4" />
+		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.8.0" />
+		<PackageReference Include="MiniExcel" Version="1.41.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="8.1.1" />
+		<PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
+		<PackageReference Include="System.Drawing.Common" Version="9.0.4" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.8.0" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.4" />
+		<PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\EtheriT.Coker.Application.Shared\EtheriT.Coker.Application.Shared.csproj" />
+		<ProjectReference Include="..\EtheriT.Coker.Application\EtheriT.Coker.Application.csproj" />
+		<ProjectReference Include="..\EtheriT.Coker.EntityFrameworkCore\EtheriT.Coker.EntityFrameworkCore.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Update="appsettings.json">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	<ProjectExtensions>
+		<VisualStudio>
+			<UserProperties appsettings_1json__JsonSchema="" />
+		</VisualStudio>
+	</ProjectExtensions>
 </Project>

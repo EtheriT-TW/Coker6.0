@@ -26,8 +26,8 @@ namespace EtheriT.Coker.Application.FileManagement
             _downloadFilePath = $"/upload/{orgName}";
         }
 
-        public CustomFileSystemProvider(string rootDirectoryPath,
-                                        Action<FileSystemInfo, FileSystemItem> prepareFileSystemItemCallback,
+        public CustomFileSystemProvider(Action<FileSystemInfo, FileSystemItem> prepareFileSystemItemCallback,
+                                        string rootDirectoryPath,
                                         CokerDbContext dbContext,
                                         string orgName,
                                         long userId)
@@ -36,6 +36,31 @@ namespace EtheriT.Coker.Application.FileManagement
             _dbContext = dbContext;
             _userId = userId;
             _downloadFilePath = $"/upload/{orgName}";
+        }
+
+        public override IEnumerable<FileSystemItem> GetItems(FileSystemLoadItemOptions options)
+        {
+            var items = base.GetItems(options);
+
+            var dbFileUploads = _dbContext.FileUploads
+                .AsNoTracking()
+                .Where(f => f.FK_WebsiteId == GetWebsiteId())
+                .ToList();
+
+            foreach (var item in items)
+            {
+                if (!item.IsDirectory)
+                {
+                    var matchingFileUpload = dbFileUploads.FirstOrDefault(x => x.DownloadFileName != null &&
+                                                                          x.DownloadFileName.EndsWith(item.Name));
+                    if (matchingFileUpload != null)
+                    {
+                        item.CustomFields["GuidKey"] = matchingFileUpload.FileGuid;
+                    }
+                }
+            }
+
+            return items;
         }
 
         public override void DeleteItem(FileSystemDeleteItemOptions options)
@@ -128,7 +153,14 @@ namespace EtheriT.Coker.Application.FileManagement
 
         public override void UploadFile(FileSystemUploadFileOptions options)
         {
-            // 先執行原始的上傳檔案方法
+            // 產生唯一識別碼，這會被用作 GuidKey
+            Guid fileGuid = Guid.NewGuid();
+
+            // 保存原始檔案名稱與副檔名
+            string originalFileName = options.FileName;
+            string extension = Path.GetExtension(originalFileName);
+
+            // 先執行原始的上傳檔案方法，上傳原始檔案
             base.UploadFile(options);
 
             try
@@ -151,31 +183,38 @@ namespace EtheriT.Coker.Application.FileManagement
                     return;
                 }
 
-                // 產生唯一識別碼，這會被用作 GuidKey
-                Guid guidKey = Guid.NewGuid();
+                // 產生GUID檔案名稱
+                string guidFileName = $"{fileGuid}{extension}";
+
+                // 產生GUID檔案的完整路徑
+                string directoryPath = Path.GetDirectoryName(fullPath) ?? string.Empty;
+                string guidFilePath = Path.Combine(directoryPath, guidFileName);
+
+                // 更名實體檔案為GUID檔案名稱
+                File.Move(fullPath, guidFilePath);
 
                 // 建立 FileUpload 記錄
                 FileUpload fileUpload = new FileUpload
                 {
                     FK_WebsiteId = websiteId,
-                    GuidKey = guidKey,
+                    GuidKey = Guid.NewGuid(),
                     ContentType = GetContentType(fileInfo.Extension),
                     OriginalFileName = options.FileName,
-                    DownloadFileName = Path.Combine(_downloadFilePath, options.FileName).Replace("\\", "/"),
+                    DownloadFileName = Path.Combine(_downloadFilePath, guidFileName).Replace("\\", "/"),
                     Size = fileInfo.Length,
-                    FileGuid = guidKey,
+                    FileGuid = fileGuid,
                     CreatorUserId = _userId,
                     IsDeleted = false,
                     CreationTime = DateTime.Now
                 };
 
-                // 將記錄添加到資料庫
+                // 將記錄新增到資料庫
                 _dbContext.FileUploads.Add(fileUpload);
                 _dbContext.SaveChanges();
             }
             catch (Exception ex)
             {
-                // 記錄錯誤，但不影響上傳功能
+                // 記錄錯誤
                 System.Diagnostics.Debug.WriteLine($"Error inserting FileUpload record: {ex.Message}");
             }
         }

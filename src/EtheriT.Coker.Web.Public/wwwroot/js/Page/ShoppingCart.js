@@ -1190,12 +1190,8 @@ function OrderDataGet() {
     order_header_data.OrderDetails = shopping_cart_data;
 
     if (HasECPay) {
-        if (window.ApplePaySession && typeof ApplePaySession.canMakePayments === "function") {
-            ApplePaySession.canMakePayments().then(function (canPay) {
-                if (canPay) {
-                    order_header_data.SupportApplePay = true;
-                }
-            });
+        if (window.ApplePaySession && typeof ApplePaySession.canMakePayments == "function") {
+            order_header_data.SupportApplePay = true;
         }
     }
 }

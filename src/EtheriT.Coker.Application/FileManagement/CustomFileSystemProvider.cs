@@ -1,10 +1,13 @@
 using DevExtreme.AspNet.Mvc.FileManagement;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.FileManagement
@@ -14,16 +17,23 @@ namespace EtheriT.Coker.Application.FileManagement
         private readonly CokerDbContext _dbContext;
         private readonly long _userId;
         private readonly string _downloadFilePath;
+        private readonly IConfiguration _configuration;
+
+        private readonly int _maxFileSizeMB = 0;
 
         public CustomFileSystemProvider(string rootDirectoryPath,
                                         CokerDbContext dbContext,
                                         string orgName,
-                                        long userId)
+                                        long userId,
+                                        IConfiguration configuration)
             : base(rootDirectoryPath)
         {
             _dbContext = dbContext;
             _userId = userId;
             _downloadFilePath = $"/upload/{orgName}";
+            _configuration = configuration;
+
+           int.TryParse(_configuration.GetValue<string>("VirtualDirectory:FileAllow:MaxSize"), out _maxFileSizeMB);
         }
 
         public CustomFileSystemProvider(Action<FileSystemInfo, FileSystemItem> prepareFileSystemItemCallback,
@@ -51,8 +61,23 @@ namespace EtheriT.Coker.Application.FileManagement
             {
                 if (!item.IsDirectory)
                 {
-                    var matchingFileUpload = dbFileUploads.FirstOrDefault(x => x.DownloadFileName != null &&
-                                                                               x.DownloadFileName.EndsWith(item.Name));
+                    // 構建完整的相對路徑來進行精確匹配
+                    string currentDirectory = options.Directory != null ? options.Directory.Path : string.Empty;
+                    string itemPath = Path.Combine(currentDirectory, item.Name).Replace("\\", "/");
+
+                    // 確保路徑格式一致以便比較
+                    string downloadPathPrefix = _downloadFilePath.TrimEnd('/');
+
+                    var matchingFileUpload = dbFileUploads.FirstOrDefault(x =>
+                        x.DownloadFileName != null &&
+                        !x.IsDeleted &&
+                        (
+                            // 精確比對完整路徑
+                            x.DownloadFileName.EndsWith("/" + itemPath) ||
+                            // 如果 DownloadFileName 包含下載路徑前綴和完整路徑
+                            (x.DownloadFileName.StartsWith(downloadPathPrefix) &&
+                             x.DownloadFileName.EndsWith(itemPath))
+                        ));
                     if (matchingFileUpload != null)
                     {
                         item.CustomFields[nameof(matchingFileUpload.OriginalFileName)] = matchingFileUpload.OriginalFileName;
@@ -78,16 +103,13 @@ namespace EtheriT.Coker.Application.FileManagement
                 if (Guid.TryParse(fileName, out Guid guidKey))
                 {
                     // 更新資料庫中的紀錄
-                    var fileUpload = _dbContext.FileUploads.FirstOrDefault(f => f.GuidKey == guidKey);
+                    var fileUpload = _dbContext.FileUploads.FirstOrDefault(f => f.FileGuid == guidKey);
                     if (fileUpload != null)
                     {
                         fileUpload.IsDeleted = true;
                         fileUpload.DeletionTime = DateTime.Now;
                         fileUpload.DeleterUserId = _userId;
                         _dbContext.SaveChanges();
-
-                        // 不實際刪除檔案，而是只在資料庫中標記為刪除
-                        return;
                     }
                 }
             }
@@ -154,105 +176,190 @@ namespace EtheriT.Coker.Application.FileManagement
 
         /// <summary>
         /// 覆寫上傳檔案的方法，將檔案上傳到指定的目錄並在資料庫中建立 FileUpload 記錄。
+        /// 如果上傳的檔名已存在(以欄位[DownloadFileName]為依據，需考量路徑)，更新資料庫欄位，並蓋掉舊檔。
         /// </summary>
         /// <param name="options"></param>
         public override void UploadFile(FileSystemUploadFileOptions options)
         {
-            // 產生唯一識別碼，這會被用作 GuidKey
-            Guid fileGuid = Guid.NewGuid();
+            if (options.TempFile.Length > _maxFileSizeMB * 1024 * 1024)
+            {
+                throw new FileSystemException(FileSystemErrorCode.MaxFileSizeExceeded, $"檔案過大，不可超過{_maxFileSizeMB}MB");
+            }
 
-            // 保存原始檔案名稱與副檔名
-            string originalFileName = options.FileName;
-            string extension = Path.GetExtension(originalFileName);
 
-            // 先執行原始的上傳檔案方法，上傳原始檔案
-            base.UploadFile(options);
 
             try
             {
-                // 取得網站 ID
-                long websiteId = GetWebsiteId();
-                if (websiteId <= 0)
+                // 獲取目標路徑和檔案名稱
+                string targetDirectory = PreparePath(options.DestinationDirectory.Path);
+                string targetFileName = Path.GetFileName(options.FileName);
+                string targetFilePath = Path.Combine(RootDirectoryPath, targetDirectory, targetFileName);
+                string relativePath = Path.Combine(targetDirectory, targetFileName).Replace("\\", "/");
+                string downloadFilePath = Path.Combine(_downloadFilePath, relativePath).Replace("\\", "/");
+
+                // 檢查是否存在相同下載路徑的檔案記錄
+                var existingFileUpload = _dbContext.FileUploads
+                    .FirstOrDefault(f => f.DownloadFileName == downloadFilePath && !f.IsDeleted);
+
+                // 生成新的檔案 GUID
+                Guid fileGuid = Guid.NewGuid();
+                string extension = Path.GetExtension(targetFileName);
+                string newFileName = fileGuid.ToString() + extension;
+                string newFilePath = Path.Combine(RootDirectoryPath, targetDirectory, newFileName);
+
+                if (existingFileUpload != null)
                 {
-                    return;
+                    // 檔案已存在的情況，進行更新
+                    // 1. 備份原始檔案
+                    string backupFilePath = targetFilePath + ".bak";
+                    if (File.Exists(targetFilePath))
+                    {
+                        File.Move(targetFilePath, backupFilePath);
+                    }
+
+                    try
+                    {
+                        // 2. 上傳新檔案
+                        base.UploadFile(options);
+
+                        // 3. 重新命名為 GUID.副檔名 格式
+                        if (File.Exists(targetFilePath))
+                        {
+                            if (File.Exists(newFilePath))
+                            {
+                                File.Delete(newFilePath);
+                            }
+                            File.Move(targetFilePath, newFilePath);
+                        }
+                        // 建立新的下載路徑，使用 fileGuid + 副檔名
+                        string guidDownloadFilePath = Path.Combine(_downloadFilePath, targetDirectory, newFileName).Replace("\\", "/");
+
+                        // 4. 更新資料庫記錄
+                        existingFileUpload.FileGuid = fileGuid;
+                        existingFileUpload.DownloadFileName = guidDownloadFilePath;
+                        //existingFileUpload.OriginalFileName = options.FileName;
+                        existingFileUpload.ContentType = GetContentType(extension);
+                        existingFileUpload.Size = new FileInfo(newFilePath).Length;
+                        existingFileUpload.LastModificationTime = DateTime.Now;
+                        existingFileUpload.LastModifierUserId = _userId;
+
+                        // 5. 刪除備份檔案
+                        if (File.Exists(backupFilePath))
+                        {
+                            File.Delete(backupFilePath);
+                        }
+
+                        _dbContext.SaveChanges();
+                    }
+                    catch (IOException ex)
+                    {
+                        // 發生 IO 異常時還原備份
+                        RestoreBackupFile(backupFilePath, targetFilePath);
+                        throw new FileSystemException(FileSystemErrorCode.NoAccess, $"檔案 IO 錯誤：{ex.Message}");
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        // 發生權限異常時還原備份
+                        RestoreBackupFile(backupFilePath, targetFilePath);
+                        throw new FileSystemException(FileSystemErrorCode.NoAccess, $"沒有足夠權限存取檔案：{ex.Message}");
+                    }
+                    catch (Exception ex)
+                    {
+                        // 發生其他異常時還原備份
+                        RestoreBackupFile(backupFilePath, targetFilePath);
+                        throw new FileSystemException(FileSystemErrorCode.Unspecified, $"上傳檔案時發生錯誤：{ex.Message}");
+                    }
                 }
-
-                // 取得檔案資訊
-                string destPath = Path.Combine(options.DestinationDirectory.Path, options.FileName);
-                string fullPath = Path.Combine(RootDirectoryPath, PreparePath(destPath));
-                FileInfo fileInfo = new FileInfo(fullPath);
-
-                // 檢查檔案是否存在
-                if (!fileInfo.Exists)
+                else
                 {
-                    return;
+                    // 檔案不存在的情況，建立新記錄
+                    // 1. 上傳檔案
+                    base.UploadFile(options);
+
+                    // 2. 重新命名為 GUID.副檔名 格式
+                    if (File.Exists(targetFilePath))
+                    {
+                        if (File.Exists(newFilePath))
+                        {
+                            File.Delete(newFilePath);
+                        }
+                        File.Move(targetFilePath, newFilePath);
+                    }
+
+                    // 3. 建立資料庫記錄
+                    // 建立新的下載路徑，使用 fileGuid + 副檔名
+                    string guidDownloadFilePath = Path.Combine(_downloadFilePath, targetDirectory, newFileName).Replace("\\", "/");
+
+                    var fileUpload = new FileUpload
+                    {
+                        FK_WebsiteId = GetWebsiteId(),
+                        FileGuid = fileGuid,
+                        GuidKey = Guid.NewGuid(),
+                        DownloadFileName = guidDownloadFilePath,
+                        OriginalFileName = options.FileName,
+                        ContentType = GetContentType(extension),
+                        Size = new FileInfo(newFilePath).Length,
+                        CreatorUserId = _userId,
+                        CreationTime = DateTime.Now
+                    };
+
+                    _dbContext.FileUploads.Add(fileUpload);
+                    _dbContext.SaveChanges();
                 }
-
-                // 產生GUID檔案名稱
-                string guidFileName = $"{fileGuid}{extension}";
-
-                // 產生GUID檔案的完整路徑
-                string directoryPath = Path.GetDirectoryName(fullPath) ?? string.Empty;
-                string guidFilePath = Path.Combine(directoryPath, guidFileName);
-
-                // 更名實體檔案為GUID檔案名稱
-                File.Move(fullPath, guidFilePath);
-
-                // 建立 FileUpload 記錄
-                FileUpload fileUpload = new FileUpload
-                {
-                    FK_WebsiteId = websiteId,
-                    GuidKey = Guid.NewGuid(),
-                    ContentType = GetContentType(fileInfo.Extension),
-                    OriginalFileName = options.FileName,
-                    DownloadFileName = Path.Combine(_downloadFilePath, options.DestinationDirectory.Path, guidFileName).Replace("\\", "/"),
-                    Size = fileInfo.Length,
-                    FileGuid = fileGuid,
-                    CreatorUserId = _userId,
-                    IsDeleted = false,
-                    CreationTime = DateTime.Now
-                };
-
-                // 將記錄新增到資料庫
-                _dbContext.FileUploads.Add(fileUpload);
-                _dbContext.SaveChanges();
+            }
+            catch (IOException ex)
+            {
+                // 處理 IO 相關的異常
+                System.Diagnostics.Debug.WriteLine($"IO error uploading file: {ex.Message}");
+                throw new FileSystemException(FileSystemErrorCode.NoAccess, $"檔案存取錯誤：{ex.Message}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // 處理權限相關的異常
+                System.Diagnostics.Debug.WriteLine($"Access error uploading file: {ex.Message}");
+                throw new FileSystemException(FileSystemErrorCode.NoAccess, $"沒有足夠權限存取檔案：{ex.Message}");
             }
             catch (Exception ex)
             {
-                // 記錄錯誤
-                System.Diagnostics.Debug.WriteLine($"Error inserting FileUpload record: {ex.Message}");
+                // 處理其他上傳過程中的異常
+                System.Diagnostics.Debug.WriteLine($"Error uploading file: {ex.Message}");
+                throw new FileSystemException(FileSystemErrorCode.Unspecified, $"上傳檔案時發生錯誤：{ex.Message}");
+            }
+        }
+
+        // 上傳發生錯誤時，還原備份檔案
+        private void RestoreBackupFile(string backupFilePath, string targetFilePath)
+        {
+            try
+            {
+                // 發生異常時還原備份
+                if (File.Exists(backupFilePath))
+                {
+                    if (File.Exists(targetFilePath))
+                    {
+                        File.Delete(targetFilePath);
+                    }
+                    File.Move(backupFilePath, targetFilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                // 記錄備份還原失敗，但不拋出新的異常
+                System.Diagnostics.Debug.WriteLine($"Failed to restore backup file: {ex.Message}");
             }
         }
 
         // 根據檔案副檔名取得 ContentType
         private string GetContentType(string extension)
         {
-            switch (extension.ToLower())
+            // 使用 FileExtensionContentTypeProvider 來取得對應的 MIME 類型
+            var provider = new FileExtensionContentTypeProvider();
+            string? contentType;
+            if (provider.TryGetContentType("file" + extension, out contentType))
             {
-                case ".jpg":
-                case ".jpeg":
-                    return "image/jpeg";
-                case ".png":
-                    return "image/png";
-                case ".gif":
-                    return "image/gif";
-                case ".pdf":
-                    return "application/pdf";
-                case ".doc":
-                    return "application/msword";
-                case ".docx":
-                    return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-                case ".xls":
-                    return "application/vnd.ms-excel";
-                case ".xlsx":
-                    return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-                case ".zip":
-                    return "application/zip";
-                case ".txt":
-                    return "text/plain";
-                default:
-                    return "application/octet-stream";
+                return contentType;
             }
+            return "application/octet-stream";
         }
 
         // 取得網站 ID
@@ -274,67 +381,99 @@ namespace EtheriT.Coker.Application.FileManagement
 
         public override void RenameItem(FileSystemRenameItemOptions options)
         {
-            string path = options.Item.Path;
-            bool isDirectory = options.Item.IsDirectory;
+            string oldPath = options.Item.Path;
             string newName = options.ItemNewName;
+            string directoryPath = Path.GetDirectoryName(oldPath) ?? string.Empty;
+            string newPath = Path.Combine(directoryPath, newName);
 
-            // 如果是目錄，使用基類方法處理
-            if (isDirectory)
+            // 檢查副檔名是否為允許的類型
+            string extension = Path.GetExtension(newName).ToLower();
+            List<string> allowedExtensions = new List<string>
             {
-                base.RenameItem(options);
-                return;
+                ".pdf",
+                ".dwg"
+                };
+            if (!allowedExtensions.Contains(extension.ToLower()))
+            {
+                throw new FileSystemException(FileSystemErrorCode.WrongFileExtension, $"僅支援更名為 {string.Join(", ", allowedExtensions)} 檔案");
             }
 
-            // 取得原始檔案的完整路徑
-            string fullPath = Path.Combine(RootDirectoryPath, PreparePath(path));
+            // 準備檔案路徑
+            string fullOldPath = Path.Combine(RootDirectoryPath, PreparePath(oldPath));
+            string fullNewPath = Path.Combine(RootDirectoryPath, PreparePath(newPath));
 
-            // 取得檔名並嘗試解析為 Guid
-            string fileName = Path.GetFileNameWithoutExtension(path);
-
-            if (!string.IsNullOrEmpty(fileName) && Guid.TryParse(fileName, out Guid guidKey))
+            // 檢查新檔案名稱是否已存在
+            if (File.Exists(fullNewPath))
             {
-                // 先執行基本的重命名操作
-                base.RenameItem(options);
+                throw new FileSystemException(FileSystemErrorCode.FileExists, $"{newName}已存在");
+            }
 
-                // 取得新檔案的資訊
-                string directory = Path.GetDirectoryName(fullPath) ?? string.Empty;
-                string newFullPath = Path.Combine(directory, newName);
-                FileInfo fileInfo = new FileInfo(newFullPath);
+            // 執行實際的檔案重新命名
+            try
+            {
+                // 取得來源檔案名稱（不含路徑）
+                string sourceFileName = Path.GetFileName(oldPath);
 
-                // 如果新檔案存在，更新資料庫記錄
-                if (fileInfo.Exists)
+                // 實際重新命名檔案
+                File.Move(fullOldPath, fullNewPath);
+
+                // 更新資料庫記錄
+                // 嘗試從檔名解析 Guid
+                string fileName = Path.GetFileNameWithoutExtension(oldPath);
+                bool isGuidFile = Guid.TryParse(fileName, out Guid guidKey);
+
+                // 取得網站 ID
+                long websiteId = GetWebsiteId();
+                if (websiteId <= 0)
                 {
-                    // 更新 FileUploads 表
-                    var fileUpload = _dbContext.FileUploads.FirstOrDefault(f => f.GuidKey == guidKey);
-                    if (fileUpload != null)
-                    {
-                        fileUpload.DownloadFileName = newName;
-                        fileUpload.LastModifierUserId = _userId;
-                        fileUpload.LastModificationTime = DateTime.Now;
+                    return; // 如果無法獲取網站 ID，則僅重新命名檔案，不更新資料庫
+                }                // 查找相關的 FileUpload 記錄
+                FileUpload? fileUpload = null;
 
-                        // 更新 FileBinds 表中的 MediaLink
-                        var fileBinds = _dbContext.FileBinds.Where(f => f.FK_FileUploadId == fileUpload.Id).ToList();
-                        foreach (var fileBind in fileBinds)
-                        {
-                            // 假設 MediaLink 包含檔案路徑，需要更新
-                            string mediaLink = fileBind.MediaLink;
-                            // 取代舊檔名為新檔名
-                            if (!string.IsNullOrEmpty(mediaLink))
-                            {
-                                string oldFileName = Path.GetFileName(path);
-                                string newMediaLink = mediaLink.Replace(oldFileName, newName);
-                                fileBind.MediaLink = newMediaLink;
-                            }
-                        }
+                // 如果檔名是 Guid，則用 FileGuid 查找
+                if (isGuidFile)
+                {
+                    fileUpload = _dbContext.FileUploads.FirstOrDefault(f => f.FileGuid == guidKey);
+                }
 
-                        _dbContext.SaveChanges();
-                    }
+                // 如果未找到，則嘗試通過 DownloadFileName 查找
+                if (fileUpload == null)
+                {
+                    string relativeOldPath = oldPath.Replace("\\", "/");
+                    string downloadPath = Path.Combine(_downloadFilePath, relativeOldPath).Replace("\\", "/");
+
+                    fileUpload = _dbContext.FileUploads
+                        .FirstOrDefault(f => f.FK_WebsiteId == websiteId &&
+                                          f.DownloadFileName != null &&
+                                          f.DownloadFileName.EndsWith(sourceFileName));
+                }
+
+                // 如果找到資料庫記錄，更新它
+                if (fileUpload != null)
+                {
+                    // 取得新的相對路徑和下載路徑
+                    string relativeNewPath = newPath.Replace("\\", "/");
+                    string newDownloadPath = Path.Combine(_downloadFilePath, relativeNewPath).Replace("\\", "/");
+
+                    // 更新記錄
+                    fileUpload.DownloadFileName = newDownloadPath;
+                    fileUpload.LastModifierUserId = _userId;
+                    fileUpload.LastModificationTime = DateTime.Now;
+
+                    // 儲存變更
+                    _dbContext.SaveChanges();
                 }
             }
-            else
+            catch (IOException ex)
             {
-                // 若無法識別為 Guid，則使用基類方法處理
-                base.RenameItem(options);
+                // 處理 IO 異常
+                throw new FileSystemException(FileSystemErrorCode.Unspecified, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                // 處理其他異常
+                System.Diagnostics.Debug.WriteLine($"Error renaming file: {ex.Message}");
+                throw new FileSystemException(FileSystemErrorCode.Unspecified, "重新命名檔案時發生錯誤");
             }
         }
     }

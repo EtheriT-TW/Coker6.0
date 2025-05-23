@@ -1,23 +1,113 @@
 ﻿@using DevExtreme.AspNet.Mvc
+@model EtheriT.Coker.Web.MVC.Models.FileManagement.IndexModel
 
 @{
     ViewData["Title"] = "FileManagement";
 }
 
-@(Html.DevExtreme().FileManager()
-    .FileSystemProvider(provider => provider.Remote()
-        .Url("/api/FileManagement/FileSystem"))
-    .Permissions(permissions =>
-    {
-        permissions.Download(true);
-        // uncomment the code below to enable file/folder management
-        permissions.Create(true);
-        // permissions.Copy(true);
-        permissions.Move(true);
-        permissions.Delete(true);
-        permissions.Rename(true);
-        permissions.Upload(true);
-    })
-    //.AllowedFileExtensions(new[] { ".js", ".json", ".css" })
+<div id="filemanager-container">
+    @(Html.DevExtreme().FileManager()
+        .ID("file-manager")
+        .Height("85vh")
+        .FileSystemProvider(provider => provider.Remote()
+                                                .Url("/api/FileManagement/FileSystem"))
+        .Permissions(permissions =>
+        {
+            permissions.Download(true);
+            // uncomment the code below to enable file/folder management
+            permissions.Create(true);
+            // permissions.Copy(true);
+            permissions.Move(true);
+            permissions.Delete(true);
+            permissions.Rename(true);
+            permissions.Upload(true);
+        })
+        .AllowedFileExtensions(Model.AllowFileExtension)
+        .ItemView(itemView =>
+        {
+            itemView.Details(details =>
+            {
+                details.Columns(columns =>
+                {
+                    columns.Add().DataField("OriginalFileName").Caption("上傳檔名");
+                    columns.Add().DataField("name").Caption("實體檔名");
+                    columns.Add().DataField("dateModified");
+                    columns.Add().DataField("size");
+                });
+            })
+            .ShowParentFolder(false);
+        })
+        .OnContentReady("fileManager_onContentReady")
+        .OnItemRenaming("myFileManager_onItemRenaming").OnItemRenamed("myFileManager_onItemRenaming")
+
+        .OnSelectedFileOpened(@<text>
+        function(e) {
+        var popup = $("#photo-popup").dxPopup("instance");
+        popup.option({
+        "title": e.file.name,
+        "contentTemplate": "<img src=\"" + e.file.dataItem.DownloadFileName + "\" class=\"photo-popup-image\" />"
+        });
+        popup.show();
+        }
+    </text>)
     )
-​
+
+    @(Html.DevExtreme().Popup()
+        .ID("photo-popup")
+        .MaxHeight(600)
+        .OnContentReady(@<text>
+        function(e) {
+        var $contentElement = e.component.content();
+        $contentElement.addClass("photo-popup-content");
+        }
+    </text>)
+        .HideOnOutsideClick(true)
+        .ShowCloseButton(true))
+</div>
+
+<script>
+    function myFileManager_onItemRenaming(e) {
+        console.log(e);
+    }
+
+    function fileManager_onContentReady(e) {
+          var fileManagerInstance = $("#file-manager").dxFileManager("instance");
+          var acceptString = "@Html.Raw(string.Join(",", Model.AllowContentType))";
+          fileManagerInstance._editing._fileUploader._uploaderInfos.forEach(u => u.fileUploader.option('accept', acceptString));
+    }
+</script>
+
+
+<script>
+    function onItemClick(e) {
+        const fileExtension = e.itemData.name.split('.').pop().toLowerCase();
+        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+
+        if (!e.itemData.isDirectory && imageExtensions.includes(fileExtension)) {
+            // 如果點擊的是圖片檔案，顯示大圖
+            const fileManager = $("#file-manager").dxFileManager("instance");
+
+            // 建立下載連結
+            const fileUrl = `/api/FileManagement/FileSystem?command=Download&arguments=${encodeURIComponent(e.itemData.relativeName || e.itemData.path)}`;
+
+            // 設置圖片路徑並顯示彈窗
+            $("#popup-image").attr("src", fileUrl);
+
+            // 更新標題並顯示彈窗
+            const popup = $("#image-popup").dxPopup("instance");
+            popup.option("title", `圖片預覽: ${e.itemData.name}`);
+            popup.show();
+        }
+    }
+</script>
+
+<style>
+    .image-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+        overflow: auto;
+    }
+</style>

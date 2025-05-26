@@ -13,10 +13,10 @@
                                                 .Url("/api/FileManagement/FileSystem"))
         .Permissions(permissions =>
         {
-            permissions.Download(true);
             // uncomment the code below to enable file/folder management
-            permissions.Create(true);
             // permissions.Copy(true);
+            permissions.Download(true);
+            permissions.Create(true);
             permissions.Move(true);
             permissions.Delete(true);
             permissions.Rename(true);
@@ -29,85 +29,65 @@
             {
                 details.Columns(columns =>
                 {
-                    columns.Add().DataField("OriginalFileName").Caption("上傳檔名");
                     columns.Add().DataField("name").Caption("實體檔名");
-                    columns.Add().DataField("dateModified");
+                    columns.Add().DataField("OriginalFileName").Caption("上傳檔名");
                     columns.Add().DataField("size");
+                    columns.Add().DataField("dateModified").DataType(GridColumnDataType.DateTime).Width(200);
                 });
             })
             .ShowParentFolder(false);
         })
         .OnContentReady("fileManager_onContentReady")
-        .OnItemRenaming("myFileManager_onItemRenaming").OnItemRenamed("myFileManager_onItemRenaming")
-
-        .OnSelectedFileOpened(@<text>
-        function(e) {
-        var popup = $("#photo-popup").dxPopup("instance");
-        popup.option({
-        "title": e.file.name,
-        "contentTemplate": "<img src=\"" + e.file.dataItem.DownloadFileName + "\" class=\"photo-popup-image\" />"
-        });
-        popup.show();
-        }
-    </text>)
+        .OnSelectedFileOpened("fileManager_onSelectedFileOpened")
+        .OnItemDeleting("fileManager_onItemDeleting")
     )
 
     @(Html.DevExtreme().Popup()
         .ID("photo-popup")
         .MaxHeight(600)
-        .OnContentReady(@<text>
-        function(e) {
-        var $contentElement = e.component.content();
-        $contentElement.addClass("photo-popup-content");
-        }
-    </text>)
+        .OnContentReady("popup_photo_onContentReady")
         .HideOnOutsideClick(true)
         .ShowCloseButton(true))
 </div>
 
 <script>
-    function myFileManager_onItemRenaming(e) {
-        console.log(e);
+    function fileManager_onSelectedFileOpened(e) {
+        const fileExtension = e.file.name.split('.').pop().toLowerCase();
+        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+        const displayFileName = e.file.dataItem.OriginalFileName
+                                  ? `${e.file.name} (${e.file.dataItem.OriginalFileName})`
+                                  : e.file.name;
+
+        // 如果 DownloadFileName 為空，則實體檔案路徑
+        const imageSource = e.file.dataItem.DownloadFileName ||
+                                 @Html.Raw($"'{Model.UploadFilePathBase.ToString()}'") +
+                                 (e.file.parentPath ? e.file.parentPath + '/' : '') +
+                                 e.file.dataItem.name;
+
+        if (imageExtensions.includes(fileExtension)) {
+            // 圖片檔案的處理：使用DevExtreme().Popup()顯示
+            var popup = $("#photo-popup").dxPopup("instance");
+            popup.option({
+                "title": displayFileName,
+                "contentTemplate": "<img src=\"" + imageSource + "\" class=\"photo-popup-image\" />"
+            });
+            popup.show();
+        } else {
+            // 非圖片檔案：一律開啟新視窗
+            window.open(imageSource, '_blank');
+        }
     }
 
     function fileManager_onContentReady(e) {
           var fileManagerInstance = $("#file-manager").dxFileManager("instance");
           var acceptString = "@Html.Raw(string.Join(",", Model.AllowContentType))";
+
+          // 設定上傳檔案的類型(client端)
           fileManagerInstance._editing._fileUploader._uploaderInfos.forEach(u => u.fileUploader.option('accept', acceptString));
     }
-</script>
 
-
-<script>
-    function onItemClick(e) {
-        const fileExtension = e.itemData.name.split('.').pop().toLowerCase();
-        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
-
-        if (!e.itemData.isDirectory && imageExtensions.includes(fileExtension)) {
-            // 如果點擊的是圖片檔案，顯示大圖
-            const fileManager = $("#file-manager").dxFileManager("instance");
-
-            // 建立下載連結
-            const fileUrl = `/api/FileManagement/FileSystem?command=Download&arguments=${encodeURIComponent(e.itemData.relativeName || e.itemData.path)}`;
-
-            // 設置圖片路徑並顯示彈窗
-            $("#popup-image").attr("src", fileUrl);
-
-            // 更新標題並顯示彈窗
-            const popup = $("#image-popup").dxPopup("instance");
-            popup.option("title", `圖片預覽: ${e.itemData.name}`);
-            popup.show();
-        }
+    function popup_photo_onContentReady(e) {
+          var $contentElement = e.component.content();
+          $contentElement.addClass("photo-popup-content");
     }
 </script>
-
-<style>
-    .image-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100%;
-        width: 100%;
-        overflow: auto;
-    }
-</style>

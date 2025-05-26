@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using EtheriT.Coker.Application;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -10,10 +11,13 @@ namespace EtheriT.Coker.Web.MVC.Controllers
     public class FileManagementController : Controller
     {
         private readonly IConfiguration _configuration;
+        private readonly LoginUserData _loginUserData;
 
-        public FileManagementController(IConfiguration configuration)
+        public FileManagementController(IConfiguration configuration,
+                                        LoginUserData loginUserData)
         {
             _configuration = configuration;
+            _loginUserData = loginUserData;
         }
 
         public IActionResult Index()
@@ -30,6 +34,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                                                         .OrderBy(x => x)
                                                         .Distinct()
                                                         .ToList();
+
+            string orgName = _loginUserData.GetWebsiteOrgName().Result;
+            model.UploadFilePathBase = $"/upload/{orgName}/";
 
             return View(model);
         }

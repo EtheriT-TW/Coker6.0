@@ -51,18 +51,59 @@
 </div>
 
 <script>
+    function fileManager_onItemDeleting(e) {
+        if (e.item && !e.item.isDirectory) {
+            // 取得要刪除的檔案路徑
+            var filePath = e.item.relativeName || e.item.name;
+
+            // 使用同步 AJAX 檢查檔案是否有關聯
+            var hasBindings = false;
+            var checkSuccess = false;
+
+            $.ajax({
+                url: '/api/FileManagement/CheckFileHasBindings',
+                type: 'POST',
+                contentType: 'application/json',
+                headers: co.Data.Header,
+                data: JSON.stringify(filePath),
+                async: false, // 設定為同步請求
+                success: function (result) {
+                    hasBindings = result;
+                    checkSuccess = true;
+                },
+                error: function () {
+                    // AJAX 錯誤時，為安全起見，假設有關聯
+                    hasBindings = true;
+                    checkSuccess = true;
+                }
+            });
+
+            // 如果檢查成功且檔案有關聯，則詢問用戶確認
+            if (checkSuccess && hasBindings) {
+                // 使用內建的 confirm 對話框（這是同步的）
+                var confirmed = confirm(e.item.name + " 此檔案正被系統使用中，確定要刪除嗎？刪除後不可復原！");
+                if (!confirmed) {
+                    e.cancel = true; // 用戶取消刪除
+                    e.errorText = "取消刪除";
+                    return;
+                }
+            }
+            // 如果用戶確認或檔案沒有關聯，讓預設刪除行為繼續執行
+        }
+    }
+
     function fileManager_onSelectedFileOpened(e) {
         const fileExtension = e.file.name.split('.').pop().toLowerCase();
         const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
         const displayFileName = e.file.dataItem.OriginalFileName
-                                  ? `${e.file.name} (${e.file.dataItem.OriginalFileName})`
-                                  : e.file.name;
+            ? `${e.file.name} (${e.file.dataItem.OriginalFileName})`
+            : e.file.name;
 
         // 如果 DownloadFileName 為空，則實體檔案路徑
         const imageSource = e.file.dataItem.DownloadFileName ||
-                                 @Html.Raw($"'{Model.UploadFilePathBase.ToString()}'") +
-                                 (e.file.parentPath ? e.file.parentPath + '/' : '') +
-                                 e.file.dataItem.name;
+                            @Html.Raw($"'{Model.UploadFilePathBase.ToString()}'") +
+                                    (e.file.parentPath ? e.file.parentPath + '/' : '') +
+                                    e.file.dataItem.name;
 
         if (imageExtensions.includes(fileExtension)) {
             // 圖片檔案的處理：使用DevExtreme().Popup()顯示
@@ -79,15 +120,15 @@
     }
 
     function fileManager_onContentReady(e) {
-          var fileManagerInstance = $("#file-manager").dxFileManager("instance");
-          var acceptString = "@Html.Raw(string.Join(",", Model.AllowContentType))";
+        var fileManagerInstance = $("#file-manager").dxFileManager("instance");
+        var acceptString = "@Html.Raw(string.Join(",", Model.AllowContentType))";
 
-          // 設定上傳檔案的類型(client端)
-          fileManagerInstance._editing._fileUploader._uploaderInfos.forEach(u => u.fileUploader.option('accept', acceptString));
+        // 設定上傳檔案的類型(client端)
+        fileManagerInstance._editing._fileUploader._uploaderInfos.forEach(u => u.fileUploader.option('accept', acceptString));
     }
 
     function popup_photo_onContentReady(e) {
-          var $contentElement = e.component.content();
-          $contentElement.addClass("photo-popup-content");
+        var $contentElement = e.component.content();
+        $contentElement.addClass("photo-popup-content");
     }
 </script>

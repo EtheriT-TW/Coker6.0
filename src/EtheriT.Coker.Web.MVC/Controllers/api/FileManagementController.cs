@@ -24,5 +24,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return _fileManagementAppService.FileSystem(command, arguments, this.Request);
         }
+
+        [HttpPost]
+        public async Task<bool> CheckFileHasBindings([FromBody] string filePath)
+        {
+            return await _fileManagementAppService.CheckFileHasBindingsAsync(filePath);
+        }
     }
 }

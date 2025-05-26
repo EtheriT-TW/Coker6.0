@@ -11,5 +11,6 @@ namespace EtheriT.Coker.Application.Shared.FileManagement
     public interface IFileManagementAppService
     {
         object FileSystem(FileSystemCommand command, string arguments, HttpRequest request);
+        Task<bool> CheckFileHasBindingsAsync(string filePath);
     }
 }

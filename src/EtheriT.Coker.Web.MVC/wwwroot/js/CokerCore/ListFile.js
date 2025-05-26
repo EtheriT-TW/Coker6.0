@@ -354,11 +354,11 @@
         const $previewFrame = $parent.find(".preview_frame");
         let file_num = $parent.data("file_num");
         function previewFrameClear() {
-            $previewFrame.find(".default_frame").addClass("d-flex");
-            $previewFrame.find(".upload_frame").addClass("d-none");
-            $previewFrame.find(".media_frame").removeClass("d-flex");
-            $previewFrame.find(".youtube_frame").removeClass("d-flex");
-            $previewFrame.find(".select_frame").removeClass("d-flex");
+            //$previewFrame.find(".default_frame").removeClass("d-none").addClass("d-flex");
+            $previewFrame.find(".upload_frame").removeClass("d-flex").addClass("d-none");
+            $previewFrame.find(".media_frame").removeClass("d-flex").addClass("d-none");
+            $previewFrame.find(".youtube_frame").removeClass("d-flex").addClass("d-none");
+            $previewFrame.find(".select_frame").removeClass("d-flex").addClass("d-none");
         }
         previewFrameClear();
         if ($self.data("edit")) {
@@ -383,13 +383,13 @@
                 $(this).data("edit", false);
             });
             $self.data("edit", true)
-            $parent.find(".default_frame").removeClass("d-flex");
+            //$parent.find(".default_frame").removeClass("d-flex");
             $parent.find(".youtube_preview").empty();
             $parent.find(".media_preview > div").children().remove();
             switch ($self.data("uploadtype")) {
                 case 0:
                     var $select_frame = $parent.find(".select_frame")
-                    $select_frame.addClass("d-flex");
+                    $select_frame.removeClass("d-none").addClass("d-flex");
                     $select_frame.find("button").each(function () {
                         $(this).on("click", function (e) {
                             e.preventDefault();
@@ -409,7 +409,7 @@
                         if (typeof ($self.data("id")) != "undefined") {
                             var name = total_files.find(item => item["Id"] == $self.data("id"))["Name"];
                             var file = total_files.find(item => item["Id"] == $self.data("id"))["File"];
-                            $parent.find(".media_frame").addClass("d-flex");
+                            $parent.find(".media_frame").removeClass("d-none").addClass("d-flex");
                             $parent.find(".media_frame").find("input").val(name);
                             $parent.find(".media_preview > div").children().remove();
                             $parent.find(".media_preview > div").append(`<img src="${file}" class=""></img>`);
@@ -422,7 +422,7 @@
                                 var link = data["Link"];
                                 $parent.find(".media_preview > div").append(`<img src="${link}" class=""></img>`);
                             }
-                            $parent.find(".media_frame").addClass("d-flex");
+                            $parent.find(".media_frame").removeClass("d-none").addClass("d-flex");
                         }
                     }
                     break;
@@ -449,7 +449,7 @@
                         if (typeof ($self.data("id")) != "undefined") {
                             var name = total_files.find(item => item["Id"] == $self.data("id"))["Name"];
                             var file = total_files.find(item => item["Id"] == $self.data("id"))["File"];
-                            $parent.find(".media_frame").addClass("d-flex");
+                            $parent.find(".media_frame").removeClass("d-none").addClass("d-flex");
                             $parent.find(".media_frame").find("input").val(name);
                             $parent.find(".media_preview > div").children().remove();
                             $parent.find(".media_preview > div").append(`<video src="${file}" class="h-100 w-100" controls preload="metadata"></video>`);
@@ -466,13 +466,13 @@
                                         preload: "metadata",
                                         src: objectUrl
                                     });
-                                    $parent.find(".media_frame").addClass("d-flex");
+                                    $parent.find(".media_frame").removeClass("d-none").addClass("d-flex");
                                     $parent.find(".media_preview > div").append(video);
                                 }
                                 $parent.find(".upload_frame").find("span").text(file.name);
                                 $parent.find(".media_frame").find("input").val(total_files.find(item => item["TempId"] == $self.data("tempid"))["Name"]);
                             }
-                            $parent.find(".media_frame").addClass("d-flex");
+                            $parent.find(".media_frame").removeClass("d-none").addClass("d-flex");
                         }
                     }
                     break;
@@ -493,14 +493,14 @@
                         $(".youtube_preview").children("*").remove();
                         $(".youtube_preview").append(error_html);
                     }
-                    $parent.find(".youtube_frame").addClass("d-flex");
+                    $parent.find(".youtube_frame").removeClass("d-none").addClass("d-flex");
                     break;
                 case 5:
                     if ($self.find(".title").text() == "") {
                         upload_file = co.File.UploadFileInit("ProdFile");
                         $parent.find(".upload_frame").removeClass("d-none");
                         $parent.find(".image-preview").addClass("d-none");
-                    } else $parent.find(".default_frame").addClass("d-flex");
+                    } //else $parent.find(".default_frame").removeClass("d-none").addClass("d-flex");
                     break;
             }
         }

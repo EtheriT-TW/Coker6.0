@@ -15,6 +15,11 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using System.Web;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Files;
+using EtheriT.Coker.Application.Dto.Files;
+using EtheriT.Coker.Application.Shared.Dto.Templates;
+using EtheriT.Coker.Application.Templates;
+using System.Text.RegularExpressions;
+using EtheriT.Coker.Application.Shared.Templates;
 
 namespace EtheriT.Coker.Application.HtmlContent
 {
@@ -23,20 +28,21 @@ namespace EtheriT.Coker.Application.HtmlContent
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
         private readonly IMapper mapper;
-        private readonly string ApplicationName;
         private readonly IFileUploadAppService fileUploadAppService;
+        private readonly ITemplatesApplicationService templatesApplicationService;
         public HtmlContentAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IMapper mapper,
-            IFileUploadAppService fileUploadAppService
+            IFileUploadAppService fileUploadAppService,
+            ITemplatesApplicationService templatesApplicationService
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.mapper = mapper;
             this.fileUploadAppService = fileUploadAppService;
-            ApplicationName = "HtmlContent";
+            this.templatesApplicationService = templatesApplicationService;
         }
         public async Task<ResponseMessageDto> AddUp(HtmlContentDto dto)
         {
@@ -355,6 +361,79 @@ namespace EtheriT.Coker.Application.HtmlContent
             {
                 response.Success = false;
                 response.Error = e.Message;
+            }
+            return response;
+        }
+        public async Task<UploadFileOutputDto> getHtmlContentFiles(GetFileListDto dto)
+        {
+            UploadFileOutputDto response = new UploadFileOutputDto
+            {
+                Files = new List<FileItemDto>()
+            };
+            try
+            {
+                long websiteId = await loginUserData.GetWebsiteId();
+                string orgName = await loginUserData.GetWebsiteOrgName();
+                string html = string.Empty;
+                switch (dto.type)
+                {
+                    case GrapesPageTypeEnum.頁面:
+                        var menu = await db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
+                        if (menu != null) html = menu.SaveCss + menu.SaveHtml;
+                        break;
+                    case GrapesPageTypeEnum.文章:
+                        var art = await db.Article.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
+                        if (art != null) html = art.SaveCss + art.SaveHtml;
+                        break;
+                    case GrapesPageTypeEnum.商品:
+                        var prod = await db.Prods.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
+                        if (prod != null) html = prod.SaveCss + prod.SaveHtml;
+                        break;
+                    case GrapesPageTypeEnum.技術文件:
+                        var tech = await db.TechnicalCertificates.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
+                        if (tech != null) html = tech.Css + tech.Html;
+                        break;
+                    case GrapesPageTypeEnum.頁尾:
+                        var footer = await templatesApplicationService.GetDefaultFooterTemplatesAsync();
+                        if (footer != null && footer.Success && footer.Object != null) html =
+                                 ((TemplateSectionsDto)footer.Object).footerTemplateDto?.css ?? "" +
+                                ((TemplateSectionsDto)footer.Object).footerTemplateDto?.html ?? "";
+                        break;
+                }
+                if (!string.IsNullOrEmpty(html))
+                {
+                    List<string> list = new List<string>();
+                    Regex r = new Regex(@"\/upload\/(.*?)(\.)");
+                    var match = r.Match(html);
+                    while (match.Success)
+                    {
+                        var s = match.Value.ToString().Split("/");
+                        if (s.Length != 0)
+                        {
+                            list.Add(s[s.Length - 1].Replace(".", "").ToLower());
+                        }
+                        match = match.NextMatch();
+                    }
+                    var files = db.FileUploads
+                                .Where(e => e.FK_WebsiteId == websiteId)
+                                .Where(e => !e.IsDeleted)
+                                .Where(e => e.FileGuid != null && list.Contains(e.FileGuid.ToString().ToLower()));
+                    var result = from file in files
+                                 select new FileItemDto
+                                 {
+                                     Guid = file.GuidKey,
+                                     Name = file.OriginalFileName,
+                                     Path = (file.DownloadFileName ?? "").Replace(@"\", "/").Replace("/upload/", $"/upload/{orgName}/"),
+                                 };
+                    response.Files = await result.ToListAsync();
+                }
+                else response.Files = new List<FileItemDto>();
+
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
             }
             return response;
         }

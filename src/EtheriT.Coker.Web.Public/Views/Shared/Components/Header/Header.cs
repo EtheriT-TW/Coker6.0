@@ -95,25 +95,30 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     switch (defaultData.Id)
                     {
                         default:
-                            if (headerViewModel.templates != null && headerViewModel.templates.templateSections.Exists(e => e.sectionType == SectionTypeEnum.Banner))
+                            if (headerViewModel.templates != null && headerViewModel.templates.templateSections.Exists(e => e.sectionType == SectionTypeEnum.表頭))
                             {
-                                var bannerSection = headerViewModel.templates.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.Banner);
+                                var bannerSection = headerViewModel.templates.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.表頭);
                                 if (bannerSection != null) {
-                                    var list = JsonConvert.DeserializeObject<TemplateBanner>(bannerSection.ContentConfig);
-                                    if (list != null && list.Items.Count > 0)
+                                    var list = JsonConvert.DeserializeObject<HeaderContentConfigDto>(bannerSection.ContentConfig);
+                                    if (list != null )
                                     {
-                                        foreach (var item in list.Items)
+                                        list.ShowMarquee = headerViewModel.ShowMarquee;
+                                        list.ShowPagePath = headerViewModel.ShowPagePath;
+                                        if (list.Sliders.Count > 0)
                                         {
-                                            if (item.DisktopImage != null)
+                                            foreach (var item in list.Sliders)
                                             {
-                                                item.DisktopImage = item.DisktopImage.Replace(pathReplace, uploadPath);
+                                                if (item.DesktopImage != null)
+                                                {
+                                                    item.DesktopImage = item.DesktopImage.Replace(pathReplace, uploadPath);
+                                                }
+                                                if (item.MobileImage != null)
+                                                {
+                                                    item.MobileImage = item.MobileImage.Replace(pathReplace, uploadPath);
+                                                }
                                             }
-                                            if (item.PhoneImage != null)
-                                            {
-                                                item.PhoneImage = item.PhoneImage.Replace(pathReplace, uploadPath);
-                                            }
+                                            headerViewModel.Bannners = list.Sliders;
                                         }
-                                        headerViewModel.Bannners = list.Items;
                                     }
                                 }
                             } 
@@ -173,18 +178,18 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     var phoneVersion = baseName.Replace(".", "_phone.");
                                     handledSet.Add(fileName);
                                     handledSet.Add(phoneVersion);
-                                    var banner = new TemplateBannerItem();
+                                    var banner = new SliderDto();
                                     if (!isPhone && fileDict.ContainsKey(fileName))
                                     {
-                                        banner.DisktopImage = fileDict[fileName];
+                                        banner.DesktopImage = fileDict[fileName];
                                     }
 
                                     if (fileDict.ContainsKey(phoneVersion))
                                     {
-                                        banner.PhoneImage = fileDict[phoneVersion];
+                                        banner.MobileImage = fileDict[phoneVersion];
                                     }
 
-                                    if (banner.DisktopImage != null || banner.PhoneImage != null)
+                                    if (banner.DesktopImage != null || banner.MobileImage != null)
                                     {
                                         headerViewModel.Bannners.Add(banner);
                                     }

@@ -1,7 +1,9 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.EnterAd;
+using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,5 +19,6 @@ namespace EtheriT.Coker.Application.Shared.HtmlContent
         public Task<JsonResult> GetDisplay(long webid, int type, int number);
         public Task<ResponseMessageDto> Delete(long Id);
         public Task<HtmlContentTypeDto> GetTypeList();
+        public Task<UploadFileOutputDto> getHtmlContentFiles(GetFileListDto dto);
     }
 }

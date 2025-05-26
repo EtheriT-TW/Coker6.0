@@ -11,6 +11,14 @@
         padding: 0.5rem;
     }
 
+.barcode_svg {
+    max-height: 7.5rem;
+}
+
+    .barcode_svg > g > rect {
+        height: 5rem;
+    }
+
 .red_text {
     color: var(--red-number);
 }
@@ -174,6 +182,20 @@
         font-family: 'Font Awesome 6 Free';
         font-weight: 900;
         content: "\f217 ";
+    }
+
+.btn_buyInfo {
+    width: calc(100% / 12 * 3 - 1.25rem);
+    min-width: fit-content;
+    padding-right: 2.5rem;
+    padding-left: 2.5rem;
+    color: black;
+    background-color: rgba(255,193,7);
+}
+
+    .btn_buyInfo:hover {
+        color: black !important;
+        background-color: rgba(255,193,7) !important;
     }
 
 #ResetEmailModal > .modal-dialog > .modal-content {

@@ -8,8 +8,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Templates
 {
     public class HeaderContentConfigDto
     {
-        public bool showPagePath { get; set; } = true;
-        public bool showMarquee { get; set; } = true;
-        public List<SliderDto> sliders { get; set; } = new List<SliderDto>();
+        public bool ShowPagePath { get; set; } = true;
+        public bool ShowMarquee { get; set; } = true;
+        public List<SliderDto> Sliders { get; set; } = new List<SliderDto>();
     }
 }

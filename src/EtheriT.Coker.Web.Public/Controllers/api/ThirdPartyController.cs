@@ -1,6 +1,7 @@
 ﻿using DevExpress.XtraRichEdit.Commands.Internal;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto;
@@ -39,7 +40,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             this._httpContextAccessor = _httpContextAccessor;
         }
         [HttpGet]
-        public async Task<ResponseMessageDto> PayRequest(long ohid, string paytype)
+        public async Task<ResponseMessageDto> PayRequest(long ohid, string paytype, bool? support)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             switch (paytype)
@@ -52,21 +53,26 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                     return await linePayAppService.LinePayRequest(ohid);
                 case "4":
                 case "ECPay":
-                    return await ecPayAppService.ECPayGetToken(ohid);
+                    return await ecPayAppService.ECPayGetTokenById(ohid, support ?? false);
             }
             response.Success = false;
             response.Message = "支付方式不存在";
             return response;
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> ECPayGetPaymentInfo(long ohid)
+        {
+            return await ecPayAppService.ECPayGetPaymentInfo(ohid);
         }
         [HttpPost]
         public async Task<ResponseMessageDto> ECPayCreatePayment(ECPayPaymentInfoDto PaymentInfo)
         {
             return await ecPayAppService.ECPayCreatePayment(PaymentInfo);
         }
-        [HttpGet]
-        public async Task<ResponseMessageDto> ECPayGetToken(long ohid)
+        [HttpPost]
+        public async Task<ResponseMessageDto> ECPayGetToken(OrderHeaderAddDto dto)
         {
-            return await ecPayAppService.ECPayGetToken(ohid);
+            return await ecPayAppService.ECPayGetToken(dto);
         }
         [HttpGet]
         public async Task<IActionResult> LinePayConfirm(string transactionId, string orderId)
@@ -111,7 +117,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await ecPayAppService.ECPayOrderResult(ResultData);
         }
         [HttpPost]
-        public async Task<String> ECPayReturn(ECPayResponseDto ResultResponseData)
+        public async Task<String> ECPayReturn([FromBody] ECPayReturnResponseDto ResultResponseData)
         {
             return await ecPayAppService.ECPayReturn(ResultResponseData);
         }

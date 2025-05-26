@@ -57,6 +57,14 @@ function PageReady() {
                 contentType: 'application/json; charset=utf-8',
                 data: { ohid: ohid, payment: payment },
             });
+        },
+        GetECPayPaymentInfo: function (ohid) {
+            return $.ajax({
+                url: "/api/ThirdParty/ECPayGetPaymentInfo",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                data: { ohid: ohid },
+            });
         }
     }
 
@@ -376,8 +384,18 @@ function HistoryTemplateDataInsert(Datas) {
                 frame.find(".state button").data("ohid", order_header.id)
                 frame.find(".state .btn_cancelOrder").on("click", function () {
                     var $this = $(this);
-                    var confirm_text = [2, 6].includes(order_header.state) ? order_header.thirdParties != 1 ? "?(若已付款將退回款項)" : "？(退款事宜請聯繫客服處理)" : "?";
-                    Coker.sweet.confirm("取消訂單", `確定要取消這筆訂單${confirm_text}`, "確定", "取消", function () {
+                    var confirm_text = "?";
+                    if ([2, 6].includes(order_header.state)) {
+                        if (
+                            order_header.thirdParties === 1 ||
+                            (order_header.thirdParties === 4 && [21, 22, 23].includes(order_header.paymentCode))
+                        ) {
+                            confirm_text += "<br><br><span class='fw-bold text-danger'>※退款事宜請聯繫客服處理※</span>";
+                        } else {
+                            confirm_text += "<br><br><span class='fw-bold'>※若已付款將退回款項※</span>";
+                        }
+                    }
+                    Coker.sweet.confirm("取消訂單", `<div>確定要取消這筆訂單${confirm_text}</div>`, "確定", "取消", function () {
                         Coker.sweet.loading();
                         Coker.Member.CancelOrder($this.data("ohid"), order_header.thirdParties).done(function (result) {
                             if (result.success) {
@@ -474,13 +492,37 @@ function HistoryTemplateDataInsert(Datas) {
                         var ohidstr = `000000000${result.message}`.substring(result.message.length);
                         window.location.href = `/${OrgName}/ShoppingCar?reorder${ohidstr}`;
                     } else {
-                        if (result.message == "該商品規格庫存量已在瀏覽期間被更動，按下確定後將重整頁面。") {
-                            Coker.sweet.warning("商品庫存不足", result.message, null)
-                        }
+                        Coker.sweet.warning("商品庫存不足", result.message, null)
                     }
                 });
             })
         })
+
+        if (order_header.state == 6 && [21, 22, 23].includes(order_header.paymentCode)) {
+            frame.find(".btn_buyInfo").data("ohid", order_header.id);
+            frame.find(".btn_buyInfo").removeClass("d-none");
+            frame.find(".btn_buyInfo").on("click", function () {
+                var $this = $(this);
+                Coker.Member.GetECPayPaymentInfo($this.data("ohid")).done(function (result) {
+                    if (result.success) {
+                        if (order_header.paymentCode == 22) {
+                            var message = result.message.split(",");
+                            co.sweet.confirm("訂單付款資訊", message[0], "確定", "", null);
+                            $.getScript("https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js", function () {
+                                JsBarcode("#barcode1", message[1], { format: "CODE39", displayValue: true });
+                                JsBarcode("#barcode2", message[2], { format: "CODE39", displayValue: true });
+                                JsBarcode("#barcode3", message[3], { format: "CODE39", displayValue: true });
+                            });
+                        } else {
+                            co.sweet.confirm("訂單付款資訊", result.message, "確定", "", null);
+                        }
+                    } else {
+                        Coker.sweet.warning("取得付款資訊失敗", result.message, null)
+                    }
+                });
+            })
+        }
+
         $.each(order_details, function (index, detail) {
             if (detail != null) {
                 var list_frame = $($("#Template_Order_Details_List").html()).clone();
@@ -522,7 +564,15 @@ function OrderRepay(datas) {
 
     Coker.Member.OrderRepay(data).done(function (result) {
         if (result.success) {
-            Coker.ThirdParty.Request(datas.orderHeader.id, datas.orderHeader.thirdParties).done(function (result) {
+            var support = false;
+            if (window.ApplePaySession && typeof ApplePaySession.canMakePayments === "function") {
+                ApplePaySession.canMakePayments().then(function (canPay) {
+                    if (canPay) {
+                        support = true;
+                    }
+                });
+            }
+            Coker.ThirdParty.Request(datas.orderHeader.id, datas.orderHeader.thirdParties, support).done(function (result) {
                 if (result.success) {
                     if (datas.orderHeader.thirdParties != 4) {
                         localStorage.setItem("lastSaveTime", new Date().toISOString())
@@ -534,7 +584,7 @@ function OrderRepay(datas) {
                             console.log("ServerType", $("#ECPayModal").data("server-type"))
                             ECPay.initialize($("#ECPayModal").data("server-type"), 1, function (errMsg) {
                                 if (errMsg == null) {
-                                    ECPay.createPayment(result.message, ECPay.Language.zhTW, function (errMsg) {
+                                    ECPay.createPayment(result.message.split(",")[1], ECPay.Language.zhTW, function (errMsg) {
                                         if (errMsg != null) {
                                             console.log(`Create Payment errMsg : ${errMsg}`)
                                             co.sweet.error("串接綠界發生錯誤");
@@ -558,44 +608,49 @@ function OrderRepay(datas) {
                                             ECPayModal.hide();
                                             co.sweet.loading();
                                             co.ThirdParty.ECPayCreatePayment(paymentInfo).done(function (result) {
-                                                var result_obj = JSON.parse(result.message);
-                                                switch (result_obj.OrderInfo.PaymentType) {
-                                                    case null:
-                                                        localStorage.setItem("lastSaveTime", new Date().toISOString())
-                                                        localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
-                                                        var VerifyURL = result_obj.ThreeDInfo?.ThreeDURL ?? result_obj.UnionPayInfo?.UnionPayURL;
-                                                        co.sweet.confirm("即將進入驗證流程", `<div class="text-start">如未自動跳轉，請點此<a class="fw-bold text-primary px-1" href="${VerifyURL} target="_blank" title="連結至：驗證頁面(開新視窗)">連結</a>進行跳轉</div>`, "確定", "", function () {
-                                                            window.open(VerifyURL, "_blank");
-                                                            location.reload();
-                                                        });
-                                                        break;
-                                                    case "ATM":
-                                                        var ATMInfo = result_obj.ATMInfo;
-                                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費銀行代碼：${ATMInfo.BankCode}<br>繳費虛擬帳號：${ATMInfo.vAccount}<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${ATMInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", function () {
-                                                            location.reload();
-                                                        });
-                                                        break;
-                                                    case "CVS":
-                                                        var CVSInfo = result_obj.CVSInfo;
-                                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費代碼：${CVSInfo.PaymentNo}<br>或點此<a class="fw-bold text-primary px-1" href="${CVSInfo.PaymentURL} target="_blank" title="連結至：繳費條碼(開新分頁)">連結</a>取得繳費條碼<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${CVSInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", function () {
-                                                            location.reload();
-                                                        });
-                                                        break;
-                                                    case "BARCODE":
-                                                        var BarcodeInfo = result_obj.BarcodeInfo;
-                                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="w-100"></svg><svg id="barcode2" class="w-100"></svg><svg id="barcode3" class="w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", function () {
-                                                            location.reload();
-                                                        });
-                                                        $.getScript("https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js", function () {
-                                                            JsBarcode("#barcode1", BarcodeInfo.Barcode1, { format: "CODE39", displayValue: true });
-                                                            JsBarcode("#barcode2", BarcodeInfo.Barcode2, { format: "CODE39", displayValue: true });
-                                                            JsBarcode("#barcode3", BarcodeInfo.Barcode3, { format: "CODE39", displayValue: true });
-                                                        });
-                                                        break;
-                                                    case "APPLEPAY":
-                                                        //var BarcodeInfo = result_obj.BarcodeInfo;
-                                                        //co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="w-100"></svg><svg id="barcode2" class="w-100"></svg><svg id="barcode3" class="w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", null);
-                                                        break;
+                                                if (result.success) {
+                                                    var result_obj = JSON.parse(result.message);
+                                                    switch (result_obj.OrderInfo.PaymentType) {
+                                                        case null:
+                                                            localStorage.setItem("lastSaveTime", new Date().toISOString())
+                                                            localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
+                                                            var VerifyURL = result_obj.ThreeDInfo?.ThreeDURL ?? result_obj.UnionPayInfo?.UnionPayURL;
+                                                            co.sweet.confirm("即將進入驗證流程", `<div class="text-start">如未自動跳轉，請點此<a class="fw-bold text-primary px-1" href="${VerifyURL}" target="_blank" title="連結至：驗證頁面(開新視窗)">連結</a>進行跳轉</div>`, "確定", "", function () {
+                                                                window.open(VerifyURL, "_blank");
+                                                                location.reload();
+                                                            });
+                                                            break;
+                                                        case "ATM":
+                                                            var ATMInfo = result_obj.ATMInfo;
+                                                            co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費銀行代碼：${ATMInfo.BankCode}<br>繳費虛擬帳號：${ATMInfo.vAccount}<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${ATMInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", function () {
+                                                                location.reload();
+                                                            });
+                                                            break;
+                                                        case "CVS":
+                                                            var CVSInfo = result_obj.CVSInfo;
+                                                            co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費代碼：${CVSInfo.PaymentNo}<br>或點此<a class="fw-bold text-primary px-1" href="${CVSInfo.PaymentURL}" target="_blank" title="連結至：繳費條碼(開新分頁)">連結</a>取得繳費條碼<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${CVSInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", function () {
+                                                                location.reload();
+                                                            });
+                                                            break;
+                                                        case "BARCODE":
+                                                            var BarcodeInfo = result_obj.BarcodeInfo;
+                                                            co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="w-100"></svg><svg id="barcode2" class="w-100"></svg><svg id="barcode3" class="w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", function () {
+                                                                location.reload();
+                                                            });
+                                                            $.getScript("https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js", function () {
+                                                                JsBarcode("#barcode1", BarcodeInfo.Barcode1, { format: "CODE39", displayValue: true });
+                                                                JsBarcode("#barcode2", BarcodeInfo.Barcode2, { format: "CODE39", displayValue: true });
+                                                                JsBarcode("#barcode3", BarcodeInfo.Barcode3, { format: "CODE39", displayValue: true });
+                                                            });
+                                                            break;
+                                                        case "ApplePay":
+                                                            co.sweet.confirm("訂單已成立，謝謝您的訂購！", "", "確定", "", function () {
+                                                                location.reload();
+                                                            });
+                                                            break;
+                                                    }
+                                                } else {
+                                                    co.sweet.confirm("付款發生未知錯誤。");
                                                 }
                                             })
                                         } else {

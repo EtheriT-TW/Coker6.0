@@ -49,12 +49,6 @@ namespace EtheriT.Coker.Application.ThirdParty
             this.orderAppService = orderAppService;
             this.tokenAppService = tokenAppService;
         }
-        public async Task<ResponseMessageDto> PChomePayGetToken()
-        {
-            ResponseMessageDto response = new ResponseMessageDto();
-
-            return response;
-        }
         public async Task<ResponseMessageDto> PChomePayRequest(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();
@@ -773,7 +767,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                             where tpkv.FK_WebsiteId == WebsiteId
                                             where tpk.Code == "expire_days"
                                             select tpkv.Value).FirstOrDefaultAsync();
-                    var expire_days = tpkv_Value == null ? 5 : int.Parse(tpkv_Value) < 1 ? 1 : int.Parse(tpkv_Value) > 5 ? 5 : int.Parse(tpkv_Value);
+                    var expire_days = (tpkv_Value == null || tpkv_Value == "") ? 5 : int.Parse(tpkv_Value) < 1 ? 1 : int.Parse(tpkv_Value) > 5 ? 5 : int.Parse(tpkv_Value);
                     PaymentBody.atm_info = new PChomePayPaymentDto.PChomePayPaymentInfo() { expire_days = expire_days };
 
                     PaymentBody.return_timer = "Y";

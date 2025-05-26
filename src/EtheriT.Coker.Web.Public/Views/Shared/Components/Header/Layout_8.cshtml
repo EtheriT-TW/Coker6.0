@@ -291,13 +291,22 @@
         <div class="@fullClass">
             @foreach (var item in Model.Bannners)
             {
-                <img id="header-title" class="titleimage m-auto" src="@item.DisktopImage" alt="Header Titile" asp-append-version="true" />
-                <img id="header-title-phone" class="titleimage m-auto d-block" src="@item.PhoneImage" alt="Header Titile" asp-append-version="true" />
+                @if (!string.IsNullOrEmpty(item.MobileImage))
+                {
+                    <img id="header-title" class="titleimage m-auto  d-none d-md-block" src="@item.DesktopImage" alt="Header Titile" asp-append-version="true" />
+                    <img id="header-title-phone" class="titleimage m-auto d-block d-md-none" src="@item.MobileImage" alt="Header Titile" asp-append-version="true" />
+                }
+                else
+                {
+                    <!-- Mobile image不存在時，Desktop image永遠顯示 -->
+                    <img id="header-title" class="titleimage m-auto" src="@item.DesktopImage" alt="Header Titile" asp-append-version="true" />
+                }
+
                 @if (!string.IsNullOrEmpty(item.Title))
                 {
                     <div class="title">
                         <div class="mainTitle">@item.Title</div>
-                        <div class="subTitle">@item.SubTitle</div>
+                        <div class="subTitle">@item.Subtitle</div>
                     </div>
                 }
             }
@@ -312,7 +321,24 @@
                         @foreach (var imageSrc in Model.Bannners)
                         {
                             <div class="swiper-slide image_link_slide d-flex align-self-center">
-                                            <a href="@imageSrc.LinkUrl" class="w-100"><img src="@imageSrc.DisktopImage" class="w-100" asp-append-version="true" /></a>
+                                <a href="@imageSrc.Link" class="w-100">
+                                    @if (!string.IsNullOrEmpty(imageSrc.MobileImage))
+                                    {
+                                        <img src="@imageSrc.DesktopImage" class="w-100 d-none d-md-block" alt="Desktop Image" asp-append-version="true" />
+                                        <img src="@imageSrc.MobileImage" class="w-100 d-block d-md-none" id="header-title-phone" alt="Mobile Image" asp-append-version="true" />
+                                    }
+                                    else
+                                    {
+                                        <img src="@imageSrc.DesktopImage" class="w-100" alt="Desktop Image" asp-append-version="true" />
+                                    }
+                                    @if (!string.IsNullOrEmpty(imageSrc.Title))
+                                    {
+                                        <div class="title">
+                                            <div class="mainTitle">@imageSrc.Title</div>
+                                            <div class="subTitle">@imageSrc.Subtitle</div>
+                                        </div>
+                                    }
+                                </a>
                             </div>
                         }
                     </div>
@@ -327,7 +353,8 @@
         </div>
     }
 }
-@if (Model.marqueeModels != null && Model.marqueeModels.Count > 0){
+@if (Model.ShowMarquee && Model.marqueeModels != null && Model.marqueeModels.Count > 0)
+{
     <div id="swiper-light" class="headernews m-auto d-block position-relative">
         @if (!string.IsNullOrEmpty(Model.marqueeBagroundImage))
         {

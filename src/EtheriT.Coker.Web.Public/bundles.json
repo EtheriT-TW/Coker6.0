@@ -139,6 +139,12 @@
       "input": [
         "node_modules/bootstrap/dist/css/*"
       ]
+    },
+    {
+      "outputFolder": "lib/aos",
+      "input": [
+        "node_modules/aos/dist/*.*"
+      ]
     }
   ]
 }

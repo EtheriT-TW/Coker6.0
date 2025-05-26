@@ -197,8 +197,8 @@
                     subtitle: s.subtitle,
                     link: s.link,
                     enabled: s.enabled,
-                    desktopImage: s.desktopDeleted ? null : s.desktopImage,
-                    mobileImage: s.mobileDeleted ? null : s.mobileImage
+                    desktopImage: (s.desktopDeleted || s.desktopImage === '/images/noImg.jpg') ? null : s.desktopImage,
+                    mobileImage: (s.mobileDeleted || s.mobileImage === '/images/noImg.jpg') ? null : s.mobileImage
                 }))
             }
         };

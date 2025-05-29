@@ -10,7 +10,8 @@
         .ID("file-manager")
         .Height("85vh")
         .FileSystemProvider(provider => provider.Remote()
-                                                .Url("/api/FileManagement/FileSystem"))
+                                                .Url("/api/FileManagement/FileSystem")
+                                                .BeforeAjaxSend("onBeforeAjaxSendFileSystemRequest"))
         .Permissions(permissions =>
         {
             // uncomment the code below to enable file/folder management
@@ -37,6 +38,28 @@
             })
             .ShowParentFolder(false);
         })
+        .Toolbar(toolbar => {
+            toolbar.Items(items => {
+                items.Add().Name("create").Text("新增資料夾");
+                items.Add().Name("upload").Text("上傳檔案");
+
+                items.Add()
+                    .Name("searchBoxWidget")
+                    .Location(ToolbarItemLocation.Before)
+                    .Widget(w => w.TextBox()
+                        .ID("fileManagerSearchBox")
+                        .Placeholder("依檔名搜尋...")
+                        .Mode(TextBoxMode.Search)
+                        .ShowClearButton(true)
+                        .Width(250)
+                        .OnValueChanged("fileManagerSearch_onValueChanged")
+                    )
+                    .LocateInMenu(ToolbarItemLocateInMenuMode.Never);
+
+                items.Add().Name("refresh").Text("重新整理");
+                items.Add().Name("switchView");
+            });
+        })
         .OnContentReady("fileManager_onContentReady")
         .OnSelectedFileOpened("fileManager_onSelectedFileOpened")
         .OnItemDeleting("fileManager_onItemDeleting")
@@ -51,6 +74,26 @@
 </div>
 
 <script>
+    function onBeforeAjaxSendFileSystemRequest({ headers, formData, xhrFields }) {
+        var searchBox = $("#fileManagerSearchBox").dxTextBox("instance");
+        var searchTerm = "";
+        if (searchBox) {
+            searchTerm = searchBox.option("value");
+            if (searchTerm === "") {
+                return;
+            }
+        }
+
+        formData.searchValue = searchTerm;
+    }
+
+    function fileManagerSearch_onValueChanged(e) {
+        var fileManager = $("#file-manager").dxFileManager("instance");
+        if (fileManager) {
+            fileManager.refresh();
+        }
+    }
+
     function fileManager_onItemDeleting(e) {
         if (e.item && !e.item.isDirectory) {
             // 取得要刪除的檔案路徑

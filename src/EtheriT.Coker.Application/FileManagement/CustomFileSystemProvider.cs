@@ -1,6 +1,7 @@
 using DevExtreme.AspNet.Mvc.FileManagement;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +20,7 @@ namespace EtheriT.Coker.Application.FileManagement
         private readonly long _userId;
         private readonly string _downloadFilePath;
         private readonly IConfiguration _configuration;
+        private Microsoft.AspNetCore.Http.HttpRequest? _httpRequest;
 
         private readonly int _maxFileSizeMB = 0;
 
@@ -26,7 +28,8 @@ namespace EtheriT.Coker.Application.FileManagement
                                         CokerDbContext dbContext,
                                         string orgName,
                                         long userId,
-                                        IConfiguration configuration)
+                                        IConfiguration configuration,
+                                        HttpRequest httpRequest)
             : base(rootDirectoryPath)
         {
             _dbContext = dbContext;
@@ -34,6 +37,7 @@ namespace EtheriT.Coker.Application.FileManagement
             // _downloadFilePath 不要包含 orgName，需求確認於2025/5/26 by Charles LINE
             _downloadFilePath = $"/upload";
             _configuration = configuration;
+            _httpRequest = httpRequest;
 
             // 讀取最大檔案大小的設定，預設為 0，表示不限制
             int.TryParse(_configuration.GetValue<string>("VirtualDirectory:FileAllow:MaxSize"), out _maxFileSizeMB);
@@ -44,7 +48,8 @@ namespace EtheriT.Coker.Application.FileManagement
                                         CokerDbContext dbContext,
                                         string orgName,
                                         long userId,
-                                        IConfiguration configuration)
+                                        IConfiguration configuration,
+                                        HttpRequest httpRequest)
             : base(rootDirectoryPath, prepareFileSystemItemCallback)
         {
             _dbContext = dbContext;
@@ -52,6 +57,7 @@ namespace EtheriT.Coker.Application.FileManagement
             // _downloadFilePath 不要包含 orgName，需求確認於2025/5/26 by Charles LINE
             _downloadFilePath = $"/upload";
             _configuration = configuration;
+            _httpRequest = httpRequest;
         }
 
         /// <summary>
@@ -62,6 +68,9 @@ namespace EtheriT.Coker.Application.FileManagement
         public override IEnumerable<FileSystemItem> GetItems(FileSystemLoadItemOptions options)
         {
             var items = base.GetItems(options);
+
+            // 從 FileSystemConfiguration.Request 中取得搜尋值
+            string searchValue = GetSearchValue();
 
             var dbFileUploads = _dbContext.FileUploads
                 .AsNoTracking()
@@ -95,6 +104,12 @@ namespace EtheriT.Coker.Application.FileManagement
                         item.CustomFields[nameof(matchingFileUpload.DownloadFileName)] = matchingFileUpload.DownloadFileName;
                     }
                 }
+            }
+
+            // 如果有搜尋值，則過濾檔案
+            if (!string.IsNullOrEmpty(searchValue))
+            {
+                items = FilterItemsBySearchValue(items, searchValue);
             }
 
             return items;
@@ -159,7 +174,8 @@ namespace EtheriT.Coker.Application.FileManagement
         /// </summary>
         /// <param name="options"></param>
         public override void MoveItem(FileSystemMoveItemOptions options)
-        {            string sourcePath = options.Item.Path;
+        {
+            string sourcePath = options.Item.Path;
             string destDirectoryPath = options.DestinationDirectory.Path;
 
             string fullSourcePath = Path.Combine(RootDirectoryPath, PreparePath(sourcePath));
@@ -519,16 +535,91 @@ namespace EtheriT.Coker.Application.FileManagement
             {
                 return 0;
             }
-        }
-
-        /// <summary>
-        /// 處理路徑，將斜線轉換為反斜線並去除多餘的反斜線。
-        /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
+        }        /// <summary>
+                 /// 處理路徑，將斜線轉換為反斜線並去除多餘的反斜線。
+                 /// </summary>
+                 /// <param name="path"></param>
+                 /// <returns></returns>
         private string PreparePath(string path)
         {
             return path?.Replace('/', '\\').Trim('\\') ?? string.Empty;
+        }
+
+        /// <summary>
+        /// 從 HttpRequest 中取得搜尋值
+        /// </summary>
+        /// <returns></returns>
+        private string GetSearchValue()
+        {
+            if (_httpRequest == null)
+            {
+                return string.Empty;
+            }
+
+            // 嘗試從 Form 中取得 searchValue 參數
+            if (_httpRequest.HasFormContentType && _httpRequest.Form.ContainsKey("searchValue"))
+            {
+                return _httpRequest.Form["searchValue"].ToString().Trim();
+            }
+
+            // 嘗試從 QueryString 中取得 searchValue 參數
+            if (_httpRequest.Query.ContainsKey("searchValue"))
+            {
+                return _httpRequest.Query["searchValue"].ToString().Trim();
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// 根據搜尋值過濾檔案項目
+        /// </summary>
+        /// <param name="items"></param>
+        /// <param name="searchValue"></param>
+        /// <returns></returns>
+        private IEnumerable<FileSystemItem> FilterItemsBySearchValue(IEnumerable<FileSystemItem> items, string searchValue)
+        {
+            if (string.IsNullOrEmpty(searchValue))
+            {
+                return items;
+            }
+
+            items = items.Where(item =>
+            {
+                // 如果是目錄，不過濾
+                if (item.IsDirectory)
+                    return true;
+
+                // 搜尋檔案名稱（不含副檔名）
+                string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(item.Name);
+                if (fileNameWithoutExtension.Contains(searchValue, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                // 搜尋完整檔案名稱
+                if (item.Name.Contains(searchValue, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                // 搜尋原始檔案名稱（如果有的話）
+                if (item.CustomFields.ContainsKey(nameof(FileUpload.OriginalFileName)))
+                {
+                    string originalFileName = item.CustomFields[nameof(FileUpload.OriginalFileName)]?.ToString() ?? string.Empty;
+                    if (originalFileName.Contains(searchValue, StringComparison.OrdinalIgnoreCase))
+                        return true;
+
+                    // 也搜尋原始檔案名稱不含副檔名的部分
+                    string originalFileNameWithoutExtension = Path.GetFileNameWithoutExtension(originalFileName);
+                    if (originalFileNameWithoutExtension.Contains(searchValue, StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+
+                return false;
+            });
+
+            return items;
         }
 
     }

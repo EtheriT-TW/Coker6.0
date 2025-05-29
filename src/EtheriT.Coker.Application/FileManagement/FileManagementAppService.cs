@@ -33,9 +33,9 @@ namespace EtheriT.Coker.Application.FileManagement
             var filePath = $"{_configuration.GetValue<string>("VirtualDirectory:upload")}\\" + orgName + "";
 
             // 取得目前登入使用者的 ID
-            long userId = _loginUserData.GetUserId().Result;
+            long userId = _loginUserData.GetUserId().Result; var allowFileAllowMIME = _configuration.GetSection("VirtualDirectory:FileAllow:Ext").Get<List<string>>() ?? new List<string>();
 
-            var allowFileAllowMIME = _configuration.GetSection("VirtualDirectory:FileAllow:Ext").Get<List<string>>() ?? new List<string>();            // 使用 FileExtensionContentTypeProvider 從 MIME 值反推取得副檔名
+            // 使用 FileExtensionContentTypeProvider 從 MIME 值反推取得副檔名
             var provider = new FileExtensionContentTypeProvider();
 
             // 從 MIME 反向查找副檔名並只保留允許的副檔名
@@ -45,10 +45,12 @@ namespace EtheriT.Coker.Application.FileManagement
                                                       .Distinct()
                                                       .ToList();
 
+            var customFileSystemProvider = new CustomFileSystemProvider(filePath, _dbContext, orgName, userId, _configuration, request);
+
             var config = new FileSystemConfiguration
             {
                 Request = request,
-                FileSystemProvider = new CustomFileSystemProvider(filePath, _dbContext, orgName, userId, _configuration),
+                FileSystemProvider = customFileSystemProvider,
 
                 //uncomment the code below to enable file/folder management
                 //AllowCopy = true,

@@ -113,9 +113,7 @@ namespace EtheriT.Coker.Application.FileManagement
             }
 
             return items;
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// 覆寫刪除檔案的方法，將檔案從檔案系統中刪除，並在資料庫中標記為已刪除。
         /// </summary>
         /// <param name="options"></param>
@@ -127,6 +125,19 @@ namespace EtheriT.Coker.Application.FileManagement
 
             string path = options.Item.Path;
             string fullPath = Path.Combine(RootDirectoryPath, PreparePath(path));
+
+            // 檢查是否為資料夾，如果是資料夾且包含檔案則不允許刪除
+            if (options.Item.IsDirectory)
+            {
+                if (System.IO.Directory.Exists(fullPath))
+                {
+                    var files = System.IO.Directory.GetFiles(fullPath, "*", SearchOption.AllDirectories);
+                    if (files.Length > 0)
+                    {
+                        throw new FileSystemException(FileSystemErrorCode.NoAccess, "不允許刪除，因為該資料夾內還有檔案");
+                    }
+                }
+            }
 
             // 擷取檔名，GuidKey 通常是檔名的一部分
             string fileName = Path.GetFileNameWithoutExtension(path);

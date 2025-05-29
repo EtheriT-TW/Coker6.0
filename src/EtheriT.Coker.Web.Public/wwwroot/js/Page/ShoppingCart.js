@@ -19,7 +19,7 @@ var hasProds = false;
 
 var islogin = false;
 
-var datachange = true, HasECPay = false, ECPayInit = false;
+var datachange = true, HasECPay = false, ECPayInit = false, ECPayMonitor = false;
 
 var RecipientsList_dxData;
 
@@ -160,9 +160,14 @@ function PageReady() {
                 $("input[name='RadioPayment']").on("change", function () {
                     if ($("#radio_payment_ECPay").is(":checked")) {
                         $("#ECPayPayment").show();
+                        console.log($(".swiper_button"))
+                        $(".swiper_button").addClass("mb_10");
                         buy_step_swiper.update();
                     } else {
                         $("#ECPayPayment").hide();
+                        console.log($(".swiper_button"))
+                        $(".swiper_button").removeClass("mb_10");
+                        buy_step_swiper.update();
                     }
                 });
             }
@@ -216,6 +221,7 @@ function PageReady() {
                         $("#radio_bill_orderer").trigger("change");
                     }
                     if (datachange && HasECPay) {
+                        ECPayMonitor = true;
                         ECPaymentChange();
                         datachange = false;
                     }
@@ -374,6 +380,9 @@ function PageReady() {
     InvoiceForms = $('#InvoiceForm > form');
 
     $(".btn_checkout").on("click", function () {
+        var temp_val = true;
+        ECPayMonitor = false;
+
         Step3Monitor();
 
         if (!OrdererFilled) {
@@ -392,10 +401,12 @@ function PageReady() {
                 co.sweet.warning("付款模組尚未載入完成，請稍候再試。", "", null);
             } else {
                 Coker.sweet.confirm("是否確定結帳？", "點選確認進入付款流程", "是，開始付款", "否", function () {
+                    temp_val = false;
                     OrderHeaderAdd();
                 });
             }
         }
+        ECPayMonitor = temp_val;
 
         buy_step_swiper.update();
     });
@@ -958,6 +969,9 @@ function Step3Monitor() {
     payMethodsChosen = FormCheck(PaymentForms);
 }
 function ECPaymentChange() {
+    console.log("ECPaymentChange")
+    console.log("ECPayMonitor", ECPayMonitor)
+    if (!ECPayMonitor) return;
     var checksuccess = true;
 
     Step3Monitor();
@@ -1003,6 +1017,7 @@ function ECPaymentChange() {
                                 } else {
                                     var checkPayExist = setInterval(function () {
                                         if (typeof window.Pay !== "undefined") {
+                                            $(".swiper_button").addClass("mb_10");
                                             buy_step_swiper.update();
                                             clearInterval(checkPayExist);
                                             $(".ecpay_loading").addClass("d-none");
@@ -1175,12 +1190,8 @@ function OrderDataGet() {
     order_header_data.OrderDetails = shopping_cart_data;
 
     if (HasECPay) {
-        if (window.ApplePaySession && typeof ApplePaySession.canMakePayments === "function") {
-            ApplePaySession.canMakePayments().then(function (canPay) {
-                if (canPay) {
-                    order_header_data.SupportApplePay = true;
-                }
-            });
+        if (window.ApplePaySession && typeof ApplePaySession.canMakePayments == "function") {
+            order_header_data.SupportApplePay = true;
         }
     }
 }

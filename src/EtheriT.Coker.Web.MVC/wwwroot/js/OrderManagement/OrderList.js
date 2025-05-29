@@ -278,6 +278,8 @@ function FormDataClear() {
     $orderer_cellphone.text("")
     $orderer_telphone.text("")
     $orderer_address.text("")
+
+    if ($(".btn_shippingLabel").length > 0) $(".btn_shippingLabel").remove();
 }
 function contentReady(e) {
     order_list = e;
@@ -407,13 +409,13 @@ function HeaderDataSet(result) {
     $recipient_name.text(result.recipient)
     $recipient_cellphone.text(result.recipientCellPhone)
     var re_telIndex = result.recipientTelePhone.indexOf("-", 5)
-    $recipient_telphone.text(result.recipientTelePhone.substr(re_telIndex + 1).length > 0 ? result.recipientTelePhone : result.recipientTelePhone.subtotal(0, re_telIndex))
+    $recipient_telphone.text(result.recipientTelePhone.substr(re_telIndex + 1).length > 0 ? result.recipientTelePhone : result.recipientTelePhone.substr(0, re_telIndex))
     $recipient_address.text(result.recipientAddress)
 
     $orderer_name.text(result.orderer)
     $orderer_cellphone.text(result.ordererCellPhone)
     var or_telIndex = result.ordererTelePhone.indexOf("-", 5)
-    if (result.ordererTelePhone != "") $orderer_telphone.text(result.ordererTelePhone.substr(or_telIndex + 1).length > 0 ? result.ordererTelePhone : result.ordererTelePhone.subtotal(0, or_telIndex))
+    if (result.ordererTelePhone != "") $orderer_telphone.text(result.ordererTelePhone.substr(or_telIndex + 1).length > 0 ? result.ordererTelePhone : result.ordererTelePhone.substr(0, or_telIndex))
     else $orderer_telphone.text("-");
 
     $memo_block.val(result.memo);
@@ -461,6 +463,25 @@ function HeaderDataSet(result) {
             }
         }
     });
+
+    if (result.paymentCode >= 7 && result.paymentCode <= 10) {
+        $("#TopLine .tool").prepend(`<button class="btn_shippingLabel btn-secondary border-0 px-4 py-1 text-white fw-bold fs-5 btn" >列印交寄單</button>`);
+        $(".btn_shippingLabel").on("click", function () {
+            co.sweet.loading();
+            Coker.ThirdParty.HandleThirdPartyPayment({
+                Action: "DeliveryNote",
+                OrderId: keyId,
+                ThirdParties: payment,
+            }).done(function (result) {
+                if (result.success) {
+                    window.open(result.message, "_blank");
+                    co.sweet.success(`<div>畫面即將跳轉，如未跳轉，請點擊<a href="${result.message}" title="連結至：交寄單(開新分頁)" target="_blank">連結</a>手動跳轉</div>`, null, false);
+                } else {
+                    co.sweet.warn("取得交寄單發生錯誤", result.message, null);
+                }
+            })
+        })
+    }
 }
 function DataInsert(data, frame) {
     frame.find("*").each(function () {

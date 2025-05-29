@@ -600,6 +600,57 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
+        public async Task<ResponseMessageDto> PChomePayDeliveryNote(long ohid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync() ?? throw new Exception("查無訂單資訊");
+                if (ohdata.TransactionId == null) throw new Exception("查無訂單代碼");
+
+                var RequestUri = "/v1/logistic/batch";
+                response = await PChomePayHeaders();
+
+                if (!response.Success) throw new Exception("PChomePayGetHeaders錯誤");
+
+                var request = new { order_id = new[] { ohdata.TransactionId } };
+                var RequestBody = JsonConvert.SerializeObject(request);
+
+                response = new ResponseMessageDto();
+
+                var RequestContent = new StringContent(RequestBody, Encoding.UTF8, "application/json");
+                var PostResponse = await ThirdPartyClient_PCHome.PostAsync(RequestUri, RequestContent);
+                PostResponse.EnsureSuccessStatusCode();
+                var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
+
+                if (!PostResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"❌ 請求失敗: {PostResponse.StatusCode}");
+                    Console.WriteLine($"🔹 Headers: {string.Join("\n", PostResponse.Headers)}");
+                    Console.WriteLine($"🔹 Response Body: {jsonResponse}");
+                    throw new Exception($"PChomePay API 回應錯誤: {PostResponse.StatusCode}");
+                }
+
+                var ResponseObject = JsonConvert.DeserializeObject<PChomePayDeliveryNoteResponseDto>(jsonResponse);
+
+                if (ResponseObject == null) throw new Exception("PChomePayLogisticBatch 錯誤：無法解析回應內容");
+                if (ResponseObject.error_order_id != null) throw new Exception($"PChomePayLogisticBatch 錯誤，失敗的 order_id: {ResponseObject.error_order_id}");
+
+                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"PChomePayDeliveryNote", JsonConvert.SerializeObject(ResponseObject));
+
+                response.Message = ResponseObject.print_url;
+                response.Success = true;
+            }
+            catch (HttpRequestException ex)
+            {
+                response.Message = $"Request Request failed: {ex.Message}";
+            }
+            catch (Exception ex)
+            {
+                response.Message = $"Request Other Error: {ex.Message}";
+            }
+            return response;
+        }
         public async Task<ResponseMessageDto> PChomePayHeaders()
         {
             ResponseMessageDto response = new ResponseMessageDto();

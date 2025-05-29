@@ -278,6 +278,8 @@ function FormDataClear() {
     $orderer_cellphone.text("")
     $orderer_telphone.text("")
     $orderer_address.text("")
+
+    if ($(".btn_shippingLabel").length > 0) $(".btn_shippingLabel").remove();
 }
 function contentReady(e) {
     order_list = e;
@@ -461,6 +463,25 @@ function HeaderDataSet(result) {
             }
         }
     });
+
+    if (result.paymentCode >= 7 && result.paymentCode <= 10) {
+        $("#TopLine .tool").prepend(`<button class="btn_shippingLabel btn-secondary border-0 px-4 py-1 text-white fw-bold fs-5 btn" >列印交寄單</button>`);
+        $(".btn_shippingLabel").on("click", function () {
+            co.sweet.loading();
+            Coker.ThirdParty.HandleThirdPartyPayment({
+                Action: "DeliveryNote",
+                OrderId: keyId,
+                ThirdParties: payment,
+            }).done(function (result) {
+                if (result.success) {
+                    window.open(result.message, "_blank");
+                    co.sweet.success(`<div>畫面即將跳轉，如未跳轉，請點擊<a href="${result.message}" title="連結至：交寄單(開新分頁)" target="_blank">連結</a>手動跳轉</div>`, null, false);
+                } else {
+                    co.sweet.warn("取得交寄單發生錯誤", result.message, null);
+                }
+            })
+        })
+    }
 }
 function DataInsert(data, frame) {
     frame.find("*").each(function () {

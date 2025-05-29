@@ -31,7 +31,8 @@ namespace EtheriT.Coker.Application.FileManagement
         {
             _dbContext = dbContext;
             _userId = userId;
-            _downloadFilePath = $"/upload/{orgName}";
+            // _downloadFilePath 不要包含 orgName，需求確認於2025/5/26 by Charles LINE
+            _downloadFilePath = $"/upload";
             _configuration = configuration;
 
             // 讀取最大檔案大小的設定，預設為 0，表示不限制
@@ -48,7 +49,8 @@ namespace EtheriT.Coker.Application.FileManagement
         {
             _dbContext = dbContext;
             _userId = userId;
-            _downloadFilePath = $"/upload/{orgName}";
+            // _downloadFilePath 不要包含 orgName，需求確認於2025/5/26 by Charles LINE
+            _downloadFilePath = $"/upload";
             _configuration = configuration;
         }
 

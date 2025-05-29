@@ -36,7 +36,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                                                         .ToList();
 
             string orgName = _loginUserData.GetWebsiteOrgName().Result;
-            model.UploadFilePathBase = $"/upload/{orgName}/";
+            model.DownloadPathAppendOrgName = $"/upload/{orgName}/";
 
             return View(model);
         }

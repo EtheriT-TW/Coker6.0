@@ -100,10 +100,11 @@
             : e.file.name;
 
         // 如果 DownloadFileName 為空，則實體檔案路徑
-        const imageSource = e.file.dataItem.DownloadFileName ||
-                            @Html.Raw($"'{Model.UploadFilePathBase.ToString()}'") +
-                                    (e.file.parentPath ? e.file.parentPath + '/' : '') +
-                                    e.file.dataItem.name;
+        // 如果 DownloadFileName 有值，則需要把含OrgName的路徑補上
+        const imageSource = (e.file.dataItem.DownloadFileName ? e.file.dataItem.DownloadFileName.replace('/upload/', @Html.Raw($"'{Model.DownloadPathAppendOrgName.ToString()}'")) : null) ||
+                            @Html.Raw($"'{Model.DownloadPathAppendOrgName.ToString()}'") +
+                                         (e.file.parentPath ? e.file.parentPath + '/' : '') +
+                                          e.file.dataItem.name;
 
         if (imageExtensions.includes(fileExtension)) {
             // 圖片檔案的處理：使用DevExtreme().Popup()顯示

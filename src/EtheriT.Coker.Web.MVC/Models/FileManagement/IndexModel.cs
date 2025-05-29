@@ -6,6 +6,6 @@ namespace EtheriT.Coker.Web.MVC.Models.FileManagement
     {
         public List<string> AllowContentType { get; set; } = new List<string>();
         public List<string> AllowFileExtension { get; set; } = new List<string>();
-        public string UploadFilePathBase { get; set; } = string.Empty;
+        public string DownloadPathAppendOrgName { get; set; } = string.Empty;
     }
 }

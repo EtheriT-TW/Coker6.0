@@ -42,7 +42,6 @@
             toolbar.Items(items => {
                 items.Add().Name("create").Text("新增資料夾");
                 items.Add().Name("upload").Text("上傳檔案");
-
                 items.Add()
                     .Name("searchBoxWidget")
                     .Location(ToolbarItemLocation.Before)
@@ -53,6 +52,7 @@
                         .ShowClearButton(true)
                         .Width(250)
                         .OnValueChanged("fileManagerSearch_onValueChanged")
+                        .ElementAttr("style", "")
                     )
                     .LocateInMenu(ToolbarItemLocateInMenuMode.Never);
 
@@ -89,6 +89,15 @@
 
     function fileManagerSearch_onValueChanged(e) {
         var fileManager = $("#file-manager").dxFileManager("instance");
+        var searchBox = $("#fileManagerSearchBox").dxTextBox("instance");        // 根據是否有輸入值來設定背景色
+        if (e.value && e.value.trim() !== "") {
+            // 有輸入值時設定深黃色背景
+            searchBox.element().find("input").css("background-color", "#ffc107");
+        } else {
+            // 沒有輸入值時恢復預設背景
+            searchBox.element().find("input").css("background-color", "");
+        }
+
         if (fileManager) {
             fileManager.refresh();
         }

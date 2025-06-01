@@ -999,8 +999,6 @@ function ECPaymentChange() {
             $(".ecpay_loading").removeClass("d-none");
             $("#RadioPayment div.form-check").removeClass("d-none");
 
-            order_header_data.IsTemp = true;
-
             var timeout = 0;
             var checkInterval = setInterval(function () {
                 if (ECPayInit === true) {
@@ -1284,9 +1282,7 @@ function OrderHeaderAdd() {
             }
 
             InvoiceDataGet();
-
             OrderDataGet();
-            order_header_data.isTemp = false;
 
             if (checksuccess) {
                 var memberUpdateFailMessage = "";

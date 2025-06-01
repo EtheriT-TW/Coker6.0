@@ -485,20 +485,22 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                         RequestBody.Data = Encrypt(PaymentData, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
 
-                        var createPaymentResponse = await ECPaySendRequest("ECPayCreatePayment", RequestUri, RequestBody);
+                        var createPaymentResponse = await ECPaySendRequest("ECPayCreatePayment", RequestUri, RequestBody) ?? throw new Exception("ECPay建立訂單發生錯誤");
+
+                        ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains(createPaymentResponse.OrderInfo.PaymentType)).Select(e => e.Id).FirstOrDefaultAsync();
+                        if (ohdata.Payment == 0) ohdata.Payment = 16;
+                        db.SaveChanges();
+                        await orderAppService.SendMail(ohdata.Id);
 
                         if (createPaymentResponse.Success)
                         {
                             response.Message = JsonConvert.SerializeObject(createPaymentResponse);
                             response.Success = true;
-                            ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains(createPaymentResponse.OrderInfo.PaymentType)).Select(e => e.Id).FirstOrDefaultAsync();
-                            if (ohdata.Payment == 0) ohdata.Payment = 16;
                             ohdata.State = OrderStatusEnum.待付款;
                             db.SaveChanges();
                         }
                         else
                         {
-                            ohdata.Payment = 16;
                             ohdata.State = OrderStatusEnum.付款失敗;
                             db.SaveChanges();
                             throw new Exception(createPaymentResponse.Message);

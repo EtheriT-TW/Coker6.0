@@ -155,6 +155,8 @@ namespace EtheriT.Coker.Application.Order
 
                 Core.Models.Order_Header oh = new Order_Header();
 
+                if (dto.IsTemp == null) dto.IsTemp = false;
+
                 if (dto.OrderId != null)
                 {
                     var ohdata = db.Order_Headers.Where(e => e.Id == dto.OrderId && e.IsTemp).FirstOrDefault();
@@ -235,7 +237,7 @@ namespace EtheriT.Coker.Application.Order
                                          select tp.Title).FirstOrDefaultAsync();
 
                 var mailoutput = new ResponseMessageDto();
-                if (!dto.IsTemp) mailoutput = await SendMail(oh.Id);
+                if (!dto.IsTemp && dto.Payment != 16) mailoutput = await SendMail(oh.Id);
                 else mailoutput.Success = true;
 
                 if (PaymentType != null)
@@ -1172,15 +1174,19 @@ namespace EtheriT.Coker.Application.Order
 
                     var OrdererEmailSecret = (order_header.OrdererEmail.Length > 5 ? order_header.OrdererEmail.Substring(0, 4) : order_header.OrdererEmail.Substring(0, 1)) + "**********";
                     order_header.OrdererCellPhone = (order_header.OrdererCellPhone.Length > 4 ? order_header.OrdererCellPhone.Substring(0, 4) : order_header.OrdererCellPhone.Substring(0, 1)) + "******";
-                    order_header.OrdererTelePhone = !string.IsNullOrEmpty(order_header.OrdererTelePhone) ?
-                        order_header.OrdererTelePhone.Length > 3 ?
-                            order_header.OrdererTelePhone?.Substring(0, 3) + "******" :
-                            string.IsNullOrEmpty(order_header.OrdererTelePhone) ? "" : order_header.OrdererTelePhone?.Substring(0, 1) + "******" :
-                        "";
+                    order_header.OrdererTelePhone = !string.IsNullOrEmpty(order_header.OrdererTelePhone)
+                    ? order_header.OrdererTelePhone.Length > 3
+                        ? order_header.OrdererTelePhone.Substring(0, 3) + "******"
+                        : order_header.OrdererTelePhone.Substring(0, 1) + "******"
+                    : "";
                     var OrdererSex = order_header.OrdererSex == 1 ? "先生" : order_header.OrdererSex == 2 ? "小姐" : "君";
                     order_header.RecipientAddress = order_header.RecipientAddress.Replace(" ", "").Substring(0, 6) + "**********";
                     order_header.RecipientCellPhone = (order_header.RecipientCellPhone.Length > 4 ? order_header.RecipientCellPhone.Substring(0, 4) : order_header.RecipientCellPhone.Substring(0, 1)) + "******";
-                    order_header.RecipientTelePhone = order_header.RecipientTelePhone != null ? order_header.RecipientTelePhone.Length > 3 ? order_header.RecipientTelePhone?.Substring(0, 3) + "******" : order_header.RecipientTelePhone?.Substring(0, 1) + "******" : "";
+                    order_header.RecipientTelePhone = !string.IsNullOrEmpty(order_header.RecipientTelePhone)
+                     ? order_header.RecipientTelePhone.Length > 3
+                         ? order_header.RecipientTelePhone.Substring(0, 3) + "******"
+                         : order_header.RecipientTelePhone.Substring(0, 1) + "******"
+                     : "";
                     var RecipientSex = order_header.RecipientSex == 1 ? "先生" : order_header.RecipientSex == 2 ? "小姐" : "君";
 
                     var mailhtml = @$"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>

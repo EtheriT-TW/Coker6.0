@@ -7,10 +7,6 @@ input::-webkit-inner-spin-button {
     -webkit-appearance: none;
 }
 
-.mb_10 {
-    margin-bottom: 10rem !important;
-}
-
 .barcode_svg {
     max-height: 7.5rem;
 }

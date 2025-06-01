@@ -418,6 +418,22 @@ body > .popover.bs-popover-auto.fade {
     width: fit-content;
 }
 
+#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list {
+    max-width: unset;
+}
+
+    #ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list li label {
+        width: 100%;
+    }
+
+        #ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list li label::before {
+            background-color: transparent;
+        }
+
+        #ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list li label::after {
+            top: calc(50% - 2.5px);
+        }
+
 /*RWD*/
 @media (max-width: 1366px) {
 }

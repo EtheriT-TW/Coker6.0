@@ -82,14 +82,16 @@
             if (searchTerm === "") {
                 return;
             }
+            else {
+                formData.searchValue = searchTerm;
+            }
         }
-
-        formData.searchValue = searchTerm;
     }
 
     function fileManagerSearch_onValueChanged(e) {
         var fileManager = $("#file-manager").dxFileManager("instance");
-        var searchBox = $("#fileManagerSearchBox").dxTextBox("instance");        // 根據是否有輸入值來設定背景色
+        var searchBox = $("#fileManagerSearchBox").dxTextBox("instance");
+        // 根據是否有輸入值來設定背景色
         if (e.value && e.value.trim() !== "") {
             // 有輸入值時設定深黃色背景
             searchBox.element().find("input").css("background-color", "#ffc107");
@@ -118,7 +120,8 @@
                 contentType: 'application/json',
                 headers: co.Data.Header,
                 data: JSON.stringify(filePath),
-                async: false, // 設定為同步請求
+                // 設定為同步請求
+                async: false,
                 success: function (result) {
                     hasBindings = result;
                     checkSuccess = true;
@@ -135,7 +138,8 @@
                 // 使用內建的 confirm 對話框（這是同步的）
                 var confirmed = confirm(e.item.name + " 此檔案正被系統使用中，確定要刪除嗎？刪除後不可復原！");
                 if (!confirmed) {
-                    e.cancel = true; // 用戶取消刪除
+                    // 用戶取消刪除
+                    e.cancel = true;
                     e.errorText = "取消刪除";
                     return;
                 }

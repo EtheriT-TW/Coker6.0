@@ -148,6 +148,7 @@ function PageReady() {
 
     if ($("#ECPayPayment").length > 0) {
         HasECPay = true;
+        ECPayMonitor = true;
         ECPay.initialize($("#ECPayPayment").data("server-type"), 1, function (errMsg) {
             if (errMsg != null) {
                 $("#radio_payment_ECPay").addClass("d-none");
@@ -158,15 +159,11 @@ function PageReady() {
                 $("#radio_payment_ECPay").prop("checked", true);
 
                 $("input[name='RadioPayment']").on("change", function () {
-                    if ($("#radio_payment_ECPay").is(":checked")) {
-                        $("#ECPayPayment").show();
-                        console.log($(".swiper_button"))
-                        $(".swiper_button").addClass("mb_10");
-                        buy_step_swiper.update();
-                    } else {
-                        $("#ECPayPayment").hide();
-                        console.log($(".swiper_button"))
-                        $(".swiper_button").removeClass("mb_10");
+                    if ($(this).attr("id") != "radio_payment_ECPay") {
+                        var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
+                        $ECPayList.each(function () {
+                            $(this).removeClass("ecpay-pl-act");
+                        })
                         buy_step_swiper.update();
                     }
                 });
@@ -221,7 +218,6 @@ function PageReady() {
                         $("#radio_bill_orderer").trigger("change");
                     }
                     if (datachange && HasECPay) {
-                        ECPayMonitor = true;
                         ECPaymentChange();
                         datachange = false;
                     }
@@ -380,9 +376,6 @@ function PageReady() {
     InvoiceForms = $('#InvoiceForm > form');
 
     $(".btn_checkout").on("click", function () {
-        var temp_val = true;
-        ECPayMonitor = false;
-
         Step3Monitor();
 
         if (!OrdererFilled) {
@@ -401,13 +394,11 @@ function PageReady() {
                 co.sweet.warning("付款模組尚未載入完成，請稍候再試。", "", null);
             } else {
                 Coker.sweet.confirm("是否確定結帳？", "點選確認進入付款流程", "是，開始付款", "否", function () {
-                    temp_val = false;
+                    ECPayMonitor = false;
                     OrderHeaderAdd();
                 });
             }
         }
-        ECPayMonitor = temp_val;
-
         buy_step_swiper.update();
     });
 
@@ -997,9 +988,14 @@ function ECPaymentChange() {
         if (checksuccess) {
             $(".ecpayWarning").addClass("d-none");
             $(".ecpay_loading").removeClass("d-none");
-            $("#RadioPayment div.form-check").removeClass("d-none");
+            $("#radio_payment_ECPay").prop("checked", true);
+            $("input[name='RadioPayment']").prop("disabled", true);
 
-            order_header_data.IsTemp = true;
+            $("#RadioPayment div.form-check").each(function () {
+                var $self = $(this);
+                if ($self.children("input").attr("id") == "radio_payment_ECPay") $self.addClass("d-none");
+                else $self.removeClass("d-none");
+            });
 
             var timeout = 0;
             var checkInterval = setInterval(function () {
@@ -1015,12 +1011,16 @@ function ECPaymentChange() {
                                     console.log(`Create Payment errMsg : ${errMsg}`)
                                     $(".ecpay_loading").text("串接綠界發生錯誤");
                                 } else {
+                                    $("#ECPayPayment").on("click", function () {
+                                        $("#radio_payment_ECPay").prop("checked", true);
+                                        buy_step_swiper.update();
+                                    })
                                     var checkPayExist = setInterval(function () {
                                         if (typeof window.Pay !== "undefined") {
-                                            $(".swiper_button").addClass("mb_10");
-                                            buy_step_swiper.update();
                                             clearInterval(checkPayExist);
                                             $(".ecpay_loading").addClass("d-none");
+                                            $("input[name='RadioPayment']").prop("disabled", false);
+                                            buy_step_swiper.update();
                                         }
                                     }, 1000);
                                 }
@@ -1284,9 +1284,7 @@ function OrderHeaderAdd() {
             }
 
             InvoiceDataGet();
-
             OrderDataGet();
-            order_header_data.isTemp = false;
 
             if (checksuccess) {
                 var memberUpdateFailMessage = "";
@@ -1385,12 +1383,14 @@ function OrderHeaderAdd() {
                                                                 $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，謝謝您的訂購！。`);
                                                                 $("#Step4 .payment_method").text("ApplePay");
                                                                 break;
+                                                            default:
+                                                                o.sweet.confirm(`回傳的PaymentType：${result_obj.OrderInfo.PaymentType}`, "此為測試訊息", "確認", "", null)
+                                                                break;
                                                         }
                                                         setTimeout(function () {
                                                             buy_step_swiper.slideNext();
                                                             buy_step_swiper.disable();
-                                                            co.sweet.confirm(`回傳的PaymentType：${result_obj.OrderInfo.PaymentType}`, "此為測試訊息，正式站會隱藏", "確認", "", null)
-                                                            //if (SwalClose) Swal.close();
+                                                            if (SwalClose) Swal.close();
                                                         }, 300);
                                                     } else {
                                                         $("#Step4 > .card-body > .pruchase_content > .status_alert").text("付款流程發生未知錯誤，請稍後重新嘗試，或直接聯繫客服人員。");

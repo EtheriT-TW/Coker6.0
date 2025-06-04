@@ -19,12 +19,14 @@ namespace EtheriT.Coker.Application.FileManagement
         private readonly IConfiguration _configuration;
         private readonly LoginUserData _loginUserData;
         private readonly CokerDbContext _dbContext;
+        private IThumbnailGeneratorService _thumbnailGenerator { get; }
 
-        public FileManagementAppService(IConfiguration configuration, LoginUserData loginUserData, CokerDbContext dbContext)
+        public FileManagementAppService(IConfiguration configuration, LoginUserData loginUserData, CokerDbContext dbContext, IThumbnailGeneratorService thumbnailGenerator)
         {
             _configuration = configuration;
             _loginUserData = loginUserData;
             _dbContext = dbContext;
+            _thumbnailGenerator = thumbnailGenerator;
         }
 
         public object FileSystem(FileSystemCommand command, string arguments, HttpRequest request)
@@ -45,7 +47,13 @@ namespace EtheriT.Coker.Application.FileManagement
                                                       .Distinct()
                                                       .ToList();
 
-            var customFileSystemProvider = new CustomFileSystemProvider(filePath, _dbContext, orgName, userId, _configuration, request);
+            var customFileSystemProvider = new CustomFileSystemProvider(_thumbnailGenerator.AssignThumbnailUrl,
+                                                                        filePath,
+                                                                        _dbContext,
+                                                                        orgName,
+                                                                        userId,
+                                                                        _configuration,
+                                                                        request);
 
             var config = new FileSystemConfiguration
             {

@@ -23,9 +23,11 @@
             permissions.Rename(true);
             permissions.Upload(true);
         })
+
         .AllowedFileExtensions(Model.AllowFileExtension)
         .ItemView(itemView =>
         {
+            itemView.Mode(FileManagerItemViewMode.Thumbnails);
             itemView.Details(details =>
             {
                 details.Columns(columns =>
@@ -63,6 +65,7 @@
         .OnContentReady("fileManager_onContentReady")
         .OnSelectedFileOpened("fileManager_onSelectedFileOpened")
         .OnItemDeleting("fileManager_onItemDeleting")
+        .CustomizeThumbnail("OnCustomizeThumbnail")
     )
 
     @(Html.DevExtreme().Popup()
@@ -182,10 +185,35 @@
 
         // 設定上傳檔案的類型(client端)
         fileManagerInstance._editing._fileUploader._uploaderInfos.forEach(u => u.fileUploader.option('accept', acceptString));
+
+        // 監聽檔案管理器的變化，為新載入的縮圖加入 lazy loading 和 alt
+        var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) { // Element node
+                        $(node).find(".dx-filemanager-item-custom-thumbnail").each(function() {
+                            var $img = $(this);
+                            var fileName = $img.closest('.dx-filemanager-thumbnails-item').find('.dx-filemanager-thumbnails-item-name').text();
+                            $img.attr("loading", "lazy");
+                            $img.attr("alt", fileName + "(縮圖)");
+                        });
+                    }
+                });
+            });
+        });
+
+        observer.observe(document.getElementById("file-manager"), {
+            childList: true,
+            subtree: true
+        });
     }
 
     function popup_photo_onContentReady(e) {
         var $contentElement = e.component.content();
         $contentElement.addClass("photo-popup-content");
+    }
+
+    function OnCustomizeThumbnail(fileManagerItem) {
+        return fileManagerItem.dataItem ? fileManagerItem.dataItem.thumbnailUrl : null;
     }
 </script>

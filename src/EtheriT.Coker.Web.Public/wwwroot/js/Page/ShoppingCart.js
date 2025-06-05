@@ -146,6 +146,23 @@ function PageReady() {
         }
     }
 
+    $('#RadioPayment .payment_display').first().addClass("first");
+    $('#RadioPayment .payment_display').last().addClass("last");
+
+    $('#RadioPayment .payment_display').on("click", function () {
+        var $this_radio = $(this);
+        var $parentFormCheck = $this_radio.closest('.form-check');
+        var $prevPayment = $parentFormCheck.prevAll('.form-check').first().find('.payment_display');
+        var $nextPayment = $parentFormCheck.nextAll('.form-check').first().find('.payment_display');
+        $('#RadioPayment .payment_display').removeClass("checked first last");
+        $(`#${$this_radio.data("radioid")}`).prop("checked", true);
+        $this_radio.addClass("checked");
+        $('#RadioPayment .payment_display').first().addClass("first");
+        $('#RadioPayment .payment_display').last().addClass("last");
+        $prevPayment.addClass('last');
+        $nextPayment.addClass('first');
+    });
+
     if ($("#ECPayPayment").length > 0) {
         HasECPay = true;
         ECPayMonitor = true;
@@ -156,16 +173,26 @@ function PageReady() {
                 co.sweet.error("串接綠界發生錯誤");
             } else {
                 ECPayInit = true;
-                $("#radio_payment_ECPay").prop("checked", true);
 
-                $("input[name='RadioPayment']").on("change", function () {
-                    if ($(this).attr("id") != "radio_payment_ECPay") {
-                        var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
-                        $ECPayList.each(function () {
-                            $(this).removeClass("ecpay-pl-act");
-                        })
-                        buy_step_swiper.update();
-                    }
+                $("#radio_payment_ECPay").prop("checked", true);
+                $("#radio_payment_ECPay").closest('.form-check').prevAll('.form-check').first().find('.payment_display').addClass('last');
+
+                $('#RadioPayment .payment_display').on("click", function () {
+                    var $this_radio = $(this);
+                    var $parentFormCheck = $this_radio.closest('.form-check');
+                    var $nextPayment = $parentFormCheck.nextAll('.form-check').first().find('.payment_display');
+                    var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
+
+                    $ECPayList.each(function () {
+                        $(this).removeClass("first");
+                    })
+
+                    if ($nextPayment.attr("id") == "payment_ECPay") $ECPayList.first().addClass("first");
+
+                    $ECPayList.each(function () {
+                        $(this).removeClass("ecpay-pl-act");
+                    })
+                    buy_step_swiper.update();
                 });
             }
         });
@@ -916,18 +943,16 @@ function RadioShipping() {
 function RadioPayment() {
     var $pay_text = $(".payment_method");
     $pay_text.addClass("fs-2 fw-bold px-3");
-    $pay_method.each(function () {
-        var $this = $(this);
-        if ($this.is(":checked")) {
-            var val = $this.val();
-            if (val == 1) {
-                $(".pay_info").removeClass("d-none");
-            } else {
-                $(".pay_info").addClass("d-none");
-            }
-            $pay_text.text($this.siblings("label").text());
+    var $checked = $pay_method.filter(':checked');
+    if ($checked.length) {
+        var val = $checked.val();
+        if (val == 1) {
+            $('.pay_info').removeClass('d-none');
+        } else {
+            $('.pay_info').addClass('d-none');
         }
-    })
+        $pay_text.text($checked.data('title'));
+    }
     buy_step_swiper.update();
 }
 function Step3Monitor() {
@@ -1011,10 +1036,39 @@ function ECPaymentChange() {
                                     console.log(`Create Payment errMsg : ${errMsg}`)
                                     $(".ecpay_loading").text("串接綠界發生錯誤");
                                 } else {
+                                    var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
+                                    $ECPayList.first().next('li').addClass("first");
+                                    $ECPayList.last().addClass("last");
+
                                     $("#ECPayPayment").on("click", function () {
-                                        $("#radio_payment_ECPay").prop("checked", true);
+                                        var $this_radio = $("#radio_payment_ECPay");
+                                        var $parentFormCheck = $this_radio.closest('.form-check');
+                                        var $prevPayment = $parentFormCheck.prevAll('.form-check').first().find('.payment_display');
+                                        $('#RadioPayment .payment_display').removeClass("checked first last");
+                                        $this_radio.prop("checked", true);
+                                        $('#RadioPayment .payment_display').first().addClass("first");
+                                        $prevPayment.addClass('last');
+
+                                        if ($(".ecpay_loading").hasClass("d-none")) {
+                                            $ECPayList.removeClass("first last")
+                                            var $activeLi = $ECPayList.filter('.ecpay-pl-act');
+
+                                            if ($activeLi.prev('li').length == 0) {
+                                                if ($('#RadioPayment .payment_display').length > 1) $prevPayment.addClass('last');
+                                            }
+                                            else {
+                                                if ($('#RadioPayment .payment_display').length == 1) $ECPayList.first().addClass("first");
+                                                $prevPayment.removeClass("last");
+                                                $activeLi.prev('li').addClass("last");
+                                            }
+                                            $activeLi.addClass("first last")
+                                            $activeLi.next('li').addClass("first");
+                                            $ECPayList.last().addClass("last");
+                                        }
+
                                         buy_step_swiper.update();
                                     })
+
                                     var checkPayExist = setInterval(function () {
                                         if (typeof window.Pay !== "undefined") {
                                             clearInterval(checkPayExist);
@@ -1043,6 +1097,48 @@ function ECPaymentChange() {
     } else {
         $(".ecpayWarning").removeClass("d-none");
         $("#RadioPayment div.form-check").addClass("d-none");
+    }
+}
+function GetECPayType() {
+    var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
+    var $activeLi = $ECPayList.filter('.ecpay-pl-act');
+    $("#Step4 .payment_method").text($activeLi.find(".ecpay-pl-intro .ecpay-pl-type").text());
+    switch ($activeLi.attr("id")) {
+        case "CreditCard":
+            order_header_data.payment = 16;
+            break;
+        case "CreditInstallment":
+            var stage = $activeLi.find("select.ecpay-Installment").val();
+            switch (stage) {
+                case 3:
+                    order_header_data.payment = 18;
+                    $("#Step4 .payment_method").text("信用卡付款 (3期)");
+                    break;
+                case 6:
+                    order_header_data.payment = 19;
+                    $("#Step4 .payment_method").text("信用卡付款 (6期)");
+                    break;
+                case 12:
+                    order_header_data.payment = 20;
+                    $("#Step4 .payment_method").text("信用卡付款 (12期)");
+                    break;
+            }
+            break;
+        case "UnionPay":
+            order_header_data.payment = 17;
+            break;
+        case "ATM":
+            order_header_data.payment = 21;
+            break;
+        case "CVS":
+            order_header_data.payment = 23;
+            break;
+        case "Barcode":
+            order_header_data.payment = 22;
+            break;
+        case "ApplePay":
+            order_header_data.payment = 27;
+            break;
     }
 }
 function OrdererEdit(isopen) {
@@ -1259,13 +1355,15 @@ function OrderHeaderAdd() {
     Coker.Order.CheckStock(shopping_cart_data).done(function (result) {
         if (result.success) {
             var checksuccess = true;
+            RadioPayment();
+            OrderDataGet();
 
             if (HasECPay) {
                 ECPay.getPayToken(function (paymentInfo, errMsg) {
                     if (errMsg != null) {
                         co.sweet.warning("請確實填寫付款資料", errMsg, null);
                         checksuccess = false;
-                    }
+                    } else GetECPayType();
                 });
             }
 
@@ -1284,7 +1382,6 @@ function OrderHeaderAdd() {
             }
 
             InvoiceDataGet();
-            OrderDataGet();
 
             if (checksuccess) {
                 var memberUpdateFailMessage = "";
@@ -1353,20 +1450,17 @@ function OrderHeaderAdd() {
                                                                 });
                                                                 $("#Step4 > .card-body .thirdpay_link").removeClass("d-none");
                                                                 SwalClose = true;
-                                                                $("#Step4 .payment_method").text("信用卡付款");
                                                                 window.open(VerifyURL, "_blank");
                                                                 break;
                                                             case "ATM":
                                                                 var ATMInfo = result_obj.ATMInfo;
                                                                 $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${ATMInfo.ExpireDate}前完成付款。`);
                                                                 co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費銀行代碼：${ATMInfo.BankCode}<br>繳費虛擬帳號：${ATMInfo.vAccount}<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${ATMInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", null);
-                                                                $("#Step4 .payment_method").text("虛擬ATM");
                                                                 break;
                                                             case "CVS":
                                                                 var CVSInfo = result_obj.CVSInfo;
                                                                 $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${CVSInfo.ExpireDate}前完成付款。`);
                                                                 co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費代碼：${CVSInfo.PaymentNo}<br>或點此<a class="fw-bold text-primary px-1" href="${CVSInfo.PaymentURL}" target="_blank" title="連結至：繳費條碼(開新分頁)">連結</a>取得繳費條碼<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${CVSInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", null);
-                                                                $("#Step4 .payment_method").text("超商代碼");
                                                                 break;
                                                             case "BARCODE":
                                                                 var BarcodeInfo = result_obj.BarcodeInfo;
@@ -1377,14 +1471,12 @@ function OrderHeaderAdd() {
                                                                     JsBarcode("#barcode2", BarcodeInfo.Barcode2, { format: "CODE39", displayValue: true });
                                                                     JsBarcode("#barcode3", BarcodeInfo.Barcode3, { format: "CODE39", displayValue: true });
                                                                 });
-                                                                $("#Step4 .payment_method").text("超商條碼");
                                                                 break;
                                                             case "ApplePay":
                                                                 $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，謝謝您的訂購！。`);
-                                                                $("#Step4 .payment_method").text("ApplePay");
                                                                 break;
                                                             default:
-                                                                o.sweet.confirm(`回傳的PaymentType：${result_obj.OrderInfo.PaymentType}`, "此為測試訊息", "確認", "", null)
+                                                                co.sweet.confirm(`回傳的PaymentType：${result_obj.OrderInfo.PaymentType}`, "此為測試訊息", "確認", "", null)
                                                                 break;
                                                         }
                                                         setTimeout(function () {

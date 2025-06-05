@@ -253,6 +253,99 @@ input[type="number"] {
 #RadioPayment .paymenticon {
     height: 1.5rem;
 }
+
+#RadioPayment .payment_display {
+    cursor: pointer;
+    padding: 18px 16px;
+    border: 1px solid #dcdcdc;
+    border-bottom: none;
+}
+
+    #RadioPayment .payment_display.first {
+        border-radius: 12px 12px 0px 0px;
+    }
+
+    #RadioPayment .payment_display.last {
+        border-radius: 0px 0px 12px 12px;
+        border-bottom: 1px solid #dcdcdc;
+    }
+
+    #RadioPayment .payment_display.first.last {
+        border-radius: 12px;
+        border-bottom: 1px solid #dcdcdc;
+    }
+
+    #RadioPayment .payment_display.checked {
+        background-color: #f3f3f3;
+        border-radius: 12px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    #RadioPayment .payment_display .paymentradio {
+        width: 18px;
+        height: 18px;
+        margin-right: 10px;
+        position: relative;
+    }
+
+        #RadioPayment .payment_display .paymentradio::before {
+            background: white;
+            content: "";
+            width: 100%;
+            height: 100%;
+            border: 2px solid #31302f;
+            display: block;
+            -webkit-background-clip: padding-box;
+            -moz-background-clip: padding;
+            background-clip: padding-box;
+            border-radius: 99em;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        #RadioPayment .payment_display .paymentradio::after {
+            opacity: 0;
+            content: "";
+            position: absolute;
+            top: 3px;
+            left: 7px;
+            width: 5px;
+            height: 10px;
+            border: 2px solid #FFF;
+            border-left: none;
+            border-top: none;
+            -ms-transform: rotate(45deg);
+            -webkit-transform: rotate(45deg);
+            transform: rotate(45deg);
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+    #RadioPayment .payment_display.checked .paymentradio::before {
+        background: #31302f;
+    }
+
+    #RadioPayment .payment_display.checked .paymentradio::after {
+        opacity: 1;
+    }
+
+#ECPayPayment .ecpay-pay-list li:not(.ecpay-pl-act) {
+    border-radius: 0;
+}
+
+#ECPayPayment .ecpay-pay-list li.first {
+    border-radius: 12px 12px 0px 0px;
+}
+
+#ECPayPayment .ecpay-pay-list li.last {
+    border-radius: 0px 0px 12px 12px;
+}
+
+#ECPayPayment .ecpay-pay-list li.first.last {
+    border-radius: 12px;
+}
+
 /* Step3 */
 #Step3 > .card-header > a {
     font-size: 0.8rem;

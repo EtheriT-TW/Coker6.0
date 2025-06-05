@@ -403,6 +403,8 @@ function PageReady() {
     InvoiceForms = $('#InvoiceForm > form');
 
     $(".btn_checkout").on("click", function () {
+        ECPayMonitor = false;
+        console.log("ECPayMonitor Change", ECPayMonitor)
         Step3Monitor();
 
         if (!OrdererFilled) {
@@ -420,9 +422,11 @@ function PageReady() {
             if ($(`[name="RadioPayment"]:checked`).val() == null && HasECPay && (typeof window.Pay === "undefined" || $("#ECPayPayment").children().length == 0)) {
                 co.sweet.warning("付款模組尚未載入完成，請稍候再試。", "", null);
             } else {
-                Coker.sweet.confirm("是否確定結帳？", "點選確認進入付款流程", "是，開始付款", "否", function () {
-                    ECPayMonitor = false;
+                Coker.sweet.custom("info", "是否確定結帳？", "點選確認進入付款流程", "是，開始付款", function () {
                     OrderHeaderAdd();
+                }, "否", function () {
+                    ECPayMonitor = true;
+                    console.log("ECPayMonitor Change", ECPayMonitor);
                 });
             }
         }

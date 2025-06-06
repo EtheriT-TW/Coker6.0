@@ -401,14 +401,11 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 var ohdata = await db.Order_Headers.Where(e => e.TransactionId == ResponseData.OrderInfo.MerchantTradeNo).FirstOrDefaultAsync() ?? throw new Exception("查無訂單資訊");
 
-                if (ResponseData.RtnCode != 1) ohdata.State = OrderStatusEnum.付款失敗;
-                else if (ResponseData.CardInfo != null)
+                if (ResponseData.RtnCode != 1)
                 {
-                    if (ResponseData.CardInfo != null && ResponseData.CardInfo.Stage != null) ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains($"CreditInstallment_{ResponseData.CardInfo.Stage}")).Select(e => e.Id).FirstOrDefaultAsync();
-                    else ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains(ResponseData.OrderInfo.PaymentType)).Select(e => e.Id).FirstOrDefaultAsync();
+                    ohdata.State = OrderStatusEnum.付款失敗;
+                    db.SaveChanges();
                 }
-
-                db.SaveChanges();
 
                 return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{("000000000" + ohdata.Id).Substring(ohdata.Id.ToString().Length)}");
             }
@@ -432,9 +429,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (ResponseData.RtnCode != 1) throw new Exception($"取得ECPayReturn發生錯誤，{JsonConvert.SerializeObject(ResponseData, Formatting.Indented)}");
 
                 var ohdata = await db.Order_Headers.Where(e => e.TransactionId == ResponseData.OrderInfo.MerchantTradeNo).FirstOrDefaultAsync();
-
-                if (ResponseData.CardInfo != null && ResponseData.CardInfo.Stage != null) ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains($"CreditInstallment_{ResponseData.CardInfo.Stage}")).Select(e => e.Id).FirstOrDefaultAsync();
-                else ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains(ResponseData.OrderInfo.PaymentType)).Select(e => e.Id).FirstOrDefaultAsync();
 
                 if (ResponseData.RtnCode == 1 && ohdata.State == OrderStatusEnum.待付款 && ResponseData.OrderInfo.TradeStatus == "1")
                 {
@@ -493,10 +487,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                         RequestBody.Data = Encrypt(PaymentData, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
 
                         var createPaymentResponse = await ECPaySendRequest("ECPayCreatePayment", RequestUri, RequestBody) ?? throw new Exception("ECPay建立訂單發生錯誤");
-
-                        ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains(createPaymentResponse.OrderInfo.PaymentType)).Select(e => e.Id).FirstOrDefaultAsync();
-                        if (ohdata.Payment == 0) ohdata.Payment = 16;
-                        db.SaveChanges();
                         await orderAppService.SendMail(ohdata.Id);
 
                         await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayCreatePayment", JsonConvert.SerializeObject(createPaymentResponse));
@@ -551,7 +541,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (ThirdPartyData != null)
                 {
                     var RequestUri = "/Merchant/GetTokenbyTrade";
-                    dto.Payment = 16;
 
                     if (dto.OrderId == null)
                     {

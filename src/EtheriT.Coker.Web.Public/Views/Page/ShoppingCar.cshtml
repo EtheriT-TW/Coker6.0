@@ -595,35 +595,33 @@
                             <div class="ecpayWarning text-danger px-5">請先完整填寫資料，才能選擇付款方式</div>
                         }
                     </div>
-
-                    <form id="RadioPayment" class="px-4 px-sm-5 text-start border-bottom mb-4 pb-4 needs-validation" method="post" novalidate>
+                    @* <form id="RadioPayment" class="px-4 px-sm-5 text-start border-bottom mb-4 pb-4 needs-validation" method="post" novalidate> *@
+                    <form id="RadioPayment" class="px-4 px-sm-5 text-start border-bottom mb-4 pb-4">
                         <input type="hidden" name="authentiity_token" value="@Model.token" />
                         @if (Model.paymentModels.Count > 0)
                         {
                             var has_invalid = false;
                             @if (Model.paymentModels.Count == 1 && Model.paymentModels.Find(e => e.Code == "ECPay") != null)
                             {
+                                <div class="ecpay_loading text-start col-12 col-sm-3 my-2 py-2 d-none">支付方式載入中......</div>
                                 <div id="ECPayPayment" data-server-type="@(ViewBag.IsProduction ? "Prod" : "Stage")"></div>
                             }
                             else
                             {
                                 @foreach (var payment in Model.paymentModels ?? new List<PaymentTypeItemOutputDto>())
                                 {
-                                    <div class="form-check text-start col-12 col-sm-3 my-2 py-2">
-                                        <input id="radio_payment_@payment.Code" class="form-check-input" type="radio" name="RadioPayment" data-maxamount="@payment.MaxAmount" data-minamount="@payment.MinAmount" value="@payment.Id" required>
-                                        <label class="form-check-label d-flex" for="radio_payment_@payment.Code">
+                                    <div class="form-check text-start m-0 p-0">
+                                        <input id="radio_payment_@payment.Code" class="form-check-input d-none" type="radio" name="RadioPayment" data-maxamount="@payment.MaxAmount" data-minamount="@payment.MinAmount" value="@payment.Id" required data-title="@payment.Title">
+                                        <div id="payment_@payment.Code" class="payment_display d-flex justify-content-between" data-radioid="radio_payment_@payment.Code">
+                                            <div class="d-flex align-items-center">
+                                                <span class="paymentradio d-block"></span>
+                                                <div class="paymenttitle">@payment.Title</div>
+                                            </div>
                                             @if (payment.Icon != "")
                                             {
                                                 <img class="paymenticon px-1" src="@payment.Icon" alt="@payment.Title">
                                             }
-                                            <span>@payment.Title</span>
-                                        </label>
-
-                                        @if (!has_invalid)
-                                        {
-                                            <div class="invalid-feedback">請選擇付款方式</div>
-                                            has_invalid = true;
-                                        }
+                                        </div>
                                     </div>
                                 }
                                 @if (Model.paymentModels.Find(e => e.Code == "ECPay") != null)

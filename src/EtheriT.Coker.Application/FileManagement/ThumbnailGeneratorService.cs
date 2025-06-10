@@ -31,7 +31,7 @@ namespace EtheriT.Coker.Application.FileManagement
 
 
         private static readonly IReadOnlyCollection<string> AllowedFileExtensions = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase) {
-            ".png", ".gif", ".jpg", ".jpeg", ".ico", ".bmp", "avif", "webp", "svg"
+            ".png", ".gif", ".jpg", ".jpeg", ".ico", ".bmp", ".avif", ".webp", ".svg"
         };
 
         public ThumbnailGeneratorService(IWebHostEnvironment environment, IUrlHelperFactory urlHelperFactory, IActionContextAccessor actionContextAccessor)

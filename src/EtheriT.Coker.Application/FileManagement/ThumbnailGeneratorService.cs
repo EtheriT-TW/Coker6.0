@@ -9,6 +9,7 @@ using System.Text;
 using DevExtreme.AspNet.Mvc.FileManagement;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using ImageMagick;
 
 namespace EtheriT.Coker.Application.FileManagement
 {
@@ -53,13 +54,19 @@ namespace EtheriT.Coker.Application.FileManagement
             if (!(fileSystemInfo is FileInfo fileInfo))
                 return;
 
-            var helper = UrlHelperFactory.GetUrlHelper(ActionContextAccessor.ActionContext);
-            var thumbnail = GetThumbnail(fileInfo);
-            var relativeThumbnailPath = Path.Combine(ThumbnailsDirectory.Name, thumbnail.Directory?.Name, thumbnail.Name);
-            clientItem.CustomFields["thumbnailUrl"] = helper.Content(relativeThumbnailPath);
+            if (ActionContextAccessor?.ActionContext != null)
+            {
+                var helper = UrlHelperFactory.GetUrlHelper(ActionContextAccessor.ActionContext);
+                var thumbnail = GetThumbnail(fileInfo);
+                if (thumbnail != null && thumbnail.Directory != null)
+                {
+                    var relativeThumbnailPath = Path.Combine(ThumbnailsDirectory.Name, thumbnail.Directory.Name, thumbnail.Name);
+                    clientItem.CustomFields["thumbnailUrl"] = helper.Content(relativeThumbnailPath);
+                }
+            }
         }
 
-        private FileInfo GetThumbnail(FileInfo file)
+        private FileInfo? GetThumbnail(FileInfo file)
         {
             var thumbnailFile = new FileInfo(GetThumbnailFilePath(file));
 
@@ -81,7 +88,7 @@ namespace EtheriT.Coker.Application.FileManagement
                 if (thumbnailFile.Exists)
                     thumbnailFile.Delete();
 
-                if (!System.IO.Directory.Exists(thumbnailFile.DirectoryName))
+                if (thumbnailFile.DirectoryName != null && !System.IO.Directory.Exists(thumbnailFile.DirectoryName))
                     System.IO.Directory.CreateDirectory(thumbnailFile.DirectoryName);
 
                 GenerateThumbnailCore(file, thumbnailFile, ThumbnailWidth, ThumbnailHeight);
@@ -94,38 +101,45 @@ namespace EtheriT.Coker.Application.FileManagement
         }
         private static void GenerateThumbnailCore(Stream file, FileInfo thumbnailFile, int width, int height)
         {
-            using (var originalImage = Image.FromStream(file))
+            // 使用 ImageMagick 處理圖片。可以處理多種格式，包括 AVIF 和 SVG。
+            using (var originalImage = new MagickImage(file))
             using (var thumbnail = ChangeImageSize(originalImage, width, height))
             {
                 try
                 {
-                    thumbnail.Save(thumbnailFile.FullName);
+                    // 將 MagickImage 寫入檔案
+                    thumbnail.Write(thumbnailFile.FullName);
                 }
                 catch
                 {
                     // ignored
                 }
             }
-        }
-
-        private static Bitmap ChangeImageSize(Image original, int width, int height)
+        }        private static MagickImage ChangeImageSize(MagickImage original, int width, int height)
         {
-            var thumbnail = new Bitmap(width, height);
+            // 創建一個新的 MagickImage 作為縮略圖背景（白色背景）
+            var thumbnail = new MagickImage(MagickColor.FromRgb(255, 255, 255), (uint)width, (uint)height);
 
-            var newHeight = original.Height;
-            var newWidth = original.Width;
+            // 計算新的尺寸
+            uint newHeight = (uint)original.Height;
+            uint newWidth = (uint)original.Width;
             if (original.Height > height || original.Width > width)
             {
-                newHeight = (original.Height > original.Width) ? height : (height * original.Height / original.Width);
-                newWidth = (original.Width > original.Height) ? width : (width * original.Width / original.Height);
+                newHeight = (original.Height > original.Width) ? (uint)height : (uint)(height * original.Height / original.Width);
+                newWidth = (original.Width > original.Height) ? (uint)width : (uint)(width * original.Width / original.Height);
             }
 
-            var g = Graphics.FromImage(thumbnail);
-            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            // 製作一個調整大小後的原始圖像副本
+            var resizedOriginal = original.Clone();
+            resizedOriginal.Resize(newWidth, newHeight);
+            resizedOriginal.FilterType = FilterType.Lanczos; // 高品質縮放濾鏡，類似於 HighQualityBicubic
 
-            var top = (height - newHeight) / 2;
-            var left = (width - newWidth) / 2;
-            g.DrawImage(original, left, top, newWidth, newHeight);
+            // 計算居中位置
+            int top = (height - (int)newHeight) / 2;
+            int left = (width - (int)newWidth) / 2;
+
+            // 將縮放後的圖像合成到中心位置
+            thumbnail.Composite(resizedOriginal, left, top);
 
             return thumbnail;
         }

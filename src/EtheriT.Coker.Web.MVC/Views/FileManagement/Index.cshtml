@@ -153,7 +153,7 @@
 
     function fileManager_onSelectedFileOpened(e) {
         const fileExtension = e.file.name.split('.').pop().toLowerCase();
-        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'avif', 'svg'];
         const displayFileName = e.file.dataItem.OriginalFileName
             ? `${e.file.name} (${e.file.dataItem.OriginalFileName})`
             : e.file.name;

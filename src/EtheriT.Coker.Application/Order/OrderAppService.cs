@@ -87,8 +87,12 @@ namespace EtheriT.Coker.Application.Order
                                        {
                                            UUID = oh.FK_UUID,
                                            Id = ("000000000" + oh.Id.ToString()).Substring(oh.Id.ToString().Length, 9),
-                                           Orderer = oh.Orderer.Substring(0, 1) + "○" + oh.Orderer.Substring(oh.Orderer.Length - 1, 1),
-                                           RecipientAddress = oh.RecipientAddress.Substring(0, oh.RecipientAddress.LastIndexOf(" ")) + "***",
+                                           Orderer = string.IsNullOrEmpty(oh.Orderer) ? "" :
+                                                oh.Orderer.Length == 1 ? oh.Orderer + "○" :
+                                                    oh.Orderer.Substring(0, 1) + "○" + oh.Orderer.Substring(oh.Orderer.Length - 1, 1),
+                                           RecipientAddress = string.IsNullOrEmpty(oh.RecipientAddress) || !oh.RecipientAddress.Contains(" ") ?
+                                                oh.RecipientAddress :
+                                                oh.RecipientAddress.Substring(0, oh.RecipientAddress.LastIndexOf(" ")) + "***",
                                            Shipping = oh.Shipping == 0 ? ShippingTypeEnum.郵寄掛號.ToString() : ((ShippingTypeEnum)ls.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11"),
                                            Payment = db.PaymentTypes.Where(e => e.Id == oh.Payment).Select(e => e.Title).FirstOrDefault() ?? "",
                                            State = ((OrderStatusEnum)oh.State).ToString(),

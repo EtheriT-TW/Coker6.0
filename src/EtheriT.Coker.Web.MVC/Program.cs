@@ -83,6 +83,9 @@ using EtheriT.Coker.Application.BonusManagement;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion.Auth;
+using EtheriT.Coker.Application.Shared.FileManagement;
+using EtheriT.Coker.Application.FileManagement;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -288,7 +291,10 @@ builder.Services.AddTransient<IDashboardAuthorizationFilter, HangfireDashboardAu
 builder.Services.AddTransient<ITemplatesApplicationService, TemplatesApplicationService>();
 builder.Services.AddScoped<UserHabitsWorking>();
 builder.Services.AddScoped<IBonusManagementAppService, BonusManagementAppService>();
+builder.Services.AddScoped<IFileManagementAppService, FileManagementAppService>();
 builder.Services.Configure<AuthenticationSettings>(builder.Configuration.GetSection("Authentication"));
+builder.Services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
+builder.Services.AddSingleton<IThumbnailGeneratorService, ThumbnailGeneratorService>();
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

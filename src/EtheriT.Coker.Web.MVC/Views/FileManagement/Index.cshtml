@@ -1,3 +1,219 @@
-﻿@{
+﻿@using DevExtreme.AspNet.Mvc
+@model EtheriT.Coker.Web.MVC.Models.FileManagement.IndexModel
+
+@{
     ViewData["Title"] = "FileManagement";
 }
+
+<div id="filemanager-container">
+    @(Html.DevExtreme().FileManager()
+        .ID("file-manager")
+        .Height("85vh")
+        .FileSystemProvider(provider => provider.Remote()
+                                                .Url("/api/FileManagement/FileSystem")
+                                                .BeforeAjaxSend("onBeforeAjaxSendFileSystemRequest"))
+        .Permissions(permissions =>
+        {
+            // uncomment the code below to enable file/folder management
+            // permissions.Copy(true);
+            permissions.Download(true);
+            permissions.Create(true);
+            permissions.Move(true);
+            permissions.Delete(true);
+            permissions.Rename(true);
+            permissions.Upload(true);
+        })
+
+        .AllowedFileExtensions(Model.AllowFileExtension)
+        .ItemView(itemView =>
+        {
+            itemView.Mode(FileManagerItemViewMode.Thumbnails);
+            itemView.Details(details =>
+            {
+                details.Columns(columns =>
+                {
+                    columns.Add().DataField("name").Caption("實體檔名");
+                    columns.Add().DataField("OriginalFileName").Caption("上傳檔名");
+                    columns.Add().DataField("size");
+                    columns.Add().DataField("dateModified").DataType(GridColumnDataType.DateTime).Width(200);
+                });
+            })
+            .ShowParentFolder(false);
+        })
+        .Toolbar(toolbar => {
+            toolbar.Items(items => {
+                items.Add().Name("create").Text("新增資料夾");
+                items.Add().Name("upload").Text("上傳檔案");
+                items.Add()
+                    .Name("searchBoxWidget")
+                    .Location(ToolbarItemLocation.Before)
+                    .Widget(w => w.TextBox()
+                        .ID("fileManagerSearchBox")
+                        .Placeholder("依檔名搜尋...")
+                        .Mode(TextBoxMode.Search)
+                        .ShowClearButton(true)
+                        .Width(250)
+                        .OnValueChanged("fileManagerSearch_onValueChanged")
+                        .ElementAttr("style", "")
+                    )
+                    .LocateInMenu(ToolbarItemLocateInMenuMode.Never);
+
+                items.Add().Name("refresh").Text("重新整理");
+                items.Add().Name("switchView");
+            });
+        })
+        .OnContentReady("fileManager_onContentReady")
+        .OnSelectedFileOpened("fileManager_onSelectedFileOpened")
+        .OnItemDeleting("fileManager_onItemDeleting")
+        .CustomizeThumbnail("OnCustomizeThumbnail")
+    )
+
+    @(Html.DevExtreme().Popup()
+        .ID("photo-popup")
+        .MaxHeight(600)
+        .OnContentReady("popup_photo_onContentReady")
+        .HideOnOutsideClick(true)
+        .ShowCloseButton(true))
+</div>
+
+<script>
+    function onBeforeAjaxSendFileSystemRequest({ headers, formData, xhrFields }) {
+        var searchBox = $("#fileManagerSearchBox").dxTextBox("instance");
+        var searchTerm = "";
+        if (searchBox) {
+            searchTerm = searchBox.option("value");
+            if (searchTerm === "") {
+                return;
+            }
+            else {
+                formData.searchValue = searchTerm;
+            }
+        }
+    }
+
+    function fileManagerSearch_onValueChanged(e) {
+        var fileManager = $("#file-manager").dxFileManager("instance");
+        var searchBox = $("#fileManagerSearchBox").dxTextBox("instance");
+        // 根據是否有輸入值來設定背景色
+        if (e.value && e.value.trim() !== "") {
+            // 有輸入值時設定深黃色背景
+            searchBox.element().find("input").css("background-color", "#ffc107");
+        } else {
+            // 沒有輸入值時恢復預設背景
+            searchBox.element().find("input").css("background-color", "");
+        }
+
+        if (fileManager) {
+            fileManager.refresh();
+        }
+    }
+
+    function fileManager_onItemDeleting(e) {
+        if (e.item && !e.item.isDirectory) {
+            // 取得要刪除的檔案路徑
+            var filePath = e.item.relativeName || e.item.name;
+
+            // 使用同步 AJAX 檢查檔案是否有關聯
+            var hasBindings = false;
+            var checkSuccess = false;
+
+            $.ajax({
+                url: '/api/FileManagement/CheckFileHasBindings',
+                type: 'POST',
+                contentType: 'application/json',
+                headers: co.Data.Header,
+                data: JSON.stringify(filePath),
+                // 設定為同步請求
+                async: false,
+                success: function (result) {
+                    hasBindings = result;
+                    checkSuccess = true;
+                },
+                error: function () {
+                    // AJAX 錯誤時，為安全起見，假設有關聯
+                    hasBindings = true;
+                    checkSuccess = true;
+                }
+            });
+
+            // 如果檢查成功且檔案有關聯，則詢問用戶確認
+            if (checkSuccess && hasBindings) {
+                // 使用內建的 confirm 對話框（這是同步的）
+                var confirmed = confirm(e.item.name + " 此檔案正被系統使用中，確定要刪除嗎？刪除後不可復原！");
+                if (!confirmed) {
+                    // 用戶取消刪除
+                    e.cancel = true;
+                    e.errorText = "取消刪除";
+                    return;
+                }
+            }
+            // 如果用戶確認或檔案沒有關聯，讓預設刪除行為繼續執行
+        }
+    }
+
+    function fileManager_onSelectedFileOpened(e) {
+        const fileExtension = e.file.name.split('.').pop().toLowerCase();
+        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+        const displayFileName = e.file.dataItem.OriginalFileName
+            ? `${e.file.name} (${e.file.dataItem.OriginalFileName})`
+            : e.file.name;
+
+        // 如果 DownloadFileName 為空，則實體檔案路徑
+        // 如果 DownloadFileName 有值，則需要把含OrgName的路徑補上
+        const imageSource = (e.file.dataItem.DownloadFileName ? e.file.dataItem.DownloadFileName.replace('/upload/', @Html.Raw($"'{Model.DownloadPathAppendOrgName.ToString()}'")) : null) ||
+                            @Html.Raw($"'{Model.DownloadPathAppendOrgName.ToString()}'") +
+                                         (e.file.parentPath ? e.file.parentPath + '/' : '') +
+                                          e.file.dataItem.name;
+
+        if (imageExtensions.includes(fileExtension)) {
+            // 圖片檔案的處理：使用DevExtreme().Popup()顯示
+            var popup = $("#photo-popup").dxPopup("instance");
+            popup.option({
+                "title": displayFileName,
+                "contentTemplate": "<img src=\"" + imageSource + "\" class=\"photo-popup-image\" />"
+            });
+            popup.show();
+        } else {
+            // 非圖片檔案：一律開啟新視窗
+            window.open(imageSource, '_blank');
+        }
+    }
+
+    function fileManager_onContentReady(e) {
+        var fileManagerInstance = $("#file-manager").dxFileManager("instance");
+        var acceptString = "@Html.Raw(string.Join(",", Model.AllowContentType))";
+
+        // 設定上傳檔案的類型(client端)
+        fileManagerInstance._editing._fileUploader._uploaderInfos.forEach(u => u.fileUploader.option('accept', acceptString));
+
+        // 監聽檔案管理器的變化，為新載入的縮圖加入 lazy loading 和 alt
+        var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) { // Element node
+                        $(node).find(".dx-filemanager-item-custom-thumbnail").each(function() {
+                            var $img = $(this);
+                            var fileName = $img.closest('.dx-filemanager-thumbnails-item').find('.dx-filemanager-thumbnails-item-name').text();
+                            $img.attr("loading", "lazy");
+                            $img.attr("alt", fileName + "(縮圖)");
+                        });
+                    }
+                });
+            });
+        });
+
+        observer.observe(document.getElementById("file-manager"), {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    function popup_photo_onContentReady(e) {
+        var $contentElement = e.component.content();
+        $contentElement.addClass("photo-popup-content");
+    }
+
+    function OnCustomizeThumbnail(fileManagerItem) {
+        return fileManagerItem.dataItem ? fileManagerItem.dataItem.thumbnailUrl : null;
+    }
+</script>

@@ -22,3 +22,27 @@
         });
     });
 });
+
+$(document).ready(function () {
+    setTimeout(function () {
+        var suspendValueChanged;
+
+        // 為所有 NumberBox 增加事件處理
+        // ref:https://supportcenter.devexpress.com/ticket/details/T741892/numberbox-how-to-prevent-only-the-mouse-wheel-event-and-keep-arrows-active
+        $(".dx-numberbox").each(function () {
+            var instance = $(this).dxNumberBox("instance");
+            if (instance) {
+                instance.option("onValueChanged", function (e) {
+                    if (e.event && e.event.type === "dxmousewheel") {
+                        if (suspendValueChanged) {
+                            suspendValueChanged = false;
+                            return;
+                        }
+                        suspendValueChanged = true;
+                        e.component.option('value', e.previousValue);
+                    }
+                });
+            }
+        });
+    }, 300); // 給予適當的延遲以確保控件已經初始化
+});

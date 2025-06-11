@@ -31,7 +31,8 @@ namespace EtheriT.Coker.Application.FileManagement
         private SHA1 CryptoProvider { get; }
 
 
-        private static readonly IReadOnlyCollection<string> AllowedFileExtensions = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase) {
+        private static readonly IReadOnlyCollection<string> AllowedFileExtensions = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
             ".png", ".gif", ".jpg", ".jpeg", ".ico", ".bmp", ".avif", ".webp", ".svg"
         };
 
@@ -132,7 +133,9 @@ namespace EtheriT.Coker.Application.FileManagement
             // 製作一個調整大小後的原始圖像副本
             var resizedOriginal = original.Clone();
             resizedOriginal.Resize(newWidth, newHeight);
-            resizedOriginal.FilterType = FilterType.Lanczos; // 高品質縮放濾鏡，類似於 HighQualityBicubic
+
+            // 高品質縮放濾鏡，類似於 HighQualityBicubic
+            resizedOriginal.FilterType = FilterType.Lanczos;
 
             // 計算居中位置
             int top = (height - (int)newHeight) / 2;

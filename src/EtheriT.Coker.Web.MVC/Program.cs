@@ -86,6 +86,7 @@ using EtheriT.Coker.Application.Shared.Dto.Authorizaion.Auth;
 using EtheriT.Coker.Application.Shared.FileManagement;
 using EtheriT.Coker.Application.FileManagement;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.StaticFiles;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -444,7 +445,15 @@ app.UseVirtualDirectory("shared", builder.Configuration.GetValue<string>("Virtua
 app.UseVirtualDirectory("layout", builder.Configuration.GetValue<string>("VirtualDirectory:Layout"));
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
+// 設定 MIME 類型映射，包括 AVIF 檔案
+var fileProvider = new FileExtensionContentTypeProvider();
+fileProvider.Mappings[".avif"] = "image/avif";
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = fileProvider
+});
 
 app.UseRouting();
 

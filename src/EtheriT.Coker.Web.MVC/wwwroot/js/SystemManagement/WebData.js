@@ -221,11 +221,11 @@ function CompanyInfoEdit() {
     if (companyInfoIsEdit) {
         $this_form_input.removeAttr("disabled");
         $this_form_select.removeAttr("disabled");
-        $this_form_btn.addClass("d-flex");
+        $this_form_btn.removeClass("d-none").addClass("d-flex");
     } else {
         $this_form_input.attr('disabled', 'disabled');
         $this_form_select.attr('disabled', 'disabled');
-        $this_form_btn.removeClass("d-flex");
+        $this_form_btn.removeClass("d-flex").addClass("d-none");
     }
 }
 

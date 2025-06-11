@@ -214,81 +214,94 @@ namespace EtheriT.Coker.Application.ThirdParty
                     case OrderStatusEnum.待確認:
                         await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
                         await orderAppService.CancelOrderMailSend(ohdata.Id, DateTimeNow);
+                        response.Message = "訂單已取消成功";
                         response.Success = true;
                         break;
                     case OrderStatusEnum.已取消:
                         throw new Exception("該筆訂單已取消");
                     default:
-                        if (!payment.CanRefund) throw new Exception("訂單無法取消，請聯繫客服協助處理。");
-                        var ThirdPartyData = await ECPayGetThirdPartyData() ?? throw new Exception("取得綠界支付資料發生錯誤，請確認是否正確設置");
-
-                        var RequestUri = ThirdPartyClient_ECPay.BaseAddress?.ToString().Replace("ecpg", "ecpayment") + "/1.0.0/Credit/DoAction";
-                        if (RequestUri.Contains("-stage")) throw new Exception("測試環境無法退刷");
-
-                        var CreditDetailGetResponse = await ECPayCreditDetailGet(ohdata.Id);
-                        if (!CreditDetailGetResponse.Success) throw new Exception(CreditDetailGetResponse.Message);
-
-                        ECPayRequestDto RequestBody = new ECPayRequestDto();
-
-                        if (ThirdPartyData.PlatformID != "") RequestBody.MerchantID = ThirdPartyData.PlatformID;
-                        else RequestBody.MerchantID = ThirdPartyData.MerchantID;
-                        RequestBody.RqHeader = new RqHeaderDto();
-                        RequestBody.RqHeader.Timestamp = ((DateTimeOffset)DateTimeNow).ToUnixTimeSeconds().ToString();
-
-                        ECPayRefundDataDto refundRequestData = new ECPayRefundDataDto();
-                        refundRequestData.PlatformID = ThirdPartyData.PlatformID;
-                        refundRequestData.MerchantID = ThirdPartyData.MerchantID;
-                        refundRequestData.MerchantTradeNo = ohdata.TransactionId ?? "";
-                        refundRequestData.TradeNo = CreditDetailGetResponse.TradeNo;
-                        switch (CreditDetailGetResponse.Status)
+                        if (!payment.CanRefund)
                         {
-                            case "Canceled":
-                            case "Operation canceled":
-                                await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
-                                await orderAppService.CancelOrderMailSend(ohdata.Id, DateTimeNow);
-                                response.Success = true;
-                                break;
-                            case "Unauthorized":
-                                DateTime tradeDate = DateTime.ParseExact(CreditDetailGetResponse.AuthTime, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
-                                if (DateTimeNow > tradeDate.AddMinutes(30))
-                                {
+                            if (ohdata.State == OrderStatusEnum.待付款) response.Message = "訂單已取消成功，如有貨款需退回，請聯繫客服處理";
+                            else if (ohdata.State == OrderStatusEnum.已付款) response.Message = "訂單已取消成功，退款事宜請聯繫客服處理";
+                            await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
+                            await orderAppService.CancelOrderMailSend(ohdata.Id, DateTimeNow);
+                            response.Success = true;
+                        }
+                        else
+                        {
+                            var ThirdPartyData = await ECPayGetThirdPartyData() ?? throw new Exception("取得綠界支付資料發生錯誤，請確認是否正確設置");
+
+                            var RequestUri = ThirdPartyClient_ECPay.BaseAddress?.ToString().Replace("ecpg", "ecpayment") + "/1.0.0/Credit/DoAction";
+                            if (RequestUri.Contains("-stage")) throw new Exception("測試環境無法退刷");
+
+                            var CreditDetailGetResponse = await ECPayCreditDetailGet(ohdata.Id);
+                            if (!CreditDetailGetResponse.Success) throw new Exception(CreditDetailGetResponse.Message);
+
+                            ECPayRequestDto RequestBody = new ECPayRequestDto();
+
+                            if (ThirdPartyData.PlatformID != "") RequestBody.MerchantID = ThirdPartyData.PlatformID;
+                            else RequestBody.MerchantID = ThirdPartyData.MerchantID;
+                            RequestBody.RqHeader = new RqHeaderDto();
+                            RequestBody.RqHeader.Timestamp = ((DateTimeOffset)DateTimeNow).ToUnixTimeSeconds().ToString();
+
+                            ECPayRefundDataDto refundRequestData = new ECPayRefundDataDto();
+                            refundRequestData.PlatformID = ThirdPartyData.PlatformID;
+                            refundRequestData.MerchantID = ThirdPartyData.MerchantID;
+                            refundRequestData.MerchantTradeNo = ohdata.TransactionId ?? "";
+                            refundRequestData.TradeNo = CreditDetailGetResponse.TradeNo;
+                            switch (CreditDetailGetResponse.Status)
+                            {
+                                case "Canceled":
+                                case "Operation canceled":
                                     await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
                                     await orderAppService.CancelOrderMailSend(ohdata.Id, DateTimeNow);
                                     response.Success = true;
-                                }
-                                break;
-                            case "Authorized":
-                                refundRequestData.Action = "N";
-                                break;
-                            case "To be captured":
-                                refundRequestData.Action = "E";
-                                break;
-                            case "Captured":
-                                refundRequestData.Action = "R";
-                                break;
-                        }
-                        refundRequestData.TotalAmount = CreditDetailGetResponse.Amount;
+                                    break;
+                                case "Unauthorized":
+                                    DateTime tradeDate = DateTime.ParseExact(CreditDetailGetResponse.AuthTime, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
+                                    if (DateTimeNow > tradeDate.AddMinutes(30))
+                                    {
+                                        await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
+                                        await orderAppService.CancelOrderMailSend(ohdata.Id, DateTimeNow);
+                                        response.Message = "訂單已取消成功";
+                                        response.Success = true;
+                                    }
+                                    break;
+                                case "Authorized":
+                                    refundRequestData.Action = "N";
+                                    break;
+                                case "To be captured":
+                                    refundRequestData.Action = "E";
+                                    break;
+                                case "Captured":
+                                    refundRequestData.Action = "R";
+                                    break;
+                            }
+                            refundRequestData.TotalAmount = CreditDetailGetResponse.Amount;
 
-                        RequestBody.Data = Encrypt(refundRequestData, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
-
-                        var refundResponse = await ECPaySendRequest("ECPayGetQueryTrade", RequestUri, RequestBody);
-                        if (!refundResponse.Success) throw new Exception(refundResponse.Message);
-
-                        if (refundRequestData.Action == "E")
-                        {
-                            refundRequestData.Action = "N";
                             RequestBody.Data = Encrypt(refundRequestData, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
-                            refundResponse = await ECPaySendRequest("ECPayGetQueryTrade", RequestUri, RequestBody);
 
+                            var refundResponse = await ECPaySendRequest("ECPayGetQueryTrade", RequestUri, RequestBody);
                             if (!refundResponse.Success) throw new Exception(refundResponse.Message);
-                        }
 
-                        ohdata.State = OrderStatusEnum.已取消;
-                        ohdata.refundTransactionId = refundRequestData.TradeNo;
-                        ohdata.refundTransactionDate = DateTimeNow;
-                        db.SaveChanges();
-                        await orderAppService.CancelOrderMailSend(ohdata.Id, DateTimeNow);
-                        response.Success = true;
+                            if (refundRequestData.Action == "E")
+                            {
+                                refundRequestData.Action = "N";
+                                RequestBody.Data = Encrypt(refundRequestData, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
+                                refundResponse = await ECPaySendRequest("ECPayGetQueryTrade", RequestUri, RequestBody);
+
+                                if (!refundResponse.Success) throw new Exception(refundResponse.Message);
+                            }
+
+                            ohdata.State = OrderStatusEnum.已取消;
+                            ohdata.refundTransactionId = refundRequestData.TradeNo;
+                            ohdata.refundTransactionDate = DateTimeNow;
+                            db.SaveChanges();
+                            await orderAppService.CancelOrderMailSend(ohdata.Id, DateTimeNow);
+                            response.Message = "訂單已取消成功";
+                            response.Success = true;
+                        }
                         break;
                 }
             }
@@ -382,19 +395,18 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 var data = Decrypt(ResultResponseData.Data, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
                 var ResponseData = JsonConvert.DeserializeObject<ECPayResponseDataDto>(data as string);
+                if (ResponseData.RtnCode == 1) ResponseData.Success = true;
 
-                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayOrderResultFail", JsonConvert.SerializeObject(ResponseData));
+                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayOrderResult", JsonConvert.SerializeObject(ResponseData));
 
                 var ohdata = await db.Order_Headers.Where(e => e.TransactionId == ResponseData.OrderInfo.MerchantTradeNo).FirstOrDefaultAsync() ?? throw new Exception("查無訂單資訊");
 
-                if (ResponseData.RtnCode != 1) ohdata.State = OrderStatusEnum.付款失敗;
-                else if (ResponseData.CardInfo != null)
+                if (ResponseData.RtnCode != 1)
                 {
-                    if (ResponseData.OrderInfo.PaymentType == "CreditInstallment") ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains($"CreditInstallment_{ResponseData.CardInfo.Stage}")).Select(e => e.Id).FirstOrDefaultAsync();
-                    else ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains(ResponseData.OrderInfo.PaymentType)).Select(e => e.Id).FirstOrDefaultAsync();
+                    ohdata.State = OrderStatusEnum.付款失敗;
+                    db.SaveChanges();
                 }
 
-                db.SaveChanges();
                 return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{("000000000" + ohdata.Id).Substring(ohdata.Id.ToString().Length)}");
             }
             catch (Exception ex)
@@ -411,6 +423,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var ThirdPartyData = await ECPayGetThirdPartyData() ?? throw new Exception("商家未確實設置綠界支付資料");
                 var data = Decrypt(ResultResponseData.Data, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
                 var ResponseData = JsonConvert.DeserializeObject<ECPayResponseDataDto>(data as string);
+                if (ResponseData.RtnCode == 1) ResponseData.Success = true;
 
                 await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayReturn", JsonConvert.SerializeObject(ResponseData));
                 if (ResponseData.RtnCode != 1) throw new Exception($"取得ECPayReturn發生錯誤，{JsonConvert.SerializeObject(ResponseData, Formatting.Indented)}");
@@ -428,6 +441,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                     ohdata.LastModificationTime = DateTime.Now;
                     ohdata.State = OrderStatusEnum.付款失敗;
                 }
+
                 db.SaveChanges();
 
                 return "1|OK";
@@ -472,20 +486,20 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                         RequestBody.Data = Encrypt(PaymentData, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
 
-                        var createPaymentResponse = await ECPaySendRequest("ECPayCreatePayment", RequestUri, RequestBody);
+                        var createPaymentResponse = await ECPaySendRequest("ECPayCreatePayment", RequestUri, RequestBody) ?? throw new Exception("ECPay建立訂單發生錯誤");
+                        await orderAppService.SendMail(ohdata.Id);
+
+                        await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayCreatePayment", JsonConvert.SerializeObject(createPaymentResponse));
 
                         if (createPaymentResponse.Success)
                         {
                             response.Message = JsonConvert.SerializeObject(createPaymentResponse);
                             response.Success = true;
-                            ohdata.Payment = await db.PaymentTypes.Where(e => e.Code.StartsWith("ECPay") && e.Code.Contains(createPaymentResponse.OrderInfo.PaymentType)).Select(e => e.Id).FirstOrDefaultAsync();
-                            if (ohdata.Payment == 0) ohdata.Payment = 16;
                             ohdata.State = OrderStatusEnum.待付款;
                             db.SaveChanges();
                         }
                         else
                         {
-                            ohdata.Payment = 16;
                             ohdata.State = OrderStatusEnum.付款失敗;
                             db.SaveChanges();
                             throw new Exception(createPaymentResponse.Message);
@@ -527,7 +541,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (ThirdPartyData != null)
                 {
                     var RequestUri = "/Merchant/GetTokenbyTrade";
-                    dto.Payment = 16;
 
                     if (dto.OrderId == null)
                     {

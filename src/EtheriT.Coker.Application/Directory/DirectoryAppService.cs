@@ -1008,18 +1008,16 @@ namespace EtheriT.Coker.Application.Directory
                             });
                             if (temparticledata != null)
                             {
-                                if (dto.FindNearest == true)
+                                foreach (var item in temparticledata)
                                 {
-                                    foreach (var item in temparticledata)
+                                    var dindex = corr.FindIndex(c => c.ArticleId == item.Id);
+                                    if (dindex != -1)
                                     {
-                                        var dindex = corr.FindIndex(c => c.ArticleId == item.Id);
-                                        if (dindex != -1)
-                                        {
-                                            item.Dirname = corr[dindex].DirectoryName;
-                                        }
+                                        item.Dirname = corr[dindex].DirectoryName;
                                     }
                                 }
-                                else
+
+                                if (dto.FindNearest != true)
                                 {
                                     foreach (var item in temparticledata)
                                     {

@@ -87,8 +87,12 @@ namespace EtheriT.Coker.Application.Order
                                        {
                                            UUID = oh.FK_UUID,
                                            Id = ("000000000" + oh.Id.ToString()).Substring(oh.Id.ToString().Length, 9),
-                                           Orderer = oh.Orderer.Substring(0, 1) + "○" + oh.Orderer.Substring(oh.Orderer.Length - 1, 1),
-                                           RecipientAddress = oh.RecipientAddress.Substring(0, oh.RecipientAddress.LastIndexOf(" ")) + "***",
+                                           Orderer = string.IsNullOrEmpty(oh.Orderer) ? "" :
+                                                oh.Orderer.Length == 1 ? oh.Orderer + "○" :
+                                                    oh.Orderer.Substring(0, 1) + "○" + oh.Orderer.Substring(oh.Orderer.Length - 1, 1),
+                                           RecipientAddress = string.IsNullOrEmpty(oh.RecipientAddress) || !oh.RecipientAddress.Contains(" ") ?
+                                                oh.RecipientAddress :
+                                                oh.RecipientAddress.Substring(0, oh.RecipientAddress.LastIndexOf(" ")) + "***",
                                            Shipping = oh.Shipping == 0 ? ShippingTypeEnum.郵寄掛號.ToString() : ((ShippingTypeEnum)ls.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11"),
                                            Payment = db.PaymentTypes.Where(e => e.Id == oh.Payment).Select(e => e.Title).FirstOrDefault() ?? "",
                                            State = ((OrderStatusEnum)oh.State).ToString(),
@@ -154,6 +158,8 @@ namespace EtheriT.Coker.Application.Order
                 var datetime_now = DateTime.Now;
 
                 Core.Models.Order_Header oh = new Order_Header();
+
+                if (dto.IsTemp == null) dto.IsTemp = false;
 
                 if (dto.OrderId != null)
                 {
@@ -235,7 +241,7 @@ namespace EtheriT.Coker.Application.Order
                                          select tp.Title).FirstOrDefaultAsync();
 
                 var mailoutput = new ResponseMessageDto();
-                if (!dto.IsTemp) mailoutput = await SendMail(oh.Id);
+                if (!dto.IsTemp && dto.Payment != 16) mailoutput = await SendMail(oh.Id);
                 else mailoutput.Success = true;
 
                 if (PaymentType != null)
@@ -1172,15 +1178,19 @@ namespace EtheriT.Coker.Application.Order
 
                     var OrdererEmailSecret = (order_header.OrdererEmail.Length > 5 ? order_header.OrdererEmail.Substring(0, 4) : order_header.OrdererEmail.Substring(0, 1)) + "**********";
                     order_header.OrdererCellPhone = (order_header.OrdererCellPhone.Length > 4 ? order_header.OrdererCellPhone.Substring(0, 4) : order_header.OrdererCellPhone.Substring(0, 1)) + "******";
-                    order_header.OrdererTelePhone = !string.IsNullOrEmpty(order_header.OrdererTelePhone) ?
-                        order_header.OrdererTelePhone.Length > 3 ?
-                            order_header.OrdererTelePhone?.Substring(0, 3) + "******" :
-                            string.IsNullOrEmpty(order_header.OrdererTelePhone) ? "" : order_header.OrdererTelePhone?.Substring(0, 1) + "******" :
-                        "";
+                    order_header.OrdererTelePhone = !string.IsNullOrEmpty(order_header.OrdererTelePhone)
+                    ? order_header.OrdererTelePhone.Length > 3
+                        ? order_header.OrdererTelePhone.Substring(0, 3) + "******"
+                        : order_header.OrdererTelePhone.Substring(0, 1) + "******"
+                    : "";
                     var OrdererSex = order_header.OrdererSex == 1 ? "先生" : order_header.OrdererSex == 2 ? "小姐" : "君";
                     order_header.RecipientAddress = order_header.RecipientAddress.Replace(" ", "").Substring(0, 6) + "**********";
                     order_header.RecipientCellPhone = (order_header.RecipientCellPhone.Length > 4 ? order_header.RecipientCellPhone.Substring(0, 4) : order_header.RecipientCellPhone.Substring(0, 1)) + "******";
-                    order_header.RecipientTelePhone = order_header.RecipientTelePhone != null ? order_header.RecipientTelePhone.Length > 3 ? order_header.RecipientTelePhone?.Substring(0, 3) + "******" : order_header.RecipientTelePhone?.Substring(0, 1) + "******" : "";
+                    order_header.RecipientTelePhone = !string.IsNullOrEmpty(order_header.RecipientTelePhone)
+                     ? order_header.RecipientTelePhone.Length > 3
+                         ? order_header.RecipientTelePhone.Substring(0, 3) + "******"
+                         : order_header.RecipientTelePhone.Substring(0, 1) + "******"
+                     : "";
                     var RecipientSex = order_header.RecipientSex == 1 ? "先生" : order_header.RecipientSex == 2 ? "小姐" : "君";
 
                     var mailhtml = @$"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>

@@ -29,6 +29,7 @@ namespace EtheriT.Coker.Application
         private readonly LoginUserData loginUserData;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly string ApplicationName;
+        private readonly IFileUploadAppService fileUploadAppService;
         private readonly IConfiguration Configuration;
         private readonly IMapper mapper;
         public WebsiteApplication(
@@ -36,6 +37,7 @@ namespace EtheriT.Coker.Application
             LoginUserData loginUserData,
             IConfiguration Configuration,
             IHttpContextAccessor httpContextAccessor,
+            IFileUploadAppService fileUploadAppService,
             IMapper mapper
         )
         {
@@ -43,6 +45,7 @@ namespace EtheriT.Coker.Application
             this.httpContextAccessor = httpContextAccessor;
             this.loginUserData = loginUserData;
             this.Configuration = Configuration;
+            this.fileUploadAppService = fileUploadAppService;
             this.mapper = mapper;
             ApplicationName = "Website";
 
@@ -273,6 +276,19 @@ namespace EtheriT.Coker.Application
                                   Logo = w.Logo ?? "",
                                   isSubsite = issubsite == null ? false : true,
                               }).ToListAsync();
+            if (date != null) {
+                foreach (var item in date)
+                {
+                    if (string.IsNullOrEmpty(item.Logo)) {
+                        var logo = await fileUploadAppService.getImgFiles( new Shared.Dto.Files.FileGetImgInputDto { 
+                            Sid = item.Id,
+                           Type = (int)FileBindTypeEnum.網站Logo,
+                        });
+                        if(logo.Any())
+                            item.Logo = logo.FirstOrDefault().Link;
+                    }
+                }
+            }
             return date;
         }
         public async Task<ResponseMessageDto> GetPrivacyAndTerms()

@@ -164,6 +164,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                             case "CheckStatus":
                                 response = await pchomePayAppService.PChomePayCheckPaymentStatus(dto.OrderId);
                                 break;
+                            case "DeliveryNote":
+                                response = await pchomePayAppService.PChomePayDeliveryNote(dto.OrderId);
+                                break;
                             default:
                                 response.Message = $"查詢動作【{dto.Action}】不支援";
                                 break;

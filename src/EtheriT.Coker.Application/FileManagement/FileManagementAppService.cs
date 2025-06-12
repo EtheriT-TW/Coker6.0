@@ -35,7 +35,8 @@ namespace EtheriT.Coker.Application.FileManagement
             var filePath = $"{_configuration.GetValue<string>("VirtualDirectory:upload")}\\" + orgName + "";
 
             // 取得目前登入使用者的 ID
-            long userId = _loginUserData.GetUserId().Result; var allowFileAllowMIME = _configuration.GetSection("VirtualDirectory:FileAllow:Ext").Get<List<string>>() ?? new List<string>();
+            long userId = _loginUserData.GetUserId().Result;
+            var allowFileAllowMIME = _configuration.GetSection("VirtualDirectory:FileAllow:Ext").Get<List<string>>() ?? new List<string>();
 
             // 使用 FileExtensionContentTypeProvider 從 MIME 值反推取得副檔名
             var provider = new FileExtensionContentTypeProvider();
@@ -46,6 +47,8 @@ namespace EtheriT.Coker.Application.FileManagement
                                                       .OrderBy(x => x)
                                                       .Distinct()
                                                       .ToList();
+
+            allowFileExtension.Add(".avif");
 
             var customFileSystemProvider = new CustomFileSystemProvider(_thumbnailGenerator.AssignThumbnailUrl,
                                                                         filePath,

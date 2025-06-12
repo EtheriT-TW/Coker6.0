@@ -25,7 +25,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             Models.FileManagement.IndexModel model = new Models.FileManagement.IndexModel();
 
 
-            model.AllowContentType = _configuration.GetSection("VirtualDirectory:FileAllow:Ext").Get<List<string>>() ?? new List<string>();            // 使用 FileExtensionContentTypeProvider 從 MIME 值反推取得副檔名
+            model.AllowContentType = _configuration.GetSection("VirtualDirectory:FileAllow:Ext").Get<List<string>>() ?? new List<string>();
+            // 使用 FileExtensionContentTypeProvider 從 MIME 值反推取得副檔名
             var provider = new FileExtensionContentTypeProvider();
 
             // 從 MIME 反向尋找副檔名並只保留允許的副檔名
@@ -34,6 +35,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                                                         .OrderBy(x => x)
                                                         .Distinct()
                                                         .ToList();
+
+            model.AllowFileExtension.Add(".avif");
 
             string orgName = _loginUserData.GetWebsiteOrgName().Result;
             model.DownloadPathAppendOrgName = $"/upload/{orgName}/";

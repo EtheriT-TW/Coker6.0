@@ -1157,18 +1157,10 @@ namespace EtheriT.Coker.Application
                     long fileLength = file.Length;
                     if (convert && IsAllowedFileType(file.ContentType))
                     {
-                        using (var image = new MagickImage(stream))
-                        {
-                            string newFilePath = Path.Combine(directoryPath, $"{key}.avif");
-                            image.Format = MagickFormat.Avif; // 轉成 avif
-                            image.Quality = 100;
-                            image.Settings.SetDefine(MagickFormat.Avif, "lossless", "true"); //設定無損壓縮
-                            image.Settings.SetDefine(MagickFormat.Avif, "chroma-subsampling", "4:4:4"); // 關鍵！！
-                            await image.WriteAsync(newFilePath); // 儲存轉換後的檔案
-                            path = $"/{directory}/{key}.avif";
-                            ContentType = "image/avif";
-                            fileLength = new FileInfo(newFilePath).Length;
-                        }
+                        var fileInfo = await ConvertImageAsync(stream, directoryPath, directory, key.ToString());
+                        path = fileInfo.Path;
+                        ContentType = fileInfo.ContentType;
+                        fileLength = fileInfo.FileLength;
                     }
                     else
                     {
@@ -1254,18 +1246,10 @@ namespace EtheriT.Coker.Application
                             long fileLength = file.Length;
                             if (convert && asotype != (int)FileBindTypeEnum.網站圖示 && asotype != (int)FileBindTypeEnum.分享圖示 && IsAllowedFileType(file.ContentType))
                             {
-                                using (var image = new MagickImage(stream))
-                                {
-                                    string newFilePath = Path.Combine(directoryPath, $"{key}.avif");
-                                    image.Quality = 100;
-                                    image.Format = MagickFormat.Avif; // 轉成 WebP
-                                    image.Settings.SetDefine(MagickFormat.Avif, "lossless", "true"); //設定無損壓縮
-                                    image.Settings.SetDefine(MagickFormat.Avif, "chroma-subsampling", "4:4:4"); // 關鍵！！
-                                    await image.WriteAsync(newFilePath); // 儲存轉換後的檔案
-                                    path = $"/{directory}/{key}.avif";
-                                    ContentType = "image/avif";
-                                    fileLength = new FileInfo(newFilePath).Length;
-                                }
+                                var fileInfo = await ConvertImageAsync(stream, directoryPath, directory, key.ToString());
+                                path = fileInfo.Path;
+                                ContentType = fileInfo.ContentType;
+                                fileLength = fileInfo.FileLength;
                             }
                             else
                             {
@@ -1346,6 +1330,96 @@ namespace EtheriT.Coker.Application
                 "image/webp"
             };
             return Array.Exists(allowedTypes, type => type == contentType);
+        }
+        private async Task<ImageConversionResultDto> ConvertImageAsync(Stream inputStream, string directoryPath, string baseUrlPath, string key)
+        {
+            using var original = new MagickImage(inputStream);
+            var originalFormat = original.Format;
+
+            // 若為 AVIF，直接儲存
+            if (originalFormat == MagickFormat.Avif)
+            {
+                var avifPath = Path.Combine(directoryPath, $"{key}.avif");
+                await original.WriteAsync(avifPath);
+                return new ImageConversionResultDto
+                {
+                    Path = $"/{baseUrlPath}/{key}.avif",
+                    ContentType = "image/avif",
+                    FileLength = new FileInfo(avifPath).Length
+                };
+            }
+
+            // 記下原始大小
+            inputStream.Position = 0; // 保險做法，防止 Seek 失效
+            var originalSize = inputStream.Length;
+            const int Threshold = 500 * 1024;
+
+            // 嘗試轉 AVIF
+            var avifPathTry = Path.Combine(directoryPath, $"{key}.avif");
+            original.Format = MagickFormat.Avif;
+            if (originalSize < Threshold)
+                original.Quality = 90;
+            original.Settings.SetDefine(MagickFormat.Avif, "lossless", "true");
+            original.Settings.SetDefine(MagickFormat.Avif, "chroma-subsampling", "4:4:4");
+            await original.WriteAsync(avifPathTry);
+
+            var avifSize = new FileInfo(avifPathTry).Length;
+
+            if (avifSize < originalSize)
+            {
+                // ✅ AVIF 成功壓縮
+                return new ImageConversionResultDto
+                {
+                    Path = $"/{baseUrlPath}/{key}.avif",
+                    ContentType = "image/avif",
+                    FileLength = avifSize
+                };
+            }
+
+            // ❌ AVIF 檔案反而更大 → 刪除 AVIF
+            File.Delete(avifPathTry);
+
+            // 儲存原始圖，使用原格式副檔名
+            var extension = GetExtension(originalFormat);
+            var contentType = GetMimeType(originalFormat);
+            var fallbackPath = Path.Combine(directoryPath, $"{key}{extension}");
+
+            inputStream.Position = 0; // 回到開頭
+            using (var fs = File.Create(fallbackPath))
+            {
+                await inputStream.CopyToAsync(fs);
+            }
+
+            return new ImageConversionResultDto
+            {
+                Path = $"/{baseUrlPath}/{key}{extension}",
+                ContentType = contentType,
+                FileLength = originalSize
+            };
+        }
+        private string GetExtension(MagickFormat format)
+        {
+            return format switch
+            {
+                MagickFormat.Jpeg => ".jpg",
+                MagickFormat.Png => ".png",
+                MagickFormat.WebP => ".webp",
+                MagickFormat.Bmp => ".bmp",
+                _ => ".img"
+            };
+        }
+
+        private string GetMimeType(MagickFormat format)
+        {
+            return format switch
+            {
+                MagickFormat.Jpeg => "image/jpeg",
+                MagickFormat.Png => "image/png",
+                MagickFormat.WebP => "image/webp",
+                MagickFormat.Bmp => "image/bmp",
+                MagickFormat.Avif => "image/avif",
+                _ => "application/octet-stream"
+            };
         }
     }
 }

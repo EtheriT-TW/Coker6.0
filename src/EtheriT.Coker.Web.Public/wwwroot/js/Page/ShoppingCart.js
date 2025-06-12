@@ -1489,7 +1489,7 @@ function OrderHeaderAdd() {
                                                             if (SwalClose) Swal.close();
                                                         }, 300);
                                                     } else {
-                                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("付款流程發生未知錯誤，請稍後重新嘗試，或直接聯繫客服人員。");
+                                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`<div>付款流程發生錯誤，<br>『${result.message}』<br>請稍後重新嘗試，或直接聯繫客服人員。</div>`);
                                                         setTimeout(function () {
                                                             buy_step_swiper.slideNext();
                                                             buy_step_swiper.disable();

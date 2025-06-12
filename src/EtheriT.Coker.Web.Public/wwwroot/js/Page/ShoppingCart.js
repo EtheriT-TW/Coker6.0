@@ -406,7 +406,6 @@ function PageReady() {
         ECPayMonitor = false;
         console.log("ECPayMonitor Change", ECPayMonitor)
         Step3Monitor();
-
         if (!OrdererFilled) {
             if (!OrdererOpen) OrdererEdit(true);
             Coker.sweet.warning("請注意", "請確實填寫訂購人資料！", null);
@@ -1157,13 +1156,16 @@ function OrdererEdit(isopen) {
         OrdererOpen = true;
         OrdererFilled = false;
     } else if (OrdererOpen && !isopen) {
-        var data = co.Form.getJson($("#Form_Orderer").attr("id"), $("#OrdererForm .default_data"));
-        data.ordererAddress = `${data.county}${data.district}${data.ordererAddress}`;
-        ShoppingCartDataInsert(data, $("#OrdererForm .default_data"));
-        $("#OrdererForm > .default_data").removeClass("d-none");
-        $("#OrdererForm > form").addClass("d-none");
-        OrdererOpen = false;
-        OrdererFilled = true;
+        OrdererFilled = FormCheck(OrdererForms);
+        if (!OrdererFilled) Coker.sweet.warning("請注意", "請確實填寫訂購人資料！", null);
+        else {
+            var data = co.Form.getJson($("#Form_Orderer").attr("id"), $("#OrdererForm .default_data"));
+            data.ordererAddress = `${data.county}${data.district}${data.ordererAddress}`;
+            ShoppingCartDataInsert(data, $("#OrdererForm .default_data"));
+            $("#OrdererForm > .default_data").removeClass("d-none");
+            $("#OrdererForm > form").addClass("d-none");
+            OrdererOpen = false;
+        }
     }
     if (HasECPay) ECPaymentChange();
     buy_step_swiper.update();
@@ -1296,6 +1298,7 @@ function OrderDataGet() {
     }
 }
 function OrdererDataGet() {
+    if (!FormCheck(OrdererForms)) return false;
     order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
     order_data.ordererAddress = `${order_data.county} ${order_data.district} ${order_data.ordererAddress}`;
 
@@ -1307,6 +1310,8 @@ function OrdererDataGet() {
     for (var key in order_data) {
         if (key.startsWith("orderer") > 0) order_header_data[key] = order_data[key]
     }
+
+    return true;
 }
 // 收件人資料寫入 order_header_data
 function RecipientDataGet() {
@@ -1315,6 +1320,7 @@ function RecipientDataGet() {
             RecipientSameOrderer();
             break;
         case "edit":
+            if (!FormCheck(RecipientForms)) return false;
             recipient_data = co.Form.getJson($("#Form_Recipient").attr("id"));
             recipient_data.recipientAddress = `${recipient_data.county} ${recipient_data.district} ${recipient_data.recipientAddress}`;
             recipient_data.recipientTelePhone = "";
@@ -1332,6 +1338,8 @@ function RecipientDataGet() {
     } else {
         order_header_data['remark'] = recipient_data['remark']
     }
+
+    return true;
 }
 // 發票資料寫入 order_header_data
 function InvoiceDataGet() {
@@ -1345,6 +1353,7 @@ function InvoiceDataGet() {
             invoice_data['invoiceAddress'] = recipient_data['recipientAddress'];
             break;
         case "company":
+            if (!FormCheck(InvoiceForms)) return false;
             invoice_data = co.Form.getJson($("#Form_Invoice").attr("id"));
             invoice_data.invoiceAddress = `${invoice_data.county} ${invoice_data.district} ${invoice_data.invoiceAddress}`;
             invoice_data['invoiceRecipient'] = 3;
@@ -1354,6 +1363,8 @@ function InvoiceDataGet() {
     for (var key in invoice_data) {
         if (key.startsWith("invoice") > 0) order_header_data[key] = invoice_data[key]
     }
+
+    return true;
 }
 function OrderHeaderAdd() {
     Coker.Order.CheckStock(shopping_cart_data).done(function (result) {
@@ -1362,7 +1373,7 @@ function OrderHeaderAdd() {
             RadioPayment();
             OrderDataGet();
 
-            if (HasECPay) {
+            if ($("#radio_payment_ECPay").length > 0 && $("#radio_payment_ECPay").prop("checked")) {
                 ECPay.getPayToken(function (paymentInfo, errMsg) {
                     if (errMsg != null) {
                         co.sweet.warning("請確實填寫付款資料", errMsg, null);
@@ -1371,21 +1382,34 @@ function OrderHeaderAdd() {
                 });
             }
 
-            OrdererDataGet();
-            if (order_data.zone == "" ^ order_data.ordererTelePhone == "") {
-                Coker.sweet.warning("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null);
+            if (!OrdererDataGet()) {
                 checksuccess = false;
+                Coker.sweet.warning("請注意", "請確實填寫訂購人資料！", null);
             }
-
-            RecipientDataGet();
-            if ($(`[name="RecipientRadio"]:checked`).val() == "edit") {
-                if (recipient_data.zone == "" ^ recipient_data.recipientTelePhone == "") {
-                    Coker.sweet.warning("資料填寫錯誤", "如要提供收件人電話資訊，請確實填寫區碼與聯絡電話。", null);
+            else {
+                if (order_data.zone == "" ^ order_data.ordererTelePhone == "") {
+                    Coker.sweet.warning("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null);
                     checksuccess = false;
                 }
             }
 
-            InvoiceDataGet();
+            if (!RecipientDataGet()) {
+                checksuccess = false;
+                Coker.sweet.warning("請注意", "請確實填寫收件人資料！", null);
+            }
+            else {
+                if ($(`[name="RecipientRadio"]:checked`).val() == "edit") {
+                    if (recipient_data.zone == "" ^ recipient_data.recipientTelePhone == "") {
+                        Coker.sweet.warning("資料填寫錯誤", "如要提供收件人電話資訊，請確實填寫區碼與聯絡電話。", null);
+                        checksuccess = false;
+                    }
+                }
+            }
+
+            if (!InvoiceDataGet()) {
+                checksuccess = false;
+                Coker.sweet.warning("請注意", "請確實填寫發票資料！", null);
+            }
 
             if (checksuccess) {
                 var memberUpdateFailMessage = "";

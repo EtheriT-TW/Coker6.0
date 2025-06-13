@@ -1352,13 +1352,15 @@ namespace EtheriT.Coker.Application
             // 記下原始大小
             inputStream.Position = 0; // 保險做法，防止 Seek 失效
             var originalSize = inputStream.Length;
-            const int Threshold = 500 * 1024;
 
             // 嘗試轉 AVIF
             var avifPathTry = Path.Combine(directoryPath, $"{key}.avif");
             original.Format = MagickFormat.Avif;
-            if (originalSize < Threshold)
+            if (originalSize < 250 * 1024)
                 original.Quality = 90;
+            else if (originalSize < 500 * 1024)
+                original.Quality = 85;
+
             original.Settings.SetDefine(MagickFormat.Avif, "lossless", "true");
             original.Settings.SetDefine(MagickFormat.Avif, "chroma-subsampling", "4:4:4");
             await original.WriteAsync(avifPathTry);

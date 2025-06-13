@@ -429,10 +429,7 @@ function DirectoryDataInsert($item, result) {
             content.children("div:first").addClass("d-none");
         }
 
-        if ($item.hasClass("getlatlng")) {
-            content.find(".dirname").text(data.dirname);
-            content.find(".dirname").removeClass("d-none");
-        }
+        content.find(".dirname").removeClass("d-none").text(data.dirname);
 
         var imglink = data.mainImage || "/images/noImg.jpg";
         if (data.orgName != null && ((typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && !IsFaPage) || (typeof (OrgName) != "undefined" && OrgName != data.orgName))) {

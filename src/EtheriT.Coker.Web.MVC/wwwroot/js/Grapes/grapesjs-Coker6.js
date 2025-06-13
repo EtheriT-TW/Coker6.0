@@ -184,15 +184,30 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
         },
     });
     //Youtube Modal
-    editor.DomComponents.addType('Youtube放大檢視', {
+    editor.DomComponents.addType('外嵌影片放大檢視', {
         isComponent: el => el.classList?.contains('YTmodal_frame'),
         model: {
             defaults: {
                 removable: true,
-                editable: false,
+                editable: true,
                 traits: [
                     { name: 'yttitle', type: 'text', label: '標題', placeholder: '請輸入Youtube標題' },
-                    { name: 'link', type: 'text', label: '網址', placeholder: '請輸入Youtube網址' }
+                    { name: 'link', type: 'text', label: '網址', placeholder: '請輸入Youtube網址' }, {
+                        name: 'thumb', type: 'button',
+                        text: "選擇預覽圖片",
+                        command: editor => {
+                            AssetManager.open();
+                            AssetManager.onSelect((result) => {
+                                const imgComp = editor.getSelected().find("button > img")[0];
+                                console.log(imgComp.getEl());
+                                if (imgComp) {
+                                    console.log(result.id);
+                                    imgComp.addAttributes({ "src": result.id });
+                                }
+                                AssetManager.close();
+                            });
+                        },
+                    },
                 ]
             }, init() {
 
@@ -203,60 +218,70 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                         var $self = $(component.getEl());
 
                         if (link) {
-                            // 處理不同格式的 YouTube 網址
-                            if (link.startsWith('https://www.youtube.com/watch?')) {
-                                link = link.substring("https://www.youtube.com/watch?".length);
-                            } else if (link.startsWith('https://youtu.be/')) {
-                                link = link.substring("https://youtu.be/".length);
-                            } else if (link.startsWith("https://www.youtube.com/shorts/")) {
-                                link = link.substring("https://www.youtube.com/shorts/".length);
-                            } else if (link.startsWith("https://youtube.com/shorts/")) {
-                                link = link.substring("https://youtube.com/shorts/".length);
-                            } else if (link.startsWith('https://www.youtube.com/live/')) {
-                                link = link.substring("https://www.youtube.com/live/".length);
-                            }
+                            if (link.includes("facebook.com")) {
+                                if (link.includes("facebook.com/plugins/video.php"))
+                                    return; // 已經是嵌入網址，不要再轉一次
 
-                            if (link.includes("?si=")) {
-                                var siIndex = link.indexOf("?si=");
-                                var beforeSi = link.substring(0, siIndex);
-                                var ampersandIndex = link.indexOf("&", siIndex);
-                                link = ampersandIndex >= 0 ? beforeSi + link.substring(ampersandIndex) : beforeSi;
-                            }
-
-                            var vid = "";
-                            if (link.includes("v=")) {
-                                var vIndex = link.indexOf("v=") + 2;
-                                var ampersandIndex = link.indexOf("&", vIndex);
-                                vid = ampersandIndex >= 0 ? link.substring(vIndex, ampersandIndex) : link.substring(vIndex);
+                                let encodedHref = encodeURIComponent(link);
+                                let fbEmbedUrl = `https://www.facebook.com/plugins/video.php?href=${encodedHref}&show_text=false&autoplay=1`;
+                                component.setAttributes({ 'link': fbEmbedUrl });
+                                return;
                             } else {
-                                var tagindex = link.indexOf("&");
-                                vid = tagindex >= 0 ? link.substring(0, tagindex) : link.substring(vIndex);
-                            }
-
-                            var startTime = 0;
-                            if (link.includes("t=")) {
-                                var tIndex = link.indexOf("t=") + 2;
-                                var tEnd = link.indexOf("&", tIndex);
-                                var timeStr = tEnd >= 0 ? link.substring(tIndex, tEnd) : link.substring(tIndex);
-
-                                if (timeStr.endsWith("s")) {
-                                    startTime = parseInt(timeStr.slice(0, -1), 10);
-                                } else if (timeStr.endsWith("m")) {
-                                    startTime = parseInt(timeStr.slice(0, -1), 10) * 60;
-                                } else if (!isNaN(timeStr)) {
-                                    startTime = parseInt(timeStr, 10);
+                                // 處理不同格式的 YouTube 網址
+                                if (link.startsWith('https://www.youtube.com/watch?')) {
+                                    link = link.substring("https://www.youtube.com/watch?".length);
+                                } else if (link.startsWith('https://youtu.be/')) {
+                                    link = link.substring("https://youtu.be/".length);
+                                } else if (link.startsWith("https://www.youtube.com/shorts/")) {
+                                    link = link.substring("https://www.youtube.com/shorts/".length);
+                                } else if (link.startsWith("https://youtube.com/shorts/")) {
+                                    link = link.substring("https://youtube.com/shorts/".length);
+                                } else if (link.startsWith('https://www.youtube.com/live/')) {
+                                    link = link.substring("https://www.youtube.com/live/".length);
                                 }
-                            }
-                            link = startTime > 0
-                                ? `https://www.youtube.com/embed/${vid}?start=${startTime}`
-                                : `https://www.youtube.com/embed/${vid}`;
 
-                            if (!oldlink.startsWith("https://www.youtube.com/embed/")) {
-                                component.setAttributes({ 'link': link });
-                            }
+                                if (link.includes("?si=")) {
+                                    var siIndex = link.indexOf("?si=");
+                                    var beforeSi = link.substring(0, siIndex);
+                                    var ampersandIndex = link.indexOf("&", siIndex);
+                                    link = ampersandIndex >= 0 ? beforeSi + link.substring(ampersandIndex) : beforeSi;
+                                }
 
-                            var img_link = `http://img.youtube.com/vi/${vid}/hqdefault.jpg`
-                            $self.find("img").attr("src", img_link);
+                                var vid = "";
+                                if (link.includes("v=")) {
+                                    var vIndex = link.indexOf("v=") + 2;
+                                    var ampersandIndex = link.indexOf("&", vIndex);
+                                    vid = ampersandIndex >= 0 ? link.substring(vIndex, ampersandIndex) : link.substring(vIndex);
+                                } else {
+                                    var tagindex = link.indexOf("&");
+                                    vid = tagindex >= 0 ? link.substring(0, tagindex) : link.substring(vIndex);
+                                }
+
+                                var startTime = 0;
+                                if (link.includes("t=")) {
+                                    var tIndex = link.indexOf("t=") + 2;
+                                    var tEnd = link.indexOf("&", tIndex);
+                                    var timeStr = tEnd >= 0 ? link.substring(tIndex, tEnd) : link.substring(tIndex);
+
+                                    if (timeStr.endsWith("s")) {
+                                        startTime = parseInt(timeStr.slice(0, -1), 10);
+                                    } else if (timeStr.endsWith("m")) {
+                                        startTime = parseInt(timeStr.slice(0, -1), 10) * 60;
+                                    } else if (!isNaN(timeStr)) {
+                                        startTime = parseInt(timeStr, 10);
+                                    }
+                                }
+                                link = startTime > 0
+                                    ? `https://www.youtube.com/embed/${vid}?start=${startTime}`
+                                    : `https://www.youtube.com/embed/${vid}`;
+
+                                if (!oldlink.startsWith("https://www.youtube.com/embed/")) {
+                                    component.setAttributes({ 'link': link });
+                                }
+
+                                var img_link = `http://img.youtube.com/vi/${vid}/hqdefault.jpg`
+                                $self.find("img").attr("src", img_link);
+                            }
                         }
                     }
                 });

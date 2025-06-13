@@ -9,7 +9,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class BonusManagementController : Controller
     {
         private readonly IBonusManagementAppService _bonusManagementAppService;

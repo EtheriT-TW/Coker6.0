@@ -65,8 +65,8 @@
     </p>
 
     <script>
-        const loginBaseUrl = "/oauth/ExternalLogin";
-        const redirectUrl = encodeURIComponent("https://your-frontend-site.com/login/callback");
+        const loginBaseUrl = "/api/OAuth/ExternalLogin";
+        const redirectUrl = encodeURIComponent("https://lcb.develop.ezsale.tw/login/callback");
 
         fetch("/api/OAuth/GetEnabledProviders")
             .then(res => res.json())

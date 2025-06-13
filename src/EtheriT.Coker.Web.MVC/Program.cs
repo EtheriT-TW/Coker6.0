@@ -83,6 +83,10 @@ using EtheriT.Coker.Application.BonusManagement;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion.Auth;
+using EtheriT.Coker.Application.Shared.FileManagement;
+using EtheriT.Coker.Application.FileManagement;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.StaticFiles;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -181,6 +185,10 @@ if (!string.IsNullOrEmpty(LineConfig["ChannelId"]) && !string.IsNullOrEmpty(Line
     {
         options.ClientId = LineConfig["ChannelId"] ?? "";
         options.ClientSecret = LineConfig["ChannelSecret"] ?? "";
+        options.CallbackPath = "/SigninLine";
+
+        options.CorrelationCookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
     });
 }
 var GoogleConfig = authenticationConfig.GetSection("Google");
@@ -288,7 +296,10 @@ builder.Services.AddTransient<IDashboardAuthorizationFilter, HangfireDashboardAu
 builder.Services.AddTransient<ITemplatesApplicationService, TemplatesApplicationService>();
 builder.Services.AddScoped<UserHabitsWorking>();
 builder.Services.AddScoped<IBonusManagementAppService, BonusManagementAppService>();
+builder.Services.AddScoped<IFileManagementAppService, FileManagementAppService>();
 builder.Services.Configure<AuthenticationSettings>(builder.Configuration.GetSection("Authentication"));
+builder.Services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
+builder.Services.AddSingleton<IThumbnailGeneratorService, ThumbnailGeneratorService>();
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
@@ -438,7 +449,15 @@ app.UseVirtualDirectory("shared", builder.Configuration.GetValue<string>("Virtua
 app.UseVirtualDirectory("layout", builder.Configuration.GetValue<string>("VirtualDirectory:Layout"));
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
+// 設定 MIME 類型映射，包括 AVIF 檔案
+var fileProvider = new FileExtensionContentTypeProvider();
+fileProvider.Mappings[".avif"] = "image/avif";
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = fileProvider
+});
 
 app.UseRouting();
 

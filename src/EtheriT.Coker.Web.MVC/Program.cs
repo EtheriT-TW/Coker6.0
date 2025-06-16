@@ -185,6 +185,10 @@ if (!string.IsNullOrEmpty(LineConfig["ChannelId"]) && !string.IsNullOrEmpty(Line
     {
         options.ClientId = LineConfig["ChannelId"] ?? "";
         options.ClientSecret = LineConfig["ChannelSecret"] ?? "";
+        options.CallbackPath = "/SigninLine";
+
+        options.CorrelationCookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
     });
 }
 var GoogleConfig = authenticationConfig.GetSection("Google");

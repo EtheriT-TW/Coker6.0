@@ -1577,7 +1577,6 @@ async function OrderHeaderAdd() {
 function ValidateECPayPayment() {
     return new Promise((resolve) => {
         ECPay.getPayToken(function (paymentInfo, errMsg) {
-            console.log(paymentInfo)
             if (errMsg != null) {
                 co.sweet.warning("請確實填寫付款資料", errMsg, null);
                 resolve(`2${errMsg}`);
@@ -1668,7 +1667,6 @@ function OrderSuccess(result) {
     })
 
     Coker.Payment.GetPaymentInfo(order_header_data.payment).done(function (message) {
-        //console.log(message)
         if (message != null && message.length > 0) {
             var html = "";
             $.each(message, function (index, value) {

@@ -1036,8 +1036,7 @@ function ECPaymentChange() {
 
                             ECPay.createPayment(message[1], ECPay.Language.zhTW, function (errMsg) {
                                 if (errMsg != null) {
-                                    console.log(`Create Payment errMsg : ${errMsg}`)
-                                    $(".ecpay_loading").text("串接綠界發生錯誤");
+                                    $(".ecpay_loading").text(`串接綠界發生錯誤(${errMsg})`);
                                 } else {
                                     var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
                                     $ECPayList.first().next('li').addClass("first");
@@ -1082,13 +1081,16 @@ function ECPaymentChange() {
                                     }, 1000);
                                 }
                             }, 'V2');
+                        } else {
+                            $(".ecpay_loading").text(`串接綠界發生錯誤，請稍後嘗試`);
+                            console.log(result.message)
                         }
                     });
                 } else {
                     timeout += 100;
                     if (timeout >= 10000) { // 最多等 10 秒
                         clearInterval(checkInterval);
-                        console.error("ECPayInit 初始化失敗（逾時）");
+                        $(".ecpay_loading").text(`串接綠界發生錯誤(初始化失敗-逾時)`);
                     }
                 }
             }, 100);
@@ -1513,7 +1515,7 @@ function OrderHeaderAdd() {
                                                             if (SwalClose) Swal.close();
                                                         }, 300);
                                                     } else {
-                                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`<div>付款流程發生錯誤，<br>『${result.message}』<br>請稍後重新嘗試，或直接聯繫客服人員。</div>`);
+                                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").html(`<div>付款流程發生錯誤，${result.message}<br>請稍後重新嘗試，或直接聯繫客服人員。</div>`);
                                                         setTimeout(function () {
                                                             buy_step_swiper.slideNext();
                                                             buy_step_swiper.disable();

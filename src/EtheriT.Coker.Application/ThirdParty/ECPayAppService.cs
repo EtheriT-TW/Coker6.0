@@ -487,6 +487,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                         RequestBody.Data = Encrypt(PaymentData, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
 
                         var createPaymentResponse = await ECPaySendRequest("ECPayCreatePayment", RequestUri, RequestBody) ?? throw new Exception("ECPay建立訂單發生錯誤");
+
                         await orderAppService.SendMail(ohdata.Id);
 
                         await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayCreatePayment", JsonConvert.SerializeObject(createPaymentResponse));
@@ -500,7 +501,20 @@ namespace EtheriT.Coker.Application.ThirdParty
                         }
                         else
                         {
-                            response.Message = createPaymentResponse.RtnCode == 5000062 ? "本銀行信用卡不支援分期付款，請使用其他信用卡。" : createPaymentResponse.RtnMsg;
+
+                            ECPayResponseDataDto innerResponse = new ECPayResponseDataDto();
+
+                            string rawMessage = createPaymentResponse.Message;
+
+                            int jsonStart = rawMessage.IndexOf('{');
+                            if (jsonStart >= 0)
+                            {
+                                string innerJson = rawMessage.Substring(jsonStart);
+                                innerResponse = JsonConvert.DeserializeObject<ECPayResponseDataDto>(innerJson);
+                                response.Message = innerResponse.RtnCode == 5000062 ? "本銀行信用卡不支援分期付款，請使用其他信用卡。" : innerResponse.RtnMsg;
+                            }
+                            else { response.Message = JsonConvert.SerializeObject(createPaymentResponse); }
+
                             ohdata.State = OrderStatusEnum.付款失敗;
                             db.SaveChanges();
                         }
@@ -510,7 +524,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (Exception ex)
             {
-                response.Message = $"Request failed: {ex.Message}";
+                response.Message = $"ECPayCreatePayment failed: {ex.Message}";
             }
             return response;
         }
@@ -545,8 +559,10 @@ namespace EtheriT.Coker.Application.ThirdParty
                     if (dto.OrderId == null)
                     {
                         dto.IsTemp = true;
+                        dto.Payment = 16;
+                        await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayAddOrder", JsonConvert.SerializeObject(dto));
                         var orderMessage = await orderAppService.AddHeader(dto);
-                        if (!orderMessage.Success) throw new Exception($"建立訂單發生錯誤：{orderMessage.Message}");
+                        if (!orderMessage.Success) throw new Exception($"建立訂單發生錯誤：{orderMessage.Error}, {orderMessage.Message}");
                         dto.OrderId = long.Parse(orderMessage.Message.Split(",")[1]);
                     }
 

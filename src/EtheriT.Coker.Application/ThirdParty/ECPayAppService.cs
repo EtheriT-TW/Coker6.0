@@ -503,7 +503,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                             response.Message = createPaymentResponse.RtnCode == 5000062 ? "本銀行信用卡不支援分期付款，請使用其他信用卡。" : createPaymentResponse.RtnMsg;
                             ohdata.State = OrderStatusEnum.付款失敗;
                             db.SaveChanges();
-                            throw new Exception(createPaymentResponse.Message);
                         }
                     }
                     else throw new Exception("查無訂單資訊");

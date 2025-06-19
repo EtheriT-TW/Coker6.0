@@ -86,6 +86,7 @@
     }
     <script nonce="@ViewBag.Nonce">
         sessionStorage.setItem("PageKey","@ViewBag.PageKey");
+        const SiteId = @ViewBag.SiteId;
         const SearchWord = "@Html.Raw(ViewBag.SearchWord)";
         const BackstageUrl = "@ViewBag.BackstageUrl";
         const OAuthSuccess ="@ViewBag.OAuthSuccess";

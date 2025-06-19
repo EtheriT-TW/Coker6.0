@@ -15,19 +15,19 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             _accountAppService = accountAppService;
         }
         [HttpGet]
-        public async Task<IActionResult> success(OAuthSuccessInputDto dto)
+        public async Task<IActionResult> success(Guid Token, string redirect)
         {
             TempData["OAuthSuccess"] = true;
-            await _accountAppService.FrontLoginByToken(dto.Token);
-            return Redirect(dto.redirect);
+            await _accountAppService.FrontLoginByToken(Token);
+            return Redirect(redirect);
         }
-        public IActionResult error(OAuthErrorInputDto dto)
+        public IActionResult error(OAuthErrorTypeEnum code, string? redirect)
         {
-            TempData["OAuthError"] = dto.code.ToString();
-            if (string.IsNullOrEmpty(dto.redirect))
-                dto.redirect = "/";
+            TempData["OAuthError"] = code.ToString();
+            if (string.IsNullOrEmpty(redirect))
+                redirect = "/";
 
-             return Redirect(dto.redirect);
+             return Redirect(redirect);
         }
     }
 }

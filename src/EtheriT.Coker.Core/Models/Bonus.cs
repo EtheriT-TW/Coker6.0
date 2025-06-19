@@ -7,7 +7,7 @@ namespace EtheriT.Coker.Core.Models
         public int Amount { get; set; }
         public Guid UUID { get; set; }
         public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
+        public DateTime? EndDate { get; set; }
         public string Note { get; set; }
         public int Balance { get; set; }
     }

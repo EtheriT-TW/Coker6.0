@@ -427,7 +427,7 @@ app.MapControllerRoute(
 
 app.MapControllerRoute(
     name: "Verify",
-    pattern: ".well-known/{option}/{key}",
+    pattern: ".well-known/{option}/{key?}",
     defaults: new { controller = "Verify", action = "Index" }
 );
 

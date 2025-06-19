@@ -340,7 +340,7 @@ namespace EtheriT.Coker.Application.Authorization
                 output.Error = ((int)OAuthErrorTypeEnum.使用者建立失敗).ToString();
             }
             else {
-                Guid guid = new Guid();
+                Guid guid = Guid.NewGuid();
                 var token = new Core.Models.Token
                 {
                     id = guid,
@@ -348,6 +348,7 @@ namespace EtheriT.Coker.Application.Authorization
                     websiteId = dto.FK_WebsiteId,
                     StartTime = DateTime.Now,
                     EndTime = DateTime.Now.AddMinutes(30),
+                    ip = loginUserData.GetClientIP() ?? "",
                     UUID = user.u.UUID
                 };
                 var map = new MappingOldNewUUID
@@ -367,25 +368,36 @@ namespace EtheriT.Coker.Application.Authorization
         {
             CheckRedirectUrlOutputDto dto = new CheckRedirectUrlOutputDto();
             if (string.IsNullOrEmpty(redirectUrl)) return dto;
-            Uri redirectUri;
-            try
-            {
-                redirectUri = new Uri(redirectUrl);
-            }
-            catch
-            {
+            redirectUrl = WebUtility.UrlDecode(redirectUrl);
+            if (!Uri.TryCreate(redirectUrl, UriKind.Absolute, out var redirectUri))
                 return dto;
-            }
+
             var redirectBaseUrl = $"{redirectUri.Scheme}://{redirectUri.Host}";
             if (!redirectUri.IsDefaultPort)
                 redirectBaseUrl += $":{redirectUri.Port}";
             redirectBaseUrl = redirectBaseUrl.TrimEnd('/');
+
             var matchedSite = db.Websites
                 .Where(w => w.DefaultUrl != null)
-                .AsEnumerable() // 注意：這行是重點，轉為記憶體比對後可用 C# 字串方法
+                .AsEnumerable()
                 .FirstOrDefault(w => redirectBaseUrl.StartsWith(w.DefaultUrl!.TrimEnd('/'), StringComparison.OrdinalIgnoreCase));
-            dto.RedirectUrl = matchedSite?.DefaultUrl ?? string.Empty;
-            dto.FK_WebsiteId = matchedSite?.Id ?? 0;
+
+            if (_env.IsProduction() && matchedSite != null) {
+                dto.RedirectUrl = matchedSite?.DefaultUrl ?? string.Empty;
+                dto.FK_WebsiteId = matchedSite?.Id ?? 0;
+                return dto;
+            }
+
+            var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(redirectUri.Query);
+            if (queryParams.TryGetValue("siteId", out var siteIdStr) && long.TryParse(siteIdStr, out var siteId))
+            {
+                var site = db.Websites.FirstOrDefault(w => w.Id == siteId);
+                if (site != null)
+                {
+                    dto.RedirectUrl = redirectBaseUrl; 
+                    dto.FK_WebsiteId = site.Id;
+                }
+            }
             return dto;
         }
         [Authorize]

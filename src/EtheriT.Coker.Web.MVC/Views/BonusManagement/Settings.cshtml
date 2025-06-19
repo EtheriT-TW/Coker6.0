@@ -1,12 +1,12 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Web.MVC.Models.BonusManagement
-@model EtheriT.Coker.Web.MVC.Models.BonusManagement.SettingsModel
+@model EtheriT.Coker.Web.MVC.Models.BonusManagement.SettingsViewModel
 
 @{
     ViewData["Title"] = "BonusSettings";
 }
 
-@(Html.DevExtreme().Form<SettingsModel>()
+@(Html.DevExtreme().Form<SettingsViewModel>()
         .FormData(Model)
         .ID("bonusSettingsForm")
         .Items(items =>

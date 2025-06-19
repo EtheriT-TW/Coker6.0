@@ -365,6 +365,7 @@ function ready() {
 
     var OtherLoginModal = document.getElementById('OtherLoginModal')
     if (OtherLoginModal != null) {
+
         OtherLoginModal.addEventListener('show.bs.modal', function (event) {
             loginModal.hide();
         })

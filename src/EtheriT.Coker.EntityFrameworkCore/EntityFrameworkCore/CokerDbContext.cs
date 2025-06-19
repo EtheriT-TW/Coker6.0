@@ -89,9 +89,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<UserActivityTags> UserActivityTags { get; set; }
         public DbSet<UserGroupingDetail> UserGroupingDetails { get; set; }
 		public DbSet<FlowSize> FlowSizes { get; set; }
+        public DbSet<Bonus> Bonus { get; set; }
+        public DbSet<BonusLog> BonusLog { get; set; }
 
 
-		public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
+        public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
 
         }
@@ -119,6 +121,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<FrontUser>(o =>
             {
+                o.HasIndex(x => new { x.UUID, x.IsDeleted }).IsUnique(); ;
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<UserActivityTags>(o =>
@@ -191,40 +194,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Token>(o =>
             {
                 o.Property(t => t.id).HasDefaultValueSql("newid()").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-                //o.HasMany(t => t.Advertise_Logs).WithMany(l => l.Tokens).UsingEntity<Dictionary<string, object>>(
-                //    "TokenMapAdvertise_Log", // 這是中間表的名稱
-                //    j => j
-                //        .HasOne<Advertise_Log>()
-                //        .WithMany()
-                //        .HasForeignKey("FK_Tid") // 使用 FK_Tid 作為關聯
-                //        .OnDelete(DeleteBehavior.Restrict), // 刪除紀錄不影響Token保留
-                //    j => j
-                //        .HasOne<Token>()
-                //        .WithMany()
-                //        .HasForeignKey("UUID") // 使用 UUID 作為關聯
-                //        .OnDelete(DeleteBehavior.Restrict), // 刪除Token不影響Log紀錄
-                //    j =>
-                //    {
-                //        j.HasKey("UUID", "FK_Tid"); // 設定主鍵
-                //    }
-                //);
-               // o.HasMany(t => t.Prod_Logs).WithMany(l => l.Tokens).UsingEntity<Dictionary<string, object>>(
-               //    "TokenMapProd_Log", // 這是中間表的名稱
-               //    j => j
-               //        .HasOne<Prod_Log>()
-               //        .WithMany()
-               //        .HasForeignKey("FK_TokenId") // 使用 FK_TokenId 作為關聯
-               //        .OnDelete(DeleteBehavior.Restrict), // 刪除紀錄不影響Token保留
-               //    j => j
-               //        .HasOne<Token>()
-               //        .WithMany()
-               //        .HasForeignKey("UUID") // 使用 UUID 作為關聯
-               //        .OnDelete(DeleteBehavior.Restrict), // 刪除Token不影響Log紀錄
-               //    j =>
-               //    {
-               //        j.HasKey("UUID", "FK_TokenId"); // 設定主鍵
-               //    }
-               //);
                 o.HasMany(t => t.ShoppingCarts).WithMany(l => l.Tokens).UsingEntity<Dictionary<string, object>>(
                    "TokenMapShoppingCarts", // 這是中間表的名稱
                    j => j
@@ -325,6 +294,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.Prod).WithMany(u => u.Prod_Logs).HasForeignKey(f => f.FK_Pid);
                 o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<Bonus>(o =>
+            {
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<BonusLog>(o =>
+            {
+                o.HasOne(x => x.User)
+                 .WithMany(u => u.BonusLogs)
+                 .HasForeignKey(x => x.UUID)
+                 .HasPrincipalKey(u => u.UUID);
+
+                o.Property(x => x.ExecutionTime)
+                    .HasDefaultValueSql("GETDATE()")
+                    .ValueGeneratedOnAdd();
             });
             modelBuilder.Entity<Favorites>(o =>
             {

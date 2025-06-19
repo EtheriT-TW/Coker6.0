@@ -87,6 +87,9 @@
     <script nonce="@ViewBag.Nonce">
         sessionStorage.setItem("PageKey","@ViewBag.PageKey");
         const SearchWord = "@Html.Raw(ViewBag.SearchWord)";
+        const BackstageUrl = "@ViewBag.BackstageUrl";
+        const OAuthSuccess ="@ViewBag.OAuthSuccess";
+        const OAuthError = "@ViewBag.OAuthError";
         window.CI360 = { notInitOnLoad: true }
         window.onload = function () {
             ready();
@@ -248,6 +251,7 @@
     </footer>
     @if (ViewBag.LoginEnable != null && ViewBag.LoginEnable)
     {
+        <script nonce="@ViewBag.Nonce" src="~/js/Login.min.js" asp-append-version="true"></script>
         <div id="LoginModal" class="modal fade" aria-hidden="true" aria-labelledby="LoginModalLabel" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered justify-content-center">
                 <div class="modal-content">
@@ -289,7 +293,7 @@
                             </div>
                         </form>
                         <button class="btn_login w-100 rounded border-0 text-white py-2 fs-5 my-3">登　入</button>
-                        @* <button class="btn_other_login w-100 rounded border-0 text-white py-2 fs-5 " data-bs-target="#OtherLoginModal" data-bs-toggle="modal" data-bs-dismiss="modal">其他登入方式</button> *@
+                        <button class="btn_other_login w-100 rounded border-0 text-white py-2 fs-5 " data-bs-target="#OtherLoginModal" data-bs-toggle="modal" data-bs-dismiss="modal">其他登入方式</button>
                     </div>
                     <div class="modal-footer d-flex justify-content-center border-0">
                         <div class="text-black-50">不是會員？</div>
@@ -347,9 +351,6 @@
                     </div>
                     <div class="modal-body">
                         <div class="text-center fs-4 fw-bold">其他登入方式</div>
-                        <button class="btn_line w-100 rounded border-0 text-white py-2 fs-5 my-3">LINE</button>
-                        <button class="btn_google w-100 rounded border-0 text-white py-2 fs-5 my-3">Google</button>
-                        <button class="btn_facebook w-100 rounded border-0 text-white py-2 fs-5 my-3">Facebook</button>
                     </div>
                 </div>
             </div>
@@ -520,6 +521,13 @@
                         <button class="btn_forget w-100 rounded border-0 text-white py-2 fs-5 my-3">發　送</button>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div id="Cookie" class="cookie position-fixed text-white w-100 bottom-0 justify-content-center align-items-center">
+            <p class="cookie_text my-3 pe-3">@L.get("cookieDeclare")</p>
+            <div id="Cookie_button">
+                <div class="btn_cookie_accept m-2 p-1 px-4 rounded-2 text-center">@L.get("accept")</div>
+                <div class="btn_cookie_reject m-2 p-1 px-4 rounded-2 text-center">@L.get("reject")</div>
             </div>
         </div>
     }

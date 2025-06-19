@@ -26,11 +26,19 @@ namespace EtheriT.Coker.Web.Public.Middlewares
             using (var scope = _serviceProvider.CreateScope())
             {
                 long siteId = _configuration.GetValue<long>("WebConfig:SiteId");
+                var backstageUrl = _configuration.GetValue<string>("WebConfig:BackstageUrl") ?? "";
+                var backstageHost = "";
+                if (Uri.TryCreate(backstageUrl, UriKind.Absolute, out var uri))
+                {
+                    // 只取 scheme://host(:port) 這一段，避免 path
+                    backstageHost = $"{uri.Scheme}://{uri.Host}{(uri.IsDefaultPort ? "" : $":{uri.Port}")}";
+                }
+
                 var dbContext = scope.ServiceProvider.GetRequiredService<CokerDbContext>();
                 var item = dbContext.StoreSetDetail.Where(e => e.FK_WebsiteId == siteId && e.FK_StoreSetId == 2).FirstOrDefault();
                 var otherPayElement = dbContext.ThirdPartyKeypairValues.Where(e => e.FK_WebsiteId == siteId && e.FK_ThirdPartyKeypairId == 11).FirstOrDefault();
                 string selfInline = $"nonce-{nonce}";
-                string connectSrc = "*;";
+                string connectSrc = $"'self' *";
                 context.Items["CSPNonce"] = nonce;
                 bool isSitemapRequest = context.Request.Path.HasValue && (
                     context.Request.Path.Value.EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase) ||
@@ -47,7 +55,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 }
                 if (_env.IsProduction())
                 {
-                    connectSrc = "'self' *.google.com *.google-analytics.com *.googleapis.com;";
+                    connectSrc = $"'self' {backstageHost} *.google.com *.google-analytics.com *.googleapis.com";
                 }
 
                 // 將 nonce 存入 HttpContext.Items
@@ -61,7 +69,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     $"font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw;  " +
                     $"img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.gstatic.com *.googleapis.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com i.imgur.com lh3.googleusercontent.com cdn.discordapp.com githubusercontent.com images.unsplash.com cdn.pixabay.com res.cloudinary.com scaleflex.cloudimg.io data: blob:  https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw; " +
                     $"frame-src 'self' *.ezsale.tw *.google.com *.google.com.tw *.youtube.com *.youtube-nocookie.com *.facebook.com *.instagram.com *.googletagmanager.com *.doubleclick.net v.qq.com;" +
-                    $"connect-src {connectSrc}" +
+                    $"connect-src {connectSrc};" +
                     $"frame-ancestors 'self' *.ezsale.tw;";
                 //cache 限制設定
                 context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private";

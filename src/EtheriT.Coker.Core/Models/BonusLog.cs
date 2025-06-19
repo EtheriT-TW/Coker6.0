@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Core.Models
         public Guid UUID { get; set; }
         public int Amount { get; set; }
         public string Note { get; set; }
+        public FrontUser User { get; set; }
         public DateTime ExecutionTime { get; set; } = DateTime.Now;
     }
 }

@@ -1,44 +1,48 @@
-﻿using EtheriT.Coker.Application.Authorizaion.Dto;
+﻿using AutoMapper;
+using DevExpress.CodeParser;
+using EtheriT.Coker.Application.Authorizaion.Dto;
+using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Newsletter;
+using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.OAuth;
+using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Shared.Dto.Token;
+using EtheriT.Coker.Application.Shared.Dto.User;
+using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.Web.Core.Models;
 using EtheriT.Coker.Web.MVC.Resources;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
+using System;
+using System.Data;
+using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Net;
-using EtheriT.Coker.Application.Dto;
-using System;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.Extensions.Caching.Distributed;
-using EtheriT.Coker.Core.Models;
-using Microsoft.Extensions.Primitives;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication;
-using EtheriT.Coker.Application.Shared.Dto.User;
-using Newtonsoft.Json;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json.Serialization;
-using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
-using EtheriT.Coker.Application.Shared.Dto;
 using System.Xml.Linq;
-using AutoMapper;
-using EtheriT.Coker.Web.Core.Models;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
-using System.Data;
-using EtheriT.Coker.Application.Common;
-using EtheriT.Coker.Application.Shared.Dto.Mail;
-using EtheriT.Coker.Application.Newsletter;
-using EtheriT.Coker.Application.Shared.Dto.Token;
-using Newtonsoft.Json.Linq;
-using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Mvc;
-using EtheriT.Coker.Application.Shared.ShoppingCart;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -48,6 +52,7 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly IPasswordHasher passwordHasher;
         private readonly ITokenAppService tokenAppService;
         private readonly LoginUserData loginUserData;
+        private readonly StringHandler stringHandler;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IMapper mapper;
         private readonly string controllerName;
@@ -55,6 +60,7 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly INewsletterAppService newsletterAppService;
         private readonly IConfiguration configuration;
         private readonly IShoppingCartAppService shoppingCartAppService;
+        private readonly IHostEnvironment _env;
         public AccountAppService(
             CokerDbContext db,
             IPasswordHasher passwordHasher,
@@ -63,9 +69,11 @@ namespace EtheriT.Coker.Application.Authorization
             IHttpContextAccessor httpContextAccessor,
             IMapper mapper,
             MailAppService mailAppService,
+            StringHandler stringHandler,
             INewsletterAppService newsletterAppService,
             IConfiguration configuration,
-            IShoppingCartAppService shoppingCartAppService
+            IShoppingCartAppService shoppingCartAppService,
+            IHostEnvironment env
         )
         {
             this.db = db;
@@ -78,6 +86,8 @@ namespace EtheriT.Coker.Application.Authorization
             this.newsletterAppService = newsletterAppService;
             this.configuration = configuration;
             this.shoppingCartAppService = shoppingCartAppService;
+            this.stringHandler = stringHandler;
+            this._env = env;
             controllerName = "Account";
         }
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
@@ -244,6 +254,139 @@ namespace EtheriT.Coker.Application.Authorization
                 output.Error = e.Message;
             }
             return output;
+        }
+
+        public async Task<LoginOutputDto> FrontLoginByToken(Guid token) {
+            LoginOutputDto output = new LoginOutputDto();
+            var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            try
+            {
+                var tokenInfo = await db.Tokens
+            .Where(t => t.id == token)
+            .Select(t => new
+            {
+                t.UUID,
+                Map = db.MappingOldNewUUID.FirstOrDefault(m => m.TempUUID == t.UUID),
+            })
+            .FirstOrDefaultAsync();
+
+                if (tokenInfo == null || tokenInfo.Map == null)
+                    throw new Exception(((int)OAuthErrorTypeEnum.無效的登入方式).ToString());
+
+                var userId = tokenInfo.Map.UserUUID;
+
+                // 查詢使用者與網站綁定資訊
+                var userInfo = await db.FrontUsers
+                    .Where(u => u.UUID == userId)
+                    .Select(u => new
+                    {
+                        User = u,
+                        WebsiteMap = db.MappingFrontUserAndWebsite.FirstOrDefault(m => m.FK_UserId == u.Id)
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (userInfo == null || userInfo.User == null)
+                    throw new Exception(((int)OAuthErrorTypeEnum.使用者不存在).ToString());
+
+                if (userInfo.WebsiteMap == null)
+                    throw new Exception(((int)OAuthErrorTypeEnum.無效的登入方式).ToString());
+
+                // 驗證是否屬於此網站或子網站
+                if (userInfo.WebsiteMap.Id != websiteId)
+                {
+                    List<string> childOrgNames = new();
+                    configuration.GetSection("WebConfig:childSiteOrgName").Bind(childOrgNames);
+
+                    var childSiteMatch = await db.Websites
+                        .AnyAsync(w => childOrgNames.Contains(w.OrgName) && w.Id == userInfo.WebsiteMap.Id);
+
+                    if (!childSiteMatch)
+                        throw new Exception(((int)OAuthErrorTypeEnum.無效的登入方式).ToString());
+                }
+
+                output = await NoPasswordLogin(userInfo.User, userInfo.WebsiteMap.Id,new FrontLoginInputDto { 
+                    WebsiteId = userInfo.WebsiteMap.FK_WebsiteId,
+                    Email = userInfo.User.Email,
+                    Remember = true
+                });
+            }
+            catch (Exception e) {
+                output.Error = e.Message;
+            }
+                
+            return output;
+        }
+        public async Task<LoginOutputDto> FrontThirdLogin(FrontThirdLoginInputDto dto) {
+            LoginOutputDto output = new LoginOutputDto() { Success = false };
+            var user = await db.FrontUsers.Join(db.MappingFrontUserAndWebsite, u => u.Id, m => m.FK_UserId, (u, m) => new { u, m })
+                .Where(g => g.u.Email == dto.Email && g.m.FK_WebsiteId == dto.FK_WebsiteId)
+                .FirstOrDefaultAsync();
+            if (user == null)
+            {
+                var newUser = await AddFrontUser(new FrontAddUserDto
+                {
+                    Email = dto.Email,
+                    Name = dto.Name,
+                    WebsiteId = dto.FK_WebsiteId,
+                    Password = stringHandler.RandonCode(RandomStringType.數字加英文大小寫及符號, 16),
+                });
+
+                user = await db.FrontUsers.Join(db.MappingFrontUserAndWebsite, u => u.Id, m => m.FK_UserId, (u, m) => new { u, m })
+                .Where(g => g.u.Email == dto.Email && g.m.FK_WebsiteId == dto.FK_WebsiteId)
+                .FirstOrDefaultAsync();
+            }
+            if (user == null)
+            {
+                output.Error = ((int)OAuthErrorTypeEnum.使用者建立失敗).ToString();
+            }
+            else {
+                Guid guid = new Guid();
+                var token = new Core.Models.Token
+                {
+                    id = guid,
+                    UserID = user.u.Id,
+                    websiteId = dto.FK_WebsiteId,
+                    StartTime = DateTime.Now,
+                    EndTime = DateTime.Now.AddMinutes(30),
+                    UUID = user.u.UUID
+                };
+                var map = new MappingOldNewUUID
+                {
+                    TempUUID = token.UUID,
+                    UserUUID = user.u.UUID
+                };
+                db.Tokens.Add(token);
+                db.MappingOldNewUUID.Add(map);
+                await db.SaveChangesAsync();
+                output.Secret = guid;
+                output.Success = true;
+            }
+            return output;
+        }
+        public CheckRedirectUrlOutputDto checkRedirectUrl(string? redirectUrl)
+        {
+            CheckRedirectUrlOutputDto dto = new CheckRedirectUrlOutputDto();
+            if (string.IsNullOrEmpty(redirectUrl)) return dto;
+            Uri redirectUri;
+            try
+            {
+                redirectUri = new Uri(redirectUrl);
+            }
+            catch
+            {
+                return dto;
+            }
+            var redirectBaseUrl = $"{redirectUri.Scheme}://{redirectUri.Host}";
+            if (!redirectUri.IsDefaultPort)
+                redirectBaseUrl += $":{redirectUri.Port}";
+            redirectBaseUrl = redirectBaseUrl.TrimEnd('/');
+            var matchedSite = db.Websites
+                .Where(w => w.DefaultUrl != null)
+                .AsEnumerable() // 注意：這行是重點，轉為記憶體比對後可用 C# 字串方法
+                .FirstOrDefault(w => redirectBaseUrl.StartsWith(w.DefaultUrl!.TrimEnd('/'), StringComparison.OrdinalIgnoreCase));
+            dto.RedirectUrl = matchedSite?.DefaultUrl ?? string.Empty;
+            dto.FK_WebsiteId = matchedSite?.Id ?? 0;
+            return dto;
         }
         [Authorize]
         public async Task<UserDto> GetCurrentUser()

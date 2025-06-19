@@ -1,92 +1,97 @@
-﻿using EtheriT.Coker.Application.Authorization;
-using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using EtheriT.Coker.Web.MVC.Resources;
-using Microsoft.EntityFrameworkCore;
-using EtheriT.Coker.Application.Token;
-using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.Net.Http.Headers;
-using EtheriT.Coker.Application;
-using EtheriT.Coker.Application.Shared.Marquee;
-using EtheriT.Coker.Application.Marquee;
-using EtheriT.Coker.Application.Shared.Order;
-using EtheriT.Coker.Application.Order;
-using EtheriT.Coker.Application.Shared.Member;
-using EtheriT.Coker.Application.Member;
-using EtheriT.Coker.Application.Shared.Freight;
-using EtheriT.Coker.Application.Freight;
-using EtheriT.Coker.Application.Shared.Product;
-using EtheriT.Coker.Application.Product;
-using EtheriT.Coker.Application.Shared.HtmlContent;
-using EtheriT.Coker.Application.HtmlContent;
-using EtheriT.Coker.Application.Shared.TechnicalCertificate;
-using EtheriT.Coker.Application.TechnicalCertificate;
-using EtheriT.Coker.Application.Shared.Specification;
-using EtheriT.Coker.Application.Specification;
-using EtheriT.Coker.Application.Shared.Tag;
-using EtheriT.Coker.Application.Tag;
-using EtheriT.Coker.Application.Configuration;
-using Microsoft.AspNetCore.Mvc.Razor;
-using EtheriT.Coker.Application.Shared.Article;
-using EtheriT.Coker.Application.Article;
-using EtheriT.Coker.Application.Shared.Advertise;
-using EtheriT.Coker.Application.Advertise;
-using EtheriT.Coker.Application.Shared.Directory;
-using EtheriT.Coker.Application.Directory;
-using EtheriT.Coker.Application.Import;
-using EtheriT.Coker.Application.StoreSet;
-using EtheriT.Coker.Application.Common;
-using Microsoft.Extensions.Options;
-using MiniExcelLibs;
-using EtheriT.Coker.Application.Search;
-using Microsoft.AspNetCore.Antiforgery;
-using EtheriT.Coker.Application.Company;
-using EtheriT.Coker.Application.AuditLog;
-using EtheriT.Coker.Web.MVC.Startup;
-using EtheriT.Coker.Application.Newsletter;
-using EtheriT.Coker.Application.Permissions;
-using EtheriT.Coker.Application.Shared.Remote;
-using EtheriT.Coker.Application.Remote;
-using EtheriT.Coker.Application.JsonObject;
-using EtheriT.Coker.Application.Shared.JsonObject;
-using EtheriT.Coker.Application.Contact;
-using System.Net;
-using EtheriT.Coker.Application.Shared.ThirdParty;
-using EtheriT.Coker.Application.ThirdParty;
-using EtheriT.Coker.Application.Processor;
-using EtheriT.Coker.Application.Shared.Processor;
-using EtheriT.Coker.Web.MVC.Middleware;
-using EtheriT.Coker.Application.Shared.ShoppingCart;
-using EtheriT.Coker.Application.ShoppingCart;
-using EtheriT.Coker.Application.Shared.UserHabits;
-using EtheriT.Coker.Application.UserHabits;
-using Hangfire;
-using Hangfire.SqlServer;
-using EtheriT.Coker.Application.Filters;
-using Hangfire.Dashboard;
-using EtheriT.Coker.Application.BackgroundJob;
-using EtheriT.Coker.Application.Shared.FlowSize;
-using EtheriT.Coker.Application.FlowSize;
-using EtheriT.Coker.Application.Shared.Reporting;
-using EtheriT.Coker.Application.Report;
-using DevExpress.AspNetCore;
-using DevExpress.XtraCharts;
-using EtheriT.Coker.Web.MVC.Controllers.DevExpress;
+﻿using DevExpress.AspNetCore;
 using DevExpress.AspNetCore.Reporting;
-using EtheriT.Coker.Application.Shared.Templates;
-using EtheriT.Coker.Application.Templates;
-using EtheriT.Coker.Application.Shared.BonusManagement;
+using DevExpress.XtraCharts;
+using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Advertise;
+using EtheriT.Coker.Application.Article;
+using EtheriT.Coker.Application.AuditLog;
+using EtheriT.Coker.Application.Authorization;
+using EtheriT.Coker.Application.BackgroundJob;
 using EtheriT.Coker.Application.BonusManagement;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
+using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Company;
+using EtheriT.Coker.Application.Configuration;
+using EtheriT.Coker.Application.Contact;
+using EtheriT.Coker.Application.Directory;
+using EtheriT.Coker.Application.FileManagement;
+using EtheriT.Coker.Application.Filters;
+using EtheriT.Coker.Application.FlowSize;
+using EtheriT.Coker.Application.Freight;
+using EtheriT.Coker.Application.HtmlContent;
+using EtheriT.Coker.Application.Import;
+using EtheriT.Coker.Application.JsonObject;
+using EtheriT.Coker.Application.Marquee;
+using EtheriT.Coker.Application.Member;
+using EtheriT.Coker.Application.Newsletter;
+using EtheriT.Coker.Application.Order;
+using EtheriT.Coker.Application.Permissions;
+using EtheriT.Coker.Application.Processor;
+using EtheriT.Coker.Application.Product;
+using EtheriT.Coker.Application.Remote;
+using EtheriT.Coker.Application.Report;
+using EtheriT.Coker.Application.Search;
+using EtheriT.Coker.Application.Shared.Advertise;
+using EtheriT.Coker.Application.Shared.Article;
+using EtheriT.Coker.Application.Shared.BonusManagement;
+using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion.Auth;
 using EtheriT.Coker.Application.Shared.FileManagement;
-using EtheriT.Coker.Application.FileManagement;
+using EtheriT.Coker.Application.Shared.FlowSize;
+using EtheriT.Coker.Application.Shared.Freight;
+using EtheriT.Coker.Application.Shared.HtmlContent;
+using EtheriT.Coker.Application.Shared.JsonObject;
+using EtheriT.Coker.Application.Shared.Marquee;
+using EtheriT.Coker.Application.Shared.Member;
+using EtheriT.Coker.Application.Shared.Order;
+using EtheriT.Coker.Application.Shared.Processor;
+using EtheriT.Coker.Application.Shared.Product;
+using EtheriT.Coker.Application.Shared.Remote;
+using EtheriT.Coker.Application.Shared.Reporting;
+using EtheriT.Coker.Application.Shared.ShoppingCart;
+using EtheriT.Coker.Application.Shared.Specification;
+using EtheriT.Coker.Application.Shared.Tag;
+using EtheriT.Coker.Application.Shared.TechnicalCertificate;
+using EtheriT.Coker.Application.Shared.Templates;
+using EtheriT.Coker.Application.Shared.ThirdParty;
+using EtheriT.Coker.Application.Shared.UserHabits;
+using EtheriT.Coker.Application.ShoppingCart;
+using EtheriT.Coker.Application.Specification;
+using EtheriT.Coker.Application.StoreSet;
+using EtheriT.Coker.Application.Tag;
+using EtheriT.Coker.Application.TechnicalCertificate;
+using EtheriT.Coker.Application.Templates;
+using EtheriT.Coker.Application.ThirdParty;
+using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Application.UserHabits;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.Web.MVC.Controllers.DevExpress;
+using EtheriT.Coker.Web.MVC.Extensions;
+using EtheriT.Coker.Web.MVC.Extensions;
+using EtheriT.Coker.Web.MVC.Middleware;
+using EtheriT.Coker.Web.MVC.Resources;
+using EtheriT.Coker.Web.MVC.Startup;
+using Hangfire;
+using Hangfire.Dashboard;
+using Hangfire.SqlServer;
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Net.Http.Headers;
+using Microsoft.OpenApi.Models;
+using MiniExcelLibs;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Security.Claims;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -101,6 +106,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllersWithViews().AddNewtonsoftJson();
 builder.Services.AddSingleton<JwtHelpers>();
+builder.Services.AddCors();
 builder.Services.AddMemoryCache()
     .AddSimpleCaptcha(builder =>
     {
@@ -187,7 +193,34 @@ if (!string.IsNullOrEmpty(LineConfig["ChannelId"]) && !string.IsNullOrEmpty(Line
         options.ClientSecret = LineConfig["ChannelSecret"] ?? "";
         options.CallbackPath = "/SigninLine";
 
-        options.CorrelationCookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+        options.Scope.Clear(); // 清掉 LINE 套件預設的 profile
+        options.Scope.Add("openid");
+        options.Scope.Add("profile");
+        options.Scope.Add("email");
+
+        options.SaveTokens = true;
+
+        options.Events.OnCreatingTicket = async ctx =>
+        {
+            var idToken = ctx.TokenResponse.Response?.RootElement.GetProperty("id_token").GetString();
+            if (!string.IsNullOrEmpty(idToken))
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jwt = handler.ReadJwtToken(idToken);
+
+                if (jwt.Payload.TryGetValue("email", out var email))
+                {
+                    ctx.Identity?.AddClaim(new Claim(ClaimTypes.Email, email?.ToString()!));
+                }
+
+                if (jwt.Payload.TryGetValue("name", out var name))
+                {
+                    ctx.Identity?.AddClaim(new Claim(ClaimTypes.Name, name?.ToString()!));
+                }
+            }
+        };
+
+        options.CorrelationCookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;    // 先設好
         options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
     });
 }
@@ -249,6 +282,9 @@ builder.Services.AddAuthorization();
 builder.Services.AddSingleton<BackgroundJobService>();
 builder.Services.AddScoped<LoginUserData>();
 builder.Services.AddScoped<NavigationProvider>();
+
+// 設定 CORS 策略
+builder.Services.AddScoped<ICorsPolicyProvider, DynamicCorsPolicyProvider>();
 
 builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IAccountAppService, AccountAppService>();
@@ -420,7 +456,17 @@ app.UseCookiePolicy(
     {
         Secure = CookieSecurePolicy.Always,
         HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always,
-        MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Strict
+        MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Strict,
+        OnAppendCookie = ctx =>
+        {
+            var isCorrelation = ctx.CookieName.StartsWith(".AspNetCore.Correlation.", StringComparison.Ordinal);
+            var isAuth = ctx.CookieName == ".AspNetCore.Cookies";          // ← 登入票證
+            if (isCorrelation || isAuth)
+            {
+                ctx.CookieOptions.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+                ctx.CookieOptions.Secure = true; // 符合 Chrome 規範
+            }
+        }
     }
 );
 
@@ -463,6 +509,8 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseCors();
 
 app.UseDevExpressControls();
 // 添加 AntiforgeryDebugMiddleware

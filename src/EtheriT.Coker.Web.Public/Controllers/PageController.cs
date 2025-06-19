@@ -156,6 +156,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var shareImage = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { Sid = siteId, Type = 13 });
             var template = await templatesApplicationService.GetDefaultTemplatesAsync();
             ViewBag.ShowPagePath = true;
+            ViewBag.BackstageUrl = Configuration["BACKSTAGE_URL"] ?? Configuration.GetValue<string>("WebConfig:BackstageUrl");
+            ViewBag.OAuthError = TempData["OAuthError"];
+            ViewBag.OAuthSuccess = TempData["OAuthSuccess"];
             if (template != null)
             {
                 var header = template.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.表頭);

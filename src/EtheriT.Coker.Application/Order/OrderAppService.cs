@@ -241,7 +241,7 @@ namespace EtheriT.Coker.Application.Order
                                          select tp.Title).FirstOrDefaultAsync();
 
                 var mailoutput = new ResponseMessageDto();
-                if (!dto.IsTemp && dto.Payment != 16) mailoutput = await SendMail(oh.Id);
+                if (!dto.IsTemp) mailoutput = await SendMail(oh.Id);
                 else mailoutput.Success = true;
 
                 if (PaymentType != null)

@@ -1,7 +1,7 @@
 ﻿var keyId
 var order_list
 let $btn_reSend, $btn_save;
-var oristate = 0, payment = "", transactionId = "", thirdparty = 0;
+var oristate = 0, payment = "", isCashOnDelivery = false, transactionId = "", thirdparty = 0;
 function PageReady() {
     OrderDataCollapse();
     $(window).resize(OrderDataCollapse);
@@ -24,7 +24,7 @@ function PageReady() {
         const status = $(".status_select > option:selected").text();
         var newstate = parseInt($(".status_select > option:selected").val());
         if (newstate != oristate && payment != "ATM") {
-            if (([1, 5, 6].includes(newstate) || (thirdparty == 3 && oristate == 1) || oristate == 6)) {
+            if (([1, 5, 6].includes(newstate) || (thirdparty == 3 && oristate == 1) || (oristate == 6 && !isCashOnDelivery))) {
                 co.sweet.error("訂單狀態錯誤", `不可將狀態變更為【${status}】`);
             } else updateOrder();
         } else updateOrder();
@@ -327,6 +327,8 @@ function HashDataEdit() {
             co.Order.GetDisplay(ohids).done(function (result) {
                 if (result.length > 0) {
                     var order_header = result[0].orderHeader;
+                    // 如果是貨到付款 待付款可以取消
+                    if ([7, 8, 9, 10].includes(order_header.paymentCode)) isCashOnDelivery = true;
                     //keyId = order_header.id;
                     HeaderDataInsert(order_header)
 
@@ -518,6 +520,7 @@ function MoveToContent() {
     $btn_save.removeClass("d-none");
 }
 function BackToList() {
+    isCashOnDelivery = false;
     $("#OrderList").removeClass("d-none");
     $("#OrderContent").addClass("d-none");
     $("#PrintR001").addClass("d-none");

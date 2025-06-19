@@ -76,7 +76,7 @@ namespace EtheriT.Coker.Application.BonusManagement
             return new GetBonusSettingHelpTextForEditOutput();
         }
 
-        public async Task<ResponseMessageDto> Save(CreateOrUpdateSettingsDto input)
+        public async Task<ResponseMessageDto> SaveSetting(CreateOrUpdateSettingsDto input)
         {
             ResponseMessageDto result = new ResponseMessageDto { Success = false };
             long websiteID = await loginUserData.GetWebsiteId();

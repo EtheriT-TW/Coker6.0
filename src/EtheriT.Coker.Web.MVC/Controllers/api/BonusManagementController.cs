@@ -29,7 +29,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
 
         [HttpPost]
-        public async Task<IActionResult> Save([FromBody] CreateOrUpdateSettingsDto model)
+        public async Task<IActionResult> SaveSetting([FromBody] CreateOrUpdateSettingsDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -39,7 +39,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             try
             {
                 // 呼叫 Service 層方法來更新設定
-                await _bonusManagementAppService.Save(model);
+                await _bonusManagementAppService.SaveSetting(model);
                 return Ok(new { success = true, message = "設定已成功更新" });
             }
             catch (Exception ex)

@@ -28,6 +28,6 @@ namespace EtheriT.Coker.Application.Shared.BonusManagement
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        Task<ResponseMessageDto> Save(CreateOrUpdateSettingsDto input);
+        Task<ResponseMessageDto> SaveSetting(CreateOrUpdateSettingsDto input);
     }
 }

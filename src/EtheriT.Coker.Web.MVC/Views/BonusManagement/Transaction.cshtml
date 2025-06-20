@@ -1,3 +1,170 @@
-﻿@{
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.BonusManagement
+@using EtheriT.Coker.Web.MVC.Models.BonusManagement
+
+@model EtheriT.Coker.Web.MVC.Models.BonusManagement.TransactionViewModel
+
+@{
     ViewData["Title"] = "BonusTransaction";
 }
+
+<div>
+    @(Html.DevExtreme().Form<CreateFrontUserTransactionDto>()
+        .FormData(Model)
+        .ID("bonusSettingsForm")
+        .Items(items =>
+        {
+            // 群組1：異動人數
+            items.AddGroup()
+            .ColCount(1)
+            .Caption("紅利異動人數")
+            .Items(groupItems =>
+            {
+                groupItems.AddSimpleFor(m => m.MemberUUID).Visible(false);
+                groupItems.AddSimple().Label(l => l.Text("異動人數(請於下方選擇異動人員)")
+                                                   .ShowColon(false)
+                                                   .Location(FormLabelLocation.Top)
+                                                   .Alignment(HorizontalAlignment.Left))
+                                      .Editor(e => e.NumberBox().ReadOnly(true))
+                                      .HelpText("AAAAAA");
+            });
+
+            // 群組2：紅利異動設定
+            items.AddGroup()
+            .Caption("紅利異動設定")
+            .ColCount(12)
+            .Items(groupItems =>
+            {
+                groupItems.AddSimple()
+                          .ColSpan(12)
+                          .Template(new JS("expireDateTemplate"));
+
+
+                groupItems.AddSimpleFor(m => m.TransactionOperation)
+                    .ColSpan(2)
+                    .IsRequired(true)
+                    .Label(l => l.Text("異動操作")
+                                 .Alignment(HorizontalAlignment.Left))
+                    .Editor(e => e.SelectBox().DataSource(Model.TransactionOperationSelectBoxDataSource)
+                                              .DisplayExpr(nameof(TransactionOperationSelectBoxData.DisplayName))
+                                              .ValueExpr(nameof(TransactionOperationSelectBoxData.OperationValue)));
+
+
+                groupItems.AddSimpleFor(m => m.TransactionPoint)
+                    .ColSpan(2)
+                    .IsRequired(true)
+                    .Label(l => l.Text("異動點數")
+                                 .Alignment(HorizontalAlignment.Left))
+                    .Editor(e => e.NumberBox()
+                                  .Min(1)
+                                  .Max(Model.ConstTransactionPointMax)
+                                  .Format("#,##0"))
+                                  .HelpText($"(1~{Model.ConstTransactionPointMax})點");
+
+                groupItems.AddEmpty().ColSpan(8);
+
+                groupItems.AddSimpleFor(m => m.TransactionReason)
+                    .ColSpan(12)
+                    .IsRequired(true)
+                    .Label(l => l.Text("異動原因")
+                                 .Alignment(HorizontalAlignment.Right))
+                    .Editor(e => e.TextBox()
+                                  .MaxLength(Model.ConstTransactionReasonMaxLength))
+                    .HelpText($"請於{Model.ConstTransactionReasonMaxLength}字內簡述");
+            });
+        })
+    )
+
+    <div class="form-group mt-3">
+        <button type="button" id="submitButton" class="btn btn-primary">確定異動</button>
+    </div>
+</div>
+
+@using (Html.DevExtreme().NamedTemplate("expireDateTemplate"))
+{
+    <div id='template-content'>
+        <i id="helpedInfo" class="dx-icon dx-icon-info"></i>
+        過期日為：@Model.ConstRewardPointsExpireDateTime.ToString("yyyy/MM/dd HH:mm")
+    </div>
+
+    @(Html.DevExtreme().Tooltip()
+            .Target("#helpedInfo")
+            .ShowEvent("mouseenter")
+            .HideEvent("mouseleave")
+            .ContentTemplate(@<text><div id='tooltip-content'>目前過期天數為：@Model.ConstRewardPointsExpireDays 天</div></text>)
+        )
+}
+
+<br />
+<br />
+<div class="py-2 px-4 position-relative">
+    <div id="TopLine" class="d-flex justify-content-between mb-4">
+        <div class="title fw-bold fs-4">選擇異動會員</div>
+    </div>
+
+    <div id="SelectFrontUser" class="card border-0">
+        <div class="card-body position-relative pb-5">
+            @(
+            Html.DevExtreme().DataGrid<GetFrontUserDto>()
+                .ID("gridContainer")
+                .AllowColumnReordering(true)
+                .AllowColumnResizing(true)
+                .ShowBorders(true)
+                .FilterRow(filterRow => filterRow
+                    .Visible(true)
+                    .ApplyFilter(GridApplyFilterMode.Auto)
+                )
+                .SearchPanel(searchPanel => searchPanel
+                    .Visible(true)
+                    .Width(240)
+                    .Placeholder("SearchWithThreeDot")
+                    .SearchVisibleColumnsOnly(true)
+                )
+                .RowAlternationEnabled(true)
+                .StateStoring(s => s
+                    .Enabled(false)
+                    .Type(StateStoringType.Custom)
+                    .StorageKey("Storage_TransactionDataGrid")
+                    //.CustomLoad("onDataGridStateStoringCustomLoad")
+                    //.CustomSave("onDataGridStateStoringCustomSave")
+                )
+                .HeaderFilter(headerFilter => headerFilter.Visible(true))
+                .Selection(s => s
+                    .Mode(SelectionMode.Multiple)
+                    .AllowSelectAll(true)
+                    .ShowCheckBoxesMode(GridSelectionShowCheckBoxesMode.Always)
+                )
+                .Columns(columns =>
+                {
+                    columns.AddFor(m => m.MemberUUID).Caption("UUID").AllowEditing(false).Visible(false).AllowSearch(false);
+                    columns.AddFor(m => m.MemberId).Caption("MemberId");
+                    columns.AddFor(m => m.MemberName).Caption("MemberName");
+                    columns.AddFor(m => m.MemberBirthday).Caption("MemberBirthday").DataType(GridColumnDataType.Date);
+                })
+                .Summary(s => s.GroupItems(items =>
+                {
+                    items.AddFor(m => m.MemberBirthday)
+                         .SummaryType(SummaryType.Count)
+                         .DisplayFormat($"{"RecordCount"}:{{0}}");
+                }))
+                .Paging(paging => paging.PageSize(20))
+                .Pager(pager =>
+                {
+                    pager.Visible(true);
+                    pager.DisplayMode(GridPagerDisplayMode.Full);
+                    pager.ShowPageSizeSelector(true);
+                    pager.AllowedPageSizes([10, 20, 50]);
+                    pager.ShowInfo(true);
+                })
+                .DataSource(d => d.RemoteController().Key("MemberUUID")
+                                  .LoadUrl("/api/BonusManagement/GetFrontUsers").LoadMethod("Get"))
+            )
+        </div>>
+    </div>
+</div>
+
+
+<div>
+
+
+</div>

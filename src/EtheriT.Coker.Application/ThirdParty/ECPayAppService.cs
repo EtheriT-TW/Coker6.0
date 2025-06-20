@@ -488,8 +488,6 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                         var createPaymentResponse = await ECPaySendRequest("ECPayCreatePayment", RequestUri, RequestBody) ?? throw new Exception("ECPay建立訂單發生錯誤");
 
-                        await orderAppService.SendMail(ohdata.Id);
-
                         await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayCreatePayment", JsonConvert.SerializeObject(createPaymentResponse));
 
                         if (createPaymentResponse.Success)

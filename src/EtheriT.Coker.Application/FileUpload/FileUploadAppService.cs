@@ -1357,9 +1357,10 @@ namespace EtheriT.Coker.Application
             var avifPathTry = Path.Combine(directoryPath, $"{key}.avif");
             original.Format = MagickFormat.Avif;
             if (originalSize < 250 * 1024)
-                original.Quality = 90;
+                original.Quality = 88;
             else if (originalSize < 500 * 1024)
-                original.Quality = 85;
+                original.Quality = 80;
+            else original.Quality = 73;
 
             original.Settings.SetDefine(MagickFormat.Avif, "lossless", "true");
             original.Settings.SetDefine(MagickFormat.Avif, "chroma-subsampling", "4:4:4");

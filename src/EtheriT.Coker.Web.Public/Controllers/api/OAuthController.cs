@@ -18,8 +18,14 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<IActionResult> success(Guid Token, string redirect)
         {
             TempData["OAuthSuccess"] = true;
-            await _accountAppService.FrontLoginByToken(Token);
-            return Redirect(redirect);
+            var resule = await _accountAppService.FrontLoginByToken(Token);
+            if (resule.Success) return Redirect(redirect);
+            else if (int.TryParse(resule.Error, out var code)) return error((OAuthErrorTypeEnum)code, redirect);
+            else {
+                TempData["OAuthSuccess"] = false;
+                TempData["OAuthError"] = resule.Error;
+                return Redirect(redirect);
+            }
         }
         public IActionResult error(OAuthErrorTypeEnum code, string? redirect)
         {

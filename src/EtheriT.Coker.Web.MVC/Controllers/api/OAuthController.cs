@@ -1,5 +1,6 @@
 ﻿using DevExpress.CodeParser;
 using EtheriT.Coker.Application.Authorization;
+using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion.Auth;
@@ -7,6 +8,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType.OAuth;
 using EtheriT.Coker.Application.Token;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using System.Net;
 using System.Security.Claims;
@@ -18,18 +20,18 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
     public class OAuthController : ControllerBase
     {
         private readonly AuthenticationSettings _authSettings;
-        private readonly ITokenAppService _tokenAppService;
+        private readonly StringHandler _stringHandler;
         private readonly IAccountAppService _accountAppService;
         private readonly IAuthenticationSchemeProvider _schemeProvider;
         private readonly ILogger<OAuthController> _logger;
         private readonly string DefaultDomain;
 
         public OAuthController(
-            IOptions<AuthenticationSettings> authSettings, ITokenAppService tokenAppService, 
+            IOptions<AuthenticationSettings> authSettings, StringHandler StringHandler, 
             IAccountAppService accountAppService, IAuthenticationSchemeProvider schemeProvider, ILogger<OAuthController> logger)
         {
             _authSettings = authSettings.Value;
-            _tokenAppService = tokenAppService;
+            _stringHandler = StringHandler;
             _accountAppService = accountAppService;
             _schemeProvider = schemeProvider;
             _logger = logger;
@@ -100,7 +102,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             if (string.IsNullOrEmpty(redirectBaseUrl)) {
                 return Redirect(DefaultDomain);
             }
-            var safeRedirect = Uri.EscapeDataString(Uri.UnescapeDataString(redirect));
+
+            var cleanRedirect = _stringHandler.RemoveQueryParam(redirect, "siteId");
+            var safeRedirect = Uri.EscapeDataString(cleanRedirect);
 
             var user = result.Principal; // 這裡可取回第三方登入的使用者資訊
             var email = user?.FindFirst(ClaimTypes.Email)?.Value;

@@ -23,10 +23,11 @@ function PageReady() {
     $btn_save.on("click", function () {
         const status = $(".status_select > option:selected").text();
         var newstate = parseInt($(".status_select > option:selected").val());
+        var oristatte_str = $(`.status_select > option[value=${oristate}]`).text();
         if (newstate != oristate && payment != "ATM") {
-            if (([1, 5, 6].includes(newstate) || (thirdparty == 3 && oristate == 1) || (oristate == 6 && !isCashOnDelivery))) {
-                co.sweet.error("訂單狀態錯誤", `不可將狀態變更為【${status}】`);
-            } else updateOrder();
+            if (([1, 5, 6].includes(newstate) || (thirdparty == 3 && oristate == 1))) co.sweet.error("訂單狀態錯誤", `不可將狀態變更為【${status}】`);
+            else if ((newstate == 3 || newstate == 7) && (oristate == 1 || oristate == 6) && !isCashOnDelivery) co.sweet.error("訂單狀態錯誤", `非貨到付款訂單${oristatte_str}不可直接變更為【${status}】`);
+            else updateOrder();
         } else updateOrder();
     });
     co.Order.GetOrderStatusLookup().done(function (result) {
@@ -213,6 +214,11 @@ function updateOrder() {
                 case 5:
                     $order_status.prop("disabled", true)
                     break;
+            }
+            var newstate = $order_status.val();
+            if (oristate == 6 && newstate != oristate) {
+                $(".btn_recheck").addClass("d-none");
+                oristate = newstate;
             }
             //order_list.component.refresh();
         }

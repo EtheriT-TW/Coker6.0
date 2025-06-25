@@ -91,6 +91,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 		public DbSet<FlowSize> FlowSizes { get; set; }
         public DbSet<Bonus> Bonus { get; set; }
         public DbSet<BonusLog> BonusLog { get; set; }
+        public DbSet<BonusLogDetail> bonusLogDetails { get; set; }
 
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
@@ -309,6 +310,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(x => x.ExecutionTime)
                     .HasDefaultValueSql("GETDATE()")
                     .ValueGeneratedOnAdd();
+            });
+            modelBuilder.Entity<BonusLogDetail>(o =>
+            {
+                o.HasKey(b => new { b.FK_BonusId, b.FK_BonusLogs });
+                o.HasOne(b => b.Bonus).WithMany().HasForeignKey(b => b.FK_BonusId);
+                o.HasOne(b => b.BonusLog).WithMany().HasForeignKey(b => b.FK_BonusLogs);
             });
             modelBuilder.Entity<Favorites>(o =>
             {

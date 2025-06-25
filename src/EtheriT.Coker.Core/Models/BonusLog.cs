@@ -15,5 +15,6 @@ namespace EtheriT.Coker.Core.Models
         public string Note { get; set; }
         public FrontUser User { get; set; }
         public DateTime ExecutionTime { get; set; } = DateTime.Now;
+        public List<BonusLogDetail> BonusLogDetails { get; set; } = new List<BonusLogDetail>();
     }
 }

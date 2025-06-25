@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250619084244_Alter_Table_Bonus_EndDate_Nullable")]
+    partial class Alter_Table_Bonus_EndDate_Nullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -479,34 +482,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("UUID");
 
                     b.ToTable("BonusLog");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.BonusLogDetail", b =>
-                {
-                    b.Property<long>("FK_BonusId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("FK_BonusLogs")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("BonusId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("BonusLogId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("UsedAmount")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("FK_BonusId", "FK_BonusLogs");
-
-                    b.HasIndex("BonusId");
-
-                    b.HasIndex("BonusLogId");
-
-                    b.HasIndex("FK_BonusLogs");
-
-                    b.ToTable("bonusLogDetails");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Company", b =>
@@ -6276,33 +6251,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.BonusLogDetail", b =>
-                {
-                    b.HasOne("EtheriT.Coker.Core.Models.Bonus", null)
-                        .WithMany("BonusLogDetails")
-                        .HasForeignKey("BonusId");
-
-                    b.HasOne("EtheriT.Coker.Core.Models.BonusLog", null)
-                        .WithMany("BonusLogDetails")
-                        .HasForeignKey("BonusLogId");
-
-                    b.HasOne("EtheriT.Coker.Core.Models.Bonus", "Bonus")
-                        .WithMany()
-                        .HasForeignKey("FK_BonusId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("EtheriT.Coker.Core.Models.BonusLog", "BonusLog")
-                        .WithMany()
-                        .HasForeignKey("FK_BonusLogs")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Bonus");
-
-                    b.Navigation("BonusLog");
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Contact", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.WebMenu", "WebMenu")
@@ -7049,16 +6997,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Article", b =>
                 {
                     b.Navigation("Remotes");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.Bonus", b =>
-                {
-                    b.Navigation("BonusLogDetails");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.BonusLog", b =>
-                {
-                    b.Navigation("BonusLogDetails");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Company", b =>

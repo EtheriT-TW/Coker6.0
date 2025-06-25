@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType.OAuth
     {
         無效的登入方式 = 1,
         使用者建立失敗 = 2,
-        使用者不存在 = 3
+        使用者不存在 = 3,
+        登入失敗缺少沒有信箱資料 = 4
     }
 }

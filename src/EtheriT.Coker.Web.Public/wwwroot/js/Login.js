@@ -1,7 +1,9 @@
 ﻿document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('OtherLoginModal');
     const loginBaseUrl = `${BackstageUrl}api/OAuth/ExternalLogin`;
-    const redirectUrl = encodeURIComponent(window.location.href);
+    const currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.set("siteId", SiteId);
+    const redirectUrl = encodeURIComponent(currentUrl.toString());
     if (modal != null) {
         fetch(`${BackstageUrl}api/OAuth/GetEnabledProviders`)
             .then(response => response.json())

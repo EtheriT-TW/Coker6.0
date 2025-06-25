@@ -1284,6 +1284,7 @@ function DeleteRecipient() {
 function OrderDataGet() {
     order_header_data.shipping = $(`[name="RadioShipping"]:checked`).val();
     order_header_data.payment = $(`[name="RadioPayment"]:checked`).val();
+    if (order_header_data.payment == 16) GetECPayType();
     order_header_data.state = 1;
     order_header_data.subtotal = subtotal;
     order_header_data.discount = 0;
@@ -1384,7 +1385,6 @@ async function OrderHeaderAdd() {
         }
 
         if (validate_success) {
-            GetECPayType();
             Swal.close();
             paymentInfo = JSON.parse(validate_result);
         } else checksuccess = false;

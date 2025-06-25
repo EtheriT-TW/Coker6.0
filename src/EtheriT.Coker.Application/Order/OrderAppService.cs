@@ -241,7 +241,7 @@ namespace EtheriT.Coker.Application.Order
                                          select tp.Title).FirstOrDefaultAsync();
 
                 var mailoutput = new ResponseMessageDto();
-                if (!dto.IsTemp && dto.Payment != 16) mailoutput = await SendMail(oh.Id);
+                if (!dto.IsTemp) mailoutput = await SendMail(oh.Id);
                 else mailoutput.Success = true;
 
                 if (PaymentType != null)
@@ -411,17 +411,11 @@ namespace EtheriT.Coker.Application.Order
                             var timeago = DateTime.Now.AddMinutes(-15);
                             order_headers = await db.Order_Headers.Where(e => ohids.Contains(e.Id) && uuids.Contains(e.FK_UUID) && (e.CreationTime > timeago || e.RepayDate > timeago)).ToListAsync();
                         }
-                        else
-                        {
-                            order_headers = await db.Order_Headers.Where(e => ohids.Contains(e.Id) && e.Fk_Tid == checktoken.RefreshToken).ToListAsync();
-                        }
+                        else order_headers = await db.Order_Headers.Where(e => ohids.Contains(e.Id) && e.Fk_Tid == checktoken.RefreshToken).ToListAsync();
                     }
                     else throw new Exception("查無Token資料");
                 }
-                else
-                {
-                    order_headers = await db.Order_Headers.Where(e => ohids.Contains(e.Id)).ToListAsync();
-                }
+                else order_headers = await db.Order_Headers.Where(e => ohids.Contains(e.Id)).ToListAsync();
 
                 foreach (var order_header in order_headers)
                 {
@@ -462,10 +456,7 @@ namespace EtheriT.Coker.Application.Order
                                         break;
                                 }
                             }
-                            else if (property.Name.EndsWith("Address"))
-                            {
-                                property.SetValue(temp_output, value.Replace(" ", ""));
-                            }
+                            else if (property.Name.EndsWith("Address")) property.SetValue(temp_output, value.Replace(" ", ""));
                         }
                     }
 
@@ -474,23 +465,18 @@ namespace EtheriT.Coker.Application.Order
                     var shipping_str2 = ((PreserveTypeEnum)(shipping?.PreserveType ?? 0)).ToString();
                     var shipping_str3 = ((ShippingTypeEnum)(shipping?.LogisticsType ?? 0)).ToString().Replace("_", "/");
                     temp_output.Shipping = shipping_str1 != "" ? shipping_str2 != "" ? shipping_str3 != "" ? $"{shipping_str1}　{shipping_str2}-{shipping_str3}" : $"{shipping_str1}　{shipping_str2}" : $"{shipping_str1}" : "";
-                    var payments = await (from pt in db.PaymentTypes
+                    var payment = await (from pt in db.PaymentTypes
                                           join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
                                           where ptv.FK_WebsiteId == WebsiteId
-                                          select pt).ToListAsync();
-                    if (payments.FirstOrDefault(e => e.Id == order_header.Payment) != null)
-                    {
-                        var payment = payments.FirstOrDefault(e => e.Id == order_header.Payment);
-                        if (payment.Code.ToLower().StartsWith("pchome"))
-                        {
-                            temp_output.Payment = "支付連-" + payment.Title?.ToString() ?? "";
-                        }
-                        else
-                        {
-                            temp_output.Payment = payment.Title?.ToString() ?? "";
-                        }
-                        temp_output.ThirdParties = payment.FK_ThirdPartyId;
-                    }
+                                          where pt.Id == order_header.Payment
+                                          select pt).FirstOrDefaultAsync();
+
+                    if (payment.Code.ToLower().StartsWith("pchome")) temp_output.Payment = "支付連-" + payment.Title?.ToString() ?? "";
+                    else temp_output.Payment = payment.Title?.ToString() ?? "";
+
+                    temp_output.CanRefund = payment.CanRefund;
+                    temp_output.ThirdParties = payment.FK_ThirdPartyId;
+
                     temp_output.CreationTime = order_header.CreationTime.ToString("yyyy-MM-dd HH:mm");
                     output.Add(temp_output);
                 }
@@ -910,6 +896,8 @@ namespace EtheriT.Coker.Application.Order
                     response.Page_Total = (int)Math.Ceiling(order_headers.Count / 8.0);
                     order_headers = order_headers.Skip((page - 1) * 8).Take(8).ToList();
 
+                    var paymentList = await db.PaymentTypes.ToListAsync();
+
                     foreach (var order_header in order_headers)
                     {
                         // 判斷訂單在Member可執行的動作 取消訂單/重新付款
@@ -921,8 +909,11 @@ namespace EtheriT.Coker.Application.Order
                         else if (order_header.CompletedDate != null && order_header.CompletedDate >= past24Hours) isintime = true;
                         else if (order_header.CreationTime >= past24Hours) isintime = true;
 
-                        if (isintime && new List<int>() { 1, 2, 6 }.Contains((int)order_header.State)) temp_OrderHeader.Action = "Cancel";
-                        else if (temp_OrderHeader.ThirdParties != 1 && order_header.State == OrderStatusEnum.付款失敗) temp_OrderHeader.Action = "Repay";
+                        var canRefund = paymentList.Where(p => p.Id == order_header.Payment).FirstOrDefault().CanRefund;
+
+                        if (isintime && new List<int>() { (int)OrderStatusEnum.待確認, (int)OrderStatusEnum.待付款 }.Contains((int)order_header.State)) temp_OrderHeader.Action = "Cancel";
+                        else if (isintime && (int)OrderStatusEnum.已付款 == (int)order_header.State && canRefund) temp_OrderHeader.Action = "Cancel";
+                        else if (canRefund && order_header.State == OrderStatusEnum.付款失敗) temp_OrderHeader.Action = "Repay";
                         else temp_OrderHeader.Action = "";
 
                         var temp_OrderDetails = new List<ShoppingCartDisplayDto>();

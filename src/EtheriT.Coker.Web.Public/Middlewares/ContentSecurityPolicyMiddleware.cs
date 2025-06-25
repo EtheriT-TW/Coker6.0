@@ -55,7 +55,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 }
                 if (_env.IsProduction())
                 {
-                    connectSrc = $"'self' {backstageHost} *.google.com *.google-analytics.com *.googleapis.com";
+                    connectSrc = $"'self' {backstageHost} *.google.com *.google-analytics.com *.googleapis.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw";
                 }
 
                 // 將 nonce 存入 HttpContext.Items

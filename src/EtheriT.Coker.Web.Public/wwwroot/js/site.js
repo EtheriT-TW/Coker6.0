@@ -1,4 +1,4 @@
-﻿var OrgName = "Page", LayoutType = 0, SiteId = 0, IsFaPage = true, loginModal, otherLoginModal, registerModal, forgetModal, resetModal, IsLogin;
+﻿var OrgName = "Page", LayoutType = 0, IsFaPage = true, loginModal, otherLoginModal, registerModal, forgetModal, resetModal, IsLogin;
 
 function ready() {
     const $conten = $("#main");
@@ -24,9 +24,6 @@ function ready() {
         }
         if ($self.data("layouttype") != undefined) {
             LayoutType = $self.data("layouttype");
-        }
-        if ($self.data("siteid") != undefined) {
-            SiteId = $self.data("siteid");
         }
         if ($self.data("isfapage") != undefined) {
             IsFaPage = $self.data("isfapage");

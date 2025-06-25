@@ -183,7 +183,7 @@
 						@if (subItems.Count() > 0)
 						{
 							<div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap font">
-								<a href="@menu.Link" id="collapse-header-@menu.Title" class="m-0 nav-link p-0 text-nowrap text-white menu-item collapsed"
+								<a href="@menu.Link" id="collapse-header-@menu.Title" class="m-0 nav-link p-0 text-nowrap menu-item collapsed"
 								   data-bs-toggle="collapse" data-bs-target="#collapse-@menu.Title" aria-expanded="true" aria-controls="collapse-@menu.Title">
 									@if (string.IsNullOrEmpty(menu.imageUrl))
 									{
@@ -220,7 +220,7 @@
 													title = $"展開選單：{secItem.Title}";
 												}
 											}
-											<a class="subtitle_title nav-link text-white text-start d-flex" href="@secItem.Link" title="@title" target="@target">
+											<a class="subtitle_title nav-link text-start d-flex" href="@secItem.Link" title="@title" target="@target">
 												<i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
 												<img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
 												<span>
@@ -264,8 +264,8 @@
 						}
 						else
 						{
-							<div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap text-white font">
-								<a class="p-0 nav-link text-nowrap text-white menu-item" href="@menu.Link" target="@(menu.Target == true ? "_blank" : "_self")" title="@(menu.Target == true ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title))">
+							<div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap font">
+								<a class="p-0 nav-link text-nowrap menu-item" href="@menu.Link" target="@(menu.Target == true ? "_blank" : "_self")" title="@(menu.Target == true ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title))">
 									@if (string.IsNullOrEmpty(menu.imageUrl))
 									{
 										@menu.Title
@@ -294,7 +294,7 @@
 					var targetStr = menu.Target ?? false ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title);
 					<li class="title nav-item col-lg-3 listMenu langMenu">
 						<div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap font">
-							<a href="@menu.Link" class="text-white" title="@targetStr" target="@target">@menu.Title</a>
+							<a href="@menu.Link" title="@targetStr" target="@target">@menu.Title</a>
 						</div>
 					</li>
 				}

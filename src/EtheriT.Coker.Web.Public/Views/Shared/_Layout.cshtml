@@ -76,9 +76,6 @@
             --orgName: @ViewData["OrgName"];
         }
     </style>
-    <style id="frameCss" nonce="@ViewBag.Nonce">
-        @Html.Raw(HttpUtility.HtmlDecode(ViewBag.Css))
-    </style>
     @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
     @if (Configuration.GetValue<bool>("RemoteJs:Enabled", false))
     {
@@ -592,5 +589,8 @@
     <script defer src="/lib/jscloudimage360/js-cloudimage-360-view.min.js" asp-append-version="true"></script>
     <script src="~/js/site.min.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+    <style id="frameCss" nonce="@ViewBag.Nonce">
+        @Html.Raw(HttpUtility.HtmlDecode(ViewBag.Css))
+    </style>
 </body>
 </html>

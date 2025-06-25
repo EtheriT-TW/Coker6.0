@@ -332,12 +332,14 @@ namespace EtheriT.Coker.Application.Authorization
                 .FirstOrDefaultAsync();
             if (user == null)
             {
+                string password = stringHandler.RandonCode(RandomStringType.數字加英文大小寫及符號, 16);
                 var newUser = await AddFrontUser(new FrontAddUserDto
                 {
                     Email = dto.Email,
                     Name = dto.Name,
                     WebsiteId = dto.FK_WebsiteId,
-                    Password = stringHandler.RandonCode(RandomStringType.數字加英文大小寫及符號, 16),
+                    Password = password,
+                    PasswordConfirm = password
                 });
 
                 user = await db.FrontUsers.Join(db.MappingFrontUserAndWebsite, u => u.Id, m => m.FK_UserId, (u, m) => new { u, m })
@@ -350,6 +352,7 @@ namespace EtheriT.Coker.Application.Authorization
             }
             else {
                 Guid guid = Guid.NewGuid();
+                user.u.Status = (int)UserStatusEnum.開通;
                 var token = new Core.Models.Token
                 {
                     id = guid,

@@ -66,7 +66,6 @@ using EtheriT.Coker.Application.UserHabits;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.MVC.Controllers.DevExpress;
 using EtheriT.Coker.Web.MVC.Extensions;
-using EtheriT.Coker.Web.MVC.Extensions;
 using EtheriT.Coker.Web.MVC.Middleware;
 using EtheriT.Coker.Web.MVC.Resources;
 using EtheriT.Coker.Web.MVC.Startup;
@@ -218,6 +217,21 @@ if (!string.IsNullOrEmpty(LineConfig["ChannelId"]) && !string.IsNullOrEmpty(Line
                     ctx.Identity?.AddClaim(new Claim(ClaimTypes.Name, name?.ToString()!));
                 }
             }
+        };
+
+        options.Events.OnRedirectToAuthorizationEndpoint = context =>
+        {
+            var uri = new UriBuilder(context.RedirectUri);
+            var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+            var updated = new Dictionary<string, string>();
+            foreach (var kv in query)
+                updated[kv.Key] = kv.Value.ToString();
+
+            updated["bot_prompt"] = "normal";
+
+            uri.Query = string.Join("&", updated.Select(kv => $"{kv.Key}={kv.Value}"));
+            context.Response.Redirect(uri.ToString());
+            return Task.CompletedTask;
         };
 
         options.CorrelationCookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;    // 先設好

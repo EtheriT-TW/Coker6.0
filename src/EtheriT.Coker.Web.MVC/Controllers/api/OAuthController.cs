@@ -111,7 +111,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             var name = user?.FindFirst(ClaimTypes.Name)?.Value;
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(name)) {
                 _logger.LogWarning($"[OAuth] 登入資訊不完整，請確認第三方帳號設定");
-                return Redirect($"");
+                return Redirect($"{redirectBaseUrl}/api/oauth/error?code={OAuthErrorTypeEnum.登入失敗缺少沒有信箱資料}&redirect={safeRedirect}");
             }
             var TokenResult = await _accountAppService.FrontThirdLogin(new FrontThirdLoginInputDto
             {

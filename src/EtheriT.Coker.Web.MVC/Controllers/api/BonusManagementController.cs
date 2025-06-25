@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.BonusManagement;
+using DevExtreme.AspNet.Mvc;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -46,6 +47,32 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             {
                 return BadRequest(new { success = false, message = ex.Message });
             }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveTransaction([FromBody] CreateUserTransactionDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                // 呼叫 Service 層方法來更新設定
+                await _bonusManagementAppService.SaveTransaction(model);
+                return Ok(new { success = true, message = "紅利異動成功" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+
+        public async Task<JsonResult> GetFrontUsers(DataSourceLoadOptions loadOptions)
+        {
+            return await _bonusManagementAppService.GetFrontUsers(loadOptions);
         }
     }
 }

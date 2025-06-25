@@ -1,6 +1,8 @@
-﻿using EtheriT.Coker.Application.Company;
+﻿using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Company;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.BonusManagement;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,5 +31,19 @@ namespace EtheriT.Coker.Application.Shared.BonusManagement
         /// <param name="input"></param>
         /// <returns></returns>
         Task<ResponseMessageDto> SaveSetting(CreateOrUpdateSettingsDto input);
+
+        /// <summary>
+        /// 儲存前端使用者紅利異動
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        Task<ResponseMessageDto> SaveTransaction(CreateUserTransactionDto input);
+
+        /// <summary>
+        /// 取得前端使用者列表
+        /// </summary>
+        /// <param name="loadOptions"></param>
+        /// <returns></returns>
+        Task<JsonResult> GetFrontUsers(DataSourceLoadOptions loadOptions);
     }
 }

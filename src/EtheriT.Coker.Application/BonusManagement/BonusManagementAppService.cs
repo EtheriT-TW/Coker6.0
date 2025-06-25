@@ -1,12 +1,18 @@
-﻿using EtheriT.Coker.Application.Dto;
+﻿using DevExtreme.AspNet.Data;
+using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.BonusManagement;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -64,7 +70,7 @@ namespace EtheriT.Coker.Application.BonusManagement
             {
                 return new GetBonusSettingHelpTextForEditOutput
                 {
-                    SignupBonusPointsHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.SignupBonusPoints))?.memo,                    
+                    SignupBonusPointsHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.SignupBonusPoints))?.memo,
                     MinOrderForRedemptionHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MinOrderForRedemption))?.memo,
                     MaxRedemptionPercentHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MaxRedemptionPercent))?.memo,
                     MinOrderForEarnPointsHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MinOrderForEarnPoints))?.memo,
@@ -74,6 +80,31 @@ namespace EtheriT.Coker.Application.BonusManagement
             }
 
             return new GetBonusSettingHelpTextForEditOutput();
+        }
+
+        public async Task<JsonResult> GetFrontUsers(DataSourceLoadOptions loadOptions)
+        {
+            long websideId = await loginUserData.GetWebsiteId();
+            var dataQuery = from user in db.FrontUsers
+                            join site in db.MappingFrontUserAndWebsite on user.Id equals site.FK_UserId
+                            where site.FK_WebsiteId == websideId &&
+                                  user.IsDeleted == false
+                            select user;
+
+            var result = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+
+            if (result != null && result.data != null)
+            {
+                result.data = (result.data as IEnumerable<FrontUser>)?.Select(x => new GetFrontUserDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    UUID = x.UUID,
+                    Birthday = x.Birthday.HasValue ? x.Birthday.Value.ToString("yyyy/MM/dd") : null
+                })?.ToList() ?? new List<GetFrontUserDto>();
+            }
+
+            return new JsonResult(result, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
 
         public async Task<ResponseMessageDto> SaveSetting(CreateOrUpdateSettingsDto input)
@@ -99,8 +130,33 @@ namespace EtheriT.Coker.Application.BonusManagement
 
                 }
                 result = await _storeSetAppService.CreateOrUpdate(createOrUpdateDto);
+            }
+            catch (Exception ex)
+            {
+                result.Error = ex.Message;
+            }
 
-                //result.Success = true;
+            return result;
+        }
+
+        public async Task<ResponseMessageDto> SaveTransaction(CreateUserTransactionDto input)
+        {
+            ResponseMessageDto result = new ResponseMessageDto { Success = false };
+            long websiteID = await loginUserData.GetWebsiteId();
+
+            try
+            {
+                if (input.TransactionOperation == "-")
+                {
+                    // 如果是扣除操作，將點數轉為負數
+                    input.TransactionPoint = -input.TransactionPoint;
+                }
+                var currentUserBonus = db.Bonus.Where(x => input.MemberUUID.Contains(x.UUID)).ToList();
+
+                foreach (var memberUuid in input.MemberUUID)
+                {
+
+                }
             }
             catch (Exception ex)
             {

@@ -184,13 +184,13 @@
                              .SummaryType(SummaryType.Count)
                              .DisplayFormat($"{"RecordCount"}:{{0}}");
                     }))
-                    .Paging(paging => paging.PageSize(2))
+                    .Paging(paging => paging.PageSize(10))
                     .Pager(pager =>
                     {
                         pager.Visible(true);
                         pager.DisplayMode(GridPagerDisplayMode.Full);
                         pager.ShowPageSizeSelector(true);
-                        pager.AllowedPageSizes([1, 2, 5]);
+                        pager.AllowedPageSizes([10, 20, 50]);
                         pager.ShowInfo(true);
                     })
                     .DataSource(d => d.RemoteController().Key(nameof(GetFrontUserDto.UUID))
@@ -265,25 +265,41 @@
             var form = $("#TransactionBonusForm").dxForm("instance");
             var formData = form.option("formData");
 
-            Coker.sweet.confirm("即將儲存", "本次影響XX人，每人點數[增加或減少]XX點", "儲存", "取消", function () {
-                $.ajax({
-                    url: "/api/BonusManagement/SaveTransaction",
-                    type: "POST",
-                    data: JSON.stringify(formData),
-                    contentType: "application/json",
-                    headers: co.Data.Header,
-                    success: function (response) {
-                        if (response.success) {
-                            Coker.sweet.success(response.message, null, true);
-                        } else {
-                            Coker.sweet.error("錯誤", response.message, null, true);
+            var memberCount = formData.TransactionMemberCount || 0;
+            var point = formData.TransactionPoint || 0;
+            var operation = formData.TransactionOperation;
+            var opText = "";
+            if (operation === "+") {
+                opText = "增加";
+            } else if (operation === "-") {
+                opText = "扣除";
+            }
+
+            Coker.sweet.confirm(
+                "即將儲存",
+                "本次影響" + memberCount + "人，每人點數" + opText + point + "點",
+                "儲存",
+                "取消",
+                function () {
+                    $.ajax({
+                        url: "/api/BonusManagement/SaveTransaction",
+                        type: "POST",
+                        data: JSON.stringify(formData),
+                        contentType: "application/json",
+                        headers: co.Data.Header,
+                        success: function (response) {
+                            if (response.success) {
+                                Coker.sweet.success(response.message, null, true);
+                            } else {
+                                Coker.sweet.error("錯誤", response.message, null, true);
+                            }
+                        },
+                        error: function (req, status, error) {
+                            Coker.sweet.error("錯誤", "儲存失敗" + req.responseJSON.message, null, true);
                         }
-                    },
-                    error: function (req, status, error) {
-                        Coker.sweet.error("錯誤", "儲存失敗" + req.responseJSON.message, null, true);
-                    }
-                });
-            });
+                    });
+                }
+            );
         });
     });
 </script>

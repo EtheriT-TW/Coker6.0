@@ -313,9 +313,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<BonusLogDetail>(o =>
             {
-                o.HasKey(b => new { b.FK_BonusId, b.FK_BonusLogs });
+                o.HasKey(b => new { b.FK_BonusId, b.FK_BonusLogsId });
                 o.HasOne(b => b.Bonus).WithMany().HasForeignKey(b => b.FK_BonusId);
-                o.HasOne(b => b.BonusLog).WithMany().HasForeignKey(b => b.FK_BonusLogs);
+                o.HasOne(b => b.BonusLog).WithMany().HasForeignKey(b => b.FK_BonusLogsId);
             });
             modelBuilder.Entity<Favorites>(o =>
             {

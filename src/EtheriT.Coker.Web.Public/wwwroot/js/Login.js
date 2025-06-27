@@ -4,22 +4,45 @@
     const currentUrl = new URL(window.location.href);
           currentUrl.searchParams.set("siteId", SiteId);
     const redirectUrl = encodeURIComponent(currentUrl.toString());
+    const displayMap = {
+        line: {
+            name: "LINE",
+            provider: "Line",
+            class: "btn_line"
+        },
+        google: {
+            name: "Google",
+            provider: "Google",
+            class: "btn_google"
+        },
+        facebook: {
+            name: "Facebook",
+            provider: "Facebook",
+            class: "btn_facebook"
+        },
+        apple: {
+            name: "Apple",
+            provider: "Apple",
+            class: "btn_apple"
+        }
+    };
     if (modal != null) {
         fetch(`${BackstageUrl}api/OAuth/GetEnabledProviders`)
             .then(response => response.json())
             .then(data => {
                 const container = modal.querySelector('.modal-body>div');
-                if (data.lineEnabled) {
-                    container.after(createButton("LINE", "Line", "btn_line"));
-                }
-                if (data.googleEnabled) {
-                    container.after(createButton("Google", "Google", "btn_google"));
-                }
-                if (data.facebookEnabled) {
-                    container.after(createButton("Facebook", "Facebook", "btn_facebook"));
-                }
-                if (data.appleEnabled) {
-                    container.after(createButton("Apple", "Apple", "btn_apple"));
+
+                const enabledKeys = Object.entries(data)
+                    .filter(([key, value]) => key.endsWith('Enabled') && value === true);
+
+                if (enabledKeys.length === 0) {
+                    document.querySelector('.btn_other_login')?.remove();
+                } else {
+                    enabledKeys.forEach(([key]) => {
+                        const raw = key.replace('Enabled', '');
+                        const entry = displayMap[raw];
+                        if (entry) container.after(createButton(entry.name, entry.provider, entry.class));
+                    });
                 }
             })
     }
@@ -38,7 +61,7 @@
         const a = document.createElement("a");
         a.href = `${loginBaseUrl}?provider=${provider}&redirect=${redirectUrl}`;
         a.className = `btn-login ${cssClass} d-inline-block text-center w-100 rounded border-0 text-white py-2 fs-5 my-3`;
-        a.textContent = provider;
+        a.textContent = text;
         return a;
     }
 });

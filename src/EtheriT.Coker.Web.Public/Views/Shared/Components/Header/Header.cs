@@ -115,7 +115,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                                 if (item.MobileImage != null)
                                                 {
                                                     item.MobileImage = item.MobileImage.Replace(pathReplace, uploadPath);
-                                                }
+                                                }else if(!string.IsNullOrEmpty(item.DesktopImage)) item.MobileImage = item.DesktopImage;
                                             }
                                             headerViewModel.Bannners = list.Sliders;
                                         }

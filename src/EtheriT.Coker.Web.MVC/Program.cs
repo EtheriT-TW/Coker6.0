@@ -245,6 +245,7 @@ if (!string.IsNullOrEmpty(GoogleConfig["ClientId"]) && !string.IsNullOrEmpty(Goo
     {
         options.ClientId = GoogleConfig["ClientId"] ?? "";
         options.ClientSecret = GoogleConfig["ClientSecret"] ?? "";
+        options.CallbackPath = "/signin-google";
     });
 }
 var FacebookConfig = authenticationConfig.GetSection("Facebook");
@@ -254,6 +255,7 @@ if (!string.IsNullOrEmpty(FacebookConfig["AppId"]) && !string.IsNullOrEmpty(Face
     {
         options.AppId = FacebookConfig["AppId"] ?? "";
         options.AppSecret = FacebookConfig["AppSecret"] ?? "";
+        options.CallbackPath = "/signin-facebook";
     });
 }
 var AppleConfig = authenticationConfig.GetSection("Apple");
@@ -263,6 +265,7 @@ if (!string.IsNullOrEmpty(AppleConfig["ClientId"]) && !string.IsNullOrEmpty(Appl
         options.ClientId = AppleConfig["ClientId"] ?? "";
         options.KeyId = AppleConfig["KeyId"] ?? "";
         options.TeamId = AppleConfig["TeamId"] ?? "";
+        options.CallbackPath = "/signin-apple";
         var fileProvider = new PhysicalFileProvider(Directory.GetCurrentDirectory());
         options.UsePrivateKey(fileName =>
         {

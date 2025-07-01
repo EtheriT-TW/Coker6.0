@@ -16,7 +16,7 @@
             if (typeof ($self) == "undefined" || $self == null) $self = $("form").first();
             else if (typeof ($self) == "string") {
                 $self = /^#/.test($self) ? $($self) : $(`#${$self}`);
-            } 
+            }
             const formTypeSet = (type, $e, value) => {
                 switch (type) {
                     case "zipcode":
@@ -74,8 +74,9 @@
             for (const key in obj) {
                 const $e = $self.find(`[name="${key}"]`);
                 if ($e.length > 0) {
-                    if (!!$e.data("form-type")) formTypeSet($e.data("form-type"), $e, obj[key])
-                    else {
+                    if (!!$e.data("form-type")) {
+                        formTypeSet($e.data("form-type"), $e, obj[key])
+                    } else {
                         switch ($e[0].tagName) {
                             case "INPUT":
                                 switch ($e.attr("type").toLowerCase()) {

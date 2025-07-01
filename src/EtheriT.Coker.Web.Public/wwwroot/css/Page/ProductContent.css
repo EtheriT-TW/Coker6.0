@@ -41,10 +41,15 @@ i.fa-chevron-right {
 #ProDisplayModal.show {
     display: flex !important;
 }
-
-#ProDisplayModal > .modal-dialog {
-    min-width: 90vmin;
-    min-height: 90vmin;
+#ProDisplayModal .modal-dialog {
+    width: 0;
+    margin: auto;
+    transition: width 0.4s ease, height 0.4s ease;
+}
+#ProDisplayModal .modal-body {
+    height: 0;
+    padding:0;
+    transition: height 0.4s ease;
 }
 
     #ProDisplayModal > .modal-dialog.ytshow {
@@ -61,6 +66,19 @@ i.fa-chevron-right {
             background-color: white;
             opacity: 0.75;
         }
+#ProDisplayModal .btn-tool {
+    position: fixed;
+    top: calc(50% - 2.5rem);
+    padding: 0.5rem;
+    color: #FFF;
+    font-size: 5rem;
+}
+    #ProDisplayModal .btn-tool.prev-btn {
+        left: 0;
+    }
+    #ProDisplayModal .btn-tool.next-btn {
+        right: 0;
+    }
 
 #Pro_Image {
     cursor: zoom-in !important;

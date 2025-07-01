@@ -75,6 +75,28 @@ function PageReady() {
         if (v < parseInt($self.attr("min"))) v = parseInt($self.attr("min"));
         $self.val(v);
     });
+    const getCurrentIndex = () => {
+        const currentIndex = img_origin_list.findIndex(
+            item => item.id == $("#ProDisplayModal").data("id")
+        );
+        return currentIndex + 1; // 因為css nth-child從1開始計數，所以需要+1
+    }
+    $("#ProDisplayModal .btn-tool.prev-btn").on("click", function (e) {
+        e.preventDefault();
+        const currentIndex = getCurrentIndex();
+        let prevIndex = currentIndex - 1;
+        if (prevIndex <= 0) prevIndex = img_origin_list.length; // 循環到最後一個
+        const prevItem = $(`.ProductSwiper>.swiper-wrapper>.swiper-slide:nth-child(${prevIndex}) [data-id]`);
+        showProItem(prevItem);
+    });
+    $("#ProDisplayModal .btn-tool.next-btn").on("click", function (e) {
+        e.preventDefault();
+        const currentIndex = getCurrentIndex();
+        let nextIndex = currentIndex + 1;
+        if (nextIndex > img_origin_list.length) nextIndex = 1; // 循環到第一個
+        const nextItem = $(`.ProductSwiper>.swiper-wrapper>.swiper-slide:nth-child(${nextIndex}) [data-id]`);
+        showProItem(nextItem);
+    });
 
     var $radio_btn = $('#Product > .content > .options > .radio > .control')
     if ($radio_btn.children().length <= 2) {
@@ -721,76 +743,174 @@ function AddToCart() {
 }
 function ShowBigPro() {
     var pro_self = $(this);
+    showProItem(pro_self);
+}
+
+function showProItem(pro_self) {
+    const itemType = pro_self.data("display-protype"); // "image", "video", "youtube", "360view"
+    // 通用:先清除舊CI360
+    window.CI360.destroy();
+
+    // 通用:先清空容器
+    $("#Pro_Image").addClass("d-none");
+    $("#Pro_Video").addClass("d-none").attr("src", "");
+    $("#Pro_Youtube").addClass("d-none").attr("src", "");
+    $("#Pro_360View").addClass("d-none");
+
+    // 通用:取得資料
     var pro_viewModalSpace = $("#ProDisplayModal > .modal-dialog > .modal-content > .modal-body");
     pro_viewModalSpace.children(".pro_img").addClass("d-none");
     pro_viewModalSpace.children(".pro_youtube").addClass("d-none");
     pro_viewModalSpace.children(".pro_360view").addClass("d-none");
-    switch (pro_self.data("display-protype")) {
+    const img_data = img_origin_list.find(item => item.id == pro_self.data("id"));
+    $("#ProDisplayModal").data("id", img_data.id);
+    // 根據類型分流
+    switch (itemType) {
         case "image":
+            $("#Pro_Image").removeClass("d-none");
             $(".modal-dialog").removeClass("ytshow")
             pro_viewModalSpace.children(".pro_img").removeClass("d-none");
             pro_viewModalSpace.children(".pro_video").addClass("d-none");
-            addImage(pro_self);
+            loadImageInModal(pro_self, img_data);
             break;
         case "video":
             $(".modal-dialog").removeClass("ytshow")
             pro_viewModalSpace.children(".pro_img").addClass("d-none");
             pro_viewModalSpace.children(".pro_video").removeClass("d-none");
-            addVideo(pro_self);
+            $("#ProDisplayModal .modal-dialog").removeAttr("style");
+            $("#ProDisplayModal .modal-body").removeAttr("style");
+            $("#ProDisplayModal .modal-dialog").css("width", "auto");
+            $("#ProDisplayModal .modal-body").css("height", "auto");
+            $("#Pro_Video").removeClass("d-none").attr("src", img_data.link[0]);
             break;
         case "youtube":
             $(".modal-dialog").addClass("ytshow")
             pro_viewModalSpace.children(".pro_youtube").removeClass("d-none");
             pro_viewModalSpace.children(".pro_img").addClass("d-none");
             pro_viewModalSpace.children(".pro_video").addClass("d-none");
-            addYoutube(pro_self);
+            const pro_YoutubeLink = pro_self.data("youtube-link").split("&t=");
+            let url = "https://www.youtube-nocookie.com/embed/" + pro_YoutubeLink[0];
+            if (pro_YoutubeLink[1]) url += `?start=${pro_YoutubeLink[1]}`;
+            $("#ProDisplayModal .modal-dialog").removeAttr("style");
+            $("#ProDisplayModal .modal-body").removeAttr("style");
+            $("#ProDisplayModal .modal-body").css("height", "auto");
+            $("#Pro_Youtube").removeClass("d-none").attr("src", url);
             break;
         case "360view":
             if ($(".modal-dialog").hasClass("ytshow")) $(".modal-dialog").removeClass("ytshow")
             pro_viewModalSpace.children(".pro_360view").removeClass("d-none");
             pro_viewModalSpace.children(".pro_video").removeClass("d-none");
-            add360View(pro_self);
+            $("#Pro_360View").removeClass("d-none");
+            load360InModal(pro_self);
             break;
     }
 }
-function addImage(pro_self) {
+function loadImageInModal(pro_self) {
     var img_data = img_origin_list.find(item => item.id == pro_self.data("id"));
-
     var pro_filename = img_data.link[0];
-    pro_folder = pro_filename.substr(0, pro_filename.lastIndexOf('/') + 1)
+    var pro_folder = pro_filename.substr(0, pro_filename.lastIndexOf('/') + 1);
     pro_filename = pro_filename.substr(pro_filename.lastIndexOf('/') + 1);
 
     var proImage_Self = $("#Pro_Image");
-    proImage_Self.attr({ "data-filename-x": pro_filename, "data-folder": pro_folder });
-
-    $("#ProDisplayModal").on("shown.bs.modal", function () {
-        const proImage = document.getElementById("Pro_Image");
-        proImage.classList.add("cloudimage-360");
-        window.CI360.add("Pro_Image");
+    proImage_Self.empty();
+    proImage_Self.attr({
+        "data-filename-x": pro_filename,
+        "data-folder": pro_folder
     });
+
+    const preloadImg = new Image();
+    preloadImg.src = pro_folder + pro_filename;
+
+    preloadImg.onload = function () {
+        const dialog = $("#ProDisplayModal .modal-dialog");
+        const imgWidth = preloadImg.naturalWidth;
+        const imgHeight = preloadImg.naturalHeight;
+        const imgRatio = imgWidth / imgHeight;
+        const currentWidth = dialog.outerWidth();
+        const currentHeight = dialog.outerHeight();
+        dialog.css({ width: currentWidth, height: currentHeight });
+        void dialog[0].offsetWidth;
+
+        const winWidth = window.innerWidth;
+        const winHeight = window.innerHeight;
+
+        let maxWidthRatio = 0.8;
+        if (imgRatio > 1.2) maxWidthRatio = 0.9;
+
+        const maxWidth = winWidth * maxWidthRatio;
+        const maxHeight = winHeight * 0.9;
+
+        const heightByMaxWidth = maxWidth / imgRatio;
+        let targetWidth, targetHeight;
+
+        if (heightByMaxWidth <= maxHeight) {
+            targetWidth = maxWidth;
+            targetHeight = heightByMaxWidth;
+        } else {
+            targetHeight = maxHeight;
+            targetWidth = maxHeight * imgRatio;
+        }
+
+        dialog.css({
+            minWidth: "",
+            minHeight: "",
+            width: targetWidth + "px",
+            maxWidth: "100%"
+        });
+        dialog.css({
+            height: targetHeight + "px",
+            maxHeight: ""
+        });
+
+        const thumbSrc = pro_self.attr("src");
+        const thumbImg = $('<img>').attr("src", thumbSrc).css({
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            opacity: 0.6,
+            position: "absolute",
+            top: 0,
+            left: 0,
+            zIndex: 1
+        });
+        proImage_Self.append(thumbImg);
+        proImage_Self.css("position", "relative");
+        dialog.on("transitionend", function handler(e) {
+            dialog.off("transitionend", handler);
+            const proImage = document.getElementById("Pro_Image");
+            proImage.classList.add("cloudimage-360");
+            setTimeout(() => {
+                window.CI360.add("Pro_Image");
+                thumbImg.remove();
+
+                setTimeout(() => {
+                    const canvas = $("#Pro_Image canvas");
+                    const canvasHeight = canvas.outerHeight();
+                    $("#ProDisplayModal .modal-body").css({
+                        height: canvasHeight + "px"
+                    });
+                }, 50);
+            }, 300);
+        });
+    };
 }
-function addVideo(pro_self) {
-    var img_data = img_origin_list.find(item => item.id == pro_self.data("id"));
-    $("#Pro_Video").attr("src", img_data.link[0])
-}
-function addYoutube(pro_self) {
-    var pro_YoutubeLink = pro_self.data("youtube-link").split("&t=");
-    pro_YoutubeLink
-    var url = "https://www.youtube-nocookie.com/embed/" + pro_YoutubeLink[0];
-    if (typeof (pro_YoutubeLink[1]) != "undefined") url += `?start=${pro_YoutubeLink[1]}`;
-    $("#Pro_Youtube").attr("src", url);
-}
-function add360View(pro_self) {
-    var pro360View_Self = $("#Pro_360View");
+function load360InModal(pro_self) {
+    const pro360View_Self = $("#Pro_360View");
     pro360View_Self.attr("data-filename-x", pro_self.data("filename-x"));
     pro360View_Self.attr("data-amount-x", pro_self.data("amount-x"));
+    pro360View_Self.css("position", "relative");
 
-    $("#ProDisplayModal").on("shown.bs.modal", function () {
+    const dialog = document.querySelector("#ProDisplayModal .modal-dialog");
+    dialog.addEventListener("transitionend", function handler(e) {
+        //if (e.propertyName === "height" || e.propertyName === "width") {
+        dialog.removeEventListener("transitionend", handler);
         const pro360View = document.getElementById("Pro_360View");
         pro360View.classList.add("cloudimage-360");
         window.CI360.add("Pro_360View");
+        //}
     });
 }
+
 function SwitchPage() {
     var currentUrl = window.location.pathname + window.location.search;
     var catalog = currentUrl.substring(0, currentUrl.indexOf('/product'));

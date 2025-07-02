@@ -100,8 +100,6 @@
 
     .type_change_frame > .catalog .image_frame img {
         border-radius: 0.25rem;
-        width: 200px;
-        height: 200px;
         object-fit: contain;
     }
 

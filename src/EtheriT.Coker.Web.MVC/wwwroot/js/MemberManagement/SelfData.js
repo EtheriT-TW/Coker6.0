@@ -28,8 +28,9 @@
             formData.append("serno", 500);
             list.push(co.File.Upload(formData));
         }
-        $.when.apply(null, list).done(function (promise) {
-            const result = promise[0];
+        $.when.apply(null, list).done(function () {
+            const arg = arguments[0];
+            const result = Array.isArray(arg) ? arg[0] : arg;
             if (result.success) co.sweet.success("儲存成功");
             else co.sweet.error("儲存失敗");
         });

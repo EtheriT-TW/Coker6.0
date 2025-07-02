@@ -109,7 +109,6 @@ namespace EtheriT.Coker.Application.StoreSet
             {
                 var result = await db.StoreSetDetail
                     .Include(e => e.StoreSet)
-                    .Where(e => !e.IsDeleted)
                     .Where(e => e.StoreSet.FK_StoreSetGroupId == StoreSetGroupId)
                     .Where(e => e.FK_WebsiteId == websiteId)
                     .ToListAsync();
@@ -118,7 +117,13 @@ namespace EtheriT.Coker.Application.StoreSet
                     select new StoreSetDetailOutputDto
                     {
                         key = s.StoreSet.key,
-                        value = s.StoreSet.type != SeoSetDataTypeEnum.textarea ? s.value!.Split(",").ToList().ConvertAll(e => e.Trim()) : s.value != null ? new List<string> { s.value } : new List<string>(),
+                        value = s.StoreSet.type != SeoSetDataTypeEnum.textarea
+                                ? (s.value != null
+                                    ? s.value.Split(",").ToList().ConvertAll(e => e.Trim())
+                                    : new List<string>() { string.Empty })
+                                : (s.value != null
+                                    ? new List<string> { s.value }
+                                    : new List<string>() { string.Empty })
                     }
                 ).ToList();
                 output.Success = true;

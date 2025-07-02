@@ -52,6 +52,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 var websiteId = await loginUserData.GetWebsiteId();
                 var result = from s in db.ThirdParties.Where(e => !e.IsDeleted)
+                             orderby s.ser_no
                              select new ThirdPartyItemOutputDto
                              {
                                  Id = s.Id,

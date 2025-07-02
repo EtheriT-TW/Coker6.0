@@ -3,6 +3,7 @@
     autoplay:boolen 是否輪播
  }
  ***************/
+//# sourceURL=Swiper.js
 function SwiperInit(obj) {
     var config = {
         slidesPerView: 1,
@@ -515,7 +516,7 @@ function SwiperInit(obj) {
             let pictureSwiperOptions = {
                 centeredSlides: true,
                 spaceBetween: 10,
-                loop: true,
+                loop: false,
                 loopAdditionalSlides: 0,
                 navigation: {
                     nextEl: "#pictureSwiper .swiper-button-next",
@@ -544,7 +545,6 @@ function SwiperInit(obj) {
                 pictureSwiperThumbs.removeAllSlides();
                 pictureSwiper.update();
                 pictureSwiperThumbs.update();
-
                 var $self = $(this).parents(".picture-category");
                 var index = $self.find("a").index(this);
                 var $images = [];
@@ -567,8 +567,9 @@ function SwiperInit(obj) {
                         var newSlideThumbs = `<div class="swiper-slide align-content-center ms-1 me-2"><img src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
                         pictureSwiperThumbs.appendSlide(newSlideThumbs);
                     }
+                    pictureSwiper.autoplay.start();
                 }
-                const images = document.querySelectorAll('#pictureSwiperThumbs .swiper-slide img');
+                const images = document.querySelectorAll('#SwiperModal .swiper-slide img');
                 let loadedCount = 0;
                 images.forEach(img => {
                     img.onload = () => {

@@ -58,6 +58,7 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly string controllerName;
         private readonly MailAppService mailAppService;
         private readonly INewsletterAppService newsletterAppService;
+        private readonly IFileUploadAppService fileUploadAppService;
         private readonly IConfiguration configuration;
         private readonly IShoppingCartAppService shoppingCartAppService;
         private readonly IHostEnvironment _env;
@@ -71,6 +72,7 @@ namespace EtheriT.Coker.Application.Authorization
             MailAppService mailAppService,
             StringHandler stringHandler,
             INewsletterAppService newsletterAppService,
+            IFileUploadAppService fileUploadAppService,
             IConfiguration configuration,
             IShoppingCartAppService shoppingCartAppService,
             IHostEnvironment env
@@ -84,6 +86,7 @@ namespace EtheriT.Coker.Application.Authorization
             this.mapper = mapper;
             this.mailAppService = mailAppService;
             this.newsletterAppService = newsletterAppService;
+            this.fileUploadAppService = fileUploadAppService;
             this.configuration = configuration;
             this.shoppingCartAppService = shoppingCartAppService;
             this.stringHandler = stringHandler;
@@ -434,6 +437,16 @@ namespace EtheriT.Coker.Application.Authorization
                             };
                     output.Account = theUser.Account;
                     output.UserName = theUser.Name;
+                    var profileImg = await fileUploadAppService.getImgFiles(new Shared.Dto.Files.FileGetImgInputDto { 
+                        Sid = theUser.Id,
+                        Size = 3,
+                        Type = (int)FileBindTypeEnum.大頭貼
+                    });
+                    if(profileImg.Any())
+                    {
+                        output.ProfileImage = profileImg.FirstOrDefault()?.Link ?? string.Empty;
+                    }
+                    if (string.IsNullOrEmpty(output.ProfileImage)) output.ProfileImage = "/images/user.png";
                     output.Webs = await o.ToListAsync();
                 }
             }

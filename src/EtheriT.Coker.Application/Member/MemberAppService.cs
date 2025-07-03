@@ -168,10 +168,11 @@ namespace EtheriT.Coker.Application.Member
         {
             try
             {
+                bool isSystemUser = await loginUserData.isSystemUser();
                 long websideId = await loginUserData.GetWebsiteId();
                 var result = await (from user in db.Users.Where(e => e.Id == id)
                                     join map in db.MappingUserAndWebsites on user.Id equals map.UserId
-                                    where map.WebsiteId == websideId
+                                    where map.WebsiteId == websideId || isSystemUser
                                     select user).FirstOrDefaultAsync();
 
 

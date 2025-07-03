@@ -60,8 +60,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             try
             {
                 // 呼叫 Service 層方法來更新設定
-                await _bonusManagementAppService.SaveTransaction(model);
-                return Ok(new { success = true, message = "紅利異動成功" });
+                var result = await _bonusManagementAppService.SaveTransaction(model);
+                if (result.Success)
+                {
+                    return Ok(new { success = true, message = "紅利異動成功" });
+                }
+                else
+                {
+                    return BadRequest(new { success = false, message = result.Error ?? "紅利異動失敗" });
+                }
             }
             catch (Exception ex)
             {

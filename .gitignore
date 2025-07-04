@@ -366,12 +366,14 @@ FodyWeavers.xsd
 *.min.js
 *.min.js.map
 *.min.css
+*.min.css.map
 upload/**/*.*
+**/wwwroot/lib/*/*.*
 **/wwwroot/lib/grapesjs/**/*.*
 **/wwwroot/lib/swiper/**/*.*
 **/wwwroot/lib/bootstrap/dist/**/*
 **/wwwroot/lib/ace-builds/*.*
-!**/wwwroot/lib/jquery/**/*.min.js.map
+!**/wwwroot/lib/jquery/**/*.min.map
 !**/wwwroot/js/devextreme/**/*.min.js
 !**/wwwroot/css/devextreme/**/*.min.css
 **/wwwroot/js/devextreme/analytics-core/**

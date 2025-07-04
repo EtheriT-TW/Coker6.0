@@ -260,103 +260,114 @@ var grapesInit = function (options) {
                     const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;
                     const isrun = false;
                     let timer = null;
-                    if (typeof (iframe.local) == "undefined") {
-                        iframe.local = {};
-                        co.i18.getAll().done(function (result) {
-                            iframe.local = result;
-                        });
-                    }
-                    const init = function () {
-                        if (typeof (iframe.jqueryExtend) != "undefined" && typeof (iframe.local) != "undefined") iframe.jqueryExtend();
-                        else timer = setTimeout(init, 100);
-                    }
-                    timer = setTimeout(init, 100);
-                    let checkClass = [
-                        { key: "SwiperInit", state: false, run: true, class: [], parameter: { autoplay: false } },
-                        { key: "FrameInit", state: false, run: true, class: [], parameter: {} },
-                        { key: "ViewTypeChangeInit", state: false, run: true, class: [], parameter: {} },
-                        { key: "SitemapInit", state: false, run: true, class: [], parameter: {} },
-                        { key: "HoverEffectInit", state: false, run: true, class: [], parameter: {} },
-                        { key: "DirectoryGetDataInit", state: false, run: true, class: [], parameter: {} },
-                        { key: "LinkWithIconInit", state: false, run: true, class: [], parameter: {} },
-                        { key: "AnchorPointInit", state: false, run: true, class: [], parameter: {} },
-                        { key: "ShareBlockInit", state: false, run: true, class: [], parameter: {} },
-                        { key: "GetLatLng", state: false, run: true, class: [], parameter: {} },
-                    ];
-                    const setConfig = function (index, str) {
-                        checkClass[index].state = true;
-                        checkClass[index].run = false;
-                        checkClass[index].class.push(`.${str}`);
-                    }
-                    $(obj.classes).each(function () {
-                        var s = this.toString();
-                        switch (s) {
-                            case "one_swiper":
-                            case "one_swiper_thumbs":
-                            case "two_swiper":
-                            case "three_swiper":
-                            case "four_swiper":
-                            case "five_swiper":
-                            case "six_swiper":
-                            case "three_two_grid_swiper":
-                            case "vertical_swiper_thumbs":
-                                setConfig(0, s);
-                                checkClass[0].parameter.autoplay = false;
-                                break;
-                            case "masonry":
-                            case "YTmodal_frame":
-                                setConfig(1, s);
-                                break;
-                            case "frame":
-                            case "type_change_frame":
-                                setConfig(2, s);
-                                break;
-                            case "sitemap_hierarchical_frame":
-                                setConfig(3, s);
-                                break;
-                            case "hover_mask":
-                                setConfig(4, s);
-                                break;
-                            case "catalog_frame":
-                            case "menu_directory":
-                            case "advertise_directory":
-                                setConfig(5, s);
-                                break;
-                            case "link_with_icon":
-                                setConfig(6, s);
-                                break
-                            case "anchor_directory":
-                            case "anchor_title":
-                                setConfig(7, s);
-                                break;
-                            case "shareBlock":
-                                setConfig(8, s);
-                                break;
-                            case "getlatlng":
-                                setConfig(9, s);
-                                break;
+                    const waitIframeReady = (cb) => {
+                        const iframeEl = document.getElementsByClassName("gjs-frame")[0];
+                        if (!iframeEl) return setTimeout(() => waitIframeReady(cb), 100);
+                        const iframe = iframeEl.contentWindow;
+                        if (iframe.document.readyState !== "complete") {
+                            return setTimeout(() => waitIframeReady(cb), 100);
                         }
-                    });
-                    const checkEle = function () {
-                        var runAll = true;
-                        $(checkClass).each(function () {
-                            var item = this;
-                            if (item.state) {
-                                let c = true;
-                                $(item.class).each(function () {
-                                    var str = this;
-                                    if (iframe.$(str).length == 0) c = false;
-                                });
-                                if (c) {
-                                    iframe[item.key](item.parameter);
-                                    item.run = true;
-                                }
+                        cb(iframe);
+                    };
+                    waitIframeReady((iframe) => {
+                        if (typeof (iframe.local) == "undefined") {
+                            iframe.local = {};
+                            co.i18.getAll().done(function (result) {
+                                iframe.local = result;
+                            });
+                        }
+                        const init = function () {
+                            if (typeof (iframe.jqueryExtend) != "undefined" && typeof (iframe.local) != "undefined") iframe.jqueryExtend();
+                            else timer = setTimeout(init, 100);
+                        }
+                        timer = setTimeout(init, 100);
+                        let checkClass = [
+                            { key: "SwiperInit", state: false, run: true, class: [], parameter: { autoplay: false } },
+                            { key: "FrameInit", state: false, run: true, class: [], parameter: {} },
+                            { key: "ViewTypeChangeInit", state: false, run: true, class: [], parameter: {} },
+                            { key: "SitemapInit", state: false, run: true, class: [], parameter: {} },
+                            { key: "HoverEffectInit", state: false, run: true, class: [], parameter: {} },
+                            { key: "DirectoryGetDataInit", state: false, run: true, class: [], parameter: {} },
+                            { key: "LinkWithIconInit", state: false, run: true, class: [], parameter: {} },
+                            { key: "AnchorPointInit", state: false, run: true, class: [], parameter: {} },
+                            { key: "ShareBlockInit", state: false, run: true, class: [], parameter: {} },
+                            { key: "GetLatLng", state: false, run: true, class: [], parameter: {} },
+                        ];
+                        const setConfig = function (index, str) {
+                            checkClass[index].state = true;
+                            checkClass[index].run = false;
+                            checkClass[index].class.push(`.${str}`);
+                        }
+                        $(obj.classes).each(function () {
+                            var s = this.toString();
+                            switch (s) {
+                                case "one_swiper":
+                                case "one_swiper_thumbs":
+                                case "two_swiper":
+                                case "three_swiper":
+                                case "four_swiper":
+                                case "five_swiper":
+                                case "six_swiper":
+                                case "three_two_grid_swiper":
+                                case "vertical_swiper_thumbs":
+                                    setConfig(0, s);
+                                    checkClass[0].parameter.autoplay = false;
+                                    break;
+                                case "masonry":
+                                case "YTmodal_frame":
+                                    setConfig(1, s);
+                                    break;
+                                case "frame":
+                                case "type_change_frame":
+                                    setConfig(2, s);
+                                    break;
+                                case "sitemap_hierarchical_frame":
+                                    setConfig(3, s);
+                                    break;
+                                case "hover_mask":
+                                    setConfig(4, s);
+                                    break;
+                                case "catalog_frame":
+                                case "menu_directory":
+                                case "advertise_directory":
+                                    setConfig(5, s);
+                                    break;
+                                case "link_with_icon":
+                                    setConfig(6, s);
+                                    break
+                                case "anchor_directory":
+                                case "anchor_title":
+                                    setConfig(7, s);
+                                    break;
+                                case "shareBlock":
+                                    setConfig(8, s);
+                                    break;
+                                case "getlatlng":
+                                    setConfig(9, s);
+                                    break;
                             }
-                            runAll = runAll && this.run
                         });
-                        if (!runAll) setTimeout(checkEle, 300);
-                    }
-                    setTimeout(checkEle, 300);
+                        const checkEle = function () {
+                            var runAll = true;
+                            $(checkClass).each(function () {
+                                var item = this;
+                                if (item.state) {
+                                    let c = true;
+                                    $(item.class).each(function () {
+                                        var str = this;
+                                        if (iframe.$(str).length == 0) c = false;
+                                    });
+                                    if (c) {
+                                        iframe[item.key](item.parameter);
+                                        item.run = true;
+                                    }
+                                }
+                                runAll = runAll && this.run
+                            });
+                            if (!runAll) setTimeout(checkEle, 300);
+                        }
+                        setTimeout(checkEle, 300);
+                    });
                 }
             }
         },

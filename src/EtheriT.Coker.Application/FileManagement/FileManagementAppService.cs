@@ -50,6 +50,11 @@ namespace EtheriT.Coker.Application.FileManagement
 
             allowFileExtension.Add(".avif");
 
+            if (!System.IO.Directory.Exists(filePath))
+            {
+                System.IO.Directory.CreateDirectory(filePath);
+            }
+
             var customFileSystemProvider = new CustomFileSystemProvider(_thumbnailGenerator.AssignThumbnailUrl,
                                                                         filePath,
                                                                         _dbContext,

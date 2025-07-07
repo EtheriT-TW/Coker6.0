@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.BonusManagement;
+using DevExtreme.AspNet.Mvc;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -29,7 +30,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
 
         [HttpPost]
-        public async Task<IActionResult> Save([FromBody] CreateOrUpdateSettingsDto model)
+        public async Task<IActionResult> SaveSetting([FromBody] CreateOrUpdateSettingsDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -39,13 +40,46 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             try
             {
                 // 呼叫 Service 層方法來更新設定
-                await _bonusManagementAppService.Save(model);
+                await _bonusManagementAppService.SaveSetting(model);
                 return Ok(new { success = true, message = "設定已成功更新" });
             }
             catch (Exception ex)
             {
                 return BadRequest(new { success = false, message = ex.Message });
             }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveTransaction([FromBody] CreateUserTransactionDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                // 呼叫 Service 層方法來更新設定
+                var result = await _bonusManagementAppService.SaveTransaction(model);
+                if (result.Success)
+                {
+                    return Ok(new { success = true, message = "紅利異動成功" });
+                }
+                else
+                {
+                    return BadRequest(new { success = false, message = result.Error ?? "紅利異動失敗" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+
+        public async Task<JsonResult> GetFrontUsers(DataSourceLoadOptions loadOptions)
+        {
+            return await _bonusManagementAppService.GetFrontUsers(loadOptions);
         }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace EtheriT.Coker.Web.MVC.Models.BonusManagement
 {
-    public class SettingsModel : GetBonusSettingForEditOutput
+    public class SettingsViewModel : GetBonusSettingForEditOutput
     {
         public string? SignupBonusPointsHelpText { get; set; }
 

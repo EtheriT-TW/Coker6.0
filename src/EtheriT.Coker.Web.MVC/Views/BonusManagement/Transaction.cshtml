@@ -1,3 +1,325 @@
-﻿@{
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.BonusManagement
+@using EtheriT.Coker.Web.MVC.Models.BonusManagement
+
+@model EtheriT.Coker.Web.MVC.Models.BonusManagement.TransactionViewModel
+
+@{
     ViewData["Title"] = "BonusTransaction";
 }
+<style>
+    #root {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        gap: 10px;
+    }
+    #left {
+        flex: 0 0 43%;
+        max-width: 45%;
+        min-width: 0;
+    }
+    #right {
+        flex: 0 0 55%;
+        max-width: 55%;
+        min-width: 0;
+    }
+</style>
+<div id="root">
+    <div id="left">
+        @(Html.DevExtreme().Form<CreateUserTransactionDto>()
+                .FormData(Model)
+                .ID("TransactionBonusForm")
+                .Items(items =>
+                {
+                    // 群組1：異動人數
+                    items.AddGroup()
+                    .ColCount(1)
+                    .Caption("紅利異動人數")
+                    .Items(groupItems =>
+                    {
+                        groupItems.AddSimpleFor(m => m.MemberUUID).Visible(false);
+                        groupItems.AddSimple()
+                            .DataField("TransactionMemberCount")
+                            .Label(l => l.Text("異動人數(請於右方選擇異動人員)")
+                                           .ShowColon(false)
+                                           .Location(FormLabelLocation.Top)
+                                           .Alignment(HorizontalAlignment.Left))
+                            .Editor(e => e.NumberBox().ReadOnly(true).ID("TransactionMemberCount")
+                                        .Format("#,##0"));
+                        groupItems.AddSimple().Template(new JS("showSelectedMember"));
+                    });
+
+                    // 群組2：紅利異動設定
+                    items.AddGroup()
+                    .Caption("紅利異動設定")
+                    .ColCount(12)
+                    .Items(groupItems =>
+                    {
+                        groupItems.AddSimple()
+                                  .ColSpan(12)
+                                  .Template(new JS("expireDateTemplate"));
+
+
+                        groupItems.AddSimpleFor(m => m.TransactionOperation)
+                            .ColSpan(4)
+                            .IsRequired(true)
+                            .Label(l => l.Text("異動操作")
+                                         .Alignment(HorizontalAlignment.Left))
+                            .Editor(e => e.SelectBox().DataSource(Model.TransactionOperationSelectBoxDataSource)
+                                                      .DisplayExpr(nameof(TransactionOperationSelectBoxData.DisplayName))
+                                                      .ValueExpr(nameof(TransactionOperationSelectBoxData.OperationValue)));
+
+
+                        groupItems.AddSimpleFor(m => m.TransactionPoint)
+                            .ColSpan(4)
+                            .IsRequired(true)
+                            .Label(l => l.Text("異動點數")
+                                         .Alignment(HorizontalAlignment.Left))
+                            .Editor(e => e.NumberBox()
+                                          .Min(1)
+                                          .Max(Model.ConstTransactionPointMax)
+                                          .Format("#,##0"))
+                                          .HelpText($"(1~{Model.ConstTransactionPointMax})點");
+
+                        groupItems.AddEmpty().ColSpan(4);
+
+                        groupItems.AddSimpleFor(m => m.TransactionReason)
+                            .ColSpan(12)
+                            .IsRequired(true)
+                            .Label(l => l.Text("異動原因")
+                                         .Alignment(HorizontalAlignment.Right))
+                            .Editor(e => e.TextBox()
+                                          .MaxLength(Model.ConstTransactionReasonMaxLength))
+                            .HelpText($"請於{Model.ConstTransactionReasonMaxLength}字內簡述");
+                    });
+                })
+            )
+
+        <div class="form-group mt-3">
+            <button type="button" id="submitButton" class="btn btn-primary">確定異動</button>
+        </div>
+    </div>
+
+    @using (Html.DevExtreme().NamedTemplate("showSelectedMember"))
+    {
+        <div id='template-content'>
+            <i id="helpedInfo_showSelectedMember" class="dx-icon dx-icon-info"></i>
+            <div id="showSelectedMemberDiv"></div>
+        </div>
+
+        @(Html.DevExtreme().Tooltip()
+                            .Target("#helpedInfo_showSelectedMember")
+                            .ShowEvent("mouseenter")
+                            .HideEvent("mouseleave")
+                            .ContentTemplate(@<text><div id='tooltip-content'>最多只顯示20位，設定仍為全數人員設定</div></text>)
+                        )
+    }
+
+    @using (Html.DevExtreme().NamedTemplate("expireDateTemplate"))
+    {
+        <div id='template-content'>
+            <i id="helpedInfo_expireDateTemplate" class="dx-icon dx-icon-info"></i>
+            過期日為：@Model.ConstRewardPointsExpireDateTime.ToString("yyyy/MM/dd HH:mm")
+        </div>
+
+        @(Html.DevExtreme().Tooltip()
+                        .Target("#helpedInfo_expireDateTemplate")
+                        .ShowEvent("mouseenter")
+                        .HideEvent("mouseleave")
+                        .ContentTemplate(@<text><div id='tooltip-content'>目前過期天數為：@Model.ConstRewardPointsExpireDays 天</div></text>)
+                    )
+    }
+
+
+
+    <br />
+    <br />
+    <div id="right" class="py-2 px-4 position-relative">
+        <div id="TopLine" class="d-flex justify-content-between mb-4">
+            <div class="title fw-bold fs-4">選擇異動會員</div>
+        </div>
+
+        <div id="SelectFrontUser" class="card border-0">
+            <div class="card-body position-relative pb-5">
+                @(
+                    Html.DevExtreme().DataGrid<GetFrontUserDto>()
+                        .ID("gridContainer")
+                        .Width(800)
+                        .AllowColumnReordering(true)
+                        .AllowColumnResizing(true)
+                        .ShowBorders(true)
+                        .FilterRow(filterRow => filterRow
+                            .Visible(true)
+                            .ApplyFilter(GridApplyFilterMode.Auto)
+                        )
+                        .SearchPanel(searchPanel => searchPanel
+                            .Visible(true)
+                            .Width(240)
+                            .Placeholder("輸入搜尋值...")
+                            .SearchVisibleColumnsOnly(true)
+                        )
+                        .RowAlternationEnabled(true)
+                        .StateStoring(s => s
+                            .Enabled(false)
+                            .Type(StateStoringType.Custom)
+                            .StorageKey("Storage_TransactionDataGrid")
+                        )
+                        .HeaderFilter(headerFilter => headerFilter.Visible(true))
+                        .Selection(s => s
+                            .Mode(SelectionMode.Multiple)
+                            .AllowSelectAll(true)
+                            .ShowCheckBoxesMode(GridSelectionShowCheckBoxesMode.Always)
+                        )
+                        .Columns(columns =>
+                        {
+                            columns.AddFor(m => m.UUID).Caption("UUID").Visible(false).AllowSearch(false);
+                            columns.AddFor(m => m.Id).Caption("編號").AllowSearch(false).AllowHeaderFiltering(false).AllowFiltering(false).Width(100);
+                            columns.AddFor(m => m.Name).Caption("姓名").Name("Name");
+                            columns.AddFor(m => m.Birthday).Caption("生日").DataType(GridColumnDataType.Date);
+                    })
+                    .Summary(s => s.GroupItems(items =>
+                    {
+                        items.AddFor(m => m.Birthday)
+                             .SummaryType(SummaryType.Count)
+                             .DisplayFormat($"{"RecordCount"}:{{0}}");
+                    }))
+                    .Paging(paging => paging.PageSize(10))
+                    .Pager(pager =>
+                    {
+                        pager.Visible(true);
+                        pager.DisplayMode(GridPagerDisplayMode.Full);
+                        pager.ShowPageSizeSelector(true);
+                        pager.AllowedPageSizes([10, 20, 50]);
+                        pager.ShowInfo(true);
+                    })
+                    .DataSource(d => d.RemoteController().Key(nameof(GetFrontUserDto.UUID))
+                                      .LoadUrl("/api/BonusManagement/GetFrontUsers").LoadMethod("Get"))
+                    .RemoteOperations(remote => remote.GroupPaging(true))
+                    .OnSelectionChanged("onGridSelectionChanged")
+                )
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    @*取消使用滑鼠滾輪增減數值的功能*@
+    $(document).ready(function () {
+        setTimeout(function () {
+            var suspendValueChanged;
+
+            // 為所有 NumberBox 增加事件處理
+            // ref:https://supportcenter.devexpress.com/ticket/details/T741892/numberbox-how-to-prevent-only-the-mouse-wheel-event-and-keep-arrows-active
+            $(".dx-numberbox").each(function () {
+                var instance = $(this).dxNumberBox("instance");
+                if (instance) {
+                    instance.option("onValueChanged", function (e) {
+                        if (e.event && e.event.type === "dxmousewheel") {
+                            if (suspendValueChanged) {
+                                suspendValueChanged = false;
+                                return;
+                            }
+                            suspendValueChanged = true;
+                            e.component.option('value', e.previousValue);
+                        }
+                    });
+                }
+            });
+        }, 300); // 給予適當的延遲以確保控件已經初始化
+    });
+
+    function onGridSelectionChanged(e) {
+        var selectedRows = e.component.getSelectedRowsData();
+        var selectedUUIDs = selectedRows.map(function(row) {
+            return row.UUID;
+        });
+        var selectedNames = selectedRows.map(function(row) {
+            return row.Name;
+        });
+
+        // 更新 TransactionBonusForm 的 MemberUUID 欄位
+        var form = $("#TransactionBonusForm").dxForm("instance");
+        form.updateData("MemberUUID", selectedUUIDs);
+
+        // 統計數量
+        var memberCount = selectedUUIDs.length;
+
+        // 處理人名顯示，最多顯示20個，超過的用...表示
+        var helpText = "";
+        if (selectedNames.length > 0) {
+            var displayNames = selectedNames.slice(0, 20);
+            helpText = displayNames.join("、");
+            if (selectedNames.length > 20) {
+                helpText += "...";
+            }
+        }
+        // 更新異動人數欄位的值
+        form.updateData("TransactionMemberCount", memberCount);
+
+        // 將選擇的會員名稱顯示在 showSelectedMemberDiv 中
+        $("#showSelectedMemberDiv").text(helpText);
+    }
+
+    $(function () {
+        $("#submitButton").on("click", function () {
+            var form = $("#TransactionBonusForm").dxForm("instance");
+            var formData = form.option("formData");
+
+            var memberCount = formData.TransactionMemberCount || 0;
+            var point = formData.TransactionPoint || 0;
+            var operation = formData.TransactionOperation;
+            var opText = "";
+            if (operation === "+") {
+                opText = "增加";
+            } else if (operation === "-") {
+                opText = "扣除";
+            }
+
+            if (memberCount === 0) {
+                Coker.sweet.error("錯誤", "請先選擇異動人員", null, false);
+                return;
+            }
+
+            if (operation === undefined || operation === null) {
+                Coker.sweet.error("錯誤", "請選擇異動操作", null, false);
+                return;
+            }
+
+            if (point <= 0 || point > @Model.ConstTransactionPointMax) {
+                Coker.sweet.error("錯誤", "異動點數必須在1到" + @Model.ConstTransactionPointMax + "之間", null, false);
+                return;
+            }
+
+            if (!formData.TransactionReason || formData.TransactionReason.trim() === "") {
+                Coker.sweet.error("錯誤", "請填寫異動原因", null, false);
+                return;
+            }
+
+            Coker.sweet.confirm(
+                "即將儲存",
+                "本次影響" + memberCount + "人，每人點數" + opText + point + "點",
+                "儲存",
+                "取消",
+                function () {
+                    $.ajax({
+                        url: "/api/BonusManagement/SaveTransaction",
+                        type: "POST",
+                        data: JSON.stringify(formData),
+                        contentType: "application/json",
+                        headers: co.Data.Header,
+                        success: function (response) {
+                            if (response.success) {
+                                Coker.sweet.success(response.message, null, true);
+                            } else {
+                                Coker.sweet.error("錯誤", response.message, null, false);
+                            }
+                        },
+                        error: function (req, status, error) {
+                            Coker.sweet.error("錯誤", "儲存失敗" + req.responseJSON.message, null, false);
+                        }
+                    });
+                }
+            );
+        });
+    });
+</script>

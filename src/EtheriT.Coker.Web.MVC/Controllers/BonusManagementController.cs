@@ -23,7 +23,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             var bonusSettingData = await _bonusManagementAppService.GetBonusSettingForEdit();
             var bonusSettingHelpText = await _bonusManagementAppService.GetBonusSettingHelpTextForEdit();
 
-            SettingsModel model = new SettingsModel()
+            SettingsViewModel model = new SettingsViewModel()
             {
                 // 取得紅利設定
                 SiteId = bonusSettingData.SiteId,
@@ -44,10 +44,18 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             };
             return View(model);
         }
-        public IActionResult Transaction()
+
+        public async Task<IActionResult> Transaction()
         {
-            return View();
+            var bonusSettingData = await _bonusManagementAppService.GetBonusSettingForEdit();
+
+            TransactionViewModel model = new TransactionViewModel();
+            model.ConstRewardPointsExpireDays = bonusSettingData.RewardPointsExpireDays ?? 1;
+            model.ConstRewardPointsExpireDateTime = DateTime.Now.AddDays(model.ConstRewardPointsExpireDays.Value);
+
+            return View(model);
         }
+
         public IActionResult Record()
         {
             return View();

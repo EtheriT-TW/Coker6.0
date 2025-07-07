@@ -4,7 +4,7 @@
         var formData = form.option("formData");
 
         $.ajax({
-            url: "/api/BonusManagement/Save",
+            url: "/api/BonusManagement/SaveSetting",
             type: "POST",
             data: JSON.stringify(formData),
             contentType: "application/json",

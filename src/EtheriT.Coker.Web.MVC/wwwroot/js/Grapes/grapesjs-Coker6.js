@@ -189,7 +189,6 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
             url:"",img:""
         }
         const oldLink = link;
-        console.log(link.includes("facebook.com"), /fb\.watch\//.test(link), link.match(/[?&]t=(\d+)/));
         if (link.includes("facebook.com")) {
             if (link.includes("facebook.com/plugins/video.php"))
                 Link.url = link;
@@ -519,7 +518,9 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                         "img_update": $self.find("img").length > 0 ? true : false,
                                         "a_tag": $self.find("a").length > 0 && !$self.find("a").attr("href").startsWith("#SwiperModal") ? true : false,
                                         "target": $self.find("a").attr("target"),
-                                        "yt_src": $self.find("iframe").length >0? $self.find("iframe").attr("src") : $self.find(`[href="#SwiperModal"]`).data("link"),
+                                        "yt_src": $self.find("iframe").length > 0 ? $self.find("iframe").attr("src") :
+                                            $self.find("video").length > 0 ? $self.find("video").attr("src") :
+                                                $self.find(`[href="#SwiperModal"]`).data("link"),
                                         "video_title": $self.find("iframe").length ? $self.find("iframe").attr("title") : $self.find("video").attr("title"),
                                         "start_time": $self.find('*').attr('data-start_time'),
                                         "keep_time": $self.find("img").length ? $self.find("img").data('keep_time') : $self.find("iframe").data('keep_time'),
@@ -604,6 +605,12 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                     a_tag: true,
                                     img_update: true
                                 }, data);
+                                if (typeof (o.src) == "undefined" || o.src == "") {
+                                    if (o.yt_src != "" && typeof (o.yt_src) != "undefined") {
+                                        o.src = getVideoUrl(o.yt_src).img;
+                                        if (o.src == "") o.src = "/images/defaultImage/video.jpg";
+                                    } else o.src = "/images/UploadImg.png";
+                                }
                                 var content = $($("#TemplateSwiperList").html());
                                 content.data(o);
                                 content.find("[name='label']").attr("id", `selectSwiper${index}`);
@@ -615,6 +622,10 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                 content.find(".start_time").text(o.start_time);
                                 content.find(".keep_time").text(o.keep_time);
                                 content.find(".synopsis_caption").text(o.synopsis_caption);
+
+                                if (o.link != "#SwiperModal" && o.yt_src != "" && typeof (o.yt_src) != "undefined") {
+                                    content.find("img").removeClass("update-img isPointer");
+                                }
                                 if (data.visible) {
                                     content.find(".eyes > span:first-child").addClass("d-none");
                                     content.find(".eyes > span:last-child").removeClass("d-none");
@@ -732,6 +743,10 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                     "data-start_time": startTime
                                 });
                             }
+                            const isVideoFile = function(url) {
+                                const videoExtensions = [".mp4", ".webm", ".ogg", ".mov"];
+                                return videoExtensions.some(ext => url.toLowerCase().endsWith(ext));
+                            }
                             const addAndUpdateSwiper = function ($slide, obj) {
                                 if ($slide == null || $slide.length ==0) {
                                     var $selected = editor.getSelected();
@@ -749,7 +764,6 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                     const $item = $($slide).find(`[href="#SwiperModal"]`);
                                     if ($item.length > 0) {
                                         const video = getVideoUrl(obj.VideoLink);
-                                        console.log(video);
                                         if (video.url != "") $item.attr('data-link', video.url);
                                         if (obj.ImgSrc.startsWith("/images/")) {
                                             if (video.img != "") {
@@ -758,12 +772,21 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                                 obj.ImgSrc = "/images/defaultImage/video.jpg";
                                             }
                                         }
+                                    } else if (isVideoFile(obj.VideoLink)) {
+                                        const $video = $('<video>', {
+                                            src: obj.VideoLink,
+                                            controls: true,
+                                            preload: 'metadata',
+                                            poster: obj.ImgSrc || "/images/defaultImage/video.jpg",
+                                            style: 'width:100%; height:auto;'
+                                        });
+                                        if (obj.VideoLink == "") obj.ImgSrc = "/images/defaultImage/video.jpg";
+                                        $($slide).append($video);
                                     } else {
                                         const $iframe = setIframe(obj.VideoLink, obj.startTime, obj.Title);
                                         $($slide).append($iframe);
                                     }
                                 }
-
                                 $($slide).find('img').attr('src', obj.ImgSrc);
                                 $($slide).find('img').attr('alt', obj.Title);
                                 if (obj.Link) {

@@ -60,6 +60,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Website", convert);
                 case FileBindTypeEnum.分享圖示:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Share", convert);
+                case FileBindTypeEnum.大頭貼:
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "SelfData", convert);
                 default:
                     return await fileUploadAppService.uploadHtmlContentFiles(files);
             }

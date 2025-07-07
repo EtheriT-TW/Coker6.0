@@ -465,6 +465,7 @@ namespace EtheriT.Coker.Application
                 var files = await db.FileBinds.Include(e => e.fileUpload)
                         .Where(e => e.Sid == dto.Sid && e.type == dto.Type)
                         .Where(e => !e.IsDeleted).OrderBy(e => e.SerNo).ToListAsync();
+
                 var faids = files.Select(e => e.FK_FileUploadId).ToList();
                 orgName = string.IsNullOrEmpty(orgName) ? "" : $"/{orgName}";
                 if (faids != null)
@@ -475,13 +476,19 @@ namespace EtheriT.Coker.Application
                         {
                             files.ForEach(e =>
                             {
+                                var ImageOrgName = orgName;
                                 if (e.fileUpload != null)
                                 {
+                                    if (!string.IsNullOrEmpty(ImageOrgName) && websiteId != e.fileUpload.FK_WebsiteId)
+                                    {
+                                        var site = db.Websites.Where(w => w.Id == e.fileUpload.FK_WebsiteId).FirstOrDefault();
+                                        if (site != null) ImageOrgName = $"/{site.OrgName}";
+                                    }
                                     result.Add(new FileGetImgDto
                                     {
                                         Id = e.fileUpload.Id,
                                         Name = e.Name,
-                                        Link = e.fileUpload.DownloadFileName.Replace("upload", $"upload{orgName}")
+                                        Link = e.fileUpload.DownloadFileName.Replace("upload", $"upload{ImageOrgName}")
                                     });
                                 }
                             });
@@ -496,6 +503,12 @@ namespace EtheriT.Coker.Application
 
                             if (fadata != null && fadata.GuidKey != Guid.Empty)
                             {
+                                var ImageOrgName = orgName;
+                                if (!string.IsNullOrEmpty(ImageOrgName) && websiteId != fadata.FK_WebsiteId)
+                                {
+                                    var site = db.Websites.Where(w => w.Id == fadata.FK_WebsiteId).FirstOrDefault();
+                                    if (site != null) ImageOrgName = $"/{site.OrgName}";
+                                }
                                 var chimg_ids = await (db.FileBindMores.Where(e => e.FK_FileBindGuid == fadata.GuidKey).Where(e => !e.IsDeleted).Select(e => e.FK_FileUploadId).ToListAsync());
                                 if (chimg_ids.Count > 0)
                                 {
@@ -512,7 +525,7 @@ namespace EtheriT.Coker.Application
                                         {
                                             Id = faid.Value,
                                             Name = chimg[dto.Size - 2].OriginalFileName,
-                                            Link = chimg[dto.Size - 2].DownloadFileName.Replace("upload", $"upload{orgName}")
+                                            Link = chimg[dto.Size - 2].DownloadFileName.Replace("upload", $"upload{ImageOrgName}")
                                         });
                                     }
                                     else if (chimg_ids.Count == 1)
@@ -521,7 +534,7 @@ namespace EtheriT.Coker.Application
                                         {
                                             Id = faid.Value,
                                             Name = chimg[0].OriginalFileName,
-                                            Link = chimg[0].DownloadFileName.Replace("upload", $"upload{orgName}")
+                                            Link = chimg[0].DownloadFileName.Replace("upload", $"upload{ImageOrgName}")
                                         });
                                     }
                                 }
@@ -531,7 +544,7 @@ namespace EtheriT.Coker.Application
                                     {
                                         Id = fadata.Id,
                                         Name = fadata.OriginalFileName,
-                                        Link = fadata.DownloadFileName.Replace("upload", $"upload{orgName}")
+                                        Link = fadata.DownloadFileName.Replace("upload", $"upload{ImageOrgName}")
                                     });
                                 }
                             }
@@ -1333,8 +1346,17 @@ namespace EtheriT.Coker.Application
         }
         private async Task<ImageConversionResultDto> ConvertImageAsync(Stream inputStream, string directoryPath, string baseUrlPath, string key)
         {
-            using var original = new MagickImage(inputStream);
+            // 複製到MemoryStream確保可重複使用
+            using var memoryStream = new MemoryStream();
+            await inputStream.CopyToAsync(memoryStream);
+            var originalSize = memoryStream.Length;
+
+            memoryStream.Position = 0;
+            using var original = new MagickImage(memoryStream);
             var originalFormat = original.Format;
+            var extension = GetExtension(originalFormat);
+            var contentType = GetMimeType(originalFormat);
+            var fallbackPath = Path.Combine(directoryPath, $"{key}{extension}");
 
             // 若為 AVIF，直接儲存
             if (originalFormat == MagickFormat.Avif)
@@ -1349,27 +1371,43 @@ namespace EtheriT.Coker.Application
                 };
             }
 
-            // 記下原始大小
-            inputStream.Position = 0; // 保險做法，防止 Seek 失效
-            var originalSize = inputStream.Length;
+            // 若檔案小於40KB，直接存原始
+            if (originalSize < 40 * 1024)
+            {
+                memoryStream.Position = 0;
+                using (var fs = File.Create(fallbackPath))
+                {
+                    await memoryStream.CopyToAsync(fs);
+                }
+
+                return new ImageConversionResultDto
+                {
+                    Path = $"/{baseUrlPath}/{key}{extension}",
+                    ContentType = contentType,
+                    FileLength = originalSize
+                };
+            }
 
             // 嘗試轉 AVIF
             var avifPathTry = Path.Combine(directoryPath, $"{key}.avif");
             original.Format = MagickFormat.Avif;
+
             if (originalSize < 250 * 1024)
-                original.Quality = 90;
+                original.Quality = 88;
             else if (originalSize < 500 * 1024)
-                original.Quality = 85;
+                original.Quality = 80;
+            else
+                original.Quality = 73;
 
             original.Settings.SetDefine(MagickFormat.Avif, "lossless", "true");
             original.Settings.SetDefine(MagickFormat.Avif, "chroma-subsampling", "4:4:4");
+
             await original.WriteAsync(avifPathTry);
 
             var avifSize = new FileInfo(avifPathTry).Length;
 
             if (avifSize < originalSize)
             {
-                // ✅ AVIF 成功壓縮
                 return new ImageConversionResultDto
                 {
                     Path = $"/{baseUrlPath}/{key}.avif",
@@ -1378,18 +1416,14 @@ namespace EtheriT.Coker.Application
                 };
             }
 
-            // ❌ AVIF 檔案反而更大 → 刪除 AVIF
+            // AVIF未壓縮成功，刪除
             File.Delete(avifPathTry);
 
-            // 儲存原始圖，使用原格式副檔名
-            var extension = GetExtension(originalFormat);
-            var contentType = GetMimeType(originalFormat);
-            var fallbackPath = Path.Combine(directoryPath, $"{key}{extension}");
-
-            inputStream.Position = 0; // 回到開頭
+            // 儲存原始格式
+            memoryStream.Position = 0;
             using (var fs = File.Create(fallbackPath))
             {
-                await inputStream.CopyToAsync(fs);
+                await memoryStream.CopyToAsync(fs);
             }
 
             return new ImageConversionResultDto
@@ -1399,6 +1433,7 @@ namespace EtheriT.Coker.Application
                 FileLength = originalSize
             };
         }
+
         private string GetExtension(MagickFormat format)
         {
             return format switch

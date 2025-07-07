@@ -4,7 +4,8 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "BACKSTAGE_URL": "https://localhost:7014/"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7193;http://localhost:5193"
@@ -22,7 +23,8 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Defood"
+        "ASPNETCORE_ENVIRONMENT": "Defood",
+        "BACKSTAGE_URL": "https://localhost:7014/"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7195;http://localhost:5195"
@@ -31,7 +33,8 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Museum"
+        "ASPNETCORE_ENVIRONMENT": "Museum",
+        "BACKSTAGE_URL": "https://localhost:7014/"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7195;http://localhost:5196"
@@ -40,7 +43,8 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "sing-jhen-yi"
+        "ASPNETCORE_ENVIRONMENT": "sing-jhen-yi",
+        "BACKSTAGE_URL": "https://localhost:7014/"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7195;http://localhost:5197"
@@ -49,7 +53,8 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "longtop"
+        "ASPNETCORE_ENVIRONMENT": "longtop",
+        "BACKSTAGE_URL": "https://localhost:7014/"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7195;http://localhost:5198"
@@ -58,7 +63,8 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "kinglake"
+        "ASPNETCORE_ENVIRONMENT": "kinglake",
+        "BACKSTAGE_URL": "https://localhost:7014/"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7195;http://localhost:5199"
@@ -67,7 +73,8 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "unitedtw"
+        "ASPNETCORE_ENVIRONMENT": "unitedtw",
+        "BACKSTAGE_URL": "https://localhost:7014/"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7195;http://localhost:5120"

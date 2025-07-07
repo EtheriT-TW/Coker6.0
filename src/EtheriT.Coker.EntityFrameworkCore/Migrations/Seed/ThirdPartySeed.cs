@@ -14,7 +14,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Id = 1,
                     Title = "轉帳",
                     IsDeleted = false,
-                    ser_no = 500,
+                    ser_no = 1,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
 
@@ -42,6 +42,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     ser_no = 500,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new ThirdParty
+                {
+                    Id = 5,
+                    Title = "貨到付款",
+                    IsDeleted = false,
+                    ser_no = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }
             );
             modelBuilder.Entity<ThirdPartyKeypair>().HasData(
@@ -583,6 +591,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     RefundWorkDay = -1,
                     CanRefund = false,
                     CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 28,
+                    Used = false,
+                    Title = "貨到付款",
+                    Code = "COD",
+                    MinAmount = 1,
+                    MaxAmount = null,
+                    Icons = "trans_icon.jpg",
+                    SerNo = 1,
+                    FK_ThirdPartyId = 5,
+                    CreatorUserId = 1,
+                    RefundWorkDay = -1,
+                    CanRefund = false,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }
             );
         }

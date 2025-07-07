@@ -11,6 +11,7 @@
 		<None Remove="Views\UserManagement\**" />
 	</ItemGroup>
 	<ItemGroup>
+		<Content Remove="appsettings - 複製.EPZA.json" />
 		<Content Remove="appsettings.EPZA.json" />
 		<Content Remove="wwwroot\css\Account\login.less" />
 		<Content Remove="wwwroot\css\Account\site.less" />
@@ -70,6 +71,7 @@
 		<Folder Include="wwwroot\lib\tui-code\" />
 	</ItemGroup>
 	<ItemGroup>
+		<None Include="appsettings.Local.EPZA.json" />
 		<None Include="appsettings.EPZA.json">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
@@ -119,9 +121,9 @@
 		<None Include="wwwroot\js\CokerCore\**" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="AspNet.Security.OAuth.Apple" Version="9.2.0" />
-		<PackageReference Include="AspNet.Security.OAuth.Instagram" Version="9.2.0" />
-		<PackageReference Include="AspNet.Security.OAuth.Line" Version="9.2.0" />
+		<PackageReference Include="AspNet.Security.OAuth.Apple" Version="9.4.0" />
+		<PackageReference Include="AspNet.Security.OAuth.Instagram" Version="9.4.0" />
+		<PackageReference Include="AspNet.Security.OAuth.Line" Version="9.4.0" />
 		<PackageReference Include="BuildBundlerMinifier" Version="3.2.449" />
 		<PackageReference Include="DevExpress.AspNetCore.Reporting" Version="24.2.6" />
 		<PackageReference Include="DevExpress.Xpo" Version="24.2.6" />
@@ -161,6 +163,9 @@
 		<ProjectReference Include="..\EtheriT.Coker.EntityFrameworkCore\EtheriT.Coker.EntityFrameworkCore.csproj" />
 	</ItemGroup>
 	<ItemGroup>
+		<Content Update="appsettings.Local.json">
+		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Content>
 		<Content Update="appsettings.json">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Content>

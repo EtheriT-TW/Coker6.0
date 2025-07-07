@@ -124,6 +124,32 @@ namespace EtheriT.Coker.Application.FileManagement
                 return hasBindings;
             }
             catch (Exception)
+            {                return false;
+            }
+        }
+
+        public async Task<bool> CheckFileExistsAsync(string directoryPath, string fileName)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(directoryPath) || string.IsNullOrEmpty(fileName))
+                {
+                    return false;
+                }
+
+                string orgName = await _loginUserData.GetWebsiteOrgName();
+
+                // 組合完整的檔案路徑
+                string fullPath = System.IO.Path.Combine(
+                    _configuration.GetValue<string>("VirtualDirectory:upload") ?? string.Empty,
+                    orgName,
+                    directoryPath.TrimStart('/').TrimStart('\\'),
+                    fileName);
+
+                // 檢查檔案是否存在
+                return System.IO.File.Exists(fullPath);
+            }
+            catch (Exception)
             {
                 return false;
             }

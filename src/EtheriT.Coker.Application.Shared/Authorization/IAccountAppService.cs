@@ -10,6 +10,8 @@ namespace EtheriT.Coker.Application.Authorization
     {
         public Task<LoginOutputDto> Login(LoginInputDto dto);
         public Task<LoginOutputDto> FrontLogin(FrontLoginInputDto dto);
+        public Task<LoginOutputDto> FrontLoginByToken(Guid token);
+        public Task<LoginOutputDto> FrontThirdLogin(FrontThirdLoginInputDto dto);
         public Task<LoginOutputDto> FrontLogout();
         public Task<ResponseMessageDto> FrontUserEdit(FrontEditUserDto dto);
         public Task<ResponseUserEditDto> GetFrontUserData();
@@ -27,5 +29,6 @@ namespace EtheriT.Coker.Application.Authorization
         public Task<ResponseUserEditDto> GetEditUser(DataDelectDto dto);
         public Task<ResponseMessageDto> AddUser(AddUser dto);
         public Task<ResponseMessageDto> AddFrontUser(FrontAddUserDto dto);
+        public CheckRedirectUrlOutputDto checkRedirectUrl(string? redirectUrl);
     }
 }

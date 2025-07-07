@@ -11,5 +11,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
 		未開通 = 0,
 		開通 = 1,
 		停權 = 2,
-	}
+        鎖定 = 3,
+    }
 }

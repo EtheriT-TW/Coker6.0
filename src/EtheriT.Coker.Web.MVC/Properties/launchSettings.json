@@ -10,11 +10,21 @@
       "applicationUrl": "https://localhost:7014;http://localhost:5014",
       "DevExpress": "Debug"
     },
+    "EtheriT.Coker.Web.MVC.Local": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Local"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7014;http://localhost:5014",
+      "DevExpress": "Debug"
+    },
     "EtheriT.Coker.Web.MVC.EPZA": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "EPZA"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7014;http://localhost:5014"

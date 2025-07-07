@@ -10,9 +10,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
         {
             Configuration = configuration;
         }
-        public IActionResult Index(string option,string key)
+        public IActionResult Index(string option,string? key)
         {
             string verifyString = Configuration.GetValue<string>($"Verify:{option}:{key}");
+            if(string.IsNullOrEmpty(key)) verifyString = Configuration.GetValue<string>($"Verify:{option}");
             if (!string.IsNullOrEmpty(verifyString)) return Content(verifyString, "text/plain");
             else {
                 Response.StatusCode = 404;

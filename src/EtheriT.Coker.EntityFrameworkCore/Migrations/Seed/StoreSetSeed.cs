@@ -340,7 +340,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Id = 20,
                     key = "RewardPointsExpireDays",
                     name = "有效天數",
-                    memo = "每一筆紅利的有效天數",
+                    memo = "每一筆紅利的有效天數，如無須限制可不輸入",
                     FK_StoreSetGroupId = 6,
                     type = SeoSetDataTypeEnum.number,
                     maxlength = 3,

@@ -31,7 +31,7 @@
         </li>
         <li class="nav-item ml-sm-3 user-logedin dropdown">
             <a href="#" id="userLogedinDropdown" data-bs-toggle="dropdown" class="nav-link weight-400 dropdown-toggle">
-                <img src="/images/user.png" class="me-2 rounded" width="28">
+                <img src="@Model.User.ProfileImage" class="me-2 rounded" width="28">
                 <span id="UserName">@Model.User.Account</span>
             </a>
             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userLogedinDropdown">

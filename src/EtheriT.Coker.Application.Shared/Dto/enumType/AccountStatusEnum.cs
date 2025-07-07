@@ -14,6 +14,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         停權 = 3,
         密碼重置 = 4,
         登入失敗 = 5,
-        Email重置 = 5,
+        Email重置 = 6,
+        鎖定 =7
     }
 }

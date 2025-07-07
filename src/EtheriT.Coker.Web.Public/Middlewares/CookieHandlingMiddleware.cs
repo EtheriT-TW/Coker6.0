@@ -1,4 +1,6 @@
-﻿using EtheriT.Coker.Application;
+﻿using DevExpress.CodeParser;
+using DevExpress.XtraPrinting.Native;
+using EtheriT.Coker.Application;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
@@ -30,6 +32,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 {
                     string Token = context.Request.Cookies["Token"] ?? "";
                     string RefreshToken = context.Request.Cookies["RefreshToken"] ?? "";
+                    string Remember = context.Request.Cookies["Remember"] ?? "";
                     CookieOptions tokenOptions = new CookieOptions
                     {
                         Expires = DateTimeOffset.UtcNow.AddMinutes(15)
@@ -46,11 +49,11 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     if (!context.Response.Headers.ContainsKey("Set-Cookie") ||
                         !context.Response.Headers["Set-Cookie"].Any(header => !string.IsNullOrEmpty(header) && header.Contains("Token=")))
                     {
-                        context.Response.Cookies.Append("Token", "", new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(-1) });
-                        context.Response.Cookies.Append("RefreshToken", "", new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(-1) });
-
-                        context.Response.Cookies.Append("Token", Token, tokenOptions);
-                        context.Response.Cookies.Append("RefreshToken", RefreshToken, refreshTokenOptions);
+                        if (string.IsNullOrEmpty(Remember) || Remember == "1") {
+                            context.Response.Cookies.Append("Token", Token, tokenOptions);
+                            context.Response.Cookies.Append("RefreshToken", RefreshToken, refreshTokenOptions);
+                            context.Response.Cookies.Append("Remember", Remember, refreshTokenOptions);
+                        }
                     }
                 }
                 return Task.CompletedTask;

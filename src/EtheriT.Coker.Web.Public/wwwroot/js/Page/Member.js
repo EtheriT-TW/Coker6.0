@@ -379,16 +379,14 @@ function HistoryTemplateDataInsert(Datas) {
 
         switch (order_header.action) {
             case "Cancel":
-                if (![7, 8, 10, 15].includes(order_header.paymentCode)) frame.find(".state").prepend(`<span>${order_header.stateStr}</span><button class="btn_cancelOrder bg-transparent border-0 text-decoration-underline" title="取消此筆訂單">取消訂單</button>`)
-                else frame.find(".state").prepend(`<span>${order_header.stateStr}</span>`)
+                frame.find(".state").prepend(`<span>${order_header.stateStr}</span><button class="btn_cancelOrder bg-transparent border-0 text-decoration-underline" title="取消此筆訂單">取消訂單</button>`)
                 frame.find(".state button").data("ohid", order_header.id)
                 frame.find(".state .btn_cancelOrder").on("click", function () {
                     var $this = $(this);
                     var $orderFrame = $this.closest(".order_frame");
                     var confirm_text = "?";
                     if ([2, 6].includes(order_header.state)) {
-                        if (
-                            order_header.thirdParties === 1 ||
+                        if (order_header.thirdParties === 1 ||
                             (order_header.thirdParties === 4 && [21, 22, 23].includes(order_header.paymentCode))
                         ) {
                             confirm_text += "<br><br><span class='fw-bold text-danger'>※退款事宜請聯繫客服處理※</span>";

@@ -82,12 +82,6 @@ div {
 }
 
 @media (min-width: 1200px) {
-    .container, .navbar-static-top .container, .navbar-fixed-top .container, .navbar-fixed-bottom .container {
-        width: 1170px;
-    }
-}
-
-@media (min-width: 1200px) {
     .row-fluid:before, .row-fluid:after {
         display: table;
         line-height: 0;

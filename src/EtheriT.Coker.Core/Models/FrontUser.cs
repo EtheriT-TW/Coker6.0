@@ -32,6 +32,7 @@ namespace EtheriT.Coker.Core.Models
         public DateTime? ForgeIDSendDate { get; set; }
         public DateTime? PrivacyAgreeTime { get; set; }
         public long? FK_User { get; set; }
+        public List<BonusLog>? BonusLogs { get; set; } = new List<BonusLog>();
         public List<MappingFrontUserAndWebsite> Websites { get; set; }
     }
 }

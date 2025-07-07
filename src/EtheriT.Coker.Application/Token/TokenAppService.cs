@@ -124,31 +124,8 @@ namespace EtheriT.Coker.Application.Token
             db.Tokens.Add(Token);
             await db.SaveChangesAsync();
             item.RefreshToken = Token.id;
-            item.IsLogin = httpContextAccessor.HttpContext.Request.Cookies["sessionId"] != null ? UserId != null : false;
+            item.IsLogin = UserId != null;
             item.AccessToken = await CreateToken(Accont.ToString(), Token.id);
-
-            if (httpContextAccessor.HttpContext.Request.Cookies["sessionId"] != null)
-            {
-                bool remember = false;
-                if (httpContextAccessor.HttpContext.Request.Cookies.TryGetValue("sessionRemember", out var rememberValue)) bool.TryParse(rememberValue, out remember);
-                httpContextAccessor.HttpContext.Response.Cookies.Delete("sessionRemember");
-                httpContextAccessor.HttpContext.Response.Cookies.Append("sessionRemember", remember.ToString(), new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    Expires = remember ? Token.EndTime : TokenEndTime,
-                    SameSite = SameSiteMode.Strict
-                });
-                httpContextAccessor.HttpContext.Response.Cookies.Delete("sessionId");
-                httpContextAccessor.HttpContext.Response.Cookies.Append("sessionId", Token.id.ToString(), new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    Expires = remember ? Token.EndTime : TokenEndTime,
-                    SameSite = SameSiteMode.Strict
-                });
-            }
-
             return item;
         }
         public async Task<TokenResponseDto> CheckToken(string? token)
@@ -179,11 +156,10 @@ namespace EtheriT.Coker.Application.Token
                     if (Guid.TryParse(jwtToken?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value, out var Sub)) output.IsLogin = false;
                     else
                     {
-                        if (httpContextAccessor.HttpContext.Request.Cookies["sessionId"] != null) output.IsLogin = true;
-                        else output.IsLogin = false;
+                        output.IsLogin = true;
                     }
 
-                    if (httpContextAccessor.HttpContext.Request.Cookies["sessionId"] != null) output.name = jwtToken?.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
+                    output.name = jwtToken?.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
 
                     var db_token = await db.Tokens.Where(e => e.id == Sid).FirstOrDefaultAsync();
                     if (db_token != null)
@@ -370,7 +346,17 @@ namespace EtheriT.Coker.Application.Token
             {
                 Expires = DateTimeOffset.UtcNow.AddMonths(3) // 設定過期時間
             });
-            httpContextAccessor.HttpContext?.Items.Add($"{position}Token", token);
+
+            var key = $"{position}Token";
+            var items = httpContextAccessor.HttpContext!.Items;
+            if (!items.ContainsKey(key))
+            {
+                items.Add(key, token);
+            }
+            else
+            {
+                items[key] = token;
+            }
             return token;
         }
         public async Task<bool> DelToken()

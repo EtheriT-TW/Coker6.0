@@ -30,5 +30,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await _fileManagementAppService.CheckFileHasBindingsAsync(filePath);
         }
+
+        [HttpPost]
+        public async Task<bool> CheckFileExists([FromBody] FileExistCheckDto fileCheckDto)
+        {
+            return await _fileManagementAppService.CheckFileExistsAsync(fileCheckDto.DirectoryPath, fileCheckDto.FileName);
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using AutoMapper.Execution;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -158,5 +159,15 @@ namespace EtheriT.Coker.Application.Common
 			}
 			return str;
 		}
-	}
+        public string RemoveQueryParam(string rawUrl, params string[] keysToRemove)
+        {
+            var uri = new Uri(Uri.UnescapeDataString(rawUrl));
+            var queryParams = QueryHelpers.ParseQuery(uri.Query);
+            var cleaned = queryParams
+                .Where(kv => !keysToRemove.Contains(kv.Key, StringComparer.OrdinalIgnoreCase))
+                .ToDictionary(kv => kv.Key, kv => kv.Value.ToString());
+
+            return QueryHelpers.AddQueryString(uri.GetLeftPart(UriPartial.Path), cleaned);
+        }
+    }
 }

@@ -17,6 +17,7 @@ namespace EtheriT.Coker.Application.Dto
         網站圖示 = 11,
         網站Logo = 12,
         分享圖示 = 13,
+        大頭貼 = 14,
         資料暫存 = 99
 	}
 }

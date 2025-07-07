@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Authorizaion.Dto
 {
     public class UserDto: UserSimplifyDto
 	{
+        public string ProfileImage { get; set; } = string.Empty;
         public List<WebsDto>? Webs { get; set; }
     }
 }

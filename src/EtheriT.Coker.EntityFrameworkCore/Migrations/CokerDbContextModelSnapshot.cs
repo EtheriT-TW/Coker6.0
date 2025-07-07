@@ -422,7 +422,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("EndDate")
+                    b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsDeleted")
@@ -449,6 +449,64 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Bonus");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.BonusLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ExecutionTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UUID")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UUID");
+
+                    b.ToTable("BonusLog");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.BonusLogDetail", b =>
+                {
+                    b.Property<long>("FK_BonusId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_BonusLogsId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("BonusId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("BonusLogId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UsedAmount")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("FK_BonusId", "FK_BonusLogsId");
+
+                    b.HasIndex("BonusId");
+
+                    b.HasIndex("BonusLogId");
+
+                    b.HasIndex("FK_BonusLogsId");
+
+                    b.ToTable("bonusLogDetails");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Company", b =>
@@ -1129,6 +1187,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UUID", "IsDeleted")
+                        .IsUnique();
 
                     b.ToTable("FrontUsers");
                 });
@@ -2885,6 +2946,22 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             SerNo = 25,
                             Title = "ApplePay",
                             Used = false
+                        },
+                        new
+                        {
+                            Id = 28L,
+                            CanRefund = false,
+                            Code = "COD",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 5L,
+                            Icons = "trans_icon.jpg",
+                            IsDeleted = false,
+                            MinAmount = 1,
+                            RefundWorkDay = -1,
+                            SerNo = 1,
+                            Title = "貨到付款",
+                            Used = false
                         });
                 });
 
@@ -4489,7 +4566,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             jobID = "B001",
                             key = "RewardPointsExpireDays",
                             maxlength = 3,
-                            memo = "每一筆紅利的有效天數",
+                            memo = "每一筆紅利的有效天數，如無須限制可不輸入",
                             name = "有效天數",
                             pattern = "",
                             type = 8
@@ -5141,7 +5218,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 1L,
                             IsDeleted = false,
                             Title = "轉帳",
-                            ser_no = 500
+                            ser_no = 1
                         },
                         new
                         {
@@ -5169,6 +5246,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             Title = "綠界支付",
                             ser_no = 500
+                        },
+                        new
+                        {
+                            Id = 5L,
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            IsDeleted = false,
+                            Title = "貨到付款",
+                            ser_no = 2
                         });
                 });
 
@@ -6203,6 +6289,45 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.BonusLog", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.FrontUser", "User")
+                        .WithMany("BonusLogs")
+                        .HasForeignKey("UUID")
+                        .HasPrincipalKey("UUID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.BonusLogDetail", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Bonus", null)
+                        .WithMany("BonusLogDetails")
+                        .HasForeignKey("BonusId");
+
+                    b.HasOne("EtheriT.Coker.Core.Models.BonusLog", null)
+                        .WithMany("BonusLogDetails")
+                        .HasForeignKey("BonusLogId");
+
+                    b.HasOne("EtheriT.Coker.Core.Models.Bonus", "Bonus")
+                        .WithMany()
+                        .HasForeignKey("FK_BonusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EtheriT.Coker.Core.Models.BonusLog", "BonusLog")
+                        .WithMany()
+                        .HasForeignKey("FK_BonusLogsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Bonus");
+
+                    b.Navigation("BonusLog");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Contact", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.WebMenu", "WebMenu")
@@ -6951,6 +7076,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Remotes");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Bonus", b =>
+                {
+                    b.Navigation("BonusLogDetails");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.BonusLog", b =>
+                {
+                    b.Navigation("BonusLogDetails");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Company", b =>
                 {
                     b.Navigation("Websites");
@@ -6963,6 +7098,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.FrontUser", b =>
                 {
+                    b.Navigation("BonusLogs");
+
                     b.Navigation("Websites");
                 });
 

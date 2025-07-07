@@ -1,44 +1,48 @@
-﻿using EtheriT.Coker.Application.Authorizaion.Dto;
+﻿using AutoMapper;
+using DevExpress.CodeParser;
+using EtheriT.Coker.Application.Authorizaion.Dto;
+using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Newsletter;
+using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.OAuth;
+using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Shared.Dto.Token;
+using EtheriT.Coker.Application.Shared.Dto.User;
+using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.Web.Core.Models;
 using EtheriT.Coker.Web.MVC.Resources;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
+using System;
+using System.Data;
+using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Net;
-using EtheriT.Coker.Application.Dto;
-using System;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.Extensions.Caching.Distributed;
-using EtheriT.Coker.Core.Models;
-using Microsoft.Extensions.Primitives;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication;
-using EtheriT.Coker.Application.Shared.Dto.User;
-using Newtonsoft.Json;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json.Serialization;
-using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
-using EtheriT.Coker.Application.Shared.Dto;
 using System.Xml.Linq;
-using AutoMapper;
-using EtheriT.Coker.Web.Core.Models;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
-using System.Data;
-using EtheriT.Coker.Application.Common;
-using EtheriT.Coker.Application.Shared.Dto.Mail;
-using EtheriT.Coker.Application.Newsletter;
-using EtheriT.Coker.Application.Shared.Dto.Token;
-using Newtonsoft.Json.Linq;
-using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Mvc;
-using EtheriT.Coker.Application.Shared.ShoppingCart;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -48,13 +52,16 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly IPasswordHasher passwordHasher;
         private readonly ITokenAppService tokenAppService;
         private readonly LoginUserData loginUserData;
+        private readonly StringHandler stringHandler;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IMapper mapper;
         private readonly string controllerName;
         private readonly MailAppService mailAppService;
         private readonly INewsletterAppService newsletterAppService;
+        private readonly IFileUploadAppService fileUploadAppService;
         private readonly IConfiguration configuration;
         private readonly IShoppingCartAppService shoppingCartAppService;
+        private readonly IHostEnvironment _env;
         public AccountAppService(
             CokerDbContext db,
             IPasswordHasher passwordHasher,
@@ -63,9 +70,12 @@ namespace EtheriT.Coker.Application.Authorization
             IHttpContextAccessor httpContextAccessor,
             IMapper mapper,
             MailAppService mailAppService,
+            StringHandler stringHandler,
             INewsletterAppService newsletterAppService,
+            IFileUploadAppService fileUploadAppService,
             IConfiguration configuration,
-            IShoppingCartAppService shoppingCartAppService
+            IShoppingCartAppService shoppingCartAppService,
+            IHostEnvironment env
         )
         {
             this.db = db;
@@ -76,8 +86,11 @@ namespace EtheriT.Coker.Application.Authorization
             this.mapper = mapper;
             this.mailAppService = mailAppService;
             this.newsletterAppService = newsletterAppService;
+            this.fileUploadAppService = fileUploadAppService;
             this.configuration = configuration;
             this.shoppingCartAppService = shoppingCartAppService;
+            this.stringHandler = stringHandler;
+            this._env = env;
             controllerName = "Account";
         }
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
@@ -163,7 +176,7 @@ namespace EtheriT.Coker.Application.Authorization
 
                 if (frontuser != null)
                 {
-                    if (frontuser.Status == (int)UserStatusEnum.停權 && frontuser.LockTime != null && ((DateTime)frontuser.LockTime).AddMinutes(15).CompareTo(DateTime.Now) > 0)
+                    if (frontuser.Status == (int)UserStatusEnum.鎖定 && frontuser.LockTime != null && ((DateTime)frontuser.LockTime).AddMinutes(15).CompareTo(DateTime.Now) > 0)
                     {
                         throw new Exception($"帳號鎖定中，請於{((DateTime)frontuser.LockTime).AddMinutes(15)}後再次嘗試。");
                     }
@@ -187,7 +200,7 @@ namespace EtheriT.Coker.Application.Authorization
                                     if (oldtoken != null && frontuser.PrivacyAgreeTime == null) frontuser.PrivacyAgreeTime = oldtoken.PrivacyAgreeTime;
                                     frontuser.ErrorTimes = 0;
                                     frontuser.LockTime = null;
-                                    if (frontuser.Status == (int)UserStatusEnum.停權) frontuser.Status = (int)UserStatusEnum.開通;
+                                    if (frontuser.Status == (int)UserStatusEnum.鎖定) frontuser.Status = (int)UserStatusEnum.開通;
 
                                     await loginUserData.SaveChanges(frontuser);
                                 }
@@ -207,8 +220,8 @@ namespace EtheriT.Coker.Application.Authorization
                                 frontuser.LockTime = DateTime.Now;
                                 account_Log.LockTime = frontuser.LockTime;
 
-                                frontuser.Status = (int)UserStatusEnum.停權;
-                                account_Log.Status = (int)AccountStatusEnum.停權;
+                                frontuser.Status = (int)UserStatusEnum.鎖定;
+                                account_Log.Status = (int)AccountStatusEnum.鎖定;
 
                                 await loginUserData.SaveChanges(frontuser);
 
@@ -245,6 +258,163 @@ namespace EtheriT.Coker.Application.Authorization
             }
             return output;
         }
+
+        public async Task<LoginOutputDto> FrontLoginByToken(Guid token) {
+            LoginOutputDto output = new LoginOutputDto();
+            var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            try
+            {
+                var tokenInfo = await db.Tokens
+                                        .Where(t => t.id == token)
+                                        .Select(t => new
+                                        {
+                                            t.UUID,
+                                            Map = db.MappingOldNewUUID.FirstOrDefault(m => m.TempUUID == t.UUID),
+                                        })
+                                        .FirstOrDefaultAsync();
+
+                if (tokenInfo == null || tokenInfo.Map == null)
+                    throw new Exception(((int)OAuthErrorTypeEnum.無效的登入方式).ToString());
+
+                var userId = tokenInfo.Map.UserUUID;
+
+                // 查詢使用者與網站綁定資訊
+                var userInfo = await db.FrontUsers
+                    .Where(u => u.UUID == userId)
+                    .Select(u => new
+                    {
+                        User = u,
+                        WebsiteMap = db.MappingFrontUserAndWebsite.FirstOrDefault(m => m.FK_UserId == u.Id)
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (userInfo == null || userInfo.User == null)
+                    throw new Exception(((int)OAuthErrorTypeEnum.使用者不存在).ToString());
+
+                if (userInfo.WebsiteMap == null)
+                    throw new Exception(((int)OAuthErrorTypeEnum.無效的登入方式).ToString());
+
+                var frontuser = userInfo.User;
+                // 驗證是否屬於此網站或子網站
+                if (userInfo.WebsiteMap.FK_WebsiteId != websiteId)
+                {
+                    List<string> childOrgNames = new();
+                    configuration.GetSection("WebConfig:childSiteOrgName").Bind(childOrgNames);
+
+                    var childSiteMatch = await db.Websites
+                        .AnyAsync(w => childOrgNames.Contains(w.OrgName) && w.Id == userInfo.WebsiteMap.Id);
+
+                    if (!childSiteMatch)
+                        throw new Exception(((int)OAuthErrorTypeEnum.無效的登入方式).ToString());
+                }
+
+                Guid Temp_UUID = await tokenAppService.GetUUID();
+                var oldtoken = await db.Tokens.Where(e => e.UUID == Temp_UUID).FirstOrDefaultAsync();
+                var tokenItem = await tokenAppService.CreateToken(frontuser.Email, token);
+
+                output = await NoPasswordLogin(frontuser, userInfo.WebsiteMap.FK_WebsiteId,new FrontLoginInputDto { 
+                    WebsiteId = userInfo.WebsiteMap.FK_WebsiteId,
+                    Email = frontuser.Email,
+                    Remember = true
+                });
+
+                if (oldtoken != null && frontuser.PrivacyAgreeTime == null) frontuser.PrivacyAgreeTime = oldtoken.PrivacyAgreeTime;
+
+                await loginUserData.SaveChanges(frontuser);
+            }
+            catch (Exception e) {
+                output.Error = e.Message;
+            }
+                
+            return output;
+        }
+        public async Task<LoginOutputDto> FrontThirdLogin(FrontThirdLoginInputDto dto) {
+            LoginOutputDto output = new LoginOutputDto() { Success = false };
+            var user = await db.FrontUsers.Join(db.MappingFrontUserAndWebsite, u => u.Id, m => m.FK_UserId, (u, m) => new { u, m })
+                .Where(g => g.u.Email == dto.Email && g.m.FK_WebsiteId == dto.FK_WebsiteId)
+                .FirstOrDefaultAsync();
+            if (user == null)
+            {
+                string password = stringHandler.RandonCode(RandomStringType.數字加英文大小寫及符號, 16);
+                var newUser = await AddFrontUser(new FrontAddUserDto
+                {
+                    Email = dto.Email,
+                    Name = dto.Name,
+                    WebsiteId = dto.FK_WebsiteId,
+                    Password = password,
+                    PasswordConfirm = password
+                });
+
+                user = await db.FrontUsers.Join(db.MappingFrontUserAndWebsite, u => u.Id, m => m.FK_UserId, (u, m) => new { u, m })
+                .Where(g => g.u.Email == dto.Email && g.m.FK_WebsiteId == dto.FK_WebsiteId)
+                .FirstOrDefaultAsync();
+            }
+            if (user == null)
+            {
+                output.Error = ((int)OAuthErrorTypeEnum.使用者建立失敗).ToString();
+            }
+            else {
+                Guid guid = Guid.NewGuid();
+                user.u.Status = (int)UserStatusEnum.開通;
+                var token = new Core.Models.Token
+                {
+                    id = guid,
+                    UserID = user.u.Id,
+                    websiteId = dto.FK_WebsiteId,
+                    StartTime = DateTime.Now,
+                    EndTime = DateTime.Now.AddMinutes(30),
+                    ip = loginUserData.GetClientIP() ?? "",
+                    UUID = user.u.UUID
+                };
+                var map = new MappingOldNewUUID
+                {
+                    TempUUID = token.UUID,
+                    UserUUID = user.u.UUID
+                };
+                db.Tokens.Add(token);
+                db.MappingOldNewUUID.Add(map);
+                await db.SaveChangesAsync();
+                output.Secret = guid;
+                output.Success = true;
+            }
+            return output;
+        }
+        public CheckRedirectUrlOutputDto checkRedirectUrl(string? redirectUrl)
+        {
+            CheckRedirectUrlOutputDto dto = new CheckRedirectUrlOutputDto();
+            if (string.IsNullOrEmpty(redirectUrl)) return dto;
+            redirectUrl = WebUtility.UrlDecode(redirectUrl);
+            if (!Uri.TryCreate(redirectUrl, UriKind.Absolute, out var redirectUri))
+                return dto;
+
+            var redirectBaseUrl = $"{redirectUri.Scheme}://{redirectUri.Host}";
+            if (!redirectUri.IsDefaultPort)
+                redirectBaseUrl += $":{redirectUri.Port}";
+            redirectBaseUrl = redirectBaseUrl.TrimEnd('/');
+
+            var matchedSite = db.Websites
+                .Where(w => w.DefaultUrl != null)
+                .AsEnumerable()
+                .FirstOrDefault(w => redirectBaseUrl.StartsWith(w.DefaultUrl!.TrimEnd('/'), StringComparison.OrdinalIgnoreCase));
+
+            if (_env.IsProduction() && matchedSite != null) {
+                dto.RedirectUrl = matchedSite?.DefaultUrl ?? string.Empty;
+                dto.FK_WebsiteId = matchedSite?.Id ?? 0;
+                return dto;
+            }
+
+            var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(redirectUri.Query);
+            if (queryParams.TryGetValue("siteId", out var siteIdStr) && long.TryParse(siteIdStr, out var siteId))
+            {
+                var site = db.Websites.FirstOrDefault(w => w.Id == siteId);
+                if (site != null)
+                {
+                    dto.RedirectUrl = redirectBaseUrl; 
+                    dto.FK_WebsiteId = site.Id;
+                }
+            }
+            return dto;
+        }
         [Authorize]
         public async Task<UserDto> GetCurrentUser()
         {
@@ -267,6 +437,16 @@ namespace EtheriT.Coker.Application.Authorization
                             };
                     output.Account = theUser.Account;
                     output.UserName = theUser.Name;
+                    var profileImg = await fileUploadAppService.getImgFiles(new Shared.Dto.Files.FileGetImgInputDto { 
+                        Sid = theUser.Id,
+                        Size = 3,
+                        Type = (int)FileBindTypeEnum.大頭貼
+                    });
+                    if(profileImg.Any())
+                    {
+                        output.ProfileImage = profileImg.FirstOrDefault()?.Link ?? string.Empty;
+                    }
+                    if (string.IsNullOrEmpty(output.ProfileImage)) output.ProfileImage = "/images/user.png";
                     output.Webs = await o.ToListAsync();
                 }
             }
@@ -945,7 +1125,7 @@ namespace EtheriT.Coker.Application.Authorization
                                            select user).FirstOrDefaultAsync();
                         if (frontUser != null)
                         {
-                            if (frontUser.Status == (int)UserStatusEnum.停權 && frontUser.LockTime != null && ((DateTime)frontUser.LockTime).AddMinutes(15).CompareTo(DateTime.Now) > 0)
+                            if (frontUser.Status == (int)UserStatusEnum.鎖定 && frontUser.LockTime != null && ((DateTime)frontUser.LockTime).AddMinutes(15).CompareTo(DateTime.Now) > 0)
                             {
                                 throw new Exception($"帳號鎖定中，請於{((DateTime)frontUser.LockTime).AddMinutes(15)}後再次嘗試。");
                             }
@@ -963,8 +1143,8 @@ namespace EtheriT.Coker.Application.Authorization
                                     frontUser.LockTime = DateTime.Now;
                                     account_Log.LockTime = frontUser.LockTime;
 
-                                    frontUser.Status = (int)UserStatusEnum.停權;
-                                    account_Log.Status = (int)AccountStatusEnum.停權;
+                                    frontUser.Status = (int)UserStatusEnum.鎖定;
+                                    account_Log.Status = (int)AccountStatusEnum.鎖定;
 
                                     await loginUserData.SaveChanges(frontUser);
 
@@ -1125,8 +1305,8 @@ namespace EtheriT.Coker.Application.Authorization
                             frontuser.LockTime = DateTime.Now;
                             account_Log.LockTime = frontuser.LockTime;
 
-                            frontuser.Status = (int)UserStatusEnum.停權;
-                            account_Log.Status = (int)AccountStatusEnum.停權;
+                            frontuser.Status = (int)UserStatusEnum.鎖定;
+                            account_Log.Status = (int)AccountStatusEnum.鎖定;
 
                             await loginUserData.SaveChanges(frontuser);
 
@@ -1270,23 +1450,16 @@ namespace EtheriT.Coker.Application.Authorization
                 }
 
                 output.Success = true;
-
-                httpContextAccessor.HttpContext.Response.Cookies.Delete("sessionRemember");
-                httpContextAccessor.HttpContext.Response.Cookies.Append("sessionRemember", dto == null ? "True" : dto?.Remember.ToString(), new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    Expires = dto != null && !dto.Remember ? TokenEndDateTime : token.EndTime,
-                    SameSite = SameSiteMode.Strict
-                });
-                httpContextAccessor.HttpContext.Response.Cookies.Delete("sessionId");
-                httpContextAccessor.HttpContext.Response.Cookies.Append("sessionId", token.id.ToString(), new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    Expires = dto != null && !dto.Remember ? TokenEndDateTime : token.EndTime,
-                    SameSite = SameSiteMode.Strict
-                });
+                if (dto!= null) {
+                    httpContextAccessor.HttpContext.Response.Cookies.Append("RememberMe", dto.Remember ? "1" : "0", new CookieOptions { Expires = EndDateTime });
+                    if (!dto.Remember) {
+                        var tokenOld = httpContextAccessor.HttpContext.Request.Cookies["Token"];
+                        var refreshTokenOld = httpContextAccessor.HttpContext.Request.Cookies["RefreshToken"];
+                        if (tokenOld != null) httpContextAccessor.HttpContext.Response.Cookies.Append("Token", tokenOld, new CookieOptions { Expires = null });
+                        if (refreshTokenOld != null) httpContextAccessor.HttpContext.Response.Cookies.Append("RefreshToken", refreshTokenOld, new CookieOptions { Expires = null });
+                        httpContextAccessor.HttpContext.Response.Cookies.Append("RememberMe", "1", new CookieOptions { Expires = null });
+                    }
+                }
             }
             catch (Exception ex)
             {

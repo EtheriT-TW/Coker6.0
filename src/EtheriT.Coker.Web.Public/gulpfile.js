@@ -8,6 +8,7 @@ var concat = require('gulp-concat');
 var less = require('gulp-less');
 var uglify = require('gulp-uglify-es').default;
 var cleanCss = require('gulp-clean-css');
+var sourcemaps = require('gulp-sourcemaps');
 
 var postcss = require("gulp-postcss");
 var url = require("postcss-url");
@@ -117,13 +118,14 @@ function createScriptBundle(script) {
 	var bundleName = getFileNameFromPath(script);
 	var bundlePath = getPathWithoutFileNameFromPath(script);
 
-	var stream = gulp.src(scriptEntries[script]);
+	var stream = gulp.src(scriptEntries[script]).pipe(sourcemaps.init());
 	if (production && /.js$/.test(script)) {
 		stream = stream
 			.pipe(uglify());
 	}
 
 	return stream.pipe(concat(bundleName))
+        .pipe(sourcemaps.write('.'))
 		.pipe(gulp.dest('wwwroot/' + bundlePath));
 }
 
@@ -139,13 +141,11 @@ function createStyleBundles() {
 }
 
 function createStyleBundle(style) {
-
 	var bundleName = getFileNameFromPath(style);
 	var bundlePath = getPathWithoutFileNameFromPath(style);
 
 	var options = {
 		url: function (asset) {
-			// Ignore absolute URLs
 			if (asset.url.substring(0, 1) === '/') {
 				return asset.url;
 			}
@@ -157,7 +157,6 @@ function createStyleBundle(style) {
 			} else if (asset.url.match(/\.(woff|woff2|eot|ttf|otf)[?]{0,1}.*$/)) {
 				outputFolder = 'dist/fonts';
 			} else {
-				// Ignore not recognized assets like data:image etc...
 				return asset.url;
 			}
 
@@ -171,8 +170,9 @@ function createStyleBundle(style) {
 	};
 
 	var stream = gulp.src(styleEntries[style])
-		.pipe(postcss([url(options)]))
-		.pipe(less({ math: 'parens-division' }));
+		.pipe(sourcemaps.init()) // <<<<<< 開 sourcemaps
+		.pipe(less({ math: 'parens-division' }))
+		.pipe(postcss([url(options)]));
 
 	if (production) {
 		stream = stream.pipe(cleanCss());
@@ -180,9 +180,9 @@ function createStyleBundle(style) {
 
 	return stream
 		.pipe(concat(bundleName))
+		.pipe(sourcemaps.write('.')) // <<<<<< 產生 map 檔
 		.pipe(gulp.dest('wwwroot/' + bundlePath));
 }
-
 function findMatchingElements(path, array) {
 	var result = [];
 	for (var item in array) {

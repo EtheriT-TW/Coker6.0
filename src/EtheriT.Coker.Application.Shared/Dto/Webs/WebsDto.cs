@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Application.Webs.Dto
         public string OrgName { get; set; }
         public string Description { get; set; }
         public string Images { get; set; }
+        public string DefaultUrl { get; set; }
         public bool Check { get; set; }
     }
 }

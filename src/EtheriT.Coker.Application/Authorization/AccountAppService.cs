@@ -433,8 +433,10 @@ namespace EtheriT.Coker.Application.Authorization
                             select new Webs.Dto.WebsDto
                             {
                                 Id = w.Id,
-                                Name = w.Title
+                                Name = w.Title,
+                                DefaultUrl = w.DefaultUrl ?? string.Empty,
                             };
+
                     output.Account = theUser.Account;
                     output.UserName = theUser.Name;
                     var profileImg = await fileUploadAppService.getImgFiles(new Shared.Dto.Files.FileGetImgInputDto { 

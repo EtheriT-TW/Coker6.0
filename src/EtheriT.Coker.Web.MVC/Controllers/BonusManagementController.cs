@@ -50,8 +50,16 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             var bonusSettingData = await _bonusManagementAppService.GetBonusSettingForEdit();
 
             TransactionViewModel model = new TransactionViewModel();
-            model.ConstRewardPointsExpireDays = bonusSettingData.RewardPointsExpireDays ?? 1;
-            model.ConstRewardPointsExpireDateTime = DateTime.Now.AddDays(model.ConstRewardPointsExpireDays.Value);
+            if (bonusSettingData.RewardPointsExpireDays.HasValue)
+            {
+                model.ConstRewardPointsExpireDays = bonusSettingData.RewardPointsExpireDays.Value.ToString();
+                model.ConstRewardPointsExpireDateTime = DateTime.Now.AddDays(bonusSettingData.RewardPointsExpireDays.Value);
+            }
+            else
+            {
+                model.ConstRewardPointsExpireDays = "無限制";
+                model.ConstRewardPointsExpireDateTime = DateTime.Parse("2099/12/13 23:59:59");
+            }
 
             return View(model);
         }

@@ -12,5 +12,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.BonusManagement
         public string? TransactionOperation { get; set; }
         public int TransactionPoint { get; set; }
         public string? TransactionReason { get; set; }
+        public bool IsSendMail { get; set; } = false;
     }
 }

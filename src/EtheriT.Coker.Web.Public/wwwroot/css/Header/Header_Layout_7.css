@@ -909,9 +909,9 @@
 
 @media (min-width:768px) {
     #ContainerBody #breadcrumb {
-        max-width: 720px;*/
-/*        background-color: var(--breadcrumb-color);*/
-/*}
+        max-width: 720px;
+        background-color: var(--breadcrumb-color);
+}
 
     #breadcrumb > nav.container {
         width: unset;
@@ -1000,8 +1000,8 @@
     }
 }*/
 
-/* layout7跑馬燈 */
-/* 跑馬燈 */
+/* layout7跑馬燈 
+ 跑馬燈 */
 /*#swiper-light#swiper-light {
     margin-top: 0 !important;
     background-color: var(--swiper-light-background-color);
@@ -1243,8 +1243,8 @@
     }
 }*/
 
-/* layout7 main部分 */
-/* main */
+/* layout7 main部分 
+ main */
 /*#main#main {
     position: relative;
     background-color: var(--main-background-color) !important;

@@ -2,14 +2,14 @@
 :root {
     --breadcrumb-color: gray;
     --breadcrumb-word-color: black;
-    --phone-background-color: white;
+    --phone-background-color: pink;
     --Offcanvas_Mega_Menu-color: pink;
     --Offcanvas_Mega_Menu-background-color: pink;
     --swiper-light-background-color: white;
     --ul-li-font-color: black;
     --ul-li-submenu-font-color: black;
-    --ul-content-background-color: white;
-    --ul-content-li-title-hover-background-color: white;
+    --ul-content-background-color: pink;
+    --ul-content-li-title-hover-background-color: #f3abb8;
     --phone-menu-color: pink;
     --main-background-color: white;
     --search-input-border-color: black;
@@ -321,69 +321,69 @@
                 margin-left: 0;
             }
 
-        #Offcanvas_Mega_Menu > ul > .title > div > a {
-            color: var(--ul-li-font-color) !important;
+#Mega_Menu {
+    background-color: var(--phone-menu-color);
+}
+
+#Offcanvas_Mega_Menu > ul > .title > div > a > img + span {
+    display: none;
+}
+
+#Offcanvas_Mega_Menu > ul > .title > div > ul > li > a {
+    color: var(--ul-li-submenu-font-color);
+}
+/* Mega Menu Content */
+#Offcanvas_Mega_Menu > ul > .title > .content {
+    visibility: hidden;
+    background-color: #255eb7;
+    opacity: 0.9;
+    padding: 1rem 0;
+    cursor: default;
+    position: absolute;
+    top: 100%;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+    #Offcanvas_Mega_Menu > ul > .title > .content li {
+        width: 30%;
+    }
+
+        #Offcanvas_Mega_Menu > ul > .title > .content li > a {
+            padding: 10px 20px 10px 40px;
+            width: 100%;
         }
 
-            #Offcanvas_Mega_Menu > ul > .title > div > a > img + span {
-                display: none;
+            #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover {
+                padding-left: 20px;
             }
 
-        #Offcanvas_Mega_Menu > ul > .title > div > ul > li > a {
-            color: var(--ul-li-submenu-font-color);
-        }
-        /* Mega Menu Content */
-        #Offcanvas_Mega_Menu > ul > .title > .content {
-            visibility: hidden;
-            background-color: #255eb7;
-            opacity: 0.9;
-            padding: 1rem 0;
-            cursor: default;
-            position: absolute;
-            top: 100%;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        }
-
-            #Offcanvas_Mega_Menu > ul > .title > .content li {
-                width: 30%;
-            }
-
-                #Offcanvas_Mega_Menu > ul > .title > .content li > a {
-                    padding: 10px 20px 10px 40px;
-                    width: 100%;
+                #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover::before {
+                    content: "➤";
+                    display: inline-block;
+                    margin-right: 4px;
+                    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", /* Emoji 首選 */
+                    "Segoe UI Symbol", "Arial Unicode MS", "Noto Sans Symbols", /* 通用符號 fallback */
+                    sans-serif;
                 }
 
-                    #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover {
-                        padding-left: 20px;
-                    }
+            #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover {
+                background: #0b4298;
+                margin-left: 0;
+            }
 
-                        #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover::before {
-                            content: "➤";
-                            display: inline-block;
-                            margin-right: 4px;
-                            font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", /* Emoji 首選 */
-                                        "Segoe UI Symbol", "Arial Unicode MS", "Noto Sans Symbols", /* 通用符號 fallback */
-                                        sans-serif;
-                        }
+#Offcanvas_Mega_Menu .subtitle > .subtitle_title {
+    width: fit-content;
+    font-weight: normal;
+    opacity: 1;
+}
 
-                    #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover {
-                        background: #0b4298;
-                        margin-left: 0;
-                    }
+#Offcanvas_Mega_Menu .subtitle .subtitle_title > i {
+    font-size: 1.5rem;
+}
 
-    #Offcanvas_Mega_Menu .subtitle > .subtitle_title {
-        width: fit-content;
-        font-weight: normal;
-        opacity: 1;
-    }
-
-    #Offcanvas_Mega_Menu .subtitle .subtitle_title > i {
-        font-size: 1.5rem;
-    }
-
-    #Offcanvas_Mega_Menu .subtitle .subtitle_title > img {
-        height: 1.5rem;
-    }
+#Offcanvas_Mega_Menu .subtitle .subtitle_title > img {
+    height: 1.5rem;
+}
 
 .navbar-nav ul {
     list-style: none;
@@ -880,38 +880,36 @@
 
 
 /* zhoa添加 */
-
-
 /* 文章下方切換頁面，把margin換成padding就可以改變因爲背景顔色不同導致的中間斷層 裏面原本有個my-5類，直接換成py-5可能更快 */
-/*#SwitchPage {
-    margin: 0 auto !important;
+#SwitchPage {
+    margin: 0 auto;
     padding: 3rem 0;
-}*/
+}
 
 /* banner的左右切換按鈕加個邊距 */
-/*#banner .swiper_button_prev {
+#banner .swiper_button_prev {
     padding-left: 15px;
 }
 
 #banner .swiper_button_next {
     padding-right: 15px;
-}*/
+}
 
 
 /* 路徑設置 */
-/*#breadcrumb .bread > ol > li > a {
-    color: var(--breadcrumb-word-color) !important;
+#breadcrumb .bread > ol > li > a {
+    color: var(--breadcrumb-word-color);
 }
 
 #breadcrumb .bread > ol > li:not(:first-child)::before {
-    color: var(--breadcrumb-word-color) !important;
+    color: var(--breadcrumb-word-color);
 }
 
 @media (min-width:768px) {
     #ContainerBody #breadcrumb {
         max-width: 720px;
         background-color: var(--breadcrumb-color);
-}
+    }
 
     #breadcrumb > nav.container {
         width: unset;
@@ -922,8 +920,8 @@
     }
 
     #breadcrumb .bread > ol > li:first-child {
-        color: var(--breadcrumb-color) !important;
-        padding-left: 0 !important;
+        color: var(--breadcrumb-color);
+        padding-left: 0;
     }
 }
 
@@ -943,18 +941,15 @@
     #ContainerBody #breadcrumb {
         max-width: 1320px;
     }
-}*/
+}
 
 
 /* layout7的手機選單 */
-/*@media (max-width: 991px) {
+@media (max-width: 991px) {
     #Offcanvas_Mega_Menu > ul {
         overflow-x: hidden;
     }
 
-    #Offcanvas_Mega_Menu {
-        background-color: var(--phone-background-color) !important;
-    }
 
         #Offcanvas_Mega_Menu > ul > .title > .content li {
             width: auto;
@@ -965,25 +960,9 @@
     }
 
     #iswrap {
-        justify-content: space-between !important;
+        justify-content: space-between;
     }
 
-    #Offcanvas_Mega_Menu .offcanvas-body {
-        width: 90%;
-    }
-
-        #Offcanvas_Mega_Menu .offcanvas-body .metaMenu a {
-            font-size: 1.1rem;
-        }
-
-    #Offcanvas_Mega_Menu > .offcanvas-body.offcanvas-body {
-        padding-top: 0rem !important;
-        justify-content: flex-start;
-    }
-
-    #Offcanvas_Mega_Menu > * {
-        color: var(--Offcanvas_Mega_Menu-color) !important;
-    }
 
     #offcanvasLabel#offcanvasLabel {
         margin-left: 0;
@@ -996,47 +975,39 @@
 
 @media (max-width: 576px) {
     #offcanvasLabel {
-        margin-top: -8px !important;
+        margin-top: -8px;
     }
-}*/
+}
 
-/* layout7跑馬燈 
- 跑馬燈 */
-/*#swiper-light#swiper-light {
-    margin-top: 0 !important;
+/* layout7跑馬燈 */
+/* 跑馬燈 */
+#swiper-light {
+    margin-top: 0;
     background-color: var(--swiper-light-background-color);
 }
 
 @media (max-width:767px) {
-    #swiper-light#swiper-light {
+    #swiper-light {
         width: 100%;
         max-width: 540px;
     }
 
-    .swiper-wrapper > .swiper-slide.swiper-slide {
+    .swiper-wrapper > .swiper-slide {
         justify-content: center;
-    }
-
-    .headernews .content.content {
-        padding-left: 0 !important;
     }
 }
 
 @media (max-width: 576px) {
     #swiper-light {
-        margin-left: 0rem !important;
+        margin-left: 0rem;
     }
 }
 
 @media (min-width:768px) {
     #swiper-light {
-        padding-left: calc(1.5rem * 0.5 + 1rem) !important;
+        padding-left: calc(1.5rem * 0.5 + 1rem);
         width: 100%;
         max-width: 720px;
-    }
-
-    .headernews .content.content {
-        padding-left: 0 !important;
     }
 
     #swiper-light {
@@ -1046,11 +1017,11 @@
 
 @media (min-width:992px) {
     #swiper-light {
-        padding-left: calc(1.5rem * 0.5 + 0.25rem) !important;
+        padding-left: calc(1.5rem * 0.5 + 0.25rem);
         max-width: 960px;
     }
 
-        #swiper-light > .row.row {
+        #swiper-light > .row {
             margin-left: 0;
         }
 }
@@ -1065,73 +1036,47 @@
     #swiper-light {
         max-width: 1320px;
     }
-}*/
-
-/* layout7選單 */
-/*#Mega-Menu > .w-100 > .py-2 {
-    padding-top: 0.5rem !important;
 }
 
-#Mega_Menu .w50.w50 {
-    height: 60px;
+/*layout7選單 */
+#Mega-Menu > .w-100 > .py-2 {
+    padding-top: 0.5rem;
 }
-
-#Offcanvas_Mega_Menu > ul > .title > .content {
-    background-color: var(--ul-content-background-color) !important;
-}
-
-    #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover {
-        background-color: var(--ul-content-li-title-hover-background-color) !important
-    }
 
 
 @media (max-width:440px) {
-    #Offcanvas_Mega_Menu > .offcanvas-header.offcanvas-header {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        padding-top: 1.75rem !important;
-        padding-bottom: 0 !important;
+    #Offcanvas_Mega_Menu > .offcanvas-header {
+        padding-left: 0;
+        padding-right: 0;
+        padding-top: 1.75rem;
+        padding-bottom: 0;
     }
 
-    #offcanvasLabel#offcanvasLabel {
+    #offcanvasLabel {
         margin-left: 0;
-    }
-
-    #Offcanvas_Mega_Menu > .offcanvas-body.offcanvas-body {
-        padding-top: 0rem !important;
-        justify-content: flex-start;
     }
 }
 
 @media (max-width:576px) and (min-width:441px) {
-    #offcanvasLabel#offcanvasLabel {
+    #offcanvasLabel {
         margin-left: 0;
     }
 
-    #Offcanvas_Mega_Menu > .offcanvas-header.offcanvas-header {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        padding-top: 0.75rem !important;
-    }
-
-    #Offcanvas_Mega_Menu > .offcanvas-body.offcanvas-body {
-        padding-top: 0rem !important;
-        justify-content: flex-start;
+    #Offcanvas_Mega_Menu > .offcanvas-header {
+        padding-left: 0;
+        padding-right: 0;
+        padding-top: 0.75rem;
     }
 }
 
 @media (max-width:991px) and (min-width:577px) {
-    #Offcanvas_Mega_Menu > .offcanvas-body.offcanvas-body {
-        padding-top: 0rem !important;
-        justify-content: flex-start;
-    }
 
     #Offcanvas_Mega_Menu > ul > .title > .content > ul {
         justify-content: space-between;
         flex-direction: column;
     }
 
-    #Offcanvas_Mega_Menu > ul > .title > .content.content {
+    #Offcanvas_Mega_Menu > ul > .title > .content {
         margin-left: 0;
     }
 
@@ -1139,113 +1084,56 @@
         margin-left: 0;
     }
 
-    #Offcanvas_Mega_Menu > .offcanvas-header.offcanvas-header {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        padding-top: 0.5rem !important;
+    #Offcanvas_Mega_Menu > .offcanvas-header {
+        padding-left: 0;
+        padding-right: 0;
+        padding-top: 0.5rem;
     }
 }
 
 @media (min-width:992px) {
-    #Offcanvas_Mega_Menu > ul {
+    #Offcanvas_Mega_Menu > ul > li > div:nth-child(1) {
+        position: relative;
+    }
+
+    #Offcanvas_Mega_Menu > ul > li:hover > div:nth-child(1)::after {
+        transform: scaleX(1);
+    }
+
+    #Offcanvas_Mega_Menu > ul > li > div:nth-child(1)::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
         width: 100%;
+        background-color: var(--menu-border-color);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s ease;
     }
 
-        #Offcanvas_Mega_Menu > ul > li > div:nth-child(1) {
-            position: relative;
-        }
-
-        #Offcanvas_Mega_Menu > ul > li:hover > div:nth-child(1)::after {
-            transform: scaleX(1);
-        }
-
-        #Offcanvas_Mega_Menu > ul > li > div:nth-child(1)::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            height: 4px;
-            width: 100%;
-            background-color: var(--menu-border-color);
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform 0.4s ease;
-        }
-
-        #Offcanvas_Mega_Menu > ul > li > .collapse_menus {
-            display: flex;
-            justify-content: center;
-        }
-
-        #Offcanvas_Mega_Menu > ul > .title > div.nav-link.nav-link {
-            padding-bottom: 0.5rem !important;
-        }
-
-        #Offcanvas_Mega_Menu > ul > .title > .mt-lg-1.mt-lg-1 {
-            margin-top: 0.75rem !important;
-        }
-
-        #Offcanvas_Mega_Menu > ul > .title.title:hover {
-            font-weight: 700;
-        }
-
-    #Mega_Menu > div:nth-child(2) > .justify-content-around.justify-content-around {
-        justify-content: space-between !important;
-    }
-
-    #Mega_Menu > div:nth-child(2) > .justify-content-around > .logo {
-        padding-left: calc((100vw - 960px) / 2);
-    }
-
-    #Mega_Menu > div:nth-child(2) > .justify-content-around > div:nth-child(2) {
-        padding-right: calc((100vw - 960px) / 2);
-    }
-
-    #Offcanvas_Mega_Menu > ul {
+    #Offcanvas_Mega_Menu > ul > li > .collapse_menus {
         display: flex;
-        justify-content: space-around;
-        padding-right: calc((100vw - 960px) / 2);
-        padding-left: calc((100vw - 960px) / 2);
+        justify-content: center;
     }
 
-        #Offcanvas_Mega_Menu > ul .title.title {
-            width: unset;
-        }
-}
-
-@media (min-width:1200px) {
-    #Mega_Menu > div:nth-child(2) > .justify-content-around > .logo {
-        padding-left: calc((100vw - 1140px) / 2);
+    #Offcanvas_Mega_Menu > ul > .title > div.nav-link {
+        padding-bottom: 0.5rem;
     }
 
-    #Mega_Menu > div:nth-child(2) > .justify-content-around > div:nth-child(2) {
-        padding-right: calc((100vw - 1140px) / 2);
+    #Offcanvas_Mega_Menu > ul > .title > .mt-lg-1 {
+        margin-top: 0.75rem;
     }
 
-    #Offcanvas_Mega_Menu > ul {
-        padding-right: calc((100vw - 1140px) / 2);
-        padding-left: calc((100vw - 1140px) / 2);
+    #Offcanvas_Mega_Menu > ul > .title:hover {
+        font-weight: 700;
     }
 }
 
-@media (min-width:1400px) {
-    #Mega_Menu > div:nth-child(2) > .justify-content-around > .logo {
-        padding-left: calc((100vw - 1320px) / 2);
-    }
-
-    #Mega_Menu > div:nth-child(2) > .justify-content-around > div:nth-child(2) {
-        padding-right: calc((100vw - 1320px) / 2);
-    }
-
-    #Offcanvas_Mega_Menu > ul {
-        padding-right: calc((100vw - 1320px) / 2);
-        padding-left: calc((100vw - 1320px) / 2);
-    }
-}*/
-
-/* layout7 main部分 
- main */
-/*#main#main {
+/* layout7 main部分 */
+/* main */
+#main#main {
     position: relative;
     background-color: var(--main-background-color) !important;
 }
@@ -1284,4 +1172,4 @@
     #main#main {
         max-width: 1320px;
     }
-}*/
+}

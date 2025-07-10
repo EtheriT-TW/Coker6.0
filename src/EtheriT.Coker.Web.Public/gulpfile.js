@@ -169,10 +169,16 @@ function createStyleBundle(style) {
 		}
 	};
 
+	var isLess = styleEntries[style][0].endsWith('.less');
+
 	var stream = gulp.src(styleEntries[style])
-		.pipe(sourcemaps.init()) // <<<<<< 開 sourcemaps
-		.pipe(less({ math: 'parens-division' }))
-		.pipe(postcss([url(options)]));
+		.pipe(sourcemaps.init());
+
+	if (isLess) {
+		stream = stream.pipe(less({ math: 'parens-division' }));
+	}
+
+	stream = stream.pipe(postcss([url(options)]));
 
 	if (production) {
 		stream = stream.pipe(cleanCss());
@@ -180,7 +186,7 @@ function createStyleBundle(style) {
 
 	return stream
 		.pipe(concat(bundleName))
-		.pipe(sourcemaps.write('.')) // <<<<<< 產生 map 檔
+		.pipe(sourcemaps.write('.'))
 		.pipe(gulp.dest('wwwroot/' + bundlePath));
 }
 function findMatchingElements(path, array) {

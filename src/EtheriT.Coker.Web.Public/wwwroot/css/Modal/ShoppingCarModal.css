@@ -33,24 +33,73 @@ input[type="number"] {
         content: '\ff0e';
     }
 
-.pro_content > .tag {
-    height: 1.75rem;
+
+@media (min-width:768px){
+    .modal-left > .tag {
+        padding-left: calc((100% - 1.5rem - 183px) / 2);
+    }
 }
 
-    .pro_content > .tag > li {
-        font-size: 0.8rem;
-        color: var(--black-text);
+.BuyGroup{
+    padding:0 calc(1.5rem * 0.5);
+}
+
+@media (max-width:767px) {
+    .modal-left > ul.tag {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}
+
+    .modal-left > .tag > li {
+        font-size: 0.7rem;
         background-color: var(--gray-bg-light);
         padding: 0.25rem 1rem;
         float: left;
         list-style: none;
         white-space: nowrap;
+        margin-bottom:0.25rem;
+        margin-right:0.5rem;
     }
+        .modal-left > .tag > li > a {
+            color: var(--gray-text);
+        }
 
-.pro_content > .priceframe > .discount {
-    color: var(--red-number);
+        .pro_content > .priceframe > .discount {
+            color: var(--red-number);
+        }
+
+.hr_config > hr{
+    margin: 0.5rem 0;
 }
 
+.buy_line > .counter{
+    padding-left:2.5rem;
+    position:relative;
+}
+
+.btn_learnMore {
+    background-color: #eab05a;
+}
+
+#counterTitle {
+    left: 0;
+    border: 0;
+    padding-left: 0;
+}
+
+.btn_radio {
+    border: 1px solid var(--gray-text);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+input:checked + .btn_radio {
+    font-weight: 700;
+    border-color: var(--red-main);
+    border-width: medium;
+    cursor: default;
+}
 
 .options > .radio > .title {
     color: var(--black-text);
@@ -87,7 +136,7 @@ input[type="number"] {
 }
 
 .buy_line > .btn_addToCar {
-    max-width: 20rem;
+/*    max-width: 20rem;*/
     background-color: var(--red-main);
 }
 

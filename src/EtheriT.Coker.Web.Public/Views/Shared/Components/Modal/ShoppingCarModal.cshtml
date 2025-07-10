@@ -13,29 +13,86 @@
 
 			<div class="content py-3 py-md-0">
 				<figure class="row">
-					<div class="col-md-4 pb-2 pb-md-0 text-center align-self-center">
-						<img class="pro_image img-fluid border" src="" alt="商品圖" />
+					<div class="d-flex flex-column modal-left col-md-5">
+						<div class="col-md-4 pb-2 pb-md-0 text-center align-self-center w-100">
+							<img class="pro_image img-fluid border" src="~/test.jpg" alt="商品圖" />
+						</div>
+						<ul class="tag d-flex flex-wrap my-2 overflow-hidden">
+							<li class="rounded-pill"><a href="" class="d-inline-block">標籤1</a></li>
+							<li class="rounded-pill"><a href="" class="d-inline-block">標籤2</a></li>
+							<li class="rounded-pill"><a href="" class="d-inline-block">標籤3</a></li>
+							<li class="rounded-pill"><a href="" class="d-inline-block">標籤4</a></li>
+							<li class="rounded-pill"><a href="" class="d-inline-block">標籤5</a></li>
+						</ul>
 					</div>
 
-					<figcaption class="pro_content col-md-8">
-						<div class="name fs-5 pe-md-4">ProdName</div>
+					<figcaption class="pro_content col-md-7">
+						<div class="name fs-3 pe-md-4">ProdName</div>
 
 						<div class="introduction"></div>
 
-						<ul class="tag d-flex flex-wrap my-2 overflow-hidden">
-							<li class="rounded-pill me-2">標籤1</li>
-							<li class="rounded-pill me-2">標籤2</li>
-							<li class="rounded-pill me-2">標籤3</li>
-							<li class="rounded-pill me-2">標籤4</li>
-							<li class="rounded-pill me-2">標籤5</li>
-						</ul>
+						<div class="hr_config">
+							<hr>
+						</div>
 
-						<div class="priceframe d-flex flex-wrap ps-3 align-items-center">
+						<div class="priceframe d-flex flex-wrap align-items-center">
 							<div class="ori_price price me-2 d-none"></div>
-							<div class="discount d-flex align-items-center fs-4 fw-bold price"></div>
+							<div class="discount d-flex align-items-center fs-4 fw-bold price">99,999,999</div>
+						</div>
+
+						<div class="radio radio1 d-flex justify-content-center my-2 flex-column w-100">
+							<div class="hr_config">
+								<hr>
+							</div>
+							<div class="spec_control control d-flex flex-wrap">
+								<input id="radio11" type="radio" name="RadioGroup1" value="Group11" class="btn-check" autocomplete="off"/>
+								<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="radio11">規格11</label>
+								<input id="radio12" type="radio" name="RadioGroup1" value="Group12" class="btn-check" autocomplete="off" />
+								<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="radio12">規格12</label>
+								<input id="radio13" type="radio" name="RadioGroup1" value="Group13" class="btn-check" autocomplete="off" />
+								<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="radio13">規格13</label>
+							</div>
+						</div>
+
+						<div class="radio radio2 d-flex justify-content-center my-2 flex-column w-100">
+							<div class="hr_config">
+								<hr>
+							</div>
+							<div class="spec_control control d-flex flex-wrap">
+								<input id="radio21" type="radio" name="RadioGroup2" value="Group21" class="btn-check" autocomplete="off" />
+								<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="radio21">規格21</label>
+								<input id="radio22" type="radio" name="RadioGroup2" value="Group22" class="btn-check" autocomplete="off" />
+								<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="radio22">規格22</label>
+								<input id="radio23" type="radio" name="RadioGroup2" value="Group23" class="btn-check" autocomplete="off" />
+								<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="radio23">規格23</label>
+							</div>
+						</div>
+
+						<div class="options BuyGroup">
+							<div class="buy_line row d-sm-flex d-block justify-content-center flex-column">
+								<div class="counter col-auto d-flex align-items-center my-2">
+									<button class="btn_count_minus bg-white">
+										<i class="fa-solid fa-minus"></i>
+										<span class="d-none">減少</span>
+									</button>
+									<label id="counterTitle" class="position-absolute" for="quantityInput2">數量</label>
+									<input id="quantityInput2" class="input_pro_quantity text-center" name="counter" type="number" value="1">
+
+									<button class="btn_count_plus bg-white">
+										<i class="fa-solid fa-plus"></i>
+										<span class="d-none">增加</span>
+									</button>
+								</div>
+
+								<div class="btn_addToCar col py-2 text-center text-white" type="button" data-bs-dismiss="modal">
+									<div>加入購物車</div>
+								</div>
+							</div>
 						</div>
 					</figcaption>
 				</figure>
+
+
 
 				<template id="Modal_Template_Spec_Radio">
 					<div class="radio d-flex align-items-center my-2">
@@ -45,28 +102,10 @@
 					</div>
 				</template>
 
-				<div class="options px-3">
-
-					<div class="buy_line row d-sm-flex d-block justify-content-between align-items-center">
-						<div class="counter col-auto d-flex align-items-center my-2">
-							<button class="btn_count_minus bg-white">
-								<i class="fa-solid fa-minus"></i>
-								<span class="d-none">減少</span>
-							</button>
-							<label class="d-none" for="quantityInput2">數量</label>
-							<input id="quantityInput2" class="input_pro_quantity text-center" name="counter" type="number" value="1">
-
-							<button class="btn_count_plus bg-white">
-								<i class="fa-solid fa-plus"></i>
-								<span class="d-none">增加</span>
-							</button>
-						</div>
-
-						<div class="btn_addToCar col py-2 text-center text-white" type="button" data-bs-dismiss="modal">
-							<div>加入購物車</div>
-						</div>
-					</div>
-				</div>
+				<a href="" class="btn_learnMore col py-2 d-flex align-items-center justify-content-center w-100" type="button" data-bs-dismiss="modal">
+					<div class="text-white">瀏覽更多</div>
+				</a>
+				
 			</div>
 		</div>
 	</div>

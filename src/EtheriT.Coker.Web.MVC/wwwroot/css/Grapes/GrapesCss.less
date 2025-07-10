@@ -42,8 +42,26 @@
         left: 50%;
     }
 }
+[data-block-name]:hover {
+    position: relative;
+}
 
-.edit_lock *:not(.allowedit), .catalog_frame *:not(.allowedit) {
+[data-block-name]:hover::before {
+    content: attr(data-block-name);
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 12px;
+    background: #eee;
+    color: #555;
+    padding: 2px 4px;
+    border: 1px dashed #ccc;
+    opacity: 0.8;
+    z-index: 999;
+    pointer-events: none;
+}
+
+.edit_lock *:not(.allowedit), .catalog_frame *:not(.allowedit), [data-gjs-type="輪播"] * {
     pointer-events: none !important;
     outline: none !important;
 }

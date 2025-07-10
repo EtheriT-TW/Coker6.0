@@ -33,7 +33,7 @@
                 vid = $self.attr('link').substring($self.attr("link").indexOf('v=') + 2);
                 $self.attr("vid", vid);
             }
-            if ($self.attr("link").includes("youtu") && !$self.attr("link").startsWith("https://www.youtube.com/embed/")) {
+            if ($self.attr("link").includes("youtu") && ($self.find("img").attr("src").startsWith("/images/") || $self.find("img").attr("src").startsWith("data:"))) {
                 var img_link = `https://img.youtube.com/vi/${vid}/hqdefault.jpg`;
                 $self.find("img").attr("src", img_link)
             }

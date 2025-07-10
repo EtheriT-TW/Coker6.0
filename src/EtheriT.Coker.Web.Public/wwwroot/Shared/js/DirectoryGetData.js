@@ -562,8 +562,11 @@ function DirectoryDataInsert($item, result) {
         $catalog.append(content);
 
         if (data.type == 1 && content.find(".btn_addToCar").length > 0) {
-            content.find(".btn_addToCar").on("click", function () {
-                window.location.href = path;
+            content.find(".btn_addToCar").on("click", function (e) {
+                e.preventDefault();
+                var modal = new bootstrap.Modal(document.getElementById('ShoppingCarModal'));
+                modal.show();
+                //window.location.href = path;
             });
         }
 

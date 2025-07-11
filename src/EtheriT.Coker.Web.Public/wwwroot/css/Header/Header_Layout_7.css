@@ -1,21 +1,21 @@
 ﻿/* zhoa-root */
 :root {
-    --breadcrumb-color: gray;
+    --breadcrumb-color: transparent;
     --breadcrumb-word-color: black;
-    --phone-background-color: pink;
-    --Offcanvas_Mega_Menu-color: pink;
-    --Offcanvas_Mega_Menu-background-color: pink;
+    --phone-background-color: white;
+    --Offcanvas_Mega_Menu-color: white;
+    --Offcanvas_Mega_Menu-background-color: white;
     --swiper-light-background-color: white;
     --ul-li-font-color: black;
     --ul-li-font-hover-color: black;
     --ul-li-submenu-font-color: black;
-    --ul-content-background-color: pink;
+    --ul-content-background-color: white;
     --ul-content-li-title-hover-background-color: #f3abb8;
-    --phone-menu-color: pink;
+    --phone-menu-color: white;
     --main-background-color: white;
     --search-input-border-color: black;
-    --menu-border-color: black;
     --logo-height: 70px;
+    --icon-search-and-offcanvas-li-after-background-color:black;
 }
 
 .bg-img {
@@ -683,7 +683,7 @@
 }
 
 .icon-search-bg {
-    background: #756480;
+    background: var(--icon-search-and-offcanvas-li-after-background-color);
     border-radius: 50%;
     width: 30px;
     height: 30px;
@@ -1112,7 +1112,7 @@
         left: 0;
         height: 4px;
         width: 100%;
-        background-color: var(--menu-border-color);
+        background-color: var(--icon-search-and-offcanvas-li-after-background-color);
         transform: scaleX(0);
         transform-origin: left;
         transition: transform 0.4s ease;

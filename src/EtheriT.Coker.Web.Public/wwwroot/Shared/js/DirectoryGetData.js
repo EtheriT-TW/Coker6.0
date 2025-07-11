@@ -564,9 +564,9 @@ function DirectoryDataInsert($item, result) {
         if (data.type == 1 && content.find(".btn_addToCar").length > 0) {
             content.find(".btn_addToCar").on("click", function (e) {
                 e.preventDefault();
-                var modal = new bootstrap.Modal(document.getElementById('ShoppingCarModal'));
-                modal.show();
-                //window.location.href = path;
+                //var modal = new bootstrap.Modal(document.getElementById('ShoppingCarModal'));
+                //modal.show();
+                window.location.href = path;
             });
         }
 

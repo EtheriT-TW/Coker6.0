@@ -4,6 +4,7 @@ var fs = require('fs');
 var merge = require("merge-stream");
 var globby = require('globby');
 
+const gulpIf = require('gulp-if');
 var concat = require('gulp-concat');
 var less = require('gulp-less');
 var uglify = require('gulp-uglify-es').default;
@@ -118,14 +119,15 @@ function createScriptBundle(script) {
 	var bundleName = getFileNameFromPath(script);
 	var bundlePath = getPathWithoutFileNameFromPath(script);
 
-	var stream = gulp.src(scriptEntries[script]).pipe(sourcemaps.init());
+	var stream = gulp.src(scriptEntries[script])
+		.pipe(sourcemaps.init());
+
 	if (production && /.js$/.test(script)) {
-		stream = stream
-			.pipe(uglify());
+		stream = stream.pipe(uglify());
 	}
 
 	return stream.pipe(concat(bundleName))
-        .pipe(sourcemaps.write('.'))
+		.pipe(gulpIf(!production, sourcemaps.write('.')))
 		.pipe(gulp.dest('wwwroot/' + bundlePath));
 }
 

@@ -7,6 +7,7 @@
     --Offcanvas_Mega_Menu-background-color: pink;
     --swiper-light-background-color: white;
     --ul-li-font-color: black;
+    --ul-li-font-hover-color: black;
     --ul-li-submenu-font-color: black;
     --ul-content-background-color: pink;
     --ul-content-li-title-hover-background-color: #f3abb8;
@@ -304,9 +305,13 @@
     background-color: #3b73ca;
 }
 
-    #Offcanvas_Mega_Menu > * {
-        color: #ffffff;
+    #Offcanvas_Mega_Menu .nav-link {
+        color: var(--ul-li-font-color);
     }
+
+        #Offcanvas_Mega_Menu .nav-link:hover {
+            color: var(--ul-li-font-hover-color);
+        }
 
     #Offcanvas_Mega_Menu > ul > .title {
         cursor: pointer;

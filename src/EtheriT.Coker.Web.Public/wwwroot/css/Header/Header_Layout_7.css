@@ -903,11 +903,11 @@
 
 /* 路徑設置 */
 #breadcrumb .bread > ol > li > a {
-    color: var(--breadcrumb-word-color);
+    color: var(--gray-path);
 }
 
 #breadcrumb .bread > ol > li:not(:first-child)::before {
-    color: var(--breadcrumb-word-color);
+    color: var(--gray-path);
 }
 
 @media (min-width:768px) {

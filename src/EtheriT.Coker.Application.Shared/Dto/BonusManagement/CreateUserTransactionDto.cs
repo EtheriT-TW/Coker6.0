@@ -12,6 +12,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.BonusManagement
         public string? TransactionOperation { get; set; }
         public int TransactionPoint { get; set; }
         public string? TransactionReason { get; set; }
-        public bool IsSendMail { get; set; } = false;
+
+        /// <summary>
+        /// 是否寄送紅利異動通知信件(預設啟用)
+        /// </summary>
+        public bool IsSendMail { get; set; } = true;
     }
 }

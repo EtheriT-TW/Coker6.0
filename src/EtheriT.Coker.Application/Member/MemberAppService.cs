@@ -21,6 +21,7 @@ using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Core.Models;
 using System.Data;
+using EtheriT.Coker.Application.Shared.BonusManagement;
 
 namespace EtheriT.Coker.Application.Member
 {
@@ -30,17 +31,20 @@ namespace EtheriT.Coker.Application.Member
         private readonly LoginUserData loginUserData;
         private readonly ITokenAppService tokenAppService;
         private readonly IMapper mapper;
+        private readonly IBonusManagementAppService _bonusManagementAppService;
+
         public MemberAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             ITokenAppService tokenAppService,
-            IMapper mapper
-        )
+            IMapper mapper,
+            IBonusManagementAppService bonusManagementAppService)
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.tokenAppService = tokenAppService;
             this.mapper = mapper;
+            _bonusManagementAppService = bonusManagementAppService;
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
@@ -93,6 +97,7 @@ namespace EtheriT.Coker.Application.Member
                                     select new MemberGetAllListDto
                                     {
                                         Id = e.Id,
+                                        UUID = e.UUID,
                                         Name = e.Name.Substring(0, 1) + "○" + e.Name.Substring(e.Name.Length - 1),
                                         CellPhone = e.CellPhone.Substring(0, 3) + "****" + e.CellPhone.Substring(7),
                                         TelPhone = e.TelPhone == "" ? "" : e.TelPhone.Substring(0, e.TelPhone.IndexOf("-") + 3) + "***" + e.TelPhone.Substring(e.TelPhone.IndexOf("-") + 6),
@@ -116,6 +121,18 @@ namespace EtheriT.Coker.Application.Member
                                         CreationTime = e.CreationTime,
                                     };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+
+                    // 把前台會員的可用紅利補充到列表中
+                    if (output != null && output.data != null)
+                    {
+                        var dataList = (output.data as IEnumerable<MemberGetAllListDto>) ?? new List<MemberGetAllListDto>();
+                        var userBonus = _bonusManagementAppService.GetQueryFrontUsersTotalAvaliableBonus(dataList.Select(x => x.UUID).ToList()).Result;
+                        foreach (MemberGetAllListDto item in dataList)
+                        {
+                            item.Bonus = userBonus.FirstOrDefault(x => x.UserUUID == item.UUID)?.TotalAvaliableBonus ?? 0;
+                        }
+                    }
+
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }
                 else throw new Exception("查無會員資料");

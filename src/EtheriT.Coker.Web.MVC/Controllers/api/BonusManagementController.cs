@@ -83,5 +83,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await _bonusManagementAppService.GetFrontUsers(loadOptions);
         }
+
+        public async Task<JsonResult> GetBonusLogForDataGrid(DataSourceLoadOptions loadOptions)
+        {
+            return await _bonusManagementAppService.GetBonusLogForDataGrid(loadOptions);
+        }
+
     }
 }

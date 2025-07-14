@@ -355,7 +355,9 @@ namespace EtheriT.Coker.Application.BonusManagement
                 // BCC整批寄送
                 SenderDto senderDto = new SenderDto
                 {
-                    Bcc = frontUsers.Where(x => !string.IsNullOrEmpty(x.Email?.Trim())).Select(x => new MailUserDataDto { Email = x.Email ?? "" }).ToList(),
+                    Bcc = frontUsers.Where(x => !string.IsNullOrEmpty(x.Email?.Trim()))
+                                    .Select(x => new MailUserDataDto { Email = x.Email ?? "" })
+                                    .ToList(),
                     Subject = $"【紅利通知】您的紅利點數已異動（{transactionInput.TransactionOperation}{transactionInput.TransactionPoint} 點）",
                     Body = mailContent.FirstOrDefault()?.Body ?? string.Empty,
                 };
@@ -367,6 +369,128 @@ namespace EtheriT.Coker.Application.BonusManagement
             }
         }
 
+        /// <summary>
+        /// 取得紅利異動紀錄列表
+        /// </summary>
+        /// <param name="loadOptions"></param>
+        /// <returns></returns>
+        public async Task<JsonResult> GetBonusLogForDataGrid(DataSourceLoadOptions loadOptions)
+        {
+            long websideId = await loginUserData.GetWebsiteId();
+            var dataQuery = from user in db.FrontUsers
+                            join site in db.MappingFrontUserAndWebsite on user.Id equals site.FK_UserId
+                            join bonusLog in db.BonusLog on user.UUID equals bonusLog.User.UUID
+                            where site.FK_WebsiteId == websideId &&
+                                  user.IsDeleted == false
+                            select new GetBonusLogForDataGridDto
+                            {
+                                Id = user.Id,
+                                Name = user.Name,
+                                UUID = user.UUID,
+                                Amount = bonusLog.Amount,
+                                ExecutionTime = bonusLog.ExecutionTime,
+                                Note = bonusLog.Note
+                            };
+
+            var result = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+
+            if (result != null && result.data != null)
+            {
+                result.data = (result.data as IEnumerable<GetBonusLogForDataGridDto>)?.ToList() ?? new List<GetBonusLogForDataGridDto>();
+            }
+
+            return new JsonResult(result, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+
+        /// <summary>
+        /// 取得前端使用者紅利資訊
+        /// </summary>
+        /// <param name="frontUsers"></param>
+        /// <returns></returns>
+        public async Task<List<GetQueryFrontUsersTotalAvaliableBonusOutput>> GetQueryFrontUsersTotalAvaliableBonus(List<Guid> frontUsersUUID)
+        {
+            var currentDate = DateTime.Now;
+
+            if (!frontUsersUUID.Any())
+            {
+                return new List<GetQueryFrontUsersTotalAvaliableBonusOutput>();
+            }
+
+            // 查詢所有使用者的有效紅利
+            var availableBonusData = db.Bonus
+                .Where(x => frontUsersUUID.Contains(x.UUID) &&
+                           x.Balance > 0 &&
+                           x.StartDate <= currentDate &&
+                           (x.EndDate == null || x.EndDate >= currentDate) &&
+                           !x.IsDeleted)
+                .GroupBy(x => x.UUID)
+                .Select(g => new GetQueryFrontUsersTotalAvaliableBonusOutput
+                {
+                    UserUUID = g.Key,
+                    TotalAvaliableBonus = g.Sum(b => b.Balance)
+                })
+                .ToList();
+
+            // 補齊沒有紅利的使用者（紅利為0或沒有紅利異動過的）
+            var missingUsers = frontUsersUUID.Except(availableBonusData.Select(x => x.UserUUID))
+                .Select(uuid => new GetQueryFrontUsersTotalAvaliableBonusOutput
+                {
+                    UserUUID = uuid,
+                    TotalAvaliableBonus = 0
+                });
+
+            return availableBonusData.Concat(missingUsers).ToList();
+        }
+
+        /// <summary>
+        /// 取得前端使用者紅利異動紀錄
+        /// </summary>
+        /// <param name="frontUserUUID"></param>
+        /// <param name="topRecordCount"></param>
+        /// <returns></returns>
+        public async Task<List<GetQueryFrontUsersBonusLogOutput>> GetQueryFrontUsersBonusLog(Guid frontUserUUID, int topRecordCount)
+        {
+            List<GetQueryFrontUsersBonusLogOutput> result = new List<GetQueryFrontUsersBonusLogOutput>();
+            if (frontUserUUID != Guid.Empty)
+            {
+                var bonusQuery = from bonus in db.Bonus
+                                 join user in db.FrontUsers on bonus.UUID equals user.UUID
+                                 where user.UUID == frontUserUUID && !user.IsDeleted
+                                 select new GetQueryFrontUsersBonusLogOutput
+                                 {
+                                     Amount = bonus.Amount,
+                                     Note = bonus.Note,
+                                     ExecuteTime = bonus.CreationTime,
+                                     ExpireTime = bonus.EndDate
+                                 };
+
+                var bonusLogQuery = from bonusLog in db.BonusLog
+                                    join user in db.FrontUsers on bonusLog.UUID equals user.UUID
+                                    where user.UUID == frontUserUUID && !user.IsDeleted
+                                    select new GetQueryFrontUsersBonusLogOutput
+                                    {
+                                        Amount = bonusLog.Amount,
+                                        Note = bonusLog.Note,
+                                        ExecuteTime = bonusLog.ExecutionTime,
+                                        ExpireTime = null
+                                    };
+
+                // 將兩個查詢結果合併，並按執行時間降序排序後取前10筆
+                var bonusResults = bonusQuery.OrderByDescending(x => x.ExecuteTime)
+                                                   .Take(topRecordCount)
+                                                   .ToList();
+                var bonusLogResults = bonusLogQuery.OrderByDescending(x => x.ExecuteTime)
+                                                         .Take(topRecordCount)
+                                                         .ToList();
+
+                result = bonusResults.Concat(bonusLogResults)
+                                     .OrderByDescending(x => x.ExecuteTime)
+                                     .Take(topRecordCount)
+                                     .ToList();
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// 取得紅利設定的值，並嘗試將其轉換為指定的數值型別。
@@ -568,5 +692,7 @@ namespace EtheriT.Coker.Application.BonusManagement
                 remainingDeduct -= deductFromThis;
             }
         }
+
+
     }
 }

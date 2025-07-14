@@ -41,16 +41,16 @@ namespace EtheriT.Coker.Application
             ObjectTypeGetAlldto response = new ObjectTypeGetAlldto();
             try
             {
-                bool othersOnly = await loginUserData.IsExtraSuperUser();
+                bool othersOnly = await loginUserData.isSystemUser();
                 var user = await loginUserData.GetUser();
                 if (user == null) throw new Exception("會員尚未登入");
                 var result = db.ObjectTypes.Where(e => !e.IsDeleted);
-                if (othersOnly) result = result.Where(e => e.Id == 999);
+                if (!othersOnly) result = result.Where(e => e.Id == 999);
                 websiteId = await loginUserData.GetWebsiteId();
                 result = result.OrderBy(e => e.SerNo);
                 response.List = mapper.Map<List<ObjectTypeItemDto>>(result);
                 foreach (var e in response.List) {
-                    e.Children = GetChild(e.Id);
+                    e.Children = await GetChild(e.Id);
                 }
                 response.Success = true;
             }
@@ -61,11 +61,11 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-        private List<ObjectTypeItemDto> GetChild(long type) {
+        private async Task<List<ObjectTypeItemDto>> GetChild(long type) {
+            bool isSystemUser = await loginUserData.isSystemUser();
             var reg = db.Html_Contents
                         .Where(e => e.Type == type)
-                        .Where(e => !e.IsDeleted)
-                        .Where(e => e.Type != (int)ObjectTypeEnum.自訂 || e.FK_WebsiteId == websiteId)
+                        .Where(e => isSystemUser || (e.Type == (int)ObjectTypeEnum.自訂 && e.FK_WebsiteId == websiteId))
                         .OrderBy(e => e.Ser_no);
             return mapper.Map<List<ObjectTypeItemDto>>(reg);
         }

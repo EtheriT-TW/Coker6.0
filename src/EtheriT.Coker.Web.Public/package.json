@@ -11,7 +11,7 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.2.0",
     "aos": "^2.3.4",
-    "bootstrap": "^5.2.1",
+    "bootstrap": "^5.3.7",
     "counterup2": "^2.0.2",
     "globby": "^9.2.0",
     "gulp": "^4.0.2",
@@ -28,12 +28,13 @@
     "path": "^0.12.7",
     "pdf.js": "^0.1.0",
     "postcss-url": "^9.0.0",
-    "sweetalert2": "^11.4.32",
-    "swiper": "^11.1.14",
+    "sweetalert2": "^11.22.2",
+    "swiper": "^11.2.10",
     "yarn": "^1.22.19"
   },
   "devDependencies": {
     "eslint": "^8.42.0",
+    "gulp-if": "^3.0.0",
     "gulp-sourcemaps": "^3.0.0"
   },
   "description": ""

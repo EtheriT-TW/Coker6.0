@@ -4,6 +4,7 @@ var fs = require('fs');
 var merge = require("merge-stream");
 var globby = require('globby');
 
+const gulpIf = require('gulp-if');
 var concat = require('gulp-concat');
 var less = require('gulp-less');
 var uglify = require('gulp-uglify-es').default;
@@ -118,14 +119,15 @@ function createScriptBundle(script) {
 	var bundleName = getFileNameFromPath(script);
 	var bundlePath = getPathWithoutFileNameFromPath(script);
 
-	var stream = gulp.src(scriptEntries[script]).pipe(sourcemaps.init());
+	var stream = gulp.src(scriptEntries[script])
+		.pipe(sourcemaps.init());
+
 	if (production && /.js$/.test(script)) {
-		stream = stream
-			.pipe(uglify());
+		stream = stream.pipe(uglify());
 	}
 
 	return stream.pipe(concat(bundleName))
-        .pipe(sourcemaps.write('.'))
+		.pipe(gulpIf(!production, sourcemaps.write('.')))
 		.pipe(gulp.dest('wwwroot/' + bundlePath));
 }
 
@@ -169,10 +171,16 @@ function createStyleBundle(style) {
 		}
 	};
 
+	var isLess = styleEntries[style][0].endsWith('.less');
+
 	var stream = gulp.src(styleEntries[style])
-		.pipe(sourcemaps.init()) // <<<<<< 開 sourcemaps
-		.pipe(less({ math: 'parens-division' }))
-		.pipe(postcss([url(options)]));
+		.pipe(sourcemaps.init());
+
+	if (isLess) {
+		stream = stream.pipe(less({ math: 'parens-division' }));
+	}
+
+	stream = stream.pipe(postcss([url(options)]));
 
 	if (production) {
 		stream = stream.pipe(cleanCss());
@@ -180,7 +188,7 @@ function createStyleBundle(style) {
 
 	return stream
 		.pipe(concat(bundleName))
-		.pipe(sourcemaps.write('.')) // <<<<<< 產生 map 檔
+		.pipe(sourcemaps.write('.'))
 		.pipe(gulp.dest('wwwroot/' + bundlePath));
 }
 function findMatchingElements(path, array) {

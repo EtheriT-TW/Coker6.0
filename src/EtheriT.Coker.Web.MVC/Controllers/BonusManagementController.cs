@@ -66,7 +66,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 
         public IActionResult Record()
         {
-            return View();
+            RecordViewModel model = new RecordViewModel();
+            return View(model);
         }
     }
 }

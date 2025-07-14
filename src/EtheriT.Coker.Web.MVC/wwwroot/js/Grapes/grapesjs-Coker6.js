@@ -184,32 +184,30 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
         },
     });
     //Youtube Modal
-    const getVideoUrl = (link,startTime = 0) => {
+    const getVideoUrl = (link, startTime = 0) => {
         let Link = {
-            url:"",img:""
+            url: "", img: ""
         }
-        const oldLink = link;
-        console.log(link.includes("facebook.com"), /fb\.watch\//.test(link), link.match(/[?&]t=(\d+)/));
         if (link.includes("facebook.com")) {
-            if (link.includes("facebook.com/plugins/video.php"))
+            const tMatch = link.match(/[?&]t=(\d+)/);
+            if (tMatch) {
+                startTime = parseInt(tMatch[1], 10) || 0;
+            }
+
+            if (link.includes("facebook.com/plugins/video.php")) {
                 Link.url = link;
-            if (/fb\.watch\//.test(link)) {
+            } else if (/fb\.watch\//.test(link)) {
                 co.sweet.error("FB Watch 影片無法嵌入，請使用 Facebook 網址。");
             } else {
-                const tMatch = link.match(/[?&]t=(\d+)/);
                 const cleanLink = link.replace(/[?&]t=\d+/, '');
                 const encodedHref = encodeURIComponent(cleanLink);
                 let embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodedHref}&show_text=false&autoplay=1`;
-                if (tMatch) {
-                    startTime = parseInt(tMatch[1], 10) || 0;
-                    // 如果有 startTime，附加參數
-                    if (startTime > 0) {
-                        embedUrl += `&start_time=${startTime}`;
-                    }
-                }
                 Link.url = embedUrl;
             }
-        } else if (link.indexOf("youtu") > -1){
+            if (startTime > 0 && !!Link.url) {
+                Link.url += `&start_time=${startTime}`;
+            }
+        } else if (link.indexOf("youtu") > -1) {
             // 處理不同格式的 YouTube 網址
             let vid = "";
             const regex = /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/|live\/)|youtu\.be\/|youtube-nocookie\.com\/embed\/)([a-zA-Z0-9_-]{11})/;
@@ -223,7 +221,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                     vid = altMatch[1];
                 }
             }
-            if (startTime==0 && link.includes("t=")) {
+            if (startTime == 0 && link.includes("t=")) {
                 var tIndex = link.indexOf("t=") + 2;
                 var tEnd = link.indexOf("&", tIndex);
                 var timeStr = tEnd >= 0 ? link.substring(tIndex, tEnd) : link.substring(tIndex);
@@ -244,14 +242,16 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                 }
             }
             link = startTime > 0
-                ? `https://www.youtube.com/embed/${vid}?start=${startTime}`
-                : `https://www.youtube.com/embed/${vid}`;
+                ? `https://www.youtube.com/embed/${vid}?start=${startTime}&autoplay=1`
+                : `https://www.youtube.com/embed/${vid}?autoplay=1`;
 
             if (link.startsWith("https://www.youtube.com/embed/")) {
                 var img_link = `https://img.youtube.com/vi/${vid}/hqdefault.jpg`
                 Link.img = img_link;
                 Link.url = link;
             }
+        } else {
+            Link.url = link;
         }
         return Link;
     }
@@ -263,7 +263,8 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                 editable: true,
                 traits: [
                     { name: 'yttitle', type: 'text', label: '標題', placeholder: '請輸入影片標題' },
-                    { name: 'link', type: 'text', label: '網址', placeholder: '請輸入影片網址(僅支援YT、FB)' }, {
+                    { name: 'link', type: 'text', label: '網址', placeholder: '請輸入影片網址(僅支援YT、FB)' },
+                    {
                         name: 'thumb', type: 'button',
                         text: "選擇預覽圖片",
                         command: editor => {
@@ -271,7 +272,8 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                             AssetManager.onSelect((result) => {
                                 const imgComp = editor.getSelected().find("button > img")[0];
                                 if (imgComp) {
-                                    imgComp.addAttributes({ "src": result.id });
+                                    //修改 src 屬性要用.set 不能用 setAttributes
+                                    imgComp.set({ "src": result.id });
                                 }
                                 AssetManager.close();
                             });
@@ -282,13 +284,20 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
 
                 this.on('change:attributes:link', function (component) {
                     if (typeof (component.getEl()) != "undefined") {
-                        var oldlink = component.getAttributes()["link"];
-                        var link = oldlink;
-                        var $self = $(component.getEl());
+                        var link = component.getAttributes()["link"];
+                        const el = component.getEl();
                         if (link) {
                             const video = getVideoUrl(link);
-                            component.setAttributes({ 'link': video.link });
-                            $self.find("img").attr("src", video.img);
+                            const img = el.querySelector('img');
+                            if (link != video.url) {
+                                component.setAttributes({ 'link': video.url });
+                                const oldSrc = img ? img.getAttribute("src") : "";
+                                if (oldSrc.startsWith("data:") || oldSrc.startsWith("/images/")) {
+                                    if (video.img != "") {
+                                        img.set("src", video.img);
+                                    } else img.set('src', '/images/defaultImage/video.jpg');
+                                }
+                            }
                         }
                     }
                 });
@@ -296,25 +305,12 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                     if (typeof (component.getEl()) != "undefined") {
                         var title = component.getAttributes()["yttitle"];
                         if (typeof (title) != "undefined") {
-                            var $self = $(component.getEl());
-                            $self.find("img").attr("alt", `${title}的圖片`);
+                            const el = component.getEl();
+                            const img = el.querySelector('img');
+                            if (img) img.setAttribute("alt", `${title}的圖片`);
                         }
                     }
                 });
-            }
-        },
-        view: {
-            onRender() {
-                const el = this.el;
-                var $parent = $(el);
-                var link = $parent.attr("link");
-                if (typeof (link) != "undefined") {
-                    // 因為有舊的內容沒有處理好所以這邊保留原始寫法
-                    var vid = typeof ($parent.attr("vid")) != "undefined" ? $parent.attr("vid") : link.substring(link.indexOf("v=") + 2)
-                    var img_link = `http://img.youtube.com/vi/${vid}/hqdefault.jpg`
-                    $parent.find("img").attr("src", img_link)
-                    $parent.attr("data-isinit", true);
-                }
             }
         }
     });
@@ -406,7 +402,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
         isComponent: el => el.classList?.contains('one_swiper') || el.classList?.contains('one_swiper_thumbs') || el.classList?.contains('two_swiper') || el.classList?.contains('three_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper') || el.classList?.contains('three_two_grid_swiper') || el.classList?.contains('vertical_swiper_thumbs'),
         model: {
             defaults: {
-                tagName: 'div', 
+                tagName: 'div',
                 traits: [
                     {
                         type: 'button', text: "開啟編輯",
@@ -479,7 +475,10 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                                       <input type="text" class="form-control" id="slideHref" placeholder="輸入連結" />
                                                     </div>
                                                     <div id="YT-link" class="mb-4 d-none">
-                                                      <label for="ytSrc" class="form-label">影片連結(YT、FB 或.mp4影片連結)</label>
+                                                      <label for="ytSrc" class="form-label">
+                                                        影片連結(YT、FB 或 影片連結建議使用MP4 【H.264 + AAC】)
+                                                        <a href="#" class="selectVideo">選擇影片</a>
+                                                    </label>
                                                       <input type="text" class="form-control" id="ytSrc" placeholder="影片網址" />
                                                     </div>
                                                     <div id="start-time" class="mb-4 d-none">
@@ -489,6 +488,10 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                                     <div id="keep-time" class="mb-4">
                                                       <label for="keepTime" class="form-label">持續時間(秒)</label>
                                                       <input type="text" class="form-control" id="keepTime" placeholder="輸入持續時間(秒)" />
+                                                    </div>
+                                                    <div id="Ratio" class="mb-4">
+                                                      <label for="ratio" class="form-label">影片比例</label>
+                                                      <select class="form-control" id="ratio"><option value="16x9">16:9(橫屏)</option><option value="4x3">4:3</option><option value="1x1">1:1</option><option value="9x16">9:16(直屏)</option></select>
                                                     </div>
                                                     <div id="img-hidden" class="ms-3">
                                                         <input class="form-check-input" type="checkbox" value="" id="CheckHidden">
@@ -505,33 +508,54 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                         </div>
                                     </div>
                                 `).appendTo("body");
+                                $(".set-caption .selectVideo").on("click", function (e) {
+                                    e.preventDefault();
+                                    const assets = AssetManager.getAll().models.map(m => m.attributes);
+                                    AssetManager.open();
+
+                                    AssetManager.onSelect((selected) => {
+                                        if (selected && selected.id) {
+                                            if (isVideoFile(selected.id)) {
+                                                $(".set-caption #ytSrc").val(selected.id);
+                                                $(".set-caption #ytSrc").trigger("change");
+                                            } else co.sweet.error("請選擇影片檔案！");
+                                        }
+                                        AssetManager.close();
+                                    });
+                                });
                             }
                             var $body = $("#SwiperList");
+                            const $caption = $('.set-caption');
                             var datas = [];
                             $selected.find(".swiper .swiper-slide").each(function () {
                                 var $self = $(this);
                                 if (!$self.parent().hasClass("template_slide")) {
                                     var obj = {
                                         "href": $self.find("a").attr("href"),
-                                        "title": $self.find("a").attr("title"),
+                                        "title": $self.find("a").attr("title") || $self.find(".title").text(),
                                         "src": $self.find("img").attr("src"),
                                         "alt": $self.find("img").attr("alt"),
                                         "img_update": $self.find("img").length > 0 ? true : false,
-                                        "a_tag": $self.find("a").length > 0 && !$self.find("a").attr("href").startsWith("#SwiperModal") ? true : false,
+                                        "a_tag": $self.find("a").length > 0 && $self.find("a").attr("href") && !$self.find("a").attr("href").startsWith("#SwiperModal") ? true : false,
                                         "target": $self.find("a").attr("target"),
-                                        "yt_src": $self.find("iframe").length >0? $self.find("iframe").attr("src") : $self.find(`[href="#SwiperModal"]`).data("link"),
-                                        "video_title": $self.find("iframe").length ? $self.find("iframe").attr("title") : $self.find("video").attr("title"),
-                                        "start_time": $self.find('*').attr('data-start_time'),
-                                        "keep_time": $self.find("img").length ? $self.find("img").data('keep_time') : $self.find("iframe").data('keep_time'),
+                                        "yt_src": $self.find("iframe").length > 0 ? $self.find("iframe").attr("src") :
+                                            $self.find("video").length > 0 ? $self.find("video").attr("src") :
+                                                $self.find(`[href="#SwiperModal"]`).data("link"),
+                                        "video_title": $self.find("iframe").length ? $self.find("iframe").attr("title") :
+                                            $self.find("video").length > 0 ? $self.find("video").attr("title") :
+                                                $self.find("img").attr("alt"),
+                                        "start_time": $self.find("[data-start_time]").length ? $self.find("[data-start_time]").data("start_time") : "",
+                                        "keep_time": $self.find("[data-keep_time]").length ? $self.find("[data-keep_time]").data("keep_time") : "",
                                         "synopsis_title": $self.find('.synopsis_title').text(), //文章標題
                                         "synopsis_caption": $self.find('.synopsis_caption').text().trim(), //文章內容
-                                        "visible": $self.hasClass("backstageType")
+                                        "visible": $self.hasClass("backstageType"),
+                                        "ratio": $self.find("a").data("ratio") || "16x9"
                                     };
                                     datas.push(obj);
                                 }
                             });
                             $body.empty();
-                            $("#EditContentForm input").off("change").on("change", function () {
+                            $("#EditContentForm input,#EditContentForm select").off("change").on("change", function () {
                                 //相關設定存檔
                                 // 獲取當前選中的 li
                                 const $li = $(`#SwiperList [name="label"]:checked`).closest('li'); // 獲取顯示的 setting 所在的 li
@@ -544,6 +568,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                 const start_time = $('#startTime').val() ? $('#startTime').val() : "";
                                 const keep_time = $('#keepTime').val() ? $('#keepTime').val() : 5;
                                 const visible = $("#CheckHidden").prop("checked") ? true : false;
+                                const ratio = $('#ratio').val() || "16x9";
                                 if (yt_src != "") {
                                     const $img = $li.find("img");
                                     if ($img.attr("src").startsWith("/images/")) {
@@ -565,7 +590,8 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                     video_title: title,
                                     start_time: start_time,
                                     keep_time: keep_time,
-                                    visible: visible
+                                    visible: visible,
+                                    ratio: ratio
                                 });
                                 if (visible) {
                                     $li.find('.eyes>span:first-child').addClass('d-none');
@@ -602,9 +628,16 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                     synopsis_caption: "",
                                     visible: false,
                                     a_tag: true,
-                                    img_update: true
+                                    img_update: true,
+                                    ratio: "16x9"
                                 }, data);
-                                var content = $($("#TemplateSwiperList").html());
+                                if (typeof (o.src) == "undefined" || o.src == "") {
+                                    if (o.yt_src != "" && typeof (o.yt_src) != "undefined") {
+                                        o.src = getVideoUrl(o.yt_src).img;
+                                        if (o.src == "") o.src = "/images/defaultImage/video.jpg";
+                                    } else o.src = "/images/UploadImg.png";
+                                }
+                                var content = $($("#TemplateSwiperList").html()); // 使用模板生成新的 li 元素
                                 content.data(o);
                                 content.find("[name='label']").attr("id", `selectSwiper${index}`);
                                 content.find("label").attr("for", `selectSwiper${index}`);
@@ -615,6 +648,9 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                 content.find(".start_time").text(o.start_time);
                                 content.find(".keep_time").text(o.keep_time);
                                 content.find(".synopsis_caption").text(o.synopsis_caption);
+                                if (o.href != "#SwiperModal" && o.yt_src != "" && typeof (o.yt_src) != "undefined") {
+                                    content.find("img").removeClass("update-img isPointer");
+                                }
                                 if (data.visible) {
                                     content.find(".eyes > span:first-child").addClass("d-none");
                                     content.find(".eyes > span:last-child").removeClass("d-none");
@@ -628,7 +664,6 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                 content.data("order", index);
                                 content.find("label").on("click", function () {
                                     const $li = $(this).closest('li');
-                                    const $caption = $('.set-caption');
                                     const $setting = $li.find('.setting');
                                     const $setTitle = $caption.find('#slideTitle');
                                     const $setContent = $caption.find('#slideAlt');
@@ -636,14 +671,18 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                     const $setYtSrc = $caption.find('#ytSrc');
                                     const $setStartTime = $caption.find('#startTime');
                                     const $setKeepTime = $caption.find('#keepTime');
-                                    const $formSetting = [$("#set-title"), $("#set-content"), $("#set-link"), $("#YT-link"), $("#start-time")];
+                                    const $formSetting = [$("#set-title"), $("#set-content"), $("#set-link"), $("#YT-link"), $("#start-time"), $("#Ratio")];
                                     $caption.find('*:not(.a_target, #YT-link)').removeClass('d-none');
-                                    if (!$li.data("a_tag") && (!$li.data("img_update") || ($li.data("yt_src") != "" && typeof ($li.data("yt_src")) != "undefined"))) {
+                                    if (
+                                        !$li.data("a_tag") && (!$li.data("img_update") || ($li.data("yt_src") != "" && typeof ($li.data("yt_src")) != "undefined"))
+                                    ) {
                                         $formSetting[3].removeClass("d-none");
                                         $formSetting[4].removeClass("d-none");
+                                        $formSetting[5].removeClass("d-none");
                                     } else {
                                         $formSetting[3].addClass("d-none");
                                         $formSetting[4].addClass("d-none");
+                                        $formSetting[5].addClass("d-none");
                                     }
                                     if ($li.data("yt_src") || $li.data("href") === "#SwiperModal" || !$li.data("a_tag")) {
                                         $formSetting[2].addClass('d-none');
@@ -665,6 +704,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                     $setContent.val($li.data().synopsis_caption); //內文
                                     $setLink.val($li.data().href); //連結
                                     $setYtSrc.val($li.data().yt_src);//youtube
+                                    $caption.find(`#ratio>option[value="${$li.data().ratio}"]`).prop("selected", true);
                                     $setStartTime.val($li.data().start_time);
                                     $setKeepTime.val($li.data().keep_time);
                                 });
@@ -692,10 +732,10 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                 });
 
                                 content.find(".delete-slide").on("click", function () {
-                                    var isConfirmed = window.confirm("確定要刪除此欄位嗎?");
-                                    if (isConfirmed) {
-                                        $(this).closest("li").remove();
-                                    }
+                                    var $self = $(this);
+                                    co.sweet.confirm("刪除欄位", "確定要刪除此欄位嗎?", "刪除", "取消", function () {
+                                        $self.closest("li").remove();
+                                    });
                                 });
 
                                 $body.append(content)
@@ -714,12 +754,62 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                 $('#scroll').scrollTop($('#scroll')[0].scrollHeight);
                             });
 
-                            $("#SwiperModal .btn-add-YT").off("click").on("click", function () {
+                            
+                            var $videoBotton = $("#SwiperModal .btn-add-YT");
+
+                            if (canInsertVideo()) $videoBotton.removeClass("d-none");
+                            else $videoBotton.addClass("d-none");
+                            $videoBotton.off("click").on("click", function () {
                                 const $l = newLi($("#SwiperList>li").length, { a_tag: false, img_update: false });
                                 $l.find(`[name="label"]`).prop("checked", true);
                                 $l.find("label").trigger("click");
                                 $('#scroll').scrollTop($('#scroll')[0].scrollHeight);
                             });
+                            function isBannerSwiper() {
+                                return $selected.is('.one_swiper,.one_swiper_thumbs');
+                            }
+
+                            function canInsertVideo() {
+                                const $container = $selected.find(".swiper");
+                                let allowInsert = false;
+
+                                // 封裝成一個函式，專門判斷單個slide
+                                function checkSlide($slide) {
+                                    if ($slide.find('iframe,video').length > 0) {
+                                        return true;
+                                    }
+                                    const $links = $slide.find('a');
+                                    if ($links.length === 0) {
+                                        return true;
+                                    }
+                                    let hasSwiperModal = false;
+                                    $links.each(function () {
+                                        const href = $(this).attr('href') || '';
+                                        if (href.startsWith('#SwiperModal')) {
+                                            hasSwiperModal = true;
+                                            return false; // 提前結束 each
+                                        }
+                                    });
+                                    return hasSwiperModal;
+                                }
+
+                                if (isBannerSwiper($container)) {
+                                    // Banner類型：要掃全部slide
+                                    $container.find('.swiper-slide').each(function () {
+                                        if (checkSlide($(this))) {
+                                            allowInsert = true;
+                                            return false; // 提前結束 each
+                                        }
+                                    });
+                                } else {
+                                    // 普通型：只看第一個slide
+                                    const $firstSlide = $container.find('.swiper-slide').first();
+                                    allowInsert = checkSlide($firstSlide);
+                                }
+
+                                return allowInsert;
+                            }
+
                             const setIframe = function (VideoLink, startTime, Title) {
                                 return $("<iframe>").attr({
                                     src: VideoLink,
@@ -729,11 +819,15 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                     frameborder: "0",
                                     allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
                                     allowfullscreen: true,
-                                    "data-start_time": startTime
+                                    "data-start_time": startTime,
                                 });
                             }
+                            const isVideoFile = function (url) {
+                                const videoExtensions = [".mp4", ".webm", ".ogg", ".mov"];
+                                return videoExtensions.some(ext => url.toLowerCase().endsWith(ext));
+                            }
                             const addAndUpdateSwiper = function ($slide, obj) {
-                                if ($slide == null || $slide.length ==0) {
+                                if ($slide == null || $slide.length == 0) {
                                     var $selected = editor.getSelected();
                                     const have_template = $selected.find(".template_slide>.swiper-slide")[0];
                                     if (have_template) {
@@ -742,15 +836,21 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                         $slide = $($("<div>").append($($selected.find(".swiper-slide")[0].toHTML())).html());
                                     }
                                 }
-                                if (obj.VideoLink != "" && typeof(obj.VideoLink) != "undefined") {
+                                if (obj.VideoLink != "" && typeof (obj.VideoLink) != "undefined") {
                                     if ($($slide).find('iframe').length > 0) {
                                         $($slide).find('iframe').remove();
                                     }
                                     const $item = $($slide).find(`[href="#SwiperModal"]`);
                                     if ($item.length > 0) {
-                                        const video = getVideoUrl(obj.VideoLink);
-                                        console.log(video);
-                                        if (video.url != "") $item.attr('data-link', video.url);
+                                        const video = getVideoUrl(obj.VideoLink, obj.startTime);
+                                        if (video.url != "") {
+                                            $item.attr({
+                                                'data-link': video.url,
+                                                'data-ratio': obj.ratio || "16x9",
+                                                'data-start_time': obj.startTime || 0,
+                                            });
+                                            $item.find("img").attr({ 'data-keep_time': obj.keepTime || 5 });
+                                        }
                                         if (obj.ImgSrc.startsWith("/images/")) {
                                             if (video.img != "") {
                                                 obj.ImgSrc = video.img;
@@ -758,12 +858,30 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                                 obj.ImgSrc = "/images/defaultImage/video.jpg";
                                             }
                                         }
+                                    } else if (isVideoFile(obj.VideoLink)) {
+                                        const $video = $('<video>', {
+                                            src: obj.VideoLink,
+                                            controls: true,
+                                            preload: 'metadata',
+                                            poster: obj.ImgSrc || "/images/defaultImage/video.jpg",
+                                            'data-start_time': obj.startTime || 0,
+                                            'data-keep_time': obj.keepTime || 5,
+                                        });
+                                        if (obj.VideoLink == "") obj.ImgSrc = "/images/defaultImage/video.jpg";
+                                        $($slide).append($video);
                                     } else {
-                                        const $iframe = setIframe(obj.VideoLink, obj.startTime, obj.Title);
-                                        $($slide).append($iframe);
+                                        const video = getVideoUrl(obj.VideoLink, obj.startTime);
+                                        const $iframe = setIframe(video.url, obj.startTime, obj.Title);
+                                        if (obj.keepTime) {
+                                            $iframe.attr("data-keep_time", obj.keepTime);
+                                            $($slide).attr("data-swiper-autoplay", obj.keepTime * 1000);
+                                        }
+                                        $($slide).append($iframe.appendTo("<div>"));
+                                    }
+                                    if ($($slide).find("video,iframe").length > 0 && $($slide).find("img").length == 1) {
+                                        $($slide).find("img").remove(); // 移除舊的圖片容器
                                     }
                                 }
-
                                 $($slide).find('img').attr('src', obj.ImgSrc);
                                 $($slide).find('img').attr('alt', obj.Title);
                                 if (obj.Link) {
@@ -789,18 +907,19 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                                 $("#SwiperList li").each(function (index, element) {
                                     const $img = $(element).find("img");
                                     let data = {
-                                        ImgSrc : $img.length > 0 ? $(element).find("img").attr("src") : "",
-                                        Title : $(element).data("alt") ? $(element).data("alt") : $(element).data("video_title"),
-                                        Link : $(element).data("href"),
-                                        Target : $(element).data("target"),
-                                        VideoLink : $(element).data("yt_src"),
-                                        isVisible : $(element).data("visible"),
-                                        Caption : $(element).data("synopsis_caption"),
-                                        startTime : $(element).data("start_time"),
-                                        keepTime : $(element).data("keep_time"),
+                                        ImgSrc: $img.length > 0 ? $(element).find("img").attr("src") : "",
+                                        Title: $(element).data("alt") ? $(element).data("alt") : $(element).data("video_title"),
+                                        Link: $(element).data("href"),
+                                        Target: $(element).data("target"),
+                                        VideoLink: $(element).data("yt_src"),
+                                        isVisible: $(element).data("visible"),
+                                        Caption: $(element).data("synopsis_caption"),
+                                        startTime: $(element).data("start_time"),
+                                        keepTime: $(element).data("keep_time"),
+                                        ratio: $(element).data("ratio") || "16x9"
                                     };
                                     if (data.ImgSrc == "") {
-                                        if (obj.VideoLink == "" || typeof(obj.VideoLink) == "undefined") {
+                                        if (obj.VideoLink == "" || typeof (obj.VideoLink) == "undefined") {
                                             data.ImgSrc = "/images/UploadImg.png";
                                         }
                                     }
@@ -1235,7 +1354,10 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
     settings.getComponer().done(function (result) {
         $(result).each(function () {
             const html = co.Data.HtmlDecode(this.html);
-            const elementHtmlCss = `${html}<style>${this.css}</style>`;
+            let $elements = $('<div>' + html + '</div>').children();
+            let $first = $elements.first();
+            $first.attr('data-block-name', this.title);
+            const elementHtmlCss = `${$('<div>').append($elements).html()}<style>${this.css}</style>`;
             let blockId = 'customBlockTemplate_' + this.id;
             let iconText = (this.icon || "").replace("material-symbols-outlined", "").trim();
             let media = "";

@@ -150,7 +150,6 @@ function createStyleBundle(style) {
 
 	var options = {
 		url: function (asset) {
-			// Ignore absolute URLs
 			if (asset.url.substring(0, 1) === '/') {
 				return asset.url;
 			}
@@ -162,7 +161,6 @@ function createStyleBundle(style) {
 			} else if (asset.url.match(/\.(woff|woff2|eot|ttf|otf)[?]{0,1}.*$/)) {
 				outputFolder = 'dist/fonts';
 			} else {
-				// Ignore not recognized assets like data:image etc...
 				return asset.url;
 			}
 
@@ -175,9 +173,15 @@ function createStyleBundle(style) {
 		}
 	};
 
+	// 判斷是 less 或 css
+	var isLess = style.endsWith('.min.css') && styleEntries[style][0].endsWith('.less');
+
 	var stream = gulp.src(styleEntries[style])
-		.pipe(postcss([url(options)]))
-		.pipe(less({ math: 'parens-division' }));
+		.pipe(postcss([url(options)]));
+
+	if (isLess) {
+		stream = stream.pipe(less({ math: 'parens-division' }));
+	}
 
 	if (production) {
 		stream = stream.pipe(cleanCss());
@@ -187,6 +191,7 @@ function createStyleBundle(style) {
 		.pipe(concat(bundleName))
 		.pipe(gulp.dest('wwwroot/' + bundlePath));
 }
+
 
 function findMatchingElements(path, array) {
 	var result = [];

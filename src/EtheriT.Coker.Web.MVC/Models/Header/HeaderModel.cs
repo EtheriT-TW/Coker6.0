@@ -5,6 +5,7 @@ namespace EtheriT.Coker.Web.MVC.Models.Header
     public class HeaderModel
     {
         public UserDto User { get; set; }
+        public string DefaultUrl {  get; set; } = string.Empty;
 
     }
 }

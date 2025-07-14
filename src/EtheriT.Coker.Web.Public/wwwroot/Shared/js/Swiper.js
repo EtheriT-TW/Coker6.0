@@ -144,47 +144,38 @@ function SwiperInit(obj) {
                     el: "#" + $self.attr("id") + " .swiper_pagination",
                     clickable: true,
                 }, on: {
-                    //以下有Bug
-                    slideChangeTransitionEnd: function () {
-                        const slide = this;
-                        const totalSlides = this.slides.length;
-                        const previousSlideIndex = this.previousIndex;
-                        const $previousSlide = $(this.slides[previousSlideIndex]);
-                        const videoAction = $(this.slides[this.activeIndex]).find('video');
-                        const videoElement = videoAction.get(0);
-                        var videoManager = () => {
-                            slide.autoplay.stop();
-                            videoElement.onended = function () {
-                                $self.on("mouseover");
-                                $self.on("mouseout");
-                                slide.autoplay.start();
-                            };
-                        };
-                        if (videoAction.length > 0) {
-                            $self.off("mouseover");
-                            $self.off("mouseout");
-                            videoManager();
-                        }
-                        $self.find(".swiper-slide").each(function () {
-                            if (parseInt($(this).attr("data-swiper-slide-index")) != this.realIndex) {
-                                var html;
-                                var reset = function (element, tager) {
-                                    $(element).empty();
-                                    $(element).append(tager);
-                                };
-                                if ($(this).find("iframe").length > 0) {
-                                    html = $(this).html();
-                                } else if ($(this).find("video").length > 0) {
-                                    var video = $(this).find('video').get(0);
-                                    video.pause();
-                                    video.currentTime = 0;
-                                    video.play();
-                                }
-                                if (html !== undefined && html !== null) {
-                                    reset($(this), html);
-                                }
+                    slideChangeTransitionStart: function () {
+                        // 暫停所有 video
+                        var videos = $(swiper.wrapperEl).find('video');
+                        videos.each(function () {
+                            this.pause();
+                        });
+
+                        // 暫停所有 iframe
+                        var iframes = $(swiper.wrapperEl).find('iframe');
+                        iframes.each(function () {
+                            var $iframe = $(this);
+                            if ($iframe.attr('src')) {
+                                let src = $iframe.attr('src');
+                                if ($iframe.data("start_time") && src.includes("youtube") && src.includes("autoplay") && !src.includes("start=")) 
+                                    src += `&start=${$iframe.data("start_time")}`; //如果有設定開始時間，則加上參數
+                                $iframe.data('src', src);
+                                $iframe.attr('src', '');
                             }
                         });
+                    },
+                    slideChangeTransitionEnd: function () {
+                        var activeSlide = $(swiper.wrapperEl).find('.swiper-slide').eq(swiper.activeIndex);
+                        var $video = $(activeSlide).find('video');
+                        var $iframe = activeSlide.find('iframe');
+
+                        if ($video.length > 0) {
+                            var startTime = parseFloat($video.data('starttime')) || 0;
+                            $video[0].currentTime = startTime;
+                            $video[0].play();
+                        } else if ($iframe.length > 0 && $iframe.data('src')) {
+                            $iframe.attr('src', $iframe.data('src'));
+                        }
                     }
                 },
                 navigation: {
@@ -540,6 +531,39 @@ function SwiperInit(obj) {
                 $header_text.text(activeSlide.find("img").attr("alt"));
             });
 
+            pictureSwiper.on('slideChangeTransitionStart', function () {
+                // 暫停所有 video
+                var videos = $(pictureSwiper.wrapperEl).find('video');
+                videos.each(function () {
+                    this.pause();
+                });
+
+                // 暫停所有 iframe
+                var iframes = $(pictureSwiper.wrapperEl).find('iframe');
+                iframes.each(function () {
+                    var $iframe = $(this);
+                    if ($iframe.attr('src')) {
+                        $iframe.data('src', $iframe.attr('src'));
+                        $iframe.attr('src', '');
+                    }
+                });
+            });
+
+            pictureSwiper.on('slideChangeTransitionEnd', function () {
+                // 恢復當前 slide iframe
+                var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
+                var $video = $(activeSlide).find('video');
+                var $iframe = activeSlide.find('iframe');
+
+                if ($video.length > 0) {
+                    var startTime = parseFloat($video.data('starttime')) || 0;
+                    $video[0].currentTime = startTime;
+                    $video[0].play();
+                }else if ($iframe.length > 0 && $iframe.data('src')) {
+                    $iframe.attr('src', $iframe.data('src'));
+                }
+            });
+
             $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
                 pictureSwiper.removeAllSlides();
                 pictureSwiperThumbs.removeAllSlides();
@@ -547,39 +571,72 @@ function SwiperInit(obj) {
                 pictureSwiperThumbs.update();
                 var $self = $(this).parents(".picture-category");
                 var index = $self.find("a").index(this);
+                var $items = [];
                 var $images = [];
                 $self.find(".templatecontent img").each(function () {
                     var obj = {};
+                    var $a = $(this).parents("a");
+                    var link = $a.data("link") || "";
+                    var ratio = $a.data("ratio") || "9x16";
+                    var start_time = $a.data("start_time") || 0;
+                    var keep_time = $(this).data("keep_time") || 5;
+                    keep_time = keep_time * 1000;
                     obj['src'] = $(this).attr("src");
                     obj['alt'] = typeof ($(this).attr("alt")) == "undefined" ? "" : $(this).attr("alt");
                     $images.push(obj);
+                    if (link.startsWith("https://www.youtube.com") || link.startsWith("https://www.facebook.com")) $items.push({ type: "iframe", src: link, ratio: ratio, startTime: start_time, keepTime: keep_time });
+                    else if (isVideoFile(link)) $items.push({ type: "video", src: link, ratio: ratio, startTime: start_time, keepTime: keep_time });
+                    else $items.push({ type: "image", src: obj['src'], keepTime: keep_time });
                 });
                 $header_text.text($images[index]['alt']);
-                if ($images.length == 1) {
-                    var newSlide = `<div class="swiper-slide"><img src="${$images[0]['src']}" alt="${$images[0]['alt']}" /></div>`;
-                    pictureSwiper.appendSlide(newSlide);
-                    pictureSwiper.autoplay.stop();
-                } else {
-                    PauseOnMouseEnter(pictureSwiper, $("#pictureSwiper"))
-                    for (let i = 0; i < $images.length; i++) {
-                        var newSlide = `<div class="swiper-slide"><img src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
-                        pictureSwiper.appendSlide(newSlide);
-                        var newSlideThumbs = `<div class="swiper-slide align-content-center ms-1 me-2"><img src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
-                        pictureSwiperThumbs.appendSlide(newSlideThumbs);
+
+                for (let i = 0; i < $items.length; i++) {
+                    var item = $items[i];
+                    var newSlide = "";
+                    var newSlideThumbs = "";
+                    if (item.type === "image") {
+                        newSlide = `<div class="swiper-slide" data-swiper-autoplay="${item.keepTime}">
+                            <img src="${item.src}" alt="" />
+                        </div>`;
+                    } else if (item.type === "video") {
+                        newSlide = `<div class="swiper-slide" data-swiper-autoplay="${item.keepTime}">
+                            <div class="video-content video-${item.ratio}">
+                                <video controls preload="metadata" poster="${$images[i].src}" data-startTime="${item.startTime}">
+                                    <source src="${item.src}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                        </div>`;
+                    } else if (item.type === "iframe") {
+                        newSlide = `<div class="swiper-slide" data-swiper-autoplay="${item.keepTime}">
+                            <div class="video-content video-${item.ratio}">
+                                <iframe src="${item.src}" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+                            </div>
+                        </div>`;
                     }
+                    newSlideThumbs = `<div class="swiper-slide align-content-center ms-1 me-2"><img src="${$images[i].src}" data-keepTime="${item.keepTime}" alt="${$images[i].alt}" /></div>`;
+                    pictureSwiper.appendSlide(newSlide);
+                    pictureSwiperThumbs.appendSlide(newSlideThumbs);
+                }
+                pictureSwiper.autoplay.stop();
+
+                if ($items.length > 1) {
+                    PauseOnMouseEnter(pictureSwiper, $("#pictureSwiper"));
                     pictureSwiper.autoplay.start();
                 }
-                const images = document.querySelectorAll('#SwiperModal .swiper-slide img');
-                let loadedCount = 0;
-                images.forEach(img => {
-                    img.onload = () => {
-                        loadedCount++;
-                        if (loadedCount === images.length) {
-                            // 確保全部圖片都載入後再測量
-                            $('#SwiperModal').modal('show');
-                        }
-                    };
-                });
+
+                const images = document.querySelectorAll('#SwiperModal .swiper-slide-active img');
+                $('#SwiperModal').modal('show');
+                //let loadedCount = 0;
+                //images.forEach(img => {
+                //    img.onload = () => {
+                //        loadedCount++;
+                //        if (loadedCount === images.length) {
+                //            // 確保全部圖片都載入後再測量
+                //            $('#SwiperModal').modal('show');
+                //        }
+                //    };
+                //});
                 $('#SwiperModal').off("shown.bs.modal").on("shown.bs.modal", function () {
                     const wrapper = document.querySelector('#pictureSwiperThumbs .swiper-wrapper');
                     const container = document.querySelector('#pictureSwiperThumbs');
@@ -768,4 +825,9 @@ function SameHeight($swiper) {
         var $slide = $(this);
         $slide.css("min-height", height);
     });
+}
+
+const isVideoFile = function (url) {
+    const videoExtensions = [".mp4", ".webm", ".ogg", ".mov"];
+    return videoExtensions.some(ext => url.toLowerCase().endsWith(ext));
 }

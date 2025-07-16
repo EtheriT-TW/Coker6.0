@@ -261,6 +261,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
                             {
                                 Title = data_f.Title,
+                                SubTitle = data_f.SubTitle,
                                 Link = data_f.hasContan ?
                                     data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "" :
                                     "javascript:void(0)",
@@ -288,6 +289,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                 headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
                                 {
                                     Title = data_f.Title,
+                                    SubTitle = data_f.SubTitle,
                                     Target = data_f.Target,
                                     Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "",
                                     imageUrl = (data_f.ImgUrl ?? ""),

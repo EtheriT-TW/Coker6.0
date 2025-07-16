@@ -236,7 +236,9 @@ function PageDefaultSet(result) {
         item1.data("stype", 1)
         item2.data("stype", 2)
 
-        var maxprice = 0, minprice = 0;
+        const priceArray = result.stocks.map(d => d.prices[0].price);
+        const maxprice = Math.max(...priceArray);
+        const minprice = Math.min(...priceArray);
 
         var hasstock = false;
         result.stocks.forEach(data => {
@@ -263,8 +265,6 @@ function PageDefaultSet(result) {
                     suggestprice: data.price,
                 };
                 price_list.push(obj);
-                maxprice = obj["price"] > maxprice ? obj["price"] : maxprice;
-                minprice = obj["price"] < minprice || minprice == 0 ? obj["price"] : minprice;
                 obj = {}
                 var nostock = "";
                 if (data.stock <= 0 && CanShop) {
@@ -323,7 +323,7 @@ function PageDefaultSet(result) {
         if (showRange) {
             if (maxprice == minprice) price_temp.find(".discount").text(minprice.toLocaleString('en-US'));
             else price_temp.find(".discount").text(minprice.toLocaleString('en-US') + " ~ " + maxprice.toLocaleString('en-US'));
-        } else price_temp.find(".discount").text(maxprice.toLocaleString('en-US'));
+        } else price_temp.find(".discount").text((orderPrice ? minprice : maxprice).toLocaleString('en-US'));
         price_temp.find("input").addClass("d-none");
         $(".priceframe").append(price_temp);
     } else if (result.stocks[0].prices.length > 0 && result.stocks[0].prices[0].price != null) {

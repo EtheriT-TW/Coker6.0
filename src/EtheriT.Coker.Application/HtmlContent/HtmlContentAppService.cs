@@ -95,7 +95,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                 var websiteId = await loginUserData.GetWebsiteId();
 
                 var result = await db.Html_Contents.Include(e => e.ObjectClassify)
-                        .Where(e => e.Disp_opt && (isSystemUser || (e.Type == 999 && e.FK_WebsiteId == websiteId)))
+                        .Where(e => e.Disp_opt && (isSystemUser || e.Type != 999 || (e.Type == 999 && e.FK_WebsiteId == websiteId)))
                         .OrderBy(e => e.ObjectClassify.SerNo)
                         .ThenBy(e => e.Ser_no)
                         .ToListAsync();

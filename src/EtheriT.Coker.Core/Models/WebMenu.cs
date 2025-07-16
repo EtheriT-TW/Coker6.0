@@ -14,6 +14,8 @@ namespace EtheriT.Coker.Core.Models
     {
         [StringLength(100)]
         public string? Title { get; set; }
+        [StringLength(100)]
+        public string? SubTitle { get; set; }
         public string? Description { get; set; }
         [StringLength(50)]
         public string? icon { get; set; }

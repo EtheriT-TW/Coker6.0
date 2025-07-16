@@ -1,3 +1,99 @@
-﻿@{
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.BonusManagement
+@using EtheriT.Coker.Web.MVC.Models.BonusManagement
+
+@model EtheriT.Coker.Web.MVC.Models.BonusManagement.RecordViewModel
+
+@{
     ViewData["Title"] = "BonusRecord";
 }
+
+<div class="py-2 px-4 position-relative">
+    <div id="TopLine" class="d-flex justify-content-between mb-4">
+        <div class="d-flex">
+            <button class="btn_back bg-transparent border-0 align-items-center d-none">
+                <span class="material-symbols-outlined">
+                    keyboard_backspace
+                </span>
+            </button>
+            <div class="title fw-bold fs-4">紅利異動記錄</div>
+        </div>
+    </div>
+
+    <div id="MemberList" class="card border-0">
+        <div class="card-body position-relative pb-5">
+@(
+    Html.DevExtreme().DataGrid<GetBonusLogForDataGridDto>()
+        .ID("gridContainer")
+        .AllowColumnReordering(true)
+        .AllowColumnResizing(true)
+        .ShowBorders(true)
+        .FilterRow(filterRow => filterRow
+            .Visible(true)
+            .ApplyFilter(GridApplyFilterMode.Auto)
+        )
+        .SearchPanel(searchPanel => searchPanel
+            .Visible(true)
+            .Width(240)
+            .Placeholder("輸入搜尋值...")
+            .SearchVisibleColumnsOnly(true)
+        )
+        .RowAlternationEnabled(true)
+        .StateStoring(s => s
+            .Enabled(false)
+            .Type(StateStoringType.Custom)
+            .StorageKey("Storage_RecordDataGrid")
+        )
+        .HeaderFilter(headerFilter => headerFilter.Visible(true))
+        .Columns(columns =>
+        {
+            columns.AddFor(m => m.UUID).Caption("UUID").Visible(false).AllowSearch(false);
+            columns.AddFor(m => m.Id).Caption("會員編號").AllowSearch(false).AllowHeaderFiltering(false).AllowFiltering(false)
+                                     .Width(100)
+                                     .CellTemplate(@<text>
+                                                      <a target="_blank" href="@Url.Action("MemberList", "MemberManagement")#[%= data.Id %]">[%= ("000000000" + data.Id).slice(-9) %]</a>
+                                                    </text>);
+            columns.AddFor(m => m.Name).Caption("會員名稱")
+                                       .AllowHeaderFiltering(false);
+            columns.AddFor(m => m.ExecutionTime).Caption("日期")
+                                                .DataType(GridColumnDataType.DateTime)
+                                                .Format("yyyy/MM/dd HH:mm:ss")
+                                                .AllowHeaderFiltering(false)
+                                                .SortOrder(SortOrder.Desc);
+            columns.AddFor(m => m.Amount).Caption("異動紅利")
+                                         .AllowHeaderFiltering(false);
+            columns.AddFor(m => m.Note).Caption("備註")
+                                       .AllowHeaderFiltering(false)
+                                       .CellTemplate(@<text>
+                                                       <% if (data.Note && data.Note.match(/^訂單完成回饋金\((\d+)\)$/)) { %>
+                                                           <% var orderNumber = data.Note.match(/^訂單完成回饋金\((\d+)\)$/)[1]; %>
+                                                           <a target="_blank" href="@Url.Action("Index", "OrderManagement")#[%= orderNumber %]">[%= data.Note %]</a>
+                                                       <% } else { %>
+                                                           [%= data.Note %]
+                                                       <% } %>
+                                                     </text>);
+        })
+    .Summary(s => s.GroupItems(items =>
+    {
+        items.AddFor(m => m.Note)
+             .SummaryType(SummaryType.Count)
+             .DisplayFormat($"{"RecordCount"}:{{0}}");
+    }))
+    .Paging(paging => paging.PageSize(20))
+    .Pager(pager =>
+    {
+        pager.Visible(true);
+        pager.DisplayMode(GridPagerDisplayMode.Full);
+        pager.ShowPageSizeSelector(true);
+        pager.AllowedPageSizes([20, 50, 100]);
+        pager.ShowInfo(true);
+    })
+    .DataSource(d => d.RemoteController().Key(nameof(GetBonusLogForDataGridDto.UUID))
+                      .LoadUrl("/api/BonusManagement/GetBonusLogForDataGrid").LoadMethod("Get"))
+    .RemoteOperations(remote => remote.GroupPaging(true))
+)
+        </div>
+    </div>
+</div>
+
+

@@ -1,0 +1,27 @@
+﻿@model EtheriT.Coker.Web.MVC.Models.MailTemplate.TransactionMailTemplateModel
+親愛的會員 您好，
+<br />
+我們已於 @Model.TransactionDateTime 為您的帳戶進行紅利點數異動，詳情如下：
+<br />
+▶️ 異動類型：@Model.TransactionOperationName 紅利點數
+<br />
+▶️ 異動點數：@Model.TransactionOperation@Model.TransactionPoint 點
+<br />
+▶️ 異動原因：@Model.TransactionDescription
+<br />
+<br />
+@if (Model.TransactionOperation != "-")
+{
+    @:紅利使用期限：依各筆紅利發放當下設定為準
+    <br />
+}
+
+若您對此異動有任何疑問，歡迎聯繫客服中心，我們將竭誠為您服務。
+<br />
+感謝您持續支持！
+<br />
+—
+<br />
+@Model.WebSiteName 敬上
+<br />
+@Model.WebSiteUrl

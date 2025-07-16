@@ -19,6 +19,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EtheriT.Coker.Application.Shared.Common;
+using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
+using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Shared.Dto.Mail;
+using Microsoft.Extensions.Configuration;
 
 namespace EtheriT.Coker.Application.BonusManagement
 {
@@ -27,12 +32,21 @@ namespace EtheriT.Coker.Application.BonusManagement
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
         private readonly IStoreSetAppService _storeSetAppService;
+        private readonly IMailTemplateAppService _mailTemplateAppService;
+        private readonly MailAppService _mailAppService;
+        private readonly IConfiguration _configuration;
 
         public BonusManagementAppService(IStoreSetAppService storeSetAppService,
+                                         IMailTemplateAppService mailTemplateAppService,
+                                         MailAppService mailAppService,
+                                         IConfiguration configuration,
                                          LoginUserData loginUserData,
                                          CokerDbContext db)
         {
             _storeSetAppService = storeSetAppService;
+            _mailTemplateAppService = mailTemplateAppService;
+            _mailAppService = mailAppService;
+            _configuration = configuration;
             this.loginUserData = loginUserData;
             this.db = db;
         }
@@ -232,7 +246,7 @@ namespace EtheriT.Coker.Application.BonusManagement
                     {
                         // 取得紅利有效天數設定
                         var bonusSettings = await GetBonusSettingForEdit();
-                        var expireDays = bonusSettings.RewardPointsExpireDays ?? 0; // 預設0天
+                        var expireDays = bonusSettings.RewardPointsExpireDays ?? null; // 預設null
 
                         // 新增紅利
                         var addAmount = Math.Abs(input.TransactionPoint);
@@ -248,10 +262,231 @@ namespace EtheriT.Coker.Application.BonusManagement
 
                 await db.SaveChangesAsync();
                 result.Success = true;
+
+                if (input.IsSendMail)
+                {
+                    // 發送紅利異動通知郵件給所有前端使用者
+                    this.SendTransactionMailToFrontUser(allFrontUsers, input);
+                }
             }
             catch (Exception ex)
             {
                 result.Error = ex.Message;
+            }
+
+            return result;
+        }
+
+
+        private async void SendTransactionMailToFrontUser(List<FrontUser> frontUsers, CreateUserTransactionDto transactionInput)
+        {
+            try
+            {
+                var bonusSettings = GetBonusSettingForEdit().Result;
+                var expireDays = bonusSettings.RewardPointsExpireDays;
+                var rewardPointsExpireDateTime = expireDays.HasValue ? DateTime.Now.AddDays(expireDays.Value) : (DateTime?)null;
+
+                var currentDate = DateTime.Now;
+                // 一次查詢所有相關用戶的可用紅利
+                var availableBonusData = db.Bonus
+                    .Where(x => transactionInput.MemberUUID.Contains(x.UUID) &&
+                               x.Balance > 0 &&
+                               x.StartDate <= currentDate &&
+                               (x.EndDate == null || x.EndDate >= currentDate) &&
+                               !x.IsDeleted)
+                    .GroupBy(x => x.UUID)
+                    .Select(g => new { UUID = g.Key, TotalBalance = g.Sum(b => b.Balance) })
+                    .ToList();
+
+                long websiteID = _configuration.GetValue<long>("WebConfig:SiteId") == 0 ? loginUserData.GetWebsiteId().Result : _configuration.GetValue<long>("WebConfig:SiteId");
+                var website = db.Websites.Where(e => e.Id == websiteID).FirstOrDefault();
+
+                List<MailTemplateInputDto> mailTemplatesInput = new List<MailTemplateInputDto>();
+                foreach (var item in frontUsers)
+                {
+                    mailTemplatesInput.Add(new MailTemplateInputDto
+                    {
+                        Key = item.UUID.ToString(),
+                        Model = new TransactionMailTemplateModelDto
+                        {
+                            MemberName = item.Name,
+                            MemberId = item.Id,
+                            TransactionOperation = transactionInput.TransactionOperation,
+                            TransactionOperationName = transactionInput.TransactionOperation == "+" ? "新增" : "扣除",
+                            TransactionPoint = transactionInput.TransactionPoint,
+                            TransactionDescription = transactionInput.TransactionReason,
+                            RewardPointsExpireDateTime = rewardPointsExpireDateTime ?? DateTime.Now.AddDays(0),
+                            TransactionDateTime = DateTime.Now,
+                            TransactionBalance = availableBonusData.FirstOrDefault(x => x.UUID == item.UUID)?.TotalBalance ?? 0,
+                            WebSiteName = website?.OrgName ?? string.Empty,
+                            WebSiteUrl = website?.DefaultUrl ?? string.Empty
+                        }
+                    });
+                }
+
+                var mailContent = await _mailTemplateAppService.GetTemplateRenderAsync(MailTemplateTypeEnum.紅利異動, mailTemplatesInput);
+                List<ResponseMessageDto> sendMailResponse = new List<ResponseMessageDto>();
+
+                //一封一封寄送
+                //List<SenderDto> senderDtos = new List<SenderDto>();
+                //foreach (var item in frontUsers.Where(x => !string.IsNullOrEmpty(x.Email?.Trim())))
+                //{
+                //    senderDtos.Add(new SenderDto
+                //    {
+                //        Recipients = new List<MailUserDataDto>()
+                //                    {
+                //                        new MailUserDataDto()
+                //                        {
+                //                            Name = item.Name,
+                //                            Email = item.Email ?? string.Empty,
+                //                        }
+                //                    },
+                //        Subject = $"【紅利通知】您的紅利點數已異動（{transactionInput.TransactionOperation}{transactionInput.TransactionPoint} 點）",
+                //        Body = mailContent.FirstOrDefault(x => x.Key == item.UUID.ToString())?.Body ?? string.Empty,
+                //        Css = string.Empty,
+                //    });
+                //}
+
+                //foreach (var item in senderDtos)
+                //{
+                //    sendMailResponse.Add(_mailAppService.sendMail(item, website?.Contact).Result);
+                //}
+
+                // BCC整批寄送
+                SenderDto senderDto = new SenderDto
+                {
+                    Bcc = frontUsers.Where(x => !string.IsNullOrEmpty(x.Email?.Trim()))
+                                    .Select(x => new MailUserDataDto { Email = x.Email ?? "" })
+                                    .ToList(),
+                    Subject = $"【紅利通知】您的紅利點數已異動（{transactionInput.TransactionOperation}{transactionInput.TransactionPoint} 點）",
+                    Body = mailContent.FirstOrDefault()?.Body ?? string.Empty,
+                };
+                sendMailResponse.Add(_mailAppService.sendMail(senderDto, website?.Contact).Result);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 取得紅利異動紀錄列表
+        /// </summary>
+        /// <param name="loadOptions"></param>
+        /// <returns></returns>
+        public async Task<JsonResult> GetBonusLogForDataGrid(DataSourceLoadOptions loadOptions)
+        {
+            long websideId = await loginUserData.GetWebsiteId();
+            var dataQuery = from user in db.FrontUsers
+                            join site in db.MappingFrontUserAndWebsite on user.Id equals site.FK_UserId
+                            join bonusLog in db.BonusLog on user.UUID equals bonusLog.User.UUID
+                            where site.FK_WebsiteId == websideId &&
+                                  user.IsDeleted == false
+                            select new GetBonusLogForDataGridDto
+                            {
+                                Id = user.Id,
+                                Name = user.Name,
+                                UUID = user.UUID,
+                                Amount = bonusLog.Amount,
+                                ExecutionTime = bonusLog.ExecutionTime,
+                                Note = bonusLog.Note
+                            };
+
+            var result = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+
+            if (result != null && result.data != null)
+            {
+                result.data = (result.data as IEnumerable<GetBonusLogForDataGridDto>)?.ToList() ?? new List<GetBonusLogForDataGridDto>();
+            }
+
+            return new JsonResult(result, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+
+        /// <summary>
+        /// 取得前端使用者紅利資訊
+        /// </summary>
+        /// <param name="frontUsers"></param>
+        /// <returns></returns>
+        public async Task<List<GetQueryFrontUsersTotalAvaliableBonusOutput>> GetQueryFrontUsersTotalAvaliableBonus(List<Guid> frontUsersUUID)
+        {
+            var currentDate = DateTime.Now;
+
+            if (!frontUsersUUID.Any())
+            {
+                return new List<GetQueryFrontUsersTotalAvaliableBonusOutput>();
+            }
+
+            // 查詢所有使用者的有效紅利
+            var availableBonusData = db.Bonus
+                .Where(x => frontUsersUUID.Contains(x.UUID) &&
+                           x.Balance > 0 &&
+                           x.StartDate <= currentDate &&
+                           (x.EndDate == null || x.EndDate >= currentDate) &&
+                           !x.IsDeleted)
+                .GroupBy(x => x.UUID)
+                .Select(g => new GetQueryFrontUsersTotalAvaliableBonusOutput
+                {
+                    UserUUID = g.Key,
+                    TotalAvaliableBonus = g.Sum(b => b.Balance)
+                })
+                .ToList();
+
+            // 補齊沒有紅利的使用者（紅利為0或沒有紅利異動過的）
+            var missingUsers = frontUsersUUID.Except(availableBonusData.Select(x => x.UserUUID))
+                .Select(uuid => new GetQueryFrontUsersTotalAvaliableBonusOutput
+                {
+                    UserUUID = uuid,
+                    TotalAvaliableBonus = 0
+                });
+
+            return availableBonusData.Concat(missingUsers).ToList();
+        }
+
+        /// <summary>
+        /// 取得前端使用者紅利異動紀錄
+        /// </summary>
+        /// <param name="frontUserUUID"></param>
+        /// <param name="topRecordCount"></param>
+        /// <returns></returns>
+        public async Task<List<GetQueryFrontUsersBonusLogOutput>> GetQueryFrontUsersBonusLog(Guid frontUserUUID, int topRecordCount)
+        {
+            List<GetQueryFrontUsersBonusLogOutput> result = new List<GetQueryFrontUsersBonusLogOutput>();
+            if (frontUserUUID != Guid.Empty)
+            {
+                var bonusQuery = from bonus in db.Bonus
+                                 join user in db.FrontUsers on bonus.UUID equals user.UUID
+                                 where user.UUID == frontUserUUID && !user.IsDeleted
+                                 select new GetQueryFrontUsersBonusLogOutput
+                                 {
+                                     Amount = bonus.Amount,
+                                     Note = bonus.Note,
+                                     ExecuteTime = bonus.CreationTime,
+                                     ExpireTime = bonus.EndDate
+                                 };
+
+                var bonusLogQuery = from bonusLog in db.BonusLog
+                                    join user in db.FrontUsers on bonusLog.UUID equals user.UUID
+                                    where user.UUID == frontUserUUID && !user.IsDeleted
+                                    select new GetQueryFrontUsersBonusLogOutput
+                                    {
+                                        Amount = bonusLog.Amount,
+                                        Note = bonusLog.Note,
+                                        ExecuteTime = bonusLog.ExecutionTime,
+                                        ExpireTime = null
+                                    };
+
+                // 將兩個查詢結果合併，並按執行時間降序排序後取前10筆
+                var bonusResults = bonusQuery.OrderByDescending(x => x.ExecuteTime)
+                                                   .Take(topRecordCount)
+                                                   .ToList();
+                var bonusLogResults = bonusLogQuery.OrderByDescending(x => x.ExecuteTime)
+                                                         .Take(topRecordCount)
+                                                         .ToList();
+
+                result = bonusResults.Concat(bonusLogResults)
+                                     .OrderByDescending(x => x.ExecuteTime)
+                                     .Take(topRecordCount)
+                                     .ToList();
             }
 
             return result;
@@ -380,7 +615,7 @@ namespace EtheriT.Coker.Application.BonusManagement
                 Amount = points,
                 Balance = points,
                 StartDate = currentDate,
-                EndDate = currentDate.AddDays(expireDays ?? 0),
+                EndDate = expireDays != null ? currentDate.AddDays(expireDays.Value) : DateTime.Parse("2099/12/31 23:59:59"),
                 Note = reason ?? "系統新增紅利",
                 CreatorUserId = createUserId,
                 CreationTime = currentDate,
@@ -457,5 +692,7 @@ namespace EtheriT.Coker.Application.BonusManagement
                 remainingDeduct -= deductFromThis;
             }
         }
+
+
     }
 }

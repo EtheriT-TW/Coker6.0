@@ -45,5 +45,27 @@ namespace EtheriT.Coker.Application.Shared.BonusManagement
         /// <param name="loadOptions"></param>
         /// <returns></returns>
         Task<JsonResult> GetFrontUsers(DataSourceLoadOptions loadOptions);
+
+        /// <summary>
+        /// 取得紅利異動紀錄列表
+        /// </summary>
+        /// <param name="loadOptions"></param>
+        /// <returns></returns>
+        Task<JsonResult> GetBonusLogForDataGrid(DataSourceLoadOptions loadOptions);
+
+        /// <summary>
+        /// 取得前端使用者紅利總合資訊
+        /// </summary>
+        /// <param name="frontUsers"></param>
+        /// <returns></returns>
+        Task<List<GetQueryFrontUsersTotalAvaliableBonusOutput>> GetQueryFrontUsersTotalAvaliableBonus(List<Guid> frontUsersUUID);
+
+        /// <summary>
+        /// 取得前端使用者紅利異動紀錄
+        /// </summary>
+        /// <param name="frontUserUUID"></param>
+        /// <param name="topRecordCount"></param>
+        /// <returns></returns>
+        Task<List<GetQueryFrontUsersBonusLogOutput>> GetQueryFrontUsersBonusLog(Guid frontUserUUID, int topRecordCount);
     }
 }

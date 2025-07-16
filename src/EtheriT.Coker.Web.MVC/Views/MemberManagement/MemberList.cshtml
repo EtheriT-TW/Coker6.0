@@ -50,6 +50,7 @@
                     c.AddFor(e => e.TelPhone).Caption("電話");
                     c.AddFor(e => e.Address).Caption("地址");
                     c.AddFor(e => e.Email).Caption("Email");
+                    c.AddFor(e => e.Bonus).Caption("紅利");
                     c.AddFor(e => e.Total).Caption("訂購總金額");
                     c.AddFor(e => e.Level).Caption("會員等級").Lookup(lookup =>
                         lookup.DataSource("getMemberLevel")

@@ -59,6 +59,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 
             try
             {
+                // 設為 true，表示需要發送郵件
+                model.IsSendMail = true;
                 // 呼叫 Service 層方法來更新設定
                 var result = await _bonusManagementAppService.SaveTransaction(model);
                 if (result.Success)
@@ -81,5 +83,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await _bonusManagementAppService.GetFrontUsers(loadOptions);
         }
+
+        public async Task<JsonResult> GetBonusLogForDataGrid(DataSourceLoadOptions loadOptions)
+        {
+            return await _bonusManagementAppService.GetBonusLogForDataGrid(loadOptions);
+        }
+
     }
 }

@@ -10,7 +10,7 @@
             };
         public int ConstTransactionReasonMaxLength { get; set; } = 25;
         public int ConstTransactionPointMax { get; set; } = 9999;
-        public int? ConstRewardPointsExpireDays { get; set; }
+        public string? ConstRewardPointsExpireDays { get; set; }
         public DateTime ConstRewardPointsExpireDateTime { get; set; }
     }
 

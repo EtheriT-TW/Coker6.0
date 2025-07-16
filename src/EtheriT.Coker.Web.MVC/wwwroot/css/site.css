@@ -98,7 +98,8 @@ a {
         }
 
         .selectedItem + label > span:nth-child(2), .selectedItem + label > i:nth-child(2) {
-            display: initial;
+            display: flex;
+            align-items: center;
         }
 
         .selectedItem + label > span, .selectedItem + label > i {
@@ -110,7 +111,8 @@ a {
     }
 
         .selectedItem:checked + label > span:first-child, .selectedItem:checked + label > i:first-child {
-            display: initial;
+            display: flex;
+            align-items: center;
         }
 
         .selectedItem:checked + label > span:nth-child(2), .selectedItem:checked + label > i:nth-child(2) {

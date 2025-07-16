@@ -334,6 +334,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Prod_Stock>(o =>
             {
                 o.HasOne(u => u.Prod).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_Pid);
+                o.Property(p => p.IsTimePrice).HasDefaultValue(false);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<ShoppingCart>(o =>

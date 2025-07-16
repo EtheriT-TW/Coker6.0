@@ -1,0 +1,130 @@
+﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem;
+@using EtheriT.Coker.Application.Shared.i18n;
+@model List<MenuItemModel>
+@{
+	int changeMetaMenucont = 0;
+}
+@foreach (var menu in Model)
+{
+	string headType = (menu.menuItemModels != null && menu.menuItemModels.Count() > changeMetaMenucont) || menu.Length > 0 ? "metaMenu" : "listMenu";
+	string justifyContent = menu.menuItemModels != null && (menu.menuItemModels.Count() < (ViewData["Locale"] != null && (new List<string> { "zh-tw" }).Contains(ViewData["Locale"]) ? 5 : 4)) ? "justify-content-center" : "";
+	<li class="title nav-item col-lg-3 @headType">
+		@{
+			List<MenuItemModel> subItems = menu.menuItemModels ?? new List<MenuItemModel>();
+		}
+		@if (subItems.Count() > 0)
+		{
+			<div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap font">
+				<a href="@menu.Link" id="collapse-header-@menu.Title" class="m-0 nav-link p-0 text-nowrap menu-item collapsed"
+				   data-bs-toggle="collapse" data-bs-target="#collapse-@menu.Title" aria-expanded="true" aria-controls="collapse-@menu.Title">
+					@if (string.IsNullOrEmpty(menu.imageUrl))
+					{
+						@menu.Title
+					}
+					else
+					{
+						if (string.IsNullOrEmpty(menu.hoverImageUrl))
+						{
+							<img src="@menu.imageUrl" alt="@menu.Title" />
+							<span class="justify-content-center">@menu.Title</span>
+						}
+						else
+						{
+							<img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
+							<span>@menu.Title</span>
+						}
+					}
+					@if (!string.IsNullOrEmpty(menu.SubTitle))
+					{
+						<span class="subtitle">@menu.SubTitle</span>
+					}
+				</a>
+			</div>
+			<div class="content collapse_menus translate-middle-x">
+				<ul class="@justifyContent" data-count-theme="@(menu.menuItemModels != null ? menu.menuItemModels.Count() : "0")">
+					@foreach (var secItem in subItems)
+					{
+						var iconclass = secItem.Icon == "" ? "d-none" : "";
+						var imageiconclass = secItem.ImageIcon == "" ? "d-none" : "";
+						<li class="subtitle nav-item my-0 text-start">
+							@{
+								var target = secItem.Target == true ? "_blank" : "_self";
+								var title = secItem.Target == true ? string.Format(L.get("LinkToAndBlank"), secItem.Title) : string.Format(L.get("LinkTo"), secItem.Title);
+								if (string.IsNullOrEmpty(secItem.Link))
+								{
+									secItem.Link = "#";
+									title = $"展開選單：{secItem.Title}";
+								}
+							}
+							<a class="subtitle_title nav-link text-start d-flex" href="@secItem.Link" title="@title" target="@target">
+								<i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
+								<img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
+								<span>
+									@secItem.Title
+								</span>
+							</a>
+							@if (secItem.menuItemModels != null && secItem.menuItemModels.Count() > 0 && menu.Title != "產品專區")
+							{
+								<ul class="row mx-0@($" hasRow{secItem.menuItemModels.Count() / 3 + 1}")">
+									@foreach (var thirdItem in secItem.menuItemModels ?? new List<MenuItemModel>())
+									{
+										iconclass = thirdItem.Icon == "" ? "d-none" : "";
+										imageiconclass = thirdItem.ImageIcon == "" ? "d-none" : "";
+										<li class="px-0">
+											@if (secItem.Link != "")
+											{
+												target = thirdItem.Target == true ? "_blank" : "_self";
+												title = thirdItem.Target == true ? string.Format(L.get("LinkToAndBlank"), thirdItem.Title) : string.Format(L.get("LinkTo"), thirdItem.Title);
+												<a class="subtitle_title ps-2 nav-link text-black pt-0 pb-1 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target">
+													<i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
+													<img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
+													@thirdItem.Title
+												</a>
+											}
+											else
+											{
+												<div class="subtitle_title ps-2 nav-link text-black py-1 text-nowrap text-start fw-normal d-flex align-items-center">
+													<i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
+													<img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
+													@thirdItem.Title
+												</div>
+											}
+										</li>
+									}
+								</ul>
+							}
+						</li>
+					}
+				</ul>
+			</div>
+		}
+		else
+		{
+			<div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap font">
+				<a class="p-0 nav-link text-nowrap menu-item" href="@menu.Link" target="@(menu.Target == true ? "_blank" : "_self")" title="@(menu.Target == true ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title))">
+					@if (string.IsNullOrEmpty(menu.imageUrl))
+					{
+						@menu.Title
+					}
+					else
+					{
+						if (string.IsNullOrEmpty(menu.hoverImageUrl))
+						{
+							<img src="@menu.imageUrl" alt="@menu.Title" />
+							<span class="justify-content-center">@menu.Title</span>
+						}
+						else
+						{
+							<img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
+							<span>@menu.Title</span>
+						}
+					}
+					@if (!string.IsNullOrEmpty(menu.SubTitle))
+					{
+						<span class="subtitle">@menu.SubTitle</span>
+					}
+				</a>
+			</div>
+		}
+	</li>
+}

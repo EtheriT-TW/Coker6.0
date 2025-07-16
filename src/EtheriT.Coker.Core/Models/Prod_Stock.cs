@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Core.Models
         public int? Alert_Qty { get; set; }
         public int? Min_Qty { get; set; }
         public int Ser_No { get; set; }
+        public bool IsTimePrice { get; set; }
         public string? SubItemNo { get; set; }
         public Prod? Prod { get; set; }
         public List<ShoppingCart> ShoppingCarts { get; set; }

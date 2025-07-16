@@ -54,9 +54,10 @@
                     List<MenuItemModel> subItems = menu.menuItemModels ?? new List<MenuItemModel>();
                     string jc = menu.menuItemModels != null && menu.menuItemModels.Count() > 4 ? "" : "justify-content-center";
                     <li class="title nav-item p-2 @headType">
-                        @if (subItems.Count() > 0){
+                        @if (subItems.Count() > 0)
+                        {
                             <a href="@menu.Link" id="collapse-header-@menu.Title" class="m-0 nav-link pb-0 text-nowrap text-black menu-item collapsed"
-                            data-bs-toggle="collapse" data-bs-target="#collapse-@menu.Title" aria-expanded="true" aria-controls="collapse-@menu.Title">
+                               data-bs-toggle="collapse" data-bs-target="#collapse-@menu.Title" aria-expanded="true" aria-controls="collapse-@menu.Title">
                                 @if (string.IsNullOrEmpty(menu.imageUrl))
                                 {
                                     @menu.Title
@@ -73,6 +74,10 @@
                                         <img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
                                         <span>@menu.Title</span>
                                     }
+                                }
+                                @if (!string.IsNullOrEmpty(menu.SubTitle))
+                                {
+                                    <span class="subtitle">@menu.SubTitle</span>
                                 }
                             </a>
                             <div class="content collapse_menus translate-middle-x collapse" id="collapse-@menu.Title" aria-labelledby="collapse-header-@menu.Title" data-bs-parent="#accordion-menu">
@@ -92,7 +97,7 @@
                                             }
                                             <li class="subtitle nav-item my-0 @titleClass">
                                                 <a id="collapse-header-@secItem.Title" class="subtitle_title justify-content-between nav-link text-black py-0 text-nowrap text-start d-flex align-items-center collapsed" href="@secItem.Link" title="@title" target="@target"
-                                                data-bs-toggle="" data-bs-target="#collapse-@secItem.Title" aria-expanded="true">
+                                                   data-bs-toggle="" data-bs-target="#collapse-@secItem.Title" aria-expanded="true">
                                                     <div>
                                                         <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
                                                         <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
@@ -105,7 +110,7 @@
                                                 @if (secItem.menuItemModels != null && secItem.menuItemModels.Count() > 0)
                                                 {
                                                     <ul id="collapse-@secItem.Title" aria-labelledby="collapse-header-@secItem.Title" data-bs-parent="#collapse-@menu.Title"
-                                                    class="row collapse px-3 mx-1@($" hasRow{secItem.menuItemModels.Count()/3 + 1}")@($"{(menu.Link.ToLower().Contains("product")?" d-lg-none":"")}")">
+                                                        class="row collapse px-3 mx-1@($" hasRow{secItem.menuItemModels.Count() / 3 + 1}")@($"{(menu.Link.ToLower().Contains("product") ? " d-lg-none" : "")}")">
                                                         @foreach (var thirdItem in secItem.menuItemModels ?? new List<MenuItemModel>())
                                                         {
                                                             iconclass = thirdItem.Icon == "" ? "d-none" : "";
@@ -141,7 +146,7 @@
                         }
                         else
                         {
-                            <a class="mt-0 nav-link pb-0 text-nowrap text-black menu-item" href="@menu.Link" target="@(menu.Target == true?"_blank":"_self")" title="@(menu.Target == true?$"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
+                            <a class="mt-0 nav-link pb-0 text-nowrap text-black menu-item" href="@menu.Link" target="@(menu.Target == true ? "_blank" : "_self")" title="@(menu.Target == true ? $"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
                                 @if (string.IsNullOrEmpty(menu.imageUrl))
                                 {
                                     @menu.Title
@@ -159,10 +164,15 @@
                                         <span>@menu.Title</span>
                                     }
                                 }
+                                @if (!string.IsNullOrEmpty(menu.SubTitle))
+                                {
+                                    <span class="subtitle">@menu.SubTitle</span>
+                                }
                             </a>
                         }
                     </li>
                 }
+
             </ul>
         </div>
 

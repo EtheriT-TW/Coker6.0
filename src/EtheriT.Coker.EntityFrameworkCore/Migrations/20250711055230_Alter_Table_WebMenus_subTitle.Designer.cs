@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250711055230_Alter_Table_WebMenus_subTitle")]
+    partial class Alter_Table_WebMenus_subTitle
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3635,11 +3638,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
-                    b.Property<bool>("IsTimePrice")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
 
@@ -3678,7 +3676,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_S1id = 1L,
                             FK_S2id = 4L,
                             IsDeleted = false,
-                            IsTimePrice = false,
                             Min_Qty = 1,
                             Price = 30000.0,
                             Ser_No = 500,
@@ -3694,7 +3691,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_S1id = 2L,
                             FK_S2id = 4L,
                             IsDeleted = false,
-                            IsTimePrice = false,
                             Min_Qty = 1,
                             Price = 28000.0,
                             Ser_No = 500,
@@ -3710,7 +3706,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_S1id = 2L,
                             FK_S2id = 5L,
                             IsDeleted = false,
-                            IsTimePrice = false,
                             Min_Qty = 1,
                             Price = 28500.0,
                             Ser_No = 500,
@@ -3726,7 +3721,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_S1id = 1L,
                             FK_S2id = 4L,
                             IsDeleted = false,
-                            IsTimePrice = false,
                             Min_Qty = 1,
                             Price = 9500.0,
                             Ser_No = 500,
@@ -3742,7 +3736,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_S1id = 1L,
                             FK_S2id = 4L,
                             IsDeleted = false,
-                            IsTimePrice = false,
                             Min_Qty = 1,
                             Price = 13000.0,
                             Ser_No = 500,
@@ -3758,7 +3751,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_S1id = 7L,
                             FK_S2id = 0L,
                             IsDeleted = false,
-                            IsTimePrice = false,
                             Min_Qty = 1,
                             Price = 24300.0,
                             Ser_No = 500,
@@ -3774,7 +3766,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_S1id = 8L,
                             FK_S2id = 0L,
                             IsDeleted = false,
-                            IsTimePrice = false,
                             Min_Qty = 1,
                             Price = 9500.0,
                             Ser_No = 500,
@@ -3790,7 +3781,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_S1id = 9L,
                             FK_S2id = 0L,
                             IsDeleted = false,
-                            IsTimePrice = false,
                             Min_Qty = 1,
                             Price = 14800.0,
                             Ser_No = 500,
@@ -4573,21 +4563,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             name = "有效天數",
                             pattern = "",
                             type = 8
-                        },
-                        new
-                        {
-                            Id = 21L,
-                            CreationTime = new DateTime(2023, 7, 25, 19, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetGroupId = 2L,
-                            IsDeleted = false,
-                            jobID = "B001",
-                            key = "priceOrder",
-                            maxlength = 3,
-                            memo = "商品預設顯示的金額",
-                            name = "價格顯示順序",
-                            pattern = "",
-                            type = 5
                         });
                 });
 
@@ -6117,28 +6092,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Key = "Pay",
                             Level = 3,
                             Value = "開放購物"
-                        },
-                        new
-                        {
-                            Id = 9L,
-                            CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetId = 21L,
-                            IsDeleted = false,
-                            Key = "HtoL",
-                            Level = 1,
-                            Value = "由高至低"
-                        },
-                        new
-                        {
-                            Id = 10L,
-                            CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetId = 21L,
-                            IsDeleted = false,
-                            Key = "LtoH",
-                            Level = 1,
-                            Value = "由低至高"
                         });
                 });
 

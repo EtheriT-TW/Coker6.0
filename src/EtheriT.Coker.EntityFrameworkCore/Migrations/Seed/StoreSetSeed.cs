@@ -349,6 +349,20 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     jobID = "B001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2023, 7, 25, 19, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 21,
+                    key = "priceOrder",
+                    name = "價格顯示順序",
+                    memo = "商品預設顯示的金額",
+                    FK_StoreSetGroupId = 2,
+                    type = SeoSetDataTypeEnum.select,
+                    maxlength = 3,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "B001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2023, 7, 25, 19, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(
@@ -423,6 +437,26 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Value = "開放購物",
                     Level = WebsiteLevelEnum.購物,
                     FK_StoreSetId = 3,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 23, 14, 38, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 9,
+                    Key = "HtoL",
+                    Value = "由高至低",
+                    Level = WebsiteLevelEnum.形象,
+                    FK_StoreSetId = 21,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 23, 14, 38, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 10,
+                    Key = "LtoH",
+                    Value = "由低至高",
+                    Level = WebsiteLevelEnum.形象,
+                    FK_StoreSetId = 21,
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 23, 14, 38, 00, 00, DateTimeKind.Local).AddTicks(1459)

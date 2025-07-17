@@ -1,43 +1,45 @@
-﻿using DevExtreme.AspNet.Data;
+﻿using AutoMapper;
+using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Shared.Dto.Product;
-using EtheriT.Coker.Application.Shared.Product;
-using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json;
-using Microsoft.EntityFrameworkCore;
-using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
-using EtheriT.Coker.Application.Shared.Tag;
-using EtheriT.Coker.Application.Shared.Dto.Import;
-using Microsoft.AspNetCore.Http;
 using EtheriT.Coker.Application.Import;
-using Microsoft.Extensions.Configuration;
-using EtheriT.Coker.Application.Shared.TechnicalCertificate;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
-using EtheriT.Coker.Application.Shared.Dto.Tag;
-using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto;
-using AutoMapper;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Favorites;
 using EtheriT.Coker.Application.Shared.Dto.Files;
-using EtheriT.Coker.Core.Models;
-using EtheriT.Coker.Application.Shared.Specification;
-using System.Web;
-using System.Data;
+using EtheriT.Coker.Application.Shared.Dto.Import;
+using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.Role;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
+using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+using EtheriT.Coker.Application.Shared.Processor;
+using EtheriT.Coker.Application.Shared.Product;
+using EtheriT.Coker.Application.Shared.Specification;
+using EtheriT.Coker.Application.Shared.Tag;
+using EtheriT.Coker.Application.Shared.TechnicalCertificate;
+using EtheriT.Coker.Application.StoreSet;
+using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.EntityFrameworkCore.Migrations;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using System;
+using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
-using EtheriT.Coker.Application.Token;
-using EtheriT.Coker.EntityFrameworkCore.Migrations;
-using Microsoft.CodeAnalysis.CSharp;
-using EtheriT.Coker.Application.Shared.Dto.Favorites;
-using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
-using EtheriT.Coker.Application.Shared.Processor;
-using EtheriT.Coker.Application.Common;
-using EtheriT.Coker.Application.Shared.Dto.Role;
-using System;
+using System.Web;
+using static DevExpress.XtraPrinting.Native.ExportOptionsPropertiesNames;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -54,6 +56,7 @@ namespace EtheriT.Coker.Application.Product
         private readonly ISpecificationAppService specificationAppService;
         private readonly ITokenAppService tokenAppService;
         private readonly IHtmlProcessor htmlProcessor;
+        private readonly IStoreSetAppService storeSetAppService;
         private readonly StringHandler stringHandler;
         private readonly ImportAppService importAppService;
         public ProductAppService(
@@ -65,6 +68,7 @@ namespace EtheriT.Coker.Application.Product
             ITechnicalCertificateAppService technicalCertificateAppService,
             IFileUploadAppService fileUploadAppService,
             ISpecificationAppService specificationAppService,
+            IStoreSetAppService storeSetAppService,
             IWebMenuApplication webMenuApplication,
             ITokenAppService tokenAppService,
             IHtmlProcessor htmlProcessor,
@@ -80,6 +84,7 @@ namespace EtheriT.Coker.Application.Product
             this.importAppService = importAppService;
             this.fileUploadAppService = fileUploadAppService;
             this.specificationAppService = specificationAppService;
+            this.storeSetAppService = storeSetAppService;
             this.webMenuApplication = webMenuApplication;
             this.tokenAppService = tokenAppService;
             this.stringHandler = stringHandler;
@@ -232,6 +237,7 @@ namespace EtheriT.Coker.Application.Product
                             Stock = item.Stock,
                             Min_Qty = item.Min_Qty,
                             Alert_Qty = item.Alert_Qty,
+                            IsTimePrice = item.TimePrice,
                             Ser_No = item.Ser_No,
                             Price = item.Price,
                             SubItemNo = item.SubItemNo,
@@ -304,7 +310,7 @@ namespace EtheriT.Coker.Application.Product
                                 }
                             }
                             db_ps.Stock = item.Stock;
-
+                            db_ps.IsTimePrice = item.TimePrice;
                             db_ps.FK_S1id = item.FK_S1id;
                             db_ps.FK_S2id = item.FK_S2id;
                             db_ps.Min_Qty = item.Min_Qty;
@@ -407,56 +413,107 @@ namespace EtheriT.Coker.Application.Product
             {
                 long webid = await loginUserData.GetWebsiteId();
 
-                var dataQuery = from p in db.Prods
-                                where p.FK_WebsiteId == webid && !p.IsDeleted
-                                select new ProductGetAllListDto
-                                {
-                                    Id = p.Id,
-                                    Title = p.Title,
-                                    Visible = p.Visible,
-                                    Available = !p.RemovedFromShelves,
-                                    Ser_No = p.Ser_No,
-                                    ItemNo = p.ItemNo ?? "",
-                                    Price = "",
-                                    StartTime = p.StartTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.StartTime),
-                                    EndTime = p.EndTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.EndTime),
-                                    Permanent = p.permanent,
-                                    LastModificationTime = p.LastModificationTime ?? p.CreationTime
-                                };
+                // 一次先查所有 Prods
+                var prods = await db.Prods
+                    .Where(p => p.FK_WebsiteId == webid && !p.IsDeleted)
+                    .ToListAsync();
 
-                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-                foreach (var data in output.data)
+                var prodIds = prods.Select(p => p.Id).ToList();
+
+                // 一次查所有 Stocks
+                var allStocks = await db.Prod_Stocks
+                    .Where(s => prodIds.Contains(s.FK_Pid) && !s.IsDeleted)
+                    .Select(s => new { s.Id, s.FK_Pid, s.IsTimePrice })
+                    .ToListAsync();
+
+                // 把 Stocks 分組
+                var stocksDict = allStocks
+                    .GroupBy(s => s.FK_Pid)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                var resultList = new List<ProductGetAllListDto>();
+
+                foreach (var p in prods)
                 {
-                    int min_price = 0, max_price = 0;
-                    var pid = (long)data.GetType().GetProperty("Id").GetValue(data, null);
-                    var db_ps = await db.Prod_Stocks.Where(e => e.FK_Pid == pid && !e.IsDeleted).ToListAsync();
-                    if (db_ps.Count > 0)
+                    stocksDict.TryGetValue(p.Id, out var stocks);
+
+                    var timePriceStocks = stocks.Where(s => s.IsTimePrice).ToList();
+                    var normalStocks = stocks.Where(s => !s.IsTimePrice).ToList();
+
+                    string priceText;
+
+                    if (stocks == null || stocks.Count == 0)
                     {
-                        for (var ps_i = 0; ps_i < db_ps.Count(); ps_i++)
+                        priceText = "";
+                    }
+                    else if (normalStocks.Count == 0)
+                    {
+                        priceText = "時價";
+                    }
+                    else
+                    {
+                        var stockIds = normalStocks.Select(s => s.Id).ToList();
+
+                        var priceList = await db.Prod_Prices
+                            .Where(pp => !pp.IsDeleted && stockIds.Contains(pp.FK_PSId))
+                            .Select(pp => (int?)(pp.Price ?? 0))
+                            .ToListAsync();
+
+                        if (priceList.Count == 0)
                         {
-                            var db_pp = await db.Prod_Prices.Where(e => e.FK_PSId == db_ps[ps_i].Id && !e.IsDeleted).ToListAsync();
-                            if (db_pp.Count > 0)
+                            priceText = timePriceStocks.Count > 0 ? "時價" : "";
+                        }
+                        else
+                        {
+                            var minPrice = priceList.Min();
+                            var maxPrice = priceList.Max();
+
+                            if (timePriceStocks.Count > 0)
                             {
-                                for (var pp_i = 0; pp_i < db_pp.Count; pp_i++)
-                                {
-                                    var price = (int)(db_pp[pp_i].Price ?? 0);
-                                    if (min_price == 0 || price < min_price) { min_price = price; }
-                                    if (price > max_price) { max_price = price; }
-                                }
+                                priceText = $"{minPrice.GetValueOrDefault():###,###}~時價";
+                            }
+                            else
+                            {
+                                priceText = minPrice == maxPrice
+                                    ? $"{maxPrice.GetValueOrDefault():###,###}"
+                                    : $"{minPrice.GetValueOrDefault():###,###}~{maxPrice.GetValueOrDefault():###,###}";
                             }
                         }
-                        var price_text = min_price == max_price ? max_price.ToString("###,###") : $"{min_price.ToString("###,###")}~{max_price.ToString("###,###")}";
-                        data.GetType().GetProperty("Price").SetValue(data, price_text);
                     }
+
+                    resultList.Add(new ProductGetAllListDto
+                    {
+                        Id = p.Id,
+                        Title = p.Title,
+                        Visible = p.Visible,
+                        Available = !p.RemovedFromShelves,
+                        Ser_No = p.Ser_No,
+                        ItemNo = p.ItemNo ?? "",
+                        Price = priceText,
+                        StartTime = p.StartTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.StartTime),
+                        EndTime = p.EndTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.EndTime),
+                        Permanent = p.permanent,
+                        LastModificationTime = p.LastModificationTime ?? p.CreationTime
+                    });
                 }
-                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+
+                // DataSourceLoader篩選排序
+                var output = DataSourceLoader.Load(resultList.AsQueryable(), loadOptions);
+
+                return new JsonResult(output, new JsonSerializerSettings
+                {
+                    ContractResolver = new DefaultContractResolver()
+                });
             }
             catch (Exception e)
             {
-
+                // 建議加Log
             }
 
-            return new JsonResult(new List<ProductGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            return new JsonResult(new List<ProductGetAllListDto>(), new JsonSerializerSettings
+            {
+                ContractResolver = new DefaultContractResolver()
+            });
         }
         public async Task<ProdGetDataDto> GetProdDataOne(long Id)
         {
@@ -537,6 +594,7 @@ namespace EtheriT.Coker.Application.Product
                                         FK_S1id = ps.FK_S1id,
                                         S1_Title = "",
                                         FK_S2id = ps.FK_S2id,
+                                        TimePrice = ps.IsTimePrice,
                                         S2_Title = "",
                                         Price = ps.Price,
                                         Min_Qty = ps.Min_Qty,
@@ -808,6 +866,11 @@ namespace EtheriT.Coker.Application.Product
                 var UUID = await tokenAppService.GetUUID();
                 var token = await db.Tokens.Where(e => e.UUID == UUID).FirstOrDefaultAsync();
                 long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
+                var priceOrder = await storeSetAppService.getValues(new Shared.Dto.StoreSet.StoreSetGetValueInput { 
+                    key = "priceOrder",
+                    SiteId = WebsiteID
+                });
+                var order = priceOrder.Success && priceOrder.detailItem != null && priceOrder.detailItem.key == "priceOrder" && priceOrder.detailItem.value != null && priceOrder.detailItem.value.Contains("LtoH");
                 string orgName = await loginUserData.GetWebsiteOrgName();
                 var output = new List<DirectoryReleInfoDto>();
                 var productData = new List<ProdGetDataDto>();
@@ -868,7 +931,7 @@ namespace EtheriT.Coker.Application.Product
                         var stockids = stocks.Where(e => e.FK_Pid == data.Id).Select(e => e.Id).ToList();
                         var prices = await GetPriceByStock(stockids);
 
-                        var temp_price = prices.Where(e => e.Price == (prices.Max(e => e.Price))).FirstOrDefault();
+                        var temp_price = order ? prices.MinBy(e => e.Price): prices.MaxBy(e => e.Price);
                         if (token?.UserID == null && temp_price?.FK_RId == 1)
                         {
                             var SuggestPrice = stocks.Where(e => e.Id == temp_price.FK_PSId).Select(e => e.Price).FirstOrDefault();

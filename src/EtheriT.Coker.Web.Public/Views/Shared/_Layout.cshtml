@@ -89,6 +89,7 @@
         const BackstageUrl = "@ViewBag.BackstageUrl";
         const OAuthSuccess ="@ViewBag.OAuthSuccess";
         const OAuthError = "@ViewBag.OAuthError";
+        const orderPrice = @ViewBag.priceOrder.ToString().ToLower();
         window.CI360 = { notInitOnLoad: true }
         window.onload = function () {
             ready();
@@ -529,9 +530,12 @@
                 <div class="btn_cookie_reject m-2 p-1 px-4 rounded-2 text-center">@L.get("reject")</div>
             </div>
         </div>
-        <div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
-            @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ShoppingCarModal" })
-        </div>
+        @if (ViewBag.option != "product")
+        {
+            <div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+                @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ShoppingCarModal" })
+            </div>
+        }
     }
     <div id="videoModal" tabindex="-1" aria-labelledby="videoModal" aria-hidden="true" class="modal fade">
         <div class="modal-dialog modal-xl modal-dialog-centered h-75">

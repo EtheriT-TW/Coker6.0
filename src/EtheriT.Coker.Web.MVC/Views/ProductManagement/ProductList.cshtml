@@ -70,27 +70,42 @@
             </template>
 
             <div class="modal-body p-4">
-
-                <div class="suggest_price align-items-center row mb-3">
-                    <div class="col text text-end">商品建議售價(非必填)</div>
-                    <div class="col cash input-group">
-                        <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">現金</div>
-                        <input class="form-control rounded" type="number" aria-label="Input Cash Price of Product" maxlength="9" value="0" step="any">
+                <div class="row">
+                    <div class="col text text-end">銷售方式</div>
+                    <div class="col">
+                        <input id="TimePrice" type="checkbox" name="timePrice" class="selectedItem">
+                        <label class="form-check-label" for="TimePrice">
+                            <span>
+                                <span class="material-symbols-outlined">history</span> 時價
+                            </span>
+                            <span>
+                                <span class="material-symbols-outlined">delete_history</span> 現金
+                            </span>
+                        </label>
                     </div>
-                    <button class="col-auto btn_suggest_price_delete bg-transparent border-0 d-flex p-0">
-                        <span class="material-symbols-outlined">delete</span>
-                    </button>
                 </div>
+                <div class="priceSetting">
+                    <div class="suggest_price align-items-center row mb-3">
+                        <div class="col text text-end">商品建議售價(非必填)</div>
+                        <div class="col cash input-group">
+                            <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">現金</div>
+                            <input class="form-control rounded" type="number" aria-label="Input Cash Price of Product" maxlength="9" value="0" step="any">
+                        </div>
+                        <button class="col-auto btn_suggest_price_delete bg-transparent border-0 d-flex p-0">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                    </div>
 
-                <div class="price_option"></div>
-                <div class="d-flex justify-content-center my-2">
-                    <button class="btn btn_spec_price_add align-items-center d-flex">
-                        <span class="material-symbols-outlined">add</span>
-                        <div>新增其他付款方式</div>
-                    </button>
+                    <div class="price_option"></div>
+                    <div class="d-flex justify-content-center my-2">
+                        <button class="btn btn_spec_price_add align-items-center d-flex">
+                            <span class="material-symbols-outlined">add</span>
+                            <div>新增其他付款方式</div>
+                        </button>
+                    </div>
+                    <div class="alert_text text-center text-danger d-none"></div>
+                    <div class="text-center text-danger mb-3">*紅利及價格須輸入一億元(含)以下</div>
                 </div>
-                <div class="alert_text text-center text-danger d-none"></div>
-                <div class="text-center text-danger mb-3">*紅利及價格須輸入一億元(含)以下</div>
             </div>
             <div class="modal-footer px-4">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取　消</button>

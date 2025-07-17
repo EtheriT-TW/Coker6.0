@@ -97,7 +97,7 @@ namespace EtheriT.Coker.Application.BonusManagement
             return new GetBonusSettingHelpTextForEditOutput();
         }
 
-        public async Task<JsonResult> GetFrontUsers(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetFrontUsers(DataSourceLoadOptions loadOptions, bool isShowCurrentMonthBirthdayOnly)
         {
             long websideId = await loginUserData.GetWebsiteId();
             var dataQuery = from user in db.FrontUsers
@@ -105,6 +105,13 @@ namespace EtheriT.Coker.Application.BonusManagement
                             where site.FK_WebsiteId == websideId &&
                                   user.IsDeleted == false
                             select user;
+
+            if (isShowCurrentMonthBirthdayOnly)
+            {
+                DateTime currentDate = DateTime.Now;
+                dataQuery = dataQuery.Where(x => x.Birthday.HasValue &&
+                                                 x.Birthday.Value.Month == currentDate.Month);
+            }
 
             var result = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
 

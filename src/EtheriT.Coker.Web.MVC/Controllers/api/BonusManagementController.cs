@@ -79,9 +79,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
 
 
-        public async Task<JsonResult> GetFrontUsers(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetFrontUsers(DataSourceLoadOptions loadOptions, bool isShowCurrentMonthBirthdayOnly)
         {
-            return await _bonusManagementAppService.GetFrontUsers(loadOptions);
+            return await _bonusManagementAppService.GetFrontUsers(loadOptions, isShowCurrentMonthBirthdayOnly);
         }
 
         public async Task<JsonResult> GetBonusLogForDataGrid(DataSourceLoadOptions loadOptions)

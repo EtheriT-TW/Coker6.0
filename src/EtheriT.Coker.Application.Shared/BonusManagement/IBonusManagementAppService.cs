@@ -44,7 +44,7 @@ namespace EtheriT.Coker.Application.Shared.BonusManagement
         /// </summary>
         /// <param name="loadOptions"></param>
         /// <returns></returns>
-        Task<JsonResult> GetFrontUsers(DataSourceLoadOptions loadOptions);
+        Task<JsonResult> GetFrontUsers(DataSourceLoadOptions loadOptions, bool isShowCurrentMonthBirthdayOnly);
 
         /// <summary>
         /// 取得紅利異動紀錄列表

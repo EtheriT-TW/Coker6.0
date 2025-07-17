@@ -153,12 +153,14 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var linkMore = StoreSet.storeSetDetails?.Find(e => e.key == "linkMore");
             var prodCatalog = StoreSet.storeSetDetails?.Find(e => e.key == "prodCatalog");
             var membershipTerms = StoreSet.storeSetDetails?.Find(e => e.key == "membershipTerms");
+            var priceOrder = StoreSet.storeSetDetails?.Find(e => e.key == "priceOrder");
             var shareImage = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { Sid = siteId, Type = 13 });
             var template = await templatesApplicationService.GetDefaultTemplatesAsync();
             ViewBag.ShowPagePath = true;
             ViewBag.BackstageUrl = Configuration["BACKSTAGE_URL"] ?? Configuration.GetValue<string>("WebConfig:BackstageUrl");
             ViewBag.OAuthError = TempData["OAuthError"];
             ViewBag.OAuthSuccess = TempData["OAuthSuccess"];
+            ViewBag.priceOrder = priceOrder != null && priceOrder.value != null && priceOrder.value.Any() && priceOrder.value.Contains("LtoH");
             if (template != null)
             {
                 var header = template.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.表頭);
@@ -464,6 +466,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.LoginEnable = await webMenuApplication.checkHasMember(siteId);
             ViewBag.isLogin = false;
             ViewBag.SiteId = siteId;
+            ViewBag.option = option.ToLower();
             try
             {
                 var tokenItem = await tokenAppService.CreateToken();

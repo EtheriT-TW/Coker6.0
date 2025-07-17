@@ -190,6 +190,10 @@ function PageReady() {
         SpecPriceAdd(null)
     });
     $(".btn_price_save").on("click", SpecPriceSave);
+    $("#TimePrice").on("change",function () {
+        if ($(this).prop("checked")) $(".priceSetting").addClass("d-none");
+        else $(".priceSetting").removeClass("d-none");
+    });
 
     $name.on('keyup', function () {
         $name_count.text($name.val().length);
@@ -299,7 +303,7 @@ function ElementInit() {
     $removedFromShelves = $(`#ProductForm [name="RemovedFromShelves"]`);
 
     priceModal = new bootstrap.Modal(document.getElementById('PriceModal'))
-    $price_modal = $("#PriceModal >.modal-dialog > .modal-content > .modal-body >.price_option");
+    $price_modal = $("#PriceModal >.modal-dialog > .modal-content > .modal-body > .priceSetting >.price_option");
     $("#SortCheck").on("change", function () {
         const $items = $(`[name="serNo"]`);
         if ($(this).prop("checked")) $items.removeAttr("disabled");
@@ -309,29 +313,35 @@ function ElementInit() {
         $price_modal.children(".frame").each(function () {
             $(this).remove();
             spec_price_num = 0;
-        })
+        });
 
         $(".input_price").each(function () {
             var $self = $(this)
             var psid = $self.parents(".spec_list").data("psid")
             var temppsid = $self.parents(".spec_list").data("temppsid")
+            var timePrice = $self.parents(".spec_list").data("timeprice")
             var count = $self.parents(".price").find(".count");
             var text = "";
             var filter = modal_price_list.filter(item => !item.IsDelete && (item["FK_PSId"] == psid || item["TempPSid"] == temppsid));
             $self.removeClass("multi-price");
-            if (filter.length > 1) {
-                count.removeClass("d-none").text(filter.length);
-                $self.addClass("multi-price");
-            } else count.addClass("d-none");
-            filter.map(item => {
-                if (text != "") text += "\n";
-                text += "現金：" + co.String.thousandSign(item["Price"]);
-                if (item["Bonus"] != 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
-            });
-            if (filter.length > 0) {
-                $self.val(text);
+            if (timePrice) {
+                $self.val("時價");
+                count.addClass("d-none")
             } else {
-                $self.val("");
+                if (filter.length > 1) {
+                    count.removeClass("d-none").text(filter.length);
+                    $self.addClass("multi-price");
+                } else count.addClass("d-none");
+                filter.map(item => {
+                    if (text != "") text += "\n";
+                    text += "現金：" + co.String.thousandSign(item["Price"]);
+                    if (item["Bonus"] != 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
+                });
+                if (filter.length > 0) {
+                    $self.val(text);
+                } else {
+                    $self.val("");
+                }
             }
         })
 
@@ -557,7 +567,7 @@ function SpecPriceAdd(result) {
         }
     })
 
-    $("#PriceModal > .modal-dialog > .modal-content > .modal-body > .price_option").append(item);
+    $("#PriceModal > .modal-dialog > .modal-content > .modal-body .price_option").append(item);
 
     $("input[type='number']").on("input", function () {
         var $self = $(this);
@@ -570,51 +580,56 @@ function SpecPriceSave() {
     var save_success = true
     var psid = $price_modal.parents(".modal-body").first().data("psid");
     var temppsid = $price_modal.parents(".modal-body").first().data("temppsid");
+    let index;
     if (psid != "") {
-        var index = suggest_price_list.findIndex(item => item["FK_PSId"] == psid)
-        suggest_price_list[index]["Price"] = $("#PriceModal .suggest_price input").val()
+        index = suggest_price_list.findIndex(item => item["FK_PSId"] == psid)
+    } else {
+        index = suggest_price_list.findIndex(item => item["TempPSid"] == temppsid)
     }
-    else {
-        var index = suggest_price_list.findIndex(item => item["TempPSid"] == temppsid)
-        suggest_price_list[index]["Price"] = $("#PriceModal .suggest_price input").val()
-    }
-    $price_modal.children(".frame").each(function () {
-        $self = $(this);
-        var obj = {};
-        obj["Id"] = $self.data("ppid");
-        obj["Tempid"] = price_tid;
-        obj["FK_PSId"] = psid;
-        obj["TempPSid"] = temppsid;
-        obj["FK_RId"] = $self.find(".select_role").val();
-        obj["Price"] = $self.find(".input_cash").val();
-        obj["Bonus"] = $self.find(".input_bonus").val();
-        obj["IsDelete"] = false;
-        if (obj["Price"] == 0 && obj["Bonus"] == 0) {
-            co.sweet.error("商品現金與紅利不可同時為空", null, true)
-            $(".alert_text").text("商品現金與紅利不可同時為空")
-            $(".alert_text").removeClass("d-none");
-            save_success = false
-        } else {
-            if (temp_list.find(item => item["FK_RId"] == obj["FK_RId"] && (item["Price"] == obj["Price"] || item["Bonus"] == obj["Bonus"])) != null) {
-                co.sweet.error("商品現金或紅利不可重複", null, true)
+    suggest_price_list[index]["Price"] = $("#PriceModal .suggest_price input").val();
+    $(".spec_list").each(function () {
+        if ($(this).data("psid") == psid || $(this).data("temppsid") == temppsid)
+            $(this).data("timeprice", $("#TimePrice").prop("checked"));
+    });
+    if (!$("#TimePrice").prop("checked")) {
+        $price_modal.children(".frame").each(function () {
+            $self = $(this);
+            var obj = {};
+            obj["Id"] = $self.data("ppid");
+            obj["Tempid"] = price_tid;
+            obj["FK_PSId"] = psid;
+            obj["TempPSid"] = temppsid;
+            obj["FK_RId"] = $self.find(".select_role").val();
+            obj["Price"] = $self.find(".input_cash").val();
+            obj["Bonus"] = $self.find(".input_bonus").val();
+            obj["IsDelete"] = false;
+            if (obj["Price"] == 0 && obj["Bonus"] == 0) {
+                co.sweet.error("商品現金與紅利不可同時為空", null, true)
+                $(".alert_text").text("商品現金與紅利不可同時為空")
                 $(".alert_text").removeClass("d-none");
-                $(".alert_text").text("同個會員等級下商品現金或紅利不可重複");
                 save_success = false
             } else {
-                temp_list.push(obj)
-                $(".alert_text").addClass("d-none");
-                if ($self.data("tempid") < 0) {
-                    modal_price_list.push(obj)
-                    price_tid += 1;
+                if (temp_list.find(item => item["FK_RId"] == obj["FK_RId"] && (item["Price"] == obj["Price"] || item["Bonus"] == obj["Bonus"])) != null) {
+                    co.sweet.error("商品現金或紅利不可重複", null, true)
+                    $(".alert_text").removeClass("d-none");
+                    $(".alert_text").text("同個會員等級下商品現金或紅利不可重複");
+                    save_success = false
                 } else {
-                    var index = modal_price_list.findIndex(item => item["Tempid"] == $self.data("tempid"))
-                    modal_price_list[index]["FK_RId"] = $self.find(".select_role").val();
-                    modal_price_list[index]["Price"] = $self.find(".input_cash").val();
-                    modal_price_list[index]["Bonus"] = $self.find(".input_bonus").val();
+                    temp_list.push(obj)
+                    $(".alert_text").addClass("d-none");
+                    if ($self.data("tempid") < 0) {
+                        modal_price_list.push(obj)
+                        price_tid += 1;
+                    } else {
+                        var index = modal_price_list.findIndex(item => item["Tempid"] == $self.data("tempid"))
+                        modal_price_list[index]["FK_RId"] = $self.find(".select_role").val();
+                        modal_price_list[index]["Price"] = $self.find(".input_cash").val();
+                        modal_price_list[index]["Bonus"] = $self.find(".input_bonus").val();
+                    }
                 }
             }
-        }
-    })
+        })
+    }
     if (save_success) {
         priceModal.hide();
     }
@@ -639,9 +654,11 @@ function SpecAdd(result) {
     if (result != null) {
         item.find(".ser_no").val(result.ser_No);
         item.data("serno", result.ser_No);
+        item.data("timeprice", result.timePrice);
     } else {
         item.find(".ser_no").val(spec_num);
         item.data("serno", spec_num);
+        item.data("timeprice", false);
     }
 
     item.find(".ser_no").on("blur", function () {
@@ -737,23 +754,30 @@ function SpecAdd(result) {
         suggest_price_obj["Price"] = 0;
         suggest_price_list.push(suggest_price_obj);
     }
-    var text = "";
-    var filter = modal_price_list.filter(mitem => !mitem.IsDelete && (mitem["FK_PSId"] == item.data("psid")));
-    item_price.removeClass("multi-price");
-    if (filter.length > 1) {
-        item_price.addClass("multi-price");
-        item_price_count.removeClass("d-none").text(filter.length);
-    } else item_price_count.addClass("d-none");
-    filter.map(item => {
-        if (text != "") text += "\n";
-        text += "現金：" + co.String.thousandSign(item["Price"]);
-        if (item["Bonus"] != 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
-    });
-    if (filter.length > 0) {
-        item_price.val(text);
+    
+    if (item.data("timeprice")) {
+        item_price.val("時價");
+        item_price_count.addClass("d-none");
     } else {
-        item_price.val("");
+        var text = "";
+        var filter = modal_price_list.filter(mitem => !mitem.IsDelete && (mitem["FK_PSId"] == item.data("psid")));
+        item_price.removeClass("multi-price");
+        if (filter.length > 1) {
+            item_price.addClass("multi-price");
+            item_price_count.removeClass("d-none").text(filter.length);
+        } else item_price_count.addClass("d-none");
+        filter.map(item => {
+            if (text != "") text += "\n";
+            text += "現金：" + co.String.thousandSign(item["Price"]);
+            if (item["Bonus"] != 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
+        });
+        if (filter.length > 0) {
+            item_price.val(text);
+        } else {
+            item_price.val("");
+        }
     }
+    
     item_subItemNo.val(result != null ? result.subItemNo : "");
     item_min.val(result != null ? result.min_Qty ?? 1 : 1);
     item_min.on("change", function () {
@@ -776,9 +800,11 @@ function SpecAdd(result) {
         var $self = $(this)
         var psid = $self.parents(".spec_list").data("psid")
         var temppsid = $self.parents(".spec_list").data("temppsid")
+        var timePrice = $self.parents(".spec_list").data("timeprice")
         $price_modal.parents(".modal-body").first().data("psid", psid != null ? psid : "")
         $price_modal.parents(".modal-body").first().data("temppsid", temppsid != null ? temppsid : "")
-
+        $("#TimePrice").prop("checked", timePrice);
+        $("#TimePrice").trigger("change");
         if (psid != null) {
             var index = suggest_price_list.findIndex(item => item["FK_PSId"] == psid)
             $("#PriceModal .suggest_price input").val(suggest_price_list[index]["Price"]);
@@ -1119,6 +1145,7 @@ function AddUp(success_text, error_text, target) {
             var index = suggest_price_list.findIndex(item => item["TempPSid"] == $self.data("temppsid"))
             obj["Price"] = suggest_price_list[index]["Price"];
         }
+        obj["TimePrice"] = $self.data("timeprice");
         obj["Price"] = isNaN(obj["Price"]) ? 0 : Number(obj["Price"]);
         obj["FK_S1id"] = fk_sid[0];
         obj["FK_S2id"] = fk_sid[1];

@@ -106,6 +106,7 @@
 .type_change_frame > .catalog .img-fluid {
     max-width: 100%;
     max-height: 100%;
+    height: 250px;
 }
 
 .type_change_frame > .catalog .description {
@@ -215,10 +216,6 @@
 
 .type_change_frame .catalog .type4-image-frame {
     height: 60%;
-}
-
-.type_change_frame .type4-caption {
-    height: 40%;
 }
 
 .type_change_frame .catalog .type5-image-frame {

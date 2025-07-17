@@ -420,6 +420,10 @@ header {
         display: flex;
         align-items: center;
     }
+    #Offcanvas_Mega_Menu > .offcanvas-body {
+        width: 100%;
+        justify-content: space-around;
+    }
 }
 
 @media only screen and (max-width: 1200px) {

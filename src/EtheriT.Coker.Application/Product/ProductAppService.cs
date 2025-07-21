@@ -928,17 +928,26 @@ namespace EtheriT.Coker.Application.Product
                         if (favorites != null) data.FId = favorites.Id;
 
                         var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).ToListAsync();
-                        var stockids = stocks.Where(e => e.FK_Pid == data.Id).Select(e => e.Id).ToList();
+                        var stockids = stocks.Where(e => e.FK_Pid == data.Id && !e.IsTimePrice).Select(e => e.Id).ToList();
                         var prices = await GetPriceByStock(stockids);
 
                         var temp_price = order ? prices.MinBy(e => e.Price): prices.MaxBy(e => e.Price);
+                        var theStock = stocks.Where(e => e.Id == temp_price.FK_PSId).FirstOrDefault();
                         if (token?.UserID == null && temp_price?.FK_RId == 1)
                         {
                             var SuggestPrice = stocks.Where(e => e.Id == temp_price.FK_PSId).Select(e => e.Price).FirstOrDefault();
                             if (SuggestPrice > 0) data.SuggestPrice = (SuggestPrice).ToString("N0");
                         }
+                        data.IsTimePrice = theStock?.IsTimePrice ?? false;
                         data.Price = temp_price?.Price?.ToString("N0") ?? "0";
-                        data.OriPrice = temp_price?.OriPrice?.ToString("N0") ?? "0";
+                        data.OriPrice = temp_price?.OriPrice?.ToString("N0") ?? "0"; 
+                        
+                        if (data.IsTimePrice)
+                        {
+                            data.Price = "時價";
+                            data.SuggestPrice = null;
+                            data.OriPrice = null;
+                        }
                     }
                 }
                 return output;

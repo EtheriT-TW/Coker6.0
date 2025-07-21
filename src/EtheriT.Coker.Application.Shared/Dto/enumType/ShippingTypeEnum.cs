@@ -10,9 +10,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
     {
         郵寄掛號 = 1,
         宅配_貨運 = 2,
-        貨運_到付 = 3,
+        OK取貨 = 3,
         全家取貨 = 4,
         Seven取貨 = 5,
         面交_自取 = 6,
+        萊爾富取貨 = 7
     }
 }

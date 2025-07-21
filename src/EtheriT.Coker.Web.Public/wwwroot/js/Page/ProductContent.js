@@ -226,6 +226,61 @@ function PageDefaultSet(result) {
     }
     if (result.techCertDatas.length == 0) $("#btn_tab > .technical,.pro_tc").remove();
 
+    const stocks = result.stocks || [];
+
+    // 是否有時價
+    const hasTimePrice = stocks.some(s => s.timePrice);
+
+    // 收集所有價格
+    const allPriceObjects = stocks
+        .filter(s => !s.timePrice && s.prices.length > 0)
+        .flatMap(s => s.prices.map(p => ({
+            total: (p.price || 0) + (p.bonus || 0),
+            price: p.price || 0,
+            bonus: p.bonus || 0
+        })));
+
+    let minprice, maxprice;
+    if (allPriceObjects.length > 0) {
+        minprice = Math.min(...allPriceObjects.map(x => x.total));
+        maxprice = Math.max(...allPriceObjects.map(x => x.total));
+    }
+
+    // 接下來組合顯示文字
+    let displayText = '';
+    const target = orderPrice ? minprice : maxprice;
+    if (hasTimePrice && allPriceObjects.length === 0) {
+        displayText = '時價';
+    } else if (hasTimePrice && allPriceObjects.length > 0) {
+        displayText = showRange ? `${minprice.toLocaleString('en-US')} ~ 時價` : target;
+    } else if (!hasTimePrice && allPriceObjects.length > 0) {
+        if (showRange) {
+            if (minprice === maxprice) {
+                // 只有一種價格，顯示詳細組成
+                const match = allPriceObjects.find(x => x.total === minprice);
+                displayText =
+                    match.bonus === 0
+                        ? `${match.price.toLocaleString('en-US')}`
+                        : match.price === 0
+                            ? `紅利:${match.bonus.toLocaleString('en-US')}`
+                            : `${match.price.toLocaleString('en-US')} + 紅利:${match.bonus.toLocaleString('en-US')}`;
+            } else {
+                displayText = `${minprice.toLocaleString('en-US')} ~ ${maxprice.toLocaleString('en-US')}`;
+            }
+        } else {
+            // 單一價格顯示(orderPrice決定用min或max)
+            const match = allPriceObjects.find(x => x.total === target);
+            displayText =
+                match.bonus === 0
+                    ? `${match.price.toLocaleString('en-US')}`
+                    : match.price === 0
+                        ? `紅利:${match.bonus.toLocaleString('en-US')}`
+                        : `${match.price.toLocaleString('en-US')} + 紅利:${match.bonus.toLocaleString('en-US')}`;
+        }
+    } else {
+        displayText = '';
+    }
+
     if (result.stocks.length > 1) {
         var obj = {};
 
@@ -235,10 +290,6 @@ function PageDefaultSet(result) {
 
         item1.data("stype", 1)
         item2.data("stype", 2)
-
-        const priceArray = result.stocks.map(d => d.prices[0].price);
-        const maxprice = Math.max(...priceArray);
-        const minprice = Math.min(...priceArray);
 
         var hasstock = false;
         result.stocks.forEach(data => {
@@ -258,6 +309,7 @@ function PageDefaultSet(result) {
                     priceid: data.prices[0].id,
                     s1id: data.fK_S1id,
                     s2id: data.fK_S2id,
+                    timePrice: data.timePrice,
                     stock: data.stock,
                     minQty: data.min_Qty,
                     price: data.prices[0].price,
@@ -320,10 +372,7 @@ function PageDefaultSet(result) {
         })
         $(".priceframe").empty();
         var price_temp = $($("#PriceListTemplate").html()).clone();
-        if (showRange) {
-            if (maxprice == minprice) price_temp.find(".discount").text(minprice.toLocaleString('en-US'));
-            else price_temp.find(".discount").text(minprice.toLocaleString('en-US') + " ~ " + maxprice.toLocaleString('en-US'));
-        } else price_temp.find(".discount").text((orderPrice ? minprice : maxprice).toLocaleString('en-US'));
+        price_temp.find(".discount").text(displayText);
         price_temp.find("input").addClass("d-none");
         $(".priceframe").append(price_temp);
     } else if (result.stocks[0].prices.length > 0 && result.stocks[0].prices[0].price != null) {
@@ -340,9 +389,7 @@ function PageDefaultSet(result) {
             price_temp.find("input").attr("id", `price_${item.id}`);
             price_temp.find("label").attr("for", `price_${item.id}`);
 
-            var price_text = "";
             if (item.bonus > 0) {
-                price_text = `${price.toLocaleString('en-US')}+紅利${item.bonus}點`;
                 if (CanShop) {
                     if (bonus > item.bonus) {
                         price_temp.find(".discount").removeClass("bonus_lack");
@@ -353,8 +400,8 @@ function PageDefaultSet(result) {
                         price_temp.find("input").prop("disabled", true);
                     }
                 }
-            } else price_text = price.toLocaleString('en-US');
-            price_temp.find(".discount").text(price_text);
+            }
+            price_temp.find(".discount").text(displayText);
             if (item.fK_RId != 1 && oriprice > price) price_temp.find(".discount").addClass("mprice");
 
             if (oriprice > price) {
@@ -365,9 +412,9 @@ function PageDefaultSet(result) {
             if (!IsLogin && result.stocks[0].suggestPrice > 0 && result.stocks[0].suggestPrice != price) {
                 price_temp.find(".discount").empty();
                 price_temp.find(".discount").removeClass("price");
-                price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${result.stocks[0].suggestPrice.toLocaleString('en-US')}</div><div class="text-danger">  $${price_text}</div>`);
+                price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${result.stocks[0].suggestPrice.toLocaleString('en-US')}</div><div class="text-danger">  ${displayText}</div>`);
             }
-            else price_temp.find(".discount").text(price_text);
+            if (result.stocks[0].timePrice) $(".btn_addToCar").remove();
 
             if ($(".priceframe").children().length == 0 && !price_temp.find("input").prop("disabled")) price_temp.find("input").prop("checked", true);
             $(".priceframe").append(price_temp);
@@ -622,32 +669,36 @@ function SpecRadio() {
                     price_temp.find("label").attr("for", `price_${self_item.priceid}`);
 
                     var price_text = "";
-                    if (self_item.bonus > 0) {
-                        price_text = `${price.toLocaleString('en-US')}+紅利${self_item.bonus}點`;
-                        if (CanShop) {
-                            if (bonus > self_item.bonus) {
-                                price_temp.find(".discount").removeClass("bonus_lack");
-                                price_temp.find("input").prop("disabled", false);
+                    if (item.timePrice) {
+                        price_temp.find(".discount").removeClass("price").text("時價");
+                    } else {
+                        if (self_item.bonus > 0) {
+                            price_text = `${price.toLocaleString('en-US')}+紅利${self_item.bonus}點`;
+                            if (CanShop) {
+                                if (bonus > self_item.bonus) {
+                                    price_temp.find(".discount").removeClass("bonus_lack");
+                                    price_temp.find("input").prop("disabled", false);
+                                }
+                                else {
+                                    price_temp.find(".discount").addClass("bonus_lack");
+                                    price_temp.find("input").prop("disabled", true);
+                                }
                             }
-                            else {
-                                price_temp.find(".discount").addClass("bonus_lack");
-                                price_temp.find("input").prop("disabled", true);
-                            }
+                        } else price_text = price.toLocaleString('en-US');
+
+                        if (!IsLogin && item.suggestprice > 0 && item.suggestprice != price) {
+                            price_temp.find(".discount").empty();
+                            price_temp.find(".discount").removeClass("price");
+                            price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${item.suggestprice.toLocaleString('en-US')}</div><div class="text-danger"> $${price_text}</div>`);
                         }
-                    } else price_text = price.toLocaleString('en-US');
+                        else price_temp.find(".discount").text(price_text);
 
-                    if (!IsLogin && item.suggestprice > 0 && item.suggestprice != price) {
-                        price_temp.find(".discount").empty();
-                        price_temp.find(".discount").removeClass("price");
-                        price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${item.suggestprice.toLocaleString('en-US')}</div><div class="text-danger"> $${price_text}</div>`);
-                    }
-                    else price_temp.find(".discount").text(price_text);
+                        if (self_item.fK_RId != 1) price_temp.find(".discount").addClass("mprice");
 
-                    if (self_item.fK_RId != 1) price_temp.find(".discount").addClass("mprice");
-
-                    if (oriprice > price) {
-                        price_temp.find(".ori_price").text(oriprice.toLocaleString('en-US'));
-                        price_temp.find(".ori_price").removeClass("d-none")
+                        if (oriprice > price) {
+                            price_temp.find(".ori_price").text(oriprice.toLocaleString('en-US'));
+                            price_temp.find(".ori_price").removeClass("d-none")
+                        }
                     }
 
                     if ($(".priceframe").children().length == 0 && !price_temp.find("input").prop("disabled")) price_temp.find("input").prop("checked", true);
@@ -670,7 +721,7 @@ function SpecRadio() {
 
     if (s2 == null) s2 = 0
     var this_price_list = price_list.find(e => e.s1id == s1 && e.s2id == s2);
-    if (this_price_list.stock <= 0) {
+    if (this_price_list.stock <= 0 || this_price_list.timePrice) {
         $(".btn_addToCar").addClass("close")
     }
     else {

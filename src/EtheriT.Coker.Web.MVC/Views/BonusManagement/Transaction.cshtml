@@ -178,6 +178,14 @@
                             columns.AddFor(m => m.Name).Caption("姓名").Name("Name");
                             columns.AddFor(m => m.Birthday).Caption("生日").DataType(GridColumnDataType.Date);
                     })
+                    .Toolbar(t => t.Items(items =>
+                    {
+                        items.Add().Location(ToolbarItemLocation.After)
+                        .Widget(w => w.CheckBox()
+                                      .Text($"僅顯示當月生日會員({DateTime.Now.Date.Month}月)")
+                                      .Value(false)
+                                      .OnValueChanged("isShowCurrentMonthBirthdayOnly_onValueChanged"));
+                    }))
                     .Summary(s => s.GroupItems(items =>
                     {
                         items.AddFor(m => m.Birthday)
@@ -194,7 +202,9 @@
                         pager.ShowInfo(true);
                     })
                     .DataSource(d => d.RemoteController().Key(nameof(GetFrontUserDto.UUID))
-                                      .LoadUrl("/api/BonusManagement/GetFrontUsers").LoadMethod("Get"))
+                                      .LoadUrl("/api/BonusManagement/GetFrontUsers").LoadMethod("Get")
+                                      .LoadParams(new { isShowCurrentMonthBirthdayOnly = new JS("function() { return isShowCurrentMonthBirthdayOnlyBool; }") })
+                                      )
                     .RemoteOperations(remote => remote.GroupPaging(true))
                     .OnSelectionChanged("onGridSelectionChanged")
                 )
@@ -322,4 +332,10 @@
             );
         });
     });
+
+    var isShowCurrentMonthBirthdayOnlyBool = false;
+    function isShowCurrentMonthBirthdayOnly_onValueChanged(e) {
+        isShowCurrentMonthBirthdayOnlyBool = e.value;
+        $("#gridContainer").dxDataGrid("instance").refresh();
+    }
 </script>

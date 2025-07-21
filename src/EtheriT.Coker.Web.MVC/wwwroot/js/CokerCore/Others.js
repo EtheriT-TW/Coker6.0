@@ -257,7 +257,4 @@
         }
     }
 });
-
-var _c = Coker;
-var co = Coker;
 co.Cookie.EffectiveTime = co.Data.Time.DataRetentionTime;

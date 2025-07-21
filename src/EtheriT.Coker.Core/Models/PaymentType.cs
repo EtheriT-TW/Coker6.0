@@ -24,7 +24,7 @@ namespace EtheriT.Coker.Core.Models
         public int RefundWorkDay { get; set; }
         public long FK_ThirdPartyId { get; set; }
         public ThirdParty? ThirdParty { get; set; }
-        public List<LogisticsType_PaymentType>? LogisticsType_Payments { get; set; }
+        public List<LogisticsPaymentRestriction>? LogisticsType_Payments { get; set; }
         public List<PaymentTypesValue>? paymentTypesValues { get; set; }
         public List<Order_Header>? Order_Headers { get; set; }
     }

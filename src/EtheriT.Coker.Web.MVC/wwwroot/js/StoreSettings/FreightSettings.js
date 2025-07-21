@@ -1,57 +1,9 @@
 ﻿var $set_default, $title, $preserve, $shipping, $freight, $low_con, $d_freight, $pricing_method;
 var keyId, disp_opt = true, freight_type
 var freight_list
-
+/// <reference path="/wwwroot/js/CokerCore.min.js" />
 function PageReady() {
-    co.Order = {
-        GetPreserveTypeEnum: function () {
-            return $.ajax({
-                url: "/api/Order/GetPreserveTypeEnum",
-                type: "POST",
-                headers: _c.Data.Header
-            });
-        },
-        GetShippingTypeEnum: function () {
-            return $.ajax({
-                url: "/api/Order/GetShippingTypeEnum",
-                type: "POST",
-                headers: _c.Data.Header
-            });
-        }
-    };
-    co.Freight = {
-        AddUp: function (data) {
-            return $.ajax({
-                url: "/api/Freight/AddUp",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        },
-        Get: function (id) {
-            return $.ajax({
-                url: "/api/Freight/GetOne/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { id: id },
-            });
-        },
-        Delete: function (id) {
-            return $.ajax({
-                url: "/api/Freight/Delete/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { id: id },
-            });
-        }
-    };
-
     ElementInit();
-
     const forms = $('#FreightForm');
     (() => {
         Array.from(forms).forEach(form => {

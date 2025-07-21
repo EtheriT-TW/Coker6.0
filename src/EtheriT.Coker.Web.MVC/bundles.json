@@ -21,6 +21,7 @@
         "wwwroot/js/CokerCore/Directory.js",
         "wwwroot/js/CokerCore/File.js",
         "wwwroot/js/CokerCore/Form.js",
+        "wwwroot/js/CokerCore/Freight.js",
         "wwwroot/js/CokerCore/HtmlContent.js",
         "wwwroot/js/CokerCore/ListFile.js",
         "wwwroot/js/CokerCore/Member.js",

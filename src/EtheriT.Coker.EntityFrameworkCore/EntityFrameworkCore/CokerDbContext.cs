@@ -33,10 +33,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Order_Header> Order_Headers { get; set; }
         public DbSet<Order_Details> Order_Details { get; set; }
         public DbSet<LogisticsSetting> LogisticsSettings { get; set; }
-        public DbSet<Logisticstype> Logisticstypes { get; set; }
         public DbSet<PaymentType> PaymentTypes { get; set; }
         public DbSet<PaymentTypesValue> PaymentTypesValues { get; set; }
-        public DbSet<LogisticsType_PaymentType> LogisticsType_Payments { get; set; }
+        public DbSet<LogisticsPaymentRestriction> LogisticsType_Payments { get; set; }
         public DbSet<ThirdParty> ThirdParties { get; set; }
         public DbSet<ThirdPartyKeypair> ThirdPartyKeypairs { get; set; }
         public DbSet<ThirdPartyKeypairValue> ThirdPartyKeypairValues { get; set; }
@@ -240,9 +239,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
-            modelBuilder.Entity<LogisticsType_PaymentType>(o =>
+            modelBuilder.Entity<LogisticsPaymentRestriction>(o =>
             {
-                o.HasOne(u => u.Logisticstype).WithMany(u => u.LogisticsType_Payments).HasForeignKey(f => f.FK_Lid);
                 o.HasOne(u => u.PaymentType).WithMany(u => u.LogisticsType_Payments).HasForeignKey(f => f.FK_Pid);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });

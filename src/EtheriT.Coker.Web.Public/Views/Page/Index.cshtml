@@ -131,16 +131,19 @@
                     <div class="modal-body">
                         <button type="button" class="bg-white btn-close end-0 me-3 p-2 position-absolute rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
                         <div class="d-flex justify-content-center">
-
-                            @if (Model.enterAd[0].Link != "")
+                            @{
+                                var ad = Model.enterAd[0];
+                            }
+                            @if (ad.Link != "")
                             {
-                                var target = Model.enterAd[0].Target == true ? "_blank" : "_self";
-                                var title = Model.enterAd[0].Target == true ? $"連結至：{Model.enterAd[0].Title}(另開視窗)" : $"連結至：{Model.enterAd[0].Title}";
-                                <a href="@Model.enterAd[0].Link" target="@target" title="@title">
+                                var target = ad.Target == true ? "_blank" : "_self";
+                                var rel = ad.Target ? "noopener noreferrer" : null;
+                                var title = ad.Target == true ? $"連結至：{ad.Title}(另開視窗)" : $"連結至：{ad.Title}";
+                                <a href="@ad.Link" target="@target" title="@title" @(rel != null ? $"rel=\"{rel}\"" : "")>
                                     <ul>
-                                        @foreach (var File in Model.enterAd[0].FileLink)
+                                        @foreach (var File in ad.FileLink)
                                         {
-                                            <li><img class="img-fluid d-block mx-auto" src="@File.Link" alt="@Model.enterAd[0].Title" /></li>
+                                            <li><img class="img-fluid d-block mx-auto" src="@File.Link" alt="@ad.Title" /></li>
                                         }
                                     </ul>
                                 </a>
@@ -148,9 +151,9 @@
                             else
                             {
                                 <ul>
-                                    @foreach (var File in Model.enterAd[0].FileLink)
+                                    @foreach (var File in ad.FileLink)
                                     {
-                                        <li><img class="img-fluid d-block mx-auto" src="@File.Link" alt="@Model.enterAd[0].Title" /></li>
+                                        <li><img class="img-fluid d-block mx-auto" src="@File.Link" alt="@ad.Title" /></li>
                                     }
                                 </ul>
                             }

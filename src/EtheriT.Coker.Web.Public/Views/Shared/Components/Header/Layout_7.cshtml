@@ -32,7 +32,7 @@
 					var logo_target = Model.HomeTarget == true ? "_blank" : "_self";
 					var logo_title = Model.HomeTarget == true ? string.Format(L.get("LinkToAndBlank"), L.get("HomePage")) : string.Format(L.get("LinkTo"), L.get("HomePage"));
 				}
-				<a href="/" target="@logo_target" title="@logo_title">
+				<a href="/" target="@logo_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@logo_title">
 					@if (string.IsNullOrEmpty(Model.Title))
 					{
 						<h1>@Model.Title</h1>
@@ -59,7 +59,7 @@
 						var home_title = Model.HomeTarget == true ? string.Format(L.get("LinkToAndBlank"), L.get("HomePage")) : string.Format(L.get("LinkTo"), L.get("HomePage"));
 						if (string.IsNullOrEmpty(Model.HomeLink)) Model.HomeLink = "/";
 					}
-					<a href="/" target="@home_target" title="@home_title">
+					<a href="/" target="@home_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@home_title">
 						@if (string.IsNullOrEmpty(Model.Title))
 						{
 							<h1>@Model.Title</h1>
@@ -90,7 +90,7 @@
 									<template id="Template_Car_Dropdown">
 										<li class="border-bottom me-4" data-scid="">
 											<figure class="position-relative mb-0">
-												<a data-key="link" class="pro_link d-flex" href="" title="" target="_blank">
+												<a data-key="link" class="pro_link d-flex" href="" title="" target="_blank" rel="noopener noreferrer">
 													<img data-key="imagePath" class="pro_image me-2" src="" alt="" />
 													<figcaption class="overflow-hidden">
 														<div data-key="title" class="pro_name h-auto"></div>
@@ -135,7 +135,7 @@
 					{
 						var target = menu.Target ?? false ? "_blank" : "_self";
 						var targetStr = menu.Target ?? false ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title);
-						<a href="@menu.Link" class="mx-2" title="@targetStr" target="@target">
+						<a href="@menu.Link" class="mx-2" title="@targetStr" target="@target" rel="@(menu.Target == true ? $"noopener noreferrer" : "")">
 							@if (string.IsNullOrEmpty(menu.imageUrl))
 							{
 								@menu.Title
@@ -178,7 +178,7 @@
 					var targetStr = menu.Target ?? false ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title);
 					<li class="title nav-item col-lg-3 listMenu langMenu">
 						<div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap font">
-							<a href="@menu.Link" title="@targetStr" target="@target">@menu.Title</a>
+							<a href="@menu.Link" title="@targetStr" target="@target" rel="@(menu.Target == true ? $"noopener noreferrer" : "")">@menu.Title</a>
 						</div>
 					</li>
 				}
@@ -291,7 +291,7 @@
 							}
 							else
 							{
-								<div class="swiper-slide"><a class="overflow-hidden text" data-bs-toggle="tooltip" title="@title" href="@link" target="@target">@marquee.title <span class="sr-only">(current)</span></a></div>
+								<div class="swiper-slide"><a class="overflow-hidden text" data-bs-toggle="tooltip" title="@title" href="@link" target="@target" rel="@(marquee.target == true ? $"noopener noreferrer" : "")">@marquee.title <span class="sr-only">(current)</span></a></div>
 							}
 						}
 					</div>

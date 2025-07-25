@@ -4,6 +4,7 @@ using EtheriT.Coker.Application.Authorizaion.Dto;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Newsletter;
+using EtheriT.Coker.Application.Shared.Authorization;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
@@ -61,6 +62,7 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly IConfiguration configuration;
         private readonly IShoppingCartAppService shoppingCartAppService;
+        private readonly ICookieManagerAppService cookieManager;
         private readonly IHostEnvironment _env;
         public AccountAppService(
             CokerDbContext db,
@@ -75,6 +77,7 @@ namespace EtheriT.Coker.Application.Authorization
             IFileUploadAppService fileUploadAppService,
             IConfiguration configuration,
             IShoppingCartAppService shoppingCartAppService,
+            ICookieManagerAppService cookieManager,
             IHostEnvironment env
         )
         {
@@ -91,6 +94,7 @@ namespace EtheriT.Coker.Application.Authorization
             this.shoppingCartAppService = shoppingCartAppService;
             this.stringHandler = stringHandler;
             this._env = env;
+            this.cookieManager = cookieManager;
             controllerName = "Account";
         }
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
@@ -1453,13 +1457,13 @@ namespace EtheriT.Coker.Application.Authorization
 
                 output.Success = true;
                 if (dto!= null) {
-                    httpContextAccessor.HttpContext.Response.Cookies.Append("RememberMe", dto.Remember ? "1" : "0", new CookieOptions { Expires = EndDateTime });
+                    cookieManager.Set("RememberMe", dto.Remember ? "1" : "0", CookiePurposeEnum.AuthToken);
                     if (!dto.Remember) {
-                        var tokenOld = httpContextAccessor.HttpContext.Request.Cookies["Token"];
-                        var refreshTokenOld = httpContextAccessor.HttpContext.Request.Cookies["RefreshToken"];
-                        if (tokenOld != null) httpContextAccessor.HttpContext.Response.Cookies.Append("Token", tokenOld, new CookieOptions { Expires = null });
-                        if (refreshTokenOld != null) httpContextAccessor.HttpContext.Response.Cookies.Append("RefreshToken", refreshTokenOld, new CookieOptions { Expires = null });
-                        httpContextAccessor.HttpContext.Response.Cookies.Append("RememberMe", "1", new CookieOptions { Expires = null });
+                        var tokenOld = cookieManager.Get("Token");
+                        var refreshTokenOld = cookieManager.Get("RefreshToken");
+                        if (tokenOld != null) cookieManager.Delete("Token");
+                        if (refreshTokenOld != null) cookieManager.Delete("RefreshToken");
+                        cookieManager.Delete("RememberMe");
                     }
                 }
             }

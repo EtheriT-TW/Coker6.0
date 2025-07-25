@@ -15,9 +15,10 @@
             @{
                 var home_target = Model.HomeTarget == true ? "_blank" : "_self";
                 var home_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+                var rel = Model.HomeTarget == true ? "noopener noreferrer" : null;
                 if (string.IsNullOrEmpty(Model.HomeLink)) Model.HomeLink = "/";
             }
-            <a href="@Model.HomeLink" target="@home_target" title="@home_title">
+            <a href="@Model.HomeLink" target="@home_target" title="@home_title" @(rel != null ? $"rel=\"{rel}\"" : "")>
                 @if (string.IsNullOrEmpty(Model.Title))
                 {
                     <h1>@Model.Title</h1>
@@ -82,6 +83,7 @@
                                             var iconclass = secItem.Icon == "" ? "d-none" : "";
                                             var imageiconclass = secItem.ImageIcon == "" ? "d-none" : "";
                                             var target = secItem.Target == true ? "_blank" : "_self";
+                                            var secRel = secItem.Target == true ? "noopener noreferrer" : null;
                                             var title = secItem.Target == true ? $"連結至：{secItem.Title}(另開視窗)" : $"連結至：{secItem.Title}";
                                             string titleClass = (secItem.menuItemModels == null || secItem.menuItemModels.Count() == 0 || menu.Link.ToLower().Contains("product")) ? "" : "hasChild";
                                             if (string.IsNullOrEmpty(secItem.Link))
@@ -90,7 +92,7 @@
                                                 title = $"展開選單：{secItem.Title}";
                                             }
                                             <li class="subtitle nav-item my-0 @titleClass">
-                                                <a id="collapse-header-@secItem.Title" class="subtitle_title justify-content-between nav-link text-black py-0 text-nowrap text-start d-flex align-items-center collapsed" href="@secItem.Link" title="@title" target="@target"
+                                                <a id="collapse-header-@secItem.Title" class="subtitle_title justify-content-between nav-link text-black py-0 text-nowrap text-start d-flex align-items-center collapsed" href="@secItem.Link" title="@title" target="@target" @(secRel != null ? $"rel=\"{secRel}\"" : "")
                                                    data-bs-toggle="" data-bs-target="#collapse-@secItem.Title" aria-expanded="true">
                                                     <div>
                                                         <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
@@ -114,7 +116,8 @@
                                                                 {
                                                                     target = thirdItem.Target == true ? "_blank" : "_self";
                                                                     title = thirdItem.Target == true ? $"連結至：{thirdItem.Title}(另開視窗)" : $"連結至：{thirdItem.Title}";
-                                                                    <a class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target">
+                                                                    var thirdRel = thirdItem.Target == true ? "noopener noreferrer" : null;
+                                                                    <a class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target" @(thirdRel != null ? $"rel=\"{thirdRel}\"" : "")>
                                                                         <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
                                                                         <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
                                                                         @thirdItem.Title
@@ -140,7 +143,7 @@
                         }
                         else
                         {
-                            <a class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black" href="@menu.Link" target="@(menu.Target == true?"_blank":"_self")" title="@(menu.Target == true?$"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
+                            <a class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black" href="@menu.Link" target="@(menu.Target == true ? "_blank" : "_self")" rel="@(menu.Target == true ? $"noopener noreferrer" : "")" title="@(menu.Target == true ? $"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
                                 @if (string.IsNullOrEmpty(menu.imageUrl))
                                 {
                                     @menu.Title
@@ -177,7 +180,7 @@
                 var logo_target = Model.HomeTarget == true ? "_blank" : "_self";
                 var logo_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
             }
-            <a href="@Model.HomeLink" target="@logo_target" title="@logo_title">
+            <a href="@Model.HomeLink" target="@logo_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@logo_title">
                 @if (string.IsNullOrEmpty(Model.Title))
                 {
                     <h1>@Model.Title</h1>
@@ -211,7 +214,7 @@
                             <template id="Template_Car_Dropdown">
                                 <li class="border-bottom me-4" data-scid="">
                                     <figure class="position-relative mb-0">
-                                        <a data-key="link" class="pro_link d-flex" href="" title="" target="_blank">
+                                        <a data-key="link" class="pro_link d-flex" href="" title="" target="_blank" rel="noopener noreferrer">
                                             <img data-key="imagePath" class="pro_image me-2" src="" alt="" />
                                             <figcaption class="overflow-hidden">
                                                 <div data-key="title" class="pro_name h-auto"></div>

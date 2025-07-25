@@ -128,13 +128,14 @@ namespace EtheriT.Coker.Web.Public.Controllers
         public async Task<IActionResult> IndexAsync(string website, string key, string option, int id, string search)
         {
             if (string.IsNullOrEmpty(key)) key = "home";
-            else if (string.IsNullOrEmpty(website) && !string.IsNullOrEmpty(key))
+            else if (string.IsNullOrEmpty(website) && !string.IsNullOrEmpty(key) && string.IsNullOrEmpty(option))
             {
                 website = key;
                 key = "home";
             }
             var rootSiteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var defaultData = await websiteApplication.GetDefaultData(rootSiteId, website);
+            if (website != defaultData.OrgName) website = defaultData.OrgName;
             var siteId = defaultData.Id;
             var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
             var payment = JsonConvert.DeserializeObject<List<PaymentTypeItemOutputDto>>(JsonConvert.SerializeObject((await thirdPartyAppService.GetDisplayPayment()).Value));
@@ -212,6 +213,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 option = key;
             }
             model.option = key;
+            if (string.IsNullOrEmpty(option)) option = "";
             if (!UseLegacyPathHandling(website, key, option))
             {
                 model.PageData = new GetFrontContenOutputDto { SiteName = L.get("PathError") };
@@ -220,7 +222,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
             }
             else if (!string.IsNullOrEmpty(key))
             {
-                if (string.IsNullOrEmpty(option)) option = "";
                 switch (option.ToLower())
                 {
                     case "article":
@@ -269,7 +270,11 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             remoteInputDto.FK_WebmenuId = ProdPageData.Id;
                             model.MenuBread = await webMenuApplication.GetMenuBread(ProdPageData.Id);
                             model.PageData = await productAppService.GetFrontConten(new ProdGetFrontContenInputDto { siteId = defaultData.Id, prodId = id });
-                            if (model.PageData.Id == 0) view = "../Error/NotFound";
+                            if (model.PageData.Id == 0)
+                            {
+                                Response.StatusCode = 404;
+                                view = "../Error/NotFound";
+                            }
                             else
                             {
                                 remoteInputDto.FK_ProdId = model.PageData.Id;
@@ -464,6 +469,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             }
             ViewBag.HasShoppingCar = await webMenuApplication.checkHasShoppingCar(siteId);
             ViewBag.LoginEnable = await webMenuApplication.checkHasMember(siteId);
+            ViewBag.RootId = await webMenuApplication.GetRootId(key);
             ViewBag.isLogin = false;
             ViewBag.SiteId = siteId;
             ViewBag.option = option.ToLower();
@@ -519,7 +525,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["Id"] = model.PageData.Id;
             ViewData["bodyClass"] = model.option?.ToLower() == "home" ? model.option.ToLower() : "page";
             var nonce = HttpContext.Items["CSPNonce"] as string;
-            ViewBag.SearchWord = search;
+            ViewBag.SearchWord = JsonConvert.SerializeObject(search);
             ViewBag.Nonce = nonce;
             ViewData["nonce"] = nonce;
             ViewBag.storeBuyState = model.storeSet.storeBuyState;

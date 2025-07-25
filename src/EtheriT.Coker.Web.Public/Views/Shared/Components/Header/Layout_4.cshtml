@@ -14,7 +14,7 @@
                         var home_target = Model.HomeTarget == true ? "_blank" : "_self";
                         var homte_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
                         }
-                    <a class="d-flex navbar-brand me-0 me-sm-3" href="@Model.HomeLink" target="@home_target" title="@homte_title">
+                    <a class="d-flex navbar-brand me-0 me-sm-3" href="@Model.HomeLink" target="@home_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@homte_title">
                         <img class="logo" src="@Model.LogoImageUrl" alt=" " asp-append-version="true">
                         <h1 class="sr-only">@Model.Title</h1>
                     </a>
@@ -28,7 +28,7 @@
                     {
                         var sitemap_target = Model.Sitemap_Target == true ? "_blank" : "_self";
                         var sitemap_title = Model.Sitemap_Target == true ? "連結至：網站導覽(另開視窗)" : "連結至：網站導覽";
-                        <a class="text-nowrap text-white px-3 mt-3 mb-2 mb-lg-auto mt-lg-auto font_small" aria-current="page" href="@Model.Sitemap_Link" title="@sitemap_title" target="@sitemap_target">網站導覽</a>
+                        <a class="text-nowrap text-white px-3 mt-3 mb-2 mb-lg-auto mt-lg-auto font_small" aria-current="page" href="@Model.Sitemap_Link" title="@sitemap_title" target="@sitemap_target" rel="@(Model.Sitemap_Target == true ? $"noopener noreferrer" : "")">網站導覽</a>
                     }
                     <div id="Search" class="align-items-center bg-white d-flex rounded">
                         <input id="SearchInput" class="input_sear form-control rounded-0 rounded-start" type="search" placeholder="站內搜尋" aria-label="Search">
@@ -54,7 +54,7 @@
                         var target = menu.Target == true ? "_blank" : "_self";
                         var title = menu.Target == true ? $"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}";
                         <li class="float-start">
-                            <a class="nav-link p-0 text-black" aria-current="page" href="@menu.Link" title="@title" target="@target">
+                            <a class="nav-link p-0 text-black" aria-current="page" href="@menu.Link" title="@title" target="@target" rel="@(menu.Target == true ? $"noopener noreferrer" : "")">
                                 @if (@menu.imageUrl == "")
                                 {
                                     <h2 class="w-25 custom_h5 text-white mx-auto">@menu.Title</h2>
@@ -77,7 +77,7 @@
         var picture_home_target = Model.HomeTarget == true ? "_blank" : "_self";
         var picture_homte_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
     }
-    <a class="" href="@Model.HomeLink" target="@picture_home_target" title="@picture_homte_title">
+    <a class="" href="@Model.HomeLink" target="@picture_home_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@picture_homte_title">
         <img class="w-100" src="~/upload/eplus/banner.jpg" alt="@Model.Title">
     </a>
 </div>

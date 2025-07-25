@@ -21,7 +21,7 @@
                 var home_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
                 if (string.IsNullOrEmpty(Model.HomeLink)) Model.HomeLink = "/";
             }
-            <a href="@Model.HomeLink" target="@home_target" title="@home_title">
+            <a href="@Model.HomeLink" target="@home_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@home_title">
                 @if (string.IsNullOrEmpty(Model.LogoImageUrl))
                 {
                     <h1>@Model.Title</h1>
@@ -53,7 +53,7 @@
                     string headType = "metaMenu";
                     List<MenuItemModel> subItems = menu.menuItemModels ?? new List<MenuItemModel>();
                     string jc = menu.menuItemModels != null && menu.menuItemModels.Count() > 4 ? "" : "justify-content-center";
-                    <li class="title nav-item p-2 @headType">
+                    <li class="title nav-item p-2 @headType" data-rootId="@menu.Id">
                         @if (subItems.Count() > 0)
                         {
                             <a href="@menu.Link" id="collapse-header-@menu.Title" class="m-0 nav-link pb-0 text-nowrap text-black menu-item collapsed"
@@ -96,7 +96,7 @@
                                                 title = $"展開選單：{secItem.Title}";
                                             }
                                             <li class="subtitle nav-item my-0 @titleClass">
-                                                <a id="collapse-header-@secItem.Title" class="subtitle_title justify-content-between nav-link text-black py-0 text-nowrap text-start d-flex align-items-center collapsed" href="@secItem.Link" title="@title" target="@target"
+                                                <a id="collapse-header-@secItem.Title" class="subtitle_title justify-content-between nav-link text-black py-0 text-nowrap text-start d-flex align-items-center collapsed" href="@secItem.Link" title="@title" target="@target" rel="@(secItem.Target == true ? $"noopener noreferrer" : "")"
                                                    data-bs-toggle="" data-bs-target="#collapse-@secItem.Title" aria-expanded="true">
                                                     <div>
                                                         <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
@@ -120,7 +120,7 @@
                                                                 {
                                                                     target = thirdItem.Target == true ? "_blank" : "_self";
                                                                     title = thirdItem.Target == true ? $"連結至：{thirdItem.Title}(另開視窗)" : $"連結至：{thirdItem.Title}";
-                                                                    <a class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target">
+                                                                    <a class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target" rel="@(thirdItem.Target == true ? $"noopener noreferrer" : "")">
                                                                         <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
                                                                         <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
                                                                         @thirdItem.Title
@@ -146,7 +146,7 @@
                         }
                         else
                         {
-                            <a class="mt-0 nav-link pb-0 text-nowrap text-black menu-item" href="@menu.Link" target="@(menu.Target == true ? "_blank" : "_self")" title="@(menu.Target == true ? $"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
+                            <a class="mt-0 nav-link pb-0 text-nowrap text-black menu-item" href="@menu.Link" target="@(menu.Target == true ? "_blank" : "_self")" rel="@(menu.Target == true ? $"noopener noreferrer" : "")" title="@(menu.Target == true ? $"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
                                 @if (string.IsNullOrEmpty(menu.imageUrl))
                                 {
                                     @menu.Title
@@ -188,7 +188,7 @@
                 var logo_target = Model.HomeTarget == true ? "_blank" : "_self";
                 var logo_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
             }
-            <a href="@Model.HomeLink" target="@logo_target" title="@logo_title">
+            <a href="@Model.HomeLink" target="@logo_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@logo_title">
                 @if (string.IsNullOrEmpty(Model.Title))
                 {
                     <h1>@Model.Title</h1>
@@ -212,7 +212,7 @@
             {
                 var target = menu.Target ?? false ? "_blank" : "_self";
                 var targetStr = menu.Target ?? false ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title);
-                <a href="@menu.Link" class="mx-2" title="@targetStr" target="@target">
+                <a href="@menu.Link" class="mx-2" title="@targetStr" target="@target" rel="@(menu.Target == true ? $"noopener noreferrer" : "")">
                     @if (string.IsNullOrEmpty(menu.imageUrl))
                     {
                         @menu.Title
@@ -246,7 +246,7 @@
                             <template id="Template_Car_Dropdown">
                                 <li class="border-bottom me-4" data-scid="">
                                     <figure class="position-relative mb-0">
-                                        <a data-key="link" class="pro_link d-flex" href="" title="" target="_blank">
+                                        <a data-key="link" class="pro_link d-flex" href="" title="" target="_blank" rel="noopener noreferrer">
                                             <img data-key="imagePath" class="pro_image me-2" src="" alt="" />
                                             <figcaption class="overflow-hidden">
                                                 <div data-key="title" class="pro_name h-auto"></div>
@@ -389,7 +389,7 @@
                             }
                             else
                             {
-                                <div class="swiper-slide"><a class="overflow-hidden text" data-bs-toggle="tooltip" title="@title" href="@link" target="@target">@marquee.title <span class="sr-only">(current)</span></a></div>
+                                <div class="swiper-slide"><a class="overflow-hidden text" data-bs-toggle="tooltip" title="@title" href="@link" target="@target" rel="@(marquee.target == true ? $"noopener noreferrer" : "")">@marquee.title <span class="sr-only">(current)</span></a></div>
                             }
                         }
                     </div>

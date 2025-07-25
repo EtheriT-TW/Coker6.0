@@ -37,7 +37,7 @@
                     var logo_target = Model.HomeTarget == true ? "_blank" : "_self";
                     var logo_title = Model.HomeTarget == true ? string.Format(L.get("LinkToAndBlank"), L.get("HomePage")) : string.Format(L.get("LinkTo"), L.get("HomePage"));
                 }
-                <a href="/" target="@logo_target" title="@logo_title">
+                <a href="/" target="@logo_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@logo_title">
                     @if (string.IsNullOrEmpty(Model.Title))
                     {
                         <h1>@Model.Title</h1>
@@ -63,7 +63,7 @@
                     var home_title = Model.HomeTarget == true ? string.Format(L.get("LinkToAndBlank"), L.get("HomePage")) : string.Format(L.get("LinkTo"), L.get("HomePage"));
                     if (string.IsNullOrEmpty(Model.HomeLink)) Model.HomeLink = "/";
                 }
-                <a href="/" target="@home_target" title="@home_title">
+                <a href="/" target="@home_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@home_title">
                     @if (string.IsNullOrEmpty(Model.Title))
                     {
                         <h1>@Model.Title</h1>
@@ -84,7 +84,7 @@
                     {
                         var target = menu.Target??false ? "_blank" : "_self";
                         var targetStr = menu.Target ?? false ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title);
-                        <a href="@menu.Link" class="mx-2 switch-button" title="@targetStr" target="@target">@menu.Title</a>
+                        <a href="@menu.Link" class="mx-2 switch-button" title="@targetStr" target="@target" rel="@(menu.Target == true ? $"noopener noreferrer" : "")">@menu.Title</a>
                     }
                 </div>
             </div>
@@ -130,7 +130,7 @@
                                                     title = $"展開選單：{secItem.Title}";
                                                 }
                                             }
-                                            <a class="subtitle_title nav-link text-white text-start d-flex" href="@secItem.Link" title="@title" target="@target">
+                                            <a class="subtitle_title nav-link text-white text-start d-flex" href="@secItem.Link" title="@title" target="@target" rel="@(secItem.Target == true ? $"noopener noreferrer" : "")">
                                                 <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
                                                 <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
                                                 <span>
@@ -149,7 +149,7 @@
                                                             {
                                                                 target = thirdItem.Target == true ? "_blank" : "_self";
                                                                 title = thirdItem.Target == true ? string.Format(L.get("LinkToAndBlank"), thirdItem.Title) : string.Format(L.get("LinkTo"), thirdItem.Title);
-                                                                <a class="subtitle_title ps-2 nav-link text-black pt-0 pb-1 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target">
+                                                                <a class="subtitle_title ps-2 nav-link text-black pt-0 pb-1 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target" rel="@(thirdItem.Target == true ? $"noopener noreferrer" : "")">
                                                                     <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
                                                                     <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
                                                                     @thirdItem.Title
@@ -175,7 +175,7 @@
                         else
                         {
                             <div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap text-white font">
-                                <a class="p-0 nav-link text-nowrap text-white" href="@menu.Link" target="@(menu.Target == true?"_blank":"_self")" title="@(menu.Target == true? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title))">
+                                <a class="p-0 nav-link text-nowrap text-white" href="@menu.Link" target="@(menu.Target == true ? "_blank" : "_self")" rel="@(menu.Target == true ? $"noopener noreferrer" : "")" title="@(menu.Target == true ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title))">
                                     @menu.Title
                                 </a>
                             </div>
@@ -188,7 +188,7 @@
                     var targetStr = menu.Target ?? false ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title);
                     <li class="title nav-item col-lg-3 listMenu langMenu">
                         <div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap font">
-                            <a href="@menu.Link" class="text-white" title="@targetStr" target="@target">@menu.Title</a>
+                            <a href="@menu.Link" class="text-white" title="@targetStr" target="@target" rel="@(menu.Target == true ? $"noopener noreferrer" : "")">@menu.Title</a>
                         </div>
                     </li>
                 }
@@ -218,7 +218,7 @@
                         <template id="Template_Car_Dropdown">
                             <li class="border-bottom me-4" data-scid="">
                                 <figure class="position-relative mb-0">
-                                    <a data-key="link" class="pro_link d-flex" href="" title="" target="_blank">
+                                    <a data-key="link" class="pro_link d-flex" href="" title="" target="_blank" rel="noopener noreferrer">
                                         <img data-key="imagePath" class="pro_image me-2" src="" alt="" />
                                         <figcaption class="overflow-hidden">
                                             <div data-key="title" class="pro_name h-auto"></div>

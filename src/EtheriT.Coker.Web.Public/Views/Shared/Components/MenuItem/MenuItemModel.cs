@@ -2,6 +2,7 @@
 {
     public class MenuItemModel
     {
+        public long Id { get; set; }
         public string? Title { get; set; }
         public string? SubTitle { get; set; }
         public string? Description { get; set; }
@@ -9,6 +10,7 @@
         public bool? Target { get; set; }
         public string? imageUrl { get; set; }
         public string? hoverImageUrl { get; set; }
+        public string? RouteName { get; set; }
         public string? Icon { get; set; }
         public string? IconClass { get; set; }
         public string? ImageIcon { get; set; }

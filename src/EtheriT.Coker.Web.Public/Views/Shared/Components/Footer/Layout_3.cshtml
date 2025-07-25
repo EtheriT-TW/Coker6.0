@@ -61,7 +61,7 @@
 		}
 		@if (Model.Accessibility_Link != null && Model.Accessibility_Badge != null)
 		{
-			<a href="@Model.Accessibility_Link" targer="_blank" title="連結至:無障礙網站AA認證(另開新視窗)">
+			<a href="@Model.Accessibility_Link" targer="_blank" rel="noopener noreferrer" title="連結至:無障礙網站AA認證(另開新視窗)">
 				<img class="px-3 my-3" alt="通過AA無障礙網頁檢測" src="@Model.Accessibility_Badge" asp-append-version="true" />
 			</a>
 		}

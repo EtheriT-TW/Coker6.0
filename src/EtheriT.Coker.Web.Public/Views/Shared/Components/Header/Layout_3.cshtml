@@ -17,7 +17,7 @@
                     <a class="d-flex navbar-brand" href="/" target="_self" title="連結至：首頁">
                         <img class="rootlogo w-100" src="/upload/logo/ksp_logo.png" alt=" ">
                     </a>
-                    <a class="d-flex navbar-brand" href="@Model.HomeLink" target="@home_target" title="@home_title">
+                    <a class="d-flex navbar-brand" href="@Model.HomeLink" target="@home_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@home_title">
                         <img class="logo w-100" src="@Model.LogoImageUrl" alt=" " asp-append-version="true">
                         <h1 class="sr-only">@Model.Title</h1>
                     </a>
@@ -42,7 +42,7 @@
                                         @foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
                                         {
                                             target = (subMenu.Target != null && subMenu.Target == true) ? "_blank" : "_self";
-                                            <li><a class="dropdown-item text-lg-start fw-normal px-0 px-lg-3" href="@subMenu.Link" target="@target">@subMenu.Title</a></li>
+                                            <li><a class="dropdown-item text-lg-start fw-normal px-0 px-lg-3" href="@subMenu.Link" target="@target" rel="@(subMenu.Target == true ? $"noopener noreferrer" : "")">@subMenu.Title</a></li>
                                         }
                                     </ul>
                                 </li>
@@ -50,7 +50,7 @@
                             else
                             {
                                 <li class="text-nowrap nav-item px-2 my-1 text-center">
-                                    <a class="nav-link  px-0" aria-current="page" href="@menu.Link" target="@target" title="@title">@menu.Title</a>
+                                    <a class="nav-link  px-0" aria-current="page" href="@menu.Link" target="@target" rel="@(menu.Target == true ? $"noopener noreferrer" : "")" title="@title">@menu.Title</a>
                                 </li>
                             }
                         }

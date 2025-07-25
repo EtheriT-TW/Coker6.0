@@ -46,25 +46,25 @@
     <div id="Other_Web_Button" class=" center">
         @if (!string.IsNullOrEmpty(Model.Facebook_Link))
         {
-            <a href="@Model.Facebook_Link" title="連結至:粉絲團(另開新視窗)" target="_blank" class="link_icon"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="@Model.Facebook_Link" title="連結至:粉絲團(另開新視窗)" target="_blank" rel="noopener noreferrer" class="link_icon"><i class="fa-brands fa-facebook-f"></i></a>
         }
         @if (!string.IsNullOrEmpty(Model.YoutubeChannel_Link))
         {
-            <a href="@Model.YoutubeChannel_Link" title="連結至:YT頻道(另開新視窗)" target="_blank" class="link_icon"><i class="fa-brands fa-youtube"></i></a>
+            <a href="@Model.YoutubeChannel_Link" title="連結至:YT頻道(另開新視窗)" target="_blank" rel="noopener noreferrer" class="link_icon"><i class="fa-brands fa-youtube"></i></a>
         }
         @if (!string.IsNullOrEmpty(Model.IG_Link))
         {
-            <a href="@Model.IG_Link" title="連結至:IG粉絲團(另開新視窗)" target="_blank" class="link_icon"><i class="fa-brands fa-instagram"></i></a>
+            <a href="@Model.IG_Link" title="連結至:IG粉絲團(另開新視窗)" target="_blank" rel="noopener noreferrer" class="link_icon"><i class="fa-brands fa-instagram"></i></a>
         }
         @if (!string.IsNullOrEmpty(Model.LINE_Link))
         {
-            <a href="@Model.LINE_Link" title="連結至:LINE(另開新視窗)" target="_blank" class="link_icon"><i class="fa-brands fa-line"> </i></a>
+            <a href="@Model.LINE_Link" title="連結至:LINE(另開新視窗)" target="_blank" rel="noopener noreferrer" class="link_icon"><i class="fa-brands fa-line"> </i></a>
         }
         @if (Model.Other_Image_Link != null && Model.Other_Image_Link.Any())
         {
             @foreach (var data in Model.Other_Image_Link)
             {
-                <a href="@data.Link" title="連結至:@data.Title" target="_blank" class="link_image"><img src="@data.Source" alt="@data.Name" asp-append-version="true" /></a>
+                <a href="@data.Link" title="連結至:@data.Title" target="_blank" rel="noopener noreferrer" class="link_image"><img src="@data.Source" alt="@data.Name" asp-append-version="true" /></a>
             }
         }
     </div>

@@ -28,5 +28,6 @@ namespace EtheriT.Coker.Application
         public Task insertMenus(List<SelectDto> menus);
         public Task<bool> checkHasShoppingCar(long WebsiteID);
 		public Task<bool> checkHasMember(long WebsiteID);
+        public Task<long> GetRootId(string name);
 	}
 }

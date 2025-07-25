@@ -32,6 +32,7 @@ using EtheriT.Coker.Application.Report;
 using EtheriT.Coker.Application.Search;
 using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Shared.Article;
+using EtheriT.Coker.Application.Shared.Authorization;
 using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Common;
 using EtheriT.Coker.Application.Shared.Directory;
@@ -355,6 +356,7 @@ builder.Services.Configure<AuthenticationSettings>(builder.Configuration.GetSect
 builder.Services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 builder.Services.AddSingleton<IThumbnailGeneratorService, ThumbnailGeneratorService>();
 builder.Services.AddScoped<IMailTemplateAppService, MailTemplateAppService>();
+builder.Services.AddScoped<ICookieManagerAppService, CookieManagerAppService>();
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

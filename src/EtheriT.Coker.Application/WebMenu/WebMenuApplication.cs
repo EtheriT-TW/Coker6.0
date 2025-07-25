@@ -830,5 +830,16 @@ namespace EtheriT.Coker.Application
 			var item = db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId && !e.RemovedFromShelves && e.PageType == PageTypeEnum.會員);
 			return item.Any();
 		}
-	}
+        public async Task<long> GetRootId(string name)
+        {
+            name = name.ToLower().Trim();
+            var siteId = loginUserData.GetFrontWebsiteId();
+            var menu = await db.WebMenus.Include(e => e.FK_RootNode).Where(e =>  e.FK_WebsiteId == siteId &&  
+                ((e.RouterName == name && e.PageType == PageTypeEnum.一般頁面) || (name=="home" && new List<string?> {"/","/home" }.Contains(e.LinkUrl)) )).FirstOrDefaultAsync();
+            if(menu != null && menu.FK_RootNode != null) return menu.FK_RootNode.Id;
+            else if (menu != null) return menu.Id;
+            return 0;
+        }
+
+    }
 }

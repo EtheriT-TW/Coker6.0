@@ -414,7 +414,8 @@ function DirectoryDataInsert($item, result) {
         const linkData = {
             "href": path,
             "title": `連結至: ${data.title}${(target == "_blank" ? "(另開視窗)" : "")}`,
-            "target": target
+            "target": target,
+            rel: "noopener noreferrer"
         }
 
         if (content.length > 0) {
@@ -725,7 +726,10 @@ function InsertAdDatat($frame, result) {
                 $img_frame.find("img").attr("alt", result.title);
                 $img_frame.find("a").attr("href", result.link);
                 $img_frame.find("a").attr("title", "連結至" + result.title + (result.target ? "(開新視窗)" : ""));
-                $img_frame.find("a").attr("target", (result.target ? "_blank" : "_self"));
+                $img_frame.find("a").attr({
+                    "target": (result.target ? "_blank" : "_self"),
+                    rel: "noopener noreferrer"
+                });
                 if ($frame.find(".title").length > 0) {
                     $frame.find(".title").text(result.title);
                     $frame.find(".title").removeClass("d-none");

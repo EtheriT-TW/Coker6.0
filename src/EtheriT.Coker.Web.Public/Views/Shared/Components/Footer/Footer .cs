@@ -479,9 +479,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 								},
 								Content = new List<string>
 								{
-									"<span><i class=\"fa-solid fa-phone\"></i></span><a href=\"tel:03-3179599\" target=\"_blank\" title=\"撥打電話至:07-3737909(另開新視窗)\" class=\"tel\">03-3179599</a><br>" +
-									"<span><i class=\"fa-solid fa-at\"></i></span>電子郵件：<a href=\"mailto:unitedte168@gmail.com\" target=\"_blank\" title=\"發送電子郵件至:unitedte168@gmail.com(另開新視窗)\">unitedte168@gmail.com</a><br>" +
-									"<span><i class=\"fa-solid fa-house\"></i></span>地址：<a href=\"https://goo.gl/maps/eoGMYGKvxetaReKX8\" target=\"_blank\" title=\"連結至:google地圖(另開新視窗)\">330桃園市桃園區經國路168號</a><br>" +
+                                    "<span><i class=\"fa-solid fa-phone\"></i></span><a href=\"tel:03-3179599\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"撥打電話至:07-3737909(另開新視窗)\" class=\"tel\">03-3179599</a><br>" +
+                                    "<span><i class=\"fa-solid fa-at\"></i></span>電子郵件：<a href=\"mailto:unitedte168@gmail.com\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"發送電子郵件至:unitedte168@gmail.com(另開新視窗)\">unitedte168@gmail.com</a><br>" +
+                                    "<span><i class=\"fa-solid fa-house\"></i></span>地址：<a href=\"https://goo.gl/maps/eoGMYGKvxetaReKX8\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"連結至:google地圖(另開新視窗)\">330桃園市桃園區經國路168號</a><br>" +
                                     "<div id=\"qrcode\"><a href=\"/unitedtw/home\"><img src=\"/upload/footer_qrcode.png\" asp-append-version=\"true\" ></a></div>"
                                 },
 								Copyright = "Copyright © 2020 UNITED MEDICAL FOUNDATION TAIWAN. All Rights Reserved"
@@ -543,7 +543,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 	"										 </div>",
 	"										 <div class='info-row'>",
 	"												 <span class='label'>篩檢地點：</span>",
-	"													<span class='value'><a href='https://maps.app.goo.gl/C2mZJDm7atAJ4kA86' target=\"_blank\">高雄市左營區大中一路386號<br>醫療大樓10樓(感染症諮詢篩檢中心)</a></span>",
+    "													<span class='value'><a href='https://maps.app.goo.gl/C2mZJDm7atAJ4kA86' target=\"_blank\" rel=\"noopener noreferrer\">高雄市左營區大中一路386號<br>醫療大樓10樓(感染症諮詢篩檢中心)</a></span>",
 											"</div>",
 										"</div>",
 									"</div>"
@@ -578,7 +578,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                             {
                                 Content = new List<string>
                                 {
-                                    "Copyright© 高鋒開發有限公司 版權所有 |<br id=\"iswrap\"> KaoFeng Development Co., Ltd. ALL Rights Reservd<br>電話：<a href=\"tel:07-3737909\">07-3737909</a> &nbsp; 傳真：07-3737915<br id=\"iswrap\"> &nbsp; 地址：<a href=\"https://maps.app.goo.gl/6Q8ggmAWi6VCQ9us5\" target=\"_blank\"> 高雄市仁武區鳳仁路177-2號</a>",
+                                    "Copyright© 高鋒開發有限公司 版權所有 |<br id=\"iswrap\"> KaoFeng Development Co., Ltd. ALL Rights Reservd<br>電話：<a href=\"tel:07-3737909\">07-3737909</a> &nbsp; 傳真：07-3737915<br id=\"iswrap\"> &nbsp; 地址：<a href=\"https://maps.app.goo.gl/6Q8ggmAWi6VCQ9us5\" target=\"_blank\" rel=\"noopener noreferrer\"> 高雄市仁武區鳳仁路177-2號</a>",
                                 }
                             };
                             break;
@@ -587,7 +587,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                             {
                                 Content = new List<string>
                                 {
-                                    "Copyright© 湛盛度量衡器企業社 版權所有 |<br id=\"iswrap\"> 湛盛電子秤 ALL Rights Reservd<br>電話：<a href=\"tel:06-3128599\">06-312-8599</a> &nbsp; 傳真：06-312-9399<br id=\"iswrap\"> &nbsp; Email：<a href=\"MAILTO:L2730520@yahoo.com.tw\" target=\"_blank\"> L2730520@yahoo.com.tw</a>",
+                                    "Copyright© 湛盛度量衡器企業社 版權所有 |<br id=\"iswrap\"> 湛盛電子秤 ALL Rights Reservd<br>電話：<a href=\"tel:06-3128599\">06-312-8599</a> &nbsp; 傳真：06-312-9399<br id=\"iswrap\"> &nbsp; Email：<a href=\"MAILTO:L2730520@yahoo.com.tw\" target=\"_blank\" rel=\"noopener noreferrer\"> L2730520@yahoo.com.tw</a>",
                                 }
                             };
                             break;
@@ -607,8 +607,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                 Content = new List<string>
                                 {
                                     $@"
-										<a href=""https://maps.app.goo.gl/oHM8mFcQMUmQCXBPA"" target=""_blank"" title=""連結至:google地圖(另開新視窗)"">640 雲林縣斗六市鎮西路3號</a> 電話:<a href=""tel:05-5341621"" title=""撥打至：05-5341621"">05-5341-621</a> 信箱：<a href=""mailTo:shinyun@sygas.com.tw"" tltle=""發送電子郵件"">shinyun@sygas.com.tw</a><br />
-										<a href=""https://maps.app.goo.gl/oHM8mFcQMUmQCXBPA"" target=""_blank"" title=""連結至:google地圖(另開新視窗)"">No.3, Zhenxi Rd., Douliu City, Yunlin County 640, Taiwan (R.O.C.) </a> TEL:<a href=""tel:05-5341621"" title=""撥打至：886-5-5341621"">886-5-5341621</a>
+										<a href=""https://maps.app.goo.gl/oHM8mFcQMUmQCXBPA"" target=""_blank"" rel=""noopener noreferrer"" title=""連結至:google地圖(另開新視窗)"">640 雲林縣斗六市鎮西路3號</a> 電話:<a href=""tel:05-5341621"" title=""撥打至：05-5341621"">05-5341-621</a> 信箱：<a href=""mailTo:shinyun@sygas.com.tw"" tltle=""發送電子郵件"">shinyun@sygas.com.tw</a><br />
+										<a href=""https://maps.app.goo.gl/oHM8mFcQMUmQCXBPA"" target=""_blank"" rel=""noopener noreferrer"" title=""連結至:google地圖(另開新視窗)"">No.3, Zhenxi Rd., Douliu City, Yunlin County 640, Taiwan (R.O.C.) </a> TEL:<a href=""tel:05-5341621"" title=""撥打至：886-5-5341621"">886-5-5341621</a>
 										<br />
 									",
                                 }
@@ -633,7 +633,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 					switch (siteId)
 					{
 						case 6:
-							footerMessage = "<span class=\"footer-massage\">Copyright©2024 榮唐運輸股份有限公司 版權所有 <br id=\"iswrap\">&nbsp;&nbsp;電話：<a href=\"tel:07-8912360\">07-8912360(代表號)</a> <br id=\"smail-wrap\">&nbsp;&nbsp;傳真：<span>07-8912380</span><br id=\"smail-wrap\">&nbsp;&nbsp;統一編號:<span>13179181</span></span><hr id=\"smail-wrap\"><span class=\"footer-massage\">地址：<a href=\"https://maps.app.goo.gl/VcnQ5HaZ8ZVnstX27\" target=\"_blank\">高雄市小港區高坪十一路大坪頂停車場2號</a> &nbsp;&nbsp;<br id=\"iswrap\">E-mail：<a href=mailto:\"longtop.mail@msa.hinet.net\">longtop.mail@msa.hinet.net</a></span>";
+							footerMessage = "<span class=\"footer-massage\">Copyright©2024 榮唐運輸股份有限公司 版權所有 <br id=\"iswrap\">&nbsp;&nbsp;電話：<a href=\"tel:07-8912360\">07-8912360(代表號)</a> <br id=\"smail-wrap\">&nbsp;&nbsp;傳真：<span>07-8912380</span><br id=\"smail-wrap\">&nbsp;&nbsp;統一編號:<span>13179181</span></span><hr id=\"smail-wrap\"><span class=\"footer-massage\">地址：<a href=\"https://maps.app.goo.gl/VcnQ5HaZ8ZVnstX27\" target=\"_blank\" rel=\"noopener noreferrer\">高雄市小港區高坪十一路大坪頂停車場2號</a> &nbsp;&nbsp;<br id=\"iswrap\">E-mail：<a href=mailto:\"longtop.mail@msa.hinet.net\">longtop.mail@msa.hinet.net</a></span>";
 							break;
 						case 7:
 							footerMessage = "<div class=\"d-flex\" id=\"footrow\">" +
@@ -646,23 +646,23 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 							break;
 						case 11:
 							footerMessage =
-                                    "<div class=\"d-flex my-2\"><div id=\"tonight-block\"><a id=\"tonight-logo\" href=\"https://www.tonight-motel.com.tw/default1.asp\" title=\"連結至:晶夜官方網站(另開新視窗)\" target=\"_blank\"><img src = \"/upload/footer_image.png\" asp-append-version=\"true\" ></a></div>" +
+                                    "<div class=\"d-flex my-2\"><div id=\"tonight-block\"><a id=\"tonight-logo\" href=\"https://www.tonight-motel.com.tw/default1.asp\" title=\"連結至:晶夜官方網站(另開新視窗)\" target=\"_blank\" rel=\"noopener noreferrer\"><img src = \"/upload/footer_image.png\" asp-append-version=\"true\" ></a></div>" +
 									"<div id=\"message-block\"><span>興震億建設．震億營造 ALL Rights Reserved</span></br>" +
-									"<span>電話:</span><a href=\"tel:(08)751-7125\" target=\"_blank\" title=\"撥打電話至:(08)751-7125(另開新視窗)\" class=\"tel\">(08)751-7125</a> <span> &nbsp;&nbsp;傳真:(08)751-7135</span><br>" +
-									"<span>地址:</span><a href=\"https://g.co/kgs/D83qX5m\" target=\"_blank\" title=\"連結至:google地圖(另開新視窗)\">屏東縣屏東市清溪里清寧街223號</a></div></div>";
+                                    "<span>電話:</span><a href=\"tel:(08)751-7125\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"撥打電話至:(08)751-7125(另開新視窗)\" class=\"tel\">(08)751-7125</a> <span> &nbsp;&nbsp;傳真:(08)751-7135</span><br>" +
+                                    "<span>地址:</span><a href=\"https://g.co/kgs/D83qX5m\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"連結至:google地圖(另開新視窗)\">屏東縣屏東市清溪里清寧街223號</a></div></div>";
 							break;
 						case 29:
 							footerMessage = $@"
 								楠崧企業有限公司 NansonTechnic Co.,Ltd. ALL Rights Reserved. <br>
-								地址：<a href=""https://maps.app.goo.gl/uo36KnwZp6zAb7Rw6"" target=""_blank"" title=""連結至google Map"">80045高雄市新興區民生一路52號7樓之2 <br class=""d-sm-none d-block"">電話：</a><a href=""tel:07-2269629"" target=""_blank"" title=""撥打電話至:(07)2269629(另開新視窗)"" class=""tel"">+886-7-2269629</a> / <a href=""tel:07-2269793"" target=""_blank"" title=""撥打電話至:(07)2269793(另開新視窗)"" class=""tel"">+886-7-2269793</a> <br class=""d-md-none d-block"">傳真：+886-7-2262688<br>
+								地址：<a href=""https://maps.app.goo.gl/uo36KnwZp6zAb7Rw6"" target=""_blank"" rel=""noopener noreferrer"" title=""連結至google Map"">80045高雄市新興區民生一路52號7樓之2 <br class=""d-sm-none d-block"">電話：</a><a href=""tel:07-2269629"" target=""_blank"" title=""撥打電話至:(07)2269629(另開新視窗)"" class=""tel"">+886-7-2269629</a> / <a href=""tel:07-2269793"" target=""_blank"" title=""撥打電話至:(07)2269793(另開新視窗)"" class=""tel"">+886-7-2269793</a> <br class=""d-md-none d-block"">傳真：+886-7-2262688<br>
 								螢幕解析度請設為 1280*1024 以上│Design by EtheriT
 							";
 							break;
                         case 30:
                             footerMessage = $@"
-								日大調理設備有限公司 日大工程行 <a href=""https://maps.app.goo.gl/uo36KnwZp6zAb7Rw6"" target=""_blank"" title=""連結至google Map"">嘉義縣六腳鄉六斗村10鄰六斗尾150號</a><br />
-								電話:<a href=""tel:05-7812176"" target=""_blank"" title=""撥打電話至:(05)7812176(另開新視窗)"" class=""tel"">(05)781-2176</a> 傳真專線:(05)781-2786<br />
-								電子信箱:<a href=""mailto:Ryh.Dah@Gmail.com"" target=""_blank"" title=""發送電子郵件至:Ryh.Dah@Gmail.com(另開新視窗)"">Ryh.Dah@Gmail.com</a> ALL CONTENTS RYH-DAH COPYRIGHT 2016. RESERVED.
+								日大調理設備有限公司 日大工程行 <a href=""https://maps.app.goo.gl/uo36KnwZp6zAb7Rw6"" target=""_blank"" rel=""noopener noreferrer"" title=""連結至google Map"">嘉義縣六腳鄉六斗村10鄰六斗尾150號</a><br />
+								電話:<a href=""tel:05-7812176"" target=""_blank"" rel=""noopener noreferrer"" title=""撥打電話至:(05)7812176(另開新視窗)"" class=""tel"">(05)781-2176</a> 傳真專線:(05)781-2786<br />
+								電子信箱:<a href=""mailto:Ryh.Dah@Gmail.com"" target=""_blank"" rel=""noopener noreferrer"" title=""發送電子郵件至:Ryh.Dah@Gmail.com(另開新視窗)"">Ryh.Dah@Gmail.com</a> ALL CONTENTS RYH-DAH COPYRIGHT 2016. RESERVED.
 							";
                             break;
                     }

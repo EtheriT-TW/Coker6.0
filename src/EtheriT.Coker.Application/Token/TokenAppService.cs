@@ -22,6 +22,8 @@ using Org.BouncyCastle.Asn1.Ess;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.Common;
 using Microsoft.AspNetCore.Mvc;
+using EtheriT.Coker.Application.Shared.Authorization;
+using EtheriT.Coker.Application.Shared.Dto.enumType.OAuth;
 
 namespace EtheriT.Coker.Application.Token
 {
@@ -33,6 +35,7 @@ namespace EtheriT.Coker.Application.Token
         private readonly LoginUserData loginUserData;
         private readonly IDistributedCache cache;
         private readonly IConfiguration configuration;
+        private readonly ICookieManagerAppService cookieManager;
         private readonly IMapper mapper;
         public TokenAppService(
             JwtHelpers jwt,
@@ -41,6 +44,7 @@ namespace EtheriT.Coker.Application.Token
             LoginUserData loginUserData,
             IDistributedCache cache,
             IConfiguration configuration,
+            ICookieManagerAppService cookieManager,
             IMapper mapper)
         {
             this.jwt = jwt;
@@ -49,6 +53,7 @@ namespace EtheriT.Coker.Application.Token
             this.loginUserData = loginUserData;
             this.cache = cache;
             this.configuration = configuration;
+            this.cookieManager = cookieManager;
             this.mapper = mapper;
         }
         public async Task<TokenResponseDto> CreateToken()
@@ -338,14 +343,8 @@ namespace EtheriT.Coker.Application.Token
                 "Users"
             };
             string token = await jwt.GenerateToken(account, roles, secret, expireMinutes, custClaims);
-            httpContextAccessor.HttpContext?.Response.Cookies.Append($"{position}Token", token, new CookieOptions
-            {
-                Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 設定過期時間
-            });
-            httpContextAccessor.HttpContext?.Response.Cookies.Append($"{position}RefreshToken", secret.ToString(), new CookieOptions
-            {
-                Expires = DateTimeOffset.UtcNow.AddMonths(3) // 設定過期時間
-            });
+            cookieManager.Set($"{position}Token", token, CookiePurposeEnum.XsrfToken);
+            cookieManager.Set($"{position}RefreshToken", secret.ToString(), CookiePurposeEnum.RefreshIdentifier);
 
             var key = $"{position}Token";
             var items = httpContextAccessor.HttpContext!.Items;

@@ -7,7 +7,6 @@
  *
  * Date: 2023-12-11T12:22:16.785Z
  */
-
 (function (factory) {
     typeof define === 'function' && define.amd ? define(factory) :
         factory();
@@ -94,11 +93,11 @@
             if (typeof (settings.href) == "string" && settings.href !== "") {
                 href += settings.href;
             }
-
+            
             settings.showButtons.forEach(function (shareName) {
                 var item = settings.data[shareName]; // Create button element
 
-                _this.append("\n        <a href=\"".concat(item.href.call(null, href, settings.description), "\" title=\"").concat(settings.shareToText.format(item.name), " ").concat("\" target=\"_blank\" data-icon=\"").concat(shareName, "\">\n<span class=\"d-none\">" + shareName +"</span>          <span class=\"fa-stack\">\n            ").concat(!item.hideWrapper ? '<i class="fas fa-circle fa-stack-2x"></i>' : '', "\n            <i class=\"").concat(item.fa, " fa-stack-1x\"></i>\n          </span>\n        </a>\n      "));
+                _this.append("\n        <a href=\"".concat(item.href.call(null, href, settings.description), "\" title=\"").concat(settings.shareToText.format(item.name), " ").concat("\" target=\"_blank\" rel=\"noopener noreferrer\" data-icon=\"").concat(shareName, "\">\n<span class=\"d-none\">" + shareName +"</span>          <span class=\"fa-stack\">\n            ").concat(!item.hideWrapper ? '<i class="fas fa-circle fa-stack-2x"></i>' : '', "\n            <i class=\"").concat(item.fa, " fa-stack-1x\"></i>\n          </span>\n        </a>\n      "));
             });
             this.find('.fa-plurk').text('P'); // Bind link click event
 

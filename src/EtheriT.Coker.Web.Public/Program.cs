@@ -1,75 +1,77 @@
-﻿using EtheriT.Coker.Application;
+﻿using DevExpress.CodeParser;
+using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Advertise;
 using EtheriT.Coker.Application.Article;
 using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Contact;
 using EtheriT.Coker.Application.Directory;
+using EtheriT.Coker.Application.Favorites;
 using EtheriT.Coker.Application.Freight;
 using EtheriT.Coker.Application.HtmlContent;
 using EtheriT.Coker.Application.Import;
 using EtheriT.Coker.Application.JsonObject;
 using EtheriT.Coker.Application.Marquee;
+using EtheriT.Coker.Application.Newsletter;
 using EtheriT.Coker.Application.Order;
 using EtheriT.Coker.Application.Permissions;
+using EtheriT.Coker.Application.Processor;
 using EtheriT.Coker.Application.Product;
+using EtheriT.Coker.Application.Recipients;
 using EtheriT.Coker.Application.Remote;
 using EtheriT.Coker.Application.Search;
 using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Shared.Article;
+using EtheriT.Coker.Application.Shared.Authorization;
 using EtheriT.Coker.Application.Shared.Directory;
+using EtheriT.Coker.Application.Shared.Favorites;
 using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.JsonObject;
 using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Shared.Order;
+using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Product;
+using EtheriT.Coker.Application.Shared.Recipients;
 using EtheriT.Coker.Application.Shared.Remote;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Specification;
 using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
+using EtheriT.Coker.Application.Shared.Templates;
+using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.ShoppingCart;
 using EtheriT.Coker.Application.Specification;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Tag;
 using EtheriT.Coker.Application.TechnicalCertificate;
+using EtheriT.Coker.Application.Templates;
+using EtheriT.Coker.Application.ThirdParty;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.MVC.Resources;
 using EtheriT.Coker.Web.Public.Middlewares;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.CookiePolicy;
-using System.Net;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using EtheriT.Coker.Application.Advertise;
-using EtheriT.Coker.Application.Processor;
-using EtheriT.Coker.Application.Shared.Processor;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.Net.Http.Headers;
-using EtheriT.Coker.Application.Newsletter;
 using Microsoft.Extensions.FileProviders;
-using EtheriT.Coker.Application.Shared.Favorites;
-using EtheriT.Coker.Application.Favorites;
-using EtheriT.Coker.Application.Shared.ThirdParty;
-using EtheriT.Coker.Application.ThirdParty;
-using EtheriT.Coker.Application.Shared.Recipients;
-using EtheriT.Coker.Application.Recipients;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Net.Http.Headers;
 using Serilog;
-using EtheriT.Coker.Application.Shared.Templates;
-using EtheriT.Coker.Application.Templates;
+using System.Net;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
 var configuration = provider.GetRequiredService<IConfiguration>();
-
+var env = builder.Environment;
 
 
 builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Error);
@@ -128,8 +130,11 @@ if (builder.Configuration.GetValue<bool>("Verify:HttpOnly"))
 {
     builder.Services.AddHttpsRedirection(options =>
     {
-        options.RedirectStatusCode = (int)HttpStatusCode.TemporaryRedirect;
-        options.HttpsPort = 443;
+        options.RedirectStatusCode = (int)HttpStatusCode.MovedPermanently;
+        if (env.IsProduction())
+        {
+            options.HttpsPort = 443;
+        }
     });
 }
 builder.Services.AddAntiforgery(options =>
@@ -156,6 +161,7 @@ builder.WebHost.ConfigureKestrel(options =>
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<JwtHelpers>();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache()
     .AddSimpleCaptcha(builder =>
     {
@@ -219,6 +225,7 @@ builder.Services.AddScoped<IJsonObjectAppService, JsonObjectAppService>();
 builder.Services.AddScoped<ISitemap, Sitemap>();
 builder.Services.AddScoped<IHtmlProcessor, HtmlProcessor>();
 builder.Services.AddScoped<ITemplatesApplicationService, TemplatesApplicationService> ();
+builder.Services.AddScoped<ICookieManagerAppService, CookieManagerAppService>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 if (!builder.Environment.IsDevelopment())
@@ -289,14 +296,16 @@ var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
 
 app.Use((context, next) =>
 {
+    Console.WriteLine($"[Middleware] IsHttps = {context.Request.IsHttps}, Path = {context.Request.Path}");
     var requestPath = context.Request.Path.Value;
 
-    if (string.Equals(requestPath, "/", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(requestPath, "/home", StringComparison.OrdinalIgnoreCase))
+    if (context.Request.IsHttps &&
+        (string.Equals(requestPath, "/", StringComparison.OrdinalIgnoreCase) || string.Equals(requestPath, "/home", StringComparison.OrdinalIgnoreCase))
+    )
     {
         var tokenSet = antiforgery.GetAndStoreTokens(context);
         context.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken!,
-            new CookieOptions { HttpOnly = true, Secure = true });
+            new CookieOptions { HttpOnly = true, Secure = true, SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict });
     }
     return next(context);
 });
@@ -305,10 +314,10 @@ app.UseCookiePolicy(
     {
         Secure = CookieSecurePolicy.Always,
         HttpOnly = HttpOnlyPolicy.Always,
-        MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.None
+        MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Lax
     }
 );
-//app.UseMiddleware<CookieHandlingMiddleware>();
+app.UseMiddleware<CookieHandlingMiddleware>();
 app.UseMiddleware<StaticFileVersionMiddleware>();
 
 //禁用X-HTTP-Method-Override
@@ -328,6 +337,7 @@ static void ConfigureStaticFileHeaders(StaticFileResponseContext ctx)
     ctx.Context.Response.Headers["Cache-Control"] = "public, max-age=31536000"; // 例如設定快取一年
     ctx.Context.Response.Headers["Expires"] = DateTime.UtcNow.AddYears(1).ToString("R");
     ctx.Context.Response.Headers["Last-Modified"] = File.GetLastWriteTimeUtc(ctx.File.PhysicalPath).ToString("R");
+    ctx.Context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
     var etag = Convert.ToBase64String(Encoding.UTF8.GetBytes(ctx.File.PhysicalPath)); // 基於文件路徑生成 ETag
     ctx.Context.Response.Headers["ETag"] = etag;
 }
@@ -404,15 +414,23 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseMiddleware<PreventHttpRequestSmugglingMiddleware>();
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsProduction())
 {
     app.UseExceptionHandler("/Error");
     app.UseStatusCodePagesWithReExecute("/Error/{0}");
     app.UseMiddleware<CustomBadRequestMiddleware>();
+    app.UseHsts();
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 }
+else {
+    app.UseExceptionHandler("/Error");
+    app.UseStatusCodePagesWithReExecute("/Error/{0}");
+    app.UseMiddleware<CustomBadRequestMiddleware>();
+    app.UseHsts();
+    app.UseDeveloperExceptionPage();
+}
+
 app.UseHttpsRedirection();
-app.UseHsts();
 app.UseMiddleware<ContentSecurityPolicyMiddleware>();
 
 app.UseRouting();
@@ -444,8 +462,10 @@ app.MapControllerRoute(
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{key?}/{id?}",
-    defaults: new { controller = "Page", action = "Index" });
+    pattern: "{key?}/{option?}/{id?}/{search?}",
+    defaults: new { controller = "Page", action = "Index" },
+    constraints: new { key = new NotEqual(new List<string> { "upload", "css", "js", "images", "Shared", "lib" }) }
+);
 
 if (app.Environment.IsProduction())
 {

@@ -9,7 +9,7 @@ function ready() {
     forgetModal = $("#ForgetModal").length > 0 ? new bootstrap.Modal($("#ForgetModal")) : null;
     resetModal = $("#ResetModal").length > 0 ? new bootstrap.Modal($("#ResetModal")) : null;
     jqueryExtend();
-
+    document.querySelector(`[data-rootid="${RootId}"]`)?.classList.add("active");
     $('.navbar-nav > .nav-item').each(function () {
         $this = $(this);
         if ($this.find('.subtitle').length == 0) {

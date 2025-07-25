@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application;
+﻿using DevExpress.ClipboardSource.SpreadsheetML;
+using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
@@ -48,6 +49,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
             var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
             var website_data = await websiteApplication.GetAllData(defaultData.Id);
             var webmenus_data = (await webMenuApplication.GetDisplayAll(defaultData.Id)).Maps.ToList();
+            string orgName = website_data[0].OrgName ?? "";
             var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(website_data[0].Id, "Top")).Value));
             HeaderViewModel headerViewModel = new HeaderViewModel();
             switch (defaultData.Layout_Type)
@@ -66,15 +68,29 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     break;
                 default:
                     webmenus_data = webmenus_data.ToList();
-                    string uploadPath = childOrgNames.Count > 0 ? $"/upload/{website_data[0].OrgName}" : "/upload";
-                    string pathReplace = childOrgNames.Count > 0 ? "/upload" : $"/upload/{website_data[0].OrgName}";
+                    string uploadPath = childOrgNames.Count > 0 ? $"/upload/{orgName}" : "/upload";
+                    string pathReplace = childOrgNames.Count > 0 ? "/upload" : $"/upload/{orgName}";
                     string uploadDirectory = Configuration.GetValue<string>("VirtualDirectory:upload") ?? "";
+                    if (!uploadDirectory.Contains(orgName))
+                    {
+                        List<string> childFilePath = new List<string>();
+                        Configuration.GetSection("WebConfig:childPath").Bind(childFilePath);
+                        childFilePath.ForEach(path => { 
+                            if (path.Contains(orgName)) {
+                                uploadDirectory = path;
+                            }
+                        });
+                    }
+                    if (!string.IsNullOrEmpty(uploadDirectory) && !uploadDirectory.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                    {
+                        uploadDirectory += Path.DirectorySeparatorChar;
+                    }
                     headerViewModel = new HeaderViewModel
                     {
                         Title = website_data[0].Title,
                         UploadPath = uploadPath + "/",
                         LogoImageUrl = website_data[0].Logo?.Replace("/upload", uploadPath),
-                        HomeLink = childOrgNames.Count > 0 ? $"/{website_data[0].OrgName}/" : "/",
+                        HomeLink = childOrgNames.Count > 0 ? $"/{orgName}/" : "/",
                         HomeTarget = false,
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                         marqueeModels = new List<MarqueeDisplayDto> { },
@@ -106,6 +122,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                         list.ShowPagePath = headerViewModel.ShowPagePath;
                                         if (list.Sliders.Count > 0)
                                         {
+                                            var banners = new List<SliderDto>();
                                             foreach (var item in list.Sliders)
                                             {
                                                 if (item.DesktopImage != null)
@@ -116,8 +133,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                                 {
                                                     item.MobileImage = item.MobileImage.Replace(pathReplace, uploadPath);
                                                 }else if(!string.IsNullOrEmpty(item.DesktopImage)) item.MobileImage = item.DesktopImage;
+                                                if(item.Enabled) banners.Add(item);
                                             }
-                                            headerViewModel.Bannners = list.Sliders;
+                                            headerViewModel.Bannners = banners;
                                         }
                                     }
                                 }
@@ -125,7 +143,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             if(!headerViewModel.Bannners.Any()) {
                                 if (!string.IsNullOrEmpty(headerViewModel.LogoImageUrl))
                                 {
-                                    string LogoImage = Path.Combine(uploadDirectory, headerViewModel.LogoImageUrl.Replace("/upload/", ""));
+                                    string LogoImage = childOrgNames.Count > 0?
+                                        Path.Combine(uploadDirectory, headerViewModel.LogoImageUrl.Replace("/upload/", "").Replace($"{orgName}/", "")) :
+                                        Path.Combine(uploadDirectory, headerViewModel.LogoImageUrl.Replace("/upload/", ""));
                                     if (!File.Exists(LogoImage))
                                     {
                                         headerViewModel.LogoImageUrl = "";
@@ -260,12 +280,14 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             });
                             headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
                             {
+                                Id = data_f.Id,
                                 Title = data_f.Title,
                                 SubTitle = data_f.SubTitle,
                                 Link = data_f.hasContan ?
                                     data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "" :
                                     "javascript:void(0)",
                                 menuItemModels = secitemModels,
+                                RouteName = data_f.RouterName,
                                 Length = length,
                                 imageUrl = (data_f.ImgUrl ?? "").Replace("/upload", uploadPath),
                                 hoverImageUrl = (data_f.OverImgUrl ?? "").Replace("/upload", uploadPath),
@@ -288,8 +310,10 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             {
                                 headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
                                 {
+                                    Id = data_f.Id,
                                     Title = data_f.Title,
                                     SubTitle = data_f.SubTitle,
+                                    RouteName = data_f.RouterName,
                                     Target = data_f.Target,
                                     Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "",
                                     imageUrl = (data_f.ImgUrl ?? ""),
@@ -307,7 +331,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
             }
             headerViewModel.SearchPath = $"/{website_data[0].OrgName}/Search";
             var view = defaultData.View;
-            if (headerViewModel.templates != null)
+            var templateSections = headerViewModel.templates?.templateSections.Where(e => e.sectionType == SectionTypeEnum.表頭).FirstOrDefault();
+            if (headerViewModel.templates!=null &&templateSections != null && !string.IsNullOrEmpty(templateSections.ContentConfig))
             {
                 switch (headerViewModel.templates.HeadType)
                 {

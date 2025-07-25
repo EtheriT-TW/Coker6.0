@@ -97,7 +97,7 @@
                 const title = marquee.target ? `連結至：${marquee.title}(另開視窗)` : `連結至：${marquee.title}`;
 
                 htmlContent = `
-                    <a class="overflow-hidden text" data-bs-toggle="tooltip" title='${title}' href='${marquee.link}' target="${target}">
+                    <a class="overflow-hidden text" data-bs-toggle="tooltip" title='${title}' href='${marquee.link}' rel='noopener noreferrer' target="${target}">
                         ${marquee.title}
                     </a>
                 `;

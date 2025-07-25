@@ -20,7 +20,7 @@
         $(parentlocation).addClass("d-none");
     } else {
         $(parentlocation).find("a")
-            .attr({ href: `https://www.google.com.tw/maps/place/${location}`, title: `連結至：${location}(另開新視窗)`, target: "_blank" });
+            .attr({ href: `https://www.google.com.tw/maps/place/${location}`, title: `連結至：${location}(另開新視窗)`, target: "_blank", rel: "noopener noreferrer" });
         $(parentlocation).removeClass("d-none");
     }
     var parentaddr = $self.find(".activity_addr").parents("div").eq(0);
@@ -28,7 +28,7 @@
     if (addr == "") {
         $(parentaddr).addClass("d-none");
     } else {
-        $(parentaddr).find("a").attr({ href: `https://www.google.com.tw/maps/place/${addr}`, title: `連結至：${addr}(另開新視窗)`, target: "_blank" });
+        $(parentaddr).find("a").attr({ href: `https://www.google.com.tw/maps/place/${addr}`, title: `連結至：${addr}(另開新視窗)`, target: "_blank", rel: "noopener noreferrer" });
         $(parentaddr).removeClass("d-none");
     }
     var parentorganizer = $self.find(".activity-organizer").parent("div").eq(0);
@@ -64,7 +64,7 @@
     if (link == "") {
         $(parentlink).addClass("d-none");
     } else {
-        $(parentlink).find("a").attr({ href: link, title: `連結至：活動網站(另開新視窗)`, target: "_blank" });
+        $(parentlink).find("a").attr({ href: link, title: `連結至：活動網站(另開新視窗)`, target: "_blank", rel: "noopener noreferrer" });
         $(parentlink).removeClass("d-none");
     }
     var parenttel = $self.find(".activity_tel").parents("div").eq(0);
@@ -73,7 +73,7 @@
         $(parenttel).addClass("d-none");
         tel = "no";
     } else {
-        $(parenttel).find("a").attr({ href: `tel:${tel}`, title: `播打電話：${tel}`, target: "_blank" });
+        $(parenttel).find("a").attr({ href: `tel:${tel}`, title: `播打電話：${tel}`, target: "_blank", rel: "noopener noreferrer" });
         $(parenttel).removeClass("d-none");
     }
     if (typeof(dateRange) != "undefined" && !!dateRange) {

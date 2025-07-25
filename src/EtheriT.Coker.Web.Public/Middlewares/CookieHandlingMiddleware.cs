@@ -28,6 +28,11 @@ namespace EtheriT.Coker.Web.Public.Middlewares
             long siteId = _configuration.GetValue<long>("WebConfig:SiteId");
             string orgName = await GetOrgNameAsync(context, siteId);
             context.Response.OnStarting(() => {
+                context.Response.Headers.Remove("X-Powered-By");
+                context.Response.Headers.Remove("Server");
+                context.Response.Headers.Remove("X-AspNet-Version");
+                context.Response.Headers.Remove("X-AspNetMvc-Version");
+                context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
                 if (context.Request.Cookies.ContainsKey("Token"))
                 {
                     string Token = context.Request.Cookies["Token"] ?? "";

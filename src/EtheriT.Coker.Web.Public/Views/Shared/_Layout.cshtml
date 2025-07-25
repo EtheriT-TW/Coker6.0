@@ -80,15 +80,16 @@
     @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
     @if (Configuration.GetValue<bool>("RemoteJs:Enabled", false))
     {
-        <script data-consolejs-channel="c54af59e-d006-5fa6-30d5-e2b3f272a9fc" src="https://remotejs.com/agent/agent.js"></script>
+        <script data-consolejs-channel="c54af59e-d006-5fa6-30d5-e2b3f272a9fc" src="https://remotejs.com/agent/agent.js" crossorigin="anonymous"></script>
     }
     <script nonce="@ViewBag.Nonce">
         sessionStorage.setItem("PageKey","@ViewBag.PageKey");
         const SiteId = @ViewBag.SiteId;
-        const SearchWord = "@Html.Raw(ViewBag.SearchWord)";
+        const SearchWord = @Html.Raw(ViewBag.SearchWord);
         const BackstageUrl = "@ViewBag.BackstageUrl";
         const OAuthSuccess ="@ViewBag.OAuthSuccess";
         const OAuthError = "@ViewBag.OAuthError";
+        const RootId = "@ViewBag.RootId";
         const orderPrice = @ViewBag.priceOrder.ToString().ToLower();
         window.CI360 = { notInitOnLoad: true }
         window.onload = function () {
@@ -128,7 +129,7 @@
     @if (!string.IsNullOrEmpty(ViewBag.GA4))
     {
         <!-- Google tag (gtag.js) -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=@ViewBag.GA4"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=@ViewBag.GA4" crossorigin="anonymous"></script>
         <script nonce="@ViewBag.Nonce">
             window.dataLayer = window.dataLayer || [];
             function gtag() { dataLayer.push(arguments); }
@@ -176,6 +177,7 @@
                 script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
                 script.async = true;
                 script.defer = true;
+                script.crossOrigin = "anonymous";
 
                 script.onload = () => {
                     console.log("Google Translate script loaded successfully.");
@@ -202,7 +204,7 @@
                         new Date().getTime(), event: 'gtm.js'
                 }); var f = d.getElementsByTagName(s)[0],
                     j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
-                        'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+                        'https://www.googletagmanager.com/gtm.js?id=' + i + dl; j.crossOrigin = 'anonymous'; f.parentNode.insertBefore(j, f);
             })(window, document, 'script', 'dataLayer', '@ViewBag.GTM');</script>
         <!-- End Google Tag Manager -->
     }
@@ -216,7 +218,7 @@
         </noscript>
         <!-- End Google Tag Manager (noscript) -->
     }
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <a id="jumpToCenter" href="#ContainerBody" class="hide accesskey" title="@L.get("accesskeyJumpMain")">
         <span title="@L.get("accesskeyJumpMain")">@L.get("accesskeyJumpMain")</span>
     </a>
@@ -410,7 +412,6 @@
                             </div>
                             <div class="form-check">
                                 <input id="CheckAccept" class="form-check-input" type="checkbox" value="">
-                                @* <label class="form-check-label" for="CheckAccept">我已詳細閱讀並同意<span><a class="text-black text-decoration-underline" href="/@ViewData["OrgName"]/Terms" title="連結至：會員條款(另開新視窗)" target="_blank">會員條款</a></span></label> *@
                                 <label class="form-check-label" for="CheckAccept">我已詳細閱讀並同意<span><button class="bg-transparent border-0 px-0 text-decoration-underline" type="button" data-bs-toggle="modal" data-bs-target="#TermsModal"> 會員條款 </button></span></label>
                             </div>
                         </div>
@@ -588,7 +589,7 @@
     </div>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/swiper/swiper-bundle.min.js"></script>
-    <script src="~/Shared/c-share.min.js"></script>
+    <script src="~/Shared/c-share.min.js" asp-append-version="true"></script>
     <script src="~/lib/sweetalert2/dist/sweetalert2.min.js"></script>
     <script src="~/lib/jquery-twzipcode/jquery.twzipcode.min.js"></script>
     <script src="~/lib/masonry-layout/dist/masonry.pkgd.min.js"></script>

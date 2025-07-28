@@ -359,6 +359,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<TechnicalCertificate>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.TechnicalCertificates).HasForeignKey(f => f.FK_WebsiteId);
+                o.Property(p => p.Css).HasDefaultValue(string.Empty);
+                o.Property(p => p.Html).HasDefaultValue(string.Empty);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<Prod_Price>(o =>

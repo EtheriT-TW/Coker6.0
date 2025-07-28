@@ -363,7 +363,7 @@ builder.Services.AddLocalization(options => options.ResourcesPath = "Resources")
 builder.Services.AddMvc()
         .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix);//要使用View多國語系的話就加這行程式碼
 
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddAutoMapper(cfg => { }, typeof(CustomDtoMapper));
 builder.Services.Configure<VirtualDirectory>(builder.Configuration.GetSection("VirtualDirectory"));
 // Add services to the container.
 builder.Services.AddControllersWithViews();

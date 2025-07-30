@@ -226,7 +226,7 @@ builder.Services.AddScoped<ISitemap, Sitemap>();
 builder.Services.AddScoped<IHtmlProcessor, HtmlProcessor>();
 builder.Services.AddScoped<ITemplatesApplicationService, TemplatesApplicationService> ();
 builder.Services.AddScoped<ICookieManagerAppService, CookieManagerAppService>();
-builder.Services.AddAutoMapper(cfg => { }, typeof(CustomDtoMapper));
+builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<CustomDtoMapper>();});
 
 if (!builder.Environment.IsDevelopment())
 {

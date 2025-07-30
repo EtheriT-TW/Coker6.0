@@ -530,6 +530,7 @@ namespace EtheriT.Coker.Application.Article
                     string Orgname = await loginUserData.GetWebsiteOrgName();
                     importDto.Html = stringHandler.HtmlDecode(importDto.Html);
                     importDto.Html = htmlProcessor.RemoveNode(importDto.Html ?? "", ".backstageType");
+                    importDto.Html = htmlProcessor.SetAttr(importDto.Html ?? "", "[target='_blank'] ", "rel", "noopener noreferrer");
 
                     importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
                     importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");

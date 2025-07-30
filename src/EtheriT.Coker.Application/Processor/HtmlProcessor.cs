@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -26,7 +27,20 @@ namespace EtheriT.Coker.Application.Processor
 			}
 			else return html;
 		}
-		public List<string> find(string html, string selector) {
+        public string SetAttr(string html, string selector, string attrName, string attrValue)
+        {
+            if (string.IsNullOrEmpty(html) || string.IsNullOrEmpty(selector) || string.IsNullOrEmpty(attrName))
+                return html;
+
+            var doc = LoadHtml(html);
+            var nodes = Find(doc, selector);
+            foreach (var node in nodes)
+            {
+                node.SetAttributeValue(attrName, attrValue);
+            }
+            return doc.DocumentNode.OuterHtml;
+        }
+        public List<string> find(string html, string selector) {
 			List<string> nodesStr = new List<string>();
 			HtmlDocument doc = LoadHtml(html);
 			var nodes = Find(doc, selector);
@@ -41,7 +55,7 @@ namespace EtheriT.Coker.Application.Processor
 			string innerText = doc.DocumentNode.InnerText;
 
 			// 使用正則表達式過濾掉多餘的空白字元和換行符
-			string cleanedText = System.Text.RegularExpressions.Regex.Replace(innerText, @"\s+", " ").Trim();
+			string cleanedText = Regex.Replace(innerText, @"\s+", " ").Trim();
 
 			return cleanedText;
 		}
@@ -58,47 +72,49 @@ namespace EtheriT.Coker.Application.Processor
 			string xpath = CssSelectorToXPath(selector);
 			return document.DocumentNode.SelectNodes(xpath)?.ToList() ?? new List<HtmlNode>();
 		}
-		// 將 CSS 選擇器轉換為 XPath
-		private string CssSelectorToXPath(string cssSelector)
-		{
-			// 先處理子選擇器（>），它表示嚴格的子節點關係
-			cssSelector = cssSelector.Replace(">", "/");
+        // 將 CSS 選擇器轉換為 XPath
+        private string CssSelectorToXPath(string cssSelector)
+        {
+            // 嚴格子節點（>）轉換為 /
+            cssSelector = cssSelector.Replace(">", "/");
 
-			// 處理相鄰兄弟選擇器（+）
-			cssSelector = cssSelector.Replace("+", "/following-sibling::*[1]");
+            // 相鄰兄弟（+）
+            cssSelector = cssSelector.Replace("+", "/following-sibling::*[1]");
 
-			// 處理一般兄弟選擇器（~）
-			cssSelector = cssSelector.Replace("~", "/following-sibling::");
+            // 一般兄弟（~）
+            cssSelector = cssSelector.Replace("~", "/following-sibling::");
 
-			// 處理後代選擇器（空格），避免與其他選擇器重疊
-			cssSelector = System.Text.RegularExpressions.Regex.Replace(cssSelector, @"\s+(?![>+~])", "##DOUBLE_SLASH##");
+            // 處理空白為後代（避免與 >、+、~ 混淆）
+            cssSelector = Regex.Replace(cssSelector, @"\s+(?![>+~])", "##DOUBLE_SLASH##");
 
-			// 處理 ID 選擇器 (#id)
-			cssSelector = System.Text.RegularExpressions.Regex.Replace(cssSelector, @"#([\w-]+)", "//*[@id='$1']");
+            // ID (#id)
+            cssSelector = Regex.Replace(cssSelector, @"#([\w-]+)", "[@id='$1']");
 
-			// 處理類選擇器 (.class)，保持元素類型
-			cssSelector = System.Text.RegularExpressions.Regex.Replace(cssSelector, @"\.([\w-]+)", "//*[contains(concat(' ', normalize-space(@class), ' '), ' $1 ')]");
+            // class（保留元素型別）
+            cssSelector = Regex.Replace(cssSelector, @"(\w*)\.([\w-]+)", "$1[contains(concat(' ', normalize-space(@class), ' '), ' $2 ')]");
 
-			// 處理屬性選擇器 [attr=value]
-			cssSelector = System.Text.RegularExpressions.Regex.Replace(cssSelector, @"\[(\w+)=([\w'-]+)\]", "[@$1='$2']");
+            // 精確屬性 [attr="value"]
+            cssSelector = Regex.Replace(cssSelector, @"\[(\w+)=['""]?([^'""]+)['""]?\]", "[@$1='$2']");
 
-			// 避免多餘的斜杠連續出現（例如 "////"）
-			cssSelector = System.Text.RegularExpressions.Regex.Replace(cssSelector, "/{2,}", "/");
+            // 存在屬性 [attr]
+            cssSelector = Regex.Replace(cssSelector, @"\[(\w+)\]", "[@$1]");
 
-			// 將特殊標記替換回 //
-			cssSelector = cssSelector.Replace("##DOUBLE_SLASH##", "//");
+            // 萬用元素 *
+            cssSelector = Regex.Replace(cssSelector, @"(^|\W)\*", "$1*");
 
-			// 確保生成的 XPath 以 "//" 開頭
-			if (cssSelector.StartsWith("/"))
-			{
-				cssSelector = "//" + cssSelector.TrimStart('/');
-			}
-			else
-			{
-				cssSelector = "//" + cssSelector; // 如果不是以 / 開頭，則直接添加 //
-			}
+            // 去除多餘斜線
+            cssSelector = Regex.Replace(cssSelector, "/{2,}", "/");
 
-			return cssSelector;
-		}
-	}
+            // 還原 //
+            cssSelector = cssSelector.Replace("##DOUBLE_SLASH##", "//");
+
+            // 確保 XPath 是以 // 開頭
+            if (!cssSelector.StartsWith("//"))
+            {
+                cssSelector = "//" + cssSelector.TrimStart('/');
+            }
+
+            return cssSelector;
+        }
+    }
 }

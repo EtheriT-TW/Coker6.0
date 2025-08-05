@@ -1,0 +1,73 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Product
+@using EtheriT.Coker.Application.Shared.Dto.Role
+@using EtheriT.Coker.Application.Shared.Dto.Specification
+@using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
+@using EtheriT.Coker.Web.MVC.Models.ProductManagement
+@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
+@using EtheriT.Coker.Web.MVC.Startup
+@{
+    ViewData["Title"] = "ProductList";
+}
+<div class="">
+    <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
+        <div class="title fw-bold fs-3">可銷售警示列表</div>
+        <a class="btn_back btn btn-primary text-decoration-none align-self-center d-none" role="button">返回選單</a>
+    </div>
+
+    <div id="" class="py-2">
+        <div id="ProductList" class="card border-0">
+            <div class="card-body position-relative pb-5">
+                @(
+                    Html.DevExtreme().DataGrid<SaleQuantityStagingOutputDto>()
+                        .DataSource(d => d.RemoteController().Key("Id")
+                            .LoadUrl("/api/Product/SaleQuantityStaging").LoadMethod("Get")
+                        )
+                        .HeaderFilter(headerFilter => headerFilter.Visible(true))
+                        .RemoteOperations(true)
+                        .ColumnHidingEnabled(true)
+                        .ShowBorders(true)
+                        .FilterRow(filterRow => filterRow
+                        .Visible(true)
+                        .ApplyFilter(GridApplyFilterMode.Auto)
+                        )
+                        .SearchPanel(searchPanel => searchPanel
+                        .Visible(true)
+                        .Width(480)
+                        .Placeholder("請輸入要搜尋的資料")
+                        .SearchVisibleColumnsOnly(true)
+                        )
+                        .ShowRowLines(true)
+                        .Columns(c =>
+                        {
+                            c.AddFor(e => e.Id).Caption("id").Width(50).AllowEditing(false);
+                            c.AddFor(e => e.Name).Caption("商品名稱").AllowEditing(false);
+                            c.AddFor(e => e.Specs).Caption("規格名稱").AllowEditing(false);
+                            c.AddFor(e => e.SaleQuantity).Caption("可銷售警示量").AllowEditing(false);
+                            c.AddFor(e => e.StockQuantity).Caption("可銷售量");
+                        })
+                        .ColumnAutoWidth(true)
+                        .Paging(paging => paging.PageSize(30))
+                        .Pager(pager =>
+                        {
+                            pager.Visible(true);
+                            pager.ShowPageSizeSelector(true);
+                            pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                            pager.ShowInfo(true);
+                        })
+                        .Editing(editing =>
+                        {
+                            editing.AllowUpdating(true);
+                            editing.UseIcons(true);
+                                }).OnRowUpdating("OnRowUpdating")
+                )
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function OnRowUpdating(e) {
+        DevExpress.ui.notify("已更新", "success", 2000);
+        e.component.refresh();
+    }
+</script>

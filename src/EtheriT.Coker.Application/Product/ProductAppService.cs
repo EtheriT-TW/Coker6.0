@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using DevExpress.XtraCharts;
 using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Common;
@@ -338,6 +339,59 @@ namespace EtheriT.Coker.Application.Product
             }
 
             return output;
+        }
+        public async Task<JsonResult> SaleQuantityStaging(DataSourceLoadOptions loadOptions)
+        {
+            long webid = await loginUserData.GetWebsiteId();
+
+            var rows = await (
+                from p in db.Prods
+                join s in db.Prod_Stocks on p.Id equals s.FK_Pid
+
+                // S1 規格 Left Join（允許 s.FK_S1id = 0 或 NULL 時仍保留 s）
+                join s1 in db.Prod_Specs on s.FK_S1id equals s1.Id into s1g
+                from n1 in s1g.DefaultIfEmpty()
+
+                    // S2 規格 Left Join
+                join s2 in db.Prod_Specs on s.FK_S2id equals s2.Id into s2g
+                from n2 in s2g.DefaultIfEmpty()
+
+                where p.FK_WebsiteId == webid
+                      && p.Status != ProdStatusEnum.售完
+                      && !p.RemovedFromShelves
+                      && p.Visible
+                      && s.Stock < s.Alert_Qty
+                select new
+                {
+                    Id = s.Id,
+                    SaleQuantity = s.Alert_Qty ?? 0,
+                    StockQuantity = s.Stock ?? 0,
+                    Name = p.Title,
+                    S1Title = n1 != null ? string.IsNullOrEmpty(n1.Title.Trim())?null: n1.Title.Trim() : null,
+                    S2Title = n2 != null ? string.IsNullOrEmpty(n2.Title.Trim()) ? null : n2.Title.Trim() : null
+                }
+            ).ToListAsync();
+
+            // 在記憶體中安全組字串（避免 EF 翻譯問題）
+            var prods = rows.Select(x => new SaleQuantityStagingOutputDto
+            {
+                Id = x.Id,
+                SaleQuantity = x.SaleQuantity,
+                StockQuantity = x.StockQuantity,
+                Name = x.Name,
+                Specs = (x.S1Title == null && x.S2Title == null)
+                        ? "無規格"
+                        : string.Join(" / ",
+                            new[] { x.S1Title, x.S2Title }
+                                .Where(t => t != null)
+                                .Distinct(StringComparer.OrdinalIgnoreCase))
+            }).ToList();
+
+            var output = DataSourceLoader.Load(prods, loadOptions);
+            return new JsonResult(output, new JsonSerializerSettings
+            {
+                ContractResolver = new DefaultContractResolver()
+            });
         }
         public async Task<ResponseMessageDto> PriceAddUp(List<ProductPriceDto> dto)
         {

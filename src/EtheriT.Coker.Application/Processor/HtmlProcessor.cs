@@ -11,22 +11,22 @@ using System.Xml.Linq;
 
 namespace EtheriT.Coker.Application.Processor
 {
-	public class HtmlProcessor: IHtmlProcessor
-	{
-		public string RemoveNode(string html, string selector)
-		{
-			if (!string.IsNullOrEmpty(html) && !string.IsNullOrEmpty(selector))
-			{
-				HtmlDocument doc = LoadHtml(html);
-				var nodes = Find(doc, selector);
-				foreach (var node in nodes)
-				{
-					node.Remove();
-				}
-				return doc.DocumentNode.OuterHtml;
-			}
-			else return html;
-		}
+    public class HtmlProcessor : IHtmlProcessor
+    {
+        public string RemoveNode(string html, string selector)
+        {
+            if (!string.IsNullOrEmpty(html) && !string.IsNullOrEmpty(selector))
+            {
+                HtmlDocument doc = LoadHtml(html);
+                var nodes = Find(doc, selector);
+                foreach (var node in nodes)
+                {
+                    node.Remove();
+                }
+                return doc.DocumentNode.OuterHtml;
+            }
+            else return html;
+        }
         public string SetAttr(string html, string selector, string attrName, string attrValue)
         {
             if (string.IsNullOrEmpty(html) || string.IsNullOrEmpty(selector) || string.IsNullOrEmpty(attrName))
@@ -40,81 +40,143 @@ namespace EtheriT.Coker.Application.Processor
             }
             return doc.DocumentNode.OuterHtml;
         }
-        public List<string> find(string html, string selector) {
-			List<string> nodesStr = new List<string>();
-			HtmlDocument doc = LoadHtml(html);
-			var nodes = Find(doc, selector);
-			foreach (var node in nodes) {
-				nodesStr.Add(node.OuterHtml);
-			}
-			return nodesStr;
-		}
-		public string text(string html) {
-			HtmlDocument doc = LoadHtml(RemoveNode(html, ".material-symbols-outlined"));
-			// 取得去除標籤後的純文字
-			string innerText = doc.DocumentNode.InnerText;
+        public List<string> find(string html, string selector)
+        {
+            List<string> nodesStr = new List<string>();
+            HtmlDocument doc = LoadHtml(html);
+            var nodes = Find(doc, selector);
+            foreach (var node in nodes)
+            {
+                nodesStr.Add(node.OuterHtml);
+            }
+            return nodesStr;
+        }
+        public string text(string html)
+        {
+            HtmlDocument doc = LoadHtml(RemoveNode(html, ".material-symbols-outlined"));
+            // 取得去除標籤後的純文字
+            string innerText = doc.DocumentNode.InnerText;
 
-			// 使用正則表達式過濾掉多餘的空白字元和換行符
-			string cleanedText = Regex.Replace(innerText, @"\s+", " ").Trim();
+            // 使用正則表達式過濾掉多餘的空白字元和換行符
+            string cleanedText = Regex.Replace(innerText, @"\s+", " ").Trim();
 
-			return cleanedText;
-		}
+            return cleanedText;
+        }
 
-		public HtmlDocument LoadHtml(string htmlContent)
-		{
-			var doc = new HtmlDocument();
-			doc.LoadHtml(htmlContent);
-			return doc;
-		}
-		public List<HtmlNode> Find(HtmlDocument document, string selector)
-		{
-			if (string.IsNullOrEmpty(selector)) return new List<HtmlNode>();
-			string xpath = CssSelectorToXPath(selector);
-			return document.DocumentNode.SelectNodes(xpath)?.ToList() ?? new List<HtmlNode>();
-		}
+        public HtmlDocument LoadHtml(string htmlContent)
+        {
+            var doc = new HtmlDocument();
+            doc.LoadHtml(htmlContent);
+            return doc;
+        }
+        public List<HtmlNode> Find(HtmlDocument document, string selector)
+        {
+            var Nodes = new List<HtmlNode>();
+            if (string.IsNullOrEmpty(selector)) return Nodes;
+            else if (selector.Contains(","))
+            {
+                var selectors = selector.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s));
+                foreach (var sel in selectors)
+                {
+                    Nodes.AddRange(Find(document, sel));
+                }
+            }
+            else
+            {
+                string xpath = CssSelectorToXPath(selector);
+                try
+                {
+                    var matched = document.DocumentNode.SelectNodes(xpath);
+                    if (matched == null || matched.Count == 0)
+                    {
+                        Console.WriteLine($"xpath:{xpath},select:{selector}");
+                    }
+                    return matched?.ToList() ?? Nodes;
+                }
+                catch (Exception ex) // 可改用 XPathException
+                {
+                    // 紀錄以便快速定位
+                    Console.WriteLine($"XPath error: {ex.Message}\nXPath: {xpath}\nSelector: {selector}");
+                }
+            }
+            return Nodes;
+        }
         // 將 CSS 選擇器轉換為 XPath
+
         private string CssSelectorToXPath(string cssSelector)
         {
-            // 嚴格子節點（>）轉換為 /
-            cssSelector = cssSelector.Replace(">", "/");
+            if (string.IsNullOrWhiteSpace(cssSelector)) return "//";
 
-            // 相鄰兄弟（+）
-            cssSelector = cssSelector.Replace("+", "/following-sibling::*[1]");
+            var s = cssSelector.Trim();
 
-            // 一般兄弟（~）
-            cssSelector = cssSelector.Replace("~", "/following-sibling::");
-
-            // 處理空白為後代（避免與 >、+、~ 混淆）
-            cssSelector = Regex.Replace(cssSelector, @"\s+(?![>+~])", "##DOUBLE_SLASH##");
-
-            // ID (#id)
-            cssSelector = Regex.Replace(cssSelector, @"#([\w-]+)", "[@id='$1']");
-
-            // class（保留元素型別）
-            cssSelector = Regex.Replace(cssSelector, @"(\w*)\.([\w-]+)", "$1[contains(concat(' ', normalize-space(@class), ' '), ' $2 ')]");
-
-            // 精確屬性 [attr="value"]
-            cssSelector = Regex.Replace(cssSelector, @"\[(\w+)=['""]?([^'""]+)['""]?\]", "[@$1='$2']");
-
-            // 存在屬性 [attr]
-            cssSelector = Regex.Replace(cssSelector, @"\[(\w+)\]", "[@$1]");
-
-            // 萬用元素 *
-            cssSelector = Regex.Replace(cssSelector, @"(^|\W)\*", "$1*");
-
-            // 去除多餘斜線
-            cssSelector = Regex.Replace(cssSelector, "/{2,}", "/");
-
-            // 還原 //
-            cssSelector = cssSelector.Replace("##DOUBLE_SLASH##", "//");
-
-            // 確保 XPath 是以 // 開頭
-            if (!cssSelector.StartsWith("//"))
+            // 1) 暫存引號內容，避免把引號內空白誤當成後代分隔
+            var quoted = new List<string>();
+            s = Regex.Replace(s, @"(['""])(?:\\.|(?!\1).)*\1", m =>
             {
-                cssSelector = "//" + cssSelector.TrimStart('/');
+                var full = m.Value;                       // e.g.  '_blank'
+                var inner = full.Substring(1, full.Length - 2); //  _blank
+                quoted.Add(inner);
+                return $"##Q{quoted.Count - 1}##";
+            });
+
+            // 名稱規則（元素/屬性）
+            const string Tag = @"([A-Za-z_][A-Za-z0-9_\-:]*)";
+            const string Attr = @"([A-Za-z_][A-Za-z0-9_\-:\.]*)";
+
+            // 2) Combinators
+            s = Regex.Replace(s, @"\s*>\s*", "/");                     // 子代
+            s = Regex.Replace(s, @"\s*\+\s*", "##ADJ##");              // 相鄰兄弟（先標記，稍後還原）
+            s = Regex.Replace(s, @"\s*~\s*", "/following-sibling::");  // 一般兄弟
+            s = Regex.Replace(s, @"\s+", "##DS##");                    // 後代（空白）
+
+            // 3) #id
+            s = Regex.Replace(s, $@"{Tag}#([\w\-]+)", "$1[@id='$2']");
+            s = Regex.Replace(s, @"(^|//|/|##DS##)#([\w\-]+)", "$1*[@id='$2']");
+
+            // 4) .class（含多 class 連寫）
+            while (Regex.IsMatch(s, $@"{Tag}\.([\w\-]+)"))
+                s = Regex.Replace(s, $@"{Tag}\.([\w\-]+)",
+                    "$1[contains(concat(' ', normalize-space(@class), ' '), ' $2 ')]");
+
+            while (Regex.IsMatch(s, @"(^|//|/|##DS##)\.([\w\-]+)"))
+                s = Regex.Replace(s, @"(^|//|/|##DS##)\.([\w\-]+)",
+                    "$1*[contains(concat(' ', normalize-space(@class), ' '), ' $2 ')]");
+
+            // 5) 屬性選擇器
+            s = Regex.Replace(s, $@"\[{Attr}=['""]?([^'""]+)['""]?\]", @"[@$1='$2']");
+            s = Regex.Replace(s, $@"\[{Attr}\^=['""]?([^'""]+)['""]?\]", @"[starts-with(@$1,'$2')]");
+            s = Regex.Replace(s, $@"\[{Attr}\$=['""]?([^'""]+)['""]?\]",
+                @"[substring(@$1, string-length(@$1)-string-length('$2')+1)='$2']");
+            s = Regex.Replace(s, $@"\[{Attr}\*=['""]?([^'""]+)['""]?\]", @"[contains(@$1,'$2')]");
+            s = Regex.Replace(s, $@"\[{Attr}\]", @"[@$1]");
+
+            // 純屬性起點補 *（片段起點或分隔符後直接 "["）
+            s = Regex.Replace(s, @"(^|//|/|##DS##)\[", "$1*[");
+
+            // 6) 還原相鄰兄弟：
+            //   E + F → E/following-sibling::*[1][self::F]（F 為單純元素名時）
+            s = Regex.Replace(s, $@"##ADJ##{Tag}", @"/following-sibling::*[1][self::$1]");
+            //   其他情況（如 + .a 或 + [attr]）退化為「下一個兄弟」再接條件
+            s = s.Replace("##ADJ##", "/following-sibling::*[1]");
+
+            // 7) 還原後代與引號
+            s = s.Replace("##DS##", "//");
+            for (int i = 0; i < quoted.Count; i++)
+            {
+                // 只還原內文（不帶引號），因為等號替換時已經加上了引號
+                s = s.Replace($"##Q{i}##", quoted[i]);
             }
 
-            return cssSelector;
+            // 8) 清理與保險
+            s = Regex.Replace(s, @"//+", "//");
+            s = s.Replace("//[", "//*[");
+            s = s.Replace("/[", "/*[");
+
+            if (!s.StartsWith("//"))
+                s = "//" + s.TrimStart('/');
+
+            return s;
         }
+
     }
 }

@@ -86,6 +86,13 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Controller="ProductManagement",
                                 Action="SpecSetting",
                                 Icon="",
+                            },
+                            new JobMenu{
+                                PageName="SaleQuantityStaging",
+                                Title="可銷售量警示",
+                                Controller="ProductManagement",
+                                Action="SaleQuantityStaging",
+                                Icon="",
                             }
                         }
                     },
@@ -511,6 +518,10 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         {
                             PageName = "Bonus",
                             Enable = false
+                        },new JobMenu
+                        {
+                            PageName = "SaleQuantityStaging",
+                            Enable = false
                         }
                     });
                     break;
@@ -561,6 +572,10 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         {
                             PageName = "Bonus",
                             Enable = false
+                        },new JobMenu
+                        {
+                            PageName = "SaleQuantityStaging",
+                            Enable = false
                         }
                     });
                     break;
@@ -591,6 +606,10 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         },new JobMenu
                         {
                             PageName = "Bonus",
+                            Enable = false
+                        },new JobMenu
+                        {
+                            PageName = "SaleQuantityStaging",
                             Enable = false
                         }
                     });

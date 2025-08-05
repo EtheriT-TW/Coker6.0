@@ -41,6 +41,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await productAppService.GetAllList(loadOptions);
         }
         [HttpGet]
+        public async Task<JsonResult> SaleQuantityStaging(DataSourceLoadOptions loadOptions)
+        {
+            return await productAppService.SaleQuantityStaging(loadOptions);
+        }
+        [HttpGet]
         public async Task<ProdGetDataDto> GetProdDataOne(long Id)
         {
             return await productAppService.GetProdDataOne(Id);

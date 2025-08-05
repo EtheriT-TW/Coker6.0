@@ -1564,13 +1564,10 @@ namespace EtheriT.Coker.Application.Directory
                         if (webmenus != null)
                         {
                             var html = stringHandler.HtmlDecode(webmenus.Html);
-                            var CompliantHtmls = htmlProcessor.find(html ?? "", "//*[@data-dirid]");
-                            CompliantHtmls = htmlProcessor.find(string.Join("", CompliantHtmls) ?? "", ".catalog_frame");
-
-                            Match match = Regex.Match(CompliantHtmls[0], @"data-dirid=""(\d+)""");
-                            if (match.Success)
+                            var value = htmlProcessor.Find(htmlProcessor.LoadHtml(html), "[data-dirid]").FirstOrDefault().Attr("data-dirid");
+                            if (!string.IsNullOrEmpty(value) && long.TryParse(value,out var dirId))
                             {
-                                dto.dirids.Add(long.Parse(match.Groups[1].Value));
+                                dto.dirids.Add(dirId);
                             }
                         }
                     }

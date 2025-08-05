@@ -30,6 +30,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             };
             return View("ProductList", model);
         }
+        public async Task<IActionResult> SaleQuantityStaging() {
+            return View("SaleQuantityStaging");
+        }
         public IActionResult TechnicalCertificate()
         {
             return View("TechnicalCertificate");

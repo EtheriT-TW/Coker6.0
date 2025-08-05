@@ -294,21 +294,22 @@ if (!app.Environment.IsProduction())
 }
 var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
 
-app.Use((context, next) =>
+if (app.Environment.IsProduction()) 
 {
-    Console.WriteLine($"[Middleware] IsHttps = {context.Request.IsHttps}, Path = {context.Request.Path}");
-    var requestPath = context.Request.Path.Value;
-
-    if (context.Request.IsHttps &&
-        (string.Equals(requestPath, "/", StringComparison.OrdinalIgnoreCase) || string.Equals(requestPath, "/home", StringComparison.OrdinalIgnoreCase))
-    )
+    app.Use((context, next) =>
     {
-        var tokenSet = antiforgery.GetAndStoreTokens(context);
-        context.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken!,
-            new CookieOptions { HttpOnly = true, Secure = true, SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict });
-    }
-    return next(context);
-});
+        var requestPath = context.Request.Path.Value;
+        if (context.Request.IsHttps &&
+            (string.Equals(requestPath, "/", StringComparison.OrdinalIgnoreCase) || string.Equals(requestPath, "/home", StringComparison.OrdinalIgnoreCase))
+        )
+        {
+            var tokenSet = antiforgery.GetAndStoreTokens(context);
+            context.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken!,
+                new CookieOptions { HttpOnly = true, Secure = true, SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict });
+        }
+        return next(context);
+    });
+}
 app.UseCookiePolicy(
     new CookiePolicyOptions
     {

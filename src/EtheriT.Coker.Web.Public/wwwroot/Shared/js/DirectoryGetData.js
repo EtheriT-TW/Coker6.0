@@ -631,15 +631,12 @@ function DirectoryDataInsert($item, result) {
                 swiper.autoplay.stop();
                 swiper.removeAllSlides();
                 result.forEach(function (data) {
-                    if (data.mainImage != "") {
-                        var newSlide = $($template_slide.html()).clone();
-                        newSlide = DirectoryTemplateDataInsert(newSlide, data);
-                        newSlide.find("img").attr({
-                            "src": data.mainImage,
-                            "alt": data.title
-                        });
-                        swiper.appendSlide(newSlide);
-                    }
+                    var newSlide = $($template_slide.html()).clone();
+                    newSlide = DirectoryTemplateDataInsert(newSlide, data);
+                    // 如果有圖抓圖 沒圖直接用原本的
+                    if (data.mainImage != "") newSlide.find("img").attr("src", data.mainImage);
+                    newSlide.find("img").attr("alt", data.title);
+                    swiper.appendSlide(newSlide);
                 });
                 if (result.length > 1) swiper.autoplay.start();
             }

@@ -28,7 +28,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return result;
         }
         [HttpPost]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<LoginOutputDto> Chech()
         {
             return await accountAppService.Chech();

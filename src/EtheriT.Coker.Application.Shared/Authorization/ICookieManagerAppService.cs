@@ -10,7 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Authorization
     public interface ICookieManagerAppService
     {
         void Set(string key, string value, CookiePurposeEnum purpose = CookiePurposeEnum.Default);
-        string? Get(string key);
+        string Get(string key);
         void Delete(string key);
         void Clear(params string[] exceptKeys);
     }

@@ -118,8 +118,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     var list = JsonConvert.DeserializeObject<HeaderContentConfigDto>(bannerSection.ContentConfig);
                                     if (list != null )
                                     {
-                                        list.ShowMarquee = headerViewModel.ShowMarquee;
-                                        list.ShowPagePath = headerViewModel.ShowPagePath;
+                                        headerViewModel.ShowMarquee = list.ShowMarquee;
+                                        headerViewModel.ShowPagePath = list.ShowPagePath;
                                         if (list.Sliders.Count > 0)
                                         {
                                             var banners = new List<SliderDto>();

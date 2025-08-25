@@ -509,6 +509,7 @@ function SwiperInit(obj) {
                 spaceBetween: 10,
                 loop: false,
                 loopAdditionalSlides: 0,
+                zoom: { maxRatio: 5 },
                 navigation: {
                     nextEl: "#pictureSwiper .swiper-button-next",
                     prevEl: "#pictureSwiper .swiper-button-prev",
@@ -596,7 +597,9 @@ function SwiperInit(obj) {
                     var newSlideThumbs = "";
                     if (item.type === "image") {
                         newSlide = `<div class="swiper-slide" data-swiper-autoplay="${item.keepTime}">
-                            <img src="${item.src}" alt="" />
+                            <div class="swiper-zoom-container">
+                                <img src="${item.src}" alt="" />
+                            </div>
                         </div>`;
                     } else if (item.type === "video") {
                         newSlide = `<div class="swiper-slide" data-swiper-autoplay="${item.keepTime}">

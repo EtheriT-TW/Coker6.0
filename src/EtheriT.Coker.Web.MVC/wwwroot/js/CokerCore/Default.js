@@ -9,8 +9,8 @@
     Data: {
         DefauleUrl: "/Welcome/index",
         Header: {
-            Authorization: 'Bearer ' + $.cookie("token"),
-            Secret: $.cookie("secret"),
+            Authorization: null,
+            Secret: null,
             "x-xsrf-token": $('input[name="AntiforgeryField"]').val()
         },
         Time: {

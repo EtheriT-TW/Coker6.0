@@ -1,0 +1,27 @@
+﻿.flipdown.dark1 .rotor-group {
+    padding: 1.25rem 0;
+    margin-right: 30px;
+    background: linear-gradient(to bottom, #151515 0%, #202020 100%);
+}
+
+    .flipdown.dark1 .rotor-group:last-child {
+        margin-right: 0;
+    }
+.flipdown.dark1 .rotor {
+    margin:0;
+}
+
+.flipdown.dark1 .rotor-group-heading {
+    position: absolute;
+    bottom: 0px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: normal;
+    letter-spacing: 0.5px;
+}
+
+.flipdown.dark1.flipdown__theme-dark .rotor-group-heading:before {
+    color: #FFF;
+}

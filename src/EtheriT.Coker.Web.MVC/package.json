@@ -20,6 +20,7 @@
     "devexpress-reporting": "^24.2.6",
     "devextreme": "^24.2.6",
     "file-upload-with-preview": "^5.0.8",
+    "flipdown": "^0.3.2",
     "fs-extra": "^11.3.0",
     "globby": "^9.2.0",
     "grapesjs": "^0.21.7",

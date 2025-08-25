@@ -144,10 +144,7 @@ function getMemberLevel(e) {
             loadUrl: '/api/Member/GetAllRole',
         }),
         onBeforeSend: function (method, options) {
-            options.headers = {
-                Authorization: 'Bearer ' + $.cookie("token"),
-                Secret: $.cookie("secret")
-            };
+            options.headers = co.Data.Header;
         },
     };
 }

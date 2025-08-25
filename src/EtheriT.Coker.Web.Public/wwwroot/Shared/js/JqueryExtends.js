@@ -44,6 +44,79 @@ function jqueryExtend() {
 
             // 返回新元素的 jQuery 物件
             return $(newElements);
+        },
+        getFormJson: function () {
+            const form = $(this);
+            const excludedNames = [];
+            const handledNames = [];
+            const formDataObject = $(form).serializeArray();
+
+            $(formDataObject).each(function () {
+                const obj = this;
+                const field = $(form).find(`[name="${obj.name}"]`);
+                const getTitleNearby = function(field) {
+                    let wrapper = field.closest('.d-flex');
+
+                    while (wrapper.length) {
+                        const title = wrapper.prevAll('.title').first().text().trim();
+                        if (title) return title;
+                        wrapper = wrapper.parent().closest('.d-flex');
+                    }
+
+                    return '';
+                }
+                // 排除在隱藏容器（data-show-on + .d-none）中的欄位
+                const hiddenContainer = field.closest('[data-show-on].d-none');
+                if (hiddenContainer.length || !obj.name || excludedNames.includes(obj.name) || handledNames.includes(obj.name)) {
+                    obj.ignore = true;
+                    return;
+                }
+                obj.title = field.closest('.form-floating').find('.title').first().text().trim() ||
+                    field.closest('.form-floating').find('label').first().text().trim() || "";
+                // 控制 title 與 value
+                switch (field.prop("tagName")) {
+                    case "SELECT":
+                        obj.value = field.find("option:selected").text().trim();
+                        break;
+                    case "INPUT":
+                        switch (field.attr("type")) {
+                            case "radio":
+                                const checked = $(form).find(`input[name="${obj.name}"]:checked`);
+                                const label = $(form).find(`label[for="${checked.attr("id")}"]`).text().trim();
+                                obj.title = getTitleNearby(checked) || "";
+                                obj.value = label;
+
+                                // 若有補充輸入框（如 text 緊跟在 radio 後）
+                                const extraInput = checked.closest('.form-check, .d-flex').find('input[type="text"]');
+                                if (extraInput.length && extraInput.val().trim()) {
+                                    obj.value += `：${extraInput.val().trim()}`;
+                                    excludedNames.push(extraInput.attr("name"));
+                                }
+                                break;
+                            case "checkbox":
+                                obj.title = field.closest('.d-flex').prevAll('.title').first().text().trim() ||
+                                    field.closest('.d-flex').prevAll('label').first().text().trim() || "";
+                                obj.value = '';
+                                $(form).find(`[name="${obj.name}"]:checked`).each(function () {
+                                    const lbl = $(this).nextAll("label").text().trim();
+                                    obj.value += lbl + " ,";
+                                });
+                                obj.value = obj.value.replace(/ ,$/, '');
+                                break;
+
+                            default:
+                                obj.value = field.val().trim();
+                                break;
+                        }
+                        break;
+                    default:
+                        obj.value = field.val().trim();
+                        break;
+                }
+                if (obj.value === "captcha") obj.title = "";
+                handledNames.push(obj.name);
+            });
+            return formDataObject.filter(f => !f.ignore);
         }
     });
     $.extend({

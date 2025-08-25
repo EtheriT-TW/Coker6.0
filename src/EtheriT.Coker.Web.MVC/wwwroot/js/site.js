@@ -24,7 +24,6 @@ var PreLoader;
             co.User.Logout();
         });
     }
-    setTimeout(continueLoginState, co.Data.Time.ReCheckTime - 1000);
     // Ctrl + S 儲存表單
     document.addEventListener("keydown", function (event) {
         // 檢查是否按下 Ctrl + S
@@ -58,7 +57,8 @@ var PreLoader;
             form.dataset.submitting = "false";
         }, 1000);
     });
-    if (!!!co.Cookie.Get("token")) {
+    if (!!co.Cookie.Get("isLogin")) setTimeout(continueLoginState, co.Data.Time.ReCheckTime - 1000);
+    if (!co.Cookie.Get("isLogin")) {
         if (location.pathname != "/" && !/^\/Account/.test(location.pathname)) location.href = "/";
         else co.Page.Ready();
     } else if (edt > (now.getTime() + co.Data.Time.ReCheckTime)) {

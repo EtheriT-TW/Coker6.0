@@ -89,6 +89,7 @@ function ready() {
     if ($(".link_with_icon").length > 0) LinkWithIconInit();
     if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
     if ($(".shareBlock").length > 0) ShareBlockInit();
+    if ($(".flipdown").length > 0) FlipTimer();
     if ($(".ContactForm").length > 0) {
         setContact();//From表單驗證碼
     }
@@ -1685,44 +1686,6 @@ $.fn.extend({
         let id = className + (order == 0 ? "" : order);
         if ($(`#${id}`).length == 0) $self.attr("id", id);
         else $self.setRandenId(order + 1);
-    },
-    getFormJson: function () {
-        const form = $(this);
-        const formDataObject = $(form).serializeArray();
-        $(formDataObject).each(function () {
-            const obj = this;
-            const field = $(form).find(`[name="${obj.name}"]`);
-            switch (field.attr("name")) {
-                case "authentiity_token":
-                case "captcha":
-                    break;
-                default:
-                    switch (field.get(0).tagName) {
-                        case "SELECT":
-                            obj.title = field.nextAll("label").text().trim();
-                            obj.value = field.find(`option:selected`).text().trim();
-                            break;
-                        default:
-                            switch (field.attr("type")) {
-                                case "radio":
-                                case "checkbox":
-                                    obj.title = field.parents(".d-flex").prevAll(".title").text().trim();
-                                    obj.value = "";
-                                    $(form).find(`[name="${obj.name}"]:checked`).each(function () {
-                                        obj.value += $(this).nextAll("label").text().trim() + " ,";
-                                    });
-                                    obj.value = obj.value.substring(0, obj.value.length - 2);
-                                    break;
-                                default:
-                                    obj.title = field.nextAll("label").text().trim();
-                                    break;
-                            }
-                            break;
-                    }
-                    break
-            }
-        });
-        return formDataObject;
     }
 });
 let _c = Coker;

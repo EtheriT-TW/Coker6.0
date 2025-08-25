@@ -214,8 +214,3 @@
     </div>
 </div>
 @await Component.InvokeAsync(nameof(Modal), new { dispaly = "PermissionDetailsModal" })
-@section scripts {
-    @{
-        await Html.RenderPartialAsync(@"GrapesComponents\_PopupDirectory");
-    }
-}

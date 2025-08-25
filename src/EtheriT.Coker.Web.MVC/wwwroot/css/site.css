@@ -294,6 +294,8 @@ a {
         transition: all 0.5s;
         max-width: 75%;
         overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 
 @media screen and (prefers-reduced-motion: reduce) { /* line 35, ../../scss/basestyle/components/_sidebar.scss */

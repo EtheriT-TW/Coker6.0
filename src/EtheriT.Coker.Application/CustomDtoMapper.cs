@@ -43,6 +43,14 @@ namespace EtheriT.Coker.Application
 {
     public class CustomDtoMapper : Profile
     {
+        private double? ParseDouble(string? value)
+        {
+            if (double.TryParse(value, out var result))
+            {
+                return result;
+            }
+            return null;
+        }
         // Mapping
         // 第一個參數是來源，第二個參數是目標
         public CustomDtoMapper()
@@ -189,7 +197,8 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.S2_Name, option => option.MapFrom(c => c.Spec2Name))
                 .ForMember(e => e.S1_Title, option => option.MapFrom(c => c.Spec1))
                 .ForMember(e => e.S2_Title, option => option.MapFrom(c => c.Spec2))
-                .ForMember(e => e.Prices, option => option.MapFrom(c => new List<ProductPriceDto> { new ProductPriceDto { Price = c.Price, FK_RId = 1 } }));
+                .ForMember(e => e.TimePrice, option => option.MapFrom(c => c.Price < 0))
+                .ForMember(e => e.Prices, option => option.MapFrom(c => new List<ProductPriceDto> { new ProductPriceDto { Price = c.Price < 0 ? 0 : c.Price, FK_RId = 1 } }));
 
             CreateMap<Prod_Stock, ProductStockDto>()
                 .ReverseMap()
@@ -204,6 +213,10 @@ namespace EtheriT.Coker.Application
             CreateMap<TechCertDto, TechCertImportDto>()
                 .ForMember(e => e.Image1, option => option.MapFrom(c => c.Img))
                 .ReverseMap();
+            CreateMap<ProductImportUpateRegDto, ProductImportDto>()
+                .ForMember(e => e.Price, option => option.MapFrom(p => ParseDouble(p.Price)??-1))
+                .ReverseMap();
+
 
             //FrontUser
             CreateMap<OrderHeaderAddDto, FrontEditUserDto>()

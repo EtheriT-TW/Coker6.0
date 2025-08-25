@@ -13,6 +13,7 @@
     "aos": "^2.3.4",
     "bootstrap": "^5.3.7",
     "counterup2": "^2.0.2",
+    "flipdown": "^0.3.2",
     "globby": "^9.2.0",
     "gulp": "^4.0.2",
     "gulp-clean-css": "^4.3.0",

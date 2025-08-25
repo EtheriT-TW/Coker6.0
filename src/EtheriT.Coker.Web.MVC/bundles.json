@@ -313,6 +313,13 @@
       "input": [
         "node_modules/@devexpress/analytics-core/dist/**/*.js"
       ]
+    },
+    {
+      "outputFolder": "lib/flipdown",
+      "input": [
+        "node_modules/flipdown/dist/flipdown.min.js",
+        "node_modules/flipdown/dist/flipdown.min.css"
+      ]
     }
   ]
 }

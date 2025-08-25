@@ -23,9 +23,9 @@ namespace EtheriT.Coker.Application.Authorization
             _contextAccessor.HttpContext?.Response.Cookies.Append(key, value, options);
         }
 
-        public string? Get(string key)
+        public string Get(string key)
         {
-            return _contextAccessor.HttpContext?.Request.Cookies[key];
+            return _contextAccessor.HttpContext?.Request.Cookies[key]??"";
         }
 
         public void Delete(string key)

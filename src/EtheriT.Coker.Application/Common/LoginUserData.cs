@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Authorizaion.Dto;
 using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Shared.Authorization;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Webs.Dto;
@@ -33,16 +34,19 @@ namespace EtheriT.Coker.Application
         private readonly CokerDbContext db;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IConfiguration configuration;
+        private readonly ICookieManagerAppService cookieManager;
         private readonly IMapper mapper;
         public LoginUserData(
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
+            ICookieManagerAppService cookieManager,
             IConfiguration configuration,
             IMapper mapper
         ) {
             this.db = db;
             this.httpContextAccessor = httpContextAccessor;
             this.configuration = configuration;
+            this.cookieManager = cookieManager;
             this.mapper = mapper;
         }
 
@@ -300,7 +304,7 @@ namespace EtheriT.Coker.Application
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
             string name = user.Identity?.Name;
             string secret = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value;
-            if(string.IsNullOrEmpty(secret)) secret = httpContextAccessor.HttpContext.Request.Cookies["secret"];
+            if(string.IsNullOrEmpty(secret)) secret = cookieManager.Get("BackstageRefreshToken");
             return string.IsNullOrEmpty(secret) ? new Guid() : Guid.Parse(secret);
         }
         public async Task<bool> CheckedWebSiteId(long id) {

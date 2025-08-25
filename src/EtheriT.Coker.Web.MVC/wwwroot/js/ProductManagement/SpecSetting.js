@@ -47,7 +47,7 @@ function typeDeleteButtonClicked(e) {
         if (result.error != null) co.sweet.error("發生錯誤", result.error, null, false);
         else if (result.success) {
             co.sweet.confirm("刪除規格類型", "確定刪除？規格類型刪除後不可復原", "確　定", "取　消", function () {
-                co.Spec.SpecDelect(e.row.key).done(function () {
+                co.Spec.TypeDelect(e.row.key).done(function () {
                     TypeList_dxData.refresh();
                     SpecList_dxData.refresh();
                 })

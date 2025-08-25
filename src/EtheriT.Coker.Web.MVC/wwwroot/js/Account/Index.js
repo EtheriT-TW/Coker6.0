@@ -10,7 +10,7 @@ var PageReady = function () {
     var length = document.getElementById("length");
     const lastViewPage = $.cookie("lastViewPage") || co.Data.DefauleUrl;
 
-    if (!!$.cookie("token")) {
+    if (!!co.Cookie.Get("isLogin")) {
         co.User.Check().done(function (result) {
             if (result.success)
                 location.href = lastViewPage;

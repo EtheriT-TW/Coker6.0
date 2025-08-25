@@ -78,7 +78,8 @@ var grapesInit = function (options) {
             //'grapesjs-plugin-ckeditor',
             //'gjs-plugin-ckeditor5',
             //'grapesjs-rte-extensions',
-            'grapesjs-Coker6'
+            'grapesjs-Coker6',
+            'grapesjs-Swiper'
         ],
         pluginsOpts: {
             'gjs-blocks-basic': { flexGrid: true },
@@ -108,6 +109,7 @@ var grapesInit = function (options) {
             },
             'grapesjs-blocks-table': { containerId: '#gjs', componentCell: ".test" },
             'grapesjs-Coker6': options,
+            'grapesjs-Swiper': { },
             'grapesjs-preset-newsletter': {
                 modalLabelExport: 'Copy the code and use it wherever you want',
                 codeViewerTheme: 'material',

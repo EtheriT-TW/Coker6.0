@@ -13,7 +13,6 @@
 		<Content Remove="appsettings.longtop.json" />
 		<Content Remove="appsettings.Museum.json" />
 		<Content Remove="appsettings.sing-jhen-yi.json" />
-		<Content Remove="appsettings.unitedtw.json" />
 		<Content Remove="Views\Page\OrderManagement.cshtml" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.css" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.min.css" />
@@ -24,23 +23,35 @@
 		<Content Remove="wwwroot\lib\pdf-viewer\README.md" />
 		<Content Remove="wwwroot\Shared\css\Activity.less" />
 		<Content Remove="wwwroot\Shared\css\AnchorPoint.css" />
-		<Content Remove="wwwroot\Shared\css\AnchorPoint.min.css" />
 		<Content Remove="wwwroot\Shared\css\BGCanvas.css" />
-		<Content Remove="wwwroot\Shared\css\BGCanvas.min.css" />
 		<Content Remove="wwwroot\Shared\css\Contact.css" />
 		<Content Remove="wwwroot\Shared\css\Contact.en.css" />
-		<Content Remove="wwwroot\Shared\css\Contact.en.min.css" />
-		<Content Remove="wwwroot\Shared\css\Contact.min.css" />
 		<Content Remove="wwwroot\Shared\css\Directory.css" />
-		<Content Remove="wwwroot\Shared\css\Directory.min.css" />
 		<Content Remove="wwwroot\Shared\css\FlipBook.css" />
-		<Content Remove="wwwroot\Shared\css\FlipBook.min.css" />
+		<Content Remove="wwwroot\Shared\css\Flipdown.cs" />
+		<Content Remove="wwwroot\Shared\css\Flipdown.css" />
 		<Content Remove="wwwroot\Shared\css\Frame.css" />
-		<Content Remove="wwwroot\Shared\css\Frame.min.css" />
 		<Content Remove="wwwroot\Shared\css\HoverEffect.css" />
-		<Content Remove="wwwroot\Shared\css\HoverEffect.min.css" />
 		<Content Remove="wwwroot\Shared\css\Swiper.css" />
-		<Content Remove="wwwroot\Shared\css\Swiper.min.css" />
+		<Content Remove="wwwroot\Shared\js\Activity.js" />
+		<Content Remove="wwwroot\Shared\js\AnchorPoint.js" />
+		<Content Remove="wwwroot\Shared\js\BGCanvas.js" />
+		<Content Remove="wwwroot\Shared\js\Contact.js" />
+		<Content Remove="wwwroot\Shared\js\CShare.js" />
+		<Content Remove="wwwroot\Shared\js\DirectoryGetData.js" />
+		<Content Remove="wwwroot\Shared\js\FlipBook.js" />
+		<Content Remove="wwwroot\Shared\js\Flipdown.js" />
+		<Content Remove="wwwroot\Shared\js\Frame.js" />
+		<Content Remove="wwwroot\Shared\js\GetLatLng.js" />
+		<Content Remove="wwwroot\Shared\js\HoverEffect.js" />
+		<Content Remove="wwwroot\Shared\js\JqueryExtends.js" />
+		<Content Remove="wwwroot\Shared\js\LinkWithIcon.js" />
+		<Content Remove="wwwroot\Shared\js\MapMessage.js" />
+		<Content Remove="wwwroot\Shared\js\MarqueeSwiper.js" />
+		<Content Remove="wwwroot\Shared\js\ShareBlock.js" />
+		<Content Remove="wwwroot\Shared\js\Sitemap.js" />
+		<Content Remove="wwwroot\Shared\js\Swiper.js" />
+		<Content Remove="wwwroot\Shared\js\ViewTypeChange.js" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -101,23 +112,37 @@
 		<None Include="wwwroot\lib\pdf-viewer\README.md" />
 		<None Include="wwwroot\Shared\css\Activity.less" />
 		<None Include="wwwroot\Shared\css\AnchorPoint.css" />
-		<None Include="wwwroot\Shared\css\AnchorPoint.min.css" />
 		<None Include="wwwroot\Shared\css\BGCanvas.css" />
-		<None Include="wwwroot\Shared\css\BGCanvas.min.css" />
 		<None Include="wwwroot\Shared\css\Contact.css" />
 		<None Include="wwwroot\Shared\css\Contact.en.css" />
-		<None Include="wwwroot\Shared\css\Contact.en.min.css" />
-		<None Include="wwwroot\Shared\css\Contact.min.css" />
 		<None Include="wwwroot\Shared\css\Directory.css" />
-		<None Include="wwwroot\Shared\css\Directory.min.css" />
 		<None Include="wwwroot\Shared\css\FlipBook.css" />
-		<None Include="wwwroot\Shared\css\FlipBook.min.css" />
+		<None Include="wwwroot\Shared\css\Flipdown.css" />
 		<None Include="wwwroot\Shared\css\Frame.css" />
-		<None Include="wwwroot\Shared\css\Frame.min.css" />
 		<None Include="wwwroot\Shared\css\HoverEffect.css" />
-		<None Include="wwwroot\Shared\css\HoverEffect.min.css" />
 		<None Include="wwwroot\Shared\css\Swiper.css" />
-		<None Include="wwwroot\Shared\css\Swiper.min.css" />
+		<None Include="wwwroot\Shared\js\Activity.js" />
+		<None Include="wwwroot\Shared\js\AnchorPoint.js" />
+		<None Include="wwwroot\Shared\js\BGCanvas.js" />
+		<None Include="wwwroot\Shared\js\Contact.js" />
+		<None Include="wwwroot\Shared\js\CShare.js" />
+		<None Include="wwwroot\Shared\js\DirectoryGetData.js" />
+		<None Include="wwwroot\Shared\js\FlipBook.js" />
+		<None Include="wwwroot\Shared\js\Flipdown.js" />
+		<None Include="wwwroot\Shared\js\Frame.js" />
+		<None Include="wwwroot\Shared\js\GetLatLng.js" />
+		<None Include="wwwroot\Shared\js\HoverEffect.js" />
+		<None Include="wwwroot\Shared\js\JqueryExtends.js" />
+		<None Include="wwwroot\Shared\js\LinkWithIcon.js" />
+		<None Include="wwwroot\Shared\js\MapMessage.js" />
+		<None Include="wwwroot\Shared\js\MarqueeSwiper.js" />
+		<None Include="wwwroot\Shared\js\ShareBlock.js" />
+		<None Include="wwwroot\Shared\js\Sitemap.js" />
+		<None Include="wwwroot\Shared\js\ViewTypeChange.js" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="wwwroot\Shared\js\Swiper.js" />
 	</ItemGroup>
 
 </Project>

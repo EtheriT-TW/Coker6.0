@@ -1,0 +1,104 @@
+﻿<div class="modal fade" id="SwiperModal" tabindex="-1" aria-labelledby="SwiperModalLabel">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="SwiperModalLabel">輪播編輯</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="scroll" class="px-0 w-50">
+                    <ul id="SwiperList" class="px-0 p-1"></ul>
+                    <template id="TemplateSwiperList">
+                        <li>
+                            <input type="radio" name="label" checked="checked">
+                            <label class="d-flex mb-3 border p-2 border-dark rounded position-relative isScroll">
+                                <img class="me-2 update-img isPointer" src="" alt="" />
+                                <span class="d-flex align-self-center">
+                                    <span class="img_alt d-none"></span>
+                                    <span class="setting d-none h3">
+                                        正在編輯</>
+                                        <span class="a_href d-none"></span>
+                                        <span class="a_title d-none"></span>
+                                        <span class="a_target d-none"></span>
+                                        <span class="yt_src d-none"></span>
+                                        <span class="video_title d-none"></span>
+                                        <span class="start_time d-none"></span>
+                                        <span class="keep_time d-none"></span>
+                                        <span class="synopsis_title d-none"></span>
+                                        <span class="synopsis_caption d-none"></span>
+                                        <span class="eyes">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                            <span class="material-symbols-outlined d-none">visibility_off</span>
+                                        </span>
+                                    </span>
+                                </span>
+
+                                <span class="align-items-center d-flex position-absolute top-50 end-0 translate-middle-y me-1">
+                                    <a class="me-1 show-form isPointer" title="編輯內容">
+                                        <span class="material-symbols-outlined text-black button">border_color</span>
+                                    </a>
+                                    <a class="me-1 delete-slide isPointer" title="刪除">
+                                        <span class="material-symbols-outlined text-black button">delete</span>
+                                    </a>
+                                </span>
+                            </label>
+                        </li>
+                    </template>
+                </div>
+                <button id="add" type="button" class="btn-add-column">新增一欄</button>
+                <button id="addYT" type="button" class="btn-add-YT">新增影片</button>
+                <div class="w-50 ps-3 set-caption">
+                    <h5>相關設定</h5>
+                    <form id="EditContentForm">
+                        <div id=set-title class="mb-3 d-none">
+                            <label for="slideTitle" class="form-label">標題</label>
+                            <input type="text" class="form-control" id="slideTitle" placeholder="輸入名稱" />
+                        </div>
+                        <div id="set-content" class="mb-3">
+                            <label for="slideAlt" class="form-label">內文</label>
+                            <textarea class="form-control" id="slideAlt" rows="3" placeholder="輸入內文"></textarea>
+                        </div>
+                        <div id="set-link" class="mb-4">
+                            <label for="slideHref" class="form-label">連結網址</label>
+                            <input class="form-check-input ms-4" type="checkbox" value="" id="CheckOpenWindow">
+                            <label class="form-check-label ms-3 ps-4" for="CheckOpenWindow">另開新視窗</label>
+                            <input type="text" class="form-control" id="slideHref" placeholder="輸入連結" />
+                        </div>
+                        <div id="YT-link" class="mb-4 d-none">
+                            <label for="ytSrc" class="form-label">
+                                影片連結(YT、FB 或 影片連結建議使用MP4 【H.264 + AAC】)
+                                <a href="#" class="selectVideo">選擇影片</a>
+                            </label>
+                            <input type="text" class="form-control" id="ytSrc" placeholder="影片網址" />
+                        </div>
+                        <div id="start-time" class="mb-4 d-none">
+                            <label for="startTime" class="form-label">開始時間(秒)</label>
+                            <input type="text" class="form-control" id="startTime" placeholder="輸入開始時間(秒)" />
+                        </div>
+                        <div id="keep-time" class="mb-4">
+                            <label for="keepTime" class="form-label">持續時間(秒)</label>
+                            <input type="text" class="form-control" id="keepTime" placeholder="輸入持續時間(秒)" />
+                        </div>
+                        <div id="Ratio" class="mb-4">
+                            <label for="ratio" class="form-label">影片比例</label>
+                            <select class="form-control" id="ratio">
+                                <option value="16x9">16:9(橫屏)</option>
+                                <option value="4x3">4:3</option>
+                                <option value="1x1">1:1</option>
+                                <option value="9x16">9:16(直屏)</option>
+                            </select>
+                        </div>
+                        <div id="img-hidden" class="ms-3">
+                            <input class="form-check-input" type="checkbox" value="" id="CheckHidden">
+                            <label class="form-check-label" for="CheckHidden">隱藏</label>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary sava">完成編輯</button>
+            </div>
+        </div>
+    </div>
+</div>

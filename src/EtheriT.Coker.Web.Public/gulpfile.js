@@ -22,16 +22,12 @@ var scriptEntries = {};
 
 var viewScripts = globby.sync([
 	'./wwwroot/js/**/*.js',
-	'./wwwroot/Shared/js/**/*.js',
-	'!./wwwroot/js/**/*.min.js',
-	'!./wwwroot/Shared/js/**/*.min.js'
+	'!./wwwroot/js/**/*.min.js'
 ]);
 
 var viewStyles = globby.sync([
 	'./wwwroot/css/**/*.css',
-	'./wwwroot/Shared/css/**/*.css',
-	'!./wwwroot/css/**/*.min.css',
-	'!./wwwroot/Shared/css/**/*.min.css'
+	'!./wwwroot/css/**/*.min.css'
 ]);
 
 function processInputDefinition(input) {

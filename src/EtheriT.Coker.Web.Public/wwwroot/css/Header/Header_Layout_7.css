@@ -460,7 +460,7 @@
 @media (min-width: 992px) {
     #Mega_Menu .mega_menu_canvas,
     .mega_menu_canvas .dropdown {
-        position: initial;
+        position: relative;
     }
 
     #Offcanvas_Mega_Menu > ul > .title > .text-black {
@@ -909,6 +909,9 @@
 #breadcrumb .bread > ol > li:not(:first-child)::before {
     color: var(--gray-path);
 }
+#ContainerBody #breadcrumb {
+    margin: 0 auto;
+}
 
 @media (min-width:768px) {
     #ContainerBody #breadcrumb {
@@ -1149,32 +1152,7 @@
 
 @media (min-width:576px) {
     #main#main {
-        max-width: 540px;
         margin: auto;
         display: block;
-    }
-}
-
-@media (min-width: 768px) {
-    #main#main {
-        max-width: 720px;
-    }
-}
-
-@media (min-width: 992px) {
-    #main#main {
-        max-width: 960px;
-    }
-}
-
-@media (min-width:1200px) {
-    #main#main {
-        max-width: 1140px;
-    }
-}
-
-@media (min-width:1400px) {
-    #main#main {
-        max-width: 1320px;
     }
 }

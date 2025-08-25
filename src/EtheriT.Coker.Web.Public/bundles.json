@@ -34,25 +34,26 @@
     },
     {
       "output": "Shared/shared.min.js",
-        "input": [
-            "wwwroot/Shared/js/AnchorPoint.js",
-            "wwwroot/Shared/js/DirectoryGetData.js",
-            "wwwroot/Shared/js/Frame.js",
-            "wwwroot/Shared/js/HoverEffect.js",
-            "wwwroot/Shared/js/LinkWithIcon.js",
-            "wwwroot/Shared/js/ShareBlock.js",
-            "wwwroot/Shared/js/Sitemap.js",
-            "wwwroot/Shared/js/Swiper.js",
-            "wwwroot/Shared/js/ViewTypeChange.js",
-            "wwwroot/Shared/js/Activity.js",
-            "wwwroot/Shared/js/Contact.js",
-            "wwwroot/Shared/js/BGCanvas.js",
-            "wwwroot/Shared/js/JqueryExtends.js",
-            "wwwroot/Shared/js/FlipBook.js",
-            "wwwroot/Shared/js/MapMessage.js",
-            "wwwroot/Shared/js/GetLatLng.js",
-            "wwwroot/Shared/js/MarqueeSwiper.js"
-        ]
+      "input": [
+        "wwwroot/Shared/js/AnchorPoint.js",
+        "wwwroot/Shared/js/DirectoryGetData.js",
+        "wwwroot/Shared/js/Frame.js",
+        "wwwroot/Shared/js/HoverEffect.js",
+        "wwwroot/Shared/js/LinkWithIcon.js",
+        "wwwroot/Shared/js/ShareBlock.js",
+        "wwwroot/Shared/js/Sitemap.js",
+        "wwwroot/Shared/js/Swiper.js",
+        "wwwroot/Shared/js/ViewTypeChange.js",
+        "wwwroot/Shared/js/Activity.js",
+        "wwwroot/Shared/js/Contact.js",
+        "wwwroot/Shared/js/BGCanvas.js",
+        "wwwroot/Shared/js/JqueryExtends.js",
+        "wwwroot/Shared/js/FlipBook.js",
+        "wwwroot/Shared/js/Flipdown.js",
+        "wwwroot/Shared/js/MapMessage.js",
+        "wwwroot/Shared/js/GetLatLng.js",
+        "wwwroot/Shared/js/MarqueeSwiper.js"
+      ]
     },
     {
       "output": "Shared/c-share.min.js",
@@ -89,6 +90,7 @@
         "wwwroot/Shared/css/Contact.css",
         "wwwroot/Shared/css/Directory.css",
         "wwwroot/Shared/css/FlipBook.css",
+        "wwwroot/Shared/css/Flipdown.css",
         "wwwroot/Shared/css/Frame.css",
         "wwwroot/Shared/css/HoverEffect.css",
         "wwwroot/Shared/css/Swiper.css"
@@ -145,6 +147,14 @@
       "input": [
         "node_modules/aos/dist/*.*"
       ]
+    },
+    {
+      "outputFolder": "lib/flipdown",
+      "input": [
+        "node_modules/flipdown/dist/flipdown.min.js",
+        "node_modules/flipdown/dist/flipdown.min.css"
+      ]
     }
   ]
 }
+

@@ -351,7 +351,7 @@ namespace EtheriT.Coker.Application.Specification
                 long userId = await loginUserData.GetUserId();
                 long websiteid = await loginUserData.GetWebsiteId();
 
-                var db_ps = await db.Prod_Specs.Where(e => e.Id == Id && !e.IsDeleted).FirstOrDefaultAsync();
+                var db_ps = await db.Prod_Specs.Where(e => e.Id == Id).FirstOrDefaultAsync();
 
                 if (db_ps != null)
                 {

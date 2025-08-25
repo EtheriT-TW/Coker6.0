@@ -269,7 +269,7 @@
                 <ul class="image d-flex flex-wrap"></ul>
             </div>
 
-            <hr class="m-1" />
+            <hr class="m-1" data-storeTpe="@ViewBag.storeBuyState" />
             @if (ViewBag.storeBuyState.IndexOf("NoShow") < 0)
             {
                 @* <div class="priceframe  flex-wrap"> *@
@@ -289,16 +289,15 @@
                     </div> *@
                     @*<div class="model col pe-3 align-self-center text-end">型號：C659NA</div>*@
                 </div>
-
                 <hr class="m-1" />
-                <template id="Template_Spec_Radio">
-                    <div class="radio d-flex align-items-center my-2">
-                        @*<div class="spec_title title"></div>*@
-                        <div class="spec_control control d-flex flex-wrap">
-                        </div>
-                    </div>
-                </template>
             }
+            <template id="Template_Spec_Radio">
+                <div class="radio d-flex align-items-center my-2">
+                    @*<div class="spec_title title"></div>*@
+                    <div class="spec_control control d-flex flex-wrap">
+                    </div>
+                </div>
+            </template>
             <div class="options px-3">
                 @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
                 {

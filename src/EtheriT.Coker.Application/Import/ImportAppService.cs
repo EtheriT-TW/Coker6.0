@@ -54,8 +54,9 @@ namespace EtheriT.Coker.Application.Import
 		private List<ProductImportDto> readProdExcel(string path)
 		{
 			List<ProductImportDto> data = new List<ProductImportDto>();
-			var rows = MiniExcel.Query<ProductImportDto>(path, sheetName: "商品",startCell: "A2").ToList();
-			var Techs = MiniExcel.Query<TechCertImportDto>(path, sheetName: "技術證照", startCell: "A2").ToList(); 
+			var reg = MiniExcel.Query<ProductImportUpateRegDto>(path, sheetName: "商品",startCell: "A2").ToList();
+			var rows = mapper.Map<List<ProductImportDto>>(reg);
+            var Techs = MiniExcel.Query<TechCertImportDto>(path, sheetName: "技術證照", startCell: "A2").ToList(); 
 			try
 			{
 				for (int i = 0; i < rows.Count; i++)

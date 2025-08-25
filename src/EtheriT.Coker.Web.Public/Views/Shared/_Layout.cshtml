@@ -177,7 +177,6 @@
                 script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
                 script.async = true;
                 script.defer = true;
-                script.crossOrigin = "anonymous";
 
                 script.onload = () => {
                     console.log("Google Translate script loaded successfully.");
@@ -204,7 +203,7 @@
                         new Date().getTime(), event: 'gtm.js'
                 }); var f = d.getElementsByTagName(s)[0],
                     j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
-                        'https://www.googletagmanager.com/gtm.js?id=' + i + dl; j.crossOrigin = 'anonymous'; f.parentNode.insertBefore(j, f);
+                        'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
             })(window, document, 'script', 'dataLayer', '@ViewBag.GTM');</script>
         <!-- End Google Tag Manager -->
     }

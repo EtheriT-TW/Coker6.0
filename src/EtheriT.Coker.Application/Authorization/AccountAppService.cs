@@ -470,7 +470,7 @@ namespace EtheriT.Coker.Application.Authorization
             };
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
             string name = user.Identity?.Name;
-            string? secret = httpContextAccessor.HttpContext?.Request.Headers["secret"].ToString();
+            string? secret = cookieManager.Get("BackstageRefreshToken");
             try
             {
                 if (!string.IsNullOrEmpty(name))
@@ -485,7 +485,7 @@ namespace EtheriT.Coker.Application.Authorization
                         if (t != null)
                         {
                             var users = await db.Users.Where(e => e.Id == t.UserID).FirstOrDefaultAsync();
-                            if (t.EndTime < DateTime.Now.AddMinutes(10))
+                            if (t.EndTime < DateTime.Now.AddMinutes(15))
                             {
                                 t.EndTime = DateTime.Now.AddMinutes(30);
                                 db.SaveChanges();
@@ -518,7 +518,7 @@ namespace EtheriT.Coker.Application.Authorization
         {
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
             string name = user.Identity?.Name;
-            string? secret = httpContextAccessor.HttpContext?.Request.Headers["secret"].ToString();
+            string? secret = cookieManager.Get("BackstageRefreshToken");
             if (!string.IsNullOrEmpty(secret))
             {
                 var t = await db.Tokens.Where(e => e.id == Guid.Parse(secret ?? "")).FirstOrDefaultAsync();
@@ -536,6 +536,7 @@ namespace EtheriT.Coker.Application.Authorization
                     db.Account_Logs.Add(account_Log);
                     db.Tokens.Remove(t);
                     db.SaveChanges();
+                    cookieManager.Clear();
                 }
             }
             return new ResponseMessageDto

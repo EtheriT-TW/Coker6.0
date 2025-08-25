@@ -101,7 +101,7 @@
             </div>
         </div>
     </div>
-    <div id="Search_Title" data-key="" class="container d-flex justify-content-center my-4">
+    <div id="Search_Title" class="container d-flex justify-content-center my-4">
         <p>
             @Html.Raw(string.Format(L.get("FindDescription"), $@"<span class=""px-1 searchText"">{@Model.SearchPalameter.SearchText}</span>", $@"<span class=""px-1 searchCount"">0</span>"))
         </p>
@@ -150,54 +150,54 @@
                         <span class="material-symbols-outlined fs-5 me-1">list</span>@L.get("GridText")
                     </button>
                 </div>
-                <div draggable="true" class="catalog content row row-cols-lg-4 gx-0 rounded-lg bg-light px-2">
-                    <div data-key="" class="templatecontent d-none">
+                <div class="catalog content row row-cols-lg-4 gx-0 rounded-lg bg-light px-2">
+                    <div class="templatecontent d-none">
                         <div class="template p-2 py-2">
-                            <div data-key="" class="col bg-white p-2 position-sticky p-1 type4 rounded-lg h-100">
-                                <a data-key="" href="/lcb/Apro_1/product/2" title="" target="_self" class="text-black">
-                                    <figure data-key="" class="d-flex justify-content-center mb-0 h-100 max-h flex-column">
-                                        <div data-key="" class="image_frame d-flex flex-grow-1 justify-content-center align-items-center type4-image-frame w-100">
-                                            <img data-key="" src="/upload/logo.png" alt="" class="image gjs-plh-image img-fluid" />
+                            <div class="col bg-white p-2 position-sticky p-1 type4 rounded-lg h-100">
+                                <a href="/lcb/Apro_1/product/2" title="" target="_self" class="text-black">
+                                    <figure class="d-flex justify-content-center mb-0 h-100 max-h flex-column">
+                                        <div class="image_frame d-flex flex-grow-1 justify-content-center align-items-center type4-image-frame w-100">
+                                            <img src="/upload/logo.png" alt="" class="image gjs-plh-image img-fluid" />
                                         </div>
-                                        <figcaption data-key="" class="w-100 position-relative pb1 type4-caption d-flex flex-column">
+                                        <figcaption class="w-100 position-relative pb1 type4-caption d-flex flex-column">
                                             <div class="item-header d-flex">
                                                 <div class="itemNo m-0 p-0 align-itmes-center type4-title d-inline fw-bold">
                                                     {{產品編號}}
                                                 </div>
                                             </div>
                                             <div class="item-title">
-                                                <div data-key="" class="catalog-number itemNo m-0 p-2 align-itmes-center type4-title"></div>
-                                                <div data-key="" class="title m-0 fs-5 align-itmes-center type4-title fs-6"></div>
+                                                <div class="catalog-number itemNo m-0 p-2 align-itmes-center type4-title"></div>
+                                                <div class="title m-0 fs-5 align-itmes-center type4-title fs-6"></div>
                                                 <div class="like-and-share top_line d-none">
                                                     <button class="btn_favorites bg-transparent border-0 d-none">
                                                         <i class="fs-5 fa-regular fa-heart"></i><span class="d-none">關注</span>
                                                     </button>
                                                 </div>
                                             </div>
-                                            <p data-key="" class="description mt-1 overflow-hidden p-2 d-none type2-content">
+                                            <p class="description mt-1 overflow-hidden p-2 d-none type2-content">
                                             </p>
                                             <div class="more-btn position-absolute d-flex justify-content-center align-items-center d-none">
                                                 <div class="fas fa-angle-right">
                                                 </div>
                                             </div>
-                                            <div data-key="" class="date d-flex justify-content-end align-items-center p-2 d-none">
+                                            <div class="date d-flex justify-content-end align-items-center p-2 d-none">
                                             </div>
-                                            <div data-key="" class="more text-end mt-1 d-none">
+                                            <div class="more text-end mt-1 d-none">
                                                 詳細介紹
                                             </div>
-                                            <div data-key="" class="price price-grid mt-auto type2-title fw-bold fs-7">
+                                            <div class="price price-grid mt-auto type2-title fw-bold fs-7">
                                             </div>
-                                            <div data-key="" class="bottom-row d-flex align-text-bottom">
-                                                <div data-key="" class="tags">
+                                            <div class="bottom-row d-flex align-text-bottom">
+                                                <div class="tags">
                                                 </div>
                                                 <div class="purchase d-none">
-                                                    <div data-key="" class="price price-discount me-auto p-2 align-itmes-center type2-title d-none">
+                                                    <div class="price price-discount me-auto p-2 align-itmes-center type2-title d-none">
                                                         {{min price}}
                                                     </div>
-                                                    <div data-key="" class="price normal-price me-auto p-2 align-itmes-center type2-title fw-bold">
+                                                    <div class="price normal-price me-auto p-2 align-itmes-center type2-title fw-bold">
                                                         {{max price}}
                                                     </div>
-                                                    <span data-key="" class="cart badge rounded-pill bg-secondary text-white me-auto p-2 px-4 align-itmes-center type2-title d-none fw-normal">
+                                                    <span class="cart badge rounded-pill bg-secondary text-white me-auto p-2 px-4 align-itmes-center type2-title d-none fw-normal">
                                                         <i class="fa-solid fa-cart-shopping fa-inverse">
                                                         </i>
                                                         放入購物車
@@ -215,21 +215,21 @@
                             </div>
                         </div>
                     </div>
-                    <div data-key="" class="templatecontent-tag d-none">
+                    <div class="templatecontent-tag d-none">
                         <span class="badge rounded-pill bg-light text-secondary fw-normal me-1 px-2">{{Tag Name}}</span>
                     </div>
                 </div>
-                <nav draggable="true" aria-label="Page">
-                    <ul draggable="true" class="page_btn d-flex justify-content-center my-5 pagination">
-                        <li draggable="true" class="page-item btn_prev">
-                            <button draggable="true" class="page-link text-black" value="上一頁按鈕">
+                <nav aria-label="Page">
+                    <ul class="page_btn d-flex justify-content-center my-5 pagination">
+                        <li class="page-item btn_prev">
+                            <button class="page-link text-black" value="上一頁按鈕">
                                 <span class="material-symbols-outlined">
                                     arrow_back_ios
                                 </span>
                             </button>
                         </li>
-                        <li draggable="true" class="page-item btn_next">
-                            <button draggable="true" class="page-link text-black" value="下一頁按鈕">
+                        <li class="page-item btn_next">
+                            <button class="page-link text-black" value="下一頁按鈕">
                                 <span class="material-symbols-outlined">
                                     arrow_forward_ios
                                 </span>

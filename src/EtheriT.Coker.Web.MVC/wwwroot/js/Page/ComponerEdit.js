@@ -122,7 +122,6 @@
                         isAdd = true;
                         saveList.push($(cEl).data());
                     }
-                    console.log(cEl);
                     ul.children("li").each(function (index, element) {
                         var s = $(element).data("serNO");
                         if (s != (index + 1)) {
@@ -183,7 +182,6 @@
     co.ObjectType.GetAll().done(function (result) {
         if (result.success) {
             $(result.list).each((i, e) => {
-                console.log(e);
                 const $s = $("#classType");
                 $s.append(`<option value="${e.id}">${e.title}</option>`);
             });

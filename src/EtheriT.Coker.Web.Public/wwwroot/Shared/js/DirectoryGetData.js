@@ -337,14 +337,14 @@ function DirectoryDataGet($item, option) {
 }
 function DirectoryDataInsert($item, result) {
     if (result == null) return;
-    const temp = $item.find(".templatecontent").html();
+    $item.find(".templatecontent .shareBlock>a").remove();
+    const temp = $item.data("temp") || $item.find(".templatecontent").html();
     const temp_tag = $item.find(".templatecontent-tag").html();
     const isSearch = $item.data("type") == "search";
     const dirPath = typeof ($item.data("dirpath")) == "undefined" ? "" : $item.data("dirpath").toLowerCase();
     const $catalog = $item.find(".catalog");
     if (result.length == 0) $catalog.addClass("empty");
     else $catalog.removeClass("empty");
-
     if ($item.hasClass("hover_display_details") && typeof (OrgName) != "undefined") {
         if (result.length > 0) {
             if (result[0].mainImage != "") {

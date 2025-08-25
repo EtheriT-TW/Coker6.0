@@ -729,7 +729,7 @@ function SpecAdd(result) {
             item_select_input_2.removeAttr("disabled")
 
             var temp_spec_list = spec_pick_list.find(item => item.id == item_select_2.val())
-            if (temp_spec_list.specs.length > 0) {
+            if (temp_spec_list && temp_spec_list.specs && temp_spec_list.specs.length > 0) {
                 temp_spec_list.specs.forEach(item => {
                     item_select_list_2.append(`<option value="${item.title}" data-sid="${item.id}"></option>`)
                     if (item.id == result.fK_S2id) {

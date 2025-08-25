@@ -10,14 +10,11 @@
                 dataType: "json"
             }).done(function (result) {
                 co.Cookie.AddAll({
-                    token: result.token,
-                    secret: result.secret,
+                    isLogin: true,
                     endDateTime: (new Date(result.endDateTime)).getTime()
                 });
-                _c.Data.Header = {
-                    Authorization: 'Bearer ' + $.cookie("token"),
-                    Secret: $.cookie("secret")
-                }
+                _c.Data.Header.Authorization = 'Bearer ' + result.token;
+                _c.Data.Header.Secret = result.secret;
                 _dfr.resolve(result);
             });
             return _dfr.promise();
@@ -48,14 +45,14 @@
                 url: "/api/User/Chech",
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
                 dataType: "json"
             }).done(function (result) {
                 co.Cookie.AddAll({
-                    token: result.token,
-                    secret: result.secret,
+                    isLogin: true,
                     endDateTime: (new Date(result.endDateTime)).getTime()
                 });
+                _c.Data.Header.Authorization = 'Bearer ' + result.token;
+                _c.Data.Header.Secret = result.secret;
                 _dfr.resolve(result);
             }).fail(function () {
                 _c.Cookie.DelAll();

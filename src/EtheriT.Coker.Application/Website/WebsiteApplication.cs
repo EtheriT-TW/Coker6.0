@@ -225,6 +225,7 @@ namespace EtheriT.Coker.Application
             }
             if (data.Any())
             {
+                if (data.Count > 12) data = data.OrderByDescending(e => e.Id).ToList();
                 foreach (var d in data)
                 {
                     if (!d.Images.Contains(d.OrgName)) d.Images = d.Images.Replace("/upload/", $"/upload/{d.OrgName}/");

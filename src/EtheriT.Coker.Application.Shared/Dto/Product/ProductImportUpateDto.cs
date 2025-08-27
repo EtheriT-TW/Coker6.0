@@ -16,8 +16,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public string? Description { get; set; }
 		public string? Introduction { get; set; }
 		public string? Html { get; set; }
-		public DateTime StartTime { get; set; }
-		public DateTime EndTime { get; set; }
+		public DateTime? StartTime { get; set; }
+		public DateTime? EndTime { get; set; }
 		public string? Spec1Name { get; set; }
 		public string? Spec1 { get; set; }
 		public string? Spec2Name { get; set; }

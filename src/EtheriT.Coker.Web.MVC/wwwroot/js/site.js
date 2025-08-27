@@ -65,8 +65,8 @@ var PreLoader;
         co.Page.Ready();
     } else {
         co.User.Check().done(function (result) {
-            if (result.success) co.Page.Ready();
-            else location.href = "/";
+            if (!result.success && location.pathname != "/" && !/^\/Account/.test(location.pathname)) location.href = "/";
+            else co.Page.Ready();
         });
     }
     $(".loader-wrapper").not(".incomponent").fadeOut(1000, function () { PreLoader = $(this).detach() })

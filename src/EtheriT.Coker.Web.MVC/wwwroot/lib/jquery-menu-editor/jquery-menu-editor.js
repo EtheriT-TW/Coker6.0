@@ -1167,7 +1167,6 @@ function MenuEditor(idSelector, options) {
     });
     $main.on('click', '.btnEdit', function (e) {
         e.preventDefault();
-        console.log("btnEdit");
         itemEditing = $(this).closest('li');
         editItem(itemEditing);
         !!settings.on.edit && settings.on.edit();

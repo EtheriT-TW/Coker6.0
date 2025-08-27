@@ -122,7 +122,7 @@ namespace EtheriT.Coker.Application.Authorization
                         }
                         if (!await loginUserData.CheckedWebSiteId(user.Id, bindID))
                         {
-                            var defaultWeb = await db.MappingUserAndWebsites.Where(e => !e.IsDeleted).Where(m => m.UserId == user.Id).FirstOrDefaultAsync();
+                            var defaultWeb = await db.MappingUserAndWebsites.Where(e => !e.IsDeleted).Where(m => m.UserId == user.Id).OrderByDescending(e => e.WebsiteId).FirstOrDefaultAsync();
                             if (defaultWeb != null)
                             {
                                 bindID = defaultWeb.UserId;

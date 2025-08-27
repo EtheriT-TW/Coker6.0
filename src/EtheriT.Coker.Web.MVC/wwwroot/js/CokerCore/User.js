@@ -47,13 +47,21 @@
                 contentType: 'application/json; charset=utf-8',
                 dataType: "json"
             }).done(function (result) {
-                co.Cookie.AddAll({
-                    isLogin: true,
-                    endDateTime: (new Date(result.endDateTime)).getTime()
-                });
-                _c.Data.Header.Authorization = 'Bearer ' + result.token;
-                _c.Data.Header.Secret = result.secret;
-                _dfr.resolve(result);
+                if (!result.success) {
+                    co.Cookie.AddAll({
+                        isLogin: false
+                    });
+                    co.Cookie.Del("endDateTime");
+                    _dfr.resolve(result);
+                } else {
+                    co.Cookie.AddAll({
+                        isLogin: true,
+                        endDateTime: (new Date(result.endDateTime)).getTime()
+                    });
+                    _c.Data.Header.Authorization = 'Bearer ' + result.token;
+                    _c.Data.Header.Secret = result.secret;
+                    _dfr.resolve(result);
+                }
             }).fail(function () {
                 _c.Cookie.DelAll();
                 co.sweet.error("連線失敗", "延遲時間過久，您的登入狀態已被登出，請重新登入。", function () {

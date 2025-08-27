@@ -1,6 +1,10 @@
 ﻿var $gjs_select = null;
 grapesjs.plugins.add('grapesjs-Swiper', (editor, options) => {
     const AssetManager = editor.AssetManager;
+    const isSwiperSlide = cmp => {
+        const classes = typeof cmp.getClasses === 'function' ? cmp.getClasses() : [];
+        return Array.isArray(classes) && classes.includes('swiper-slide');
+    };
     //輪播
     editor.DomComponents.addType('輪播', {
         isComponent: el => el.classList?.contains('one_swiper') || el.classList?.contains('one_swiper_thumbs') || el.classList?.contains('two_swiper') || el.classList?.contains('three_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper') || el.classList?.contains('three_two_grid_swiper') || el.classList?.contains('vertical_swiper_thumbs'),
@@ -460,23 +464,24 @@ grapesjs.plugins.add('grapesjs-Swiper', (editor, options) => {
         }
     });
     editor.on('component:remove', (obj) => {
-        const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;
-        const classList = obj.getClasses();
-        if (classList.indexOf("swiper-slide") > -1) {
-            if (typeof (editor.getSelected()) != "undefined") {
-                var swiper = editor.getSelected().getEl().swiper;
-                if (typeof (swiper) != "undefined") {
-                    var cont = iframe.document.getElementsByClassName("swiper-slide").length;
-                    const timmer = function () {
-                        if (iframe.document.getElementsByClassName("swiper-slide").length != cont) swiper.update();
-                        else setTimeout(timmer, 100);
-                    }
-                    setTimeout(timmer, 100);
+        if (!isSwiperSlide(obj)) return;
+        const iframe = editor.Canvas.getWindow();
+        if (typeof (editor.getSelected()) != "undefined") {
+            var swiper = editor.getSelected().getEl().swiper;
+            if (typeof (swiper) != "undefined") {
+                var cont = iframe.document.getElementsByClassName("swiper-slide").length;
+                const timmer = function () {
+                    if (iframe.document.getElementsByClassName("swiper-slide").length != cont) swiper.update();
+                    else setTimeout(timmer, 100);
                 }
+                setTimeout(timmer, 100);
             }
         }
     });
-    editor.on('component:drag:end', (obj) => {
+    editor.on('component:drag:end', (e) => {
+        const obj = e?.target || e;
+        const iframe = editor.Canvas.getWindow();
+        const classList = obj.getClasses();
         if (classList.indexOf("swiper-slide") > -1) {
             var swiper = obj.target.parent().parent().getEl().swiper;
             swiper.update();

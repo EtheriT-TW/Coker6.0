@@ -319,9 +319,7 @@
 
                 ul.children("li").each(function (index, element) {
                     var s = $(element).data("serNO");
-                    console.log(s, index + 1, element);
                     if (s != (index + 1)) {
-                        /*console.log(element, s, (index + 1));*/
                         s = index + 1;
                         $(element).data("serNO", s);
                         if ($(element).data("id") != cEl.data("id")) saveList.push($(element).data());

@@ -204,9 +204,9 @@
         <!-- Tool Bar -->
         <div class="d-flex justify-content-center icon-block">
             <!-- Search Block -->
-            <a href="@Model.SearchPath" title="前往搜尋頁" class="d-flex bg-transparent border-0 align-items-center bg-transparent border-0 p-0 p-lg-1">
+            <a href="@Model.SearchPath" title="@L.get("GoToSearch")" class="d-flex bg-transparent border-0 align-items-center bg-transparent border-0 p-0 p-lg-1">
                 <span class="material-symbols-outlined bg-secondary bg-grey text-muted rounded-circle p-1 fs-5 notranslate">search</span>
-                <span class="text-nowrap ms-2 d-none d-lg-flex">搜尋</span>
+                <span class="text-nowrap ms-2 d-none d-lg-flex">@L.get("Search")</span>
             </a>
             @foreach (var menu in Model.langMenuItemModels)
             {

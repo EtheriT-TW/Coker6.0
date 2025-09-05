@@ -15,6 +15,7 @@ namespace EtheriT.Coker.Application.Shared.Processor
         public List<string> find(string html, string selector);
 		public List<HtmlNode> Find(HtmlDocument document, string selector);
 		public HtmlDocument LoadHtml(string htmlContent);
+		public string ExtractBodyInnerHtml(string html);
         public string text(string html);
 	}
 }

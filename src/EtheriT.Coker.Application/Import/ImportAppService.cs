@@ -11,10 +11,12 @@ using Microsoft.Extensions.Options;
 using MiniExcelLibs;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -25,7 +27,8 @@ namespace EtheriT.Coker.Application.Import
 		private readonly IFileUploadAppService fileUploadAppService;
 		private readonly string _folder;
 		private readonly IMapper mapper;
-		public ImportAppService(
+        private readonly ConcurrentDictionary<(Type, string), PropertyInfo[]> _propCache = new();
+        public ImportAppService(
 			IFileUploadAppService fileUploadAppService, 
 			IOptions<VirtualDirectory> VirtualDirectory,
 			IMapper mapper
@@ -65,23 +68,12 @@ namespace EtheriT.Coker.Application.Import
 					{
 						var t = Techs.FindAll(e => e.ProdName == rows[i].ProdName && e.ItemNo == rows[i].ItemNo);
 						rows[i].Techs = mapper.Map<List<TechCertDto>>(t);
-                        if(!string.IsNullOrEmpty(rows[i].Image1)) rows[i].Image1 = $"/upload/Product/{rows[i].Image1}".Replace("//", "/");
-                        if (!string.IsNullOrEmpty(rows[i].Image2)) rows[i].Image2 = $"/upload/Product/{rows[i].Image2}".Replace("//", "/");
-                        if (!string.IsNullOrEmpty(rows[i].Image3)) rows[i].Image3 = $"/upload/Product/{rows[i].Image3}".Replace("//", "/");
-                        if (!string.IsNullOrEmpty(rows[i].Image4)) rows[i].Image4 = $"/upload/Product/{rows[i].Image4}".Replace("//", "/");
-                        if (!string.IsNullOrEmpty(rows[i].Image5)) rows[i].Image5 = $"/upload/Product/{rows[i].Image5}".Replace("//", "/");
-                        if (!string.IsNullOrEmpty(rows[i].Image6)) rows[i].Image6 = $"/upload/Product/{rows[i].Image6}".Replace("//", "/");
-                        if (!string.IsNullOrEmpty(rows[i].Image7)) rows[i].Image7 = $"/upload/Product/{rows[i].Image7}".Replace("//", "/");
-                        if (!string.IsNullOrEmpty(rows[i].File1)) rows[i].File1 = $"/upload/Product/File/{rows[i].File1}".Replace("//", "/");
-                        if (!string.IsNullOrEmpty(rows[i].File2)) rows[i].File2 = $"/upload/Product/File/{rows[i].File2}".Replace("//", "/");
-                        if (!string.IsNullOrEmpty(rows[i].File3)) rows[i].File3 = $"/upload/Product/File/{rows[i].File3}".Replace("//", "/");
-                        if (!string.IsNullOrEmpty(rows[i].File4)) rows[i].File4 = $"/upload/Product/File/{rows[i].File4}".Replace("//", "/");
-                        if (!string.IsNullOrEmpty(rows[i].File5)) rows[i].File5 = $"/upload/Product/File/{rows[i].File5}".Replace("//", "/");
-
+                        pathReplace(rows[i], "Image", "Product");
+                        pathReplace(rows[i], "File", "Product/File");
                         if (rows[i].Techs != null)
 						{
                             rows[i].Techs.ForEach(e => {
-                                if(!string.IsNullOrEmpty(e.Img)) e.Img = $"/upload/TechnicalCertificate/{e.Img}".Replace("//", "/");
+                                pathReplace(e, "Img", "TechnicalCertificate");
                             });
                         }
                         data.Add(rows[i]);
@@ -92,7 +84,30 @@ namespace EtheriT.Coker.Application.Import
 
 			return data;
 		}
-		public List<DirectoryImportDto> readDirectoryExcel(string path) {
+        private PropertyInfo[] GetProps<T>(string keyPrefix) where T : class
+        {
+            var k = (typeof(T), keyPrefix.ToLowerInvariant());
+            return _propCache.GetOrAdd(k, _ =>
+                typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                         .Where(p => p.CanRead && p.CanWrite
+                                  && p.PropertyType == typeof(string)
+                                  && p.Name.StartsWith(keyPrefix, StringComparison.OrdinalIgnoreCase))
+                         .ToArray()
+            );
+        }
+        private void pathReplace<T>(T dto,string key, string dir) where T : class
+        {
+            var props = GetProps<T>(key);
+            foreach (var prop in props) { 
+				string? path = prop.GetValue(dto) as string;
+				if (!string.IsNullOrEmpty(path) && !path.StartsWith("http") && !path.StartsWith("/upload/"))
+				{
+					path = $"/upload/{dir}/{path}".Replace("//", "/");
+					prop.SetValue(dto, path);
+                }
+            }
+        }
+        public List<DirectoryImportDto> readDirectoryExcel(string path) {
 			var rows = MiniExcel.Query<DirectoryImportDto>(path, sheetName: "目錄分類", startCell: "A3").ToList();
 			return rows;
 		}

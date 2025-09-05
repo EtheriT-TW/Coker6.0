@@ -307,7 +307,6 @@ function DirectoryDataGet($item, option) {
             else hasbuybtn = $item.data("hasbuybtn");
             if (hasbuybtn && ($("#btn_car_dropdown").length > 0 || typeof (OrgName) == "undefined")) $item.addClass("hasBuyBtn");
             else $item.removeClass("hasBuyBtn");
-
             if (typeof (islogin) == "undefined" && typeof (OrgName) != "undefined") {
                 Coker.Token.CheckToken().done(function (token_result) {
                     if (token_result.success) islogin = token_result.isLogin;
@@ -713,6 +712,7 @@ function DirectoryAdDataInsert($item, result) {
 function InsertAdDatat($frame, result) {
     var isFront = typeof (OrgName) != "undefined";
     var result_File = result.fileLink[0];
+    if (result_File == null) return;
     var filetype = result_File.fileType;
     var html;
     if (isFront || typeof ($frame.data("init")) == "undefined") {

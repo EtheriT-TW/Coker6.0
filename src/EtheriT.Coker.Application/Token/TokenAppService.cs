@@ -343,7 +343,8 @@ namespace EtheriT.Coker.Application.Token
                 "Users"
             };
             string token = await jwt.GenerateToken(account, roles, secret, expireMinutes, custClaims);
-            cookieManager.Set($"{position}Token", token, CookiePurposeEnum.XsrfToken);
+            //cookieManager.Set($"{position}Token", token, CookiePurposeEnum.XsrfToken);
+            cookieManager.Set($"{position}Token", token, CookiePurposeEnum.AuthToken);
             cookieManager.Set($"{position}RefreshToken", secret.ToString(), CookiePurposeEnum.RefreshIdentifier);
 
             var key = $"{position}Token";

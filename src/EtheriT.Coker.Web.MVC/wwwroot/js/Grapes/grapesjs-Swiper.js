@@ -487,4 +487,138 @@ grapesjs.plugins.add('grapesjs-Swiper', (editor, options) => {
             swiper.update();
         } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1 || classList.indexOf("three_two_grid_swiper") > -1 || classList.indexOf("vertical_swiper_thumbs") > -1) iframe.SwiperInit({ autoplay: false });
     });
+    editor.DomComponents.addType('外嵌影片放大檢視', {
+        isComponent: el => el.classList?.contains('YTmodal_frame'),
+        model: {
+            defaults: {
+                removable: true,
+                editable: true,
+                traits: [
+                    { name: 'yttitle', type: 'text', label: '標題', placeholder: '請輸入影片標題' },
+                    { name: 'link', type: 'text', label: '網址', placeholder: '請輸入影片網址(僅支援YT、FB)' },
+                    {
+                        name: 'thumb', type: 'button',
+                        text: "選擇預覽圖片",
+                        command: editor => {
+                            AssetManager.open();
+                            AssetManager.onSelect((result) => {
+                                const imgComp = editor.getSelected().find("button > img")[0];
+                                if (imgComp) {
+                                    //修改 src 屬性要用.set 不能用 setAttributes
+                                    imgComp.set({ "src": result.id });
+                                }
+                                AssetManager.close();
+                            });
+                        },
+                    },
+                ]
+            }, init() {
+
+                this.on('change:attributes:link', function (component) {
+                    if (typeof (component.getEl()) != "undefined") {
+                        var link = component.getAttributes()["link"];
+                        const el = component.getEl();
+                        if (link) {
+                            const video = getVideoUrl(link);
+                            const img = el.querySelector('img');
+                            if (link != video.url) {
+                                component.setAttributes({ 'link': video.url });
+                                const oldSrc = img ? img.getAttribute("src") : "";
+                                if (oldSrc.startsWith("data:") || oldSrc.startsWith("/images/")) {
+                                    if (video.img != "") {
+                                        img.set("src", video.img);
+                                    } else img.set('src', '/images/defaultImage/video.jpg');
+                                }
+                            }
+                        }
+                    }
+                });
+                this.on('change:attributes:yttitle', function (component) {
+                    if (typeof (component.getEl()) != "undefined") {
+                        var title = component.getAttributes()["yttitle"];
+                        if (typeof (title) != "undefined") {
+                            const el = component.getEl();
+                            const img = el.querySelector('img');
+                            if (img) img.setAttribute("alt", `${title}的圖片`);
+                        }
+                    }
+                });
+            }
+        }
+    });
+    //Youtube Modal
+    const getVideoUrl = (link, startTime = 0) => {
+        let Link = {
+            url: "", img: ""
+        }
+        if (link.includes("facebook.com")) {
+            const tMatch = link.match(/[?&]t=(\d+)/);
+            if (tMatch) {
+                startTime = parseInt(tMatch[1], 10) || 0;
+            }
+
+            if (link.includes("facebook.com/plugins/video.php")) {
+                Link.url = link;
+            } else if (/fb\.watch\//.test(link)) {
+                co.sweet.error("FB Watch 影片無法嵌入，請使用 Facebook 網址。");
+            } else {
+                const cleanLink = link.replace(/[?&]t=\d+/, '');
+                const encodedHref = encodeURIComponent(cleanLink);
+                let embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodedHref}&show_text=false&autoplay=1`;
+                Link.url = embedUrl;
+            }
+            if (startTime > 0 && !!Link.url) {
+                Link.url += `&start_time=${startTime}`;
+            }
+            if (!!Link.url && !/[\?&]mute=1/.test(Link.url)) {
+                Link.url += "&mute=1";
+            }
+        } else if (link.indexOf("youtu") > -1) {
+            // 處理不同格式的 YouTube 網址
+            let vid = "";
+            const regex = /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/|live\/)|youtu\.be\/|youtube-nocookie\.com\/embed\/)([a-zA-Z0-9_-]{11})/;
+            const match = link.match(regex);
+            if (match && match[1]) {
+                vid = match[1];
+            } else {
+                const altRegex = /[?&]v=([a-zA-Z0-9_-]{11})/;
+                const altMatch = url.match(altRegex);
+                if (altMatch && altMatch[1]) {
+                    vid = altMatch[1];
+                }
+            }
+            if (startTime == 0 && link.includes("t=")) {
+                var tIndex = link.indexOf("t=") + 2;
+                var tEnd = link.indexOf("&", tIndex);
+                var timeStr = tEnd >= 0 ? link.substring(tIndex, tEnd) : link.substring(tIndex);
+
+                // 檢查是否是純數字
+                if (/^\d+$/.test(timeStr)) {
+                    startTime = parseInt(timeStr, 10);
+                } else {
+                    // 匹配 hms 格式
+                    const regex = /(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/;
+                    const match = timeStr.match(regex);
+                    if (match) {
+                        const hours = match[1] ? parseInt(match[1], 10) : 0;
+                        const minutes = match[2] ? parseInt(match[2], 10) : 0;
+                        const seconds = match[3] ? parseInt(match[3], 10) : 0;
+                        startTime = hours * 3600 + minutes * 60 + seconds;
+                    }
+                }
+            }
+            link = startTime > 0
+                ? `https://www.youtube.com/embed/${vid}?start=${startTime}&autoplay=1`
+                : `https://www.youtube.com/embed/${vid}?autoplay=1`;
+
+            if (link.startsWith("https://www.youtube.com/embed/")) {
+                var img_link = `https://img.youtube.com/vi/${vid}/hqdefault.jpg`
+                Link.img = img_link;
+                Link.url = link;
+            }
+        } else {
+            Link.url = link;
+        }
+        return Link;
+    }
 });

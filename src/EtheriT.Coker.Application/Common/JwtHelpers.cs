@@ -77,14 +77,15 @@ namespace EtheriT.Coker.Web.MVC.Resources
             var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256Signature);
 
             // Create SecurityTokenDescriptor
+            var now = DateTime.Now;
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Issuer = issuer,
                 Audience = audience, // Sometimes you don't have to define Audience.
-                NotBefore = DateTime.Now, // 何時開始生效
-                IssuedAt = DateTime.Now, // Default is DateTime.Now
+                NotBefore = now, // 何時開始生效
+                IssuedAt = now, // Default is DateTime.Now
                 Subject = userClaimsIdentity,
-                Expires = DateTime.Now.AddMinutes(expireMinutes),
+                Expires = now.AddMinutes(expireMinutes),
                 SigningCredentials = signingCredentials
             };
 

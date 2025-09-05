@@ -9,9 +9,13 @@ function PageReady() {
     ElementInit();
 
     $(".btn_back").on("click", function () {
-        Coker.sweet.confirm("返回訂單列表", "資料將不被保存", "確定", "取消", function () {
-            history.back();
-        });
+        var newstate = parseInt($(".status_select > option:selected").val());
+        if (oristate == newstate) history.back();
+        else {
+            Coker.sweet.confirm("返回訂單列表", "資料將不被保存", "確定", "取消", function () {
+                history.back();
+            });
+        }
     })
     $btn_reSend.on("click", function () {
         co.sweet.confirm("重新發送通知信", "是否確認重發訂單通知信?", "確定", "取消", function () {
@@ -220,7 +224,7 @@ function updateOrder() {
                 $(".btn_recheck").addClass("d-none");
                 oristate = newstate;
             }
-            //order_list.component.refresh();
+            order_list.component.refresh();
         }
         else co.sweet.error("儲存失敗", result.error);
     });

@@ -331,7 +331,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Prod_Stock>(o =>
             {
-                o.HasOne(u => u.Prod).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_Pid);
+                o.HasOne(u => u.Prod).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_Pid).OnDelete(DeleteBehavior.Cascade);
                 o.Property(p => p.IsTimePrice).HasDefaultValue(false);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
@@ -365,7 +365,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Prod_Price>(o =>
             {
-                o.HasOne(u => u.Prod_Stock).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_PSId);
+                o.HasOne(u => u.Prod_Stock).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_PSId).OnDelete(DeleteBehavior.Cascade);
                 o.HasOne(u => u.Role).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_RId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });

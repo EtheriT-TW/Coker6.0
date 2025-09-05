@@ -280,7 +280,9 @@ function PageDefaultSet(result) {
     } else {
         displayText = '';
     }
-
+    result.stocks.map(e => {
+        if (e.timePrice) e.prices = [{price:0}];
+    });
     if (result.stocks.length > 1) {
         var obj = {};
 
@@ -414,7 +416,11 @@ function PageDefaultSet(result) {
                 price_temp.find(".discount").removeClass("price");
                 price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${result.stocks[0].suggestPrice.toLocaleString('en-US')}</div><div class="text-danger">  ${displayText}</div>`);
             }
-            if (result.stocks[0].timePrice) $(".btn_addToCar").remove();
+            if (result.stocks[0].timePrice) {
+                $(".btn_addToCar").addClass("d-none");
+                $(".priceframe + hr").addClass("d-none");
+                $options.addClass("d-none");
+            }
 
             if ($(".priceframe").children().length == 0 && !price_temp.find("input").prop("disabled")) price_temp.find("input").prop("checked", true);
             $(".priceframe").append(price_temp);

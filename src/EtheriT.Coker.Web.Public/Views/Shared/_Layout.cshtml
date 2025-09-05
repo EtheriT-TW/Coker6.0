@@ -146,7 +146,42 @@
     {
         <script nonce="@ViewBag.Nonce">
             let isGoogleTranslateInitialized = false;
+            function triggerResize(quietMs = 200, fallbackMs = 1500) {
+                const header = document.querySelector('header'); // 針對 header
+                if (!header) {
+                    // 找不到 header 就直接觸發一次
+                    window.dispatchEvent(new Event('resize'));
+                    return;
+                }
 
+                let timer;
+                const mo = new MutationObserver(() => {
+                    clearTimeout(timer);
+                    timer = setTimeout(() => {
+                        mo.disconnect();
+                        window.dispatchEvent(new Event('resize'));
+                    }, quietMs);
+                });
+
+                // 只觀察 header 內部
+                mo.observe(header, {
+                    childList: true,      // 子節點增減
+                    subtree: true,        // header 裡所有子孫
+                    characterData: true,  // 文字內容變化
+                    attributes: true      // 屬性改變（例如 style）
+                });
+
+                // fallback，最多等 fallbackMs
+                setTimeout(() => {
+                    try { mo.disconnect(); } catch {}
+                    window.dispatchEvent(new Event('resize'));
+                }, fallbackMs);
+            }
+            document.addEventListener('change', function (e) {
+                if (e.target && e.target.classList.contains('goog-te-combo')) {
+                    triggerResize();
+                }
+            });
             function googleTranslateElementInit() {
                 if (isGoogleTranslateInitialized) {
                     console.log("Google Translate is already initialized.");
@@ -162,6 +197,7 @@
 
                         $('select.goog-te-combo').attr('title', 'translate');
                         isGoogleTranslateInitialized = true;
+                        triggerResize();
                     } else {
                         console.warn("Google Translate API is not ready yet. Retrying...");
                         setTimeout(googleTranslateElementInit, 1000); // 每秒重試一次

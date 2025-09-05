@@ -48,14 +48,16 @@ namespace EtheriT.Coker.Application.Common
             return await sendMail(dto, webSiteName);
         }
 
-        private async Task<SMTPDto> SetSMTP(long siteId=0)
+        private async Task<SMTPDto> SetSMTP(long siteId = 0)
         {
             var smtp = new SMTPDto();
-            if(siteId == 0 ) siteId = await loginUserData.GetWebsiteId();
+            if (siteId == 0) siteId = await loginUserData.GetWebsiteId();
+            if (siteId == 0) siteId = loginUserData.GetFrontWebsiteId();
             var data = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 3, SiteId = siteId });
-            if (data != null && data.Success && data.storeSetDetails!= null && data.storeSetDetails.Any()) {
+            if (data != null && data.Success && data.storeSetDetails != null && data.storeSetDetails.Any())
+            {
                 var SMTPPath = data.storeSetDetails.Find(e => e.key == "SMTPPath");
-                if(SMTPPath != null && SMTPPath.value!=null && SMTPPath.value.Any() && !string.IsNullOrEmpty(SMTPPath.value[0]))
+                if (SMTPPath != null && SMTPPath.value != null && SMTPPath.value.Any() && !string.IsNullOrEmpty(SMTPPath.value[0]))
                     smtp.Url = SMTPPath.value[0];
 
                 var SMTPPort = data.storeSetDetails.Find(e => e.key == "SMTPPort");
@@ -69,7 +71,8 @@ namespace EtheriT.Coker.Application.Common
                 var SMTPPassword = data.storeSetDetails.Find(e => e.key == "SMTPPassword");
                 if (SMTPPassword != null && SMTPPassword.value != null && SMTPPassword.value.Any() && !string.IsNullOrEmpty(SMTPPassword.value[0]))
                     smtp.Password = SMTPPassword.value[0];
-                switch (smtp.Port) {
+                switch (smtp.Port)
+                {
                     case 587:
                         smtp.UseSSL = (int)SecureSocketOptions.StartTls;
                         break;
@@ -91,7 +94,7 @@ namespace EtheriT.Coker.Application.Common
             // 建立郵件
             var message = new MimeMessage();
             // 添加寄件者
-            if (!string.IsNullOrEmpty(dto.SMTP.Password) && !string.IsNullOrEmpty(dto.SMTP.UserName)) 
+            if (!string.IsNullOrEmpty(dto.SMTP.Password) && !string.IsNullOrEmpty(dto.SMTP.UserName))
                 dto.Sender.Email = dto.SMTP.UserName;
             message.From.Add(new MailboxAddress(webSiteName, dto.Sender.Email));
 

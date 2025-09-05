@@ -13,6 +13,7 @@ label::after {
 /* Custom English translation */
 .translate_ch {
     display: inline;
+    font-family: initial;
 }
 
 .translate_en {
@@ -25,6 +26,7 @@ html[lang="en"] .translate_ch {
 
 html[lang="en"] .translate_en {
     display: inline;
+    font-family: initial;
 }
 
 .no-right-click {

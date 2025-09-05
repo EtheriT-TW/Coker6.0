@@ -578,7 +578,10 @@ namespace EtheriT.Coker.Application
                         {
                             mapper.Map(parent, result);
                             result.LastModificationTime = null;
-                            result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
+                            var _html = stringHandler.HtmlDecode(result.Html);
+                            _html = htmlProcessor.RemoveNode(_html ?? "", ".catalog_frame,.noInherit");
+                            _html = htmlProcessor.ExtractBodyInnerHtml(_html);
+                            result.Html = stringHandler.HtmlEncode(_html);
                             result.CurrentUrl = $"/{parent.RouterName}";
                         }
                     }

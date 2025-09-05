@@ -139,6 +139,7 @@ function SwiperInit(obj) {
             if (typeof speed === 'undefined' || speed === false) speed = 300;
             else speed = parseInt(speed);
             var autoplay = obj.autoplay ? canNext : false;
+            let siwerTimer;
             var selfConfig = Object.assign({}, config, {
                 pagination: {
                     el: "#" + $self.attr("id") + " .swiper_pagination",
@@ -168,13 +169,46 @@ function SwiperInit(obj) {
                         var activeSlide = $(swiper.wrapperEl).find('.swiper-slide').eq(swiper.activeIndex);
                         var $video = $(activeSlide).find('video');
                         var $iframe = activeSlide.find('iframe');
-
-                        if ($video.length > 0) {
-                            var startTime = parseFloat($video.data('starttime')) || 0;
-                            $video[0].currentTime = startTime;
-                            $video[0].play();
-                        } else if ($iframe.length > 0 && $iframe.data('src')) {
-                            $iframe.attr('src', $iframe.data('src'));
+                        var keepTime = $(activeSlide).data("keep_time") || 0;
+                        clearTimeout(siwerTimer);
+                        if (autoplay) swiper.autoplay.start();
+                        if (keepTime) {
+                            if (autoplay) {
+                                swiper.autoplay.stop();
+                                siwerTimer = setTimeout(() => {
+                                    swiper.autoplay.start();
+                                }, keepTime)
+                            }
+                        } else {
+                            if ($video.length > 0) {
+                                var videoEl = $video.get(0);
+                                function getVideoDuration(videoEl) {
+                                    return new Promise((resolve) => {
+                                        if (videoEl.readyState >= 1 && !isNaN(videoEl.duration)) {
+                                            resolve(videoEl.duration);
+                                        } else {
+                                            videoEl.addEventListener("loadedmetadata", function onLoaded() {
+                                                videoEl.removeEventListener("loadedmetadata", onLoaded);
+                                                resolve(videoEl.duration);
+                                            });
+                                        }
+                                    });
+                                }
+                                var startTime = parseFloat($video.data('starttime')) || 0;
+                                videoEl.currentTime = startTime;
+                                videoEl.play();
+                                if (autoplay) {
+                                    swiper.autoplay.stop();
+                                    getVideoDuration(videoEl).then((duration) => {
+                                        const totalDuration = (duration - startTime) * 1000;
+                                        siwerTimer = setTimeout(() => {
+                                            swiper.autoplay.start();
+                                        }, totalDuration);
+                                    });
+                                }
+                            } else if ($iframe.length > 0 && $iframe.data('src')) {
+                                $iframe.attr('src', $iframe.data('src'));
+                            }
                         }
                     }
                 },
@@ -570,6 +604,7 @@ function SwiperInit(obj) {
                 pictureSwiperThumbs.removeAllSlides();
                 pictureSwiper.update();
                 pictureSwiperThumbs.update();
+                const self = this;
                 var $self = $(this).parents(".picture-category");
                 var index = $self.find("a").index(this);
                 var $items = [];
@@ -587,7 +622,7 @@ function SwiperInit(obj) {
                     $images.push(obj);
                     if (link.startsWith("https://www.youtube.com") || link.startsWith("https://www.facebook.com")) $items.push({ type: "iframe", src: link, ratio: ratio, startTime: start_time, keepTime: keep_time });
                     else if (isVideoFile(link)) $items.push({ type: "video", src: link, ratio: ratio, startTime: start_time, keepTime: keep_time });
-                    else $items.push({ type: "image", src: obj['src'], keepTime: keep_time });
+                    else $items.push({ type: "image", src: obj['src'], keepTime: keep_time, alt: obj['alt'] });
                 });
                 $header_text.text($images[index]['alt']);
 
@@ -598,7 +633,7 @@ function SwiperInit(obj) {
                     if (item.type === "image") {
                         newSlide = `<div class="swiper-slide" data-swiper-autoplay="${item.keepTime}">
                             <div class="swiper-zoom-container">
-                                <img src="${item.src}" alt="" />
+                                <img src="${item.src}" alt="${item.alt}" />
                             </div>
                         </div>`;
                     } else if (item.type === "video") {
@@ -663,6 +698,12 @@ function SwiperInit(obj) {
                     }
                     pictureSwiper.slideToLoop(index, 0,false);
                     pictureSwiperThumbs.slideTo(index, 0,false);
+                });
+                $('#SwiperModal').off("hide.bs.modal").on("hide.bs.modal", function () {
+                    document.activeElement.blur();
+                });
+                $('#SwiperModal').off("hidden.bs.modal").on("hidden.bs.modal", function () {
+                    self.focus();
                 });
                 return false;
             });

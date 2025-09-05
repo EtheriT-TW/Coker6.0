@@ -111,6 +111,7 @@ namespace EtheriT.Coker.Application
 		public async Task<long> GetWebsiteId()
         {
             if (httpContextAccessor.HttpContext == null) return 0;
+            var frontWebsiteId = GetFrontWebsiteId();
 
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
             string name = user.Identity?.Name;

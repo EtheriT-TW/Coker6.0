@@ -1446,6 +1446,136 @@ namespace EtheriT.Coker.Application.Product
             }
             return output;
         }
+
+        public async Task<GetProdContenDto> GetConten(SearchIDDto dto)
+        {
+            GetProdContenDto results = new GetProdContenDto();
+            try
+            {
+                long siteId = await loginUserData.GetWebsiteId();
+                var prod = await db.Prods.Where(e => e.FK_WebsiteId == siteId)
+                                    .Where(e => e.Id == dto.Id)
+                                    .Where(e => !e.IsDeleted)
+                                    .FirstOrDefaultAsync();
+                if (prod != null)
+                {
+                    results.Conten = new ProdSaveContenDto
+                    {
+                        SaveHtml = prod.SaveHtml,
+                        SaveCss = prod.SaveCss
+                    };
+                    results.Conten.SaveHtml = HttpUtility.HtmlEncode(HttpUtility.HtmlDecode(results.Conten.SaveHtml));
+                    results.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }
+            catch (Exception ex)
+            {
+                results.Success = false;
+                results.Error = ex.Message;
+            }
+            return results;
+        }
+        public async Task<ResponseMessageDto> ImportConten(ProdSaveContenDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var userId = await loginUserData.GetUserId();
+
+                dto.SaveHtml = HttpUtility.HtmlEncode(dto.SaveHtml);
+                ProdContenDto importDto = new ProdContenDto
+                {
+                    Id = dto.Id,
+                    Html = dto.SaveHtml,
+                    Css = dto.SaveCss
+                };
+                var s = await SaveConten(dto);
+                var user = await loginUserData.GetUser();
+                var prod = await db.Prods.FirstOrDefaultAsync(e => e.Id == dto.Id);
+                if (prod != null)
+                {
+                    string Orgname = await loginUserData.GetWebsiteOrgName();
+                    importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
+                    importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
+
+                    prod.Html = importDto.Html;
+                    prod.Css = importDto.Css;
+                    prod.LastModificationTime = DateTime.Now;
+                    prod.LastModifierUserId = userId;
+
+                    await loginUserData.SaveChanges(prod);
+                    response.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> SaveConten(ProdSaveContenDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                dto.SaveHtml = HttpUtility.HtmlEncode(dto.SaveHtml);
+                var user = await loginUserData.GetUser();
+                var prod = await db.Prods.FirstOrDefaultAsync(e => e.Id == dto.Id);
+
+                prod.SaveHtml = dto.SaveHtml;
+                prod.SaveCss = dto.SaveCss;
+                prod.LastModificationTime = DateTime.Now;
+                prod.LastModifierUserId = user.Id;
+
+                db.SaveChanges();
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+        public async Task<GetFrontContenOutputDto> GetFrontConten(ProdGetFrontContenInputDto dto)
+        {
+            if (dto.siteId == null)
+            {
+                dto.siteId = configuration.GetValue<long>("WebConfig:SiteId");
+            }
+            GetFrontContenOutputDto result = new GetFrontContenOutputDto();
+            try
+            {
+                var side = await db.Websites.Where(e => e.Id == dto.siteId).FirstOrDefaultAsync();
+                var prod = await db.Prods.Where(e => e.Id == dto.prodId).Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == dto.siteId).FirstOrDefaultAsync();
+                if (side != null)
+                {
+                    result.SiteName = side.Title;
+                    if (prod != null && !prod.RemovedFromShelves)
+                    {
+                        result.Id = (int)prod.Id;
+                        result.Title = prod.Title;
+                        result.Description = !string.IsNullOrEmpty(prod.Description) ? prod.Description :
+                                                !string.IsNullOrEmpty(prod.Introduction) ? prod.Introduction : htmlProcessor.text(stringHandler.HtmlDecode(prod.Html));
+                        var images = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { Sid = prod.Id, Type = (int)FileBindTypeEnum.產品, Size = 1 });
+                        if (images.Count > 0)
+                        {
+                            result.ImageUrl = images[0].Link;
+                        }
+                        result.Css = prod.Css ?? "";
+                        result.Html = result.Html == null ? "" : result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+            }
+            return result;
+        }
+
         /* Product Import */
         public async Task<ImportOutputDto> ProdReplace(IList<IFormFile> files)
         {
@@ -2112,139 +2242,98 @@ namespace EtheriT.Coker.Application.Product
             await InsetProdSpecTypes(prods);
             await InsetProdSpec(prods);
 
-            if (AddProds.Count != 0) await InsertProds(AddProds, errors);
-            if (Prods.Count != 0) await UpdateProds(Prods, errors);
-        }
-        private async Task InsertProds(List<ProductImportDto> prods, List<ImportMassageItem> errors)
-        {
-            long userId = await loginUserData.GetUserId();
-            List<Prod> news = mapper.Map<List<Prod>>(prods);
-            foreach (Prod prod in news)
-            {
-                try
-                {
-                    var item = prods.Find(p => string.IsNullOrEmpty(prod.ItemNo) ? p.ProdName == prod.Title : p.ItemNo == prod.ItemNo);
-                    if (item != null && item.stocks != null)
-                    {
-                        prod.Prod_Stocks = await InsertOrUpdateStore(item);
-                        prod.Visible = true;
-                        if (prod.Html != null)
-                        {
-                            prod.Html = $"<div class=\"container\">{prod.Html.Trim().Replace(Environment.NewLine, "<br />")}</div>";
-                            prod.SaveHtml = prod.Html;
-                        }
-                        prod.RemovedFromShelves = false;
-                        ProdStatusEnum statusType;
-                        if (Enum.TryParse(item.Status, out statusType))
-                        {
-                            prod.Status = statusType;
-                        }
-                        else prod.Status = 0;
-                    }
-                    prod.CreatorUserId = userId;
-                }
-                catch (Exception ex)
-                {
-                    errors.Add(new ImportMassageItem { Name = prod.Title, Description = ex.Message });
-                }
-            }
-            db.AddRange(news);
+            var products = await UpsertProducts(prods, errors);
+            await UpsertStocksAndPricesBatchAsync(products, prods, errors);
             await db.SaveChangesAsync();
         }
-        private async Task UpdateProds(List<ProductImportDto> prods, List<ImportMassageItem> errors)
+        private async Task<List<Prod>> ResolveProdsAsync(List<ProductImportDto> prods)
         {
-            long userId = await loginUserData.GetUserId();
-            List<string> titles = prods.Select(e => e.ProdName ?? "").ToList();
-            List<string> itemNos = prods.Select(e => e.ItemNo ?? "").ToList();
-            var items = await db.Prods.Where(e => !e.IsDeleted)
-                .Where(e => string.IsNullOrEmpty(e.ItemNo) ? titles.Contains(e.Title) : itemNos.Contains(e.ItemNo))
+            var itemNos = prods.Where(p => !string.IsNullOrEmpty(p.ItemNo))
+                               .Select(p => p.ItemNo!)
+                               .Distinct()
+                               .ToList();
+
+            var titles = prods.Where(p => string.IsNullOrEmpty(p.ItemNo))
+                              .Select(p => p.ProdName ?? "")
+                              .Distinct()
+                              .ToList();
+
+            return await db.Prods
+                .Where(e => !e.IsDeleted)
+                .Where(e =>
+                    (!string.IsNullOrEmpty(e.ItemNo) && itemNos.Contains(e.ItemNo)) ||
+                    (string.IsNullOrEmpty(e.ItemNo) && titles.Contains(e.Title))
+                )
                 .ToListAsync();
+        }
+        private async Task<List<Prod>> UpsertProducts(List<ProductImportDto> dtos, List<ImportMassageItem> errors)
+        {
+            long userId = await loginUserData.GetUserId();
+            var results = new List<Prod>();
 
-            await UpsertStocksAndPricesBatchAsync(items, prods, errors);
-
-            foreach (var prod in items)
+            foreach (var dto in dtos)
             {
                 try
                 {
-                    ProductImportDto? item = prods.Find(e => string.IsNullOrEmpty(e.ItemNo) ? e.ProdName == prod.Title : e.ItemNo == prod.ItemNo);
-                    if (item != null)
+                    Prod prod;
+                    if (dto.Id == 0) // 新增
                     {
-                        var s = mapper.Map<ProductImportUpateDto>(item);
-                        mapper.Map(s, prod);
-                        if (prod.Html != null)
-                        {
-                            prod.Html = $"<div class=\"container\"><p>{prod.Html.Trim().Replace("\n", "<br />")}</p></div>";
-                            prod.SaveHtml = prod.Html;
-                            prod.Css = "";
-                            prod.SaveCss = "";
-                        }
-                        ProdStatusEnum statusType;
-                        if (Enum.TryParse(item.Status, out statusType))
-                        {
-                            prod.Status = statusType;
-                        }
-                        else prod.Status = 0;
+                        prod = mapper.Map<Prod>(dto);
+                        prod.CreatorUserId = userId;
+                        prod.RemovedFromShelves = false;
+                        prod.Visible = true;
+                        db.Prods.Add(prod);
                     }
-                    prod.LastModifierUserId = userId;
-                    prod.LastModificationTime = DateTime.Now;
+                    else // 更新
+                    {
+                        prod = await db.Prods.FirstAsync(p => p.Id == dto.Id);
+                        mapper.Map(dto, prod);
+                        prod.LastModifierUserId = userId;
+                        prod.LastModificationTime = DateTime.Now;
+                    }
+
+                    // Insert/Update 共用的邏輯
+                    if (!string.IsNullOrWhiteSpace(prod.Html))
+                    {
+                        prod.Html = NormalizeHtml(prod.Html);
+                        prod.SaveHtml = prod.Html;
+                    }
+                    if (Enum.TryParse(dto.Status, out ProdStatusEnum statusType))
+                        prod.Status = statusType;
+                    else
+                        prod.Status = 0;
+
+                    results.Add(prod);
                 }
                 catch (Exception ex)
                 {
-                    errors.Add(new ImportMassageItem { Name = prod.Title, Description = ex.Message });
+                    errors.Add(new ImportMassageItem { Name = dto.ProdName, Description = ex.Message });
                 }
             }
-            await db.SaveChangesAsync();
+
+            return results;
         }
-        private async Task<List<Prod_Stock>> InsertOrUpdateStore(ProductImportDto item)
+        private string NormalizeHtml(string? rawHtml)
         {
-            var ProdSpecTitleList = db.Prod_Specs.Where(e => !e.IsDeleted).Select(e => new { e.Id, e.Title }).ToList();
+            if (string.IsNullOrWhiteSpace(rawHtml))
+                return "";
 
-            List<Prod_Stock> stockDto = new List<Prod_Stock>();
-            if (item.stocks == null) item.stocks = new List<ProductStockDto>();
+            string html = rawHtml.Trim();
 
-            for (int i = 0; i < item.stocks.Count; i++)
+            // 已經是 container 包起來的，就直接回傳
+            if (html.StartsWith("<div class=\"container\">") && html.EndsWith("</div>"))
             {
-                Prod_Stock? myStore = null;
-                var stock = item.stocks[i];
-                var r1 = ProdSpecTitleList.Find(e => e.Title == stock.S1_Title);
-                var r2 = ProdSpecTitleList.Find(e => e.Title == stock.S2_Title);
-                if (r1 != null) stock.FK_S1id = r1.Id;
-                else stock.FK_S1id = 0;
-                if (r2 != null) stock.FK_S2id = r2.Id;
-                else stock.FK_S2id = 0;
-
-                if (item.Id != 0)
-                {
-                    myStore = await db.Prod_Stocks
-                            .Where(e => !e.IsDeleted)
-                            .Where(e => e.FK_S1id == stock.FK_S1id)
-                            .Where(e => e.FK_S2id == stock.FK_S2id)
-                            .Where(e => e.FK_Pid == item.Id)
-                            .FirstOrDefaultAsync();
-
-                    if (myStore != null)
-                    {
-                        myStore.Stock = stock.Stock;
-                        myStore.SubItemNo = stock.SubItemNo;
-                        stockDto.Add(myStore);
-                    }
-                    else
-                    {
-                        myStore = mapper.Map<Prod_Stock>(stock);
-                        myStore.Id = 0;
-                        stockDto.Add(myStore);
-                    }
-                }
-                else
-                {
-                    myStore = mapper.Map<Prod_Stock>(stock);
-                    stockDto.Add(myStore);
-                }
-                myStore.Prod_Prices = mapper.Map<List<Prod_Price>>(stock.Prices);
-
+                return html;
             }
-            return stockDto;
+
+            // 統一換行處理
+            html = html.Replace(Environment.NewLine, "<br />")
+                       .Replace("\n", "<br />");
+
+            // 外層補一個 container
+            return $"<div class=\"container\">{html}</div>";
         }
+
         private async Task InsetProdSpecTypes(List<ProductImportDto> prods)
         {
             if (prods.Count == 0) return;
@@ -2358,330 +2447,218 @@ namespace EtheriT.Coker.Application.Product
             db.Prod_Specs.AddRange(news);
             await db.SaveChangesAsync();
         }
-        public async Task<GetProdContenDto> GetConten(SearchIDDto dto)
-        {
-            GetProdContenDto results = new GetProdContenDto();
-            try
-            {
-                long siteId = await loginUserData.GetWebsiteId();
-                var prod = await db.Prods.Where(e => e.FK_WebsiteId == siteId)
-                                    .Where(e => e.Id == dto.Id)
-                                    .Where(e => !e.IsDeleted)
-                                    .FirstOrDefaultAsync();
-                if (prod != null)
-                {
-                    results.Conten = new ProdSaveContenDto
-                    {
-                        SaveHtml = prod.SaveHtml,
-                        SaveCss = prod.SaveCss
-                    };
-                    results.Conten.SaveHtml = HttpUtility.HtmlEncode(HttpUtility.HtmlDecode(results.Conten.SaveHtml));
-                    results.Success = true;
-                }
-                else throw new Exception("資料不存在");
-            }
-            catch (Exception ex)
-            {
-                results.Success = false;
-                results.Error = ex.Message;
-            }
-            return results;
-        }
-        public async Task<ResponseMessageDto> ImportConten(ProdSaveContenDto dto)
-        {
-            ResponseMessageDto response = new ResponseMessageDto();
-            try
-            {
-                var userId = await loginUserData.GetUserId();
-
-                dto.SaveHtml = HttpUtility.HtmlEncode(dto.SaveHtml);
-                ProdContenDto importDto = new ProdContenDto
-                {
-                    Id = dto.Id,
-                    Html = dto.SaveHtml,
-                    Css = dto.SaveCss
-                };
-                var s = await SaveConten(dto);
-                var user = await loginUserData.GetUser();
-                var prod = await db.Prods.FirstOrDefaultAsync(e => e.Id == dto.Id);
-                if (prod != null)
-                {
-                    string Orgname = await loginUserData.GetWebsiteOrgName();
-                    importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
-                    importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
-
-                    prod.Html = importDto.Html;
-                    prod.Css = importDto.Css;
-                    prod.LastModificationTime = DateTime.Now;
-                    prod.LastModifierUserId = userId;
-
-                    await loginUserData.SaveChanges(prod);
-                    response.Success = true;
-                }
-                else throw new Exception("資料不存在");
-            }
-            catch (Exception ex)
-            {
-                response.Success = false;
-                response.Error = ex.Message;
-            }
-            return response;
-        }
-        public async Task<ResponseMessageDto> SaveConten(ProdSaveContenDto dto)
-        {
-            ResponseMessageDto response = new ResponseMessageDto();
-            try
-            {
-                dto.SaveHtml = HttpUtility.HtmlEncode(dto.SaveHtml);
-                var user = await loginUserData.GetUser();
-                var prod = await db.Prods.FirstOrDefaultAsync(e => e.Id == dto.Id);
-
-                prod.SaveHtml = dto.SaveHtml;
-                prod.SaveCss = dto.SaveCss;
-                prod.LastModificationTime = DateTime.Now;
-                prod.LastModifierUserId = user.Id;
-
-                db.SaveChanges();
-                response.Success = true;
-            }
-            catch (Exception ex)
-            {
-                response.Success = false;
-                response.Error = ex.Message;
-            }
-            return response;
-        }
-        public async Task<GetFrontContenOutputDto> GetFrontConten(ProdGetFrontContenInputDto dto)
-        {
-            if (dto.siteId == null)
-            {
-                dto.siteId = configuration.GetValue<long>("WebConfig:SiteId");
-            }
-            GetFrontContenOutputDto result = new GetFrontContenOutputDto();
-            try
-            {
-                var side = await db.Websites.Where(e => e.Id == dto.siteId).FirstOrDefaultAsync();
-                var prod = await db.Prods.Where(e => e.Id == dto.prodId).Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == dto.siteId).FirstOrDefaultAsync();
-                if (side != null)
-                {
-                    result.SiteName = side.Title;
-                    if (prod != null && !prod.RemovedFromShelves)
-                    {
-                        result.Id = (int)prod.Id;
-                        result.Title = prod.Title;
-                        result.Description = !string.IsNullOrEmpty(prod.Description) ? prod.Description :
-                                                !string.IsNullOrEmpty(prod.Introduction) ? prod.Introduction : htmlProcessor.text(stringHandler.HtmlDecode(prod.Html));
-                        var images = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { Sid = prod.Id, Type = (int)FileBindTypeEnum.產品, Size = 1});
-                        if(images.Count > 0)
-                        {
-                            result.ImageUrl = images[0].Link;
-                        }
-                        result.Css = prod.Css ?? "";
-                        result.Html = result.Html == null ? "" : result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-            }
-            return result;
-        }
         // 唯一鍵 helper
+        private static string Norm(string? s)
+     => (s ?? "").Trim().Replace('\u00A0', ' ').ToUpperInvariant();
+
+        private static bool TryGetBonusKey(double? bonus, out int key)
+        {
+            if (!bonus.HasValue) { key = 0; return true; }
+            var v = bonus.Value;
+            var isInt = Math.Abs(v - Math.Round(v)) < 1e-9;
+            key = isInt ? (int)Math.Round(v) : 0;
+            return isInt;
+        }
+
         private static (long pid, long s1, long s2) StockKey(long pid, long? s1, long? s2)
             => (pid, s1 ?? 0, s2 ?? 0);
 
-        private static int BonusKey(double? bonus) => Convert.ToInt32(bonus ?? 0);
-
-        /// <summary>
-        /// 批次處理：把所有要更新的商品（items）與其對應的 Excel DTO（prods）
-        /// 的「規格＋金額」一次完成，直接修改 DbContext 追蹤的實體，不回傳值。
-        /// </summary>
         private async Task UpsertStocksAndPricesBatchAsync(
-            List<Prod> items,                      // DB 取回、要更新的商品
-            List<ProductImportDto> prods,          // Excel 匯入對應 DTO（含 stocks）
-            List<ImportMassageItem> errors)        // 錯誤收集
+            List<Prod> items,                      // 追蹤中的新/舊商品（未必已 Save）
+            List<ProductImportDto> prods,          // 對應的 Excel DTO
+            List<ImportMassageItem> errors)
         {
-            if (items.Count == 0) return;
+            if (items == null || items.Count == 0) return;
 
-            // 1) 規格標題字典（避免重複查 DB）
             long siteId = await loginUserData.GetWebsiteId();
-            var specTitleDict = await db.Prod_Specs.Include(e => e.Prod_Spec_Type)
-                .Where(e => e.Prod_Spec_Type!=null && e.Prod_Spec_Type.FK_WebsiteId == siteId)
+
+            // 規格標題 → Id
+            var specTitleDict = await db.Prod_Specs
+                .Include(e => e.Prod_Spec_Type)
+                .Where(e => e.Prod_Spec_Type != null && e.Prod_Spec_Type.FK_WebsiteId == siteId)
                 .Select(e => new { e.Id, e.Title })
                 .ToDictionaryAsync(e => e.Title, e => e.Id);
 
-            // 2) 建立「商品對應 DTO」對照（以 ItemNo 優先，否則用 ProdName）
-            var dtoKey = prods.ToDictionary(
-                p => string.IsNullOrEmpty(p.ItemNo)
-                        ? $"T::{p.ProdName}"
-                        : $"I::{p.ItemNo}",
-                p => p
-            );
+            // Excel 對照：ItemNo 優先，否則用 Title
+            var dtoByItemNo = prods
+                .Where(p => !string.IsNullOrWhiteSpace(p.ItemNo))
+                .GroupBy(p => Norm(p.ItemNo))
+                .ToDictionary(g => g.Key, g => g.Last());
 
-            // 3) 把目標商品 Id、其現有規格與價格一次載入
-            var prodIds = items.Select(x => x.Id).ToList();
+            var dtoByTitle = prods
+                .Where(p => string.IsNullOrWhiteSpace(p.ItemNo))
+                .GroupBy(p => Norm(p.ProdName))
+                .ToDictionary(g => g.Key, g => g.Last());
+
+            // 只載入「既有商品」的 DB 規格/價格做快取；新商品用本地集合處理
+            var existingIds = items.Where(x => x.Id != 0).Select(x => x.Id).Distinct().ToList();
 
             var dbStocks = await db.Prod_Stocks
-                .Where(s => prodIds.Contains(s.FK_Pid))
+                .Where(s => existingIds.Contains(s.FK_Pid) && !s.IsDeleted)
+                .OrderByDescending(s => s.Id)
                 .ToListAsync();
 
-            var psIds = dbStocks.Select(s => s.Id).ToList();
+            var stockDictByPid = new Dictionary<(long pid, long s1, long s2), Prod_Stock>();
+            foreach (var s in dbStocks)
+                stockDictByPid[StockKey(s.FK_Pid, s.FK_S1id, s.FK_S2id)] = s;
 
+            var psIds = dbStocks.Select(s => s.Id).ToList();
             var dbPrices = await db.Prod_Prices
                 .Where(p => !p.IsDeleted && psIds.Contains(p.FK_PSId))
                 .ToListAsync();
 
-            // 4) 建字典快取
-            var stockDict = dbStocks.ToDictionary(
-                s => StockKey(s.FK_Pid, s.FK_S1id, s.FK_S2id),
-                s => s
-            );
-
-            // 注意：priceDict 的 key 需要 psId，對於新建立（尚無 Id）的規格，先暫存在待處理清單
             var priceDict = dbPrices.ToDictionary(
-                p => (p.FK_PSId, p.FK_RId, BonusKey(p.Bonus)),
+                p => (p.FK_PSId, p.FK_RId, (int)(p.Bonus ?? 0)),
                 p => p
             );
 
-            // 5) 對每個商品一次處理其所有 stocks（規格＋金額）
             foreach (var prod in items)
             {
-                // 找到對應的 Import DTO
-                var findKey = string.IsNullOrEmpty(prod.ItemNo)
-                                ? $"T::{prod.Title}"
-                                : $"I::{prod.ItemNo}";
-
-                if (!dtoKey.TryGetValue(findKey, out var dto) || dto.stocks == null)
-                    continue;
-
-                // 先把 DTO 的 S1/S2 文字轉成 Id（找不到就用 0，符合你的舊規則）
-                foreach (var s in dto.stocks)
+                try
                 {
-                    if (!string.IsNullOrEmpty(s.S1_Title))
-                        s.FK_S1id = specTitleDict.TryGetValue(s.S1_Title, out var id1) ? id1 : 0;
+                    // 對應到 Excel DTO
+                    ProductImportDto? dto = null;
+                    if (!string.IsNullOrWhiteSpace(prod.ItemNo))
+                        dtoByItemNo.TryGetValue(Norm(prod.ItemNo), out dto);
+                    if (dto == null)
+                        dtoByTitle.TryGetValue(Norm(prod.Title), out dto);
 
-                    if (!string.IsNullOrEmpty(s.S2_Title))
-                        s.FK_S2id = specTitleDict.TryGetValue(s.S2_Title, out var id2) ? id2 : 0;
-                }
+                    if (dto == null || dto.stocks == null || dto.stocks.Count == 0)
+                        continue;
 
-                // 逐一合併規格（只操作記憶體實體與 DbContext，不打 DB）
-                foreach (var s in dto.stocks)
-                {
-                    var key = StockKey(prod.Id, s.FK_S1id, s.FK_S2id);
-
-                    // 5-1) 找既有規格或建立新規格
-                    if (!stockDict.TryGetValue(key, out var stockEntity))
+                    // 將 S1/S2 Title => Id（找不到則 0）
+                    foreach (var s in dto.stocks)
                     {
-                        stockEntity = new Prod_Stock
-                        {
-                            FK_Pid = prod.Id,
-                            FK_S1id = s.FK_S1id ?? 0,
-                            FK_S2id = s.FK_S2id ?? 0,
-                            Stock = s.Stock,
-                            SubItemNo = s.SubItemNo
-                        };
-                        db.Prod_Stocks.Add(stockEntity);
-                        stockDict[key] = stockEntity; // 用 (Pid,S1,S2) 當 key，先行快取
-                    }
-                    else
-                    {
-                        // 更新必要欄位
-                        stockEntity.Stock = s.Stock;
-                        stockEntity.SubItemNo = s.SubItemNo;
+                        if (!string.IsNullOrWhiteSpace(s.S1_Title))
+                            s.FK_S1id = specTitleDict.TryGetValue(s.S1_Title, out var id1) ? id1 : 0;
+                        if (!string.IsNullOrWhiteSpace(s.S2_Title))
+                            s.FK_S2id = specTitleDict.TryGetValue(s.S2_Title, out var id2) ? id2 : 0;
                     }
 
-                    // 5-2) —— 價格規則（方案 A）——
-                    // TimePrice：你目前 mapping 設定為 c.Price < 0 即 TimePrice=true
-                    var isTimePrice = s.TimePrice || s.Price < 0;
-
-                    if (isTimePrice)
+                    foreach (var s in dto.stocks)
                     {
-                        // 詢價：不應存在任何實價
-                        stockEntity.IsTimePrice = true;
-                        stockEntity.Price = 0;
+                        var s1 = s.FK_S1id ?? 0;
+                        var s2 = s.FK_S2id ?? 0;
 
-                        // 清除此規格既有角色價（軟刪即可）
-                        if (stockEntity.Id != 0)
+                        Prod_Stock? stockEntity = null;
+
+                        // ① 既有商品 → 優先用 (pid,s1,s2) 從 DB 快取找
+                        if (prod.Id != 0)
                         {
-                            var toClear = priceDict
-                                .Where(kv => kv.Key.Item1 == stockEntity.Id)
-                                .Select(kv => kv.Value)
-                                .ToList();
-
-                            foreach (var p in toClear)
-                                p.IsDeleted = true;
+                            var key = StockKey(prod.Id, s1, s2);
+                            stockDictByPid.TryGetValue(key, out stockEntity);
                         }
 
-                        continue; // 本筆規格完成
-                    }
-                    else
-                    {
-                        stockEntity.IsTimePrice = false;
-                        // 是否把通用價（Prod_Stock.Price）也使用？目前尊重你用角色價存放的策略 → 通用價維持 0
-                        stockEntity.Price = 0;
-                    }
-
-                    // 5-3) 整理角色價（同角色、同 Bonus 唯一；出現衝突回報錯誤）
-                    var roleBonusMap = new Dictionary<(long roleId, int bonusKey), ProductPriceDto>();
-                    if (s.Prices != null)
-                    {
-                        foreach (var p in s.Prices)
+                        // ② 追蹤中的本地集合（新商品或剛新建的規格）
+                        if (stockEntity == null && prod.Prod_Stocks != null)
                         {
-                            var k = (p.FK_RId, BonusKey(p.Bonus)); // BonusKey: Convert.ToInt32
-                                                                   // 若要記 warning，可在覆蓋前檢查 ContainsKey 後寫入 errors（非必要）
-                            roleBonusMap[k] = p;  // ← 覆蓋舊值：以最新(最後)為準
+                            stockEntity = prod.Prod_Stocks
+                                .FirstOrDefault(x => !x.IsDeleted &&
+                                                     (x.FK_S1id ?? 0) == s1 &&
+                                                     (x.FK_S2id ?? 0) == s2);
                         }
-                    }
 
-                    // 5-4) Upsert 角色價（不查 DB，只用 priceDict 與 DbContext）
-                    foreach (var kvp in roleBonusMap)
-                    {
-                        var (roleId, bonusK) = kvp.Key;
-                        var dtoPrice = kvp.Value;
-
-                        Prod_Price entity;
-
-                        if (stockEntity.Id != 0)
+                        // ③ 都沒有 → 新建規格
+                        if (stockEntity == null)
                         {
-                            // 既有規格：直接以 (psId, roleId, bonus) 查快取字典
-                            if (!priceDict.TryGetValue((stockEntity.Id, roleId, bonusK), out entity))
+                            stockEntity = new Prod_Stock
                             {
-                                // 不存在 ⇒ 新增
-                                entity = new Prod_Price
-                                {
-                                    FK_PSId = stockEntity.Id,
-                                    FK_RId = roleId
-                                };
-                                db.Prod_Prices.Add(entity);
-                                priceDict[(stockEntity.Id, roleId, bonusK)] = entity;
-                            }
-                            // 存在 ⇒ 覆寫欄位（Upsert：更新為新價）
+                                FK_S1id = s1,
+                                FK_S2id = s2,
+                                Stock = s.Stock,
+                                SubItemNo = s.SubItemNo,
+                                // ！關鍵：用導覽屬性關聯（新商品 Id==0 亦可）
+                                Prod = prod
+                            };
+                            db.Prod_Stocks.Add(stockEntity);
+
+                            // 若是既有商品，順手補進 (pid,s1,s2) 快取
+                            if (prod.Id != 0)
+                                stockDictByPid[StockKey(prod.Id, s1, s2)] = stockEntity;
+
+                            // 維護本地集合，方便同一輪後續找到
+                            prod.Prod_Stocks ??= new List<Prod_Stock>();
+                            if (!prod.Prod_Stocks.Contains(stockEntity))
+                                prod.Prod_Stocks.Add(stockEntity);
                         }
                         else
                         {
-                            // 新規格：以關聯先掛上，SaveChanges 時自動帶入 FK_PSId
-                            entity = new Prod_Price
-                            {
-                                Prod_Stock = stockEntity,
-                                FK_RId = roleId
-                            };
-                            db.Prod_Prices.Add(entity);
-                            // 無 psId 前不放入 priceDict；SaveChanges 後再重建也可
+                            // 更新既有規格欄位
+                            stockEntity.Stock = s.Stock;
+                            stockEntity.SubItemNo = s.SubItemNo;
                         }
 
-                        // 無論新增或已存在，都覆寫為本次匯入的最新值
-                        entity.Bonus = bonusK;
-                        entity.Price = dtoPrice.Price;       // ← 舊價≠新價 ⇒ 直接更新
-                        entity.IsDeleted = false;
+                        // 詢價（不刪舊價；只標記並把通用價歸零）
+                        var isTimePrice = s.TimePrice || s.Price < 0;
+                        stockEntity.IsTimePrice = isTimePrice;
+                        stockEntity.Price = 0;
+
+                        // 詢價就不處理角色價
+                        if (isTimePrice) continue;
+
+                        // 角色價：同 (roleId, bonusKey) 最後一筆覆蓋；Bonus 必為整數
+                        var roleBonusMap = new Dictionary<(long roleId, int bonusKey), ProductPriceDto>();
+                        if (s.Prices != null)
+                        {
+                            foreach (var p in s.Prices)
+                            {
+                                if (!TryGetBonusKey(p.Bonus, out var bonusKey))
+                                {
+                                    errors.Add(new ImportMassageItem
+                                    {
+                                        Name = prod.Title,
+                                        Description = $"Bonus 必為整數；收到 {p.Bonus}（S1={s1}, S2={s2}, Role={p.FK_RId}）。已略過此價格。"
+                                    });
+                                    continue;
+                                }
+                                roleBonusMap[(p.FK_RId, bonusKey)] = p; // 後者覆蓋前者
+                            }
+                        }
+
+                        foreach (var ((roleId, bonusKey), dtoPrice) in roleBonusMap)
+                        {
+                            Prod_Price? entity = null;
+
+                            if (stockEntity.Id != 0)
+                            {
+                                // ✅ 既有規格：用 (psId, roleId, bonusKey) 查 DB 快取
+                                if (!priceDict.TryGetValue((stockEntity.Id, roleId, bonusKey), out entity))
+                                {
+                                    entity = new Prod_Price { FK_PSId = stockEntity.Id, FK_RId = roleId };
+                                    db.Prod_Prices.Add(entity);
+                                    priceDict[(stockEntity.Id, roleId, bonusKey)] = entity;
+                                }
+                            }
+                            else
+                            {
+                                // ✅ 新規格（尚未有 Id）：用「本地集合」去重，而不是一律新增
+                                stockEntity.Prod_Prices ??= new List<Prod_Price>();
+                                entity = stockEntity.Prod_Prices
+                                    .FirstOrDefault(pp => !pp.IsDeleted
+                                                          && pp.FK_RId == roleId
+                                                          && (int)(pp.Bonus ?? 0) == bonusKey);
+
+                                if (entity == null)
+                                {
+                                    entity = new Prod_Price { Prod_Stock = stockEntity, FK_RId = roleId };
+                                    db.Prod_Prices.Add(entity);
+                                    // 保險起見把兩邊關聯都維護好（避免某些情況下未自動 fixup）
+                                    stockEntity.Prod_Prices.Add(entity);
+                                }
+                            }
+
+                            // 金額可為浮點：若實體欄位是 decimal，這裡轉型；若是 double 就直接指定
+                            entity.Price = dtoPrice.Price ?? 0;
+                            entity.Bonus = bonusKey;
+                            entity.IsDeleted = false;
+                        }
                     }
-
-
-                    // ⚠️ 若你要「清除這次沒帶到」的舊價格，可在此加同步邏輯（選配）
-                    // var keep = roleBonusMap.Keys.Select(k => (stockEntity.Id, k.roleId, k.bonusKey)).ToHashSet();
-                    // foreach (var old in priceDict.Where(kv => kv.Key.Item1 == stockEntity.Id).ToList())
-                    //     if (!keep.Contains(old.Key)) old.Value.IsDeleted = true;
-                } // end foreach stock
-            } // end foreach product
+                }
+                catch (Exception ex)
+                {
+                    errors.Add(new ImportMassageItem { Name = prod.Title, Description = ex.Message });
+                }
+            }
         }
     }
 }

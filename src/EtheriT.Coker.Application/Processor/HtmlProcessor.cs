@@ -101,6 +101,22 @@ namespace EtheriT.Coker.Application.Processor
             }
             return Nodes;
         }
+        public string ExtractBodyInnerHtml(string html)
+        {
+            if (string.IsNullOrWhiteSpace(html)) return string.Empty;
+
+            var doc = LoadHtml(html);
+
+            // 優先用 XPath 找 body
+            var body = doc.DocumentNode.SelectSingleNode("//body");
+            if (body != null)
+            {
+                return body.InnerHtml ?? string.Empty;
+            }
+
+            // 沒有 body：代表本來就是片段，直接回傳原字串
+            return html;
+        }
         // 將 CSS 選擇器轉換為 XPath
 
         private string CssSelectorToXPath(string cssSelector)

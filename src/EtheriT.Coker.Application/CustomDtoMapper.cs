@@ -51,6 +51,32 @@ namespace EtheriT.Coker.Application
             }
             return null;
         }
+        public static string Normalize(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+            var s = input;
+
+            // 常見控制/換行 → 空白
+            s = s.Replace('\r', ' ')
+                 .Replace('\n', ' ')
+                 .Replace('\t', ' ');
+
+            // 看似空白 → 正常空白；零寬/BOM → 直接移除
+            s = s.Replace('\u00A0', ' ') // NBSP
+                 .Replace('\u2007', ' ') // Figure Space
+                 .Replace('\u202F', ' ') // Narrow NBSP
+                 .Replace("\u200B", "")  // Zero Width Space
+                 .Replace("\u200C", "")  // ZWNJ
+                 .Replace("\u200D", "")  // ZWJ
+                 .Replace("\u2060", "")  // Word Joiner
+                 .Replace("\uFEFF", ""); // BOM
+
+            // 壓縮連續空白
+            while (s.Contains("  "))
+                s = s.Replace("  ", " ");
+
+            return s.Trim();
+        }
         // Mapping
         // 第一個參數是來源，第二個參數是目標
         public CustomDtoMapper()
@@ -214,8 +240,10 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.Image1, option => option.MapFrom(c => c.Img))
                 .ReverseMap();
             CreateMap<ProductImportUpateRegDto, ProductImportDto>()
+                .ForMember(e => e.ProdName, option => option.MapFrom(p => Normalize(p.ProdName)))
                 .ForMember(e => e.Price, option => option.MapFrom(p => ParseDouble(p.Price)??-1))
-                .ReverseMap();
+                .ReverseMap()
+                .ForMember(e => e.ProdName, option => option.MapFrom(p => Normalize(p.ProdName)));
 
 
             //FrontUser

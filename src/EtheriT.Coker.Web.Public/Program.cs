@@ -98,7 +98,7 @@ builder.Services.AddAuthentication(options =>
             ValidIssuer = builder.Configuration.GetValue<string>("JwtSettings:Issuer"), // JWT 發行者
             ValidAudience = builder.Configuration.GetValue<string>("JwtSettings:Audience"), // JWT 接收者
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetValue<string>("JwtSettings:SignKey"))), // 密鑰
-            ClockSkew = TimeSpan.Zero // Token 時間允許的偏移量
+            ClockSkew = TimeSpan.FromMinutes(1) // Token 時間允許的偏移量
         };
     }).AddPolicyScheme("JWT_OR_COOKIE", "JWT_OR_COOKIE", options =>
     {

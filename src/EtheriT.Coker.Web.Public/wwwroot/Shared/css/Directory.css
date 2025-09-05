@@ -452,6 +452,10 @@
     display: block;
 }
 
+[lang="en"] .empty:before {
+    content: "No Data Found";
+}
+
 .menuHeadTool {
     display: flex;
     justify-content: center;

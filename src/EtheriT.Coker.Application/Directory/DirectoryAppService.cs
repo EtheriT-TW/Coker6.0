@@ -773,14 +773,24 @@ namespace EtheriT.Coker.Application.Directory
                     var prices = await productAppService.GetPriceByStock(stockids);
 
                     var temp_price = prices.Where(e => e.Price == (prices.Max(e => e.Price))).FirstOrDefault();
-                    if (token?.UserID == null && temp_price?.FK_RId == 1)
+                    var stock = stocks.Where(e => e.Id == temp_price?.FK_PSId).FirstOrDefault();
+                    if (stock == null || stock.IsTimePrice)
                     {
-                        var SuggestPrice = stocks.Where(e => e.Id == temp_price.FK_PSId).Select(e => e.Price).FirstOrDefault();
-                        if (SuggestPrice > 0) data.SuggestPrice = (SuggestPrice).ToString("N0");
+                        data.Price = "時價";
+                        data.SuggestPrice = null;
+                        data.OriPrice = null;
                     }
+                    else
+                    {
+                        if (token?.UserID == null && temp_price?.FK_RId == 1)
+                        {
+                            var SuggestPrice = stock?.Price ?? 0;
+                            if (SuggestPrice > 0) data.SuggestPrice = (SuggestPrice).ToString("N0");
+                        }
 
-                    data.Price = temp_price?.Price?.ToString("N0") ?? "0";
-                    data.OriPrice = temp_price?.OriPrice?.ToString("N0") ?? "0";
+                        data.Price = temp_price?.Price?.ToString("N0") ?? "0";
+                        data.OriPrice = temp_price?.OriPrice?.ToString("N0") ?? "0";
+                    }
                 }
             }
             output.ReleInfos = list;
@@ -1606,13 +1616,18 @@ namespace EtheriT.Coker.Application.Directory
                                                            where !p.RemovedFromShelves && p.Visible
                                                            where p.permanent || (DateTime.Now >= p.StartTime && DateTime.Now <= p.EndTime)
                                                            where tagids.Contains(tagas.FK_TId) && tagas.Type == TagAssociateTypeEnum.商品
-                                                           orderby p.Ser_No, p.Status == ProdStatusEnum.新品 descending, p.ItemNo, p.Title, p.Id descending
+                                                           orderby 
+                                                                p.Ser_No, p.Status == ProdStatusEnum.新品 descending,
+                                                                p.Status != ProdStatusEnum.售完 descending, p.Status != ProdStatusEnum.停產 descending,
+                                                                p.ItemNo, p.Title, p.Id descending
                                                            select new { p, tagas }).ToListAsync();
-                                datas = products_tags.OrderBy(x => tagids.IndexOf(x.tagas.FK_TId)).Select(x => new KeyValueDto()
+
+                                datas = products_tags
+                                    .Select(x => new KeyValueDto()
                                 {
                                     Key = x.p.Id.ToString(),
                                     Value = x.p.Title ?? ""
-                                }).ToList();
+                                }).DistinctBy(x => x.Key).ToList();
                                 break;
                             case 2:
                                 var not_tags_aid = await (from a in db.Article

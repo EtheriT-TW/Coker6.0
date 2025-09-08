@@ -4,8 +4,10 @@ using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using MailKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using Microsoft.Extensions.Configuration;
 using MimeKit;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
@@ -20,13 +22,15 @@ namespace EtheriT.Coker.Application.Common
         private readonly IMapper mapper;
         private readonly StringHandler stringHandler;
         private readonly IStoreSetAppService storeSetAppService;
+        private readonly IConfiguration Configuration;
         private readonly SMTPDto sMTPDto;
         public MailAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IMapper mapper,
             StringHandler stringHandler,
-            IStoreSetAppService storeSetAppService
+            IStoreSetAppService storeSetAppService,
+            IConfiguration Configuration
         )
         {
             this.db = db;
@@ -34,6 +38,7 @@ namespace EtheriT.Coker.Application.Common
             this.mapper = mapper;
             this.stringHandler = stringHandler;
             this.storeSetAppService = storeSetAppService;
+            this.Configuration = Configuration;
         }
         public async Task<ResponseMessageDto> sendMail(SenderDto dto)
         {
@@ -74,13 +79,16 @@ namespace EtheriT.Coker.Application.Common
                 switch (smtp.Port)
                 {
                     case 587:
-                        smtp.UseSSL = (int)SecureSocketOptions.StartTls;
+                        smtp.UseSSL = SecureSocketOptions.StartTls;
                         break;
                     case 465:
-                        smtp.UseSSL = (int)SecureSocketOptions.SslOnConnect;
+                        smtp.UseSSL = SecureSocketOptions.SslOnConnect;
                         break;
                     case 25:
-                        smtp.UseSSL = (int)SecureSocketOptions.None;
+                        smtp.UseSSL = SecureSocketOptions.StartTlsWhenAvailable;
+                        break;
+                    default:
+                        smtp.UseSSL = SecureSocketOptions.Auto;
                         break;
                 }
             }
@@ -159,7 +167,20 @@ namespace EtheriT.Coker.Application.Common
 
             try
             {
-                using (var client = new SmtpClient())
+                bool enableLog = Configuration.GetValue<bool>("SmtpSettings:EnableSmtpDebugLog");
+                SmtpClient client;
+                if (enableLog)
+                {
+                    var logDir = Path.Combine(AppContext.BaseDirectory, "Logs", "mail");
+                    System.IO.Directory.CreateDirectory(logDir);
+                    var logFile = Path.Combine(logDir, $"smtp_client_{DateTime.UtcNow:yyyyMMdd}.log");
+                    client = new SmtpClient(new ProtocolLogger(logFile));
+                }
+                else
+                {
+                    client = new SmtpClient(); // 沒有 logger → 不產生日誌
+                }
+                using (client)
                 {
                     //client.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;
                     client.ServerCertificateValidationCallback = (sender, certificate, chain, errors) =>
@@ -197,9 +218,9 @@ namespace EtheriT.Coker.Application.Common
                         // 如果沒有通過，返回 false，表明憑證驗證失敗
                         return false;
                     };
-                    if (dto.SMTP.UseSSL != 0) client.SslProtocols = SslProtocols.Tls12;
+                    client.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13; ;
                     // 連接 Mail Server (郵件伺服器網址, 連接埠, 是否使用 SSL)
-                    client.Connect(dto.SMTP.Url, dto.SMTP.Port, (SecureSocketOptions)dto.SMTP.UseSSL);
+                    client.Connect(dto.SMTP.Url, dto.SMTP.Port, dto.SMTP.UseSSL);
 
                     // 如果需要的話，驗證一下
                     if (dto.SMTP.UserName != null)

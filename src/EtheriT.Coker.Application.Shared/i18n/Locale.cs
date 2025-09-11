@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,16 +10,19 @@ namespace EtheriT.Coker.Application.Shared.i18n
 {
     public static class Locale
     {
-        public static string FindAll { get; } = "找全部"; 
+        public static string All { get; } = "全部";
+        public static string FindAll { get; } = "找全部";
         public static string FindArticle { get; } = "找文章";
         public static string FindProduct { get; } = "找商品";
         public static string FindDescription { get; } = "搜尋 {0}共 {1}筆 資料";
+        public static string ClearAll { get; } = "全部清空";
         public static string GridImage { get; } = "圖片";
         public static string GridImageAndText { get; } = "圖文";
         public static string GridText { get; } = "文字";
         public static string SearchProdPlaceholder { get; } = "請輸入商品名稱/型號";
         public static string SearchAllPlaceholder { get; } = "尋找全站資訊";
         public static string FindEmpty { get; } = "查無資料";
+        public static string Share { get; } = "分享";
         public static string shareTo { get; } = "分享至：{0} (另開新視窗)";
         public static string LinkTo { get; } = "連結至：{0}";
         public static string LinkToAndBlank { get; } = "連結至：{0}(另開新視窗)";
@@ -47,5 +51,14 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string UnnamedFile { get; } = "未命名檔案";
         public static string ProdEmpty { get; } = "商品已售完";
         public static string ServiceCenter { get; } = "客服中心";
+        public static string Other { get; } = "其他";
+        public static string AdvancedFilter { get; } = "進階篩選";
+        public static string Category { get; } = "分類";
+        public static string SelectCategory { get; } = "請選擇分類";
+        public static string ProductDescription { get; } = "產品說明";
+        public static string CertificationMark { get; } = "標章認證";
+        public static string DownloadFile { get; } = "檔案下載";
+        public static string LearnMore { get; } = "了解更多";
+        public static string MarketPrice { get; } = "時價";
     }
 }

@@ -145,7 +145,7 @@ function DirectoryGetDataInit() {
                             });
                             var $body = item.find(".accordion-body");
                             $.each(SecIItem.children, function (index, ThirdIItem) {
-                                const _a = $(`<a href="${ThirdIItem.routerName}" title="連結至：${ThirdIItem.title}" class="list-group-item list-group-item-action border-0 py-3">${ThirdIItem.title}</a>`);
+                                const _a = $(`<a href="${ThirdIItem.routerName}" title="${cokerI18n("LinkTo", ThirdIItem.title)}" class="list-group-item list-group-item-action border-0 py-3">${ThirdIItem.title}</a>`);
                                 if (typeof (PageKey) != "undefined" && PageKey.toLowerCase() == ThirdIItem.routerName.toLowerCase()) {
                                     $(_a).addClass("active");
                                     $(accordionCollapse).collapse('show');
@@ -156,7 +156,7 @@ function DirectoryGetDataInit() {
                             $self.find(".accordion").append(item);
                         } else {
                             const link = (SecIItem.routerName != null && SecIItem.routerName != "") ? SecIItem.routerName : SecIItem.linkUrl
-                            var html = $(`<div class="accordion-item border-0 border-bottom px-1"><a href="${link}" title="連結至：${SecIItem.title}" class="list-group-item border-0 py-3 custom_h5 text-black"><span>${SecIItem.title}<span></a></div>`);
+                            var html = $(`<div class="accordion-item border-0 border-bottom px-1"><a href="${link}" title="${cokerI18n("LinkTo", SecIItem.title)}" class="list-group-item border-0 py-3 custom_h5 text-black"><span>${SecIItem.title}<span></a></div>`);
                             if (SecIItem.imgUrl != null && SecIItem.imgUrl != "") {
                                 const $img = $(`<img alt=" " />`);
                                 if (SecIItem.overImgUrl == null || (typeof (PageKey) != "undefined" && link.toLowerCase().indexOf(PageKey.toLowerCase()) >= 0)) {
@@ -412,7 +412,7 @@ function DirectoryDataInsert($item, result) {
         if (!/^http/.test(path)) path = path.replace("//", "/");
         const linkData = {
             "href": path,
-            "title": `連結至: ${data.title}${(target == "_blank" ? "(另開視窗)" : "")}`,
+            "title": target == "_blank" ? cokerI18n("LinkToAndBlank", data.title) : cokerI18n("LinkTo", data.title),
             "target": target,
             rel: "noopener noreferrer"
         }
@@ -670,7 +670,7 @@ function DirectoryTemplateDataInsert($template, data) {
                     break;
                 case "link":
                     $self.attr("href", `${data[key]}`);
-                    $self.attr("title", `連結至：${data['title']}`);
+                    $self.attr("title", cokerI18n("LinkTo", data.title));
                     break;
                 default:
                     $self.text(data[key]);
@@ -722,7 +722,7 @@ function InsertAdDatat($frame, result) {
                 $img_frame.find("img").attr("src", result_File.link);
                 $img_frame.find("img").attr("alt", result.title);
                 $img_frame.find("a").attr("href", result.link);
-                $img_frame.find("a").attr("title", "連結至" + result.title + (result.target ? "(開新視窗)" : ""));
+                $img_frame.find("a").attr("title", result.target ? cokerI18n("LinkToAndBlank", result.title) : cokerI18n("LinkTo", result.title));
                 $img_frame.find("a").attr({
                     "target": (result.target ? "_blank" : "_self"),
                     rel: "noopener noreferrer"
@@ -788,7 +788,7 @@ function InsertAdDatat($frame, result) {
             var tags = "";
             for (var i = 0; i < result.tagDatas.length; i++) {
                 var taglink = typeof (OrgName) == "undefined" ? "" : `/${OrgName}/Search/Get/${result.tagDatas[i].searchId}/${result.tagDatas[i].title}`;
-                tags += `<a href="${taglink}" title="連結至：${result.tagDatas[i].title}" class="pe-2">#${result.tagDatas[i].title}</a>`;
+                tags += `<a href="${taglink}" title="${cokerI18n("LinkTo", result.tagDatas[i].title) }" class="pe-2">#${result.tagDatas[i].title}</a>`;
             }
             $frame.find(".tag").append(tags);
         }

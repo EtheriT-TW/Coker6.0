@@ -27,6 +27,7 @@ using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Application.Shared.Processor;
+using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
@@ -604,7 +605,7 @@ namespace EtheriT.Coker.Application.Directory
             {
                 Id = 0,
                 Type = DirectorySearchTypeEnum.標籤,
-                Name = "其他",
+                Name = L.get("Other"),
                 Tags = (from t in db.Tags.Where(e => !e.IsDeleted)
                         where t.FK_WebsiteId == WebsiteID && tagsId.Contains(t.Id)
                         select new TagGetSelectedDto
@@ -776,7 +777,7 @@ namespace EtheriT.Coker.Application.Directory
                     var stock = stocks.Where(e => e.Id == temp_price?.FK_PSId).FirstOrDefault();
                     if (stock == null || stock.IsTimePrice)
                     {
-                        data.Price = "時價";
+                        data.Price = L.get("MarketPrice");
                         data.SuggestPrice = null;
                         data.OriPrice = null;
                     }

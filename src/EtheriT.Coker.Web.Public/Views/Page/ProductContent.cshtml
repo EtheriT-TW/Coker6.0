@@ -329,24 +329,24 @@
                 </div>
             }
             <a href="@ViewData["linkMore"]" class="btn_learnMore d-flex align-items-center justify-content-center text-white" type="button" target="_blank" rel="noopener noreferrer">
-                <div class="text-white">了解更多</div>
+                <div class="text-white">@L.get("LearnMore")</div>
             </a>
         </div>
     </div>
 
     <div id="CenterLine" class="container d-flex pt-sm-0 pt-2 flex-wrap flex-sm-row-reverse align-items-center justify-content-center justify-content-sm-between">
         <div class="shareBlock d-flex align-items-center justify-content-center justify-content-sm-end">
-            <div>分享：</div>
+            <div>@L.get("Share")：</div>
         </div>
         <ul id="btn_tab" class="text d-flex pt-2 pt-sm-0 nav nav-pills" role="tablist">
             <li class="nav-item description" role="presentation">
-                <button id="pills-description-tab" class="mx-sm-0 nav-link active py-3" data-bs-toggle="pill" data-bs-target="#ProductDescription" type="button" role="tab" aria-controls="pills-description" aria-selected="true">產品說明</button>
+                <button id="pills-description-tab" class="mx-sm-0 nav-link active py-3" data-bs-toggle="pill" data-bs-target="#ProductDescription" type="button" role="tab" aria-controls="pills-description" aria-selected="true">@L.get("ProductDescription")</button>
             </li>
             <li class="nav-item technical" role="presentation">
-                <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#TechnicalDocuments" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">標章認證</button>
+                <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#TechnicalDocuments" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">@L.get("CertificationMark")</button>
             </li>
             <li class="nav-item files" role="presentation">
-                <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#FileDownload" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">檔案下載</button>
+                <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#FileDownload" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">@L.get("DownloadFile")</button>
             </li>
         </ul>
     </div>

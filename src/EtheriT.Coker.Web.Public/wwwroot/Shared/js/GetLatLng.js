@@ -30,3 +30,12 @@
         console.log("GetLatLngError: Geolocation is not supported by this browser")
     }
 }
+function cokerI18n(key, ...args) {
+    let str = local[key];
+    if (!str) return ""; // 沒找到 key 就回空字串
+
+    // 安全替換 {0} {1} ...
+    return str.replace(/\{(\d+)\}/g, (match, index) => {
+        return typeof args[index] !== "undefined" ? args[index] : match;
+    });
+}

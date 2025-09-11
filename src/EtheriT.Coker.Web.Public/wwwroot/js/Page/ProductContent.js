@@ -250,9 +250,9 @@ function PageDefaultSet(result) {
     let displayText = '';
     const target = orderPrice ? minprice : maxprice;
     if (hasTimePrice && allPriceObjects.length === 0) {
-        displayText = '時價';
+        displayText = local.MarketPrice;
     } else if (hasTimePrice && allPriceObjects.length > 0) {
-        displayText = showRange ? `${minprice.toLocaleString('en-US')} ~ 時價` : target;
+        displayText = showRange ? `${minprice.toLocaleString('en-US')} ~ ${local.MarketPrice}` : target;
     } else if (!hasTimePrice && allPriceObjects.length > 0) {
         if (showRange) {
             if (minprice === maxprice) {
@@ -676,7 +676,7 @@ function SpecRadio() {
 
                     var price_text = "";
                     if (item.timePrice) {
-                        price_temp.find(".discount").removeClass("price").text("時價");
+                        price_temp.find(".discount").removeClass("price").text(local.MarketPrice);
                     } else {
                         if (self_item.bonus > 0) {
                             price_text = `${price.toLocaleString('en-US')}+紅利${self_item.bonus}點`;

@@ -41,31 +41,34 @@ i.fa-chevron-right {
 #ProDisplayModal.show {
     display: flex !important;
 }
+
 #ProDisplayModal .modal-dialog {
     width: 0;
     margin: auto;
     transition: width 0.4s ease, height 0.4s ease;
 }
+
 #ProDisplayModal .modal-body {
     height: 0;
-    padding:0;
+    padding: 0;
     transition: height 0.4s ease;
 }
 
-    #ProDisplayModal > .modal-dialog.ytshow {
-        width: 1320px;
-        max-width: 95vw;
+#ProDisplayModal > .modal-dialog.ytshow {
+    width: 1320px;
+    max-width: 95vw;
+}
+
+#ProDisplayModal > .modal-dialog > .modal-content {
+    min-height: 50vmin;
+}
+
+    #ProDisplayModal > .modal-dialog > .modal-content > button {
+        z-index: 1;
+        background-color: white;
+        opacity: 0.75;
     }
 
-    #ProDisplayModal > .modal-dialog > .modal-content {
-        min-height: 50vmin;
-    }
-
-        #ProDisplayModal > .modal-dialog > .modal-content > button {
-            z-index: 1;
-            background-color: white;
-            opacity: 0.75;
-        }
 #ProDisplayModal .btn-tool {
     position: fixed;
     top: calc(50% - 2.5rem);
@@ -73,9 +76,11 @@ i.fa-chevron-right {
     color: #FFF;
     font-size: 5rem;
 }
+
     #ProDisplayModal .btn-tool.prev-btn {
         left: 0;
     }
+
     #ProDisplayModal .btn-tool.next-btn {
         right: 0;
     }
@@ -161,6 +166,7 @@ i.fa-chevron-right {
 
     #Product > .content > .describe > .introduce, #ProductDescription {
         list-style: none;
+        padding: 0;
     }
 
     #Product > .content > .describe > .track {
@@ -469,17 +475,22 @@ input:disabled + .btn_radio {
 /* TabContent */
 #TabContent {
     color: var(--gray-text);
-    margin-bottom: 4rem;
 }
 
-    #TabContent > div > img {
-        width: 100%;
+    #TabContent > div {
+        padding-bottom: 3rem;
     }
+        #TabContent > div#ProductDescription {
+            padding:1.5rem 0;
+        }
+        #TabContent > div > img {
+            width: 100%;
+        }
 
-    #TabContent > div > iframe {
-        width: 100%;
-        height: 80vmin;
-    }
+        #TabContent > div > iframe {
+            width: 100%;
+            height: 80vmin;
+        }
 
 /* TechnicalDocuments */
 

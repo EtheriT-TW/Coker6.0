@@ -1307,8 +1307,6 @@ function OrdererDataGet() {
     if (!FormCheck(OrdererForms)) return false;
     order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
     order_data.ordererAddress = `${order_data.county} ${order_data.district} ${order_data.ordererAddress}`;
-
-    order_data.ordererTelePhone = "";
     if (order_data.ordererTelePhone != "" && order_data.zone != "") {
         order_data.ordererTelePhone = `${order_data.zone}-${order_data.ordererTelePhone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
     }

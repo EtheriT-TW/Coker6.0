@@ -490,7 +490,7 @@ namespace EtheriT.Coker.Application.Product
                 foreach (var p in prods)
                 {
                     stocksDict.TryGetValue(p.Id, out var stocks);
-
+                    if (stocks == null) continue;
                     var timePriceStocks = stocks.Where(s => s.IsTimePrice).ToList();
                     var normalStocks = stocks.Where(s => !s.IsTimePrice).ToList();
 
@@ -2245,26 +2245,6 @@ namespace EtheriT.Coker.Application.Product
             var products = await UpsertProducts(prods, errors);
             await UpsertStocksAndPricesBatchAsync(products, prods, errors);
             await db.SaveChangesAsync();
-        }
-        private async Task<List<Prod>> ResolveProdsAsync(List<ProductImportDto> prods)
-        {
-            var itemNos = prods.Where(p => !string.IsNullOrEmpty(p.ItemNo))
-                               .Select(p => p.ItemNo!)
-                               .Distinct()
-                               .ToList();
-
-            var titles = prods.Where(p => string.IsNullOrEmpty(p.ItemNo))
-                              .Select(p => p.ProdName ?? "")
-                              .Distinct()
-                              .ToList();
-
-            return await db.Prods
-                .Where(e => !e.IsDeleted)
-                .Where(e =>
-                    (!string.IsNullOrEmpty(e.ItemNo) && itemNos.Contains(e.ItemNo)) ||
-                    (string.IsNullOrEmpty(e.ItemNo) && titles.Contains(e.Title))
-                )
-                .ToListAsync();
         }
         private async Task<List<Prod>> UpsertProducts(List<ProductImportDto> dtos, List<ImportMassageItem> errors)
         {

@@ -940,16 +940,23 @@ namespace EtheriT.Coker.Application.Authorization
         {
             var website = await db.Websites.Where(e => e.Id == dto.WebsiteId).FirstOrDefaultAsync();
             ResponseMessageDto response = new ResponseMessageDto();
+            if (website == null)
+            {
+                response.Error = "網站資料錯誤";
+                return response;
+            }
+            var WebsiteName = string.IsNullOrEmpty(dto.WebsiteName) ? website?.Title : dto.WebsiteName;
+            var WebsiteLink = string.IsNullOrEmpty(dto.WebsiteLink) ? website?.DefaultUrl : dto.WebsiteLink;
             try
             {
-                var mailhtml = $"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！歡迎加入{dto.WebsiteName}會員</h2>" +
+                var mailhtml = $"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！歡迎加入{WebsiteName}會員</h2>" +
                                                         $"<hr/>" +
                                                         $"<div>以下是您的帳號資料，請熟記以下重要訊息</div>" +
                                                         $"<br/>" +
                                                         $"<div class='d-flex text-bold'><div>您的帳號：</div><u>{dto.Email}</u></div>" +
                                                         $"<br/>" +
                                                         $"<div text-bold>點選下方連結，完成會員驗證。</div>" +
-                                                        $"<a href='{dto.WebsiteLink}/?useraction=accountoping&openid={dto.OpenId}' title='前往開通帳號'>{dto.WebsiteLink}/?useraction=accountoping&openid={dto.OpenId}</a>" +
+                                                        $"<a href='{WebsiteLink}/?useraction=accountoping&openid={dto.OpenId}' title='前往開通帳號'>{WebsiteLink}/?useraction=accountoping&openid={dto.OpenId}</a>" +
                                                         $"<div class='text-gray'>這個連結僅能使用一次，並於 {((DateTime)dto.OpenIdSendDate).AddDays(1)} 到期，請在期限內開通。</div>" +
                                                         $"<div class='text-gray'>感謝您的加入！~</div>" +
                                                         $"<br/>" +
@@ -972,7 +979,7 @@ namespace EtheriT.Coker.Application.Authorization
                                         Email = dto.Email,
                                     }
                                 },
-                    Subject = $"【{dto.WebsiteName}】註冊會員通知",
+                    Subject = $"【{WebsiteName}】註冊會員通知",
                     Body = mailhtml,
                     Css = mailcss,
                 }, website.Contact);

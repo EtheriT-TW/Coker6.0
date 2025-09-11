@@ -1,0 +1,57 @@
+﻿.gjs-opt-wrap {
+    display: grid;
+    gap: .5rem;
+}
+
+.gjs-opt-list {
+    display: grid;
+    gap: .5rem;
+}
+
+.gjs-opt-row {
+    position: relative;
+    margin-bottom: .5rem;
+}
+
+.gjs-opt-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    padding-right: 2rem; /* 留空間給刪除鍵 */
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+.gjs-opt-del {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    z-index: 3;
+    border: none;
+    background: transparent;
+    color: #e74c3c;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+}
+
+    .gjs-opt-del:hover {
+        color: #c0392b;
+    }
+
+.gjs-opt-add {
+    display: block;
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f7f7f7;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+    .gjs-opt-add:hover {
+        background: #e9ecef;
+    }

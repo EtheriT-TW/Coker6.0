@@ -563,6 +563,7 @@ function SwiperInit(obj) {
 
             pictureSwiper.on('slideChange', function () {
                 var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
+                console.log(pictureSwiper.activeIndex, activeSlide.find("img").attr("alt"));
                 $header_text.text(activeSlide.find("img").attr("alt"));
             });
 

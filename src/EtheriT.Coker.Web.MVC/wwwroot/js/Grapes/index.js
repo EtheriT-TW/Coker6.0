@@ -79,6 +79,7 @@ var grapesInit = function (options) {
             //'gjs-plugin-ckeditor5',
             //'grapesjs-rte-extensions',
             'grapesjs-Coker6',
+            'grapesJs-Coker6-Form',
             'grapesjs-Swiper'
         ],
         pluginsOpts: {

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using DevExpress.Charts.Native;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
@@ -9,6 +10,7 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;
 using MimeKit;
+using System.Collections.Generic;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
@@ -169,12 +171,21 @@ namespace EtheriT.Coker.Application.Common
             {
                 bool enableLog = Configuration.GetValue<bool>("SmtpSettings:EnableSmtpDebugLog");
                 SmtpClient client;
+                StreamWriter? writer = null;
+                void Step(string msg)
+                {
+                    if(writer != null)
+                        writer.WriteLine($"[{DateTime.Now:HH:mm:ss}] [APP_STEP] {msg}");
+                }
                 if (enableLog)
                 {
                     var logDir = Path.Combine(AppContext.BaseDirectory, "Logs", "mail");
                     System.IO.Directory.CreateDirectory(logDir);
                     var logFile = Path.Combine(logDir, $"smtp_client_{DateTime.UtcNow:yyyyMMdd}.log");
-                    client = new SmtpClient(new ProtocolLogger(logFile));
+                    var stream = File.Open(logFile, FileMode.Append, FileAccess.Write, FileShare.Read);
+                    var protocolLogger = new ProtocolLogger(stream);
+                    client = new SmtpClient(protocolLogger);
+                    writer = new StreamWriter(stream) { AutoFlush = true };
                 }
                 else
                 {
@@ -182,6 +193,7 @@ namespace EtheriT.Coker.Application.Common
                 }
                 using (client)
                 {
+                    Step("start");
                     //client.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;
                     client.ServerCertificateValidationCallback = (sender, certificate, chain, errors) =>
                     {
@@ -218,21 +230,51 @@ namespace EtheriT.Coker.Application.Common
                         // 如果沒有通過，返回 false，表明憑證驗證失敗
                         return false;
                     };
+                    Step("set ServerCertificateValidationCallback");
                     client.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13; ;
                     // 連接 Mail Server (郵件伺服器網址, 連接埠, 是否使用 SSL)
                     client.Connect(dto.SMTP.Url, dto.SMTP.Port, dto.SMTP.UseSSL);
-
+                    Step("set Connect");
                     // 如果需要的話，驗證一下
-                    if (dto.SMTP.UserName != null)
-                        client.Authenticate(dto.SMTP.UserName, dto.SMTP.Password);
+                    var hasUser = !string.IsNullOrWhiteSpace(dto.SMTP.UserName);
+                    var canAuth = client.Capabilities.HasFlag(SmtpCapabilities.Authentication);
+                    if (hasUser && canAuth)
+                    {
+                        Step($"AUTH before: {dto.SMTP.UserName}");
+                        try
+                        {
+                            client.Authenticate(dto.SMTP.UserName, dto.SMTP.Password);
+                            Step("AUTH after (ok)");
+                        }
+                        catch (NotSupportedException ex)
+                        {
+                            // 個別攔截，寫清楚再繼續（不要 return）
+                            Step($"AUTH NotSupported -> fallback unauthenticated. {ex.Message}");
+                        }
+                        catch (MailKit.Security.AuthenticationException ex)
+                        {
+                            // 真的帳密錯誤才會進來（你原本外層也有抓，這裡多寫一步清楚）
+                            Step($"AUTH AuthenticationException: {ex.Message}");
+                            throw; // 讓外層 catch 正常處理
+                        }
+                    }
+                    else if (hasUser && !canAuth)
+                    {
+                        Step("Server did not advertise AUTH -> skip Authenticate");
+                    }
+                    else
+                    {
+                        Step("No username -> skip Authenticate");
+                    }
 
                     // 寄出郵件
                     client.Send(message);
-
+                    Step("set Send");
                     // 中斷連線
                     client.Disconnect(true);
+                    Step("set Disconnect");
+                    response.Success = true;
                 }
-                response.Success = true;
             }
             catch (SmtpCommandException ex)
             {
@@ -277,8 +319,10 @@ namespace EtheriT.Coker.Application.Common
                          * **/
                         response.Message = "信件內容格式錯誤";
                         break;
+                    default:
+                        response.Message = $"信件發送失敗[{ex.ErrorCode}:{ex.Message}]";
+                        break;
                 }
-                response.Error = ex.Message;
             }
             catch (MailKit.Security.AuthenticationException ex)
             {

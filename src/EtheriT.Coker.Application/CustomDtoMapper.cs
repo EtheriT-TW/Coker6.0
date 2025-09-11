@@ -1,43 +1,45 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Authorizaion.Dto;
+using EtheriT.Coker.Application.Company;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Dto.AuditLog;
+using EtheriT.Coker.Application.Dto.Newsletter;
 using EtheriT.Coker.Application.Dto.ObjectType;
-using EtheriT.Coker.Application.Shared.Dto.Article;
-using EtheriT.Coker.Application.Shared.Dto.Directory;
-using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
-using EtheriT.Coker.Application.Shared.Dto.Member;
-using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Dto.StoreSet;
+using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Advertise;
+using EtheriT.Coker.Application.Shared.Dto.Article;
+using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
+using EtheriT.Coker.Application.Shared.Dto.Contact;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
+using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
+using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Shared.Dto.Member;
+using EtheriT.Coker.Application.Shared.Dto.Newsletter;
+using EtheriT.Coker.Application.Shared.Dto.Order;
+using EtheriT.Coker.Application.Shared.Dto.Permissions;
+using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.Recipients;
+using EtheriT.Coker.Application.Shared.Dto.Remote;
+using EtheriT.Coker.Application.Shared.Dto.Role;
+using EtheriT.Coker.Application.Shared.Dto.Search;
+using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
-using EtheriT.Coker.Application.Shared.Dto.WebMenu;
-using EtheriT.Coker.Core.Models;
-using EtheriT.Coker.Web.Core.Models;
-using EtheriT.Coker.Application.Shared.Dto.StoreSet;
-using EtheriT.Coker.Application.Shared.Dto.Search;
-using EtheriT.Coker.Application.Shared.Dto.Webs;
-using EtheriT.Coker.Application.Company;
-using EtheriT.Coker.Application.Dto.AuditLog;
-using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
-using EtheriT.Coker.Application.Dto.Newsletter;
-using EtheriT.Coker.Application.Shared.Dto.Mail;
-using EtheriT.Coker.Application.Shared.Dto.Permissions;
-using EtheriT.Coker.Application.Shared.Dto;
-using EtheriT.Coker.Application.Shared.Dto.Remote;
-using EtheriT.Coker.Application.Shared.Dto.Contact;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
-using EtheriT.Coker.Application.Shared.Dto.Newsletter;
-using EtheriT.Coker.Application.Shared.Dto.Advertise;
-using EtheriT.Coker.Application.Shared.Dto.Token;
-using EtheriT.Coker.Application.Shared.Dto.Order;
-using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
-using EtheriT.Coker.Application.Shared.Dto.Role;
-using EtheriT.Coker.Application.Shared.Dto.UserHabits;
-using EtheriT.Coker.Application.Shared.Dto.Recipients;
 using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
+using EtheriT.Coker.Application.Shared.Dto.Token;
+using EtheriT.Coker.Application.Shared.Dto.UserHabits;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+using EtheriT.Coker.Application.Shared.Dto.Webs;
+using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.Web.Core.Models;
 using Newtonsoft.Json;
+using System.Net;
+using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Application
 {
@@ -76,6 +78,19 @@ namespace EtheriT.Coker.Application
                 s = s.Replace("  ", " ");
 
             return s.Trim();
+        }
+        public static bool HasContent(WebMenu s)
+        {
+            // 文字有值
+            if (!string.IsNullOrWhiteSpace(s.PageText))
+                return true;
+
+            if (string.IsNullOrEmpty(s.Html))
+                return false;
+
+            // decode 後再檢查
+            var html = WebUtility.HtmlDecode(s.Html);
+            return Regex.IsMatch(html, @"<(img|iframe|video)\b", RegexOptions.IgnoreCase);
         }
         // Mapping
         // 第一個參數是來源，第二個參數是目標
@@ -126,12 +141,15 @@ namespace EtheriT.Coker.Application
 
             //WebMenu
             CreateMap<SiteMapDto, WebMenu>().ReverseMap();
+
             CreateMap<MenuItemDto, WebMenu>()
-                .ForMember(e => e.RemovedFromShelves, option => option.MapFrom(c => !c.IsFromShelves))
+                .ForMember(d => d.RemovedFromShelves, o => o.MapFrom(s => !s.IsFromShelves))
                 .ReverseMap()
-                .ForMember(e => e.IsFromShelves, option => option.MapFrom(c => !c.RemovedFromShelves))
-                .ForMember(e => e.OrgName, option => option.MapFrom(c => c.Website.OrgName))
-                .ForMember(e => e.hasContan, option => option.MapFrom(c => !string.IsNullOrEmpty(c.Html)));
+                .ForMember(d => d.IsFromShelves, o => o.MapFrom(s => !s.RemovedFromShelves))
+                .ForMember(d => d.OrgName, o => o.MapFrom(s => s.Website != null ? s.Website.OrgName : null))
+                .ForMember(d => d.hasContan, o => o.MapFrom(s => HasContent(s)));
+
+
             CreateMap<MenuContenDto, WebMenu>().ReverseMap();
             CreateMap<MenuSaveContenDto, WebMenu>().ReverseMap();
             CreateMap<GetFrontContenOutputDto, WebMenu>()

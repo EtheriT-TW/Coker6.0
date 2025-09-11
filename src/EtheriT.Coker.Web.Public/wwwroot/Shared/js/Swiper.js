@@ -557,48 +557,45 @@ function SwiperInit(obj) {
                 autoplay: {
                     delay: 5000,
                     disableOnInteraction: false,
+                }, on: {
+                    slideChange: function () {
+                        var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
+                        $header_text.text(activeSlide.find("img").attr("alt"));
+                    },
+                    slideChangeTransitionStart: function () {
+                        // 暫停所有 video
+                        var videos = $(pictureSwiper.wrapperEl).find('video');
+                        videos.each(function () {
+                            this.pause();
+                        });
+
+                        // 暫停所有 iframe
+                        var iframes = $(pictureSwiper.wrapperEl).find('iframe');
+                        iframes.each(function () {
+                            var $iframe = $(this);
+                            if ($iframe.attr('src')) {
+                                $iframe.data('src', $iframe.attr('src'));
+                                $iframe.attr('src', '');
+                            }
+                        });
+                    },
+                    slideChangeTransitionEnd: function () {
+                        // 恢復當前 slide iframe
+                        var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
+                        var $video = $(activeSlide).find('video');
+                        var $iframe = activeSlide.find('iframe');
+
+                        if ($video.length > 0) {
+                            var startTime = parseFloat($video.data('starttime')) || 0;
+                            $video[0].currentTime = startTime;
+                            $video[0].play();
+                        } else if ($iframe.length > 0 && $iframe.data('src')) {
+                            $iframe.attr('src', $iframe.data('src'));
+                        }
+                    }
                 }
             };
             let pictureSwiper = new Swiper("#pictureSwiper", pictureSwiperOptions);
-
-            pictureSwiper.on('slideChange', function () {
-                var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
-                console.log(pictureSwiper.activeIndex, activeSlide.find("img").attr("alt"));
-                $header_text.text(activeSlide.find("img").attr("alt"));
-            });
-
-            pictureSwiper.on('slideChangeTransitionStart', function () {
-                // 暫停所有 video
-                var videos = $(pictureSwiper.wrapperEl).find('video');
-                videos.each(function () {
-                    this.pause();
-                });
-
-                // 暫停所有 iframe
-                var iframes = $(pictureSwiper.wrapperEl).find('iframe');
-                iframes.each(function () {
-                    var $iframe = $(this);
-                    if ($iframe.attr('src')) {
-                        $iframe.data('src', $iframe.attr('src'));
-                        $iframe.attr('src', '');
-                    }
-                });
-            });
-
-            pictureSwiper.on('slideChangeTransitionEnd', function () {
-                // 恢復當前 slide iframe
-                var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
-                var $video = $(activeSlide).find('video');
-                var $iframe = activeSlide.find('iframe');
-
-                if ($video.length > 0) {
-                    var startTime = parseFloat($video.data('starttime')) || 0;
-                    $video[0].currentTime = startTime;
-                    $video[0].play();
-                }else if ($iframe.length > 0 && $iframe.data('src')) {
-                    $iframe.attr('src', $iframe.data('src'));
-                }
-            });
 
             $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
                 pictureSwiper.removeAllSlides();

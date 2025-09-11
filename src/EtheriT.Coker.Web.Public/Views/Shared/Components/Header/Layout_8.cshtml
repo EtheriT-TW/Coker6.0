@@ -18,7 +18,7 @@
         <div class="d-none d-lg-flex logo justify-content-end">
             @{
                 var home_target = Model.HomeTarget == true ? "_blank" : "_self";
-                var home_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+                var home_title = Model.HomeTarget == true ? L.get("LinkToAndBlank", L.get("HomePage")) : L.get("LinkTo", L.get("HomePage"));
                 if (string.IsNullOrEmpty(Model.HomeLink)) Model.HomeLink = "/";
             }
             <a href="@Model.HomeLink" target="@home_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@home_title">
@@ -88,7 +88,7 @@
                                             var iconclass = secItem.Icon == "" ? "d-none" : "";
                                             var imageiconclass = secItem.ImageIcon == "" ? "d-none" : "";
                                             var target = secItem.Target == true ? "_blank" : "_self";
-                                            var title = secItem.Target == true ? $"連結至：{secItem.Title}(另開視窗)" : $"連結至：{secItem.Title}";
+                                            var title = secItem.Target == true ? L.get("LinkToAndBlank", secItem.Title) : L.get("LinkTo", secItem.Title);
                                             string titleClass = (secItem.menuItemModels == null || secItem.menuItemModels.Count() == 0 || menu.Link.ToLower().Contains("product")) ? "" : "hasChild";
                                             if (string.IsNullOrEmpty(secItem.Link))
                                             {
@@ -119,7 +119,7 @@
                                                                 @if (secItem.Link != "")
                                                                 {
                                                                     target = thirdItem.Target == true ? "_blank" : "_self";
-                                                                    title = thirdItem.Target == true ? $"連結至：{thirdItem.Title}(另開視窗)" : $"連結至：{thirdItem.Title}";
+                                                                    title = thirdItem.Target == true ? L.get("LinkToAndBlank", thirdItem.Title) : L.get("LinkTo", thirdItem.Title);
                                                                     <a class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target" rel="@(thirdItem.Target == true ? $"noopener noreferrer" : "")">
                                                                         <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
                                                                         <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
@@ -146,7 +146,7 @@
                         }
                         else
                         {
-                            <a class="mt-0 nav-link pb-0 text-nowrap text-black menu-item" href="@menu.Link" target="@(menu.Target == true ? "_blank" : "_self")" rel="@(menu.Target == true ? $"noopener noreferrer" : "")" title="@(menu.Target == true ? $"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
+                            <a class="mt-0 nav-link pb-0 text-nowrap text-black menu-item" href="@menu.Link" target="@(menu.Target == true ? "_blank" : "_self")" rel="@(menu.Target == true ? $"noopener noreferrer" : "")" title="@(menu.Target == true ? L.get("LinkToAndBlank", menu.Title) : L.get("LinkTo", menu.Title))">
                                 @if (string.IsNullOrEmpty(menu.imageUrl))
                                 {
                                     @menu.Title
@@ -186,7 +186,7 @@
         <div class="logo d-lg-none col-7 text-center py-lg-0 py-1">
             @{
                 var logo_target = Model.HomeTarget == true ? "_blank" : "_self";
-                var logo_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+                var logo_title = Model.HomeTarget == true ? L.get("LinkToAndBlank", L.get("HomePage")) : L.get("LinkTo", L.get("HomePage"));
             }
             <a href="@Model.HomeLink" target="@logo_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@logo_title">
                 @if (string.IsNullOrEmpty(Model.Title))
@@ -381,7 +381,7 @@
                         @foreach (var marquee in Model.marqueeModels ?? new List<MarqueeDisplayDto>())
                         {
                             var target = marquee.target == true ? "_blank" : "_self";
-                            var title = marquee.target == true ? $"連結至：{marquee.title}(另開視窗)" : $"連結至：{marquee.title}";
+                            var title = marquee.target == true ? L.get("LinkToAndBlank", marquee.title) : L.get("LinkTo", marquee.title);
                             var link = marquee.link;
                             if (string.IsNullOrEmpty(link))
                             {

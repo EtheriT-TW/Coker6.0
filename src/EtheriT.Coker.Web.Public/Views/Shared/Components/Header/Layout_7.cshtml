@@ -283,7 +283,7 @@
 						@foreach (var marquee in Model.marqueeModels ?? new List<MarqueeDisplayDto>())
 						{
 							var target = marquee.target == true ? "_blank" : "_self";
-							var title = marquee.target == true ? $"連結至：{marquee.title}(另開視窗)" : $"連結至：{marquee.title}";
+							var title = marquee.target == true ? L.get("LinkToAndBlank", marquee.title) : L.get("LinkTo", marquee.title);
 							var link = marquee.link;
 							if (string.IsNullOrEmpty(link))
 							{

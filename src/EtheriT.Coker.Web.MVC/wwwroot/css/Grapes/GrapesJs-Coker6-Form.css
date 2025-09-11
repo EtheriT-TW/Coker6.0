@@ -1,57 +1,139 @@
-﻿.gjs-opt-wrap {
+﻿/* 容器 */
+.ds-modal {
+    min-width: 520px;
+    max-width: 820px;
+    padding: 8px 4px;
+}
+
+/* 工具列：上下兩層排列 */
+.ds-toolbar {
     display: grid;
-    gap: .5rem;
+    gap: 10px;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0.5rem 1rem;
+    border-bottom: #aaa solid 1px;
 }
 
-.gjs-opt-list {
+.ds-toolbar-top {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.ds-hint {
+    font-size: 12px;
+    opacity: .8;
+}
+
+/* 貼多行區塊（獨立一列） */
+.ds-bulk {
     display: grid;
-    gap: .5rem;
+    gap: 6px;
 }
 
-.gjs-opt-row {
-    position: relative;
-    margin-bottom: .5rem;
+.ds-label {
+    font-size: 12px;
+    opacity: .85;
 }
 
-.gjs-opt-input {
+.ds-textarea {
+    width: 100%;
+    min-height: 80px;
+    resize: vertical;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px 10px;
+    box-sizing: border-box;
+    background: #fff;
+}
+
+/* 列表與每列 */
+.ds-list {
+    display: grid;
+    gap: 8px;
+}
+
+.ds-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto; /* 把手 / 輸入框 / 刪除 */
+    gap: 10px;
+    align-items: center;
+}
+
+/* 把手、輸入、刪除鍵 */
+.ds-handle {
+    cursor: move;
+    user-select: none;
+    padding: 0 8px;
+    color: #666;
+    border: 1px dashed #bbb;
+    border-radius: 4px;
+}
+
+.ds-input {
     width: 100%;
     box-sizing: border-box;
-    padding: 6px 8px;
-    padding-right: 2rem; /* 留空間給刪除鍵 */
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.875rem;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
 }
 
-.gjs-opt-del {
-    position: absolute;
-    top: 2px;
-    right: 4px;
-    z-index: 3;
+.ds-del {
     border: none;
     background: transparent;
-    color: #e74c3c;
-    font-weight: bold;
+    color: #d64545; /* 醒目但不刺眼 */
+    font-weight: 700;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 18px;
+    padding: 0 4px;
     line-height: 1;
 }
 
-    .gjs-opt-del:hover {
-        color: #c0392b;
+    .ds-del:hover {
+        color: #c03434;
     }
 
-.gjs-opt-add {
-    display: block;
-    width: 100%;
-    padding: 4px 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: #f7f7f7;
-    cursor: pointer;
-    font-size: 0.875rem;
+/* 底部動作按鈕 */
+.ds-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 14px;
 }
 
-    .gjs-opt-add:hover {
-        background: #e9ecef;
+.ds-btn {
+    border: 1px solid #ccc;
+    background: #f7f7f7;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+    .ds-btn:hover {
+        background: #eee;
     }
+
+.ds-btn-primary {
+    border-color: #4c6ef5;
+    background: #4c6ef5;
+    color: #fff;
+}
+
+    .ds-btn-primary:hover {
+        background: #3b5bdb;
+    }
+
+.ds-btn-block {
+    display: block;
+    width: 100%;
+}
+
+/* jQuery UI 的 placeholder */
+.ds-placeholder {
+    background: #f0f4ff;
+    border: 1px dashed #4c6ef5;
+    min-height: 38px;
+    border-radius: 6px;
+}

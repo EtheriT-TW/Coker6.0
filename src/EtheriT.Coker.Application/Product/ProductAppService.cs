@@ -16,6 +16,7 @@ using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Specification;
@@ -89,6 +90,7 @@ namespace EtheriT.Coker.Application.Product
             this.webMenuApplication = webMenuApplication;
             this.tokenAppService = tokenAppService;
             this.stringHandler = stringHandler;
+            this.htmlProcessor = htmlProcessor;
             this.mapper = mapper;
         }
         /* Add & Update */
@@ -502,7 +504,7 @@ namespace EtheriT.Coker.Application.Product
                     }
                     else if (normalStocks.Count == 0)
                     {
-                        priceText = "時價";
+                        priceText = L.get("MarketPrice");
                     }
                     else
                     {
@@ -515,7 +517,7 @@ namespace EtheriT.Coker.Application.Product
 
                         if (priceList.Count == 0)
                         {
-                            priceText = timePriceStocks.Count > 0 ? "時價" : "";
+                            priceText = timePriceStocks.Count > 0 ? L.get("MarketPrice") : "";
                         }
                         else
                         {
@@ -524,7 +526,7 @@ namespace EtheriT.Coker.Application.Product
 
                             if (timePriceStocks.Count > 0)
                             {
-                                priceText = $"{minPrice.GetValueOrDefault():###,###}~時價";
+                                priceText = $"{minPrice.GetValueOrDefault():###,###}~{L.get("MarketPrice")}";
                             }
                             else
                             {
@@ -998,7 +1000,7 @@ namespace EtheriT.Coker.Application.Product
                         
                         if (data.IsTimePrice)
                         {
-                            data.Price = "時價";
+                            data.Price = L.get("MarketPrice");
                             data.SuggestPrice = null;
                             data.OriPrice = null;
                         }
@@ -1496,10 +1498,13 @@ namespace EtheriT.Coker.Application.Product
                 if (prod != null)
                 {
                     string Orgname = await loginUserData.GetWebsiteOrgName();
+                    importDto.Html = stringHandler.HtmlDecode(importDto.Html);
+                    importDto.Html = htmlProcessor.RemoveNode(importDto.Html ?? "", ".backstageType");
+                    importDto.Html = htmlProcessor.SetAttr(importDto.Html ?? "", "[target='_blank'] ", "rel", "noopener noreferrer");
                     importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
                     importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
 
-                    prod.Html = importDto.Html;
+                    prod.Html = stringHandler.HtmlEncode(importDto.Html);
                     prod.Css = importDto.Css;
                     prod.LastModificationTime = DateTime.Now;
                     prod.LastModifierUserId = userId;

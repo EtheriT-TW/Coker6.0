@@ -63,7 +63,7 @@
                 if (localData.length > 0 || remoteData.length > 0) {
                     // 顯示本機資料
                     if (localData.length > 0) {
-                        const localButton = $(`<button class='clear-local'>全部清空<span class="material-symbols-outlined">delete</span></button>`);
+                        const localButton = $(`<button class='clear-local'>${local.ClearAll}<span class="material-symbols-outlined">delete</span></button>`);
                         const $localLi = $("<li><ul></ul></li>");
                         localData.forEach(item => {
                             const $item = $(`<li class="local-record"><a href="#" title="搜尋：${item.key}">${item.key}</a> <button class="delete-local"><span class="material-symbols-outlined">close</span></button></li>`);
@@ -222,7 +222,7 @@
         const $tragetDir = $("#filterBlock > .filterDirType > ul");
         $traget.empty();
         $tragetDir.empty();
-        $fram.data("directoryType").unshift({ id: 0, name: "全部" })
+        $fram.data("directoryType").unshift({ id: 0, name: local.All })
 
         $("#filterBlock .fa-close").on("click", function () {
             $("#filterBlock").removeClass("active");

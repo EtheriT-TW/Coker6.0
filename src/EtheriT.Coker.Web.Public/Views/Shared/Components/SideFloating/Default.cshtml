@@ -1,5 +1,6 @@
 ﻿@using EtheriT.Coker.Application.Shared.Dto.Advertise;
 @using EtheriT.Coker.Application.Shared.Dto.HtmlContent
+@using EtheriT.Coker.Application.Shared.i18n;
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.SideFloating
 @model SideFloatingViewModel
 
@@ -14,7 +15,7 @@
 			@if (rightSideAd.Link != "")
 			{
 				var target = rightSideAd.Target == true ? "_blank" : "_self";
-				var title = rightSideAd.Target == true ? $"連結至：{rightSideAd.Title}(另開視窗)" : $"連結至：{rightSideAd.Title}";
+				var title = rightSideAd.Target == true ? L.get("LinkToAndBlank", rightSideAd.Title) : L.get("LinkTo", rightSideAd.Title);
 				<div data-aid="@rightSideAd.Id"><a href="@rightSideAd.Link" target="@target" rel="@(rightSideAd.Target == true ? $"noopener noreferrer" : "")" title="@title"><img class="my-1 shadow" src="@rightSideAd.FileLink[0].Link" alt="@rightSideAd.Title"></a></div>
 			}
 			else

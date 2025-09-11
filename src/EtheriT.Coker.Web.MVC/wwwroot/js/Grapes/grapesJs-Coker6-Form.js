@@ -24,6 +24,152 @@
             textNode = Array.isArray(textNode) ? textNode[0] : textNode;
         });
     };
+    function openOptionsModal(editor, component) {
+        const modal = editor.Modal;
+
+        // —— 容器（只掛 class，不寫行內樣式）——
+        const wrap = document.createElement('div');
+        wrap.className = 'ds-modal';
+
+        const toolbar = document.createElement('div');
+        toolbar.className = 'ds-toolbar';
+
+        const addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'ds-btn ds-btn-primary';
+        addBtn.textContent = '＋ 新增';
+
+        const bulkBox = document.createElement('div');
+        bulkBox.className = 'ds-bulk';
+
+        const bulkLabel = document.createElement('label');
+        bulkLabel.className = 'ds-label';
+        bulkLabel.textContent = '或貼上多行（每行一個選項，Ctrl + Enter 可快速加入）：';
+
+        const bulkArea = document.createElement('textarea');
+        bulkArea.className = 'ds-textarea';
+        bulkArea.placeholder = '每一行會變成一個選項（會自動忽略空白行）';
+
+        bulkBox.appendChild(bulkLabel);
+        bulkBox.appendChild(bulkArea);
+
+        toolbar.appendChild(bulkBox);
+        toolbar.appendChild(addBtn);
+
+        const list = document.createElement('div');
+        list.className = 'ds-list';
+
+        const actions = document.createElement('div');
+        actions.className = 'ds-actions';
+
+        const btnCancel = document.createElement('button');
+        btnCancel.type = 'button';
+        btnCancel.className = 'ds-btn';
+        btnCancel.textContent = '取消';
+
+        const btnSave = document.createElement('button');
+        btnSave.type = 'button';
+        btnSave.className = 'ds-btn ds-btn-primary';
+        btnSave.textContent = '儲存';
+
+        actions.appendChild(btnCancel);
+        actions.appendChild(btnSave);
+
+        wrap.appendChild(toolbar);
+        wrap.appendChild(list);
+        wrap.appendChild(actions);
+
+        // —— 一列（含拖曳把手）——
+        const makeRow = (text = '') => {
+            const row = document.createElement('div');
+            row.className = 'ds-row';
+
+            const handle = document.createElement('span');
+            handle.className = 'ds-handle';
+            handle.textContent = '≡';
+            handle.title = '拖曳以排序';
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'ds-input';
+            input.value = text;
+            input.placeholder = '輸入選項文字';
+
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'ds-del';
+            del.setAttribute('aria-label', '刪除');
+            del.textContent = '×';
+            del.addEventListener('click', () => row.remove());
+
+            row.appendChild(handle);
+            row.appendChild(input);
+            row.appendChild(del);
+            return row;
+        };
+
+        // 依現有 options 畫出列表
+        const opts = (component.get('options') || []).map(v => (v ?? '').toString());
+        if (opts.length === 0) list.appendChild(makeRow('選項1'));
+        else opts.forEach(v => list.appendChild(makeRow(v)));
+
+        // 新增
+        function importFromTextarea(bulkArea, list, makeRow) {
+            const buf = (bulkArea.value || '').trim();
+            if (!buf) return 0;
+            const lines = buf.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+            lines.forEach(v => list.appendChild(makeRow(v)));
+            bulkArea.value = '';
+            return lines.length;
+        }
+        // 「新增一列」：若 textarea 有內容，先匯入，不另外新增空白列
+        addBtn.addEventListener('click', () => {
+            const added = importFromTextarea(bulkArea, list, makeRow);
+            if (added > 0) return;                 // 已匯入多行，就不再加空白
+            list.appendChild(makeRow(''));         // 否則就加一列空白
+        });
+
+        // 可選：在 textarea 內 Ctrl+Enter / Cmd+Enter 直接匯入（不用移開焦點）
+        bulkArea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                importFromTextarea(bulkArea, list, makeRow);
+            }
+        });
+
+        // 取消
+        btnCancel.addEventListener('click', () => modal.close());
+
+        // 儲存：回寫 options 並同步 <option>
+        btnSave.addEventListener('click', () => {
+            const inputs = Array.from(list.querySelectorAll('input.ds-input'));
+            const values = inputs.map(i => (i.value || '').trim()).filter(Boolean);
+            component.set('options', values);     // 觸發你的 change:options
+            modal.close();
+        });
+
+        // 開啟 Modal
+        modal.open({ title: '編輯下拉選項', content: wrap });
+
+        // —— 啟用 jQuery UI Sortable（用把手拖曳）——
+        const $ = window.jQuery;
+        if ($ && $.fn && $.fn.sortable) {
+            setTimeout(() => {
+                try { $(list).sortable('destroy'); } catch { }
+                $(list).sortable({
+                    items: '.ds-row',
+                    handle: '.ds-handle',
+                    axis: 'y',
+                    tolerance: 'pointer',
+                    placeholder: 'ds-placeholder',
+                    forcePlaceholderSize: true,
+                    start: (e, ui) => ui.placeholder.height(ui.item.outerHeight()),
+                });
+                try { $(list).disableSelection && $(list).disableSelection(); } catch { }
+            }, 0);
+        }
+    }
+
     // 從現有子節點抽取 <option> 的 value/文字 → 轉成 options 陣列
     const extractOptionsFromChildren = (component) => {
         const res = [];
@@ -64,8 +210,12 @@
                 options: [],
                 // 讓 Style Manager 比較好用
                 traits: [
-                    { type: 'options-builder', label: '選項' } // 自訂 trait（見下）
+                    { type: 'options-modal-launcher', label: '選項' } // 自訂 trait（見下）
                 ],
+                toolbar: [
+                    { attributes: { class: 'fa fa-edit', title: '編輯選項 (E)' }, command: 'open-ds-editor' },
+                    // 可以保留複製/刪除的預設按鈕
+                ]
             },
 
             // 初始化時把 options 同步成 <option>
@@ -87,258 +237,67 @@
             }
         },
         view: {
+            events: {
+                mousedown: 'intercept',
+                click: 'intercept',
+                dblclick: 'openEditor',
+            },
+
+            // 攔截原生互動，同時強制選取這個 component
+            intercept(e) {
+                e.preventDefault(); // 不讓原生 select 展開
+                const ed = this.em.get('Editor');
+                if (ed) ed.select(this.model); // ← 讓它在 GrapesJS 視為「已選取」
+                return false;
+            },
+
+            openEditor() {
+                const ed = this.em.get('Editor');
+                if (ed) openOptionsModal(ed, this.model);
+            },
+
             onRender() {
-                // 確保首次 render 也同步
                 syncOptionsToChildren(this.model);
             }
         }
     });
 
-    // 自訂 Trait：選項管理器（帶＋按鈕
-    // 自訂 Trait：選項管理器（＋按鈕＋拖曳排序 with jQuery UI）
-    tm.addType('options-builder', {
-        createInput({ trait, component }) {
-            const root = document.createElement('div');
-            root.style.display = 'grid';
-            root.style.gap = '8px';
-
-            // 選項清單容器
-            const listWrap = document.createElement('div');
-            listWrap.style.display = 'grid';
-            listWrap.style.gap = '6px';
-            listWrap.setAttribute('data-optlist', '1');
-
-            // ＋ 新增
-            const addBtn = document.createElement('button');
-            addBtn.type = 'button';
-            addBtn.textContent = '＋ 新增選項';
-            addBtn.style.padding = '6px 10px';
-            addBtn.style.borderRadius = '6px';
-            addBtn.style.border = '1px solid #ddd';
-            addBtn.style.cursor = 'pointer';
-            addBtn.style.background = '#f7f7f7';
-
-            // 渲染單列（含拖曳把手）
-            const renderRow = (v, i) => {
-                const row = document.createElement('div');
-                row.className = 'gjs-opt-row';
-                row.style.display = 'grid';
-                row.style.gridTemplateColumns = 'auto 1fr auto'; // 把手 / 輸入框 / 刪除
-                row.style.alignItems = 'center';
-                row.style.gap = '6px';
-
-                // 拖曳把手
-                const handle = document.createElement('span');
-                handle.className = 'gjs-opt-handle';
-                handle.textContent = '≡';
-                handle.title = '拖曳以排序';
-                handle.style.cursor = 'move';
-                handle.style.userSelect = 'none';
-                handle.style.padding = '0 6px';
-                handle.style.color = '#666';
-                handle.style.border = '1px dashed #ccc';
-                handle.style.borderRadius = '4px';
-
-                // 輸入框
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.value = v || '';
-                input.placeholder = '輸入選項文字';
-                input.style.padding = '6px 8px';
-                input.style.border = '1px solid #ddd';
-                input.style.borderRadius = '6px';
-                input.addEventListener('input', () => {
-                    const cur = [...(component.get('options') || [])];
-                    cur[i] = input.value;
-                    component.set('options', cur);
-                });
-
-                // 刪除
-                const del = document.createElement('button');
-                del.type = 'button';
-                del.textContent = '刪除';
-                del.style.padding = '6px 10px';
-                del.style.borderRadius = '6px';
-                del.style.border = '1px solid #ddd'; // ← 修正這行
-                del.style.cursor = 'pointer';
-                del.style.background = '#fff';
-                del.addEventListener('click', () => {
-                    const cur = [...(component.get('options') || [])];
-                    cur.splice(i, 1);
-                    component.set('options', cur);
-                    redrawList();
-                });
-
-                row.appendChild(handle);
-                row.appendChild(input);
-                row.appendChild(del);
-                return row;
-            };
-
-            // 套用/重設 jQuery UI sortable（延後到 DOM 掛載後）
-            const initSortable = () => {
-                const $ = window.jQuery;
-                if (!$ || !$.fn || !$.fn.sortable) return; // 沒載 jQuery UI 就略過
-                // 用 setTimeout 讓 root 已經插入 Traits 面板的 DOM 再初始化
-                setTimeout(() => {
-                    try { $(listWrap).sortable('destroy'); } catch { }
-                    $(listWrap).sortable({
-                        items: '.gjs-opt-row',
-                        handle: '.gjs-opt-handle',
-                        axis: 'y',
-                        tolerance: 'pointer',
-                        placeholder: 'gjs-opt-placeholder',
-                        forcePlaceholderSize: true,
-                        cancel: 'input,textarea,button,select',
-                        start: function (e, ui) { ui.placeholder.height(ui.item.outerHeight()); },
-                        update: function () {
-                            // 依 DOM 順序回寫 options
-                            const inputs = listWrap.querySelectorAll('input[type="text"]');
-                            const values = Array.from(inputs).map(i => i.value);
-                            component.set('options', values);
-                        }
-                    });
-                    try { $(listWrap).disableSelection && $(listWrap).disableSelection(); } catch { }
-                }, 0);
-            };
-
-            const redrawList = () => {
-                listWrap.innerHTML = '';
-                const opts = component.get('options') || [];
-                opts.forEach((v, i) => listWrap.appendChild(renderRow(v, i)));
-                initSortable();
-            };
-
-            addBtn.addEventListener('click', () => {
-                const opts = [...(component.get('options') || [])];
-                const base = '選項';
-                let n = opts.length + 1;
-                let candidate = `${base}${n}`;
-                while (opts.includes(candidate)) { n += 1; candidate = `${base}${n}`; }
-                opts.push(candidate);
-                component.set('options', opts);
-                redrawList();
-            });
-
-            // 初次渲染
-            redrawList();
-
-            root.appendChild(listWrap);
-            root.appendChild(addBtn);
-            return root; // 這個會被傳進 onUpdate 的 elInput
-        },
-
-        // 相容 elInput/el；重畫後重新綁 sortable（同樣用延後初始化）
-        onUpdate(args) {
-            const { component } = args;
-            const root = args.elInput || args.el || null;
-            if (!root) return;
-
-            const listWrap = root.querySelector('[data-optlist]');
-            if (!listWrap) return;
-
-            // 讓 list 可拖曳排序（jQuery UI）
-            const initSortable = () => {
-                const $ = window.jQuery;
-                if (!($ && $.fn && $.fn.sortable)) return;
-                setTimeout(() => {
-                    try { $(listWrap).sortable('destroy'); } catch { }
-                    $(listWrap).sortable({
-                        items: '.gjs-opt-row',
-                        handle: '.gjs-opt-handle',
-                        axis: 'y',
-                        tolerance: 'pointer',
-                        placeholder: 'gjs-opt-placeholder',
-                        forcePlaceholderSize: true,
-                        cancel: 'input,textarea,button,select',
-                        start: function (e, ui) { ui.placeholder.height(ui.item.outerHeight()); },
-                        update: () => {
-                            // 依 DOM 順序回寫 options
-                            const inputs = listWrap.querySelectorAll('input[type="text"]');
-                            const values = Array.from(inputs).map(i => i.value);
-                            component.set('options', values);
-                        }
-                    });
-                    try { $(listWrap).disableSelection && $(listWrap).disableSelection(); } catch { }
-                }, 0);
-            };
-
-            const renderRow = (v, i) => {
-                const row = document.createElement('div');
-                row.className = 'gjs-opt-row';
-                row.style.display = 'grid';
-                row.style.gridTemplateColumns = 'auto 1fr auto';
-                row.style.alignItems = 'center';
-                row.style.gap = '6px';
-
-                // 把手
-                const handle = document.createElement('span');
-                handle.className = 'gjs-opt-handle';
-                handle.textContent = '≡';
-                handle.title = '拖曳以排序';
-                handle.style.cursor = 'move';
-                handle.style.userSelect = 'none';
-                handle.style.padding = '0 6px';
-                handle.style.color = '#666';
-                handle.style.border = '1px dashed #ccc';
-                handle.style.borderRadius = '4px';
-
-                // 輸入框
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.value = v || '';
-                input.placeholder = '輸入選項文字';
-                input.style.padding = '6px 8px';
-                input.style.border = '1px solid #ddd';
-                input.style.borderRadius = '6px';
-                input.addEventListener('input', () => {
-                    const cur = [...(component.get('options') || [])];
-                    cur[i] = input.value;
-                    component.set('options', cur);
-                });
-
-                // 刪除（重點：刪完立即 redraw，不再等待 onUpdate）
-                const del = document.createElement('button');
-                del.type = 'button';
-                del.textContent = '刪除';
-                del.style.padding = '6px 10px';
-                del.style.borderRadius = '6px';
-                del.style.border = '1px solid #ddd';
-                del.style.cursor = 'pointer';
-                del.style.background = '#fff';
-                del.addEventListener('click', () => {
-                    const cur = [...(component.get('options') || [])];
-                    cur.splice(i, 1);
-                    component.set('options', cur);
-                    redrawList(); // ← 立刻重畫，保證一開始就生效
-                });
-
-                row.appendChild(handle);
-                row.appendChild(input);
-                row.appendChild(del);
-                return row;
-            };
-
-            const redrawList = () => {
-                listWrap.innerHTML = '';
-                const opts = component.get('options') || [];
-                opts.forEach((v, i) => listWrap.appendChild(renderRow(v, i)));
-                initSortable();
-            };
-
-            // 首次/每次 onUpdate 都完整重畫一次
-            redrawList();
+    // Trait：只放一顆按鈕 → 按下開啟 Modal
+    tm.addType('options-modal-launcher', {
+        createInput: ({ component }) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ds-btn ds-btn-block';
+            btn.textContent = '開啟選項編輯器';
+            btn.addEventListener('click', () => openOptionsModal(editor, component));
+            return btn;
         }
     });
 
+
     // Block：一鍵插入
-    bm.add('dynamic-select', {
+    /*bm.add('dynamic-select', {
         label: '下拉選單',
         category: '表單',
         content: {
             type: 'dynamic-select',
             attributes: { class: 'gjs-dyn-select' },
             // 初始內文會被 options 覆蓋，不用放 children
+        }
+    });*/
+
+    editor.Commands.add('open-ds-editor', {
+        run(ed) {
+            const sel = ed.getSelected();
+            if (sel && sel.get('type') === 'dynamic-select') openOptionsModal(ed, sel);
+        }
+    });
+
+    editor.Keymaps.add('open-ds-editor', 'e', (ed, ev) => {
+        const sel = ed.getSelected();
+        if (sel && sel.get('type') === 'dynamic-select') {
+            ev.preventDefault();
+            ed.runCommand('open-ds-editor');
         }
     });
 });

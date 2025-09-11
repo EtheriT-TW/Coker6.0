@@ -113,14 +113,14 @@
             </div>
             <div class="filterDirType dropdown">
                 <a class="btn btn-secondary dropdown-toggle" href="#" title="選擇分類" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    請選擇分類
+                    @L.get("SelectCategory")
                 </a>
                 <ul class="dropdown-menu"></ul>
                 <template id="filterDirTypeTemp">
                     <li><a class="dropdown-item" href="#">Action</a></li>
                 </template>
             </div>
-            <h3 class="title">進階篩選</h3>
+            <h3 class="title">@L.get("AdvancedFilter")</h3>
             <ul id="filterList"></ul>
         </div>
         <div id="Search_Result" class="col px-0">

@@ -8,16 +8,19 @@ namespace EtheriT.Coker.Application.Shared.i18n
 {
     public static class LocaleEn
     {
+        public static string All { get; } = "All";
         public static string FindAll { get; } = "Find All";
         public static string FindArticle { get; } = "Find Article";
         public static string FindProduct { get; } = "Find Product";
         public static string FindDescription { get; } = "{1} results for {0}";
+        public static string ClearAll { get; } = "Clear All";
         public static string GridImage { get; } = "List";
         public static string GridImageAndText { get; } = "Gallery";
         public static string GridText { get; } = "Texts";
         public static string SearchProdPlaceholder { get; } = "please enter product name or number";
         public static string SearchAllPlaceholder { get; } = "search website infomation";
         public static string FindEmpty { get; } = "find empty";
+        public static string Share { get; } = "Share";
         public static string shareTo { get; } = "share To";
         public static string LinkTo { get; } = "Link To：{0}";
         public static string LinkToAndBlank { get; } = "Link To：{0}(open new window)";
@@ -46,5 +49,14 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string GoToSearch { get; } = "Go to Search Page";
         public static string UnnamedFile { get; } = "Unnamed file";
         public static string ProdEmpty { get; } = "This product is sold out";
+        public static string Other { get; } = "Other";
+        public static string AdvancedFilter { get; } = "Advanced Filter";
+        public static string Category { get; } = "Category";
+        public static string SelectCategory { get; } = "Choose Category";
+        public static string ProductDescription { get; } = "Description";
+        public static string CertificationMark { get; } = "Certification";
+        public static string DownloadFile { get; } = "Download";
+        public static string LearnMore { get; } = "Learn More";
+        public static string MarketPrice { get; } = "Market Price";
     }
 }

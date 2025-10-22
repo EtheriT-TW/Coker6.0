@@ -82,7 +82,7 @@ builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = "JWT_OR_COOKIE";
         options.DefaultChallengeScheme = "JWT_OR_COOKIE";
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = "JWT_OR_COOKIE";
     }).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
         options.LoginPath = "/";

@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Core.Models;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
+using EtheriT.Coker.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
             modelBuilder.Entity<LogisticsPaymentRestriction>().HasData(
                 new LogisticsPaymentRestriction {
                     Id = 1,
-                    ShippingType = Application.Shared.Dto.enumType.ShippingTypeEnum.郵寄掛號,
+                    ShippingType = ShippingTypeEnum.郵寄掛號,
                     FK_Pid = 1
                 }
             );

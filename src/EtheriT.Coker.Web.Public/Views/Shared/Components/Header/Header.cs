@@ -263,6 +263,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                         IconClass = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[0] : "",
                                         ImageIcon = data_s.IconImage != null ? siteId == defaultData.Id ? data_s.IconImage : data_s.IconImage.Replace("upload", $"upload/{defaultData.OrgName}") : "",
                                         menuItemModels = thirditemModels,
+                                        imageUrl = data_s.ImgUrl != null ? siteId == defaultData.Id ? data_s.ImgUrl : data_s.ImgUrl.Replace("upload", $"upload/{defaultData.OrgName}") : "",
+                                        hoverImageUrl = data_s.OverImgUrl != null ? siteId == defaultData.Id ? data_s.OverImgUrl : data_s.OverImgUrl.Replace("upload", $"upload/{defaultData.OrgName}") : ""
                                     });
                                 }
                                 else
@@ -275,6 +277,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                         Icon = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[1] : "",
                                         IconClass = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[0] : "",
                                         ImageIcon = data_s.IconImage != null ? siteId == defaultData.Id ? data_s.IconImage : data_s.IconImage.Replace("upload", $"upload/{defaultData.OrgName}") : "",
+                                        imageUrl = data_s.ImgUrl != null ? siteId == defaultData.Id ? data_s.ImgUrl : data_s.ImgUrl.Replace("upload", $"upload/{defaultData.OrgName}") : "",
+                                        hoverImageUrl = data_s.OverImgUrl != null ? siteId == defaultData.Id ? data_s.OverImgUrl : data_s.OverImgUrl.Replace("upload", $"upload/{defaultData.OrgName}") : ""
                                     });
                                 }
                             });

@@ -1,6 +1,8 @@
 ﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto
 @using EtheriT.Coker.Application.Shared.Dto.Contact
 @using DevExpress.Data
+@model List<SelectDto>;
 @{
     ViewData["Title"] = "ContactUs";
 }
@@ -41,8 +43,10 @@
                         c.AddFor(e => e.Id).SortOrder(SortOrder.Desc).Caption("編號").Width(90);
                         c.AddFor(e => e.Name).SortOrder(SortOrder.Asc).Caption("位置");
                         c.AddFor(e => e.TargetEmail).Caption("處理信箱");
+                        c.AddFor(e => e.UserName).Caption("用戶姓名");
                         c.AddFor(e => e.Email).Caption("用戶信箱");
                         c.AddFor(e => e.CreationTime).Caption("詢問日期");
+                        c.AddFor(e => e.Status).Caption("處理狀態");
                         c.Add()
                         .Type(GridCommandColumnType.Buttons)
                         .Buttons(b =>
@@ -64,6 +68,7 @@
                         editing.AllowUpdating(true);
                         editing.UseIcons(true);
                     })
+                    .OnRowPrepared("onRowPrepared") 
                     .OnContentReady("contentReady")
                     )
             </div>
@@ -72,7 +77,7 @@
             <div class="card-header d-flex justify-content-between">
                 <div class="fw-bold fs-5 me-auto">查看及回覆</div>
                 <div><button class="btn btn_back btn-danger border-0 px-3 py-1 text-white mx-3">返回</button></div>
-                <div><button class="btn btn_done btn-primary border-0 px-3 py-1 text-white d-none" form="ReplyForm">儲存</button></div>
+                <div><button class="btn btn_done btn-primary border-0 px-3 py-1 text-white" form="ReplyForm">儲存</button></div>
             </div>
             <form id="ReplyForm" class="form-floating needs-validation" novalidate>
                 <div class="card-body row">
@@ -89,23 +94,25 @@
                         <div class="title pe-3 text-end">詢問日期</div>
                         <input type="datetime-local" name="creationTime" readonly disabled />
                     </div>
-                    <div class="col-12 d-flex flex-column mb-3">
-                        <div class="title pe-3 mb-3">詢問資料</div>
-                        <div class="html" name="html" data-form-type="html"></div>
-                    </div>
-                    <div class="col-12 mb-3 d-none">
+                    <div class="col-12 col-sm-6 d-flex mb-3 align-items-center">
                         <div class="select_status d-flex">
                             <label class="form-label mb-0 pe-3 text-end align-self-center" for="Status">處理狀態</label>
-                            <select id="Status" class="form-select" aria-label="Status Select" disabled>
-                                <option selected value="Unprocessed">未處理</option>
-                                <option value="Processed">已處理</option>
+                            <select id="Status" name="Status" class="form-select" aria-label="Status Select">
+                                @foreach (var item in Model)
+                                {
+                                    <option value="@item.Id">@item.Name.Replace("_","/")</option>
+                                }
                             </select>
                         </div>
                     </div>
                     <div class="col-12 mb-3 d-none">
-                        <textarea id="InputReply" class="website_description form-control col" type="text" placeholder="回覆" required></textarea>
                         <label class="required" for="InputReply">回覆</label>
+                        <textarea id="InputReply" name="Reply" class="website_description form-control col" type="text" placeholder="回覆"></textarea>
                         <div class="invalid-tooltip">尚未填寫回覆</div>
+                    </div>
+                    <div class="col-12 d-flex flex-column m-3">
+                        <div class="title pe-3 mb-3">詢問資料</div>
+                        <div class="html" name="html" data-form-type="html"></div>
                     </div>
                 </div>
             </form>

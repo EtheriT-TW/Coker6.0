@@ -1,14 +1,18 @@
-﻿using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using EtheriT.Coker.Application.Shared.Freight;
-using EtheriT.Coker.Application.Shared.Dto.Freight;
+﻿using AutoMapper;
 using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
+using EtheriT.Coker.Application.Shared.Dto.Freight;
+using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Freight;
+using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace EtheriT.Coker.Application.Freight
 {
@@ -17,15 +21,18 @@ namespace EtheriT.Coker.Application.Freight
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
         private readonly IConfiguration Configuration;
+        private readonly IMapper mapper;
         public FreightAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
-            IConfiguration Configuration
+            IConfiguration Configuration,
+            IMapper mapper
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.Configuration = Configuration;
+            this.mapper = mapper;
         }
         public async Task<ResponseMessageDto> AddUp(FreightDto dto)
         {
@@ -35,44 +42,24 @@ namespace EtheriT.Coker.Application.Freight
             try
             {
                 long WebsiteID = await loginUserData.GetWebsiteId();
-                long usetId = await loginUserData.GetUserId();
+                LogisticsSetting? ls;
                 if (dto.Id == 0)
                 {
-                    Core.Models.LogisticsSetting ls = new Core.Models.LogisticsSetting
-                    {
-                        FK_WebsiteId = WebsiteID,
-                        Title = dto.Title,
-                        PreserveType = dto.PreserveType,
-                        LogisticsType = dto.LogisticsType,
-                        FreigntType = dto.FreigntType,
-                        Freight = dto.Freight,
-                        Low_Con = dto.Low_Con == null ? 0 : dto.Low_Con,
-                        Dis_Freight = dto.Dis_Freight == null ? 0 : dto.Dis_Freight,
-                        Set_Default = dto.Set_Default,
-                        CreatorUserId = usetId,
-                    };
+                    ls = mapper.Map<LogisticsSetting>(dto);
+                    ls.FK_WebsiteId = WebsiteID;
                     db.LogisticsSettings.Add(ls);
-                    db.SaveChanges();
                 }
                 else
                 {
-                    var db_ls = db.LogisticsSettings.Where(e => e.Id == dto.Id).FirstOrDefault();
-                    if (db_ls != null)
+                    ls = db.LogisticsSettings.Where(e => e.Id == dto.Id).FirstOrDefault();
+                    if (ls != null)
                     {
-                        db_ls.Title = dto.Title;
-                        db_ls.PreserveType = dto.PreserveType;
-                        db_ls.LogisticsType = dto.LogisticsType;
-                        db_ls.FreigntType = dto.FreigntType;
-                        db_ls.Freight = dto.Freight;
-                        db_ls.Low_Con = dto.Low_Con;
-                        db_ls.Dis_Freight = dto.Dis_Freight;
-                        db_ls.Set_Default = dto.Set_Default;
-                        db_ls.LastModificationTime = DateTime.Now;
-                        db_ls.LastModifierUserId = usetId;
-                        db.SaveChanges();
+                        mapper.Map(dto, ls);
                     }
                     else throw new Exception("查無運費資料");
                 }
+                await loginUserData.SaveChanges(ls);
+                await SyncProdMappingsAsync(ls.Id, dto.ProdIds, WebsiteID);
                 output.Success = true;
             }
             catch (Exception e)
@@ -80,7 +67,7 @@ namespace EtheriT.Coker.Application.Freight
                 output.Success = false;
                 output.Error = e.Message;
             }
-
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto),JsonConvert.SerializeObject(output));
             return output;
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
@@ -98,9 +85,9 @@ namespace EtheriT.Coker.Application.Freight
                                     {
                                         Id = e.Id,
                                         Title = e.Title,
-                                        Describe = ((PreserveTypeEnum)e.PreserveType) + " - " +
-                                        ((ShippingTypeEnum)e.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11") + "，" +
-                                        (e.FreigntType == 1 ? "免運費" : "單筆運費" + e.Freight + "元(滿" + e.Low_Con + "元" + (e.Dis_Freight == 0 ? "免運)" : "運費" + e.Dis_Freight + "元)")),
+                                        Describe = e.FreigntStatusType.ToString() + " - " +
+                                        e.LogisticsType.ToString().Replace("_", "/").Replace("Seven", "7-11") + "，" +
+                                        (e.FreigntType == FreigntTypeEnum.免運費 ? e.FreigntType.ToString() : e.FreigntType.ToString() + e.Freight + "元(滿" + e.Low_Con + "元" + (e.Dis_Freight == 0 ? "免運)" : "運費" + e.Dis_Freight + "元)")),
                                     };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
@@ -118,22 +105,11 @@ namespace EtheriT.Coker.Application.Freight
         {
             try
             {
-                var result = db.LogisticsSettings.Where(e => e.Id == Id && !e.IsDeleted).FirstOrDefault();
+                var result = db.LogisticsSettings.Include(e => e.MappingLogisticsSettingAndProds).ThenInclude(e => e.Prod).Where(e => e.Id == Id && !e.IsDeleted).FirstOrDefault();
 
                 if (result != null)
                 {
-                    FreightDto output = new FreightDto()
-                    {
-                        Id = result.Id,
-                        Title = result.Title,
-                        PreserveType = result.PreserveType,
-                        LogisticsType = result.LogisticsType,
-                        FreigntType = result.FreigntType,
-                        Freight = result.Freight,
-                        Low_Con = result.Low_Con,
-                        Dis_Freight = result.Dis_Freight,
-                        Set_Default = result.Set_Default
-                    };
+                    var output = mapper.Map<FreightDto>(result);
                     return output;
                 }
                 else throw new Exception("查無運費資料");
@@ -164,9 +140,8 @@ namespace EtheriT.Coker.Application.Freight
                                      Low_Con = e.Low_Con,
                                      Dis_Freight = e.Dis_Freight,
                                      Set_Default = e.Set_Default,
-                                     Describe = ((PreserveTypeEnum)e.PreserveType) + " - " +
-                                                ((ShippingTypeEnum)e.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11") + "，" +
-                                                (e.FreigntType == 1 ? "免運費" : "單筆運費" + e.Freight + "元(滿" + e.Low_Con + "元" + (e.Dis_Freight == 0 ? "免運)" : "運費" + e.Dis_Freight + "元)")),
+                                     Describe = e.LogisticsType.ToString().Replace("_", "/").Replace("Seven", "7-11") + "，" +
+                                                (e.FreigntType == FreigntTypeEnum.免運費 ? e.FreigntType.ToString() : e.FreigntType.ToString() + e.Freight + "元(滿" + e.Low_Con + "元" + (e.Dis_Freight == 0 ? "免運)" : "運費" + e.Dis_Freight + "元)")),
                                  };
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }
@@ -204,6 +179,53 @@ namespace EtheriT.Coker.Application.Freight
             }
 
             return output;
+        }
+        private async Task SyncProdMappingsAsync(long lsId, IEnumerable<ProdSelectedDto>? prodIds, long websiteId)
+        {
+            // 去重、過濾無效
+            var allSet = new HashSet<long>((prodIds ?? Enumerable.Empty<ProdSelectedDto>()).Select(x => x.FK_ProdId).Distinct());
+            var newSet = new HashSet<long>((prodIds ?? Enumerable.Empty<ProdSelectedDto>()).Where(x => !x.IsDeleted).Select(x => x.FK_ProdId).Distinct());
+
+            // （可選）安全性：確保傳入的 prod 都屬於此網站
+            if (allSet.Count > 0)
+            {
+                var validCount = await db.Prods
+                    .Where(p => p.FK_WebsiteId == websiteId && !p.IsDeleted && allSet.Contains(p.Id))
+                    .Select(p => p.Id)
+                    .CountAsync();
+
+                if (validCount != allSet.Count)
+                    throw new Exception("包含無效或非本網站的商品 Id。");
+            }
+
+            // 取目前資料庫的關聯
+            var current = await db.MappingLogisticsSettingAndProd
+                .Where(m => m.FK_LogisticsSettingId == lsId)
+                .Select(m => m.FK_ProdId)
+                .ToListAsync();
+
+            var newItems = newSet.Except(current).ToList();
+            var toRemove = current.Except(newSet).ToList();
+
+            if (newItems.Count > 0)
+            {
+                var addEntities = newItems.Select(pid => new MappingLogisticsSettingAndProd
+                {
+                    FK_LogisticsSettingId = lsId,
+                    FK_ProdId = pid
+                });
+                await db.MappingLogisticsSettingAndProd.AddRangeAsync(addEntities);
+            }
+
+            if (toRemove.Count > 0)
+            {
+                var delEntities = await db.MappingLogisticsSettingAndProd
+                    .Where(m => m.FK_LogisticsSettingId == lsId && toRemove.Contains(m.FK_ProdId))
+                    .ToListAsync();
+                db.MappingLogisticsSettingAndProd.RemoveRange(delEntities);
+            }
+
+            await db.SaveChangesAsync();
         }
     }
 }

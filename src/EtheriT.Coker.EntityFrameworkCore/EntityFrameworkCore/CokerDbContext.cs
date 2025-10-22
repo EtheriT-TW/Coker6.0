@@ -13,6 +13,7 @@ using System.Text.Json.Nodes;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Core.Entity;
 using EtheriT.Coker.EntityFrameworkCore.Configurations;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 
 namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 {
@@ -25,6 +26,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<MappingUserAndWebsite> MappingUserAndWebsites { get; set; }
         public DbSet<MappingFrontUserAndWebsite> MappingFrontUserAndWebsite { get; set; }
         public DbSet<MappingOldNewUUID> MappingOldNewUUID { get; set; }
+        public DbSet<MappingLogisticsSettingAndProd> MappingLogisticsSettingAndProd { get; set; }
         public DbSet<Token> Tokens { get; set; }
         public DbSet<Prod> Prods { get; set; }
         public DbSet<Marketing> Marketing { get; set; }
@@ -181,6 +183,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
+            modelBuilder.Entity<MappingLogisticsSettingAndProd>(o =>
+            {
+                o.HasKey(m => new {m.FK_LogisticsSettingId,m.FK_ProdId});
+                o.HasOne(u => u.LogisticsSetting).WithMany(u => u.MappingLogisticsSettingAndProds).HasForeignKey(e => e.FK_LogisticsSettingId);
+                o.HasOne(u => u.Prod).WithMany(u => u.MappingLogisticsSettingAndProds).HasForeignKey(f => f.FK_ProdId);
+            });
             modelBuilder.Entity<Marketing>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.Marketing).HasForeignKey(f => f.FK_WebsiteId);
@@ -233,6 +241,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<LogisticsSetting>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.LogisticsSettings).HasForeignKey(f => f.FK_WebsiteId);
+                o.Property(l => l.FreigntStatusType).HasDefaultValue(FreigntStatusTypeEnum.一般);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<PaymentType>(o =>

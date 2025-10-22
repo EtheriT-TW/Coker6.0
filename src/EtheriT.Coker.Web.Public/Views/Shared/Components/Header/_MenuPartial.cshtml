@@ -55,13 +55,30 @@
 									secItem.Link = "#";
 									title = $"展開選單：{secItem.Title}";
 								}
+								var secItemType = string.IsNullOrEmpty(secItem.imageUrl) ? "textLink" : "imageLink";
 							}
-							<a class="subtitle_title nav-link text-start d-flex" href="@secItem.Link" title="@title" target="@target" rel="@(secItem.Target == true ? $"noopener noreferrer" : "")">
-								<i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
-								<img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
-								<span>
-									@secItem.Title
-								</span>
+							<a class="subtitle_title nav-link text-start d-flex @secItemType" href="@secItem.Link" title="@title" target="@target" data-routeName="@secItem.RouteName" rel="@(secItem.Target == true ? $"noopener noreferrer" : "")">
+								@if (string.IsNullOrEmpty(secItem.imageUrl))
+								{
+									<i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
+									<img class="@imageiconclass icon me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
+									<span>
+										@secItem.Title
+									</span>
+								}
+								else
+								{
+									if (string.IsNullOrEmpty(secItem.hoverImageUrl))
+									{
+										<img src="@secItem.imageUrl" alt="@secItem.Title" class="d-none d-lg-inline" />
+										<span class="d-inline d-lg-none">@secItem.Title</span>
+									}
+									else
+									{
+										<img src="@secItem.imageUrl" data-mouseover="@secItem.hoverImageUrl" data-mouseout="@secItem.imageUrl" alt="@secItem.Title" />
+										<span class="d-none">@secItem.Title</span>
+									}
+								}
 							</a>
 							@if (secItem.menuItemModels != null && secItem.menuItemModels.Count() > 0 && menu.Title != "產品專區")
 							{
@@ -70,12 +87,13 @@
 									{
 										iconclass = thirdItem.Icon == "" ? "d-none" : "";
 										imageiconclass = thirdItem.ImageIcon == "" ? "d-none" : "";
+										var thirdItemType = string.IsNullOrEmpty(thirdItem.imageUrl) ? "textLink" : "imageLink";
 										<li class="px-0">
 											@if (secItem.Link != "")
 											{
 												target = thirdItem.Target == true ? "_blank" : "_self";
 												title = thirdItem.Target == true ? string.Format(L.get("LinkToAndBlank"), thirdItem.Title) : string.Format(L.get("LinkTo"), thirdItem.Title);
-												<a class="subtitle_title ps-2 nav-link text-black pt-0 pb-1 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target" rel="@(thirdItem.Target == true ? $"noopener noreferrer" : "")">
+												<a class="subtitle_title ps-2 nav-link text-black pt-0 pb-1 text-nowrap text-start fw-normal d-flex align-items-center @thirdItemType" href="@thirdItem.Link" title="@title" target="@target" rel="@(thirdItem.Target == true ? $"noopener noreferrer" : "")">
 													<i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
 													<img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
 													@thirdItem.Title

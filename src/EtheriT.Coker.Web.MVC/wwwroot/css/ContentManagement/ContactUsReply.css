@@ -34,3 +34,38 @@
 .html td:first-child {
     width: 8rem;
 }
+
+/* 未處理 (紅) */
+.status-pending {
+    background-color: #ffe5e5; /* 淡紅 */
+    color: #b71c1c; /* 深紅字 */
+    font-weight: 600;
+}
+
+/* 處理中 (黃) */
+.status-processing {
+    background-color: #fff8e1; /* 淡黃 */
+    color: #795548; /* 深咖啡字 */
+    font-weight: 600;
+}
+
+/* 已回覆 (藍) */
+.status-replied {
+    background-color: #e3f2fd; /* 淡藍 */
+    color: #0d47a1; /* 深藍字 */
+    font-weight: 600;
+}
+
+/* 已結案 (綠) */
+.status-closed {
+    background-color: #e8f5e9; /* 淡綠 */
+    color: #1b5e20; /* 深綠字 */
+    font-weight: 600;
+}
+
+/* 作廢 (灰) */
+.status-ignored {
+    background-color: #eeeeee; /* 灰 */
+    color: #424242; /* 深灰字 */
+    font-weight: 600;
+}

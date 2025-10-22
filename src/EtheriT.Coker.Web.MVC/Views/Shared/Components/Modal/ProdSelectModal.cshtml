@@ -1,0 +1,93 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Product
+
+<link rel="stylesheet" href="~/css/Components/ProdListModal.min.css" asp-append-version="true" />
+<script src="~/js/Components/ProdListModal.min.js" asp-append-version="true"></script>
+@{
+    await Html.RenderPartialAsync(@"DevExpress\_GridCSRF");
+}
+<div id="ProdModal" class="modal fade" tabindex="-1" aria-labelledby="Tag Modal Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">選擇標籤</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="bg-white p-3">
+                    @(
+                        Html.DevExtreme().DataGrid<ProductSelectGetAllListDto>()
+                            .DataSource(d => d.RemoteController().Key("Id")
+                            .LoadUrl("/api/Product/GetAllList").LoadMethod("Get")
+                            .LoadParams(new { pids = new JS("getSelectSort") })
+                        )
+                        .ID("devProdListModalGrid")
+                        .Selection(s =>
+                            s.Mode(SelectionMode.Multiple).ShowCheckBoxesMode(GridSelectionShowCheckBoxesMode.Always)
+                        )
+                        .RemoteOperations(true)
+                        .ColumnHidingEnabled(false)
+                        .ShowBorders(true)
+                        .FilterRow(filterRow => filterRow
+                            .Visible(true)
+                            .ApplyFilter(GridApplyFilterMode.OnClick)
+                        )
+                        .SearchPanel(searchPanel => searchPanel
+                        .Visible(true)
+                        .Placeholder("請輸入要搜尋的資料")
+                        )
+                        .Editing(editing =>
+                        {
+                            editing.Mode(GridEditMode.Row);
+                            editing.UseIcons(true);
+                        })
+                        .Columns(c =>
+                        {
+                            c.AddFor(e => e.IsSelected).Caption("是否勾選").Visible(false).AllowEditing(false).SortOrder(SortOrder.Desc);
+                            c.AddFor(e => e.Title).Caption("商品名稱").Width(150).AllowEditing(false);
+                            c.AddFor(e => e.MinsizeImage).Caption("圖片").Width(84).Alignment(HorizontalAlignment.Center)
+                                .AllowSearch(false).AllowFiltering(false).AllowSorting(false)
+                                .CellTemplate(
+                                    @<text>
+                                        <img class="dg-thumb"
+                                                loading="lazy"
+                                                src="<%- data.MinsizeImage || '/images/noImg.jpg' %>"
+                                                alt="<%- data.Title || '' %>" />
+                                    </text>);
+                            c.AddFor(e => e.TagNames).AllowSearch(false).AllowFiltering(false).AllowSorting(false).Caption("標籤名稱");
+                        })
+                        .Toolbar(toolbar =>
+                        {
+                            toolbar.Items(items =>
+                            {
+                                items.Add()
+                                    .Location(ToolbarItemLocation.Before)
+                                    .Widget(w =>
+                                        w.Button()
+                                        .Text("選項清除")
+                                        .Disabled(true)
+                                        .OnClick("prodList_ClearBtnClick")
+                                        .OnInitialized("prodList_ClearBtnInit")
+                                    );
+                            });
+                            toolbar.Items(i =>
+                            {
+                                i.Add()
+                                    .Name(DataGridToolbarItem.SearchPanel)
+                                    .ShowText(ToolbarItemShowTextMode.Always)
+                                    .Location(ToolbarItemLocation.After);
+                            });
+                        })
+                        .OnSelectionChanged("prodList_SelectChange")
+                        .OnContentReady("prodContentReady")
+                        .Paging(paging => paging.PageSize(10))
+                    )
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn_prod_save btn btn-primary">確認</button>
+            </div>
+        </div>
+    </div>
+</div>

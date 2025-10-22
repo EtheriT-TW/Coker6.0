@@ -398,7 +398,16 @@ function SwiperInit(obj) {
         if (!!!$self.data("isInit")) {
             if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper";
+            const $swiper = $(Id);
+            const freeModeAttr = $swiper.data('freeMode');
+            const speedAttr = $swiper.data('speed');
+            const delayAttr = $swiper.data('delay');
+            const freeMode = freeModeAttr === undefined ? false : freeModeAttr;
+            const speed = Number.isFinite(parseInt(speedAttr)) ? parseInt(speedAttr) : 300;
+            const delay = (delayAttr === undefined ? 5000 : parseInt(delayAttr));
+
             var selfConfig = Object.assign({}, config, {
+                speed: speed,
                 pagination: {
                     el: "#" + $self.attr("id") + " .swiper-pagination",
                     clickable: true,
@@ -419,10 +428,16 @@ function SwiperInit(obj) {
                 }
             }, obj.autoplay ? {
                 autoplay: {
-                    delay: 5000,
+                    delay: delay,
                     disableOnInteraction: false,
                 },
                 loop: true
+            } : {}, freeMode ? {
+                freeMode: {
+                    enabled: true,
+                    momentum: false,
+                    sticky: false,
+                }
             } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
@@ -482,7 +497,16 @@ function SwiperInit(obj) {
         if (!!!$self.data("isInit")) {
             if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper";
+            const $swiper = $(Id);
+            const freeModeAttr = $swiper.data('freeMode');
+            const speedAttr = $swiper.data('speed');
+            const delayAttr = $swiper.data('delay');
+            const freeMode = freeModeAttr === undefined ? false : freeModeAttr;
+            const speed = Number.isFinite(parseInt(speedAttr)) ? parseInt(speedAttr) : 300;
+            const delay = (delayAttr === undefined ? 5000 : parseInt(delayAttr));
+
             var selfConfig = Object.assign({}, config, {
+                speed: speed,
                 pagination: {
                     el: "#" + $self.attr("id") + " .swiper_pagination",
                     clickable: true,
@@ -513,10 +537,16 @@ function SwiperInit(obj) {
                 }
             }, obj.autoplay ? {
                 autoplay: {
-                    delay: 5000,
+                    delay: delay,
                     disableOnInteraction: false,
                 },
                 loop: true
+            } : {}, freeMode ? {
+                freeMode: {
+                    enabled: true,
+                    momentum: false,
+                    sticky: false,
+                }
             } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)

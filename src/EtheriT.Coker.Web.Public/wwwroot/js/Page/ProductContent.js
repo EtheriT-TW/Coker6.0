@@ -883,6 +883,9 @@ function loadImageInModal(pro_self) {
         const imgWidth = preloadImg.naturalWidth;
         const imgHeight = preloadImg.naturalHeight;
         const imgRatio = imgWidth / imgHeight;
+        const rectBefore = dialog[0].getBoundingClientRect();
+        const beforeW = Math.round(rectBefore.width);
+        const beforeH = Math.round(rectBefore.height);
         const currentWidth = dialog.outerWidth();
         const currentHeight = dialog.outerHeight();
         dialog.css({ width: currentWidth, height: currentHeight });
@@ -912,13 +915,11 @@ function loadImageInModal(pro_self) {
             minWidth: "",
             minHeight: "",
             width: targetWidth + "px",
-            maxWidth: "100%"
-        });
-        dialog.css({
             height: targetHeight + "px",
+            maxWidth: "100%",
             maxHeight: ""
         });
-
+        const sizeChanged = (beforeW !== Math.round(targetWidth)) || (beforeH !== Math.round(targetHeight));
         const thumbSrc = pro_self.attr("src");
         const thumbImg = $('<img>').attr("src", thumbSrc).css({
             width: "100%",
@@ -932,23 +933,43 @@ function loadImageInModal(pro_self) {
         });
         proImage_Self.append(thumbImg);
         proImage_Self.css("position", "relative");
-        dialog.on("transitionend", function handler(e) {
-            dialog.off("transitionend", handler);
-            const proImage = document.getElementById("Pro_Image");
-            proImage.classList.add("cloudimage-360");
+        proImage_Self.addClass("loading");
+
+        const proceed = () => {
+            proImage_Self.addClass("cloudimage-360");
             setTimeout(() => {
                 window.CI360.add("Pro_Image");
-                thumbImg.remove();
-
                 setTimeout(() => {
                     const canvas = $("#Pro_Image canvas");
                     const canvasHeight = canvas.outerHeight();
                     $("#ProDisplayModal .modal-body").css({
                         height: canvasHeight + "px"
                     });
+                    thumbImg.remove();
+                    proImage_Self.removeClass("loading");
                 }, 50);
             }, 300);
-        });
+        };
+        if (sizeChanged) {
+            let finished = false;
+            const finish = () => {
+                if (finished) return;
+                finished = true;
+                dialog.off("transitionend._resize");
+                proceed();
+            };
+
+            // 先清一次，避免累積監聽
+            dialog.off("transitionend._resize").on("transitionend._resize", function (e) {
+                if (e.target === dialog[0]) finish(); // 只接受對話框本身的 transition
+            });
+
+            // 保底：就算 transition 被打斷，也會在 350ms 後繼續
+            setTimeout(finish, 350);
+        } else {
+            // 沒有尺寸變化 → 下一幀直接執行後續
+            requestAnimationFrame(proceed);
+        }
     };
 }
 function load360InModal(pro_self) {

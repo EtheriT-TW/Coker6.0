@@ -1,19 +1,20 @@
 ﻿using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json;
-using EtheriT.Coker.Application.Shared.Dto.Tag;
-using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Shared.Dto;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System.Security.Cryptography;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using Org.BouncyCastle.Asn1.X509;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Application.Tag
 {
@@ -21,15 +22,18 @@ namespace EtheriT.Coker.Application.Tag
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
+        private readonly StringHandler stringHandler;
         private readonly IConfiguration configuration;
         public TagAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
+            StringHandler stringHandler,
             IConfiguration configuration
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
+            this.stringHandler = stringHandler;
             this.configuration = configuration;
         }
         public async Task<ResponseMessageDto> TagAddUp(DevExpressDto dto)
@@ -186,7 +190,7 @@ namespace EtheriT.Coker.Application.Tag
         {
             try
             {
-                var list_tid = tids?.Split(',').Select(long.Parse).ToList() ?? new List<long>() { -1 };
+                var list_tid = stringHandler.ParseCsvIds(tids);
                 long webid = await loginUserData.GetWebsiteId();
                 List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == webid).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
                 siteIds.Add(webid);

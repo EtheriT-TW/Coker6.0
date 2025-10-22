@@ -26,7 +26,7 @@
 
 			</div>
 
-			<!-- Logo -->
+			<!-- Logo 在上-->
 			<div class="logo d-lg-none text-center py-lg-0 py-1">
 				@{
 					var logo_target = Model.HomeTarget == true ? "_blank" : "_self";
@@ -50,7 +50,7 @@
 				</div>
 			</div>
 		</div>
-		<!-- Logo -->
+		<!-- Logo 在上-->
 		<div class="w-100">
 			<div class="d-flex justify-content-around align-items-center  py-2 bg-img w50 w-100">
 				<div class="d-none d-lg-flex logo m-2 justify-content-end">
@@ -111,7 +111,7 @@
 
 								<div id="Car_Dropdown_Null" class="drpy-3 text-center">購物車尚無商品</div>
 
-								<button onclick="location.href='/ShoppingCar';" class="btn_car_buy border-0 rounded-1 w-100 py-1 mt-2 text-white" disabled>購買</button>
+								<a href="/@ViewData["OrgName"]/ShoppingCar" class="btn_car_buy border-0 rounded-1 w-100 py-1 mt-2 text-white" disabled>購買</a>
 							</div>
 						</div>
 					}

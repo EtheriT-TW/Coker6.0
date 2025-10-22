@@ -65,8 +65,11 @@ namespace EtheriT.Coker.Application.Token
                 string? RefreshTokenStr = null;
                 DateTime date = DateTime.Now;
                 TokenKeyItem tokenItem = new TokenKeyItem();
+                var websiteId = loginUserData.GetFrontWebsiteId();
+                bool userStatus = loginUserData.IsLoggedIn();
                 httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Token", out tokenStr);
-                if (!string.IsNullOrEmpty(tokenStr))
+
+                if (!string.IsNullOrEmpty(tokenStr) && userStatus)
                 {
                     output = await CheckToken(null);
                     if (output.Success) return output;
@@ -75,14 +78,14 @@ namespace EtheriT.Coker.Application.Token
                 httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("RefreshToken", out RefreshTokenStr);
                 if (!string.IsNullOrEmpty(RefreshTokenStr) && Guid.TryParse(RefreshTokenStr, out Guid rt))
                 {
-                    var RefreshTokens = db.Tokens.Where(e => e.id == rt);
+                    var RefreshTokens = db.Tokens.Where(e => e.id == rt && e.websiteId == websiteId);
                     if (RefreshTokens.Any())
                     {
                         var RefreshToken = await RefreshTokens.Where(e => e.StartTime < date && date < e.EndTime).FirstOrDefaultAsync();
                         var oidRefreshToken = await RefreshTokens.FirstOrDefaultAsync();
                         if (RefreshToken != null)
                         {
-                            var frontUser = await db.FrontUsers.Where(e => e.UUID == RefreshToken.UUID).FirstOrDefaultAsync();
+                            var frontUser = await db.FrontUsers.Include(e => e.Websites).Where(e => e.UUID == RefreshToken.UUID && e.Websites.Any(s => s.FK_WebsiteId == websiteId)).FirstOrDefaultAsync();
                             if (frontUser != null)
                             {
                                 var useraccount = frontUser.Account == null ? frontUser.Email : frontUser.Account;

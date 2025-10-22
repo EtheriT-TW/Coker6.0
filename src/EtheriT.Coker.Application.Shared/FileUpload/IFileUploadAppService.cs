@@ -27,5 +27,7 @@ namespace EtheriT.Coker.Application
         public Task<ResponseMessageDto> deleteFileById(FileDeleteDto dto);
         public Task<ResponseMessageDto> deleteFile(string path);
         public Task<ResponseMessageDto> insertNotFondFile(InsertNotFoundFileDto dto);
+        public Task<Dictionary<long, string>> GetMinImageMapAsync(List<long> prodIds);
+
     }
 }

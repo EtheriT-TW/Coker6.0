@@ -2,6 +2,10 @@
     background-color: var(--gray-bg-light);
 }
 
+#main > .container:not(#CenterLine) {
+    padding-bottom: 0;
+}
+
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -23,21 +27,32 @@ input[type="number"] {
     -moz-appearance: textfield;
 }
 
-#Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > btn_count_minus {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+#Step1 > .card-body > .purchase_list > .purchase_group {
+    list-style: none;
+    margin-bottom: 2rem;
 }
 
-#Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > btn_count_plus {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+    #Step1 > .card-body > .purchase_list > .purchase_group > .group_header > .form-check {
+        padding-left: 0.5rem;
+    }
 
-#Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > #quantityInput1 {
-    border-radius: 0;
-}
+    #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item > .content > .counter_input > btn_count_minus {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item > .content > .counter_input > btn_count_plus {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item > .content > .counter_input > #quantityInput1 {
+        border-radius: 0;
+    }
+
+
 /* Required Sign */
 .required_front::before {
     color: var(--red-text);
@@ -189,49 +204,49 @@ input[type="number"] {
     padding-right: 3rem;
 }
 
-#Step1 > .card-body > .purchase_list > .purchase_item {
+#Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item {
     padding-right: 3rem;
 }
 
-    #Step1 > .card-body > .purchase_list > .purchase_item > .image > a > .content {
+    #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item > .image > a > .content {
         color: var(--black-text);
     }
 
-        #Step1 > .card-body > .purchase_list > .purchase_item > .image > a > .content > .pro_detail {
+        #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item > .image > a > .content > .pro_detail {
             color: var(--gray-text);
         }
 
-            #Step1 > .card-body > .purchase_list > .purchase_item > .image > a > .content > .pro_detail > .pro_instructions {
+            #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item > .image > a > .content > .pro_detail > .pro_instructions {
                 max-height: 4.5rem;
             }
 
-    #Step1 > .card-body > .purchase_list > .purchase_item > .content > a > div > .pro_detail {
+    #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item > .content > a > div > .pro_detail {
         color: var(--gray-text);
     }
 
-        #Step1 > .card-body > .purchase_list > .purchase_item > .content > a > div > .pro_detail > .pro_instructions {
+        #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item > .content > a > div > .pro_detail > .pro_instructions {
             max-height: 4.5rem;
         }
 
-    #Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > button {
+    #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item > .content > .counter_input > button {
         color: var(--black-text);
         border: 1px solid var(--gray-text);
         height: 2.25rem;
         width: 2.25rem;
     }
 
-    #Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > input {
+    #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item > .content > .counter_input > input {
         color: var(--black-text);
         border: 1px solid var(--gray-text);
         height: 2.25rem;
         width: 5rem;
     }
 
-    #Step1 > .card-body > .purchase_list > .purchase_item > .content > .pro_subtotal {
+    #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item > .content > .pro_subtotal {
         color: var(--red-number);
     }
 
-    #Step1 > .card-body > .purchase_list > .purchase_item > .btn_side_icon {
+    #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item > .btn_side_icon {
         width: 3rem;
     }
 
@@ -590,7 +605,7 @@ body > .popover.bs-popover-auto.fade {
 }
 
 @media only screen and (max-width: 400px) {
-    #Step1 > .card-body > .purchase_list > .purchase_item {
+    #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item {
         padding-right: 1rem;
     }
 

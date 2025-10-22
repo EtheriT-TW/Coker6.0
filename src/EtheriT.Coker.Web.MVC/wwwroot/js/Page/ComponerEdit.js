@@ -40,6 +40,7 @@
                 Update: "#btnUpdate",
                 Add: '#btnAdd',
                 Refresh: '#btnRefresh',
+                moveEnable: "#moveEnable"
             },
             on: {
                 ready: function () {

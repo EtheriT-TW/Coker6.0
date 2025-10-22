@@ -317,7 +317,12 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     if (temp_roleid != 0) roleid = temp_roleid;
                 }
 
-                var shoppingCarts = await db.ShoppingCarts.Include(e => e.Prod_Stock).ThenInclude(e => e.Prod).Where(e => scids.Contains(e.Id)).ToListAsync();
+                var shoppingCarts = await db.ShoppingCarts
+                        .Include(e => e.Prod_Stock)
+                            .ThenInclude(e => e.Prod)
+                                .ThenInclude(e => e.MappingLogisticsSettingAndProds)
+                                    .ThenInclude(e => e.LogisticsSetting)
+                        .Where(e => scids.Contains(e.Id)).ToListAsync();
 
                 foreach (var shoppingCart in shoppingCarts)
                 {

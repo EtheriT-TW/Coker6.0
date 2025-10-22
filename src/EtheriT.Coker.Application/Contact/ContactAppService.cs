@@ -1,25 +1,26 @@
-﻿using EtheriT.Coker.Application.Dto.Contact;
+﻿using AutoMapper;
+using DevExtreme.AspNet.Data;
+using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Authorization;
+using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Dto.Contact;
+using EtheriT.Coker.Application.Shared.Dto.Article;
+using EtheriT.Coker.Application.Shared.Dto.Contact;
+using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.i18n;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
-using EtheriT.Coker.Application.Authorization;
-using EtheriT.Coker.Application.Common;
-using EtheriT.Coker.Application.Shared.Dto.Mail;
-using Microsoft.Extensions.Configuration;
-using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
-using EtheriT.Coker.Application.Shared.Dto.Article;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json;
-using EtheriT.Coker.Application.Shared.Dto.Contact;
-using DevExtreme.AspNet.Mvc;
-using DevExtreme.AspNet.Data;
-using AutoMapper;
 
 namespace EtheriT.Coker.Application.Contact
 {
@@ -67,12 +68,12 @@ namespace EtheriT.Coker.Application.Contact
 							html += $@"<tr>
 								<td class='title'>{e.Title}</td>
 								<td>{e.Value.Replace(Environment.NewLine, "<br/>")}</td>
-							<tr>";
+							</tr>";
 						}
 						if(e.Name== "email") recipient.Email = e.Value;
 						else if(e.Name == "name") recipient.Name = e.Value;
 					});
-					html += "<table>";
+					html += "</table>";
 					SenderDto senderDto = new SenderDto
 					{
 						Recipients = new List<MailUserDataDto> { recipient },
@@ -83,14 +84,31 @@ namespace EtheriT.Coker.Application.Contact
                     };
 					senderDto.Sender.Name = string.IsNullOrEmpty(site.Contact) ? site.Title ?? "" : site.Contact;
 					await mailAppService.sendMail(senderDto);
-					Core.Models.Contact contact = new Core.Models.Contact
+                    var dict = dto.forms
+						.Where(f => !string.IsNullOrWhiteSpace(f.Title))
+						.ToDictionary(
+							f => f.Name,
+							f => new { 
+								title = string.IsNullOrWhiteSpace(f.Title) ? "" : f.Title.Trim().Replace(" ", "").Replace("　", ""), 
+								value = f.Value 
+							}
+						);
+                    string result = JsonConvert.SerializeObject(dict);
+                    var parts = new[]
+					{
+						dto.forms.Find(e => e.Name == "name")?.Value,
+						dto.forms.Find(e => e.Name == "Gender")?.Value
+					};
+                    Core.Models.Contact contact = new Core.Models.Contact
 					{
 						FK_WebMenuId = menu.Id,
 						Email = recipient.Email,
 						Name = menu.Title ?? "",
 						TargetEmail = $"{dto.Sender.Name}({dto.Sender.Email})",
-						Html = html
-					};
+						Html = html,
+						FromDate = result,
+						UserName = string.Join(" ", parts.Where(p => !string.IsNullOrWhiteSpace(p)))
+                    };
 					loginUserData.setOptionParameter(contact, 0);
                     db.Contacts.Add(contact);
 					await db.SaveChangesAsync();
@@ -111,9 +129,11 @@ namespace EtheriT.Coker.Application.Contact
                             { 
 								Id=c.Id,
 								Name = c.Name,
+								UserName = c.UserName,
                                 TargetEmail = c.TargetEmail,
 								Email = c.Email,
-								CreationTime = c.CreationTime
+								Status = c.Status.ToString().Replace("_","/"),
+                                CreationTime = c.CreationTime
 							};
 			if (dataQuery.Any())
 			{
@@ -139,6 +159,31 @@ namespace EtheriT.Coker.Application.Contact
 				response.Error = ex.Message;
             }
 			return response;
+        }
+		public async Task<ResponseMessageDto> ReplyContact(ContactReplyDto dto) {
+            ResponseMessageDto response = new ResponseMessageDto();
+			try
+			{
+                var websiteId = await loginUserData.GetWebsiteId();
+                var contact = await db.Contacts.Include(e => e.WebMenu).Where(e => e.WebMenu != null && e.WebMenu.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
+				if (contact != null) {
+                    contact.Status = dto.Status;
+					if (!string.IsNullOrWhiteSpace(dto.Reply)) {
+                        contact.Reply = dto.Reply;
+                        contact.ReplyTime = DateTime.Now;
+                    }
+					await loginUserData.SaveChanges(contact);
+                    response.Success = true;
+                }
+                else throw new Exception(L.get("DataNotFound"));
+            }
+			catch (Exception ex)
+			{ 
+				response.Error = ex.Message;
+            }
+			await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+
+            return response;
         }
     }
 }

@@ -299,6 +299,32 @@
         width: 600px;
     }
 
+    .btnMove.is-move-locked {
+        pointer-events: none;
+        opacity: .4;
+    }
+
+    .offcanvas-header {
+        .fa-stack {
+            display: flex;
+            align-items: center;
+        }
+
+        .fa-stack > .fa-ban {
+            color: #F33;
+        }
+
+        #moveEnable {
+            color: #fff;
+            font-size: 1.2rem;
+            margin: 0.5rem;
+        }
+    }
+
+    &.menu-move-locked li {
+        cursor: default !important;
+    }
+
     &.offcanvas-lg .offcanvas-header {
         display: flex;
     }

@@ -154,9 +154,18 @@ namespace EtheriT.Coker.Application.Common
                             <meta http-equiv=""Content-Type"" content=""text/html; charset=UTF-8"">
                             <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
                             <meta name=""x-apple-disable-message-reformatting"">
-                            <style>{dto.Css}</style>
+                            <style>
+                                {dto.Css}
+                                .memo {{
+                                    margin-top: 30px;
+                                    padding: 10px;
+                                    font-size: 12px;
+                                    color: #f00;
+                                    border-top: 1px solid #ddd;
+                                }}
+                            </style>
                         </head>
-                        <body>{body}</body>
+                        <body>{body}<div class=""memo"">提醒您：此信件為系統自動發出，請勿直接回覆。</div></body>
                     </html>";
             }
             // 設定附件

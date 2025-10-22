@@ -87,11 +87,38 @@ i.fa-chevron-right {
 
 #Pro_Image {
     cursor: zoom-in !important;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
 }
 
     #Pro_Image .cloudimage-360-inner-box .cloudimage-360-icons-container {
         left: 50%;
         transform: translateX(-50%);
+    }
+
+    #Pro_Image .cloudimage-360-inner-box canvas {
+        opacity: 1;
+        transition: opacity .18s ease;
+    }
+
+    #Pro_Image.loading .cloudimage-360-inner-box canvas {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    #Pro_Image.loading::after {
+        content: "\f110"; /* Font Awesome 的 fa-spinner 圖示 */
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900; /* solid 款式 */
+        font-size: 2rem;
+        color: rgba(0,0,0,0.6);
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation: fa-spin 1s linear infinite; /* 自帶的轉圈效果 */
+        z-index: 10; /* 蓋在縮圖之上 */
     }
 
 #Pro_Youtube {
@@ -480,9 +507,11 @@ input:disabled + .btn_radio {
     #TabContent > div {
         padding-bottom: 3rem;
     }
+
         #TabContent > div#ProductDescription {
-            padding:1.5rem 0;
+            padding: 1.5rem 0;
         }
+
         #TabContent > div > img {
             width: 100%;
         }

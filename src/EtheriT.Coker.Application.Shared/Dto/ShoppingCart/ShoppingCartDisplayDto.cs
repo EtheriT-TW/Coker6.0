@@ -1,4 +1,6 @@
 ﻿
+using EtheriT.Coker.Application.Shared.Dto.Freight;
+
 namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
 {
     public class ShoppingCartDisplayDto
@@ -26,5 +28,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public int OldQuantity { get; set; }
         public double Subtotal { get; set; }
         public int Stock { get; set; }
+        public FreightGetAllListDto? Freight { get; set; }
     }
 }

@@ -169,5 +169,13 @@ namespace EtheriT.Coker.Application.Common
 
             return QueryHelpers.AddQueryString(uri.GetLeftPart(UriPartial.Path), cleaned);
         }
+        public List<long> ParseCsvIds(string? csv)
+        {
+            if (string.IsNullOrWhiteSpace(csv)) return new List<long>();
+            var list = new List<long>();
+            foreach (var token in csv.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                if (long.TryParse(token.Trim(), out var id)) list.Add(id);
+            return list;
+        }
     }
 }

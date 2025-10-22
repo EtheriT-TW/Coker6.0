@@ -163,6 +163,31 @@ function PageReady() {
         $nextPayment.addClass('first');
     });
 
+    // 群組全選（Header）
+    $(document).on('change', '.purchase_group .js-group-check', function () {
+        const $group = $(this).closest('.purchase_group');
+        const checked = this.checked;
+
+        if (checked) clearOtherGroupsExcept($group);     // 互斥：先清其他組
+        $group.find('.js-group-check').prop('indeterminate', false); // 讓第一次點擊不會卡在半選
+
+        $group.find('input[name="buyItems"]').prop('checked', checked);
+
+        updateGroupSelectedSubtotal($group);
+        updateOverallSelectedSubtotal();
+    });
+
+    // 單一品項
+    $(document).on('change', '.purchase_group li.purchase_item input[name="buyItems"]', function () {
+        const $group = $(this).closest('.purchase_group');
+
+        if (this.checked) clearOtherGroupsExcept($group); // 互斥：勾任何一個品項就清其他組
+
+        updateGroupSelectedSubtotal($group);
+        updateOverallSelectedSubtotal();
+    });
+
+
     if ($("#ECPayPayment").length > 0) {
         HasECPay = true;
         ECPayMonitor = true;
@@ -491,6 +516,55 @@ function PageReady() {
         if (HasECPay) ECPaymentChange();
     })
 }
+// 同步 header 的勾選/半選狀態與「已選件數」
+function syncHeaderCheckbox($group) {
+    const $checks = $group.find('input[name="buyItems"]');
+    const total = $checks.length;
+    const selected = $checks.filter(':checked').length;
+    const $header = $group.find('.js-group-check');
+
+    $header.prop('indeterminate', false);
+    if (selected === 0) $header.prop('checked', false);
+    else if (selected === total) $header.prop('checked', true);
+    else $header.prop({ checked: false, indeterminate: true });
+
+    $group.find('.js-selected-count').text(selected);
+}
+
+// 計算本組「已選」的小計 → 更新 footer
+function updateGroupSelectedSubtotal($group) {
+    let sum = 0;
+    $group.find('li.purchase_item').each(function () {
+        const $li = $(this);
+        if ($li.find('input[name="buyItems"]').is(':checked')) {
+            sum += Number($li.find('[data-key="subtotal"]').data('subtotal') || 0);
+        }
+    });
+    $group.find('.js-group-subtotal').attr('data-subtotal', sum).text(`$${sum.toLocaleString()}`);
+    syncHeaderCheckbox($group);
+}
+
+// 清掉「其他群組」的選取與小計（互斥的關鍵）
+function clearOtherGroupsExcept($group) {
+    $('.purchase_group').not($group).each(function () {
+        const $g = $(this);
+        $g.find('.js-group-check').prop({ checked: false, indeterminate: false });
+        $g.find('input[name="buyItems"]').prop('checked', false);
+        $g.find('.js-group-subtotal').attr('data-subtotal', 0).text('$0');
+        $g.find('.js-selected-count').text(0);
+    });
+}
+
+// 右下角合計：加總所有群組 footer 的「已選小計」
+function updateOverallSelectedSubtotal() {
+    let total = 0;
+    $('.purchase_group .js-group-subtotal').each(function () {
+        total += Number($(this).attr('data-subtotal') || 0);
+    });
+    $('#Step1 [data-key="subtotal"].subtotal').text(`${total.toLocaleString()}`);
+    $('#Step1 [data-key="total"].subtotal').text(`${total.toLocaleString()}`);
+}
+
 function hashChange(e) {
     if (!!e) {
         e.preventDefault();
@@ -637,11 +711,91 @@ function CardDataGet() {
         }
     });
 }
+// 依 freight.id 分群（null/缺值 = 0：一般配送）
+function groupByFreight(list) {
+    return list.reduce((acc, it) => {
+        const key = (it.freight && it.freight.id) ? it.freight.id : 0;
+        (acc[key] ||= []).push(it);
+        return acc;
+    }, {});
+}
+
+// 建群組標頭 DOM
+function createGroupHeader(meta) {
+    const $tpl = $($('#Template_Cart_GroupHeader').html().trim());
+    $tpl.attr('data-group-id', meta.id);
+    $tpl.find('[data-field="title"]').text(meta.title || '一般配送');
+    if (meta.describe) $tpl.find('[data-field="describe"]').text(meta.describe).show();
+    else $tpl.find('[data-field="describe"]').hide();
+    $tpl.find('[data-field="count"]').text(`${meta.count} 件`);
+    $tpl.find('.btn-checkout-group').attr('data-group-id', meta.id);
+    return $tpl;
+}
+
+// ✅ 用你原本的 CartListAdd 來插入每一筆
+function renderCartGroups(result) {
+    const $ul = $("#Step1 > .card-body > .purchase_list");
+    // 只移除舊的群組，不要 .empty() 以免不小心砍到 template
+    $ul.children("li.purchase_group").remove();
+
+    // 分群
+    const groups = groupByFreight(result);
+    const orderedKeys = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length);
+
+    orderedKeys.forEach(key => {
+        const items = groups[key];
+        const meta = {
+            id: Number(key),
+            title: items[0].freight?.title || '一般配送',
+            describe: items[0].freight?.describe || '',
+            count: items.length
+        };
+
+        // 建群組容器
+        const $group = $($('#Template_Cart_Group').html().trim());
+        $group.attr('data-group-id', meta.id);
+        $group.find('[data-field="title"]').text(meta.title);
+        $group.find('[data-field="count"]').text(`${meta.count} 件`);
+        if (meta.describe) $group.find('[data-field="describe"]').text(meta.describe);
+        else $group.find('[data-field="describe"]').remove();
+
+        const $groupItems = $group.find('.group_items');
+
+        // 塞入該組 items（沿用你原有 CartListAdd，但改讓它可以指定容器）
+        items.forEach(row => {
+            row.__groupId = meta.id;
+            CartListAdd(row, $groupItems); // ⬅ 第3步會支援這個參數
+        });
+
+        // 初始化本組已選小計/件數
+        $group.find('.js-group-subtotal').attr('data-subtotal', 0).text('$0');
+        $group.find('.js-group-check').prop('indeterminate', false);
+        $group.find('.js-selected-count').text(0);
+
+        $ul.append($group);
+    });
+
+    const hasItems = result.length > 0;
+    $("#Step1 > .card-body").toggleClass("d-none", !hasItems);
+    $("#Purchase_Null").toggleClass("d-none", hasItems);
+
+    buy_step_swiper.update();
+    updateOverallSubtotal(); // 若你要「已選合計」，可改成 updateOverallSelectedSubtotal()
+}
+
+
+function updateOverallSubtotal() {
+    let sum = 0;
+    $('#Step1 .purchase_list .purchase_group_header [data-field="subtotal"]').each(function () {
+        sum += Number($(this).attr('data-subtotal') || 0);
+    });
+    $('#Step1 [data-key="subtotal"].subtotal').text(`$${sum.toLocaleString()}`);
+    $('#Step1 [data-key="total"].subtotal').text(`$${sum.toLocaleString()}`);
+}
 function CartInit(result) {
     $("#Step1 > .card-body").removeClass("d-none");
-    for (var i = 0; i < result.length; i++) {
-        CartListAdd(result[i])
-    }
+    renderCartGroups(result);
+
     $("#Purchase_Null").addClass("d-none");
     buy_step_swiper.enable();
 
@@ -653,6 +807,17 @@ function CartInit(result) {
     buy_step_swiper.update();
     TotalCount();
     PaymentHideShow();
+
+    const $firstGroup = $('.purchase_group').first();
+    if ($firstGroup.length) {
+        // 勾選整組
+        $firstGroup.find('.js-group-check').prop('checked', true);
+        $firstGroup.find('input[name="buyItems"]').prop('checked', true);
+
+        // 計算小計與合計
+        updateGroupSelectedSubtotal($firstGroup);
+        updateOverallSelectedSubtotal();
+    }
 }
 function PaymentHideShow() {
     if (!HasECPay || $(".ecpayWarning").hasClass("d-none")) {
@@ -667,7 +832,7 @@ function PaymentHideShow() {
         })
     }
 }
-function CartListAdd(data) {
+function CartListAdd(data, $container) {
     if (data.quantity > 0) {
         if (shopping_cart_data.find(e => e.Id == data.scId) != null) {
             data.price = shopping_cart_data.find(e => e.Id == data.scId).Price;
@@ -677,6 +842,7 @@ function CartListAdd(data) {
             obj['Price'] = data.price;
             obj['Quantity'] = data.quantity;
             obj['Bonus'] = data.bonus;
+            obj['freight'] = data.freight;
             shopping_cart_data.push(obj);
             hasProds = true;
         }
@@ -684,36 +850,51 @@ function CartListAdd(data) {
 
     var max_quantity = data.quantity + data.stock;
 
-    var item_list_ul = $("#Step1 > .card-body > .purchase_list");
+    var item_list_ul = $container || $("#Step1 > .card-body > .purchase_list");
     var $template = $($("#Template_Cart_Details").html()).clone();
-    $template.data("scId", data.scId);
+    var groupId = (data.freight && data.freight.id) ? data.freight.id : 0;
 
+    $template.data("scId", data.scId);
+    $template.attr('data-group-id', groupId);
     $template = CartListInsert($template, data);
     $template.find(".btn_remove_pro").on("click", function () {
         var $self = $(this).parents("li").first();
         Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
             CartDelete($self, $self.data("scId"), "成功移除商品", "移除商品發生未知錯誤")
+            const $group = $self.closest('li.purchase_group');
+            if ($group.length && $group.find('li.purchase_item').length === 0) {
+                $group.remove();
+            }
         });
     });
     $template.find(".btn_count_plus").on("click", function () {
         var $self_bro = $(this).siblings(".pro_quantity");
+        const $group = $template.closest('.purchase_group');
         if ($self_bro.val() < max_quantity) {
             $self_bro.val(parseInt($self_bro.val()) + parseInt($self_bro.attr("step")))
+            updateGroupSelectedSubtotal($group);
+            updateOverallSelectedSubtotal();
             CartQuantityUpdate($template.find(".pro_subtotal"), data.price, data.bonus, $template.data("scId"), $self_bro.val());
         }
     });
     $template.find(".btn_count_minus").on("click", function () {
         var $self_bro = $(this).siblings(".pro_quantity");
+        const $group = $template.closest('.purchase_group');
         if ($self_bro.val() > parseInt($self_bro.attr("step"))) {
             $self_bro.val(parseInt($self_bro.val()) - parseInt($self_bro.attr("step")))
+            updateGroupSelectedSubtotal($group);
+            updateOverallSelectedSubtotal();
             CartQuantityUpdate($template.find(".pro_subtotal"), data.price, data.bonus, $template.data("scId"), $self_bro.val());
         }
     });
     $template.find(".pro_quantity").on("change", function () {
         var $self = $(this);
+        const $group = $template.closest('.purchase_group');
         if ($self.val() < parseInt($self.attr("step"))) $self.val(parseInt($self.attr("step")));
         else if ($self.val() > max_quantity) $self.val(max_quantity - (max_quantity % parseInt($self.attr("step"))))
         else $self.val($self.val() - ($self.val() % parseInt($self.attr("step"))))
+        updateGroupSelectedSubtotal($group);
+        updateOverallSelectedSubtotal();
         CartQuantityUpdate($template.find(".pro_subtotal"), data.price, data.bonus, $template.data("scId"), $self.val());
     });
 
@@ -829,11 +1010,20 @@ function CartListInsert($frame, data) {
                     $self.val(data[key]);
                     $self.attr({ step: data.step })
                     break;
+                case "freight":
+                    if (data[key] == null) $self.remove();
+                    else {
+                        $self.data("freight", data[key]);
+                        $self.text(data[key].title);
+                    }
+                    break;
                 default:
                     $self.text(data[key]);
                     break;
             }
-
+            const item = $self.closest(".image");
+            const checkItem = item.find(`[name="buyItems"]`).attr("id", `prod${data.scId}`).val(data.scId);
+            checkItem.next("label").attr("for", `prod${data.scId}`);
             if (data['quantity'] == 0) {
                 $frame.find(".nostock").removeClass("d-none");
                 $frame.find(".content").addClass("d-none");
@@ -861,9 +1051,9 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity) {
                     self.data("subtotal_bonus", sub_bonus)
                     var price_text = "";
                     if (sub_bonus > 0) {
-                        price_text = `$${sub_price.toLocaleString()}+紅利${sub_bonus}`;
+                        price_text = `${sub_price.toLocaleString()}+紅利${sub_bonus}`;
                     } else {
-                        price_text = `$${sub_price.toLocaleString()}`;
+                        price_text = `${sub_price.toLocaleString()}`;
                     }
                     self.text(price_text)
                     TotalCount();
@@ -885,26 +1075,20 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity) {
 }
 function TotalCount() {
     subtotal = 0;
-    $('.purchase_list').children("li").each(function () {
-        subtotal += $(this).children(".content").children(".pro_subtotal").data("subtotal");
-        if (subtotal > low_con) {
-            freight = disfreight;
-        } else {
-            freight = ori_freight;
-        }
-    })
-    $(".subtotal").each(function () {
-        $(this).text(subtotal.toLocaleString())
-    })
-    $(".shipping_fee").each(function () {
-        $(this).text(((freight == null || freight == "") || freight == "") ? 0 : freight.toLocaleString())
-    })
-    $(".total_amount").each(function () {
-        total = (freight == null || freight == "") ? subtotal : subtotal + freight;
-        $(this).text(parseInt(total).toLocaleString())
-    })
-    PaymentHideShow()
+    $('#Step1 .purchase_list li.purchase_item .pro_subtotal').each(function () {
+        subtotal += Number($(this).data("subtotal") || 0);
+    });
+
+    if (subtotal > low_con) freight = disfreight; else freight = ori_freight;
+
+    $(".subtotal").text(subtotal.toLocaleString());
+    $(".shipping_fee").text(((freight == null || freight == "") ? 0 : freight).toLocaleString());
+    total = (freight == null || freight == "") ? subtotal : subtotal + freight;
+    $(".total_amount").text(parseInt(total).toLocaleString());
+
+    PaymentHideShow();
 }
+
 function CartDelete(self, id, success, error) {
     self.remove();
     datachange = true;

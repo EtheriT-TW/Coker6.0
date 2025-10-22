@@ -15,6 +15,14 @@ label::after {
     background-color: transparent !important;
 }
 
+.dg-thumb {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+}
+
 :root {
     --colors-red-text: #B8230F;
     --color-gray-bg-dark: #E2E2E2;

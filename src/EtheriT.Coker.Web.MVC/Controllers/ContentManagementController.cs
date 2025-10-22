@@ -1,5 +1,7 @@
-﻿using EtheriT.Coker.Web.MVC.Startup;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Web.MVC.Startup;
 using Microsoft.AspNetCore.Mvc;
+using EtheriT.Coker.Application.Common;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
@@ -28,13 +30,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         {
             return View("Marquee");
         }
-        public IActionResult ContactUs(int id)
+        public IActionResult ContactUs()
         {
-            if (id != 0)
-            {
-                return View("ContactUsReply");
-            }
-            return View("ContactUs");
+            return View("ContactUs", EnumHelper.EnumToKeyValueList<ContactStatusEnum>());
         }
 
         public IActionResult SettingCSS()

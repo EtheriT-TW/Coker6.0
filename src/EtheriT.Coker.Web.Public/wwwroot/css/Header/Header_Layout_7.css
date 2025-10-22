@@ -15,7 +15,7 @@
     --main-background-color: white;
     --search-input-border-color: black;
     --logo-height: 70px;
-    --icon-search-and-offcanvas-li-after-background-color:black;
+    --icon-search-and-offcanvas-li-after-background-color: black;
 }
 
 .bg-img {
@@ -192,11 +192,16 @@
     background: transparent !important;
 }
 /* Cart Dropdown*/
+#Cart_Dropdown_Parent {
+    position: relative;
+}
 #Car_Dropdown {
     z-index: 1070;
     width: 280px;
     max-width: 80vw;
     max-height: 90vh;
+    left: 0;
+    top: 2.5rem;
 }
 
     #Car_Dropdown > ul > li.unavailable {
@@ -261,6 +266,8 @@
 
     #Car_Dropdown > .btn_car_buy {
         background-color: var(--black-text);
+        display: block;
+        text-align: center;
     }
 
         #Car_Dropdown > .btn_car_buy[disabled] {
@@ -358,11 +365,11 @@
             width: 100%;
         }
 
-            #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover {
+            #Offcanvas_Mega_Menu > ul > .title > .content li > a.textLink:hover {
                 padding-left: 20px;
             }
 
-                #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover::before {
+                #Offcanvas_Mega_Menu > ul > .title > .content li > a.textLink:hover::before {
                     content: "➤";
                     display: inline-block;
                     margin-right: 4px;
@@ -386,7 +393,7 @@
     font-size: 1.5rem;
 }
 
-#Offcanvas_Mega_Menu .subtitle .subtitle_title > img {
+#Offcanvas_Mega_Menu .subtitle .subtitle_title > img.icon {
     height: 1.5rem;
 }
 
@@ -470,6 +477,11 @@
     #Offcanvas_Mega_Menu {
         height: 3rem;
     }
+
+        #Offcanvas_Mega_Menu ul li a img {
+            max-width: 100%;
+            max-height: 5rem;
+        }
 }
 
 @media (max-width: 1200px) {
@@ -909,6 +921,7 @@
 #breadcrumb .bread > ol > li:not(:first-child)::before {
     color: var(--gray-path);
 }
+
 #ContainerBody #breadcrumb {
     margin: 0 auto;
 }
@@ -1141,12 +1154,12 @@
 
 /* layout7 main部分 */
 /* main */
-#main#main {
+#ContainerBody {
     position: relative;
     background-color: var(--main-background-color) !important;
 }
 
-#main > .container {
+#main > .container:not(#CenterLine) {
     padding-bottom: 2rem;
 }
 

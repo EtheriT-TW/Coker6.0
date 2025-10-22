@@ -325,7 +325,7 @@ function ElementInit() {
             var filter = modal_price_list.filter(item => !item.IsDelete && (item["FK_PSId"] == psid || item["TempPSid"] == temppsid));
             $self.removeClass("multi-price");
             if (timePrice) {
-                $self.val(local.MarketPrice);
+                $self.val("時價");
                 count.addClass("d-none")
             } else {
                 if (filter.length > 1) {
@@ -756,7 +756,7 @@ function SpecAdd(result) {
     }
     
     if (item.data("timeprice")) {
-        item_price.val(local.MarketPrice);
+        item_price.val("時價");
         item_price_count.addClass("d-none");
     } else {
         var text = "";

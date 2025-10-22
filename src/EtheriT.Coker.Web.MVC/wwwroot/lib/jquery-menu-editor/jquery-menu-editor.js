@@ -1114,11 +1114,81 @@ function MenuEditor(idSelector, options) {
      * Update the buttons on the list. Only the buttons 'Up', 'Down', 'In', 'Out'
      * @param {jQuery} $mainList The unorder list 
      **/
+
     self.updateButtons = function ($mainList) {
         $mainList.find('.btnMove').show();
         if(!settings.levelChang) $mainList.find('.levelMove').hide();
         $mainList.updateButtons();
     };
+    self._moveLocked = true;
+    var dragGuard = function (e) {
+        if (!self._moveLocked) return;
+        var $t = $(e.target);
+        if ($t.closest('.clickable').length) return; // 讓功能按鈕可點
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        return false;
+    };
+    $main.off('mousedown.toggleMoveLock touchstart.toggleMoveLock')
+        .on('mousedown.toggleMoveLock touchstart.toggleMoveLock', 'li, li *', dragGuard);
+    function applyMoveLockUI() {
+        var locked = !!self._moveLocked;
+
+        // 停用/恢復「上下移/入/出階層」按鈕
+        var $moveBtns = $main.find('.btnMove');
+        if (locked) {
+            $moveBtns.attr({ 'aria-disabled': 'true', 'tabindex': '-1' }).addClass('is-move-locked');
+        } else {
+            $moveBtns.removeAttr('aria-disabled tabindex').removeClass('is-move-locked');
+        }
+
+        // 容器標記
+        $main.toggleClass('menu-move-locked', locked);
+
+        // 讓既有規則重新計算顯示
+        if (self.updateButtons) self.updateButtons($main);
+    }
+
+    self.toggleMoveLock = function (force) {
+        self._moveLocked = (typeof force === 'boolean') ? force : !self._moveLocked;
+        applyMoveLockUI();
+        // 更新外部控制按鈕圖示（若有）
+        if (self._moveLockButton && self._renderMoveLockBtn) {
+            self._renderMoveLockBtn(self._moveLocked);
+        }
+        return self._moveLocked;
+    };
+
+    self.lockMove = function () { return self.toggleMoveLock(true); };
+    self.unlockMove = function () { return self.toggleMoveLock(false); };
+    var $moveBtn = $(options.element.moveEnable);
+
+    function _norm(v) { return (v == null ? "" : String(v)); }
+    function _getPath($li) { // 備援：路徑索引
+        var path = [], $cur = $li;
+        while ($cur && $cur.length) {
+            path.unshift($cur.prevAll('li').length);
+            $cur = $cur.parent('ul').parent('li');
+            if (!$cur.length) break;
+        }
+        return path;
+    }
+    function _cssEscape(sel) { // 最低限度的 selector escape
+        return (window.CSS && CSS.escape) ? CSS.escape(sel) : sel.replace(/([^a-zA-Z0-9_\-:])/g, "\\$1");
+    }
+    // 依 data.Id（或 id），若沒有就用索引路徑，產生 DOM id；並寫回到 li
+    function _ensureDomId($li) {
+        var rid = ($main.attr('id') || 'menu').replace(/[^\w\-:.]/g, '_'); // 根容器前綴，避免全域碰撞
+        var key = _norm($li.data('Id') || $li.data('id'));
+        var domId = key ? `mitem-${rid}-${key}` : `mitem-${rid}-path-${_getPath($li).join('-')}`;
+        $li.attr('id', domId);
+        return domId;
+    }
+    // 重建後把所有 li 補上（或更新）id
+    function _tagAllDomIds() {
+        $main.find('li').each(function () { _ensureDomId($(this)); });
+    }
+    
     $.extend(true, settings, options);
     var itemEditing = null;
     var sortableReady = true;
@@ -1130,6 +1200,55 @@ function MenuEditor(idSelector, options) {
     $main.sortableLists(settings.listOptions);
 
     /* EVENTS */
+    if ($moveBtn.length > 0) {
+        var iconUnlocked =
+            '<span class="fa-stack" aria-hidden="true" style="line-height:1;">' +
+            '<i class="fa-solid fa-up-down-left-right fa-stack-1x"></i>' +
+            '<i class="fa-solid fa-circle-notch fa-stack-2x"></i>' +
+            '</span>';
+        var iconLocked =
+            '<span class="fa-stack" aria-hidden="true" style="line-height:1;">' +
+            '<i class="fa-solid fa-up-down-left-right fa-stack-1x"></i>' +
+            '<i class="fa-solid fa-ban fa-stack-2x"></i>' +
+            '</span>';
+        self._moveLockButton = $moveBtn
+        self._renderMoveLockBtn = function (locked) {
+            $moveBtn
+                .attr({
+                    'type': $moveBtn.attr('type') || 'button',
+                    'aria-pressed': (!locked).toString(),
+                    'aria-label': locked ? '移動鎖定（點擊解鎖）' : '移動解鎖（點擊鎖定）',
+                    'title': locked ? '移動鎖定' : '移動解鎖'
+                })
+                .toggleClass('is-locked', locked)
+                .html(locked ? iconLocked : iconUnlocked);
+        }
+        ;
+        $moveBtn.off('.moveLock').on('click.moveLock', function (e) {
+            e.preventDefault();
+            self.toggleMoveLock();
+        });
+        self._moveLocked = true;
+        self._renderMoveLockBtn(true);
+        applyMoveLockUI();
+
+        if (window.MutationObserver) {
+            var mo = new MutationObserver(function (mutations) {
+                if (!self._moveLocked) return;
+                var needApply = false;
+                mutations.forEach(function (m) {
+                    // 有新增節點、且裡面可能出現 li / .btnMove 就補套
+                    if (m.addedNodes && m.addedNodes.length) {
+                        needApply = true;
+                    }
+                });
+                if (needApply) applyMoveLockUI();
+            });
+            mo.observe($main.get(0), { childList: true, subtree: true });
+            // 保存以便需要時關閉
+            self._moveLockObserver = mo;
+        }
+    }
     iconPicker.on('change', function (e) {
         $form.find("[name=icon]").val(e.icon);
     });
@@ -1228,6 +1347,9 @@ function MenuEditor(idSelector, options) {
     function editItem($item) {
         var data = $item.data();
         const $card = $form.parents(".card");
+        self._editingDomId = _ensureDomId($item);
+        $main.find("li.editItem").removeClass("editItem");
+        $item.addClass("editItem");
         $.each(data, function (p, v) {
             let element = $form.find("[name=" + p + "]");
             if (element.length <= 0) return;
@@ -1484,6 +1606,107 @@ function MenuEditor(idSelector, options) {
             self.updateButtons($main);
         }
     };
+
+    // === setDataPreserve：沿用原本 setData，只做狀態保存/還原（Id優先，索引路徑為後援） ===
+    (function patchSetDataPreserve() {
+        var originalSetData; // 第一次呼叫時才抓，避免未定義
+        var norm = function (v) { return (v == null ? "" : String(v)); };
+
+        // 取得 li 的「索引路徑」(0-based)：[rootIndex, childIndex, ...]
+        function getPath($li) {
+            var path = [];
+            var $cur = $li;
+            while ($cur && $cur.length && !$cur.is($li.closest('#__ROOT_STOP__'))) {
+                var $ul = $cur.parent('ul');
+                var idx = $cur.prevAll('li').length;
+                path.unshift(idx);
+                // 往上找到父層 li
+                $cur = $ul.parent('li');
+                if (!$cur.length) break;
+            }
+            return path;
+        }
+
+        // 依「索引路徑」在新 DOM 找到 li
+        function findByPath(rootUl, path) {
+            var $curUl = rootUl;
+            var $li = null;
+            for (var i = 0; i < path.length; i++) {
+                $li = $curUl.children('li').eq(path[i]);
+                if (!$li.length) return null;
+                $curUl = $li.children('ul');
+                if (i < path.length - 1 && !$curUl.length) return null;
+            }
+            return $li || null;
+        }
+
+        // 嘗試從 li 讀出 Id（支援 Id/id）
+        function readId($li) {
+            // jQuery .data 會做 camelCase 正規化，這裡兩個都試
+            return norm($li.data('Id')) || norm($li.data('id')) || "";
+        }
+
+        self.setDataPreserve = function (strJson) {
+            // 延後擷取核心 setData
+            if (typeof originalSetData !== 'function') originalSetData = self.setData;
+            var coreSet = (typeof originalSetData === 'function') ? originalSetData : self.setData;
+            if (typeof coreSet !== 'function' || coreSet === self.setDataPreserve) {
+                console.error('MenuEditor: setData not ready when setDataPreserve called.');
+                return;
+            }
+
+            // 1) 保存狀態：展開 li 的 Id 與 索引路徑，還有卷軸與鎖定
+            var openStates = [];
+            $main.find('li.sortableListsOpen').each(function () {
+                var $li = $(this);
+                openStates.push({
+                    id: readId($li),         // 可能為空
+                    path: getPath($li)       // 一定有
+                });
+            });
+            const editorId = $(itemEditing).attr("id");
+            var prevScroll = $main.scrollTop();
+            var wasLocked = !!self._moveLocked;
+
+            // 2) 重建（沿用原本 setData）
+            coreSet.call(self, strJson);
+            _tagAllDomIds(); 
+            if (self._editingDomId) {
+                var $new = $('#' + _cssEscape(self._editingDomId), $main);
+                if ($new.length) {
+                    itemEditing = $new.addClass('editItem');
+                    editItem(itemEditing); // 讓右側表單拿到最新 data
+                }
+            }
+
+            // 3) 還原展開狀態（先用 Id 找，找不到再用索引路徑）
+            //    注意：createMenu後 setOpeners() 會預設關閉，所以我們要在它之後打開
+            //    原本 setData 已經呼叫過 setOpeners()，這裡直接打開即可
+            for (var i = 0; i < openStates.length; i++) {
+                var st = openStates[i], target = null;
+
+                if (st.id) {
+                    // 用 Id/id 對應
+                    target = $main.find('li').filter(function () {
+                        var d = readId($(this));
+                        return d && d === st.id;
+                    }).first();
+                }
+                if (!target || !target.length) {
+                    // 後援：用索引路徑
+                    target = findByPath($main, st.path);
+                }
+                if (target && target.length) {
+                    target.iconOpen(settings.listOptions);
+                }
+            }
+
+            // 4) 還原卷軸與鎖定＋鎖定按鈕圖示
+            $main.scrollTop(prevScroll);
+            if (typeof self.toggleMoveLock === 'function') self.toggleMoveLock(wasLocked);
+            if (typeof self._renderMoveLockBtn === 'function') self._renderMoveLockBtn(wasLocked);
+        };
+    })();
 
     if (!!settings.element) {
         var e = settings.element;

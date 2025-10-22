@@ -591,6 +591,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long>("FK_WebMenuId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("FromDate")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Html")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -618,10 +621,18 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("ReplyTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.Property<string>("TargetEmail")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.HasKey("Id");
 
@@ -1413,6 +1424,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int?>("FreigntAmt2")
                         .HasColumnType("int");
 
+                    b.Property<int>("FreigntStatusType")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.Property<int>("FreigntType")
                         .HasColumnType("int");
 
@@ -1545,6 +1561,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("FK_WebsiteId");
 
                     b.ToTable("MappingFrontUserAndWebsite", (string)null);
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingLogisticsSettingAndProd", b =>
+                {
+                    b.Property<long>("FK_LogisticsSettingId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_ProdId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("FK_LogisticsSettingId", "FK_ProdId");
+
+                    b.HasIndex("FK_ProdId");
+
+                    b.ToTable("MappingLogisticsSettingAndProd", (string)null);
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingOldNewUUID", b =>
@@ -6480,6 +6511,25 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingLogisticsSettingAndProd", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.LogisticsSetting", "LogisticsSetting")
+                        .WithMany("MappingLogisticsSettingAndProds")
+                        .HasForeignKey("FK_LogisticsSettingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EtheriT.Coker.Core.Models.Prod", "Prod")
+                        .WithMany("MappingLogisticsSettingAndProds")
+                        .HasForeignKey("FK_ProdId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LogisticsSetting");
+
+                    b.Navigation("Prod");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingUserAndRole", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Role", "Role")
@@ -7082,6 +7132,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Websites");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsSetting", b =>
+                {
+                    b.Navigation("MappingLogisticsSettingAndProds");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ObjectType", b =>
                 {
                     b.Navigation("html_Contents");
@@ -7103,6 +7158,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod", b =>
                 {
+                    b.Navigation("MappingLogisticsSettingAndProds");
+
                     b.Navigation("Prod_Logs");
 
                     b.Navigation("Prod_Stocks");

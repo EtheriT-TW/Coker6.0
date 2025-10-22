@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.Contact;
+using EtheriT.Coker.Application.Shared.Dto.Contact;
 using EtheriT.Coker.Application.Dto.Contact;
 using EtheriT.Coker.Application.Dto;
 using Microsoft.AspNetCore.Mvc;
@@ -22,8 +23,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await contactAppService.GetContactListAll(loadOptions);
         }
         [HttpGet]
-        public async Task<ResponseMessageDto> GetDataOne(long id) {
+        public async Task<ResponseMessageDto> GetDataOne(long id)
+        {
             return await contactAppService.GetDataOne(id);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> ReplyContact(ContactReplyDto dto)
+        {
+            return await contactAppService.ReplyContact(dto);
         }
     }
 }

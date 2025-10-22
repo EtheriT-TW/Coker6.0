@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Contact
         public string Email { get; set; }
         public string TargetEmail { get; set; }
         public string Html { get; set; }
+        public string Reply { get; set; }
+        public ContactStatusEnum Status { get; set; }
         public DateTime CreationTime { get; set; }
     }
 }

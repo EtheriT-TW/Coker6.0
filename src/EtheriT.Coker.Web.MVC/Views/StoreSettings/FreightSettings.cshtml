@@ -1,5 +1,6 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Freight
+@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @{
 	ViewData["Title"] = "FreightSettings";
 }
@@ -98,8 +99,12 @@
 						<input id="InputName" class="form-control rounded" type="text" aria-label="Input Name of Freight" autocomplete="off" required>
 					</div>
 
+					<div class="col-6 col-sm-3 mb-3 d-none">
+						<select id="SelectPreserve" class="form-select" aria-label="Preserve Select"></select>
+					</div>
+
 					<div class="col-6 col-sm-3 mb-3">
-						<select id="SelectPreserve" class="form-select" aria-label="Preserve Select" required></select>
+						<select id="SelectStatus" class="form-select" aria-label="Status Select" required></select>
 					</div>
 
 					<div class="col-6 col-sm-3 mb-3">
@@ -118,27 +123,40 @@
 					</div>
 				</div>
 
-				<div class="freight input-group mb-3">
-					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1">paid</span>單筆運費
+				<div class="row">
+					<div class="col-6 col-sm-3 mb-3">
+						<div class="freight input-group mb-3">
+							<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+								<span class="material-symbols-outlined me-1">paid</span>單筆運費
+							</div>
+							<input id="InputFreight" class="form-control rounded" type="number" aria-label="Input Freight" disabled="disabled" required>
+						</div>
 					</div>
-					<input id="InputFreight" class="form-control rounded" type="number" aria-label="Input Freight" disabled="disabled" required>
+					<div class="col-6 col-sm-3 mb-3">
+						<div class="low_con input-group mb-3">
+							<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+								<span class="material-symbols-outlined me-1">toll</span>折抵低消
+							</div>
+							<input id="InputLowCon" class="form-control rounded" type="number" aria-label="Input Low Consumption" disabled="disabled" required>
+						</div>
+					</div>
+					<div class="col-6 col-sm-3 mb-3">
+						<div class="dfreight input-group mb-3">
+							<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+								<span class="material-symbols-outlined me-1">generating_tokens</span>折抵後運費
+							</div>
+							<input id="InputDfreight" class="form-control rounded" type="number" aria-label="Input Discounted Freight" disabled="disabled" required>
+						</div>
+					</div>
 				</div>
-
-				<div class="low_con input-group mb-3">
+				<div class="prod input-group mb-3" name="prods" data-form-type="prods">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1">toll</span>折抵低消
+						<span class="material-symbols-outlined me-1">alternate_email</span>商品
 					</div>
-					<input id="InputLowCon" class="form-control rounded" type="number" aria-label="Input Low Consumption" disabled="disabled" required>
-				</div>
-
-				<div class="dfreight input-group mb-3">
-					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1">generating_tokens</span>折抵後運費
-					</div>
-					<input id="InputDfreight" class="form-control rounded" type="number" aria-label="Input Discounted Freight" disabled="disabled" required>
+					<textarea id="InputProd" class="form-control rounded text-start InputProd formItem" name="ProdSelected" aria-label="Input Prod" data-bs-toggle="modal" data-bs-target="#ProdModal" readonly></textarea>
 				</div>
 			</form>
+			@await Component.InvokeAsync(nameof(Modal), new { dispaly = "ProdSelectModal" })
 		</div>
 	</div>
 </div>

@@ -328,9 +328,11 @@
                     <div class="icon_plus"></div>
                 </div>
             }
-            <a href="@ViewData["linkMore"]" class="btn_learnMore d-flex align-items-center justify-content-center text-white" type="button" target="_blank" rel="noopener noreferrer">
-                <div class="text-white">@L.get("LearnMore")</div>
-            </a>
+            @if (!string.IsNullOrWhiteSpace(ViewBag.linkMore)){
+                <a href="@ViewData["linkMore"]" class="btn_learnMore d-flex align-items-center justify-content-center text-white" type="button" target="_blank" rel="noopener noreferrer">
+                    <div class="text-white">@L.get("LearnMore")</div>
+                </a>
+            }
         </div>
     </div>
 

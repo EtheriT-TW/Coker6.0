@@ -31,14 +31,14 @@ input[type="number"] {
     padding-left: 5.5rem;
 }
 
-#FreightForm > .freight > input {
+#FreightForm .freight > input {
     padding-left: 6.5rem;
 }
 
-#FreightForm > .low_con > input {
+#FreightForm .low_con > input {
     padding-left: 6.5rem;
 }
 
-#FreightForm > .dfreight > input {
+#FreightForm .dfreight > input {
     padding-left: 7.5rem;
 }

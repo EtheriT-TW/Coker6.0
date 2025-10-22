@@ -263,7 +263,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         break;
                     case "product":
-                        ViewData["linkMore"] = model.storeSet.linkMore;
+                        ViewBag.linkMore = model.storeSet.linkMore;
                         if (id != 0)
                         {
                             var ProdPageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });

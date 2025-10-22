@@ -1,0 +1,33 @@
+﻿#ProdModal > .modal-dialog {
+    min-width: 40vw;
+}
+
+#ProdModal .dx-datagrid-search-panel {
+    width: fit-content !important;
+}
+
+.modal-open .wrapper {
+    transition: unset !important;
+    filter: unset !important;
+}
+
+.prodModal > textarea, .prodModal > input {
+    padding-left: 4.5rem;
+    height: 2rem;
+}
+
+    .prodModal > textarea.multiple {
+        height: 4rem;
+    }
+
+#devProdListModalGrid {
+    width: 100%;
+}
+
+    #devProdListModalGrid .dx-datagrid-rowsview .dx-row > td {
+        vertical-align: middle;
+    }
+
+#InputProd {
+    padding: 1.5rem 0 0 5rem;
+}

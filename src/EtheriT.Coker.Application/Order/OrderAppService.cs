@@ -31,6 +31,7 @@ using EtheriT.Coker.Application.StoreSet;
 using Microsoft.CodeAnalysis.CSharp;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -1028,6 +1029,9 @@ namespace EtheriT.Coker.Application.Order
                                     };
 
             return enumDictionaryDto.ToList();
+        }
+        public List<SelectDto> GetFreigntStatusTypEnum() {
+            return EnumHelper.EnumToKeyValueList<FreigntStatusTypeEnum>();
         }
         public async Task<ResponseMessageDto> OrderStateChange(long ohid, int state)
         {

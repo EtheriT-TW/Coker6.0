@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using DevExpress.CodeParser;
 using EtheriT.Coker.Application.Authorizaion.Dto;
 using EtheriT.Coker.Application.Company;
 using EtheriT.Coker.Application.Dto;
@@ -13,7 +14,9 @@ using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Dto.Contact;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
+using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.Member;
@@ -301,10 +304,25 @@ namespace EtheriT.Coker.Application
             CreateMap<Core.Models.ShoppingCart, ShoppingCartAddUpOldDto>()
                 .ReverseMap();
             CreateMap<Core.Models.ShoppingCart, ShoppingCartDisplayDto>()
-                 .ForMember(e => e.SCId, option => option.MapFrom(c => c.Id))
-                 .ForMember(e => e.PSId, option => option.MapFrom(c => c.FK_PSid))
-                 .ForMember(e => e.PPId, option => option.MapFrom(c => c.FK_PriceId))
-                .ReverseMap();
+                 .ForMember(d => d.SCId, m => m.MapFrom(s => s.Id))
+                 .ForMember(d => d.PSId, m => m.MapFrom(s => s.FK_PSid))
+                 .ForMember(d => d.PPId, m => m.MapFrom(s => s.FK_PriceId))
+                 .ForMember(d => d.Freight, m => m.MapFrom(s =>
+                     // 先確認兩層導覽非 null，再取對應的關聯
+                     (s.Prod_Stock != null && s.Prod_Stock.Prod != null)
+                         ? s.Prod_Stock.Prod.MappingLogisticsSettingAndProds
+                             .Where(x => x.FK_ProdId == s.Prod_Stock.FK_Pid && x.LogisticsSetting != null)
+                             .Select(x => new FreightGetAllListDto
+                             {
+                                 Id = x.LogisticsSetting!.Id,
+                                 Title = x.LogisticsSetting.Title,
+                                 Describe = x.LogisticsSetting.LogisticsType.ToString().Replace("_", "/").Replace("Seven", "7-11") + "，" +
+                                        (x.LogisticsSetting.FreigntType == FreigntTypeEnum.免運費 ? x.LogisticsSetting.FreigntType.ToString() : x.LogisticsSetting.FreigntType.ToString() + x.LogisticsSetting.Freight + "元(滿" + x.LogisticsSetting.Low_Con + "元" + (x.LogisticsSetting.Dis_Freight == 0 ? "免運)" : "運費" + x.LogisticsSetting.Dis_Freight + "元)"))
+                             })
+                             .FirstOrDefault()     // 找不到就回 null
+                         : null
+                 ))
+                 .ReverseMap();
 
             //Tags
             CreateMap<TagSelectedDto, Core.Models.Tag>()
@@ -383,6 +401,13 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.TelePhone, option => option.MapFrom(c => c.RecipientTelePhone))
                 .ForMember(e => e.Sex, option => option.MapFrom(c => c.RecipientSex))
                 .ReverseMap();
+
+            //LogisticsSetting
+            CreateMap<FreightDto, LogisticsSetting>()
+                .ForMember(e => e.Low_Con, option => option.MapFrom(c => c.Low_Con == null ? 0 : c.Low_Con))
+                .ForMember(e => e.Dis_Freight, option => option.MapFrom(c => c.Dis_Freight == null ? 0 : c.Dis_Freight))
+                .ReverseMap()
+                .ForMember(e => e.ProdIds, option => option.MapFrom(c => c.MappingLogisticsSettingAndProds == null ? new List<ProdSelectedDto>() : c.MappingLogisticsSettingAndProds.Select(e => new ProdSelectedDto { Id = e.FK_LogisticsSettingId, FK_ProdId = e.FK_ProdId, IsDeleted = false,prod_Name = e.Prod.Title })));
 
             //Permissions
             CreateMap<SavePermissionsItem, Core.Models.Permissions>().ReverseMap();

@@ -108,10 +108,14 @@ namespace EtheriT.Coker.Application
 			}
 			return user;
 		}
-		public async Task<long> GetWebsiteId()
+        public bool IsLoggedIn()
+        {
+            var user = httpContextAccessor.HttpContext?.User;
+            return user?.Identity?.IsAuthenticated ?? false;
+        }
+        public async Task<long> GetWebsiteId()
         {
             if (httpContextAccessor.HttpContext == null) return 0;
-            var frontWebsiteId = GetFrontWebsiteId();
 
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
             string name = user.Identity?.Name;
@@ -209,7 +213,8 @@ namespace EtheriT.Coker.Application
             string name = "";
             try
             {
-                if (id != 0)
+                var frontWebsiteId = GetFrontWebsiteId();
+                if (frontWebsiteId == 0 && id != 0)
                 {
                     var website = await db.Websites.Where(w => w.Id == id).FirstOrDefaultAsync();
                     if(website != null) name = website.OrgName;
@@ -344,9 +349,9 @@ namespace EtheriT.Coker.Application
             db.SaveChanges();
         }
         public async Task SaveChanges(IQueryable<object> queryable) {
-            queryable.ToListAsync().Result.ForEach(x => {
-                setOptionParameter((FullAuditedEntity)x);
-                db.SaveChangesAsync();
+            queryable.ToListAsync().Result.ForEach(async x => {
+                await setOptionParameter((FullAuditedEntity)x);
+                await db.SaveChangesAsync();
             });
         }
         public async Task setOptionParameter(FullAuditedEntity entity) {
@@ -354,20 +359,34 @@ namespace EtheriT.Coker.Application
             setOptionParameter(entity,user.Id);
         }
         public void setOptionParameter(FullAuditedEntity entity,long userId) {
-            if (entity.Id == 0)
+            var entry = db.Entry(entity);
+            var now = DateTime.Now;
+            switch (entry.State)
             {
-                entity.CreatorUserId = userId;
-                entity.CreationTime = DateTime.Now;
-            }
-            else if (entity.IsDeleted)
-            {
-                entity.DeleterUserId = userId;
-                entity.DeletionTime = DateTime.Now;
-            }
-            else
-            {
-                entity.LastModifierUserId = userId;
-                entity.LastModificationTime = DateTime.Now;
+                case EntityState.Added:
+                    entity.CreatorUserId = userId;
+                    entity.CreationTime = now;
+                    break;
+
+                case EntityState.Modified:
+                    if (entity.IsDeleted)
+                    {
+                        entity.DeleterUserId = userId;
+                        entity.DeletionTime = now;
+                    }
+                    else
+                    {
+                        entity.LastModifierUserId = userId;
+                        entity.LastModificationTime = now;
+                    }
+                    break;
+
+                case EntityState.Deleted:
+                    entry.State = EntityState.Modified;
+                    entity.IsDeleted = true;
+                    entity.DeleterUserId = userId;
+                    entity.DeletionTime = now;
+                    break;
             }
         }
         public async Task SetLogs(string Paramater, string response) {

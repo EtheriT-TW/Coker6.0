@@ -318,7 +318,7 @@ header {
     font-size: 1.5rem;
 }
 
-.subtitle .subtitle_title > img, .subtitle .subtitle_title > div > img {
+.subtitle .subtitle_title > img.icon, .subtitle .subtitle_title > img.icon {
     max-height: 1.75rem;
 }
 

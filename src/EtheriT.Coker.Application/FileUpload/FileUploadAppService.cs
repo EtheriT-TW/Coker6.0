@@ -1118,6 +1118,89 @@ namespace EtheriT.Coker.Application
             response.Success = true;
             return response;
         }
+        public async Task<Dictionary<long, string>> GetMinImageMapAsync(List<long> prodIds)
+        {
+            if (prodIds == null || prodIds.Count == 0)
+                return new Dictionary<long, string>();
+
+            long webid = await loginUserData.GetWebsiteId();
+            string orgName = await loginUserData.GetWebsiteOrgName();
+
+            // 把「網站邊界」綁死在查詢裡，避免跨站撈圖
+            var siteProdIds =
+                from p in db.Prods
+                where p.FK_WebsiteId == webid && !p.IsDeleted && prodIds.Contains(p.Id)
+                select p.Id;
+
+            var originalsQ =
+                from fb in db.FileBinds
+                join f in db.FileUploads on fb.FK_FileUploadId equals f.Id
+                join pid in siteProdIds on fb.Sid equals pid
+                where fb.type == 1 && !f.IsDeleted && !fb.IsDeleted
+                select new { ProdId = fb.Sid, Size = f.Size, Path = f.DownloadFileName };
+
+            var compressedQ =
+                from fb in db.FileBinds
+                join fo in db.FileUploads on fb.FK_FileUploadId equals fo.Id
+                join pid in siteProdIds on fb.Sid equals pid
+                where fb.type == 1 && !fo.IsDeleted && !fb.IsDeleted
+                join m in db.FileBindMores on fo.GuidKey equals m.FK_FileBindGuid
+                where m.type == 1
+                join fc in db.FileUploads on m.FK_FileUploadId equals fc.Id
+                where !fc.IsDeleted
+                select new { ProdId = fb.Sid, Size = fc.Size, Path = fc.DownloadFileName };
+
+            var allImagesQ = originalsQ.Concat(compressedQ);
+
+            // 兩段式：先求每個商品最小 size，再對回那一筆
+            var minSizeQ =
+                from img in allImagesQ
+                where img.Size != null
+                group img by img.ProdId into g
+                select new { ProdId = g.Key, MinSize = g.Min(x => x.Size) };
+
+            var minImageQ =
+                from img in allImagesQ
+                join agg in minSizeQ on new { img.ProdId, img.Size } equals new { agg.ProdId, Size = agg.MinSize }
+                select new { img.ProdId, img.Path };
+
+            var minImageRows = await minImageQ.ToListAsync();
+
+            return minImageRows
+                .GroupBy(x => x.ProdId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => BuildBackendUploadPath(
+                            g.Select(x => x.Path).FirstOrDefault(),
+                            orgName,
+                            "/images/noImg.jpg"
+                    )
+                );
+        }
+        private string BuildBackendUploadPath(string? path, string orgName, string fallback = "/images/noImg.jpg")
+        {
+            if (string.IsNullOrWhiteSpace(path)) return fallback;
+
+            var p = path.Trim().Replace("\\", "/");
+
+            // 絕對 URL 或 data URI 直接通過
+            if (p.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                p.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+                p.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                return p;
+
+            const string root = "/upload/";
+            if (!p.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+                return p; // 非 /upload/ 開頭就不處理（例如 /images/noImg.jpg）
+
+            // 已經含 orgName 就不重複加
+            var after = p.Substring(root.Length);
+            if (after.StartsWith(orgName + "/", StringComparison.OrdinalIgnoreCase))
+                return p;
+
+            return (root + orgName + "/" + after).Replace("//", "/");
+        }
+
         private async Task<List<FileItemDto>> SaveFile(IList<IFormFile> files, int asotype, int serno, string directory, long sid)
         {
             List<FileItemDto> outputs = new List<FileItemDto>();

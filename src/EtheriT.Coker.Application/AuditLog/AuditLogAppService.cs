@@ -1,12 +1,13 @@
 ﻿using AutoMapper;
+using DevExpress.ClipboardSource.SpreadsheetML;
 using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto.AuditLog;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,14 +30,14 @@ namespace EtheriT.Coker.Application.AuditLog
 		public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
 		{
 			long siteId = await loginUserData.GetWebsiteId();
-			var data = await db.AuditLogs.Where(e => e.FK_WebsiteId == siteId).ToListAsync();
-			if (data != null)
-			{
-				var dataQuery = mapper.Map<List<AuditLogListDto>>(data);
-				var output = DataSourceLoader.Load(dataQuery, loadOptions);
-				return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-			}
-			else throw new Exception("查無資料");
+			var baseQuery = db.AuditLogs.AsNoTracking().Where(e => e.FK_WebsiteId == siteId);
+
+            IQueryable<AuditLogListDto> dtoQuery = mapper.ProjectTo<AuditLogListDto>(baseQuery);
+            loadOptions.PrimaryKey = new[] { "Id" };
+            loadOptions.PaginateViaPrimaryKey = true;
+
+            var output = await DataSourceLoader.LoadAsync(dtoQuery, loadOptions);
+            return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
 		}
 	}
 }

@@ -14,7 +14,7 @@
 <nav class="navbar navbar-expand-lg flex-column p-0 shadow position-fixed vw-100">
     <!-- Mega Menu -->
     <div id="Mega_Menu" class="bg-white navbar navbar-expand-lg w-100">
-        <!-- Logo -->
+        <!-- Logo 一排-->
         <div class="d-none d-lg-flex logo justify-content-end">
             @{
                 var home_target = Model.HomeTarget == true ? "_blank" : "_self";
@@ -90,18 +90,35 @@
                                             var target = secItem.Target == true ? "_blank" : "_self";
                                             var title = secItem.Target == true ? L.get("LinkToAndBlank", secItem.Title) : L.get("LinkTo", secItem.Title);
                                             string titleClass = (secItem.menuItemModels == null || secItem.menuItemModels.Count() == 0 || menu.Link.ToLower().Contains("product")) ? "" : "hasChild";
+                                            var secItemType = string.IsNullOrEmpty(secItem.imageUrl) ? "textLink" : "imageLink";
                                             if (string.IsNullOrEmpty(secItem.Link))
                                             {
                                                 secItem.Link = "#";
                                                 title = $"展開選單：{secItem.Title}";
                                             }
                                             <li class="subtitle nav-item my-0 @titleClass">
-                                                <a id="collapse-header-@secItem.Title" class="subtitle_title justify-content-between nav-link text-black py-0 text-nowrap text-start d-flex align-items-center collapsed" href="@secItem.Link" title="@title" target="@target" rel="@(secItem.Target == true ? $"noopener noreferrer" : "")"
+                                                <a id="collapse-header-@secItem.Title" class="subtitle_title justify-content-between nav-link text-black py-0 text-nowrap text-start d-flex align-items-center collapsed @secItemType" href="@secItem.Link" title="@title" target="@target" rel="@(secItem.Target == true ? $"noopener noreferrer" : "")"
                                                    data-bs-toggle="" data-bs-target="#collapse-@secItem.Title" aria-expanded="true">
                                                     <div>
-                                                        <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
-                                                        <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
-                                                        @secItem.Title
+                                                        @if (string.IsNullOrEmpty(secItem.imageUrl))
+                                                        {
+                                                            <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
+                                                            <img class="@imageiconclass icon me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
+                                                            @secItem.Title
+                                                        }
+                                                        else
+                                                        {
+                                                            if (string.IsNullOrEmpty(secItem.hoverImageUrl))
+                                                            {
+                                                                <img src="@secItem.imageUrl" alt="@secItem.Title" class="d-none d-lg-inline" />
+                                                                <span class="d-inline d-lg-none">@secItem.Title</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <img src="@secItem.imageUrl" data-mouseover="@secItem.hoverImageUrl" data-mouseout="@secItem.imageUrl" alt="@secItem.Title" />
+                                                                <span class="d-none">@secItem.Title</span>
+                                                            }
+                                                        }
                                                     </div>
                                                     <span class="material-symbols-outlined d-lg-none">
                                                         double_arrow
@@ -115,12 +132,13 @@
                                                         {
                                                             iconclass = thirdItem.Icon == "" ? "d-none" : "";
                                                             imageiconclass = thirdItem.ImageIcon == "" ? "d-none" : "";
+                                                            var thirdItemType = string.IsNullOrEmpty(thirdItem.imageUrl) ? "textLink" : "imageLink";
                                                             <li class="px-0">
                                                                 @if (secItem.Link != "")
                                                                 {
                                                                     target = thirdItem.Target == true ? "_blank" : "_self";
                                                                     title = thirdItem.Target == true ? L.get("LinkToAndBlank", thirdItem.Title) : L.get("LinkTo", thirdItem.Title);
-                                                                    <a class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target" rel="@(thirdItem.Target == true ? $"noopener noreferrer" : "")">
+                                                                    <a class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center @thirdItemType" href="@thirdItem.Link" data-routeName="@secItem.RouteName" title="@title" target="@target" rel="@(thirdItem.Target == true ? $"noopener noreferrer" : "")">
                                                                         <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
                                                                         <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
                                                                         @thirdItem.Title
@@ -363,6 +381,7 @@
         </div>
     }
 }
+
 @if (Model.ShowMarquee && Model.marqueeModels != null && Model.marqueeModels.Count > 0)
 {
     <div id="swiper-light" class="headernews m-auto d-block position-relative">

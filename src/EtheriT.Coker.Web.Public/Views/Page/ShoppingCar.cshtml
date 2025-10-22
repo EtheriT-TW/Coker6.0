@@ -6,16 +6,6 @@
 @using EtheriT.Coker.Application.Shared.i18n;
 @using System.Web
 @model PageViewModel
-@{
-    ViewData["SideName"] = Model.PageData.SiteName;
-    ViewData["PageName"] = Model.PageData.Title;
-    ViewData["OrgName"] = Model.orgName;
-    ViewData["Description"] = Model.PageData.Description;
-    ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
-    ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
-    ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
-    ViewData["XSRF-TOKEN"] = Model.token;
-}
 <script nonce="@ViewBag.Nonce">
     const PageKey = "@Model.option";
     const local = @Html.Raw(L.getAllJsonString());
@@ -142,7 +132,15 @@
         </div>
     </div>
 </div>
+@if (Model.PageData != null && !string.IsNullOrWhiteSpace(Model.PageData.Html))
+{
+    <Content id="main" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
+}
 
+@if (Model.ParentData != null && !string.IsNullOrWhiteSpace(Model.ParentData.Html))
+{
+    <Content id="ParentNode" class="d-none">@HttpUtility.HtmlEncode(Model.ParentData.Html)</Content>
+}
 <div class="history container my-4 d-flex flex-wrap justify-content-center justify-content-md-end d-none">
     <a class="bg-white text-center m-1 py-2" href="/@ViewData["OrgName"]/Favorites">
         <div>收藏商品<span class="fw-bold">20</span>件</div>
@@ -152,17 +150,14 @@
     </a>
 </div>
 <div id="BuyStepSwiper" class="container pt-5 pb-4 mt-4 position-relative">
-    @if (ViewBag.LoginEnable != null && ViewBag.LoginEnable)
+    @if (ViewBag.LoginEnable != null && ViewBag.LoginEnable && !ViewBag.isLogin)
     {
-        @if (!ViewBag.isLogin)
-        {
-            <div id="memberLogin" class="container my-5">
-                <div class="rounded-1 px-3 py-4 bg-white d-flex align-items-center justify-content-center justify-content-sm-start">
-                    <div>購買前登入會員可更方便查詢訂單！</div>
-                    <button class="btn_call_login bg-transparent rounded-1 ms-0 ms-sm-3">會員登入</button>
-                </div>
+        <div id="memberLogin" class="container my-5">
+            <div class="rounded-1 px-3 py-4 bg-white d-flex align-items-center justify-content-center justify-content-sm-start">
+                <div>購買前登入會員可更方便查詢訂單！</div>
+                <button class="btn_call_login bg-transparent rounded-1 ms-0 ms-sm-3">會員登入</button>
             </div>
-        }
+        </div>
     }
 
     <div class="swiper shadow-lg mt-5">
@@ -179,87 +174,113 @@
                         <div class="col-2">數量</div>
                         <div class="col-2">小計</div>
                     </div>
+                    <template id="Template_Cart_Group">
+                        <li class="purchase_group border-top py-2" data-group-id="">
+                            <div class="group_header mb-2">
+                                <label class="form-check d-flex align-items-center">
+                                    <input type="checkbox" class="form-check-input me-2 js-group-check">
+                                    <span class="group_title fw-bold" data-field="title"></span>
+                                    <span class="badge bg-secondary ms-2" data-field="count">0 件</span>
+                                </label>
+                                <div class="text-muted small" data-field="describe"></div>
+                            </div>
 
-                    <ul class="purchase_list pb-4 px-5">
-                        <template id="Template_Cart_Details">
-                            <li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative" data-scid="">
-                                <div class="image col-lg-6 col-sm-2 col-4 row gx-0">
-                                    <a data-key="link" class="align-content-center pro_link col-lg-2 col-12 me-3" href="" title="連結至：商品" target="_blank" rel="noopener noreferrer">
+                            <ul class="group_items list-unstyled mb-0"></ul>
+
+                            <div class="group_footer mt-2 pt-2 d-flex justify-content-between align-items-center">
+                                <small class="text-muted">已選 <span class="js-selected-count">0</span> 件</small>
+                                <div>
+                                    <span class="fw-bold">小計：</span>
+                                    <span class="js-group-subtotal red_text fw-bold" data-subtotal="0">$0</span>
+                                </div>
+                            </div>
+                        </li>
+                    </template>
+
+
+                    <template id="Template_Cart_Details">
+                        <li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative" data-scid="">
+                            <div class="image col-lg-6 col-sm-2 col-4 row gx-0">
+                                <div class="d-flex align-content-center pro_link col-lg-2 col-12 me-3">
+                                    <input type="checkbox" name="buyItems" class="me-2" />
+                                    <label>
                                         <img data-key="imagePath" class="pro_image img-fluid" alt="商品" src="">
-                                    </a>
-                                    <a data-key="link" class="pro_link col text-start overflow-hidden" href="" target="_blank" rel="noopener noreferrer">
-                                        <div class="content d-lg-block d-none">
-                                            <div data-key="title" class="pro_name single_line fw-bold"></div>
-                                            <div class="pro_detail d-flex flex-wrap">
-                                                <div data-key="spec" class="pro_specification pe-3"></div>
-                                            </div>
+                                    </label>
+                                </div>
+                                <a data-key="link" class="pro_link col text-start overflow-hidden" href="" target="_blank" rel="noopener noreferrer">
+                                    <div class="content d-lg-block d-none">
+                                        <div data-key="title" class="pro_name single_line fw-bold"></div>
+                                        <div class="pro_detail d-flex flex-wrap">
+                                            <div data-key="spec" class="pro_specification pe-3"></div>
                                         </div>
-                                    </a>
-                                </div>
-                                <div class="nostock text-start col-sm-6 col d-none">
-                                    <div data-key="title" class="pro_name d-lg-none single_line fw-bold"></div>
-                                    <div class="pro_detail d-lg-none d-flex flex-wrap">
-                                        <div data-key="spec" class="pro_specification pe-3"></div>
+                                        <div data-key="freight" class="fixedFreight"></div>
                                     </div>
-                                    <div class="h5 fw-bold red_text">商品規格已下架或庫存為0</div>
+                                </a>
+                            </div>
+                            <div class="nostock text-start col-sm-6 col d-none">
+                                <div data-key="title" class="pro_name d-lg-none single_line fw-bold"></div>
+                                <div class="pro_detail d-lg-none d-flex flex-wrap">
+                                    <div data-key="spec" class="pro_specification pe-3"></div>
                                 </div>
-                                <div class="content col-sm-6 col row gx-0 overflow-hidden">
-                                    <a data-key="link" class="pro_link" href="" title="連結至：商品" target="_blank" rel="noopener noreferrer">
-                                        <div class="d-lg-none d-block text-start">
-                                            <div data-key="title" class="pro_name single_line fw-bold"></div>
-                                            <div class="pro_detail d-flex flex-wrap">
-                                                <div data-key="spec" class="pro_specification pe-3"></div>
-                                                @*<div class="pro_instructions single_line"></div>*@
-                                            </div>
+                                <div class="h5 fw-bold red_text">商品規格已下架或庫存為0</div>
+                            </div>
+                            <div class="content col-sm-6 col row gx-0 overflow-hidden">
+                                <a data-key="link" class="pro_link" href="" title="連結至：商品" target="_blank" rel="noopener noreferrer">
+                                    <div class="d-lg-none d-block text-start">
+                                        <div data-key="title" class="pro_name single_line fw-bold"></div>
+                                        <div class="pro_detail d-flex flex-wrap">
+                                            <div data-key="spec" class="pro_specification pe-3"></div>
+                                            @*<div class="pro_instructions single_line"></div>*@
                                         </div>
-                                    </a>
-
-                                    <div class=" col-12 col-lg-4 my-3 my-lg-0 fw-bold align-self-center text-start text-lg-center">
-                                        <div data-key="oldPrice" data-type="price" class="pro_old_unit price fw-light text-decoration-line-through d-none"></div>
-                                        <div data-key="price" data-type="price" class="pro_unit"></div>
                                     </div>
+                                </a>
 
-                                    <div class="counter_input col-12 col-lg-4 d-flex justify-content-start justify-content-lg-center align-items-center">
-                                        <button class="btn_count_minus bg-white border-end-0">
-                                            <i class="fa-solid fa-minus"></i>
-                                            <span class="d-none">減少</span>
-                                        </button>
-                                        <label class="d-none" for="quantityInput1">數量</label>
-                                        <input data-key="quantity" id="quantityInput1" class="pro_quantity text-center py-1" type="number" name="counter" value="">
-
-                                        <button class="btn_count_plus bg-white border-start-0">
-                                            <i class="fa-solid fa-plus"></i>
-                                            <span class="d-none">增加</span>
-                                        </button>
-                                    </div>
-
-                                    <div data-key="subtotal" data-type="price" class="pro_subtotal col-4 fw-bold fs-5 d-lg-block d-none" data-subtotal=""></div>
+                                <div class=" col-12 col-lg-4 my-3 my-lg-0 fw-bold align-self-center text-start text-lg-center">
+                                    <div data-key="oldPrice" data-type="price" class="pro_old_unit price fw-light text-decoration-line-through d-none"></div>
+                                    <div data-key="price" data-type="price" class="pro_unit"></div>
                                 </div>
 
-                                <div class="btn_side_icon position-absolute d-flex flex-column top-50 translate-middle-y end-0 p-2">
+                                <div class="counter_input col-12 col-lg-4 d-flex justify-content-start justify-content-lg-center align-items-center">
+                                    <button class="btn_count_minus bg-white border-end-0">
+                                        <i class="fa-solid fa-minus"></i>
+                                        <span class="d-none">減少</span>
+                                    </button>
+                                    <label class="d-none" for="quantityInput1">數量</label>
+                                    <input data-key="quantity" id="quantityInput1" class="pro_quantity text-center py-1" type="number" name="counter" value="">
 
-                                    @if (ViewBag.LoginEnable)
+                                    <button class="btn_count_plus bg-white border-start-0">
+                                        <i class="fa-solid fa-plus"></i>
+                                        <span class="d-none">增加</span>
+                                    </button>
+                                </div>
+
+                                <div data-key="subtotal" data-type="price" class="pro_subtotal col-4 fw-bold fs-5 d-lg-block d-none" data-subtotal=""></div>
+                            </div>
+
+                            <div class="btn_side_icon position-absolute d-flex flex-column top-50 translate-middle-y end-0 p-2">
+
+                                @if (ViewBag.LoginEnable)
+                                {
+                                    @if (ViewBag.isLogin)
                                     {
-                                        @if (ViewBag.isLogin)
-                                        {
-                                            <span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="加入/移除收藏">
-                                                <button class="btn_move_to_favorites bg-transparent border-0">
-                                                    <i class="fa-regular fa-heart text-danger"></i>
-                                                    <span class="d-none">加入/移除收藏</span>
-                                                </button>
-                                            </span>
-                                        }
+                                        <span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="加入/移除收藏">
+                                            <button class="btn_move_to_favorites bg-transparent border-0">
+                                                <i class="fa-regular fa-heart text-danger"></i>
+                                                <span class="d-none">加入/移除收藏</span>
+                                            </button>
+                                        </span>
                                     }
-                                    <span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移除商品">
-                                        <button class="btn_remove_pro bg-transparent border-0">
-                                            <i class="fa-solid fa-xmark"></i>
-                                            <span class="d-none">移除商品</span>
-                                        </button>
-                                    </span>
-                                </div>
-                            </li>
-                        </template>
-                    </ul>
+                                }
+                                <span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移除商品">
+                                    <button class="btn_remove_pro bg-transparent border-0">
+                                        <i class="fa-solid fa-xmark"></i>
+                                        <span class="d-none">移除商品</span>
+                                    </button>
+                                </span>
+                            </div>
+                        </li>
+                    </template>
+                    <ul class="purchase_list pb-4 ps-4 pe-5"></ul>
 
                     <div class="priceline pe-sm-5 col-12 col-md-6 offset-md-6">
                         <div class="py-2 d-flex justify-content-end text-end">

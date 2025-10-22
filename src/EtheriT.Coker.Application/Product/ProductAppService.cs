@@ -110,7 +110,7 @@ namespace EtheriT.Coker.Application.Product
 
                 if (dto.Id == 0)
                 {
-                    Core.Models.Prod p = new Core.Models.Prod
+                    Prod p = new Prod
                     {
                         FK_WebsiteId = WebsiteID,
                         CreatorUserId = userId
@@ -128,7 +128,7 @@ namespace EtheriT.Coker.Application.Product
                         var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == db_p.Id).ToListAsync();
                         var stockids = stocks.Select(e => e.Id).ToList();
                         var scs = await db.ShoppingCarts.Where(e => stockids.Contains(e.FK_PSid) && !e.IsOrder).OrderByDescending(e => e.CreationTime).ToListAsync();
-                        if (dto.status != (ProdStatusEnum)db_p.Status && dto.status == ProdStatusEnum.售完)
+                        if (dto.status != db_p.Status && dto.status == ProdStatusEnum.售完)
                         {
                             foreach (var sc in scs)
                             {
@@ -140,7 +140,7 @@ namespace EtheriT.Coker.Application.Product
                                 stock_change = true;
                             }
                         }
-                        else if (dto.status != (ProdStatusEnum)db_p.Status && (ProdStatusEnum)db_p.Status == ProdStatusEnum.售完)
+                        else if (dto.status != db_p.Status && db_p.Status == ProdStatusEnum.售完)
                         {
                             foreach (var sc in scs)
                             {
@@ -463,81 +463,108 @@ namespace EtheriT.Coker.Application.Product
             return output;
         }
         /* Get Data */
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? pids)
         {
             try
             {
                 long webid = await loginUserData.GetWebsiteId();
-
-                // 一次先查所有 Prods
-                var prods = await db.Prods
+                var selectedIds = stringHandler.ParseCsvIds(pids);
+                // 只取必要欄位，避免撈太肥
+                var baseQuery = db.Prods
                     .Where(p => p.FK_WebsiteId == webid && !p.IsDeleted)
+                    .Select(p => new ProductListBase
+                    {
+                        Id = p.Id,
+                        Title = p.Title,
+                        Visible = p.Visible,
+                        RemovedFromShelves = p.RemovedFromShelves,
+                        Ser_No = p.Ser_No,
+                        ItemNo = p.ItemNo,
+                        StartTime = p.StartTime,
+                        EndTime = p.EndTime,
+                        permanent = p.permanent,
+                        LastModificationTime = p.LastModificationTime,
+                        CreationTime = p.CreationTime,
+                        IsSelected = selectedIds.Contains(p.Id)
+                    });
+
+                var baseResult = await DataSourceLoader.LoadAsync(baseQuery, loadOptions);
+
+                var pageRows = ((IEnumerable<object>)baseResult.data).Cast<ProductListBase>().ToList();
+                var pageIds = pageRows.Select(r => r.Id).ToList();
+                if (pageIds.Count == 0)
+                    return new JsonResult(baseResult, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+
+                //抓標籤
+                var tagRows = await (
+                    from ta in db.Tag_Associates.AsNoTracking()
+                    join t in db.Tags.AsNoTracking() on ta.FK_TId equals t.Id
+                    where ta.Type == TagAssociateTypeEnum.商品
+                       && !ta.IsDeleted && !t.IsDeleted
+                       && pageIds.Contains(ta.FK_AId)
+                    select new { ProdId = ta.FK_AId, TagName = t.Title }
+                ).ToListAsync();
+
+                var tagMap = tagRows
+                    .GroupBy(x => x.ProdId)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => string.Join("、", g.Select(x => x.TagName).Distinct().OrderBy(n => n))
+                    );
+                // 最小圖的路徑/檔名
+                var imageMap = await fileUploadAppService.GetMinImageMapAsync(pageIds);
+
+                //抓商品價格
+                var priceAgg = await
+                    (from s in db.Prod_Stocks
+                     where !s.IsDeleted && pageIds.Contains(s.FK_Pid)
+                     join pp in db.Prod_Prices.Where(pp => !pp.IsDeleted) on s.Id equals pp.FK_PSId into ppj
+                     from pp in ppj.DefaultIfEmpty()
+                     group new { s, pp } by s.FK_Pid into g
+                     select new
+                     {
+                         ProdId = g.Key,
+                         HasAnyStock = g.Any(), // 有無任何庫存
+                         HasTimePrice = g.Any(x => x.s.IsTimePrice),
+                         MinPrice = g.Where(x => !x.s.IsTimePrice && x.pp != null)
+                                     .Select(x => (int?)(x.pp.Price ?? 0))
+                                     .Min(),
+                         MaxPrice = g.Where(x => !x.s.IsTimePrice && x.pp != null)
+                                     .Select(x => (int?)(x.pp.Price ?? 0))
+                                     .Max(),
+                         HasNormalStock = g.Any(x => !x.s.IsTimePrice) // 有無非時價庫存
+                     })
                     .ToListAsync();
 
-                var prodIds = prods.Select(p => p.Id).ToList();
 
-                // 一次查所有 Stocks
-                var allStocks = await db.Prod_Stocks
-                    .Where(s => prodIds.Contains(s.FK_Pid) && !s.IsDeleted)
-                    .Select(s => new { s.Id, s.FK_Pid, s.IsTimePrice })
-                    .ToListAsync();
 
-                // 把 Stocks 分組
-                var stocksDict = allStocks
-                    .GroupBy(s => s.FK_Pid)
-                    .ToDictionary(g => g.Key, g => g.ToList());
+                var priceMap = priceAgg.ToDictionary(x => x.ProdId);
 
-                var resultList = new List<ProductGetAllListDto>();
+                string L_MarketPrice = L.get("MarketPrice");
 
-                foreach (var p in prods)
+                var finalRows = pageRows.Select(p =>
                 {
-                    stocksDict.TryGetValue(p.Id, out var stocks);
-                    if (stocks == null) continue;
-                    var timePriceStocks = stocks.Where(s => s.IsTimePrice).ToList();
-                    var normalStocks = stocks.Where(s => !s.IsTimePrice).ToList();
-
-                    string priceText;
-
-                    if (stocks == null || stocks.Count == 0)
+                    string priceText = "";
+                    if (priceMap.TryGetValue(p.Id, out var agg))
                     {
-                        priceText = "";
-                    }
-                    else if (normalStocks.Count == 0)
-                    {
-                        priceText = L.get("MarketPrice");
-                    }
-                    else
-                    {
-                        var stockIds = normalStocks.Select(s => s.Id).ToList();
-
-                        var priceList = await db.Prod_Prices
-                            .Where(pp => !pp.IsDeleted && stockIds.Contains(pp.FK_PSId))
-                            .Select(pp => (int?)(pp.Price ?? 0))
-                            .ToListAsync();
-
-                        if (priceList.Count == 0)
-                        {
-                            priceText = timePriceStocks.Count > 0 ? L.get("MarketPrice") : "";
-                        }
+                        if (!agg.HasAnyStock) priceText = "";
+                        else if (!agg.HasNormalStock) priceText = L_MarketPrice;
+                        else if (agg.MinPrice == null || agg.MaxPrice == null)
+                            priceText = agg.HasTimePrice ? L_MarketPrice : "";
                         else
                         {
-                            var minPrice = priceList.Min();
-                            var maxPrice = priceList.Max();
-
-                            if (timePriceStocks.Count > 0)
-                            {
-                                priceText = $"{minPrice.GetValueOrDefault():###,###}~{L.get("MarketPrice")}";
-                            }
-                            else
-                            {
-                                priceText = minPrice == maxPrice
-                                    ? $"{maxPrice.GetValueOrDefault():###,###}"
-                                    : $"{minPrice.GetValueOrDefault():###,###}~{maxPrice.GetValueOrDefault():###,###}";
-                            }
+                            var minPrice = agg.MinPrice.GetValueOrDefault();
+                            var maxPrice = agg.MaxPrice.GetValueOrDefault();
+                            priceText = agg.HasTimePrice
+                                ? $"{minPrice:###,###}~{L_MarketPrice}"
+                                : (minPrice == maxPrice ? $"{maxPrice:###,###}" : $"{minPrice:###,###}~{maxPrice:###,###}");
                         }
                     }
 
-                    resultList.Add(new ProductGetAllListDto
+                    imageMap.TryGetValue(p.Id, out var imgPath);
+                    tagMap.TryGetValue(p.Id, out var tagsText);
+
+                    return new ProductSelectGetAllListDto
                     {
                         Id = p.Id,
                         Title = p.Title,
@@ -549,21 +576,24 @@ namespace EtheriT.Coker.Application.Product
                         StartTime = p.StartTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.StartTime),
                         EndTime = p.EndTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.EndTime),
                         Permanent = p.permanent,
-                        LastModificationTime = p.LastModificationTime ?? p.CreationTime
-                    });
-                }
+                        LastModificationTime = p.LastModificationTime ?? p.CreationTime,
+                        MinsizeImage = imgPath ?? "/images/noImg.jpg",
+                        TagNames = tagsText ?? "",
+                        IsSelected = p.IsSelected
+                    };
+                }).ToList();
 
-                // DataSourceLoader篩選排序
-                var output = DataSourceLoader.Load(resultList.AsQueryable(), loadOptions);
+                baseResult.data = finalRows;
 
-                return new JsonResult(output, new JsonSerializerSettings
+                return new JsonResult(baseResult, new JsonSerializerSettings
                 {
                     ContractResolver = new DefaultContractResolver()
                 });
             }
             catch (Exception e)
             {
-                // 建議加Log
+                Console.WriteLine(e.Message);
+                // TODO: 記錄 log（包含 webid、loadOptions 摘要、e.Message/e.StackTrace）
             }
 
             return new JsonResult(new List<ProductGetAllListDto>(), new JsonSerializerSettings
@@ -571,6 +601,7 @@ namespace EtheriT.Coker.Application.Product
                 ContractResolver = new DefaultContractResolver()
             });
         }
+
         public async Task<ProdGetDataDto> GetProdDataOne(long Id)
         {
             try

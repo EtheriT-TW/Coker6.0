@@ -49,6 +49,7 @@
             Update: "#btnUpdate",
             Add: '#btnAdd',
             Refresh: '#btnRefresh',
+            moveEnable: "#moveEnable"
         },
         on: {
             ready: function () {
@@ -396,7 +397,8 @@ function menuReload(menuEditor, myOffcanvas) {
     co.WebMesnus.getAll().done(function (result) {
         if (result.success) {
             //console.log(result.maps)
-            menuEditor.setData(result.maps);
+            (menuEditor.setDataPreserve || menuEditor.setData).call(menuEditor, result.maps);
+            //menuEditor.setData(result.maps);
             $("#myEditor").removeClass("d-none");
             if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
             else $("#myEditor").addClass("d-none");

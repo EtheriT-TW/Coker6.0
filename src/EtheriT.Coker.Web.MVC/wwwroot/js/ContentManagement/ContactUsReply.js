@@ -2,6 +2,28 @@
 function contentReady(e) {
     ContactList = e;
 }
+function onRowPrepared(e) {
+    if (e.rowType === "data") {
+        const $row = $(e.rowElement); 
+        switch (e.data.Status) {
+            case "未處理":
+                $row.addClass("status-pending");
+                break;
+            case "處理中":
+                $row.addClass("status-processing");
+                break;
+            case "已回覆":
+                $row.addClass("status-replied");
+                break;
+            case "已完成":
+                $row.addClass("status-closed");
+                break;
+            case "作廢/忽略":
+                $row.addClass("status-ignored");
+                break;
+        }
+    }
+}
 function editButtonClicked(e) {
     keyId = e.row.key;
     window.location.hash = keyId;
@@ -83,14 +105,27 @@ function FormDataSet(result) {
     co.Form.insertData(result.object, "#ReplyForm");
     $(".page").removeClass("show");
     $("#Form").addClass("show");
-    console.log(result);
+    $("#Status").find(`option[value="${result.object.status}"]`).prop("selected", true);
+    if (result.object.status == 3 || result.object.status == 9) {
+        $("#Form .btn_done,#Status,#InputReply").prop("disabled", true);
+    } else {
+        $("#Form .btn_done,#Status,#InputReply").prop("disabled", false);
+    }
 }
 
 function Reply() {
     Coker.sweet.confirm("直接回覆", "回覆後不可取消", "確定", "取消", function () {
-        Coker.sweet.success("已成功回覆", null, true);
-        $("#Status").val("Processed");
-        $("#InputReply").attr("disabled", "disabled");
+        const data = co.Form.getJson("ReplyForm");
+        co.Contact.Replay(data).done(function (result) {
+            if (result.success) {
+                Coker.sweet.success("已成功回覆", null, true);
+                location.hash = "";
+                ContactList.component.refresh();
+            } else {
+                Coker.sweet.error(result.message);
+            }
+        }).fail(function (xhr, status, error) {
+            Coker.sweet.error(error);
+        });
     });
-    $(".btn_done").attr("disabled", "disabled");
 }

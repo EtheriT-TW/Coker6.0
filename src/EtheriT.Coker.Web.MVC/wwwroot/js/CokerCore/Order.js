@@ -66,6 +66,13 @@ const orderModel = {
             type: "POST",
             headers: _c.Data.Header
         });
+    },
+    GetFreigntStatusTypEnum: function () {
+        return $.ajax({
+            url: "/api/Order/GetFreigntStatusTypEnum",
+            type: "POST",
+            headers: _c.Data.Header
+        });
     }
 }
 Coker.extend({

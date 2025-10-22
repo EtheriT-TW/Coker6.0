@@ -1,4 +1,4 @@
-﻿namespace EtheriT.Coker.Application.Shared.Dto.enumType
+﻿namespace EtheriT.Coker.Application.Shared.Dto.enumType.Logistics
 {
     public enum PreserveTypeEnum
     {

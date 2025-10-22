@@ -330,7 +330,7 @@ namespace EtheriT.Coker.Application.Directory
             var data1 = db.WebMenus.Include(e => e.Website).Where(e => !e.IsDeleted)
                             .Where(e => e.FK_WebsiteId == WebsiteID)
                             .Where(e => e.Visible)
-                            //.Where(e => e.RouterName.ToLower() != "home")
+                            .Where(e => !string.IsNullOrEmpty(e.RouterName))
                             .Where(e => !string.IsNullOrEmpty(e.Html))
                             .Where(e =>
                                 (e.Title ?? "").Contains(dto.SearchText ?? "") ||

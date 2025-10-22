@@ -28,10 +28,12 @@ function setCounter() {
 		entries.forEach(entry => {
 			const el = entry.target;
 			if (entry.isIntersecting && !el.classList.contains('is-visible')) {
-				counterUp(el, {
-					duration: 2000,
-					delay: 16,
-				})
+				const $el = $(el);
+				const options = {
+					duration: parseInt($el.data("duration")) || 2000,
+					delay: parseInt($el.data("delay")) || 16,
+				};
+				counterUp(el, options);
 				el.classList.add('is-visible')
 			}
 		})

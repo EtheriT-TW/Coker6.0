@@ -1,5 +1,4 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
-using EtheriT.Coker.Application.Shared.Reporting;
+﻿using EtheriT.Coker.Application.Shared.Reporting;
 using EtheriT.Coker.Application.Shared.Dto.ReportingModels;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 
 namespace EtheriT.Coker.Application.Report
 {

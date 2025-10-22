@@ -45,6 +45,10 @@ input[type="number"] {
 }
 
 /* Product List */
+#ProductList .dx-datagrid-rowsview .dx-row > td {
+    vertical-align: middle;
+}
+
 #ProductContent .btn_back {
     color: #4E565A;
 }

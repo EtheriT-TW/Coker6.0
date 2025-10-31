@@ -363,6 +363,20 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     jobID = "B001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2023, 7, 25, 19, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 22,
+                    key = "EmailNotificationType",
+                    name = "信件寄送方式",
+                    memo = "請選擇信件寄送方式",
+                    FK_StoreSetGroupId = 3,
+                    type = SeoSetDataTypeEnum.radio,
+                    maxlength = 50,
+                    pattern = "(?=[a-z]{2}-?[A-Z]{0,2},?)+",
+                    IsDeleted = false,
+                    jobID = "S001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 12, 05, 06, 00, 00, 00, DateTimeKind.Local)
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(
@@ -460,6 +474,24 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 23, 14, 38, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 11,
+                    Key = "Detailed",
+                    Value = "寄送完整表單",
+                    FK_StoreSetId = 22,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 12,
+                    Key = "Simple",
+                    Value = "簡易通知",
+                    FK_StoreSetId = 22,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
         }

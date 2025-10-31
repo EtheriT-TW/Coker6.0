@@ -75,6 +75,19 @@
                                             </div>
                                         </div>
                                         break;
+                                    case SeoSetDataTypeEnum.radio:
+                                        <div class="d-flex flex-column">
+                                            <div class="form-label m-0">@item.name</div>
+                                            <div class="d-flex align-items-center border border-1 my-2 py-2 rounded">
+                                                @foreach (var checkItem in item.storeSetItemOutputDtos)
+                                                {
+                                                    <input id="@($"{item.key}-{checkItem.Key}")" name="@(item.key)" class="mx-3" type="radio" value="@checkItem.Key">
+                                                    <label for="@($"{item.key}-{checkItem.Key}")">@checkItem.Value</label>
+                                                }
+                                            </div>
+                                            <div class="form-label m-0">@item.memo</div>
+                                        </div>
+                                        break;
                                 }
                             }
                         </div>

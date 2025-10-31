@@ -11,14 +11,20 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         }
         public IActionResult CustomAd(int id)
         {
+            if (!ModelState.IsValid)
+                return StatusCode(StatusCodes.Status400BadRequest);
             return View("CustomAd");
         }
         public IActionResult EnterAd(int id)
         {
+            if (!ModelState.IsValid)
+                return StatusCode(StatusCodes.Status400BadRequest);
             return View("EnterAd");
         }
         public IActionResult RightSideAd(int id)
         {
+            if (!ModelState.IsValid)
+                return StatusCode(StatusCodes.Status400BadRequest);
             return View("RightSideAd");
         }
     }

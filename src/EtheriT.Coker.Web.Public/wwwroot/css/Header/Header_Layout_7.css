@@ -161,6 +161,10 @@
 
 #iswrap {
     display: none !important;
+    width: 100%;
+}
+#narTopBar {
+    width: 100%;
 }
 
 #is-block {
@@ -512,10 +516,31 @@
     #Header_Top {
         height: 3rem;
     }
+    #Mega_Menu {
+        flex-direction: row;
+    }
+    #iswrap {
+        flex: 1 1 0;
+        width: auto;
+        min-width: 0;
+        justify-content: space-between !important;
+    }
+    #narTopBar {
+        flex: 0 0 auto;
+        width:auto;
+        min-width: 0;
+    }
 
     #Mega_Menu > .logo > a > img {
         max-height: 50px;
         max-width: 50%;
+    }
+    #Car_Dropdown {
+        left:unset;
+        right: 0;
+        top: 4.5rem;
+        position: fixed;
+        margin: 0 !important;
     }
 
     #Offcanvas_Mega_Menu {

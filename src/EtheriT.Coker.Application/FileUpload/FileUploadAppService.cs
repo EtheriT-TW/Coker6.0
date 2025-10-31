@@ -1423,7 +1423,11 @@ namespace EtheriT.Coker.Application
                 "image/pjpeg",
                 "image/png",
                 "image/gif",
-                "image/webp"
+                "image/webp",
+                "image/avif",
+                "image/bmp",
+                "image/heic",
+                "image/heif"
             };
             return Array.Exists(allowedTypes, type => type == contentType);
         }
@@ -1524,7 +1528,11 @@ namespace EtheriT.Coker.Application
                 MagickFormat.Jpeg => ".jpg",
                 MagickFormat.Png => ".png",
                 MagickFormat.WebP => ".webp",
+                MagickFormat.Gif => ".gif",
                 MagickFormat.Bmp => ".bmp",
+                MagickFormat.Avif => ".avif",
+                MagickFormat.Heic => ".heic",
+                MagickFormat.Heif => ".heif",
                 _ => ".img"
             };
         }
@@ -1536,8 +1544,11 @@ namespace EtheriT.Coker.Application
                 MagickFormat.Jpeg => "image/jpeg",
                 MagickFormat.Png => "image/png",
                 MagickFormat.WebP => "image/webp",
+                MagickFormat.Gif => "image/gif",
                 MagickFormat.Bmp => "image/bmp",
                 MagickFormat.Avif => "image/avif",
+                MagickFormat.Heic => "image/heic",
+                MagickFormat.Heif => "image/heif",
                 _ => "application/octet-stream"
             };
         }

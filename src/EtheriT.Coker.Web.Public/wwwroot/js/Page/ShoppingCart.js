@@ -174,7 +174,7 @@ function PageReady() {
         $group.find('input[name="buyItems"]').prop('checked', checked);
 
         updateGroupSelectedSubtotal($group);
-        updateOverallSelectedSubtotal();
+        TotalCount();
     });
 
     // 單一品項
@@ -184,7 +184,7 @@ function PageReady() {
         if (this.checked) clearOtherGroupsExcept($group); // 互斥：勾任何一個品項就清其他組
 
         updateGroupSelectedSubtotal($group);
-        updateOverallSelectedSubtotal();
+        TotalCount();
     });
 
 
@@ -234,6 +234,7 @@ function PageReady() {
         autoHeight: true,
         loop: false,
         enabled: false,
+        allowTouchMove:false,
         pagination: {
             el: ".swiper_pagination > .swiper_pagination_buystep",
             clickable: true,
@@ -249,7 +250,7 @@ function PageReady() {
 
     buy_step_swiper.on('slideChangeTransitionEnd', function () {
         if (gotop_switch) {
-            window.scrollTo(0, $(".swiper").offset().top - $("header").height());
+            window.scrollTo(0, $("#BuyStepSwiper").offset().top - $("#Mega_Menu").height() - 90);
         }
     });
 
@@ -555,16 +556,6 @@ function clearOtherGroupsExcept($group) {
     });
 }
 
-// 右下角合計：加總所有群組 footer 的「已選小計」
-function updateOverallSelectedSubtotal() {
-    let total = 0;
-    $('.purchase_group .js-group-subtotal').each(function () {
-        total += Number($(this).attr('data-subtotal') || 0);
-    });
-    $('#Step1 [data-key="subtotal"].subtotal').text(`${total.toLocaleString()}`);
-    $('#Step1 [data-key="total"].subtotal').text(`${total.toLocaleString()}`);
-}
-
 function hashChange(e) {
     if (!!e) {
         e.preventDefault();
@@ -780,7 +771,7 @@ function renderCartGroups(result) {
     $("#Purchase_Null").toggleClass("d-none", hasItems);
 
     buy_step_swiper.update();
-    updateOverallSubtotal(); // 若你要「已選合計」，可改成 updateOverallSelectedSubtotal()
+    updateOverallSubtotal(); // 若你要「已選合計」，可改成 TotalCount()
 }
 
 
@@ -816,7 +807,7 @@ function CartInit(result) {
 
         // 計算小計與合計
         updateGroupSelectedSubtotal($firstGroup);
-        updateOverallSelectedSubtotal();
+        TotalCount();
     }
 }
 function PaymentHideShow() {
@@ -873,7 +864,7 @@ function CartListAdd(data, $container) {
         if ($self_bro.val() < max_quantity) {
             $self_bro.val(parseInt($self_bro.val()) + parseInt($self_bro.attr("step")))
             updateGroupSelectedSubtotal($group);
-            updateOverallSelectedSubtotal();
+            TotalCount();
             CartQuantityUpdate($template.find(".pro_subtotal"), data.price, data.bonus, $template.data("scId"), $self_bro.val());
         }
     });
@@ -883,7 +874,7 @@ function CartListAdd(data, $container) {
         if ($self_bro.val() > parseInt($self_bro.attr("step"))) {
             $self_bro.val(parseInt($self_bro.val()) - parseInt($self_bro.attr("step")))
             updateGroupSelectedSubtotal($group);
-            updateOverallSelectedSubtotal();
+            TotalCount();
             CartQuantityUpdate($template.find(".pro_subtotal"), data.price, data.bonus, $template.data("scId"), $self_bro.val());
         }
     });
@@ -894,7 +885,7 @@ function CartListAdd(data, $container) {
         else if ($self.val() > max_quantity) $self.val(max_quantity - (max_quantity % parseInt($self.attr("step"))))
         else $self.val($self.val() - ($self.val() % parseInt($self.attr("step"))))
         updateGroupSelectedSubtotal($group);
-        updateOverallSelectedSubtotal();
+        TotalCount();
         CartQuantityUpdate($template.find(".pro_subtotal"), data.price, data.bonus, $template.data("scId"), $self.val());
     });
 
@@ -1073,19 +1064,32 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity) {
         });
     }
 }
-function TotalCount() {
-    subtotal = 0;
-    $('#Step1 .purchase_list li.purchase_item .pro_subtotal').each(function () {
-        subtotal += Number($(this).data("subtotal") || 0);
+function computeSelectedSubtotal() {
+    let sum = 0, bonus = 0;
+    $('.purchase_group li.purchase_item input[name="buyItems"]:checked').each(function () {
+        const $li = $(this).closest('li.purchase_item');
+        const $sub = $li.find('[data-key="subtotal"]');
+        sum += Number($sub.data('subtotal') || 0);
+        bonus += Number($sub.data('subtotal_bonus') || 0);
     });
+    return { sum, bonus };
+}
 
+function TotalCount() {
+    // 以「已勾選」的品項為準
+    const { sum, bonus } = computeSelectedSubtotal();
+    subtotal = sum;
+    // 運費門檻依勾選小計判斷
     if (subtotal > low_con) freight = disfreight; else freight = ori_freight;
 
+    // 右下角顯示
     $(".subtotal").text(subtotal.toLocaleString());
     $(".shipping_fee").text(((freight == null || freight == "") ? 0 : freight).toLocaleString());
+
     total = (freight == null || freight == "") ? subtotal : subtotal + freight;
     $(".total_amount").text(parseInt(total).toLocaleString());
 
+    // 付款方式顯示篩選依據 subtotal
     PaymentHideShow();
 }
 
@@ -1554,10 +1558,21 @@ function InvoiceDataGet() {
 
     return true;
 }
+function getSelectedCartIds() {
+    const ids = [];
+    $('.purchase_group li.purchase_item input[name="buyItems"]:checked').each(function () {
+        const $li = $(this).closest('li.purchase_item');
+        const scid = $li.data('scId');            // ← 你已有：$template.data("scId", data.scId);
+        if (scid != null) ids.push(Number(scid));
+    });
+    return ids;
+}
 
 async function OrderHeaderAdd() {
     var checksuccess = true;
     var paymentInfo = null;
+    var ids = getSelectedCartIds();
+    var data = shopping_cart_data.filter(e => ids.includes(e.Id));
 
     if (($("#RadioPayment > .form-check").length > 1 & $("#radio_payment_ECPay").length > 0 && $("#radio_payment_ECPay").prop("checked")) || $("#ECPayPayment").length > 0) {
         GetECPayType();
@@ -1580,7 +1595,7 @@ async function OrderHeaderAdd() {
         }
     }
 
-    Coker.Order.CheckStock(shopping_cart_data).done(function (result) {
+    Coker.Order.CheckStock(data).done(function (result) {
         if (result.success) {
             RadioPayment();
             OrderDataGet();
@@ -1623,6 +1638,7 @@ async function OrderHeaderAdd() {
                         }
                     });
                 }
+                order_header_data.OrderDetails = order_header_data.OrderDetails.filter(e => ids.includes(e.Id));
 
                 Coker.sweet.loading();
                 Coker.Order.AddHeader(order_header_data).done(function (result) {

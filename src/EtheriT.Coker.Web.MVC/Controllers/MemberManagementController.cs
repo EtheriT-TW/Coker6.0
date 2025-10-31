@@ -6,6 +6,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
     {
         public IActionResult MemberSet(int id)
         {
+            if (!ModelState.IsValid)
+                return StatusCode(StatusCodes.Status400BadRequest);
             if (id != 0)
             {
                 return View("MemberDetails");
@@ -32,6 +34,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 		}
         public IActionResult ManagerList(int id)
         {
+            if (!ModelState.IsValid)
+                return StatusCode(StatusCodes.Status400BadRequest);
             return View("ManagerList");
         }
     }

@@ -3,11 +3,17 @@ using Newtonsoft.Json;
 
 namespace EtheriT.Coker.Web.Public.Controllers
 {
+    [Route("Error")]
     public class ErrorController : Controller
     {
-        [Route("Error/{statusCode}")]
+        [HttpGet("{statusCode:int}")]
         public IActionResult HandleErrorCode(int statusCode)
         {
+            if (!ModelState.IsValid)
+            {
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                return View("~/Views/Error/404.cshtml");
+            }
             var viewName = statusCode switch
             {
                 404 => "NotFound",
@@ -18,7 +24,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             return View(viewName);
         }
 
-        [Route("Error")]
+        [HttpGet("")]
         public IActionResult HandleError()
         {
             PrepareErrorViewBag();

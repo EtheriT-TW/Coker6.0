@@ -35,7 +35,8 @@ namespace EtheriT.Coker.Web.MVC.Extensions
 
                 // 從 DB 取出、解析、正規化，只留下 Origin
                 var urls = await db.Websites
-                    .Where(w => w.DefaultUrl != null && w.DefaultUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    .Where(w => w.DefaultUrl != null)
+                    .Where(w => EF.Functions.Like(w.DefaultUrl!, "http%"))
                     .Select(w => w.DefaultUrl!.Trim())   // 先去除前後空白
                     .Distinct()
                     .ToListAsync();

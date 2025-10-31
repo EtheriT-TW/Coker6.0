@@ -456,14 +456,14 @@ app.MapControllerRoute(
 
 app.MapControllerRoute(
     name: "Page",
-    pattern: "{website}/{key}/{option?}/{id?}/{search?}",
+    pattern: "{website}/{key}/{option?}/{detailId?}/{search?}",
     defaults: new { controller = "Page", action = "Index" },
     constraints: new { website = new NotEqual(new List<string> { "upload", "css", "js", "images", "Shared", "lib" }) }
 );
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{key?}/{option?}/{id?}/{search?}",
+    pattern: "{key?}/{option?}/{detailId?}/{search?}",
     defaults: new { controller = "Page", action = "Index" },
     constraints: new { key = new NotEqual(new List<string> { "upload", "css", "js", "images", "Shared", "lib" }) }
 );

@@ -15,6 +15,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         }
         public async Task<IActionResult> R001(long id)
         {
+            if (!ModelState.IsValid)
+                return StatusCode(StatusCodes.Status400BadRequest);
             R001ViewModel r001ViewModel = new R001ViewModel();
             r001ViewModel.ReportModel = await _reportingAppService.GetR001ModelAsync(id);
             r001ViewModel.ReportObject = new R001撿貨單();

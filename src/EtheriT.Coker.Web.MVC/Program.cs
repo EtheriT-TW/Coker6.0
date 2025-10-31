@@ -455,15 +455,17 @@ builder.Services.AddTransient<CustomQueryBuilderController>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsProduction())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/Error/404");
+    //app.UseStatusCodePagesWithReExecute("/error/{0}");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 else
 {
-    app.UseDeveloperExceptionPage();
+    // SonarQube: suppress false positive (only runs when not Production)
+    app.UseDeveloperExceptionPage();  // NOSONAR
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
@@ -545,6 +547,13 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
     IgnoreAntiforgeryToken = true,
     StatsPollingInterval = 60 * 1000
 });
+
+app.MapControllers();
+
+app.MapControllerRoute(
+    name: "error",
+    pattern: "error/{code:int}",
+    defaults: new { controller = "Error", action = "Code" });
 
 app.MapControllerRoute(
     name: "default",

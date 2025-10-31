@@ -125,14 +125,17 @@ namespace EtheriT.Coker.Web.Public.Controllers
             return check;
         }
 
-        public async Task<IActionResult> IndexAsync(string website, string key, string option, int id, string search)
+        public async Task<IActionResult> IndexAsync(string? website, string? key, string? option, long? detailId, string? search)
         {
+            if (!ModelState.IsValid)
+                return StatusCode(StatusCodes.Status404NotFound);
             if (string.IsNullOrEmpty(key)) key = "home";
             else if (string.IsNullOrEmpty(website) && !string.IsNullOrEmpty(key) && string.IsNullOrEmpty(option))
             {
                 website = key;
                 key = "home";
             }
+            long id = detailId ?? 0;
             var rootSiteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var defaultData = await websiteApplication.GetDefaultData(rootSiteId, website);
             if (website != defaultData.OrgName) website = defaultData.OrgName;
@@ -208,7 +211,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             };
             ViewData["membershipTerms"] = model.storeSet.membershipTerms;
             string view;
-            if (new List<string> { "article" }.Contains(key.ToLower()) && int.TryParse(option, out id))
+            if (new List<string> { "article" }.Contains(key.ToLower()) && long.TryParse(option, out id))
             {
                 option = key;
             }

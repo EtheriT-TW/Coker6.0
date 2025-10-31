@@ -332,16 +332,12 @@ function ElementInit() {
                     count.removeClass("d-none").text(filter.length);
                     $self.addClass("multi-price");
                 } else count.addClass("d-none");
-                filter.map(item => {
+                filter.forEach(item => {
                     if (text != "") text += "\n";
                     text += "現金：" + co.String.thousandSign(item["Price"]);
-                    if (item["Bonus"] != 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
+                    if (item["Bonus"] !== 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
                 });
-                if (filter.length > 0) {
-                    $self.val(text);
-                } else {
-                    $self.val("");
-                }
+                $self.val(filter.length ? text : "");
             }
         })
 

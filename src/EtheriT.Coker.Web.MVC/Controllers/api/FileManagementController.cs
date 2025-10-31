@@ -20,9 +20,13 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             _fileManagementAppService = fileManagementAppService;
         }
 
-        public object FileSystem(FileSystemCommand command, string arguments)
+        public IActionResult FileSystem(FileSystemCommand command, string arguments)
         {
-            return _fileManagementAppService.FileSystem(command, arguments, this.Request);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var result = _fileManagementAppService.FileSystem(command, arguments, this.Request);
+
+            return Ok(result);
         }
 
         [HttpPost]
@@ -32,9 +36,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
 
         [HttpPost]
-        public async Task<bool> CheckFileExists([FromBody] FileExistCheckDto fileCheckDto)
+        public async Task<ActionResult<bool>> CheckFileExists([FromBody] FileExistCheckDto fileCheckDto)
         {
-            return await _fileManagementAppService.CheckFileExistsAsync(fileCheckDto.DirectoryPath, fileCheckDto.FileName);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var exists = await _fileManagementAppService.CheckFileExistsAsync(fileCheckDto.DirectoryPath, fileCheckDto.FileName);
+            return Ok(exists);
         }
     }
 }

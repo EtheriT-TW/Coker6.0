@@ -7,6 +7,7 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.Contact;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Contact;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
@@ -58,7 +59,7 @@ namespace EtheriT.Coker.Application.Contact
                 var code = dto.forms.Find(e => e.Name == "captcha");
                 var StoreSetId = (await db.StoreSet.Where(e => e.key == "EmailNotificationType").FirstOrDefaultAsync())?.Id;
                 var StoreSet = StoreSetId != null ? await db.StoreSetDetail.Where(e => e.FK_WebsiteId == siteId && e.FK_StoreSetId == StoreSetId).FirstOrDefaultAsync() : null;
-                var EmailNotificationType = StoreSet?.value?.ToString() ?? "Detailed";
+                var EmailNotificationType = int.Parse(StoreSet?.value ?? "0") ;
 
                 var codeId = dto.forms.Find(e => e.Name == "captchaId");
                 if (codeId == null || code == null || !captchaAppService.Validate(codeId.Value, code.Value).Success) throw new Exception(L.get("VerificationCodeError"));
@@ -71,9 +72,9 @@ namespace EtheriT.Coker.Application.Contact
                     MailUserDataDto recipient = new MailUserDataDto();
 
                     string html = "";
-                    switch (EmailNotificationType)
+                    switch ((EmailNotificationTypeEnum)EmailNotificationType)
                     {
-                        case "Detailed":
+                        case EmailNotificationTypeEnum.寄送完整表單:
                             html = "<p>您好，感謝您的聯繫。此信件為系統通知，請勿直接回覆，感謝您的理解與配合~謝謝<br></p><table class='table'>";
                             dto.forms.ForEach(e =>
                             {
@@ -89,7 +90,7 @@ namespace EtheriT.Coker.Application.Contact
                             });
                             html += "</table>";
                             break;
-                        case "Simple":
+                        case EmailNotificationTypeEnum.簡易通知:
                             dto.forms.ForEach(e =>
                             {
                                 if (!string.IsNullOrEmpty(e.Title))

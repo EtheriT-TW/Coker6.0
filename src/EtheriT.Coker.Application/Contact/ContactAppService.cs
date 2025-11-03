@@ -74,7 +74,7 @@ namespace EtheriT.Coker.Application.Contact
                     switch (EmailNotificationType)
                     {
                         case "Detailed":
-                            html = "<table class='table'>";
+                            html = "<p>您好，感謝您的聯繫。此信件為系統通知，請勿直接回覆，感謝您的理解與配合~謝謝<br></p><table class='table'>";
                             dto.forms.ForEach(e =>
                             {
                                 if (!string.IsNullOrEmpty(e.Title))
@@ -103,8 +103,13 @@ namespace EtheriT.Coker.Application.Contact
                                 else if (e.Name == "name") recipient.Name = e.Value;
                             });
 
-                            html = $@"<div>{dto.forms.FirstOrDefault(f => f.Name == "name")?.Value ?? "親愛的會員"}您好</div>
-                                                    <p>感謝您透過【{site.Title}】提交【{menu.Title}】表單，我們已經成功收到您的資料。<br>
+                            var name = dto.forms.FirstOrDefault(f => f.Name == "name")?.Value ?? "";
+                            if (name.Length <= 1) name = "親愛的會員";
+                            else if (name.Length == 2) name = name.Substring(0, 1) + "○";
+                            else name = $"{name[0]}○{name[name.Length - 1]}";
+
+                            html = $@"<div>{name} 您好</div>
+                                                    <p>感謝您透過【{site.Title}】提交 {menu.Title} 表單，我們已經成功收到您的資料。<br>
                                                     我們將盡快進行後續處理，並於需要時與您聯繫。<br><br>
                                                     謝謝您的耐心與支持。</p>";
                             break;

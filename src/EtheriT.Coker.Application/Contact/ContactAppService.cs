@@ -7,6 +7,7 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.Contact;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Contact;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
@@ -58,7 +59,7 @@ namespace EtheriT.Coker.Application.Contact
                 var code = dto.forms.Find(e => e.Name == "captcha");
                 var StoreSetId = (await db.StoreSet.Where(e => e.key == "EmailNotificationType").FirstOrDefaultAsync())?.Id;
                 var StoreSet = StoreSetId != null ? await db.StoreSetDetail.Where(e => e.FK_WebsiteId == siteId && e.FK_StoreSetId == StoreSetId).FirstOrDefaultAsync() : null;
-                var EmailNotificationType = StoreSet?.value?.ToString() ?? "Detailed";
+                var EmailNotificationType = int.Parse(StoreSet?.value ?? "0") ;
 
                 var codeId = dto.forms.Find(e => e.Name == "captchaId");
                 if (codeId == null || code == null || !captchaAppService.Validate(codeId.Value, code.Value).Success) throw new Exception(L.get("VerificationCodeError"));
@@ -71,10 +72,10 @@ namespace EtheriT.Coker.Application.Contact
                     MailUserDataDto recipient = new MailUserDataDto();
 
                     string html = "";
-                    switch (EmailNotificationType)
+                    switch ((EmailNotificationTypeEnum)EmailNotificationType)
                     {
-                        case "Detailed":
-                            html = "<table class='table'>";
+                        case EmailNotificationTypeEnum.寄送完整表單:
+                            html = "<p>您好，感謝您的聯繫。此信件為系統通知，請勿直接回覆，感謝您的理解與配合~謝謝<br></p><table class='table'>";
                             dto.forms.ForEach(e =>
                             {
                                 if (!string.IsNullOrEmpty(e.Title))
@@ -89,7 +90,7 @@ namespace EtheriT.Coker.Application.Contact
                             });
                             html += "</table>";
                             break;
-                        case "Simple":
+                        case EmailNotificationTypeEnum.簡易通知:
                             dto.forms.ForEach(e =>
                             {
                                 if (!string.IsNullOrEmpty(e.Title))
@@ -103,8 +104,13 @@ namespace EtheriT.Coker.Application.Contact
                                 else if (e.Name == "name") recipient.Name = e.Value;
                             });
 
-                            html = $@"<div>{dto.forms.FirstOrDefault(f => f.Name == "name")?.Value ?? "親愛的會員"}您好</div>
-                                                    <p>感謝您透過【{site.Title}】提交【{menu.Title}】表單，我們已經成功收到您的資料。<br>
+                            var name = dto.forms.FirstOrDefault(f => f.Name == "name")?.Value ?? "";
+                            if (name.Length <= 1) name = "親愛的會員";
+                            else if (name.Length == 2) name = name.Substring(0, 1) + "○";
+                            else name = $"{name[0]}○{name[name.Length - 1]}";
+
+                            html = $@"<div>{name} 您好</div>
+                                                    <p>感謝您透過【{site.Title}】提交 {menu.Title} 表單，我們已經成功收到您的資料。<br>
                                                     我們將盡快進行後續處理，並於需要時與您聯繫。<br><br>
                                                     謝謝您的耐心與支持。</p>";
                             break;

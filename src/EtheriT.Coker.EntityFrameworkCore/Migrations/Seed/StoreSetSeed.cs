@@ -372,7 +372,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     FK_StoreSetGroupId = 3,
                     type = SeoSetDataTypeEnum.radio,
                     maxlength = 50,
-                    pattern = "(?=[a-z]{2}-?[A-Z]{0,2},?)+",
+                    pattern = "",
                     IsDeleted = false,
                     jobID = "S001",
                     CreatorUserId = 1,
@@ -477,8 +477,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 }, new storeSetItem
                 {
                     Id = 11,
-                    Key = "Detailed",
-                    Value = "寄送完整表單",
+                    Key = ((int)EmailNotificationTypeEnum.寄送完整表單).ToString(),
+                    Value = EmailNotificationTypeEnum.寄送完整表單.ToString(),
                     FK_StoreSetId = 22,
                     IsDeleted = false,
                     CreatorUserId = 1,
@@ -486,8 +486,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 }, new storeSetItem
                 {
                     Id = 12,
-                    Key = "Simple",
-                    Value = "簡易通知",
+                    Key = ((int)EmailNotificationTypeEnum.簡易通知).ToString(),
+                    Value = EmailNotificationTypeEnum.簡易通知.ToString(),
                     FK_StoreSetId = 22,
                     IsDeleted = false,
                     CreatorUserId = 1,

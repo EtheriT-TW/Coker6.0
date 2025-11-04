@@ -7,5 +7,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Files
         public string Name { get; set; }
         public string Link { get; set; }
         public long Size { get; set; }
+        public long Sid { get; set; }
     }
 }

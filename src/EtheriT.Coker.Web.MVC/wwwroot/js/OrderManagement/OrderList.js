@@ -29,8 +29,7 @@ function PageReady() {
         var newstate = parseInt($(".status_select > option:selected").val());
         var oristatte_str = $(`.status_select > option[value=${oristate}]`).text();
         if (newstate != oristate && payment != "ATM") {
-            if (([1, 5, 6].includes(newstate) || (thirdparty == 3 && oristate == 1))) co.sweet.error("訂單狀態錯誤", `不可將狀態變更為【${status}】`);
-            else if ((newstate == 3 || newstate == 7) && (oristate == 1 || oristate == 6) && !isCashOnDelivery) co.sweet.error("訂單狀態錯誤", `非貨到付款訂單${oristatte_str}不可直接變更為【${status}】`);
+            if ((newstate == 3 || newstate == 7) && (oristate == 1 || oristate == 6) && !isCashOnDelivery) co.sweet.error("訂單狀態錯誤", `非貨到付款訂單${oristatte_str}不可直接變更為【${status}】`);
             else updateOrder();
         } else updateOrder();
     });

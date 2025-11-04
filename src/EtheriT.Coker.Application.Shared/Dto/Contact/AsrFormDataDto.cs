@@ -15,6 +15,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Contact
         public string TargetEmail { get; set; }
         public string Html { get; set; }
         public string Reply { get; set; }
+        public string FromDate { get; set; }
         public ContactStatusEnum Status { get; set; }
         public DateTime CreationTime { get; set; }
     }

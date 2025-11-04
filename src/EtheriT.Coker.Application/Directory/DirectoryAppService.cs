@@ -1,36 +1,37 @@
 ﻿using AutoMapper;
 using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Permissions;
+using EtheriT.Coker.Application.Search;
+using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Directory;
-using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json;
+using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Advertise;
+using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
-using Microsoft.EntityFrameworkCore;
-using EtheriT.Coker.Application.Shared.Dto.Tag;
-using EtheriT.Coker.Application.Shared.Tag;
-using EtheriT.Coker.Application.Shared.Article;
-using EtheriT.Coker.Application.Shared.Product;
-using EtheriT.Coker.Application.Shared.Dto.WebMenu;
-using Microsoft.Extensions.Configuration;
-using EtheriT.Coker.Application.Shared.Dto;
-using System.Text.RegularExpressions;
-using EtheriT.Coker.Application.Common;
-using EtheriT.Coker.Core.Models;
-using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Shared.Dto.Files;
-using EtheriT.Coker.Application.Search;
 using EtheriT.Coker.Application.Shared.Dto.Search;
-using EtheriT.Coker.Application.Shared.Dto.Advertise;
-using EtheriT.Coker.Application.Token;
-using EtheriT.Coker.Application.Shared.Processor;
-using EtheriT.Coker.Application.Shared.i18n;
-using EtheriT.Coker.Application.Shared.Dto.Article;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+using EtheriT.Coker.Application.Shared.i18n;
+using EtheriT.Coker.Application.Shared.Processor;
+using EtheriT.Coker.Application.Shared.Product;
+using EtheriT.Coker.Application.Shared.Tag;
+using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Application.Directory
 {
@@ -463,18 +464,20 @@ namespace EtheriT.Coker.Application.Directory
                         .ThenByDescending(e => e.Id)
                         .Skip(skip).Take(shownum);
 
+                    var articleImages = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
+                    {
+                        Sid = art.Select(e => e.Id).ToList(),
+                        Type = (int)FileBindTypeEnum.文章管理,
+                        Size = 3
+                    });
+
+
+
                     var list = await Task.WhenAll(dataMargin.Select(async e =>
                     {
                         List<FileGetImgDto> imagedata = new List<FileGetImgDto>();
-                        if (e.type == DirectoryTypeEnum.文章)
-                        {
-                            imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
-                            {
-                                Sid = e.Id,
-                                Type = (int)FileBindTypeEnum.文章管理,
-                                Size = 3
-                            });
-                        }
+                       if (e.type == DirectoryTypeEnum.文章) imagedata = articleImages.FindAll(f => f.Sid == e.Id);
+
                         return new DirectoryReleInfoDto
                         {
                             Id = e.Id,
@@ -797,22 +800,55 @@ namespace EtheriT.Coker.Application.Directory
             output.ReleInfos = list;
             return output;
         }
-        private string getSearchDescription(string? conten, string findstr)
+        private static readonly Regex RxRemoveIcons = new(
+            @"<\s*(?:span|i)\b[^>]*\bclass\s*=\s*""[^""]*\bmaterial-symbols-outlined\b[^""]*""[^>]*>.*?<\s*/\s*(?:span|i)\s*>",
+            RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+        );
+
+        private static readonly Regex RxStripTags = new(@"<[^>]+>", RegexOptions.Compiled);
+
+        private static readonly Regex RxCollapseSpaces = new(@"\s+", RegexOptions.Compiled);
+        private string getSearchDescription(string? content, string findstr)
         {
-            if (string.IsNullOrEmpty(conten)) return "";
-            List<string> replaceRul = new List<string> {
-                @"<span(.|\n)*?class=""material-symbols-outlined(.|\n)*?>(.|\n)*?/span>",
-                @"<i(.|\n)*?class=""material-symbols-outlined(.|\n)*?>(.|\n)*?/i>",
-                @"<(.|\n)*?>",
-                @"\n"
-            };
-            string s = Regex.Replace(stringHandler.HtmlDecode(conten), @$"({String.Join("|", replaceRul.ToArray())})", "");
-            int index = s.IndexOf(findstr) - 10;
-            if (index < 0) index = 0;
-            s = s.Substring(index);
-            if (index != 0) s = $" ... {s}";
-            if (string.IsNullOrEmpty(findstr)) return s;
-            return s.Replace(findstr, $"<span class='bg-warning text-dark'>{findstr}</span>");
+            if (string.IsNullOrEmpty(content)) return string.Empty;
+
+            string s = stringHandler.HtmlDecode(content);
+
+            // 1) 去掉 icon 節點
+            s = RxRemoveIcons.Replace(s, string.Empty);
+
+            // 2) 去標籤
+            s = RxStripTags.Replace(s, string.Empty);
+
+            // 3) 收斂空白
+            s = RxCollapseSpaces.Replace(s, " ").Trim();
+
+            // 4) 找出關鍵字前後的片段
+            int idx = string.IsNullOrEmpty(findstr)
+                ? -1
+                : s.IndexOf(findstr, StringComparison.OrdinalIgnoreCase);
+            int start = Math.Max(0, (idx >= 0 ? idx : 0) - 10);
+            if (start > 0) s = " ... " + s.Substring(start);
+
+            // 5) 關鍵字高亮（避免用 Regex.Replace，改用 StringBuilder）
+            if (!string.IsNullOrEmpty(findstr))
+            {
+                var sb = new StringBuilder(s.Length + 64);
+                int last = 0, flen = findstr.Length;
+
+                while ((idx = s.IndexOf(findstr, last, StringComparison.OrdinalIgnoreCase)) >= 0)
+                {
+                    sb.Append(s, last, idx - last);
+                    sb.Append("<span class='bg-warning text-dark'>");
+                    sb.Append(s, idx, flen);
+                    sb.Append("</span>");
+                    last = idx + flen;
+                }
+                sb.Append(s, last, s.Length - last);
+                s = sb.ToString();
+            }
+
+            return s;
         }
         public async Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto)
         {

@@ -431,7 +431,16 @@ function DirectoryDataInsert($item, result) {
 
         content.find(".dirname").removeClass("d-none").text(data.dirname);
 
-        var imglink = data.mainImage || "/images/noImg.jpg";
+        var imglink = data.mainImage.trim() || "/images/noImg.jpg";
+        if (imglink.includes("noImg.jpg")) {
+            const fallback =
+                $("meta[property='og:image']").attr("content") ||
+                $(".logo-img").attr("src") ||
+                $("link[rel='icon']").attr("href");
+
+            if (fallback && fallback.trim() !== "")
+                imglink = fallback;
+        }
         if (data.orgName != null && ((typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && !IsFaPage) || (typeof (OrgName) != "undefined" && OrgName != data.orgName))) {
             imglink = imglink.replace("upload", `upload/${data.orgName}`);
         }

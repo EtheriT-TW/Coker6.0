@@ -77,7 +77,7 @@
 						<span class="material-symbols-outlined icon position-absolute">search</span>
 					</div>
 					<div id="google_translate_element"></div>
-					@if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+					@if (ViewBag.ShoppingEnable?? false && ViewBag.HasShoppingCar ?? false && ViewBag.storeBuyState.IndexOf("noPay") < 0)
 					{
 						<div id="Cart_Dropdown_Parent" class="d-flex px-1">
 							<button id="btn_car_dropdown" class="bg-transparent border-0 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">

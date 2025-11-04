@@ -708,10 +708,11 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
     settings.getComponer().done(function (result) {
         $(result).each(function () {
             const html = co.Data.HtmlDecode(this.html);
-            let $elements = $('<div>' + html + '</div>').children();
-            let $first = $elements.first();
-            $first.attr('data-block-name', this.title);
-            const elementHtmlCss = `${$('<div>').append($elements).html()}<style>${this.css}</style>`;
+            const htmlWithAttr = html.replace(
+                /<([a-zA-Z0-9-]+)([^>]*)>/,
+                `<$1$2 data-block-name="${this.title}">`
+            );
+            const elementHtmlCss = `${htmlWithAttr}<style>${this.css}</style>`;
             let blockId = 'customBlockTemplate_' + this.id;
             let iconText = (this.icon || "").replace("material-symbols-outlined", "").trim();
             let media = "";

@@ -480,7 +480,11 @@ namespace EtheriT.Coker.Application.ThirdParty
                         {
                             case OrderStatusEnum.待付款:
                                 response = await LinePayVoid(ohdata.Id);
-                                if (response.Success) response.Message = "訂單已取消並送出退款申請。";
+                                if (response.Success) response.Message = "訂單已取消。";
+                                break;
+                            case OrderStatusEnum.待確認:
+                                response = await LinePayVoid(ohdata.Id);
+                                if (response.Success) response.Message = "訂單已取消。";
                                 break;
                             case OrderStatusEnum.已付款:
                                 response = await LinePayRefund(ohdata.Id, null);

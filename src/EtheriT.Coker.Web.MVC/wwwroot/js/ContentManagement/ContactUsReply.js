@@ -101,7 +101,58 @@ function BackToList() {
     $("#ArticleList").addClass("show");
 }
 
+function buildTableWithDom(formObj) {
+    const table = document.createElement('table');
+    table.className = 'table';
+    const tbody = document.createElement('tbody');
+
+    Object.entries(formObj).forEach(([key, obj]) => {
+        const title = obj?.title ?? "";
+        const value = obj?.value ?? "";
+
+        const tr = document.createElement('tr');
+        const th = document.createElement('th');
+        th.classList.add('title');
+        th.textContent = title; // 安全：textContent 不會解析 HTML
+
+        const td = document.createElement('td');
+
+        if (value == null || value === '') {
+            td.textContent = '\u00A0'; // non-break space
+        } else if (Array.isArray(value)) {
+            td.textContent = value.map(x => String(x)).join(', ');
+        } else if (typeof value === 'object') {
+            // 若是物件，顯示 pretty JSON（也安全）
+            const pre = document.createElement('pre');
+            pre.style.margin = '0';
+            pre.textContent = JSON.stringify(value, null, 2);
+            td.appendChild(pre);
+        } else {
+            // 字串／數字：保留換行顯示（用 textContent + <br> 需拆行）
+            if (String(value).includes('\n')) {
+                String(value).split(/\r?\n/).forEach((line, i) => {
+                    if (i) td.appendChild(document.createElement('br'));
+                    td.appendChild(document.createTextNode(line));
+                });
+            } else {
+                td.textContent = String(value);
+            }
+        }
+
+        tr.appendChild(th);
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    return table; // 回傳 DOM 節點，使用者決定放哪裡
+}
+
 function FormDataSet(result) {
+    if (result.object.fromDate != null) {
+        const formObj = JSON.parse(result.object.fromDate);
+        result.object.html = buildTableWithDom(formObj)
+    }
     co.Form.insertData(result.object, "#ReplyForm");
     $(".page").removeClass("show");
     $("#Form").addClass("show");

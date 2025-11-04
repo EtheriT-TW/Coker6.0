@@ -31,8 +31,9 @@
     width: calc(100% - 6rem);
     padding:0.5rem;
 }
-.html td:first-child {
+.html td.title, th {
     width: 8rem;
+    white-space: nowrap;
 }
 
 /* 未處理 (紅) */

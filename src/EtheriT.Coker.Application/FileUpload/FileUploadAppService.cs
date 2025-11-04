@@ -1,12 +1,16 @@
-﻿using EtheriT.Coker.Application.Configuration;
+﻿using DevExpress.CodeParser;
+using EtheriT.Coker.Application.Configuration;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
+using EtheriT.Coker.Application.Shared.Dto.Templates;
+using EtheriT.Coker.Application.Shared.Templates;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Core.Models;
+using ImageMagick;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -17,9 +21,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Text.RegularExpressions;
-using ImageMagick;
-using EtheriT.Coker.Application.Shared.Templates;
-using EtheriT.Coker.Application.Shared.Dto.Templates;
 
 namespace EtheriT.Coker.Application
 {
@@ -457,187 +458,166 @@ namespace EtheriT.Coker.Application
         // size = 1 原圖 2中縮圖 3小縮圖
         public async Task<List<FileGetImgDto>> getImgFiles(FileGetImgInputDto dto)
         {
-            var result = new List<FileGetImgDto>();
-            try
+            if (dto == null) return new();
+            return await getImgsFiles(new FileGetImgsInputDto
             {
-                long websiteId = await loginUserData.GetWebsiteId();
-                string orgName = await loginUserData.GetWebsiteOrgName();
-                var files = await db.FileBinds.Include(e => e.fileUpload)
-                        .Where(e => e.Sid == dto.Sid && e.type == dto.Type)
-                        .Where(e => !e.IsDeleted).OrderBy(e => e.SerNo).ToListAsync();
-
-                var faids = files.Select(e => e.FK_FileUploadId).ToList();
-                orgName = string.IsNullOrEmpty(orgName) ? "" : $"/{orgName}";
-                if (faids != null)
-                {
-                    if (dto.Size == 1)
-                    {
-                        if (files != null && files.Any())
-                        {
-                            files.ForEach(e =>
-                            {
-                                var ImageOrgName = orgName;
-                                if (e.fileUpload != null)
-                                {
-                                    if (!string.IsNullOrEmpty(ImageOrgName) && websiteId != e.fileUpload.FK_WebsiteId)
-                                    {
-                                        var site = db.Websites.Where(w => w.Id == e.fileUpload.FK_WebsiteId).FirstOrDefault();
-                                        if (site != null) ImageOrgName = $"/{site.OrgName}";
-                                    }
-                                    result.Add(new FileGetImgDto
-                                    {
-                                        Id = e.fileUpload.Id,
-                                        Name = e.Name,
-                                        Link = e.fileUpload.DownloadFileName.Replace("upload", $"upload{ImageOrgName}")
-                                    });
-                                }
-                            });
-
-                        }
-                    }
-                    else
-                    {
-                        foreach (var faid in faids)
-                        {
-                            var fadata = await db.FileUploads.Where(e => e.Id == faid).FirstOrDefaultAsync();
-
-                            if (fadata != null && fadata.GuidKey != Guid.Empty)
-                            {
-                                var ImageOrgName = orgName;
-                                if (!string.IsNullOrEmpty(ImageOrgName) && websiteId != fadata.FK_WebsiteId)
-                                {
-                                    var site = db.Websites.Where(w => w.Id == fadata.FK_WebsiteId).FirstOrDefault();
-                                    if (site != null) ImageOrgName = $"/{site.OrgName}";
-                                }
-                                var chimg_ids = await (db.FileBindMores.Where(e => e.FK_FileBindGuid == fadata.GuidKey).Where(e => !e.IsDeleted).Select(e => e.FK_FileUploadId).ToListAsync());
-                                if (chimg_ids.Count > 0)
-                                {
-                                    var chimg = new List<FileUpload>();
-                                    foreach (var chimg_id in chimg_ids)
-                                    {
-                                        chimg.Add(await (db.FileUploads.Where(e => e.Id == chimg_id).Where(e => !e.IsDeleted).FirstOrDefaultAsync()));
-
-                                    }
-                                    chimg = chimg.OrderByDescending(e => e.Size).ToList();
-                                    if (chimg_ids.Count == 2)
-                                    {
-                                        result.Add(new FileGetImgDto
-                                        {
-                                            Id = faid.Value,
-                                            Name = chimg[dto.Size - 2].OriginalFileName,
-                                            Link = chimg[dto.Size - 2].DownloadFileName.Replace("upload", $"upload{ImageOrgName}")
-                                        });
-                                    }
-                                    else if (chimg_ids.Count == 1)
-                                    {
-                                        result.Add(new FileGetImgDto
-                                        {
-                                            Id = faid.Value,
-                                            Name = chimg[0].OriginalFileName,
-                                            Link = chimg[0].DownloadFileName.Replace("upload", $"upload{ImageOrgName}")
-                                        });
-                                    }
-                                }
-                                else
-                                {
-                                    result.Add(new FileGetImgDto
-                                    {
-                                        Id = fadata.Id,
-                                        Name = fadata.OriginalFileName,
-                                        Link = fadata.DownloadFileName.Replace("upload", $"upload{ImageOrgName}")
-                                    });
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-
-            }
-            return result;
+                Sid = new List<long> { dto.Sid },
+                Type = dto.Type,
+                Size = dto.Size
+            });
         }
-        // size = 1 原圖 2中縮圖 3小縮圖
-        public async Task<List<string>> getImgFilesById(List<long> Ids, int size)
+
+        public async Task<List<FileGetImgDto>> getImgsFiles(FileGetImgsInputDto dto)
         {
-            var result = new List<string>();
+            if (dto?.Sid == null || dto.Sid.Count == 0) return new();
+
+            var binds = await db.FileBinds
+                .AsNoTracking()
+                .Where(b => !b.IsDeleted && dto.Sid.Contains(b.Sid) && b.type == dto.Type)
+                .Where(b => b.FK_FileUploadId.HasValue)
+                .Select(b => new { b.Sid, UploadId = b.FK_FileUploadId!.Value, b.SerNo })
+                .ToListAsync();
+
+            if (binds.Count == 0) return new();
+
+            var uploadIds = binds.Select(x => x.UploadId).Distinct().ToList();
+
+            var uploadIdToSid = binds
+                .GroupBy(x => x.UploadId)
+                .ToDictionary(g => g.Key, g => g.OrderBy(x => x.SerNo).First().Sid);
+
+            var imgDtos = await _getLinksByUploadIdsAsync(uploadIds, dto.Size, uploadIdToSid);
+
+            return imgDtos;
+        }
+
+        public async Task<List<string>> getImgFilesById(List<long> ids, int size)
+        {
+            var imgDtos = await _getLinksByUploadIdsAsync(ids, size);
+            return imgDtos.Select(i => i.Link).ToList();
+        }
+
+        private async Task<List<FileGetImgDto>> _getLinksByUploadIdsAsync(List<long> uploadIds, int size, Dictionary<long, long>? uploadIdToSid = null)
+        {
+            var result = new List<FileGetImgDto>();
+            if (uploadIds == null || uploadIds.Count == 0) return result;
+
+            long websiteId = await loginUserData.GetWebsiteId();
+            if (websiteId == 0) websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+
             string orgName = await loginUserData.GetWebsiteOrgName();
             orgName = string.IsNullOrEmpty(orgName) ? "" : $"/{orgName}";
-            try
-            {
-                long websiteId = await loginUserData.GetWebsiteId();
-                if (websiteId == 0)
-                {
-                    websiteId = configuration.GetValue<long>("WebConfig:SiteId");
-                }
 
-                if (size == 1)
+            // 主檔（限制同站，保留原行為）
+            var uploads = await db.FileUploads
+                .AsNoTracking()
+                .Where(u => uploadIds.Contains(u.Id) && !u.IsDeleted && u.FK_WebsiteId == websiteId)
+                .Select(u => new { u.Id, u.FK_WebsiteId, u.GuidKey, u.DownloadFileName, u.OriginalFileName, u.Size })
+                .ToListAsync();
+
+            if (uploads.Count == 0) return result;
+
+            var allSiteIds = new HashSet<long>(uploads.Select(u => (long)u.FK_WebsiteId)) { websiteId };
+
+            // 子圖（只有 size != 1 才需要）
+            Dictionary<Guid, List<long>> moreIdsByGuid = null;
+            Dictionary<long, (long Size, string Download, string Original, long FK_WebsiteId)> childUploadMap = null;
+
+            if (size != 1)
+            {
+                var guids = uploads.Where(u => u.GuidKey != Guid.Empty).Select(u => u.GuidKey).Distinct().ToList();
+
+                if (guids.Count > 0)
                 {
-                    foreach (var id in Ids)
+                    var more = await db.FileBindMores
+                        .AsNoTracking()
+                        .Where(m => !m.IsDeleted && guids.Contains(m.FK_FileBindGuid) && m.FK_FileUploadId.HasValue)
+                        .Select(m => new { m.FK_FileBindGuid, FK_FileUploadId = m.FK_FileUploadId!.Value }) // long
+                        .ToListAsync();
+
+                    // Dictionary<Guid, List<long>>
+                    moreIdsByGuid = more
+                        .GroupBy(m => m.FK_FileBindGuid)
+                        .ToDictionary(g => g.Key, g => g.Select(x => x.FK_FileUploadId).ToList());
+
+                    var childIds = more.Select(x => x.FK_FileUploadId).Distinct().ToList();
+                    if (childIds.Count > 0)
                     {
-                        var file = await db.FileUploads.Where(e => e.Id == id && !e.IsDeleted && e.FK_WebsiteId == websiteId).FirstOrDefaultAsync();
-                        if (file != null)
-                        {
-                            result.Add(file.DownloadFileName == null ? "" : file.DownloadFileName.Replace("upload", $"upload{orgName}"));
-                        }
+                        // 取回所有子圖上傳檔（key = long）
+                        var childs = await db.FileUploads
+                            .AsNoTracking()
+                            .Where(u => childIds.Contains(u.Id))  // childIds 是 List<long>
+                            .Select(u => new { u.Id, u.FK_WebsiteId, u.DownloadFileName, u.OriginalFileName, u.Size })
+                            .ToListAsync();
+
+                        // Dictionary<long, (int? Size, string Download, string Original, long FK_WebsiteId)>
+                        childUploadMap = childs.ToDictionary(
+                            u => u.Id,
+                            u => (u.Size, u.DownloadFileName??"", u.OriginalFileName, u.FK_WebsiteId) // ← 具名 tuple
+                        );
+
+                        // 若你有收集 allSiteIds：
+                        foreach (var w in childs.Select(c => (long)c.FK_WebsiteId).Distinct())
+                            allSiteIds.Add(w);
                     }
                 }
-                else
-                {
-                    foreach (var id in Ids)
-                    {
-                        var fa_file = await db.FileUploads.Where(e => e.Id == id && !e.IsDeleted && e.FK_WebsiteId == websiteId).FirstOrDefaultAsync();
-
-                        if (fa_file != null)
-                        {
-                            var files = await db.FileBindMores.Where(e => e.FK_FileBindGuid == fa_file.GuidKey && !e.IsDeleted).ToListAsync();
-
-                            if (files.Count > 0)
-                            {
-                                var temp_files = new List<FileGetImgDto>();
-                                foreach (var file in files)
-                                {
-                                    var fu = await db.FileUploads.Where(e => e.Id == file.FK_FileUploadId && !e.IsDeleted && e.FK_WebsiteId == websiteId).FirstOrDefaultAsync();
-                                    if (fu != null)
-                                    {
-                                        temp_files.Add(new FileGetImgDto()
-                                        {
-                                            Id = fu.Id,
-                                            Name = fu.OriginalFileName,
-                                            Link = fu.DownloadFileName,
-                                            Size = fu.Size,
-                                        });
-                                    }
-                                }
-
-                                temp_files.Sort((x, y) => x.Size.CompareTo(y.Size));
-                                temp_files.Reverse();
-
-                                if (files.Count == 2)
-                                {
-                                    result.Add(temp_files[size - 2].Link.Replace("upload", $"upload{orgName}"));
-                                }
-                                else
-                                {
-                                    result.Add(temp_files[0].Link.Replace("upload", $"upload{orgName}"));
-                                }
-                            }
-                            else
-                            {
-                                result.Add(fa_file.DownloadFileName == null ? "" : fa_file.DownloadFileName.Replace("upload", $"upload{orgName}"));
-                            }
-                        }
-                    }
-
-                }
             }
-            catch (Exception ex)
+
+            // 批次抓網站 OrgName
+            var siteOrgMap = await db.Websites
+                .AsNoTracking()
+                .Where(w => allSiteIds.Contains(w.Id))
+                .Select(w => new { w.Id, w.OrgName })
+                .ToDictionaryAsync(w => (long)w.Id, w => w.OrgName);
+
+            string BuildLink(string downloadFileName, long fileWebsiteId)
             {
-
+                var imageOrgName = orgName;
+                if (!string.IsNullOrEmpty(imageOrgName) && fileWebsiteId != websiteId)
+                {
+                    if (siteOrgMap.TryGetValue(fileWebsiteId, out var otherOrg) && !string.IsNullOrEmpty(otherOrg))
+                        imageOrgName = $"/{otherOrg}";
+                }
+                return downloadFileName.Replace("upload", $"upload{imageOrgName}");
             }
+
+            // 依 size 選圖
+            foreach (var up in uploads)
+            {
+                string link = BuildLink(up.DownloadFileName, up.FK_WebsiteId);
+                string name = up.OriginalFileName;
+
+                if (size != 1 && up.GuidKey != Guid.Empty &&
+                    moreIdsByGuid != null && childUploadMap != null &&
+                    moreIdsByGuid.TryGetValue(up.GuidKey, out var childIds) &&
+                    childIds.Count > 0)
+                {
+                    var candidates = childIds
+                        .Where(id => childUploadMap.ContainsKey(id))
+                        .Select(id => childUploadMap[id])     // (Size, Download, Original, FK_WebsiteId)
+                        .OrderByDescending(x => x.Size)
+                        .ToList();
+
+                    if (candidates.Count == 2 && (size - 2) >= 0 && (size - 2) < 2)
+                    {
+                        var pick = candidates[size - 2];
+                        link = BuildLink(pick.Download, pick.FK_WebsiteId);
+                        name = pick.Original;
+                    }
+                    else if (candidates.Count == 1)
+                    {
+                        var pick = candidates[0];
+                        link = BuildLink(pick.Download, pick.FK_WebsiteId);
+                        name = pick.Original;
+                    }
+                }
+
+                result.Add(new FileGetImgDto { Id = up.Id, Name = name, Link = link, Sid = (uploadIdToSid != null && uploadIdToSid.TryGetValue(up.Id, out var sid)) ? sid : 0, });
+            }
+
             return result;
         }
+
         public async Task<List<FileGetProdDisplayDto>> getProdFiles(long Pid)
         {
             var output = new List<FileGetProdDisplayDto>();

@@ -406,31 +406,49 @@ namespace EtheriT.Coker.Application
                                     }).FirstOrDefaultAsync();
                 if (output != null)
                 {
-                    output.Children = await this.GetDisplayChild(dto.Id, dto.WebsiteId, dto.showUnvisible);
-                    output.Children.ForEach(async e => {
-                        var img = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                    var children = await GetDisplayChild(dto.Id, dto.WebsiteId, dto.showUnvisible);
+
+                    if (children.Count > 0)
+                    {
+                        var sids = children.Select(c => c.Id).ToList();
+                        var imgDtos = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
                         {
-                            Sid = e.Id,
+                            Sid = sids,
                             Size = 1,
                             Type = (int)FileBindTypeEnum.選單圖
                         });
-                        if (img.Any())
+
+                        var overDtos = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
                         {
-                            e.ImgId = img[0].Id;
-                            e.ImgUrl = img[0].Link;
-                        }
-                        var overimg = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
-                        {
-                            Sid = e.Id,
+                            Sid = sids,
                             Size = 1,
                             Type = (int)FileBindTypeEnum.選單覆蓋
                         });
-                        if (overimg.Any())
+
+                        var imgBySid = imgDtos?.GroupBy(x => x.Sid).ToDictionary(g => g.Key, g => g.First())
+                                         ?? new Dictionary<long, FileGetImgDto>();
+                        var overBySid = overDtos?.GroupBy(x => x.Sid).ToDictionary(g => g.Key, g => g.First())
+                                         ?? new Dictionary<long, FileGetImgDto>();
+
+                        for (int i = 0; i < children.Count; i++)
                         {
-                            e.OverImgId = overimg[0].Id;
-                            e.OverImgUrl = overimg[0].Link;
+                            var e = children[i];
+
+                            if (imgBySid.TryGetValue(e.Id, out var img))
+                            {
+                                e.ImgId = img.Id;
+                                e.ImgUrl = img.Link;
+                            }
+
+                            if (overBySid.TryGetValue(e.Id, out var over))
+                            {
+                                e.OverImgId = over.Id;
+                                e.OverImgUrl = over.Link;
+                            }
                         }
-                    });
+                    }
+
+                    output.Children = children;
                 }
                 return output;
             }

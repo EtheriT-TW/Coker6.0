@@ -18,6 +18,7 @@ namespace EtheriT.Coker.Application
 		public Task<ResponseMessageDto> uploadImageLink(FileImageImportDto dto);
         public Task<string> getImgUrl(long? imgid, long websiteid);
         public Task<List<FileGetImgDto>> getImgFiles(FileGetImgInputDto dto);
+        public Task<List<FileGetImgDto>> getImgsFiles(FileGetImgsInputDto dto);
         public Task<List<string>> getImgFilesById(List<long> Ids, int size);
         public Task<List<FileGetProdDisplayDto>> getProdFiles(long Pid);
         public Task<List<FileGetDisplayDto>> getAdvertiseFiles(long Aid, int type);

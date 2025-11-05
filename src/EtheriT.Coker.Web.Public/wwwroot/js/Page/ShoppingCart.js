@@ -261,6 +261,7 @@ function PageReady() {
                     Coker.sweet.warning("錯誤", "無可購買商品。", null, false);
                     buy_step_swiper.slideTo(0);
                 } else {
+                    enforceFreightVisibility();
                     OrdererFilled = FormCheck(OrdererForms);
                     RecipientFilled = FormCheck(RecipientForms);
                     InvoiceFilled = FormCheck(InvoiceForms);
@@ -427,6 +428,75 @@ function PageReady() {
     OrdererForms = $('#OrdererForm > form');
     RecipientForms = $('#RecipientForm > form');
     InvoiceForms = $('#InvoiceForm > form');
+
+    function getSelectedFreightGroupId() {
+        const ids = getSelectedCartIds();     // 你現有的函式：回傳勾選的 scId 陣列
+        const selected = shopping_cart_data.filter(e => ids.includes(e.Id));
+        // 你的 shopping_cart_data 在 CartListAdd() 會寫入 e.freight（物件或 null）
+        const uniq = new Set(
+            selected.map(x => (x.freight && x.freight.id) ? Number(x.freight.id) : 0)
+        );
+        if (uniq.size === 0) return 0;     // 沒選任何商品 → 視為一般
+        if (uniq.size > 1) {
+            // 理論上不會發生（因為你已做群組互斥），保守取非零優先
+            if (uniq.has(0)) uniq.delete(0);
+        }
+        return [...uniq][0] || 0;
+    }
+
+    function enforceFreightVisibility() {
+        const fid = getSelectedFreightGroupId(); // 0 = 一般, >0 = 特殊運費 ID
+        const $inputs = $('[name="RadioShipping"]');
+
+        if (fid > 0) {
+            // 👉 特殊運費情境：只保留該筆運費
+            $inputs.each(function () {
+                const $input = $(this);
+                const id = Number($input.val());
+                const $formCheck = $input.closest('.form-check');
+                const $describe = $formCheck.next('.freight-describe');
+                const isTarget = (id === fid);
+                $formCheck.toggleClass('d-none', !isTarget);
+                $describe.toggleClass('d-none', !isTarget);
+                $input.prop('checked', isTarget);
+            });
+
+            const $checked = $('[name="RadioShipping"]:checked');
+            if ($checked.length) RadioShipping.call($checked[0]);
+
+        } else {
+            // 👉 一般運費情境：隱藏所有特殊運費（freigntStatusType = 2）
+            $inputs.each(function () {
+                const $input = $(this);
+                const statusType = Number($input.data('freignt-status-type')) || 0;
+                const $formCheck = $input.closest('.form-check');
+                const $describe = $formCheck.next('.freight-describe');
+                const isSpecial = (statusType === 2); // 特殊運費
+
+                $formCheck.toggleClass('d-none', isSpecial);
+                $describe.toggleClass('d-none', isSpecial);
+
+                // 若原本選到特殊項目 → 取消選取
+                if (isSpecial && $input.is(':checked')) {
+                    $input.prop('checked', false);
+                }
+            });
+
+            // 若沒有任何選取 → 預設勾選第一個可見的一般運費
+            const $checked = $('[name="RadioShipping"]:checked');
+            if ($checked.length === 0) {
+                const $firstVisible = $inputs.filter(function () {
+                    return !$(this).closest('.form-check').hasClass('d-none');
+                }).first();
+                if ($firstVisible.length) {
+                    $firstVisible.prop('checked', true);
+                    RadioShipping.call($firstVisible[0]);
+                }
+            }
+        }
+
+        buy_step_swiper.update();
+    }
 
     $(".btn_checkout").on("click", function () {
         ECPayMonitor = false;

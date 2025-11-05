@@ -104,18 +104,16 @@ namespace EtheriT.Coker.Application.Contact
                                 else if (e.Name == "name") recipient.Name = e.Value;
                             });
 
-                            var title = "";
                             var name = dto.forms.FirstOrDefault(f => f.Name == "name")?.Value ?? "";
+                            var gender = dto.forms.FirstOrDefault(f => f.Name == "Gender")?.Value ?? "先生/小姐";
+                            string title;
 
-                            if (name.Length <= 1) title = "親愛的會員";
-                            else
-                            {
-                                if (name.Length == 2) title = name.Substring(0, 1) + "○";
-                                else title = $"{name[0]}○{name[name.Length - 1]}";
-                                title += " " + dto.forms.FirstOrDefault(f => f.Name == "Gender")?.Value + " " ?? "";
-                            }
+                            if (string.IsNullOrWhiteSpace(name)) title = "親愛的會員";
+                            else if (name.Length == 1) title = $"{name} {gender}";
+                            else if (name.Length == 2) title = $"{name[0]}○ {gender}";
+                            else title = $"{name[0]}○{name[^1]} {gender}";
 
-                            html = $@"<div>{title}您好</div>
+                            html = $@"<div>{title} 您好</div>
                                                     <p>感謝您透過【{site.Title}】提交 {menu.Title} 表單，我們已經成功收到您的資料。<br>
                                                     我們將盡快進行後續處理，並於需要時與您聯繫。<br><br>
                                                     謝謝您的耐心與支持。</p>";

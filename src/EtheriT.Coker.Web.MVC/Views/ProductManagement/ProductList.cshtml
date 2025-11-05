@@ -161,18 +161,31 @@
                                          src="<%- data.MinsizeImage || '/images/noImg.jpg' %>"
                                          alt="<%- data.Title || '' %>" />
                                 </text>);
-                        c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90);
-                        c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90);
                         c.AddFor(e => e.Ser_No).Caption("排序").Width(75);
-                        c.AddFor(e => e.ItemNo).Caption("銷貨編號").Width(150);
-                        c.AddFor(e => e.Title).Caption("商品名稱").Width(450);
+                        c.AddFor(e => e.Title).Caption("商品名稱");
+                        c.AddFor(e => e.ItemNo).Caption("銷貨編號").Width(150).HidingPriority(3);
                         c.AddFor(e => e.Price).Caption("價格").AllowSearch(false).AllowFiltering(false).AllowSorting(false);
-                        c.AddFor(e => e.StartTime).Caption("起始日期").AllowSearch(false);
-                        c.AddFor(e => e.EndTime).Caption("結束日期").AllowSearch(false);
-                        c.AddFor(e => e.Permanent).Caption("永久顯示").AllowSearch(false).Width(125);
-                        c.AddFor(e => e.LastModificationTime).Caption("最後編輯日期").Visible(false).SortOrder(SortOrder.Desc);
-                        c.Add()
-                        .Type(GridCommandColumnType.Buttons)
+                        c.AddFor(e => e.EndTime) // 用 EndTime 當基底即可
+                            .Caption("結束日期")
+                            .AllowSearch(false)
+                            .HidingPriority(2)
+                            .Width(150)
+                            .CellTemplate(@<text>
+                                <% 
+                                    var showText = "永久顯示"
+                                    if(!data.Permanent){
+                                        var start = new Date(data.StartTime).toLocaleDateString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit' });
+                                        var end = new Date(data.EndTime).toLocaleDateString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit' });
+                                        showText = start + " ~ " + end;
+                                    }
+                                %>
+                                <%- showText %>
+                            </text>);
+
+                        c.AddFor(e => e.LastModificationTime).Caption("最後編輯日期").Visible(false).SortOrder(SortOrder.Desc).HidingPriority(1);
+                        c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90).HidingPriority(4);
+                        c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90).HidingPriority(4);
+                        c.Add().Type(GridCommandColumnType.Buttons).Width(100)
                         .Buttons(b =>
                         {
                             b.Add().Name("edit").OnClick("editButtonClicked");

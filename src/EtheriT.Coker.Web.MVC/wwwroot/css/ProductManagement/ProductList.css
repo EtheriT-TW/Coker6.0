@@ -4,6 +4,12 @@ input::-webkit-inner-spin-button {
     -webkit-appearance: none;
 }
 
+.dx-datagrid .dx-data-row td {
+    white-space: normal !important;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
 input[type="number"] {
     -moz-appearance: textfield;
 }

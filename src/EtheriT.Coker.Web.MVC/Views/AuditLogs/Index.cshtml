@@ -41,7 +41,7 @@
                     c.AddFor(e => e.ServiceName).Caption("服務名稱");
                     c.AddFor(e => e.MethodName).Caption("方法名稱");
                     c.AddFor(e => e.ClientName).Caption("使用者名稱");
-                    c.AddFor(e => e.ExecutionTime).Caption("執行時間");
+                    c.AddFor(e => e.ExecutionTime).Format("yyyy/MM/dd HH:mm:ss").Caption("執行時間").SortOrder(SortOrder.Desc);
                     c.AddFor(e => e.ClientIpAddress).Caption("IP");
                     c.AddFor(e => e.Parameters).Caption("參數").AllowHiding(true);
                     c.AddFor(e => e.ReturnValue).Caption("回應").AllowHiding(true);

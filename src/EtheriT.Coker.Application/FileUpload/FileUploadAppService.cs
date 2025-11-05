@@ -475,19 +475,24 @@ namespace EtheriT.Coker.Application
                 .AsNoTracking()
                 .Where(b => !b.IsDeleted && dto.Sid.Contains(b.Sid) && b.type == dto.Type)
                 .Where(b => b.FK_FileUploadId.HasValue)
-                .Select(b => new { b.Sid, UploadId = b.FK_FileUploadId!.Value, b.SerNo })
+                .Select(b => new { b.Sid, UploadId = b.FK_FileUploadId!.Value, b.SerNo, b.Name }) // 取出 FileBinds.Name
                 .ToListAsync();
 
             if (binds.Count == 0) return new();
 
             var uploadIds = binds.Select(x => x.UploadId).Distinct().ToList();
 
-            var uploadIdToSid = binds
+            // 同一 UploadId 可能對應多筆 bind，沿用 SerNo 最小者
+            var uploadIdMeta = binds
                 .GroupBy(x => x.UploadId)
-                .ToDictionary(g => g.Key, g => g.OrderBy(x => x.SerNo).First().Sid);
+                .ToDictionary(
+                    g => g.Key,
+                    g => {
+                        var first = g.OrderBy(x => x.SerNo).First();
+                        return (Sid: first.Sid, BindName: first.Name);
+                    });
 
-            var imgDtos = await _getLinksByUploadIdsAsync(uploadIds, dto.Size, uploadIdToSid);
-
+            var imgDtos = await _getLinksByUploadIdsAsync(uploadIds, dto.Size, uploadIdMeta);
             return imgDtos;
         }
 
@@ -497,7 +502,9 @@ namespace EtheriT.Coker.Application
             return imgDtos.Select(i => i.Link).ToList();
         }
 
-        private async Task<List<FileGetImgDto>> _getLinksByUploadIdsAsync(List<long> uploadIds, int size, Dictionary<long, long>? uploadIdToSid = null)
+        private async Task<List<FileGetImgDto>> _getLinksByUploadIdsAsync(
+            List<long> uploadIds, int size,
+            Dictionary<long, (long Sid, string? BindName)>? uploadIdMeta = null)
         {
             var result = new List<FileGetImgDto>();
             if (uploadIds == null || uploadIds.Count == 0) return result;
@@ -508,7 +515,6 @@ namespace EtheriT.Coker.Application
             string orgName = await loginUserData.GetWebsiteOrgName();
             orgName = string.IsNullOrEmpty(orgName) ? "" : $"/{orgName}";
 
-            // 主檔（限制同站，保留原行為）
             var uploads = await db.FileUploads
                 .AsNoTracking()
                 .Where(u => uploadIds.Contains(u.Id) && !u.IsDeleted && u.FK_WebsiteId == websiteId)
@@ -519,23 +525,20 @@ namespace EtheriT.Coker.Application
 
             var allSiteIds = new HashSet<long>(uploads.Select(u => (long)u.FK_WebsiteId)) { websiteId };
 
-            // 子圖（只有 size != 1 才需要）
-            Dictionary<Guid, List<long>> moreIdsByGuid = null;
-            Dictionary<long, (long Size, string Download, string Original, long FK_WebsiteId)> childUploadMap = null;
+            Dictionary<Guid, List<long>>? moreIdsByGuid = null;
+            Dictionary<long, (long Size, string Download, string Original, long FK_WebsiteId)>? childUploadMap = null;
 
             if (size != 1)
             {
                 var guids = uploads.Where(u => u.GuidKey != Guid.Empty).Select(u => u.GuidKey).Distinct().ToList();
-
                 if (guids.Count > 0)
                 {
                     var more = await db.FileBindMores
                         .AsNoTracking()
                         .Where(m => !m.IsDeleted && guids.Contains(m.FK_FileBindGuid) && m.FK_FileUploadId.HasValue)
-                        .Select(m => new { m.FK_FileBindGuid, FK_FileUploadId = m.FK_FileUploadId!.Value }) // long
+                        .Select(m => new { m.FK_FileBindGuid, FK_FileUploadId = m.FK_FileUploadId!.Value })
                         .ToListAsync();
 
-                    // Dictionary<Guid, List<long>>
                     moreIdsByGuid = more
                         .GroupBy(m => m.FK_FileBindGuid)
                         .ToDictionary(g => g.Key, g => g.Select(x => x.FK_FileUploadId).ToList());
@@ -543,27 +546,22 @@ namespace EtheriT.Coker.Application
                     var childIds = more.Select(x => x.FK_FileUploadId).Distinct().ToList();
                     if (childIds.Count > 0)
                     {
-                        // 取回所有子圖上傳檔（key = long）
                         var childs = await db.FileUploads
                             .AsNoTracking()
-                            .Where(u => childIds.Contains(u.Id))  // childIds 是 List<long>
+                            .Where(u => childIds.Contains(u.Id))
                             .Select(u => new { u.Id, u.FK_WebsiteId, u.DownloadFileName, u.OriginalFileName, u.Size })
                             .ToListAsync();
 
-                        // Dictionary<long, (int? Size, string Download, string Original, long FK_WebsiteId)>
                         childUploadMap = childs.ToDictionary(
                             u => u.Id,
-                            u => (u.Size, u.DownloadFileName??"", u.OriginalFileName, u.FK_WebsiteId) // ← 具名 tuple
-                        );
+                            u => (u.Size, u.DownloadFileName ?? "", u.OriginalFileName, u.FK_WebsiteId));
 
-                        // 若你有收集 allSiteIds：
                         foreach (var w in childs.Select(c => (long)c.FK_WebsiteId).Distinct())
                             allSiteIds.Add(w);
                     }
                 }
             }
 
-            // 批次抓網站 OrgName
             var siteOrgMap = await db.Websites
                 .AsNoTracking()
                 .Where(w => allSiteIds.Contains(w.Id))
@@ -581,11 +579,16 @@ namespace EtheriT.Coker.Application
                 return downloadFileName.Replace("upload", $"upload{imageOrgName}");
             }
 
-            // 依 size 選圖
+            static string FileNameOnly(string? path)
+            {
+                if (string.IsNullOrEmpty(path)) return "";
+                return System.IO.Path.GetFileName(path); // 自動只留檔名（支援 / 與 \）
+            }
+
             foreach (var up in uploads)
             {
                 string link = BuildLink(up.DownloadFileName, up.FK_WebsiteId);
-                string name = up.OriginalFileName;
+                string originalName = up.OriginalFileName; // 可能含路徑，稍後只取檔名
 
                 if (size != 1 && up.GuidKey != Guid.Empty &&
                     moreIdsByGuid != null && childUploadMap != null &&
@@ -594,7 +597,7 @@ namespace EtheriT.Coker.Application
                 {
                     var candidates = childIds
                         .Where(id => childUploadMap.ContainsKey(id))
-                        .Select(id => childUploadMap[id])     // (Size, Download, Original, FK_WebsiteId)
+                        .Select(id => childUploadMap[id])
                         .OrderByDescending(x => x.Size)
                         .ToList();
 
@@ -602,17 +605,35 @@ namespace EtheriT.Coker.Application
                     {
                         var pick = candidates[size - 2];
                         link = BuildLink(pick.Download, pick.FK_WebsiteId);
-                        name = pick.Original;
+                        originalName = pick.Original;
                     }
                     else if (candidates.Count == 1)
                     {
                         var pick = candidates[0];
                         link = BuildLink(pick.Download, pick.FK_WebsiteId);
-                        name = pick.Original;
+                        originalName = pick.Original;
                     }
                 }
 
-                result.Add(new FileGetImgDto { Id = up.Id, Name = name, Link = link, Sid = (uploadIdToSid != null && uploadIdToSid.TryGetValue(up.Id, out var sid)) ? sid : 0, });
+                // 這裡優先使用 FileBinds.Name
+                long sid = 0;
+                string name = FileNameOnly(originalName); // 預設退回「只保留檔名」
+
+                if (uploadIdMeta != null && uploadIdMeta.TryGetValue(up.Id, out var meta))
+                {
+                    sid = meta.Sid;
+                    if (!string.IsNullOrWhiteSpace(meta.BindName))
+                        name = meta.BindName!;
+                }
+
+                result.Add(new FileGetImgDto
+                {
+                    Id = up.Id,
+                    Name = name,     // ← 以 FileBinds.Name 為主；空時退回檔名
+                    Link = link,
+                    Sid = sid,
+                    Size = up.Size
+                });
             }
 
             return result;

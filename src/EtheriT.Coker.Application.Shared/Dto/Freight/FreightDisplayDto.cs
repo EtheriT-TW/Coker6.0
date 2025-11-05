@@ -1,4 +1,6 @@
 ﻿
+using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
+
 namespace EtheriT.Coker.Application.Shared.Dto.Freight
 {
     public class FreightDisplayDto
@@ -9,6 +11,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Freight
         public int? Low_Con { get; set; }
         public int? Dis_Freight { get; set; }
         public bool Set_Default { get; set; }
+        public int freigntStatusType { get; set; }
         public String Describe { get; set; }
     }
 }

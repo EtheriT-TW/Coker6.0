@@ -85,9 +85,16 @@ namespace EtheriT.Coker.Application.Freight
                                     {
                                         Id = e.Id,
                                         Title = e.Title,
-                                        Describe = e.FreigntStatusType.ToString() + " - " +
-                                        e.LogisticsType.ToString().Replace("_", "/").Replace("Seven", "7-11") + "，" +
-                                        (e.FreigntType == FreigntTypeEnum.免運費 ? e.FreigntType.ToString() : e.FreigntType.ToString() + e.Freight + "元(滿" + e.Low_Con + "元" + (e.Dis_Freight == 0 ? "免運)" : "運費" + e.Dis_Freight + "元)")),
+                                        Describe =
+                                            e.FreigntStatusType.ToString() + " - " +
+                                            e.LogisticsType.ToString()
+                                                .Replace("_", "/")
+                                                .Replace("Seven", "7-11") + "，" +
+                                            (e.FreigntType == FreigntTypeEnum.免運費
+                                                ? e.FreigntType.ToString()
+                                                : e.Freight == e.Dis_Freight
+                                                    ? $"單筆計算{e.Freight}元"
+                                                    : $"單筆計算{e.Freight}元(滿{e.Low_Con}元{(e.Dis_Freight == 0 ? "免運" : $"運費{e.Dis_Freight}元")})")
                                     };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
@@ -136,24 +143,46 @@ namespace EtheriT.Coker.Application.Freight
                                  {
                                      Id = e.Id,
                                      Title = e.Title,
-                                     Freight = e.Freight == null ? 0 : e.Freight,
+                                     Freight = e.Freight ?? 0,
                                      Low_Con = e.Low_Con,
                                      Dis_Freight = e.Dis_Freight,
                                      Set_Default = e.Set_Default,
-                                     Describe = e.LogisticsType.ToString().Replace("_", "/").Replace("Seven", "7-11") + "，" +
-                                                (e.FreigntType == FreigntTypeEnum.免運費 ? e.FreigntType.ToString() : e.FreigntType.ToString() + e.Freight + "元(滿" + e.Low_Con + "元" + (e.Dis_Freight == 0 ? "免運)" : "運費" + e.Dis_Freight + "元)")),
+                                     freigntStatusType = (int)e.FreigntStatusType,
+                                     Describe =
+                                         e.LogisticsType.ToString()
+                                             .Replace("_", "/")
+                                             .Replace("Seven", "7-11") + "，" +
+                                         (
+                                             e.FreigntType == FreigntTypeEnum.免運費
+                                                 ? e.FreigntType.ToString()
+                                                 : e.Freight == e.Dis_Freight
+                                                     ? $"單筆計算{e.Freight}元"
+                                                     : $"單筆計算{e.Freight}元(滿{e.Low_Con}元{(e.Dis_Freight == 0 ? "免運" : $"運費{e.Dis_Freight}元")})"
+                                         )
                                  };
-                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+
+                    return new JsonResult(output, new JsonSerializerSettings
+                    {
+                        ContractResolver = new DefaultContractResolver()
+                    });
                 }
-                else throw new Exception("查無運費資料");
+                else
+                {
+                    throw new Exception("查無運費資料");
+                }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-
+                // 建議可記錄 log
+                Console.WriteLine(ex.Message);
             }
 
-            return new JsonResult(new List<FreightDisplayDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            return new JsonResult(new List<FreightDisplayDto>(), new JsonSerializerSettings
+            {
+                ContractResolver = new DefaultContractResolver()
+            });
         }
+
         public async Task<ResponseMessageDto> Delete(long Id)
         {
 

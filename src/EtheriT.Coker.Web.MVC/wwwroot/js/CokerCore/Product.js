@@ -11,16 +11,6 @@
                     dataType: "json"
                 });
             },
-            Stock: function (data) {
-                return $.ajax({
-                    url: "/api/Product/StockAddUp",
-                    type: "POST",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: JSON.stringify(data),
-                    dataType: "json"
-                });
-            },
             ProdTechCert: function (data) {
                 return $.ajax({
                     url: "/api/Product/TechCertAddUp",
@@ -204,5 +194,17 @@
                 });
             },
         }
+    },
+    Stock: {
+        BatchSet: function (data) {
+            return $.ajax({
+                url: "/api/Product/StockBatchSet",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
     }
 });

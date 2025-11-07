@@ -538,6 +538,9 @@ body > .popover.bs-popover-auto.fade {
             top: calc(50% - 2.5px);
         }
 
+.pay_mail a {
+    display: inline-block;
+}
 /*RWD*/
 @media (max-width: 1366px) {
 }

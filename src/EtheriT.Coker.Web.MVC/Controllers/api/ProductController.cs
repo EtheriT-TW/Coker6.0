@@ -95,5 +95,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await productAppService.SaveConten(dto);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> StockBatchSet(List<StockBatchSetDto> dto) {
+            return await productAppService.StockBatchSet(dto);
+        }
     }
 }

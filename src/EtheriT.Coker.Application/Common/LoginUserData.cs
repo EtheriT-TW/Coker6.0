@@ -348,11 +348,15 @@ namespace EtheriT.Coker.Application
             await setOptionParameter(entity);
             db.SaveChanges();
         }
-        public async Task SaveChanges(IQueryable<object> queryable) {
-            queryable.ToListAsync().Result.ForEach(async x => {
+        public async Task SaveChanges(IEnumerable<object> entities) {
+            var list = entities.ToList();
+
+            foreach (var x in list)
+            {
                 await setOptionParameter((FullAuditedEntity)x);
-                await db.SaveChangesAsync();
-            });
+            }
+
+            await db.SaveChangesAsync();
         }
         public async Task setOptionParameter(FullAuditedEntity entity) {
             var user = await GetUser();

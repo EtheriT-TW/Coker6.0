@@ -9,6 +9,9 @@
 @{
     ViewData["Title"] = "ProductList";
 }
+@Html.AntiForgeryToken()
+<link rel="stylesheet" href="~/css/ProductManagement/SaleQuantityStaging.min.css" asp-append-version="true" />
+<script src="~/js/ProductManagement/SaleQuantityStaging.min.js" asp-append-version="true"></script>
 <div class="">
     <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
         <div class="title fw-bold fs-3">可銷售警示列表</div>
@@ -44,7 +47,11 @@
                             c.AddFor(e => e.Name).Caption("商品名稱").AllowEditing(false);
                             c.AddFor(e => e.Specs).Caption("規格名稱").AllowEditing(false);
                             c.AddFor(e => e.SaleQuantity).Caption("可銷售警示量").AllowEditing(false);
-                            c.AddFor(e => e.StockQuantity).Caption("可銷售量");
+                            c.AddFor(e => e.StockQuantity)
+                                .AllowEditing(true)
+                                .DataType(GridColumnDataType.Number)
+                                .EditorOptions(new { min = 0, showSpinButtons = true })
+                                .Caption("可銷售量");
                         })
                         .ColumnAutoWidth(true)
                         .Paging(paging => paging.PageSize(30))
@@ -57,17 +64,14 @@
                         })
                         .Editing(editing =>
                         {
+                            editing.Mode(GridEditMode.Batch);
                             editing.AllowUpdating(true);
                             editing.UseIcons(true);
-                                }).OnRowUpdating("OnRowUpdating")
+                            editing.StartEditAction(GridStartEditAction.Click);
+                            editing.SelectTextOnEditStart(true);
+                        }).OnSaving("OnUpdating")
                 )
             </div>
         </div>
     </div>
 </div>
-<script>
-    function OnRowUpdating(e) {
-        DevExpress.ui.notify("已更新", "success", 2000);
-        e.component.refresh();
-    }
-</script>

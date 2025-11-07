@@ -257,61 +257,8 @@ namespace EtheriT.Coker.Application.Product
                     else
                     {
                         var db_ps = await db.Prod_Stocks.Where(e => e.Id == item.Id).FirstOrDefaultAsync();
-
-                        if (db_ps.Stock != item.OldStock && item.OldStock != null)
-                        {
-                            output.Message = "庫存變動";
-                            item.Stock -= item.OldStock - db_ps.Stock;
-                        }
-
                         if (db_ps != null)
                         {
-                            var prod = await db.Prods.Where(e => e.Id == db_ps.FK_Pid).FirstOrDefaultAsync();
-                            var scs = await db.ShoppingCarts.Where(e => e.FK_PSid == db_ps.Id && !e.IsOrder).ToListAsync();
-                            var total_stock = 0;
-                            foreach (var sc in scs) total_stock += sc.Quantity;
-                            item.Stock -= total_stock;
-
-                            if (prod.Status != ProdStatusEnum.售完)
-                            {
-                                if (item.Stock > 0)
-                                {
-                                    scs = scs.Where(e => e.OldQuantity > e.Quantity).OrderByDescending(e => e.CreationTime).ToList();
-                                    foreach (var sc in scs)
-                                    {
-                                        if (item.Stock >= (sc.OldQuantity - sc.Quantity))
-                                        {
-                                            item.Stock -= (sc.OldQuantity - sc.Quantity);
-                                            sc.Quantity = sc.OldQuantity;
-                                        }
-                                        else
-                                        {
-                                            sc.Quantity += (sc.OldQuantity - sc.Quantity) - (int)item.Stock;
-                                            item.Stock = 0;
-                                            break;
-                                        }
-                                    }
-                                }
-                                else if (item.Stock < 0)
-                                {
-                                    item.Stock = Math.Abs((int)item.Stock);
-                                    scs = scs.Where(e => e.Quantity > 0).OrderBy(e => e.CreationTime).ToList();
-                                    foreach (var sc in scs)
-                                    {
-                                        if (sc.Quantity - item.Stock >= 0)
-                                        {
-                                            sc.Quantity -= (int)item.Stock;
-                                            item.Stock = 0;
-                                            break;
-                                        }
-                                        else
-                                        {
-                                            item.Stock -= sc.Quantity;
-                                            sc.Quantity = 0;
-                                        }
-                                    }
-                                }
-                            }
                             db_ps.Stock = item.Stock;
                             db_ps.IsTimePrice = item.TimePrice;
                             db_ps.FK_S1id = item.FK_S1id;
@@ -340,6 +287,45 @@ namespace EtheriT.Coker.Application.Product
                 output.Error = e.Message;
             }
 
+            return output;
+        }
+        public async Task<ResponseMessageDto> StockBatchSet(List<StockBatchSetDto> dto) {
+            ResponseMessageDto output = new ResponseMessageDto();
+            if (dto == null || dto.Count == 0)
+            {
+                output.Success = true;
+                return output;
+            }
+
+            try
+            {
+                var websiteId = await loginUserData.GetWebsiteId();
+
+                var idToQty = dto
+                    .GroupBy(x => x.Id)
+                    .ToDictionary(g => g.Key, g => g.Last().StockQuantity);
+
+                var ids = idToQty.Keys.ToList();
+                var stocks = await db.Prod_Stocks.Include(s => s.Prod)
+                    .Where(s => s.Prod!=null && s.Prod.FK_WebsiteId == websiteId && ids.Contains(s.Id)).ToListAsync();
+
+                foreach (var s in stocks)
+                {
+                    if (idToQty.TryGetValue(s.Id, out var qty))
+                    {
+                        s.Stock = qty;
+                    }
+                }
+
+                await loginUserData.SaveChanges(stocks);
+                output.Success = true;
+            }
+            catch (Exception ex)
+            {
+                output.Success = false;
+                output.Error = ex.Message;
+            }
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
         public async Task<JsonResult> SaleQuantityStaging(DataSourceLoadOptions loadOptions)

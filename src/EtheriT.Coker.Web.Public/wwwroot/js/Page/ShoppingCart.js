@@ -1929,7 +1929,7 @@ function OrderSuccess(result) {
 
     $("#PaymentData .pay_info .paid_date").append(message[3]);
     var tempmail = order_header_data.ordererEmail;
-    $("#PaymentData .pay_mail").append(`如因交易條件有誤、商品缺貨或價格物刊或有其他本公司無法接受訂單之情形,本公司保留商品出貨與否的權利。<br />．隨後我們也會將轉帳的資料mail到您指定的電子信箱:${tempmail.substr(0, 1)}******${tempmail.substr(tempmail.indexOf("@") - 1)}`);
+    $("#PaymentData .pay_mail").append(`如因交易條件有誤、商品缺貨或價格物刊或有其他本公司無法接受訂單之情形,本公司保留商品出貨與否的權利。<br />．隨後我們也會將轉帳的資料mail到您指定的電子信箱:<code>${tempmail.substr(0, 1)}******&#8203;${tempmail.substr(tempmail.indexOf("@") - 1)}</code>`);
 
     Coker.Order.GetDetails(order_header_id).done(function (message) {
         if (message.length > 0) {

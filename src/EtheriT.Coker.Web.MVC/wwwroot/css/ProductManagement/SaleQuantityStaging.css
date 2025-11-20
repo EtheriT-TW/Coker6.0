@@ -1,2 +1,37 @@
-﻿body {
+﻿/* 只標示「可編輯」且尚未被修改、也沒有錯誤的儲存格 */
+.dx-datagrid-rowsview .dx-data-row .col-editable:not(.dx-cell-modified):not(.dx-invalid) {
+    position: relative;
+    background: #fff9e6; /* 比之前更明顯的淡橙底 */
+    cursor: text;
 }
+
+    /* 左側色條（比底色更醒目，但不擋邊框） */
+    .dx-datagrid-rowsview .dx-data-row .col-editable:not(.dx-cell-modified):not(.dx-invalid)::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: #f59e0b; /* amber-500 */
+        opacity: .9; /* 提高可見度 */
+        pointer-events: none;
+    }
+
+    /* Hover 再更明顯一點 */
+    .dx-datagrid-rowsview .dx-data-row .col-editable:not(.dx-cell-modified):not(.dx-invalid):hover {
+        background: #fff3c4; /* 更亮一些 */
+    }
+
+    /* 右上角鉛筆 */
+    .dx-datagrid-rowsview .dx-data-row .col-editable:not(.dx-cell-modified):not(.dx-invalid)::before {
+        content: "\f5ad";
+        font-family: "Font Awesome 6 Free", Arial;
+        font-weight: 900;
+        font-size: 14px;
+        color: rgba(0,0,0,.45);
+        position: absolute;
+        top: 6px;
+        left: 8px;
+        pointer-events: none;
+    }

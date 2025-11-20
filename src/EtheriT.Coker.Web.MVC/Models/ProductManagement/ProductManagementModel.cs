@@ -9,5 +9,6 @@ namespace EtheriT.Coker.Web.MVC.Models.ProductManagement
         public List<SpecTypeListDto> SpecType { get; set; }
         public List<AddRoleDto>? Roles { get; set; }
         public List<ProdStatusEnum> ProdStatus { get; set; }
-    }
+        public bool HasAnyItemNo { get; set; } = false;
+        }
 }

@@ -1,35 +1,42 @@
-﻿using System.Security.Claims;
-using System.Text;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Http;
+﻿using EtheriT.Coker.Application.Shared.Authorization;
+using EtheriT.Coker.Application.Shared.Dto.enumType.OAuth;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.Web.Core.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using EtheriT.Coker.Web.Core.Models;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace EtheriT.Coker.Web.MVC.Resources
 {
     public class JwtHelpers
     {
         //private readonly CokerDbContext db;
+        private readonly ICookieManagerAppService cookieManager;
         private readonly IConfiguration Configuration;
         private readonly IHttpContextAccessor httpContextAccessor;
 
         public JwtHelpers(
             //CokerDbContext db,
             IConfiguration configuration, 
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            ICookieManagerAppService cookieManager)
         {
             //this.db = db;
             this.Configuration = configuration;
             this.httpContextAccessor = httpContextAccessor;
+            this.cookieManager = cookieManager;
         }
 
-        public async Task<string> GenerateToken(string Account, List<string> roles, Guid secret, int expireMinutes = 30,List<KeyValuePair<string, string>>? custClaims = null)
+        public async Task<string> GenerateToken(string Account, List<string> roles, Guid secret, CookiePurposeEnum purpose, List<KeyValuePair<string, string>>? custClaims = null)
         {
+            var lifetime = cookieManager.GetLifetime(purpose);
+            var expires = DateTime.Now.Add(lifetime);
             //var user = await db.Users.Where(e => e.Account == Account).FirstOrDefaultAsync();
             var issuer = Configuration.GetValue<string>("JwtSettings:Issuer");
             var audience = Configuration.GetValue<string>("JwtSettings:Audience") ?? issuer;
@@ -85,7 +92,7 @@ namespace EtheriT.Coker.Web.MVC.Resources
                 NotBefore = now, // 何時開始生效
                 IssuedAt = now, // Default is DateTime.Now
                 Subject = userClaimsIdentity,
-                Expires = now.AddMinutes(expireMinutes),
+                Expires = expires,
                 SigningCredentials = signingCredentials
             };
 

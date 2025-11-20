@@ -163,7 +163,9 @@
                                 </text>);
                         c.AddFor(e => e.Ser_No).Caption("排序").Width(75);
                         c.AddFor(e => e.Title).Caption("商品名稱");
-                        c.AddFor(e => e.ItemNo).Caption("銷貨編號").Width(150).HidingPriority(3);
+                        if(Model.HasAnyItemNo){
+                            c.AddFor(e => e.ItemNo).Caption("銷貨編號").Width(150).HidingPriority(3);
+                        }
                         c.AddFor(e => e.Price).Caption("價格").AllowSearch(false).AllowFiltering(false).AllowSorting(false);
                         c.AddFor(e => e.EndTime) // 用 EndTime 當基底即可
                             .Caption("結束日期")

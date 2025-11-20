@@ -70,9 +70,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpGet]
         [Authorize]
-        public async Task<PageTypeDto> GetPageTypeList()
+        public PageTypeDto GetPageTypeList()
         {
-            return await webMenuApplication.GetPageTypeList();
+            return webMenuApplication.GetPageTypeList();
         }
     }
 }

@@ -23,6 +23,7 @@ namespace EtheriT.Coker.Core.Models
         public bool Visible { get; set; }
         public bool RemovedFromShelves { get; set; }
         public ProdStatusEnum Status { get; set; }
+        public ProdStatusEnum? oStatus { get; set; }
         public int? Clicks { get; set; }
         public string? SaveHtml { get; set; }
         [MaxLength]

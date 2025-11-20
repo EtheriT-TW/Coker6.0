@@ -56,16 +56,15 @@ namespace EtheriT.Coker.Application.Favorites
                         db.Favorites.Add(favorites);
                         await loginUserData.SaveChanges(favorites);
 
-                        Core.Models.Prod_Log prod_log = new Core.Models.Prod_Log
+                        Prod_Log prod_log = new Prod_Log
                         {
                             FK_Pid = Pid,
                             FK_UserId = await db.FrontUsers.Where(e => e.UUID == UUID).Select(e => e.FK_User).FirstOrDefaultAsync(),
                             UUID = UUID,
-                            Action = (int)LogActionEnum.加入收藏,
-                            Db_Name = "Favorites"
+                            Action = LogActionEnum.加入收藏
                         };
                         db.Prod_Logs.Add(prod_log);
-                        await loginUserData.SaveChanges(prod_log);
+                        db.SaveChanges();
 
                         response.Success = true;
                         response.Message = favorites.Id.ToString();
@@ -177,16 +176,15 @@ namespace EtheriT.Coker.Application.Favorites
 
                     if (favorites.Type == (int)FavoritesTypeEnum.商品)
                     {
-                        Core.Models.Prod_Log prod_log = new Core.Models.Prod_Log
+                        Prod_Log prod_log = new Prod_Log
                         {
                             FK_Pid = favorites.FK_AssocId,
                             FK_UserId = userid,
                             UUID = UUID,
-                            Action = (int)LogActionEnum.移除收藏,
-                            Db_Name = "Favorites"
+                            Action = LogActionEnum.移除收藏
                         };
                         db.Prod_Logs.Add(prod_log);
-                        await loginUserData.SaveChanges(prod_log);
+                        db.SaveChanges();
                     }
 
                     response.Success = true;

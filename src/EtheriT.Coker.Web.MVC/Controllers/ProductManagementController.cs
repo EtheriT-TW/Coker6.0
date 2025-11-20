@@ -22,11 +22,13 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         public async Task<IActionResult> ProductListAsync()
         {
             var spec_type = new List<SpecTypeListDto>(await specificationAppService.GetPickTypeList());
+            var chackHasAnyItemNo = await productAppService.HasAnyItemNo();
             ProductManagementModel model = new ProductManagementModel
             {
                 SpecType = spec_type,
                 ProdStatus = Enum.GetValues(typeof(ProdStatusEnum)).Cast<ProdStatusEnum>().ToList(),
-                Roles = JsonConvert.DeserializeObject<List<AddRoleDto>>(JsonConvert.SerializeObject((await productAppService.GetRolesAll()).Value))
+                Roles = JsonConvert.DeserializeObject<List<AddRoleDto>>(JsonConvert.SerializeObject((await productAppService.GetRolesAll()).Value)),
+                HasAnyItemNo = chackHasAnyItemNo.Success
             };
             return View("ProductList", model);
         }

@@ -52,6 +52,7 @@ using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.MVC.Resources;
 using EtheriT.Coker.Web.Public.Middlewares;
+using EtheriT.Coker.Web.Public.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -227,6 +228,8 @@ builder.Services.AddScoped<IHtmlProcessor, HtmlProcessor>();
 builder.Services.AddScoped<ITemplatesApplicationService, TemplatesApplicationService> ();
 builder.Services.AddScoped<ICookieManagerAppService, CookieManagerAppService>();
 builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<CustomDtoMapper>();});
+
+builder.Services.AddSingleton<JumpRedirectCache>();
 
 if (!builder.Environment.IsDevelopment())
 {
@@ -435,6 +438,7 @@ app.UseHttpsRedirection();
 app.UseMiddleware<ContentSecurityPolicyMiddleware>();
 
 app.UseRouting();
+app.UseMiddleware<RedirectMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -467,44 +471,5 @@ app.MapControllerRoute(
     defaults: new { controller = "Page", action = "Index" },
     constraints: new { key = new NotEqual(new List<string> { "upload", "css", "js", "images", "Shared", "lib" }) }
 );
-
-if (app.Environment.IsProduction())
-{
-    app.Use(async (context, next) =>
-    {
-        if (context.Request.IsHttps)
-        {
-            try
-            {
-                using (var scope = app.Services.CreateScope())
-                {
-                    long siteId = builder.Configuration.GetValue<long>("WebConfig:SiteId");
-                    var dbContext = scope.ServiceProvider.GetRequiredService<CokerDbContext>();
-                    var website = dbContext.Websites.Where(e => e.Id == siteId && !e.IsDeleted).FirstOrDefault();
-                    if (website != null && !string.IsNullOrEmpty(website.DefaultUrl))
-                    {
-                        var currentHost = context.Request.Host.Host;
-                        var mainDomain = website.DefaultUrl.Replace("http://", "").Replace("https://", ""); // 主網域
-
-                        if (!currentHost.Equals(mainDomain, StringComparison.OrdinalIgnoreCase))
-                        {
-                            var newUrl = $"https://{mainDomain}{context.Request.Path}{context.Request.QueryString}";
-                            context.Response.Redirect(newUrl, true); // true 表示 301轉址 
-                            return;
-                        }
-
-                        await next();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-        }
-    });
-}
-
-app.UseRouting();
 
 app.Run();

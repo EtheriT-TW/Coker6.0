@@ -232,7 +232,7 @@ namespace EtheriT.Coker.Application.Product
                     var item = dto[i];
                     if (item.Id == 0)
                     {
-                        Core.Models.Prod_Stock ps = new Core.Models.Prod_Stock
+                        Prod_Stock ps = new Prod_Stock
                         {
                             FK_Pid = Pid,
                             FK_S1id = item.FK_S1id,
@@ -256,9 +256,13 @@ namespace EtheriT.Coker.Application.Product
                     }
                     else
                     {
-                        var db_ps = await db.Prod_Stocks.Where(e => e.Id == item.Id).FirstOrDefaultAsync();
+                        var db_ps = await db.Prod_Stocks.Include(e => e.Prod).Where(e => e.Id == item.Id).FirstOrDefaultAsync();
                         if (db_ps != null)
                         {
+                            if (db_ps.Stock == 0 && item.Stock != 0 && db_ps.Prod != null) {
+                                if(db_ps.Prod.oStatus == null) db_ps.Prod.Status = ProdStatusEnum.一般;
+                                else db_ps.Prod.Status = db_ps.Prod.oStatus.Value;
+                            }
                             db_ps.Stock = item.Stock;
                             db_ps.IsTimePrice = item.TimePrice;
                             db_ps.FK_S1id = item.FK_S1id;
@@ -314,6 +318,12 @@ namespace EtheriT.Coker.Application.Product
                     if (idToQty.TryGetValue(s.Id, out var qty))
                     {
                         s.Stock = qty;
+                        if (s.Prod != null && s.Prod.Status == ProdStatusEnum.售完) { 
+                            if(s.Prod.oStatus == null) 
+                                s.Prod.Status = ProdStatusEnum.一般;
+                            else
+                                s.Prod.Status = s.Prod.oStatus.Value;
+                        }
                     }
                 }
 
@@ -345,10 +355,11 @@ namespace EtheriT.Coker.Application.Product
                 from n2 in s2g.DefaultIfEmpty()
 
                 where p.FK_WebsiteId == webid
-                      && p.Status != ProdStatusEnum.售完
+                      && p.Status != ProdStatusEnum.停產
                       && !p.RemovedFromShelves
                       && p.Visible
-                      && s.Stock < s.Alert_Qty
+                      && s.Alert_Qty != null 
+                      && s.Stock <= s.Alert_Qty
                 select new
                 {
                     Id = s.Id,
@@ -447,6 +458,24 @@ namespace EtheriT.Coker.Application.Product
             }
 
             return output;
+        }
+        public async Task<ResponseMessageDto> HasAnyItemNo() {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var webid = await loginUserData.GetWebsiteId();
+                bool hasAnyItemNo = await db.Prods
+                    .AsNoTracking()
+                    .Where(p => p.FK_WebsiteId == webid && !p.IsDeleted)
+                    .AnyAsync(p => !string.IsNullOrWhiteSpace(p.ItemNo));
+
+                response.Success = hasAnyItemNo;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
         }
         /* Get Data */
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? pids)
@@ -1221,13 +1250,12 @@ namespace EtheriT.Coker.Application.Product
 
                     var userid = await db.FrontUsers.Where(e => e.UUID == UUID).Select(e => e.FK_User).FirstOrDefaultAsync();
 
-                    Core.Models.Prod_Log prod_log = new Core.Models.Prod_Log
+                    Prod_Log prod_log = new Prod_Log
                     {
                         FK_Pid = FK_Pid,
-                        Action = (int)LogActionEnum.點擊,
+                        Action = LogActionEnum.點擊,
                         UUID = UUID,
-                        FK_UserId = userid,
-                        Db_Name = "Prods"
+                        FK_UserId = userid
                     };
 
                     db.Prod_Logs.Add(prod_log);
@@ -1380,7 +1408,7 @@ namespace EtheriT.Coker.Application.Product
 
                 var prod_Logs = await (from prod_log in db.Prod_Logs
                                        where prod_log.UUID == UUID
-                                       where prod_log.Action == (int)ProdLogActionEnum.點擊
+                                       where prod_log.Action == LogActionEnum.點擊
                                        where (DateTime.Compare(DateTime.Now.AddMonths(-3), (DateTime)prod_log.CreationTime) < 0)
                                        orderby prod_log.CreationTime descending
                                        select prod_log.FK_Pid).ToListAsync();

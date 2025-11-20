@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251111034439_drop_column_Prod_Log_lastModifytime")]
+    partial class drop_column_Prod_Log_lastModifytime
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3279,12 +3282,22 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
+                    b.Property<Guid?>("Tokenid")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("UUID")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<long?>("UserId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
                     b.HasIndex("FK_Pid");
+
+                    b.HasIndex("Tokenid");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Prod_Logs");
                 });
@@ -6732,6 +6745,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EtheriT.Coker.Core.Models.Token", null)
+                        .WithMany("Prod_Logs")
+                        .HasForeignKey("Tokenid");
+
+                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", null)
+                        .WithMany("Prod_Logs")
+                        .HasForeignKey("UserId");
+
                     b.Navigation("Prod");
                 });
 
@@ -7264,6 +7285,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("thirdPartyKeypairValues");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Token", b =>
+                {
+                    b.Navigation("Prod_Logs");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.UserGrouping", b =>
                 {
                     b.Navigation("UserGroupingDetails");
@@ -7344,6 +7370,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("PermissionDetails");
 
                     b.Navigation("Permissions");
+
+                    b.Navigation("Prod_Logs");
 
                     b.Navigation("Remotes");
 

@@ -301,7 +301,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Prod_Log>(o =>
             {
                 o.HasOne(u => u.Prod).WithMany(u => u.Prod_Logs).HasForeignKey(f => f.FK_Pid);
-                o.HasQueryFilter(e => !e.IsDeleted);
+                o.Property(e => e.CreationTime).HasDefaultValueSql("getdate()");
             });
             modelBuilder.Entity<Bonus>(o =>
             {

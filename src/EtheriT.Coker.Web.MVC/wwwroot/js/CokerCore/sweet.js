@@ -72,6 +72,22 @@
                 }
             })
         },
+        confirmAsync: async function (title, text, confirmtexet, cancanceltext) {
+            return new Promise((resolve) => {
+                co.sweet.confirm(
+                    title,
+                    text,
+                    confirmtexet,
+                    cancanceltext,
+                    function () { // 使用者按「確認」
+                        resolve(true);
+                    },
+                    function () { // 使用者按「取消」（如果你原本有這個 callback，就接上）
+                        resolve(false);
+                    }
+                );
+            });
+        },
         warn: function (title, text, action) {
             Swal.fire({
                 icon: 'warning',

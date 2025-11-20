@@ -335,7 +335,7 @@ function ElementInit() {
                 filter.forEach(item => {
                     if (text != "") text += "\n";
                     text += "現金：" + co.String.thousandSign(item["Price"]);
-                    if (item["Bonus"] !== 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
+                    if (parseInt(item["Bonus"]) !== 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
                 });
                 $self.val(filter.length ? text : "");
             }
@@ -765,7 +765,7 @@ function SpecAdd(result) {
         filter.map(item => {
             if (text != "") text += "\n";
             text += "現金：" + co.String.thousandSign(item["Price"]);
-            if (item["Bonus"] != 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
+            if (parseInt(item["Bonus"]) != 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
         });
         if (filter.length > 0) {
             item_price.val(text);
@@ -1117,7 +1117,8 @@ function SortChange($self, change, minindex, maxindex) {
 }
 function AddUp(success_text, error_text, target) {
     var stock_addup_list = []
-
+    var status = parseInt($(`[name="ProdStatus"] > option:selected`).val() || 0);
+    var updateStock = false;
     $("#Spec_Frame ul li.spec_list").each(function () {
         var $self = $(this);
         var obj = {};
@@ -1151,6 +1152,7 @@ function AddUp(success_text, error_text, target) {
         obj["Ser_No"] = $self.find(".ser_no").val();
         obj['OldStock'] = $self.data("oldstock");
         obj['SubItemNo'] = $self.find(".input_subItemNo").val();
+        updateStock = updateStock || parseInt(obj["Stock"] || 0) > parseInt(obj['OldStock'] || 0);
         var price_list = [];
         modal_price_list.forEach(function (item) {
             if (item.FK_PSId == $self.data("psid") || item.TempPSid == $self.data("temppsid")) {
@@ -1167,226 +1169,231 @@ function AddUp(success_text, error_text, target) {
         obj["Prices"] = price_list;
         stock_addup_list.push(obj);
     })
-    co.Product.AddUp.Product({
-        Id: keyId,
-        Title: $name.val(),
-        ItemNo: $itemNo.val(),
-        Visible: $display.is(":checked"),
-        RemovedFromShelves: !$removedFromShelves.is(":checked"),
-        Ser_No: $("#SortCheck").is(":checked") ? $(`[name="serNo"]`).val() : 500,
-        Introduction: $introduction.val(),
-        Description: $illustrate.val(),
-        StartTime: startDate,
-        EndTime: endDate,
-        Permanent: $permanent.is(":checked"),
-        TagSelected: tag_list,
-        TechCertSelected: techcert_list,
-        Stocks: stock_addup_list,
-        Status: $(`[name="ProdStatus"] > option:selected`).val()
-    }).done(function (result) {
-        var pid = parseInt(result.message);
-        if (result.success) {
-            Coker.sweet.success(success_text, null, true);
-            var fileListSave = [];
-            if (total_files.length > 0) {
-                $("#ProductForm .data_upload > ul > li").each(function () {
-                    var $self = $(this);
-                    if (!$self.hasClass("btn_upload_add")) {
-                        var data = [];
-                        total_files.forEach(file => {
-                            if ((typeof (file["Id"]) != "undefined" && file["Id"] == $self.data("id")) || (typeof (file["TempId"]) != "undefined" && file["TempId"] == $self.data("tempid"))) {
-                                data.push(file);
-                            }
-                        })
-                        if (data.length > 0) {
-                            switch (data[0]["Type"]) {
-                                case 1:
-                                    if (typeof (data[0]["File"]) == "string") {
-                                        co.File.fileSortChange({
-                                            Id: data[0]["Id"],
-                                            Sid: pid,
-                                            SerNo: $self.find(".ser_no").val(),
-                                        });
-                                    } else {
+
+    const update = function () {
+        co.Product.AddUp.Product({
+            Id: keyId,
+            Title: $name.val(),
+            ItemNo: $itemNo.val(),
+            Visible: $display.is(":checked"),
+            RemovedFromShelves: !$removedFromShelves.is(":checked"),
+            Ser_No: $("#SortCheck").is(":checked") ? $(`[name="serNo"]`).val() : 500,
+            Introduction: $introduction.val(),
+            Description: $illustrate.val(),
+            StartTime: startDate,
+            EndTime: endDate,
+            Permanent: $permanent.is(":checked"),
+            TagSelected: tag_list,
+            TechCertSelected: techcert_list,
+            Stocks: stock_addup_list,
+            Status: status
+        }).done(function (result) {
+            var pid = parseInt(result.message);
+            if (result.success) {
+                Coker.sweet.success(success_text, null, true);
+                var fileListSave = [];
+                if (total_files.length > 0) {
+                    $("#ProductForm .data_upload > ul > li").each(function () {
+                        var $self = $(this);
+                        if (!$self.hasClass("btn_upload_add")) {
+                            var data = [];
+                            total_files.forEach(file => {
+                                if ((typeof (file["Id"]) != "undefined" && file["Id"] == $self.data("id")) || (typeof (file["TempId"]) != "undefined" && file["TempId"] == $self.data("tempid"))) {
+                                    data.push(file);
+                                }
+                            })
+                            if (data.length > 0) {
+                                switch (data[0]["Type"]) {
+                                    case 1:
+                                        if (typeof (data[0]["File"]) == "string") {
+                                            co.File.fileSortChange({
+                                                Id: data[0]["Id"],
+                                                Sid: pid,
+                                                SerNo: $self.find(".ser_no").val(),
+                                            });
+                                        } else {
+                                            var formData = new FormData();
+                                            formData.append("type", 1);
+                                            formData.append("sid", pid);
+                                            formData.append("serno", $self.find(".ser_no").val());
+                                            data.forEach(item => {
+                                                for (var i = 0; i < item["File"].length; i++) {
+                                                    formData.append("files", item["File"][i]);
+                                                }
+                                                fileListSave.push(
+                                                    co.File.Upload(formData).done(function (result) {
+                                                        var _dfr = $.Deferred()
+                                                        if (result.success) {
+                                                            for (let n = 0; n < data.length; n++) {
+                                                                data[n].Id = result.files[n].id;
+                                                                data[n].File = result.files[n].path;
+                                                            }
+                                                            return _dfr.resolve();
+                                                        } else return _dfr.reject();
+                                                        return _dfr.promise();
+                                                    })
+                                                );
+                                                formData.delete('files');
+                                            })
+                                        }
+                                        break;
+                                    /* ********** *****************
+                                  360 上傳資料庫，須重打
+                                   ***************************/
+                                    case 2:
                                         var formData = new FormData();
                                         formData.append("type", 1);
                                         formData.append("sid", pid);
                                         formData.append("serno", $self.find(".ser_no").val());
-                                        data.forEach(item => {
-                                            for (var i = 0; i < item["File"].length; i++) {
-                                                formData.append("files", item["File"][i]);
+                                        for (var i = 0; i < data.length; i += 3) {
+                                            for (var j = i; j < i + 3; j++) {
+                                                formData.append('files', data[j]);
                                             }
+                                            formData.delete('files');
+                                        }
+                                        break;
+                                    /* ********** *****************
+                                       影片上傳資料庫，不確定錯誤是否在這
+                                        ***************************/
+                                    case 3:
+                                        if (typeof (data[0]["File"]) == "string") {
+                                            co.File.fileSortChange({
+                                                Id: data[0]["Id"],
+                                                sid: pid,
+                                                SerNo: $self.find(".ser_no").val(),
+                                            });
+                                        } else {
+                                            var formData = new FormData();
+                                            formData.append("files", data[0]["File"]);
+                                            formData.append("type", 1);
+                                            formData.append("sid", pid);
+                                            formData.append("serno", $self.find(".ser_no").val());
                                             fileListSave.push(
                                                 co.File.Upload(formData).done(function (result) {
-                                                    var _dfr = $.Deferred()
                                                     if (result.success) {
-                                                        for (let n = 0; n < data.length; n++) {
-                                                            data[n].Id = result.files[n].id;
-                                                            data[n].File = result.files[n].path;
-                                                        }
-                                                        return _dfr.resolve();
-                                                    } else return _dfr.reject();
-                                                    return _dfr.promise();
+                                                        data[0].Id = result.files[0].id;
+                                                        data[0].File = result.files[0].path;
+                                                    }
                                                 })
                                             );
-                                            formData.delete('files');
-                                        })
-                                    }
-                                    break;
-                                /* ********** *****************
-                              360 上傳資料庫，須重打
-                               ***************************/
-                                case 2:
-                                    var formData = new FormData();
-                                    formData.append("type", 1);
-                                    formData.append("sid", pid);
-                                    formData.append("serno", $self.find(".ser_no").val());
-                                    for (var i = 0; i < data.length; i += 3) {
-                                        for (var j = i; j < i + 3; j++) {
-                                            formData.append('files', data[j]);
                                         }
-                                        formData.delete('files');
-                                    }
-                                    break;
-                                /* ********** *****************
-                                   影片上傳資料庫，不確定錯誤是否在這
-                                    ***************************/
-                                case 3:
-                                    if (typeof (data[0]["File"]) == "string") {
-                                        co.File.fileSortChange({
-                                            Id: data[0]["Id"],
-                                            sid: pid,
-                                            SerNo: $self.find(".ser_no").val(),
-                                        });
-                                    } else {
-                                        var formData = new FormData();
-                                        formData.append("files", data[0]["File"]);
-                                        formData.append("type", 1);
-                                        formData.append("sid", pid);
-                                        formData.append("serno", $self.find(".ser_no").val());
+                                        break;
+                                    case 4:
+                                        var Id = typeof (data[0]["Id"]) == "undefined" ? 0 : data[0]["Id"];
                                         fileListSave.push(
-                                            co.File.Upload(formData).done(function (result) {
-                                                if (result.success) {
-                                                    data[0].Id = result.files[0].id;
-                                                    data[0].File = result.files[0].path;
-                                                }
-                                            })
-                                        );
-                                    }
-                                    break;
-                                case 4:
-                                    var Id = typeof (data[0]["Id"]) == "undefined" ? 0 : data[0]["Id"];
-                                    fileListSave.push(
-                                        co.File.UploadYTLink({
-                                            Id: Id,
-                                            File: data[0]["File"] + "",
-                                            SId: pid,
-                                            Type: 1,
-                                            SerNo: $self.find(".ser_no").val(),
-                                        }).done(function (result) {
-                                            var _dfr = $.Deferred();
-                                            if (result.success && typeof (result.files) != "undefined") {
-                                                data[0].Id = result.files[0].id;
-                                                return _dfr.resolve();
-                                            } else return _dfr.reject();
-                                            return _dfr.promise();
-                                        })
-                                    );
-                                    break;
-                                case 5:
-                                    if (typeof (data[0]["File"]) == "string") {
-                                        co.File.fileSortChange({
-                                            Id: data[0]["Id"],
-                                            sid: pid,
-                                            SerNo: $self.find(".ser_no").val(),
-                                        });
-                                    } else {
-                                        var formData = new FormData();
-                                        formData.append("files", data[0]["File"]);
-                                        formData.append("type", 8);
-                                        formData.append("sid", pid);
-                                        formData.append("serno", $self.find(".ser_no").val());
-                                        fileListSave.push(
-                                            co.File.Upload(formData).done(function (result) {
+                                            co.File.UploadYTLink({
+                                                Id: Id,
+                                                File: data[0]["File"] + "",
+                                                SId: pid,
+                                                Type: 1,
+                                                SerNo: $self.find(".ser_no").val(),
+                                            }).done(function (result) {
                                                 var _dfr = $.Deferred();
-                                                if (result.success) {
+                                                if (result.success && typeof (result.files) != "undefined") {
                                                     data[0].Id = result.files[0].id;
-                                                    data[0].File = result.files[0].path;
                                                     return _dfr.resolve();
                                                 } else return _dfr.reject();
                                                 return _dfr.promise();
                                             })
                                         );
-                                    }
+                                        break;
+                                    case 5:
+                                        if (typeof (data[0]["File"]) == "string") {
+                                            co.File.fileSortChange({
+                                                Id: data[0]["Id"],
+                                                sid: pid,
+                                                SerNo: $self.find(".ser_no").val(),
+                                            });
+                                        } else {
+                                            var formData = new FormData();
+                                            formData.append("files", data[0]["File"]);
+                                            formData.append("type", 8);
+                                            formData.append("sid", pid);
+                                            formData.append("serno", $self.find(".ser_no").val());
+                                            fileListSave.push(
+                                                co.File.Upload(formData).done(function (result) {
+                                                    var _dfr = $.Deferred();
+                                                    if (result.success) {
+                                                        data[0].Id = result.files[0].id;
+                                                        data[0].File = result.files[0].path;
+                                                        return _dfr.resolve();
+                                                    } else return _dfr.reject();
+                                                    return _dfr.promise();
+                                                })
+                                            );
+                                        }
+                                }
                             }
                         }
-                    }
-                })
+                    })
 
-                total_files.forEach(file => {
-                    if (typeof (file["IsDelete"]) != "undefined" && file["IsDelete"] == true) {
-                        switch (file["Type"]) {
-                            /* ********** *****************
-                           360檔案刪除未處理
-                            ***************************/
-                            case 2:
-                                break;
-                            case 1:
-                            case 3:
-                            case 4:
-                            case 5:
-                                if (typeof (file["Id"]) != "undefined") {
-                                    var deleteid_list = [];
-                                    deleteid_list.push(file["Id"]);
-                                    fileListSave.push(
-                                        co.File.DeleteFileById({
-                                            Sid: parseInt(result.message),
-                                            Type: (file["Type"] == 5 ? 8 : 1),
-                                            Fid: deleteid_list,
-                                        })
-                                    );
-                                }
-                                break;
+                    total_files.forEach(file => {
+                        if (typeof (file["IsDelete"]) != "undefined" && file["IsDelete"] == true) {
+                            switch (file["Type"]) {
+                                /* ********** *****************
+                               360檔案刪除未處理
+                                ***************************/
+                                case 2:
+                                    break;
+                                case 1:
+                                case 3:
+                                case 4:
+                                case 5:
+                                    if (typeof (file["Id"]) != "undefined") {
+                                        var deleteid_list = [];
+                                        deleteid_list.push(file["Id"]);
+                                        fileListSave.push(
+                                            co.File.DeleteFileById({
+                                                Sid: parseInt(result.message),
+                                                Type: (file["Type"] == 5 ? 8 : 1),
+                                                Fid: deleteid_list,
+                                            })
+                                        );
+                                    }
+                                    break;
+                            }
                         }
+                    });
+
+                    switch (target) {
+                        case "List":
+                            setTimeout(function () {
+                                BackToList(true);
+                            }, 1000);
+                            break;
+                        case "Canvas":
+                            setTimeout(function () {
+                                window.location.hash = `${pid}-1`;
+                            }, 1000);
+                            break;
                     }
+                } else {
+                    switch (target) {
+                        case "List":
+                            setTimeout(function () {
+                                BackToList(true);
+                            }, 1000);
+                            break;
+                        case "Canvas":
+                            setTimeout(function () {
+                                window.location.hash = `${pid}-1`;
+                            }, 1000);
+                            break;
+                    }
+                }
+                $.when.apply(null, fileListSave).done(function () {
+                    HashDataEdit();
                 });
-
-                switch (target) {
-                    case "List":
-                        setTimeout(function () {
-                            BackToList(true);
-                        }, 1000);
-                        break;
-                    case "Canvas":
-                        setTimeout(function () {
-                            window.location.hash = `${pid}-1`;
-                        }, 1000);
-                        break;
-                }
             } else {
-                switch (target) {
-                    case "List":
-                        setTimeout(function () {
-                            BackToList(true);
-                        }, 1000);
-                        break;
-                    case "Canvas":
-                        setTimeout(function () {
-                            window.location.hash = `${pid}-1`;
-                        }, 1000);
-                        break;
-                }
+                Coker.sweet.error("錯誤", error_text, null, true);
             }
-            $.when.apply(null, fileListSave).done(function () {
-                HashDataEdit();
-            });
-        } else {
+        }).fail(function () {
             Coker.sweet.error("錯誤", error_text, null, true);
-        }
-    }).fail(function () {
-        Coker.sweet.error("錯誤", error_text, null, true);
-    });
-
+        });
+    }
+    if (status == 2 && updateStock) {
+        co.sweet.confirm("商品狀態即將變更", "您加大了商品可銷售量，商品售完狀態將被變更！", "確認", "取消", update);
+    } else update()
     if (spec_remove_list.length > 0) {
         spec_remove_list.forEach(function (item) {
             co.Product.Delete.Stock(item);

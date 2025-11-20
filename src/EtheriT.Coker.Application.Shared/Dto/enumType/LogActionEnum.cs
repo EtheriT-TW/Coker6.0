@@ -11,5 +11,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         加入購物車 = 6,
         加入收藏 = 7,
         移除收藏 = 8,
+        購物車數量變更 = 9,
+        移除購物車 = 10
     }
 }

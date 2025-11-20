@@ -1,37 +1,40 @@
-﻿using DevExtreme.AspNet.Data;
+﻿using AutoMapper;
+using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
-using EtheriT.Coker.Application.Shared.Order;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json;
-using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using EtheriT.Coker.Application.Shared.Dto.Order;
-using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
-using Microsoft.EntityFrameworkCore;
-using EtheriT.Coker.Application.Shared.Dto.Directory;
-using EtheriT.Coker.Application.Token;
-using Microsoft.Extensions.Configuration;
-using AutoMapper;
-using EtheriT.Coker.Core.Models;
-using EtheriT.Coker.Application.Shared.ShoppingCart;
-using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
-using EtheriT.Coker.Application.Common;
-using EtheriT.Coker.Application.Shared.Dto.Mail;
-using System.Globalization;
-using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
-using EtheriT.Coker.Application.Shared.Dto;
-using EtheriT.Coker.Web.Core.Models;
-using Org.BouncyCastle.Asn1.Ocsp;
-using System.Drawing;
-using Microsoft.Extensions.Logging;
 using EtheriT.Coker.Application.Authorization;
+using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Order.Dto;
+using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
-using EtheriT.Coker.Application.StoreSet;
-using Microsoft.CodeAnalysis.CSharp;
-using EtheriT.Coker.Application.Shared.Dto.Files;
-using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
+using EtheriT.Coker.Application.Shared.Dto.Files;
+using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Shared.Dto.Order;
+using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
+using EtheriT.Coker.Application.Shared.Order;
+using EtheriT.Coker.Application.Shared.ShoppingCart;
+using EtheriT.Coker.Application.StoreSet;
+using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.Web.Core.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using Org.BouncyCastle.Asn1.Ocsp;
+using System;
+using System.Drawing;
+using System.Globalization;
+using System.Linq;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -149,128 +152,321 @@ namespace EtheriT.Coker.Application.Order
         }
         public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto)
         {
-            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+            var output = new ResponseMessageDto() { Success = false };
 
             try
             {
-                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
-                var Token = await tokenAppService.CheckToken(null) ?? throw new Exception("查無Token");
-                Guid UUID = await tokenAppService.GetUUID();
-                var datetime_now = DateTime.Now;
+                // === 共用 context ===
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                var token = await tokenAppService.CheckToken(null) ?? throw new Exception("查無Token");
+                var uuid = await tokenAppService.GetUUID();          // 如果實際型別是 string 就改掉
+                var now = DateTime.Now;
+                var userId = await db.Tokens
+                        .Where(e => e.id == token.RefreshToken)
+                        .Select(e => e.UserID)
+                        .FirstOrDefaultAsync();
+                bool isTemp = dto.IsTemp;
 
-                Core.Models.Order_Header oh = new Order_Header();
+                DetailBuildResult? detailResult = null;
 
-                if (dto.IsTemp == null) dto.IsTemp = false;
-
-                if (dto.OrderId != null)
+                // 1) 正式訂單才需要檢查購物車 / 庫存 / 計算金額
+                if (!isTemp)
                 {
-                    var ohdata = db.Order_Headers.Where(e => e.Id == dto.OrderId && e.IsTemp).FirstOrDefault();
-                    oh = db.Order_Headers.Where(e => e.Id == dto.OrderId && e.IsTemp).FirstOrDefault();
-                    mapper.Map(dto, ohdata);
-                    ohdata.FK_WebsiteId = oh.FK_WebsiteId;
-                    ohdata.FK_UUID = oh.FK_UUID;
-                    ohdata.Fk_Tid = oh.Fk_Tid;
-                    ohdata.Fk_UserId = oh.Fk_UserId;
-                    ohdata.CreationTime = datetime_now;
-                    await loginUserData.SaveChanges(ohdata);
-                    oh = ohdata;
-                }
-                else
-                {
-                    oh = mapper.Map<Order_Header>(dto);
-                    oh.FK_WebsiteId = WebsiteId;
-                    oh.FK_UUID = UUID;
-                    oh.Fk_Tid = (Guid)Token.RefreshToken;
-                    oh.Fk_UserId = await db.Tokens.Where(e => e.id == Token.RefreshToken).Select(e => e.UserID).FirstOrDefaultAsync();
-                    oh.CreationTime = datetime_now;
-                    db.Order_Headers.Add(oh);
-                    db.SaveChanges();
+                    detailResult = await BuildDetailSectionAsync(dto, userId, uuid, now);
                 }
 
-                if (!oh.IsTemp)
+                Order_Header? header;
+
+                using (var tx = await db.Database.BeginTransactionAsync())
                 {
-                    List<Core.Models.Order_Details> ods = new List<Core.Models.Order_Details>();
-                    List<long> scids = new List<long>();
-                    foreach (var data in dto.OrderDetails)
-                    {
-                        scids.Add(data.Id);
-                        ods.Add(new Core.Models.Order_Details()
-                        {
-                            FK_OId = oh.Id,
-                            FK_SCId = data.Id,
-                            CreationTime = datetime_now,
-                        });
-                    }
-                    db.Order_Details.AddRange(ods);
-                    db.SaveChanges();
+                    // 2) 建立 / 更新訂單頭（head 區）
+                    header = await BuildHeaderSectionAsync(dto, websiteId, uuid, token, userId, now, isTemp, detailResult);
 
-                    List<Core.Models.ShoppingCart> scs = await db.ShoppingCarts.Where(e => scids.Contains(e.Id)).ToListAsync();
-                    List<Core.Models.Prod_Log> pls = new List<Core.Models.Prod_Log>();
-                    for (int i = 0; i < scs.Count; i++)
-                    {
-                        var prodid = await db.Prod_Stocks.Where(e => e.Id == scs[i].FK_PSid).Select(e => e.FK_Pid).FirstOrDefaultAsync();
-                        var prod = await db.Prods.Where(e => e.Id == prodid).FirstOrDefaultAsync();
+                    // 3) 建立 Log 區資料（只 new，不存 DB）
+                    var logs = BuildLogSection(header, detailResult, uuid);
 
-                        scs[i].Quantity = dto.OrderDetails[i].Quantity;
-                        scs[i].Price = dto.OrderDetails[i].Price;
-                        scs[i].IsOrder = true;
-                        scs[i].ProdName = prod?.Title;
-                        scs[i].LastModifierUserId = oh.CreatorUserId;
-                        scs[i].LastModificationTime = datetime_now;
+                    // 4) PaySelect 區：目前你專案還沒用到，可以先空實作
+                    // var paySelects = BuildPaySelectSection(header, dto);
 
-                        pls.Add(new Core.Models.Prod_Log()
-                        {
-                            FK_Pid = prodid,
-                            FK_UserId = oh.CreatorUserId,
-                            UUID = UUID,
-                            Action = (int)LogActionEnum.加入訂單,
-                            Db_Name = "Order",
-                            CreationTime = datetime_now,
-                        });
-                    }
-                    db.Prod_Logs.AddRange(pls);
-                    db.SaveChanges();
+                    // 5) 真正儲存所有資料（detail + cart + stock + logs）
+                    await SaveOrderAsync(header, detailResult, logs, now, userId, isTemp);
+
+                    await tx.CommitAsync();
                 }
+
+                // 6) Commit 後，處理付款訊息 + 寄信（失敗也不要 rollback 訂單）
+                await FillPaymentMessageAndSendMailAsync(dto, websiteId, header!, output);
 
                 output.Success = true;
-
-                var PaymentType = await (from pt in db.PaymentTypes
-                                         join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
-                                         join tp in db.ThirdParties on pt.FK_ThirdPartyId equals tp.Id
-                                         where ptv.FK_WebsiteId == WebsiteId
-                                         where pt.Id == oh.Payment
-                                         select tp.Title).FirstOrDefaultAsync();
-
-                var mailoutput = new ResponseMessageDto();
-                if (!dto.IsTemp) mailoutput = await SendMail(oh.Id);
-                else mailoutput.Success = true;
-
-                if (PaymentType != null)
-                {
-                    switch (PaymentType)
-                    {
-                        //case "轉帳":
-                        default:
-                            output.Message = $"Default,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}, {oh.CreationTime.Year}年<span>{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日23點59分</span>";
-                            break;
-                        case "支付連":
-                            output.Message = $"PCHomePay,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
-                            break;
-                        case "LINE Pay":
-                            output.Message = $"LinePay,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
-                            break;
-                        case "綠界支付":
-                            output.Message = $"ECPay,{oh.Id},{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
-                            break;
-                    }
-                }
-                if (!mailoutput.Success) output.Error = mailoutput.Message;
             }
             catch (Exception ex)
             {
                 output.Error = ex.Message;
             }
+
             return output;
+        }
+        private async Task<DetailBuildResult> BuildDetailSectionAsync(
+            OrderHeaderAddDto dto,
+            long? userId,
+            Guid uuid,
+            DateTime now)
+        {
+            if (dto.OrderDetails == null || dto.OrderDetails.Count == 0)
+                throw new Exception("沒有任何購買項目，無法建立訂單。");
+
+            // 只信「有哪些購物車 Id 要結帳」
+            var cartIds = dto.OrderDetails.Select(d => d.Id).ToList();
+
+            // 1) 把購物車 + 庫存 + 價格資訊一次從 DB 撈出來
+            var carts = await db.ShoppingCarts
+                .Include(sc => sc.Prod_Stock)
+                    .ThenInclude(ps => ps.Prod)
+                .Include(sc => sc.Prod_Price)
+                .Where(sc =>
+                    cartIds.Contains(sc.Id) &&
+                    sc.UUID == uuid &&
+                    !sc.IsOrder)                      // 只允許未結帳的購物車
+                .ToListAsync();
+
+            if (carts.Count == 0)
+                throw new Exception("購物車已失效或無任何品項，無法建立訂單。");
+
+            if (carts.Count != cartIds.Count)
+                throw new Exception("購物車資料有誤，請重新整理後再嘗試。");
+
+            // 建立 Stock 快取
+            var stockDict = carts
+                .Select(sc => sc.Prod_Stock)
+                .Where(ps => ps != null)
+                .ToDictionary(ps => ps.Id);
+
+            int subtotal = 0;
+            int totalBonus = 0;
+
+            foreach (var sc in carts)
+            {
+                if (!stockDict.TryGetValue(sc.FK_PSid, out var stock) || stock == null)
+                    throw new Exception($"找不到商品庫存資料（購物車ID={sc.Id}）。");
+
+                var currentStock = stock.Stock ?? 0;
+                var qty = sc.Quantity;    // ✅ 完全用 DB 裡的數量，不信 request
+
+                if (currentStock < qty)
+                    throw new Exception($"商品庫存不足（購物車ID={sc.Id}），剩餘 {currentStock}，欲購買 {qty}。");
+
+                // 2) 以 Prod_Price 為準，決定單價與紅利
+                int unitPrice;
+                int unitBonus;
+
+                if (sc.Prod_Price != null)
+                {
+                    unitPrice = (int)(sc.Prod_Price.Price ?? 0);
+                    unitBonus = (int)(sc.Prod_Price.Bonus ?? 0);
+                }
+                else
+                {
+                    // 備援：若沒有綁 Prod_Price，就用購物車裡當時的快照
+                    unitPrice = sc.Price;
+                    unitBonus = sc.Bonus ?? 0;
+                }
+
+                var lineAmount = unitPrice * qty;
+                var lineBonus = unitBonus * qty;
+
+                subtotal += lineAmount;
+                totalBonus += lineBonus;
+
+                // 3) 在記憶體中同步購物車資料為「標準答案」
+                sc.Price = unitPrice;
+                sc.Bonus = unitBonus;
+                sc.IsOrder = true;
+                sc.LastModifierUserId = userId;
+                sc.LastModificationTime = now;
+
+                // 4) 庫存扣除（同樣只是記憶體變動，之後一起 Save）
+                stock.Stock = currentStock - qty;
+                stock.LastModifierUserId = userId;
+                stock.LastModificationTime = now;
+            }
+
+            return new DetailBuildResult
+            {
+                ShoppingCarts = carts,
+                StockDict = stockDict,
+                Subtotal = subtotal,
+                TotalBonus = totalBonus
+            };
+        }
+        private async Task<Order_Header> BuildHeaderSectionAsync(
+            OrderHeaderAddDto dto,
+            long websiteId,
+            Guid uuid,                  // 若你實際不是 Guid，這邊改掉即可
+            dynamic token,              // 這裡用 dynamic 是為了不跟你實際型別打架
+            long? userId,
+            DateTime now,
+            bool isTemp,
+            DetailBuildResult? detailResult)
+        {
+            Order_Header? oh;
+
+            // 修改暫存單訂單為正式訂單
+            if (dto.OrderId != null)
+            {
+                oh = await db.Order_Headers
+                    .FirstOrDefaultAsync(e => e.Id == dto.OrderId && e.IsTemp);
+
+                if (oh == null)
+                    throw new Exception("找不到對應的暫存訂單。");
+
+                mapper.Map(dto, oh);
+
+                oh.FK_WebsiteId = websiteId;
+                oh.FK_UUID = uuid;
+                oh.Fk_Tid = token.RefreshToken;
+                oh.Fk_UserId = userId;
+                oh.CreationTime = now;
+
+                // 正式單用我們自己算的 subtotal 蓋掉前端
+                if (!isTemp && detailResult != null)
+                    oh.Subtotal = detailResult.Subtotal;
+
+                await loginUserData.SaveChanges(oh);   // 這裡需要 Save 一次，拿到穩定的 oh.Id
+            }
+            else
+            {
+                // 新建訂單（正式或暫存）
+                oh = mapper.Map<Order_Header>(dto);
+                oh.FK_WebsiteId = websiteId;
+                oh.FK_UUID = uuid;
+                oh.Fk_Tid = token.RefreshToken;
+                oh.Fk_UserId = userId;
+                oh.CreationTime = now;
+
+                if (!isTemp && detailResult != null)
+                    oh.Subtotal = detailResult.Subtotal;
+
+                db.Order_Headers.Add(oh);
+                await db.SaveChangesAsync();           // 取得 oh.Id 給後續 detail 用
+            }
+
+            return oh;
+        }
+        private List<Prod_Log> BuildLogSection(
+            Order_Header header,
+            DetailBuildResult? detailResult,
+            Guid uuid)                 // 型別同樣依你實際情況調整
+        {
+            var logs = new List<Prod_Log>();
+
+            if (detailResult == null) return logs;   // 暫存單不需要 log
+
+            foreach (var sc in detailResult.ShoppingCarts)
+            {
+                var stock = detailResult.StockDict[sc.FK_PSid];
+
+                logs.Add(new Prod_Log
+                {
+                    FK_Pid = stock.FK_Pid,
+                    FK_UserId = header.CreatorUserId,
+                    UUID = uuid,
+                    Action = LogActionEnum.加入訂單
+                });
+            }
+
+            return logs;
+        }
+        private async Task SaveOrderAsync(
+            Order_Header header,
+            DetailBuildResult? detailResult,
+            List<Prod_Log> logs,
+            DateTime now,
+            long? userId,
+            bool isTemp)
+        {
+            // 暫存單不用建立明細 / log
+            if (isTemp || detailResult == null)
+                return;
+
+            var ods = new List<Order_Details>();
+
+            foreach (var sc in detailResult.ShoppingCarts)
+            {
+                // 你原本建立 Order_Details 的欄位搬過來這裡
+                ods.Add(new Order_Details
+                {
+                    FK_OId = header.Id,
+                    FK_SCId = sc.Id,
+                    CreationTime = now,
+                });
+
+                // 如果庫存變成 0，要把商品狀態改成售完
+                var stock = detailResult.StockDict[sc.FK_PSid];
+                var prod = stock.Prod;
+                if (stock.Stock == 0 && prod != null && prod.Status != ProdStatusEnum.售完)
+                {
+                    prod.oStatus = prod.Status;
+                    prod.Status = ProdStatusEnum.售完;
+                }
+            }
+
+            db.Order_Details.AddRange(ods);
+            db.Prod_Logs.AddRange(logs);
+
+            // 這次 SaveChanges：
+            // 會把 ShoppingCart / Prod_Stock / Prod / Order_Details / Prod_Log 一次寫入
+            await db.SaveChangesAsync();
+        }
+        private async Task FillPaymentMessageAndSendMailAsync(
+            OrderHeaderAddDto dto,
+            long websiteId,
+            Order_Header header,
+            ResponseMessageDto output)
+        {
+            // 先查付款方式名稱
+            var paymentType = await (
+                from pt in db.PaymentTypes
+                join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
+                join tp in db.ThirdParties on pt.FK_ThirdPartyId equals tp.Id
+                where ptv.FK_WebsiteId == websiteId
+                where pt.Id == header.Payment
+                select tp.Title
+            ).FirstOrDefaultAsync();
+
+            var mailoutput = new ResponseMessageDto { Success = true };
+
+            // 正式單才寄信
+            if (!dto.IsTemp)
+            {
+                mailoutput = await SendMail(header.Id);
+            }
+
+            if (paymentType != null)
+            {
+                var createTime = header.CreationTime;
+                switch (paymentType)
+                {
+                    default:
+                        output.Message =
+                            $"Default,{header.Id},{createTime:yyyy-MM-dd HH:mm}, {createTime.Year}年<span>{createTime.Month}月{createTime.Day + 1}日23點59分</span>";
+                        break;
+                    case "支付連":
+                        output.Message = $"PCHomePay,{header.Id},{createTime:yyyy-MM-dd HH:mm}";
+                        break;
+                    case "LINE Pay":
+                        output.Message = $"LinePay,{header.Id},{createTime:yyyy-MM-dd HH:mm}";
+                        break;
+                    case "綠界支付":
+                        output.Message = $"ECPay,{header.Id},{createTime:yyyy-MM-dd HH:mm}";
+                        break;
+                }
+            }
+
+            if (!mailoutput.Success)
+            {
+                // 不 rollback 訂單，但把錯誤訊息回給前端
+                output.Error = mailoutput.Message;
+            }
         }
         public async Task<ResponseMessageDto> FrontUserUpdate(OrderHeaderAddDto dto)
         {
@@ -1056,14 +1252,16 @@ namespace EtheriT.Coker.Application.Order
                                                            select sc).ToListAsync();
                                 if (shoppingCarts != null)
                                 {
-                                    var prod_stocks = new List<Prod_Stock>();
                                     foreach (var sc in shoppingCarts)
                                     {
-                                        var prod_stock = await db.Prod_Stocks.Where(e => e.Id == sc.FK_PSid).FirstOrDefaultAsync();
+                                        var prod_stock = await db.Prod_Stocks.Include(e => e.Prod).Where(e => e.Id == sc.FK_PSid).FirstOrDefaultAsync();
                                         if (prod_stock != null)
                                         {
+                                            if (prod_stock.Prod != null && prod_stock.Prod.Status == ProdStatusEnum.售完) { 
+                                                if(prod_stock.Prod.oStatus == null) prod_stock.Prod.Status = ProdStatusEnum.一般;
+                                                else prod_stock.Prod.Status = prod_stock.Prod.oStatus.Value;
+                                            }
                                             prod_stock.Stock += sc.Quantity;
-                                            prod_stocks.Add(prod_stock);
                                         }
                                     }
                                     db.SaveChanges();

@@ -38,7 +38,6 @@ namespace EtheriT.Coker.Web.Core.Models
         public DateTime? LockTime { get; set; }
         public List<MappingUserAndWebsite> Webs { get; set; }
         public List<MappingUserAndRole> Roles { get; set; }
-        public List<Prod_Log> Prod_Logs { get; set; }
         public List<Permissions> Permissions { get; set; }
 		public List<Remote> Remotes { get; set; }
         public List<PermissionDetail> PermissionDetails { get; set; }

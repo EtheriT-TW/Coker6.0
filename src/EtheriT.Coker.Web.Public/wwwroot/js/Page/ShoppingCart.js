@@ -234,7 +234,8 @@ function PageReady() {
         autoHeight: true,
         loop: false,
         enabled: false,
-        allowTouchMove:false,
+        allowTouchMove: false,
+        simulateTouch: false,
         pagination: {
             el: ".swiper_pagination > .swiper_pagination_buystep",
             clickable: true,
@@ -257,9 +258,14 @@ function PageReady() {
     buy_step_swiper.on('slideChange', function () {
         switch (buy_step_swiper.activeIndex) {
             case 1:
+                const hasSelected = getSelectedCartIds().length > 0;
                 if (!hasProds) {
                     Coker.sweet.warning("錯誤", "無可購買商品。", null, false);
                     buy_step_swiper.slideTo(0);
+                } else if (!hasSelected) {
+                    Coker.sweet.warning("請注意", "請先勾選要結帳的商品（至少 1 項）。", null);
+                    buy_step_swiper.slideTo(0);
+                    return;
                 } else {
                     enforceFreightVisibility();
                     OrdererFilled = FormCheck(OrdererForms);
@@ -412,15 +418,6 @@ function PageReady() {
 
     /* 鍵盤輸入欄位檢測 */
     document.addEventListener("keyup", AutoSwapInput);
-
-    /* 選按Input與label不拖動到swiper */
-    $("input,label,button").mousedown(function (e) {
-        buy_step_swiper.allowTouchMove = false;
-    })
-
-    $("input,label,button").mouseup(function (e) {
-        buy_step_swiper.allowTouchMove = true;
-    })
 
     /* Step3 Form 檢測 */
     ShippingForms = $('#RadioShipping');
@@ -905,7 +902,7 @@ function CartListAdd(data, $container) {
             obj['Bonus'] = data.bonus;
             obj['freight'] = data.freight;
             shopping_cart_data.push(obj);
-            hasProds = true;
+            refreshHasProds();
         }
     }
 
@@ -921,10 +918,17 @@ function CartListAdd(data, $container) {
     $template.find(".btn_remove_pro").on("click", function () {
         var $self = $(this).parents("li").first();
         Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
-            CartDelete($self, $self.data("scId"), "成功移除商品", "移除商品發生未知錯誤")
             const $group = $self.closest('li.purchase_group');
-            if ($group.length && $group.find('li.purchase_item').length === 0) {
-                $group.remove();
+            CartDelete($self, $self.data("scId"), "成功移除商品", "移除商品發生未知錯誤")
+            
+            if ($group.length) {
+                if ($group.find('li.purchase_item').length === 0) {
+                    $group.remove();
+                } else {
+                    // 還有其他商品 → 更新群組小計/勾選狀態
+                    updateGroupSelectedSubtotal($group);
+                    TotalCount();
+                }
             }
         });
     });
@@ -1004,6 +1008,9 @@ function CartListAdd(data, $container) {
     }
 
     item_list_ul.append($template);
+}
+function refreshHasProds() {
+    hasProds = shopping_cart_data && shopping_cart_data.length > 0;
 }
 function CartListInsert($frame, data) {
     $frame.find("*").each(function () {
@@ -1171,6 +1178,7 @@ function CartDelete(self, id, success, error) {
         var index = shopping_cart_data.findIndex(e => e.Id == id);
         if (index !== -1) {
             shopping_cart_data.splice(index, 1);
+            refreshHasProds();
         }
         CartDropReset(id, 0)
         TotalCount();
@@ -1533,6 +1541,7 @@ function DetailsClear() {
     $("#Step1 > .card-body").addClass("d-none");
     $("#Purchase_Null").removeClass("d-none");
     buy_step_swiper.disable();
+    refreshHasProds();
 }
 function DeleteRecipient() {
     var $this_parent = $(this).parents("tr");

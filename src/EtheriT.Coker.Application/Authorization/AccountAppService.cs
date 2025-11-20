@@ -141,7 +141,7 @@ namespace EtheriT.Coker.Application.Authorization
                         db.Tokens.Add(t);
                         db.SaveChanges();
                         output.Success = true;
-                        output.Token = await tokenAppService.CreateToken(user.Account, t.id, 30, "Backstage");
+                        output.Token = await tokenAppService.CreateToken(user.Account, t.id, CookiePurposeEnum.BackstageAuthToken, "Backstage");
                         output.Secret = t.id;
                         output.EndDateTime = EndDateTime;
                     }
@@ -491,7 +491,7 @@ namespace EtheriT.Coker.Application.Authorization
                                 db.SaveChanges();
                             }
                             response.Success = true;
-                            response.Token = await tokenAppService.CreateToken(users.Account, t.id, 30, "Backstage");
+                            response.Token = await tokenAppService.CreateToken(users.Account, t.id, CookiePurposeEnum.BackstageAuthToken, "Backstage");
                             response.Secret = t.id;
                             response.EndDateTime = t.EndTime.Value;
                         }
@@ -1424,7 +1424,7 @@ namespace EtheriT.Coker.Application.Authorization
                     token.UserID = frontuser.FK_User;
                     if (frontuser != null && !string.IsNullOrEmpty(frontuser.Email))
                     {
-                        output.Token = await tokenAppService.CreateToken(frontuser.Email, token.id, 15);
+                        output.Token = await tokenAppService.CreateToken(frontuser.Email, token.id, CookiePurposeEnum.FrontAuthToken);
 
                     }
                 }
@@ -1465,7 +1465,7 @@ namespace EtheriT.Coker.Application.Authorization
 
                 output.Success = true;
                 if (dto!= null) {
-                    cookieManager.Set("RememberMe", dto.Remember ? "1" : "0", CookiePurposeEnum.AuthToken);
+                    cookieManager.Set("RememberMe", dto.Remember ? "1" : "0", CookiePurposeEnum.RefreshIdentifier);
                     if (!dto.Remember) {
                         var tokenOld = cookieManager.Get("Token");
                         var refreshTokenOld = cookieManager.Get("RefreshToken");

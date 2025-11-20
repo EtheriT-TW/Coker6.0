@@ -1,29 +1,30 @@
-﻿using EtheriT.Coker.Application.Authorizaion.Dto;
+﻿using AutoMapper;
+using EtheriT.Coker.Application.Authorizaion.Dto;
+using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Authorization;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.OAuth;
 using EtheriT.Coker.Application.Shared.Dto.Token;
+using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.Web.Core.Models;
 using EtheriT.Coker.Web.MVC.Resources;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Primitives;
 using Microsoft.Extensions.Configuration;
-using System.Security.Principal;
-using AutoMapper;
-using System.IdentityModel.Tokens.Jwt;
+using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
-using Org.BouncyCastle.Asn1.Ocsp;
-using EtheriT.Coker.Web.Core.Models;
-using System.Security.Claims;
-using System.Text;
 using Org.BouncyCastle.Asn1.Ess;
-using EtheriT.Coker.Application.Shared.ThirdParty;
-using EtheriT.Coker.Application.Common;
-using Microsoft.AspNetCore.Mvc;
-using EtheriT.Coker.Application.Shared.Authorization;
-using EtheriT.Coker.Application.Shared.Dto.enumType.OAuth;
+using Org.BouncyCastle.Asn1.Ocsp;
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Principal;
+using System.Text;
 
 namespace EtheriT.Coker.Application.Token
 {
@@ -59,13 +60,13 @@ namespace EtheriT.Coker.Application.Token
         public async Task<TokenResponseDto> CreateToken()
         {
             TokenResponseDto output = new TokenResponseDto();
+            var websiteId = loginUserData.GetFrontWebsiteId();
             try
             {
                 string? tokenStr = null;
                 string? RefreshTokenStr = null;
                 DateTime date = DateTime.Now;
                 TokenKeyItem tokenItem = new TokenKeyItem();
-                var websiteId = loginUserData.GetFrontWebsiteId();
                 bool userStatus = loginUserData.IsLoggedIn();
                 httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Token", out tokenStr);
 
@@ -109,9 +110,81 @@ namespace EtheriT.Coker.Application.Token
                 output.Success = false;
                 output.Error = e.Message;
             }
+            finally {
+                try
+                {
+                    await CleanupExpiredTokensAsync(websiteId);
+                }
+                catch
+                {
+                    // 這邊一定要吃掉，不可以讓清理錯誤影響到主流程
+                    // 有 Log 系統的話建議寫 Log
+                }
+
+            }
 
             return output;
         }
+        /// <summary>
+        /// 清理過期或失聯的 Token / ShoppingCart：
+        /// 1. 清孤兒購物車：沒有對應 Token 的、且尚未成立訂單
+        /// 2. 清過期 Token
+        /// 3. 要刪的購物車：這些 Token 底下、尚未成立訂單的
+        /// </summary>
+        private async Task CleanupExpiredTokensAsync(long websiteId)
+        {
+            var now = DateTime.Now;
+
+            // === 1) 清孤兒購物車：沒有對應 Token 的、且尚未成立訂單 ===
+            var orphanCarts = await (
+                from c in db.ShoppingCarts   // 依你的 DbSet 名稱調整
+                where !c.IsOrder
+                      && !db.Tokens.Any(t => t.id == c.FK_Tid)
+                select c
+            )
+            .Take(100)
+            .ToListAsync();
+
+            if (orphanCarts.Count > 0)
+            {
+                db.ShoppingCarts.RemoveRange(orphanCarts);
+                await db.SaveChangesAsync();
+            }
+
+            // === 2) 清過期 Token ===
+
+            // 找候選 Token：該網站且已過期
+            var expiredTokens = await (
+                from t in db.Tokens
+                where t.websiteId == websiteId
+                      && t.EndTime != null
+                      && t.EndTime < now
+                orderby t.EndTime  // 先刪最舊的
+                select t
+            )
+            .Include(t => t.ShoppingCarts)
+            .Take(100)
+            .ToListAsync();
+
+            if (expiredTokens.Count == 0)
+                return;
+
+            // 要刪的購物車：這些 Token 底下、尚未成立訂單的
+            var cartsToDelete = expiredTokens
+                .SelectMany(t => t.ShoppingCarts.Where(c => !c.IsOrder))
+                .ToList();
+
+            if (cartsToDelete.Count > 0)
+            {
+                db.ShoppingCarts.RemoveRange(cartsToDelete);
+            }
+
+            // 不管是否有訂單，只要 Token 過期就刪
+            db.Tokens.RemoveRange(expiredTokens);
+
+            await db.SaveChangesAsync();
+        }
+
         public async Task<TokenKeyItem> NewToken(string? Accont = null, Guid? UUID = null, long? UserId = null)
         {
             if (string.IsNullOrEmpty(Accont)) Accont = Guid.NewGuid().ToString();
@@ -201,6 +274,9 @@ namespace EtheriT.Coker.Application.Token
             {
                 output.Success = false;
                 output.Error = e.Message;
+            }
+            finally { 
+                
             }
 
             return output;
@@ -320,10 +396,10 @@ namespace EtheriT.Coker.Application.Token
             }
             return output;
         }
-        public async Task<string> CreateToken(string account, Guid secret, int expireMinutes = 30,string position = "")
+        public async Task<string> CreateToken(string account, Guid secret, CookiePurposeEnum tokenPurpose = CookiePurposeEnum.BackstageAuthToken, string position = "")
         {
             List<KeyValuePair<string, string>> custClaims = new List<KeyValuePair<string, string>>();
-            if (account.IndexOf("@") < 0)
+            if (!string.IsNullOrEmpty(position))
             {
 
                 var user = db.Users.Where(e => e.Account == account).FirstOrDefault();
@@ -334,7 +410,11 @@ namespace EtheriT.Coker.Application.Token
             }
             else
             {
-                var user = db.FrontUsers.Where(e => e.Email == account).FirstOrDefault();
+                var websiteid = loginUserData.GetFrontWebsiteId();
+                var user = await (from fu in db.FrontUsers
+                                  join mapuserweb in db.MappingFrontUserAndWebsite on fu.Id equals mapuserweb.FK_UserId
+                                  where mapuserweb.FK_WebsiteId == websiteid && fu.Email == account
+                                  select fu).FirstOrDefaultAsync();
                 if (user != null)
                 {
                     custClaims.Add(new KeyValuePair<string, string>("username", user.Name));
@@ -345,10 +425,10 @@ namespace EtheriT.Coker.Application.Token
                 "Admin",
                 "Users"
             };
-            string token = await jwt.GenerateToken(account, roles, secret, expireMinutes, custClaims);
+            string token = await jwt.GenerateToken(account, roles, secret, tokenPurpose, custClaims);
             //cookieManager.Set($"{position}Token", token, CookiePurposeEnum.XsrfToken);
-            cookieManager.Set($"{position}Token", token, CookiePurposeEnum.AuthToken);
-            cookieManager.Set($"{position}RefreshToken", secret.ToString(), CookiePurposeEnum.RefreshIdentifier);
+            cookieManager.Set($"{position}Token", token, tokenPurpose);
+            cookieManager.Set($"{position}RefreshToken", secret.ToString(), CookiePurposeEnum.RefreshToken);
 
             var key = $"{position}Token";
             var items = httpContextAccessor.HttpContext!.Items;

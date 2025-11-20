@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         首頁 = 2,
         購物車 = 3,
         會員 = 4,
-        搜尋 = 5
+        搜尋 = 5,
+        跳頁 = 6
     }
 }

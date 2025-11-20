@@ -452,5 +452,11 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
+        public async Task<string> GetDomain(long Id = 0) {
+            if (Id == 0) {
+                Id = Configuration.GetValue<long>("WebConfig:SiteId");
+            }
+            return await db.Websites.Where(e => e.Id == Id).Where(e => !e.IsDeleted).Select(e => e.DefaultUrl).FirstOrDefaultAsync() ?? "";
+        }
     }
 }

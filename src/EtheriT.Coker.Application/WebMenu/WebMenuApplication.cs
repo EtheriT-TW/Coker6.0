@@ -791,10 +791,10 @@ namespace EtheriT.Coker.Application
             await loginUserData.SetLogs( JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<PageTypeDto> GetPageTypeList()
+        public PageTypeDto GetPageTypeList()
         {
             PageTypeDto response = new PageTypeDto { Success = true };
-            List<string> enNames = new List<string> {"", "Home", "ShoppingCar", "Member", "Search" };
+            List<string> enNames = new List<string> {"", "Home", "ShoppingCar", "Member", "Search", "" };
             try
             {
                 response.Type = Enum.GetValues(typeof(PageTypeEnum))
@@ -861,6 +861,21 @@ namespace EtheriT.Coker.Application
             else if (menu != null) return menu.Id;
             return 0;
         }
-
+        public async Task<List<JumpRuleDto>> GetJumpRulesAsync() {
+            var WebsiteID = loginUserData.GetFrontWebsiteId();
+            var list = await db.WebMenus
+                .Where(x => !string.IsNullOrEmpty(x.RouterName)
+                         && !string.IsNullOrEmpty(x.LinkUrl)
+                         && x.PageType == PageTypeEnum.跳頁
+                         && x.FK_WebsiteId == WebsiteID
+                         && !x.RemovedFromShelves) // 視你的欄位
+                .Select(x => new JumpRuleDto
+                {
+                    RouteName = x.RouterName,
+                    TargetUrl = x.LinkUrl!,
+                })
+                .ToListAsync();
+            return list;
+        }
     }
 }

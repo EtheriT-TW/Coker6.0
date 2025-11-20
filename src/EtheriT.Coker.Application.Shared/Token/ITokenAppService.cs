@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType.OAuth;
 using EtheriT.Coker.Application.Shared.Dto.Token;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace EtheriT.Coker.Application.Token
 {
     public interface ITokenAppService
     {
-        public Task<string> CreateToken(string account,Guid secret, int expireMinutes = 30, string position = "");
+        public Task<string> CreateToken(string account,Guid secret, CookiePurposeEnum tokenPurpose = CookiePurposeEnum.BackstageAuthToken, string position = "");
         public Task<bool> DelToken();
         public Task<bool> IsTokenRevoked(string token);
         public Task<TokenResponseDto> CreateToken();

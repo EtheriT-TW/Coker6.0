@@ -9,13 +9,15 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType.OAuth
     public enum CookiePurposeEnum
     {
         Default,
-        AuthToken,
-        RefreshToken,
-        RefreshIdentifier,
+        FrontAuthToken,      // 前台 JWT + Token cookie
+        BackstageAuthToken,  // 後台 JWT + BackstageToken cookie
+        RefreshToken,        // 共用的 RefreshToken（DB Token.id）
+        RefreshIdentifier, 
         XsrfToken,
         Language,
         TempData,
         ShortTerm,
         LongTerm
     }
+
 }

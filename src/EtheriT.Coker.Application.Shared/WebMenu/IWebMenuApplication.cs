@@ -23,11 +23,12 @@ namespace EtheriT.Coker.Application
         public Task<ResponseMessageDto> importConten(MenuSaveContenDto dto);
         public Task<ResponseMessageDto> Delete(DataDelectDto dto);
         public Task<ResponseMessageDto> updateSerNo(UpdateSerNoListDto dto);
-        public Task<PageTypeDto> GetPageTypeList();
+        public PageTypeDto GetPageTypeList();
         public Task CheckDisplayAll(long WebsiteID);
         public Task insertMenus(List<SelectDto> menus);
         public Task<bool> checkHasShoppingCar(long WebsiteID);
 		public Task<bool> checkHasMember(long WebsiteID);
         public Task<long> GetRootId(string name);
-	}
+        public Task<List<JumpRuleDto>> GetJumpRulesAsync();
+    }
 }

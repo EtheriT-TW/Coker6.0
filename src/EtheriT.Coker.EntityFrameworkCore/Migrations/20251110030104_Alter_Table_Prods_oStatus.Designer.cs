@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251110030104_Alter_Table_Prods_oStatus")]
+    partial class Alter_Table_Prods_oStatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3266,7 +3269,19 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime>("CreationTime")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getdate()");
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Db_Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<long>("FK_Pid")
                         .HasColumnType("bigint");
@@ -3274,17 +3289,33 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("FK_UserId")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("Remark")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid?>("Tokenid")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("UUID")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<long?>("UserId")
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FK_Pid");
+
+                    b.HasIndex("Tokenid");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Prod_Logs");
                 });
@@ -6732,6 +6763,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EtheriT.Coker.Core.Models.Token", null)
+                        .WithMany("Prod_Logs")
+                        .HasForeignKey("Tokenid");
+
+                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", null)
+                        .WithMany("Prod_Logs")
+                        .HasForeignKey("UserId");
+
                     b.Navigation("Prod");
                 });
 
@@ -7264,6 +7303,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("thirdPartyKeypairValues");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Token", b =>
+                {
+                    b.Navigation("Prod_Logs");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.UserGrouping", b =>
                 {
                     b.Navigation("UserGroupingDetails");
@@ -7344,6 +7388,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("PermissionDetails");
 
                     b.Navigation("Permissions");
+
+                    b.Navigation("Prod_Logs");
 
                     b.Navigation("Remotes");
 

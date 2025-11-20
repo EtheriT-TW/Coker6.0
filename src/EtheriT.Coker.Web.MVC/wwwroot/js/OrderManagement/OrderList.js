@@ -344,6 +344,7 @@ function HashDataEdit() {
                     var order_details = result[0].orderDetails;
                     $.each(order_details, function (index, data) {
                         var frame = $($("#Template_Purchase_List").html()).clone();
+                        $("#OrderDetails > .card-body > .purchase_list").empty();
                         frame = DataInsert(data, frame);
                         $("#OrderDetails > .card-body > .purchase_list").append(frame)
                     });

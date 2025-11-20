@@ -11,7 +11,6 @@ namespace EtheriT.Coker.Core.Models
         public string ip { get; set; }
         public long websiteId { get; set; }
         public DateTime? PrivacyAgreeTime { get; set; }
-        public ICollection<Prod_Log> Prod_Logs { get; set; }
         public ICollection<ShoppingCart> ShoppingCarts { get; set; }
     }
 }

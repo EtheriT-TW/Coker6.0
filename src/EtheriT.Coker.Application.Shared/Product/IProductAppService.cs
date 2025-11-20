@@ -41,6 +41,7 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<GetProdContenDto> GetConten(SearchIDDto dto);
         public Task<ResponseMessageDto> ImportConten(ProdSaveContenDto dto);
         public Task<ResponseMessageDto> SaveConten(ProdSaveContenDto dto);
+        public Task<ResponseMessageDto> HasAnyItemNo();
         public Task<GetFrontContenOutputDto> GetFrontConten(ProdGetFrontContenInputDto dto);
 
     }

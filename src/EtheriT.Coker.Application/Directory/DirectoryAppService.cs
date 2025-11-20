@@ -1699,6 +1699,10 @@ namespace EtheriT.Coker.Application.Directory
                                 response.Add(new KeyValueDto());
                                 response.Add(new KeyValueDto() { Key = keynext, Value = datas[index + 1].Value ?? "" });
                             }
+                            else if (index == 0 && datas.Count == 1) {
+                                response.Add(new KeyValueDto());
+                                response.Add(new KeyValueDto());
+                            }
                             else if (index == datas.Count - 1)
                             {
                                 var keyprev = $"{datas[index - 1].Key}?dirid={diridsStr}";

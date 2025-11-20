@@ -13,5 +13,6 @@ namespace EtheriT.Coker.Application.Shared.Authorization
         string Get(string key);
         void Delete(string key);
         void Clear(params string[] exceptKeys);
+        TimeSpan GetLifetime(CookiePurposeEnum purpose);
     }
 }

@@ -45,6 +45,22 @@ namespace EtheriT.Coker.Application.Authorization
                 response.Cookies.Delete(cookie);
             }
         }
+        public TimeSpan GetLifetime(CookiePurposeEnum purpose)
+        {
+            return purpose switch
+            {
+                CookiePurposeEnum.FrontAuthToken => TimeSpan.FromMinutes(15),  // 前台登入 15 分鐘
+                CookiePurposeEnum.BackstageAuthToken => TimeSpan.FromMinutes(30),  // 後台登入 30 分鐘
+                CookiePurposeEnum.RefreshToken => TimeSpan.FromDays(30),     // RefreshToken 30 天
+                CookiePurposeEnum.RefreshIdentifier => TimeSpan.FromDays(90),
+                CookiePurposeEnum.XsrfToken => TimeSpan.FromMinutes(15),
+                CookiePurposeEnum.Language => TimeSpan.FromDays(365),
+                CookiePurposeEnum.ShortTerm => TimeSpan.FromMinutes(5),
+                CookiePurposeEnum.LongTerm => TimeSpan.FromDays(30),
+                _ => TimeSpan.FromMinutes(10),
+            };
+        }
+
         private CookieOptions GetOptions(CookiePurposeEnum purpose)
         {
             var options = new CookieOptions
@@ -55,18 +71,7 @@ namespace EtheriT.Coker.Application.Authorization
                 Path = "/"
             };
 
-            options.Expires = purpose switch
-            {
-                CookiePurposeEnum.AuthToken => DateTimeOffset.UtcNow.AddMinutes(30),
-                CookiePurposeEnum.RefreshToken => DateTimeOffset.UtcNow.AddDays(7),
-                CookiePurposeEnum.RefreshIdentifier => DateTimeOffset.UtcNow.AddMonths(3),
-                CookiePurposeEnum.XsrfToken => DateTimeOffset.UtcNow.AddMinutes(15),
-                CookiePurposeEnum.Language => DateTimeOffset.UtcNow.AddYears(1),
-                CookiePurposeEnum.ShortTerm => DateTimeOffset.UtcNow.AddMinutes(5),
-                CookiePurposeEnum.LongTerm => DateTimeOffset.UtcNow.AddDays(30),
-                _ => DateTimeOffset.UtcNow.AddMinutes(10),
-            };
-
+            options.Expires = DateTimeOffset.Now.Add(GetLifetime(purpose));
             return options;
         }
     }

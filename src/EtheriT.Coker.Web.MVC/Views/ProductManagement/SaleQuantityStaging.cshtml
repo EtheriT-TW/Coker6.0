@@ -7,7 +7,7 @@
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @using EtheriT.Coker.Web.MVC.Startup
 @{
-    ViewData["Title"] = "ProductList";
+    ViewData["Title"] = "SaleQuantityStaging";
 }
 @Html.AntiForgeryToken()
 <link rel="stylesheet" href="~/css/ProductManagement/SaleQuantityStaging.min.css" asp-append-version="true" />
@@ -51,6 +51,12 @@
                                 .AllowEditing(true)
                                 .DataType(GridColumnDataType.Number)
                                 .EditorOptions(new { min = 0, showSpinButtons = true })
+                                .ValidationRules(v =>
+                                {
+                                    v.AddRange().Min(1).Message("可銷售量必須大於 0");
+                                    v.AddRequired().Message("請輸入可銷售量");
+                                })
+                                .CssClass("col-editable")
                                 .Caption("可銷售量");
                         })
                         .ColumnAutoWidth(true)
@@ -69,7 +75,9 @@
                             editing.UseIcons(true);
                             editing.StartEditAction(GridStartEditAction.Click);
                             editing.SelectTextOnEditStart(true);
-                        }).OnSaving("OnUpdating")
+                        })
+                        .OnSaving("OnUpdating")
+                        .OnToolbarPreparing("onToolbarPreparing")
                 )
             </div>
         </div>

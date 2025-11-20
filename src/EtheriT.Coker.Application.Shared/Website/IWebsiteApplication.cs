@@ -21,5 +21,6 @@ namespace EtheriT.Coker.Application
         public Task<ResponseMessageDto> Save(WebsiteEditDto dto);
         public Task<ResponseMessageDto> LoadFrameCss();
         public Task<ResponseMessageDto> SettingCss(FrameCssDto dto);
+        public Task<string> GetDomain(long siteId=0);
     }
 }

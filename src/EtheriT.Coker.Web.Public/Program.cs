@@ -161,7 +161,7 @@ builder.WebHost.ConfigureKestrel(options =>
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddSingleton<JwtHelpers>();
+builder.Services.AddScoped<JwtHelpers>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache()
     .AddSimpleCaptcha(builder =>

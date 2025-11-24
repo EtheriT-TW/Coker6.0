@@ -278,7 +278,7 @@ function ready() {
                     }
                 });
 
-                node.parentNode.replaceChild(fragment, node);
+                !!node.parentNode && node.parentNode.replaceChild(fragment, node);
             }
         }
 

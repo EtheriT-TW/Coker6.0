@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251121110845_Alert_Table_ShoppingCart_Price_Bonus_IntTodouble")]
+    partial class Alert_Table_ShoppingCart_Price_Bonus_IntTodouble
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2354,8 +2357,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int?>("Service_Charge")
                         .HasColumnType("int");
 
-                    b.Property<long>("Shipping")
-                        .HasColumnType("bigint");
+                    b.Property<int>("Shipping")
+                        .HasColumnType("int");
 
                     b.Property<int>("State")
                         .HasColumnType("int");
@@ -2378,8 +2381,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Payment");
-
-                    b.HasIndex("Shipping");
 
                     b.ToTable("Order_Headers");
                 });
@@ -6638,14 +6639,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EtheriT.Coker.Core.Models.LogisticsSetting", "LogisticsSetting")
-                        .WithMany("Order_Headers")
-                        .HasForeignKey("Shipping")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("LogisticsSetting");
-
                     b.Navigation("PaymentType");
                 });
 
@@ -7147,8 +7140,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsSetting", b =>
                 {
                     b.Navigation("MappingLogisticsSettingAndProds");
-
-                    b.Navigation("Order_Headers");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ObjectType", b =>

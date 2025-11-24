@@ -18,15 +18,15 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public string ImagePath { get; set; }
         // 價格前綴字(目前僅購物車有用到)
         public string? PriceLabel { get; set; }
-        public double Price { get; set; }
-        public double DynamicPrice { get; set; }
-        public double OldPrice { get; set; }
-        public double Discont { get; set; }
-        public double Bonus { get; set; }
+        public decimal Price { get; set; }
+        public decimal DynamicPrice { get; set; }
+        public decimal OldPrice { get; set; }
+        public decimal Discont { get; set; }
+        public int Bonus { get; set; }
         public int Quantity { get; set; }
         public int Step { get; set; }
         public int OldQuantity { get; set; }
-        public double Subtotal { get; set; }
+        public decimal Subtotal { get; set; }
         public int Stock { get; set; }
         public FreightGetAllListDto? Freight { get; set; }
     }

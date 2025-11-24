@@ -83,7 +83,7 @@ namespace EtheriT.Coker.Application.Order
                                        where mapfrontweb.FK_WebsiteId == WebsiteID
                                        select fu).ToListAsync();
 
-                var dataQuery = await (from oh in db.Order_Headers
+                var dataQuery = await (from oh in db.Order_Headers.Include(e => e.LogisticsSetting)
                                        where !oh.IsTemp && oh.FK_WebsiteId == WebsiteID
                                        join ls in db.LogisticsSettings on oh.Shipping equals ls.Id
                                        orderby oh.Id descending
@@ -97,9 +97,9 @@ namespace EtheriT.Coker.Application.Order
                                            RecipientAddress = string.IsNullOrEmpty(oh.RecipientAddress) || !oh.RecipientAddress.Contains(" ") ?
                                                 oh.RecipientAddress :
                                                 oh.RecipientAddress.Substring(0, oh.RecipientAddress.LastIndexOf(" ")) + "***",
-                                           Shipping = oh.Shipping == 0 ? ShippingTypeEnum.郵寄掛號.ToString() : ((ShippingTypeEnum)ls.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11"),
+                                           Shipping = oh.Shipping==0? ShippingTypeEnum.郵寄掛號.ToString() : oh.LogisticsSetting.Title,
                                            Payment = db.PaymentTypes.Where(e => e.Id == oh.Payment).Select(e => e.Title).FirstOrDefault() ?? "",
-                                           State = ((OrderStatusEnum)oh.State).ToString(),
+                                           State = oh.State.ToString(),
                                            Total = oh.Subtotal + oh.Freight,
                                            CreationTime = oh.CreationTime,
                                        }).ToListAsync();
@@ -241,8 +241,8 @@ namespace EtheriT.Coker.Application.Order
                 .Where(ps => ps != null)
                 .ToDictionary(ps => ps.Id);
 
-            int subtotal = 0;
-            int totalBonus = 0;
+            decimal subtotal = 0;
+            decimal totalBonus = 0;
 
             foreach (var sc in carts)
             {
@@ -256,23 +256,23 @@ namespace EtheriT.Coker.Application.Order
                     throw new Exception($"商品庫存不足（購物車ID={sc.Id}），剩餘 {currentStock}，欲購買 {qty}。");
 
                 // 2) 以 Prod_Price 為準，決定單價與紅利
-                int unitPrice;
+                decimal unitPrice;
                 int unitBonus;
 
                 if (sc.Prod_Price != null)
                 {
-                    unitPrice = (int)(sc.Prod_Price.Price ?? 0);
-                    unitBonus = (int)(sc.Prod_Price.Bonus ?? 0);
+                    unitPrice = (decimal)(sc.Prod_Price.Price ?? 0);
+                    unitBonus = sc.Prod_Price.Bonus ?? 0;
                 }
                 else
                 {
                     // 備援：若沒有綁 Prod_Price，就用購物車裡當時的快照
-                    unitPrice = sc.Price;
+                    unitPrice = (decimal)sc.Price;
                     unitBonus = sc.Bonus ?? 0;
                 }
 
-                var lineAmount = unitPrice * qty;
-                var lineBonus = unitBonus * qty;
+                decimal lineAmount = unitPrice * qty;
+                int lineBonus = unitBonus * qty;
 
                 subtotal += lineAmount;
                 totalBonus += lineBonus;
@@ -294,8 +294,8 @@ namespace EtheriT.Coker.Application.Order
             {
                 ShoppingCarts = carts,
                 StockDict = stockDict,
-                Subtotal = subtotal,
-                TotalBonus = totalBonus
+                Subtotal = (int)Math.Round(subtotal, MidpointRounding.AwayFromZero),
+                TotalBonus = (int)Math.Round(totalBonus, MidpointRounding.AwayFromZero)
             };
         }
         private async Task<Order_Header> BuildHeaderSectionAsync(
@@ -508,7 +508,7 @@ namespace EtheriT.Coker.Application.Order
                     else
                     {
                         var ls = db.LogisticsSettings.Where(e => e.Id == result.Shipping).Select(e => e.LogisticsType).FirstOrDefault();
-                        ship_text = ((ShippingTypeEnum)ls).ToString().Replace("_", "/").Replace("Seven", "7-11");
+                        ship_text = ls.ToString().Replace("_", "/").Replace("Seven", "7-11");
                     }
 
                     OrderHeaderGetOneDto output = new OrderHeaderGetOneDto()
@@ -659,9 +659,8 @@ namespace EtheriT.Coker.Application.Order
 
                     var shipping = await db.LogisticsSettings.Where(e => e.FK_WebsiteId == WebsiteId && e.Id == order_header.Shipping).FirstOrDefaultAsync();
                     var shipping_str1 = shipping?.Title ?? "";
-                    var shipping_str2 = ((PreserveTypeEnum)(shipping?.PreserveType ?? 0)).ToString();
-                    var shipping_str3 = ((ShippingTypeEnum)(shipping?.LogisticsType ?? 0)).ToString().Replace("_", "/");
-                    temp_output.Shipping = shipping_str1 != "" ? shipping_str2 != "" ? shipping_str3 != "" ? $"{shipping_str1}　{shipping_str2}-{shipping_str3}" : $"{shipping_str1}　{shipping_str2}" : $"{shipping_str1}" : "";
+                    var shipping_str3 = (shipping?.LogisticsType ?? ShippingTypeEnum.郵寄掛號).ToString().Replace("_", "/");
+                    temp_output.Shipping = shipping_str1 != "" ? shipping_str3 != "" ? $"{shipping_str1}　{shipping_str3}" : $"{shipping_str1}" : "";
                     var payment = await (from pt in db.PaymentTypes
                                           join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
                                           where ptv.FK_WebsiteId == WebsiteId
@@ -706,6 +705,9 @@ namespace EtheriT.Coker.Application.Order
                                     from p in db.Prods
                                     where p.Id == ps.FK_Pid
                                     where sc.Quantity > 0
+
+                                    let unitPrice = sc.Price == 0 ? (pp.Price ?? 0) : sc.Price
+
                                     select new OrderDetailsGetAllDto
                                     {
                                         PId = p.Id,
@@ -714,10 +716,10 @@ namespace EtheriT.Coker.Application.Order
                                         S1Title = ps.FK_S1id.ToString(),
                                         S2Title = ps.FK_S2id.ToString(),
                                         Description = p.Description,
-                                        Price = sc.Price == 0 ? pp.Price ?? 0 : sc.Price,
+                                        Price = unitPrice,
                                         SCPrice = sc.Price,
                                         Quantity = sc.Quantity,
-                                        Subtotal = ps.Price * sc.Quantity,
+                                        Subtotal = unitPrice * sc.Quantity,
                                         ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
                                                         .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
                                                         .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == p.FK_WebsiteId && e.fileUpload.ContentType.StartsWith("image"))
@@ -738,7 +740,7 @@ namespace EtheriT.Coker.Application.Order
                         if (item.SCPrice == 0 && role > 1)
                         {
                             var price = await db.Prod_Prices.Where(e => e.FK_RId == role && e.FK_PSId == item.PSId).Select(e => e.Price).FirstOrDefaultAsync();
-                            if (price != null && price != 0) item.Price = (double)price;
+                            if (price != null && price != 0) item.Price = price ?? 0;
                         }
                         item.S1Title = int.Parse(item.S1Title ?? "0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S1Title!))?.Title;
                         item.S2Title = int.Parse(item.S2Title ?? "0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S2Title!))?.Title;
@@ -872,11 +874,10 @@ namespace EtheriT.Coker.Application.Order
                                                 temp_detail.Describe = "商品規格庫存不足";
                                                 change = true;
                                             }
-                                            if (temp_detail.DynamicPrice != temp_detail.Price)
+                                            if (temp_detail.OldPrice > 0 && temp_detail.OldPrice != temp_detail.Price)
                                             {
-                                                temp_detail.OldPrice = temp_detail.Price;
-                                                temp_detail.Price = temp_detail.DynamicPrice;
-                                                new_price = temp_detail.DynamicPrice;
+                                                old_price = temp_detail.OldPrice;
+                                                new_price = temp_detail.Price;
                                                 temp_detail.Describe = "商品規格價格更動";
                                                 change = true;
                                             }
@@ -884,7 +885,6 @@ namespace EtheriT.Coker.Application.Order
                                             {
                                                 subtotal += (new_price * new_quantity) - (old_price * old_quantity);
                                                 ohdata[0].Subtotal = subtotal.ToString("#,##0");
-                                                temp_detail.Price = temp_detail.Price;
                                                 dis_details.Add(temp_detail);
                                             }
                                         }
@@ -953,7 +953,7 @@ namespace EtheriT.Coker.Application.Order
                                 }
                                 else throw new Exception("訂單詳細有誤");
                             }
-                            var subtotal = 0;
+                            decimal subtotal = 0;
                             foreach (var scdata in shoppingcarts)
                             {
                                 var stock = stocks.Find(e => e.Id == scdata.FK_PSid);
@@ -962,13 +962,13 @@ namespace EtheriT.Coker.Application.Order
                                     stock.Stock -= scdata.Quantity;
                                     stock.LastModifierUserId = userid;
                                     stock.LastModificationTime = DateTime.Now;
-                                    subtotal += scdata.Price * scdata.Quantity;
+                                    subtotal += (decimal)scdata.Price * scdata.Quantity;
                                 }
                                 else throw new Exception("查無庫存資料");
                             }
                             if (subtotal == dto.Subtotal)
                             {
-                                ohdata.Subtotal = subtotal;
+                                ohdata.Subtotal = (int)Math.Round(subtotal, MidpointRounding.AwayFromZero);
                                 ohdata.State = OrderStatusEnum.待確認;
                                 ohdata.LastModifierUserId = userid;
                                 ohdata.LastModificationTime = DateTime.Now;

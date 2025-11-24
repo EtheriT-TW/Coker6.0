@@ -7,7 +7,7 @@ namespace EtheriT.Coker.Core.Models
         public long FK_Pid { get; set; }
         public long? FK_S1id { get; set; }
         public long? FK_S2id { get; set; }
-        public double Price { get; set; }
+        public decimal Price { get; set; }
         public int? Stock { get; set; }
         public int? Alert_Qty { get; set; }
         public int? Min_Qty { get; set; }

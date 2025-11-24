@@ -37,7 +37,13 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         [HttpPost]
         public async Task<ResponseMessageDto> QuantityUpdate(ShoppingQuantityUpdateDto dto)
         {
-            return await shoppingCartAppService.QuantityUpdate(dto);
+            return await shoppingCartAppService.QuantityUpdate(new List<ShoppingQuantityUpdateDto> { dto });
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> MultiQuantityUpdate(List<ShoppingQuantityUpdateDto> dto)
+        {
+            var output = await shoppingCartAppService.QuantityUpdate(dto);
+            return output;
         }
 
         [HttpGet]

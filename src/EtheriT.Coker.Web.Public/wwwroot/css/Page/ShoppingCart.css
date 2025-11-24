@@ -541,6 +541,31 @@ body > .popover.bs-popover-auto.fade {
 .pay_mail a {
     display: inline-block;
 }
+
+.purchase_item .price-change {
+    font-weight: 600;
+}
+
+.purchase_item .price-down::after {
+    content: "（已降價）";
+    margin-left: .25rem;
+    font-size: 0.875rem;
+}
+
+/* 價格變貴：紅色警示 */
+.purchase_item .price-up::after {
+    content: "（售價已調整）";
+    margin-left: .25rem;
+    font-size: 0.875rem;
+}
+.purchase_item > .content > .js-stock-error {
+    display: none;
+}
+.purchase_group > .group_header {
+    display: flex;
+    gap: 1rem;
+    flex-direction: row;
+}
 /*RWD*/
 @media (max-width: 1366px) {
 }
@@ -552,6 +577,9 @@ body > .popover.bs-popover-auto.fade {
     #Step1 > .card-body > .purchase_list > li > .btn_side_icon {
         top: 0;
         transform: translate(0, 0);
+    }
+    .purchase_item > .content > .js-stock-error {
+        display: block;
     }
 }
 

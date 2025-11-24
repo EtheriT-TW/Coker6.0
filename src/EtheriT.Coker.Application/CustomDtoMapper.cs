@@ -304,25 +304,47 @@ namespace EtheriT.Coker.Application
             CreateMap<Core.Models.ShoppingCart, ShoppingCartAddUpOldDto>()
                 .ReverseMap();
             CreateMap<Core.Models.ShoppingCart, ShoppingCartDisplayDto>()
-                 .ForMember(d => d.SCId, m => m.MapFrom(s => s.Id))
-                 .ForMember(d => d.PSId, m => m.MapFrom(s => s.FK_PSid))
-                 .ForMember(d => d.PPId, m => m.MapFrom(s => s.FK_PriceId))
-                 .ForMember(d => d.Freight, m => m.MapFrom(s =>
-                     // 先確認兩層導覽非 null，再取對應的關聯
-                     (s.Prod_Stock != null && s.Prod_Stock.Prod != null)
-                         ? s.Prod_Stock.Prod.MappingLogisticsSettingAndProds
-                             .Where(x => x.FK_ProdId == s.Prod_Stock.FK_Pid && x.LogisticsSetting != null)
-                             .Select(x => new FreightGetAllListDto
-                             {
-                                 Id = x.LogisticsSetting!.Id,
-                                 Title = x.LogisticsSetting.Title,
-                                 Describe = x.LogisticsSetting.LogisticsType.ToString().Replace("_", "/").Replace("Seven", "7-11") + "，" +
-                                        (x.LogisticsSetting.FreigntType == FreigntTypeEnum.免運費 ? x.LogisticsSetting.FreigntType.ToString() : x.LogisticsSetting.FreigntType.ToString() + x.LogisticsSetting.Freight + "元(滿" + x.LogisticsSetting.Low_Con + "元" + (x.LogisticsSetting.Dis_Freight == 0 ? "免運)" : "運費" + x.LogisticsSetting.Dis_Freight + "元)"))
-                             })
-                             .FirstOrDefault()     // 找不到就回 null
-                         : null
-                 ))
-                 .ReverseMap();
+                .ForMember(d => d.SCId, m => m.MapFrom(s => s.Id))
+                .ForMember(d => d.PSId, m => m.MapFrom(s => s.FK_PSid))
+                .ForMember(d => d.PPId, m => m.MapFrom(s => s.FK_PriceId))
+                .ForMember(d => d.Freight, m => m.MapFrom(s =>
+                    (s.Prod_Stock != null && s.Prod_Stock.Prod != null)
+                        ? s.Prod_Stock.Prod.MappingLogisticsSettingAndProds
+                            .Where(x => x.FK_ProdId == s.Prod_Stock.FK_Pid && x.LogisticsSetting != null)
+                            .Select(x => new FreightGetAllListDto
+                            {
+                                Id = x.LogisticsSetting!.Id,
+                                Title = x.LogisticsSetting.Title,
+                                Describe =
+                                    x.LogisticsSetting.LogisticsType.ToString()
+                                        .Replace("_", "/")
+                                        .Replace("Seven", "7-11")
+                                    + "，" +
+                                    (
+                                        x.LogisticsSetting.FreigntType == FreigntTypeEnum.免運費
+                                            // 免運：直接寫免運費
+                                            ? "免運費"
+                                            // 非免運：基本運費描述
+                                            : x.LogisticsSetting.FreigntType.ToString()
+                                              + x.LogisticsSetting.Freight + "元"
+                                              // 若有滿額條件才顯示括號內容
+                                              + (
+                                                    x.LogisticsSetting.Low_Con > 0
+                                                        ? "(滿" + x.LogisticsSetting.Low_Con + "元"
+                                                          + (
+                                                                x.LogisticsSetting.Dis_Freight == 0
+                                                                    ? "免運)"
+                                                                    : "運費" + x.LogisticsSetting.Dis_Freight + "元)"
+                                                            )
+                                                        : string.Empty
+                                                )
+                                    )
+                            })
+                            .FirstOrDefault()
+                        : null
+                ))
+                .ReverseMap();
+
 
             //Tags
             CreateMap<TagSelectedDto, Core.Models.Tag>()

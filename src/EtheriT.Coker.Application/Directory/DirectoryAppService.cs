@@ -298,8 +298,8 @@ namespace EtheriT.Coker.Application.Directory
                 else data.MainImage = imgRegex.Match(data.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "");
                 var s = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
                 var p = await db.Prod_Prices.Where(x => s.Contains(x.FK_PSId)).Where(e => !e.IsDeleted).ToListAsync();
-                double min = p.Min(e => e.Price) ?? 0;
-                double max = p.Max(e => e.Price) ?? 0;
+                decimal min = p.Min(e => e.Price) ?? 0;
+                decimal max = p.Max(e => e.Price) ?? 0;
                 if (min == max) data.Price = $"{max}";
                 else data.Price = $"{min} ~ {max}";
             }
@@ -547,6 +547,8 @@ namespace EtheriT.Coker.Application.Directory
                 );
             }
             List<long> Ids = await prods.Select(e => e.Id).ToListAsync();
+
+            if(dto.Filters == null) dto.Filters = new List<DirectoryFilterDto>();
             dto.Filters.ForEach(t =>
             {
                 t.Group.ForEach(g =>

@@ -13,7 +13,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public long? FK_S2id { get; set; }
         public string? S2_Title { get; set; }
         public string? S2_Name { get; set; }
-        public double Price { get; set; }
+        public decimal Price { get; set; }
         public int? OrderStock { get; set; }
         public int? Stock { get; set; }
         public int? OldStock { get; set; }
@@ -22,7 +22,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public int? Min_Qty { get; set; }
         public int? Alert_Qty { get; set; }
         public bool TimePrice { get; set; }
-        public double  SuggestPrice { get; set; }
+        public decimal SuggestPrice { get; set; }
         public List<ProductPriceDto> Prices { get; set; }
     }
 }

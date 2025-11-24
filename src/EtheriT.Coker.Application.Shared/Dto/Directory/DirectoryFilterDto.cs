@@ -10,6 +10,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
     public class DirectoryFilterDto
     {
         public DirectorySearchTypeEnum Type { get; set; }
-        public List<DirectoryGroupFilterDto> Group { get; set; }
+        public List<DirectoryGroupFilterDto> Group { get; set; } = new List<DirectoryGroupFilterDto>();
     }
 }

@@ -715,13 +715,6 @@ namespace EtheriT.Coker.Application.Product
                 {
                     foreach (var item in output)
                     {
-                        var scs = await db.ShoppingCarts.Where(e => e.FK_PSid == item.Id && !e.IsOrder).ToListAsync();
-                        var order_quantity = 0;
-                        foreach (var sc in scs)
-                        {
-                            order_quantity += sc.Quantity;
-                        }
-                        item.OrderStock = order_quantity;
                         item.FK_ST1id = (int)item.FK_S1id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id).FK_Tid : 0;
                         item.S1_Title = (int)item.FK_S1id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id).Title : "";
                         item.FK_ST2id = (int)item.FK_S2id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S2id).FK_Tid : 0;

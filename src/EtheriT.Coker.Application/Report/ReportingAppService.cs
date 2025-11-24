@@ -27,7 +27,7 @@ namespace EtheriT.Coker.Application.Report
             {
                 long siteId = await loginUserData.GetWebsiteId();
                 var siteName = await loginUserData.GetWebsiteName();
-                var order = db.Order_Headers.Include(e => e.PaymentType).Include(e => e.Order_Details).ThenInclude(o => o.ShoppingCart)
+                var order = db.Order_Headers.Include(e => e.PaymentType).Include(e => e.LogisticsSetting).Include(e => e.Order_Details).ThenInclude(o => o.ShoppingCart)
                     .Where(x => x.Id == id && x.FK_WebsiteId == siteId).FirstOrDefault();
                 if (order != null)
                 {
@@ -49,7 +49,7 @@ namespace EtheriT.Coker.Application.Report
                         訂單總金額 = order.Subtotal + order.Freight - (order.Discount ?? 0),
                         發票載具 = order.InvoiceRecipient == 1 ? "訂購人" : order.InvoiceRecipient == 2 ? "收件人" : $"公司(三聯){order.UniformId}\n{order.InvoiceTitle}\n{order.InvoiceAddress}",
                         優惠券折抵 = 0,
-                        送貨方式 = ((ShippingTypeEnum)order.Shipping).ToString(),
+                        送貨方式 = order.LogisticsSetting.Title,
                         訂單明細 = (from x in order.Order_Details
                             where x.ShoppingCart != null
                             join s1 in db.Prod_Specs on x.ShoppingCart.FK_S1id equals s1.Id into s1Group

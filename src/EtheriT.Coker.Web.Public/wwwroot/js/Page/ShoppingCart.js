@@ -259,11 +259,22 @@ function PageReady() {
         switch (buy_step_swiper.activeIndex) {
             case 1:
                 const hasSelected = getSelectedCartIds().length > 0;
+                var $errorSelected = $('li.purchase_item.cart-item-error input[name="buyItems"]:checked');
+
                 if (!hasProds) {
                     Coker.sweet.warning("錯誤", "無可購買商品。", null, false);
                     buy_step_swiper.slideTo(0);
                 } else if (!hasSelected) {
                     Coker.sweet.warning("請注意", "請先勾選要結帳的商品（至少 1 項）。", null);
+                    buy_step_swiper.slideTo(0);
+                    return;
+                } else if ($errorSelected.length > 0) {
+                    Coker.sweet.warning(
+                        "無法結帳",
+                        "您選取的商品中包含已下架或庫存不足的品項，請先調整或移除後再繼續結帳。",
+                        null,
+                        false
+                    );
                     buy_step_swiper.slideTo(0);
                     return;
                 } else {
@@ -821,9 +832,21 @@ function renderCartGroups(result) {
 
         // 塞入該組 items（沿用你原有 CartListAdd，但改讓它可以指定容器）
         items.forEach(row => {
+            var originalPrice = row.oldPrice != null ? row.oldPrice : row.price;
+            var currentPrice = row.price != null ? row.price : 0;
+
+            // 存一份「加入購物車當時的價」到自訂欄位，給後面需要的人用
+            row.originalPriceInCart = originalPrice;
+            row.priceChangeFlag = null;  // 'up' = 調漲, 'down' = 降價
+
+            if (originalPrice > 0 && currentPrice > 0 && originalPrice !== currentPrice) {
+                row.priceChangeFlag = (currentPrice > originalPrice) ? 'up' : 'down';
+            }
+            // === 原本的程式 ===
             row.__groupId = meta.id;
-            CartListAdd(row, $groupItems); // ⬅ 第3步會支援這個參數
+            CartListAdd(row, $groupItems);
         });
+
 
         // 初始化本組已選小計/件數
         $group.find('.js-group-subtotal').attr('data-subtotal', 0).text('$0');
@@ -865,6 +888,7 @@ function CartInit(result) {
     buy_step_swiper.update();
     TotalCount();
     PaymentHideShow();
+    ValidateCartOnInit();
 
     const $firstGroup = $('.purchase_group').first();
     if ($firstGroup.length) {
@@ -892,12 +916,17 @@ function PaymentHideShow() {
 }
 function CartListAdd(data, $container) {
     if (data.quantity > 0) {
-        if (shopping_cart_data.find(e => e.Id == data.scId) != null) {
-            data.price = shopping_cart_data.find(e => e.Id == data.scId).Price;
+        var exists = shopping_cart_data.find(e => e.Id == data.scId);
+
+        if (exists != null) {
+            // 已經存在就沿用目前的結帳單價（避免重複 push）
+            data.price = exists.Price;
         } else {
             var obj = {};
             obj['Id'] = data.scId;
+            // data.price 已在 renderCartGroups 被改成 currentPrice
             obj['Price'] = data.price;
+            obj['OriginalPrice'] = data.originalPriceInCart ?? data.price; // 加入購物車當時的價
             obj['Quantity'] = data.quantity;
             obj['Bonus'] = data.bonus;
             obj['freight'] = data.freight;
@@ -1043,37 +1072,75 @@ function CartListInsert($frame, data) {
                     if (data[key] != data['quantity']) $self.removeClass("d-none");
                     $self.text(data[key]);
                     break;
-                case "oldPrice":
-                    if (data[key] != data['price'] && data[key] > 0) {
+                case "oldPrice": {
+                    // 後端定義：
+                    // oldPrice = 加入購物車 / 原訂單當下的成交價（ShoppingCart.Price）
+                    // price    = 現在要結帳的實際售價（Prod_Prices.Price）
+                    var original = data.oldPrice;
+                    var current = data.price;
+
+                    if (original != null && original > 0 && original !== current) {
+                        // 顯示舊價（例如：$360）
                         $self.removeClass("d-none");
-                        $self.text(data[key]);
-                        $self.siblings("div[data-key='price']").addClass("red_text");
+                        $self.text(original.toLocaleString());
+
+                        var $priceDiv = $self.siblings("div[data-key='price']");
+
+                        // 清掉舊的狀態 class，避免重複 render 殘留
+                        $priceDiv
+                            .removeClass("price-up price-down price-changed text-danger text-success red_text");
+
+                        // 共用：這筆商品價格有變動
+                        $priceDiv.addClass("price-changed");
+
+                        if (current > original) {
+                            // ➜ 價格變貴：警告
+                            $priceDiv.addClass("price-up text-danger red_text");
+                        } else if (current < original) {
+                            // ➜ 價格變便宜：驚喜
+                            $priceDiv.addClass("price-down text-success");
+                        }
                     }
                     break;
-                case "price":
+                }
+                case "price": {
+                    // 現在要結帳的實際售價（Prod_Prices.Price）
+                    var unitPrice = data.price || 0;
                     var price_text = "";
+
                     if (data['bonus'] > 0) {
-                        price_text = `${data[key].toLocaleString()}+紅利${data['bonus'].toLocaleString()}`;
+                        price_text = `${unitPrice.toLocaleString()}+紅利${data['bonus'].toLocaleString()}`;
                     } else {
-                        price_text = `${data[key].toLocaleString()}`;
+                        price_text = `${unitPrice.toLocaleString()}`;
                     }
-                    price_text = data['priceLabel'] != null ? `${data['priceLabel']} $${price_text}` : `$${price_text}`
+
+                    price_text = data['priceLabel'] != null
+                        ? `${data['priceLabel']} $${price_text}`
+                        : `$${price_text}`;
+
                     $self.text(price_text);
                     break;
-                case "subtotal":
-                    var sub_price = (data['price'] * data['quantity']);
-                    var sub_bonus = (data['bonus'] * data['quantity']);
+                }
+                case "subtotal": {
+                    // 小計一律用「現在售價」來算，才會跟訂單金額一致
+                    var unitPrice = data.price || 0;
+                    var qty = data['quantity'] || 0;
+                    var sub_price = unitPrice * qty;
+                    var sub_bonus = (data['bonus'] || 0) * qty;
                     var price_text = "";
+
                     if (sub_bonus > 0) {
                         price_text = `$${sub_price.toLocaleString()}+紅利${sub_bonus.toLocaleString()}`
                     } else {
                         price_text = `$${sub_price.toLocaleString()}`
                     }
+
                     $self.text(price_text);
                     $self.data("subtotal", sub_price);
                     $self.data("subtotal_bonus", sub_bonus);
-                    CartQuantityUpdate($self, data['price'], data['bonus'], $frame.data("scId"), data['quantity']);
                     break;
+                }
+
                 case "quantity":
                     $self.val(data[key]);
                     $self.attr({ step: data.step })
@@ -1102,45 +1169,101 @@ function CartListInsert($frame, data) {
     return $frame;
 }
 function CartQuantityUpdate(self, price, bonus, scid, quantity) {
-    datachange = true;
-    if (quantity > 0) {
-        Product.Update.Cart({
-            Id: scid,
-            Quantity: quantity,
-        }).done(function (result) {
-            if (result.success) {
-                Product.GetOne.Cart(result.message).done(function (result) {
-                    shopping_cart_data.find(e => e.Id == result.scId).Price = price;
-                    shopping_cart_data.find(e => e.Id == result.scId).Bonus = bonus;
-                    shopping_cart_data.find(e => e.Id == result.scId).Quantity = quantity;
-                    var sub_price = price * quantity;
-                    var sub_bonus = bonus * quantity;
-                    self.data("subtotal", sub_price)
-                    self.data("subtotal_bonus", sub_bonus)
-                    var price_text = "";
-                    if (sub_bonus > 0) {
-                        price_text = `${sub_price.toLocaleString()}+紅利${sub_bonus}`;
-                    } else {
-                        price_text = `${sub_price.toLocaleString()}`;
-                    }
-                    self.text(price_text)
-                    TotalCount();
-                    CartDropReset(scid, quantity)
-                });
-            } else {
-                if (result.error == "商品庫存不足") {
-                    Coker.sweet.warning(result.error, result.message, function () {
-                        location.reload(true);
-                    }, false);
-                } else {
-                    Coker.sweet.error("商品更改數量發生錯誤", result.message, null, true);
-                }
-            }
-        }).fail(function () {
-            Coker.sweet.error("錯誤", "商品數量修改發生錯誤", null, true);
-        });
+    if (quantity <= 0) return;
+
+    var entry = shopping_cart_data.find(function (e) { return e.Id == scid; });
+    var oldQty = entry ? entry.Quantity : quantity;
+
+    // 共用：依指定數量更新小計與文字顯示，並重算總計
+    function updateSubtotalAndDisplay(qty) {
+        var sub_price = price * qty;
+        var sub_bonus = bonus * qty;
+
+        self.data("subtotal", sub_price);
+        self.data("subtotal_bonus", sub_bonus);
+
+        var price_text = (sub_bonus > 0)
+            ? `${sub_price.toLocaleString()}+紅利${sub_bonus.toLocaleString()}`
+            : `${sub_price.toLocaleString()}`;
+
+        self.text(price_text);
+
+        TotalCount();
     }
+
+    // 共用錯誤處理：顯示錯誤 + 還原數量 & 顯示 + 標記不可選
+    function handleUpdateError(title, message) {
+        var $li = self.closest('li.purchase_item');
+        if (title !== "") {
+            var $qty = $li.find('.pro_quantity');
+            Coker.sweet.error(title, message, null, true);
+            $qty.val(oldQty);
+            return;
+        }        
+
+        // 標記錯誤
+        $li.addClass('cart-item-error');
+
+        // 取消選取並鎖住 checkbox
+        var $itemCheckbox = $li.find('input[name="buyItems"]');
+        if ($itemCheckbox.length) {
+            $itemCheckbox.prop('checked', false);
+            $itemCheckbox.prop('disabled', true);
+        }
+
+        // 顯示錯誤訊息區塊（避免和初次載入重複，先移除舊的）
+        $li.find('.js-stock-error').remove();
+        var $content = $li.find('.content');
+        if (!$content.length) $content = $li;
+
+        var $msgDiv = $('<div class="js-stock-error text-danger small mt-1"></div>');
+        $msgDiv.text(message || '此商品目前無法購買，請調整或移除。');
+        $content.append($msgDiv);
+
+        updateSubtotalAndDisplay(oldQty);
+    }
+
+    Product.Update.Cart({
+        Id: scid,
+        Quantity: quantity
+    }).done(function (result) {
+
+        // === 成功 ===
+        if (result.success) {
+            if (entry) {
+                entry.Price = price;
+                entry.Bonus = bonus;
+                entry.Quantity = quantity;
+            }
+
+            // 移除錯誤標記，恢復可選
+            var $li = self.closest('li.purchase_item');
+            $li.removeClass('cart-item-error');
+            $li.find('.js-stock-error').remove();
+            var $itemCheckbox = $li.find('input[name="buyItems"]');
+            if ($itemCheckbox.length) {
+                $itemCheckbox.prop('disabled', false);
+            }
+            if (!result.object.items[0].success) {
+                handleUpdateError("", result.object.items[0].message);
+            }
+
+            updateSubtotalAndDisplay(quantity);
+            CartDropReset(scid, quantity);
+            return;
+        }
+
+        // === result.success == false：後端驗證沒過 ===
+        var msg = result.message || "商品數量修改發生錯誤，請稍後再試。";
+        handleUpdateError("商品更改數量發生錯誤", msg);
+
+    }).fail(function () {
+
+        // === AJAX / 伺服器錯誤 ===
+        handleUpdateError("錯誤", "商品數量修改發生錯誤，請稍後再試。");
+    });
 }
+
 function computeSelectedSubtotal() {
     let sum = 0, bonus = 0;
     $('.purchase_group li.purchase_item input[name="buyItems"]:checked').each(function () {
@@ -2215,4 +2338,67 @@ function RecipientsList_DeleteButtonClicked(e) {
         //    RecipientsList_dxData.refresh();
         //})
     })
+}
+function ValidateCartOnInit() {
+    if (!shopping_cart_data || shopping_cart_data.length === 0) return;
+
+    var payload = shopping_cart_data
+        .filter(function (x) { return x.Quantity > 0; })
+        .map(function (x) {
+            return { Id: x.Id, Quantity: x.Quantity };
+        });
+
+    if (payload.length === 0) return;
+
+    Product.Update.MultiCart(payload).done(function (result) {
+        var batch = result.object || result.Object;
+        if (!batch) return;
+
+        var items = batch.items || batch.Items || [];
+        if (!items || !items.length) return;
+
+        items.forEach(function (item) {
+            var cartId = item.cartId || item.CartId;
+            var success = (item.success === true || item.Success === true);
+            var removed = (item.removed === true || item.Removed === true);
+            var msg = item.message || item.Message || '';
+            var errorCode = item.error || item.Error || '';
+
+            if (!cartId) return;
+
+            var $li = $('li.purchase_item').filter(function () {
+                return $(this).data('scId') === cartId;
+            });
+            if (!$li.length) return;
+
+            // 先清掉舊狀態
+            $li.removeClass('cart-item-error');
+            $li.find('.js-stock-error').remove();
+
+            var $itemCheckbox = $li.find('input[name="buyItems"]');
+            // 預設先解鎖，避免舊狀態殘留
+            $itemCheckbox.prop('disabled', false);
+
+            // ✅ 成功 & 未被後端標記移除 → 不處理
+            if (success && !removed) return;
+
+            // ❌ 有錯誤的品項：加上錯誤標記、取消勾選並禁用
+            $li.addClass('cart-item-error');
+
+            if ($itemCheckbox.length) {
+                $itemCheckbox.prop('checked', false);
+                $itemCheckbox.prop('disabled', true);
+            }
+
+            var $content = $li.find('.content');
+            if (!$content.length) $content = $li;
+            var $msgDiv = $('<div class="js-stock-error text-danger small mt-1"></div>');
+            $msgDiv.text(msg || '此商品目前無法購買，請調整或移除。');
+            $content.append($msgDiv);
+        });
+
+        TotalCount();
+    }).fail(function () {
+        // 驗證失敗就當沒發生，不影響使用者操作
+    });
 }

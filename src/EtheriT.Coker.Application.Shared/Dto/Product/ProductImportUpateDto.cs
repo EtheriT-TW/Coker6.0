@@ -23,7 +23,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 		public string? Spec2Name { get; set; }
 		public string? Spec2 { get; set; }
 		public int Stock { get; set; } = 0;
-		public double Price { get; set; } = 0;
+		public decimal Price { get; set; } = 0;
 		public string? Image1 { get; set; }
 		public string? Image2 { get; set; }
 		public string? Image3 { get; set; }

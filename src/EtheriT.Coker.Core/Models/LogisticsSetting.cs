@@ -19,5 +19,6 @@ namespace EtheriT.Coker.Core.Models
         public int? FreigntAmt2 { get; set; }
         public Website? Website { get; set; }
         public List<MappingLogisticsSettingAndProd> MappingLogisticsSettingAndProds { get; set; }
+        public List<Order_Header> Order_Headers { get; set; }
     }
 }

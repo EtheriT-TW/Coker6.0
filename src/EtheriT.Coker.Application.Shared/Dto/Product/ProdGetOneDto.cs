@@ -9,7 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public string Title { get; set; }
         public string Introduction { get; set; }
         public string Description { get; set; }
-        public double Price { get; set; }
-        public double? Discount { get; set; }
+        public decimal Price { get; set; }
+        public decimal? Discount { get; set; }
     }
 }

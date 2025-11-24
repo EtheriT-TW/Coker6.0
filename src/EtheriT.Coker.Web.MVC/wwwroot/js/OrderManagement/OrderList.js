@@ -231,13 +231,6 @@ function updateOrder() {
 function ElementInit() {
 
     /* Header */
-    $order_number = $(".order_number")
-    $order_date = $(".order_date")
-    $order_subtotal = $(".order_subtotal")
-    $order_freight = $(".order_freight")
-    $order_total = $(".order_total")
-    $order_payment = $(".order_payment")
-    $order_shipping = $(".order_shipping")
     $order_status = $(".status_select")
     $order_notes = $(".order_notes")
     $memo_block = $(".memo_block");
@@ -261,13 +254,6 @@ function ElementInit() {
 function FormDataClear() {
     keyId = 0;
 
-    $order_number.text("");
-    $order_date.text("")
-    $order_subtotal.text("")
-    $order_freight.text("")
-    $order_total.text("")
-    $order_payment.text("")
-    $order_shipping.text("")
     $order_status.val(0);
     $order_status.prop("disabled", false);
     $order_notes.text("")
@@ -342,9 +328,11 @@ function HashDataEdit() {
                     HeaderDataInsert(order_header)
 
                     var order_details = result[0].orderDetails;
+                    var temp = $("#Template_Purchase_List").data("temp") || $($("#Template_Purchase_List").html()).clone();
+                    if (!!!$("#Template_Purchase_List").data("temp")) $("#Template_Purchase_List").data("temp", temp);
+                    $("#OrderDetails > .card-body > .purchase_list").empty();
                     $.each(order_details, function (index, data) {
-                        var frame = $($("#Template_Purchase_List").html()).clone();
-                        $("#OrderDetails > .card-body > .purchase_list").empty();
+                        var frame = $(temp).clone();
                         frame = DataInsert(data, frame);
                         $("#OrderDetails > .card-body > .purchase_list").append(frame)
                     });

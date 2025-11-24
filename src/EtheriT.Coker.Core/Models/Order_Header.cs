@@ -38,7 +38,7 @@ namespace EtheriT.Coker.Core.Models
         public string? InvoiceTitle { get; set; }
         public string? UniformId { get; set; }
         public string InvoiceAddress { get; set; }
-        public int Shipping { get; set; }
+        public long Shipping { get; set; }
         public long Payment { get; set; }
         public OrderStatusEnum State { get; set; }
         public DateTime? CompletedDate { get; set; }
@@ -57,6 +57,7 @@ namespace EtheriT.Coker.Core.Models
         public DateTime? RepayDate { get; set; }
         public bool IsTemp { get; set; }
         public PaymentType PaymentType { get; set; }
+        public LogisticsSetting LogisticsSetting { get; set; }
         public List<Order_Details> Order_Details { get; set; }
 
     }

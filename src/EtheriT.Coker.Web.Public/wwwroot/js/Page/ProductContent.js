@@ -404,17 +404,18 @@ function PageDefaultSet(result) {
                 }
             }
             price_temp.find(".discount").text(displayText);
-            if (item.fK_RId != 1 && oriprice > price) price_temp.find(".discount").addClass("mprice");
+            const ShowMPrice = item.fK_RId != 1 && oriprice > price;
+            if (ShowMPrice) price_temp.find(".discount").addClass("mprice");
 
             if (oriprice > price) {
                 price_temp.find(".ori_price").text(oriprice.toLocaleString('en-US'));
                 price_temp.find(".ori_price").removeClass("d-none")
             }
 
-            if (!IsLogin && result.stocks[0].suggestPrice > 0 && result.stocks[0].suggestPrice != price) {
+            if (!ShowMPrice && result.stocks[0].suggestPrice > 0 && result.stocks[0].suggestPrice != price) {
                 price_temp.find(".discount").empty();
                 price_temp.find(".discount").removeClass("price");
-                price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${result.stocks[0].suggestPrice.toLocaleString('en-US')}</div><div class="text-danger">  ${displayText}</div>`);
+                price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${result.stocks[0].suggestPrice.toLocaleString('en-US')}</div><div class="text-danger">  $${displayText}</div>`);
             }
             if (result.stocks[0].timePrice) {
                 $(".btn_addToCar").addClass("d-none");
@@ -692,14 +693,17 @@ function SpecRadio() {
                             }
                         } else price_text = price.toLocaleString('en-US');
 
-                        if (!IsLogin && item.suggestprice > 0 && item.suggestprice != price) {
+                        const ShowMPrice = self_item.fK_RId != 1;
+                        if (ShowMPrice) price_temp.find(".discount").addClass("mprice");
+
+                        if (!ShowMPrice && item.suggestprice > 0 && item.suggestprice != price) {
                             price_temp.find(".discount").empty();
                             price_temp.find(".discount").removeClass("price");
                             price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${item.suggestprice.toLocaleString('en-US')}</div><div class="text-danger"> $${price_text}</div>`);
                         }
                         else price_temp.find(".discount").text(price_text);
 
-                        if (self_item.fK_RId != 1) price_temp.find(".discount").addClass("mprice");
+                        
 
                         if (oriprice > price) {
                             price_temp.find(".ori_price").text(oriprice.toLocaleString('en-US'));

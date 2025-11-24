@@ -184,7 +184,6 @@ builder.Services.AddMvc(options =>
     options.OutputFormatters.Add(new XmlSerializerOutputFormatter());
 });
 
-builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IAccountAppService, AccountAppService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<MailAppService, MailAppService>();

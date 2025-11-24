@@ -12,6 +12,6 @@ namespace EtheriT.Coker.Application.Dto
         public bool Success { get; set; }
         public string? Error { get; set; }
         public string? Message { get; set; }
-        public ResponseObject? Object { get; set; }
+        public object? Object { get; set; }
     }
 }

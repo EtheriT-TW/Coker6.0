@@ -146,14 +146,27 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 if (sc == null)
                 {
                     if (wantQty > currentStock)
-                        throw new Exception($"庫存量僅剩下 {currentStock}，無法加入購物車");
+                        throw new Exception($"可購買上限 {currentStock} 件，無法再加入 {wantQty} 件");
 
                     var date = DateTime.Now;
+                    decimal unitPrice = 0;
+                    int bonus = 0;
+                    if (dto.FK_PriceId != null)
+                    {
+                        var prodPrice = await db.Prod_Prices
+                            .FirstOrDefaultAsync(e => e.Id == dto.FK_PriceId);
+                        if (prodPrice != null)
+                        {
+                            unitPrice = prodPrice.Price ?? 0;
+                            bonus = prodPrice.Bonus ?? 0;
+                        }
+                    }
                     sc = new Core.Models.ShoppingCart
                     {
                         FK_PSid = proStock.Id,
                         FK_PriceId = dto.FK_PriceId,
-                        Price = 0,                 // 保留原行為：價格由後續計價流程帶入
+                        Price = unitPrice,
+                        Bonus = bonus,
                         Quantity = wantQty,
                         FK_Tid = (Guid)token.RefreshToken!,
                         FK_Uid = userid,
@@ -165,8 +178,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     };
 
                     db.ShoppingCarts.Add(sc);
+                    LogCartEventAsync(proStock.FK_Pid, userid, UUID, LogActionEnum.加入購物車, 0, wantQty);
                     db.SaveChanges();
-                    await LogCartEventAsync(proStock.FK_Pid, userid, UUID, LogActionEnum.加入購物車, 0, wantQty);
                     response.Message = "N" + sc.Id.ToString();
                 }
                 else
@@ -174,14 +187,14 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     int newTotal = sc.Quantity + wantQty;
                     int oQuantity = sc.Quantity;
                     if (newTotal > currentStock)
-                        throw new Exception($"庫存量僅剩下 {currentStock}，無法加入購物車");
+                        throw new Exception($"可購買上限 {currentStock} 件（購物車已有 {sc.Quantity} 件），無法再加入 {wantQty} 件");
 
                     sc.Quantity = newTotal;
                     sc.LastModificationTime = DateTime.Now;
                     sc.LastModifierUserId = userid;
+                    LogCartEventAsync(proStock.FK_Pid, userid, UUID, LogActionEnum.加入購物車, oQuantity, newTotal);
 
                     await db.SaveChangesAsync();
-                    await LogCartEventAsync(proStock.FK_Pid, userid, UUID, LogActionEnum.加入購物車, oQuantity, newTotal);
                     response.Success = true;
                     response.Message = "U" + sc.Id.ToString();
                 }
@@ -194,50 +207,155 @@ namespace EtheriT.Coker.Application.ShoppingCart
             }
             return response;
         }
-        public async Task<ResponseMessageDto> QuantityUpdate(ShoppingQuantityUpdateDto dto)
+        public async Task<ResponseMessageDto> QuantityUpdate(List<ShoppingQuantityUpdateDto> dtos)
         {
-            ResponseMessageDto response = new ResponseMessageDto();
+            var response = new ResponseMessageDto
+            {
+                Success = true
+            };
+
+            var batchResult = new QuantityUpdateBatchResult();
+            response.Object = batchResult;
+
             try
             {
-                var sc = await db.ShoppingCarts.Where(e => e.Id == dto.Id && !e.IsOrder).FirstOrDefaultAsync();
-
-                if (sc != null)
+                if (dtos == null || dtos.Count == 0)
                 {
-                    var pro_stock = await db.Prod_Stocks.Where(e => e.Id == sc.FK_PSid).FirstOrDefaultAsync();
-                    if (pro_stock != null)
-                    {
-                        if (dto.Quantity > pro_stock.Stock) throw new Exception("庫存不足");
-                        var oQuantity = sc.Quantity;
-                        sc.Quantity = dto.Quantity;
-                        sc.OldQuantity = dto.Quantity;
-                        sc.LastModificationTime = DateTime.Now;
-                        sc.LastModifierUserId = sc.CreatorUserId;
-                        response.Message = sc.Id.ToString();
-                        db.SaveChanges();
-                        await LogCartEventAsync(pro_stock.FK_Pid, sc.FK_Uid, sc.UUID, LogActionEnum.購物車數量變更, oQuantity, dto.Quantity);
-                        response.Success = true;
-                    }
-                    else throw new Exception("查無商品庫存");
+                    response.Success = true;
+                    response.Message = "沒有需要更新的項目。";
+                    return response;
                 }
-                else throw new Exception("查無購物車資料");
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message == "庫存不足")
+
+                var cartIds = dtos.Select(d => d.Id).Distinct().ToList();
+
+                // 撈出所有相關購物車項目
+                var carts = await db.ShoppingCarts
+                    .Where(e => cartIds.Contains(e.Id) && !e.IsOrder)
+                    .ToListAsync();
+
+                // 撈出所有相關庫存
+                var stockIds = carts.Select(c => c.FK_PSid).Distinct().ToList();
+                var stocks = await db.Prod_Stocks
+                    .Where(s => stockIds.Contains(s.Id))
+                    .ToListAsync();
+
+                foreach (var dto in dtos)
                 {
-                    response.Error = "商品庫存不足";
-                    response.Message = "該商品規格庫存量已在瀏覽期間被更動，按下確定後將重整頁面。";
+                    var itemResult = new QuantityUpdateItemResult
+                    {
+                        CartId = dto.Id
+                    };
+                    batchResult.Items.Add(itemResult);
+
+                    var sc = carts.FirstOrDefault(e => e.Id == dto.Id);
+                    if (sc == null)
+                    {
+                        itemResult.Success = false;
+                        itemResult.Error = "CartNotFound";
+                        itemResult.Message = "查無購物車資料";
+                        itemResult.OldQuantity = dto.Quantity;
+                        itemResult.NewQuantity = dto.Quantity;
+                        response.Success = false;
+                        continue;
+                    }
+
+                    var pro_stock = stocks.FirstOrDefault(s => s.Id == sc.FK_PSid);
+                    if (pro_stock == null)
+                    {
+                        itemResult.Success = false;
+                        itemResult.Error = "StockNotFound";
+                        itemResult.Message = "查無商品庫存";
+                        itemResult.OldQuantity = sc.Quantity;
+                        itemResult.NewQuantity = sc.Quantity;
+                        response.Success = false;
+                        continue;
+                    }
+
+                    var stock = pro_stock.Stock ?? 0;
+                    var requested = dto.Quantity;
+                    var original = sc.Quantity;
+
+                    itemResult.OldQuantity = original;
+                    itemResult.NewQuantity = original;
+                    itemResult.Removed = false;
+
+                    // === 庫存不足：拒絕，不改 DB ===
+                    if (stock <= 0)
+                    {
+                        itemResult.Success = false;
+                        itemResult.Error = "StockNotEnough";
+                        itemResult.Message = "此商品目前已無庫存，請調整或移除該品項。";
+                        response.Success = false;
+                        continue;
+                    }
+
+                    if (requested < 0)
+                    {
+                        itemResult.Success = false;
+                        itemResult.Error = "InvalidQuantity";
+                        itemResult.Message = "數量不可小於 0。";
+                        response.Success = false;
+                        continue;
+                    }
+
+                    if (requested > stock)
+                    {
+                        itemResult.Success = false;
+                        itemResult.Error = "StockNotEnough";
+                        itemResult.Message = $"此商品目前剩餘 {stock} 件，請調整購買數量。";
+                        if (requested < original) {
+                            sc.Quantity = requested;
+                        }else response.Success = false;
+                        continue;
+                    }
+
+                    // === 通過驗證：庫存足夠，才實際更新 ===
+                    sc.Quantity = requested;
+                    sc.OldQuantity = original;
+                    sc.LastModificationTime = DateTime.Now;
+                    sc.LastModifierUserId = sc.CreatorUserId;
+
+                    itemResult.NewQuantity = requested;
+                    itemResult.Success = true;
+                    itemResult.Message = "更新成功";
+
+                    LogCartEventAsync(
+                        pro_stock.FK_Pid,
+                        sc.FK_Uid,
+                        sc.UUID,
+                        LogActionEnum.購物車數量變更,
+                        original,
+                        requested
+                    );
+                }
+
+                // 統一寫入：購物車 + Log
+                await db.SaveChangesAsync();
+
+                if (!response.Success)
+                {
+                    if (string.IsNullOrEmpty(response.Error))
+                        response.Error = "部分商品更新失敗";
+
+                    if (string.IsNullOrEmpty(response.Message))
+                        response.Message = "部分商品因庫存或資料問題未能更新，請檢查列表訊息。";
                 }
                 else
                 {
-                    response.Error = "Error";
-                    response.Message = ex.Message;
+                    response.Message = "更新成功。";
                 }
             }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Error = "Error";
+                response.Message = ex.Message;
+            }
+
             return response;
         }
 
-        private async Task LogCartEventAsync(long pid, long? userId, Guid uuid, LogActionEnum action, int before, int after)
+        private void LogCartEventAsync(long pid, long? userId, Guid uuid, LogActionEnum action, int before, int after)
         {
             db.Prod_Logs.Add(new Prod_Log
             {
@@ -247,15 +365,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 Action = action,
                 Remark = $"before={before}, after={after}"
             });
-            try
-            {
-                await db.SaveChangesAsync();
-            }
-            catch (DbUpdateException ex)
-            {
-                // 直接把 SQL Server 的真實錯誤丟出來
-                throw new Exception(ex.InnerException?.Message ?? ex.Message, ex);
-            }
         }
         public async Task<List<ShoppingCartDisplayDto>> GetAll()
         {
@@ -341,6 +450,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                     temp_output.Available = prods.Visible && !prods.RemovedFromShelves && (prods.permanent || (date_now > prods.StartTime && date_now < prods.EndTime));
                     temp_output.Stock = prod_stocks?.Stock ?? 0;
+                    temp_output.OldPrice = shoppingCart.Price;
+                    temp_output.DynamicPrice = prod_stocks?.Price ?? 0;
 
                     temp_output.Title = prods?.Title ?? "";
                     if (shoppingCart.IsOrder)
@@ -384,33 +495,51 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                     var psid = prod_stocks?.Id;
                     var prices = new List<ProductPriceDto>();
-                    if (psid != null) prices = await productAppService.GetPriceByStock(new List<long> { (long)psid });
-                    var prod_price = await db.Prod_Prices.Where(e => e.Id == temp_output.PPId).FirstOrDefaultAsync();
-                    if (prices.Any())
-                    {
-                        if (prod_price != null)
-                        {
-                            var temp_price = prices.Find(e => e.Bonus == prod_price?.Bonus);
-                            if (prod_price.FK_RId != 1) temp_output.PriceLabel = "會員價";
+                    Prod_Price? prod_price = null;
 
-                            if (temp_price != null && temp_price.Id != prod_price?.Id)
-                            {
-                                var sc = await db.ShoppingCarts.FirstOrDefaultAsync(e => e.Id == shoppingCart.Id);
-                                if (sc != null)
-                                {
-                                    sc.FK_PriceId = temp_price.Id;
-                                    await db.SaveChangesAsync();
-                                }
-                                prod_price.Price = temp_price.Price;
-                            }
+                    if (psid != null)
+                    {
+                        prices = await productAppService.GetPriceByStock(new List<long> { (long)psid });
+                    }
+
+                    // 以購物車上綁的 FK_PriceId 為主，找對應的 Prod_Price
+                    if (shoppingCart.FK_PriceId != null)
+                    {
+                        prod_price = await db.Prod_Prices
+                            .FirstOrDefaultAsync(e => e.Id == shoppingCart.FK_PriceId);
+                    }
+
+                    // 預設：用購物車快照價當 fallback
+                    decimal currentPrice = temp_output.OldPrice;
+                    int currentBonus = shoppingCart.Bonus ?? 0;
+
+                    if (prices.Any() && prod_price != null)
+                    {
+                        // 依原本邏輯去對應現在有效的價格列
+                        var temp_price = prices
+                            .FirstOrDefault(e => e.Id == prod_price.Id)
+                            ?? prices.FirstOrDefault(e => e.Bonus == prod_price.Bonus);
+
+                        if (temp_price != null && temp_price.Id != prod_price.Id)
+                        {
+                            // 原本綁的那列被刪掉了，就換成新的那列
+                            shoppingCart.FK_PriceId = temp_price.Id;
+                            prod_price = await db.Prod_Prices
+                                .FirstOrDefaultAsync(e => e.Id == temp_price.Id);
+                            await db.SaveChangesAsync();
                         }
 
-                        temp_output.DynamicPrice = prod_price?.Price ?? 0;
-                        temp_output.Bonus = prod_price?.Bonus ?? 0;
-                    }
-                    else temp_output.DynamicPrice = 0;
+                        currentPrice = prod_price?.Price ?? currentPrice;
+                        currentBonus = prod_price?.Bonus ?? currentBonus;
 
-                    if (temp_output.Price == 0) temp_output.Price = temp_output.DynamicPrice;
+                        if (prod_price?.FK_RId != 1)
+                            temp_output.PriceLabel = "會員價";
+                    }
+
+                    // ✅ 現在要結帳的單價＆紅利
+                    temp_output.Price = currentPrice;
+                    temp_output.Bonus = currentBonus;
+
 
                     if (!temp_output.Available) temp_output.Quantity = 0;
                     temp_output.Subtotal = temp_output.Price * temp_output.Quantity;

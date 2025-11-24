@@ -493,6 +493,24 @@ namespace EtheriT.Coker.Application
                     });
 
             var imgDtos = await _getLinksByUploadIdsAsync(uploadIds, dto.Size, uploadIdMeta);
+
+            var serNoMap = binds
+                .GroupBy(b => b.UploadId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Min(x => x.SerNo)
+                );
+
+            var sidOrder = dto.Sid
+                .Select((sid, index) => new { sid, index })
+                .ToDictionary(x => x.sid, x => x.index);
+
+            imgDtos = imgDtos
+                .OrderBy(d => sidOrder.TryGetValue(d.Sid, out var idx) ? idx : int.MaxValue)
+                .ThenBy(d => serNoMap.TryGetValue(d.Id, out var serno) ? serno : int.MaxValue)
+                .ThenBy(d => d.Id)
+                .ToList();
+
             return imgDtos;
         }
 

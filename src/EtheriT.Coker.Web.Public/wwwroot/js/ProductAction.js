@@ -25,6 +25,18 @@
                 data: JSON.stringify(data),
                 dataType: "json"
             });
+        },
+        MultiCart: function (data) {
+            return $.ajax({
+                url: "/api/ShoppingCart/MultiQuantityUpdate",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
         }
     },
     GetAll: {

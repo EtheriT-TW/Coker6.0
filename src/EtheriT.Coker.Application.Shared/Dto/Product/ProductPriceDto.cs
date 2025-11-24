@@ -6,10 +6,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public long Id { get; set; }
         public long? FK_PSId { get; set; }
         public long FK_RId { get; set; }
-        public double? Price { get; set; }
-        public double? OriPrice { get; set; }
-        public double? SuggestPrice { get; set; }
-        public double Bonus { get; set; }
+        public decimal? Price { get; set; }
+        public decimal? OriPrice { get; set; }
+        public decimal? SuggestPrice { get; set; }
+        public int Bonus { get; set; }
         public bool IsDelete { get; set; }
     }
 }

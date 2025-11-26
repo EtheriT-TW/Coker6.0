@@ -57,6 +57,7 @@ namespace EtheriT.Coker.Application.Authorization
                 CookiePurposeEnum.Language => TimeSpan.FromDays(365),
                 CookiePurposeEnum.ShortTerm => TimeSpan.FromMinutes(5),
                 CookiePurposeEnum.LongTerm => TimeSpan.FromDays(30),
+                CookiePurposeEnum.none => TimeSpan.Zero,
                 _ => TimeSpan.FromMinutes(10),
             };
         }
@@ -71,7 +72,8 @@ namespace EtheriT.Coker.Application.Authorization
                 Path = "/"
             };
 
-            options.Expires = DateTimeOffset.Now.Add(GetLifetime(purpose));
+            if(purpose != CookiePurposeEnum.none)
+                options.Expires = DateTimeOffset.Now.Add(GetLifetime(purpose));
             return options;
         }
     }

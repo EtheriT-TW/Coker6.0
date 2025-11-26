@@ -894,7 +894,7 @@ namespace EtheriT.Coker.Application.Authorization
                     }
                     else if (frontUser.Status == (int)UserStatusEnum.開通) throw new Exception("帳號已開通。");
                 }
-                else throw new Exception("連結不存在。");
+                else throw new Exception("連結已失效。");
             }
             catch (Exception ex)
             {
@@ -1096,15 +1096,11 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 var frontUser = await db.FrontUsers.Where(e => e.ForgetID == ForgetId).FirstOrDefaultAsync();
 
-                if (frontUser != null)
+                if (frontUser != null && frontUser.ForgeIDSendDate!=null && frontUser.ForgeIDSendDate.Value.Date.AddDays(1).CompareTo(DateTime.Now) > 0)
                 {
-                    if (((DateTime)frontUser.ForgeIDSendDate).AddDays(1).CompareTo(DateTime.Now) > 0)
-                    {
-                        response.Success = true;
-                    }
-                    else throw new Exception("連結失效");
+                    response.Success = true;
                 }
-                else throw new Exception("連結不存在");
+                else throw new Exception("連結已失效");
             }
             catch (Exception ex)
             {
@@ -1425,7 +1421,6 @@ namespace EtheriT.Coker.Application.Authorization
                     if (frontuser != null && !string.IsNullOrEmpty(frontuser.Email))
                     {
                         output.Token = await tokenAppService.CreateToken(frontuser.Email, token.id, CookiePurposeEnum.FrontAuthToken);
-
                     }
                 }
                 db.SaveChanges();
@@ -1467,10 +1462,20 @@ namespace EtheriT.Coker.Application.Authorization
                 if (dto!= null) {
                     cookieManager.Set("RememberMe", dto.Remember ? "1" : "0", CookiePurposeEnum.RefreshIdentifier);
                     if (!dto.Remember) {
-                        var tokenOld = cookieManager.Get("Token");
-                        var refreshTokenOld = cookieManager.Get("RefreshToken");
-                        if (tokenOld != null) cookieManager.Delete("Token");
-                        if (refreshTokenOld != null) cookieManager.Delete("RefreshToken");
+                        if (output.Token != null) {
+                            cookieManager.Set(
+                                "Token",
+                                output.Token,
+                                dto.Remember ? CookiePurposeEnum.FrontAuthToken : CookiePurposeEnum.none
+                            );
+                        }
+                        if (output.Secret != null) {
+                            cookieManager.Set(
+                                "RefreshToken",
+                                output.Secret.Value.ToString(),
+                                dto.Remember ? CookiePurposeEnum.RefreshToken : CookiePurposeEnum.none
+                            );
+                        }
                         cookieManager.Delete("RememberMe");
                     }
                 }

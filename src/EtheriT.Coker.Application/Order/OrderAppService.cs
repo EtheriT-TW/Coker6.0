@@ -1441,7 +1441,7 @@ namespace EtheriT.Coker.Application.Order
                  <tr>
                  <td colspan='6' class='text-end text-bold'>消費總計<span class='text-red ms-1 text-size1_5'>{(order_header.Freight + order_header.Subtotal).ToString("$#,##0")}</span></td>
                  </tr>
-                 <tr class='thead'><td colspan='6' scope='col'>運送方式：<span class='text-red ms-1 text-size1_5'>{Shipping.Title}　{(PreserveTypeEnum)Shipping.PreserveType}-{(ShippingTypeEnum)Shipping.LogisticsType}</span></td></tr>
+                 <tr class='thead'><td colspan='6' scope='col'>運送方式：<span class='text-red ms-1 text-size1_5'>{Shipping!.Title}　{Shipping.LogisticsType}</span></td></tr>
                  <tr class='thead'><td colspan='6'  scope='col'>付款方式：<span class='text-red ms-1 text-size1_5'>{PaymentType}</span></td></tr>
                  {PaymentTable}
                  <tr class='thead'><td scope='col' colspan='6'>繳費資訊</td></tr>

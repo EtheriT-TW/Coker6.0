@@ -351,11 +351,11 @@ function ready() {
     if (LoginModal != null) {
         LoginModal.addEventListener('show.bs.modal', function (event) {
             NewCaptcha($LoginImgCaptcha, $InputLoginVCode);
+            $("#CheckRemember").prop("checked", true);
         })
         LoginModal.addEventListener('hidden.bs.modal', function (event) {
             localStorage.removeItem('gotoMember');
-            FormClear(LoginForms, $InputLoginVCode)
-            $("#CheckRemember").prop("checked", true);
+            FormClear(LoginForms, $InputLoginVCode);
         })
     } else {
         $("footer a[href*='Member']").closest("li").addClass("d-none");
@@ -858,7 +858,7 @@ function LoginAction() {
                 if (gotoMember == "true") {
                     window.location.href = `/${OrgName}/Member`;
                 } else {
-                    location.reload()
+                    location.href = window.location.origin + window.location.pathname;
                 }
             }, false);
         } else {
@@ -948,10 +948,10 @@ function ResetAction(forgetid) {
     data.WebsiteId = SiteId;
     co.User.PasswordChange(data).done((result) => {
         if (result.success) {
-            Coker.sweet.success("密碼重置成功。", function () {
-                window.location.href = $(location).attr('origin');
+            Coker.sweet.success("密碼重置成功，請重新登入。", function () {
+                resetModal.hide();
+                loginModal.show();
             }, false);
-            registerModal.hide();
         } else {
             switch (result.message) {
                 case "密碼錯誤":
@@ -988,7 +988,6 @@ function FormClear(form, $input) {
     $input.removeClass('is-invalid');
     $LoginMail.val("");
     $LoginPass.val("");
-    $LoginRemember.prop('checked', false);
     $RegisterMail.val("");
     $RegisterName.val("");
 

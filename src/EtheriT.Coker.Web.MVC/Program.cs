@@ -106,7 +106,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllersWithViews().AddNewtonsoftJson();
-builder.Services.AddSingleton<JwtHelpers>();
+builder.Services.AddScoped<JwtHelpers>();
 builder.Services.AddCors();
 builder.Services.AddMemoryCache()
     .AddSimpleCaptcha(builder =>

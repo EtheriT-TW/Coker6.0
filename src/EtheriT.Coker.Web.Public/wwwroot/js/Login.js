@@ -1,5 +1,5 @@
 ﻿document.addEventListener('DOMContentLoaded', function () {
-    const modal = document.getElementById('OtherLoginModal');
+    const modal = document.getElementById('LoginModal');
     const loginBaseUrl = `${BackstageUrl}api/OAuth/ExternalLogin`;
     const currentUrl = new URL(window.location.href);
           currentUrl.searchParams.set("siteId", SiteId);
@@ -30,7 +30,7 @@
         fetch(`${BackstageUrl}api/OAuth/GetEnabledProviders`)
             .then(response => response.json())
             .then(data => {
-                const container = modal.querySelector('.modal-body>div');
+                const container = modal.querySelector('.modal-body .otherLoginList');
 
                 const enabledKeys = Object.entries(data)
                     .filter(([key, value]) => key.endsWith('Enabled') && value === true);
@@ -41,7 +41,7 @@
                     enabledKeys.forEach(([key]) => {
                         const raw = key.replace('Enabled', '');
                         const entry = displayMap[raw];
-                        if (entry) container.after(createButton(entry.name, entry.provider, entry.class));
+                        if (entry) container.append(createButton(entry.name, entry.provider, entry.class));
                     });
                 }
             })
@@ -60,7 +60,8 @@
     function createButton(text, provider, cssClass) {
         const a = document.createElement("a");
         a.href = `${loginBaseUrl}?provider=${provider}&redirect=${redirectUrl}`;
-        a.className = `btn-login ${cssClass} d-inline-block text-center w-100 rounded border-0 text-white py-2 fs-5 my-3`;
+        a.className = `btn-login ${cssClass} d-inline-block text-center rounded border-0 text-white mt-3`;
+        a.title = `使用 ${text} 帳號登入`;
         a.textContent = text;
         return a;
     }

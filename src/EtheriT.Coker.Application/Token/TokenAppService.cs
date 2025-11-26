@@ -80,13 +80,15 @@ namespace EtheriT.Coker.Application.Token
                 if (!string.IsNullOrEmpty(RefreshTokenStr) && Guid.TryParse(RefreshTokenStr, out Guid rt))
                 {
                     var RefreshTokens = db.Tokens.Where(e => e.id == rt && e.websiteId == websiteId);
+                    
                     if (RefreshTokens.Any())
                     {
                         var RefreshToken = await RefreshTokens.Where(e => e.StartTime < date && date < e.EndTime).FirstOrDefaultAsync();
                         var oidRefreshToken = await RefreshTokens.FirstOrDefaultAsync();
                         if (RefreshToken != null)
                         {
-                            var frontUser = await db.FrontUsers.Include(e => e.Websites).Where(e => e.UUID == RefreshToken.UUID && e.Websites.Any(s => s.FK_WebsiteId == websiteId)).FirstOrDefaultAsync();
+                            var uuid = db.MappingOldNewUUID.Where(e => e.TempUUID == RefreshToken.UUID).Select(e => e.UserUUID).FirstOrDefault();
+                            var frontUser = await db.FrontUsers.Include(e => e.Websites).Where(e => e.UUID == uuid && e.Websites.Any(s => s.FK_WebsiteId == websiteId)).FirstOrDefaultAsync();
                             if (frontUser != null)
                             {
                                 var useraccount = frontUser.Account == null ? frontUser.Email : frontUser.Account;
@@ -238,9 +240,8 @@ namespace EtheriT.Coker.Application.Token
                     else
                     {
                         output.IsLogin = true;
+                        output.name = jwtToken?.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
                     }
-
-                    output.name = jwtToken?.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
 
                     var db_token = await db.Tokens.Where(e => e.id == Sid).FirstOrDefaultAsync();
                     if (db_token != null)

@@ -17,7 +17,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType.OAuth
         Language,
         TempData,
         ShortTerm,
-        LongTerm
+        LongTerm,
+        none
     }
 
 }

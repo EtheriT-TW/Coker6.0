@@ -30,7 +30,7 @@
             var _dfr = $.Deferred();
             co.HtmlContent.GetAllComponent().done(function (result) {
                 if (result.success) _dfr.resolve(result.list);
-                else co.sweet.error(resutlt.error);
+                else co.sweet.error(result.error);
             });
             return _dfr.promise();
         }
@@ -134,6 +134,13 @@
 
                 $("#myEditor").removeClass("d-none");
                 $("#myEditor + .emptyList").addClass("d-none");
+                const $selected = $("#myEditor").find("li.selectItem").first();
+                if ($selected.length > 0) {
+                    const f_data = $selected.data() || {};
+                    data.fK_TopNodeId = f_data.id;
+                    data.level = (f_data.level || 0) + 1;
+                    data.fK_RootNodeId = f_data.fK_RootNodeId || f_data.id;
+                }
                 co.WebMesnus.createOrEdit(data).done(function (result) {
                     if (!result.success) co.sweet.error(result.error);
                     else {
@@ -184,7 +191,28 @@
                                 $("#IconImageUpload").ImageUploadModalClear();
                                 $("#ImageUpload").ImageUploadModalClear();
                                 $("#OverImageUpload").ImageUploadModalClear();
-                                menuReload(menuEditor, myOffcanvas);
+                                menuReload(menuEditor, myOffcanvas, function () {
+                                    const newId = data.id;
+                                    var $target = $("#myEditor").find("li").filter(function () {
+                                        var d = $(this).data();
+                                        return d.id === newId || d.Id === newId;
+                                    }).first();
+
+                                    if ($target.length) {
+                                        const $parents = $target.parents("li");
+                                        if ($parents.length) {
+                                            $parents.each(function () {
+                                                const $opener = $(this).find(".sortableListsOpener").first();
+                                                if ($(this).hasClass("sortableListsClosed") && $opener.length) {
+                                                    $opener.trigger("mousedown");
+                                                } 
+                                            });
+                                        }
+                                        $("#myEditor").find("li.selectItem").removeClass("selectItem");
+                                        $target.addClass("selectItem");
+                                        $target.find(".btnEdit").first().trigger("click");
+                                    }
+                                });
                                 if (!result.success) co.sweet.error(result.error);
                                 else {
                                     if (ico_success == -1 || img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
@@ -310,9 +338,6 @@
                 });
                 
             },
-            setPower: function (data) {
-                $("#PermissionDetailsModal").setData({ pageId: data.id, title: data.text, type: 0 }).modal("show");
-            },
             drop: function (cEl) {
                 let saveList = [];
                 let ps = cEl.parents('li');
@@ -369,8 +394,79 @@
                         co.sweet.error(result.error);
                     }
                 });
+            },
+            updateMenuEditorAddTitle: updateMenuEditorAddTitle
+        }, btn: [
+            // 1) visible：標題後面的 radio+label
+            {
+                key: 'visible',
+                position: 'title',
+                render: function (ctx) {
+                    var id = ctx.data.id || ('new_' + ctx.$li.index());
+                    var name = 'visible_' + id;
+                    var $wrap = $('<span class="menu-visible-toggle ms-2">');
+                    var $radio = $('<input type="checkbox">').addClass("selectedItem")
+                        .attr({ 'id': name }, 'name', name);
+                    var $label = $('<label>')
+                        .attr({
+                            'for': name,
+                            'title': '切換前台顯示'
+                        }).append(`<span class="material-symbols-outlined">visibility</span><span class="material-symbols-outlined">visibility_off</span>`);
+
+                    $wrap.append($radio).append($label);
+                    return $wrap;
+                },
+                init: function (ctx) {
+                    var visible = ctx.data.visible === true
+                        || ctx.data.visible === 1
+                        || ctx.data.visible === 'true';
+
+                    var $checkbox = ctx.$button.find('input.selectedItem');
+                    $checkbox.prop('checked', visible);
+                },
+                click: function (ctx) {
+                    var $checkbox = ctx.$button.find('input.selectedItem');
+                    var newChecked = !$checkbox.prop('checked');
+                    $checkbox.prop('checked', newChecked);
+
+                    var newVisible = newChecked;           // 勾選 = 顯示
+                    ctx.data.visible = newVisible;
+                    ctx.$li.data(ctx.data);
+                    co.WebMesnus.SetVisible(ctx.data.id, newVisible).done(function (result) {
+                        if (!result.success) co.sweet.error("儲存失敗",result.error);
+                    });
+                    // 需要的話這裡打 API
+                }
+            },
+
+            // 2) 後台權限設定：排序群後面、編輯前面
+            {
+                key: 'setPower',
+                position: 'action', // ← 會插在 .btnEdit 前
+                render: function (ctx) {
+                    return $('<a class="btn btn-warning btn-sm" title="後台權限設定">')
+                        .append('<i class="fa-solid fa-user-shield"></i>');
+                },
+                click: function (ctx) {
+                    const data = ctx.data;
+                    $("#PermissionDetailsModal").setData({ pageId: data.id, title: data.text, type: 0 }).modal("show");
+                }
+            },
+
+            // 3) 前台瀏覽權限設定：跟 setPower 並排
+            {
+                key: 'setFrontPower',
+                position: 'action',
+                render: function (ctx) {
+                    return $('<a class="btn btn-info btn-sm" title="前台瀏覽權限">')
+                        .append('<i class="fa-solid fa-user-group"></i>');
+                },
+                click: function (ctx) {
+                    const data = ctx.data;
+                    $("#RolesDetailsModal").setRolesData({ pageId: data.id, title: data.text, type: 4 }).modal("show");
+                }
             }
-        }
+        ]
     };
     co.PowerManagement.GetPermission().done(function (permission) {
         if (!permission.superManager) delete editorStting.on.setPower;
@@ -392,7 +488,8 @@
             $("#btnRefresh,#btnAdd").removeClass("d-none");
             $("#btnUpdate").addClass("d-none");
             $("#btnRefresh").trigger("click");
-            $("#MenuEditorForm>.card-header>.title").text("新增選單");
+            $("#myEditor .editItem").removeClass("editItem");
+            updateMenuEditorAddTitle();
             $("#MenuEditorForm>.card-header>a").addClass("d-none");
         });
 
@@ -414,8 +511,29 @@
         console.log(`"${this.replace(/[-]{3}[\w]{2,4}$/g,"")}"`);
     });*/
 }
+function updateMenuEditorAddTitle() {
+    const $editItem = $("#myEditor").find("li.editItem").first();
+    const $selected = $("#myEditor").find("li.selectItem").first();
+    let titleText = "";
+    if ($editItem.length !== 0) return;
+    if ($selected.length === 0) {
+        // 沒有選任何選單 → 新增主選單
+        titleText = "新增主選單";
+    } else {
+        const data = $selected.data() || {};
+        // 先用 data.text，沒有再退回去抓畫面文字
+        const menuTitle =
+            (data.text && data.text.toString().trim()) ||
+            $selected.find(".txt").first().text().trim() ||
+            "選單";
 
-function menuReload(menuEditor, myOffcanvas) {
+        titleText = `新增「${menuTitle}」的子選單`;
+    }
+
+    $("#MenuEditorForm>.card-header>.title").text(titleText);
+}
+
+function menuReload(menuEditor, myOffcanvas, afterReload) {
     co.WebMesnus.getAll().done(function (result) {
         if (result.success) {
             //console.log(result.maps)
@@ -425,6 +543,7 @@ function menuReload(menuEditor, myOffcanvas) {
             if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
             else $("#myEditor").addClass("d-none");
             myOffcanvas.show();
+            typeof afterReload === "function" && afterReload();
         } else {
             menuEditor.setData([]);
         }

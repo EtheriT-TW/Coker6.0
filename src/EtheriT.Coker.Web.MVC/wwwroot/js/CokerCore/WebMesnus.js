@@ -78,6 +78,16 @@
                 dataType: "json"
             });
         },
+        SetVisible: function (id, visible) {
+            return $.ajax({
+                url: "/api/WebMenu/SetVisible",
+                type: "Post",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ Id: id, IsVisible: visible }),
+                dataType: "json"
+            });
+        },
         GetPageTypeList: function () {
             return $.ajax({
                 url: "/api/WebMenu/GetPageTypeList",

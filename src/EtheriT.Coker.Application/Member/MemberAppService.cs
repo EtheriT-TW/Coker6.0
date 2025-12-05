@@ -101,7 +101,11 @@ namespace EtheriT.Coker.Application.Member
                                         Name = e.Name.Substring(0, 1) + "○" + e.Name.Substring(e.Name.Length - 1),
                                         CellPhone = e.CellPhone.Substring(0, 3) + "****" + e.CellPhone.Substring(7),
                                         TelPhone = e.TelPhone == "" ? "" : e.TelPhone.Substring(0, e.TelPhone.IndexOf("-") + 3) + "***" + e.TelPhone.Substring(e.TelPhone.IndexOf("-") + 6),
-                                        Address = (e.Address == null || e.Address == "") ? "" : e.Address.Substring(0, e.Address.LastIndexOf(" ")).Replace(" ", "") + "***",
+                                        Address = string.IsNullOrEmpty(e.Address)
+                                                    ? ""
+                                                    : (e.Address.Contains(" ")
+                                                        ? e.Address.Substring(0, e.Address.LastIndexOf(" ")).Replace(" ", "") + "***"
+                                                        : e.Address.Replace(" ", "") + "***"),
                                         Email = e.Email.Substring(0, 2) + "***" + e.Email.Substring(e.Email.IndexOf("@") - 1),
                                         Total = (
                                             from order in db.Order_Headers

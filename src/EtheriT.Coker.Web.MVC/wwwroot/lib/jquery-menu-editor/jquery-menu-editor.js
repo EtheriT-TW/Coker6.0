@@ -1107,8 +1107,10 @@ function MenuEditor(idSelector, options) {
                 return lastcheck;
             }
         },
-        on: {}
+        on: {},
+        btn:[]
     };
+    options = options || {};
     /* STATIC METHOD */
     /**
      * Update the buttons on the list. Only the buttons 'Up', 'Down', 'In', 'Out'
@@ -1190,6 +1192,7 @@ function MenuEditor(idSelector, options) {
     }
     
     $.extend(true, settings, options);
+
     var itemEditing = null;
     var sortableReady = true;
     var $form = null;
@@ -1254,12 +1257,13 @@ function MenuEditor(idSelector, options) {
     });
     $main.on('click', '.btnRemove', function (e) {
         e.preventDefault();
-        var self = this;
-        var data = $(this).closest('li').data();
+        var btn = this;
+        var $li = $(btn).closest('li');
+        var data = $li.data();
         var title = data.text;
         co.sweet.confirm("即將刪除", settings.textConfirmDelete.replace("{0}", title), "確認", "取消", function () {
-            var list = $(self).closest('ul');
-            $(self).closest('li').remove();
+            var list = $(btn).closest('ul');
+            $li.remove();
             var isMainContainer = false;
             if (typeof list.attr('id') !== 'undefined') {
                 isMainContainer = (list.attr('id').toString() === idSelector);
@@ -1268,10 +1272,27 @@ function MenuEditor(idSelector, options) {
                 list.prev('div').children('.sortableListsOpener').first().remove();
                 list.remove();
             }
+            if (itemEditing && itemEditing.length && itemEditing.is($li)) {
+                resetForm();
+            }
             !!settings.on.del && settings.on.del(data);
             self.updateButtons($main);
         });
     });
+    $main.on("click", "li.list-group-item", function (e) {
+        if ($(e.target).closest(".btn-group").length > 0) {
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        const $li = $main.find("li.selectItem").first();
+        $main.find("li.selectItem").removeClass("selectItem");
+        if ($li.data("id") != $(this).data("id"))
+            $(this).addClass("selectItem");
+        
+        typeof settings.on.updateMenuEditorAddTitle === "function" && settings.on.updateMenuEditorAddTitle();
+    });
+
     $main.on('click', '.btnPage', function (e) {
         e.preventDefault();
         itemEditing = $(this).closest('li');
@@ -1283,6 +1304,13 @@ function MenuEditor(idSelector, options) {
         itemEditing = $(this).closest('li');
         settings.on.setPower($(itemEditing).data());
         editItem(itemEditing);
+    });
+    $main.on('click', '.btnFrontPower', function (e) {
+        e.preventDefault();
+        itemEditing = $(this).closest('li');
+        if (typeof settings.on.setFrontPower === "function") {
+            settings.on.setFrontPower($(itemEditing).data(), itemEditing);
+        }
     });
     $main.on('click', '.btnEdit', function (e) {
         e.preventDefault();
@@ -1417,13 +1445,73 @@ function MenuEditor(idSelector, options) {
         var $btnOut = TButton({ classCss: 'btn btn-secondary btn-sm btnOut btnMove levelMove', text: '<i class="fas fa-level-down-alt clickable"></i>'});
         var $btnIn = TButton({ classCss: 'btn btn-secondary btn-sm btnIn btnMove levelMove', text: '<i class="fas fa-level-up-alt clickable"></i>' });
         var $btnCont = TButton({ classCss: 'btn btn-success btn-sm btnPage', text: '<i class="fa fa-paint-roller clickable"></i>' });
-        var $btnPower = TButton({ classCss: 'btn btn-warning btn-sm btnPower', text: '<i class="fa-solid fa-user-group clickable"></i>' });
         $divbtn.append($btnUp).append($btnDown).append($btnIn).append($btnOut);
-        if (typeof (settings.on.setPower) != "undefined") {
-            $divbtn.append($btnPower);
-        }
         $divbtn.append($btnEdit).append($btnRemv).append($btnCont);
         return $divbtn;
+    }
+    function renderExtraButtons($title, $btnGroup, itemData, $li) {
+        if (!settings.btn || !settings.btn.length) return;
+
+        settings.btn.forEach(function (cfg) {
+            if (typeof cfg.render !== 'function') return;
+
+            var pos = (cfg.position || 'action').toLowerCase();
+            var ctx = { data: itemData, $li: $li, editor: self };
+
+            // 1) 交給外部生成按鈕（jQuery element）
+            var $button = cfg.render(ctx);
+            if (!$button || !$button.length) return;
+
+            // 2) 綁定 click（若有）
+            if (typeof cfg.click === 'function') {
+                $button.on('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    cfg.click({
+                        event: e,
+                        $button: $button,
+                        $li: $li,
+                        data: $li.data(), // 每次點擊拿當前 data
+                        editor: self
+                    });
+                });
+            }
+
+            // 3) 初始 init（若有）
+            if (typeof cfg.init === 'function') {
+                cfg.init({
+                    $button: $button,
+                    data: itemData,
+                    $li: $li,
+                    editor: self
+                });
+            }
+
+            // 4) 根據 position 決定插在「哪一段」
+            if (pos === 'title') {
+                // → 標題後面
+                $title.append($button);
+            } else if (pos === 'move') {
+                // → 排序群後面（最後一顆 .btnMove 的後面）
+                var $lastMove = $btnGroup.find('.btnMove').last();
+                if ($lastMove.length) {
+                    $button.insertAfter($lastMove);
+                } else {
+                    // 找不到就退而求其次，塞到開頭
+                    $btnGroup.prepend($button);
+                }
+            } else { // 'action' 或其他
+                // → 操作群前面（第一顆 .btnEdit 前面）
+                var $firstAction = $btnGroup.find('.btnEdit').first();
+                if ($firstAction.length) {
+                    $button.insertBefore($firstAction);
+                } else {
+                    // 找不到就 append 在整組最後
+                    $btnGroup.append($button);
+                }
+            }
+        });
     }
 
     /**
@@ -1432,37 +1520,58 @@ function MenuEditor(idSelector, options) {
      * @return {object} jQuery Object
      **/
     function createMenu(arrayItem, depth) {
-        var level = (typeof (depth) === 'undefined') ? 0 : depth;
-        var $elem = (level === 0) ? $main : $('<ul>').addClass('pl-0').css('padding-top', '10px').data("level", level);
+        var level = (typeof depth === 'undefined') ? 0 : depth;
+        var $elem = (level === 0)
+            ? $main
+            : $('<ul>').addClass('pl-0').css('padding-top', '10px').data("level", level);
+
         $.each(arrayItem, function (k, v) {
-            var isParent = (typeof (v.children) !== "undefined") && ($.isArray(v.children));
-            var itemObject = {text: "", href: "", icon: "empty", target: "_self", title: ""};
+            var isParent = Array.isArray(v.children);
+            var itemObject = { text: "", href: "", icon: "empty", target: "_self", title: "" };
             var temp = $.extend({}, v);
-            if (isParent){ 
-                delete temp['children'];
-            }
+
+            if (isParent) delete temp.children;
             $.extend(itemObject, temp);
-            var $li = $('<li>').addClass('list-group-item pr-0');
-            $li.data(itemObject);
-            var $div = $('<div>').css('overflow', 'auto');
-            var $i = $('<i>').addClass(v.icon);
-            var $span = $('<span>').addClass('txt font-weight-bold').append(v.text).css('margin-right', '5px');
-            var $divTitle = $("<div class='d-flex align-items-center float-left' />");
-            var $divbtn = TButtonGroup();
-            if (!v.canEdit) $divbtn.find(".btnEdit ,.btnRemove, .btnPage, .btnPower").addClass("d-none");
-            if ($i.hasClass("material-symbols-outlined")) $i.text(v.icon.replace("material-symbols-outlined", "").trim());
-            $divTitle.append($i).append("&nbsp;").append($span);
-            if (v.visible) $divTitle.append(`<span class="material-symbols-outlined">visibility</span>`);
-            else $divTitle.append(`<span class="material-symbols-outlined">visibility_off</span>`);
-            $div.append($divTitle).append($divbtn);
-            $li.append($div);
+            var $li = _buildLi(itemObject, level);
             if (isParent) {
-                $li.append(createMenu(v.children, level + 1));
+                var $childUl = createMenu(v.children, level + 1);
+                $li.append($childUl);
             }
+
             $elem.append($li);
         });
+
         return $elem;
     }
+    function _buildLi(itemObject) {
+        var $li = $('<li>').addClass('list-group-item pr-0');
+        $li.data(itemObject);
+
+        var $div = $('<div>').css('overflow', 'auto');
+
+        var $i = $('<i>').addClass(itemObject.icon);
+        if ($i.hasClass("material-symbols-outlined")) {
+            $i.text(itemObject.icon.replace("material-symbols-outlined", "").trim());
+        }
+
+        var $span = $('<span>')
+            .addClass('txt font-weight-bold')
+            .text(itemObject.text)
+            .css('margin-right', '5px');
+
+        var $divTitle = $("<div class='d-flex align-items-center float-left' />");
+        $divTitle.append($i).append("&nbsp;").append($span);
+
+        var $divbtn = TButtonGroup();
+
+        // ← 保留你現有的擴充按鈕（不做任何改動）
+        renderExtraButtons($divTitle, $divbtn, itemObject, $li);
+        $div.append($divTitle).append($divbtn);
+        $li.append($div);
+
+        return $li;
+    }
+
 
     function TOpener(li){
         var opener = $('<span>').addClass('sortableListsOpener ' + options.opener.openerClass).css(options.opener.openerCss)
@@ -1509,6 +1618,7 @@ function MenuEditor(idSelector, options) {
     }
 
     /* PUBLIC METHODS */
+    self.TOpener = TOpener;
     self.setForm = function(form){
         $form = form;
     };
@@ -1551,33 +1661,27 @@ function MenuEditor(idSelector, options) {
         //resetForm();
     };
    
-    self.add = function(){
-        var data = {};
+    self.add = function () {
         if (!$form[0].checkValidity()) {
             $form.addClass("was-validated");
-        } else {
-            $form.find('.item-menu').each(function () {
-                data[$(this).attr('name')] = $(this).val();
-            });
-            if (data.Id == "") data.Id = 0;
-            if (data.SerNO == "") data.SerNO = 500;
-            data.text = data.title;
-            var btnGroup = TButtonGroup();
-            var textItem = $('<span>').addClass('txt font-weight-bold').text(data.title);
-            var iconItem = $('<i>').addClass(data.icon);
-            var title = $("<div class='d-flex align-items-center float-left'>").append(iconItem).append("&nbsp;").append(textItem);
-            var div = $('<div>').css({ "overflow": "auto" }).append(title).append(btnGroup);
-            var $li = $("<li>").data(data);
-            if (iconItem.hasClass("material-symbols-outlined")) iconItem.text(data.icon.replace("material-symbols-outlined", "").trim());
-            $li.addClass('list-group-item pr-0').append(div);
-            $main.append($li);
-            self.updateButtons($main);
-            resetForm();
-            !!settings.on.add && settings.on.add($li);
+            return;
         }
+        var data = {};
+        $form.find('.item-menu').each(function () {
+            data[$(this).attr('name')] = $(this).val();
+        });
+
+        if (!data.Id) data.Id = 0;
+        if (!data.SerNO) data.SerNO = 500;
+        data.text = data.title;
+        var $li = _buildLi(data);
+        $main.append($li);
+        self.updateButtons($main);
+        !!settings.on.add && settings.on.add($li);
     };
 
-    self.refresh = function(){
+
+    self.refresh = function () {
         resetForm();
     }
     /**

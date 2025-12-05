@@ -110,21 +110,21 @@
                         <div class="row">
                             <div class="col-12 d-flex justify-content-around align-item-center my-3">
                                 <div class="col form-group form-check px-1">
-                                    <label for="visibleHeader">顯示版頭</label>
+                                    <label for="visibleHeader" class="form-label">顯示版頭</label>
                                     <select name="visibleHeader" id="visibleHeader" class="form-select item-menu">
                                         <option value="true">是</option>
                                         <option value="false">否</option>
                                     </select>
                                 </div>
-                                <div class="col form-group form-check pl-1">
-                                    <label for="visibleFooter">顯示頁尾</label>
+                                <div class="col form-group form-check px-1">
+                                    <label for="visibleFooter" class="form-label">顯示頁尾</label>
                                     <select name="visibleFooter" id="visibleFooter" class="form-select item-menu">
                                         <option value="true">是</option>
                                         <option value="false">否</option>
                                     </select>
                                 </div>
-                                <div class="col form-group form-check pl-1">
-                                    <label for="visibleTitle">顯示標題</label>
+                                <div class="col form-group form-check px-1">
+                                    <label for="visibleTitle" class="form-label">顯示標題</label>
                                     <select name="visibleTitle" id="visibleTitle" class="form-select item-menu">
                                         <option value="true">是</option>
                                         <option value="false">否</option>
@@ -215,3 +215,4 @@
     </div>
 </div>
 @await Component.InvokeAsync(nameof(Modal), new { dispaly = "PermissionDetailsModal" })
+@await Component.InvokeAsync(nameof(Modal), new { dispaly = "FrontRolesModal" })

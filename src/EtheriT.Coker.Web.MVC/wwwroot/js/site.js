@@ -25,19 +25,51 @@ var PreLoader;
         });
     }
     // Ctrl + S 儲存表單
+    function findBestFormForSave() {
+        // 1. 優先用「目前有 focus 的元素」往上找
+        const active = document.activeElement;
+        if (active) {
+            const focusedForm = active.closest && active.closest("form");
+            if (focusedForm) {
+                return focusedForm;
+            }
+        }
+
+        // 2. 抓出「目前可見的 form」
+        const allForms = Array.from(document.querySelectorAll("form"))
+            .filter(f => f.offsetParent !== null); // offsetParent 為 null 通常是 display:none/隱藏
+
+        if (allForms.length === 0) return null;
+        if (allForms.length === 1) return allForms[0];
+
+        // 3. 如果有多個可見 form，挑「畫面上面積最大的」當主表單
+        let bestForm = allForms[0];
+        let bestArea = 0;
+
+        allForms.forEach(f => {
+            const rect = f.getBoundingClientRect();
+            const area = rect.width * rect.height;
+            if (area > bestArea) {
+                bestArea = area;
+                bestForm = f;
+            }
+        });
+
+        return bestForm;
+    }
+
     document.addEventListener("keydown", function (event) {
         // 檢查是否按下 Ctrl + S
         if (event.ctrlKey && event.key === "s") {
             event.preventDefault(); // 阻止瀏覽器的預設儲存行為
 
-            // 找到目前頁面內的 form（可以指定特定 form，或是選擇第一個 form）
-            const form = document.querySelector("form");
-
+            let form = findBestFormForSave();
             if (form) {
                 form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
             }
         }
     });
+
     // 防止表單重複提交
     document.addEventListener("submit", function (event) {
         const form = event.target;  // 取得觸發的表單

@@ -74,5 +74,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return webMenuApplication.GetPageTypeList();
         }
+        [HttpPost]
+        [Authorize]
+        public async Task<ResponseMessageDto> SetVisible(SetVisibleDto dto) { 
+            return await webMenuApplication.SetVisible(dto);
+        }
     }
 }

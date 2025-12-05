@@ -1,45 +1,48 @@
 ﻿using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Advertise;
+using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Search;
+using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Shared.Article;
+using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Article;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
+using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
+using EtheriT.Coker.Application.Shared.Dto.Permissions;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Remote;
 using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
+using EtheriT.Coker.Application.Shared.Dto.Templates;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
+using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Remote;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
+using EtheriT.Coker.Application.Shared.Templates;
+using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.StoreSet;
+using EtheriT.Coker.Application.Templates;
+using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Web.Public.Models;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
-using EtheriT.Coker.Application.Shared.i18n;
-using System.Web;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
-using EtheriT.Coker.Application.Shared.Dto.Advertise;
-using EtheriT.Coker.Application.Advertise;
-using EtheriT.Coker.Application.Shared.Advertise;
-using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Token;
 using System.Linq;
-using EtheriT.Coker.Application.Shared.ThirdParty;
-using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
-using EtheriT.Coker.Application.Shared.Dto.Files;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-using EtheriT.Coker.Application.Templates;
-using EtheriT.Coker.Application.Shared.Templates;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
-using EtheriT.Coker.Application.Shared.Dto.Templates;
+using System.Text.RegularExpressions;
+using System.Web;
 
 namespace EtheriT.Coker.Web.Public.Controllers
 {
@@ -64,6 +67,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IAdvertiseAppService advertiseAppService;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly ITemplatesApplicationService templatesApplicationService;
+        private readonly IAccountAppService accountAppService;
+        private readonly IPermissionsAppService permissionsAppService;
         private readonly StringHandler stringHandler;
         private readonly IWebHostEnvironment _env;
 
@@ -86,6 +91,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ITokenAppService tokenAppService,
             IFileUploadAppService fileUploadAppService,
             ITemplatesApplicationService templatesApplicationService,
+            IAccountAppService accountAppService,
+            IPermissionsAppService permissionsAppService,
             StringHandler stringHandler,
             IWebHostEnvironment env
         )
@@ -109,6 +116,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.advertiseAppService = advertiseAppService;
             this.fileUploadAppService = fileUploadAppService;
             this.templatesApplicationService = templatesApplicationService;
+            this.accountAppService = accountAppService;
+            this.permissionsAppService = permissionsAppService;
             this._env = env;
         }
         private bool UseLegacyPathHandling(string website, string key, string option)
@@ -216,6 +225,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 option = key;
             }
             model.option = key;
+            GetFrontContenOutputDto? PageData =  null;
             if (string.IsNullOrEmpty(option)) option = "";
             if (!UseLegacyPathHandling(website, key, option))
             {
@@ -225,10 +235,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
             }
             else if (!string.IsNullOrEmpty(key))
             {
+                PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                 switch (option.ToLower())
                 {
                     case "article":
-                        var PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                         remoteInputDto.FK_WebmenuId = PageData.Id;
                         model.MenuBread = await webMenuApplication.GetMenuBread(PageData.Id);
                         model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto { siteId = defaultData.Id, articleId = id });
@@ -269,9 +279,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         ViewBag.linkMore = model.storeSet.linkMore;
                         if (id != 0)
                         {
-                            var ProdPageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-                            remoteInputDto.FK_WebmenuId = ProdPageData.Id;
-                            model.MenuBread = await webMenuApplication.GetMenuBread(ProdPageData.Id);
+                            remoteInputDto.FK_WebmenuId = PageData.Id;
+                            model.MenuBread = await webMenuApplication.GetMenuBread(PageData.Id);
                             model.PageData = await productAppService.GetFrontConten(new ProdGetFrontContenInputDto { siteId = defaultData.Id, prodId = id });
                             if (model.PageData.Id == 0)
                             {
@@ -281,7 +290,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             else
                             {
                                 remoteInputDto.FK_ProdId = model.PageData.Id;
-                                model.ParentData = ProdPageData;
+                                model.ParentData = PageData;
                                 model.PageData.PageView = "Product";
                                 model.PageData.LayoutType = defaultData.Layout_Type;
                                 model.PageData.holdPage = HoldPageNameEnum.Article;
@@ -293,9 +302,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                                 }
                                 else
                                 {
-                                    model.PageData.VisibleHeader = ProdPageData.VisibleHeader;
-                                    model.PageData.VisibleFooter = ProdPageData.VisibleFooter;
-                                    model.PageData.VisibleTitle = ProdPageData.VisibleTitle;
+                                    model.PageData.VisibleHeader = PageData.VisibleHeader;
+                                    model.PageData.VisibleFooter = PageData.VisibleFooter;
+                                    model.PageData.VisibleTitle = PageData.VisibleTitle;
                                 }
 
                                 model.MenuBread.Add(new GetMenuBreadDto
@@ -315,12 +324,11 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         else view = "../Error/NotFound";
                         break;
                     case "techcert":
-                        var TechCertPageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-                        remoteInputDto.FK_WebmenuId = TechCertPageData.Id;
-                        model.MenuBread = await webMenuApplication.GetMenuBread(TechCertPageData.Id);
+                        remoteInputDto.FK_WebmenuId = PageData.Id;
+                        model.MenuBread = await webMenuApplication.GetMenuBread(PageData.Id);
                         model.PageData = await technicalCertificateAppService.GetFrontConten(new TechCertGetFrontContenInputDto { siteId = defaultData.Id, TechCertId = id });
                         remoteInputDto.FK_TechCertId = model.PageData.Id;
-                        model.ParentData = TechCertPageData;
+                        model.ParentData = PageData;
                         model.PageData.PageView = "Techcert";
                         model.PageData.LayoutType = defaultData.Layout_Type;
                         model.PageData.holdPage = HoldPageNameEnum.TechCert;
@@ -332,9 +340,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         else
                         {
-                            model.PageData.VisibleHeader = TechCertPageData.VisibleHeader;
-                            model.PageData.VisibleFooter = TechCertPageData.VisibleFooter;
-                            model.PageData.VisibleTitle = TechCertPageData.VisibleTitle;
+                            model.PageData.VisibleHeader = PageData.VisibleHeader;
+                            model.PageData.VisibleFooter = PageData.VisibleFooter;
+                            model.PageData.VisibleTitle = PageData.VisibleTitle;
                         }
 
                         if (string.IsNullOrEmpty(model.PageData.Html))
@@ -360,7 +368,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     default:
                         if (key.ToLower() == "search")
                         {
-                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = PageData;
                             model.PageData.PageView = "Search";
                             model.PageData.CurrentUrl = "/Search";
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
@@ -382,20 +390,20 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         {
                             ViewData["prodCatalog"] = model.storeSet.prodCatalog;
                             ViewData["storeMemo"] = model.storeSet.storeMemo;
-                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = PageData;
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             view = "ShoppingCar";
                         }
                         else if (key.ToLower() == "member")
                         {
-                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = PageData;
                             model.PageData.CurrentUrl = "/Member";
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             view = "Member";
                         }
                         else if (key.ToLower() == "demosearch")
                         {
-                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = PageData;
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             model.PageData.Title = L.get("SiteSearch");
                             model.SearchPalameter = new FrontSearchPalameterDro
@@ -411,13 +419,13 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         else if (key == "ProductDemo" || key == "Favorites" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "ColumnarSearch")
                         {
-                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = PageData;
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             view = key;
                         }
                         else
                         {
-                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = PageData;
                             model.ParentData = await webMenuApplication.GetParentConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
                             model.PageData.LayoutType = defaultData.Layout_Type;
@@ -482,6 +490,22 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 if (tokenItem != null)
                 {
                     ViewBag.isLogin = tokenItem.IsLogin;
+                    if (ViewBag.isLogin && PageData != null) { 
+                        var userInfo = await accountAppService.GetFrontUserData();
+                        var perm = await permissionsAppService.GetPagePermission(new GetPagePermissionInputDto { 
+                            PageId = PageData!.Id,
+                            Type = PermissionDetailsTypeEnum.選單會員
+                        });
+                        if (perm != null && userInfo != null && userInfo.Success && perm.Success && perm.Object != null) { 
+                            var permission = (PagePermissionOutputDto) perm.Object;
+                            var roles = permission.Roles.Find(e => e.Id == userInfo.data.FK_RoleId);
+                            var allAllow = permission.Roles.Find(e => e.IsChecked) == null;
+                            if (!allAllow && roles != null && !roles.IsChecked) {
+                                Response.StatusCode = 401;
+                                view = "../Error/Denied";
+                            }
+                        }
+                    }
                 }
                 else throw new Exception();
             }
@@ -548,6 +572,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
             }
             switch (Response.StatusCode)
             {
+                case 401:
+                    ViewData["VisibleHeader"] = true;
+                    ViewData["VisibleFooter"] = true;
+                    return View(view);
                 case 404:
                     ViewData["VisibleHeader"] = true;
                     ViewData["VisibleFooter"] = true;

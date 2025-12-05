@@ -40,6 +40,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.ServiceModel.Channels;
 using System.Web;
 using static DevExpress.XtraPrinting.Native.ExportOptionsPropertiesNames;
 
@@ -101,7 +102,11 @@ namespace EtheriT.Coker.Application.Product
             ResponseMessageDto techcert_response = new ResponseMessageDto() { Success = true };
             ResponseMessageDto stock_response = new ResponseMessageDto() { Success = true };
             var asoid = dto.Id;
-
+            if (string.IsNullOrWhiteSpace(dto.Title))
+            {
+                output.Message = "商品名稱不可為空";
+                return output;
+            }
             try
             {
                 long WebsiteID = await loginUserData.GetWebsiteId();
@@ -498,7 +503,7 @@ namespace EtheriT.Coker.Application.Product
                         StartTime = p.StartTime,
                         EndTime = p.EndTime,
                         permanent = p.permanent,
-                        LastModificationTime = p.LastModificationTime,
+                        LastModificationTime = p.LastModificationTime ?? p.CreationTime,
                         CreationTime = p.CreationTime,
                         IsSelected = selectedIds.Contains(p.Id)
                     });

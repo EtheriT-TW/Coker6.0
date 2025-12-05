@@ -512,6 +512,12 @@ namespace EtheriT.Coker.Application
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
+                if (!string.IsNullOrEmpty(dto.RouterName)) {
+                    var siteId = await loginUserData.GetWebsiteId();
+                    var menu = await db.WebMenus.Where(e => e.RouterName == dto.RouterName && e.FK_WebsiteId == siteId).FirstOrDefaultAsync();
+                    if (menu != null && menu.Id != dto.Id) throw new Exception("此路由名稱已被使用，請更換其他名稱");
+                }
+
                 if (dto.Id == 0)
                 {
                     long newId = await Create(dto);
@@ -771,8 +777,9 @@ namespace EtheriT.Coker.Application
             ResponseMessageDto response = new ResponseMessageDto { Success = true };
             try
             {
+                long webSiteId = await loginUserData.GetWebsiteId();
                 var o = (from s in dto.list select s.Id).ToList();
-                var result = db.WebMenus.Where(e => o.Contains(e.Id));
+                var result = db.WebMenus.Where(e => o.Contains(e.Id) && e.FK_WebsiteId == webSiteId);
                 foreach (var e in dto.list)
                 {
                     var item = await result.Where(m => m.Id == e.Id).FirstOrDefaultAsync();
@@ -789,6 +796,26 @@ namespace EtheriT.Coker.Application
                 response.Error = ex.ToString();
             }
             await loginUserData.SetLogs( JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            return response;
+        }
+        public async Task<ResponseMessageDto> SetVisible(SetVisibleDto dto) {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try {
+                long webSiteId = await loginUserData.GetWebsiteId();
+                var menu = await db.WebMenus.Where(e => e.Id == dto.Id && e.FK_WebsiteId == webSiteId).FirstOrDefaultAsync();
+                if (menu != null) {
+                    menu.Visible = dto.IsVisible;
+                    await loginUserData.SaveChanges(menu);
+                    response.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Error = ex.ToString();
+            }
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public PageTypeDto GetPageTypeList()

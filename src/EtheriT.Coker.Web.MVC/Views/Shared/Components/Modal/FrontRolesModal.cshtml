@@ -1,26 +1,20 @@
 ﻿@using DevExtreme.AspNet.Mvc
-@using EtheriT.Coker.Application.Shared.Dto.Tag
 
-<link rel="stylesheet" href="~/css/Components/PermissionDetailsModal.min.css" asp-append-version="true" />
-<script src="~/js/Components/PermissionDetailsModal.min.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/Components/RolesDetailsModal.min.css" asp-append-version="true" />
+<script src="~/js/Components/RolesDetailsModal.min.js" asp-append-version="true"></script>
 
-<div id="PermissionDetailsModal" class="modal fade" tabindex="-1" aria-labelledby="Tag Modal Label" aria-hidden="true">
+<div id="RolesDetailsModal" class="modal fade" tabindex="-1" aria-labelledby="Tag Modal Label" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h5 class="modal-title" id="exampleModalLabel">設定<span class="typeName"></span>權限</h5>
+				<h5 class="modal-title" id="exampleModalLabel">設定<span class="typeName"></span>僅部分角色可以查看</h5>
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
 			<div class="modal-body">
 				<div class="bg-white p-3">
-					<form id="PermissionDetailsForm" name="PermissionDetailsForm">
+					<form id="RolesDetailsForm" name="RolesDetailsForm">
 						<div class="container px-4" id="chooiceRoles">
-							<h3 class="pb-2 border-bottom">角色</h3>
-							<div class="row g-4 py-5 row-cols-1 row-cols-lg-3 list">
-							</div>
-						</div>
-						<div class="container px-4 pt-5 d-none" id="chooiceUsers">
-							<h3 class="pb-2 border-bottom">使用者</h3>
+                            <h3 class="pb-2 border-bottom">會員角色</h3><span class="text-muted">請選擇允許查看此頁的會員角色，未選擇表示公開</span>
 							<div class="row g-4 py-5 row-cols-1 row-cols-lg-3 list">
 							</div>
 						</div>

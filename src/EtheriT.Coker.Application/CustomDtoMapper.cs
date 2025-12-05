@@ -99,6 +99,9 @@ namespace EtheriT.Coker.Application
         // 第一個參數是來源，第二個參數是目標
         public CustomDtoMapper()
         {
+            //全域字串Trim
+            ValueTransformers.Add<string?>(s => s == null ? null : s.Trim());
+
             //Token
             CreateMap<TokenResponseDto, Core.Models.Token>()
                 .ForMember(e => e.StartTime, option => option.MapFrom(c => DateTime.Now))

@@ -23,7 +23,7 @@
     "flipdown": "^0.3.2",
     "fs-extra": "^11.3.0",
     "globby": "^9.2.0",
-    "grapesjs": "^0.21.7",
+    "grapesjs": "^0.22.14",
     "grapesjs-blocks-basic": "^1.0.1",
     "grapesjs-blocks-table": "^0.0.118",
     "grapesjs-custom-code": "^1.0.1",

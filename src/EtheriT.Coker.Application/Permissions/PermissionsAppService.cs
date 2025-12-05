@@ -457,9 +457,10 @@ namespace EtheriT.Coker.Application.Permissions
                 var items = await db.PermissionDetail.Where(e => e.FK_WebsiteId == websiteId).Where(e => e.Type == (int)dto.Type && e.FK_TargetId == dto.PageId).ToListAsync();
                 var userPerm = items.Where(e => e.FK_UserId != null && e.IsGranted).Select(e => e.FK_UserId).ToList();
                 var RoPerm = items.Where(e => e.FK_RoleId != null && e.IsGranted).Select(e => e.FK_RoleId).ToList();
+                bool isFront = (int)dto.Type >= 4;
                 response.Object = new PagePermissionOutputDto
                 {
-                    Users = await (from m in db.MappingUserAndWebsites
+                    Users = isFront ? new List<PermissionsUserCheckDto>() : await (from m in db.MappingUserAndWebsites
                                    join u in db.Users on m.UserId equals u.Id
                                    where m.WebsiteId == websiteId
                                    select new PermissionsUserCheckDto
@@ -469,7 +470,9 @@ namespace EtheriT.Coker.Application.Permissions
                                        IsChecked = userPerm.Contains(u.Id)
                                    }).ToListAsync(),
                     Roles = await (from r in db.Roles
-                                   where r.FK_WebsiteId == websiteId && !r.IsSuperUser
+                                   where 
+                                        r.FK_WebsiteId == websiteId && 
+                                        (isFront? r.Type == RoleTypeEnum.前台 :!r.IsSuperUser && r.Type == RoleTypeEnum.後台)
                                    select new PermissionsRoleCheckDto
                                    {
                                        Id = r.Id,

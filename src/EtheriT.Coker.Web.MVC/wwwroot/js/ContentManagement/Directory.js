@@ -373,8 +373,8 @@ function MoveToContent() {
 }
 
 function BackToList() {
-    $("#pages>.card,#TopLine").addClass("d-none");
-    $("#DirectoryList").removeClass("d-none");
+    $("#pages>.card").addClass("d-none");
+    $("#DirectoryList,#TopLine").removeClass("d-none");
     DirectoryId = 0;
     DirectoryType = "n";
     window.location.hash = ""

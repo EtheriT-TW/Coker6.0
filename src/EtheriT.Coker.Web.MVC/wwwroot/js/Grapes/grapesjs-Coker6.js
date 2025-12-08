@@ -332,21 +332,42 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
     //QA元件
     editor.DomComponents.addType('QA元件', {
         isComponent: el => el.classList?.contains('qa'),
-        model: {
+
+        view: {
             init() {
-                const self = this;
-                const ccid = self.ccid;
-                const c = $(".gjs-frame")[0].contentWindow.$;
-                window.setTimeout(function () {
-                    const a = self.find("a.btn")[0];
-                    const collapse = self.find(".collapse")[0];
-                    a.addAttributes({ "href": `#${ccid}_content`, "Title": "展開QA", "data-bs-toggle": "collapse" })
-                    collapse.addAttributes({ "id": `${ccid}_content` });
-                    c(`#${ccid} a`).attr({ "data-bs-toggle": `` });
-                }, 200)
+                // id 改變就重跑
+                this.listenTo(this.model, 'change:attributes:id', this.updateQaAttrs);
+            },
+
+            onRender() {
+                // 視圖每次渲染都會呼叫，等同你說的 finish
+                this.updateQaAttrs();
+            },
+
+            updateQaAttrs() {
+                const comp = this.model;
+                const ccid = comp.get('ccid') || comp.getId();
+                if (!ccid) return;
+
+                const link = comp.find('a.qa-bg')[0];     // 請用實際存在的 selector
+                const collapse = comp.find('div.collapse')[0];
+                if (!link || !collapse) return;
+
+                link.addAttributes({
+                    href: `#${ccid}_content`,
+                    title: '展開QA',
+                    'data-bs-toggle': 'collapse'
+                });
+
+                collapse.addAttributes({
+                    id: `${ccid}_content`
+                });
+
+                this.el.querySelector('a.qa-bg')?.setAttribute('data-bs-toggle', '');
             }
-        },
+        }
     });
+
     editor.DomComponents.addType('QA元件鎖定版型', {
         isComponent: el => {
             const fa = $(el).parents(".qa");

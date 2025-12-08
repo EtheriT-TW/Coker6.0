@@ -203,7 +203,7 @@ namespace EtheriT.Coker.Application
                 var WebsiteID = await loginUserData.GetWebsiteId();
                 var orgName = await loginUserData.GetWebsiteOrgName();
                 long UserID = await loginUserData.GetUserId();
-                List<long> RoleIds = await loginUserData.GetUserRoleIds(); 
+                List<long> RoleIds = await loginUserData.GetUserRoleIds();
                 bool isSuperUser = await permissionsAppService.IsPowerUserPermissions();
                 IQueryable<WebMenu> AllMenus = db.WebMenus.Where(m => !m.IsDeleted && m.FK_WebsiteId == WebsiteID && m.FK_TopNodeId == id);
                 if (!isSuperUser) {
@@ -730,11 +730,12 @@ namespace EtheriT.Coker.Application
             {
                 var user = await loginUserData.GetUser();
                 long siteID = await loginUserData.GetWebsiteId();
-                var item = await db.WebMenus
+                var item = await db.WebMenus.Include(e => e.FK_ChildNodes)
                         .Where(e => e.Id == dto.Id)
                         .Where(e => e.FK_WebsiteId == siteID)
                         .FirstOrDefaultAsync();
                 if (item == null) throw new Exception("資料不存在");
+                else if(item.FK_ChildNodes != null && item.FK_ChildNodes.Any()) throw new Exception("該選單還有其他子選單，無法刪除");
                 else
                 {
                     item.IsDeleted = true;
@@ -742,24 +743,20 @@ namespace EtheriT.Coker.Application
 
                     if (item.ImgId != null)
                     {
-                        var m_imgid_list = new List<long>();
-                        m_imgid_list.Add((long)item.ImgId);
                         var delete_image = await fileUploadAppService.deleteFileById(new FileDeleteDto()
                         {
                             Sid = item.Id,
-                            Fid = m_imgid_list,
+                            Fid = new List<long> { item.ImgId.Value },
                             Type = (int)FileBindTypeEnum.選單圖,
                         });
                     }
 
                     if (item.OverImgId != null)
                     {
-                        var o_imgid_list = new List<long>();
-                        o_imgid_list.Add((long)item.OverImgId);
                         var delete_overImage = await fileUploadAppService.deleteFileById(new FileDeleteDto()
                         {
                             Sid = item.Id,
-                            Fid = o_imgid_list,
+                            Fid = new List<long> { item.OverImgId.Value },
                             Type = (int)FileBindTypeEnum.選單覆蓋,
                         });
                     }
@@ -767,6 +764,7 @@ namespace EtheriT.Coker.Application
             }
             catch (Exception ex)
             {
+                response.Error = ex.Message;
                 response.Success = false;
             }
             await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));

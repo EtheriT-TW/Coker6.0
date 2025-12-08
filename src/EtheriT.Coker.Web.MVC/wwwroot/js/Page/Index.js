@@ -457,6 +457,7 @@
             {
                 key: 'setFrontPower',
                 position: 'action',
+                permission: hasRole,
                 render: function (ctx) {
                     return $('<a class="btn btn-info btn-sm" title="前台瀏覽權限">')
                         .append('<i class="fa-solid fa-user-group"></i>');

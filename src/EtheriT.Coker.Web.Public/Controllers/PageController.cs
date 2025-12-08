@@ -490,19 +490,34 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 if (tokenItem != null)
                 {
                     ViewBag.isLogin = tokenItem.IsLogin;
-                    if (ViewBag.isLogin && PageData != null) { 
+                    if (PageData != null) { 
                         var userInfo = await accountAppService.GetFrontUserData();
-                        var perm = await permissionsAppService.GetPagePermission(new GetPagePermissionInputDto { 
+                        var perm = await permissionsAppService.GetPagePermission(new GetPagePermissionInputDto
+                        {
                             PageId = PageData!.Id,
                             Type = PermissionDetailsTypeEnum.選單會員
                         });
-                        if (perm != null && userInfo != null && userInfo.Success && perm.Success && perm.Object != null) { 
-                            var permission = (PagePermissionOutputDto) perm.Object;
-                            var roles = permission.Roles.Find(e => e.Id == userInfo.data.FK_RoleId);
-                            var allAllow = permission.Roles.Find(e => e.IsChecked) == null;
-                            if (!allAllow && roles != null && !roles.IsChecked) {
-                                Response.StatusCode = 401;
-                                view = "../Error/Denied";
+                        if (perm.Success && perm.Object != null) {
+                            var permission = ((PagePermissionOutputDto)perm.Object).Roles.FindAll(e => e.IsChecked);
+                            var isDenied = false;
+                            if (permission.Any()) {
+                                if (!userInfo.Success)
+                                {
+                                    isDenied = true;
+                                }
+                                else {
+                                    var roles = permission.Find(e => e.Id == userInfo.data.FK_RoleId);
+                                    if (roles != null && !roles.IsChecked)
+                                    {
+                                        isDenied = true;
+                                    }
+                                }
+
+                                if (isDenied)
+                                {
+                                    Response.StatusCode = 401;
+                                    view = "../Error/Denied";
+                                }
                             }
                         }
                     }

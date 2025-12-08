@@ -665,7 +665,7 @@ header {
     }
 
     #Mega_Menu {
-        padding: 0 1rem;
+        padding: 0 0.5rem;
     }
 
     .headernews .content {
@@ -683,12 +683,6 @@ header {
 
     .subtitle > .subtitle_title > .material-symbols-outlined {
         padding-bottom: 0.5rem;
-    }
-}
-
-@media(max-width:503px) {
-    #Mega_Menu {
-        padding: 0 0 !important;
     }
 }
 

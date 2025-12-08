@@ -1453,6 +1453,7 @@ function MenuEditor(idSelector, options) {
         if (!settings.btn || !settings.btn.length) return;
 
         settings.btn.forEach(function (cfg) {
+            if (typeof cfg.permission !== 'undefined' && !cfg.permission) return;
             if (typeof cfg.render !== 'function') return;
 
             var pos = (cfg.position || 'action').toLowerCase();

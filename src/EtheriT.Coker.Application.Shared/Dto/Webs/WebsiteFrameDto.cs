@@ -9,5 +9,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Webs
     public class WebsiteFrameDto
     {
         public int Level {  get; set; }
+        public bool hasRole { get; set; }
     }
 }

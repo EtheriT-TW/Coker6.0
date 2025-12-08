@@ -127,6 +127,7 @@ var OAuth = builder.Services
     {
         options.LoginPath = "/";
         options.ExpireTimeSpan = TimeSpan.FromDays(1);
+        options.Cookie.Name = ".Coker6.Back.Auth";
     })
     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {

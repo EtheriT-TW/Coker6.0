@@ -9,6 +9,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.BonusManagement
     public class CreateUserTransactionDto
     {
         public List<Guid> MemberUUID { get; set; } = new List<Guid>();
+        /// <summary>
+        /// 增加或減少紅利點數
+        /// '+' or '-'
+        /// </summary>
         public string? TransactionOperation { get; set; }
         public int TransactionPoint { get; set; }
         public string? TransactionReason { get; set; }

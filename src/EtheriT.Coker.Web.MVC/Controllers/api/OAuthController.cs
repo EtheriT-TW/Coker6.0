@@ -73,30 +73,24 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         public async Task<IActionResult> ExternalLoginCallback()
         {
-            var allSchemes = await _schemeProvider.GetAllSchemesAsync();
-            AuthenticateResult? raw = null;
-            string? scheme = null;
+            var raw = await HttpContext.AuthenticateAsync("External");
 
-            foreach (var s in allSchemes)
+            if (!raw.Succeeded)
             {
-                var temp = await HttpContext.AuthenticateAsync(s.Name);
-                if (temp.Succeeded && temp.Properties?.Items?.ContainsKey("scheme") == true)
-                {
-                    scheme = temp.Properties.Items["scheme"];
-                    raw = temp;
-                    break;
-                }
+                _logger.LogWarning("[OAuth] External cookie not found or invalid.");
+                return Redirect(DefaultDomain);
             }
 
-            if (string.IsNullOrEmpty(scheme) || raw == null)
+            var scheme = raw.Properties?.Items.TryGetValue("scheme", out var s) == true ? s : null;
+            var redirect = raw.Properties?.Items.TryGetValue("redirect", out var r) == true ? r : null;
+
+            if (string.IsNullOrEmpty(scheme))
             {
                 _logger.LogWarning($"[OAuth] 未偵測到合法登入來源，可能是直接存取或流程異常");
                 return Redirect(DefaultDomain);
             }
-                
 
             var result = await HttpContext.AuthenticateAsync(scheme);
-            var redirect = raw.Properties.Items.TryGetValue("redirect", out var r) ? r : null;
             var redirectCheck = _accountAppService.checkRedirectUrl(redirect);
             var redirectBaseUrl = redirectCheck.RedirectUrl;
             if (string.IsNullOrEmpty(redirectBaseUrl)) {
@@ -122,7 +116,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             if (!TokenResult.Success) {
                 return Redirect($"{redirectBaseUrl}/api/oauth/error?code={TokenResult.Error}&redirect={safeRedirect}");
             }
-
+            await HttpContext.SignOutAsync("External");
             // ✅ 登入完成頁，可傳 token 回去給前台
             return Redirect($"{redirectBaseUrl}/api/oauth/success?token={TokenResult.Secret}&redirect={safeRedirect}");
         }

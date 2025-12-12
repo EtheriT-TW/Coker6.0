@@ -453,11 +453,11 @@ namespace EtheriT.Coker.Application.Permissions
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                var websiteId = await loginUserData.GetWebsiteId();
+                bool isFront = (int)dto.Type >= 4;
+                var websiteId = dto.isFront ? loginUserData.GetFrontWebsiteId() : await loginUserData.GetWebsiteId();
                 var items = await db.PermissionDetail.Where(e => e.FK_WebsiteId == websiteId).Where(e => e.Type == (int)dto.Type && e.FK_TargetId == dto.PageId).ToListAsync();
                 var userPerm = items.Where(e => e.FK_UserId != null && e.IsGranted).Select(e => e.FK_UserId).ToList();
                 var RoPerm = items.Where(e => e.FK_RoleId != null && e.IsGranted).Select(e => e.FK_RoleId).ToList();
-                bool isFront = (int)dto.Type >= 4;
                 response.Object = new PagePermissionOutputDto
                 {
                     Users = isFront ? new List<PermissionsUserCheckDto>() : await (from m in db.MappingUserAndWebsites

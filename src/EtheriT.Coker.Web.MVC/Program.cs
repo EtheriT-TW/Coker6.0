@@ -128,6 +128,12 @@ var OAuth = builder.Services
         options.LoginPath = "/";
         options.ExpireTimeSpan = TimeSpan.FromDays(1);
         options.Cookie.Name = ".Coker6.Back.Auth";
+    }).AddCookie("External", options =>
+    {
+        options.Cookie.Name = ".Coker6.External";
+        options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
     })
     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {
@@ -199,6 +205,7 @@ if (!string.IsNullOrEmpty(LineConfig["ChannelId"]) && !string.IsNullOrEmpty(Line
         options.Scope.Add("openid");
         options.Scope.Add("profile");
         options.Scope.Add("email");
+        options.SignInScheme = "External";
 
         options.SaveTokens = true;
 
@@ -249,6 +256,7 @@ if (!string.IsNullOrEmpty(GoogleConfig["ClientId"]) && !string.IsNullOrEmpty(Goo
         options.ClientId = GoogleConfig["ClientId"] ?? "";
         options.ClientSecret = GoogleConfig["ClientSecret"] ?? "";
         options.CallbackPath = "/signin-google";
+        options.SignInScheme = "External";
     });
 }
 var FacebookConfig = authenticationConfig.GetSection("Facebook");
@@ -259,6 +267,7 @@ if (!string.IsNullOrEmpty(FacebookConfig["AppId"]) && !string.IsNullOrEmpty(Face
         options.AppId = FacebookConfig["AppId"] ?? "";
         options.AppSecret = FacebookConfig["AppSecret"] ?? "";
         options.CallbackPath = "/signin-facebook";
+        options.SignInScheme = "External";
     });
 }
 var AppleConfig = authenticationConfig.GetSection("Apple");
@@ -269,6 +278,7 @@ if (!string.IsNullOrEmpty(AppleConfig["ClientId"]) && !string.IsNullOrEmpty(Appl
         options.KeyId = AppleConfig["KeyId"] ?? "";
         options.TeamId = AppleConfig["TeamId"] ?? "";
         options.CallbackPath = "/signin-apple";
+        options.SignInScheme = "External";
         var fileProvider = new PhysicalFileProvider(Directory.GetCurrentDirectory());
         options.UsePrivateKey(fileName =>
         {
@@ -484,8 +494,14 @@ app.UseCookiePolicy(
         OnAppendCookie = ctx =>
         {
             var isCorrelation = ctx.CookieName.StartsWith(".AspNetCore.Correlation.", StringComparison.Ordinal);
-            var isAuth = ctx.CookieName == ".AspNetCore.Cookies";          // ← 登入票證
-            if (isCorrelation || isAuth)
+            var isNonce = ctx.CookieName.StartsWith(".AspNetCore.Nonce.", StringComparison.Ordinal);
+            var isAuth = 
+                ctx.CookieName == ".Coker6.Back.Auth" ||
+                ctx.CookieName == ".AspNetCore.Cookies";
+
+            var isExternal = ctx.CookieName == ".Coker6.External";
+
+            if (isCorrelation || isNonce || isAuth || isExternal)
             {
                 ctx.CookieOptions.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
                 ctx.CookieOptions.Secure = true; // 符合 Chrome 規範

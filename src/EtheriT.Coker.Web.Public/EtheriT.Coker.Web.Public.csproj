@@ -88,6 +88,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Folder Include="Views\MailTemplate\" />
 		<Folder Include="wwwroot\lib\bootstrap\" />
 	</ItemGroup>
 

@@ -494,6 +494,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         var userInfo = await accountAppService.GetFrontUserData();
                         var perm = await permissionsAppService.GetPagePermission(new GetPagePermissionInputDto
                         {
+                            isFront = true,
                             PageId = PageData!.Id,
                             Type = PermissionDetailsTypeEnum.選單會員
                         });

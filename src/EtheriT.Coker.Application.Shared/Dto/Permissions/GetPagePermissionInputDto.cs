@@ -9,6 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Permissions
 {
     public class GetPagePermissionInputDto
     {
+        public bool isFront { get; set; }
         public long PageId { get; set; }
         public PermissionDetailsTypeEnum Type {  get; set; }  
     }

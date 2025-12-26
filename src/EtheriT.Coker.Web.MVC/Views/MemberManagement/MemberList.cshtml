@@ -1,5 +1,6 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Member
+@model EtheriT.Coker.Application.Shared.Dto.Permissions.SavePermissionsItem
 @{
     ViewData["Title"] = "MemberList";
 }
@@ -10,7 +11,7 @@
 <div class="py-2 px-4 position-relative">
 	<div id="TopLine" class="d-flex justify-content-between mb-4">
 		<div class="d-flex">
-			<button class="btn_back bg-transparent border-0 align-items-center d-none">
+            <button class="btn_back bg-transparent border-0 align-items-center d-flex d-none">
 				<span class="material-symbols-outlined">
 					keyboard_backspace
 				</span>
@@ -19,7 +20,10 @@
 		</div>
 		<div class="tool">
 			<button class="btn_forgetPassword btn-primary border-0 px-4 py-1 text-white fw-bold fs-5 d-none">發送忘記密碼驗證信</button>
-			<button class="btn_save btn-primary border-0 px-4 py-1 text-white fw-bold fs-5 d-none">儲存</button>
+            @if (Model.IsGranted){
+                <button class="btn_resendCreateNoticeMail btn btn-warning border-0 px-4 py-1 text-white fw-bold fs-5 d-none">發送會員開通信</button>
+            }
+            <button class="btn_save btn-primary border-0 px-4 py-1 text-white fw-bold fs-5 d-none">儲存</button>
 		</div>
 	</div>
 
@@ -27,12 +31,28 @@
         <div class="card-body position-relative pb-5">
             @(
                 Html.DevExtreme().DataGrid<MemberGetAllListDto>()
-                .DataSource(d => d.RemoteController().Key("Id")
-                .LoadUrl("/api/Member/GetAllFrontList").LoadMethod("Get")
+                .DataSource(d => 
+                    d.RemoteController().Key("Id")
+                        .LoadUrl("/api/Member/GetAllFrontList").LoadMethod("Get")
                 )
                 .RemoteOperations(true)
                 .ColumnHidingEnabled(true)
                 .ShowBorders(true)
+                .Toolbar(toolbar =>
+                {
+                    toolbar.Items(items =>
+                    {
+                        items.Add()
+                            .Location(ToolbarItemLocation.Before)
+                            .Widget(w => w.Button()
+                            .Visible(Model.IsGranted)
+                            .Icon("add")
+                            .Text("新增會員")
+                            .Type(ButtonType.Default)
+                            .OnClick("addMemberClicked")
+                    );
+                    });
+                })
                 .FilterRow(filterRow => filterRow
                 .Visible(true)
                 .ApplyFilter(GridApplyFilterMode.Auto)
@@ -77,10 +97,11 @@
                 .Editing(editing =>
                 {
                     editing.AllowUpdating(true);
+                    editing.AllowAdding(true); 
                     editing.UseIcons(true);
                 })
                 .OnContentReady("contentReady")
-                )
+            )
         </div>
     </div>
 
@@ -139,7 +160,7 @@
                                     <label class="px-4" for="InputTelPhoneArea">區碼</label>
                                 </div>
                                 <div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
-                                    <input id="InputTelPhone" class="cellphone form-control" type="tel" placeholder="1234567" value="1234567" pattern="\d{7}" maxlength="7">
+                                    <input id="InputTelPhone" class="cellphone form-control" type="tel" placeholder="12345678" value="12345678" pattern="\d{7,8}" maxlength="8">
                                     <label for="InputTelPhone">聯絡電話</label>
                                 </div>
                                 <div class="form-floating mb-3 col-6 col-sm-3">

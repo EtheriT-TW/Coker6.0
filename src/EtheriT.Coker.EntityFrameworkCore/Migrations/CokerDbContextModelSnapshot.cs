@@ -1189,6 +1189,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("FK_User");
+
                     b.HasIndex("UUID", "IsDeleted")
                         .IsUnique();
 
@@ -2218,6 +2220,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int?>("Bonus")
                         .HasColumnType("int");
 
+                    b.Property<string>("Carrier")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("CompletedDate")
                         .HasColumnType("datetime2");
 
@@ -2266,6 +2271,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("InvoiceTitle")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("InvoiceType")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -2313,6 +2323,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<long>("Payment")
                         .HasColumnType("bigint");
+
+                    b.Property<int?>("PersonalInvoiceType")
+                        .HasColumnType("int");
 
                     b.Property<string>("Recipient")
                         .IsRequired()
@@ -2931,6 +2944,22 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             RefundWorkDay = -1,
                             SerNo = 1,
                             Title = "貨到付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 29L,
+                            CanRefund = false,
+                            Code = "Post",
+                            CreationTime = new DateTime(2025, 12, 26, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 6L,
+                            Icons = "",
+                            IsDeleted = false,
+                            MinAmount = 1,
+                            RefundWorkDay = -1,
+                            SerNo = 1,
+                            Title = "郵政劃撥",
                             Used = false
                         });
                 });
@@ -4170,6 +4199,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("DefaultValue")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<long?>("DeleterUserId")
                         .HasColumnType("bigint");
 
@@ -4338,7 +4370,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Id = 8L,
                             CreationTime = new DateTime(2024, 11, 12, 11, 59, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
-                            FK_StoreSetGroupId = 2L,
+                            FK_StoreSetGroupId = 7L,
                             IsDeleted = false,
                             Level = 2,
                             jobID = "E001",
@@ -4558,6 +4590,64 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             name = "信件寄送方式",
                             pattern = "",
                             type = 3
+                        },
+                        new
+                        {
+                            Id = 23L,
+                            CreationTime = new DateTime(2025, 12, 16, 6, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 7L,
+                            IsDeleted = false,
+                            jobID = "M001",
+                            key = "MemberRegister",
+                            memo = "是否開放註冊，若關閉註冊僅可在會員清單新增。",
+                            name = "開放註冊",
+                            pattern = "",
+                            type = 5
+                        },
+                        new
+                        {
+                            Id = 24L,
+                            CreationTime = new DateTime(2025, 12, 16, 6, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 2L,
+                            IsDeleted = false,
+                            jobID = "M001",
+                            key = "HasInvoice",
+                            memo = "訂單是否供客戶選擇開立發票方式。",
+                            name = "開立發票",
+                            pattern = "",
+                            type = 5
+                        },
+                        new
+                        {
+                            Id = 25L,
+                            CreationTime = new DateTime(2025, 12, 16, 6, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 2L,
+                            IsDeleted = false,
+                            jobID = "M001",
+                            key = "ExtraInviiceCarrier",
+                            memo = "允許用戶使用發票載具類型。",
+                            name = "發票載具",
+                            pattern = "",
+                            type = 4
+                        },
+                        new
+                        {
+                            Id = 26L,
+                            CreationTime = new DateTime(2025, 12, 22, 14, 9, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            DefaultValue = "### 關於電子郵件資料的使用說明\r\n\r\n尊敬的用戶，感謝您使用我們的服務。在使用第三方登入（如 Line 登入）時，我們會從您的帳號中取得您所提供的電子郵件地址。以下為我們使用電子郵件資料的說明：\r\n\r\n**1. 身分驗證**\r\n我們會使用您的電子郵件來確認您的身分，確保您在本平台上的登入狀態及安全性。當您使用電子郵件進行登入或註冊時，這些資料將會用於身分確認。\r\n\r\n**2. 忘記密碼通知信**\r\n當您忘記密碼並請求重設時，我們會將重設密碼的通知與相關說明寄送至您註冊時所提供的電子郵件地址，以協助您找回帳號的使用權限。\r\n\r\n**3. 購物通知信**\r\n在您進行購物時，若有訂單處理進度、商品出貨等相關狀況，我們會使用您的電子郵件地址向您發送通知，以便您隨時掌握購物狀態。\r\n\r\n**4. 付款成功通知信**\r\n當您完成付款後，系統將寄送付款成功通知信至您的電子郵件，以利您確認交易是否成功並保存交易紀錄。\r\n\r\n**5. 客服聯繫**\r\n當您與客服團隊聯繫時，我們會透過電子郵件回覆您的問題、提供協助，並處理相關客戶服務事宜。\r\n\r\n**隱私與資料保護說明**\r\n我們將妥善保護您的電子郵件資料，不會將其提供給第三方，除非基於法律要求或經您同意。您的電子郵件資料僅會用於上述用途，並依據隱私政策進行保護。\r\n\r\n如您對上述內容有任何疑問，歡迎隨時與我們聯繫。",
+                            FK_StoreSetGroupId = 7L,
+                            IsDeleted = false,
+                            jobID = "E001",
+                            key = "PrivacyPolicy",
+                            maxlength = 5000,
+                            memo = "請輸入隱私聲明內文",
+                            name = "隱私聲明",
+                            pattern = "",
+                            type = 2
                         });
                 });
 
@@ -4725,6 +4815,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Image = "",
                             IsDeleted = false,
                             Title = "紅利設定"
+                        },
+                        new
+                        {
+                            Id = 7L,
+                            CreationTime = new DateTime(2025, 12, 16, 17, 7, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            Description = "",
+                            Image = "",
+                            IsDeleted = false,
+                            Title = "會員設定"
                         });
                 });
 
@@ -5247,6 +5347,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             Title = "貨到付款",
                             ser_no = 2
+                        },
+                        new
+                        {
+                            Id = 6L,
+                            CreationTime = new DateTime(2025, 12, 26, 15, 9, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            IsDeleted = false,
+                            Title = "郵政劃撥",
+                            ser_no = 1
                         });
                 });
 
@@ -5460,6 +5569,26 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             PromptText = "※預設為7天，最短1天，最長可設定為30天，超過一律以30天計算",
                             Title = "超商代碼繳費截止時間"
+                        },
+                        new
+                        {
+                            Id = 16L,
+                            Code = "PostAccount",
+                            CreationTime = new DateTime(2025, 12, 26, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_TPid = 6L,
+                            IsDeleted = false,
+                            Title = "郵局帳號"
+                        },
+                        new
+                        {
+                            Id = 17L,
+                            Code = "PostName",
+                            CreationTime = new DateTime(2025, 12, 26, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_TPid = 6L,
+                            IsDeleted = false,
+                            Title = "郵局戶名"
                         });
                 });
 
@@ -5838,6 +5967,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("Contact")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ContactMail")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<string>("Contract")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -5979,6 +6112,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long>("FK_StoreSetId")
                         .HasColumnType("bigint");
 
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -6016,6 +6152,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_StoreSetId = 2L,
+                            IsDefault = false,
                             IsDeleted = false,
                             Key = "zh-TW",
                             Value = "中文(繁體)"
@@ -6026,6 +6163,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_StoreSetId = 2L,
+                            IsDefault = false,
                             IsDeleted = false,
                             Key = "zh-CN",
                             Value = "中文(簡體)"
@@ -6036,6 +6174,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_StoreSetId = 2L,
+                            IsDefault = false,
                             IsDeleted = false,
                             Key = "en",
                             Value = "英文"
@@ -6046,6 +6185,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_StoreSetId = 2L,
+                            IsDefault = false,
                             IsDeleted = false,
                             Key = "ja",
                             Value = "日文"
@@ -6056,6 +6196,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_StoreSetId = 3L,
+                            IsDefault = false,
                             IsDeleted = false,
                             Key = "noPayNoShow",
                             Value = "不開放購物且不顯示商品售價"
@@ -6066,6 +6207,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_StoreSetId = 3L,
+                            IsDefault = false,
                             IsDeleted = false,
                             Key = "noPay",
                             Value = "不開放購物但顯示商品售價"
@@ -6076,6 +6218,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_StoreSetId = 3L,
+                            IsDefault = false,
                             IsDeleted = false,
                             Key = "menberPay",
                             Level = 3,
@@ -6087,6 +6230,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_StoreSetId = 3L,
+                            IsDefault = false,
                             IsDeleted = false,
                             Key = "Pay",
                             Level = 3,
@@ -6098,6 +6242,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_StoreSetId = 21L,
+                            IsDefault = false,
                             IsDeleted = false,
                             Key = "HtoL",
                             Level = 1,
@@ -6109,6 +6254,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_StoreSetId = 21L,
+                            IsDefault = false,
                             IsDeleted = false,
                             Key = "LtoH",
                             Level = 1,
@@ -6120,6 +6266,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_StoreSetId = 22L,
+                            IsDefault = false,
                             IsDeleted = false,
                             Key = "0",
                             Value = "寄送完整表單"
@@ -6130,9 +6277,65 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_StoreSetId = 22L,
+                            IsDefault = false,
                             IsDeleted = false,
                             Key = "1",
                             Value = "簡易通知"
+                        },
+                        new
+                        {
+                            Id = 13L,
+                            CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 23L,
+                            IsDefault = true,
+                            IsDeleted = false,
+                            Key = "1",
+                            Value = "開放註冊"
+                        },
+                        new
+                        {
+                            Id = 14L,
+                            CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 23L,
+                            IsDefault = false,
+                            IsDeleted = false,
+                            Key = "3",
+                            Value = "關閉註冊"
+                        },
+                        new
+                        {
+                            Id = 15L,
+                            CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 24L,
+                            IsDefault = false,
+                            IsDeleted = false,
+                            Key = "EnabledInvoice",
+                            Value = "允許"
+                        },
+                        new
+                        {
+                            Id = 16L,
+                            CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 24L,
+                            IsDefault = false,
+                            IsDeleted = false,
+                            Key = "DisabledInvoice",
+                            Value = "不允許"
+                        },
+                        new
+                        {
+                            Id = 17L,
+                            CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 25L,
+                            IsDefault = false,
+                            IsDeleted = false,
+                            Key = "MobileCarrier",
+                            Value = "手機載具"
                         });
                 });
 
@@ -6433,6 +6636,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("templateSections");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.FrontUser", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", "User")
+                        .WithMany("frontUsers")
+                        .HasForeignKey("FK_User");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Html_Content", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
@@ -6550,13 +6762,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", null)
+                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", "User")
                         .WithMany("Roles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Role");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingUserAndWebsite", b =>
@@ -7084,7 +7298,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Core.Models.storeSetItem", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.StoreSet", "storeSet")
-                        .WithMany("storeSetItem")
+                        .WithMany("storeSetItems")
                         .HasForeignKey("FK_StoreSetId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -7225,7 +7439,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                 {
                     b.Navigation("storeSetDetails");
 
-                    b.Navigation("storeSetItem");
+                    b.Navigation("storeSetItems");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.StoreSetGroup", b =>
@@ -7362,6 +7576,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Roles");
 
                     b.Navigation("Webs");
+
+                    b.Navigation("frontUsers");
                 });
 #pragma warning restore 612, 618
         }

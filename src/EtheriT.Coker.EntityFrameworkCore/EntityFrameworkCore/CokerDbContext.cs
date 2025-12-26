@@ -14,6 +14,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Core.Entity;
 using EtheriT.Coker.EntityFrameworkCore.Configurations;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
 
 namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 {
@@ -124,6 +125,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<FrontUser>(o =>
             {
                 o.HasIndex(x => new { x.UUID, x.IsDeleted }).IsUnique(); ;
+                o.HasOne(f => f.User).WithMany(u => u.frontUsers).HasForeignKey(f => f.FK_User);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<UserActivityTags>(o =>
@@ -354,6 +356,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.PaymentType).WithMany(u => u.Order_Headers).HasForeignKey(f => f.Payment);
                 o.HasOne(u => u.LogisticsSetting).WithMany(u => u.Order_Headers).HasForeignKey(f => f.Shipping);
+                o.Property(e => e.InvoiceType).HasDefaultValue(InvoiceTypeEnum.個人發票);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<SearchLog>(o =>
@@ -387,6 +390,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<MappingUserAndRole>(o =>
             {
                 o.HasOne(w => w.Role).WithMany(w => w.Users).HasForeignKey(f => f.RoleId);
+                o.HasOne(u => u.User).WithMany(u => u.Roles).HasForeignKey(f => f.UserId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<Tag>(o =>
@@ -476,7 +480,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<storeSetItem>(o =>
             {
-                o.HasOne(f => f.storeSet).WithMany(u => u.storeSetItem).HasForeignKey(f => f.FK_StoreSetId);
+                o.HasOne(f => f.storeSet).WithMany(u => u.storeSetItems).HasForeignKey(f => f.FK_StoreSetId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<CustSearch>(o =>

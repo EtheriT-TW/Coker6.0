@@ -9,5 +9,6 @@ namespace EtheriT.Coker.Core.Models
         public Guid UUID { get; set; }
         public long RoleId { get; set; }
         public Role? Role { get; set; }
+        public User? User { get; set; }
     }
 }

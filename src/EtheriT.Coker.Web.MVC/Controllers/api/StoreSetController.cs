@@ -21,6 +21,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await storeSetAppService.getValues(dto);
         }
         [HttpPost]
+        public async Task<StoreSetResponseMessageDto> getGroupStructure(StoreSetGetValueInput dto)
+        {
+            return await storeSetAppService.getGroupStructure(dto);
+        }
+        [HttpPost]
         public async Task<ResponseMessageDto> CreateOrUpdate(List<StoreSetDetailOutputDto> datas)
         {
             return await storeSetAppService.CreateOrUpdate(datas);

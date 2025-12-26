@@ -50,6 +50,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     ser_no = 2,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdParty
+                {
+                    Id = 6,
+                    Title = "郵政劃撥",
+                    IsDeleted = false,
+                    ser_no = 1,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2025, 12, 26, 15, 09, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }
             );
             modelBuilder.Entity<ThirdPartyKeypair>().HasData(
@@ -178,6 +186,22 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Code = "StoreExpireDate_CVS",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 16,
+                    FK_TPid = 6,
+                    Title = "郵局帳號",
+                    Code = "PostAccount",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2025, 12, 26, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 17,
+                    FK_TPid = 6,
+                    Title = "郵局戶名",
+                    Code = "PostName",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2025, 12, 26, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }
             );
             modelBuilder.Entity<PaymentType>().HasData(
@@ -606,6 +630,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     RefundWorkDay = -1,
                     CanRefund = false,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 29,
+                    Used = false,
+                    Title = "郵政劃撥",
+                    Code = "Post",
+                    MinAmount = 1,
+                    MaxAmount = null,
+                    Icons = "",
+                    SerNo = 1,
+                    FK_ThirdPartyId = 6,
+                    CreatorUserId = 1,
+                    RefundWorkDay = -1,
+                    CanRefund = false,
+                    CreationTime = new DateTime(2025, 12, 26, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }
             );
         }

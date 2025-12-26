@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
 using EtheriT.Coker.Core.Entity;
 using System.ComponentModel.DataAnnotations;
 
@@ -35,6 +36,9 @@ namespace EtheriT.Coker.Core.Models
         [StringLength(500)]
         public string? Remark { get; set; }
         public int InvoiceRecipient { get; set; }
+        public InvoiceTypeEnum InvoiceType { get; set; }
+        public PersonalInvoiceTypeEnum? PersonalInvoiceType { get; set; }
+        public string? Carrier { get; set; }
         public string? InvoiceTitle { get; set; }
         public string? UniformId { get; set; }
         public string InvoiceAddress { get; set; }

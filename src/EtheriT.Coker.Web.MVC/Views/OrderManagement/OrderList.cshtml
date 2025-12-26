@@ -20,26 +20,26 @@
     <div id="OrderList" class="card border-0">
         <div class="card-body position-relative pb-5">
             @(
-                    Html.DevExtreme().DataGrid<OrderHeaderGetAllListDto>()
-                    .DataSource(d => d.RemoteController().Key("Id")
-                    .LoadUrl("/api/Order/GetAllList").LoadMethod("Get")
-                    )
-                    .ID("OrderListDx")
-                    .RemoteOperations(true)
-                    .ColumnHidingEnabled(true)
-                    .ShowBorders(true)
-                    .FilterRow(filterRow => filterRow
-                    .Visible(true)
-                    .ApplyFilter(GridApplyFilterMode.Auto)
-                    )
-                    .SearchPanel(searchPanel => searchPanel
-                    .Visible(true)
-                    .Width(480)
-                    .Placeholder("請輸入要搜尋的資料")
-                    )
-                    .ShowRowLines(true)
-                    .Columns(c =>
-                    {
+                        Html.DevExtreme().DataGrid<OrderHeaderGetAllListDto>()
+                        .DataSource(d => d.RemoteController().Key("Id")
+                        .LoadUrl("/api/Order/GetAllList").LoadMethod("Get")
+                        )
+                        .ID("OrderListDx")
+                        .RemoteOperations(true)
+                        .ColumnHidingEnabled(true)
+                        .ShowBorders(true)
+                        .FilterRow(filterRow => filterRow
+                        .Visible(true)
+                        .ApplyFilter(GridApplyFilterMode.Auto)
+                        )
+                        .SearchPanel(searchPanel => searchPanel
+                        .Visible(true)
+                        .Width(480)
+                        .Placeholder("請輸入要搜尋的資料")
+                        )
+                        .ShowRowLines(true)
+                        .Columns(c =>
+                        {
                         c.AddFor(e => e.Id).Caption("訂單編號");
                         c.AddFor(e => e.MemberId).Caption("會員編號").Visible(true);
                         c.AddFor(e => e.CreationTime).Caption("訂單日期").Format(Format.ShortDateShortTime);
@@ -49,35 +49,35 @@
                         c.AddFor(e => e.Payment).Caption("付款方式");
                         c.AddFor(e => e.State).Caption("訂單狀態");
                         c.AddFor(e => e.Total).Caption("訂單金額").CellTemplate(
-                @<text>
+                        @<text>
                 $<%- value ? value.toLocaleString() : '0' %>
             </text>
-                );
-                        c.Add()
-                    .Type(GridCommandColumnType.Buttons)
-                    .Buttons(b =>
-                    {
-                        b.Add().Name("edit").OnClick("editButtonClicked");
-                    });
-                    })
-                .ColumnAutoWidth(true)
-                .Paging(paging => paging.PageSize(30))
-                .Pager(pager =>
-                {
-                    pager.Visible(true);
-                    pager.ShowPageSizeSelector(true);
-                    pager.AllowedPageSizes(new[] { 10, 20, 30 });
-                    pager.ShowInfo(true);
-                })
-                .Editing(editing =>
-                {
-                    editing.AllowUpdating(true);
-                    editing.UseIcons(true);
-                })
-                .OnRowPrepared("onRowPrepared")
-                .OnCellPrepared("onCellPrepared")
-                .OnContentReady("contentReady")
-                )
+                        );
+            c.Add()
+            .Type(GridCommandColumnType.Buttons)
+            .Buttons(b =>
+            {
+                b.Add().Name("edit").OnClick("editButtonClicked");
+            });
+                        })
+                        .ColumnAutoWidth(true)
+                        .Paging(paging => paging.PageSize(30))
+                        .Pager(pager =>
+                        {
+                            pager.Visible(true);
+                            pager.ShowPageSizeSelector(true);
+                            pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                            pager.ShowInfo(true);
+                        })
+                        .Editing(editing =>
+                        {
+                            editing.AllowUpdating(true);
+                            editing.UseIcons(true);
+                        })
+                        .OnRowPrepared("onRowPrepared")
+                        .OnCellPrepared("onCellPrepared")
+                        .OnContentReady("contentReady")
+                        )
         </div>
     </div>
 
@@ -241,7 +241,16 @@
                             </div>
                         </div>
                     </div>
+                    <div id="InvoiceType" class="card border-0 mb-3">
+                        <div class="card-body">
+                            <div class="fs-5 fw-bold pb-2">發票類型：<span class="fs-3 fw-light" data-key="invoiceType"></span></div>
 
+                            <div class="row">
+                                <div class="col-auto pe-0">手機載具：</div>
+                                <div data-key="invoiceType" class="col"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div id="InvoiceData" class="card border-0 mb-3">
                         <div class="card-body">
                             <div class="fs-5 fw-bold pb-2">發票寄送資料</div>

@@ -28,7 +28,9 @@ namespace EtheriT.Coker.Core.Models
 		[StringLength(200)]
 		public string? Contract { get; set; }
 		public string? Css { get; set; }
-		public WebsiteLevelEnum Level { get; set; }
+        [StringLength(200)]
+        public string? ContactMail { get; set; }
+        public WebsiteLevelEnum Level { get; set; }
         public List<MappingUserAndWebsite> Users { get; set; }
         public List<MappingFrontUserAndWebsite> FrontUsers { get; set; }
         public List<Marketing> Marketing { get; set; }

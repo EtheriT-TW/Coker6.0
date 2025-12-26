@@ -16,6 +16,7 @@ namespace EtheriT.Coker.Core.Models
         [StringLength(150)]
         public string Value {  get; set; }
         public long FK_StoreSetId {  get; set; }
+        public bool IsDefault { get; set; }
         public WebsiteLevelEnum? Level { get; set; }
         public StoreSet storeSet { get; set; }
     }

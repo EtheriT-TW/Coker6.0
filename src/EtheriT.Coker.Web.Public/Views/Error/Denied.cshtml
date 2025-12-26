@@ -1,4 +1,5 @@
 ﻿@using EtheriT.Coker.Web.Public.Models;
+@using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
 <script nonce="@ViewBag.Nonce">
@@ -17,8 +18,11 @@
 <div id="errorContainer" class="container">
     <div class="row">
         <div class="col">
-            <h1>沒有瀏覽權限</h1>
-            <p>請確認您的會員身分，或 <a href="/" class="" title="連結至：首頁">回到首頁</a></p>
+            <h1>@L.get("NoPermission")</h1>
+            <p>
+                @L.get("NoPermissionDescription")
+                <a href="/" title="{@L.get("LinkTo", L.get("HomePage"))}">@L.get("returnHomePage")</a>
+            </p>
         </div>
     </div>
 </div>

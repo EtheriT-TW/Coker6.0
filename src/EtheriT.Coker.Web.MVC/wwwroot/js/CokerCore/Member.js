@@ -18,9 +18,9 @@
                 data: { id: id }
             });
         },
-        FrontUpdate: function (data) {
+        FrontAddUpdate: function (data) {
             return $.ajax({
-                url: "/api/Member/FrontUpdate",
+                url: "/api/Member/FrontAddUpdate",
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
@@ -71,6 +71,16 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: { UUID: UUID }
+            });
+        },
+        ResendFrontUserCreateNoticeMail: function (UserId) {
+            return $.ajax({
+                url: "/api/Member/ResendFrontUserCreateNoticeMail",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ UserId :UserId }),
+                dataType: "json"
             });
         },
         isValidPassword: function (password) {

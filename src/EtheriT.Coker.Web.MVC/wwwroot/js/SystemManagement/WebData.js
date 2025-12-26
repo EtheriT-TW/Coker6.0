@@ -187,7 +187,6 @@ function HashDataEdit() {
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
             var hash = window.location.hash.replace("#", "");
-            console.log(hash)
             switch (hash) {
                 case "privacy":
                     if (typeof ($("#PrivacyStatement").data("id")) != "undefined" && $("#PrivacyStatement").data("id") > 0) MoveToCanvas($("#PrivacyStatement").data("id"));
@@ -255,6 +254,8 @@ function WebsiteInfoSave(event) {
         event.preventDefault()
         event.stopPropagation()
     } else {
+        let check = form.checkValidity();
+        if (!check) return;
         co.WebSite.Save(co.Form.getJson("WebsiteData")).done(function (resut) {
             if (resut.success) {
                 var imageUploadList = [];
@@ -262,7 +263,6 @@ function WebsiteInfoSave(event) {
                 imageUploadList.push(handleFileUpload("#LogoImageUpload", 12));
                 imageUploadList.push(handleFileUpload("#ShareImageUpload", 13));
                 $.when.apply(null, imageUploadList).done(function (result, result2, result3) {
-                    console.log(result, result2, result3);
                     if (result.success && result2.success && result3.success) {
                         co.sweet.success("儲存成功");
                     } else {

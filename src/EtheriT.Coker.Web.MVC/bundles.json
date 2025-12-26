@@ -33,6 +33,7 @@
         "wwwroot/js/CokerCore/Role.js",
         "wwwroot/js/CokerCore/Remote.js",
         "wwwroot/js/CokerCore/sweet.js",
+        "wwwroot/js/CokerCore/StoreSet.js",
         "wwwroot/js/CokerCore/ThirdParty.js",
         "wwwroot/js/CokerCore/TechnicalCertificate.js",
         "wwwroot/js/CokerCore/Templates.js",

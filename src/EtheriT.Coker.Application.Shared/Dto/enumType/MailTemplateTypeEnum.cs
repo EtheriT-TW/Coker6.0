@@ -9,5 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
     public enum MailTemplateTypeEnum
     {
         紅利異動 = 1,
+        後台會員建置 = 2,
+        密碼重設通知 = 3,
     }
 }

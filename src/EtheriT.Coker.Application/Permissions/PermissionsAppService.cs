@@ -62,7 +62,7 @@ namespace EtheriT.Coker.Application.Permissions
                             select new PermissionsUserDto
                             {
                                 Id = u.Id,
-                                Name = stringHandler.privacyName(u.Name),
+                                Name = stringHandler.MaskName(u.Name),
                             }
                         ).ToList()
                     }).ToListAsync();
@@ -84,7 +84,7 @@ namespace EtheriT.Coker.Application.Permissions
                         select new PermissionsUserDto
                         {
                             Id = u.Id,
-                            Name = stringHandler.privacyName(u.Name),
+                            Name = stringHandler.MaskName(u.Name),
                         }
                     ).ToListAsync()
                 };

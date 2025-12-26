@@ -85,12 +85,12 @@ namespace EtheriT.Coker.Application.BonusManagement
             {
                 return new GetBonusSettingHelpTextForEditOutput
                 {
-                    SignupBonusPointsHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.SignupBonusPoints))?.memo,
-                    MinOrderForRedemptionHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MinOrderForRedemption))?.memo,
-                    MaxRedemptionPercentHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MaxRedemptionPercent))?.memo,
-                    MinOrderForEarnPointsHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MinOrderForEarnPoints))?.memo,
-                    RewardRatePercentHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.RewardRatePercent))?.memo,
-                    RewardPointsExpireDaysHelpText = bonusSettingItem.storeSets?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.RewardPointsExpireDays))?.memo
+                    SignupBonusPointsHelpText = bonusSettingItem.storeGroups?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.SignupBonusPoints))?.memo,
+                    MinOrderForRedemptionHelpText = bonusSettingItem.storeGroups?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MinOrderForRedemption))?.memo,
+                    MaxRedemptionPercentHelpText = bonusSettingItem.storeGroups?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MaxRedemptionPercent))?.memo,
+                    MinOrderForEarnPointsHelpText = bonusSettingItem.storeGroups?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MinOrderForEarnPoints))?.memo,
+                    RewardRatePercentHelpText = bonusSettingItem.storeGroups?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.RewardRatePercent))?.memo,
+                    RewardPointsExpireDaysHelpText = bonusSettingItem.storeGroups?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.RewardPointsExpireDays))?.memo
                 };
             }
 

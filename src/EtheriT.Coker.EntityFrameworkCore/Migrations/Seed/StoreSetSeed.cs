@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Member;
 using EtheriT.Coker.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -63,6 +64,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2025, 05, 07, 17, 07, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSetGroup
+                {
+                    Id = 7,
+                    Title = "會員設定",
+                    Image = "",
+                    Description = "",
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2025, 12, 16, 17, 07, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<StoreSet>().HasData(
@@ -172,7 +182,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     key = "membershipTerms",
                     name = "會員條款",
                     memo = "請輸入會員條款內文",
-                    FK_StoreSetGroupId = 2,
+                    FK_StoreSetGroupId = 7,
                     type = SeoSetDataTypeEnum.textarea,
                     Level = WebsiteLevelEnum.會員,
                     maxlength = 5000,
@@ -377,6 +387,87 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     jobID = "S001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 12, 05, 06, 00, 00, 00, DateTimeKind.Local)
+                }, new StoreSet
+                {
+                    Id = 23,
+                    key = "MemberRegister",
+                    name = "開放註冊",
+                    memo = "是否開放註冊，若關閉註冊僅可在會員清單新增。",
+                    FK_StoreSetGroupId = 7,
+                    type = SeoSetDataTypeEnum.select,
+                    maxlength = null,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "M001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2025, 12, 16, 06, 00, 00, 00, DateTimeKind.Local)
+                }, new StoreSet
+                {
+                    Id = 24,
+                    key = "HasInvoice",
+                    name = "開立發票",
+                    memo = "訂單是否供客戶選擇開立發票方式。",
+                    FK_StoreSetGroupId = 2,
+                    type = SeoSetDataTypeEnum.select,
+                    maxlength = null,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "M001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2025, 12, 16, 06, 00, 00, 00, DateTimeKind.Local)
+                }, new StoreSet
+                {
+                    Id = 25,
+                    key = "ExtraInviiceCarrier",
+                    name = "發票載具",
+                    memo = "允許用戶使用發票載具類型。",
+                    FK_StoreSetGroupId = 2,
+                    type = SeoSetDataTypeEnum.checkBox,
+                    maxlength = null,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "M001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2025, 12, 16, 06, 00, 00, 00, DateTimeKind.Local)
+                }, new StoreSet
+                {
+                    Id = 26,
+                    key = "PrivacyPolicy",
+                    name = "隱私聲明",
+                    memo = "請輸入隱私聲明內文",
+                    FK_StoreSetGroupId = 7,
+                    type = SeoSetDataTypeEnum.textarea,
+                    maxlength = 5000,
+                    pattern = "",
+                    IsDeleted = false,
+                    DefaultValue = """
+### 關於電子郵件資料的使用說明
+
+尊敬的用戶，感謝您使用我們的服務。在使用第三方登入（如 Line 登入）時，我們會從您的帳號中取得您所提供的電子郵件地址。以下為我們使用電子郵件資料的說明：
+
+**1. 身分驗證**
+我們會使用您的電子郵件來確認您的身分，確保您在本平台上的登入狀態及安全性。當您使用電子郵件進行登入或註冊時，這些資料將會用於身分確認。
+
+**2. 忘記密碼通知信**
+當您忘記密碼並請求重設時，我們會將重設密碼的通知與相關說明寄送至您註冊時所提供的電子郵件地址，以協助您找回帳號的使用權限。
+
+**3. 購物通知信**
+在您進行購物時，若有訂單處理進度、商品出貨等相關狀況，我們會使用您的電子郵件地址向您發送通知，以便您隨時掌握購物狀態。
+
+**4. 付款成功通知信**
+當您完成付款後，系統將寄送付款成功通知信至您的電子郵件，以利您確認交易是否成功並保存交易紀錄。
+
+**5. 客服聯繫**
+當您與客服團隊聯繫時，我們會透過電子郵件回覆您的問題、提供協助，並處理相關客戶服務事宜。
+
+**隱私與資料保護說明**
+我們將妥善保護您的電子郵件資料，不會將其提供給第三方，除非基於法律要求或經您同意。您的電子郵件資料僅會用於上述用途，並依據隱私政策進行保護。
+
+如您對上述內容有任何疑問，歡迎隨時與我們聯繫。
+""",
+                    jobID = "E001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2025, 12, 22, 14, 09, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(
@@ -489,6 +580,52 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Key = ((int)EmailNotificationTypeEnum.簡易通知).ToString(),
                     Value = EmailNotificationTypeEnum.簡易通知.ToString(),
                     FK_StoreSetId = 22,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 13,
+                    Key = ((int)MemberRegisterTypeEnum.開放註冊).ToString(),
+                    Value = MemberRegisterTypeEnum.開放註冊.ToString(),
+                    FK_StoreSetId = 23,
+                    IsDefault = true,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 14,
+                    Key = ((int)MemberRegisterTypeEnum.關閉註冊).ToString(),
+                    Value = MemberRegisterTypeEnum.關閉註冊.ToString(),
+                    FK_StoreSetId = 23,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 15,
+                    Key = "EnabledInvoice",
+                    Value = "允許",
+                    FK_StoreSetId = 24,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 16,
+                    Key = "DisabledInvoice",
+                    Value = "不允許",
+                    FK_StoreSetId = 24,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 17,
+                    Key = "MobileCarrier",
+                    Value = "手機載具",
+                    FK_StoreSetId = 25,
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)

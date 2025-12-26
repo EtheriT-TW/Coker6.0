@@ -1,7 +1,8 @@
 ﻿<script>
     (function() {
-        DevExpress.Analytics.Utils.ajaxSetup.ajaxSettings = {
-            headers: co.Data.Header
+        DevExpress.Analytics.Utils.fetchSetup.fetchSettings = {
+            headers: { ...co.Data.Header },
+            credentials: 'same-origin'
         };
     })()
 </script>

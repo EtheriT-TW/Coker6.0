@@ -1,4 +1,6 @@
 ﻿
+using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+
 namespace EtheriT.Coker.Application.Shared.Dto.Order
 {
     public class OrderHeaderAddDto
@@ -24,6 +26,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? InvoiceTitle { get; set; }
         public string? UniformId { get; set; }
         public string InvoiceAddress { get; set; }
+        public InvoiceTypeEnum? InvoiceType { get; set; }
+        public PersonalInvoiceTypeEnum? PersonalInvoiceType { get; set; }
+        public string? Carrier { get; set; }
         public int Shipping { get; set; }
         public int Payment { get; set; }
         public int State { get; set; }

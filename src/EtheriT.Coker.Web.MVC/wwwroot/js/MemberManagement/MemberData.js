@@ -3,6 +3,7 @@ var BasicInfoForm, LoginMailForm
 var $btn_mail_lock, $btn_newpass_lock, $btn_checkpass_lock, $newpass, $passcheck, $NewPassFeedBack, $Tags
 var $member_number, $name, $sex, $status, $level, $email_basic, $cellphone, $telphone_area, $telphone, $telphone_ext, $address_city, $address_town, $address, $email_login, $newpass, $passcheck
 var member_list, keyId
+let isInit = false;
 function PageReady() {
     ManagementDataCollapse();
 
@@ -32,6 +33,12 @@ function PageReady() {
     }
 
     $(".btn_save").on("click", DataSave);
+    $(".btn_resendCreateNoticeMail").on("click", function (e) {
+        e.preventDefault();
+        co.Member.ResendFrontUserCreateNoticeMail(keyId).done(function (resulte) {
+            if (resulte.success) co.sweet.success("已成功寄出會員建立通知信");
+        });
+    });
 
     $(".btn_forgetPassword").on("click", ForgetPassword);
 
@@ -75,6 +82,7 @@ function PageReady() {
 }
 
 function ElementInit() {
+    if (isInit) return;
     BasicInfoForm = $("#MemberData > form")
     LoginMailForm = $("#LoginData form")
     $btn_mail_lock = $(".btn_mail_lock")
@@ -100,8 +108,10 @@ function ElementInit() {
     $email_login = $("#InputMailLogin")
     $newpass = $("#InputPasswordNew");
     $passcheck = $("#InputPasswordCheck");
+    isInit = true;
 }
 function FormDataClear() {
+    ElementInit();
     $name.val("");
     $sex.each(function () {
         if ($(this).val() == 3) {
@@ -154,15 +164,20 @@ function HashDataEdit() {
         if (window.currentHash != window.location.hash) {
             FormDataClear();
             var hash = window.location.hash.replace("#", "");
-            co.Member.GetFront(parseInt(hash)).done(function (result) {
-                if (result != null) {
-                    MoveToContent();
-                    keyId = parseInt(hash);
-                    FormDataSet(result)
-                } else {
-                    window.location.hash = ""
-                }
-            })
+            if (parseInt(hash) != 0) {
+                co.Member.GetFront(parseInt(hash)).done(function (result) {
+                    if (result != null) {
+                        MoveToContent();
+                        keyId = parseInt(hash);
+                        FormDataSet(result)
+                    } else {
+                        window.location.hash = "";
+                    }
+                })
+            } else {
+                keyId = 0;
+                MoveToContent();
+            }
         }
     } else {
         BackToList();
@@ -184,7 +199,9 @@ function FormDataSet(result) {
         }
     })
     $status.val(result.status);
-    $level.val(result.level)
+    if (result.level != null) {
+        $level.val(result.level);
+    }
     $email_basic.val(result.email);
     $cellphone.val(result.cellPhone);
     if (result.telPhone != null) {
@@ -198,7 +215,7 @@ function FormDataSet(result) {
     }
     if (result.address != null) {
         co.Zipcode.setData({
-            el: $TWzipcode,
+            el: $("#TWzipcode"),
             addr: result.address
         });
     }
@@ -210,7 +227,6 @@ function FormDataSet(result) {
         });
     } else $Tags.addClass("d-none");
     $email_login.val(result.email);
-    $("#MemberLevel ").val(result.roleId == null ? 1 : result.roleId);
     Coker.Member.GetHistoryOrder(result.uuid).done(function (result) {
         if (result.length > 0) {
             $.each(result, function (index, data) {
@@ -255,7 +271,7 @@ function Update(success_text, error_text) {
             sex = $(this).val();
         }
     })
-    co.Member.FrontUpdate({
+    co.Member.FrontAddUpdate({
         Id: keyId,
         Name: $name.val(),
         Sex: sex,
@@ -369,14 +385,24 @@ function PassDisplay($self, display) {
     return display;
 }
 function MoveToContent() {
-    $(".btn_back").addClass("d-flex");
+    $(".btn_back").removeClass("d-none");
     $(".btn_save").removeClass("d-none");
     $("#MemberList").addClass("d-none");
     $("#MemberContent").removeClass("d-none");
+    if (keyId == 0) {
+        $status.find("option").eq(1).prop("selected", true);
+    } else $(".btn_resendCreateNoticeMail").removeClass("d-none");
+    if (!$level.val()) {
+        const v = $level.find("option").eq(1).val();
+        if (v != null) {
+            $level.val(v);
+        }
+    }
 }
 function BackToList() {
-    $(".btn_back").removeClass("d-flex");
+    $(".btn_back").addClass("d-none");
     $(".btn_save").addClass("d-none");
+    $(".btn_resendCreateNoticeMail").addClass("d-none");
     $("#MemberList").removeClass("d-none");
     $("#MemberContent").addClass("d-none");
     $("#MemberForm").removeClass("was-validated");
@@ -412,4 +438,8 @@ function OrderDetailsPosition() {
             $btn_details.addClass("position-absolute");
         });
     }
+}
+
+function addMemberClicked() {
+    window.location.hash = 0;
 }

@@ -1,0 +1,24 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Member
+@{
+	ViewData["Title"] = "MemberSet";
+}
+
+<link rel="stylesheet" href="~/css/MemberManagement/MemberData.min.css" asp-append-version="true" />
+<script src="~/js/MemberManagement/Index.min.js" asp-append-version="true"></script>
+
+<div class="py-2 px-4 position-relative">
+	<div id="TopLine" class="d-flex justify-content-between mb-4">
+		<div class="d-flex">
+			<div class="title fw-bold fs-4">會員管理</div>
+		</div>
+		<button class="btn_save btn-primary border-0 px-4 py-1 text-white fw-bold fs-5" form="MemberManagement">儲存</button>
+	</div>
+
+	<form id="MemberManagement" name="MemberManagement" class="card border-0" data-groupid="7">
+		<div class="card-body position-relative pb-5">
+			<div class="row">
+			</div>
+		</div>
+	</form>
+</div>

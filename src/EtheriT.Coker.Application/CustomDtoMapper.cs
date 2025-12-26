@@ -19,6 +19,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
 using EtheriT.Coker.Application.Shared.Dto.Member;
 using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Order;
@@ -117,7 +118,9 @@ namespace EtheriT.Coker.Application
             CreateMap<MemberGetAllDataDto, User>().ReverseMap();
             CreateMap<MemberUpdateDto, User>().ReverseMap();
             CreateMap<MemberGetAllDataDto, FrontUser>().ReverseMap();
-            CreateMap<MemberUpdateDto, FrontUser>().ReverseMap();
+            CreateMap<MemberUpdateDto, FrontUser>()
+                .ForMember(e => e.UUID, option => option.MapFrom(c => Guid.NewGuid()))
+                .ReverseMap();
             CreateMap<ManagerAllListDto, User>().ReverseMap();
             CreateMap<EditUserDto, User>().ReverseMap();
             CreateMap<FrontUser, EditUserDto>().ReverseMap();
@@ -127,6 +130,10 @@ namespace EtheriT.Coker.Application
             CreateMap<FrontUser, User>().ReverseMap();
             CreateMap<FrontAddUserDto, MappingFrontUserAndWebsite>().ReverseMap();
             CreateMap<FrontAddUserDto, SendOpeningDto>().ReverseMap();
+            CreateMap<FrontUser, BackendTemplateResuleDto>()
+                .ForMember(e => e.ExpireTime, option => option.MapFrom(c => (c.ForgeIDSendDate ?? DateTime.Now).AddDays(1)))
+                .ForMember(e => e.SetPasswordUrl, option => option.MapFrom(c => $"/?useraction=passwordforget&forgetid={c.ForgetID}"))
+                .ReverseMap();
 
             //UserGroup
             CreateMap<UserGroupAddUpDto, UserGrouping>().ReverseMap();

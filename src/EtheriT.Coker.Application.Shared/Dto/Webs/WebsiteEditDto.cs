@@ -14,6 +14,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Webs
         public string Title { get; set; }
         public string? Description { get; set; }
         public string? Contact { get; set; }
+        public string? ContactMail { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
     }

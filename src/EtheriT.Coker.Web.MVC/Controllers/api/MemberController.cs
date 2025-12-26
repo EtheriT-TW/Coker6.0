@@ -61,6 +61,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await accountAppService.SendForget(UserId);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> ResendFrontUserCreateNoticeMailAsync(ResendFrontUserMailInputDto dto)
+        {
+            return await memberAppService.ResendFrontUserCreateNoticeMailAsync(dto.UserId);
+        }
 
         [HttpPost]
         public async Task<ResponseMessageDto> Update(MemberUpdateDto dto)
@@ -68,9 +73,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await memberAppService.Update(dto);
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> FrontUpdate(MemberUpdateDto dto)
+        public async Task<ResponseMessageDto> FrontAddUpdate(MemberUpdateDto dto)
         {
-            return await memberAppService.FrontUpdate(dto);
+            return await memberAppService.FrontAddUpdate(dto);
         }
         [HttpGet]
         public async Task<List<SelectDto>> GetAllRole()

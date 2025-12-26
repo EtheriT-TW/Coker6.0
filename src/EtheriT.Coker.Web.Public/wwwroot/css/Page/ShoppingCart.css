@@ -199,6 +199,21 @@ input[type="number"] {
     border-radius: 15px;
 }
 
+/*invoice type*/
+.invoice-options {
+    display: flex;
+}
+
+    .invoice-options > label.form-check {
+        margin-right: 1rem;
+    }
+
+.invoice-row, .personal-sub {
+    display: flex;
+    align-items: center;
+    margin-top: 1rem;
+}
+
 /* Step1 */
 #Step1 > .card-body > .list_title {
     padding-right: 3rem;
@@ -360,6 +375,16 @@ input[type="number"] {
 #ECPayPayment .ecpay-pay-list li.first.last {
     border-radius: 12px;
 }
+
+.shipping_memo {
+    margin-right: 2rem;
+}
+
+    .shipping_memo .price {
+        color: var(--red-number);
+        margin: 0 0.5rem;
+        font-weight: bold;
+    }
 
 /* Step3 */
 #Step3 > .card-header > a {

@@ -10,10 +10,12 @@ using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
 using EtheriT.Coker.Application.Shared.Order;
@@ -97,7 +99,7 @@ namespace EtheriT.Coker.Application.Order
                                            RecipientAddress = string.IsNullOrEmpty(oh.RecipientAddress) || !oh.RecipientAddress.Contains(" ") ?
                                                 oh.RecipientAddress :
                                                 oh.RecipientAddress.Substring(0, oh.RecipientAddress.LastIndexOf(" ")) + "***",
-                                           Shipping = oh.Shipping==0? ShippingTypeEnum.郵寄掛號.ToString() : oh.LogisticsSetting.Title,
+                                           Shipping = oh.Shipping == 0 ? ShippingTypeEnum.郵寄掛號.ToString() : oh.LogisticsSetting.Title,
                                            Payment = db.PaymentTypes.Where(e => e.Id == oh.Payment).Select(e => e.Title).FirstOrDefault() ?? "",
                                            State = oh.State.ToString(),
                                            Total = oh.Subtotal + oh.Freight,
@@ -649,7 +651,7 @@ namespace EtheriT.Coker.Application.Order
                                         property.SetValue(temp_output, "小姐");
                                         break;
                                     case (int)(SexEnum.其他):
-                                        property.SetValue(temp_output, "君");
+                                        property.SetValue(temp_output, "小姐/先生");
                                         break;
                                 }
                             }
@@ -662,10 +664,10 @@ namespace EtheriT.Coker.Application.Order
                     var shipping_str3 = (shipping?.LogisticsType ?? ShippingTypeEnum.郵寄掛號).ToString().Replace("_", "/");
                     temp_output.Shipping = shipping_str1 != "" ? shipping_str3 != "" ? $"{shipping_str1}　{shipping_str3}" : $"{shipping_str1}" : "";
                     var payment = await (from pt in db.PaymentTypes
-                                          join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
-                                          where ptv.FK_WebsiteId == WebsiteId
-                                          where pt.Id == order_header.Payment
-                                          select pt).FirstOrDefaultAsync();
+                                         join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
+                                         where ptv.FK_WebsiteId == WebsiteId
+                                         where pt.Id == order_header.Payment
+                                         select pt).FirstOrDefaultAsync();
 
                     if (payment.Code.ToLower().StartsWith("pchome")) temp_output.Payment = "支付連-" + payment.Title?.ToString() ?? "";
                     else temp_output.Payment = payment.Title?.ToString() ?? "";
@@ -1226,7 +1228,8 @@ namespace EtheriT.Coker.Application.Order
 
             return enumDictionaryDto.ToList();
         }
-        public List<SelectDto> GetFreigntStatusTypEnum() {
+        public List<SelectDto> GetFreigntStatusTypEnum()
+        {
             return EnumHelper.EnumToKeyValueList<FreigntStatusTypeEnum>();
         }
         public async Task<ResponseMessageDto> OrderStateChange(long ohid, int state)
@@ -1257,8 +1260,9 @@ namespace EtheriT.Coker.Application.Order
                                         var prod_stock = await db.Prod_Stocks.Include(e => e.Prod).Where(e => e.Id == sc.FK_PSid).FirstOrDefaultAsync();
                                         if (prod_stock != null)
                                         {
-                                            if (prod_stock.Prod != null && prod_stock.Prod.Status == ProdStatusEnum.售完) { 
-                                                if(prod_stock.Prod.oStatus == null) prod_stock.Prod.Status = ProdStatusEnum.一般;
+                                            if (prod_stock.Prod != null && prod_stock.Prod.Status == ProdStatusEnum.售完)
+                                            {
+                                                if (prod_stock.Prod.oStatus == null) prod_stock.Prod.Status = ProdStatusEnum.一般;
                                                 else prod_stock.Prod.Status = prod_stock.Prod.oStatus.Value;
                                             }
                                             prod_stock.Stock += sc.Quantity;
@@ -1301,33 +1305,61 @@ namespace EtheriT.Coker.Application.Order
                 long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
                 if (WebsiteID == 0) WebsiteID = await loginUserData.GetWebsiteId();
                 var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
+                var StoreSet = await storeSetAppService.getValues(new StoreSetGetValueInput { SiteId = WebsiteID, key= "HasInvoice" });
                 var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
                 var order_details = await GetOrderDetails(ohid);
+                bool hasInvoice = 
+                    StoreSet != null && StoreSet.Success && StoreSet.detailItem != null && StoreSet.detailItem.value != null &&
+                    string.Join(",", StoreSet.detailItem.value) != "DisabledInvoice";
+
 
                 if (order_header != null && order_details != null)
                 {
-                    var InvoiceRecipient = (order_header.InvoiceRecipient == 1) ? "訂購人" : (order_header.InvoiceRecipient == 2) ? "收件人" : "公司(三聯)";
-                    var InvoiceTable = "";
-                    if (order_header.InvoiceRecipient == 3)
-                    {
-                        InvoiceTable = $"<tr>" +
-                                                        $"<td colspan='2'>發票抬頭</td>" +
-                                                        $"<td colspan='4'>{order_header.InvoiceTitle}</td>" +
-                                                        $"</tr>" +
-                                                        $"<tr>" +
-                                                        $"<td colspan='2'>統一編號</td>" +
-                                                        $"<td colspan='4'>{order_header.UniformId}</td>" +
-                                                        $"</tr>" +
-                                                        $"<tr>" +
-                                                        $"<td colspan='2'>寄送地址</td>" +
-                                                        $"<td colspan='4'>{order_header.InvoiceAddress}</td>" +
-                                                        $"</tr>";
+                    var InvoiceRecipient = order_header.InvoiceRecipient == 1 ? "訂購人" :  "收件人";
+                    var InvoiceTable = string.Empty;
+                    if (hasInvoice) {
+                        InvoiceTable = $"""
+                        <tr class='thead'>
+                            <td colspan='6'>發票類型：{order_header.PersonalInvoiceType}</td>
+                        </tr>
+                        """;
+                        if (order_header.InvoiceType == InvoiceTypeEnum.個人發票)
+                        {
+                            if (order_header.PersonalInvoiceType != null && order_header.PersonalInvoiceType != PersonalInvoiceTypeEnum.紙本發票)
+                            {
+                                InvoiceTable += $"""
+                                    <tr>
+                                        <td colspan='2'>{order_header.PersonalInvoiceType}</td>
+                                        <td colspan='4'>{order_header.Carrier}</td>
+                                    </tr>
+                                """;
+                            }
+                        }
+                        else if (order_header.InvoiceType == InvoiceTypeEnum.公司發票)
+                        {
+                            InvoiceTable += $"<tr>" +
+                                                            $"<td colspan='2'>發票抬頭</td>" +
+                                                            $"<td colspan='4'>{order_header.InvoiceTitle}</td>" +
+                                                            $"</tr>" +
+                                                            $"<tr>" +
+                                                            $"<td colspan='2'>統一編號</td>" +
+                                                            $"<td colspan='4'>{order_header.UniformId}</td>" +
+                                                            $"</tr>" +
+                                                            $"<tr>" +
+                                                            $"<td colspan='2'>寄送地址</td>" +
+                                                            $"<td colspan='4'>{order_header.InvoiceAddress}</td>" +
+                                                            $"</tr>";
+                        }
+                        InvoiceTable += $"""<tr class='thead'><td scope='col' colspan='6'>發票寄送：{InvoiceRecipient}</td></tr>""";
                     }
+                    
                     var Shipping = await db.LogisticsSettings.Where(e => e.Id == order_header.Shipping).FirstOrDefaultAsync();
-                    var PaymentType = await db.PaymentTypes.Where(e => e.Id == order_header.Payment).Select(e => e.Title).FirstOrDefaultAsync();
+                    var PaymentType = await db.PaymentTypes.Where(e => e.Id == order_header.Payment).Select(e => new { e.Title,e.FK_ThirdPartyId }).FirstOrDefaultAsync();
+                    if (PaymentType == null) throw new Exception("查無付款方式資料");
+
                     var ThirdParty = await (from tpk in db.ThirdPartyKeypairs
                                             join tpkv in db.ThirdPartyKeypairValues on tpk.Id equals tpkv.FK_ThirdPartyKeypairId
-                                            where tpk.FK_TPid == order_header.Payment
+                                            where tpk.FK_TPid == PaymentType.FK_ThirdPartyId
                                             where tpkv.FK_WebsiteId == WebsiteID
                                             select new ThirdPartyKeypairItemOutputDto()
                                             {
@@ -1338,7 +1370,7 @@ namespace EtheriT.Coker.Application.Order
                                             }).ToListAsync();
                     var PaymentTable = "";
                     var PaymentInfo = "";
-                    if (PaymentType == "ATM")
+                    if (PaymentType.Title == "ATM")
                     {
                         PaymentTable = $"<tr>" +
                                                         $"<td colspan='6' class='text-red'>您選擇的付款方式為ATM轉帳方式，目前尚未付款完成，請您於繳費期限內完成，繳費完成後請主動與公司客服聯絡。若逾期未付清款項將自動取消本訂單，謝謝。</td>" +
@@ -1354,9 +1386,24 @@ namespace EtheriT.Coker.Application.Order
                                                                 $"<td colspan='4'>{data.Value}</td>" +
                                                                 $"</tr>";
                         }
+                    } else if (order_header.Payment == 29) { //郵政劃撥
+                        PaymentTable = $"<tr>" +
+                                                        $"<td colspan='6' class='text-red'>您選擇的付款方式為郵政劃撥，目前尚未付款完成，請您於繳費期限內完成，繳費完成後請主動與公司客服聯絡。若逾期未付清款項將自動取消本訂單，謝謝。</td>" +
+                                                        $"</tr>" +
+                                                         $"<tr>" +
+                                                         $"<td colspan='2'  scope='row' class='text-red'>繳費期限</td>" +
+                                                         $"<td colspan='4'  class='text-red'>{order_header.CreationTime.AddDays(7).ToString("yyyy/MM/dd")}</td>" +
+                                                         $"</tr>";
+                        foreach (var data in ThirdParty)
+                        {
+                            PaymentInfo += $"<tr>" +
+                                                                $"<td colspan='2' scope='row'>{data.Title}</td>" +
+                                                                $"<td colspan='4'>{data.Value}</td>" +
+                                                                $"</tr>";
+                        }
                     }
 
-                    var DetailsTable = "";
+                        var DetailsTable = "";
                     foreach (var data in order_details)
                     {
                         var Specification = data.S1Title != "" ? data.S2Title != "" ? $"{data.S1Title}、{data.S2Title}" : data.S1Title : "";
@@ -1376,7 +1423,7 @@ namespace EtheriT.Coker.Application.Order
                         ? order_header.OrdererTelePhone.Substring(0, 3) + "******"
                         : order_header.OrdererTelePhone.Substring(0, 1) + "******"
                     : "";
-                    var OrdererSex = order_header.OrdererSex == 1 ? "先生" : order_header.OrdererSex == 2 ? "小姐" : "君";
+                    var OrdererSex = order_header.OrdererSex == 1 ? "先生" : order_header.OrdererSex == 2 ? "小姐" : "小姐/先生";
                     order_header.RecipientAddress = order_header.RecipientAddress.Replace(" ", "").Substring(0, 6) + "**********";
                     order_header.RecipientCellPhone = (order_header.RecipientCellPhone.Length > 4 ? order_header.RecipientCellPhone.Substring(0, 4) : order_header.RecipientCellPhone.Substring(0, 1)) + "******";
                     order_header.RecipientTelePhone = !string.IsNullOrEmpty(order_header.RecipientTelePhone)
@@ -1384,7 +1431,7 @@ namespace EtheriT.Coker.Application.Order
                          ? order_header.RecipientTelePhone.Substring(0, 3) + "******"
                          : order_header.RecipientTelePhone.Substring(0, 1) + "******"
                      : "";
-                    var RecipientSex = order_header.RecipientSex == 1 ? "先生" : order_header.RecipientSex == 2 ? "小姐" : "君";
+                    var RecipientSex = order_header.RecipientSex == 1 ? "先生" : order_header.RecipientSex == 2 ? "小姐" : "小姐/先生";
 
                     var mailhtml = @$"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>
                  <br/>
@@ -1421,8 +1468,7 @@ namespace EtheriT.Coker.Application.Order
                  <td colspan='1'>電話</td>
                  <td colspan='2'>{order_header.RecipientTelePhone}</td>
                  </tr>
-                 <tr class='thead'><td scope='col' colspan='6'>發票寄送：{InvoiceRecipient}</td></tr>
-                 {InvoiceTable}
+                {InvoiceTable}
                  <tr class='thead'><td scope='col' colspan='6'>備註</td></tr>
                  <tr>
                  <td colspan='6'>{order_header.Remark}</td>
@@ -1442,7 +1488,7 @@ namespace EtheriT.Coker.Application.Order
                  <td colspan='6' class='text-end text-bold'>消費總計<span class='text-red ms-1 text-size1_5'>{(order_header.Freight + order_header.Subtotal).ToString("$#,##0")}</span></td>
                  </tr>
                  <tr class='thead'><td colspan='6' scope='col'>運送方式：<span class='text-red ms-1 text-size1_5'>{Shipping!.Title}　{Shipping.LogisticsType}</span></td></tr>
-                 <tr class='thead'><td colspan='6'  scope='col'>付款方式：<span class='text-red ms-1 text-size1_5'>{PaymentType}</span></td></tr>
+                 <tr class='thead'><td colspan='6'  scope='col'>付款方式：<span class='text-red ms-1 text-size1_5'>{PaymentType.Title}</span></td></tr>
                  {PaymentTable}
                  <tr class='thead'><td scope='col' colspan='6'>繳費資訊</td></tr>
                  {PaymentInfo}
@@ -1479,16 +1525,18 @@ namespace EtheriT.Coker.Application.Order
                     var sendDto = new SenderDto
                     {
                         Recipients = new List<MailUserDataDto>(){
-                                new MailUserDataDto()
-                                {
-                                    Name = order_header.Orderer,
-                                    Email = order_header.OrdererEmail,
-                                }
-                            },
+                            new MailUserDataDto()
+                            {
+                                Name = order_header.Orderer,
+                                Email = order_header.OrdererEmail,
+                            }
+                        },
                         Subject = $"【{Website.Title}】訂購通知",
                         Body = mailhtml,
                         Css = mailcss,
                     };
+                    if (!string.IsNullOrEmpty(Website.ContactMail)) cc.Email = Website.ContactMail;
+                    if (!string.IsNullOrEmpty(Website.Contact)) cc.Name = Website.Contact ?? cc.Name;
                     if (!string.IsNullOrEmpty(cc.Email)) sendDto.Bcc.Add(cc);
 
                     var sedResult = await mailAppService.sendMail(sendDto, Website.Contact);

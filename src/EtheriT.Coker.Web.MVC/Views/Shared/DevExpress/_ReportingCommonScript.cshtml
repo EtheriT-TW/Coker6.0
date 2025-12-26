@@ -32,7 +32,7 @@
 
     @* 報表預覽設定為頁面寬度 *@
     function beforeRender(s, e) {
-        e.reportPreview.zoom = -1;
+        e.reportPreview.zoom = 1.25;
         s.previewModel.reportPreview.usePdfPrinting = false;
     }
 </script>

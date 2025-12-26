@@ -16,6 +16,7 @@ namespace EtheriT.Coker.Application.Dto.StoreSet
         public string? pattern { get; set; }
         public int? maxlength { get; set; }
         public SeoSetDataTypeEnum type { get; set; }
-        public List<StoreSetItemOutputDto> storeSetItemOutputDtos { get; set; } = new List<StoreSetItemOutputDto>();
+        public string? DefaultValue { get; set; }
+        public List<StoreSetItemOutputDto> storeSetItems { get; set; } = new List<StoreSetItemOutputDto>();
     }
 }

@@ -17,5 +17,6 @@ namespace EtheriT.Coker.Application.Shared.Processor
 		public HtmlDocument LoadHtml(string htmlContent);
 		public string ExtractBodyInnerHtml(string html);
         public string text(string html);
-	}
+		public string ExtractStyleCss(string html);
+    }
 }

@@ -61,7 +61,7 @@
         const a = document.createElement("a");
         a.href = `${loginBaseUrl}?provider=${provider}&redirect=${redirectUrl}`;
         a.className = `btn-login ${cssClass} d-inline-block text-center rounded border-0 text-white mt-3`;
-        a.title = `使用 ${text} 帳號登入`;
+        a.title = local.SignInWithAccount.format(text);
         a.textContent = text;
         return a;
     }

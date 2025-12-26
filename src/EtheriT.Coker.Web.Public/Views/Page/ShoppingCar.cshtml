@@ -506,59 +506,122 @@
                             </div>
                         </form>
                     </div>
-
-                    <div id="InvoiceForm">
-                        <div class="title px-3 py-2 my-3 d-flex align-items-center">
-                            <div class="fs-5 text-end">發票另寄　</div>
-                            <ul class="d-sm-flex text-start mb-0">
-                                <li class="form-check mb-0 ms-3">
-                                    <input id="radio_bill_recipient" class="form-check-input" type="radio" name="InvoiceRadio" value="recipient" checked>
-                                    <label class="form-check-label" for="radio_bill_recipient">收件人</label>
-                                </li>
-                                <li class="form-check mb-0 ms-3">
-                                    <input id="radio_bill_orderer" class="form-check-input" type="radio" name="InvoiceRadio" value="order">
-                                    <label class="form-check-label" for="radio_bill_orderer">訂購人</label>
-                                </li>
-                                <li class="form-check mb-0 ms-3">
-                                    <input id="radio_bill_company" class="form-check-input" type="radio" name="InvoiceRadio" value="company">
-                                    <label class="form-check-label" for="radio_bill_company">公司(三聯)</label>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div class="default_data d-none">
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4 ps-0">姓　　名：</div>
-                                <div class="name col text-start"></div>
+                    @if (ViewBag.HasInvoice)
+                    {
+                        <div id="invoiceType">
+                            <div class="title px-3 py-2 my-3 d-flex align-items-center">
+                                <div class="fs-5 text-end">發票類型　</div>
+                                <ul id="radioType" class="d-sm-flex text-start mb-0">
+                                    <li class="form-check mb-0 ms-3">
+                                        <input id="radio_type_recipient" class="form-check-input" type="radio" name="InvoiceType" value="personal" checked>
+                                        <label class="form-check-label" for="radio_type_recipient">個人發票</label>
+                                    </li>
+                                    <li class="form-check mb-0 ms-3">
+                                        <input id="radio_type_company" class="form-check-input" type="radio" name="InvoiceType" value="company">
+                                        <label class="form-check-label" for="radio_type_company">公司發票</label>
+                                    </li>
+                                </ul>
                             </div>
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4 ps-0">地　　址：</div>
-                                <div class="address col text-start"></div>
-                            </div>
-                        </div>
-
-                        <form id="Form_Invoice" class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
-                            <input type="hidden" name="authentiity_token" value="@Model.token" />
-                            <div class="form-floating mb-3 col-12 col-sm-6">
-                                <input id="InvoiceInputTitle" name="invoiceTitle" class="bill_name form-control" type="text" placeholder="invoice" value="" required>
-                                <label class="required" for="InvoiceInputTitle">發票抬頭</label>
-                            </div>
-                            <div class="form-floating mb-3 col-12 col-sm-6">
-                                <input id="InvoiceInputUniformId" name="uniformId" class="bill_guinum form-control" type="tel" placeholder="GUINum" value="" pattern="\d{8}" maxlength="8" required>
-                                <label class="required" for="InvoiceInputUniformId">統　　編</label>
-                            </div>
-
-                            <div id="Invoice_TWzipcode" class="row">
-                                <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
-                                <div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
+                            @if (ViewBag.Carrier.Count > 0)
+                            {
+                                <!-- 個人發票 -->
+                                <div id="InvoiceInputPersonal" class="invoice-block px-3 px-sm-5 needs-validation">
+                                    <div>
+                                        <div class="invoice-options mb-2">
+                                            <label class="form-check">
+                                                <input type="radio" name="PersonalInvoiceMode" class="form-check-input" value="paper" checked>
+                                                紙本發票
+                                            </label>
+                                            @if (ViewBag.Carrier.Contains("MobileCarrier"))
+                                            {
+                                                <label class="form-check">
+                                                    <input type="radio" name="PersonalInvoiceMode" class="form-check-input" value="mobile">
+                                                    手機載具
+                                                </label>
+                                            }
+                                        </div>
+                                    </div>
+                                    @if (ViewBag.Carrier.Contains("MobileCarrier"))
+                                    {
+                                        <!-- 手機載具 -->
+                                        <form id="Form_InvoicePersonalType" class="invoice-block invoice-row px-3 px-sm-5 d-none needs-validation" data-personal="mobile" method="post" novalidate>
+                                            <div class="personal-sub" >
+                                                <div class="invoice-label">手機載具：</div>
+                                                <div class="invoice-fields">
+                                                    <input class="form-control" type="text" name="MobileCarrier" placeholder="例：/ABCD1234">
+                                                </div>
+                                            </div>
+                                        </form>
+                                    }
+                                    <!-- 發票另寄（通常不需要額外輸入，寄送選擇會在第三個 block） -->
+                                    <div class="invoice-row personal-sub text-muted" data-personal="paper">
+                                        <div class="invoice-label"></div>
+                                        <div class="invoice-fields">
+                                            已選擇「紙本發票」，請於下方選擇發票寄送對象。
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            <!-- [Block] 輸入資料：公司發票 -->
+                            <form id="Form_Invoice" class="invoice-block px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
+                                <input type="hidden" name="authentiity_token" value="@Model.token" />
                                 <div class="form-floating mb-3 col-12 col-sm-6">
-                                    <input id="InvoiceInputAddress" name="invoiceAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="" required>
-                                    <label class="px-4 required" for="InvoiceInputAddress">地址</label>
+                                    <input id="InvoiceInputTitle" name="invoiceTitle" class="bill_name form-control" type="text" placeholder="invoice" value="" required>
+                                    <label class="required" for="InvoiceInputTitle">發票抬頭</label>
+                                </div>
+                                <div class="form-floating mb-3 col-12 col-sm-6">
+                                    <input id="InvoiceInputUniformId" name="uniformId" class="bill_guinum form-control" type="tel" placeholder="GUINum" value="" pattern="\d{8}" maxlength="8" required>
+                                    <label class="required" for="InvoiceInputUniformId">統　　編</label>
+                                </div>
+
+                                <div id="Invoice_TWzipcode" class="row">
+                                    <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
+                                    <div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
+                                    <div class="form-floating mb-3 col-12 col-sm-6">
+                                        <input id="InvoiceInputAddress" name="invoiceAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="" required>
+                                        <label class="px-4 required" for="InvoiceInputAddress">地址</label>
+                                    </div>
+                                </div>
+                            </form>
+                            <!-- [Block] 輸入資料：不開發票 -->
+                            <div id="InvoiceInputNone" class="invoice-block px-3 px-sm-5 d-none needs-validation">
+                                <div class="invoice-row">
+                                    <div class="invoice-label"></div>
+                                    <div class="invoice-fields text-muted">
+                                        你已選擇「不開發票」。本筆訂單將不提供任何發票（含載具與紙本）。
+                                    </div>
                                 </div>
                             </div>
-                        </form>
-                    </div>
+                        </div>
 
+                        <div id="InvoiceForm">
+                            <div class="title px-3 py-2 my-3 d-flex align-items-center">
+                                <div class="fs-5 text-end">發票寄送　</div>
+                                <ul class="d-sm-flex text-start mb-0">
+                                    <li class="form-check mb-0 ms-3">
+                                        <input id="radio_bill_recipient" class="form-check-input" type="radio" name="InvoiceRadio" value="recipient" checked>
+                                        <label class="form-check-label" for="radio_bill_recipient">收件人</label>
+                                    </li>
+                                    <li class="form-check mb-0 ms-3">
+                                        <input id="radio_bill_orderer" class="form-check-input" type="radio" name="InvoiceRadio" value="order">
+                                        <label class="form-check-label" for="radio_bill_orderer">訂購人</label>
+                                    </li>
+                                </ul>
+
+                            </div>
+
+                            <div class="default_data d-none">
+                                <div class="row">
+                                    <div class="col-auto col-sm-2 text-end ps-4 ps-0">姓　　名：</div>
+                                    <div class="name col text-start"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-auto col-sm-2 text-end ps-4 ps-0">地　　址：</div>
+                                    <div class="address col text-start"></div>
+                                </div>
+                            </div>
+                        </div>
+                    }
                     <div class="title px-3 py-2 my-3 d-flex align-items-center">
                         <div class="fs-5 text-end">運送方式　</div>
                     </div>
@@ -599,6 +662,7 @@
                             <div class="subtotal price"></div>
                         </div>
                         <div class="py-2 d-flex justify-content-end text-end">
+                            <div class="shipping_memo">再購買<sapn class="price"></sapn>免運</div>
                             <div>運費</div>
                             <div class="shipping_fee price">0</div>
                         </div>
@@ -796,64 +860,84 @@
                             </div>
                         </div>
                     </div>
+                    @if (ViewBag.Carrier.Count > 0)
+                    {
+                        <div class="invoice_type">
+                            <div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">發票類型：<span data-key="typeTitle"></span></div>
+                            <div class="content">
+                                <div class="row">
+                                    <div class="col-auto col-sm-2 text-end ps-4">型  別：</div>
+                                    <div data-key="personalInvoiceTypeTitle" class="col text-start ps-0"></div>
+                                </div>
+                                @if (ViewBag.Carrier.Contains("MobileCarrier"))
+                                {
+                                    <div class="mobileCarrier d-none">
+                                        <div class="row">
+                                            <div class="col-auto col-sm-2 text-end ps-4">手機條碼：</div>
+                                            <div data-key="carrier" class="col text-start ps-0"></div>
+                                        </div>
+                                    </div>
+                                }
 
-                    <div class="invoice_data">
-                        <div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">發票寄送</div>
-
-                        <div class="content">
-                            <div class="orderer d-none">
-                                <div class="row">
-                                    <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-                                    <div data-key="orderer" data-type="name" class="col text-start ps-0"></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
-                                    <div data-key="ordererEmail" data-type="email" class="col text-start ps-0"></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
-                                    <div data-key="ordererCellPhone" data-type="phone" class="col text-start ps-0"></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                    <div data-key="ordererAddress" data-type="address" class="col text-start ps-0"></div>
-                                </div>
-                            </div>
-                            <div class="recipient d-none">
-                                <div class="row">
-                                    <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-                                    <div data-key="recipient" data-type="name" class="col text-start ps-0"></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
-                                    <div data-key="recipientEmail" data-type="email" class="col text-start ps-0"></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
-                                    <div data-key="recipientCellPhone" data-type="phone" class="col text-start ps-0"></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                    <div data-key="recipientAddress" data-type="address" class="col text-start ps-0"></div>
-                                </div>
-                            </div>
-                            <div class="company d-none">
-                                <div class="row">
-                                    <div class="col-auto col-sm-2 text-end ps-4">發票抬頭：</div>
-                                    <div data-key="invoiceTitle" data-type="name" class="col text-start ps-0"></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-auto col-sm-2 text-end ps-4">統　　編：</div>
-                                    <div data-key="uniformId" data-type="uniformId" class="col text-start ps-0"></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                    <div data-key="invoiceAddress" data-type="address" class="col text-start ps-0"></div>
+                                <div class="company d-none">
+                                    <div class="row">
+                                        <div class="col-auto col-sm-2 text-end ps-4">發票抬頭：</div>
+                                        <div data-key="invoiceTitle" data-type="name" class="col text-start ps-0"></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-auto col-sm-2 text-end ps-4">統　　編：</div>
+                                        <div data-key="uniformId" data-type="uniformId" class="col text-start ps-0"></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
+                                        <div data-key="invoiceAddress" data-type="address" class="col text-start ps-0"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                        <div class="invoice_data">
+                            <div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">發票寄送</div>
 
+                            <div class="content">
+                                <div class="orderer d-none">
+                                    <div class="row">
+                                        <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+                                        <div data-key="orderer" data-type="name" class="col text-start ps-0"></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
+                                        <div data-key="ordererEmail" data-type="email" class="col text-start ps-0"></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
+                                        <div data-key="ordererCellPhone" data-type="phone" class="col text-start ps-0"></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
+                                        <div data-key="ordererAddress" data-type="address" class="col text-start ps-0"></div>
+                                    </div>
+                                </div>
+                                <div class="recipient d-none">
+                                    <div class="row">
+                                        <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+                                        <div data-key="recipient" data-type="name" class="col text-start ps-0"></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
+                                        <div data-key="recipientEmail" data-type="email" class="col text-start ps-0"></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
+                                        <div data-key="recipientCellPhone" data-type="phone" class="col text-start ps-0"></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
+                                        <div data-key="recipientAddress" data-type="address" class="col text-start ps-0"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
                     <div id="PaymentData">
                         <div class="storememo d-none">@ViewData["storeMemo"]</div>
                         <div class="title px-3 py-2 my-3 d-flex align-items-center">

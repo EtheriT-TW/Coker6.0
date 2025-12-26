@@ -749,7 +749,7 @@
             "dxMultiView-itemAriaRoleDescription": "檢視",
             "dxMultiView-itemAriaLabel": "{0} / {1}",
             "dxSplitter-resizeHandleAriaLabel": "分隔條",
-            "dxSplitter-resizeHandleAriaRoleDescription": "分隔器"
+            "dxSplitter-resizeHandleAriaRoleDescription": "分隔器",
         }
     })
 }));

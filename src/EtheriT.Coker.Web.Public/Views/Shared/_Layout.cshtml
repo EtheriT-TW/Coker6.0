@@ -296,168 +296,155 @@
                         <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="text-center fs-4 fw-bold">會員登入</div>
+                        <div class="text-center fs-4 fw-bold">@L.get("LoginTitle")</div>
                         <form id="LoginForm" class="card-body needs-validation" method="post">
                             <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
                             <div class="login_mail input-group mb-3">
                                 <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                     <span class="material-symbols-outlined text-black-50">mail</span>
                                 </div>
-                                <input id="InputLoginMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Login Mail" placeholder="信箱" required name="Email">
+                                <input id="InputLoginMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Login Mail" placeholder="@L.get("Email")" required name="Email">
                             </div>
                             <div class="login_pass input-group mb-3">
                                 <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                     <span class="material-symbols-outlined text-black-50">lock</span>
                                 </div>
-                                <input id="InputLoginPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Login Password" placeholder="密碼" required name="Password">
+                                <input id="InputLoginPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Login Password" placeholder="@L.get("Password")" required name="Password">
                                 <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
-                                    <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="顯示密碼">visibility_off</button>
+                                    <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
                                 </div>
                             </div>
                             <div class="login_vcode input-group">
-                                <input id="InputLoginVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Login Verification Code" placeholder="輸入驗證碼" maxlength="4" autocomplete="off" required>
+                                <input id="InputLoginVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Login Verification Code" placeholder="@L.get("VerificationCode")" maxlength="4" autocomplete="off" required>
                                 <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
-                                    <img id="LoginImgCaptcha" alt="驗證碼" class="img-fluid" src="" />
+                                    <img id="LoginImgCaptcha" alt="@L.get("Captcha")" class="img-fluid" src="" />
                                 </div>
                             </div>
                             <div class="d-flex justify-content-end">
-                                <button class="border-0 bg-transparent text-black-50" type="button" data-bs-toggle="modal" data-bs-target="#PrivacyStatementModal"> 隱私聲明 </button>
-                                <button class="btn_refresh border-0 bg-transparent text-black-50">刷新驗證碼</button>
+                                @if(!string.IsNullOrEmpty(ViewBag.PrivacyPolicy))
+                                {
+                                    <button class="border-0 bg-transparent text-black-50" type="button" data-bs-toggle="modal" data-bs-target="#PrivacyStatementModal"> @L.get("PrivacyPolicy") </button>
+                                }
+                                <button class="btn_refresh border-0 bg-transparent text-black-50">@L.get("RefreshVerificationCode")</button>
                             </div>
                             <div class="form-check">
                                 <input id="CheckRemember" class="form-check-input" type="checkbox" value="" checked>
-                                <label class="form-check-label" for="CheckRemember">記住我的帳號</label>
+                                <label class="form-check-label" for="CheckRemember">@L.get("RememberMe")</label>
                             </div>
                         </form>
-                        <button class="btn_login w-100 rounded border-0 text-white py-2 fs-5 my-3">登　入</button>
-                        <div class="text-center fs-4 fw-bold">其他登入方式</div>
-                        <div class="otherLoginList"></div>
-                        <button class="btn_other_login w-100 rounded border-0 text-white py-2 fs-5 d-none" data-bs-target="#OtherLoginModal" data-bs-toggle="modal" data-bs-dismiss="modal">其他登入方式</button>
+                        <button class="btn_login w-100 rounded border-0 text-white py-2 fs-5 my-3">@L.get("SignIn")</button>
+                        @if (ViewBag.MemberRegister)
+                        {
+                            <div class="text-center fs-4 fw-bold">@L.get("OtherLoginMethods")</div>
+                            <div class="otherLoginList"></div>
+                            <button class="btn_other_login w-100 rounded border-0 text-white py-2 fs-5 d-none" data-bs-target="#OtherLoginModal" data-bs-toggle="modal" data-bs-dismiss="modal">@L.get("OtherLoginMethods")</button>
+                        }
                     </div>
                     <div class="modal-footer d-flex justify-content-center border-0">
-                        <div class="text-black-50">不是會員？</div>
-                        <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#RegisterModal" data-bs-toggle="modal" data-bs-dismiss="modal">立即註冊</button>
-                        <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#ForgetModal" data-bs-toggle="modal" data-bs-dismiss="modal">忘記密碼</button>
+                        @if (ViewBag.MemberRegister)
+                        {
+                            <div class="text-black-50">@L.get("NotMember")</div>
+                            <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#RegisterModal" data-bs-toggle="modal" data-bs-dismiss="modal">@L.get("SignUpNow")</button>
+                        }
+                        <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#ForgetModal" data-bs-toggle="modal" data-bs-dismiss="modal">@L.get("ForgotPassword")</button>
                     </div>
                 </div>
             </div>
         </div>
         <div id="PrivacyStatementModal" class="modal fade" aria-hidden="true" aria-labelledby="PrivacyStatementModal" tabindex="-1">
             <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable justify-content-center">
-                <div class="modal-content">
+                <div class="modal-content markdown-content">
                     <div class="modal-header border-0">
+                        <h2 class="title">@L.get("PrivacyPolicy")</h2>
                         <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="text-center fs-4 fw-bold pb-3">隱私聲明</div>
                         <div class="px-4">
-                            <div class="fs-5 fw-bold text-center">關於電子郵件資料的使用說明</div>
-                            <br />
-                            <p>尊敬的用戶，感謝您使用我們的服務。在使用第三方登入（如Line登入）時，我們會從您的帳號中取得您提供的電子郵件地址。以下是我們如何使用您的電子郵件資料的詳細說明：</p>
-                            <br />
-                            <div class="fs-6 fw-bold">1. 身分驗證</div>
-                            <p>我們會使用您的電子郵件來確認您的身分，確保您在本平台上的登錄狀態及安全性。當您使用電子郵件進行登入或註冊時，這些資料將會用於身份確認。</p>
-                            <br />
-                            <div class="fs-6 fw-bold">2. 忘記密碼通知信</div>
-                            <p>若您忘記密碼並請求重設，我們會將重設密碼的通知及相關說明發送至您註冊時所提供的電子郵件地址。這樣可以幫助您快速找回帳號的存取權限。</p>
-                            <br />
-                            <div class="fs-6 fw-bold">3. 購物通知信</div>
-                            <p>在您進行購物時，若有相關狀況（如訂單處理進度、商品發貨通知等），我們會使用您的電子郵件地址來向您發送通知。這樣可以確保您隨時掌握您的購物狀態。</p>
-                            <br />
-                            <div class="fs-6 fw-bold">4. 付款成功通知信</div>
-                            <p>在您完成付款後，會有一封付款成功的通知信發送至您的電子郵件，以便您確認交易是否成功，並持有交易紀錄。</p>
-                            <br />
-                            <div class="fs-6 fw-bold">5. 客服信箱</div>
-                            <p>若您與我們的客服團隊聯繫，我們會通過電子郵件回覆您的問題、提供協助，並處理任何可能需要的客戶服務。</p>
-                            <br />
-                            <br />
-                            <div class="fs-6 fw-bold">隱私與保護</div>
-                            <p>我們將會妥善保護您的電子郵件資料，不會將其透露給第三方，除非法律要求或您同意其他用途。您的電子郵件資料僅會用於上述所列的用途，我們將遵循隱私政策來確保您的資料安全。</p>
-                            <br />
-                            <p>如果您有任何疑慮或問題，請隨時與我們聯繫。</p>
-                            <br />
-                            <br />
+                            @Html.Raw(ViewBag.PrivacyPolicy)
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div id="OtherLoginModal" class="modal fade" aria-hidden="true" aria-labelledby="OtherLoginModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered justify-content-center">
-                <div class="modal-content">
-                    <div class="modal-header border-0">
-                        <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="text-center fs-4 fw-bold">其他登入方式</div>
-                        <div class="otherLoginList"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div id="RegisterModal" class="modal fade" aria-hidden="true" aria-labelledby="RegisterModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered justify-content-center">
-                <div class="modal-content">
-                    <div class="modal-header border-0">
-                        <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="text-center fs-4 fw-bold">加入會員</div>
-                        <form id="RegisterForm" class="card-body needs-validation pb-0" method="post">
-                            <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
-                            <div class="register_mail input-group mb-3">
-                                <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
-                                    <span class="material-symbols-outlined text-black-50">mail</span>
-                                </div>
-                                <input id="InputRegisterMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Register Mail" placeholder="信箱" required name="Email">
-                            </div>
-                            <div class="register_name input-group mb-3">
-                                <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
-                                    <span class="material-symbols-outlined text-black-50">account_circle</span>
-                                </div>
-                                <input id="InputRegisterName" class="input_bg form-control rounded border-0 py-3" type="text" aria-label="Input Register Name" placeholder="姓名/名稱" required name="Name">
-                            </div>
-                            <div class="register_new_pass input-group">
-                                <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
-                                    <span class="material-symbols-outlined text-black-50">lock</span>
-                                </div>
-                                <input id="InputRegisterNewPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Register New Password" placeholder="密碼" required name="Password">
-                                <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
-                                    <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="顯示密碼">visibility_off</button>
-                                </div>
-                            </div>
-                            <div id="RegisterNewPassFeedBack" class="lh-1 text-danger py-1">密碼需填入8至32個字元 ，並包含英文字母[大寫]、[小寫]、[數字]或[符號]至少三種。</div>
-                            <div class="register_check_pass input-group">
-                                <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
-                                    <span class="material-symbols-outlined text-black-50">lock</span>
-                                </div>
-                                <input id="InputRegisterCheckPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Register Check Password" placeholder="確認密碼" required name="PasswordConfirm">
-                                <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
-                                    <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="顯示密碼">visibility_off</button>
-                                </div>
-                            </div>
-                            <div id="RegisterCheckPassFeedBack" class="lh-1 text-danger py-1">　</div>
-                            <div class="register_vcode input-group">
-                                <input id="InputRegisterVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Register Verification Code" placeholder="輸入驗證碼" maxlength="4" autocomplete="off" required>
-                                <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
-                                    <img id="RegisterImgCaptcha" alt="驗證碼" class="img-fluid" src="" />
-                                </div>
-                            </div>
-                        </form>
-                        <div class="px-3">
-                            <div class="d-flex  justify-content-end pt-0 pb-3">
-                                <button class="btn_refresh border-0 bg-transparent text-black-50">刷新驗證碼</button>
-                            </div>
-                            <div class="form-check">
-                                <input id="CheckAccept" class="form-check-input" type="checkbox" value="">
-                                <label class="form-check-label" for="CheckAccept">我已詳細閱讀並同意<span><button class="bg-transparent border-0 px-0 text-decoration-underline" type="button" data-bs-toggle="modal" data-bs-target="#TermsModal"> 會員條款 </button></span></label>
-                            </div>
+        @if (ViewBag.MemberRegister)
+        {
+            <div id="OtherLoginModal" class="modal fade" aria-hidden="true" aria-labelledby="OtherLoginModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered justify-content-center">
+                    <div class="modal-content">
+                        <div class="modal-header border-0">
+                            <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <button class="btn_register w-100 rounded border-0 text-white py-2 fs-5 my-3">註　冊</button>
+                        <div class="modal-body">
+                            <div class="text-center fs-4 fw-bold">@L.get("OtherLoginMethods")</div>
+                            <div class="otherLoginList"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+            <div id="RegisterModal" class="modal fade" aria-hidden="true" aria-labelledby="RegisterModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered justify-content-center">
+                    <div class="modal-content">
+                        <div class="modal-header border-0">
+                            <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="text-center fs-4 fw-bold">@L.get("RegisterTitle")</div>
+                            <form id="RegisterForm" class="card-body needs-validation pb-0" method="post">
+                                <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
+                                <div class="register_mail input-group mb-3">
+                                    <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                        <span class="material-symbols-outlined text-black-50">mail</span>
+                                    </div>
+                                    <input id="InputRegisterMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Register Mail" placeholder="@L.get("Email")" required name="Email">
+                                </div>
+                                <div class="register_name input-group mb-3">
+                                    <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                        <span class="material-symbols-outlined text-black-50">account_circle</span>
+                                    </div>
+                                    <input id="InputRegisterName" class="input_bg form-control rounded border-0 py-3" type="text" aria-label="Input Register Name" placeholder="@L.get("NameOrDisplayName")" required name="Name">
+                                </div>
+                                <div class="register_new_pass input-group">
+                                    <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                        <span class="material-symbols-outlined text-black-50">lock</span>
+                                    </div>
+                                    <input id="InputRegisterNewPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Register New Password" placeholder="@L.get("Password")" required name="Password">
+                                    <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
+                                        <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
+                                    </div>
+                                </div>
+                                <div id="RegisterNewPassFeedBack" class="lh-1 text-danger py-1">@L.get("PasswordRuleHint")</div>
+                                <div class="register_check_pass input-group">
+                                    <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                        <span class="material-symbols-outlined text-black-50">lock</span>
+                                    </div>
+                                    <input id="InputRegisterCheckPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Register Check Password" placeholder="@L.get("ConfirmPassword")" required name="PasswordConfirm">
+                                    <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
+                                        <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
+                                    </div>
+                                </div>
+                                <div id="RegisterCheckPassFeedBack" class="lh-1 text-danger py-1">　</div>
+                                <div class="register_vcode input-group">
+                                    <input id="InputRegisterVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Register Verification Code" placeholder="@L.get("VerificationCode")" maxlength="4" autocomplete="off" required>
+                                    <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
+                                        <img id="RegisterImgCaptcha" alt="@L.get("Captcha")" class="img-fluid" src="" />
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="px-3">
+                                <div class="d-flex  justify-content-end pt-0 pb-3">
+                                    <button class="btn_refresh border-0 bg-transparent text-black-50">@L.get("RefreshVerificationCode")</button>
+                                </div>
+                                <div class="form-check">
+                                    <input id="CheckAccept" class="form-check-input" type="checkbox" value="">
+                                    <label class="form-check-label" for="CheckAccept">@L.get("AgreeTerms")<span><button class="bg-transparent border-0 px-0 text-decoration-underline" type="button" data-bs-toggle="modal" data-bs-target="#TermsModal"> @L.get("MemberTerms") </button></span></label>
+                                </div>
+                            </div>
+                            <button class="btn_register w-100 rounded border-0 text-white py-2 fs-5 my-3">@L.get("Register")</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
         <div id="TermsModal" class="modal fade" aria-hidden="true" aria-labelledby="TermsModal" tabindex="-1">
             <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable justify-content-center">
                 <div class="modal-content">
@@ -465,7 +452,7 @@
                         <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="text-center fs-4 fw-bold pb-3">會員條款</div>
+                        <div class="text-center fs-4 fw-bold pb-3">@L.get("MemberTerms")</div>
                         <div class="content px-4">
                             @ViewData["membershipTerms"]
                         </div>
@@ -480,17 +467,17 @@
                         <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="text-center fs-4 fw-bold">密碼重置</div>
-                        <div class="px-3 pt-2">密碼需填入8至32個字元 ，並包含英文字母[大寫]、[小寫]、[數字]或[符號]至少三種。</div>
+                        <div class="text-center fs-4 fw-bold">@L.get("ResetPasswordTitle")</div>
+                        <div class="px-3 pt-2">@L.get("PasswordRuleHint")</div>
                         <form id="ResetForm" class="card-body needs-validation" method="post">
                             <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
                             <div class="reset_old_pass input-group d-none">
                                 <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                     <span class="material-symbols-outlined text-black-50">lock</span>
                                 </div>
-                                <input id="InputResetOldPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Old Password" placeholder="舊密碼" required name="OldPassword" disabled>
+                                <input id="InputResetOldPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Old Password" placeholder="@L.get("OldPassword")" required name="OldPassword" disabled>
                                 <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
-                                    <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="顯示密碼">visibility_off</button>
+                                    <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
                                 </div>
                             </div>
                             <div id="ResetOldPassFeedBack" class="lh-1 text-danger pt-1 d-none">　</div>
@@ -498,9 +485,9 @@
                                 <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                     <span class="material-symbols-outlined text-black-50">lock</span>
                                 </div>
-                                <input id="InputResetNewPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Reset New Password" placeholder="密碼" required name="Password">
+                                <input id="InputResetNewPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Reset New Password" placeholder="@L.get("Password")" required name="Password">
                                 <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
-                                    <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="顯示密碼">visibility_off</button>
+                                    <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
                                 </div>
                             </div>
                             <div id="ResetNewPassFeedBack" class="lh-1 text-danger pt-1">　</div>
@@ -508,24 +495,24 @@
                                 <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                     <span class="material-symbols-outlined text-black-50">lock</span>
                                 </div>
-                                <input id="InputResetCheckPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Reset Check Password" placeholder="確認密碼" required name="PasswordConfirm">
+                                <input id="InputResetCheckPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Reset Check Password" placeholder="@L.get("ConfirmPassword")" required name="PasswordConfirm">
                                 <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
-                                    <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="顯示密碼">visibility_off</button>
+                                    <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
                                 </div>
                             </div>
                             <div id="ResetCheckPassFeedBack" class="lh-1 text-danger pt-1">　</div>
                             <div class="reset_vcode input-group">
-                                <input id="InputResetVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Reset Verification Code" placeholder="輸入驗證碼" maxlength="4" autocomplete="off" required>
+                                <input id="InputResetVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Reset Verification Code" placeholder="@L.get("VerificationCode")" maxlength="4" autocomplete="off" required>
                                 <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
-                                    <img id="ResetImgCaptcha" alt="驗證碼" class="img-fluid" src="" />
+                                    <img id="ResetImgCaptcha" alt="@L.get("Captcha")" class="img-fluid" src="" />
                                 </div>
                             </div>
                         </form>
                         <div class="px-3 d-flex justify-content-end">
-                            <button class="btn_refresh border-0 bg-transparent text-black-50">刷新驗證碼</button>
+                            <button class="btn_refresh border-0 bg-transparent text-black-50">@L.get("RefreshVerificationCode")</button>
                         </div>
-                        <button class="btn_reset w-100 rounded border-0 text-white py-2 fs-5 my-3">重　置</button>
-                        <button class="btn_resetforget bg-transparent border-0 text-decoration-underline text-black-50 w-100 d-none">忘記密碼?</button>
+                        <button class="btn_reset w-100 rounded border-0 text-white py-2 fs-5 my-3">@L.get("Reset")</button>
+                        <button class="btn_resetforget bg-transparent border-0 text-decoration-underline text-black-50 w-100 d-none">@L.get("ForgotPassword")?</button>
                     </div>
                 </div>
             </div>
@@ -537,27 +524,27 @@
                         <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="text-center fs-4 fw-bold">忘記密碼</div>
+                        <div class="text-center fs-4 fw-bold">@L.get("ForgotPassword")</div>
                         <form id="ForgetForm" class="card-body needs-validation" method="post">
                             <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
                             <div class="forget_mail input-group mb-3">
                                 <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                     <span class="material-symbols-outlined text-black-50">mail</span>
                                 </div>
-                                <input id="InputForgetMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Forget Mail" placeholder="信箱" required name="Email">
+                                <input id="InputForgetMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Forget Mail" placeholder="@L.get("Email")" required name="Email">
                             </div>
                             <div class="forget_vcode input-group">
-                                <input id="InputForgetVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Forget Verification Code" placeholder="輸入驗證碼" maxlength="4" autocomplete="off" required>
+                                <input id="InputForgetVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Forget Verification Code" placeholder="@L.get("VerificationCode")" maxlength="4" autocomplete="off" required>
                                 <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
-                                    <img id="ForgetImgCaptcha" alt="驗證碼" class="img-fluid" src="" />
+                                    <img id="ForgetImgCaptcha" alt="@L.get("Captcha")" class="img-fluid" src="" />
                                 </div>
                             </div>
                         </form>
                         <div class="d-flex justify-content-end px-3">
-                            <button class="btn_backlogin border-0 bg-transparent text-end text-black-50 me-1">返回登入</button>
-                            <button class="btn_refresh border-0 bg-transparent text-black-50">刷新驗證碼</button>
+                            <button class="btn_backlogin border-0 bg-transparent text-end text-black-50 me-1">@L.get("BackToLogin")</button>
+                            <button class="btn_refresh border-0 bg-transparent text-black-50">@L.get("RefreshVerificationCode")</button>
                         </div>
-                        <button class="btn_forget w-100 rounded border-0 text-white py-2 fs-5 my-3">發　送</button>
+                        <button class="btn_forget w-100 rounded border-0 text-white py-2 fs-5 my-3">@L.get("Send")</button>
                     </div>
                 </div>
             </div>

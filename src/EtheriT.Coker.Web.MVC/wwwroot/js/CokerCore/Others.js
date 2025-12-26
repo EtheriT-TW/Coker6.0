@@ -150,28 +150,6 @@
             });
         },
     },
-    StoreSet: {
-        GetValues: function (data) {
-            return $.ajax({
-                url: "/api/StoreSet/getValues/",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        },
-        SaveValues: function (data) {
-            return $.ajax({
-                url: "/api/StoreSet/CreateOrUpdate",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        }
-    },
     Zipcode: {
         init: function (id) {
             const reandomStr = co.String.generateRandomString(5);
@@ -212,15 +190,19 @@
                 obj.el.find(".address").val("");
             } else {
                 var address_split = obj.addr.split(" ");
-                obj.el.twzipcode('set', {
-                    'county': address_split[0],
-                    'district': address_split[1],
-                });
-                $addr.val(address_split[2]);
+                if (address_split.length == 1) {
+                    $addr.val(obj.addr);
+                } else {
+                    obj.el.twzipcode('set', {
+                        'county': address_split[0],
+                        'district': address_split[1],
+                    });
+                    $addr.val(address_split[2]);
+                }
             }
         },
         getData: function ($e) {
-            return $e.find(".county>select").val() + " " + $e.find(".district>select").val() + " " + $e.find(".address").val()
+            return ($e.find(".county>select").val() + " " + $e.find(".district>select").val() + " " + $e.find(".address").val()).trim();
         }
     }, Grapes: {
         setEditor: (editor,html,css) => {

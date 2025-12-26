@@ -417,7 +417,7 @@ function ready() {
             $InputLoginVCode.siblings("div").addClass("me-4 pe-2");
             NewCaptcha($LoginImgCaptcha, $InputLoginVCode)
             $InputLoginVCode.val("");
-            Coker.sweet.warning("請注意", "請確實填寫登入資料", null);
+            Coker.sweet.warning(local.AlertTitle, local.AlertCheckLoginInput, null);
         }
     })
     $("#RegisterForm input").on("keypress", function (event) {
@@ -441,13 +441,13 @@ function ready() {
         if (passcheck && formcheck) {
             if (!$RegisterAccept.prop("checked")) {
                 NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
-                Coker.sweet.warning("請注意", "請詳閱並同意會員條款", null, true);
+                Coker.sweet.warning(local.AlertTitle, local.AlertAgreeMemberTerms, null, true);
             } else {
                 CaptchaVerify($RegisterImgCaptcha, $InputRegisterVCode, RegisterAction)
             }
         } else {
             NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
-            Coker.sweet.warning("請注意", "請確實填寫註冊資料", null);
+            Coker.sweet.warning(local.AlertTitle, local.AlertCheckRegisterInput, null);
         }
     })
     $("#ForgetForm input").on("keypress", function (event) {
@@ -488,15 +488,15 @@ function ready() {
             })
         } else if (!passcheck) {
             NewCaptcha($ResetImgCaptcha, $InputResetVCode);
-            Coker.sweet.warning("請注意", "密碼格式有誤", null);
+            Coker.sweet.warning(local.AlertTitle, local.ErrorPasswordFormatInvalid, null);
         } else if (!formcheck) {
             NewCaptcha($ResetImgCaptcha, $InputResetVCode);
-            Coker.sweet.warning("請注意", "驗證碼輸入錯誤", null);
+            Coker.sweet.warning(local.AlertTitle, local.ErrorCaptchaInvalid, null);
         }
     })
 
     $("#ResetModal .btn_resetforget").on("click", function () {
-        Coker.sweet.confirm(`寄送『密碼重設通知』至您的信箱："${$("#ResetForm").data("Email")}"?`, "", "是", "否", function () {
+        Coker.sweet.confirm(local.ConfirmSendResetPasswordMailToEmail.format($("#ResetForm").data("Email")), "", local.Yes,local.No, function () {
             Coker.sweet.loading();
             var data = {};
             data.Email = $("#ResetForm").data("Email");
@@ -505,7 +505,7 @@ function ready() {
             data.WebsiteName = $("meta[property='og:site_name'").attr("content");
             co.User.PasswordForget(data).done((result) => {
                 if (result.success) {
-                    Coker.sweet.success("系統將立即發送『密碼重設通知』信函至您所登錄之E-Mail中，此信函中包含您所設定之登入帳號(即E-mail)、密碼。請靜候密碼重設通知信。", null, false);
+                    Coker.sweet.success(local.InfoResetPasswordMailWillBeSent, null, false);
                     registerModal.hide();
                 } else {
                     Coker.sweet.error(result.error, null, true);
@@ -539,9 +539,9 @@ function ready() {
                     Coker.sweet.loading();
                     co.User.AccountOpening(insertdata["openid"]).done(result => {
                         if (result.success) {
-                            Coker.sweet.custom("success", "", "會員帳號成功開通", "填寫會員資料", function () {
+                            Coker.sweet.custom("success", "", local.ResultAccountActivated, local.ActionFillMemberProfile, function () {
                                 window.location.href = `/${OrgName}/Member`;
-                            }, "下次再說", function () {
+                            }, local.ActionMaybeLater, function () {
                                 window.history.replaceState({}, document.title, window.location.pathname);
                                 location.reload();
                             })
@@ -552,11 +552,11 @@ function ready() {
                                 data.WebsiteId = SiteId;
                                 data.WebsiteLink = $(location).attr('origin');
                                 data.WebsiteName = $("meta[property='og:site_name'").attr("content");
-                                co.sweet.confirm(result.error, "", "重新寄送", "取消", function () {
+                                co.sweet.confirm(result.error, "", local.ActionResend, local.Cancel, function () {
                                     Coker.sweet.loading();
                                     co.User.AccountReSendOpening(data).done(result => {
                                         if (result.success) {
-                                            Coker.sweet.success("系統將立即重新發送『加入會員通知』信函至您所登錄之E-Mail中。請靜候開通帳號通知信。", null, false);
+                                            Coker.sweet.success(local.InfoResendMemberWelcomeMail, null, false);
                                         } else {
                                             console.log(result.error);
                                             console.log(result.message);
@@ -593,12 +593,12 @@ function ready() {
         switch ($this.text()) {
             case "visibility":
                 $this.parent("div").siblings("input").attr("type", "password");
-                $this.attr("title", "顯示密碼");
+                $this.attr("title", local.ShowPassword);
                 $this.text("visibility_off");
                 break;
             case "visibility_off":
                 $this.parent("div").siblings("input").attr("type", "text");
-                $this.attr("title", "隱藏密碼");
+                $this.attr("title", local.HidePassword);
                 $this.text("visibility");
                 break;
         }
@@ -699,7 +699,7 @@ function CheckToken() {
         if (result.success) {
             if (result.isLogin && result.name != "") {
                 IsLogin = true;
-                $("#HiUser > .name").text(`${result.name} 您好!`);
+                $("#HiUser > .name").text(local.GreetingUser.format(result.name));
             }
             if ($("#Cart_Dropdown_Parent").length > 0) {
                 CartDropInit();

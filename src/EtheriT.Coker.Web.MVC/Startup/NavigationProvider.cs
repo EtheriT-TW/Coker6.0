@@ -328,8 +328,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 PageName="MemberSet",
                                 Title="會員設定",
                                 Controller="MemberManagement",
-                                Action="MemberSet",
-                                Enable=false,
+                                Action="Index",
                                 Icon="",
                             },
                             new JobMenu {

@@ -13,11 +13,11 @@
     <div class="py-2">
         <form id="StoreSet" class="card border-0 needs-validation" data-groupId="@Model.StoreSetGroupId" novalidate>
             @{
-                if (Model.Success && Model.storeSets != null)
+                if (Model.Success && Model.storeGroups != null)
                 {
-                    for (int i = 0; i < Model.storeSets.Count; i++)
+                    for (int i = 0; i < Model.storeGroups.Count; i++)
                     {
-                        var group = Model.storeSets[i];
+                        var group = Model.storeGroups[i];
 
                         <div id="Setting@(group.Title)" class="card-body">
                             <div class="d-flex align-items-center pb-2">
@@ -51,7 +51,7 @@
                                         <div class="d-flex flex-column">
                                             <div class="form-label m-0">@item.name</div>
                                             <div class="d-flex align-items-center border border-1 my-2 py-2 rounded">
-                                                @foreach (var checkItem in item.storeSetItemOutputDtos)
+                                                @foreach (var checkItem in item.storeSetItems)
                                                 {
                                                     <input id="@($"{item.key}-{checkItem.Key}")" name="@(item.key)" class="mx-3" type="checkbox" value="@checkItem.Key">
                                                     <label for="@($"{item.key}-{checkItem.Key}")">@checkItem.Value</label>
@@ -65,7 +65,7 @@
                                             <label class="form-label m-0 required_all" for="@(item.key)">@item.name</label>
                                             <select id="@(item.key)" name="@(item.key)" class="form-select" required>
                                                 <option value="">@item.memo</option>
-                                                @foreach (var checkItem in item.storeSetItemOutputDtos)
+                                                @foreach (var checkItem in item.storeSetItems)
                                                 {
                                                     <option value="@checkItem.Key">@checkItem.Value</option>
                                                 }
@@ -79,7 +79,7 @@
                                         <div class="d-flex flex-column">
                                             <div class="form-label m-0">@item.name</div>
                                             <div class="d-flex align-items-center border border-1 my-2 py-2 rounded">
-                                                @foreach (var checkItem in item.storeSetItemOutputDtos)
+                                                @foreach (var checkItem in item.storeSetItems)
                                                 {
                                                     <input id="@($"{item.key}-{checkItem.Key}")" name="@(item.key)" class="mx-3" type="radio" value="@checkItem.Key">
                                                     <label for="@($"{item.key}-{checkItem.Key}")">@checkItem.Value</label>

@@ -22,8 +22,9 @@ namespace EtheriT.Coker.Core.Models
         public int? maxlength { get; set; }
         public string? pattern { get; set; }
         public string jobID { get; set; }
+        public string? DefaultValue { get; set; }
         public List<StoreSetDetail> storeSetDetails { get; set; }
         public StoreSetGroup storeSetGroup { get; set; }
-        public List<storeSetItem>? storeSetItem { get; set; }
+        public List<storeSetItem>? storeSetItems { get; set; }
     }
 }

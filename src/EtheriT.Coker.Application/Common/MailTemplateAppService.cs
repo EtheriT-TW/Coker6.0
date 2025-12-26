@@ -2,6 +2,7 @@
 using EtheriT.Coker.Application.Shared.Common;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
+using EtheriT.Coker.Application.Shared.Processor;
 using RazorEngineCore;
 using System;
 using System.Collections.Generic;
@@ -13,8 +14,10 @@ namespace EtheriT.Coker.Application.Common
 {
     public class MailTemplateAppService : IMailTemplateAppService
     {
-        public MailTemplateAppService()
+        private readonly IHtmlProcessor htmlProcessor;
+        public MailTemplateAppService(IHtmlProcessor htmlProcessor)
         {
+            this.htmlProcessor = htmlProcessor;
         }
 
         public Task<List<MailTemplateResultDto>> GetTemplateRenderAsync(MailTemplateTypeEnum templateType, List<MailTemplateInputDto> input)
@@ -25,7 +28,12 @@ namespace EtheriT.Coker.Application.Common
                 case MailTemplateTypeEnum.紅利異動:
                     templateFilePath = "Views/MailTemplate/TransactionMailTemplate.cshtml";
                     break;
-
+                case MailTemplateTypeEnum.後台會員建置:
+                    templateFilePath = "Views/MailTemplate/BackendAddFrontUserMailTemplate.cshtml";
+                    break;
+                case MailTemplateTypeEnum.密碼重設通知:
+                    templateFilePath = "Views/MailTemplate/ForgetPasswordMailTemplate.cshtml";
+                    break;
                 default:
                     break;
             }
@@ -55,10 +63,13 @@ namespace EtheriT.Coker.Application.Common
             foreach (var item in input)
             {
                 string mailContent = template.Run(item.Model);
+                string mailStyles = htmlProcessor.ExtractStyleCss(mailContent);
+                mailContent = htmlProcessor.RemoveNode(mailContent, "style");
                 result.Add(new MailTemplateResultDto
                 {
                     Key = item.Key,
-                    Body = mailContent
+                    Body = mailContent,
+                    Style = mailStyles
                 });
             }
 

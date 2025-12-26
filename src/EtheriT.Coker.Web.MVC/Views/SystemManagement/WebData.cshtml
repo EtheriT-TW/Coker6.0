@@ -103,9 +103,18 @@
                             <label class="required" for="InputWebsiteDescription">META網站描述</label>
                             <div class="textarea_placeholder">簡單描述網站主要內容，將有助於搜尋結果。建議不超過100個中文字。</div>
                         </div>
-                        <div class="form-floating mb-3">
-                            <input id="InputWebsiteContact" name="Contact" class="website_contact form-control" type="text" placeholder="網站聯絡人" value="@Model.Website.Contact">
-                            <label class="required" for="InputWebsiteContact">網站聯絡人</label>
+                        <div class="mb-3 mx-1">
+                            <div class="d-flex row-cols-2">
+                                <div class="form-floating me-1">
+                                    <input id="InputWebsiteContact" name="Contact" class="website_contact form-control" type="text" placeholder="寄件人顯示名稱" value="@Model.Website.Contact">
+                                    <label class="required" for="InputWebsiteContact">寄件人顯示名稱</label>
+                                </div>
+                                <div class="form-floating ms-1">
+                                    <input id="InputWebsiteContactMail" name="ContactMail" class="website_contact_name form-control" type="email" placeholder="系統訂單通知信箱" value="@Model.Website.ContactMail">
+                                    <label class="required" for="InputWebsiteContactMail">系統訂單通知信箱</label>
+                                    <div class="invalid-feedback">請輸入正確的系統訂單通知信箱格式</div>
+                                </div>
+                            </div>
                         </div>
                     </form>
                     <div class="image_upload d-flex justify-content-evenly">

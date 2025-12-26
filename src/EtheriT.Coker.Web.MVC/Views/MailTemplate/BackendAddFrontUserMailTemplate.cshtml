@@ -1,0 +1,71 @@
+﻿@model EtheriT.Coker.Application.Shared.Dto.MailTemplate.BackendTemplateResuleDto;
+<style>
+    body {
+        font-family: Arial, "Microsoft JhengHei", sans-serif;
+        line-height: 1.6;
+    }
+
+    .box {
+        border: 1px solid #cccccc;
+        padding: 12px;
+        margin: 16px 0;
+    }
+
+    .label {
+        font-weight: bold;
+        width: 120px;
+        vertical-align: top;
+    }
+
+    .hint {
+        color: #666666;
+        font-size: 12px;
+    }
+
+    .action {
+        margin: 16px 0;
+    }
+</style>
+
+
+<p>@Model.Name 您好</p>
+
+<p>
+    系統已由後台新增一筆會員帳號，請您協助完成該帳號的開通設定。
+</p>
+
+<div class="box">
+    <table>
+        <tr>
+            <td class="label">帳號（Email）</td>
+            <td>@Model.Email</td>
+        </tr>
+        <tr>
+            <td class="label">建立時間</td>
+            <td>@Model.CreationTime.ToString("yyyy/MM/dd HH:mm")</td>
+        </tr>
+    </table>
+</div>
+
+<p>請點擊以下連結為此帳號設定初始密碼：</p>
+
+<div class="action">
+    <a href="@Model.SetPasswordUrl">前往設定密碼</a>
+</div>
+
+<p>
+    若無法點擊上方連結，請將以下網址複製至瀏覽器開啟：
+</p>
+
+<p>
+    @Model.SetPasswordUrl
+</p>
+
+<p class="hint">
+    ※ 本連結僅限單次使用，並於 @Model.ExpireTime.ToString("yyyy/MM/dd HH:mm") 後失效。<br>
+    ※ 若您未進行此帳號建立作業，請忽略本信件。
+</p>
+
+<p class="hint">
+    此為系統自動發送之通知信件，請勿直接回覆。
+</p>

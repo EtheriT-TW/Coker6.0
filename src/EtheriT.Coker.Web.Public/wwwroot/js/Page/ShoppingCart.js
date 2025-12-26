@@ -4,7 +4,7 @@ var gotop_switch = false, isCheckout = false;
 var subtotal, ori_freight, low_con, disfreight, freight, total
 var shipping = null, payment = null;
 
-var ShippingForms, PaymentForms, OrdererForms, RecipientForms, InvoiceForms;
+var ShippingForms, PaymentForms, OrdererForms, RecipientForms, InvoiceForms, InvoicePersonalTypeForms;
 var OrdererOpen = false, RecipientOpen = false, InvoiceOpen = false;
 var shipMethodsChosen = false, payMethodsChosen = false, OrdererFilled = true, RecipientFilled = true, InvoiceFilled = true;
 var $Orderer_TWzipcode, $Recipient_TWzipcode, $Invoice_TWzipcode;
@@ -13,7 +13,7 @@ var $recipient_name, $recipient_sex, $recipient_email, $recipient_cellphone, $re
 var $invoice_recipient, $invoice_title, $invoice_uniformid, $invoice_address_city, $invoice_address_town, $invoice_address;
 var $ship_method, $pay_method;
 
-var order_header_data = {}, user_data = {}, order_data = {}, recipient_data = {}, invoice_data = {}, prod_data = {};
+var order_header_data = {}, user_data = {}, order_data = {}, recipient_data = {}, invoice_data = {}, invoiceType_data = {}, prod_data = {};
 var shopping_cart_data = [];
 var hasProds = false;
 
@@ -435,7 +435,8 @@ function PageReady() {
     PaymentForms = $('#RadioPayment');
     OrdererForms = $('#OrdererForm > form');
     RecipientForms = $('#RecipientForm > form');
-    InvoiceForms = $('#InvoiceForm > form');
+    InvoiceForms = $('#Form_Invoice');
+    InvoicePersonalTypeForms = $('#Form_InvoicePersonalType');
 
     function getSelectedFreightGroupId() {
         const ids = getSelectedCartIds();     // 你現有的函式：回傳勾選的 scId 陣列
@@ -555,6 +556,10 @@ function PageReady() {
     $('input[type=radio][name=RadioPayment]').on("change", RadioPayment);
     $('input[type=radio][name=RecipientRadio]').on("change", RecipientRadio);
     $('input[type=radio][name=InvoiceRadio]').on("change", InvoiceRadio);
+    $('input[type=radio][name=InvoiceType]').on("change", InvoiceTypeRadio);
+    $('input[type=radio][name=PersonalInvoiceMode]').on("change", PersonalInvoiceMode);
+
+    
 
     $(".btn_backshop").each(function () {
         var $this = $(this);
@@ -1285,7 +1290,10 @@ function TotalCount() {
     // 右下角顯示
     $(".subtotal").text(subtotal.toLocaleString());
     $(".shipping_fee").text(((freight == null || freight == "") ? 0 : freight).toLocaleString());
-
+    if (freight != 0 && disfreight == 0) {
+        $(".shipping_memo .price").text(low_con - subtotal);
+        $(".shipping_memo").removeClass("d-none");
+    } else $(".shipping_memo").addClass("d-none");
     total = (freight == null || freight == "") ? subtotal : subtotal + freight;
     $(".total_amount").text(parseInt(total).toLocaleString());
 
@@ -1622,16 +1630,42 @@ function InvoiceRadio() {
             InvoiceOpen = false;
             InvoiceFilled = true;
             break;
-        case "company":
-            $("#InvoiceForm > .default_data").addClass("d-none");
-            $("#InvoiceForm > form").removeClass("d-none");
-            InvoiceOpen = true;
-            InvoiceFilled = false;
-            InvoiceFormClear();
-            break;
     }
     if (HasECPay) ECPaymentChange();
     buy_step_swiper.update();
+}
+
+function PersonalInvoiceMode() {
+    $(`#invoiceType .invoice-row`).addClass("d-none");
+    switch (this.value) {
+        case "mobile":
+            $(`.invoice-row[data-personal="mobile"]`).removeClass("d-none");
+            $(InvoicePersonalTypeForms).find("input").prop("required",true)
+            $("#InvoiceForm").addClass("d-none");
+            break;
+        case "paper":
+            $(`.invoice-row[data-personal="paper"]`).removeClass("d-none");
+            $("#InvoiceForm").removeClass("d-none");
+            $(InvoicePersonalTypeForms).find("input").prop("required", false)
+            break;
+    }
+}
+function InvoiceTypeRadio() {
+    $(`#invoiceType .invoice-block`).addClass("d-none");
+    switch (this.value) {
+        case "personal":
+            $("#InvoiceInputPersonal").removeClass("d-none");
+            $("#InvoiceForm").removeClass("d-none");
+            break
+        case "company":
+            $("#Form_Invoice").removeClass("d-none");
+            $("#InvoiceForm").removeClass("d-none");
+            break
+        case "none":
+            $("#InvoiceInputNone").removeClass("d-none");
+            $("#InvoiceForm").addClass("d-none");
+            break
+    }
 }
 function InvoiceFormClear() {
     $invoice_title.val("");
@@ -1737,6 +1771,34 @@ function RecipientDataGet() {
 }
 // 發票資料寫入 order_header_data
 function InvoiceDataGet() {
+    switch ($(`[name="InvoiceType"]:checked`).val()) {
+        case "personal":
+            if (!FormCheck(InvoicePersonalTypeForms)) return false;
+            order_header_data.invoiceType = 1;
+            invoiceType_data.typeTitle = "個人發票";
+            switch ($(`[name="PersonalInvoiceMode"]:checked`).val()) {
+                case "paper":
+                    order_header_data.PersonalInvoiceType = 1;
+                    invoiceType_data.personalInvoiceTypeTitle = "紙本發票";
+                    break;
+                case "mobile":
+                    order_header_data.PersonalInvoiceType = 2;
+                    invoiceType_data = co.Form.getJson("Form_InvoicePersonalType");
+                    order_header_data.Carrier = invoiceType_data["MobileCarrier"];
+                    invoiceType_data.carrier = order_header_data.Carrier;
+                    invoiceType_data.personalInvoiceTypeTitle = "手機條碼";
+                    break;
+            }
+            invoiceType_data.PersonalInvoiceType = order_header_data.PersonalInvoiceType;
+            break;
+        case "company":
+            invoiceType_data.typeTitle = "公司發票";
+            if (!FormCheck(InvoiceForms)) return false;
+            invoice_data = co.Form.getJson($("#Form_Invoice").attr("id"));
+            invoice_data.invoiceAddress = `${invoice_data.county} ${invoice_data.district} ${invoice_data.invoiceAddress}`;
+            order_header_data.invoiceType = 2;
+            break;
+    }
     switch ($(`[name="InvoiceRadio"]:checked`).val()) {
         case "order":
             invoice_data['invoiceRecipient'] = 1;
@@ -1745,13 +1807,6 @@ function InvoiceDataGet() {
         case "recipient":
             invoice_data['invoiceRecipient'] = 2;
             invoice_data['invoiceAddress'] = recipient_data['recipientAddress'];
-            break;
-        case "company":
-            if (!FormCheck(InvoiceForms)) return false;
-            invoice_data = co.Form.getJson($("#Form_Invoice").attr("id"));
-            invoice_data.invoiceAddress = `${invoice_data.county} ${invoice_data.district} ${invoice_data.invoiceAddress}`;
-            invoice_data['invoiceRecipient'] = 3;
-            order_header_data.uniformId = invoice_data.uniformId;
             break;
     }
     for (var key in invoice_data) {
@@ -2041,6 +2096,24 @@ function OrderSuccess(result) {
     //HiddenCode($("#Step4 .orderer_data"))
     ShoppingCartDataInsert(recipient_data, $("#Step4 .recipient_data"));
     //HiddenCode($("#Step4 .recipient_data"))
+    switch (order_header_data.invoiceType) {
+        case 1: //個人
+            switch (invoiceType_data.PersonalInvoiceType) {
+                case 1: //紙本
+                    break;
+                case 2: //載具
+                    invoice_data.Carrier = invoiceType_data.Carrier;
+            }
+            break;
+        case 2: //公司
+            ShoppingCartDataInsert(invoice_data, $("#Step4 .invoice_data .company"));
+            //HiddenCode($("#Step4 .invoice_data .company"))
+            $("#Step4 .invoice_data .company").removeClass("d-none");
+            break;
+    }
+
+    ShoppingCartDataInsert(invoiceType_data, $("#Step4 .invoice_type"));
+    
     switch (invoice_data.invoiceRecipient) {
         case 1:
             ShoppingCartDataInsert(order_data, $("#Step4 .invoice_data .orderer"));
@@ -2051,11 +2124,6 @@ function OrderSuccess(result) {
             ShoppingCartDataInsert(recipient_data, $("#Step4 .invoice_data .recipient"));
             //HiddenCode($("#Step4 .invoice_data .recipient"))
             $("#Step4 .invoice_data .recipient").removeClass("d-none");
-            break;
-        case 3:
-            ShoppingCartDataInsert(invoice_data, $("#Step4 .invoice_data .company"));
-            //HiddenCode($("#Step4 .invoice_data .company"))
-            $("#Step4 .invoice_data .company").removeClass("d-none");
             break;
     }
 
@@ -2079,6 +2147,7 @@ function OrderSuccess(result) {
     })
 
     Coker.Payment.GetPaymentInfo(order_header_data.payment).done(function (message) {
+        console.log(message);
         if (message != null && message.length > 0) {
             var html = "";
             $.each(message, function (index, value) {
@@ -2088,6 +2157,7 @@ function OrderSuccess(result) {
                                     </div>`;
             })
             $(".pay_info > div").prepend(html);
+            $("#PaymentData .pay_info").removeClass("d-none");
         }
     });
 }
@@ -2146,6 +2216,16 @@ function HiddenCode($self) {
 }
 function ShoppingCartDataInsert(data, $self) {
     ShoppingCartDataClear($self);
+    if (typeof (data.invoiceType) != "undefined") {
+        switch (parseInt(data.invoiceType)) {
+            case 1:
+                $(".invoice_type .mobileCarrier").removeClass("d-none");
+                break;
+            case 2:
+                $(".invoice_type .company").removeClass("d-none");
+                break;
+        }
+    }
     if (typeof (data.invoiceRecipient) != "undefined") {
         switch (parseInt(data.invoiceRecipient)) {
             case 1:
@@ -2153,9 +2233,6 @@ function ShoppingCartDataInsert(data, $self) {
                 break;
             case 2:
                 $(".invoice_data .recipient").removeClass("d-none");
-                break;
-            case 3:
-                $(".invoice_data .company").removeClass("d-none");
                 break;
         }
     }

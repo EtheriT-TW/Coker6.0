@@ -154,19 +154,25 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var enterAds = JsonConvert.DeserializeObject<List<AdvertiseDisplayDto>>(JsonConvert.SerializeObject((await advertiseAppService.GetDisplay(defaultData.Id, 1, 1)).Value));
             var SEO = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 1, SiteId = siteId });
             var SystemSet = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 5, SiteId = siteId });
+            var MemberSet = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 7, SiteId = siteId, RenderTextareaAsHtml = true });
             var GA4 = SEO.storeSetDetails?.Find(e => e.key == "GA4");
             var GoogleTranslate = SEO.storeSetDetails?.Find(e => e.key == "google.translate");
             var GTM = SEO.storeSetDetails?.Find(e => e.key == "GTM");
             var GoogleAds = SEO.storeSetDetails?.Find(e => e.key == "GoogleAds");
             var NoCopyItem = SystemSet.storeSetDetails?.Find(e => e.key == "NoCopy");
+            var MemberRegister = string.Join(",", MemberSet.storeSetDetails?.Find(e => e.key == "MemberRegister")?.value ?? Enumerable.Empty<string>()) == "3";
+            var membershipTerms = MemberSet.storeSetDetails?.Find(e => e.key == "membershipTerms");
+            var privacyPolicy = MemberSet.storeSetDetails?.Find(e => e.key == "PrivacyPolicy");
 
             var StoreSet = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 2, SiteId = siteId });
             var storeBuyState = StoreSet.storeSetDetails?.Find(e => e.key == "storeBuyState");
             var storeMemo = StoreSet.storeSetDetails?.Find(e => e.key == "storeMemo");
             var linkMore = StoreSet.storeSetDetails?.Find(e => e.key == "linkMore");
             var prodCatalog = StoreSet.storeSetDetails?.Find(e => e.key == "prodCatalog");
-            var membershipTerms = StoreSet.storeSetDetails?.Find(e => e.key == "membershipTerms");
             var priceOrder = StoreSet.storeSetDetails?.Find(e => e.key == "priceOrder");
+            var HasInvoice = string.Join(",", StoreSet.storeSetDetails?.Find(e => e.key == "HasInvoice")?.value ?? Enumerable.Empty<string>()) != "DisabledInvoice";
+            List<string> Carrier = StoreSet.storeSetDetails?.Find(e => e.key == "ExtraInviiceCarrier")?.value ?? new List<string>();
+
             var shareImage = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { Sid = siteId, Type = 13 });
             var template = await templatesApplicationService.GetDefaultTemplatesAsync();
             ViewBag.ShowPagePath = true;
@@ -174,6 +180,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.OAuthError = TempData["OAuthError"];
             ViewBag.OAuthSuccess = TempData["OAuthSuccess"];
             ViewBag.priceOrder = priceOrder != null && priceOrder.value != null && priceOrder.value.Any() && priceOrder.value.Contains("LtoH");
+            ViewBag.MemberRegister = !MemberRegister;
+            ViewBag.PrivacyPolicy = privacyPolicy != null && privacyPolicy.value != null && privacyPolicy.value.Any() ? string.Join(",", privacyPolicy.value) : "";
+            ViewBag.HasInvoice = HasInvoice;
+            ViewBag.Carrier = Carrier;
             if (template != null)
             {
                 var header = template.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.表頭);

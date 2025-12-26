@@ -292,11 +292,11 @@
             {
                 @if (ViewBag.isLogin)
                 {
-                    <a id="HiUser" class="d-flex px-1 align-items-center" href="/@ViewData["OrgName"]/Member" title="前往會員中心">
+                    <a id="HiUser" class="d-flex px-1 align-items-center" href="/@ViewData["OrgName"]/Member" title="@L.get("GoToMemberCenter")">
                         <span class="material-symbols-outlined">
                             person
                         </span>
-                        <span class="name">已登入</span>
+                        <span class="name">@L.get("LoggedIn")</span>
                     </a>
                 }
                 else

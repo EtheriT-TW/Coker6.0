@@ -11,7 +11,7 @@ namespace EtheriT.Coker.Application.Dto.StoreSet
 	public class StoreSetResponseMessageDto: ResponseMessageDto
 	{
 		public long StoreSetGroupId { get; set; }
-        public List<StoreSetGroupOutputDto>? storeSets {  get; set; }
+        public List<StoreSetGroupOutputDto>? storeGroups {  get; set; }
 		public List<StoreSetDetailOutputDto>? storeSetDetails { get; set; }
 		public StoreSetOutputDto? item {  get; set; }
 		public StoreSetDetailOutputDto? detailItem { get; set; }

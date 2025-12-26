@@ -1,23 +1,38 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using EtheriT.Coker.Application.Shared.Dto.Permissions;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
+using EtheriT.Coker.Application.StoreSet;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
     public class MemberManagementController : Controller
     {
-        public IActionResult MemberSet(int id)
+        private readonly IStoreSetAppService storeSetAppService;
+        public MemberManagementController(IStoreSetAppService storeSetAppService)
         {
-            if (!ModelState.IsValid)
-                return StatusCode(StatusCodes.Status400BadRequest);
-            if (id != 0)
-            {
-                return View("MemberDetails");
-            }
-            return View("MemberData");
+            this.storeSetAppService = storeSetAppService;
+        }
+        public IActionResult Index()
+        {
+            return View();
         }
 
-        public IActionResult MemberList()
+        public async Task<IActionResult> MemberList()
         {
-            return View("MemberList");
+            var key = "MemberRegister";
+            var result = await storeSetAppService.getValues(new StoreSetGetValueInput { 
+                key = key
+            });
+            SavePermissionsItem item = new SavePermissionsItem { 
+                Name = key,
+                IsGranted = false
+            };
+            if (result.Success && result.detailItem != null && result.detailItem.value != null) {
+                item.IsGranted = result.detailItem.value.Contains("3");
+            }
+            return View("MemberList", item);
         }
 
         public IActionResult UserType()

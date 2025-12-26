@@ -1,15 +1,18 @@
 ﻿using AutoMapper;
 using DevExpress.CodeParser;
+using DevExpress.XtraRichEdit.Import.Html;
 using EtheriT.Coker.Application.Authorizaion.Dto;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Newsletter;
 using EtheriT.Coker.Application.Shared.Authorization;
+using EtheriT.Coker.Application.Shared.Common;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.OAuth;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
 using EtheriT.Coker.Application.Shared.Dto.Token;
 using EtheriT.Coker.Application.Shared.Dto.User;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
@@ -58,6 +61,7 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly IMapper mapper;
         private readonly string controllerName;
         private readonly MailAppService mailAppService;
+        private readonly IMailTemplateAppService _mailTemplateAppService;
         private readonly INewsletterAppService newsletterAppService;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly IConfiguration configuration;
@@ -78,6 +82,7 @@ namespace EtheriT.Coker.Application.Authorization
             IConfiguration configuration,
             IShoppingCartAppService shoppingCartAppService,
             ICookieManagerAppService cookieManager,
+            IMailTemplateAppService mailTemplateAppService,
             IHostEnvironment env
         )
         {
@@ -95,6 +100,7 @@ namespace EtheriT.Coker.Application.Authorization
             this.stringHandler = stringHandler;
             this._env = env;
             this.cookieManager = cookieManager;
+            _mailTemplateAppService = mailTemplateAppService;
             controllerName = "Account";
         }
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
@@ -370,14 +376,28 @@ namespace EtheriT.Coker.Application.Authorization
                     ip = loginUserData.GetClientIP() ?? "",
                     UUID = user.u.UUID
                 };
-                var map = new MappingOldNewUUID
-                {
-                    TempUUID = token.UUID,
-                    UserUUID = user.u.UUID
-                };
+                var mapping = db.MappingOldNewUUID.Where(e => e.UserUUID == user.u.UUID && e.TempUUID == token.UUID);
                 db.Tokens.Add(token);
-                db.MappingOldNewUUID.Add(map);
+                if (mapping.Any())
+                {
+                    if (mapping.Count() > 1) {
+                        var keepId = mapping.OrderByDescending(e => e.CreationTime).FirstOrDefault()?.Id ?? 0;
+                        if(keepId != 0) {
+                            var removeMaps = mapping.Where(e => e.Id != keepId);
+                            db.MappingOldNewUUID.RemoveRange(removeMaps);
+                        }
+                    }
+                }
+                else {
+                    var map = new MappingOldNewUUID
+                    {
+                        TempUUID = token.UUID,
+                        UserUUID = user.u.UUID
+                    };
+                    db.MappingOldNewUUID.Add(map);
+                }
                 await db.SaveChangesAsync();
+
                 output.Secret = guid;
                 output.Success = true;
             }
@@ -1031,53 +1051,53 @@ namespace EtheriT.Coker.Application.Authorization
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
+                if (string.IsNullOrEmpty(dto.Email)) throw new Exception("請輸入會員信箱");
                 var website = await db.Websites.Where(e => e.Id == dto.WebsiteId).FirstOrDefaultAsync();
+                if (website == null) throw new Exception("網站資料錯誤");
                 var frontUser = await (from user in db.FrontUsers
                                        join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
                                        where user.Email == dto.Email && mapuserweb.FK_WebsiteId == dto.WebsiteId
                                        select user).FirstOrDefaultAsync();
 
-                if (frontUser != null)
+                if (frontUser != null && !string.IsNullOrEmpty(frontUser.Email))
                 {
                     frontUser.ForgetID = Guid.NewGuid();
                     frontUser.ForgeIDSendDate = DateTime.Now;
                     frontUser.LastModificationTime = DateTime.Now;
                     await loginUserData.SaveChanges(frontUser);
 
-                    var mailhtml = $"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>" +
-                                                    $"<hr/>" +
-                                                    $"<div>請熟記以下重要訊息</div>" +
-                                                    $"<br/>" +
-                                                    $"<div class='d-flex text-bold'><div>您的帳號：</div><u>{dto.Email}</u></div>" +
-                                                    $"<br/>" +
-                                                    $"<div text-bold>密碼重設網址</div>" +
-                                                    $"<a href='{dto.WebsiteLink}/?useraction=passwordforget&forgetid={frontUser.ForgetID}' title='前往開通帳號'>{dto.WebsiteLink}/?useraction=passwordforget&forgetid={frontUser.ForgetID}</a>" +
-                                                    $"<div class='text-gray'>請由該網址進入重新設定您的密碼</div>" +
-                                                    $"<div class='text-gray'>這個連結僅能使用一次，並於 {((DateTime)frontUser.ForgeIDSendDate).AddDays(1)} 到期，請在期限內重設，謝謝。</div>" +
-                                                    $"<br/>" +
-                                                    $"<hr/>" +
-                                                    $"<hr/>" +
-                                                    $"<div class='text-bold text-red'>提醒您：此封『密碼重設通知』為系統發出，請勿直接回覆。</div>" +
-                                                    $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>" +
-                                                    $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>" +
-                                                    $"<hr/>" +
-                                                    $"<hr/>" +
-                                                    $"<br/></div>";
-                    var mailcss = ".text-size1{ font-size: 1rem; } .d-flex{ display: flex; } .text-bold { font-weight: bold; } .text-red { color: red;} .text-gray{ color: gray ; }";
-
-                    await mailAppService.sendMail(new SenderDto
+                    ForgetTemplateResultDto resultDto = new ForgetTemplateResultDto
                     {
-                        Recipients = new List<MailUserDataDto>(){
+                        Email = dto.Email,
+                        WebsiteLink = dto.WebsiteLink,
+                        ForgetID = frontUser.ForgetID.Value,
+                        ForgeIDSendDate = frontUser.ForgeIDSendDate.Value.AddDays(1)
+                    };
+
+                    var mailTemp = await _mailTemplateAppService.GetTemplateRenderAsync(MailTemplateTypeEnum.密碼重設通知, new List<MailTemplateInputDto> { new MailTemplateInputDto { 
+                        Key = frontUser.ForgetID.ToString(),
+                        Model = resultDto
+                    } });
+
+                    if (mailTemp?.Any() == true)
+                    {
+                        var content = mailTemp.First();
+
+                        await mailAppService.sendMail(new SenderDto
+                        {
+                            Recipients = new List<MailUserDataDto>(){
                                     new MailUserDataDto()
                                     {
                                         Name = frontUser.Name,
                                         Email = frontUser.Email,
                                     }
                                 },
-                        Subject = $"【{dto.WebsiteName}】 密碼重設通知",
-                        Body = mailhtml,
-                        Css = mailcss,
-                    }, website.Contact);
+                            Subject = $"【{dto.WebsiteName}】 密碼重設通知",
+                            Body = content?.Body ?? string.Empty,
+                            Css = content?.Style ?? string.Empty,
+                        }, website.Contact);
+                    }
+
                     response.Success = true;
                 }
                 else throw new Exception("會員不存在");

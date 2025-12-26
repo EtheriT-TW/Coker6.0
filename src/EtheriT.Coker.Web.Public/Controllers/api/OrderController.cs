@@ -101,12 +101,6 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             ResponseMessageDto response = new ResponseMessageDto();
             switch (payment)
             {
-                case 1:
-                    var state = (int)OrderStatusEnum.已取消;
-                    response = await orderAppService.OrderStateChange(ohid, state);
-                    if (response.Success && response.Message == "已付款") response.Message = "訂單已取消，請主動聯繫客服處理退款。";
-                    else response.Message = "訂單已取消。";
-                    break;
                 case 2:
                     response = await pchomePayAppService.PChomePayCancelOrder(ohid);
                     break;
@@ -115,6 +109,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                     break;
                 case 4:
                     response = await eCPayAppService.ECPayRefund(ohid);
+                    break;
+                default:
+                    var state = (int)OrderStatusEnum.已取消;
+                    response = await orderAppService.OrderStateChange(ohid, state);
+                    if (response.Success && response.Message == "已付款") response.Message = "訂單已取消，請主動聯繫客服處理退款。";
+                    else response.Message = "訂單已取消。";
                     break;
             }
             if (response.Message == "") response.Message = "支付方式不存在";

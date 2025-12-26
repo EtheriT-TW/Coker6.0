@@ -1,9 +1,13 @@
-﻿using System;
+﻿using EtheriT.Coker.Application.Shared.i18n.en;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -12,18 +16,16 @@ namespace EtheriT.Coker.Application.Shared.i18n
     public static class L
     {
         public static string local { get; set; } = "zh-tw";
-        public static string get(string key, params object?[] args) {
-            string val = string.Empty;
-            Type type = setType();
-            try {
-                object? o = GetStaticMemberValue(type, key);
-                if (o != null) val = o.ToString()??"";
-            }
-            catch(ArgumentException e) {
-                val = "";
-            }
-            if (string.IsNullOrEmpty(val) || args == null || args.Length == 0)
-                return val;
+        private static readonly ConcurrentDictionary<string, IReadOnlyDictionary<string, string>> _cache = new(StringComparer.OrdinalIgnoreCase);
+        public static string get(string key, params object?[] args)
+        {
+            if (string.IsNullOrWhiteSpace(key)) return string.Empty;
+
+            var map = GetLocaleMap(local);
+            if (!map.TryGetValue(key, out var val) || string.IsNullOrEmpty(val))
+                return string.Empty;
+
+            if (args == null || args.Length == 0) return val;
 
             try
             {
@@ -31,59 +33,18 @@ namespace EtheriT.Coker.Application.Shared.i18n
             }
             catch (FormatException)
             {
-                // 若模板或參數不匹配，就走安全替換（僅替換 {數字}）
                 return SafeFormat(val, args);
             }
         }
         public static string getAllJsonString()
-		{
-			Type type = setType();
-            return jsonconvert(type);
-		}
-        private static string jsonconvert(Type type) {
-            string json = "{";
-            var list = type.GetProperties();
-			foreach (PropertyInfo property in list)
-            {
-                var p = type.GetProperty(property.Name, BindingFlags.Static | BindingFlags.Public);
-                object value = "";
-                if (p != null) value = p.GetValue(null)??"";
-				json += $"{property.Name}:\"{value}\",";
-			}
-            json += "}";
-            return json;
-		}
-        private static Type setType() {
-            Type type;
-            switch (local)
-            {
-                case "en":
-                    type = typeof(LocaleEn);
-                    break;
-                default:
-                    type = typeof(Locale);
-                    break;
-            }
-            return type;
-        }
-
-		private static object? GetStaticMemberValue(Type type, string memberName)
         {
-            // 先嘗試取得屬性
-            PropertyInfo? property = type.GetProperty(memberName, BindingFlags.Static | BindingFlags.Public);
-            if (property != null)
-            {
-                return property.GetValue(null);
-            }
+            var map = GetLocaleMap(local);
 
-            // 如果屬性未找到，嘗試取得字段
-            FieldInfo? field = type.GetField(memberName, BindingFlags.Static | BindingFlags.Public);
-            if (field != null)
+            // 產出「合法 JSON」，避免你目前 {Key:"Value",} 這種格式 :contentReference[oaicite:2]{index=2}
+            return JsonSerializer.Serialize(map, new JsonSerializerOptions
             {
-                return field.GetValue(null);
-            }
-
-            throw new ArgumentException($"成員 '{memberName}' 未找到於類別 '{type.Name}'");
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping // 若你有中文/特殊符號，這樣較好讀
+            });
         }
         private static string SafeFormat(string template, object?[] args)
         {
@@ -105,5 +66,32 @@ namespace EtheriT.Coker.Application.Shared.i18n
             // 還原跳脫大括號
             return t.Replace(L, "{").Replace(R, "}");
         }
+        private static IReadOnlyDictionary<string, string> GetLocaleMap(string locale)
+        {
+            return _cache.GetOrAdd(locale, loc =>
+            {
+                var type = GetTypeByLocale(loc);
+                // 把所有 public static string property 一次讀出來
+                var dict = type.GetProperties(BindingFlags.Static | BindingFlags.Public)
+                               .Where(p => p.PropertyType == typeof(string) && p.GetIndexParameters().Length == 0)
+                               .ToDictionary(
+                                   p => p.Name,
+                                   p => (string)(p.GetValue(null) ?? string.Empty),
+                                   StringComparer.OrdinalIgnoreCase
+                               );
+
+                // 如果你未來真的有 field，也可補上（目前你 Locale/LocaleEn 都是 property）
+                foreach (var f in type.GetFields(BindingFlags.Static | BindingFlags.Public)
+                                      .Where(f => f.FieldType == typeof(string)))
+                {
+                    dict[f.Name] = (string)(f.GetValue(null) ?? string.Empty);
+                }
+
+                return dict;
+            });
+        }
+        private static Type GetTypeByLocale(string loc)
+            => string.Equals(loc, "en", StringComparison.OrdinalIgnoreCase) ? typeof(LocaleEn) : typeof(Locale);
+
     }
 }

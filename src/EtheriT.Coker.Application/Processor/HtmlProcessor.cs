@@ -62,6 +62,14 @@ namespace EtheriT.Coker.Application.Processor
 
             return cleanedText;
         }
+        public string ExtractStyleCss(string html)
+        {
+            if (string.IsNullOrWhiteSpace(html)) return string.Empty;
+
+            var doc = LoadHtml(html);
+            var styleNodes = Find(doc, "style");
+            return string.Join(Environment.NewLine, styleNodes.Select(n => n.InnerHtml?.Trim() ?? ""));
+        }
 
         public HtmlDocument LoadHtml(string htmlContent)
         {

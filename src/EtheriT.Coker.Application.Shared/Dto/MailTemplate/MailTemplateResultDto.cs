@@ -10,5 +10,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.MailTemplate
     {
         public string? Key { get; set; }
         public string? Body { get; set; }
+        public string? Style { get; set; }
     }
 }

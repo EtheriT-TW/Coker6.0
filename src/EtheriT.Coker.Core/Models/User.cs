@@ -36,6 +36,7 @@ namespace EtheriT.Coker.Web.Core.Models
         public int ErrorTimes { get; set; }
         public Guid? UUID { get; set; }
         public DateTime? LockTime { get; set; }
+        public List<FrontUser> frontUsers { get; set; }
         public List<MappingUserAndWebsite> Webs { get; set; }
         public List<MappingUserAndRole> Roles { get; set; }
         public List<Permissions> Permissions { get; set; }

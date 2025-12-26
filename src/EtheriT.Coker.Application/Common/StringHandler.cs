@@ -32,9 +32,66 @@ namespace EtheriT.Coker.Application.Common
             string output = HtmlDecode(html);
             return HttpUtility.HtmlEncode(output);
         }
-        public string privacyName(string Name) {
-            return Name.Substring(0, 1) + "○" + Name.Substring(Name.Length - 1);
+        public string MaskName(string? name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "";
+            name = name.Trim();
+            if (name.Length == 1) return "○";
+            if (name.Length == 2) return name.Substring(0, 1) + "○";
+            return name.Substring(0, 1) + "○" + name.Substring(name.Length - 1);
         }
+
+        public string MaskCellPhone(string? phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone)) return "";
+            phone = phone.Trim();
+            if (phone.Length < 7) return "***";
+            return phone.Substring(0, 3) + "****" + phone.Substring(phone.Length - 3);
+        }
+
+        public string MaskTelPhone(string? tel)
+        {
+            if (string.IsNullOrWhiteSpace(tel)) return "";
+            tel = tel.Trim();
+
+            // 支援格式：區碼-號碼、或沒有 '-' 的情況
+            var idx = tel.IndexOf("-");
+            if (idx < 0)
+                return "***"; // 或者保留前 2~3 碼，看你資安規格
+
+            // 保留到 idx+3（區碼+後兩碼）再遮蔽，避免越界
+            var keep = Math.Min(tel.Length, idx + 3);
+            return tel.Substring(0, keep) + "***";
+        }
+
+        public string MaskEmail(string? email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return "";
+            email = email.Trim();
+
+            var at = email.IndexOf("@", StringComparison.Ordinal);
+            if (at <= 0) return "***";
+
+            if (at <= 2) return "***" + email.Substring(at);
+
+            // 前兩碼 + *** + @ 前一碼開始（你原本 Controller 的精神）
+            return email.Substring(0, 2) + "***" + email.Substring(at - 1);
+        }
+
+        public string MaskAddress(string? address)
+        {
+            if (string.IsNullOrWhiteSpace(address)) return "";
+            var a = address.Replace(" ", "");
+
+            // 最簡規則：保留前面、尾端遮蔽
+            return a.Length <= 3 ? "***" : a.Substring(0, a.Length - 3) + "***";
+        }
+
+        public string NormalizeKeyword(string? keyword)
+        {
+            return string.IsNullOrWhiteSpace(keyword) ? "" : keyword.Trim();
+        }
+
         public string RandonCode(RandomStringType type,int length ) { 
             string str = string.Empty;
             switch (type) {

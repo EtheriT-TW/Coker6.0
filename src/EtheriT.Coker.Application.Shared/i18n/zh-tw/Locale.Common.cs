@@ -26,5 +26,10 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string No { get; } = "否";
         public static string Confirm { get; } = "確定";
         public static string Cancel { get; } = "取消";
+        public static string Processing { get; } = "資料處理中";
+        public static string FormReceivedPleaseWait { get; } = "已收到您填寫的資料，請稍後。";
+        public static string Notice { get; } = "請注意";
+        public static string PleaseEnterSearchText { get; } = "請輸入搜尋文字";
+        public static string CloseWindow { get; } = "關閉視窗";
     }
 }

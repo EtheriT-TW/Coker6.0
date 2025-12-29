@@ -243,6 +243,7 @@ namespace EtheriT.Coker.Application
             try
             {
                 long id = await GetWebsiteId();
+                if (id == 0) id = GetFrontWebsiteId();
                 var website = await db.Websites.Where(w => w.Id == id).FirstOrDefaultAsync();
                 if (website != null) local = website.Locale;
             }

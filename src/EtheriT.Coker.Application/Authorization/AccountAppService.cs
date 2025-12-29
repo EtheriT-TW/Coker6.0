@@ -15,6 +15,7 @@ using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
 using EtheriT.Coker.Application.Shared.Dto.Token;
 using EtheriT.Coker.Application.Shared.Dto.User;
+using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
@@ -169,8 +170,8 @@ namespace EtheriT.Coker.Application.Authorization
             LoginOutputDto output = new LoginOutputDto() { Success = false };
             try
             {
-                if (string.IsNullOrEmpty(dto.Email)) throw new Exception("電子信箱不可為空");
-                else if (string.IsNullOrEmpty(dto.Password)) throw new Exception("密碼不可為空");
+                if (string.IsNullOrEmpty(dto.Email)) throw new Exception(L.get("EmailRequired"));
+                else if (string.IsNullOrEmpty(dto.Password)) throw new Exception(L.get("PasswordRequired"));
 
                 var tokenItem = await tokenAppService.CreateToken();
                 Guid Temp_UUID = await tokenAppService.GetUUID();
@@ -188,7 +189,7 @@ namespace EtheriT.Coker.Application.Authorization
                 {
                     if (frontuser.Status == (int)UserStatusEnum.鎖定 && frontuser.LockTime != null && ((DateTime)frontuser.LockTime).AddMinutes(15).CompareTo(DateTime.Now) > 0)
                     {
-                        throw new Exception($"帳號鎖定中，請於{((DateTime)frontuser.LockTime).AddMinutes(15)}後再次嘗試。");
+                        throw new Exception(L.get("AccountLocked", ((DateTime)frontuser.LockTime).AddMinutes(15)));
                     }
                     else
                     {
@@ -198,8 +199,8 @@ namespace EtheriT.Coker.Application.Authorization
                             if (frontuser.Status == (int)UserStatusEnum.未開通)
                             {
                                 output.Success = false;
-                                output.Message = "重新寄送通知信";
-                                throw new Exception("尚未開通會員，請至郵箱確認或重新寄送通知信。");
+                                output.Message = L.get("ResendActivationMail");
+                                throw new Exception(L.get("MemberNotActivated"));
                             }
                             else
                             {
@@ -242,7 +243,7 @@ namespace EtheriT.Coker.Application.Authorization
                                 db.SaveChanges();
 
                                 output.Success = false;
-                                throw new Exception("密碼錯誤次數三次以上，請於15分鐘後再次嘗試。");
+                                throw new Exception(L.get("PasswordErrorTooMany"));
                             }
                             else
                             {
@@ -254,12 +255,12 @@ namespace EtheriT.Coker.Application.Authorization
                                 db.SaveChanges();
 
                                 output.Success = false;
-                                throw new Exception("帳號或密碼有誤，請重新輸入");
+                                throw new Exception(L.get("AccountOrPasswordIncorrect"));
                             }
                         }
                     }
                 }
-                else throw new Exception("帳號或密碼有誤，請重新輸入");
+                else throw new Exception(L.get("AccountOrPasswordIncorrect"));
             }
             catch (Exception e)
             {
@@ -896,7 +897,7 @@ namespace EtheriT.Coker.Application.Authorization
                         if (frontUser.OpenIDSendDate.AddDays(1).CompareTo(DateTime.Now) < 0)
                         {
                             response.Message = "ReSendOrNot";
-                            throw new Exception("開通連結已失效，是否重新寄送？");
+                            throw new Exception(L.get("ActivationLinkExpiredResend"));
                         }
                         else
                         {
@@ -912,9 +913,9 @@ namespace EtheriT.Coker.Application.Authorization
                             response.Success = true;
                         }
                     }
-                    else if (frontUser.Status == (int)UserStatusEnum.開通) throw new Exception("帳號已開通。");
+                    else if (frontUser.Status == (int)UserStatusEnum.開通) throw new Exception(L.get("AccountActivated"));
                 }
-                else throw new Exception("連結已失效。");
+                else throw new Exception(L.get("LinkExpired"));
             }
             catch (Exception ex)
             {
@@ -1120,7 +1121,7 @@ namespace EtheriT.Coker.Application.Authorization
                 {
                     response.Success = true;
                 }
-                else throw new Exception("連結已失效");
+                else throw new Exception(L.get("LinkExpired"));
             }
             catch (Exception ex)
             {
@@ -1157,7 +1158,7 @@ namespace EtheriT.Coker.Application.Authorization
                         {
                             if (frontUser.Status == (int)UserStatusEnum.鎖定 && frontUser.LockTime != null && ((DateTime)frontUser.LockTime).AddMinutes(15).CompareTo(DateTime.Now) > 0)
                             {
-                                throw new Exception($"帳號鎖定中，請於{((DateTime)frontUser.LockTime).AddMinutes(15)}後再次嘗試。");
+                                throw new Exception(L.get("AccountLocked", ((DateTime)frontUser.LockTime).AddMinutes(15)));
                             }
                             if (!passwordHasher.VerifyHashedPassword(frontUser.Password, dto.OldPassword))
                             {
@@ -1184,12 +1185,12 @@ namespace EtheriT.Coker.Application.Authorization
                                     db.Account_Logs.Add(account_Log);
                                     db.SaveChanges();
 
-                                    response.Message = "密碼錯誤";
-                                    throw new Exception("密碼錯誤次數三次以上，請於15分鐘後再次嘗試。");
+                                    response.Message = L.get("PasswordIncorrect");
+                                    throw new Exception(L.get("PasswordErrorTooMany"));
                                 }
                                 await loginUserData.SaveChanges(frontUser);
-                                response.Message = "密碼錯誤";
-                                throw new Exception("舊有密碼輸入錯誤，請重新輸入。");
+                                response.Message = L.get("PasswordIncorrect");
+                                throw new Exception(L.get("OldPasswordIncorrect"));
                             }
                         }
                     }

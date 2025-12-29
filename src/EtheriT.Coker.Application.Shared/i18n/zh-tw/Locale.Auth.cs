@@ -198,5 +198,23 @@
         public static string InfoResendMemberWelcomeMail { get; } = "系統將立即重新發送『加入會員通知』信函至您所登錄之 E-Mail 中。請靜候開通帳號通知信。";
         public static string GoToMemberCenter { get; } = "前往會員中心";
         public static string LoggedIn { get; } = "已登入";
+        public static string PasswordResetSuccess { get; } = "密碼重置成功，請重新登入。";
+        public static string PasswordIncorrect { get; } = "密碼錯誤";
+        public static string PasswordErrorTooMany { get; } = "密碼錯誤次數三次以上，請於15分鐘後再次嘗試。";
+        public static string OldPasswordIncorrect { get; } = "舊有密碼輸入錯誤，請重新輸入。";
+        public static string AccountLocked { get; } =  "帳號鎖定中，請於 {0} 後再次嘗試。";
+        public static string MemberNotFound { get; } = "會員不存在";
+        public static string TokenInvalid { get; } =  "Token 錯誤";
+        public static string ActivationLinkExpiredResend { get; } = "開通連結已失效，是否重新寄送？";
+        public static string AccountActivated { get; } = "帳號已開通。";
+        public static string LinkExpired { get; } = "連結已失效。";
+        public static string WelcomeBack { get; } = "歡迎回來";
+        public static string ResendActivationMail { get; } = "重新寄送通知信";
+        public static string SystemResendingActivationMail { get; } = "系統將重新發送『加入會員通知』信函至您所登錄之 E-Mail 中。請靜候開通帳號通知信。";
+        public static string SystemSendingResetMail { get; } = "系統將立即發送『密碼重設通知』信函至您所登錄之 E-Mail 中，此信函中包含您所設定之登入帳號 (即 E-mail)、密碼。請靜候密碼重設通知信。";
+        public static string EmailRequired { get; } = "電子信箱不可為空";
+        public static string PasswordRequired { get; } = "密碼不可為空";
+        public static string MemberNotActivated { get; } = "尚未開通會員，請至郵箱確認或重新寄送通知信。";
+        public static string AccountOrPasswordIncorrect { get; } = "帳號或密碼有誤，請重新輸入";
     }
 }

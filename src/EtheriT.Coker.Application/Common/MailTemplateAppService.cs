@@ -14,25 +14,29 @@ namespace EtheriT.Coker.Application.Common
 {
     public class MailTemplateAppService : IMailTemplateAppService
     {
+        private readonly LoginUserData loginUserData;
         private readonly IHtmlProcessor htmlProcessor;
-        public MailTemplateAppService(IHtmlProcessor htmlProcessor)
+        public MailTemplateAppService(LoginUserData loginUserData, IHtmlProcessor htmlProcessor)
         {
+            this.loginUserData = loginUserData;
             this.htmlProcessor = htmlProcessor;
         }
 
-        public Task<List<MailTemplateResultDto>> GetTemplateRenderAsync(MailTemplateTypeEnum templateType, List<MailTemplateInputDto> input)
+        public async Task<List<MailTemplateResultDto>> GetTemplateRenderAsync(MailTemplateTypeEnum templateType, List<MailTemplateInputDto> input)
         {
+            string lang = await loginUserData.GetWebsiteLocal();
             string templateFilePath = string.Empty;
+
             switch (templateType)
             {
                 case MailTemplateTypeEnum.紅利異動:
-                    templateFilePath = "Views/MailTemplate/TransactionMailTemplate.cshtml";
+                    templateFilePath = $"Views/MailTemplate/Bonus/TransactionMailTemplate.{lang}.cshtml";
                     break;
                 case MailTemplateTypeEnum.後台會員建置:
-                    templateFilePath = "Views/MailTemplate/BackendAddFrontUserMailTemplate.cshtml";
+                    templateFilePath = $"Views/MailTemplate/ResetPassword/BackendAddFrontUserMailTemplate.{lang}.cshtml";
                     break;
                 case MailTemplateTypeEnum.密碼重設通知:
-                    templateFilePath = "Views/MailTemplate/ForgetPasswordMailTemplate.cshtml";
+                    templateFilePath = $"Views/MailTemplate/Forget/ForgetPasswordMailTemplate.{lang}.cshtml";
                     break;
                 default:
                     break;
@@ -73,7 +77,7 @@ namespace EtheriT.Coker.Application.Common
                 });
             }
 
-            return Task.FromResult(result);
+            return result;
         }
     }
 }

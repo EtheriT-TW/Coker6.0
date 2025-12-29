@@ -854,7 +854,7 @@ function LoginAction() {
     data.Remember = $("#CheckRemember").prop("checked");
     co.User.Login(data).done((result) => {
         if (result.success) {
-            Coker.sweet.success("歡迎回來！", function () {
+            Coker.sweet.success(local.WelcomeBack, function () {
                 if (gotoMember == "true") {
                     window.location.href = `/${OrgName}/Member`;
                 } else {
@@ -863,14 +863,14 @@ function LoginAction() {
             }, false);
         } else {
             switch (result.message) {
-                case "重新寄送通知信":
-                    Coker.sweet.confirm(result.error, "", result.message, "關閉視窗", function () {
+                case local.ResendActivationMail:
+                    Coker.sweet.confirm(result.error, "", result.message, local.CloseWindow, function () {
                         Coker.sweet.loading();
                         data.WebsiteLink = $(location).attr('origin');
                         data.WebsiteName = $("meta[property='og:site_name'").attr("content");
                         co.User.AccountReSendOpening(data).done(result => {
                             if (result.success) {
-                                Coker.sweet.success("系統將重新發送『加入會員通知』信函至您所登錄之E-Mail中。請靜候開通帳號通知信。", null, false);
+                                Coker.sweet.success(local.SystemResendingActivationMail, null, false);
                             } else {
                                 console.log(result.error);
                                 console.log(result.message);
@@ -882,7 +882,6 @@ function LoginAction() {
                     Coker.sweet.error(result.error, null, false);
                     break;
             }
-            console.log(result)
             NewCaptcha($LoginImgCaptcha, $InputLoginVCode);
         }
     })
@@ -934,7 +933,7 @@ function ForgetAction() {
     data.WebsiteName = $("meta[property='og:site_name'").attr("content");
     co.User.PasswordForget(data).done((result) => {
         if (result.success) {
-            Coker.sweet.success("系統將立即發送『密碼重設通知』信函至您所登錄之E-Mail中，此信函中包含您所設定之登入帳號(即E-mail)、密碼。請靜候密碼重設通知信。", null, false);
+            Coker.sweet.success(local.SystemSendingResetMail, null, false);
             registerModal.hide();
         } else {
             Coker.sweet.error(result.error, null, true);
@@ -948,14 +947,14 @@ function ResetAction(forgetid) {
     data.WebsiteId = SiteId;
     co.User.PasswordChange(data).done((result) => {
         if (result.success) {
-            Coker.sweet.success("密碼重置成功，請重新登入。", function () {
+            Coker.sweet.success(local.PasswordResetSuccess, function () {
                 resetModal.hide();
                 loginModal.show();
             }, false);
         } else {
             switch (result.message) {
-                case "密碼錯誤":
-                    Coker.sweet.confirm(result.error, "", "忘記密碼?", "確定", function () {
+                case local.PasswordIncorrect:
+                    Coker.sweet.confirm(result.error, "", `${local.ForgotPassword}?`, local.Confirm, function () {
                         $("#ResetModal .btn_resetforget").click();
                     })
                     NewCaptcha($ResetImgCaptcha, $InputResetVCode);
@@ -1423,8 +1422,8 @@ var Coker = {
     sweet: {
         loading: function () {
             Swal.fire({
-                title: "資料處理中",
-                html: "已收到您填寫的資料，請稍後。",
+                title: local.Processing,
+                html: local.FormReceivedPleaseWait,
                 allowOutsideClick: false,
                 didOpen: () => {
                     Swal.showLoading();
@@ -1464,7 +1463,7 @@ var Coker = {
                 showConfirmButton: !autoclose,
                 showCancelButton: false,
                 confirmButtonColor: '#3085d6',
-                confirmButtonText: '確定',
+                confirmButtonText: local.Confirm,
                 timer: closetime,
                 allowOutsideClick: false,
             }).then((result) => {
@@ -1484,7 +1483,7 @@ var Coker = {
                 showConfirmButton: !autoclose,
                 showCancelButton: false,
                 confirmButtonColor: '#3085d6',
-                confirmButtonText: '確定',
+                confirmButtonText: local.Confirm,
                 timer: closetime,
                 allowOutsideClick: false,
             }).then((result) => {
@@ -1517,7 +1516,7 @@ var Coker = {
                 showConfirmButton: true,
                 showCancelButton: false,
                 confirmButtonColor: '#3085d6',
-                confirmButtonText: '確定',
+                confirmButtonText: local.Confirm,
                 timer: false,
                 allowOutsideClick: false,
             }).then((result) => {
@@ -1533,7 +1532,7 @@ var Coker = {
                 icon: "warning",
                 showCancelButton: typeof (action) == "function",
                 confirmButtonColor: "#3085d6",
-                confirmButtonText: "確定"
+                confirmButtonText: local.Confirm
             }).then((result) => {
                 if (typeof (action) == "function") action();
             });
@@ -1568,7 +1567,7 @@ var Coker = {
             });
             $e.find(".btn_sear").on("click", function () {
                 if ($t.val() == "") {
-                    co.sweet.warning("請注意", "請輸入搜尋文字", function () {
+                    co.sweet.warning(local.Notice, local.PleaseEnterSearchText, function () {
                         setTimeout(function () { $t2.trigger("focus"); }, 300);
                     }, false);
                 } else {

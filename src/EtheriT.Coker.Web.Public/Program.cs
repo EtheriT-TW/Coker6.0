@@ -24,6 +24,7 @@ using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Authorization;
+using EtheriT.Coker.Application.Shared.Common;
 using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Shared.Favorites;
 using EtheriT.Coker.Application.Shared.Freight;
@@ -226,6 +227,7 @@ builder.Services.AddScoped<ISitemap, Sitemap>();
 builder.Services.AddScoped<IHtmlProcessor, HtmlProcessor>();
 builder.Services.AddScoped<ITemplatesApplicationService, TemplatesApplicationService> ();
 builder.Services.AddScoped<ICookieManagerAppService, CookieManagerAppService>();
+builder.Services.AddScoped<IMailTemplateAppService, MailTemplateAppService>();
 builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<CustomDtoMapper>();});
 
 builder.Services.AddSingleton<JumpRedirectCache>();

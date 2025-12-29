@@ -26,5 +26,10 @@ namespace EtheriT.Coker.Application.Shared.i18n.en
         public static string No { get; } = "No";
         public static string Confirm { get; } = "Confirm";
         public static string Cancel { get; } = "Cancel";
+        public static string Processing { get; } = "Processing...";
+        public static string FormReceivedPleaseWait { get; } = "We have received your information. Please wait a moment.";
+        public static string Notice { get; } = "Notice";
+        public static string PleaseEnterSearchText { get; } = "Please enter search text.";
+        public static string CloseWindow { get; } = "Close";
     }
 }

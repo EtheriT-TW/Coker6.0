@@ -1,0 +1,28 @@
+﻿@model EtheriT.Coker.Web.MVC.Models.MailTemplate.TransactionMailTemplateModel
+
+Hello, valued member,
+<br />
+We have updated the bonus points in your account on @Model.TransactionDateTime. Please review the details below:
+<br />
+▶️ Transaction Type: @Model.TransactionOperationName Bonus Points
+<br />
+▶️ Points Changed: @Model.TransactionOperation@Model.TransactionPoint pts
+<br />
+▶️ Reason: @Model.TransactionDescription
+<br />
+<br />
+@if (Model.TransactionOperation != "-")
+{
+    @:Bonus Points Validity: The validity of each bonus point grant is based on the terms at the time of issuance.
+    <br />
+}
+
+If you have any questions regarding this update, please contact our customer service team. We are always happy to assist you.
+<br />
+Thank you for your continued support!
+<br />
+—
+<br />
+@Model.WebSiteName
+<br />
+@Model.WebSiteUrl

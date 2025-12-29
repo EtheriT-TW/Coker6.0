@@ -197,5 +197,23 @@
         public static string InfoResendMemberWelcomeMail { get; } = "A “Welcome / Account Activation” email will be resent to your registered email address. Please check your inbox.";
         public static string GoToMemberCenter { get; } = "Go to member center";
         public static string LoggedIn { get; } = "Logged in";
+        public static string PasswordResetSuccess { get; } = "Your password has been reset successfully. Please sign in again.";
+        public static string PasswordIncorrect { get; } = "Incorrect password.";
+        public static string PasswordErrorTooMany { get; } = "Too many failed attempts. Please try again in 15 minutes.";
+        public static string OldPasswordIncorrect { get; } = "The current password you entered is incorrect. Please try again.";
+        public static string AccountLocked { get; } = "Your account has been locked for security reasons. Please try again after {0}.";
+        public static string MemberNotFound { get; } = "Member not found.";
+        public static string TokenInvalid { get; } = "Invalid token.";
+        public static string ActivationLinkExpiredResend { get; } = "The activation link has expired. Would you like to resend it?";
+        public static string AccountActivated { get; } = "Your account has already been activated.";
+        public static string LinkExpired { get; } = "The link has expired.";
+        public static string WelcomeBack { get; } = "Welcome back";
+        public static string ResendActivationMail { get; } = "Resend activation email";
+        public static string SystemResendingActivationMail { get; } = "We will resend the membership activation email to your registered email address. Please wait for the activation instructions.";
+        public static string SystemSendingResetMail { get; } = "We will send a password reset email to your registered email address shortly.The email will include your login account(email) and password.Please wait for the reset instructions.";
+        public static string EmailRequired { get; } = "Email address is required.";
+        public static string PasswordRequired { get; } = "Password is required.";
+        public static string MemberNotActivated { get; } = "Your account has not been activated yet. Please check your email or resend the activation email.";
+        public static string AccountOrPasswordIncorrect { get; } = "The account or password you entered is incorrect. Please try again.";
     }
 }

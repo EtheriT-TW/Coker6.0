@@ -266,6 +266,7 @@ function DataSave() {
     }
 }
 function ForgetPassword() {
+    co.sweet.loading();
     co.Member.ForgetPassword(keyId).done(function (resulte) {
         if (resulte.success) co.sweet.success("已成功寄出忘記密碼驗證信");
         else co.sweet.error(resulte.error);

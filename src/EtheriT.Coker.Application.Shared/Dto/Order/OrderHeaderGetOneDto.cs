@@ -1,5 +1,6 @@
 ﻿
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Order
 {
@@ -14,10 +15,13 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? RecipientTelePhone { get; set; }
         public string RecipientCellPhone { get; set; }
         public string RecipientAddress { get; set; }
-        public int InvoiceRecipient { get; set; }
+        public InvoiceTypeEnum? InvoiceType { get; set; }
+        public string? Carrier { get; set; }
+        public string? InvoiceTypeTitle { get; set; }
+        public int? InvoiceRecipient { get; set; }
         public string? InvoiceTitle { get; set; }
         public string? UniformId { get; set; }
-        public string InvoiceAddress { get; set; }
+        public string? InvoiceAddress { get; set; }
         public string Payment { get; set; }
         public long PaymentCode { get; set; }
         public string PaymentIcon { get; set; }

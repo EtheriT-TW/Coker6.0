@@ -489,8 +489,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     var db_sp = await db.Prod_Specs.ToListAsync();
                     if (db_sp.Any())
                     {
-                        temp_output.S1Title = shoppingCart.FK_S1id != null ? db_sp.Find(e => e.Id == shoppingCart.FK_S1id)?.Title ?? "" : "";
-                        temp_output.S2Title = shoppingCart.FK_S2id != null ? db_sp.Find(e => e.Id == shoppingCart.FK_S2id)?.Title ?? "" : "";
+                        temp_output.S1Title = shoppingCart.Prod_Stock.FK_S1id != null ? db_sp.Find(e => e.Id == shoppingCart.Prod_Stock.FK_S1id)?.Title ?? "" : "";
+                        temp_output.S2Title = shoppingCart.Prod_Stock.FK_S2id != null ? db_sp.Find(e => e.Id == shoppingCart.Prod_Stock.FK_S2id)?.Title ?? "" : "";
                     }
 
                     var psid = prod_stocks?.Id;

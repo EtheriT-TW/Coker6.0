@@ -263,7 +263,7 @@
                                 {
                                     @if (ViewBag.isLogin)
                                     {
-                                        <span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="加入/移除收藏">
+                                        <span class="d-inline-block favorites" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="加入/移除收藏">
                                             <button class="btn_move_to_favorites bg-transparent border-0">
                                                 <i class="fa-regular fa-heart text-danger"></i>
                                                 <span class="d-none">加入/移除收藏</span>
@@ -578,8 +578,8 @@
                                     <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
                                     <div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
                                     <div class="form-floating mb-3 col-12 col-sm-6">
-                                        <input id="InvoiceInputAddress" name="invoiceAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="" required>
-                                        <label class="px-4 required" for="InvoiceInputAddress">地址</label>
+                                        <input id="InvoiceInputAddress" name="invoiceAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="">
+                                        <label class="px-4" for="InvoiceInputAddress">地址</label>
                                     </div>
                                 </div>
                             </form>
@@ -860,10 +860,10 @@
                             </div>
                         </div>
                     </div>
-                    @if (ViewBag.Carrier.Count > 0)
+                    @if (ViewBag.HasInvoice)
                     {
-                        <div class="invoice_type">
-                            <div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">發票類型：<span data-key="typeTitle"></span></div>
+                        <div class="invoice_type" data-carrier-count="@ViewBag.Carrier.Count">
+                            <div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">發票類型：<span class="fs-6" data-key="typeTitle"></span></div>
                             <div class="content">
                                 <div class="row">
                                     <div class="col-auto col-sm-2 text-end ps-4">型  別：</div>

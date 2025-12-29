@@ -35,13 +35,14 @@ namespace EtheriT.Coker.Core.Models
         public string RecipientAddress { get; set; }
         [StringLength(500)]
         public string? Remark { get; set; }
-        public int InvoiceRecipient { get; set; }
-        public InvoiceTypeEnum InvoiceType { get; set; }
+        public int? InvoiceRecipient { get; set; }
+        public InvoiceTypeEnum? InvoiceType { get; set; }
         public PersonalInvoiceTypeEnum? PersonalInvoiceType { get; set; }
         public string? Carrier { get; set; }
         public string? InvoiceTitle { get; set; }
         public string? UniformId { get; set; }
-        public string InvoiceAddress { get; set; }
+        [StringLength(250)]
+        public string? InvoiceAddress { get; set; }
         public long Shipping { get; set; }
         public long Payment { get; set; }
         public OrderStatusEnum State { get; set; }

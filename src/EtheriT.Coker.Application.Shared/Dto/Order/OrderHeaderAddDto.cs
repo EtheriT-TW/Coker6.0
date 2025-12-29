@@ -22,11 +22,11 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string RecipientCellPhone { get; set; }
         public string RecipientAddress { get; set; }
         public string? Remark { get; set; }
-        public int InvoiceRecipient { get; set; }
+        public int? InvoiceRecipient { get; set; }
         public string? InvoiceTitle { get; set; }
         public string? UniformId { get; set; }
-        public string InvoiceAddress { get; set; }
-        public InvoiceTypeEnum? InvoiceType { get; set; }
+        public string? InvoiceAddress { get; set; }
+        public InvoiceTypeEnum? InvoiceType { get; set; } = InvoiceTypeEnum.不開發票;
         public PersonalInvoiceTypeEnum? PersonalInvoiceType { get; set; }
         public string? Carrier { get; set; }
         public int Shipping { get; set; }

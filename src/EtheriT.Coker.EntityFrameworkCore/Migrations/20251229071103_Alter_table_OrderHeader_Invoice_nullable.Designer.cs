@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251229071103_Alter_table_OrderHeader_Invoice_nullable")]
+    partial class Alter_table_OrderHeader_Invoice_nullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4614,7 +4617,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             jobID = "M001",
                             key = "HasInvoice",
-                            memo = "網站是否需要開立發票",
+                            memo = "訂單是否供客戶選擇開立發票方式。",
                             name = "開立發票",
                             pattern = "",
                             type = 5
@@ -4644,7 +4647,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             jobID = "E001",
                             key = "PrivacyPolicy",
                             maxlength = 5000,
-                            memo = "請輸入隱私聲明內文(本區塊支援 Markdown 標記語法，### 表示標題，**文字** 表示字粗體)",
+                            memo = "請輸入隱私聲明內文",
                             name = "隱私聲明",
                             pattern = "",
                             type = 2
@@ -6313,7 +6316,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDefault = false,
                             IsDeleted = false,
                             Key = "EnabledInvoice",
-                            Value = "是"
+                            Value = "允許"
                         },
                         new
                         {
@@ -6324,7 +6327,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDefault = false,
                             IsDeleted = false,
                             Key = "DisabledInvoice",
-                            Value = "否"
+                            Value = "不允許"
                         },
                         new
                         {

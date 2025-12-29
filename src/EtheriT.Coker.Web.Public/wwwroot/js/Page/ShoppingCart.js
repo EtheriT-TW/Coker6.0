@@ -509,7 +509,6 @@ function PageReady() {
 
     $(".btn_checkout").on("click", function () {
         ECPayMonitor = false;
-        console.log("ECPayMonitor Change", ECPayMonitor)
         Step3Monitor();
         if (!OrdererFilled) {
             if (!OrdererOpen) OrdererEdit(true);
@@ -1000,7 +999,7 @@ function CartListAdd(data, $container) {
     if ($template.find(".btn_move_to_favorites").length > 0) {
         if (islogin) {
             var $btn_favorites = $template.find(".btn_move_to_favorites");
-            $btn_favorites.parent("span").removeClass("d-none");
+            if(data.quantity) $btn_favorites.parent("span").removeClass("d-none");
 
             Coker.Favorites.Check(data.pId).done(function (check) {
                 if (check.success) {
@@ -1167,7 +1166,7 @@ function CartListInsert($frame, data) {
             if (data['quantity'] == 0) {
                 $frame.find(".nostock").removeClass("d-none");
                 $frame.find(".content").addClass("d-none");
-                $frame.find(".btn_side_icon").addClass("d-none");
+                $frame.find(".btn_side_icon .favorites").addClass("d-none");
             }
         }
     });
@@ -1357,8 +1356,7 @@ function RadioPayment() {
 }
 function Step3Monitor() {
 
-    OrdererFilled = FormCheck(OrdererForms)
-
+    OrdererFilled = FormCheck(OrdererForms)    
     if (RecipientOpen) {
         RecipientFilled = FormCheck(RecipientForms);
     } else {
@@ -1369,9 +1367,10 @@ function Step3Monitor() {
                 break;
         }
     }
-
     if (InvoiceOpen) {
         InvoiceFilled = FormCheck(InvoiceForms)
+    } else if ($(`[name="InvoiceRadio"]`).length == 0) {
+        InvoiceFilled = true;
     } else {
         switch ($(`[name="InvoiceRadio"]:checked`).val()) {
             case "order":
@@ -1773,7 +1772,7 @@ function RecipientDataGet() {
 function InvoiceDataGet() {
     switch ($(`[name="InvoiceType"]:checked`).val()) {
         case "personal":
-            if (!FormCheck(InvoicePersonalTypeForms)) return false;
+            if (InvoicePersonalTypeForms.length && !FormCheck(InvoicePersonalTypeForms)) return false;
             order_header_data.invoiceType = 1;
             invoiceType_data.typeTitle = "個人發票";
             switch ($(`[name="PersonalInvoiceMode"]:checked`).val()) {
@@ -2381,20 +2380,18 @@ function TWZipCodeInit() {
 
     $county.children('select').attr({
         id: "InvoiceSelectCity",
-        class: "bill_city form-select",
-        required: "required"
+        class: "bill_city form-select"
     });
-    $county.append("<label class='px-4 required' for='InvoiceSelectCity'>縣市</label>");
+    $county.append("<label class='px-4' for='InvoiceSelectCity'>縣市</label>");
     var $county_first_option = $county.children('select').children('option').first();
     $county_first_option.text("請選擇縣市");
     $county_first_option.attr('disabled', 'disabled');
 
     $district.children('select').attr({
         id: "InvoiceSelectTown",
-        class: "bill_town form-select",
-        required: "required"
+        class: "bill_town form-select"
     });
-    $district.append("<label class='px-4 required' for='InvoiceSelectCity'>鄉鎮</label>");
+    $district.append("<label class='px-4' for='InvoiceSelectCity'>鄉鎮</label>");
     var $district_first_option = $district.children('select').children('option').first();
     $district_first_option.text("請選擇鄉鎮");
     $district_first_option.attr('disabled', 'disabled');

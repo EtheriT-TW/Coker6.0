@@ -263,6 +263,9 @@ function FormDataClear() {
     $(".btn_refund").addClass("d-none");
     $(".btn_checkrefund").addClass("d-none");
     $(".btn_failReason").addClass("d-none");
+    $("#InvoiceType").addClass("d-none");
+    $("#InvoiceData").addClass("d-none");
+
 
     $recipient_name.text("")
     $recipient_cellphone.text("")
@@ -419,8 +422,12 @@ function HeaderDataSet(result) {
     else $orderer_telphone.text("-");
 
     $memo_block.val(result.memo);
-
-    $("#InvoiceData").find("*").each(function () {
+    if (result.invoiceType != 3) {
+        $("#InvoiceData,#InvoiceType").removeClass("d-none");
+    }
+    if (result.carrier == null) $("#MobileCarrier").addClass("d-none");
+    else $("#MobileCarrier").removeClass("d-none");
+    $("#InvoiceData,#InvoiceType").find("*").each(function () {
         var $self = $(this);
         if (typeof ($self.data("key")) != "undefined") {
             var key = $self.data("key");

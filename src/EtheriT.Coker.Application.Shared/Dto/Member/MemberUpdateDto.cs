@@ -18,5 +18,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Member
         public string? TelPhone { get; set; }
         public string? Address { get; set; }
         public long? RoleId { get; set; }
+        public DateTime? Birthday { get; set; }
     }
 }

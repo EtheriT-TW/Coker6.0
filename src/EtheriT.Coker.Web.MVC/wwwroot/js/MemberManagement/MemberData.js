@@ -1,7 +1,7 @@
 ﻿var new_pass_show = false, check_pass_show = false, isMailLock = false, BasicInfoFilled = false, LoginMailFilled = false, PassIsCheck = true
 var BasicInfoForm, LoginMailForm
 var $btn_mail_lock, $btn_newpass_lock, $btn_checkpass_lock, $newpass, $passcheck, $NewPassFeedBack, $Tags
-var $member_number, $name, $sex, $status, $level, $email_basic, $cellphone, $telphone_area, $telphone, $telphone_ext, $address_city, $address_town, $address, $email_login, $newpass, $passcheck
+var $member_number, $name, $sex, $status, $level, $email_basic, $birthday, $cellphone, $telphone_area, $telphone, $telphone_ext, $address_city, $address_town, $address, $email_login, $newpass, $passcheck
 var member_list, keyId
 let isInit = false;
 function PageReady() {
@@ -98,6 +98,7 @@ function ElementInit() {
     $status = $("select[name='MemberStatus']");
     $level = $("select[name='MemberLevel']");
     $email_basic = $("#InputMailBasic");
+    $birthday = $("#InputBirthday");
     $cellphone = $("#InputCellPhone");
     $telphone_area = $("#InputTelPhoneArea");
     $telphone = $("#InputTelPhone");
@@ -131,6 +132,7 @@ function FormDataClear() {
     $email_login.val("");
     $newpass.val("");
     $passcheck.val("");
+    $birthday.val("");
 
     $("#MemberLevel ").val(0);
     $(".latest_order").children().not(".no_clear").remove();
@@ -204,6 +206,10 @@ function FormDataSet(result) {
     }
     $email_basic.val(result.email);
     $cellphone.val(result.cellPhone);
+    if (result.birthday) {
+        const date = result.birthday.substring(0, 10);
+        $birthday.val(date);
+    }
     if (result.telPhone != null) {
         var telphone_split = result.telPhone.split("-");
         $telphone_area.val(telphone_split[0]);
@@ -278,6 +284,7 @@ function Update(success_text, error_text) {
         Status: $status.val(),
         Level: $level.val(),
         Email: $email_basic.val(),
+        Birthday: $birthday.val(),
         CellPhone: $cellphone.val(),
         TelPhone: $telphone_area.val() == "" ? "" : $telphone_area.val() + "-" + $telphone.val() + ($telphone_ext.val() == "" ? "" : "#" + $telphone_ext.val()),
         Address: $address_city.val() + " " + $address_town.val() + " " + $address.val(),

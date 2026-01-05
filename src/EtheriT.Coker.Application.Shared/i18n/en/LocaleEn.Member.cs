@@ -55,7 +55,8 @@ namespace EtheriT.Coker.Application.Shared.i18n.en
 
         public static string EmptyBrowsingHistory { get; } = "No browsing history found";
         public static string NoteBrowsingHistorySixMonthsOnly { get; } = "* Only the most recent 6 months of records are available";
+        public static string InfoEmailSameNoChange { get; } = "The new email address is the same as the current one. No changes were made.";
 
-
+        public static string ResultEmailChangeSuccess { get; } = "Email address updated successfully.";
     }
 }

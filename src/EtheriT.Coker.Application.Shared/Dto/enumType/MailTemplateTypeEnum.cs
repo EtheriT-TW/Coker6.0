@@ -11,5 +11,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         紅利異動 = 1,
         後台會員建置 = 2,
         密碼重設通知 = 3,
+        變更電子信箱 = 4,
     }
 }

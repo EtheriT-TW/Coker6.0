@@ -170,5 +170,15 @@ namespace EtheriT.Coker.Application.Shared.i18n
         /// </summary>
         public static string NoteBrowsingHistorySixMonthsOnly { get; } = "※僅提供六個月紀錄資料";
 
+        /// <summary>
+        /// 新的電子郵件與舊的相同，不進行變更。
+        /// </summary>
+        public static string InfoEmailSameNoChange { get; } = "新的電子郵件與舊的相同，不進行變更。";
+
+        /// <summary>
+        /// 電子郵件修改成功
+        /// </summary>
+        public static string ResultEmailChangeSuccess { get; } = "電子郵件修改成功";
+
     }
 }

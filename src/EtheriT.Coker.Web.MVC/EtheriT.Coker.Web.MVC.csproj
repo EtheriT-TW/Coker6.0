@@ -13,6 +13,10 @@
 	<ItemGroup>
 		<Content Remove="appsettings - 複製.EPZA.json" />
 		<Content Remove="appsettings.EPZA.json" />
+		<Content Remove="Views\MailTemplate\Bonus\TransactionMailTemplate.en.cshtml" />
+		<Content Remove="Views\MailTemplate\Bonus\TransactionMailTemplate.zh-tw.cshtml" />
+		<Content Remove="Views\MailTemplate\ResetPassword\BackendAddFrontUserMailTemplate.en.cshtml" />
+		<Content Remove="Views\MailTemplate\ResetPassword\BackendAddFrontUserMailTemplate.zh-tw.cshtml" />
 		<Content Remove="wwwroot\css\Account\login.less" />
 		<Content Remove="wwwroot\css\Account\site.less" />
 		<Content Remove="wwwroot\css\AdvertisementManagement\CustomAd.css" />
@@ -74,6 +78,18 @@
 		<None Include="appsettings.Local.EPZA.json" />
 		<None Include="appsettings.EPZA.json">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
+		<None Include="Views\MailTemplate\Bonus\TransactionMailTemplate.en.cshtml">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="Views\MailTemplate\Bonus\TransactionMailTemplate.zh-tw.cshtml">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="Views\MailTemplate\ResetPassword\BackendAddFrontUserMailTemplate.en.cshtml">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="Views\MailTemplate\ResetPassword\BackendAddFrontUserMailTemplate.zh-tw.cshtml">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Include="wwwroot\css\Account\login.less" />
 		<None Include="wwwroot\css\Account\site.less" />

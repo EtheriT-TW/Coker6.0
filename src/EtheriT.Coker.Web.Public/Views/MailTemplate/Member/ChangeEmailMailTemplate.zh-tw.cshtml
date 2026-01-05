@@ -1,0 +1,38 @@
+﻿@model EtheriT.Coker.Application.Shared.Dto.MailTemplate.ChangeEmailMailTemplateDto;
+<style>
+    .text-size1 {
+        font-size: 1rem;
+    }
+
+    .d-flex {
+        display: flex;
+    }
+
+    .text-bold {
+        font-weight: bold;
+    }
+
+    .text-red {
+        color: red;
+    }
+
+    .text-gray {
+        color: gray;
+    }
+</style>
+<div class='text-size1'>
+    <h2 class='text-red'>親愛的 @Model.Name，您好！</h2>
+    <hr />
+    <div class='d-flex'>您於 @Model.CreationTime.ToString("yyyy/MM/dd HH:mm:ss") 修改Email( @Model.Email )成功</div>
+    <div class='d-flex'>未來{Website.Title}訂單通知等相關通知將會改寄到此Email</div>
+    <br />
+    <div class='text-bold text-red'>如果您沒有要求修改Email，請立刻至<a href='@Model.Url' title='會員中心'>會員中心</a>修改資料。</div>
+    <hr />
+    <hr />
+    <div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>
+    <div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>
+    <div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>
+    <hr />
+    <hr />
+    <br />
+</div>

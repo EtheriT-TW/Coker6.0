@@ -203,7 +203,7 @@
         public static string PasswordErrorTooMany { get; } = "密碼錯誤次數三次以上，請於15分鐘後再次嘗試。";
         public static string OldPasswordIncorrect { get; } = "舊有密碼輸入錯誤，請重新輸入。";
         public static string AccountLocked { get; } =  "帳號鎖定中，請於 {0} 後再次嘗試。";
-        public static string MemberNotFound { get; } = "會員不存在";
+        public static string MemberNotFound { get; } = "使用者不存在";
         public static string TokenInvalid { get; } =  "Token 錯誤";
         public static string ActivationLinkExpiredResend { get; } = "開通連結已失效，是否重新寄送？";
         public static string AccountActivated { get; } = "帳號已開通。";
@@ -216,5 +216,26 @@
         public static string PasswordRequired { get; } = "密碼不可為空";
         public static string MemberNotActivated { get; } = "尚未開通會員，請至郵箱確認或重新寄送通知信。";
         public static string AccountOrPasswordIncorrect { get; } = "帳號或密碼有誤，請重新輸入";
+        public static string AlertCheckCaptchaInput { get; } = "請確實填寫驗證碼";
+        public static string VerificationCodeRequired { get; } = "請輸入驗證碼";
+        public static string ErrorPasswordNotMatch { get; } = "密碼不相符";
+        public static string AlertPasswordMax32 { get; } = "請輸入 32 個以下的字元";
+        public static string AlertPasswordMin8 { get; } = "請輸入 8 個以上的字元";
+        public static string UserNotLoggedIn { get; } = "尚未登入";
+        public static string ActionLoginRequiredRedirectHome { get; } = "請登入後再重新操作，將引導至首頁。";
+        public static string PasswordErrorThreeTimesTitle { get; } = "錯誤三次";
+        public static string EmailAlreadyExistsTitle { get; } = "電子郵件已存在";
+        public static string EmailAlreadyUsed { get; } = "該電子郵件已被使用。";
+        public static string PasswordIncorrectRetry { get; } = "密碼輸入錯誤，請重新輸入";
+        /// <summary>
+        /// 密碼長度須為 8 - 32 之間
+        /// </summary>
+        public static string PasswordRuleLength { get; } = "密碼長度須為 8-32 之間";
+
+        /// <summary>
+        /// 密碼須滿足有英文大寫、小寫、符號、數字中的三個
+        /// </summary>
+        public static string PasswordRuleComposition { get; } = "密碼須滿足有英文大寫、小寫、符號、數字中的三個";
+
     }
 }

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<XtraReportsLayoutSerializer SerializerVersion="21.2.14.0" Ref="1" ControlType="DevExpress.XtraReports.UI.XtraReport, DevExpress.XtraReports.v21.2, Version=21.2.14.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" Name="R001檢貨單" Margins="25, 25, 25, 25" PaperKind="A4" PageWidth="827" PageHeight="1169" Version="21.2" DataSource="#Ref-0" Font="微軟正黑體, 12pt, charSet=0">
+<XtraReportsLayoutSerializer SerializerVersion="24.2.6.0" Ref="1" ControlType="DevExpress.XtraReports.UI.XtraReport, DevExpress.XtraReports.v24.2, Version=24.2.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" Name="R001檢貨單" Margins="25, 25, 25, 25" PaperKind="A4" PageWidth="827" PageHeight="1169" Version="24.2" DataSource="#Ref-0" Font="微軟正黑體, 12pt, charSet=0">
   <Extensions>
     <Item1 Ref="2" Key="VSReportExtInfo" Value=".vsrepx" />
   </Extensions>
@@ -65,7 +65,7 @@
                   </ExpressionBindings>
                   <StylePriority Ref="42" UseTextAlignment="false" />
                 </Item6>
-                <Item7 Ref="43" ControlType="XRTableCell" Name="tableCell22" Weight="1" TextFormatString="{0:N2}" Multiline="true" Text="tableCell22" TextAlignment="TopRight">
+                <Item7 Ref="43" ControlType="XRTableCell" Name="tableCell22" Weight="1" TextFormatString="${0:N2}" Multiline="true" Text="tableCell22" TextAlignment="TopRight">
                   <ExpressionBindings>
                     <Item1 Ref="44" EventName="BeforePrint" PropertyName="Text" Expression="[商品小計]" />
                   </ExpressionBindings>
@@ -100,7 +100,7 @@
                 <Item1 Ref="56" ControlType="XRTableCell" Name="tableCell35" Weight="1.1099993896484375" Multiline="true" Text="合計：" Padding="2,2,5,5,100">
                   <StylePriority Ref="57" UsePadding="false" />
                 </Item1>
-                <Item2 Ref="58" ControlType="XRTableCell" Name="tableCell38" Weight="1.1100006103515625" TextFormatString="{0:N2}" Multiline="true" Text="tableCell38" TextAlignment="TopRight" Padding="2,2,5,5,100">
+                <Item2 Ref="58" ControlType="XRTableCell" Name="tableCell38" Weight="1.1100006103515625" TextFormatString="${0:N2}" Multiline="true" Text="tableCell38" TextAlignment="TopRight" Padding="2,2,5,5,100">
                   <ExpressionBindings>
                     <Item1 Ref="59" EventName="BeforePrint" PropertyName="Text" Expression="sum([商品小計])" />
                   </ExpressionBindings>
@@ -113,7 +113,7 @@
                 <Item1 Ref="62" ControlType="XRTableCell" Name="tableCell39" Weight="1.1099993896484375" Multiline="true" Text="運費：" Padding="2,2,5,5,100">
                   <StylePriority Ref="63" UsePadding="false" />
                 </Item1>
-                <Item2 Ref="64" ControlType="XRTableCell" Name="tableCell40" Weight="1.1100006103515625" TextFormatString="{0:N2}" Multiline="true" Text="tableCell40" TextAlignment="TopRight" Padding="2,2,5,5,100">
+                <Item2 Ref="64" ControlType="XRTableCell" Name="tableCell40" Weight="1.1100006103515625" TextFormatString="${0:N2}" Multiline="true" Text="tableCell40" TextAlignment="TopRight" Padding="2,2,5,5,100">
                   <ExpressionBindings>
                     <Item1 Ref="65" EventName="BeforePrint" PropertyName="Text" Expression="?運費" />
                   </ExpressionBindings>
@@ -126,7 +126,7 @@
                 <Item1 Ref="68" ControlType="XRTableCell" Name="tableCell47" Weight="1.1099993896484375" Multiline="true" Text="訂單折抵：" Padding="2,2,5,5,100">
                   <StylePriority Ref="69" UsePadding="false" />
                 </Item1>
-                <Item2 Ref="70" ControlType="XRTableCell" Name="tableCell48" Weight="1.1100006103515625" TextFormatString="{0:N2}" Multiline="true" Text="tableCell48" TextAlignment="TopRight" Padding="2,2,5,5,100">
+                <Item2 Ref="70" ControlType="XRTableCell" Name="tableCell48" Weight="1.1100006103515625" TextFormatString="${0:N2}" Multiline="true" Text="tableCell48" TextAlignment="TopRight" Padding="2,2,5,5,100">
                   <ExpressionBindings>
                     <Item1 Ref="71" EventName="BeforePrint" PropertyName="Text" Expression="?訂單折抵" />
                   </ExpressionBindings>
@@ -139,7 +139,7 @@
                 <Item1 Ref="74" ControlType="XRTableCell" Name="tableCell41" Weight="1.1099993896484375" Multiline="true" Text="使用點數：" Padding="2,2,5,5,100">
                   <StylePriority Ref="75" UsePadding="false" />
                 </Item1>
-                <Item2 Ref="76" ControlType="XRTableCell" Name="tableCell42" Weight="1.1100006103515625" TextFormatString="{0:N2}" Multiline="true" Text="0" TextAlignment="TopRight" Padding="2,2,5,5,100">
+                <Item2 Ref="76" ControlType="XRTableCell" Name="tableCell42" Weight="1.1100006103515625" TextFormatString="${0:N2}" Multiline="true" Text="0" TextAlignment="TopRight" Padding="2,2,5,5,100">
                   <ExpressionBindings>
                     <Item1 Ref="77" EventName="BeforePrint" PropertyName="Text" Expression="?紅利折抵金額" />
                   </ExpressionBindings>
@@ -152,7 +152,7 @@
                 <Item1 Ref="80" ControlType="XRTableCell" Name="tableCell43" Weight="1.1099993896484375" Multiline="true" Text="優惠券折抵：" Padding="2,2,5,5,100">
                   <StylePriority Ref="81" UsePadding="false" />
                 </Item1>
-                <Item2 Ref="82" ControlType="XRTableCell" Name="tableCell44" Weight="1.1100006103515625" TextFormatString="{0:N2}" Multiline="true" Text="0" TextAlignment="TopRight" Padding="2,2,5,5,100">
+                <Item2 Ref="82" ControlType="XRTableCell" Name="tableCell44" Weight="1.1100006103515625" TextFormatString="${0:N2}" Multiline="true" Text="0" TextAlignment="TopRight" Padding="2,2,5,5,100">
                   <ExpressionBindings>
                     <Item1 Ref="83" EventName="BeforePrint" PropertyName="Text" Expression="?優惠券折抵金額" />
                   </ExpressionBindings>
@@ -165,7 +165,7 @@
                 <Item1 Ref="86" ControlType="XRTableCell" Name="tableCell45" Weight="1.1099993896484375" Multiline="true" Text="總計：" TextAlignment="MiddleLeft" Padding="2,2,5,5,100">
                   <StylePriority Ref="87" UsePadding="false" UseTextAlignment="false" />
                 </Item1>
-                <Item2 Ref="88" ControlType="XRTableCell" Name="tableCell46" Weight="1.1100006103515625" TextFormatString="{0:N0}" Multiline="true" Text="tableCell46" TextAlignment="TopRight" Font="微軟正黑體, 15.75pt, style=Bold, charSet=136" Padding="2,2,5,5,100">
+                <Item2 Ref="88" ControlType="XRTableCell" Name="tableCell46" Weight="1.1100006103515625" TextFormatString="${0:N0}" Multiline="true" Text="tableCell46" TextAlignment="TopRight" Font="微軟正黑體, 15.75pt, style=Bold, charSet=136" Padding="2,2,5,5,100">
                   <ExpressionBindings>
                     <Item1 Ref="89" EventName="BeforePrint" PropertyName="Text" Expression="Sum([商品小計])+?運費-?訂單折抵-?優惠券折抵金額-?紅利折抵金額" />
                   </ExpressionBindings>
@@ -357,9 +357,9 @@
     </Item7>
   </Bands>
   <ComponentStorage>
-    <Item1 Ref="0" ObjectType="DevExpress.DataAccess.ObjectBinding.ObjectDataSource,DevExpress.DataAccess.v21.2" Name="訂單明細" Base64="PE9iamVjdERhdGFTb3VyY2UgTmFtZT0i6KiC5Zau5piO57SwIiAvPg==" />
+    <Item1 Ref="0" ObjectType="DevExpress.DataAccess.ObjectBinding.ObjectDataSource,DevExpress.DataAccess.v24.2" Name="訂單明細" Base64="PE9iamVjdERhdGFTb3VyY2UgTmFtZT0i6KiC5Zau5piO57SwIiAvPg==" />
   </ComponentStorage>
   <ObjectStorage>
-    <Item1 ObjectType="DevExpress.XtraReports.Serialization.ObjectStorageInfo, DevExpress.XtraReports.v21.2" Ref="16" Content="System.Int32" Type="System.Type" />
+    <Item1 ObjectType="DevExpress.XtraReports.Serialization.ObjectStorageInfo, DevExpress.XtraReports.v24.2" Ref="16" Content="System.Int32" Type="System.Type" />
   </ObjectStorage>
 </XtraReportsLayoutSerializer>

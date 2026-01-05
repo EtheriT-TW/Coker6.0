@@ -36,7 +36,10 @@ namespace EtheriT.Coker.Application.Common
                     templateFilePath = $"Views/MailTemplate/ResetPassword/BackendAddFrontUserMailTemplate.{lang}.cshtml";
                     break;
                 case MailTemplateTypeEnum.密碼重設通知:
-                    templateFilePath = $"Views/MailTemplate/Forget/ForgetPasswordMailTemplate.{lang}.cshtml";
+                    templateFilePath = $"Views/MailTemplate/Member/ForgetPasswordMailTemplate.{lang}.cshtml";
+                    break;
+                case MailTemplateTypeEnum.變更電子信箱:
+                    templateFilePath = $"Views/MailTemplate/Member/ChangeEmailMailTemplate.{lang}.cshtml";
                     break;
                 default:
                     break;

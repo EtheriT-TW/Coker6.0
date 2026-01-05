@@ -18,6 +18,7 @@ using EtheriT.Coker.Application.Shared.Dto.User;
 using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Application.Webs.Dto;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Core.Models;
@@ -270,7 +271,8 @@ namespace EtheriT.Coker.Application.Authorization
             return output;
         }
 
-        public async Task<LoginOutputDto> FrontLoginByToken(Guid token) {
+        public async Task<LoginOutputDto> FrontLoginByToken(Guid token)
+        {
             LoginOutputDto output = new LoginOutputDto();
             var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
             try
@@ -323,7 +325,8 @@ namespace EtheriT.Coker.Application.Authorization
                 var oldtoken = await db.Tokens.Where(e => e.UUID == Temp_UUID).FirstOrDefaultAsync();
                 var tokenItem = await tokenAppService.CreateToken(frontuser.Email, token);
 
-                output = await NoPasswordLogin(frontuser, userInfo.WebsiteMap.FK_WebsiteId,new FrontLoginInputDto { 
+                output = await NoPasswordLogin(frontuser, userInfo.WebsiteMap.FK_WebsiteId, new FrontLoginInputDto
+                {
                     WebsiteId = userInfo.WebsiteMap.FK_WebsiteId,
                     Email = frontuser.Email,
                     Remember = true
@@ -333,13 +336,15 @@ namespace EtheriT.Coker.Application.Authorization
 
                 await loginUserData.SaveChanges(frontuser);
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 output.Error = e.Message;
             }
-                
+
             return output;
         }
-        public async Task<LoginOutputDto> FrontThirdLogin(FrontThirdLoginInputDto dto) {
+        public async Task<LoginOutputDto> FrontThirdLogin(FrontThirdLoginInputDto dto)
+        {
             LoginOutputDto output = new LoginOutputDto() { Success = false };
             var user = await db.FrontUsers.Join(db.MappingFrontUserAndWebsite, u => u.Id, m => m.FK_UserId, (u, m) => new { u, m })
                 .Where(g => g.u.Email == dto.Email && g.m.FK_WebsiteId == dto.FK_WebsiteId)
@@ -364,7 +369,8 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 output.Error = ((int)OAuthErrorTypeEnum.使用者建立失敗).ToString();
             }
-            else {
+            else
+            {
                 Guid guid = Guid.NewGuid();
                 user.u.Status = (int)UserStatusEnum.開通;
                 var token = new Core.Models.Token
@@ -381,15 +387,18 @@ namespace EtheriT.Coker.Application.Authorization
                 db.Tokens.Add(token);
                 if (mapping.Any())
                 {
-                    if (mapping.Count() > 1) {
+                    if (mapping.Count() > 1)
+                    {
                         var keepId = mapping.OrderByDescending(e => e.CreationTime).FirstOrDefault()?.Id ?? 0;
-                        if(keepId != 0) {
+                        if (keepId != 0)
+                        {
                             var removeMaps = mapping.Where(e => e.Id != keepId);
                             db.MappingOldNewUUID.RemoveRange(removeMaps);
                         }
                     }
                 }
-                else {
+                else
+                {
                     var map = new MappingOldNewUUID
                     {
                         TempUUID = token.UUID,
@@ -422,7 +431,8 @@ namespace EtheriT.Coker.Application.Authorization
                 .AsEnumerable()
                 .FirstOrDefault(w => redirectBaseUrl.StartsWith(w.DefaultUrl!.TrimEnd('/'), StringComparison.OrdinalIgnoreCase));
 
-            if (_env.IsProduction() && matchedSite != null) {
+            if (_env.IsProduction() && matchedSite != null)
+            {
                 dto.RedirectUrl = matchedSite?.DefaultUrl ?? string.Empty;
                 dto.FK_WebsiteId = matchedSite?.Id ?? 0;
                 return dto;
@@ -434,7 +444,7 @@ namespace EtheriT.Coker.Application.Authorization
                 var site = db.Websites.FirstOrDefault(w => w.Id == siteId);
                 if (site != null)
                 {
-                    dto.RedirectUrl = redirectBaseUrl; 
+                    dto.RedirectUrl = redirectBaseUrl;
                     dto.FK_WebsiteId = site.Id;
                 }
             }
@@ -464,12 +474,13 @@ namespace EtheriT.Coker.Application.Authorization
 
                     output.Account = theUser.Account;
                     output.UserName = theUser.Name;
-                    var profileImg = await fileUploadAppService.getImgFiles(new Shared.Dto.Files.FileGetImgInputDto { 
+                    var profileImg = await fileUploadAppService.getImgFiles(new Shared.Dto.Files.FileGetImgInputDto
+                    {
                         Sid = theUser.Id,
                         Size = 3,
                         Type = (int)FileBindTypeEnum.大頭貼
                     });
-                    if(profileImg.Any())
+                    if (profileImg.Any())
                     {
                         output.ProfileImage = profileImg.FirstOrDefault()?.Link ?? string.Empty;
                     }
@@ -1075,7 +1086,7 @@ namespace EtheriT.Coker.Application.Authorization
                         ForgeIDSendDate = frontUser.ForgeIDSendDate.Value.AddDays(1)
                     };
 
-                    var mailTemp = await _mailTemplateAppService.GetTemplateRenderAsync(MailTemplateTypeEnum.密碼重設通知, new List<MailTemplateInputDto> { new MailTemplateInputDto { 
+                    var mailTemp = await _mailTemplateAppService.GetTemplateRenderAsync(MailTemplateTypeEnum.密碼重設通知, new List<MailTemplateInputDto> { new MailTemplateInputDto {
                         Key = frontUser.ForgetID.ToString(),
                         Model = resultDto
                     } });
@@ -1117,7 +1128,7 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 var frontUser = await db.FrontUsers.Where(e => e.ForgetID == ForgetId).FirstOrDefaultAsync();
 
-                if (frontUser != null && frontUser.ForgeIDSendDate!=null && frontUser.ForgeIDSendDate.Value.Date.AddDays(1).CompareTo(DateTime.Now) > 0)
+                if (frontUser != null && frontUser.ForgeIDSendDate != null && frontUser.ForgeIDSendDate.Value.Date.AddDays(1).CompareTo(DateTime.Now) > 0)
                 {
                     response.Success = true;
                 }
@@ -1254,8 +1265,8 @@ namespace EtheriT.Coker.Application.Authorization
 
                         if (other_frontuser != null && other_frontuser.Count > 0)
                         {
-                            response.Error = "電子郵件已存在";
-                            response.Message = "該電子郵件已被使用。";
+                            response.Error = L.get("EmailAlreadyExistsTitle");
+                            response.Message = L.get("EmailAlreadyUsed");
                         }
                         else
                         {
@@ -1270,39 +1281,43 @@ namespace EtheriT.Coker.Application.Authorization
 
                             var hidden_mail = dto.Email.Substring(0, 1) + "******" + dto.Email.Substring(dto.Email.IndexOf('@') - 1, 1) + dto.Email.Substring(dto.Email.IndexOf('@'));
 
-                            var mailhtml = $"<div class='text-size1'><h2 class='text-red'>親愛的{frontuser.Name}，您好！</h2>" +
-                                                            $"<hr/>" +
-                                                            $"<div class='d-flex'>您於 {account_Log.CreationTime} 修改Email({hidden_mail})成功</div>" +
-                                                            $"<div class='d-flex'>未來{Website.Title}訂單通知等相關通知將會改寄到此Email</div>" +
-                                                            $"<br/>" +
-                                                            $"<div class='text-bold text-red'>如果您沒有要求修改Email，請立刻至<a href='{Website.DefaultUrl}/{Website.OrgName}/Member' title='會員中心'>會員中心</a>修改資料。</div>" +
-                                                            $"<hr/>" +
-                                                            $"<hr/>" +
-                                                            $"<div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>" +
-                                                            $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>" +
-                                                            $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>" +
-                                                            $"<hr/>" +
-                                                            $"<hr/>" +
-                                                            $"<br/></div>";
-                            var mailcss = ".text-size1{ font-size: 1rem; } .d-flex{ display: flex; } .text-bold { font-weight: bold; } .text-red { color: red;} .text-gray{ color: gray ; }";
-
-                            var sedResult = await mailAppService.sendMail(new SenderDto
+                            ChangeEmailMailTemplateDto resultDto = new ChangeEmailMailTemplateDto
                             {
-                                Recipients = new List<MailUserDataDto>(){
+                                Email = hidden_mail,
+                                CreationTime = account_Log.CreationTime,
+                                Name = frontuser.Name,
+                                Title = Website.Title,
+                                Url = $"{Website.DefaultUrl}/{Website.OrgName}/Member"
+                            };
+
+                            var mailTemp = await _mailTemplateAppService.GetTemplateRenderAsync(MailTemplateTypeEnum.變更電子信箱, new List<MailTemplateInputDto> { new MailTemplateInputDto {
+                                Key = frontuser.UUID.ToString(),
+                                Model = resultDto
+                            } });
+
+
+                            if (mailTemp?.Any() == true)
+                            {
+                                var content = mailTemp.First();
+
+                                var sedResult = await mailAppService.sendMail(new SenderDto
+                                {
+                                    Recipients = new List<MailUserDataDto>(){
                                     new MailUserDataDto()
                                     {
                                         Name = frontuser.Name,
                                         Email = frontuser.Email,
                                     }
                                 },
-                                Subject = $"【{Website.Title}】會員電子郵件修改通知",
-                                Body = mailhtml,
-                                Css = mailcss,
-                            }, Website.Contact);
+                                    Subject = $"【{Website.Title}】{L.get("MailNotifyEmailChanged")}",
+                                    Body = content.Body ?? string.Empty,
+                                    Css = content.Style ?? string.Empty,
+                                }, Website.Contact);
 
-                            response.Success = sedResult.Success;
-                            response.Message = sedResult.Message;
-                            response.Error = sedResult.Error;
+                                response.Success = sedResult.Success;
+                                response.Message = sedResult.Message;
+                                response.Error = sedResult.Error;
+                            }
 
                             if (response.Success)
                             {
@@ -1347,8 +1362,8 @@ namespace EtheriT.Coker.Application.Authorization
                             db.Account_Logs.Add(account_Log);
                             db.SaveChanges();
 
-                            response.Error = "錯誤三次";
-                            response.Message = "密碼錯誤次數三次以上，請於15分鐘後再次嘗試。";
+                            response.Error = L.get("PasswordErrorThreeTimesTitle");
+                            response.Message = L.get("PasswordErrorTooMany");
                         }
                         else
                         {
@@ -1359,13 +1374,13 @@ namespace EtheriT.Coker.Application.Authorization
                             db.Account_Logs.Add(account_Log);
                             db.SaveChanges();
 
-                            response.Error = "密碼錯誤";
-                            response.Message = "密碼輸入錯誤，請重新輸入";
+                            response.Error = L.get("PasswordIncorrect");
+                            response.Message = L.get("PasswordIncorrectRetry");
                         }
                     }
                 }
-                else if (frontuser == null) throw new Exception("使用者不存在");
-                else if (Website == null) throw new Exception("網站資訊有誤");
+                else if (frontuser == null) throw new Exception(L.get("MemberNotFound"));
+                else if (Website == null) throw new Exception(L.get("WebsiteDataError"));
             }
             catch (Exception ex)
             {
@@ -1382,26 +1397,26 @@ namespace EtheriT.Coker.Application.Authorization
                 至少有一個數字
                 至少有一個大寫或小寫英文字母
                 至少有一個特殊符號
-                字串長度在 8 ~ 30 個字母之間
-                Regex regex = new Regex(@"^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W).{8,30}$");
+                字串長度在 8 ~ 32 個字母之間
+                Regex regex = new Regex(@"^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W).{8,32}$");
              */
             try
             {
-                //密碼長度須為8-30之間
-                if (password.Length < 8 || password.Length > 30) throw new Exception("密碼長度須為8-30之間");
+                //密碼長度須為8-32之間
+                if (password.Length < 8 || password.Length > 32) throw new Exception(L.get("PasswordRuleLength"));
                 //密碼有數字
-                Regex regex1 = new Regex(@"^(?=.*\d).{8,30}$");
+                Regex regex1 = new Regex(@"^(?=.*\d).{8,32}$");
                 if (regex1.IsMatch(password)) matchCount++;
                 //密碼有英文小寫
-                Regex regex2 = new Regex(@"^(?=.*[a-z]).{8,30}$");
+                Regex regex2 = new Regex(@"^(?=.*[a-z]).{8,32}$");
                 if (regex2.IsMatch(password)) matchCount++;
                 //密碼有英文大寫
-                Regex regex3 = new Regex(@"^(?=.*[A-Z]).{8,30}$");
+                Regex regex3 = new Regex(@"^(?=.*[A-Z]).{8,32}$");
                 if (regex3.IsMatch(password)) matchCount++;
                 //密碼有符號
-                Regex regex4 = new Regex(@"^(?=.*\W).{8,30}$");
+                Regex regex4 = new Regex(@"^(?=.*\W).{8,32}$");
                 if (regex4.IsMatch(password)) matchCount++;
-                if (matchCount < 3) throw new Exception("密碼須滿足有英文大寫、小寫、符號、數字中的三個");
+                if (matchCount < 3) throw new Exception(L.get("PasswordRuleComposition"));
             }
             catch (Exception ex)
             {
@@ -1480,17 +1495,21 @@ namespace EtheriT.Coker.Application.Authorization
                 }
 
                 output.Success = true;
-                if (dto!= null) {
+                if (dto != null)
+                {
                     cookieManager.Set("RememberMe", dto.Remember ? "1" : "0", CookiePurposeEnum.RefreshIdentifier);
-                    if (!dto.Remember) {
-                        if (output.Token != null) {
+                    if (!dto.Remember)
+                    {
+                        if (output.Token != null)
+                        {
                             cookieManager.Set(
                                 "Token",
                                 output.Token,
                                 dto.Remember ? CookiePurposeEnum.FrontAuthToken : CookiePurposeEnum.none
                             );
                         }
-                        if (output.Secret != null) {
+                        if (output.Secret != null)
+                        {
                             cookieManager.Set(
                                 "RefreshToken",
                                 output.Secret.Value.ToString(),

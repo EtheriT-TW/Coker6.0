@@ -19,5 +19,7 @@ namespace EtheriT.Coker.Application.Shared.i18n.en
         public static string UnknownSource { get; } = "Unknown source";
         public static string ServiceCenter { get; } = "Service Center";
         public static string PathError { get; } = "Path error";
+        public static string ErrorCopyNotAllowed { get; } = "Copying content is not allowed.";
+        public static string MailNotifyEmailChanged { get; } = "Email Address Change Notification";
     }
 }

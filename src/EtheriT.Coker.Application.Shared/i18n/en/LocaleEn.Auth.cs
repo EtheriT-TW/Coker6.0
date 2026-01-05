@@ -215,5 +215,19 @@
         public static string PasswordRequired { get; } = "Password is required.";
         public static string MemberNotActivated { get; } = "Your account has not been activated yet. Please check your email or resend the activation email.";
         public static string AccountOrPasswordIncorrect { get; } = "The account or password you entered is incorrect. Please try again.";
+        public static string AlertCheckCaptchaInput { get; } = "Verification code is incorrect.";
+        public static string VerificationCodeRequired { get; } = "Please enter the verification code.";
+        public static string ErrorPasswordNotMatch { get; } = "Passwords do not match.";
+        public static string AlertPasswordMax32 { get; } = "Please enter no more than 32 characters.";
+        public static string AlertPasswordMin8 { get; } = "Please enter at least 8 characters.";
+        public static string UserNotLoggedIn { get; } = "You are not logged in.";
+        public static string ActionLoginRequiredRedirectHome { get; } = "Please sign in to continue. You will be redirected to the homepage.";
+        public static string PasswordErrorThreeTimesTitle { get; } = "3 failed attempts";
+        public static string EmailAlreadyExistsTitle { get; } = "Email already exists";
+        public static string EmailAlreadyUsed { get; } = "This email address is already in use.";
+        public static string PasswordIncorrectRetry { get; } = "Incorrect password. Please try again.";
+        public static string PasswordRuleLength { get; } = "Password length must be between 8 and 32 characters.";
+        public static string PasswordRuleComposition { get; } = "Password must include at least three of the following: uppercase letters, lowercase letters, numbers, or symbols.";
+
     }
 }

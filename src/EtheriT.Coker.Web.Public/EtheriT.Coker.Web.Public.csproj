@@ -13,6 +13,10 @@
 		<Content Remove="appsettings.longtop.json" />
 		<Content Remove="appsettings.Museum.json" />
 		<Content Remove="appsettings.sing-jhen-yi.json" />
+		<Content Remove="Views\MailTemplate\Member\ChangeEmailMailTemplate.en.cshtml" />
+		<Content Remove="Views\MailTemplate\Member\ChangeEmailMailTemplate.zh-tw.cshtml" />
+		<Content Remove="Views\MailTemplate\Member\ForgetPasswordMailTemplate.en.cshtml" />
+		<Content Remove="Views\MailTemplate\Member\ForgetPasswordMailTemplate.zh-tw.cshtml" />
 		<Content Remove="Views\Page\OrderManagement.cshtml" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.css" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.min.css" />
@@ -105,6 +109,18 @@
 		<None Include="appsettings.kinglake.json" />
 		<None Include="appsettings.longtop.json">
 		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
+		<None Include="Views\MailTemplate\Member\ChangeEmailMailTemplate.en.cshtml">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="Views\MailTemplate\Member\ChangeEmailMailTemplate.zh-tw.cshtml">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="Views\MailTemplate\Member\ForgetPasswordMailTemplate.en.cshtml">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="Views\MailTemplate\Member\ForgetPasswordMailTemplate.zh-tw.cshtml">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Include="wwwroot\css\Page\Member.css" />
 		<None Include="wwwroot\lib\pdf-viewer\external\pdfjs-4.5.136-dist\LICENSE" />

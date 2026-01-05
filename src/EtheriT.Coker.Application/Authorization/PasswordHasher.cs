@@ -151,7 +151,7 @@ namespace EtheriT.Coker.Application.Authorization
                     return false;
 
                 default:
-                    return true; // unknown format marker
+                    return false; // unknown format marker
             }
         }
 

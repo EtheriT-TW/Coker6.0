@@ -332,6 +332,7 @@ namespace EtheriT.Coker.Application.Member
                 var bUser = await db.Users.FirstOrDefaultAsync(e => e.Email == dto.Email);
 
                 var newUser = mapper.Map<FrontUser>(dto);
+                newUser.UUID = Guid.NewGuid();
                 newUser.Password = _stringHandler.RandonCode(RandomStringType.數字加英文大小寫及符號, 32);
                 newUser.ForgetID = Guid.NewGuid();
                 newUser.ForgeIDSendDate = DateTime.Now;
@@ -405,7 +406,6 @@ namespace EtheriT.Coker.Application.Member
                 {
                     if (dto.Status == null) dto.Status = result.Status;
                     if (dto.TelPhone == null) dto.TelPhone = result.TelPhone;
-
                     mapper.Map(dto, result);
                     await loginUserData.SaveChanges(result);
 

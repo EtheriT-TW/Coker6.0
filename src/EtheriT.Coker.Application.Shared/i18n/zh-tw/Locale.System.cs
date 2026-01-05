@@ -16,5 +16,7 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string FailedToSend { get; } = "發送失敗！";
         public static string VerificationCodeError { get; } = "驗證碼錯誤";
         public static string WebsiteDataError { get; } = "網站資料錯誤";
+        public static string ErrorCopyNotAllowed { get; } = "禁止複製內容！";
+        public static string MailNotifyEmailChanged { get; } = "會員電子郵件修改通知";
     }
 }

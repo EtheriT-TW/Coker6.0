@@ -775,7 +775,7 @@ function disableContextMenu(event) {
 // 禁用複製
 function disableCopy(event) {
     event.preventDefault();
-    alert("禁止複製內容！");
+    alert(local.ErrorCopyNotAllowed);
 }
 
 // 禁用 F12、Ctrl+U、Ctrl+Shift+I
@@ -833,7 +833,7 @@ function CaptchaVerify($self, $input, SuccessAction) {
                     $input.siblings("div").addClass("me-4 pe-2");
                     NewCaptcha($self, $input)
                     $input.val("");
-                    Coker.sweet.warning("請注意", "驗證碼輸入錯誤", null);
+                    Coker.sweet.warning(local.AlertTitle, local.ErrorCaptchaInvalid, null);
                 }
             }
         })
@@ -842,7 +842,7 @@ function CaptchaVerify($self, $input, SuccessAction) {
         $input.siblings("div").addClass("me-4 pe-2");
         NewCaptcha($self, $input)
         $input.val("");
-        Coker.sweet.warning("請注意", "請確實填寫驗證碼", null);
+        Coker.sweet.warning(local.AlertTitle, local.AlertCheckCaptchaInput, null);
     }
 }
 function LoginAction() {
@@ -897,8 +897,6 @@ function RegisterAction() {
             Coker.sweet.success("<div>註冊成功</div><div>您將收到開通帳號的通知信</div><div>請至信箱確認以完成帳號開通</div>", null, false);
             registerModal.hide();
         } else {
-            console.log(result)
-            console.log(result.message)
             switch (result.message) {
                 case "重新寄送通知信":
                     Coker.sweet.confirm(result.error, "", result.message, "關閉視窗", function () {
@@ -1030,19 +1028,19 @@ function PassCheck($NewPass, $CheckPass, $NewPassFeedBack, $CheckPassFeedBack) {
                     $CheckPassFeedBack.text("　");
                     return true;
                 } else {
-                    $CheckPassFeedBack.text("密碼不相符");
+                    $CheckPassFeedBack.text(local.ErrorPasswordNotMatch);
                 }
             } else {
-                $NewPassFeedBack.text("密碼格式有誤");
-                $CheckPassFeedBack.text("密碼格式有誤");
+                $NewPassFeedBack.text(local.ErrorPasswordFormatInvalid);
+                $CheckPassFeedBack.text(local.ErrorPasswordFormatInvalid);
             }
         } else {
-            $NewPassFeedBack.text("請輸入32個以下的字元");
-            $CheckPassFeedBack.text("密碼格式有誤");
+            $NewPassFeedBack.text(local.AlertPasswordMax32);
+            $CheckPassFeedBack.text(local.ErrorPasswordFormatInvalid);
         }
     } else {
-        $NewPassFeedBack.text("請輸入8個以上的字元");
-        $CheckPassFeedBack.text("密碼格式有誤");
+        $NewPassFeedBack.text(local.AlertPasswordMin8);
+        $CheckPassFeedBack.text(local.ErrorPasswordFormatInvalid);
     }
     return false;
 }

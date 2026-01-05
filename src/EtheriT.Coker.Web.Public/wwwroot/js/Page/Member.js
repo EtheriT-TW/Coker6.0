@@ -77,7 +77,7 @@ function PageReady() {
 
     Coker.Token.CheckToken().done(function (resule) {
         if (!resule.isLogin) {
-            co.sweet.warning("尚未登入", "請登入後再重新操作，將引導至首頁。", function () {
+            co.sweet.warning(local.UserNotLoggedIn, local.ActionLoginRequiredRedirectHome, function () {
                 location.href = "/";
             })
         } else Member(resule);
@@ -156,7 +156,8 @@ function Member(data) {
         resetModal.show();
     })
 
-    $(".btn_resetEmail").on("click", function () {
+    $(".btn_resetEmail").on("click", function (event) {
+        event.preventDefault();
         resetEmailModal.show()
     });
 
@@ -972,24 +973,24 @@ function FavoritesButtonInit(frame) {
 function ResetmailAction(data) {
     var input_data = co.Form.getJson($("#ResetEmailForm").attr("id"));
     if (input_data.email == old_email) {
-        Coker.sweet.info("新的電子郵件與舊的相同，不進行變更。", null)
+        Coker.sweet.info(local.InfoEmailSameNoChange, null)
         resetEmailModal.hide()
     } else {
         Coker.sweet.loading();
         Coker.User.EmailChange(input_data).done(function (result) {
             if (result.success) {
-                Coker.sweet.success("電子郵件修改成功", function () {
+                Coker.sweet.success(local.ResultEmailChangeSuccess, function () {
                     location.reload()
                 }, false);
             } else {
                 NewCaptcha($ResetEmailImgCaptcha, $InputResetEmailVCode);
                 switch (result.error) {
-                    case "密碼錯誤":
-                        Coker.sweet.confirm("密碼輸入錯誤", result.message, "忘記密碼?", "確定", function () {
+                    case local.PasswordIncorrect:
+                        Coker.sweet.confirm(local.PasswordIncorrect, result.message, `${local.ForgotPassword}?`, local.Confirm, function () {
                             $("#ResetModal .btn_resetforget").click();
                         })
                         break;
-                    case "錯誤三次":
+                    case local.PasswordErrorThreeTimesTitle:
                         Coker.sweet.error(result.error, result.message, null, false);
                         break;
                     default:

@@ -294,26 +294,30 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         Title="紅利管理",
                         Icon="redeem",
                         CollapseId="#BonusManagement",
+                        Enable=false,
                         jobItemModels= new List<JobMenu> {
                             new JobMenu{
                                 PageName="BonusSettings",
                                 Title="紅利設定",
                                 Controller="BonusManagement",
                                 Action="Settings",
-                                Icon="savings"
+                                Icon="savings",
+                                Enable=false
                             },
                             new JobMenu{
                                 PageName="BonusTransaction",
                                 Title="紅利異動",
                                 Controller="BonusManagement",
                                 Action="Transaction",
-                                Icon="savings"
+                                Icon="savings",
+                                Enable=false
                             },new JobMenu{
                                 PageName="BonusRecord",
                                 Title="歷史紅利查詢",
                                 Controller="BonusManagement",
                                 Action="Record",
-                                Icon="savings"
+                                Icon="savings",
+                                Enable=false
                             }
                         }
                     },
@@ -488,6 +492,9 @@ namespace EtheriT.Coker.Web.MVC.Startup
                             PageName="OrderManagement",
                             Enable=false,
                         },new JobMenu{
+                                PageName="OrderList",
+                                Enable=false,
+                        },new JobMenu{
                             PageName="ManagerList",
                             Enable=false
                         },new JobMenu
@@ -529,6 +536,9 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         new JobMenu{
                             PageName="OrderManagement",
                             Enable=false,
+                        },new JobMenu{
+                                PageName="OrderList",
+                                Enable=false,
                         },new JobMenu{
                             PageName="ManagerList",
                             Enable=false
@@ -585,6 +595,9 @@ namespace EtheriT.Coker.Web.MVC.Startup
                             PageName="OrderManagement",
                             Enable=false
                         },new JobMenu{
+                                PageName="OrderList",
+                                Enable=false,
+                        },new JobMenu{
                             PageName="ManagerList",
                             Enable=false
                         },new JobMenu
@@ -625,10 +638,31 @@ namespace EtheriT.Coker.Web.MVC.Startup
             }
             SetJobs(site.Jobs, seting);
         }
+        public async Task SetWebsite(Site site) {
+            var data = await permissionsAppService.GetWebsitePermissions();
+            if (data != null) {
+                List<JobMenu> jobs = new List<JobMenu>();
+                data.ForEach(x => {
+                    string name = x.Name;
+                    JobMenu? job = jobs.Find(e => e.PageName == name);
+                    if (job == null)
+                    {
+                        job = new JobMenu
+                        {
+                            PageName = name,
+                            Enable = x.IsGranted,
+                        };
+                        jobs.Add(job);
+                    }
+                });
+                SetJobs(site.Jobs, jobs);
+            }
+        }
         public async Task setUserJob(Site site)
         {
             ThePermission.Initable = false;
             ThePermission.superManager = await permissionsAppService.IsPowerUserPermissions();
+            ThePermission.systemManager = await loginUserData.isSystemUser();
             if (ThePermission.superManager)
             {
                 site.Jobs.ForEach(x =>
@@ -703,8 +737,17 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 string ControllerName = (_httpContextAccessor.HttpContext.Request.RouteValues["controller"] ?? "").ToString();
                 string ActionName = (_httpContextAccessor.HttpContext.Request.RouteValues["action"] ?? "").ToString();
                 JobMenu? item = null;
-                JobMenu? Bonus = site.Jobs.Find(e => e.PageName == "BonusSettings");
-                if (Bonus != null && Bonus.CanVisble) BonusPermission.CanExe = true;
+                JobMenu? Bonus = FindJob(site.Jobs, "BonusManagement", "Settings");
+                if (Bonus != null)
+                {
+                    BonusPermission.CanExe = Bonus.Enable;
+                    BonusPermission.CanEdit = Bonus.CanUpdate;
+                }
+                else {
+                    BonusPermission.CanExe = false;
+                    BonusPermission.CanEdit = false;
+                }
+
                 site.Jobs.ForEach(e =>
                 {
                     if (e.Controller == ControllerName && e.Action == ActionName) item = e;
@@ -755,9 +798,9 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 JobMenu? menu = seting.Find(e => e.PageName == job.PageName);
                 if (menu != null)
                 {
-                    if (job.Enable)
+                    if (job.Enable || menu.Enable)
                     {
-                        job.Enable = menu.Enable && menu.CanVisble;
+                        job.Enable = menu.Enable;
                         job.CanVisble = menu.CanVisble;
                         job.CanUpdate = menu.CanUpdate;
                         job.CanRemove = menu.CanRemove;

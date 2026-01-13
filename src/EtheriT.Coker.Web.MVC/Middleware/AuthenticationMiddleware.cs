@@ -36,6 +36,7 @@ namespace EtheriT.Coker.Web.MVC.Middleware
                         var _navigation = scope.ServiceProvider.GetRequiredService<NavigationProvider>();
                         var site = await _navigation.getMenus();
                         await _navigation.SetPower(site);
+                        await _navigation.SetWebsite(site);
                         await _navigation.setUserJob(site);
                         var menu = _navigation.FindJob(site.Jobs, controllerName, actionName);
                         if (menu == null || !menu.CanVisble)

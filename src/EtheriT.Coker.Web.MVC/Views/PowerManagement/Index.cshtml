@@ -2,6 +2,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.Member
 @using EtheriT.Coker.Application.Shared.Dto.Product
 @using EtheriT.Coker.Application.Shared.Dto.Tag
+@using EtheriT.Coker.Web.MVC.Startup;
 @{
     ViewData["Title"] = "PowerCtrl";
 }
@@ -9,7 +10,13 @@
 <link rel="stylesheet" href="~/css/PowerManagement/Index.min.css" asp-append-version="true" />
 <script src="~/js/PowerManagement/Index.min.js" asp-append-version="true"></script>
 <div class="py-3 px-4 position-relative">
-    <div class="title fw-bold fs-4 w-100 ">權限控制</div>
+    <div class="title fw-bold fs-4 w-100 ">
+        權限控制
+        @if (ThePermission.systemManager)
+        {
+            <button id="addUserInWebsite" class="btn btn-primary fas" data-bs-toggle="offcanvas" data-bs-target="#offcanvasByWebsite" aria-controls="offcanvasByWebsite"><span class="fas fa-user-cog"></span>網站權限</button>
+        }
+    </div>
     <div class="powerctrl w-100 h-auto p-5 d-flex justify-content-center align-item-center my-3">
         <div class="card1 p-4 col-4">
             <div class="card-title d-flex justify-content-around align-items-center ">
@@ -162,6 +169,20 @@
                 <form id="Permissions"></form>
             </div>
         </div>
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasByWebsite" aria-labelledby="offcanvasExampleLabel">
+            <div class="offcanvas-header">
+                <h3>網站權限設定<span class="siteName"></span></h3>
+            </div>
+            <div class="d-flex justify-content-between align-items-center p-2">
+                <div class="data"><span class="type"></span>-<span class="name"></span></div>
+                <button class="btn btn-danger save">
+                    <i class="material-symbols-outlined">save_as</i>儲存
+                </button>
+            </div>
+            <div class="offcanvas-body">
+                <form id="WebPermissions"></form>
+            </div>
+        </div>
         <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastopByAddUser" aria-labelledby="offcanvasTopLabel">
             <form class="d-flex flex-column justify-content-center align-item-center p-3">
                 <div class="form-floating mb-3">
@@ -197,6 +218,21 @@
                         <button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastopByMember" aria-controls="offcanvasTop"></button>
                         <button class="btn fas fa-user-cog" data-bs-toggle="offcanvas" data-bs-target="#offcanvas1" aria-controls="offcanvas1"></button>
                         <button class="btn fas fa-trash-alt"></button>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template id="PowerWebData">
+            <div class="item mb-3 border-bottom">
+                <div class="row align-items-center  justify-content-center">
+                    <div class="col title"></div>
+                    <div class="col">
+                        <input id="enable" type="checkbox" name="enable" class="d-none selectedItem" value="true">
+                        <label for="enable" class="bg-transparent border-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="新增" data-bs-original-title="" title="">
+                            <span class="material-symbols-outlined fs-2">check</span>
+                            <span class="material-symbols-outlined fs-2">block</span>
+                        </label>
+                        <div>啟用</div>
                     </div>
                 </div>
             </div>

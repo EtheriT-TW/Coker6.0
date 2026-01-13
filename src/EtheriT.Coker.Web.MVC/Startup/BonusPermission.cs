@@ -4,5 +4,6 @@
     {
 
         public static bool CanExe { get; set; } = false;
+        public static bool CanEdit { get; set; } = false;
     }
 }

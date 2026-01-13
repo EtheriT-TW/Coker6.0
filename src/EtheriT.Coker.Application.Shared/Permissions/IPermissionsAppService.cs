@@ -15,7 +15,8 @@ namespace EtheriT.Coker.Application.Permissions
         public Task<GetPermissionsOutputDto> GetPermissionsUserData();
         public Task<GetUserPermissionsRsponseDto> GetPermissions(SavePermissionsDto dto);
         public Task<List<SavePermissionsItem>> GetLoginUserPermissions();
-		public Task<bool> IsPowerUserPermissions();
+        public Task<List<SavePermissionsItem>> GetWebsitePermissions();
+        public Task<bool> IsPowerUserPermissions();
 		public Task<ResponseMessageDto> SavePermissions(SavePermissionsDto dto);
         public Task<ResponseMessageDto> RemoveMappingUserAndWebsite(DataDelectDto dto);
         public Task<ResponseMessageDto> MappingUserAndWebsite(AddMapingUserAndWebsiteDto dto);

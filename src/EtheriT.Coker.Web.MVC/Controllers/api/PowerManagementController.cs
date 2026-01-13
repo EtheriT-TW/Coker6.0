@@ -34,6 +34,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 		public async Task<Site> AllMenus() {
             var site = await navigation.getMenus();
             await navigation.SetPower(site);
+            await navigation.SetWebsite(site);
             return site;
 		}
         [HttpGet]
@@ -109,7 +110,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 				ThePermission.CanUpdate,
 				ThePermission.CanVisble,
 				ThePermission.CanRemove,
-                ThePermission.superManager
+                ThePermission.superManager,
+                ThePermission.systemManager,
             }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
 		}
 	}

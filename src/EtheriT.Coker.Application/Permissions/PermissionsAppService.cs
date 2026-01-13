@@ -26,7 +26,6 @@ namespace EtheriT.Coker.Application.Permissions
         private readonly LoginUserData loginUserData;
         private readonly StringHandler stringHandler;
         private readonly IMapper mapper;
-        private readonly string controllerName;
         public PermissionsAppService(
             CokerDbContext db,
             StringHandler stringHandler,
@@ -38,7 +37,6 @@ namespace EtheriT.Coker.Application.Permissions
             this.loginUserData = loginUserData;
             this.stringHandler = stringHandler;
             this.mapper = mapper;
-            controllerName = "Permissions";
         }
         public async Task<GetPermissionsOutputDto> GetPermissionsUserData()
         {
@@ -138,6 +136,15 @@ namespace EtheriT.Coker.Application.Permissions
             if (UserItems.Any() && !RoleItems.Any()) Items.AddRange(UserItems);
             if (!UserItems.Any() && RoleItems.Any()) Items.AddRange(RoleItems);
             return mapper.Map<List<SavePermissionsItem>>(Items);
+        }
+        public async Task<List<SavePermissionsItem>> GetWebsitePermissions() {
+            long SiteId = await loginUserData.GetWebsiteId();
+            long UserId = await loginUserData.GetUserId();
+            var websiteItems = await (from p in db.Permissions
+                                   where p.FK_WebsiteId == SiteId && p.FK_UserId == null && p.FK_RoleId == null
+                                      select p).ToListAsync();
+
+            return mapper.Map<List<SavePermissionsItem>>(websiteItems);
         }
         public async Task<bool> IsPowerUserPermissions() {
             List<long> Roles = await loginUserData.GetUserRoleIds();

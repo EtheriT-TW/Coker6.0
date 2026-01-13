@@ -61,6 +61,8 @@ function SwiperInit(obj) {
         swiperBindEven: function (swiper, canNext) {
 
             const checkSlides = function () {
+                if (Array.isArray(swiper)) swiper = swiper[swiper.length-1];
+                if (swiper == null) return;
                 const totalSlides = swiper.slides.length;
                 const slidesPerView = swiper.params.slidesPerView;
                 // 檢查導航元素

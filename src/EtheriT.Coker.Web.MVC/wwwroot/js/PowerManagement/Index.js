@@ -4,6 +4,7 @@
     let html = $("#MemberData").html();
     let roleHtml = $("#RoleData").html();
     const powerHtml = $("#PowerData").html();
+    const powerWebsiteHtml = $("#PowerWebData").html();
     let permission;
     const init = function () {
         co.PowerManagement.GetPermission().done(function(result){
@@ -27,11 +28,48 @@
                 }
             });
             $(".powerctrl .role-item").first().trigger("click");
+            loadAllMenus();
             loadMenus();
             co.Zipcode.init("#TWzipcode");
             co.Zipcode.init("#new-TWzipcode");
         });
     }
+    const loadAllMenus = function () {
+        co.PowerManagement.GetAll().done(function (result) {
+            const $view = $("#offcanvasByWebsite").data("init", result.jobs);
+            const $body = $view.find("#WebPermissions");
+            $view.find(".siteName").text(result.title);
+            insetMenu($body, result.jobs,true);
+            if (permission.CanUpdate) {
+                $("#offcanvasByWebsite .selectedItem").off("change.save").on("change.save", function () {
+                    const $self = $(this)
+                    const data = {
+                        name: $self.data("name"),
+                        IsGranted: $(this).prop("checked")
+                    };
+                    if (co.Array.Search(setMenu, { name: data.name }) > -1) co.Array.Delete(setMenu, { name: data.name });
+                    else setMenu.push(data);
+                });
+                $("#offcanvasByWebsite .save").off("click").on("click", function () {
+                    const obj = {
+                        Items: setMenu
+                    }
+                    obj[type] = $(nItem).data("id");
+                    co.PowerManagement.SavePermissions(obj).done(function (result) {
+                        if (result.success) {
+                            co.sweet.success("儲存成功");
+                        } else {
+                            co.sweet.error("儲存失敗", result.error);
+                        }
+                    });
+                });
+            } else {
+                $("#offcanvasByWebsite .selectedItem + label").addClass("pointer-event-none");
+                $("#offcanvasByWebsite .save").remove();
+            }
+        });
+    }
+
     const loadMenus = function () {
         co.PowerManagement.GetAll().done(function (result) {
             const $view = $("#offcanvas1").data("init", result.jobs);
@@ -67,35 +105,45 @@
             } 
         });
     }
-    const insetMenu = function ($body, jobs) {
+    const insetMenu = function ($body, jobs,isWebsite = false) {
         $(jobs).each((i, self) => {
-            if (self.enable) {
-                const $item = $(powerHtml);
+            if (isWebsite) {
+                const $item = $(powerWebsiteHtml);
                 $item.find(".title").text(self.title);
-                const newItem = $item.find("#new");
-                $item.find("#new+label").attr({ for: `${self.pageName}_new` });
-                newItem.attr({ id: `${self.pageName}_new`, name: `${self.pageName}_new` }).data({ "name": `${self.pageName}.Create`}).prop("checked", self.canCreate)
-
-                const delItem = $item.find("#del");
-                $item.find("#del+label").attr({ for: `${self.pageName}_del` });
-                delItem.attr({ id: `${self.pageName}_del`, name: `${self.pageName}_del` }).data({ "name": `${self.pageName}.Delete` }).prop("checked", self.canRemove)
-
-                const editItem = $item.find("#edit");
-                $item.find("#edit+label").attr({ for: `${self.pageName}_edit` });
-                editItem.attr({ id: `${self.pageName}_edit`, name: `${self.pageName}_edit` }).data({ "name": `${self.pageName}.Edit` }).prop("checked", self.canUpdate)
-
-                const viewItem = $item.find("#view");
-                $item.find("#view+label").attr({ for: `${self.pageName}_view` });
-                viewItem.attr({ id: `${self.pageName}_view`, name: `${self.pageName}_view` }).data({ "name": `${self.pageName}.View` }).prop("checked", self.canVisble);
-                viewItem.on("change", function () {
-                    if (!$(this).prop("checked")) {
-                        editItem.prop("checked") && editItem.prop("checked", false).trigger('change');
-                        delItem.prop("checked") && delItem.prop("checked", false).trigger('change');
-                        newItem.prop("checked") && newItem.prop("checked", false).trigger('change');
-                    }
-                });
+                const enableItem = $item.find("#enable");
+                $item.find("#enable+label").attr({ for: `${self.pageName}` });
+                enableItem.attr({ id: `${self.pageName}`, name: `${self.pageName}` }).data({ "name": `${self.pageName}` }).prop("checked", self.enable)
                 $item.appendTo($body);
-                if (self.jobItemModels != null && self.jobItemModels.length > 0) insetMenu($item, self.jobItemModels);
+                if (self.jobItemModels != null && self.jobItemModels.length > 0) insetMenu($item, self.jobItemModels,true);
+            } else {
+                if (self.enable) {
+                    const $item = $(powerHtml);
+                    $item.find(".title").text(self.title);
+                    const newItem = $item.find("#new");
+                    $item.find("#new+label").attr({ for: `${self.pageName}_new` });
+                    newItem.attr({ id: `${self.pageName}_new`, name: `${self.pageName}_new` }).data({ "name": `${self.pageName}.Create` }).prop("checked", self.canCreate)
+
+                    const delItem = $item.find("#del");
+                    $item.find("#del+label").attr({ for: `${self.pageName}_del` });
+                    delItem.attr({ id: `${self.pageName}_del`, name: `${self.pageName}_del` }).data({ "name": `${self.pageName}.Delete` }).prop("checked", self.canRemove)
+
+                    const editItem = $item.find("#edit");
+                    $item.find("#edit+label").attr({ for: `${self.pageName}_edit` });
+                    editItem.attr({ id: `${self.pageName}_edit`, name: `${self.pageName}_edit` }).data({ "name": `${self.pageName}.Edit` }).prop("checked", self.canUpdate)
+
+                    const viewItem = $item.find("#view");
+                    $item.find("#view+label").attr({ for: `${self.pageName}_view` });
+                    viewItem.attr({ id: `${self.pageName}_view`, name: `${self.pageName}_view` }).data({ "name": `${self.pageName}.View` }).prop("checked", self.canVisble);
+                    viewItem.on("change", function () {
+                        if (!$(this).prop("checked")) {
+                            editItem.prop("checked") && editItem.prop("checked", false).trigger('change');
+                            delItem.prop("checked") && delItem.prop("checked", false).trigger('change');
+                            newItem.prop("checked") && newItem.prop("checked", false).trigger('change');
+                        }
+                    });
+                    $item.appendTo($body);
+                    if (self.jobItemModels != null && self.jobItemModels.length > 0) insetMenu($item, self.jobItemModels);
+                }
             }
         });
     }

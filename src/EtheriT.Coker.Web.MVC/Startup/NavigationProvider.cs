@@ -698,8 +698,10 @@ namespace EtheriT.Coker.Web.MVC.Startup
                     List<JobMenu> jobs = new List<JobMenu>();
                     data.ForEach(x =>
                     {
-                        string name = x.Name.Split(".")[0];
-                        string type = x.Name.Split(".")[1];
+                        var jobSplit = x.Name.Split(".");
+                        if (jobSplit.Length <= 1) return;
+                        string name = jobSplit[0];
+                        string type = jobSplit[1];
                         JobMenu? job = jobs.Find(e => e.PageName == name);
                         if (job == null)
                         {

@@ -54,6 +54,7 @@ namespace EtheriT.Coker.Application.BonusManagement
         public async Task<GetBonusSettingForEditOutput> GetBonusSettingForEdit()
         {
             long websiteID = await loginUserData.GetWebsiteId();
+            if (websiteID == 0) websiteID = loginUserData.GetFrontWebsiteId();
             var bonusSettingData = await _storeSetAppService.getValues(new Shared.Dto.StoreSet.StoreSetGetValueInput
             {
                 SiteId = websiteID,

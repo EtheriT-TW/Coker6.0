@@ -6,9 +6,11 @@ using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Newsletter;
 using EtheriT.Coker.Application.Shared.Authorization;
+using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Common;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
+using EtheriT.Coker.Application.Shared.Dto.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.OAuth;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
@@ -44,6 +46,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Data;
+using System.IO.Pipelines;
 using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -65,6 +68,7 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly MailAppService mailAppService;
         private readonly IMailTemplateAppService _mailTemplateAppService;
         private readonly INewsletterAppService newsletterAppService;
+        private readonly IBonusManagementAppService bonusManagementAppService;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly IConfiguration configuration;
         private readonly IShoppingCartAppService shoppingCartAppService;
@@ -80,6 +84,7 @@ namespace EtheriT.Coker.Application.Authorization
             MailAppService mailAppService,
             StringHandler stringHandler,
             INewsletterAppService newsletterAppService,
+            IBonusManagementAppService bonusManagementAppService,
             IFileUploadAppService fileUploadAppService,
             IConfiguration configuration,
             IShoppingCartAppService shoppingCartAppService,
@@ -102,6 +107,7 @@ namespace EtheriT.Coker.Application.Authorization
             this.stringHandler = stringHandler;
             this._env = env;
             this.cookieManager = cookieManager;
+            this.bonusManagementAppService = bonusManagementAppService;
             _mailTemplateAppService = mailTemplateAppService;
             controllerName = "Account";
         }
@@ -358,7 +364,9 @@ namespace EtheriT.Coker.Application.Authorization
                     Name = dto.Name,
                     WebsiteId = dto.FK_WebsiteId,
                     Password = password,
-                    PasswordConfirm = password
+                    PasswordConfirm = password,
+                    SendWelcomeMail = dto.SendWelcomeMail,
+                    SendActivationMail = dto.SendActivationMail
                 });
 
                 user = await db.FrontUsers.Join(db.MappingFrontUserAndWebsite, u => u.Id, m => m.FK_UserId, (u, m) => new { u, m })
@@ -747,6 +755,19 @@ namespace EtheriT.Coker.Application.Authorization
                     await loginUserData.SaveChanges(frontuser);
                     userid = frontuser.Id;
 
+                    var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
+                    string bonusStr = string.Empty;
+                    if (bonusSetting != null && bonusSetting.SignupBonusPoints != null && bonusSetting.SignupBonusPoints > 0) {
+                        await bonusManagementAppService.SaveTransaction(new CreateUserTransactionDto { 
+                            IsSendMail = false,
+                            MemberUUID = new List<Guid> { frontuser.UUID },
+                            TransactionPoint = bonusSetting.SignupBonusPoints.Value,
+                            TransactionOperation = "+",
+                            TransactionReason = "加入會員贈送"
+                        });
+                        bonusStr = $"歡迎加入會員！我們已為您準備加入會員紅利 {bonusSetting.SignupBonusPoints.Value} 點，立即前往會員中心查看。";
+                    }
+
                     MappingUserAndRole mapuserrole = new MappingUserAndRole();
                     mapuserrole = new MappingUserAndRole()
                     {
@@ -779,26 +800,35 @@ namespace EtheriT.Coker.Application.Authorization
                     var senddto = mapper.Map<SendOpeningDto>(dto);
                     senddto.OpenId = frontuser.OpenID;
                     senddto.OpenIdSendDate = frontuser.OpenIDSendDate;
-
-                    var sendsuccess = await SendOpening(senddto);
-
-                    response = sendsuccess;
-
-                    if (!sendsuccess.Success)
+                    senddto.BonusText = bonusStr;
+                    if (dto.SendWelcomeMail)
                     {
-                        mapuserandweb.IsDeleted = true;
-                        mapuserandweb.DeletionTime = DateTime.Now;
+                        var sendsuccess = await SendOpening(senddto);
 
-                        mapuserrole.IsDeleted = true;
-                        mapuserrole.DeletionTime = DateTime.Now;
+                        response = sendsuccess;
 
-                        newuser.IsDeleted = true;
-                        newuser.DeletionTime = DateTime.Now;
+                        if (!sendsuccess.Success)
+                        {
+                            mapuserandweb.IsDeleted = true;
+                            mapuserandweb.DeletionTime = DateTime.Now;
 
-                        frontuser.IsDeleted = true;
-                        frontuser.DeletionTime = DateTime.Now;
+                            mapuserrole.IsDeleted = true;
+                            mapuserrole.DeletionTime = DateTime.Now;
 
-                        db.SaveChanges();
+                            newuser.IsDeleted = true;
+                            newuser.DeletionTime = DateTime.Now;
+
+                            frontuser.IsDeleted = true;
+                            frontuser.DeletionTime = DateTime.Now;
+
+                            db.SaveChanges();
+                        }
+                    }
+                    else {
+                        response.Success = true;
+                    }
+                    if (dto.SendActivationMail) { 
+                        await SendActivationMail(senddto);
                     }
                 }
                 else
@@ -968,6 +998,48 @@ namespace EtheriT.Coker.Application.Authorization
             }
             return response;
         }
+        private async Task SendActivationMail(SendOpeningDto dto) {
+            var website = await db.Websites.Where(e => e.Id == dto.WebsiteId).FirstOrDefaultAsync();
+            if (website == null) return;
+            var frontUser = await (from user in db.FrontUsers
+                                   join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+                                   where user.Email == dto.Email && mapuserweb.FK_WebsiteId == dto.WebsiteId
+                                   select user).FirstOrDefaultAsync();
+            if(frontUser == null || frontUser.Email == null) return;
+
+
+            var resultDto = new AccountCreatedNoticeResultDto { 
+                WebsiteName = string.IsNullOrEmpty(dto.WebsiteName) ? website.Title : dto.WebsiteName,
+                CreatedAt = frontUser.CreationTime,
+                Email = frontUser.Email,
+                PolicyUrl = $"{website.DefaultUrl}#PrivacyStatement",
+                BonusText = dto.BonusText
+            };
+
+            var mailTemp = await _mailTemplateAppService.GetTemplateRenderAsync(MailTemplateTypeEnum.註冊完成通知, new List<MailTemplateInputDto> { new MailTemplateInputDto {
+                    Key = Guid.NewGuid().ToString(),
+                    Model = resultDto
+                }});
+
+            if (mailTemp?.Any() == true)
+            {
+                var content = mailTemp.First();
+
+                var sedResult = await mailAppService.sendMail(new SenderDto
+                {
+                    Recipients = new List<MailUserDataDto>(){
+                                    new MailUserDataDto()
+                                    {
+                                        Name = dto.Name,
+                                        Email = dto.Email,
+                                    }
+                                },
+                    Subject = $"【{resultDto.WebsiteName}】註冊會員通知",
+                    Body = content?.Body ?? string.Empty,
+                    Css = content?.Style ?? string.Empty,
+                }, website.Contact);
+            }
+        }
         public async Task<ResponseMessageDto> SendOpening(SendOpeningDto dto)
         {
             var website = await db.Websites.Where(e => e.Id == dto.WebsiteId).FirstOrDefaultAsync();
@@ -981,43 +1053,40 @@ namespace EtheriT.Coker.Application.Authorization
             var WebsiteLink = string.IsNullOrEmpty(dto.WebsiteLink) ? website?.DefaultUrl : dto.WebsiteLink;
             try
             {
-                var mailhtml = $"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！歡迎加入{WebsiteName}會員</h2>" +
-                                                        $"<hr/>" +
-                                                        $"<div>以下是您的帳號資料，請熟記以下重要訊息</div>" +
-                                                        $"<br/>" +
-                                                        $"<div class='d-flex text-bold'><div>您的帳號：</div><u>{dto.Email}</u></div>" +
-                                                        $"<br/>" +
-                                                        $"<div text-bold>點選下方連結，完成會員驗證。</div>" +
-                                                        $"<a href='{WebsiteLink}/?useraction=accountoping&openid={dto.OpenId}' title='前往開通帳號'>{WebsiteLink}/?useraction=accountoping&openid={dto.OpenId}</a>" +
-                                                        $"<div class='text-gray'>這個連結僅能使用一次，並於 {((DateTime)dto.OpenIdSendDate).AddDays(1)} 到期，請在期限內開通。</div>" +
-                                                        $"<div class='text-gray'>感謝您的加入！~</div>" +
-                                                        $"<br/>" +
-                                                        $"<hr/>" +
-                                                        $"<hr/>" +
-                                                        $"<div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>" +
-                                                        $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>" +
-                                                        $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>" +
-                                                        $"<hr/>" +
-                                                        $"<hr/>" +
-                                                        $"<br/></div>";
-                var mailcss = ".text-size1{ font-size: 1rem; } .d-flex{ display: flex; } .text-bold { font-weight: bold; } .text-red { color: red;} .text-gray{ color: gray ; }";
-
-                var sedResult = await mailAppService.sendMail(new SenderDto
+                AccountActivationResultDto resultDto = new AccountActivationResultDto
                 {
-                    Recipients = new List<MailUserDataDto>(){
+                    WebsiteName = WebsiteName,
+                    Email = dto.Email,
+                    Link = $"{WebsiteLink}/?useraction=accountoping&openid={dto.OpenId}"
+                };
+                if (dto.OpenIdSendDate != null) resultDto.ExpiresAt = ((DateTime)dto.OpenIdSendDate).AddDays(1);
+
+                var mailTemp = await _mailTemplateAppService.GetTemplateRenderAsync(MailTemplateTypeEnum.註冊驗證通知, new List<MailTemplateInputDto> { new MailTemplateInputDto {
+                    Key = Guid.NewGuid().ToString(),
+                    Model = resultDto
+                } });
+                if (mailTemp?.Any() == true)
+                {
+                    var content = mailTemp.First();
+
+                    var sedResult = await mailAppService.sendMail(new SenderDto
+                    {
+                        Recipients = new List<MailUserDataDto>(){
                                     new MailUserDataDto()
                                     {
                                         Name = dto.Name,
                                         Email = dto.Email,
                                     }
                                 },
-                    Subject = $"【{WebsiteName}】註冊會員通知",
-                    Body = mailhtml,
-                    Css = mailcss,
-                }, website.Contact);
-                response.Success = sedResult.Success;
-                response.Message = sedResult.Message;
-                response.Error = sedResult.Error;
+                        Subject = $"【{WebsiteName}】註冊會員通知",
+                        Body = content?.Body ?? string.Empty,
+                        Css = content?.Style ?? string.Empty,
+                    }, website.Contact);
+
+                    response.Success = sedResult.Success;
+                    response.Message = sedResult.Message;
+                    response.Error = sedResult.Error;
+                }
             }
             catch (Exception ex)
             {

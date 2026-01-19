@@ -13,6 +13,7 @@
 		<Content Remove="appsettings.longtop.json" />
 		<Content Remove="appsettings.Museum.json" />
 		<Content Remove="appsettings.sing-jhen-yi.json" />
+		<Content Remove="Views\MailTemplate\Member\AccountActivationMailTemplate.zh-tw.cshtml" />
 		<Content Remove="Views\MailTemplate\Member\ChangeEmailMailTemplate.en.cshtml" />
 		<Content Remove="Views\MailTemplate\Member\ChangeEmailMailTemplate.zh-tw.cshtml" />
 		<Content Remove="Views\MailTemplate\Member\ForgetPasswordMailTemplate.en.cshtml" />
@@ -109,6 +110,9 @@
 		<None Include="appsettings.kinglake.json" />
 		<None Include="appsettings.longtop.json">
 		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
+		<None Include="Views\MailTemplate\Member\AccountActivationMailTemplate.zh-tw.cshtml">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Include="Views\MailTemplate\Member\ChangeEmailMailTemplate.en.cshtml">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

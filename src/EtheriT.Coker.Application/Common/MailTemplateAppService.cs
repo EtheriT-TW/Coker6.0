@@ -41,6 +41,12 @@ namespace EtheriT.Coker.Application.Common
                 case MailTemplateTypeEnum.變更電子信箱:
                     templateFilePath = $"Views/MailTemplate/Member/ChangeEmailMailTemplate.{lang}.cshtml";
                     break;
+                case MailTemplateTypeEnum.註冊驗證通知:
+                    templateFilePath = $"Views/MailTemplate/Member/AccountActivationMailTemplate.{lang}.cshtml";
+                    break;
+                case MailTemplateTypeEnum.註冊完成通知:
+                    templateFilePath = $"Views/MailTemplate/Member/AccountCreatedNoticeMailTemplate.{lang}.cshtml";
+                    break;
                 default:
                     break;
             }

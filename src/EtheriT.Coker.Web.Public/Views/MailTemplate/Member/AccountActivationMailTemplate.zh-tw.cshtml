@@ -1,0 +1,58 @@
+﻿@model EtheriT.Coker.Application.Shared.Dto.MailTemplate.AccountActivationResultDto;
+<style>
+    .text-size1 {
+        font-size: 1rem;
+    }
+    .text-size2{
+        font-size: 0.8rem;
+    }
+
+    .d-inline {
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    .text-bold {
+        font-weight: bold;
+    }
+
+    .text-red {
+        color: red;
+    }
+
+    .text-gray {
+        color: gray;
+    }
+
+    .text-decoration-underline{
+        text-decoration: underline;
+    }
+</style>
+<div class="text-size1">
+    <h2 class="text-red">親愛的會員，您好！歡迎加入 @Model.WebsiteName 會員</h2>
+    <hr />
+    <div>以下是您的帳號資料，請熟記以下重要訊息</div>
+    <br />
+    <div class="d-inline text-bold">
+        <div>您的帳號：</div>
+        <span class="text-decoration-underline">@Model.Email</span>
+    </div>
+    <br />
+    <div class="text-bold">點選下方連結，完成會員驗證。</div>
+    <a href="@Model.Link" title="前往開通帳號"">點此完成會員驗證</a>
+    <div class="text-gray text-size2">
+        若無法點擊，請複製貼上以下連結<br />
+        <span class="text-decoration-underline">@Model.Link</span>
+    </div>
+    <div class="text-gray">這個連結僅能使用一次，並於 @Model.ExpiresAt.ToString("yyyy/MM/dd HH:mm:ss") 到期，請在期限內開通。</div>
+    <div class="text-gray">感謝您的加入！~</div>
+    <br />
+    <hr />
+    <hr />
+    <div class="text-bold text-red">提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>
+    <div class="text-bold text-red">客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>
+    <div class="text-bold text-red">若有上述情形，請立即撥打165防詐騙專線查詢。</div>
+    <hr />
+    <hr />
+    <br />
+</div>

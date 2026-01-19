@@ -15,5 +15,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Authorizaion
         public long WebsiteId { get; set; }
         public string WebsiteLink { get; set; }
         public string WebsiteName { get; set; }
+        public string BonusText { get; set; }
     }
 }

@@ -1,0 +1,96 @@
+﻿@model EtheriT.Coker.Application.Shared.Dto.MailTemplate.AccountActivationResultDto;
+<style>
+    .text-size1 {
+        font-size: 1rem;
+    }
+
+    .text-size2 {
+        font-size: 0.8rem;
+    }
+
+    .d-inline {
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    .text-bold {
+        font-weight: bold;
+    }
+
+    .text-red {
+        color: red;
+    }
+
+    .text-gray {
+        color: gray;
+    }
+
+    .text-decoration-underline {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="text-size1">
+    <h2 class="text-red">
+        Dear Member, Welcome to @Model.WebsiteName
+    </h2>
+
+    <hr />
+
+    <div>
+        Below is your account information. Please keep the following details for your reference.
+    </div>
+
+    <br />
+
+    <div class="d-inline text-bold">
+        <div>Your Account:</div>
+        <span class="text-decoration-underline">@Model.Email</span>
+    </div>
+
+    <br />
+
+    <div class="text-bold">
+        Please click the link below to complete your account verification.
+    </div>
+
+    <a href="@Model.Link" title="Activate your account">
+        Click here to activate your account
+    </a>
+
+    <div class="text-gray text-size2">
+        If you are unable to click the link above, please copy and paste the following URL into your browser:<br />
+        <span class="text-decoration-underline">@Model.Link</span>
+    </div>
+
+    <div class="text-gray">
+        This link can only be used once and will expire at
+        @Model.ExpiresAt.ToString("yyyy/MM/dd HH:mm:ss").
+        Please complete the activation before it expires.
+    </div>
+
+    <div class="text-gray">
+        Thank you for joining us!
+    </div>
+
+    <br />
+
+    <hr />
+    <hr />
+
+    <div class="text-bold text-red">
+        Reminder: This is an automated system email. Please do not reply directly.
+    </div>
+    <div class="text-bold text-red">
+        Our customer service representatives will never ask you to change your account details
+        or request ATM transfers or payments.
+    </div>
+    <div class="text-bold text-red">
+        If you encounter any suspicious activity, please contact your local anti-fraud hotline immediately.
+    </div>
+
+    <hr />
+    <hr />
+
+    <br />
+</div>

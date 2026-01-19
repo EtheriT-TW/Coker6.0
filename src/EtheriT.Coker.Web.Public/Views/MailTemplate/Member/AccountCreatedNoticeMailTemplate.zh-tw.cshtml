@@ -1,0 +1,95 @@
+﻿@model EtheriT.Coker.Application.Shared.Dto.MailTemplate.AccountCreatedNoticeResultDto;
+<style>
+    .text-size1 {
+        font-size: 1rem;
+    }
+
+    .text-size2 {
+        font-size: 0.8rem;
+    }
+
+    .d-inline {
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    .text-bold {
+        font-weight: bold;
+    }
+
+    .text-red {
+        color: red;
+    }
+
+    .text-gray {
+        color: gray;
+    }
+
+    .text-decoration-underline {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="text-size1">
+    <h2 class="text-red">親愛的會員，您好！您已完成 @Model.WebsiteName 會員註冊</h2>
+    <hr />
+
+    <div>此封信為註冊完成通知，用於確認您的帳號已建立並可正常使用。</div>
+    <div class="text-gray text-size2">提醒您：此流程不需要任何額外操作。</div>
+
+    <br />
+
+    <div class="d-inline text-bold">
+        <div>您的帳號：</div>
+        <span class="text-decoration-underline">@Model.Email</span>
+    </div>
+
+    <br />
+
+    <div class="text-gray">
+        註冊時間：<span class="text-bold">@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss")</span>
+    </div>
+
+    @* 可選：若你有加入會員贈送紅利 *@
+    @if (!string.IsNullOrWhiteSpace(Model.BonusText))
+    {
+        <br />
+        <div class="text-gray">
+            @Model.BonusText
+        </div>
+    }
+
+    <br />
+
+    <div class="text-bold">會員條款與隱私權聲明</div>
+    <div class="text-gray text-size2">
+        完成註冊即表示您已閱讀並同意本站之會員服務條款與隱私權政策。<br />
+        您可隨時至下列連結查閱最新內容：
+    </div>
+    <a href="@Model.PolicyUrl" title="查看會員條款與隱私權政策">點此查看會員條款與隱私權政策</a>
+    <div class="text-gray text-size2">
+        若無法點擊，請複製貼上以下連結<br />
+        <span class="text-decoration-underline">@Model.PolicyUrl</span>
+    </div>
+
+    <br />
+
+    <div class="text-bold">安全提醒</div>
+    <div class="text-gray text-size2">
+        若此會員註冊非由您本人操作，請立即與客服聯繫，以確保帳號安全。
+    </div>
+
+    <br />
+
+    <hr />
+    <hr />
+
+    <div class="text-bold text-red">提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>
+    <div class="text-bold text-red">客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>
+    <div class="text-bold text-red">若有上述情形，請立即撥打165防詐騙專線查詢。</div>
+
+    <hr />
+    <hr />
+
+    <br />
+</div>

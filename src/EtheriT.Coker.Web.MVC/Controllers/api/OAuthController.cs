@@ -111,7 +111,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             {
                 Email = email,
                 Name = name,
-                FK_WebsiteId = redirectCheck.FK_WebsiteId
+                FK_WebsiteId = redirectCheck.FK_WebsiteId,
+                SendWelcomeMail = false,
+                SendActivationMail = true
             });
             if (!TokenResult.Success) {
                 return Redirect($"{redirectBaseUrl}/api/oauth/error?code={TokenResult.Error}&redirect={safeRedirect}");

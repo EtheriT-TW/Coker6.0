@@ -403,7 +403,7 @@ function PageDefaultSet(result) {
                     }
                 }
             }
-            price_temp.find(".discount").text(displayText);
+            price_temp.find(".discount").text(formatPrice(item.price, item.bonus));
             const ShowMPrice = item.fK_RId != 1 && oriprice > price;
             if (ShowMPrice) price_temp.find(".discount").addClass("mprice");
 
@@ -443,7 +443,7 @@ function PageDefaultSet(result) {
             max: result.stocks[0].stock - (result.stocks[0].stock % result.stocks[0].min_Qty),
             step: result.stocks[0].min_Qty ?? 1
         });
-        if (result.stocks[0].stock > result.stocks[0].min_Qty) {
+        if (result.stocks[0].stock >= result.stocks[0].min_Qty) {
             $counter_input.removeClass("isEmpty");
             $input_quantity.trigger("change");
         }
@@ -587,13 +587,12 @@ function PageDefaultSet(result) {
 
     if (!CanShop) $(".counter").addClass("d-none");
 }
-function SpecRadioSet(stocks, $parent) {
-    var item1 = $($("#Template_Spec_Radio").html()).clone(),
-        item2 = $($("#Template_Spec_Radio").html()).clone();
-
-    var item1_control = item1.find(".spec_control"),
-        item2_control = item2.find(".spec_control");
-
+function formatPrice(price, bonus) {
+    if (bonus > 0) {
+        if (price === 0) return `紅利:${bonus.toLocaleString('en-US')}`;
+        return `${price.toLocaleString('en-US')} + 紅利:${bonus.toLocaleString('en-US')}`;
+    }
+    return price.toLocaleString('en-US');
 }
 function SpecRadio() {
     $self = $(this);

@@ -1,0 +1,118 @@
+﻿@model EtheriT.Coker.Application.Shared.Dto.MailTemplate.AccountCreatedNoticeResultDto;
+<style>
+    .text-size1 {
+        font-size: 1rem;
+    }
+
+    .text-size2 {
+        font-size: 0.8rem;
+    }
+
+    .d-inline {
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    .text-bold {
+        font-weight: bold;
+    }
+
+    .text-red {
+        color: red;
+    }
+
+    .text-gray {
+        color: gray;
+    }
+
+    .text-decoration-underline {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="text-size1">
+    <h2 class="text-red">
+        Dear Member, Your @Model.WebsiteName account has been successfully created
+    </h2>
+
+    <hr />
+
+    <div>
+        This email is to confirm that your account has been successfully created and is now ready for use.
+    </div>
+    <div class="text-gray text-size2">
+        No further action is required.
+    </div>
+
+    <br />
+
+    <div class="d-inline text-bold">
+        <div>Your Account:</div>
+        <span class="text-decoration-underline">@Model.Email</span>
+    </div>
+
+    <br />
+
+    <div class="text-gray">
+        Registration Time:
+        <span class="text-bold">
+            @Model.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss")
+        </span>
+    </div>
+
+    @* Optional: Membership welcome bonus *@
+    @if (!string.IsNullOrWhiteSpace(Model.BonusText))
+    {
+        <br />
+        <div class="text-gray">
+            @Model.BonusText
+        </div>
+    }
+
+    <br />
+
+    <div class="text-bold">Terms of Service & Privacy Policy</div>
+    <div class="text-gray text-size2">
+        By completing the registration, you acknowledge that you have read and agreed to our
+        Terms of Service and Privacy Policy.<br />
+        You may review the latest versions at the link below:
+    </div>
+
+    <a href="@Model.PolicyUrl" title="View Terms of Service and Privacy Policy">
+        View Terms of Service and Privacy Policy
+    </a>
+
+    <div class="text-gray text-size2">
+        If the link above does not work, please copy and paste the following URL into your browser:<br />
+        <span class="text-decoration-underline">@Model.PolicyUrl</span>
+    </div>
+
+    <br />
+
+    <div class="text-bold">Security Notice</div>
+    <div class="text-gray text-size2">
+        If this account registration was not initiated by you, please contact our customer service immediately
+        to ensure the security of your account.
+    </div>
+
+    <br />
+
+    <hr />
+    <hr />
+
+    <div class="text-bold text-red">
+        Reminder: This is an automated system email. Please do not reply directly.
+    </div>
+    <div class="text-bold text-red">
+        Our customer service representatives will never ask you to change your account information
+        or request ATM transfers or payments.
+    </div>
+    <div class="text-bold text-red">
+        If you encounter any suspicious activity, please contact your local anti-fraud hotline immediately.
+    </div>
+
+    <hr />
+    <hr />
+
+    <br />
+</div>

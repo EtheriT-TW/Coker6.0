@@ -1,9 +1,10 @@
-﻿var OrgName = "Page", LayoutType = 0, IsFaPage = true, loginModal, otherLoginModal, registerModal, forgetModal, resetModal, IsLogin;
+﻿var OrgName = "Page", LayoutType = 0, IsFaPage = true, loginModal, otherLoginModal, registerModal, forgetModal, resetModal, privacyStatementModal, IsLogin;
 
 function ready() {
     const $conten = $("#main");
     const $parentConten = $("#ParentNode");
     loginModal = $("#LoginModal").length > 0 ? new bootstrap.Modal($("#LoginModal")) : null;
+    privacyStatementModal = $("#PrivacyStatementModal").length > 0 ? new bootstrap.Modal($("#PrivacyStatementModal")) : null;
     otherLoginModal = $("#OtherLoginModal").length > 0 ? new bootstrap.Modal($("#OtherLoginModal")) : null;
     registerModal = $("#RegisterModal").length > 0 ? new bootstrap.Modal($("#RegisterModal")) : null;
     forgetModal = $("#ForgetModal").length > 0 ? new bootstrap.Modal($("#ForgetModal")) : null;
@@ -128,6 +129,8 @@ function ready() {
             }
         });
     }
+    console.log(location.hash);
+    if (location.hash == "#PrivacyStatement") privacyStatementModal.show();
     _c.Search.Init("#Search");
     $(".nav-link").on("focus", function () {
         $(this).trigger("mouseover");

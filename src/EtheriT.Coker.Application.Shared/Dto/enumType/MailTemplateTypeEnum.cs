@@ -12,5 +12,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         後台會員建置 = 2,
         密碼重設通知 = 3,
         變更電子信箱 = 4,
+        註冊驗證通知 = 5,
+        註冊完成通知 = 6
     }
 }

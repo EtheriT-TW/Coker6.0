@@ -238,8 +238,11 @@ function HeaderDataInsert($frame, data) {
             switch (type) {
                 case "price":
                     if (data.available) {
-                        if (data.bonus > 0) $self.text(`${parseInt($self.text()).toLocaleString()}+紅利${data.bonus}`)
-                        else $self.text(parseInt($self.text()).toLocaleString())
+                        if (data.bonus > 0) {
+                            const price = parseInt($self.text());
+                            if (price > 0) $self.text(`${price.toLocaleString()}+紅利${data.bonus}`);
+                            else $self.text(`紅利${data.bonus}`);
+                        } else $self.text(parseInt($self.text()).toLocaleString())
                     }
                     break;
             };

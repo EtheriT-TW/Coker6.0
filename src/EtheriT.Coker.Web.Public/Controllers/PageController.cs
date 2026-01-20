@@ -1,12 +1,14 @@
 ﻿using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Advertise;
 using EtheriT.Coker.Application.Authorization;
+using EtheriT.Coker.Application.BonusManagement;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Search;
 using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Shared.Article;
+using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
@@ -69,6 +71,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly ITemplatesApplicationService templatesApplicationService;
         private readonly IAccountAppService accountAppService;
         private readonly IPermissionsAppService permissionsAppService;
+        private readonly IBonusManagementAppService bonusManagementAppService;
         private readonly StringHandler stringHandler;
         private readonly IWebHostEnvironment _env;
 
@@ -89,6 +92,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ITechnicalCertificateAppService technicalCertificateAppService,
             IAdvertiseAppService advertiseAppService,
             ITokenAppService tokenAppService,
+            IBonusManagementAppService bonusManagementAppService,
             IFileUploadAppService fileUploadAppService,
             ITemplatesApplicationService templatesApplicationService,
             IAccountAppService accountAppService,
@@ -118,6 +122,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.templatesApplicationService = templatesApplicationService;
             this.accountAppService = accountAppService;
             this.permissionsAppService = permissionsAppService;
+            this.bonusManagementAppService = bonusManagementAppService;
             this._env = env;
         }
         private bool UseLegacyPathHandling(string website, string key, string option)
@@ -171,6 +176,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var prodCatalog = StoreSet.storeSetDetails?.Find(e => e.key == "prodCatalog");
             var priceOrder = StoreSet.storeSetDetails?.Find(e => e.key == "priceOrder");
             var HasInvoice = string.Join(",", StoreSet.storeSetDetails?.Find(e => e.key == "HasInvoice")?.value ?? Enumerable.Empty<string>()) != "DisabledInvoice";
+            var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
             List<string> Carrier = StoreSet.storeSetDetails?.Find(e => e.key == "ExtraInviiceCarrier")?.value ?? new List<string>();
 
             var shareImage = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { Sid = siteId, Type = 13 });
@@ -184,6 +190,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.PrivacyPolicy = privacyPolicy != null && privacyPolicy.value != null && privacyPolicy.value.Any() ? string.Join(",", privacyPolicy.value) : "";
             ViewBag.HasInvoice = HasInvoice;
             ViewBag.Carrier = Carrier;
+            ViewBag.BonusEnabled = bonusSetting.MaxRedemptionPercent > 0;
             if (template != null)
             {
                 var header = template.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.表頭);
@@ -500,7 +507,19 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 if (tokenItem != null)
                 {
                     ViewBag.isLogin = tokenItem.IsLogin;
-                    if (PageData != null) { 
+                    if (ViewBag.BonusEnabled && ViewBag.isLogin) {
+                        var tokenUUID = await tokenAppService.GetUUID();
+                        var UUID = tokenAppService.GetUUID(tokenUUID);
+                        var bonus = (await bonusManagementAppService.GetQueryFrontUsersTotalAvaliableBonus(new List<Guid> { UUID })).FirstOrDefault();
+                        ViewBag.UserBonus = bonus != null ? bonus.TotalAvaliableBonus : 0;
+                        
+                        ViewBag.MinOrderForRedemption = bonusSetting.MinOrderForRedemption; // 消費滿額開始紅利折抵
+                        ViewBag.MaxRedemptionPercent = bonusSetting.MaxRedemptionPercent; // 折抵比例(%)
+                        ViewBag.MinOrderForEarnPoints = bonusSetting.MinOrderForEarnPoints; // 消費買額可獲得紅利
+                        ViewBag.RewardRatePercent = bonusSetting.RewardRatePercent; // 回饋比例
+                    }
+                    if (PageData != null)
+                    {
                         var userInfo = await accountAppService.GetFrontUserData();
                         var perm = await permissionsAppService.GetPagePermission(new GetPagePermissionInputDto
                         {

@@ -9,6 +9,11 @@
 <script nonce="@ViewBag.Nonce">
     const PageKey = "@Model.option";
     const local = @Html.Raw(L.getAllJsonString());
+    const bonus = @Json.Serialize(ViewBag.UserBonus ?? 0);
+    const MinOrderForRedemption = @Json.Serialize(ViewBag.MinOrderForRedemption ?? 0);
+    const MaxRedemptionPercent = @Json.Serialize(ViewBag.MaxRedemptionPercent ?? 0);
+    const MinOrderForEarnPoints = @Json.Serialize(ViewBag.MinOrderForEarnPoints ?? 0);
+    const RewardRatePercent = @Json.Serialize(ViewBag.RewardRatePercent ?? 0);
 </script>
 <link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
 <script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
@@ -282,18 +287,22 @@
                     </template>
                     <ul class="purchase_list pb-4 ps-4 pe-5"></ul>
 
-                    <div class="priceline pe-sm-5 col-12 col-md-6 offset-md-6">
+                    <div class="priceline pe-sm-5 col-12 col-md-7 offset-md-5">
                         <div class="py-2 d-flex justify-content-end text-end">
                             <div>商品金額</div>
                             <div data-key="subtotal" data-type="price" class="subtotal price"></div>
                         </div>
-                        @* <div class="py-2 d-flex justify-content-end text-end">
+                        <div class="py-2 d-flex justify-content-end text-end bonusLine">
                             <div>紅利點數</div>
-                            <div data-key="subtotal" data-type="price" class="subtotal price"></div>
-                        </div> *@
+                            <div data-key="bonus" data-type="price" class="bonus"></div>
+                        </div>
                         <div class="border-top  py-2 d-flex justify-content-end text-end">
                             <div>小計</div>
                             <div data-key="total" data-type="price" class="subtotal price fs-5 fw-bold red_text"></div>
+                        </div>
+                        <div class="py-1 d-flex justify-content-end text-end d-none bonusRedeemHintLine">
+                            <div class="bonusRedeemHintText"></div>
+                            <div class="bonusEarnHintText"></div>
                         </div>
                     </div>
                     <div class="swiper_button my-5 d-flex justify-content-center">
@@ -545,7 +554,7 @@
                                     {
                                         <!-- 手機載具 -->
                                         <form id="Form_InvoicePersonalType" class="invoice-block invoice-row px-3 px-sm-5 d-none needs-validation" data-personal="mobile" method="post" novalidate>
-                                            <div class="personal-sub" >
+                                            <div class="personal-sub">
                                                 <div class="invoice-label">手機載具：</div>
                                                 <div class="invoice-fields">
                                                     <input class="form-control" type="text" name="MobileCarrier" placeholder="例：/ABCD1234">
@@ -656,10 +665,17 @@
                         </div>
                     </form>
 
-                    <div class="priceline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
+                    <div class="priceline px-3 pe-sm-5 col-12 col-md-7 offset-md-5">
                         <div class="py-2 d-flex justify-content-end text-end">
                             <div>商品金額</div>
                             <div class="subtotal price"></div>
+                        </div>
+                        <div class="py-2 d-flex justify-content-end text-end bonusLine">
+                            <div>商品紅利</div>
+                            <div class="bonus"></div>
+                        </div>
+                        <div class="py-1 d-flex justify-content-end text-end d-none bonusEarnHintLine">
+                           
                         </div>
                         <div class="py-2 d-flex justify-content-end text-end">
                             <div class="shipping_memo">再購買<sapn class="price"></sapn>免運</div>
@@ -669,6 +685,10 @@
                         <div class="py-2 border-top d-flex justify-content-end text-end">
                             <div>小計</div>
                             <div class="total_amount price  fs-5 fw-bold red_text"></div>
+                        </div>
+                        <div class="py-1 d-flex justify-content-end text-end d-none bonusRedeemHintLine">
+                            <div class="bonusRedeemHintText"></div>
+                            <div class="bonusEarnHintText"></div>
                         </div>
                         <div class="d-flex justify-content-end"><button class="btn_back_to_check bg-transparent btn text-decoration-underline px-0">返回查看商品明細</button></div>
                     </div>
@@ -985,5 +1005,5 @@
 
 
 <script src="@(ViewBag.IsProduction
-    ? "https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"
-    : "https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116")"></script>
+            ? "https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"
+            : "https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116")"></script>

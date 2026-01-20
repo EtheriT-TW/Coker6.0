@@ -129,7 +129,6 @@ function ready() {
             }
         });
     }
-    console.log(location.hash);
     if (location.hash == "#PrivacyStatement") privacyStatementModal.show();
     _c.Search.Init("#Search");
     $(".nav-link").on("focus", function () {

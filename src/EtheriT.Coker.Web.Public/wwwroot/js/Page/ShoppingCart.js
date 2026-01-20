@@ -1113,7 +1113,8 @@ function CartListInsert($frame, data) {
                     var price_text = "";
 
                     if (data['bonus'] > 0) {
-                        price_text = `${unitPrice.toLocaleString()}+紅利${data['bonus'].toLocaleString()}`;
+                        if (unitPrice > 0) price_text = `${unitPrice.toLocaleString()}+紅利${data['bonus'].toLocaleString()}`;
+                        else price_text = `紅利${data['bonus'].toLocaleString()}`;
                     } else {
                         price_text = `${unitPrice.toLocaleString()}`;
                     }
@@ -1134,7 +1135,8 @@ function CartListInsert($frame, data) {
                     var price_text = "";
 
                     if (sub_bonus > 0) {
-                        price_text = `$${sub_price.toLocaleString()}+紅利${sub_bonus.toLocaleString()}`
+                        if (sub_price > 0) price_text = `$${sub_price.toLocaleString()}+紅利${sub_bonus.toLocaleString()}`
+                        else price_text = `紅利${sub_bonus.toLocaleString()}`
                     } else {
                         price_text = `$${sub_price.toLocaleString()}`
                     }
@@ -1187,7 +1189,7 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity) {
         self.data("subtotal_bonus", sub_bonus);
 
         var price_text = (sub_bonus > 0)
-            ? `${sub_price.toLocaleString()}+紅利${sub_bonus.toLocaleString()}`
+            ? sub_price > 0 ? `${sub_price.toLocaleString()}+紅利${sub_bonus.toLocaleString()}` : `紅利${sub_bonus.toLocaleString()}`
             : `${sub_price.toLocaleString()}`;
 
         self.text(price_text);
@@ -1294,6 +1296,68 @@ function TotalCount() {
         $(".shipping_memo").removeClass("d-none");
     } else $(".shipping_memo").addClass("d-none");
     total = (freight == null || freight == "") ? subtotal : subtotal + freight;
+    // 紅利點數
+    const $bonusLine = $(".bonusLine");
+    if ((bonus || 0) > 0) {
+        $bonusLine.find('.bonus').text(bonus.toLocaleString());
+        $bonusLine.removeClass("d-none");
+    } else {
+        $bonusLine.find('.bonus').text("");
+        $bonusLine.addClass("d-none");
+    }
+
+    // ===== 紅利折抵提示（前台顯示結果/差額）=====
+    const $redeemLine = $(".bonusRedeemHintLine");
+    const $redeemText = $redeemLine.find(".bonusRedeemHintText");
+
+    // 規則是否啟用
+    const redeemEnabled = (MinOrderForRedemption > 0 && MaxRedemptionPercent > 0);
+
+    if (!redeemEnabled) {
+        $redeemLine.addClass("d-none");
+        $redeemText.text("");
+    } else if (subtotal < MinOrderForRedemption) {
+        const diff = MinOrderForRedemption - subtotal;
+        $redeemText.text(`再消費 $${diff.toLocaleString()} 可啟用紅利折抵`);
+        $redeemLine.removeClass("d-none");
+    } else {
+        const cap = Math.floor(subtotal * MaxRedemptionPercent / 100); // 本單制度上限（元）
+        const memberBonusAmount = Math.max(0, bonus || 0);             // 會員可用紅利（先假設1點=1元）
+        const canRedeem = Math.min(cap, memberBonusAmount);
+
+        if (canRedeem > 0) {
+            $redeemText.text(`本單可用紅利折抵 $${canRedeem.toLocaleString()}`);
+            $redeemLine.removeClass("d-none");
+        } else {
+            // 會員沒有紅利時，你要不要顯示這句可自行決定
+            $redeemText.text(`本單已符合紅利折抵條件`);
+            $redeemLine.removeClass("d-none");
+        }
+    }
+
+    // ===== 紅利回饋提示（前台顯示結果/差額）=====
+    const $earnText = $redeemLine.find(".bonusEarnHintText");
+    const earnEnabled = (MinOrderForEarnPoints > 0 && RewardRatePercent > 0);
+
+    if (!earnEnabled) {
+        $earnText.addClass("d-none");
+        $earnText.text("");
+    } else if (subtotal < MinOrderForEarnPoints) {
+        const diff = MinOrderForEarnPoints - subtotal;
+        $earnText.text(`再消費 $${diff.toLocaleString()} 可獲得紅利回饋`);
+        $earnText.removeClass("d-none");
+    } else {
+        // 本單可獲得點數：通常以「商品金額」計算，不含運費
+        const earnPoints = Math.floor(subtotal * RewardRatePercent / 100);
+        if (earnPoints > 0) {
+            $earnText.text(`本單預計獲得紅利 ${earnPoints.toLocaleString()} 點`);
+            $earnText.removeClass("d-none");
+        } else {
+            $earnText.addClass("d-none");
+            $earnText.text("");
+        }
+    }
+
     $(".total_amount").text(parseInt(total).toLocaleString());
 
     // 付款方式顯示篩選依據 subtotal

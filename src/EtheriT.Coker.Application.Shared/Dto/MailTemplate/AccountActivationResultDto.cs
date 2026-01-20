@@ -12,5 +12,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.MailTemplate
         public string Email { get; set; } = string.Empty;
         public string Link { get; set; } = string.Empty;
         public DateTime ExpiresAt { get; set; } = DateTime.Now.AddDays(1);
+        public string BonusText { get; set; } = string.Empty;
     }
 }

@@ -44,6 +44,12 @@
         若無法點擊，請複製貼上以下連結<br />
         <span class="text-decoration-underline">@Model.Link</span>
     </div>
+    @if (!string.IsNullOrWhiteSpace(Model.BonusText))
+    {
+        <div class="text-gray">
+            @Model.BonusText
+        </div>
+    }
     <div class="text-gray">這個連結僅能使用一次，並於 @Model.ExpiresAt.ToString("yyyy/MM/dd HH:mm:ss") 到期，請在期限內開通。</div>
     <div class="text-gray">感謝您的加入！~</div>
     <br />

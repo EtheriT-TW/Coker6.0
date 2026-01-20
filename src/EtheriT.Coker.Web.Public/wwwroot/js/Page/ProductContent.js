@@ -1,5 +1,5 @@
 ﻿var $input_quantity
-var Pid, s1, s2, bonus
+var Pid, s1, s2
 var s1_list = [], s2_list = [], spectype_list, spec_list, price_list = [], img_origin_list
 var preview_swiper, product_swiper, $pro_itemNo, $counter_input;
 var CanShop;
@@ -13,9 +13,6 @@ function PageReady() {
 
     if ($(".btn_addToCar").length > 0) CanShop = true;
     else CanShop = false;
-
-    /* 讀取使用者剩餘紅利點數 */
-    bonus = 0;
 
     window.CI360.init();
     if (ProdId != null && !isNaN(ProdId)) Pid = ProdId;
@@ -679,7 +676,9 @@ function SpecRadio() {
                         price_temp.find(".discount").removeClass("price").text(local.MarketPrice);
                     } else {
                         if (self_item.bonus > 0) {
-                            price_text = `${price.toLocaleString('en-US')}+紅利${self_item.bonus}點`;
+                            if (price > 0) price_text = `${price.toLocaleString('en-US')}+紅利${self_item.bonus}點`;
+                            else price_text = `紅利${self_item.bonus}點`;
+
                             if (CanShop) {
                                 if (bonus > self_item.bonus) {
                                     price_temp.find(".discount").removeClass("bonus_lack");

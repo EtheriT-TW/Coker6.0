@@ -265,9 +265,28 @@ input[type="number"] {
         width: 3rem;
     }
 
-.priceline > div > div:last-child {
-    width: 10rem;
+
+.priceline {
+    position: relative;
 }
+
+    .priceline > div > div:last-child {
+        width: 10rem;
+    }
+
+    .priceline > .bonusRedeemHintLine {
+        position: absolute;
+        width: 100%;
+        display: flex;
+        justify-content: flex-start !important;
+        bottom: 0.5rem;
+        left: -3rem;
+    }
+
+
+        .priceline > .bonusRedeemHintLine > div.bonusRedeemHintText, .priceline > .bonusRedeemHintLine > div.bonusEarnHintText {
+            width: 15rem;
+        }
 
 #Purchase_Null {
     display: flex;
@@ -583,9 +602,11 @@ body > .popover.bs-popover-auto.fade {
     margin-left: .25rem;
     font-size: 0.875rem;
 }
+
 .purchase_item > .content > .js-stock-error {
     display: none;
 }
+
 .purchase_group > .group_header {
     display: flex;
     gap: 1rem;
@@ -603,6 +624,7 @@ body > .popover.bs-popover-auto.fade {
         top: 0;
         transform: translate(0, 0);
     }
+
     .purchase_item > .content > .js-stock-error {
         display: block;
     }

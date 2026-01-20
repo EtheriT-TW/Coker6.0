@@ -1049,15 +1049,21 @@ namespace EtheriT.Coker.Application.Authorization
                 response.Error = "網站資料錯誤";
                 return response;
             }
+            if (string.IsNullOrEmpty(dto.Email))
+            {
+                response.Error = "信箱錯誤";
+                return response;
+            }
             var WebsiteName = string.IsNullOrEmpty(dto.WebsiteName) ? website?.Title : dto.WebsiteName;
             var WebsiteLink = string.IsNullOrEmpty(dto.WebsiteLink) ? website?.DefaultUrl : dto.WebsiteLink;
             try
             {
                 AccountActivationResultDto resultDto = new AccountActivationResultDto
                 {
-                    WebsiteName = WebsiteName,
+                    WebsiteName = WebsiteName ?? "網站客服信",
                     Email = dto.Email,
-                    Link = $"{WebsiteLink}/?useraction=accountoping&openid={dto.OpenId}"
+                    Link = $"{WebsiteLink}/?useraction=accountoping&openid={dto.OpenId}",
+                    BonusText = dto.BonusText
                 };
                 if (dto.OpenIdSendDate != null) resultDto.ExpiresAt = ((DateTime)dto.OpenIdSendDate).AddDays(1);
 

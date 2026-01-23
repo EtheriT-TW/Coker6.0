@@ -505,8 +505,8 @@ function DirectoryDataInsert($item, result) {
         const hasBonus = !isNullOrEmpty(data.bonus);
         const hideCash = hasBonus && isZeroPriceString(data.price);
 
-        if (data.PriceDisplayText != null) {
-            content.find(".price").text(data.PriceDisplayText);
+        if (data.priceDisplayText != null) {
+            content.find(".price").removeClass("price").text(data.priceDisplayText);
         }
         // 都沒有
         else if (isNullOrEmpty(data.price) && !hasBonus) {

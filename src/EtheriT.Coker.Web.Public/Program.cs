@@ -179,7 +179,10 @@ builder.Services.AddMemoryCache()
     });
 
 builder.Services.AddDbContext<CokerDbContext>(item =>
-    item.UseSqlServer(configuration.GetConnectionString("Default"))
+    item.UseSqlServer(configuration.GetConnectionString("Default"), sqlServerOptionsAction: sqlOptions =>
+    {
+        sqlOptions.EnableRetryOnFailure();
+    })
 );
 
 builder.Services.AddMvc(options =>

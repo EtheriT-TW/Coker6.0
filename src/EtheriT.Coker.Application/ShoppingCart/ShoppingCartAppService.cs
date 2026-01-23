@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Product;
@@ -23,13 +25,15 @@ namespace EtheriT.Coker.Application.ShoppingCart
         private readonly IConfiguration configuration;
         private readonly IMapper mapper;
         private readonly IProductAppService productAppService;
+        private readonly IBonusManagementAppService bonusManagementAppService;
         public ShoppingCartAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             ITokenAppService tokenAppService,
             IConfiguration configuration,
             IMapper mapper,
-            IProductAppService productAppService
+            IProductAppService productAppService,
+            IBonusManagementAppService bonusManagementAppService
         )
         {
             this.db = db;
@@ -38,6 +42,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             this.configuration = configuration;
             this.mapper = mapper;
             this.productAppService = productAppService;
+            this.bonusManagementAppService = bonusManagementAppService;
         }
         public async Task<ResponseMessageDto> UpdateUUID(Guid UserUUID, Guid TempUUID)
         {
@@ -206,6 +211,25 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 response.Message = ex.Message;
             }
             return response;
+        }
+        public async Task<bool> checkBonusCanUse(Guid uuid, List<OrderDetailAddDto> OrderDetails)
+        {
+            var bonusData = await bonusManagementAppService.GetQueryFrontUsersTotalAvaliableBonus(new List<Guid>{ uuid });
+
+            var ids = OrderDetails.Select(e => e.Id).ToList();
+            var shoppingCarts = await db.ShoppingCarts.Include(e => e.Prod_Price)
+                .Where(e => e.UUID == uuid && !e.IsOrder && ids.Contains(e.Id))
+                .ToListAsync();
+            var bonusNeeded = shoppingCarts.Sum(e => e.Prod_Price == null ? 0 : e.Prod_Price.Bonus * e.Quantity);
+            if(bonusNeeded == 0) return true;
+            if (bonusData != null)
+            {
+                
+                var bonus = bonusData.FirstOrDefault();
+                if (bonus!=null && bonus.TotalAvaliableBonus >= bonusNeeded)
+                    return true;
+            }
+            return false;
         }
         public async Task<ResponseMessageDto> QuantityUpdate(List<ShoppingQuantityUpdateDto> dtos)
         {
@@ -543,6 +567,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                     if (!temp_output.Available) temp_output.Quantity = 0;
                     temp_output.Subtotal = temp_output.Price * temp_output.Quantity;
+                    temp_output.SubtotalBonus = temp_output.Bonus * temp_output.Quantity;
 
                     temp_output.Describe = prods?.Description ?? "";
 

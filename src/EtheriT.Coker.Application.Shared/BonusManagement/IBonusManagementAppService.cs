@@ -67,5 +67,19 @@ namespace EtheriT.Coker.Application.Shared.BonusManagement
         /// <param name="topRecordCount"></param>
         /// <returns></returns>
         Task<List<GetQueryFrontUsersBonusLogOutput>> GetQueryFrontUsersBonusLog(Guid frontUserUUID, int topRecordCount);
+        /// <summary>
+        /// 取消交易退還紅利
+        /// </summary>
+        /// <param name="memberUuid"></param>
+        /// <param name="orderId"></param>
+        /// <returns></returns>
+        Task<ResponseMessageDto> RefundRedeemByOrderAsync(Guid memberUuid, long orderId, string? reason = null);
+        /// <summary>
+        /// 取消交易追回紅利
+        /// </summary>
+        /// <param name="memberUuid"></param>
+        /// <param name="orderId"></param>
+        /// <returns></returns>
+        Task<ResponseMessageDto> RevokeEarnByOrderAsync(Guid memberUuid, long orderId, string? reason = null);
     }
 }

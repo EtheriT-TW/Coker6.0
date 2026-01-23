@@ -117,11 +117,17 @@
                                 </div>
                             </div>
 
-                            <div data-key="price" class="pro_unit col-auto gray_text text-end"></div>
+                            <div class="col-auto gray_text text-start">
+                                <div data-key="price" class="pro_unit"></div>
+                                <div data-key="bonus" class="pro_unitBonus"></div>
+                            </div>
 
                             <div data-key="quantity" class="pro_quantity col-auto gray_text text-start"></div>
 
-                            <div data-key="subtotal" class="pro_subtotal col price color_red_number text-end"></div>
+                            <div class="col color_red_number text-end">
+                                <div data-key="subtotal" class="price pro_subtotal"></div>
+                                <div data-key="subtotalBonus" class="bonus pro_subtotalBonus"></div>
+                            </div>
                         </li>
                     </template>
 
@@ -130,6 +136,10 @@
                             <div class="d-flex">
                                 <div class="col fw-bold">總金額：</div>
                                 <div data-key="subtotal" class="order_subtotal price color_red_number col-4 col-sm-2"></div>
+                            </div>
+                            <div class="d-flex ">
+                                <div class="col fw-bold">使用總紅利：</div>
+                                <div data-key="bonus" class="order_bonus bonus color_red_number col-4 col-sm-2"></div>
                             </div>
                             <div class="d-flex">
                                 <div class="col fw-bold">運費：</div>
@@ -253,7 +263,7 @@
                     </div>
                     <div id="InvoiceData" class="card border-0 mb-3">
                         <div class="card-body">
-                            <div class="fs-5 fw-bold pb-2">發票寄送資料</div>
+                            <div class="fs-5 fw-bold pb-2">發票資料</div>
 
                             <div class="row d-none" data-recipient="same">
                                 <div class="col-auto pe-0"></div>

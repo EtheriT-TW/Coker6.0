@@ -111,8 +111,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                     response = await eCPayAppService.ECPayRefund(ohid);
                     break;
                 default:
-                    var state = (int)OrderStatusEnum.已取消;
-                    response = await orderAppService.OrderStateChange(ohid, state);
+                    response = await orderAppService.UpdateStatus(new OrderUpdateStatusDto { Id = ohid, Status = OrderStatusEnum.已取消, Memo=null});
                     if (response.Success && response.Message == "已付款") response.Message = "訂單已取消，請主動聯繫客服處理退款。";
                     else response.Message = "訂單已取消。";
                     break;

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.BonusManagement;
 using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Bonus;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -61,6 +62,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             {
                 // 設為 true，表示需要發送郵件
                 model.IsSendMail = true;
+                if (model.TransactionOperation == "+") model.Type = BonusLogTypeEnum.Earn;
+                else model.Type = BonusLogTypeEnum.Refund;
+
                 // 呼叫 Service 層方法來更新設定
                 var result = await _bonusManagementAppService.SaveTransaction(model);
                 if (result.Success)

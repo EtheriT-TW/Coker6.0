@@ -25,6 +25,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public int OldQuantity { get; set; }
         public int Step { get; set; }
         public int Subtotal { get; set; }
+        public int SubtotalBonus { get; set; }
         public int Stock { get; set; }
     }
 }

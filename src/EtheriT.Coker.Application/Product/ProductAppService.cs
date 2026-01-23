@@ -1039,12 +1039,13 @@ namespace EtheriT.Coker.Application.Product
                             if (SuggestPrice > 0) data.SuggestPrice = (SuggestPrice).ToString("N0");
                         }
                         data.IsTimePrice = theStock?.IsTimePrice ?? false;
-                        data.Price = temp_price?.Price?.ToString("N0") ?? "0";
+                        data.Price = temp_price?.Price?.ToString("N0");
+                        data.Bonus = temp_price != null && temp_price.Bonus > 0 ? temp_price.Bonus.ToString("N0") : null;
                         data.OriPrice = temp_price?.OriPrice?.ToString("N0") ?? "0"; 
                         
                         if (data.IsTimePrice)
                         {
-                            data.Price = L.get("MarketPrice");
+                            data.PriceDisplayText = L.get("MarketPrice");
                             data.SuggestPrice = null;
                             data.OriPrice = null;
                         }

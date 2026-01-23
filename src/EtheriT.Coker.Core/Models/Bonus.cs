@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Core.Entity;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Bonus;
+using EtheriT.Coker.Core.Entity;
 
 namespace EtheriT.Coker.Core.Models
 {
@@ -10,6 +11,7 @@ namespace EtheriT.Coker.Core.Models
         public DateTime? EndDate { get; set; }
         public string Note { get; set; }
         public int Balance { get; set; }
+        public BonusStatusEnum Status { get; set; }
         public List<BonusLogDetail> BonusLogDetails { get; set; } = new List<BonusLogDetail>();
     }
 }

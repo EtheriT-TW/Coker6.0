@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Bonus;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,5 +22,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.BonusManagement
         /// 是否寄送紅利異動通知信件(預設啟用)
         /// </summary>
         public bool IsSendMail { get; set; } = true;
+        public long? RefKey { get; set; }
+        public BonusLogTypeEnum Type { get; set; }
+        public bool EnableIdempotencyByRefKey { get; set; } = false;
     }
 }

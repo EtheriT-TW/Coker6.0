@@ -301,7 +301,7 @@ namespace EtheriT.Coker.Application.Directory
                 decimal min = p.Min(e => e.Price) ?? 0;
                 decimal max = p.Max(e => e.Price) ?? 0;
                 if (min == max) data.Price = $"{max}";
-                else data.Price = $"{min} ~ {max}";
+                else data.PriceDisplayText = $"{min} ~ {max}";
             }
             output.ReleInfos = list;
 
@@ -793,7 +793,7 @@ namespace EtheriT.Coker.Application.Directory
                             var SuggestPrice = stock?.Price ?? 0;
                             if (SuggestPrice > 0) data.SuggestPrice = (SuggestPrice).ToString("N0");
                         }
-
+                        data.Bonus = temp_price?.Bonus.ToString("N0");
                         data.Price = temp_price?.Price?.ToString("N0") ?? "0";
                         data.OriPrice = temp_price?.OriPrice?.ToString("N0") ?? "0";
                     }

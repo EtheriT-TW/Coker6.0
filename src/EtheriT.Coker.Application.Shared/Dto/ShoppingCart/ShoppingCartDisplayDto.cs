@@ -27,6 +27,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public int Step { get; set; }
         public int OldQuantity { get; set; }
         public decimal Subtotal { get; set; }
+        public decimal SubtotalBonus { get; set; }
         public int Stock { get; set; }
         public FreightGetAllListDto? Freight { get; set; }
     }

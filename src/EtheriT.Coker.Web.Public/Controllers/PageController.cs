@@ -554,7 +554,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 }
                 else throw new Exception();
             }
-            catch
+            catch(Exception e)
             {
                 ViewBag.isLogin = false;
                 ViewBag.LoginEnable = false;

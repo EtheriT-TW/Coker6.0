@@ -50,6 +50,7 @@ namespace EtheriT.Coker.Core.Models
         public int Subtotal { get; set; }
         public int? Discount { get; set; }
         public int? Bonus { get; set; }
+        public int? GetBonus { get; set; }
         public long? CouponId { get; set; }
         public int Freight { get; set; }
         public int? Service_Charge { get; set; }

@@ -384,10 +384,11 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<CokerDbContext>(options =>
     {
         options.UseSqlServer(configuration.GetConnectionString("Default"),
-        sqlServerOptionsAction: sqlOptions =>
-        {
-            sqlOptions.EnableRetryOnFailure();
-        });
+            sqlServerOptionsAction: sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure();
+            }
+        );
     }
 );
 

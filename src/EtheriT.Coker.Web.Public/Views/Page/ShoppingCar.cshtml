@@ -9,7 +9,7 @@
 <script nonce="@ViewBag.Nonce">
     const PageKey = "@Model.option";
     const local = @Html.Raw(L.getAllJsonString());
-    const bonus = @Json.Serialize(ViewBag.UserBonus ?? 0);
+    const totalBonus = @Json.Serialize(ViewBag.UserBonus ?? 0);
     const MinOrderForRedemption = @Json.Serialize(ViewBag.MinOrderForRedemption ?? 0);
     const MaxRedemptionPercent = @Json.Serialize(ViewBag.MaxRedemptionPercent ?? 0);
     const MinOrderForEarnPoints = @Json.Serialize(ViewBag.MinOrderForEarnPoints ?? 0);
@@ -293,8 +293,12 @@
                             <div data-key="subtotal" data-type="price" class="subtotal price"></div>
                         </div>
                         <div class="py-2 d-flex justify-content-end text-end bonusLine">
-                            <div>紅利點數</div>
+                            <div>商品紅利</div>
                             <div data-key="bonus" data-type="price" class="bonus"></div>
+                        </div>
+                        <div class="py-2 d-flex justify-content-end text-end bonusDiscionLine">
+                            <div>紅利抵扣</div>
+                            <div data-key="bonusDiscion" data-type="price" class="bonusDiscion"></div>
                         </div>
                         <div class="border-top  py-2 d-flex justify-content-end text-end">
                             <div>小計</div>
@@ -411,6 +415,15 @@
                                 </div>
                             }
                         </form>
+
+                        <form id="Form_Memo" class="px-3 mt-4 pt-4 border-top px-sm-5 needs-validation" method="post" novalidate>
+                            <div class="row">
+                                <div class="form-floating mb-3 col-12">
+                                    <textarea id="TextareaRemark" name="remark" class="form-control" placeholder="備註"></textarea>
+                                    <label for="TextareaRemark" class="px-4">備　　註</label>
+                                </div>
+                            </div>
+                        </form>
                     </div>
 
                     <div id="RecipientForm">
@@ -508,10 +521,6 @@
                                     <input id="RecipientInputAddress" name="recipientAddress" class="orderer_address form-control" type="text" placeholder="請輸入地址" value="" required>
                                     <label class="px-4 required" for="RecipientInputAddress">地址</label>
                                 </div>
-                            </div>
-                            <div class="form-floating mb-3 col-12">
-                                <textarea id="TextareaRemark" name="remark" class="form-control" placeholder="備註"></textarea>
-                                <label for="TextareaRemark">備　　註</label>
                             </div>
                         </form>
                     </div>
@@ -674,8 +683,9 @@
                             <div>商品紅利</div>
                             <div class="bonus"></div>
                         </div>
-                        <div class="py-1 d-flex justify-content-end text-end d-none bonusEarnHintLine">
-                           
+                        <div class="py-2 d-flex justify-content-end text-end bonusDiscionLine">
+                            <div>紅利抵扣</div>
+                            <div data-key="bonusDiscion" data-type="price" class="bonusDiscion"></div>
                         </div>
                         <div class="py-2 d-flex justify-content-end text-end">
                             <div class="shipping_memo">再購買<sapn class="price"></sapn>免運</div>
@@ -807,11 +817,17 @@
                                         </div>
                                     </a>
 
-                                    <div data-key="price" class="pro_unit col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center"></div>
+                                    <div class="col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center">
+                                        <div data-key="price" class="pro_unit"></div>
+                                        <div data-key="bonus" class="pro_bonus"></div>
+                                    </div>
 
                                     <div data-key="quantity" class="pro_quantity col-12 col-lg-4 fs-5 d-flex justify-content-start justify-content-lg-center"></div>
 
-                                    <div data-key="subtotal" class="pro_subtotal col-4 fw-bold fs-5 d-lg-block d-none text-center" data-subtotal=""></div>
+                                    <div class="pro_subtotal col-4 fw-bold fs-5 d-lg-block d-none text-center">
+                                        <div data-key="subtotal" data-subtotal=""></div>
+                                        <div data-key="subtotalBonus"></div>
+                                    </div>
                                 </div>
                             </li>
                         </template>
@@ -828,6 +844,10 @@
                             <div class="py-2 border-top d-flex justify-content-end text-end align-items-baseline">
                                 <div>本次消費總金額</div>
                                 <div data-key="total" class="total_amount col-4 price fs-5 fw-bold">0</div>
+                            </div>
+                            <div class="py-2 d-flex justify-content-end text-end bonusUseTotal">
+                                <div>本次消費總紅利</div>
+                                <div data-key="bonus" class="bonus col-4">0</div>
                             </div>
                         </div>
 
@@ -885,32 +905,33 @@
                         <div class="invoice_type" data-carrier-count="@ViewBag.Carrier.Count">
                             <div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">發票類型：<span class="fs-6" data-key="typeTitle"></span></div>
                             <div class="content">
-                                <div class="row">
-                                    <div class="col-auto col-sm-2 text-end ps-4">型  別：</div>
-                                    <div data-key="personalInvoiceTypeTitle" class="col text-start ps-0"></div>
-                                </div>
-                                @if (ViewBag.Carrier.Contains("MobileCarrier"))
-                                {
-                                    <div class="mobileCarrier d-none">
-                                        <div class="row">
-                                            <div class="col-auto col-sm-2 text-end ps-4">手機條碼：</div>
-                                            <div data-key="carrier" class="col text-start ps-0"></div>
-                                        </div>
+                                <div class="person d-none">
+                                    <div class="row">
+                                        <div class="col-auto col-sm-2 text-end ps-4">型  別：</div>
+                                        <div data-key="personalInvoiceTypeTitle" class="col text-start ps-0"></div>
                                     </div>
-                                }
-
+                                    @if (ViewBag.Carrier.Contains("MobileCarrier"))
+                                    {
+                                        <div class="mobileCarrier d-none">
+                                            <div class="row">
+                                                <div class="col-auto col-sm-2 text-end ps-4">手機條碼：</div>
+                                                <div data-key="carrier" class="col text-start ps-0"></div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
                                 <div class="company d-none">
                                     <div class="row">
                                         <div class="col-auto col-sm-2 text-end ps-4">發票抬頭：</div>
-                                        <div data-key="invoiceTitle" data-type="name" class="col text-start ps-0"></div>
+                                        <div data-key="invoiceTitle" class="col text-start ps-0"></div>
                                     </div>
                                     <div class="row">
                                         <div class="col-auto col-sm-2 text-end ps-4">統　　編：</div>
-                                        <div data-key="uniformId" data-type="uniformId" class="col text-start ps-0"></div>
+                                        <div data-key="uniformId" class="col text-start ps-0"></div>
                                     </div>
                                     <div class="row">
                                         <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                        <div data-key="invoiceAddress" data-type="address" class="col text-start ps-0"></div>
+                                        <div data-key="invoiceAddress" class="col text-start ps-0"></div>
                                     </div>
                                 </div>
                             </div>

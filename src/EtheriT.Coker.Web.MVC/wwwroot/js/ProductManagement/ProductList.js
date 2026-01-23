@@ -764,8 +764,8 @@ function SpecAdd(result) {
         } else item_price_count.addClass("d-none");
         filter.map(item => {
             if (text != "") text += "\n";
-            text += "現金：" + co.String.thousandSign(item["Price"]);
-            if (parseInt(item["Bonus"]) != 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
+            if (parseInt(item["Price"]) > 0) text += "現金：" + co.String.thousandSign(item["Price"]);
+            if (parseInt(item["Bonus"]) > 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
         });
         if (filter.length > 0) {
             item_price.val(text);

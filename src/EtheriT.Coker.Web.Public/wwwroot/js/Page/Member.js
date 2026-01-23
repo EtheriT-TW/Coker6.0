@@ -535,9 +535,16 @@ function HistoryTemplateDataInsert(Datas) {
                 list_frame.find(".title").text(detail.title);
                 if (detail.s1Title != "") list_frame.find(".spec").append(`<span class="border px-1 me-1">${detail.s1Title}</span>`)
                 if (detail.s2Title != "") list_frame.find(".spec").append(`<span class="border px-1 me-1">${detail.s2Title}</span>`)
-                list_frame.find(".price").text((detail.price).toLocaleString());
+                list_frame.find(".price").html(`${detail.price > 0 ?
+                    detail.bonus > 0 ? `${parseInt(detail.price).toLocaleString()}<br />紅利：${(detail.bonus).toLocaleString()}` : `${parseInt(detail.price).toLocaleString()}` :
+                    `紅利：${(detail.bonus).toLocaleString()}`
+                }`);
                 list_frame.find(".quantity").text(detail.quantity);
-                list_frame.find(".subtotal").text(((parseInt(detail.price)) * (parseInt(detail.quantity))).toLocaleString());
+                list_frame.find(".subtotal").html(`${ detail.price > 0 ?
+                    detail.bonus > 0 ? `${parseInt(detail.price) * parseInt(detail.quantity)}<br />紅利：${(detail.bonus * parseInt(detail.quantity)).toLocaleString()}` :
+                        parseInt(detail.price) * parseInt(detail.quantity) :
+                    `紅利：${(detail.bonus * parseInt(detail.quantity)).toLocaleString()}`
+                }`);
                 frame.find(".list-group").append(list_frame);
             }
         })
@@ -545,6 +552,7 @@ function HistoryTemplateDataInsert(Datas) {
         frame.find(".collapse .header_subtotal").text((order_header.subtotal).toLocaleString());
         frame.find(".collapse .header_freight").text((order_header.freight).toLocaleString());
         frame.find(".collapse .header_total").text((order_header.total).toLocaleString());
+        frame.find(".collapse .header_totalBonus").text((order_header.bonus).toLocaleString());
 
         $("#profile-tab-pane .content").append(frame);
     })

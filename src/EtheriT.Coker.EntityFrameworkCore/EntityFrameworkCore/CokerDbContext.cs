@@ -1,20 +1,21 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Bonus;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+using EtheriT.Coker.Core.Entity;
+using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.EntityFrameworkCore.Configurations;
+using EtheriT.Coker.EntityFrameworkCore.Migrations.Seed;
+using EtheriT.Coker.Web.Core.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using EtheriT.Coker.Web.Core.Models;
-using EtheriT.Coker.EntityFrameworkCore.Migrations.Seed;
-using EtheriT.Coker.Core.Models;
-using Directory = EtheriT.Coker.Core.Models.Directory;
 using System.Text.Json.Nodes;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
-using EtheriT.Coker.Core.Entity;
-using EtheriT.Coker.EntityFrameworkCore.Configurations;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+using System.Threading.Tasks;
+using Directory = EtheriT.Coker.Core.Models.Directory;
 
 namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 {
@@ -93,6 +94,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 		public DbSet<FlowSize> FlowSizes { get; set; }
         public DbSet<Bonus> Bonus { get; set; }
         public DbSet<BonusLog> BonusLog { get; set; }
+        public DbSet<BonusLiability> BonusLiabilities { get; set; }
         public DbSet<BonusLogDetail> bonusLogDetails { get; set; }
 
 
@@ -308,6 +310,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Bonus>(o =>
             {
                 o.HasQueryFilter(e => !e.IsDeleted);
+                o.Property(e => e.Status).HasDefaultValue(BonusStatusEnum.Active);
             });
             modelBuilder.Entity<BonusLog>(o =>
             {
@@ -319,12 +322,18 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(x => x.ExecutionTime)
                     .HasDefaultValueSql("GETDATE()")
                     .ValueGeneratedOnAdd();
+
+                o.Property(x => x.Type).HasDefaultValue(BonusLogTypeEnum.Unknown);
             });
             modelBuilder.Entity<BonusLogDetail>(o =>
             {
                 o.HasKey(b => new { b.FK_BonusId, b.FK_BonusLogsId });
                 o.HasOne(b => b.Bonus).WithMany(b => b.BonusLogDetails).HasForeignKey(b => b.FK_BonusId);
                 o.HasOne(b => b.BonusLog).WithMany(b => b.BonusLogDetails).HasForeignKey(b => b.FK_BonusLogsId);
+            });
+            modelBuilder.Entity<BonusLiability>(o =>
+            {
+                o.HasKey(b => new { b.UUID });
             });
             modelBuilder.Entity<Favorites>(o =>
             {

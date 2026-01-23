@@ -1284,18 +1284,14 @@ function computeSelectedSubtotal() {
 function TotalCount() {
     // 以「已勾選」的品項為準
     const { sum, bonus } = computeSelectedSubtotal();
+    order_data.bonus = bonus;
     subtotal = sum;
     // 運費門檻依勾選小計判斷
     if (subtotal > low_con) freight = disfreight; else freight = ori_freight;
 
     // 右下角顯示
     $(".subtotal").text(subtotal.toLocaleString());
-    $(".shipping_fee").text(((freight == null || freight == "") ? 0 : freight).toLocaleString());
-    if (freight != 0 && disfreight == 0) {
-        $(".shipping_memo .price").text(low_con - subtotal);
-        $(".shipping_memo").removeClass("d-none");
-    } else $(".shipping_memo").addClass("d-none");
-    total = (freight == null || freight == "") ? subtotal : subtotal + freight;
+
     // 紅利點數
     const $bonusLine = $(".bonusLine");
     if ((bonus || 0) > 0) {
@@ -1309,29 +1305,34 @@ function TotalCount() {
     // ===== 紅利折抵提示（前台顯示結果/差額）=====
     const $redeemLine = $(".bonusRedeemHintLine");
     const $redeemText = $redeemLine.find(".bonusRedeemHintText");
+    const $bonusDisconLine = $(".bonusDiscionLine");
 
     // 規則是否啟用
     const redeemEnabled = (MinOrderForRedemption > 0 && MaxRedemptionPercent > 0);
-
+    let allBonus = bonus;
     if (!redeemEnabled) {
         $redeemLine.addClass("d-none");
+        $bonusDisconLine.addClass("d-none");
         $redeemText.text("");
     } else if (subtotal < MinOrderForRedemption) {
         const diff = MinOrderForRedemption - subtotal;
-        $redeemText.text(`再消費 $${diff.toLocaleString()} 可啟用紅利折抵`);
+        $redeemText.removeClass("d-none").text(`再消費 $${diff.toLocaleString()} 可啟用紅利折抵`);
         $redeemLine.removeClass("d-none");
+        $bonusDisconLine.addClass("d-none");
     } else {
         const cap = Math.floor(subtotal * MaxRedemptionPercent / 100); // 本單制度上限（元）
-        const memberBonusAmount = Math.max(0, bonus || 0);             // 會員可用紅利（先假設1點=1元）
+        const memberBonusAmount = Math.max(0, totalBonus - bonus || 0);             // 會員可用紅利（先假設1點=1元）
         const canRedeem = Math.min(cap, memberBonusAmount);
-
+        $redeemText.addClass("d-none").text("");
         if (canRedeem > 0) {
-            $redeemText.text(`本單可用紅利折抵 $${canRedeem.toLocaleString()}`);
+            $bonusDisconLine.removeClass("d-none");
+            $bonusDisconLine.find(".bonusDiscion").text(canRedeem.toLocaleString());
+            allBonus += canRedeem;
+            subtotal = subtotal - canRedeem;
             $redeemLine.removeClass("d-none");
         } else {
-            // 會員沒有紅利時，你要不要顯示這句可自行決定
-            $redeemText.text(`本單已符合紅利折抵條件`);
-            $redeemLine.removeClass("d-none");
+            $bonusDisconLine.addClass("d-none");
+            $bonusDisconLine.find(".bonusDiscion").text("");
         }
     }
 
@@ -1356,6 +1357,21 @@ function TotalCount() {
             $earnText.addClass("d-none");
             $earnText.text("");
         }
+    }
+
+    $(".shipping_fee").text(((freight == null || freight == "") ? 0 : freight).toLocaleString());
+    if (freight != 0 && disfreight == 0) {
+        $(".shipping_memo .price").text(low_con - subtotal);
+        $(".shipping_memo").removeClass("d-none");
+    } else $(".shipping_memo").addClass("d-none");
+    total = (freight == null || freight == "") ? subtotal : subtotal + freight;
+
+    if (allBonus > 0) {
+        $(".bonusUseTotal").removeClass("d-none");
+        $(".bonusUseTotal>.bonus").text(allBonus.toLocaleString());
+    } else {
+        $(".bonusUseTotal").addClass("d-none");
+        $(".bonusUseTotal>.bonus").text("");
     }
 
     $(".total_amount").text(parseInt(total).toLocaleString());
@@ -1614,7 +1630,7 @@ function OrdererEdit(isopen) {
 
     if (!OrdererOpen && isopen) {
         $("#OrdererForm > .default_data").addClass("d-none");
-        $("#OrdererForm > form").removeClass("d-none");
+        $("#OrdererForm > form#Form_Orderer").removeClass("d-none");
         OrdererOpen = true;
         OrdererFilled = false;
     } else if (OrdererOpen && !isopen) {
@@ -1625,7 +1641,7 @@ function OrdererEdit(isopen) {
             data.ordererAddress = `${data.county}${data.district}${data.ordererAddress}`;
             ShoppingCartDataInsert(data, $("#OrdererForm .default_data"));
             $("#OrdererForm > .default_data").removeClass("d-none");
-            $("#OrdererForm > form").addClass("d-none");
+            $("#OrdererForm > form#Form_Orderer").addClass("d-none");
             OrdererOpen = false;
         }
     }
@@ -1824,11 +1840,6 @@ function RecipientDataGet() {
     for (var key in recipient_data) {
         if (key.startsWith("recipient") > 0) order_header_data[key] = recipient_data[key]
     }
-    if (typeof (recipient_data['remark']) == "undefined" || recipient_data['remark'] == "") {
-        order_header_data['remark'] = "無";
-    } else {
-        order_header_data['remark'] = recipient_data['remark']
-    }
 
     return true;
 }
@@ -1838,42 +1849,35 @@ function InvoiceDataGet() {
         case "personal":
             if (InvoicePersonalTypeForms.length && !FormCheck(InvoicePersonalTypeForms)) return false;
             order_header_data.invoiceType = 1;
-            invoiceType_data.typeTitle = "個人發票";
             switch ($(`[name="PersonalInvoiceMode"]:checked`).val()) {
                 case "paper":
                     order_header_data.PersonalInvoiceType = 1;
-                    invoiceType_data.personalInvoiceTypeTitle = "紙本發票";
                     break;
                 case "mobile":
                     order_header_data.PersonalInvoiceType = 2;
                     invoiceType_data = co.Form.getJson("Form_InvoicePersonalType");
                     order_header_data.Carrier = invoiceType_data["MobileCarrier"];
-                    invoiceType_data.carrier = order_header_data.Carrier;
-                    invoiceType_data.personalInvoiceTypeTitle = "手機條碼";
                     break;
             }
             invoiceType_data.PersonalInvoiceType = order_header_data.PersonalInvoiceType;
             break;
         case "company":
-            invoiceType_data.typeTitle = "公司發票";
             if (!FormCheck(InvoiceForms)) return false;
             invoice_data = co.Form.getJson($("#Form_Invoice").attr("id"));
-            invoice_data.invoiceAddress = `${invoice_data.county} ${invoice_data.district} ${invoice_data.invoiceAddress}`;
+            order_header_data.invoiceAddress = `${invoice_data.county} ${invoice_data.district} ${invoice_data.invoiceAddress}`;
             order_header_data.invoiceType = 2;
             break;
     }
     switch ($(`[name="InvoiceRadio"]:checked`).val()) {
         case "order":
             invoice_data['invoiceRecipient'] = 1;
-            invoice_data['invoiceAddress'] = order_data['ordererAddress'];
             break;
         case "recipient":
             invoice_data['invoiceRecipient'] = 2;
-            invoice_data['invoiceAddress'] = recipient_data['recipientAddress'];
             break;
     }
     for (var key in invoice_data) {
-        if (key.startsWith("invoice") > 0) order_header_data[key] = invoice_data[key]
+        order_header_data[key] = invoice_data[key]
     }
 
     return true;
@@ -1959,7 +1963,10 @@ async function OrderHeaderAdd() {
                     });
                 }
                 order_header_data.OrderDetails = order_header_data.OrderDetails.filter(e => ids.includes(e.Id));
-
+                order_header_data.remark = $remark.val();
+                if (typeof (order_header_data.remark) == "undefined" || order_header_data.remark == "") {
+                    order_header_data.remark = "無";
+                }
                 Coker.sweet.loading();
                 Coker.Order.AddHeader(order_header_data).done(function (result) {
                     if (result.success) {
@@ -2159,23 +2166,28 @@ function OrderSuccess(result) {
     //HiddenCode($("#Step4 .orderer_data"))
     ShoppingCartDataInsert(recipient_data, $("#Step4 .recipient_data"));
     //HiddenCode($("#Step4 .recipient_data"))
+    invoice_data.invoiceType = order_header_data.invoiceType;
     switch (order_header_data.invoiceType) {
         case 1: //個人
+            invoiceType_data.typeTitle = "個人發票";
             switch (invoiceType_data.PersonalInvoiceType) {
                 case 1: //紙本
+                    invoice_data.personalInvoiceTypeTitle = "紙本發票";
                     break;
                 case 2: //載具
-                    invoice_data.Carrier = invoiceType_data.Carrier;
+                    invoice_data.personalInvoiceTypeTitle = "手機條碼";
+                    invoice_data.carrier = order_header_data.Carrier;
             }
+            $("#Step4 .invoice_type .company").addClass("d-none");
             break;
         case 2: //公司
-            ShoppingCartDataInsert(invoice_data, $("#Step4 .invoice_data .company"));
-            //HiddenCode($("#Step4 .invoice_data .company"))
-            $("#Step4 .invoice_data .company").removeClass("d-none");
+            invoiceType_data.typeTitle = "公司發票";
+            invoiceType_data.invoiceAddress = order_header_data.invoiceAddress;
+            $("#Step4 .invoice_type .company").removeClass("d-none");
             break;
     }
-
-    ShoppingCartDataInsert(invoiceType_data, $("#Step4 .invoice_type"));
+    invoice_data.typeTitle = invoiceType_data.typeTitle;
+    ShoppingCartDataInsert(invoice_data, $("#Step4 .invoice_type"));
     
     switch (invoice_data.invoiceRecipient) {
         case 1:
@@ -2231,8 +2243,10 @@ function PurchaseAdd(result, item_list_ul) {
         item_name = item.find(".pro_name"),
         item_specification = item.find(".pro_specification"),
         item_unit = item.find(".pro_unit"),
+        item_unitBonus = item.find(".pro_bonus"),
         item_quantity = item.find(".pro_quantity"),
-        item_subtotal = item.find(".pro_subtotal");
+        item_subtotal = item.find(`.pro_subtotal > [data-key="subtotal"]`),
+        item_subtotal_bonus = item.find(`.pro_subtotal > [data-key="subtotalBonus"]`);
 
     item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
     item_link.attr("title", `連結至：${result.title}(另開新視窗)`);
@@ -2240,9 +2254,15 @@ function PurchaseAdd(result, item_list_ul) {
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
     item_specification.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')
-    item_unit.text(`$${(result.price).toLocaleString('en-US')}`)
+    if (result.price > 0)
+        item_unit.text(`$${(result.price).toLocaleString('en-US')}`)
+    if (result.bonusPrice > 0)
+        item_unitBonus.text(`紅利：${(result.bonusPrice).toLocaleString('en-US')}`)
     item_quantity.text(result.quantity);
-    item_subtotal.text((result.price * result.quantity).toLocaleString('en-US'))
+    if (result.price > 0)
+        item_subtotal.text((result.price * result.quantity).toLocaleString('en-US'))
+    if (result.bonusPrice > 0)
+        item_subtotal_bonus.text("紅利：" + (result.bonusPrice * result.quantity).toLocaleString('en-US'))
 
     item_list_ul.append(item);
 }
@@ -2250,7 +2270,7 @@ function HiddenCode($self) {
     $self.find("*").each(function () {
         var $this = $(this);
         var key = $this.data("key");
-        if (typeof ($this.data("key")) != "undefined") {
+        if (typeof (key) != "undefined") {
             switch ($this.data("type")) {
                 case "name":
                     var name = $this.text();
@@ -2282,6 +2302,7 @@ function ShoppingCartDataInsert(data, $self) {
     if (typeof (data.invoiceType) != "undefined") {
         switch (parseInt(data.invoiceType)) {
             case 1:
+                $(".invoice_type .person").removeClass("d-none");
                 $(".invoice_type .mobileCarrier").removeClass("d-none");
                 break;
             case 2:
@@ -2299,10 +2320,12 @@ function ShoppingCartDataInsert(data, $self) {
                 break;
         }
     }
-    $self.find("*").each(function () {
+    console.log(data, $self);
+    $self.find("[data-key]").each(function () {
         var $this = $(this);
         var key = $this.data("key");
-        if (typeof ($this.data("key")) != "undefined") {
+        console.log(key, data[key]);
+        if (typeof ($this.data("key")) != "undefined" && !! $this.data("key")) {
             if ($this.hasClass("price")) {
                 $this.text(data[key].toLocaleString());
             }
@@ -2322,7 +2345,7 @@ function ShoppingCartDataClear($self) {
 function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas) {
     $.each(datas, function (index, data) {
         var $html = $($Template.html()).clone();
-        $html.find("*").each(function () {
+        $html.find("[data-key]").each(function () {
             var $this = $(this);
             var key = $this.data("key");
             if (typeof ($this.data("key")) != "undefined") {

@@ -1,10 +1,16 @@
-﻿using DevExtreme.AspNet.Data;
+﻿using DevExpress.CodeParser;
+using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.BonusManagement;
+using EtheriT.Coker.Application.Shared.Common;
 using EtheriT.Coker.Application.Shared.Dto.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Bonus;
+using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Core.Models;
@@ -12,18 +18,14 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Newtonsoft.Json.Serialization;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using EtheriT.Coker.Application.Shared.Common;
-using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
-using EtheriT.Coker.Application.Common;
-using EtheriT.Coker.Application.Shared.Dto.Mail;
-using Microsoft.Extensions.Configuration;
 
 namespace EtheriT.Coker.Application.BonusManagement
 {
@@ -170,9 +172,29 @@ namespace EtheriT.Coker.Application.BonusManagement
         public async Task<ResponseMessageDto> SaveTransaction(CreateUserTransactionDto input)
         {
             ResponseMessageDto result = new ResponseMessageDto { Success = false };
+            var targetUuids = input.MemberUUID.ToList();
+            if (input.EnableIdempotencyByRefKey && input.RefKey.HasValue && targetUuids.Any())
+            {
+                var exists = await db.BonusLog.Where(x =>
+                    targetUuids.Contains(x.UUID) &&
+                    x.RefKey == input.RefKey.Value &&
+                    x.Type == input.Type).Select(x => x.UUID).ToListAsync();
+
+                // 冪等：已做過就不重做
+                if (exists.Any())
+                {
+                    var existedSet = exists.ToHashSet();
+                    targetUuids = targetUuids.Where(u => !existedSet.Contains(u)).ToList();
+                }
+
+                if (!targetUuids.Any()){
+                    result.Success = true;
+                    return result; 
+                }
+            }
             long websiteID = await loginUserData.GetWebsiteId();
 
-            if (!input.MemberUUID.Any())
+            if (!targetUuids.Any())
             {
                 result.Error = "請至少選擇一位使用者進行紅利異動。";
                 return result;
@@ -202,7 +224,7 @@ namespace EtheriT.Coker.Application.BonusManagement
 
                 // 整批查詢所有相關用戶，避免重複查詢
                 var allFrontUsers = await db.FrontUsers
-                    .Where(x => input.MemberUUID.Contains(x.UUID) && !x.IsDeleted)
+                    .Where(x => targetUuids.Contains(x.UUID) && !x.IsDeleted)
                     .ToListAsync();
 
                 // 如果是扣除紅利，先檢核所有人的紅利是否足夠
@@ -212,20 +234,12 @@ namespace EtheriT.Coker.Application.BonusManagement
                     var insufficientUsers = new List<string>();
 
                     // 一次查詢所有相關用戶的可用紅利
-                    var availableBonusData = await db.Bonus
-                        .Where(x => input.MemberUUID.Contains(x.UUID) &&
-                                   x.Balance > 0 &&
-                                   x.StartDate <= currentDate &&
-                                   (x.EndDate == null || x.EndDate >= currentDate) &&
-                                   !x.IsDeleted)
-                        .GroupBy(x => x.UUID)
-                        .Select(g => new { UUID = g.Key, TotalBalance = g.Sum(b => b.Balance) })
-                        .ToListAsync();
-
+                    var availableBonusData = await GetQueryFrontUsersTotalAvaliableBonus(targetUuids);
+                    
                     foreach (var frontUser in allFrontUsers)
                     {
-                        var userBonus = availableBonusData.FirstOrDefault(x => x.UUID == frontUser.UUID);
-                        var availableBalance = userBonus?.TotalBalance ?? 0;
+                        var userBonus = availableBonusData.FirstOrDefault(x => x.UserUUID == frontUser.UUID);
+                        var availableBalance = userBonus?.TotalAvaliableBonus ?? 0;
 
                         if (availableBalance < deductAmount)
                         {
@@ -242,7 +256,7 @@ namespace EtheriT.Coker.Application.BonusManagement
                 }
 
                 var createUserId = await loginUserData.GetUserId();
-                foreach (var memberUuid in input.MemberUUID)
+                foreach (var memberUuid in targetUuids)
                 {
                     var frontUser = allFrontUsers.FirstOrDefault(x => x.UUID == memberUuid);
 
@@ -258,13 +272,13 @@ namespace EtheriT.Coker.Application.BonusManagement
 
                         // 新增紅利
                         var addAmount = Math.Abs(input.TransactionPoint);
-                        AddBonusPoints(addAmount, expireDays, input.TransactionReason, frontUser, createUserId);
+                        AddBonusPoints(addAmount, expireDays, input.TransactionReason, frontUser, createUserId,input.RefKey,input.Type);
                     }
                     else if (input.TransactionOperation == "-")
                     {
                         // 扣除紅利
                         var deductAmount = Math.Abs(input.TransactionPoint);
-                        DeductBonusPoints(deductAmount, input.TransactionReason, frontUser, createUserId);
+                        DeductBonusPoints(deductAmount, input.TransactionReason, frontUser, createUserId,input.RefKey, input.Type);
                     }
                 }
 
@@ -425,22 +439,36 @@ namespace EtheriT.Coker.Application.BonusManagement
             }
 
             // 查詢所有使用者的有效紅利
-            var availableBonusData = db.Bonus
-                .Where(x => frontUsersUUID.Contains(x.UUID) &&
-                           x.Balance > 0 &&
-                           x.StartDate <= currentDate &&
-                           (x.EndDate == null || x.EndDate >= currentDate) &&
-                           !x.IsDeleted)
-                .GroupBy(x => x.UUID)
-                .Select(g => new GetQueryFrontUsersTotalAvaliableBonusOutput
+            var availableBonusData = await db.Bonus
+                .Where(b =>
+                    frontUsersUUID.Contains(b.UUID)
+                    && b.Balance > 0
+                    && b.StartDate <= currentDate
+                    && (b.EndDate == null || b.EndDate >= currentDate)
+                    && !b.IsDeleted
+                    && b.Status == BonusStatusEnum.Active)
+                .GroupBy(b => b.UUID)
+                .Select(g => new
                 {
-                    UserUUID = g.Key,
-                    TotalAvaliableBonus = g.Sum(b => b.Balance)
+                    UUID = g.Key,
+                    SumBalance = g.Sum(x => (int?)x.Balance) ?? 0,
+                    Outstanding = db.BonusLiabilities
+                        .Where(bl => bl.UUID == g.Key)
+                        .Select(bl => (int?)bl.OutstandingPoints)
+                        .Sum() ?? 0
                 })
-                .ToList();
+                .Select(x => new GetQueryFrontUsersTotalAvaliableBonusOutput
+                {
+                    UserUUID = x.UUID,
+                    TotalAvaliableBonus = (x.SumBalance - x.Outstanding) < 0 ? 0 : (x.SumBalance - x.Outstanding)
+                })
+                .ToListAsync();
+
 
             // 補齊沒有紅利的使用者（紅利為0或沒有紅利異動過的）
-            var missingUsers = frontUsersUUID.Except(availableBonusData.Select(x => x.UserUUID))
+            var existed = availableBonusData.Select(x => x.UserUUID).ToHashSet();
+            var missingUsers = frontUsersUUID
+                .Where(uuid => !existed.Contains(uuid))
                 .Select(uuid => new GetQueryFrontUsersTotalAvaliableBonusOutput
                 {
                     UserUUID = uuid,
@@ -612,9 +640,37 @@ namespace EtheriT.Coker.Application.BonusManagement
         /// <param name="points">紅利點數</param>
         /// <param name="reason">異動原因</param>
         /// <param name="frontUser">前台使用者</param>
-        private void AddBonusPoints(int points, int? expireDays, string? reason, FrontUser frontUser, long createUserId)
+        /// <param name="RefKey">對應的資料Id，如訂單id</param>
+        private void AddBonusPoints(int points, int? expireDays, string? reason, FrontUser frontUser, long createUserId, long? RefKey, BonusLogTypeEnum Type)
         {
             var currentDate = DateTime.Now;
+
+            var liability = db.BonusLiabilities.FirstOrDefault(x => x.UUID == frontUser.UUID);
+            if (liability != null && liability.OutstandingPoints > 0)
+            {
+                var payback = Math.Min(points, liability.OutstandingPoints);
+                liability.OutstandingPoints -= payback;
+                liability.UpdatedAt = currentDate;
+
+                points -= payback; // 剩下的點數才進 Bonus
+                db.BonusLiabilities.Update(liability);
+
+                if (points <= 0)
+                {
+                    // 這次新增點數全部用來還欠點，不需要建立 Bonus，只記一筆 log（或視你要不要記）
+                    db.BonusLog.Add(new BonusLog
+                    {
+                        Amount = 0, // 或記原始點數但加註已沖欠點
+                        Note = $"{reason ?? "紅利入帳"}（先沖欠點 {payback} 點）",
+                        User = frontUser,
+                        ExecutionTime = currentDate,
+                        RefKey = RefKey,
+                        Type = Type
+                    });
+                    return;
+                }
+            }
+
 
             // 建立新的紅利記錄
             var bonus = new Bonus
@@ -635,7 +691,9 @@ namespace EtheriT.Coker.Application.BonusManagement
                 Amount = points,
                 Note = reason ?? "系統新增紅利",
                 User = frontUser,
-                ExecutionTime = currentDate
+                ExecutionTime = currentDate,
+                RefKey = RefKey,
+                Type = Type
             };
 
             db.Bonus.Add(bonus);
@@ -648,7 +706,7 @@ namespace EtheriT.Coker.Application.BonusManagement
         /// <param name="deductAmount">扣除點數</param>
         /// <param name="reason">異動原因</param>
         /// <param name="frontUser">前台使用者</param>
-        private void DeductBonusPoints(int deductAmount, string? reason, FrontUser frontUser, long createUserId)
+        private void DeductBonusPoints(int deductAmount, string? reason, FrontUser frontUser, long createUserId,long? RefKey, BonusLogTypeEnum Type)
         {
             var currentDate = DateTime.Now;
 
@@ -667,8 +725,10 @@ namespace EtheriT.Coker.Application.BonusManagement
             {
                 Amount = -deductAmount, // 負值表示扣除
                 Note = reason ?? "系統扣除紅利",
+                RefKey = RefKey,
                 User = frontUser,
-                ExecutionTime = currentDate
+                ExecutionTime = currentDate,
+                Type = Type
             };
 
             // 3. 按順序扣除紅利並記錄明細
@@ -695,12 +755,222 @@ namespace EtheriT.Coker.Application.BonusManagement
                     UsedAmount = deductFromThis
                 });
 
-                db.BonusLog.Add(bonusLog);
-
                 remainingDeduct -= deductFromThis;
+            }
+
+            db.BonusLog.Add(bonusLog);
+        }
+        public async Task<ResponseMessageDto> RefundRedeemByOrderAsync(Guid memberUuid, long orderId, string? reason = null)
+        {
+            var result = new ResponseMessageDto { Success = false };
+            var now = DateTime.Now;
+            var createUserId = await loginUserData.GetUserId();
+
+            try
+            {
+                // 1) 冪等：同訂單不可重複退回
+                var alreadyRefund = await db.BonusLog
+                    .AnyAsync(x => x.UUID == memberUuid &&
+                                   x.RefKey == orderId &&
+                                   x.Type == BonusLogTypeEnum.Refund);
+                if (alreadyRefund)
+                {
+                    result.Success = true;
+                    return result;
+                }
+
+                // 2) 找到原本折抵的 Redeem log（這裡以「最新一筆」為準，避免同訂單多次折抵的複雜度）
+                var redeemLog = await db.BonusLog
+                    .Include(x => x.BonusLogDetails)
+                    .Where(x =>
+                        x.UUID == memberUuid &&
+                        x.RefKey == orderId &&
+                        x.Type == BonusLogTypeEnum.Redeem)
+                    .OrderByDescending(x => x.ExecutionTime) // 或 OrderByDescending(x => x.Id)
+                    .FirstOrDefaultAsync();
+
+                if (redeemLog == null)
+                {
+                    result.Success = true;
+                    return result;
+                }
+
+                if (redeemLog.Amount >= 0)
+                {
+                    result.Error = "該筆紀錄不是折抵（Amount 非負），無法退回。";
+                    return result;
+                }
+
+                // 3) 逐筆回補到原本扣的 Bonus
+                //    建議：一次抓出所有 Bonus，避免逐筆查詢
+                var bonusIds = redeemLog.BonusLogDetails.Select(d => d.FK_BonusId).Distinct().ToList();
+                var bonuses = await db.Bonus
+                    .Where(b => bonusIds.Contains(b.Id) && b.UUID == memberUuid && !b.IsDeleted)
+                    .ToDictionaryAsync(b => b.Id);
+
+                int totalRefund = 0;
+
+                foreach (var d in redeemLog.BonusLogDetails)
+                {
+                    if (!bonuses.TryGetValue(d.FK_BonusId, out var bonus))
+                    {
+                        // 找不到原 Bonus：通常代表資料被刪/不一致，這種建議直接中止，避免錯帳
+                        result.Error = $"紅利券不存在或不一致（BonusId={d.FK_BonusId}），無法退回。";
+                        return result;
+                    }
+
+                    // 回補 balance（不改 EndDate，不延壽）
+                    bonus.Balance += (int)d.UsedAmount;
+                    bonus.LastModifierUserId = createUserId;
+                    bonus.LastModificationTime = now;
+
+                    totalRefund += (int)d.UsedAmount;
+                }
+
+                // 4) 寫入 Refund log（Amount 正值）
+                var refundLog = new BonusLog
+                {
+                    UUID = memberUuid,
+                    Amount = totalRefund,
+                    Note = reason ?? $"訂單{orderId} 取消折抵退回",
+                    RefKey = orderId,
+                    ExecutionTime = now,
+                    Type = BonusLogTypeEnum.Refund,
+                    BonusLogDetails = redeemLog.BonusLogDetails.Select(d => new BonusLogDetail
+                    {
+                        FK_BonusId = d.FK_BonusId,
+                        UsedAmount = d.UsedAmount
+                    }).ToList()
+                };
+
+                db.BonusLog.Add(refundLog);
+
+                result.Success = true;
+                return result;
+            }
+            catch (Exception ex)
+            {
+                result.Error = ex.Message;
+                return result;
             }
         }
 
+        public async Task<ResponseMessageDto> RevokeEarnByOrderAsync(Guid memberUuid, long orderId, string? reason = null)
+        {
+            var result = new ResponseMessageDto { Success = false };
+            var now = DateTime.Now;
+            var createUserId = await loginUserData.GetUserId();
 
+            try
+            {
+                // 1) 冪等：同訂單不可重複追回
+                var alreadyRevoke = await db.BonusLog.AnyAsync(x =>
+                    x.UUID == memberUuid &&
+                    x.RefKey == orderId &&
+                    x.Type == BonusLogTypeEnum.EarnRevoke);
+
+                if (alreadyRevoke)
+                {
+                    result.Success = true;
+                    return result;
+                }
+
+                // 2) 找原本 Earn log（代表「確實發過回饋」）
+                var earnLog = await db.BonusLog
+                    .FirstOrDefaultAsync(x =>
+                        x.UUID == memberUuid &&
+                        x.RefKey == orderId &&
+                        x.Type == BonusLogTypeEnum.Earn);
+
+                if (earnLog == null)
+                {
+                    // 沒發過就不用追回：視為成功（避免取消流程被卡死）
+                    result.Success = true;
+                    return result;
+                }
+
+                if (earnLog.Amount <= 0)
+                {
+                    result.Error = "Earn 紀錄 Amount 非正值，資料異常，無法追回。";
+                    return result;
+                }
+
+                var needRevoke = earnLog.Amount;
+
+                // 3) 算目前「可用」點數（已扣除 OutstandingPoints）
+                var avail = (await GetQueryFrontUsersTotalAvaliableBonus(new List<Guid> { memberUuid }))
+                    .FirstOrDefault()?.TotalAvaliableBonus ?? 0;
+
+                var canDeduct = Math.Min(avail, needRevoke);
+                var deficit = needRevoke - canDeduct;
+
+                // 4) 取得使用者 entity（DeductBonusPoints 需要 FrontUser）
+                var frontUser = await db.FrontUsers.FirstOrDefaultAsync(x => x.UUID == memberUuid && !x.IsDeleted);
+                if (frontUser == null)
+                {
+                    result.Error = "查無會員資料，無法追回回饋紅利。";
+                    return result;
+                }
+
+                // 5) 先扣「可扣的部分」
+                if (canDeduct > 0)
+                {
+                    DeductBonusPoints(
+                        canDeduct,
+                        reason ?? $"訂單{orderId} 取消追回回饋紅利",
+                        frontUser,
+                        createUserId,
+                        RefKey: orderId,
+                        Type: BonusLogTypeEnum.EarnRevoke
+                    );
+                }
+
+                // 6) 不足部分 -> 記欠點
+                if (deficit > 0)
+                {
+                    var liability = await db.BonusLiabilities.FirstOrDefaultAsync(x => x.UUID == memberUuid);
+                    if (liability == null)
+                    {
+                        liability = new BonusLiability
+                        {
+                            UUID = memberUuid,
+                            OutstandingPoints = deficit,
+                            UpdatedAt = now
+                        };
+                        db.BonusLiabilities.Add(liability);
+                    }
+                    else
+                    {
+                        liability.OutstandingPoints += deficit;
+                        liability.UpdatedAt = now;
+                        db.BonusLiabilities.Update(liability);
+                    }
+
+                    // 仍要寫一筆「完整追回」的 log（Amount = -needRevoke），避免之後冪等缺口
+                    db.BonusLog.Add(new BonusLog
+                    {
+                        UUID = memberUuid,
+                        Amount = -needRevoke,
+                        Note = (reason ?? $"訂單{orderId} 取消追回回饋紅利") + $"（不足{deficit}點，已記入欠點）",
+                        RefKey = orderId,
+                        ExecutionTime = now,
+                        Type = BonusLogTypeEnum.EarnRevoke
+                    });
+                }
+                else
+                {
+                    // canDeduct == needRevoke：DeductBonusPoints 已寫入 BonusLog（Amount=-canDeduct）
+                    // 這裡不必再補一筆額外 log
+                }
+
+                result.Success = true;
+                return result;
+            }
+            catch (Exception ex)
+            {
+                result.Error = ex.Message;
+                return result;
+            }
+        }
     }
 }

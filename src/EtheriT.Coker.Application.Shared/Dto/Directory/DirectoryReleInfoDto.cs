@@ -25,8 +25,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public string? Dirname { get; set; }
         public string? Description { get; set; }
         public string? OrgName { get; set; }
+        public string? PriceDisplayText { get; set; }
         public string? Price { get; set; }
         public string? OriPrice { get; set; }
+        public string? Bonus { get; set; }
         public string? SuggestPrice { get; set; }
         public bool IsTimePrice { get; set; }
         public string? ItemNo { get; set; }

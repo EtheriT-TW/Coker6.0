@@ -190,6 +190,10 @@ input[type="number"] {
             font-size: 0.8rem;
         }
 
+#BuyStepSwiper .swiper-wrapper {
+    height: auto !important;
+}
+
 /* Step Swiper */
 #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-header, #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body .title {
     background-color: var(--gray-bg-light);
@@ -276,16 +280,17 @@ input[type="number"] {
 
     .priceline > .bonusRedeemHintLine {
         position: absolute;
-        width: 100%;
+        width: auto;
         display: flex;
         justify-content: flex-start !important;
         bottom: 0.5rem;
-        left: -3rem;
+        left: 0;
+        gap:1rem;
     }
 
 
         .priceline > .bonusRedeemHintLine > div.bonusRedeemHintText, .priceline > .bonusRedeemHintLine > div.bonusEarnHintText {
-            width: 15rem;
+            width: auto;
         }
 
 #Purchase_Null {

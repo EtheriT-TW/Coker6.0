@@ -1046,6 +1046,13 @@ function PassCheck($NewPass, $CheckPass, $NewPassFeedBack, $CheckPassFeedBack) {
     }
     return false;
 }
+function isNullOrEmpty(v) {
+    return v === null || v === undefined || v === "";
+}
+function isZeroPriceString(v) {
+    if (isNullOrEmpty(v)) return true;
+    return String(v).replace(/,/g, "") === "0";
+}
 
 var Coker = {
     timeout: {

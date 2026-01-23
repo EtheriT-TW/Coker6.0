@@ -12,6 +12,7 @@ using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Dto.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Bonus;
 using EtheriT.Coker.Application.Shared.Dto.enumType.OAuth;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
@@ -763,7 +764,8 @@ namespace EtheriT.Coker.Application.Authorization
                             MemberUUID = new List<Guid> { frontuser.UUID },
                             TransactionPoint = bonusSetting.SignupBonusPoints.Value,
                             TransactionOperation = "+",
-                            TransactionReason = "加入會員贈送"
+                            TransactionReason = "加入會員贈送",
+                            Type = BonusLogTypeEnum.Earn
                         });
                         bonusStr = $"歡迎加入會員！我們已為您準備加入會員紅利 {bonusSetting.SignupBonusPoints.Value} 點，立即前往會員中心查看。";
                     }

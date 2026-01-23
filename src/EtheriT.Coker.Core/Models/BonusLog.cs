@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Core.Entity;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Bonus;
+using EtheriT.Coker.Core.Entity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,8 +14,10 @@ namespace EtheriT.Coker.Core.Models
         public Guid UUID { get; set; }
         public int Amount { get; set; }
         public string Note { get; set; }
+        public long? RefKey { get; set; }
         public FrontUser User { get; set; }
         public DateTime ExecutionTime { get; set; } = DateTime.Now;
+        public BonusLogTypeEnum Type { get; set; }
         public List<BonusLogDetail> BonusLogDetails { get; set; } = new List<BonusLogDetail>();
     }
 }

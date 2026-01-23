@@ -491,35 +491,61 @@ function DirectoryDataInsert($item, result) {
                 else $(e).remove();
             });
         }
-        if (data.price != null) {
-            if (data.suggestPrice != null && data.suggestPrice != data.price) {
-                content.find(".price-grid").removeClass("price")
-                content.find(".normal-price").removeClass("price")
-                content.find(".normal-price").addClass("text-end");
-                content.find(".price-grid").empty();
-                content.find(".normal-price").empty();
-                var price_text = `<div class="text-body-tertiary text-decoration-line-through">建議售價$${data.suggestPrice}</div><div class="text-danger"> $${data.price}</div>`;
-                content.find(".price-grid").append(price_text);
-                content.find(".normal-price").append(price_text);
-            } else if (data.oriPrice != 0 && data.oriPrice != null && data.price != data.oriPrice) {
-                content.find(".price-grid").removeClass("price")
-                content.find(".normal-price").removeClass("price")
-                content.find(".normal-price").addClass("text-end");
-                content.find(".price-grid").empty();
-                content.find(".normal-price").empty();
-                var price_text = `<div class="text-decoration-line-through">$${data.oriPrice}</div><div class="text-danger">會員價 $${data.price}</div>`;
-                content.find(".price-grid").append(price_text);
-                content.find(".normal-price").append(price_text);
+        function buildBonusLine(data) {
+            return !isNullOrEmpty(data.bonus)
+                ? `<div class="text-muted">紅利：${data.bonus}</div>`
+                : "";
+        }
+
+        function setPriceHtml(content, html) {
+            content.find(".price-grid").removeClass("price").empty().html(html);
+            content.find(".normal-price").removeClass("price").empty().addClass("text-end").html(html);
+        }
+
+        const hasBonus = !isNullOrEmpty(data.bonus);
+        const hideCash = hasBonus && isZeroPriceString(data.price);
+
+        if (data.PriceDisplayText != null) {
+            content.find(".price").text(data.PriceDisplayText);
+        }
+        // 都沒有
+        else if (isNullOrEmpty(data.price) && !hasBonus) {
+            content.find(".price").addClass("notshow").text("");
+        }
+
+        // 純紅利（有紅利，現金為 0 或 null）
+        else if (hideCash) {
+            const html = `<div class="text-danger">紅利：${data.bonus}</div>`;
+            setPriceHtml(content, html);
+        }
+
+        // 有現金（可能有紅利）
+        else {
+            const bonusLine = buildBonusLine(data);
+
+            if (!isNullOrEmpty(data.suggestPrice) && data.suggestPrice !== data.price) {
+                let html = `
+                    <div class="text-body-tertiary text-decoration-line-through">建議售價 $${data.suggestPrice}</div>
+                    <div class="text-danger">$${data.price}</div>
+                    ${bonusLine}
+                `;
+                setPriceHtml(content, html);
+
+            } else if (!isNullOrEmpty(data.oriPrice) && data.oriPrice !== data.price) {
+                let html = `
+                    <div class="text-decoration-line-through">$${data.oriPrice}</div>
+                    <div class="text-danger">會員價 $${data.price}</div>
+                    ${bonusLine}
+                `;
+                setPriceHtml(content, html);
+
+            } else {
+                let html = `
+                    <div>$${data.price}</div>
+                    ${bonusLine}
+                `;
+                setPriceHtml(content, html);
             }
-            else {
-                content.find(".normal-price").removeClass("price")
-                content.find(".price-grid").removeClass("price")
-                content.find(".normal-price").text(`$${data.price}`);
-                content.find(".price-grid").text(`$${data.price}`);
-            }
-        } else {
-            content.find(".price").addClass("notshow");
-            content.find(".price").text("");
         }
 
         if (data.itemNo != null && data.itemNo != "") content.find(".itemNo").text(data.itemNo);

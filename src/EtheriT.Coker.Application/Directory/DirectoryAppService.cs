@@ -301,7 +301,7 @@ namespace EtheriT.Coker.Application.Directory
                 decimal min = p.Min(e => e.Price) ?? 0;
                 decimal max = p.Max(e => e.Price) ?? 0;
                 if (min == max) data.Price = $"{max}";
-                else data.PriceDisplayText = $"{min} ~ {max}";
+                else data.PriceDisplayText = $"{min.ToString("$#,##0")} ~ {max.ToString("$#,##0")}";
             }
             output.ReleInfos = list;
 

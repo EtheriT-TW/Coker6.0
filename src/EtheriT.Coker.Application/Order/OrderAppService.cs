@@ -23,6 +23,7 @@ using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
 using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
+using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
@@ -49,6 +50,7 @@ namespace EtheriT.Coker.Application.Order
         private readonly LoginUserData loginUserData;
         private readonly ITokenAppService tokenAppService;
         private readonly IShoppingCartAppService shoppingCartAppService;
+        private readonly IECPayLogisticsAppService ecPayLogisticsAppService;
         private readonly IAccountAppService accountAppService;
         private readonly IStoreSetAppService storeSetAppService;
         private readonly MailAppService mailAppService;
@@ -60,6 +62,7 @@ namespace EtheriT.Coker.Application.Order
             LoginUserData loginUserData,
             ITokenAppService tokenAppService,
             IShoppingCartAppService shoppingCartAppService,
+            IECPayLogisticsAppService ecPayLogisticsAppService,
             IAccountAppService accountAppService,
             IStoreSetAppService storeSetAppService,
             IBonusManagementAppService bonusManagementAppService,
@@ -72,6 +75,7 @@ namespace EtheriT.Coker.Application.Order
             this.loginUserData = loginUserData;
             this.tokenAppService = tokenAppService;
             this.shoppingCartAppService = shoppingCartAppService;
+            this.ecPayLogisticsAppService = ecPayLogisticsAppService;
             this.accountAppService = accountAppService;
             this.storeSetAppService = storeSetAppService;
             this.mailAppService = mailAppService;

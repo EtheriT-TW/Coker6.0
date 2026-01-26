@@ -1196,6 +1196,17 @@ var Coker = {
                 dataType: "json"
             });
         },
+        LogisticsGetMap: function (scid, LogisticsSubType) {
+            return $.ajax({
+                url: "/api/ThirdParty/ECPayLogisticsGetMap/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: { scid: scid, LogisticsSubType: LogisticsSubType },
+            });
+        },
     },
     Favorites: {
         Add: function (Pid) {

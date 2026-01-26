@@ -1,16 +1,11 @@
-﻿using DevExpress.XtraRichEdit.Commands.Internal;
-using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Shared.Dto;
+﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
-using EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayLogistics;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
 using EtheriT.Coker.Application.Shared.ThirdParty;
-using EtheriT.Coker.Application.Specification;
-using EtheriT.Coker.Application.Token;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
 {
@@ -22,6 +17,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         private readonly ILinePayAppService linePayAppService;
         private readonly IPChomePayAppService pchomePayAppService;
         private readonly IECPayAppService ecPayAppService;
+        private readonly IECPayLogisticsAppService ecPayLogisticsAppService;
         private readonly IConfiguration configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
         public ThirdPartyController(
@@ -29,6 +25,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             ILinePayAppService linePayAppService,
             IPChomePayAppService pchomePayAppService,
             IECPayAppService ecPayAppService,
+            IECPayLogisticsAppService ecPayLogisticsAppService,
             IConfiguration configuration,
             IHttpContextAccessor _httpContextAccessor)
         {
@@ -36,6 +33,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             this.linePayAppService = linePayAppService;
             this.pchomePayAppService = pchomePayAppService;
             this.ecPayAppService = ecPayAppService;
+            this.ecPayLogisticsAppService = ecPayLogisticsAppService;
             this.configuration = configuration;
             this._httpContextAccessor = _httpContextAccessor;
         }
@@ -196,6 +194,17 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             }
             else response.Error = "Token 驗證錯誤";
             return response;
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> ECPayLogisticsGetMap(long scid, string LogisticsSubType)
+        {
+            return await ecPayLogisticsAppService.ECPayLogisticsGetMap(scid, LogisticsSubType);
+        }
+        [HttpPost]
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<bool> ECPayLogisticsGetMapResponse([FromBody] ECPayLogisticsMapResponseDto ResultResponseData)
+        {
+            return await ecPayLogisticsAppService.ECPayLogisticsGetMapResponse(ResultResponseData);
         }
     }
 }

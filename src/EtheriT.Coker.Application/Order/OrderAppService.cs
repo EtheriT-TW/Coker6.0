@@ -204,6 +204,26 @@ namespace EtheriT.Coker.Application.Order
                     // 4) PaySelect 區：目前你專案還沒用到，可以先空實作
                     // var paySelects = BuildPaySelectSection(header, dto);
 
+                    var logset = await db.LogisticsSettings.Where(e => e.Id == header.Shipping).FirstOrDefaultAsync();
+                    if(logset != null && ((int)logset.LogisticsType >= 8 && (int)logset.LogisticsType <= 15))
+                    {
+                        var CVSStoreId = "";
+                        foreach (var cart in detailResult.ShoppingCarts)
+                        {
+                            if (CVSStoreId == "")
+                            {
+                                CVSStoreId = cart.CVSStoreID;
+                                break;
+                            }
+                        }
+
+                        if (CVSStoreId != "")
+                        {
+                            var prod_titles = detailResult.StockDict.Values.Select(v => v.Prod.Title).ToList();
+                            await ecPayLogisticsAppService.ECPayLogisticsExpressCreate(header.Id, prod_titles);
+                        }
+                    }
+                    
                     // 5) 真正儲存所有資料（detail + cart + stock + logs）
                     await SaveOrderAsync(header, detailResult, logs, now, userId, isTemp);
 

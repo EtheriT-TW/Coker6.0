@@ -23,6 +23,7 @@ using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
 using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
+using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
@@ -49,6 +50,7 @@ namespace EtheriT.Coker.Application.Order
         private readonly LoginUserData loginUserData;
         private readonly ITokenAppService tokenAppService;
         private readonly IShoppingCartAppService shoppingCartAppService;
+        private readonly IECPayLogisticsAppService ecPayLogisticsAppService;
         private readonly IAccountAppService accountAppService;
         private readonly IStoreSetAppService storeSetAppService;
         private readonly MailAppService mailAppService;
@@ -60,6 +62,7 @@ namespace EtheriT.Coker.Application.Order
             LoginUserData loginUserData,
             ITokenAppService tokenAppService,
             IShoppingCartAppService shoppingCartAppService,
+            IECPayLogisticsAppService ecPayLogisticsAppService,
             IAccountAppService accountAppService,
             IStoreSetAppService storeSetAppService,
             IBonusManagementAppService bonusManagementAppService,
@@ -72,6 +75,7 @@ namespace EtheriT.Coker.Application.Order
             this.loginUserData = loginUserData;
             this.tokenAppService = tokenAppService;
             this.shoppingCartAppService = shoppingCartAppService;
+            this.ecPayLogisticsAppService = ecPayLogisticsAppService;
             this.accountAppService = accountAppService;
             this.storeSetAppService = storeSetAppService;
             this.mailAppService = mailAppService;
@@ -200,6 +204,26 @@ namespace EtheriT.Coker.Application.Order
                     // 4) PaySelect 區：目前你專案還沒用到，可以先空實作
                     // var paySelects = BuildPaySelectSection(header, dto);
 
+                    var logset = await db.LogisticsSettings.Where(e => e.Id == header.Shipping).FirstOrDefaultAsync();
+                    if(logset != null && ((int)logset.LogisticsType >= 8 && (int)logset.LogisticsType <= 15))
+                    {
+                        var CVSStoreId = "";
+                        foreach (var cart in detailResult.ShoppingCarts)
+                        {
+                            if (CVSStoreId == "")
+                            {
+                                CVSStoreId = cart.CVSStoreID;
+                                break;
+                            }
+                        }
+
+                        if (CVSStoreId != "")
+                        {
+                            var prod_titles = detailResult.StockDict.Values.Select(v => v.Prod.Title).ToList();
+                            await ecPayLogisticsAppService.ECPayLogisticsExpressCreate(header.Id, prod_titles);
+                        }
+                    }
+                    
                     // 5) 真正儲存所有資料（detail + cart + stock + logs）
                     await SaveOrderAsync(header, detailResult, logs, now, userId, isTemp);
 

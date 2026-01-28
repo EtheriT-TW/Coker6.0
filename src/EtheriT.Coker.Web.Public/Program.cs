@@ -206,6 +206,7 @@ builder.Services.AddScoped<IThirdPartyAppService, ThirdPartyAppService>();
 builder.Services.AddScoped<ILinePayAppService, LinePayAppService>();
 builder.Services.AddScoped<IPChomePayAppService, PChomePayAppService>();
 builder.Services.AddScoped<IECPayAppService, ECPayAppService>();
+builder.Services.AddScoped<IECPayLogisticsAppService, ECPayLogisticsAppService>();
 builder.Services.AddScoped<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddScoped<LoginUserData>();
 builder.Services.AddScoped<StringHandler>();
@@ -258,6 +259,10 @@ builder.Services.AddHttpClient("ThirdPartyClient_PCHome", client =>
 builder.Services.AddHttpClient("ThirdPartyClient_ECPay", client =>
 {
     client.BaseAddress = new Uri(configuration.GetValue<string>("ThirdParty:ECPay:PaymentUrl"));
+});
+builder.Services.AddHttpClient("ThirdPartyClient_ECPayLogistics", client =>
+{
+    client.BaseAddress = new Uri(configuration.GetValue<string>("ThirdParty:ECPayLogistics:LogisticsUrl"));
 });
 
 builder.Services.AddResponseCompression(options =>

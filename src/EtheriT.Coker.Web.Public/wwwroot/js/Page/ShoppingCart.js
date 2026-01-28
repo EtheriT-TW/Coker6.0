@@ -436,8 +436,6 @@ function PageReady() {
     $('input[type=radio][name=InvoiceType]').on("change", InvoiceTypeRadio);
     $('input[type=radio][name=PersonalInvoiceMode]').on("change", PersonalInvoiceMode);
 
-    
-
     $(".btn_backshop").each(function () {
         var $this = $(this);
         if ($this.attr("href") == "") $this.attr("title", "繼續購物：返回上一頁");
@@ -475,6 +473,14 @@ function PageReady() {
             });
         }
         if (HasECPay) ECPaymentChange();
+    })
+
+    $(".btn_getmap").on("click", function () {
+        var $this = $(this);
+        var LogisticsSubType = $this.data("subtype");
+        co.ThirdParty.LogisticsGetMap(shopping_cart_data[0].Id, LogisticsSubType).done(function (result) {
+            console.log(result)
+        });
     })
 }
 // 同步 header 的勾選/半選狀態與「已選件數」
@@ -1960,7 +1966,7 @@ async function OrderHeaderAdd() {
                                         break;
                                     case "Default":
                                         setTimeout(function () {
-                                            buy_step_swiper.slideNext();
+                                            buy_step_swiper.slideNext(); 
                                             buy_step_swiper.update();
                                             buy_step_swiper.disable();
                                         }, 300);

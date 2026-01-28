@@ -42,12 +42,16 @@ namespace EtheriT.Coker.Application.Report
                         收件人電話 = order.RecipientCellPhone,
                         支付方式 = order.PaymentType.Title??"",
                         運費 = order.Freight,
-                        用戶備註 = order.Memo ?? "",
+                        用戶備註 = order.Remark ?? "",
                         網站名稱 = siteName,
                         訂單折抵 = order.Discount ?? 0,
                         紅利折抵 = order.Bonus ?? 0,
                         訂單總金額 = order.Subtotal + order.Freight - (order.Discount ?? 0),
-                        發票載具 = order.InvoiceRecipient == 1 ? "訂購人" : order.InvoiceRecipient == 2 ? "收件人" : $"公司(三聯){order.UniformId}\n{order.InvoiceTitle}\n{order.InvoiceAddress}",
+                        發票資訊 = $"{(
+                            string.IsNullOrEmpty(order.Carrier)?
+                                string.IsNullOrEmpty(order.UniformId) ? "" : $"統一編號：{order.UniformId}\n公司抬頭：{order.InvoiceTitle}\n公司地址：{order.InvoiceAddress}" :
+                                $"手機條碼：{order.Carrier}"
+                        )}",
                         優惠券折抵 = 0,
                         送貨方式 = order.LogisticsSetting.Title,
                         訂單明細 = (from x in order.Order_Details
@@ -66,15 +70,39 @@ namespace EtheriT.Coker.Application.Report
                                 : s1 != null && s2 != null
                                     ? $"{s1.Title} / {s2.Title}"
                                     : s1?.Title ?? s2?.Title,
-                                商品單價 = x.ShoppingCart.Price,
+                                商品單價 = (
+                                (x.ShoppingCart.Price == 0 && (x.ShoppingCart.Bonus ?? 0) > 0)
+                                    ? $"紅利：{(x.ShoppingCart.Bonus ?? 0)}"
+                                    : (
+                                        x.ShoppingCart.Price.ToString("$#,##0")
+                                        + (((x.ShoppingCart.Bonus ?? 0) > 0) ? $"  紅利：{(x.ShoppingCart.Bonus ?? 0)}" : "")
+                                    )
+                                ),
+                                商品紅利 = x.ShoppingCart.Bonus ?? 0,
+                                商品金額 = x.ShoppingCart.Price,
                                 商品數量 = x.ShoppingCart.Quantity,
-                                商品小計 = x.ShoppingCart.Price * x.ShoppingCart.Quantity,
+                                商品小計 = (
+                                    (x.ShoppingCart.Price == 0 && (x.ShoppingCart.Bonus ?? 0) > 0)
+                                        ? $"紅利：{((x.ShoppingCart.Bonus ?? 0) * x.ShoppingCart.Quantity)}"
+                                        : (
+                                            (x.ShoppingCart.Price * x.ShoppingCart.Quantity).ToString("$#,##0")
+                                            + (((x.ShoppingCart.Bonus ?? 0) > 0) ? $"  紅利：{((x.ShoppingCart.Bonus ?? 0) * x.ShoppingCart.Quantity)}" : "")
+                                        )
+                                ),
                                 商品折扣 = 0,
                             }
                         ).ToList()
                     };
+                    r001.合計 = r001.訂單明細.Sum(x =>
+                    {
+                        return x.商品金額 * x.商品數量;
+                    });
+                    r001.商品使用紅利 = r001.訂單明細.Sum(x =>
+                    {
+                        return x.商品紅利 * x.商品數量;
+                    });
+                    r001.訂單紅利折抵 = r001.紅利折抵 - r001.商品使用紅利;
                 }
-
             }
             catch (Exception ex)
             {

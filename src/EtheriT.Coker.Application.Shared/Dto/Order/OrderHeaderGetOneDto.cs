@@ -11,10 +11,12 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string Orderer { get; set; }
         public string? OrdererTelePhone { get; set; }
         public string OrdererCellPhone { get; set; }
+        public string OrdererEmail { get; set; }
         public string Recipient { get; set; }
         public string? RecipientTelePhone { get; set; }
         public string RecipientCellPhone { get; set; }
         public string RecipientAddress { get; set; }
+        public string RecipientEmail { get; set; }
         public InvoiceTypeEnum? InvoiceType { get; set; }
         public string? Carrier { get; set; }
         public string? InvoiceTypeTitle { get; set; }

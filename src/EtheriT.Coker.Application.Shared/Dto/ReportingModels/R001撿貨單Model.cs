@@ -12,9 +12,12 @@
         public string 收件人 { get; set; }
         public string 收件人電話 { get; set; }
         public string 收件人地址 { get; set; }
-        public string 發票載具 { get; set; }
+        public string 發票資訊 { get; set; }
         public string 用戶備註 { get; set; }
         public int 紅利折抵 { get; set; }
+        public decimal 商品使用紅利 { get; set; }
+        public decimal 訂單紅利折抵 { get; set; }
+        public decimal 合計 { get; set; }
         public decimal 訂單折抵 { get; set; }
         public decimal 運費 { get; set; }
         public decimal 訂單總金額 { get; set; }
@@ -24,10 +27,12 @@
         {
             public string 商品名稱 { get; set; }
             public string 商品規格 { get; set; }
-            public decimal 商品單價 { get; set; }
+            public string 商品單價 { get; set; }
+            public decimal 商品金額 { get; set; }
+            public decimal 商品紅利 { get; set; }
             public decimal 商品折扣 { get; set; }
             public int 商品數量 { get; set; }
-            public decimal 商品小計 { get; set; }
+            public string 商品小計 { get; set; }
         }
     }
 }

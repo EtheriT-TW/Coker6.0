@@ -21,6 +21,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Member
         public string? Address { get; set; }
         public long? RoleId { get; set; }
         public DateTime? Birthday { get; set; }
+        public int bonus { get; set; } = 0;
         public List<string> Tags { get; set; } = new List<string>();
 
     }

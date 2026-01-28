@@ -229,7 +229,6 @@ function updateOrder() {
     });
 }
 function ElementInit() {
-
     /* Header */
     $order_status = $(".status_select")
     $order_notes = $(".order_notes")
@@ -237,15 +236,18 @@ function ElementInit() {
 
     /* Recipient */
     $recipient_name = $(".recipient_name")
+    $recipient_name = $(".recipient_name")
     $recipient_cellphone = $(".recipient_cellphone")
     $recipient_telphone = $(".recipient_telphone")
     $recipient_address = $(".recipient_address")
+    $recipient_email = $(".recipient_email");
 
     /* Order */
     $orderer_name = $(".orderer_name")
     $orderer_cellphone = $(".orderer_cellphone")
     $orderer_telphone = $(".orderer_telphone")
     $orderer_address = $(".orderer_address")
+    $orderer_email = $(".orderer_email");
 
     /*bottom*/
     $btn_reSend = $(".btn_reSend");
@@ -271,11 +273,13 @@ function FormDataClear() {
     $recipient_cellphone.text("")
     $recipient_telphone.text("")
     $recipient_address.text("")
+    $recipient_email.text("")
 
     $orderer_name.text("")
     $orderer_cellphone.text("")
     $orderer_telphone.text("")
     $orderer_address.text("")
+    $orderer_email.text("")
 
     if ($(".btn_shippingLabel").length > 0) $(".btn_shippingLabel").remove();
 }
@@ -407,21 +411,26 @@ function HeaderDataSet(result) {
     else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock && result.canRefund) $(".btn_refund").removeClass("d-none");
     else OrderStateChange(oristate)
 
-    $order_notes.text(result.remark)
+    if (result.bonus == 0) $(".bonusLine").addClass("d-none");
+    else $(".bonusLine").removeClass("d-none");
 
+    $order_notes.text(result.remark)
     $recipient_name.text(result.recipient)
     $recipient_cellphone.text(result.recipientCellPhone)
     var re_telIndex = result.recipientTelePhone.indexOf("-", 5)
     $recipient_telphone.text(result.recipientTelePhone.substr(re_telIndex + 1).length > 0 ? result.recipientTelePhone : result.recipientTelePhone.substr(0, re_telIndex))
     $recipient_address.text(result.recipientAddress)
+    $recipient_email.text(result.recipientEmail)
 
     $orderer_name.text(result.orderer)
     $orderer_cellphone.text(result.ordererCellPhone)
     var or_telIndex = result.ordererTelePhone.indexOf("-", 5)
     if (result.ordererTelePhone != "") $orderer_telphone.text(result.ordererTelePhone.substr(or_telIndex + 1).length > 0 ? result.ordererTelePhone : result.ordererTelePhone.substr(0, or_telIndex))
     else $orderer_telphone.text("-");
+    $orderer_email.text(result.ordererEmail)
 
     $memo_block.val(result.memo);
+
     if (result.invoiceType != 3) {
         $("#InvoiceData,#InvoiceType").removeClass("d-none");
     }
@@ -462,10 +471,12 @@ function HeaderDataSet(result) {
                     } else $self.parent("div").addClass("d-none");
                     break;
                 case "invoiceAddress":
-                    $self.text(result[key].replaceAll(" ", ""));
+                    if (result[key] != null) $self.text(result[key].replaceAll(" ", ""));
+                    else $self.parent("div").addClass("d-none");
                     break;
                 default:
-                    $self.text(result[key]);
+                    if (!!!result[key]) $self.addClass("d-none");
+                    else $self.removeClass("d-none").text(result[key]);
                     break;
             }
         }
@@ -510,7 +521,11 @@ function DataInsert(data, frame) {
                     $this.text(spec);
                     break;
                 default:
-                    if ($this.data("key") != "invoiceRecipient") $this.text(data[key]);
+                    if ($this.data("key") != "invoiceRecipient") {
+                        if (!!!data[key] && $this.text() == "") $this.addClass("d-none");
+                        else $this.removeClass("d-none").text(data[key]);
+                    }
+                    
                     break;
             }
         }

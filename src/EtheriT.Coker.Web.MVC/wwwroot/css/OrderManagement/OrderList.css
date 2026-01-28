@@ -38,14 +38,11 @@
     content: "\55ae\50f9\ff1a$";
 }
 .pro_unitBonus::before {
-    content: "\7d05\5229\ff1a$";
+    content: "\7d05\5229\ff1a";
 }
 
 .price::before {
     content: "$";
-}
-.bonus::before {
-    content: "Ⓟ";
 }
 
 .pro_quantity::before {

@@ -257,10 +257,11 @@ namespace EtheriT.Coker.Application.Member
                                     where map.FK_WebsiteId == websideId
                                     select user).FirstOrDefaultAsync();
 
-
                 if (result != null)
                 {
                     MemberGetAllDataDto output = mapper.Map<MemberGetAllDataDto>(result);
+                    if (!result.UUID.IsNullOrEmpty())
+                        output.bonus = (await _bonusManagementAppService.GetQueryFrontUsersTotalAvaliableBonus(new List<Guid> { result.UUID })).FirstOrDefault()?.TotalAvaliableBonus ?? 0;
                     output.Tags = db.UserTagStatistics.Include(e => e.Tag).Where(e => e.UUID == result.UUID).OrderByDescending(e => e.Weight).Take(5).Select(e => e.Tag.Title).ToList();
                     output.RoleId = await db.MappingUserAndRoles.Where(e => e.UUID == result.UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
                     output.Id = ("000000000" + result.Id).Substring(result.Id.ToString().Length);

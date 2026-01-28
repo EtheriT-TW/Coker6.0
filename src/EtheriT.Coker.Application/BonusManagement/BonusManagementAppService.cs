@@ -460,7 +460,7 @@ namespace EtheriT.Coker.Application.BonusManagement
                 .Select(x => new GetQueryFrontUsersTotalAvaliableBonusOutput
                 {
                     UserUUID = x.UUID,
-                    TotalAvaliableBonus = (x.SumBalance - x.Outstanding) < 0 ? 0 : (x.SumBalance - x.Outstanding)
+                    TotalAvaliableBonus = x.SumBalance - x.Outstanding
                 })
                 .ToListAsync();
 

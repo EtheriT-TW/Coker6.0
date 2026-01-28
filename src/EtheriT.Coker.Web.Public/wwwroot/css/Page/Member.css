@@ -477,6 +477,14 @@
             transform: translateX(-50%) scaleX(1) !important;
         }
 
+#remarkLine {
+    display: flex;
+    justify-content: flex-start;
+}
+    #remarkLine > div {
+        text-align-last: left;
+    }
+
 @media (max-width:1200px) {
     #TabContent .content.type_grid .type_change_frame {
         width: 33.33% !important;

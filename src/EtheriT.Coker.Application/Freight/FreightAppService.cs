@@ -158,7 +158,9 @@ namespace EtheriT.Coker.Application.Freight
                                                  : e.Freight == e.Dis_Freight
                                                      ? $"單筆計算{e.Freight}元"
                                                      : $"單筆計算{e.Freight}元(滿{e.Low_Con}元{(e.Dis_Freight == 0 ? "免運" : $"運費{e.Dis_Freight}元")})"
-                                         )
+                                         ),
+                                     GetMap = true,
+                                     LogisticsSubType = GetLogisticsSubType((int)e.LogisticsType)
                                  };
 
                     return new JsonResult(output, new JsonSerializerSettings
@@ -181,6 +183,41 @@ namespace EtheriT.Coker.Application.Freight
             {
                 ContractResolver = new DefaultContractResolver()
             });
+        }
+
+        private static string GetLogisticsSubType(int typecode)
+        {
+            string LogisticsSubType = "";
+
+            switch (typecode)
+            {
+                case 8:
+                    LogisticsSubType = "FAMI";
+                    break;
+                case 9:
+                    LogisticsSubType = "UNIMART";
+                    break;
+                case 10:
+                    LogisticsSubType = "UNIMARTFREEZE";
+                    break;
+                case 11:
+                    LogisticsSubType = "HILIFE";
+                    break;
+                case 12:
+                    LogisticsSubType = "FAMIC2C";
+                    break;
+                case 13:
+                    LogisticsSubType = "UNIMARTC2C";
+                    break;
+                case 14:
+                    LogisticsSubType = "HILIFEC2C";
+                    break;
+                case 15:
+                    LogisticsSubType = "OKMARTC2C";
+                    break;
+            }
+
+            return LogisticsSubType;
         }
 
         public async Task<ResponseMessageDto> Delete(long Id)

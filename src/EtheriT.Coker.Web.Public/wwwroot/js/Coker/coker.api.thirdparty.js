@@ -23,6 +23,10 @@
             /** 建立綠界付款 */
             ECPayCreatePayment: function (data) {
                 return Coker.api.post("/api/ThirdParty/ECPayCreatePayment", data);
+            },
+            /** 取得綠界地圖 */
+            LogisticsGetMap: function (scid, LogisticsSubType) {
+                return Coker.api.get("/api/ThirdParty/ECPayLogisticsGetMap", { scid: scid, LogisticsSubType: LogisticsSubType });
             }
 
         }

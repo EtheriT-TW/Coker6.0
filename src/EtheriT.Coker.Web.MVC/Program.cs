@@ -353,6 +353,7 @@ builder.Services.AddScoped<IContactAppService, ContactAppService>();
 builder.Services.AddScoped<IThirdPartyAppService, ThirdPartyAppService>();
 builder.Services.AddScoped<ILinePayAppService, LinePayAppService>();
 builder.Services.AddScoped<IPChomePayAppService, PChomePayAppService>();
+builder.Services.AddScoped<IECPayLogisticsAppService, ECPayLogisticsAppService>();
 builder.Services.AddScoped<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddScoped<IHtmlProcessor, HtmlProcessor>();
 builder.Services.AddScoped<IUserHabitsAppService, UserHabitsAppService>();
@@ -448,6 +449,11 @@ builder.Services.AddHttpClient("ThirdPartyClient_ECPay", client =>
 {
     client.BaseAddress = new Uri("https://ecpg-stage.ecpay.com.tw/Merchant");
     //client.BaseAddress = new Uri("https://ecpg.ecpay.com.tw/Merchant");
+});
+builder.Services.AddHttpClient("ThirdPartyClient_ECPayLogistics", client =>
+{
+    client.BaseAddress = new Uri("https://logistics-stage.ecpay.com.tw");
+    //client.BaseAddress = new Uri("https://logistics.ecpay.com.tw");
 });
 builder.Services.AddDevExpressControls();
 // DevExpress Reporting

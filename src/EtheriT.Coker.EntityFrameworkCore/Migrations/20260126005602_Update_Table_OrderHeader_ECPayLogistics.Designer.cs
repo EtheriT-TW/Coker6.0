@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260126005602_Update_Table_OrderHeader_ECPayLogistics")]
+    partial class Update_Table_OrderHeader_ECPayLogistics
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -443,34 +446,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(1);
-
                     b.Property<Guid>("UUID")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
                     b.ToTable("Bonus");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.BonusLiability", b =>
-                {
-                    b.Property<Guid>("UUID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("OutstandingPoints")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("UUID");
-
-                    b.ToTable("BonusLiabilities");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.BonusLog", b =>
@@ -492,14 +473,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("Note")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<long?>("RefKey")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("Type")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
 
                     b.Property<Guid>("UUID")
                         .HasColumnType("uniqueidentifier");
@@ -2304,9 +2277,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<int>("Freight")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("GetBonus")
                         .HasColumnType("int");
 
                     b.Property<string>("InvoiceAddress")
@@ -4157,9 +4127,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<int?>("Bonus")
                         .HasColumnType("int");
-
-                    b.Property<string>("CVSStoreID")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreationTime")
                         .ValueGeneratedOnAdd()

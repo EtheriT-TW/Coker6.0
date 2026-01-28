@@ -56,6 +56,30 @@
       ]
     },
     {
+      "output": "Shared/Coker.min.js",
+      "input": [
+        "wwwroot/js/Coker/coker.core.js",
+        "wwwroot/js/Coker/coker.config.js",
+        "wwwroot/js/Coker/coker.alias.js",
+
+        "wwwroot/js/Coker/coker.util.string.js",
+        "wwwroot/js/Coker/coker.util.html.js",
+        "wwwroot/js/Coker/coker.util.money.js",
+        "wwwroot/js/Coker/coker.util.device.js",
+
+        "wwwroot/js/Coker/coker.dom.zipcode.js",
+        "wwwroot/js/Coker/coker.form.js",
+        "wwwroot/js/Coker/coker.ui.sweet.js",
+        "wwwroot/js/Coker/coker.feature.search.js",
+
+        "wwwroot/js/Coker/coker.api.user.js",
+        "wwwroot/js/Coker/coker.api.thirdparty.js",
+        "wwwroot/js/Coker/coker.api.favorites.js",
+        "wwwroot/js/Coker/coker.api.order.js",
+        "wwwroot/js/Coker/coker.api.payment.js"
+      ]
+    },
+    {
       "output": "Shared/c-share.min.js",
       "input": [
         "wwwroot/Shared/js/CShare.js"

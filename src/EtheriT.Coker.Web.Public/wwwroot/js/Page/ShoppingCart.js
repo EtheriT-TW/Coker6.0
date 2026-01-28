@@ -24,128 +24,6 @@ var datachange = true, HasECPay = false, ECPayInit = false, ECPayMonitor = false
 var RecipientsList_dxData;
 
 function PageReady() {
-    Coker.Order = {
-        AddHeader: function (data) {
-            return $.ajax({
-                url: "/api/Order/AddHeader",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("token")
-                },
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        },
-        FrontUserUpdate: function (data) {
-            return $.ajax({
-                url: "/api/Order/FrontUserUpdate",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("token")
-                },
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        },
-        GetHeader: function (id) {
-            return $.ajax({
-                url: "/api/Order/GetHeaderOne/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("token")
-                },
-                data: { id: id },
-            });
-        },
-        GetDetails: function (id) {
-            return $.ajax({
-                url: "/api/Order/GetOrderDetails/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("token")
-                },
-                data: { id: id },
-            });
-        },
-        GetAllData: function (ohid, check) {
-            return $.ajax({
-                url: "/api/Order/GetOrderDisplay",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("token")
-                },
-                data: { ohid: ohid, check: check },
-            });
-        },
-        GetReorder: function (ohid) {
-            return $.ajax({
-                url: "/api/Order/ReorderDisplay",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("token")
-                },
-                data: { ohid: ohid },
-            });
-        },
-        GetPaymentTypeEnum: function () {
-            return $.ajax({
-                url: "/api/Order/GetPaymentTypeEnum",
-                type: "POST",
-            });
-        },
-        CheckStock: function (data) {
-            return $.ajax({
-                url: "/api/Order/CheckStock",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("token")
-                },
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        },
-        Reorder: function (ohid) {
-            return $.ajax({
-                url: "/api/Order/Reorder/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("token")
-                },
-                data: { ohid: ohid },
-            });
-        },
-        CancelOrder: function (ohid, payment) {
-            return $.ajax({
-                url: "/api/Order/CancelOrder/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                data: { ohid: ohid, payment: payment },
-            });
-        }
-    };
-
-    Coker.Payment = {
-        GetPaymentInfo: function (paytypeid) {
-            return $.ajax({
-                url: "/api/ShoppingCart/GetPaymentInfo/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("token")
-                },
-                data: { paytypeid: paytypeid },
-            });
-        }
-    }
-
     $('#RadioPayment .payment_display').first().addClass("first");
     $('#RadioPayment .payment_display').last().addClass("last");
 
@@ -1687,7 +1565,6 @@ function RecipientFormClear() {
     $recipient_address_city.val("");
     $recipient_address_town.val("");
     $recipient_address.val("");
-    $remark.val("");
 }
 function RecipientSameOrderer() {
     for (var key in order_data) {
@@ -1764,14 +1641,11 @@ function InvoiceFormSet(title, uniformid, address_city, address_town, address) {
 }
 /* 表單驗證 */
 function FormCheck(Forms) {
-    var Check = false;
-    Array.from(Forms).forEach(form => {
-        if (form.checkValidity()) {
-            Check = true;
-        }
-        form.classList.add('was-validated')
-    })
-    return Check;
+    return Array.from(Forms).every(form => {
+        const valid = form.checkValidity();
+        form.classList.add('was-validated');
+        return valid;
+    });
 }
 function DetailsClear() {
     $("#Step1 > .card-body").addClass("d-none");
@@ -2493,7 +2367,6 @@ function RecipientsList_SelectChange(selectedItems) {
     console.log("Select", data)
 }
 function RecipientsList_DeleteButtonClicked(e) {
-    console.log(e.row.key)
     co.sweet.confirm("刪除收件人", "確定刪除？資料刪除後不可復原", "確　定", "取　消", function () {
         //co.Tag.TagDelete(e.row.key).done(function () {
         //    RecipientsList_dxData.refresh();

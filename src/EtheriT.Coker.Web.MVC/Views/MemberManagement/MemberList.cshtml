@@ -1,4 +1,5 @@
 ﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Web.MVC.Startup
 @using EtheriT.Coker.Application.Shared.Dto.Member
 @model EtheriT.Coker.Application.Shared.Dto.Permissions.SavePermissionsItem
 @{
@@ -245,6 +246,20 @@
                             </div>
                         </div>
                     </div>
+
+                    @if (BonusPermission.CanExe)
+                    {
+                        <div class="card border-0 mb-3">
+                            <div class="card-body bonus_point">
+                                <div class="row align-items-center px-3">
+                                    <div class="form-label col-auto mb-0 ps-0">
+                                        紅利點數：
+                                        <span id="bonusPoint"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
 
                     <div class="card border-0 mb-3">
                         <div class="card-body latest_order">

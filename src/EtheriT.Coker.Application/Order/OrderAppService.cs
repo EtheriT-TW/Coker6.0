@@ -588,10 +588,12 @@ namespace EtheriT.Coker.Application.Order
                         Orderer = result.Orderer,
                         OrdererTelePhone = result.OrdererTelePhone == null ? "-" : result.OrdererTelePhone,
                         OrdererCellPhone = result.OrdererCellPhone,
+                        OrdererEmail = result.OrdererEmail,
                         Recipient = result.Recipient,
                         RecipientTelePhone = result.RecipientTelePhone == null ? "-" : result.RecipientTelePhone,
                         RecipientCellPhone = result.RecipientCellPhone,
                         RecipientAddress = result.RecipientAddress.Replace(" ", ""),
+                        RecipientEmail = result.RecipientEmail,
                         InvoiceRecipient = result.InvoiceRecipient,
                         InvoiceTitle = result.InvoiceTitle,
                         InvoiceType = result.InvoiceType,
@@ -1655,6 +1657,7 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 var webSiteId = await loginUserData.GetWebsiteId();
+                if(webSiteId == 0) webSiteId = loginUserData.GetFrontWebsiteId();
                 var order = await db.Order_Headers.Where(e => e.Id == dto.Id && e.FK_WebsiteId == webSiteId).FirstOrDefaultAsync();
                 if (order == null) throw new Exception("訂單不存在");
 

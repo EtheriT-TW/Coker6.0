@@ -552,7 +552,9 @@ function HistoryTemplateDataInsert(Datas) {
         frame.find(".collapse .header_subtotal").text((order_header.subtotal).toLocaleString());
         frame.find(".collapse .header_freight").text((order_header.freight).toLocaleString());
         frame.find(".collapse .header_total").text((order_header.total).toLocaleString());
-        frame.find(".collapse .header_totalBonus").text((order_header.bonus).toLocaleString());
+        frame.find(".collapse .header_remark").text(order_header.remark);
+        if (order_header.bonus == 0) frame.find(".collapse .header_totalBonus").closest(".row").remove();
+        else frame.find(".collapse .header_totalBonus").text((order_header.bonus).toLocaleString());
 
         $("#profile-tab-pane .content").append(frame);
     })

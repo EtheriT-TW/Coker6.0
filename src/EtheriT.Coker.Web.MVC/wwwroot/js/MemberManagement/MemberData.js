@@ -1,7 +1,7 @@
 ﻿var new_pass_show = false, check_pass_show = false, isMailLock = false, BasicInfoFilled = false, LoginMailFilled = false, PassIsCheck = true
 var BasicInfoForm, LoginMailForm
 var $btn_mail_lock, $btn_newpass_lock, $btn_checkpass_lock, $newpass, $passcheck, $NewPassFeedBack, $Tags
-var $member_number, $name, $sex, $status, $level, $email_basic, $birthday, $cellphone, $telphone_area, $telphone, $telphone_ext, $address_city, $address_town, $address, $email_login, $newpass, $passcheck
+var $member_number, $name, $sex, $status, $level, $email_basic, $birthday, $cellphone, $telphone_area, $telphone, $telphone_ext, $address_city, $address_town, $address, $email_login, $newpass, $passcheck, $memberPoint
 var member_list, keyId
 let isInit = false;
 function PageReady() {
@@ -109,6 +109,7 @@ function ElementInit() {
     $email_login = $("#InputMailLogin")
     $newpass = $("#InputPasswordNew");
     $passcheck = $("#InputPasswordCheck");
+    $memberPoint = $("#bonusPoint");
     isInit = true;
 }
 function FormDataClear() {
@@ -133,6 +134,7 @@ function FormDataClear() {
     $newpass.val("");
     $passcheck.val("");
     $birthday.val("");
+    $memberPoint.text(0);
 
     $("#MemberLevel ").val(0);
     $(".latest_order").children().not(".no_clear").remove();
@@ -201,6 +203,7 @@ function FormDataSet(result) {
         }
     })
     $status.val(result.status);
+    $memberPoint.text(result.bonus);
     if (result.level != null) {
         $level.val(result.level);
     }

@@ -492,7 +492,7 @@ function DirectoryDataInsert($item, result) {
             });
         }
         function buildBonusLine(data) {
-            return !isNullOrEmpty(data.bonus)
+            return !co.String.isNullOrEmpty(data.bonus)
                 ? `<div class="text-muted">紅利：${data.bonus}</div>`
                 : "";
         }
@@ -502,14 +502,14 @@ function DirectoryDataInsert($item, result) {
             content.find(".normal-price").removeClass("price").empty().addClass("text-end").html(html);
         }
 
-        const hasBonus = !isNullOrEmpty(data.bonus);
-        const hideCash = hasBonus && isZeroPriceString(data.price);
+        const hasBonus = !co.String.isNullOrEmpty(data.bonus);
+        const hideCash = hasBonus && co.util.money.isZeroPriceValue(data.price);
 
         if (data.priceDisplayText != null) {
             content.find(".price").removeClass("price").text(data.priceDisplayText);
         }
         // 都沒有
-        else if (isNullOrEmpty(data.price) && !hasBonus) {
+        else if (co.String.isNullOrEmpty(data.price) && !hasBonus) {
             content.find(".price").addClass("notshow").text("");
         }
 
@@ -523,7 +523,7 @@ function DirectoryDataInsert($item, result) {
         else {
             const bonusLine = buildBonusLine(data);
 
-            if (!isNullOrEmpty(data.suggestPrice) && data.suggestPrice !== data.price) {
+            if (!co.String.isNullOrEmpty(data.suggestPrice) && data.suggestPrice !== data.price) {
                 let html = `
                     <div class="text-body-tertiary text-decoration-line-through">建議售價 $${data.suggestPrice}</div>
                     <div class="text-danger">$${data.price}</div>
@@ -531,7 +531,7 @@ function DirectoryDataInsert($item, result) {
                 `;
                 setPriceHtml(content, html);
 
-            } else if (!isNullOrEmpty(data.oriPrice) && data.oriPrice !== data.price) {
+            } else if (!co.String.isNullOrEmpty(data.oriPrice) && data.oriPrice !== data.price) {
                 let html = `
                     <div class="text-decoration-line-through">$${data.oriPrice}</div>
                     <div class="text-danger">會員價 $${data.price}</div>

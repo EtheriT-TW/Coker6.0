@@ -429,6 +429,12 @@ a[href="https://translate.google.com"] {
     background-color: #3b5998;
 }
 
+.line-top {
+    border-top: 1px solid var(--bs-border-color);
+    padding: 1rem 0;
+    margin-top: 1rem;
+}
+
 @media only screen and (max-width: 768px) {
     #YTPreviewModal .modal-dialog {
         max-width: 95vw !important;

@@ -24,7 +24,7 @@ function ready() {
 
     switch (lang) {
         case "en":
-            $EditTime.text($EditTime.text().replace('最後編輯時間', 'Last Edited Time'));
+            $EditTime.text($EditTime.text().replace('最後編輯時間', 'Last edited time'));
             $More.text($More.text().replace('詳細介紹', 'More'));
         break;
     }

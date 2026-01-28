@@ -18,6 +18,17 @@ function ready() {
         }
     });
 
+    var lang = $('html').attr('lang');
+    var $EditTime = $('.editTime');
+    var $More = $('.more');
+
+    switch (lang) {
+        case "en":
+            $EditTime.text($EditTime.text().replace('最後編輯時間', 'Last Edited Time'));
+            $More.text($More.text().replace('詳細介紹', 'More'));
+        break;
+    }
+
     $("link").each(function () {
         var $self = $(this);
         if ($self.data("orgname") != undefined) {

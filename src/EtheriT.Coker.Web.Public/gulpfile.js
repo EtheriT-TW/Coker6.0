@@ -22,7 +22,8 @@ var scriptEntries = {};
 
 var viewScripts = globby.sync([
 	'./wwwroot/js/**/*.js',
-	'!./wwwroot/js/**/*.min.js'
+	'!./wwwroot/js/**/*.min.js',
+	'!./wwwroot/js/Coker/_coker.intellisense.js'
 ]);
 
 var viewStyles = globby.sync([

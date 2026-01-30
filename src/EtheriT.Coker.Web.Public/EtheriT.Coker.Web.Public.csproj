@@ -38,6 +38,7 @@
 		<Content Remove="wwwroot\js\Coker\coker.util.html.js" />
 		<Content Remove="wwwroot\js\Coker\coker.util.money.js" />
 		<Content Remove="wwwroot\js\Coker\coker.util.string.js" />
+		<Content Remove="wwwroot\js\Coker\_coker.intellisense.js" />
 		<Content Remove="wwwroot\js\Page\OrderManagement.js" />
 		<Content Remove="wwwroot\js\Page\OrderManagement.min.js" />
 		<Content Remove="wwwroot\lib\pdf-viewer\external\pdfjs-4.5.136-dist\LICENSE" />
@@ -163,6 +164,7 @@
 		<None Include="wwwroot\js\Coker\coker.util.html.js" />
 		<None Include="wwwroot\js\Coker\coker.util.money.js" />
 		<None Include="wwwroot\js\Coker\coker.util.string.js" />
+		<None Include="wwwroot\js\Coker\_coker.intellisense.js" />
 		<None Include="wwwroot\lib\pdf-viewer\external\pdfjs-4.5.136-dist\LICENSE" />
 		<None Include="wwwroot\lib\pdf-viewer\LICENSE" />
 		<None Include="wwwroot\lib\pdf-viewer\README.md" />

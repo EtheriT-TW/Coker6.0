@@ -19,6 +19,7 @@ var grapesInit = function (options) {
             '/lib/swiper/swiper-bundle.min.js',
             '/lib/masonry-layout/dist/masonry.pkgd.min.js',
             '/lib/jquery-plugin-c-share/dist/jquery.c-share.min.js',
+            '/Shared/Coker.min.js',
             '/Shared/shared.min.js',
         ]
     }

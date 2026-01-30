@@ -375,7 +375,8 @@ function FormDataClear() {
     endDate = null;
     spec_remove_list = [];
 
-    modal_price_list = []
+    modal_price_list = [];
+    suggest_price_list = [];
     price_tid = 0;
     temp_psid = 0;
     $(".data_upload").each(function () {
@@ -801,7 +802,7 @@ function SpecAdd(result) {
         $price_modal.parents(".modal-body").first().data("temppsid", temppsid != null ? temppsid : "")
         $("#TimePrice").prop("checked", timePrice);
         $("#TimePrice").trigger("change");
-        if (psid != null) {
+        if (!!psid) {
             var index = suggest_price_list.findIndex(item => item["FK_PSId"] == psid)
             $("#PriceModal .suggest_price input").val(suggest_price_list[index]["Price"]);
         } else {

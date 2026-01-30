@@ -492,7 +492,7 @@ function DirectoryDataInsert($item, result) {
             });
         }
         function buildBonusLine(data) {
-            return !co.String.isNullOrEmpty(data.bonus)
+            return !co.String.isNullOrEmpty(data.bonus) && !co.util.money.isZeroPriceValue(data.bonus)
                 ? `<div class="text-muted">紅利：${data.bonus}</div>`
                 : "";
         }
@@ -501,10 +501,9 @@ function DirectoryDataInsert($item, result) {
             content.find(".price-grid").removeClass("price").empty().html(html);
             content.find(".normal-price").removeClass("price").empty().addClass("text-end").html(html);
         }
-
-        const hasBonus = !co.String.isNullOrEmpty(data.bonus);
+        
+        const hasBonus = !co.String.isNullOrEmpty(data.bonus) && !co.util.money.isZeroPriceValue(data.bonus);
         const hideCash = hasBonus && co.util.money.isZeroPriceValue(data.price);
-
         if (data.priceDisplayText != null) {
             content.find(".price").removeClass("price").text(data.priceDisplayText);
         }
@@ -522,7 +521,6 @@ function DirectoryDataInsert($item, result) {
         // 有現金（可能有紅利）
         else {
             const bonusLine = buildBonusLine(data);
-
             if (!co.String.isNullOrEmpty(data.suggestPrice) && data.suggestPrice !== data.price) {
                 let html = `
                     <div class="text-body-tertiary text-decoration-line-through">建議售價 $${data.suggestPrice}</div>

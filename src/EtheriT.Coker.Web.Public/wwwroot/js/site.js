@@ -176,32 +176,8 @@ function ready() {
         }
     });
 
-    Coker.Token = {
-        GetToken: function () {
-            return $.ajax({
-                url: "/api/Token/CreateToken",
-                type: "POST",
-            });
-        },
-        CheckToken: function () {
-            return $.ajax({
-                url: "/api/Token/CheckToken/",
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("token")
-                },
-                type: "GET"
-            });
-        },
-        AgreePrivacy: function () {
-            return $.ajax({
-                url: "/api/Token/AgreePrivacy/",
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("token")
-                },
-                type: "GET"
-            });
-        }
-    };
+    CokerI18n.apply(document);
+
     typeof (PageReady) === "function" && PageReady();
     typeof (HeaderInit) === "function" && HeaderInit();
     typeof (FooterInit) === "function" && FooterInit();

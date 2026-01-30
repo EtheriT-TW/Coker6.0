@@ -36,23 +36,24 @@
       "output": "Shared/shared.min.js",
       "input": [
         "wwwroot/Shared/js/AnchorPoint.js",
+        "wwwroot/Shared/js/Activity.js",
+        "wwwroot/Shared/js/BGCanvas.js",
+        "wwwroot/Shared/js/Contact.js",
         "wwwroot/Shared/js/DirectoryGetData.js",
         "wwwroot/Shared/js/Frame.js",
+        "wwwroot/Shared/js/FlipBook.js",
+        "wwwroot/Shared/js/Flipdown.js",
+        "wwwroot/Shared/js/GetLatLng.js",
         "wwwroot/Shared/js/HoverEffect.js",
+        "wwwroot/Shared/js/i18n.js",
+        "wwwroot/Shared/js/JqueryExtends.js",
         "wwwroot/Shared/js/LinkWithIcon.js",
+        "wwwroot/Shared/js/MapMessage.js",
+        "wwwroot/Shared/js/MarqueeSwiper.js",
         "wwwroot/Shared/js/ShareBlock.js",
         "wwwroot/Shared/js/Sitemap.js",
         "wwwroot/Shared/js/Swiper.js",
-        "wwwroot/Shared/js/ViewTypeChange.js",
-        "wwwroot/Shared/js/Activity.js",
-        "wwwroot/Shared/js/Contact.js",
-        "wwwroot/Shared/js/BGCanvas.js",
-        "wwwroot/Shared/js/JqueryExtends.js",
-        "wwwroot/Shared/js/FlipBook.js",
-        "wwwroot/Shared/js/Flipdown.js",
-        "wwwroot/Shared/js/MapMessage.js",
-        "wwwroot/Shared/js/GetLatLng.js",
-        "wwwroot/Shared/js/MarqueeSwiper.js"
+        "wwwroot/Shared/js/ViewTypeChange.js"
       ]
     },
     {
@@ -77,7 +78,8 @@
         "wwwroot/js/Coker/coker.api.thirdparty.js",
         "wwwroot/js/Coker/coker.api.favorites.js",
         "wwwroot/js/Coker/coker.api.order.js",
-        "wwwroot/js/Coker/coker.api.payment.js"
+        "wwwroot/js/Coker/coker.api.payment.js",
+        "wwwroot/js/Coker/coker.api.token.js"
       ]
     },
     {

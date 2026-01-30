@@ -1,4 +1,4 @@
-﻿namespace EtheriT.Coker.Application.Shared.i18n.en
+﻿namespace EtheriT.Coker.Application.Shared.i18n
 {
     public static partial class LocaleEn
     {

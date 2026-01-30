@@ -1,5 +1,4 @@
-﻿using EtheriT.Coker.Application.Shared.i18n.en;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;

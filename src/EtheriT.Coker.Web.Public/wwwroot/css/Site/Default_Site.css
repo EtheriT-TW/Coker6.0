@@ -10,21 +10,8 @@ label::after {
     background-color: transparent !important;
 }
 
-/* Custom English translation */
-.translate_ch {
-    display: inline;
-    font-family: initial;
-}
-
-.translate_en {
-    display: none;
-}
-
-html[lang="en"] .translate_ch {
-    display: none;
-}
-
-html[lang="en"] .translate_en {
+/* translation */
+.translate {
     display: inline;
     font-family: initial;
 }

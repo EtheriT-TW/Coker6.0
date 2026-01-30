@@ -17,6 +17,11 @@
                     var div = document.createElement("div");
                     div.appendChild(document.createTextNode(text));
                     return div.innerHTML;
+                },
+                getPageTitle() {
+                    var og = document.querySelector('meta[property="og:title"]');
+                    if (og && og.content) return og.content.trim();
+                    return (document.title || location.hostname).trim();
                 }
             }
         }

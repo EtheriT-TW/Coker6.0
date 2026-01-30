@@ -19,13 +19,14 @@ var styleEntries = {};
 var scriptEntries = {};
 
 var viewScripts = globby.sync([
-	'./wwwroot/js/**/*.js',
 	'./wwwroot/lib/Coker*/**/*.js',
 	'./wwwroot/lib/bootstrap/iconpicker/js/iconset/fontawesome6-2-1.js',
 	'./wwwroot/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.js',
+	'!./wwwroot/lib/Coker*/**/*.min.js',
+	'./wwwroot/js/**/*.js',
 	'!./wwwroot/js/devextreme/**/*.js',
 	'!./wwwroot/js/**/*.min.js',
-	'!./wwwroot/lib/Coker*/**/*.min.js',
+	'!./wwwroot/js/CokerCore/_coker.intellisense.js',
 ]);
 
 var viewStyles = globby.sync([

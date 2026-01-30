@@ -66,6 +66,7 @@
         "wwwroot/js/Coker/coker.util.html.js",
         "wwwroot/js/Coker/coker.util.money.js",
         "wwwroot/js/Coker/coker.util.device.js",
+        "wwwroot/js/Coker/coker.util.mail.js",
 
         "wwwroot/js/Coker/coker.dom.zipcode.js",
         "wwwroot/js/Coker/coker.form.js",

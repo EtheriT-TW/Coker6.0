@@ -27,6 +27,7 @@
 		<Content Remove="wwwroot\js\Coker\coker.api.order.js" />
 		<Content Remove="wwwroot\js\Coker\coker.api.payment.js" />
 		<Content Remove="wwwroot\js\Coker\coker.api.thirdparty.js" />
+		<Content Remove="wwwroot\js\Coker\coker.api.Token.js" />
 		<Content Remove="wwwroot\js\Coker\coker.api.user.js" />
 		<Content Remove="wwwroot\js\Coker\coker.config.js" />
 		<Content Remove="wwwroot\js\Coker\coker.core.js" />
@@ -153,6 +154,7 @@
 		<None Include="wwwroot\js\Coker\coker.api.order.js" />
 		<None Include="wwwroot\js\Coker\coker.api.payment.js" />
 		<None Include="wwwroot\js\Coker\coker.api.thirdparty.js" />
+		<None Include="wwwroot\js\Coker\coker.api.token.js" />
 		<None Include="wwwroot\js\Coker\coker.api.user.js" />
 		<None Include="wwwroot\js\Coker\coker.config.js" />
 		<None Include="wwwroot\js\Coker\coker.core.js" />

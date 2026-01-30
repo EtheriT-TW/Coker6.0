@@ -176,12 +176,14 @@ function ready() {
         }
     });
 
-    CokerI18n.apply(document);
+
 
     typeof (PageReady) === "function" && PageReady();
     typeof (HeaderInit) === "function" && HeaderInit();
     typeof (FooterInit) === "function" && FooterInit();
     SideFloatingInit();
+    CokerI18n.apply(document);
+
     CreateToken();
     let idleTimeout;
     sessionStorage.setItem('pageLoadTime', Date.now());

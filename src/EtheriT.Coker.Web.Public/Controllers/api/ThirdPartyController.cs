@@ -5,7 +5,10 @@ using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayLogistics;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
 using EtheriT.Coker.Application.Shared.ThirdParty;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
+using System.Text;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
 {
@@ -196,15 +199,32 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return response;
         }
         [HttpGet]
-        public async Task<ResponseMessageDto> ECPayLogisticsGetMap(long scid, string LogisticsSubType)
+        public async Task<IActionResult> ECPayLogisticsGetMap(long scid, string LogisticsSubType)
         {
-            return await ecPayLogisticsAppService.ECPayLogisticsGetMap(scid, LogisticsSubType);
+            var response = await ecPayLogisticsAppService.ECPayLogisticsGetMap(scid, LogisticsSubType);
+            if (response.Success) return Content(response.Message, "text/html", Encoding.UTF8);
+            else
+            {
+                var errorHtml = $@"<html>
+                                                        <head>
+                                                            <meta charset='utf-8' />
+                                                            <title>門市選取失敗</title>
+                                                        </head>
+                                                        <body>
+                                                            <h2>門市選取失敗</h2>
+                                                            <p>{WebUtility.HtmlEncode(response.Message)}</p>
+                                                            <button onclick='history.back()'>返回上一頁</button>
+                                                        </body>
+                                                       </html>";
+                return Content(errorHtml, "text/html", Encoding.UTF8);
+            }
         }
         [HttpPost]
-        [Consumes("application/x-www-form-urlencoded")]
-        public async Task<bool> ECPayLogisticsGetMapResponse([FromBody] ECPayLogisticsMapResponseDto ResultResponseData)
+        [AllowAnonymous]
+        public async Task<IActionResult> ECPayLogisticsGetMapResponse([FromForm] ECPayLogisticsMapResponseDto ResultResponseData)
         {
-            return await ecPayLogisticsAppService.ECPayLogisticsGetMapResponse(ResultResponseData);
+            await ecPayLogisticsAppService.ECPayLogisticsGetMapResponse(ResultResponseData);
+            return Content("1|OK");
         }
     }
 }

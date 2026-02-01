@@ -61,8 +61,10 @@ namespace EtheriT.Coker.Application.ThirdParty
                     var content = new StringContent(JsonConvert.SerializeObject(RequestBody), Encoding.UTF8, "application/json");
                     var PostResponse = await ThirdPartyClient_ECPayLogistics.PostAsync(RequestUri, content);
                     PostResponse.EnsureSuccessStatusCode();
-                    var Response = await PostResponse.Content.ReadAsStringAsync();
-                    response.Message = "success";
+
+                    response.Success = true;
+                    response.Message = await PostResponse.Content.ReadAsStringAsync();
+
                     return response;
                 }
                 else throw new Exception("商家未確實設置綠界物流資料");
@@ -166,8 +168,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                 return false;
             }
         }
-
-
         private async Task<ECPayLogisticsCreateRequestDto> ECPayExpressRequestBody(ECPayThirdPartyDataDto ThirdPartyData, long ohid, List<string> prod_titles)
         {
             ECPayLogisticsCreateRequestDto RequestBody = new ECPayLogisticsCreateRequestDto();
@@ -255,12 +255,12 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 var thirdPartyDict = thirdPartyKeypairValues.ToDictionary(e => e.Key, e => e.Value);
 
-                //測試特店資料：C2C
+                //測試特店資料：B2C及宅配
                 //ThirdPartyData.MerchantID = "2000132";
                 //ThirdPartyData.HashKey = "5294y06JbISpM5x9";
                 //ThirdPartyData.HashIV = "v77hoKGq4kWxNNIS";
 
-                //測試特店資料：B2C及宅配
+                //測試特店資料：C2C
                 //ThirdPartyData.MerchantID = "2000933";
                 //ThirdPartyData.HashKey = "XBERn1YOvpM9nfZc";
                 //ThirdPartyData.HashIV = "h1ONHk4P4yqbl5LK";

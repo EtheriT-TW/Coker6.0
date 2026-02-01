@@ -399,6 +399,7 @@ namespace EtheriT.Coker.Application.Order
                     }
                 }
 
+                oh.CVSStoreID = detailResult.ShoppingCarts[0].CVSStoreID;
                 await loginUserData.SaveChanges(oh);   // 這裡需要 Save 一次，拿到穩定的 oh.Id
             }
             else
@@ -441,6 +442,8 @@ namespace EtheriT.Coker.Application.Order
                             oh.GetBonus = earnPoints;
                         }
                     }
+
+                    oh.CVSStoreID = detailResult.ShoppingCarts[0].CVSStoreID;
                     await db.SaveChangesAsync();
                 }
             }

@@ -159,7 +159,7 @@ namespace EtheriT.Coker.Application.Freight
                                                      ? $"單筆計算{e.Freight}元"
                                                      : $"單筆計算{e.Freight}元(滿{e.Low_Con}元{(e.Dis_Freight == 0 ? "免運" : $"運費{e.Dis_Freight}元")})"
                                          ),
-                                     GetMap = true,
+                                     GetMap = (int)e.LogisticsType >= 8 && (int)e.LogisticsType <= 15,
                                      LogisticsSubType = GetLogisticsSubType((int)e.LogisticsType)
                                  };
 

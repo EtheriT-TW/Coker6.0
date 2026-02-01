@@ -126,9 +126,10 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (Response.Length > 0)
                 {
-                    if (Response.Substring(0, 1) == "0") response.Message = Response;
-                    else response.Success = true;
+                    if(int.Parse(Response.Split('|')[0]) == 1) response.Success = true;
+                    response.Message = Response.Split('|')[1];
                     await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayLogisticsExpressCreate", Response);
+
                     return response;
                 }
                 else throw new Exception($"無法取得門市訂單建立資訊");
@@ -186,7 +187,34 @@ namespace EtheriT.Coker.Application.ThirdParty
                 RequestBody.MerchantID = ThirdPartyData.MerchantID;
                 RequestBody.MerchantTradeNo = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
                 RequestBody.MerchantTradeDate = DateTimeNow.ToString("yyyy/MM/dd HH:mm:ss");
-                RequestBody.LogisticsSubType = "FAMI";
+
+                switch ((int)ohdata.LogisticsSetting.LogisticsType)
+                {
+                    case 8:
+                        RequestBody.LogisticsSubType = "FAMI";
+                        break;
+                    case 9:
+                        RequestBody.LogisticsSubType = "UNIMART";
+                        break;
+                    case 10:
+                        RequestBody.LogisticsSubType = "UNIMARTFREEZE";
+                        break;
+                    case 11:
+                        RequestBody.LogisticsSubType = "HILIFE";
+                        break;
+                    case 12:
+                        RequestBody.LogisticsSubType = "FAMIC2C";
+                        break;
+                    case 13:
+                        RequestBody.LogisticsSubType = "UNIMARTC2C";
+                        break;
+                    case 14:
+                        RequestBody.LogisticsSubType = "HILIFEC2C";
+                        break;
+                    case 15:
+                        RequestBody.LogisticsSubType = "OKMARTC2C";
+                        break;
+                }
                 RequestBody.GoodsAmount = ohdata.Subtotal + ohdata.Freight;
 
                 RequestBody.IsCollection = ThirdPartyData.IsCollection;
@@ -224,7 +252,7 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 RequestBody.Remark = ohdata.Remark;
                 RequestBody.PlatformID = ThirdPartyData.PlatformID;
-                RequestBody.ReceiverStoreID = "131386";
+                RequestBody.ReceiverStoreID = ohdata.CVSStoreID;
 
                 RequestBody.CheckMacValue = Encrypt(RequestBody, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
 

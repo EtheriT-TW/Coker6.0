@@ -656,8 +656,11 @@
                                     <div class="form-check text-start col-12 col-sm-3 my-2">
                                         <input id="FreeShip_@freight.Id" class="form-check-input" type="radio" name="RadioShipping" value="@freight.Id" data-freignt-status-type="@freight.freigntStatusType" data-freight="@freight.Freight" data-lowcon="@freight.Low_Con" data-disfreight="@freight.Dis_Freight" @check required>
                                         <label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
-                                            @if (freight.GetMap) { <input type="button" class="btn_getmap bg-transparent border-0 ms-1 text-decoration-underline" value="選擇門市" data-subtype="@freight.LogisticsSubType">}
-                                            @{
+                                        @if (freight.GetMap)
+                                        {
+                                            <input type="button" class="btn_getmap bg-transparent border-0 ms-1 text-decoration-underline" value="選擇門市" data-subtype="@freight.LogisticsSubType">
+                                        }
+                                        @{
                                             if (!has_invalid)
                                             {
                                                 <div class="invalid-feedback">請選擇運送方式</div>
@@ -673,6 +676,11 @@
                                 <div class="noshipping">店家尚未設定運費方式</div>
                             }
                         </div>
+                    </form>
+
+                    <form id="ecpayLogisticsForm" method="get" action="/api/ThirdParty/ECPayLogisticsGetMap" class="d-none">
+                        <input type="hidden" name="scid" />
+                        <input type="hidden" name="LogisticsSubType"/>
                     </form>
 
                     <div class="priceline px-3 pe-sm-5 col-12 col-md-7 offset-md-5">
@@ -1027,5 +1035,5 @@
 
 
 <script src="@(ViewBag.IsProduction
-            ? "https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"
-            : "https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116")"></script>
+                    ? "https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"
+                    : "https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116")"></script>

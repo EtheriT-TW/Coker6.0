@@ -476,11 +476,18 @@ function PageReady() {
     })
 
     $(".btn_getmap").on("click", function () {
-        var $this = $(this);
-        var LogisticsSubType = $this.data("subtype");
-        co.ThirdParty.LogisticsGetMap(shopping_cart_data[0].Id, LogisticsSubType).done(function (result) {
-            console.log(result)
-        });
+        var $btn = $(this);
+        var $radio = $btn.prev('input[name="RadioShipping"]');
+        $radio.prop('checked', true);
+
+        var $form = $("form#ecpayLogisticsForm");
+
+        var scid = shopping_cart_data[0].Id;
+
+        $form.find('input[name="LogisticsSubType"]').val($btn.data('subtype'));
+        $form.find('input[name="scid"]').val(scid);
+
+        $form.submit();
     })
 }
 // 同步 header 的勾選/半選狀態與「已選件數」

@@ -25,7 +25,9 @@ namespace EtheriT.Coker.Core.Models
         public bool IsOrder { get; set; }
         // 結帳後才存入
         public string? ProdName { get; set; }
+        public string? LogisticsSubType  { get; set; }
         public string? CVSStoreID { get; set; }
+        public string? CVSStoreName { get; set; }
         public ICollection<Token> Tokens { get; set; }
         public Prod_Stock Prod_Stock { get; set; }
         public Prod_Price? Prod_Price { get; set; }

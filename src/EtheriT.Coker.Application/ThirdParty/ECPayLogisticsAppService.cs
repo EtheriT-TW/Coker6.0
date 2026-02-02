@@ -283,6 +283,10 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 var thirdPartyDict = thirdPartyKeypairValues.ToDictionary(e => e.Key, e => e.Value);
 
+                ThirdPartyData.MerchantID = thirdPartyDict.GetValueOrDefault("MerchantID") ?? throw new Exception("商家未確實設置綠界支付資料");
+                ThirdPartyData.HashKey = thirdPartyDict.GetValueOrDefault("HashKey") ?? throw new Exception("商家未確實設置綠界支付資料");
+                ThirdPartyData.HashIV = thirdPartyDict.GetValueOrDefault("HashIV") ?? throw new Exception("商家未確實設置綠界支付資料");
+
                 //測試特店資料：B2C及宅配
                 //ThirdPartyData.MerchantID = "2000132";
                 //ThirdPartyData.HashKey = "5294y06JbISpM5x9";
@@ -293,9 +297,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                 //ThirdPartyData.HashKey = "XBERn1YOvpM9nfZc";
                 //ThirdPartyData.HashIV = "h1ONHk4P4yqbl5LK";
 
-                ThirdPartyData.MerchantID = thirdPartyDict.GetValueOrDefault("MerchantID") ?? throw new Exception("商家未確實設置綠界支付資料");
-                ThirdPartyData.HashKey = thirdPartyDict.GetValueOrDefault("HashKey") ?? throw new Exception("商家未確實設置綠界支付資料");
-                ThirdPartyData.HashIV = thirdPartyDict.GetValueOrDefault("HashIV") ?? throw new Exception("商家未確實設置綠界支付資料");
                 ThirdPartyData.IsCollection = "Y";
 
             }

@@ -9,6 +9,7 @@ function ready() {
     registerModal = $("#RegisterModal").length > 0 ? new bootstrap.Modal($("#RegisterModal")) : null;
     forgetModal = $("#ForgetModal").length > 0 ? new bootstrap.Modal($("#ForgetModal")) : null;
     resetModal = $("#ResetModal").length > 0 ? new bootstrap.Modal($("#ResetModal")) : null;
+    if (!!local) window.local = local;
     jqueryExtend();
     document.querySelector(`[data-rootid="${RootId}"]`)?.classList.add("active");
     $('.navbar-nav > .nav-item').each(function () {
@@ -68,6 +69,7 @@ function ready() {
     }
     $(".editTime,.popular").appendTo($conten);
     $(".backstageType").remove();
+    CokerI18n.apply(document);
     if (typeof AOS !== 'undefined' && AOS && typeof AOS.init === 'function') AOS.init();
     if ($(".search-input").val() != "") {
         let encodedString = decodeURIComponent($(".search-input").val());
@@ -176,13 +178,10 @@ function ready() {
         }
     });
 
-
-
     typeof (PageReady) === "function" && PageReady();
     typeof (HeaderInit) === "function" && HeaderInit();
     typeof (FooterInit) === "function" && FooterInit();
     SideFloatingInit();
-    CokerI18n.apply(document);
 
     CreateToken();
     let idleTimeout;
@@ -672,7 +671,7 @@ function CreateToken() {
     Coker.Token.GetToken().done(function (result) {
         localStorage.setItem("token", result.token);
         CheckToken();
-    })
+    }, null, { auth: false });
 }
 function CheckToken() {
     Coker.Token.CheckToken().done(function (result) {

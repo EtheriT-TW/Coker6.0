@@ -279,3 +279,38 @@ function dataSaving(e) {
         TagList_dxData.refresh();
     }
 }
+function onTagGridEditorPreparing(e) {
+    // 只處理 FilterRow
+    if (e.parentType !== "filterRow") return;
+
+    // 只處理群組名稱這一欄
+    if (e.dataField !== "TagGroupTitle") return;
+
+    // 這裡的 editor 是 FilterRow 的 selectbox
+    var original = e.editorOptions && e.editorOptions.onValueChanged;
+
+    e.editorOptions.onValueChanged = function (args) {
+        // 先保留原本行為
+        if (typeof original === "function") original(args);
+
+        var grid = e.component;
+        var val = args.value;
+
+        // [全部] / 清除：把該欄 filterValue 清掉
+        if (val === null || val === undefined || val === "") {
+            grid.columnOption("TagGroupTitle", "filterValue", null);
+        } else {
+            // 你現在 ValueExpr=tagGroupTitle，所以 filterValue 直接用字串
+            grid.columnOption("TagGroupTitle", "filterValue", val);
+            // 若你希望 contains 而不是 equals，可加：
+            // grid.columnOption("TagGroupTitle", "selectedFilterOperation", "contains");
+        }
+
+        // 在 ApplyFilterMode.OnClick 下，手動套用
+        if (typeof grid.applyFilter === "function") {
+            grid.applyFilter();
+        } else {
+            grid.refresh();
+        }
+    };
+}

@@ -1,0 +1,14 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace EtheriT.Coker.Application.Shared.Dto.Tag
+{
+    public class TagGroupLookupDto
+    {
+        public long? TagGroupId { get; set; }
+        public string? TagGroupTitle { get; set; }
+    }
+}

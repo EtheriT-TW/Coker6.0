@@ -2,7 +2,7 @@
 var keyId, disp_opt = true, DirectoryId = 0, DirectoryType = "n";
 let directory_list, editor, permissionDetailsModal;
 let DirectorytForms, $DirectorytTags;
-let ArticletForms, $ArticletTags;
+let ArticletForms, $ArticletTags, ArticletId;
 
 function PageReady() {
     DirectorytForms = $('#DirectorytForm');
@@ -127,6 +127,11 @@ function PageReady() {
         BackToList();
     });
 
+    $(document).on('click', '.btn-open-facet', function (e) {
+        e.preventDefault();
+        co.DirectoryFacetModal.open(DirectoryId);
+    });
+
     $btn_display.on("click", function () {
         if (disp_opt) {
             $btn_display.children("span").text("visibility_off");
@@ -136,6 +141,11 @@ function PageReady() {
             disp_opt = !disp_opt;
         }
     })
+    $(".btn_permission_details").on("click", function (e) {
+        e.preventDefault();
+        var title = $("#ArticletForm [name='title']").val();
+        $("#RolesDetailsModal").setRolesData({ pageId: ArticletId, title: title, type: 5 }).modal("show");
+    });
 
     $title_text.on('keyup', function () {
         var $self = $(this);
@@ -195,12 +205,14 @@ function HashDataEdit() {
             } else if (parseInt(hash) == 0) {
                 window.location.hash = 0;
                 keyId = 0;
+                DirectoryId = 0;
                 FormDataClear();
                 MoveToContent();
             } else {
                 MoveToContent();
                 co.Directory.Get(parseInt(hash)).done(function (result) {
                     if (result != null) {
+                        DirectoryId = result.id;
                         MoveToContent();
                         FormDataSet(result);
                     } else {
@@ -360,8 +372,10 @@ function AddUpArticlet(success_text, error_text) {
 function MoveToContent() {
     $(DirectorytForms).removeClass("was-validated");
     if (!!keyId && isNaN(keyId)) {
+        
+    }
 
-    } if (keyId == 0) {
+    if (keyId == 0) {
         $(".btn_to_canvas").addClass("text-dark");
         $(".btn_to_canvas").attr('disabled', '');
     } else {
@@ -419,6 +433,7 @@ function MoveToItemArticle() {
                 if (id > 0) {
                     co.Articles.GetDataOne(id).done(function (result) {
                         if (result != null) {
+                            ArticletId = result.id;
                             result.startEndDate = 0;
                             result.sortCheckbox = 1;
                             result.ImageUpload = 1;

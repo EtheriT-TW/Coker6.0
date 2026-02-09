@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Application.Shared.Tag
         public Task<ResponseMessageDto> TagGroupAddUp(DevExpressDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? tids);
         public Task<JsonResult> GetAllGroupList(DataSourceLoadOptions loadOptions);
+        public IQueryable<TagGroupLookupDto> TagGroupLookUp(long websiteId);
         public Task<ResponseMessageDto> TagAssociateAddDelect(List<TagAssociateDto> dto);
         public Task<List<TagGetSelectedDto>> GetTagAssociate(TagAssociateGetDto dto);
         public Task<List<TagGetAllDataDto>> GetProductDataAll(long PId);

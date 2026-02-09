@@ -1,5 +1,5 @@
 ﻿using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
 using System;
 using System.Collections.Generic;
 using System.Linq;

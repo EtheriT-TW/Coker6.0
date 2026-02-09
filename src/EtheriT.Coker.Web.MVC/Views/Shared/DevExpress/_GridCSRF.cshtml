@@ -78,4 +78,86 @@
             }
         }
     });
+
+        // 通案：DevExtreme DataGrid FilterRow 的 IME-safe 自動套用
+    function CokerDxGrid_ImeSafeFilterRow(e) {
+      if (!e || e.parentType !== "filterRow") return;
+
+      const grid = e.component;
+      const eo = e.editorOptions || (e.editorOptions = {});
+
+      // 依 editorType 判斷：selectbox/lookup vs textbox
+      // DevExtreme 常見：dxTextBox / dxSelectBox / dxDateBox / dxNumberBox
+      const editorType = (e.editorType || "").toLowerCase();
+
+      // ---- A) 下拉（Lookup/SelectBox）：選了就套用，並把「全部」當清除 ----
+      if (editorType.includes("selectbox") || editorType.includes("tagbox") || editorType.includes("lookup")) {
+        const original = eo.onValueChanged;
+
+        eo.onValueChanged = function (args) {
+          if (typeof original === "function") original(args);
+
+          // FilterRow 清除/全部通常會回傳 null / undefined / ""
+          const val = args ? args.value : null;
+
+          grid.columnOption(e.dataField, "filterValue",
+            (val === null || val === undefined || val === "") ? null : val
+          );
+
+          // 因為 GridApplyFilterMode.OnClick，不會自動 apply，所以我們手動 apply
+          if (typeof grid.applyFilter === "function") grid.applyFilter();
+          else grid.refresh();
+        };
+
+        return;
+      }
+
+      // ---- B) 文字輸入（TextBox）：IME-safe debounce apply ----
+      // 如果你不希望所有文字欄都 auto，可在下面加白名單判斷（我先做通案：全部文字欄生效）
+      if (editorType.includes("textbox")) {
+        const origInit = eo.onInitialized;
+        eo.onInitialized = function (args) {
+          if (typeof origInit === "function") origInit(args);
+
+          const input = args && args.element ? $(args.element).find("input").get(0) : null;
+          if (!input) return;
+
+          // 避免重複綁定（FilterRow 重建時）
+          if (input.__cokerImeBound) return;
+          input.__cokerImeBound = true;
+
+          let composing = false;
+          let timer = null;
+
+          const apply = () => {
+            if (typeof grid.applyFilter === "function") grid.applyFilter();
+            else grid.refresh();
+          };
+
+          const debounceApply = (ms) => {
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(() => {
+              if (!composing) apply();
+            }, ms);
+          };
+
+          input.addEventListener("compositionstart", () => { composing = true; });
+          input.addEventListener("compositionend", () => {
+            composing = false;
+            // 中文 commit 後立刻套用（可改 50~100ms）
+            debounceApply(0);
+          });
+
+          input.addEventListener("input", () => {
+            // 組字期間不要 apply，避免 blur 截斷中文
+            if (composing) return;
+
+            // 像 Auto：停止輸入一小段時間才查，避免每個字都打 API
+            debounceApply(300);
+          });
+        };
+
+        return;
+      }
+    }
 </script>

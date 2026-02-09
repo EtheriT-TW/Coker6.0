@@ -59,6 +59,7 @@
                         endDateTime: (new Date(result.endDateTime)).getTime()
                     });
                     _c.Data.Header.Authorization = 'Bearer ' + result.token;
+                    console.log(_c.Data.Header.Authorization, result.token);
                     _c.Data.Header.Secret = result.secret;
                     _dfr.resolve(result);
                 }

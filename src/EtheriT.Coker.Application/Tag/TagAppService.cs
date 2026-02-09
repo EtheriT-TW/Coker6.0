@@ -195,7 +195,7 @@ namespace EtheriT.Coker.Application.Tag
                 List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == webid).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
                 siteIds.Add(webid);
 
-                var dataQuery = await (from t in db.Tags
+                var dataQuery = await (from t in db.Tags.Include(e => e.Tag_TagGroups)
                                        join s in db.Websites on t.FK_WebsiteId equals s.Id
                                        where !t.IsDeleted && siteIds.Contains(t.FK_WebsiteId)
                                        orderby t.Id descending
@@ -204,6 +204,13 @@ namespace EtheriT.Coker.Application.Tag
                                            IsSelected = list_tid.Contains(t.Id),
                                            Id = t.Id,
                                            Title = t.Title,
+                                           TagGroupTitle = t.Tag_TagGroups != null ?
+                                                            string.Join(", ",
+                                                                t.Tag_TagGroups
+                                                                .Select(ttg => ttg.Tag_Group)
+                                                                .Where(tgg => tgg != null && !tgg.IsDeleted)
+                                                                .Select(tgg => tgg!.Title)
+                                                            ) : null,
                                            SiteNameTitle = s.Title
                                        }).ToListAsync();
 
@@ -267,6 +274,17 @@ namespace EtheriT.Coker.Application.Tag
             }
 
             return new JsonResult(new List<TagGroupGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public IQueryable<TagGroupLookupDto> TagGroupLookUp(long websiteId)
+        {
+            var query = from tg in db.Tag_Groups
+                        where tg.FK_WebsiteId == websiteId
+                        select new TagGroupLookupDto
+                        {
+                            TagGroupId = tg.Id,
+                            TagGroupTitle = tg.Title
+                        };            
+            return query;
         }
         public async Task<ResponseMessageDto> TagAssociateAddDelect(List<TagAssociateDto> dto)
         {

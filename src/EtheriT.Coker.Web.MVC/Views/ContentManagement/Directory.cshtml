@@ -5,6 +5,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @using EtheriT.Coker.Web.MVC.Startup
+@using EtheriT.Coker.Web.MVC.Extensions
 @{
     ViewData["Title"] = "Directory";
 }
@@ -13,7 +14,9 @@
 <link rel="stylesheet" href="~/css/ContentManagement/Article.min.css" asp-append-version="true" />
 @{
     await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
+    var perm = Context.GetPermission();
 }
+<script src="~/js/ContentManagement/DirectoryFacet.min.js" asp-append-version="true"></script>
 <script src="~/js/ContentManagement/Directory.min.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()
 <div class="">
@@ -61,10 +64,10 @@
                         .Type(GridCommandColumnType.Buttons)
                         .Buttons(b =>
                         {
-                            b.Add().Name("edit").Visible(ThePermission.CanUpdate).OnClick("editButtonClicked");
-                            b.Add().Icon("verticalaligncenter").Visible(ThePermission.CanVisble).OnClick("reladataButtonClicked");
-                            b.Add().Icon("group").Name("group").Visible(ThePermission.superManager).OnClick("groupArticlesButtonClicked");
-                            b.Add().Name("delete").Visible(ThePermission.CanRemove).OnClick("deleteButtonClicked");
+                            b.Add().Name("edit").Visible(perm.CanUpdate).OnClick("editButtonClicked");
+                            b.Add().Icon("verticalaligncenter").Visible(perm.CanVisble).OnClick("reladataButtonClicked");
+                            b.Add().Icon("group").Name("group").Visible(perm.superManager).OnClick("groupArticlesButtonClicked");
+                            b.Add().Name("delete").Visible(perm.CanRemove).OnClick("deleteButtonClicked");
                         });
                     })
                     .ColumnAutoWidth(true)
@@ -94,9 +97,13 @@
                             keyboard_backspace
                         </span>
                     </button>
-                    <div class="lh-lg">編輯目錄</div>
+                    <div class="lh-lg title">編輯目錄</div>
                 </div>
                 <div class="d-flex">
+                    <a class="btn btn-primary btn-open-facet border-0 d-flex align-items-center me-3 text-decoration-none" role="button" href="#">
+                        <span class="material-symbols-outlined me-1">settings_b_roll</span>
+                        進階設定
+                    </a>
                     <button class="btn_done btn-primary border-0 px-3 py-1 text-white me-3 " form="DirectorytForm">儲　存</button>
                 </div>
             </div>
@@ -112,7 +119,6 @@
                             <option value="3">選單</option>
                         </select>
                     </div>
-
                     <button class="btn_display bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上">
                         <span class="material-symbols-outlined fs-2">visibility</span>
                     </button>
@@ -200,9 +206,9 @@
                             .Type(GridCommandColumnType.Buttons)
                             .Buttons(b =>
                             {
-                                b.Add().Name("edit").Visible(ThePermission.CanUpdate).OnClick("editArticlesButtonClicked");
-                                b.Add().Icon("palette").Visible(ThePermission.CanUpdate).Name("edit").OnClick("paletteArticlesButtonClicked");
-                                b.Add().Name("delete").Visible(ThePermission.CanRemove).OnClick("deleteArticlesButtonClicked");
+                                b.Add().Name("edit").Visible(perm.CanUpdate).OnClick("editArticlesButtonClicked");
+                                b.Add().Icon("palette").Visible(perm.CanUpdate).Name("edit").OnClick("paletteArticlesButtonClicked");
+                                b.Add().Name("delete").Visible(perm.CanRemove).OnClick("deleteArticlesButtonClicked");
                             });
                         })
                         .ColumnAutoWidth(true)
@@ -238,6 +244,9 @@
                     <div class="lh-lg">返回文章目錄</div>
                 </div>
                 <div class="d-flex">
+                    <a class="btn btn-warning btn_permission_details border-0 d-flex align-items-center me-3 text-decoration-none" href="#" role="button">
+                        <span class="material-symbols-outlined me-1">security</span>瀏覽權限
+                    </a>
                     <button class="btn_done btn-primary border-0 px-3 py-1 text-white me-3  btn" form="ArticletForm">儲　存</button>
                     <button class="btn_to_canvas btn-success border-0 px-3 py-1 text-white d-flex align-items-center  btn" form="ArticletForm">
                         進階編輯<span class="material-symbols-outlined ms-1">palette</span>
@@ -324,4 +333,160 @@
             </form>
         </div>
     </div>
+    
 </div>
+
+<!-- Directory Facet Config Modal -->
+<div class="modal fade" id="facetModal" tabindex="-1" aria-labelledby="facetModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="facetModalLabel">目錄再分類（Facet）設定</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <!-- DirectoryId -->
+                <input type="hidden" id="facetDirectoryId" name="DirectoryId" value="" />
+
+                <!-- 1) 分類方式設定 -->
+                <div class="row g-3">
+                    <div class="col-12 col-lg-6">
+                        <label for="facetType" class="form-label">分類型別</label>
+                        <select class="form-select" id="facetType" name="FacetType" data-role="facet-type">
+                            <option value="0">不分類</option>
+                            <option value="1">依年份</option>
+                        </select>
+                    </div>
+
+                    <!-- 2) 年份顯示方式（僅 Year 顯示） -->
+                    <div class="col-12 col-lg-6" id="facetCalendarTypeWrap" data-section="calendar-type">
+                        <label class="form-label mb-2">年份顯示方式</label>
+
+                        <div class="d-flex flex-wrap gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="CalendarType" id="calendarAD" value="1" checked>
+                                <label class="form-check-label" for="calendarAD">西元年</label>
+                            </div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="CalendarType" id="calendarROC" value="2">
+                                <label class="form-check-label" for="calendarROC">民國年</label>
+                            </div>
+                        </div>
+
+                        <div class="form-text">
+                            僅影響顯示與輸入；資料庫永遠存西元年（int）。
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- 3) 分類區間設定 -->
+                <div id="facetRangesWrap" data-section="ranges">
+                    <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                        <div>
+                            <h6 class="mb-1">分類區間</h6>
+                            <div class="text-muted small">
+                                不允許重疊、允許缺口；可拖曳調整順序。
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="facetBtnSortNatural">
+                                依自然時間排序
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm" id="facetBtnAddRange">
+                                新增區間
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width:48px;" class="text-center">序</th>
+                                    <th style="width:56px;" class="text-center">拖曳</th>
+                                    <th style="width:160px;">起始（Start）</th>
+                                    <th style="width:160px;">結束（End）</th>
+                                    <th style="width:96px;" class="text-center">啟用</th>
+                                    <th style="width:96px;" class="text-center">刪除</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="facetRangesTbody" data-role="ranges-sortable"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- empty state -->
+                    <div class="border rounded-3 p-3 mt-2 text-muted small d-none" id="facetRangesEmpty">
+                        尚未設定任何區間，請按「新增區間」。
+                    </div>
+                </div>
+                <!-- error box -->
+                <div class="alert alert-danger mt-3 d-none" id="facetErrorBox"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="facetBtnSave">儲存</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ===== Row Template for JS ===== -->
+<template id="facetRangeRowTemplate">
+    <tr data-range-row>
+        <td class="text-center">
+            <span class="badge text-bg-secondary" data-role="range-order"></span>
+            <input type="hidden" data-field="Sort" />
+        </td>
+
+        <td class="text-center">
+            <span class="text-muted" style="cursor:grab;" data-role="drag-handle">☰</span>
+        </td>
+
+        <td>
+            <input type="hidden" data-field="Id" />
+            <input type="number"
+                   class="form-control form-control-sm"
+                   data-field="Start"
+                   inputmode="numeric"
+                   placeholder="例如：2021" />
+        </td>
+
+        <td>
+            <input type="number"
+                   class="form-control form-control-sm"
+                   data-field="End"
+                   inputmode="numeric"
+                   placeholder="例如：2023" />
+        </td>
+
+        <td class="text-center">
+            <div class="form-check form-switch d-inline-flex justify-content-center m-0">
+                <input class="form-check-input"
+                       type="checkbox"
+                       data-field="Enabled"
+                       checked />
+            </div>
+        </td>
+
+        <td class="text-center">
+            <button type="button"
+                    class="btn btn-outline-danger btn-sm"
+                    data-action="remove-range">
+                刪除
+            </button>
+        </td>
+    </tr>
+</template>
+@await Component.InvokeAsync(nameof(Modal), new { dispaly = "FrontRolesModal" })
+@{
+    await Html.RenderPartialAsync(@"DevExpress\_GridCSRF");
+}

@@ -5,8 +5,10 @@
 @using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @using EtheriT.Coker.Web.MVC.Startup
+@using EtheriT.Coker.Web.MVC.Extensions
 @{
     ViewData["Title"] = "CustomAd";
+    var perm = Context.GetPermission();
 }
 
 <link rel="stylesheet" href="~/css/AdvertisementManagement/CustomAd.min.css" asp-append-version="true" />
@@ -31,6 +33,7 @@
                     <span class="material-symbols-outlined">add</span>
                 </button>
                 @(
+
                     Html.DevExtreme().DataGrid<DirectoryGetListDto>()
                     .DataSource(d => d.RemoteController().Key("Id")
                     .LoadUrl("/api/Directory/GetAdvertiseList").LoadMethod("Get")
@@ -60,9 +63,9 @@
                         .Type(GridCommandColumnType.Buttons)
                         .Buttons(b =>
                         {
-                            b.Add().Name("edit").Visible(ThePermission.CanUpdate).OnClick("editButtonClicked");
-                            b.Add().Icon("verticalaligncenter").Visible(ThePermission.CanVisble).OnClick("reladataButtonClicked");
-                            b.Add().Name("delete").Visible(ThePermission.CanRemove).OnClick("deleteButtonClicked");
+                            b.Add().Name("edit").Visible(perm.CanUpdate).OnClick("editButtonClicked");
+                            b.Add().Icon("verticalaligncenter").Visible(perm.CanVisble).OnClick("reladataButtonClicked");
+                            b.Add().Name("delete").Visible(perm.CanRemove).OnClick("deleteButtonClicked");
                         });
                     })
                     .ColumnAutoWidth(true)
@@ -203,8 +206,8 @@
                             .Type(GridCommandColumnType.Buttons)
                             .Buttons(b =>
                             {
-                                b.Add().Name("edit").Visible(ThePermission.CanUpdate).OnClick("editAdvertiseButtonClicked");
-                                b.Add().Name("delete").Visible(ThePermission.CanRemove).OnClick("deleteAdvertiseButtonClicked");
+                                b.Add().Name("edit").Visible(perm.CanUpdate).OnClick("editAdvertiseButtonClicked");
+                                b.Add().Name("delete").Visible(perm.CanRemove).OnClick("deleteAdvertiseButtonClicked");
                             });
                         })
                         .ColumnAutoWidth(true)

@@ -6,6 +6,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Tag
         public bool IsSelected { get; set; }
         public long Id { get; set; }
         public string Title { get; set; }
+        public string? TagGroupTitle { get; set; }
         public string? SiteNameTitle { get; set; }
     }
 }

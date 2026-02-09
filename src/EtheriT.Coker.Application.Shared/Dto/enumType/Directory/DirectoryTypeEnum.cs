@@ -1,5 +1,4 @@
-﻿
-namespace EtheriT.Coker.Application.Shared.Dto.enumType
+﻿namespace EtheriT.Coker.Application.Shared.Dto.enumType.Directory
 {
     public enum DirectoryTypeEnum
     {

@@ -1,4 +1,6 @@
-﻿using DevExtreme.AspNet.Mvc;
+﻿using DevExtreme.AspNet.Data;
+using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
@@ -14,11 +16,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
     public class TagController : Controller
     {
         private readonly ITagAppService tagAppService;
+        private readonly LoginUserData loginUserData;
         public TagController(
-            ITagAppService tagAppService
-            )
+            ITagAppService tagAppService,
+            LoginUserData loginUserData
+        )
         {
             this.tagAppService = tagAppService;
+            this.loginUserData = loginUserData;
         }
         [HttpPost]
         //[ValidateAntiForgeryToken] //驗證異常暫時關閉
@@ -34,6 +39,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await tagAppService.TagGroupAddUp(dto);
         }
+        [HttpGet]
+        //[ValidateAntiForgeryToken] //驗證異常暫時關閉
+        public async Task<IActionResult> TagGroupLookUp(DataSourceLoadOptions loadOptions) {
+            long webid = await loginUserData.GetWebsiteId();
+            var query = tagAppService.TagGroupLookUp(webid);
+            var result = await DataSourceLoader.LoadAsync(query, loadOptions);
+            return Json(result);
+        }   
         [HttpGet]
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? tids)
         {

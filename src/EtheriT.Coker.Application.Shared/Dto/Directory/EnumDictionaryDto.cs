@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EtheriT.Coker.Application.Shared.Dto.enumType
+namespace EtheriT.Coker.Application.Shared.Dto.Directory
 {
 	public class EnumDictionaryDto
 	{

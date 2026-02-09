@@ -458,5 +458,10 @@ namespace EtheriT.Coker.Application
             }
             return await db.Websites.Where(e => e.Id == Id).Where(e => !e.IsDeleted).Select(e => e.DefaultUrl).FirstOrDefaultAsync() ?? "";
         }
+        public async Task<bool> hasManySystem() { 
+            var siteId = await loginUserData.GetWebsiteId();
+            if(siteId == 0) siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            return db.MappingWebsiteRelationship.Where(e => (e.FatherId == siteId || e.WebsiteId == siteId)).Count() > 0;
+        }
     }
 }

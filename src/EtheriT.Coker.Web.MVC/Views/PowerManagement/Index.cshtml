@@ -3,8 +3,10 @@
 @using EtheriT.Coker.Application.Shared.Dto.Product
 @using EtheriT.Coker.Application.Shared.Dto.Tag
 @using EtheriT.Coker.Web.MVC.Startup;
+@using EtheriT.Coker.Web.MVC.Extensions
 @{
     ViewData["Title"] = "PowerCtrl";
+    var perm = Context.GetPermission();
 }
 
 <link rel="stylesheet" href="~/css/PowerManagement/Index.min.css" asp-append-version="true" />
@@ -12,7 +14,7 @@
 <div class="py-3 px-4 position-relative">
     <div class="title fw-bold fs-4 w-100 ">
         權限控制
-        @if (ThePermission.systemManager)
+        @if (perm.systemManager)
         {
             <button id="addUserInWebsite" class="btn btn-primary fas" data-bs-toggle="offcanvas" data-bs-target="#offcanvasByWebsite" aria-controls="offcanvasByWebsite"><span class="fas fa-user-cog"></span>網站權限</button>
         }

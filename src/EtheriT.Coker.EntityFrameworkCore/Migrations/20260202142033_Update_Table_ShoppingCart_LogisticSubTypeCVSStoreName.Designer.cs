@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260202142033_Update_Table_ShoppingCart_LogisticSubTypeCVSStoreName")]
+    partial class Update_Table_ShoppingCart_LogisticSubTypeCVSStoreName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -746,11 +749,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<int>("CalendarType")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
                     b.Property<DateTime>("CreationTime")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -769,19 +767,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<long?>("FK_DefaultLayout")
-                        .HasColumnType("bigint");
-
                     b.Property<long?>("FK_Mid")
                         .HasColumnType("bigint");
 
                     b.Property<long>("FK_WebsiteId")
                         .HasColumnType("bigint");
-
-                    b.Property<int>("FacetType")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -809,68 +799,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_DefaultLayout");
-
                     b.HasIndex("FK_WebsiteId");
 
-                    b.HasIndex("FacetType");
-
                     b.ToTable("Directory");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.DirectoryFacetRange", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreationTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
-
-                    b.Property<long>("CreatorUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("DeleterUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("Enabled")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("End")
-                        .HasColumnType("int");
-
-                    b.Property<long>("FK_DirectoryId")
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("LastModifierUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("Sort")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Start")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FK_DirectoryId");
-
-                    b.ToTable("DirectoryFacetRanges");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Favorites", b =>
@@ -6723,10 +6654,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Directory", b =>
                 {
-                    b.HasOne("EtheriT.Coker.Core.Models.Html_Content", "html_Content")
-                        .WithMany("Directories")
-                        .HasForeignKey("FK_DefaultLayout");
-
                     b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
                         .WithMany("Directory")
                         .HasForeignKey("FK_WebsiteId")
@@ -6734,19 +6661,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .IsRequired();
 
                     b.Navigation("Website");
-
-                    b.Navigation("html_Content");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.DirectoryFacetRange", b =>
-                {
-                    b.HasOne("EtheriT.Coker.Core.Models.Directory", "Directory")
-                        .WithMany("DirectoryFacetRanges")
-                        .HasForeignKey("FK_DirectoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Directory");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.FileBind", b =>
@@ -7501,11 +7415,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Websites");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.Directory", b =>
-                {
-                    b.Navigation("DirectoryFacetRanges");
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.FileUpload", b =>
                 {
                     b.Navigation("fileBinds");
@@ -7516,11 +7425,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("BonusLogs");
 
                     b.Navigation("Websites");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.Html_Content", b =>
-                {
-                    b.Navigation("Directories");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsSetting", b =>

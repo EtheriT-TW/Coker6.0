@@ -481,15 +481,16 @@ function PageReady() {
         $radio.prop('checked', true);
 
         var $form = $("form#ecpayLogisticsForm");
-
-        var scid = shopping_cart_data[0].Id;
+        var scids = JSON.stringify(shopping_cart_data.map(c => c.Id));
 
         $form.find('input[name="LogisticsSubType"]').val($btn.data('subtype'));
-        $form.find('input[name="scid"]').val(scid);
+
+        $form.find('input[name="SCIds"]').val(scids);
 
         $form.submit();
     })
 }
+
 // 同步 header 的勾選/半選狀態與「已選件數」
 function syncHeaderCheckbox($group) {
     const $checks = $group.find('input[name="buyItems"]');
@@ -504,7 +505,6 @@ function syncHeaderCheckbox($group) {
 
     $group.find('.js-selected-count').text(selected);
 }
-
 // 計算本組「已選」的小計 → 更新 footer
 function updateGroupSelectedSubtotal($group) {
     let sum = 0;
@@ -517,7 +517,6 @@ function updateGroupSelectedSubtotal($group) {
     $group.find('.js-group-subtotal').attr('data-subtotal', sum).text(`$${sum.toLocaleString()}`);
     syncHeaderCheckbox($group);
 }
-
 // 清掉「其他群組」的選取與小計（互斥的關鍵）
 function clearOtherGroupsExcept($group) {
     $('.purchase_group').not($group).each(function () {
@@ -528,7 +527,6 @@ function clearOtherGroupsExcept($group) {
         $g.find('.js-selected-count').text(0);
     });
 }
-
 function hashChange(e) {
     if (!!e) {
         e.preventDefault();
@@ -683,7 +681,6 @@ function groupByFreight(list) {
         return acc;
     }, {});
 }
-
 // 建群組標頭 DOM
 function createGroupHeader(meta) {
     const $tpl = $($('#Template_Cart_GroupHeader').html().trim());
@@ -695,7 +692,6 @@ function createGroupHeader(meta) {
     $tpl.find('.btn-checkout-group').attr('data-group-id', meta.id);
     return $tpl;
 }
-
 // ✅ 用你原本的 CartListAdd 來插入每一筆
 function renderCartGroups(result) {
     const $ul = $("#Step1 > .card-body > .purchase_list");
@@ -758,8 +754,6 @@ function renderCartGroups(result) {
     buy_step_swiper.update();
     updateOverallSubtotal(); // 若你要「已選合計」，可改成 TotalCount()
 }
-
-
 function updateOverallSubtotal() {
     let sum = 0;
     $('#Step1 .purchase_list .purchase_group_header [data-field="subtotal"]').each(function () {
@@ -1160,7 +1154,6 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity) {
         handleUpdateError("錯誤", "商品數量修改發生錯誤，請稍後再試。");
     });
 }
-
 function computeSelectedSubtotal() {
     let sum = 0, bonus = 0;
     $('.purchase_group li.purchase_item input[name="buyItems"]:checked').each(function () {
@@ -1171,7 +1164,6 @@ function computeSelectedSubtotal() {
     });
     return { sum, bonus };
 }
-
 function TotalCount() {
     // 以「已勾選」的品項為準
     const { sum, bonus } = computeSelectedSubtotal();
@@ -1270,7 +1262,6 @@ function TotalCount() {
     // 付款方式顯示篩選依據 subtotal
     PaymentHideShow();
 }
-
 function CartDelete(self, id, success, error) {
     self.remove();
     datachange = true;
@@ -1603,7 +1594,6 @@ function InvoiceRadio() {
     if (HasECPay) ECPaymentChange();
     buy_step_swiper.update();
 }
-
 function PersonalInvoiceMode() {
     $(`#invoiceType .invoice-row`).addClass("d-none");
     switch (this.value) {
@@ -1778,7 +1768,6 @@ function getSelectedCartIds() {
     });
     return ids;
 }
-
 async function OrderHeaderAdd() {
     var checksuccess = true;
     var paymentInfo = null;

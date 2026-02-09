@@ -37,7 +37,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             this.loginUserData = loginUserData;
             this.configuration = configuration;
         }
-        public async Task<ResponseMessageDto> ECPayLogisticsGetMap(long scid, string LogisticsSubType)
+        public async Task<ResponseMessageDto> ECPayLogisticsGetMap(string SCIds, string LogisticsSubType)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
@@ -53,11 +53,12 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                     var RequestBody = new ECPayLogisticsMapRequestDto();
                     RequestBody.MerchantID = ThirdPartyData.MerchantID;
-                    RequestBody.MerchantTradeNo = DateTime.Now.ToString("yyyyMMdd") + scid.ToString();
+                    RequestBody.MerchantTradeNo = GenMerchantTradeNo();
                     RequestBody.LogisticsSubType = LogisticsSubType;
                     RequestBody.IsCollection = ThirdPartyData.IsCollection;
+                    //RequestBody.ServerReplyURL = "https://localhost:7193/api/ThirdParty/ECPayLogisticsGetMapResponse";
                     RequestBody.ServerReplyURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayLogisticsGetMapResponse";
-                    RequestBody.ExtraData = scid.ToString();
+                    RequestBody.ExtraData = SCIds;
                     var content = new StringContent(JsonConvert.SerializeObject(RequestBody), Encoding.UTF8, "application/json");
                     var PostResponse = await ThirdPartyClient_ECPayLogistics.PostAsync(RequestUri, content);
                     PostResponse.EnsureSuccessStatusCode();
@@ -79,6 +80,23 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
+        private static string GenMerchantTradeNo()
+        {
+            Random _random = new Random();
+
+            var now = DateTime.Now;
+
+            string yyyy = now.Year.ToString();
+            string MM = now.Month.ToString("D2");
+            string dd = now.Day.ToString("D2");
+            string hh = now.Hour.ToString("D2");
+            string mm = now.Minute.ToString("D2");
+            string ss = now.Second.ToString("D2");
+
+            string rand = _random.Next(0, 10000).ToString("D4");
+
+            return $"{yyyy}{MM}{dd}{hh}{mm}{ss}{rand}";
+        }
         public async Task<bool> ECPayLogisticsGetMapResponse(ECPayLogisticsMapResponseDto ResultResponseData)
         {
             try
@@ -87,9 +105,20 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayLogisticsExpressCreate", JsonConvert.SerializeObject(ResultResponseData));
 
-                var scdata = await db.ShoppingCarts.Where(e => e.Id == long.Parse(ResultResponseData.ExtraData)).FirstOrDefaultAsync();
-                if (scdata == null) throw new Exception($"查無購物車資訊");
-                scdata.CVSStoreID = ResultResponseData.CVSStoreID;
+                var scids = JsonConvert.DeserializeObject<List<long>>(ResultResponseData.ExtraData);
+
+                var scdatas = await db.ShoppingCarts.Where(e => scids.Contains(e.Id)).ToListAsync();
+
+                if (!scdatas.Any()) throw new Exception($"查無購物車資訊");
+
+                foreach (var scdata in scdatas)
+                {
+                    scdata.LogisticsSubType = ResultResponseData.LogisticsSubType;
+                    scdata.CVSStoreID = ResultResponseData.CVSStoreID;
+                    scdata.CVSStoreName = ResultResponseData.CVSStoreName;
+                }
+
+                db.SaveChanges();
 
                 return true;
             }
@@ -283,6 +312,10 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 var thirdPartyDict = thirdPartyKeypairValues.ToDictionary(e => e.Key, e => e.Value);
 
+                ThirdPartyData.MerchantID = thirdPartyDict.GetValueOrDefault("MerchantID") ?? throw new Exception("商家未確實設置綠界支付資料");
+                ThirdPartyData.HashKey = thirdPartyDict.GetValueOrDefault("HashKey") ?? throw new Exception("商家未確實設置綠界支付資料");
+                ThirdPartyData.HashIV = thirdPartyDict.GetValueOrDefault("HashIV") ?? throw new Exception("商家未確實設置綠界支付資料");
+
                 //測試特店資料：B2C及宅配
                 //ThirdPartyData.MerchantID = "2000132";
                 //ThirdPartyData.HashKey = "5294y06JbISpM5x9";
@@ -293,9 +326,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                 //ThirdPartyData.HashKey = "XBERn1YOvpM9nfZc";
                 //ThirdPartyData.HashIV = "h1ONHk4P4yqbl5LK";
 
-                ThirdPartyData.MerchantID = thirdPartyDict.GetValueOrDefault("MerchantID") ?? throw new Exception("商家未確實設置綠界支付資料");
-                ThirdPartyData.HashKey = thirdPartyDict.GetValueOrDefault("HashKey") ?? throw new Exception("商家未確實設置綠界支付資料");
-                ThirdPartyData.HashIV = thirdPartyDict.GetValueOrDefault("HashIV") ?? throw new Exception("商家未確實設置綠界支付資料");
                 ThirdPartyData.IsCollection = "Y";
 
             }

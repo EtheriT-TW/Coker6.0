@@ -199,9 +199,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return response;
         }
         [HttpGet]
-        public async Task<IActionResult> ECPayLogisticsGetMap(long scid, string LogisticsSubType)
+        public async Task<IActionResult> ECPayLogisticsGetMap(string SCIds, string LogisticsSubType )
         {
-            var response = await ecPayLogisticsAppService.ECPayLogisticsGetMap(scid, LogisticsSubType);
+            var response = await ecPayLogisticsAppService.ECPayLogisticsGetMap(SCIds, LogisticsSubType);
             if (response.Success) return Content(response.Message, "text/html", Encoding.UTF8);
             else
             {

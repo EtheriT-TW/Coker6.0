@@ -2,6 +2,7 @@
 using EtheriT.Coker.Application.Shared.Dto.enumType.Bonus;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
 using EtheriT.Coker.Core.Entity;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.Configurations;
@@ -70,6 +71,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Advertise_Log> Advertise_Logs { get; set; }
         public DbSet<Article> Article { get; set; }
         public DbSet<Directory> Directory { get; set; }
+        public DbSet<DirectoryFacetRange> DirectoryFacetRanges { get; set; }
         public DbSet<StoreSetGroup> StoreSetGroup { get; set; }
         public DbSet<StoreSet> StoreSet { get; set; }
         public DbSet<StoreSetDetail> StoreSetDetail { get; set; }
@@ -189,7 +191,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<MappingLogisticsSettingAndProd>(o =>
             {
-                o.HasKey(m => new {m.FK_LogisticsSettingId,m.FK_ProdId});
+                o.HasKey(m => new { m.FK_LogisticsSettingId, m.FK_ProdId });
                 o.HasOne(u => u.LogisticsSetting).WithMany(u => u.MappingLogisticsSettingAndProds).HasForeignKey(e => e.FK_LogisticsSettingId);
                 o.HasOne(u => u.Prod).WithMany(u => u.MappingLogisticsSettingAndProds).HasForeignKey(f => f.FK_ProdId);
             });
@@ -404,7 +406,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Tag>(o =>
             {
-                o.HasIndex(t => new { t.Title,t.FK_WebsiteId }).HasFilter("[IsDeleted] = 0").IsUnique();
+                o.HasIndex(t => new { t.Title, t.FK_WebsiteId }).HasFilter("[IsDeleted] = 0").IsUnique();
                 o.HasOne(u => u.Website).WithMany(u => u.Tags).HasForeignKey(f => f.FK_WebsiteId);
                 o.Property(t => t.IsTemporary).HasDefaultValue(false);
                 o.HasQueryFilter(e => !e.IsDeleted && !e.IsTemporary);
@@ -429,12 +431,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(f => f.Website).WithMany(u => u.Files).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
-			modelBuilder.Entity<FlowSize>(o =>
-			{
-				o.HasOne(f => f.Website).WithMany(u => u.flowSizes).HasForeignKey(f => f.FK_WebsiteId);
+            modelBuilder.Entity<FlowSize>(o =>
+            {
+                o.HasOne(f => f.Website).WithMany(u => u.flowSizes).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasIndex(e => e.actionTime);
-			});
-			modelBuilder.Entity<FileBind>(o =>
+            });
+            modelBuilder.Entity<FileBind>(o =>
             {
                 o.HasOne(b => b.fileUpload).WithMany(f => f.fileBinds).HasForeignKey(f => f.FK_FileUploadId);
                 o.HasKey(b => b.Guid);
@@ -470,6 +472,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Directory>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.Directory).HasForeignKey(f => f.FK_WebsiteId);
+                o.HasOne(f => f.html_Content).WithMany(u => u.Directories).HasForeignKey(f => f.FK_DefaultLayout);
+                o.Property(e => e.FacetType).HasDefaultValue(DirectoryFacetTypeEnum.None);
+                o.Property(e => e.CalendarType).HasDefaultValue(DirectoryCalendarTypeEnum.None);
+                o.HasIndex(e => e.FacetType);
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<DirectoryFacetRange>(o => {
+                o.HasOne(f => f.Directory).WithMany(u => u.DirectoryFacetRanges).HasForeignKey(f => f.FK_DirectoryId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<StoreSetDetail>(o =>

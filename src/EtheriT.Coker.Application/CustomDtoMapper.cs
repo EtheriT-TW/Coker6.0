@@ -396,6 +396,15 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
                 .ReverseMap();
 
+            CreateMap<DirectoryFacetRange, DirectoryFacetRangeDto>();
+            CreateMap<DirectoryFacetRangeDto, DirectoryFacetRange>()
+                .ForMember(d => d.Id, opt => opt.Ignore()) 
+                .ForMember(d => d.FK_DirectoryId, opt => opt.Ignore())
+                .ForMember(d => d.Directory, opt => opt.Ignore());
+            CreateMap<Core.Models.Directory, DirectoryFacetConfigDto>()
+                .ForMember(d => d.DirectoryId, opt => opt.MapFrom(s => s.Id))
+                .ForMember(d => d.Ranges, opt => opt.MapFrom(s => s.DirectoryFacetRanges));
+
             //StoreSet
             CreateMap<StoreSetOutputDto, Core.Models.StoreSet>()
                 .ForMember(e => e.type, option => option.MapFrom(c => c.type))

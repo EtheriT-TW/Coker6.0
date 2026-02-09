@@ -1,4 +1,4 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using System;
 using System.Collections.Generic;

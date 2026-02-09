@@ -1,5 +1,6 @@
 ﻿
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Directory

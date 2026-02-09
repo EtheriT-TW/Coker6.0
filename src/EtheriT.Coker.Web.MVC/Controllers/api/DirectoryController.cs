@@ -79,5 +79,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await directoryAppService.GetReleAd(dto);
         }
+        [HttpGet]
+        public async Task<ResponseMessageDto> GetDirectoryFacetConfig(long Id)
+        {
+            return await directoryAppService.GetDirectoryFacetConfig(Id);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> SaveDirectoryFacetConfig(DirectoryFacetConfigDto dto)
+        {
+            return await directoryAppService.SaveDirectoryFacetConfig(dto);
+        }
     }
 }

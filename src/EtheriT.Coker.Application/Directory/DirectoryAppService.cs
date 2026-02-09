@@ -12,6 +12,7 @@ using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
@@ -476,7 +477,7 @@ namespace EtheriT.Coker.Application.Directory
                     var list = await Task.WhenAll(dataMargin.Select(async e =>
                     {
                         List<FileGetImgDto> imagedata = new List<FileGetImgDto>();
-                       if (e.type == DirectoryTypeEnum.文章) imagedata = articleImages.FindAll(f => f.Sid == e.Id);
+                        if (e.type == DirectoryTypeEnum.文章) imagedata = articleImages.FindAll(f => f.Sid == e.Id);
 
                         return new DirectoryReleInfoDto
                         {
@@ -548,7 +549,7 @@ namespace EtheriT.Coker.Application.Directory
             }
             List<long> Ids = await prods.Select(e => e.Id).ToListAsync();
 
-            if(dto.Filters == null) dto.Filters = new List<DirectoryFilterDto>();
+            if (dto.Filters == null) dto.Filters = new List<DirectoryFilterDto>();
             dto.Filters.ForEach(t =>
             {
                 t.Group.ForEach(g =>
@@ -1614,7 +1615,7 @@ namespace EtheriT.Coker.Application.Directory
                         {
                             var html = stringHandler.HtmlDecode(webmenus.Html);
                             var value = htmlProcessor.Find(htmlProcessor.LoadHtml(html), "[data-dirid]").FirstOrDefault().Attr("data-dirid");
-                            if (!string.IsNullOrEmpty(value) && long.TryParse(value,out var dirId))
+                            if (!string.IsNullOrEmpty(value) && long.TryParse(value, out var dirId))
                             {
                                 dto.dirids.Add(dirId);
                             }
@@ -1655,7 +1656,7 @@ namespace EtheriT.Coker.Application.Directory
                                                            where !p.RemovedFromShelves && p.Visible
                                                            where p.permanent || (DateTime.Now >= p.StartTime && DateTime.Now <= p.EndTime)
                                                            where tagids.Contains(tagas.FK_TId) && tagas.Type == TagAssociateTypeEnum.商品
-                                                           orderby 
+                                                           orderby
                                                                 p.Ser_No, p.Status == ProdStatusEnum.新品 descending,
                                                                 p.Status != ProdStatusEnum.售完 descending, p.Status != ProdStatusEnum.停產 descending,
                                                                 p.ItemNo, p.Title, p.Id descending
@@ -1663,10 +1664,10 @@ namespace EtheriT.Coker.Application.Directory
 
                                 datas = products_tags
                                     .Select(x => new KeyValueDto()
-                                {
-                                    Key = x.p.Id.ToString(),
-                                    Value = x.p.Title ?? ""
-                                }).DistinctBy(x => x.Key).ToList();
+                                    {
+                                        Key = x.p.Id.ToString(),
+                                        Value = x.p.Title ?? ""
+                                    }).DistinctBy(x => x.Key).ToList();
                                 break;
                             case 2:
                                 var not_tags_aid = await (from a in db.Article
@@ -1701,7 +1702,8 @@ namespace EtheriT.Coker.Application.Directory
                                 response.Add(new KeyValueDto());
                                 response.Add(new KeyValueDto() { Key = keynext, Value = datas[index + 1].Value ?? "" });
                             }
-                            else if (index == 0 && datas.Count == 1) {
+                            else if (index == 0 && datas.Count == 1)
+                            {
                                 response.Add(new KeyValueDto());
                                 response.Add(new KeyValueDto());
                             }
@@ -1728,6 +1730,210 @@ namespace EtheriT.Coker.Application.Directory
                 Console.WriteLine($"Directory=>SwitchPage回傳資料：{ex.Message}");
             }
             return response;
+        }
+        public async Task<ResponseMessageDto> GetDirectoryFacetConfig(long id)
+        {
+            var output = new ResponseMessageDto();
+
+            try
+            {
+                var websiteId = await loginUserData.GetWebsiteId();
+                if (websiteId <= 0)
+                {
+                    output.Success = false;
+                    output.Message = "Website context not found.";
+                    return output;
+                }
+
+                var entity = await db.Directory
+                    .Include(d => d.DirectoryFacetRanges)  // QueryFilter 會自動排除 IsDeleted
+                    .FirstOrDefaultAsync(d => d.Id == id && d.FK_WebsiteId == websiteId);
+
+                if (entity == null)
+                {
+                    output.Success = false;
+                    output.Message = "Directory not found.";
+                    return output;
+                }
+
+                var dto = mapper.Map<DirectoryFacetConfigDto>(entity);
+
+                // 確保 ranges 順序穩定（UI 依 Sort）
+                dto.Ranges ??= new List<DirectoryFacetRangeDto>();
+                dto.Ranges = dto.Ranges.OrderBy(r => r.Sort).ToList();
+
+                output.Success = true;
+                output.Object = dto;
+                return output;
+            }
+            catch (Exception ex)
+            {
+                output.Success = false;
+                output.Error = ex.Message;
+                output.Message = "GetDirectoryFacetConfig failed.";
+                return output;
+            }
+        }
+
+        public async Task<ResponseMessageDto> SaveDirectoryFacetConfig(DirectoryFacetConfigDto dto)
+        {
+            var output = new ResponseMessageDto();
+
+            try
+            {
+                if (dto == null)
+                {
+                    output.Success = false;
+                    output.Message = "Invalid payload.";
+                    return output;
+                }
+
+                var websiteId = await loginUserData.GetWebsiteId();
+                if (websiteId <= 0)
+                {
+                    output.Success = false;
+                    output.Message = "Website context not found.";
+                    return output;
+                }
+
+                // 1) 取回 Directory（含 ranges），並確保屬於該網站
+                var directory = await db.Directory
+                    .Include(d => d.DirectoryFacetRanges)
+                    .FirstOrDefaultAsync(d => d.Id == dto.DirectoryId && d.FK_WebsiteId == websiteId);
+
+                if (directory == null)
+                {
+                    output.Success = false;
+                    output.Message = "Directory not found.";
+                    return output;
+                }
+
+                // 2) 正規化輸入 ranges（null -> empty）
+                dto.Ranges ??= new List<DirectoryFacetRangeDto>();
+
+                // 3) 依 UI 順序重寫 Sort（1..N）
+                //    （你保留人工排序的核心：就信任前端拖曳後的順序）
+                for (int i = 0; i < dto.Ranges.Count; i++)
+                {
+                    dto.Ranges[i].Sort = i + 1;
+                }
+
+                // 4) 驗證 ranges（僅在 FacetType != None 時需要）
+                //    目前你只做 Year，但這裡不綁死 enum 值，仍以「有 ranges 就驗」的最小策略
+                var validationError = ValidateRanges(dto);
+                if (!string.IsNullOrWhiteSpace(validationError))
+                {
+                    output.Success = false;
+                    output.Message = validationError;
+                    return output;
+                }
+
+                // 5) 更新 Directory 基本欄位
+                directory.FacetType = dto.FacetType;
+                directory.CalendarType = dto.CalendarType;
+
+                // 6) Diff 更新 ranges
+                //    DB（已套 QueryFilter）中只會有未刪除的 ranges
+                var existing = directory.DirectoryFacetRanges?.ToList() ?? new List<DirectoryFacetRange>();
+                var existingById = existing.ToDictionary(x => x.Id, x => x);
+
+                // dto ids (only >0)
+                var incomingIds = dto.Ranges
+                    .Where(x => x.DirectoryId > 0)
+                    .Select(x => x.DirectoryId)
+                    .ToHashSet();
+
+                // 6-1) Update + Add
+                foreach (var rDto in dto.Ranges)
+                {
+                    if (rDto.DirectoryId > 0 && existingById.TryGetValue(rDto.DirectoryId.Value, out var entity))
+                    {
+                        // Update: map 到已存在 entity（你的 mapper 已 Ignore Id/FK/Navigation）
+                        mapper.Map(rDto, entity);
+
+                        // FK 保護（理論上 mapper 忽略 FK，但這裡再保險一次）
+                        entity.FK_DirectoryId = directory.Id;
+                    }
+                    else
+                    {
+                        // Add: new entity
+                        var newEntity = mapper.Map<DirectoryFacetRange>(rDto);
+                        newEntity.FK_DirectoryId = directory.Id;
+                        db.DirectoryFacetRanges.Add(newEntity);
+                    }
+                }
+
+                // 6-2) Soft Delete: DB 有、dto 沒有
+                foreach (var entity in existing)
+                {
+                    if (!incomingIds.Contains(entity.Id))
+                    {
+                        // Soft delete（FullAuditedEntity）
+                        db.DirectoryFacetRanges.Remove(entity);
+                    }
+                }
+
+                await db.SaveChangesAsync();
+
+                // 7) 回傳最新資料（含新增後 Id / Sort）
+                //    重新查一次確保 ranges 是最新狀態（且 QueryFilter 會排除已刪除）
+                var latest = await db.Directory
+                    .Include(d => d.DirectoryFacetRanges)
+                    .FirstOrDefaultAsync(d => d.Id == directory.Id && d.FK_WebsiteId == websiteId);
+
+                var latestDto = mapper.Map<DirectoryFacetConfigDto>(latest);
+                latestDto.Ranges ??= new List<DirectoryFacetRangeDto>();
+                latestDto.Ranges = latestDto.Ranges.OrderBy(x => x.Sort).ToList();
+
+                output.Success = true;
+                output.Message = "Saved.";
+                output.Object = latestDto;
+                return output;
+            }
+            catch (Exception ex)
+            {
+                // 建議 log（可選）
+                // _logger.LogError(ex, "SaveDirectoryFacetConfig failed. DirectoryId={DirectoryId}", dto?.DirectoryId);
+
+                output.Success = false;
+                output.Error = ex.Message;
+                output.Message = "SaveDirectoryFacetConfig failed.";
+                return output;
+            }
+        }
+        private static string? ValidateRanges(DirectoryFacetConfigDto dto)
+        {
+            // FacetType=None 時，ranges 可以視為不生效；你也可以選擇直接清空
+            // 這裡採最小策略：如果 ranges 有資料就驗，避免存入爛資料
+            if (dto.Ranges == null || dto.Ranges.Count == 0) return null;
+
+            // 必填與 Start<=End
+            foreach (var r in dto.Ranges)
+            {
+                if (r.Start <= 0 || r.End <= 0)
+                    return "起始/結束 必須為有效年份。";
+
+                if (r.Start > r.End)
+                    return "起始年份不可大於結束年份。";
+            }
+
+            // 不允許重疊（允許缺口）
+            var ordered = dto.Ranges
+                .OrderBy(x => x.Start)
+                .ThenBy(x => x.End)
+                .ToList();
+
+            for (int i = 1; i < ordered.Count; i++)
+            {
+                var prev = ordered[i - 1];
+                var cur = ordered[i];
+
+                // overlap if cur.Start <= prev.End
+                if (cur.Start <= prev.End)
+                    return "分類區間不可重疊（含相交）。";
+            }
+
+            return null;
         }
     }
 }

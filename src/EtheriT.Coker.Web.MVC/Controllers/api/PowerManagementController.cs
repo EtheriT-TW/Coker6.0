@@ -11,8 +11,9 @@ using EtheriT.Coker.Web.MVC.Startup;
 using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Serialization;
+using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -24,11 +25,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 		private readonly NavigationProvider navigation;
 		private readonly IPermissionsAppService permissionsAppService;
 		private readonly IAccountAppService accountAppService;
-        public PowerManagementController(NavigationProvider navigation, IPermissionsAppService permissionsAppService, IAccountAppService accountAppService)
+        private readonly IMemoryCache memoryCache;
+        private readonly LoginUserData loginUserData;
+        public PowerManagementController(NavigationProvider navigation, IPermissionsAppService permissionsAppService, IAccountAppService accountAppService, IMemoryCache memoryCache, LoginUserData loginUserData)
 		{
 			this.navigation = navigation;
 			this.permissionsAppService = permissionsAppService;
 			this.accountAppService = accountAppService;
+            this.memoryCache = memoryCache;
+            this.loginUserData = loginUserData;
         }
 		[HttpGet]
 		public async Task<Site> AllMenus() {
@@ -103,16 +108,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 			return await permissionsAppService.DeleteRole(dto);
 		}
         [HttpGet]
-        public JsonResult GetPermission() {
-            return new JsonResult(new {
-                ThePermission.Initable,
-                ThePermission.CanCreate,
-				ThePermission.CanUpdate,
-				ThePermission.CanVisble,
-				ThePermission.CanRemove,
-                ThePermission.superManager,
-                ThePermission.systemManager,
-            }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        public async Task<JsonResult> GetPermission() {
+            var userId = await loginUserData.GetUserId();
+            var permisssion = memoryCache.Get($"ThePermission:{userId}");
+            if (permisssion != null)
+            {
+                return new JsonResult(permisssion, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            }
+            return new JsonResult(new { success = false }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
 		}
 	}
 }

@@ -1,10 +1,13 @@
-﻿using EtheriT.Coker.Application;
+﻿using DevExpress.DataProcessing.ExtractStorage;
+using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.Caching.Memory;
+using EtheriT.Coker.Web.MVC.Extensions;
 
 namespace EtheriT.Coker.Web.MVC.Startup
 {
@@ -13,14 +16,20 @@ namespace EtheriT.Coker.Web.MVC.Startup
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly LoginUserData loginUserData;
         private readonly IPermissionsAppService permissionsAppService;
+        private readonly IWebsiteApplication websiteApplication;
+        private readonly IMemoryCache memoryCache;
         public NavigationProvider(LoginUserData loginUserData,
             IPermissionsAppService permissionsAppService,
-            IHttpContextAccessor httpContextAccessor
+            IHttpContextAccessor httpContextAccessor,
+            IWebsiteApplication websiteApplication,
+            IMemoryCache memoryCache
         )
         {
             this.loginUserData = loginUserData;
             this.permissionsAppService = permissionsAppService;
             _httpContextAccessor = httpContextAccessor;
+            this.websiteApplication = websiteApplication;
+            this.memoryCache = memoryCache;
         }
         public async Task<Site> getMenus()
         {
@@ -660,6 +669,8 @@ namespace EtheriT.Coker.Web.MVC.Startup
         }
         public async Task setUserJob(Site site)
         {
+            var userId = await loginUserData.GetUserId();
+            ThePermission ThePermission = new ThePermission();
             ThePermission.Initable = false;
             ThePermission.superManager = await permissionsAppService.IsPowerUserPermissions();
             ThePermission.systemManager = await loginUserData.isSystemUser();
@@ -776,6 +787,13 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 }
             }
             ThePermission.Initable = true;
+            if(_httpContextAccessor.HttpContext!= null)
+            {
+                _httpContextAccessor.HttpContext.Items[CokerItemKeys.Permission] = ThePermission;
+                _httpContextAccessor.HttpContext.Items[CokerItemKeys.HasManySystem] = await websiteApplication.hasManySystem();
+            }
+
+            memoryCache.Set($"ThePermission:{userId}", ThePermission, TimeSpan.FromMinutes(5));
         }
         public JobMenu? FindJob(List<JobMenu> jobs, string Controller, string Action)
         {

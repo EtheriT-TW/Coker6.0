@@ -27,6 +27,7 @@ using DevExtreme.AspNet.Data.ResponseModel;
 using System.Net;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Application.Shared.Processor;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
 
 namespace EtheriT.Coker.Application.Article
 {

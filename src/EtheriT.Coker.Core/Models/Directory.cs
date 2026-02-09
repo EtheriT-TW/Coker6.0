@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Core.Entity;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
+using EtheriT.Coker.Core.Entity;
 using System.ComponentModel.DataAnnotations;
 
 namespace EtheriT.Coker.Core.Models
@@ -12,6 +13,11 @@ namespace EtheriT.Coker.Core.Models
         public long? FK_Mid { get; set; }
         public bool Visible { get; set; }
         public int SortBy { get; set; } = 0;
+        public long? FK_DefaultLayout { get; set; }
+        public DirectoryFacetTypeEnum FacetType { get; set; } = DirectoryFacetTypeEnum.None;
+        public DirectoryCalendarTypeEnum CalendarType { get; set; } = DirectoryCalendarTypeEnum.None;
         public Website? Website { get; set; }
+        public Html_Content? html_Content { get; set; }
+        public List<DirectoryFacetRange> DirectoryFacetRanges { get; set; } = new List<DirectoryFacetRange>();
     }
 }

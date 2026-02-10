@@ -349,13 +349,45 @@ app.Use(async (context, next) =>
 // 定義共用的 OnPrepareResponse 委派
 static void ConfigureStaticFileHeaders(StaticFileResponseContext ctx)
 {
-    ctx.Context.Response.Headers["Accept-Ranges"] = "bytes";
-    ctx.Context.Response.Headers["Cache-Control"] = "public, max-age=31536000"; // 例如設定快取一年
-    ctx.Context.Response.Headers["Expires"] = DateTime.UtcNow.AddYears(1).ToString("R");
-    ctx.Context.Response.Headers["Last-Modified"] = File.GetLastWriteTimeUtc(ctx.File.PhysicalPath).ToString("R");
-    ctx.Context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
-    var etag = Convert.ToBase64String(Encoding.UTF8.GetBytes(ctx.File.PhysicalPath)); // 基於文件路徑生成 ETag
-    ctx.Context.Response.Headers["ETag"] = etag;
+    var res = ctx.Context.Response;
+    var req = ctx.Context.Request;
+
+    // 固定 headers
+    res.Headers["Accept-Ranges"] = "bytes";
+    res.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
+
+    // 判斷是否為版本化資源
+    var isVersioned = req.Query.ContainsKey("v");
+    if (isVersioned)
+    {
+        res.Headers["Cache-Control"] = "public,max-age=31536000,immutable";
+        res.Headers["Expires"] = DateTime.UtcNow.AddYears(1).ToString("R");
+    }
+    else
+    {
+        res.Headers["Cache-Control"] = "no-cache";
+        res.Headers.Remove("Expires");
+    }
+
+    // ---- 以下處理 Last-Modified / ETag（安全處理 PhysicalPath 可能為 null） ----
+    if (!string.IsNullOrEmpty(ctx.File?.PhysicalPath) && File.Exists(ctx.File.PhysicalPath))
+    {
+        var fi = new FileInfo(ctx.File.PhysicalPath);
+        var lastModifiedUtc = fi.LastWriteTimeUtc;
+
+        // Last-Modified
+        res.Headers["Last-Modified"] = lastModifiedUtc.ToString("R");
+
+        // 弱 ETag（內容變動一定會變）
+        var etag = $"W/\"{lastModifiedUtc.Ticks:x}-{fi.Length:x}\"";
+        res.Headers["ETag"] = etag;
+    }
+    else
+    {
+        // 不強行產生 ETag / Last-Modified，避免錯誤或錯誤快取
+        res.Headers.Remove("Last-Modified");
+        res.Headers.Remove("ETag");
+    }
 }
 
 // 新增一個 Middleware 處理 favicon.ico 的請求

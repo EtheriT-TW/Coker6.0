@@ -1,63 +1,4 @@
-﻿var Directory = {
-    getDirectoryData: function (data) {
-        return $.ajax({
-            url: "/api/Directory/GetReleInfo",
-            type: "POST",
-            contentType: 'application/json; charset=utf-8',
-            data: JSON.stringify(data),
-            dataType: "json"
-        });
-    },
-    getDirectoryMenuData: function (data) {
-        return $.ajax({
-            url: "/api/Directory/GetReleMenu",
-            type: "POST",
-            contentType: 'application/json; charset=utf-8',
-            data: JSON.stringify(data),
-            dataType: "json"
-        });
-    },
-    getDirectoryAdvertiseData: function (data) {
-        return $.ajax({
-            url: "/api/Directory/GetReleAd",
-            type: "POST",
-            contentType: 'application/json; charset=utf-8',
-            data: JSON.stringify(data),
-            dataType: "json"
-        });
-    },
-    SwitchPage: function (data) {
-        return $.ajax({
-            url: "/api/Directory/SwitchPage",
-            type: "POST",
-            contentType: 'application/json; charset=utf-8',
-            headers: {
-                Authorization: 'Bearer ' + localStorage.getItem("token")
-            },
-            data: JSON.stringify(data),
-            dataType: "json"
-        });
-    },
-}
-var Advertise = {
-    ActivityClick: function (FK_Aid) {
-        return $.ajax({
-            url: "/api/Advertise/ActivityClick/",
-            type: "GET",
-            contentType: 'application/json; charset=utf-8',
-            data: { FK_Aid: FK_Aid },
-        });
-    },
-    ActivityExposure: function (FK_Aid) {
-        return $.ajax({
-            url: "/api/Advertise/ActivityExposure/",
-            type: "GET",
-            contentType: 'application/json; charset=utf-8',
-            data: { FK_Aid: FK_Aid },
-        });
-    },
-}
-function initElemntAndLoadDir($dir, page) {
+﻿function initElemntAndLoadDir($dir, page) {
     const $self = $dir || $(".catalog_frame").first();
     var temp_siblings = $self.find(".templatecontent").siblings();
     if (temp_siblings.length > 0) {
@@ -222,7 +163,8 @@ function DirectoryDataGet($item, option) {
             Type: $item.data("type")
         })
     }
-    Directory.getDirectoryData(option).done(function (result) {
+    if (!!!option.Ids) return;
+    co.Directory.getDirectoryData(option).done(function (result) {
         let loadPageRange = 2;
         if (option.Type == "search") {
             $(".searchCount").text(result.totalCount);
@@ -827,7 +769,7 @@ function InsertAdDatat($frame, result) {
         }
 
         if (isFront) {
-            Advertise.ActivityExposure(result.id).done(function (result) {
+            co.Activity.Exposure(result.id).done(function (result) {
                 //console.log(result)
             })
         }
@@ -836,7 +778,7 @@ function InsertAdDatat($frame, result) {
             var $this = $(this);
             if (!$this.hasClass("playing")) {
                 $(this).addClass("playing")
-                Advertise.ActivityClick(result.id).done(function (result) {
+                co.Activity.Click(result.id).done(function (result) {
                     //console.log(result)
                 })
             }
@@ -851,7 +793,7 @@ function InsertAdDatat($frame, result) {
 
         $frame.on("click", function () {
             if ($frame.find(".video_frame").length == 0) {
-                Advertise.ActivityClick(result.id).done(function (result) {
+                co.Activity.Click(result.id).done(function (result) {
                     //console.log(result)
                 })
             }

@@ -1,0 +1,144 @@
+/* ==== Offcanvas 捲軸樣式 ==== */
+/* Offcanvas 內容區：上方 meta 區塊 */
+.gallery-offcanvas .canvas-meta {
+    margin: 0 0.5rem 1.5rem;
+    text-align: left;
+    position: relative;
+}
+
+/* 年度：小一號、偏淡 */
+.gallery-offcanvas .canvas-year {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 0.2rem;
+}
+
+/* 標題：主標 */
+.gallery-offcanvas .canvas-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gallery-accent);
+    line-height: 1.4;
+    margin: 0 0 0.4rem;
+}
+
+/* 黃色標籤 */
+.gallery-offcanvas .canvas-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1.2rem;
+    border-radius: 999px;
+    background: #f5a623;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+/* ========= 展開狀態的排版調整 ========= */
+.gallery-offcanvas.expand .canvas-meta {
+    /* 預留右邊空間給標籤，避免文字被壓到 */
+    padding-right: 11rem; /* 依實際標籤長度可再微調 */
+    margin: 0 3rem;
+}
+
+/* 展開時：標籤固定在右側，垂直置中 */
+.gallery-offcanvas.expand .canvas-tag {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    margin-top: 0; /* 清掉原本往下的距離 */
+    white-space: nowrap; /* 不要換行 */
+    font-size: 1rem; /* 避免太大擠壓版面，可依需求調整 */
+}
+
+/* 圖片區與文字保持間距 */
+.gallery-offcanvas .canvas-image-wrap {
+    margin-top: 1.2rem;
+}
+
+/* 預設展開寬度：30% */
+.gallery-offcanvas.offcanvas-start {
+    width: 30% !important;
+    top: 68px;
+    bottom: 58px;
+    background: #f1f2f4;
+    transition: all .3s ease;
+}
+/* 右側小箭頭 tab */
+.gallery-offcanvas .gallery-canvas-toggle {
+    position: absolute;
+    top: 50%;
+    right: -32px; /* 往右凸出去一點 */
+    transform: translateY(-50%);
+    width: 34px;
+    height: 120px;
+    border: none;
+    padding: 0 2px 0 0;
+    cursor: pointer;
+    /* 外觀：像一個圓角的小耳朵 */
+    background: rgb(241 242 244 / 90%);
+    color: var(--gallery-accent, #444);
+    border-radius: 0 16px 16px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+    .gallery-offcanvas .gallery-canvas-toggle:hover {
+        color: var(--gallery-accent-hover, #000);
+        box-shadow: 14px 0 14px rgb(241 242 244 / 40%);
+    }
+
+
+.gallery-offcanvas .nomal {
+    display: none;
+}
+
+/* 放大模式：右側拉伸到 80% */
+.gallery-offcanvas.expand {
+    width: 80% !important;
+}
+
+    .gallery-offcanvas.expand .nomal {
+        display: block;
+        opacity: 0;
+    }
+
+    .gallery-offcanvas.expand .offcanvas-body .canvas-image-wrap {
+        background: var(--gallery-accent-offcanvas-background) top no-repeat;
+        background-size: 100%;
+        background-attachment: local;
+    }
+/* Firefox */
+.gallery-offcanvas .offcanvas-body {
+    scrollbar-width: thin;
+    scrollbar-color: var(--gallery-scroll-thumb) var(--gallery-scroll-track);
+    z-index: 1;
+}
+
+    .gallery-offcanvas .offcanvas-body .canvas-image-wrap {
+        background: var(--gallery-accent-offcanvas-small-background) top no-repeat;
+        background-size: 100%;
+        background-attachment: local;
+    }
+    /* WebKit */
+    .gallery-offcanvas .offcanvas-body::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .gallery-offcanvas .offcanvas-body::-webkit-scrollbar-track {
+        background: var(--gallery-scroll-track);
+        border-radius: 999px;
+    }
+
+    .gallery-offcanvas .offcanvas-body::-webkit-scrollbar-thumb {
+        background-color: var(--gallery-scroll-thumb);
+        border-radius: 999px;
+        border: 1px solid var(--gallery-scroll-track);
+    }
+
+        .gallery-offcanvas .offcanvas-body::-webkit-scrollbar-thumb:hover {
+            background-color: var(--gallery-scroll-thumb-hover);
+        }

@@ -101,6 +101,9 @@ function ready() {
     if ($(".MapMessage").length > 0) MapMessage();
     if ($(".getlatlng").length > 0) GetLatLng();
     if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
+
+    co.modules.gallery3d();
+
     if ($(".container .qa,.container-fluid .qa").length > 0) {
         $(".container,.container-fluid").each((i, e) => {
             var $c = $(e);
@@ -304,11 +307,11 @@ function ready() {
                 localStorage.setItem("EnterAd_Show", adid);
             })
             if (adid != "undefined") {
-                Advertise.ActivityExposure(adid).done(function (result) {
+                co.Activity.Exposure(adid).done(function (result) {
                     //console.log(result)
                 })
                 $("#EnterAdModal img").on("click", function () {
-                    Advertise.ActivityClick(adid).done(function (result) {
+                    co.Activity.Click(adid).done(function (result) {
                         //console.log(result)
                     })
                 });

@@ -45,6 +45,12 @@
 		<Content Remove="wwwroot\lib\pdf-viewer\external\pdfjs-4.5.136-dist\LICENSE" />
 		<Content Remove="wwwroot\lib\pdf-viewer\LICENSE" />
 		<Content Remove="wwwroot\lib\pdf-viewer\README.md" />
+		<Content Remove="wwwroot\Shared\components\ArticleViewer\index.css" />
+		<Content Remove="wwwroot\Shared\components\ArticleViewer\Index.js" />
+		<Content Remove="wwwroot\Shared\components\Gallery3DShowcase\page.css" />
+		<Content Remove="wwwroot\Shared\components\Gallery3DShowcase\page.js" />
+		<Content Remove="wwwroot\Shared\components\gallery3d\gallery3d.css" />
+		<Content Remove="wwwroot\Shared\components\gallery3d\gallery3d.js" />
 		<Content Remove="wwwroot\Shared\css\Activity.less" />
 		<Content Remove="wwwroot\Shared\css\AnchorPoint.css" />
 		<Content Remove="wwwroot\Shared\css\BGCanvas.css" />
@@ -170,6 +176,12 @@
 		<None Include="wwwroot\lib\pdf-viewer\external\pdfjs-4.5.136-dist\LICENSE" />
 		<None Include="wwwroot\lib\pdf-viewer\LICENSE" />
 		<None Include="wwwroot\lib\pdf-viewer\README.md" />
+		<None Include="wwwroot\Shared\components\ArticleViewer\index.css" />
+		<None Include="wwwroot\Shared\components\ArticleViewer\Index.js" />
+		<None Include="wwwroot\Shared\components\Gallery3DShowcase\page.css" />
+		<None Include="wwwroot\Shared\components\Gallery3DShowcase\page.js" />
+		<None Include="wwwroot\Shared\components\gallery3d\gallery3d.css" />
+		<None Include="wwwroot\Shared\components\gallery3d\gallery3d.js" />
 		<None Include="wwwroot\Shared\css\Activity.less" />
 		<None Include="wwwroot\Shared\css\AnchorPoint.css" />
 		<None Include="wwwroot\Shared\css\BGCanvas.css" />

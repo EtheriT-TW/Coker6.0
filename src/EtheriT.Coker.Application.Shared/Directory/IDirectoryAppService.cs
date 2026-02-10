@@ -24,5 +24,6 @@ namespace EtheriT.Coker.Application.Shared.Directory
         public Task<List<KeyValueDto>> SwitchPage(DirectorySwitchPageDto dto);
         public Task<ResponseMessageDto> GetDirectoryFacetConfig(long Id);
         public Task<ResponseMessageDto> SaveDirectoryFacetConfig(DirectoryFacetConfigDto dto);
+        public Task<ResponseMessageDto> GetFacetAsync(long directoryId);
     }
 }

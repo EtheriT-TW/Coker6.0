@@ -1,0 +1,47 @@
+/* 容器：你塞 iframe 的 div */
+.article-viewer {
+    width: 100%;
+    margin: 0 auto;
+}
+
+    /* 窄/寬模式：直接控制 iframe viewport 寬度（重點） */
+    .article-viewer.article-viewer--narrow {
+        max-width: 520px; /* 窄閱讀寬度 */
+    }
+
+    .article-viewer.article-viewer--wide {
+        max-width: 980px; /* 寬閱讀寬度 */
+    }
+
+    /* loading 狀態（可選） */
+    .article-viewer.article-viewer--loading::before {
+        content: "Loading…";
+        display: block;
+        padding: 12px 0;
+        opacity: 0.7;
+    }
+
+/* ===================== 新增：iframe 基礎樣式（取代原本 JS inline style） ===================== */
+.article-viewer-frame {
+    width: 100%;
+    border: 0;
+    display: block;
+}
+
+/* ===================== 新增：兩種高度策略 ===================== */
+
+/* autoHeight：不滾動（高度由 JS 寫 iframe height attribute 控制） */
+.article-viewer.article-viewer--autoheight {
+    overflow: hidden;
+}
+
+/* fill：容器負責滾動；iframe 撐滿容器高度 */
+.article-viewer.article-viewer--fill {
+    height: 100%;
+    overflow: auto;
+}
+
+    /* fill 模式下讓 iframe 撐滿容器 */
+    .article-viewer.article-viewer--fill > .article-viewer-frame {
+        height: 100%;
+    }

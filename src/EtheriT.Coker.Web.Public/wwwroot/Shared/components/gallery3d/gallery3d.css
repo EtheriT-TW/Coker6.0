@@ -1,0 +1,412 @@
+.main-stage {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    /* main 的背景圖：要整張呈現，用 contain */
+    /*background: url("images/bgg.png") center center / contain no-repeat;*/
+}
+
+/* ===================== 3D 圈圈在 main 內的固定位置 ===================== */
+
+.gallery-holder {
+    position: relative;
+    /* 這裡控制圈圈在圖片上的位置，之後你可微調 */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 55%;
+    max-width: 80vw;
+    aspect-ratio: 16 / 9;
+    pointer-events: none;
+}
+
+    .gallery-holder.grid-mode {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        aspect-ratio: auto;
+        pointer-events: auto;
+    }
+
+/* ========= 外層 Wrapper ========= */
+.gallery3d-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    perspective: 1400px;
+    overflow: visible;
+}
+
+    .gallery3d-wrapper:not(.mode-grid) .grid-only {
+        display: none;
+    }
+
+    .gallery3d-wrapper.mode-grid .gallery3d-card {
+        display: block;
+    }
+
+/*.gallery3d-wrapper::before {
+                content: "";
+                position: absolute;
+                inset: -40px;
+                background: radial-gradient(circle at center, #696969, transparent 65%);
+                pointer-events: none;
+                z-index: 0;
+            }*/
+
+/* ========= Stage ========= */
+.gallery3d-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    touch-action: pan-y;
+    z-index: 1;
+}
+
+/* ========= 3D 卡片 ========= */
+.gallery3d-card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 26%;
+    height: auto;
+    margin: 0;
+    transform-style: preserve-3d;
+    transition: transform 0.32s ease-out, opacity 0.32s ease-out, filter 0.32s ease-out;
+    pointer-events: auto;
+}
+
+    .gallery3d-card img {
+        -webkit-user-drag: none;
+        user-drag: none;
+        user-select: none;
+    }
+
+        .gallery3d-card img.main,
+        .gallery3d-card img.reflection {
+            -webkit-user-drag: none;
+            user-drag: none;
+            user-select: none;
+        }
+
+.gallery3d-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    cursor: pointer;
+}
+
+.card-main {
+    width: 100%;
+    height: 100%;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #222;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.3);
+    transition: transform 0.25s ease-out, box-shadow 0.25s ease-out;
+}
+
+    .card-main img.main {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: none !important;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+        -ms-interpolation-mode: nearest-neighbor; /* 給 IE 老東西，不影響現在 */
+    }
+
+.gallery3d-card.is-front .card-main img.main {
+    filter: none !important;
+}
+
+.gallery3d-card-inner:hover .card-main {
+    transform: translateY(-4px);
+}
+
+/* ========= 倒影 ========= */
+.card-reflect {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+    .card-reflect img.reflection {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 18px;
+        transform-origin: top center;
+        transform: rotateX(180deg) translateY(-100%);
+        opacity: 0.2;
+        filter: blur(1px);
+        -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+        mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+    }
+
+/* 3D 卡片標題：毛玻璃 + 強制只顯示兩行 */
+.gallery3d-card figcaption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 8px 14px;
+    font-size: 0.625rem;
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: center;
+    color: #ffffff;
+    white-space: normal; /* 確保正常換行 */
+    /* 毛玻璃效果 */
+    background: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(10px) brightness(0.7);
+    -webkit-backdrop-filter: blur(10px) brightness(0.7);
+    border-radius: 0 0 6px 6px;
+    text-shadow: 0 0 4px rgba(0,0,0,0.85);
+    /* 行數限制：軟（line-clamp）+ 硬（max-height） */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2; /* 目標兩行 */
+    max-height: 2.5rem; /* ⭐ 最多約兩行半的高度，第三行一定被裁掉 */
+    overflow: hidden;
+    transition: backdrop-filter .2s ease, background .2s ease;
+    display: none;
+    pointer-events: none;
+}
+
+/* 正面卡片字稍大且更亮 */
+.gallery3d-card.is-front figcaption {
+    font-size: 1rem;
+    max-height: 3.4rem;
+    display: -webkit-box;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(12px) brightness(0.85);
+    -webkit-backdrop-filter: blur(12px) brightness(0.85);
+}
+
+/* 側邊卡片稍淡 */
+.gallery3d-card:not(.is-front) figcaption {
+    opacity: 0.9;
+}
+
+
+/* 顯示模式 / 上下工具列 */
+.gallery-toolbar-wrap {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 20px;
+    z-index: 9;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+}
+.gallery-toolbar-row {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px 8px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgba(233,233,233,0.3);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 8px 20px rgba(163,157,157,0.22);
+    width: fit-content;
+    pointer-events: auto;
+}
+
+/* 兩個 toolbar 自己不再有 margin-top，只負責內部樣式 */
+.gallery-toolbar {
+    margin-top: 0;
+    text-align: center;
+}
+
+
+.gallery-toolbar-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 0px;
+}
+
+.gallery-toolbar button {
+    border: none;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+    .gallery-toolbar button:hover {
+        background: rgba(255,255,255,0.25);
+    }
+
+.gallery-toolbar-label {
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+.gallery-indicator {
+    font-size: 12px;
+    margin-left: 6px;
+    white-space: nowrap;
+    opacity: 0.9;
+}
+
+/* Grid 模式 */
+.gallery3d-wrapper.mode-grid {
+    width: 80%;
+    height: 65%;
+    margin: 10% auto;
+    --grid-gap-x: 28px;
+    --grid-gap-y: 24px;
+    --col5: calc((100% - (4 * var(--grid-gap-x))) / 5);
+    --col3: calc((100% - (2 * var(--grid-gap-x))) / 3);
+}
+
+    .gallery3d-wrapper.mode-grid .gallery3d-stage {
+        transform: none !important;
+        display: grid;
+        gap: var(--grid-gap-y) var(--grid-gap-x);
+        padding: 32px 40px 40px;
+        overflow-y: auto;
+        justify-items: center;
+    }
+        /* >=4：固定 5 欄，靠左 */
+        .gallery3d-wrapper.mode-grid .gallery3d-stage.grid-cols-5 {
+            grid-template-columns: repeat(5, var(--col5));
+            justify-content: start;
+        }
+
+        /* <4：用「實際張數」決定欄數，但欄寬仍用 5欄基準，整排置中 */
+        .gallery3d-wrapper.mode-grid .gallery3d-stage.grid-count-1 {
+            grid-template-columns: repeat(1, var(--col3));
+            justify-content: center;
+        }
+
+        .gallery3d-wrapper.mode-grid .gallery3d-stage.grid-count-2 {
+            grid-template-columns: repeat(2, var(--col3));
+            justify-content: center;
+        }
+
+        .gallery3d-wrapper.mode-grid .gallery3d-stage.grid-count-3 {
+            grid-template-columns: repeat(3, var(--col3));
+            justify-content: center;
+        }
+    /* ==== Grid 模式捲軸樣式 ==== */
+
+    /* Firefox 專用：細捲軸 + 色彩 */
+    .gallery3d-wrapper.mode-grid .gallery3d-stage {
+        scrollbar-width: thin;
+        scrollbar-color: var(--gallery-scroll-thumb) var(--gallery-scroll-track);
+    }
+
+        /* WebKit 系列（Chrome / Edge / Safari） */
+        .gallery3d-wrapper.mode-grid .gallery3d-stage::-webkit-scrollbar {
+            width: 6px; /* 捲軸寬度：瘦 */
+        }
+
+        /* 軌道 */
+        .gallery3d-wrapper.mode-grid .gallery3d-stage::-webkit-scrollbar-track {
+            background: var(--gallery-scroll-track);
+            border-radius: 999px;
+        }
+
+        /* 滑塊 */
+        .gallery3d-wrapper.mode-grid .gallery3d-stage::-webkit-scrollbar-thumb {
+            background-color: var(--gallery-scroll-thumb);
+            border-radius: 999px;
+            border: 1px solid var(--gallery-scroll-track); /* 外圍留一圈，視覺更細緻 */
+        }
+
+            /* 滑塊 hover */
+            .gallery3d-wrapper.mode-grid .gallery3d-stage::-webkit-scrollbar-thumb:hover {
+                background-color: var(--gallery-scroll-thumb-hover);
+            }
+
+
+    .gallery3d-wrapper.mode-grid .gallery3d-card {
+        position: relative;
+        top: auto;
+        left: auto;
+        margin: 0;
+        width: 100% !important;
+        opacity: 1 !important;
+        z-index: auto !important;
+        transform: none !important;
+    }
+
+        .gallery3d-wrapper.mode-grid .gallery3d-card figcaption {
+            font-size: 1rem;
+            max-height: 3.35rem;
+            height: 3.35rem;
+            display: -webkit-box;
+            text-align: left;
+            font-weight: normal;
+        }
+
+        .gallery3d-wrapper.mode-grid .gallery3d-card .card-main {
+            box-shadow: none;
+            aspect-ratio: 3 / 4;
+        }
+    .gallery3d-wrapper.mode-grid .grid-count-1 .gallery3d-card .card-main,
+    .gallery3d-wrapper.mode-grid .grid-count-2 .gallery3d-card .card-main,
+    .gallery3d-wrapper.mode-grid .grid-count-3 .gallery3d-card .card-main {
+        aspect-ratio: 3 / 4;
+    }
+
+    .gallery3d-wrapper.mode-grid .gallery3d-stage {
+        align-items: start; /* grid items 不要垂直 stretch */
+        align-content: start; /* 多餘高度留在下面，不要把 row 拉高 */
+        grid-auto-rows: max-content;
+    }
+
+    .gallery3d-wrapper.mode-grid .gallery3d-card,
+    .gallery3d-wrapper.mode-grid .gallery3d-card-inner,
+    .gallery3d-wrapper.mode-grid .card-main {
+        height: auto !important;
+    }
+
+    .gallery3d-wrapper.mode-grid .card-reflect {
+        display: none;
+    }
+
+@media (max-width: 992px) {
+    .main-stage {
+        max-width: 100%;
+        margin: 0 8px;
+    }
+
+    .gallery-holder {
+        width: 100%;
+        max-width: 90vw;
+    }
+}
+
+@media (max-width: 768px) {
+    .gallery3d-card {
+        width: 220px;
+        height: 145px;
+        margin: -72px 0 0 -110px;
+    }
+
+    .gallery3d-wrapper.mode-grid .gallery3d-stage {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        padding: 24px 16px 32px;
+        gap: 20px;
+    }
+}

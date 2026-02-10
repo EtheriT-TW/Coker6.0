@@ -28,11 +28,11 @@ function SideFloatingInit() {
 
     var adid = $("#Floating_Center > div").data("aid");
     if (adid != "undefined") {
-        Advertise.ActivityExposure(adid).done(function (result) {
+        co.Activity.Exposure(adid).done(function (result) {
             //console.log(result)
         })
         $("#Floating_Center > div").on("click", function () {
-            Advertise.ActivityClick(adid).done(function (result) {
+            co.Activity.Click(adid).done(function (result) {
                 //console.log(result)
             })
         });

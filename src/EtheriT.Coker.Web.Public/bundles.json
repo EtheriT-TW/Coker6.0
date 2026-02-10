@@ -33,12 +33,26 @@
       ]
     },
     {
+      "output": "Shared/gallery3d.min.js",
+      "input": [
+        "wwwroot/Shared/components/gallery3d/gallery3d.js",
+        "wwwroot/Shared/components/Gallery3DShowcase/page.js"
+      ]
+    },
+    {
+      "output": "Shared/articleViewer.min.js",
+      "input": [
+        "wwwroot/Shared/components/ArticleViewer/index.js"
+      ]
+    },
+    {
       "output": "Shared/shared.min.js",
       "input": [
         "wwwroot/Shared/js/AnchorPoint.js",
         "wwwroot/Shared/js/Activity.js",
         "wwwroot/Shared/js/BGCanvas.js",
         "wwwroot/Shared/js/Contact.js",
+        "wwwroot/Shared/js/DefineModule.js",
         "wwwroot/Shared/js/DirectoryGetData.js",
         "wwwroot/Shared/js/Frame.js",
         "wwwroot/Shared/js/FlipBook.js",
@@ -73,12 +87,15 @@
         "wwwroot/js/Coker/coker.form.js",
         "wwwroot/js/Coker/coker.ui.sweet.js",
         "wwwroot/js/Coker/coker.feature.search.js",
+        "wwwroot/js/Coker/coker.loader.js",
 
+        "wwwroot/js/Coker/coker.api.activity.js",
         "wwwroot/js/Coker/coker.api.user.js",
         "wwwroot/js/Coker/coker.api.thirdparty.js",
         "wwwroot/js/Coker/coker.api.favorites.js",
         "wwwroot/js/Coker/coker.api.order.js",
         "wwwroot/js/Coker/coker.api.payment.js",
+        "wwwroot/js/Coker/coker.api.directory.js",
         "wwwroot/js/Coker/coker.api.token.js"
       ]
     },
@@ -106,6 +123,19 @@
       "output": "lib/swiper/swiper-bundle.min.css",
       "input": [
         "node_modules/swiper/swiper-bundle.css"
+      ]
+    },
+    {
+      "output": "Shared/gallery3d.min.css",
+      "input": [
+        "wwwroot/Shared/components/gallery3d/gallery3d.css",
+        "wwwroot/Shared/components/Gallery3DShowcase/page.css"
+      ]
+    },
+    {
+      "output": "Shared/articleViewer.min.css",
+      "input": [
+        "wwwroot/Shared/components/ArticleViewer/index.css"
       ]
     },
     {

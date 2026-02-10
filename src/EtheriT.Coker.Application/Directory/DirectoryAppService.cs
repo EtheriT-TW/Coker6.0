@@ -1935,5 +1935,341 @@ namespace EtheriT.Coker.Application.Directory
 
             return null;
         }
+        public async Task<ResponseMessageDto> GetFacetAsync(long directoryId)
+        {
+            var res = new ResponseMessageDto { Success = false };
+
+            try
+            {
+                var websiteId = await loginUserData.GetWebsiteId();
+
+                // 1) Directory + Ranges
+                var dir = await db.Directory
+                    .Include(d => d.DirectoryFacetRanges)
+                    .FirstOrDefaultAsync(d => d.Id == directoryId && d.FK_WebsiteId == websiteId && !d.IsDeleted);
+
+                if (dir == null)
+                {
+                    res.Error = "NOT_FOUND";
+                    res.Message = "Directory not found.";
+                    return res;
+                }
+
+                // 2) Only 商品/文章 have facet requirement, but 商品不做日期 facet（依你前面規格）
+                var dirType = (DirectoryTypeEnum)dir.Type;
+
+                // 如果不是商品/文章 → 回空
+                if (dirType != DirectoryTypeEnum.商品 && dirType != DirectoryTypeEnum.文章)
+                {
+                    res.Success = true;
+                    res.Object = new DirectoryGetFacetResponseDto { DirectoryId = directoryId };
+                    return res;
+                }
+
+                // 商品：不產生任何日期 facet；若 FacetType=Tag 仍可回 Tag（看你是否要）
+                // 目前先遵照你「商品不應該有日期分類」：日期型全部回空
+                if (dirType == DirectoryTypeEnum.商品 &&
+                    (dir.FacetType == DirectoryFacetTypeEnum.Year ||
+                     dir.FacetType == DirectoryFacetTypeEnum.Month ||
+                     dir.FacetType == DirectoryFacetTypeEnum.YearMonth))
+                {
+                    res.Success = true;
+                    res.Object = new DirectoryGetFacetResponseDto { DirectoryId = directoryId };
+                    return res;
+                }
+
+                // 3) Build items by facet type
+                List<DirectoryFacetItemDto> items;
+
+                switch (dir.FacetType)
+                {
+                    case DirectoryFacetTypeEnum.Year:
+                    case DirectoryFacetTypeEnum.Month:
+                    case DirectoryFacetTypeEnum.YearMonth:
+                        {
+                            // 日期型：只支援文章，且來源固定 NodeDate
+                            if (dirType != DirectoryTypeEnum.文章)
+                            {
+                                items = new List<DirectoryFacetItemDto>();
+                                break;
+                            }
+
+                            // Enabled ranges + sorted
+                            var enabledRanges = (dir.DirectoryFacetRanges ?? new List<DirectoryFacetRange>())
+                                .Where(r => r.Enabled && !r.IsDeleted)
+                                .OrderBy(r => r.Sort)
+                                .ThenBy(r => r.Id)
+                                .Select(r => (Start: r.Start, End: r.End))
+                                .ToList();
+
+                            // 取得此目錄下「真的有資料」的 NodeDate（這裡我用最保守方式：直接從文章本身抓 NodeDate）
+                            // 若你的目錄與文章關聯是透過 Tag_Associates + GetReleInfo 才能算出來，
+                            // 你之後把這段替換成你既有的 GetReleInfo 取文章Id流程即可（後續你說會討論）。
+                            var nodeDates = await db.Article
+                                .AsNoTracking()
+                                .Where(a => a.FK_WebsiteId == websiteId && !a.IsDeleted)
+                                .Where(a => a.Visible && !a.RemovedFromShelves)
+                                .Where(a => a.NodeDate != null)
+                                .Select(a => a.NodeDate!.Value)
+                                .ToListAsync();
+
+                            if (nodeDates.Count == 0)
+                            {
+                                items = new List<DirectoryFacetItemDto>();
+                                break;
+                            }
+
+                            items = dir.FacetType switch
+                            {
+                                DirectoryFacetTypeEnum.Year =>
+                                    BuildYearItems(nodeDates, dir.CalendarType, enabledRanges),
+
+                                DirectoryFacetTypeEnum.Month =>
+                                    BuildMonthItems(nodeDates, enabledRanges),
+
+                                DirectoryFacetTypeEnum.YearMonth =>
+                                    BuildYearMonthItems(nodeDates, dir.CalendarType, enabledRanges),
+
+                                _ => new List<DirectoryFacetItemDto>()
+                            };
+
+                            break;
+                        }
+
+                    case DirectoryFacetTypeEnum.Tag:
+                        {
+                            items = await BuildDirectoryTagItemsAsync(websiteId, directoryId);
+                            break;
+                        }
+
+                    case DirectoryFacetTypeEnum.DocumentType:
+                        {
+                            // 你尚未提供 DocumentType 的實際資料來源（文章欄位/獨立表/某種 tag 群組）
+                            // 這裡先明確回空，避免做錯
+                            items = new List<DirectoryFacetItemDto>();
+                            break;
+                        }
+
+                    default:
+                        items = new List<DirectoryFacetItemDto>();
+                        break;
+                }
+
+                res.Success = true;
+                res.Object = new DirectoryGetFacetResponseDto
+                {
+                    DirectoryId = directoryId,
+                    Items = items
+                };
+                return res;
+            }
+            catch (Exception ex)
+            {
+                res.Success = false;
+                res.Error = ex.Message;
+                res.Message = "GetFacet failed.";
+                return res;
+            }
+        }
+
+        #region ===== Tag facet =====
+
+        private async Task<List<DirectoryFacetItemDto>> BuildDirectoryTagItemsAsync(long websiteId, long directoryId)
+        {
+            // 子站（你系統有父子站）
+            var siteIds = await db.MappingWebsiteRelationship
+                .Where(x => x.FatherId == websiteId && !x.IsDeleted)
+                .Select(x => x.Id)
+                .ToListAsync();
+            siteIds.Add(websiteId);
+
+            // 目錄包含標籤（Type==目錄）
+            var tags = await db.Tag_Associates
+                .Include(x => x.Tag)
+                .Where(x => !x.IsDeleted)
+                .Where(x => x.Type == TagAssociateTypeEnum.目錄)
+                .Where(x => x.FK_AId == directoryId)
+                .Where(x => x.Tag != null)
+                .Where(x => siteIds.Contains(x.Tag!.FK_WebsiteId))
+                .Select(x => new { TagId = x.FK_TId, TagName = x.Tag!.Title })
+                .Distinct()
+                .OrderBy(x => x.TagName)
+                .ToListAsync();
+
+            return tags.Select(t => new DirectoryFacetItemDto
+            {
+                Start = (int)t.TagId,
+                End = (int)t.TagId,
+                Label = string.IsNullOrWhiteSpace(t.TagName) ? t.TagId.ToString() : t.TagName!
+            }).ToList();
+        }
+
+        #endregion
+
+        #region ===== Date facet builders (fill holes) =====
+
+        // 規則：
+        // 1) configuredRanges 保留成段（range 內若完全沒資料 → 不回傳該段）
+        // 2) 其他有資料但不在任何 configured range 的 key → 單點補洞（Start=End）
+        private static List<DirectoryFacetItemDto> BuildYearItems(
+            List<DateTime> nodeDates,
+            DirectoryCalendarTypeEnum calendarType,
+            List<(int Start, int End)> configuredRanges)
+        {
+            var years = nodeDates
+                .Select(d => calendarType == DirectoryCalendarTypeEnum.民國年 ? (d.Year - 1911) : d.Year)
+                .Where(y => y > 0)
+                .Distinct()
+                .OrderBy(y => y)
+                .ToList();
+
+            return BuildFilledItems(
+                years,
+                configuredRanges,
+                single => $"{single}",
+                (s, e) => $"{s}-{e}"
+            );
+        }
+
+        private static List<DirectoryFacetItemDto> BuildMonthItems(
+            List<DateTime> nodeDates,
+            List<(int Start, int End)> configuredRanges)
+        {
+            var months = nodeDates
+                .Select(d => d.Month)
+                .Where(m => m >= 1 && m <= 12)
+                .Distinct()
+                .OrderBy(m => m)
+                .ToList();
+
+            return BuildFilledItems(
+                months,
+                configuredRanges,
+                single => $"{single:00}",
+                (s, e) => $"{s:00}-{e:00}"
+            );
+        }
+
+        private static List<DirectoryFacetItemDto> BuildYearMonthItems(
+            List<DateTime> nodeDates,
+            DirectoryCalendarTypeEnum calendarType,
+            List<(int Start, int End)> configuredRanges)
+        {
+            int EncodeYm(DateTime d)
+            {
+                var y = calendarType == DirectoryCalendarTypeEnum.民國年 ? (d.Year - 1911) : d.Year;
+                return (y * 100) + d.Month; // 11201 / 202501
+            }
+
+            string FormatYm(int ym)
+            {
+                var y = ym / 100;
+                var m = ym % 100;
+                return $"{y}-{m:00}";
+            }
+
+            var yms = nodeDates
+                .Select(EncodeYm)
+                .Where(ym =>
+                {
+                    var m = ym % 100;
+                    return ym > 0 && m >= 1 && m <= 12;
+                })
+                .Distinct()
+                .OrderBy(ym => ym)
+                .ToList();
+
+            return BuildFilledItems(
+                yms,
+                configuredRanges,
+                single => FormatYm(single),
+                (s, e) => $"{FormatYm(s)}~{FormatYm(e)}"
+            );
+        }
+
+        private static List<DirectoryFacetItemDto> BuildFilledItems(
+            List<int> availableKeys,
+            List<(int Start, int End)> configuredRanges,
+            Func<int, string> labelSingle,
+            Func<int, int, string> labelRange)
+        {
+            var items = new List<DirectoryFacetItemDto>();
+            if (availableKeys.Count == 0) return items;
+
+            var ranges = configuredRanges
+                .Select(r => (Start: Math.Min(r.Start, r.End), End: Math.Max(r.Start, r.End)))
+                .ToList();
+
+            int i = 0;
+            while (i < availableKeys.Count)
+            {
+                var key = availableKeys[i];
+
+                var rangeIdx = FindRangeIndex(ranges, key);
+                if (rangeIdx >= 0)
+                {
+                    var r = ranges[rangeIdx];
+
+                    if (HasAnyKeyInRange(availableKeys, i, r.Start, r.End))
+                    {
+                        items.Add(new DirectoryFacetItemDto
+                        {
+                            Start = r.Start,
+                            End = r.End,
+                            Label = labelRange(r.Start, r.End)
+                        });
+
+                        while (i < availableKeys.Count && availableKeys[i] <= r.End) i++;
+                    }
+                    else
+                    {
+                        items.Add(new DirectoryFacetItemDto
+                        {
+                            Start = key,
+                            End = key,
+                            Label = labelSingle(key)
+                        });
+                        i++;
+                    }
+
+                    continue;
+                }
+
+                // 不在任何 configured range → 單點補洞
+                items.Add(new DirectoryFacetItemDto
+                {
+                    Start = key,
+                    End = key,
+                    Label = labelSingle(key)
+                });
+                i++;
+            }
+
+            return items;
+
+            static int FindRangeIndex(List<(int Start, int End)> ranges, int key)
+            {
+                for (int idx = 0; idx < ranges.Count; idx++)
+                {
+                    var r = ranges[idx];
+                    if (key >= r.Start && key <= r.End) return idx;
+                }
+                return -1;
+            }
+
+            static bool HasAnyKeyInRange(List<int> keys, int startIndex, int start, int end)
+            {
+                for (int j = startIndex; j < keys.Count; j++)
+                {
+                    if (keys[j] < start) continue;
+                    if (keys[j] > end) break;
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        #endregion
+
     }
 }

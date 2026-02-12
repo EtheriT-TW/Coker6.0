@@ -39,6 +39,7 @@ using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using System.Diagnostics;
@@ -73,6 +74,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IPermissionsAppService permissionsAppService;
         private readonly IBonusManagementAppService bonusManagementAppService;
         private readonly StringHandler stringHandler;
+        private readonly LoginUserData loginUserData;
         private readonly IWebHostEnvironment _env;
 
         public PageController(
@@ -98,6 +100,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IAccountAppService accountAppService,
             IPermissionsAppService permissionsAppService,
             StringHandler stringHandler,
+            LoginUserData loginUserData,
             IWebHostEnvironment env
         )
         {
@@ -123,6 +126,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.accountAppService = accountAppService;
             this.permissionsAppService = permissionsAppService;
             this.bonusManagementAppService = bonusManagementAppService;
+            this.loginUserData = loginUserData;
             this._env = env;
         }
         private bool UseLegacyPathHandling(string website, string key, string option)
@@ -138,8 +142,18 @@ namespace EtheriT.Coker.Web.Public.Controllers
             }
             return check;
         }
+        public async Task<IActionResult> EmbedAsync(long id) {
+            var orgName = await loginUserData.GetWebsiteOrgName();
+            var o = await articleAppService.FindArticleOrgName(id);
+            if (o.Success && !string.IsNullOrEmpty(o.Message)) orgName = o.Message;
+            var resule = await IndexAsync(orgName, "search", "article", id);
+            ViewData["VisibleHeader"] = false;
+            ViewData["VisibleFooter"] = false;
+            ViewBag.ShowSwitchPage = false;
+            return resule;
+        }
 
-        public async Task<IActionResult> IndexAsync(string? website, string? key, string? option, long? detailId, string? search)
+        public async Task<IActionResult> IndexAsync(string? website, string? key, string? option, long? detailId, string? search = null)
         {
             if (!ModelState.IsValid)
                 return StatusCode(StatusCodes.Status404NotFound);
@@ -600,8 +614,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.SearchWord = JsonConvert.SerializeObject(search);
             ViewBag.Nonce = nonce;
             ViewData["nonce"] = nonce;
-            ViewBag.storeBuyState = model.storeSet.storeBuyState;
+            ViewBag.storeBuyState = model.storeSet.storeBuyState ?? "noPay";
             ViewBag.IsProduction = model.IsProduction;
+            ViewBag.ShowSwitchPage = true;
             switch (model.Level)
             {
                 case WebsiteLevelEnum.會員:

@@ -48,5 +48,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             return await custSearchAppService.GetSearchKeyList(dto);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> GetFacet(LongIdDto dto) {
+            return await directoryAppService.GetFacetAsync(dto.Id);
+        }
     }
 }

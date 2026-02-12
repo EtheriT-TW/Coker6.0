@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using DevExpress.XtraReports.Design.ParameterEditor;
 using EtheriT.Coker.Application.Authorizaion.Dto;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Shared.Authorization;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Webs;
 using EtheriT.Coker.Application.Webs.Dto;
 using EtheriT.Coker.Core.Entity;
 using EtheriT.Coker.Core.Models;
@@ -237,6 +239,12 @@ namespace EtheriT.Coker.Application
             }
             catch { }
             return name;
+        }
+        public async Task<List<WebSiteOrgNameDto>> GetAllFrontWebsiteIdAndOrgName() {
+            var websiteId = GetFrontWebsiteId();
+            var orgNames = GetFrontChildOrgName();
+            var w = await db.Websites.Where(e => orgNames.Contains(e.OrgName) || websiteId == e.Id).Select(e => new WebSiteOrgNameDto { Id = e.Id,Level = e.Level, OrgName = e.OrgName }).ToListAsync();
+            return w ?? new List<WebSiteOrgNameDto>();
         }
         public async Task<string> GetWebsiteLocal() {
             string local = "";

@@ -1,4 +1,4 @@
-﻿@using System.Web;
+﻿@using System.Web
 @using EtheriT.Coker.Application.Shared.Dto.WebMenu
 @using EtheriT.Coker.Application.Shared.Dto.enumType;
 @using EtheriT.Coker.Web.Public.Models;
@@ -166,7 +166,7 @@
 }
 
 <Content id="main" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
-@if (Model.PageData != null && Model.PageData.holdPage == HoldPageNameEnum.Article)
+@if (ViewBag.ShowSwitchPage && Model.PageData != null && Model.PageData.holdPage == HoldPageNameEnum.Article)
 {
     <div id="SwitchPage" class="container my-5 justify-content-center">
         <a href="" title="" target="_self" class="btn_prev disabled"><span class="translate">@L.get("Prev")</span></a>

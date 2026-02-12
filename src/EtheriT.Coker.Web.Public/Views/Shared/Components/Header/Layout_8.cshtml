@@ -251,7 +251,12 @@
                 </a>
             }
             <div id="google_translate_element"></div>
-            @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+            @{
+                bool shoppingEnable = ViewBag.ShoppingEnable as bool? ?? false;
+                bool hasShoppingCar = ViewBag.HasShoppingCar as bool? ?? false;
+                string storeBuyState = ViewBag.storeBuyState as string ?? "";
+            }
+            @if (shoppingEnable && hasShoppingCar && storeBuyState.IndexOf("noPay") < 0)
             {
                 <div id="Cart_Dropdown_Parent" class="d-flex px-1">
                     <button id="btn_car_dropdown" class="bg-transparent border-0 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">

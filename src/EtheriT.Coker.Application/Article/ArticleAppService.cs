@@ -621,5 +621,22 @@ namespace EtheriT.Coker.Application.Article
             }
             return result;
         }
+        public async Task<ResponseMessageDto> FindArticleOrgName(long Id) {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try {
+                var siteData = await loginUserData.GetAllFrontWebsiteIdAndOrgName();
+                var siteids = siteData.Select(x => x.Id).ToList();
+                var ariricle = await db.Article.Where(e => siteids.Contains(e.FK_WebsiteId) && e.Id == Id && !e.RemovedFromShelves).FirstOrDefaultAsync();
+                if (ariricle == null) throw new Exception("文章不存在");
+                var orgName = siteData.FirstOrDefault(e => e.Id == ariricle.FK_WebsiteId)?.OrgName ?? "";
+                if(string.IsNullOrEmpty(orgName)) throw new Exception("文章不存在於您的網站或子網站");
+                response.Message = orgName;
+                response.Success = true;
+            }
+            catch (Exception e) {
+                response.Message = e.Message;
+            }
+            return response;
+        }
     }
 }

@@ -107,6 +107,10 @@
             const opt = self._mergeDefaults(userOpt);
             self.opt = opt;
 
+            // route guards
+            this._ignoreNextRouteOnce = false;
+            this._lastHandledHash = "";
+
             if (!global.bootstrap || !global.bootstrap.Offcanvas) {
                 throw new Error("Bootstrap Offcanvas not found. Please load bootstrap.bundle.js first.");
             }
@@ -159,11 +163,22 @@
                 visibleCount: opt.defaults.visibleCount,
                 on: { itemClick: (payload) => this._onItemClick(payload) },
             });
+            window.__g3dGallery = this.gallery;
+
+            $(document).off("catalog:rendered.g3d").on("catalog:rendered", ".catalog_frame", function () {
+                const g = window.__g3dGallery;
+                if (!g || typeof g.refreshFromDom !== "function") return;
+                g.refreshFromDom({ preserveIndex: true });
+            });
 
             // 進站還原（如果網址帶 g3d:）
             this.restoreFromUrlState();
+            this._bootInitialMenu();
 
             // 路由監聽：只處理 g3d: 狀態
+            if (window.onhashchange === hashChangeDirectory) {
+                window.onhashchange = null;
+            }
             window.addEventListener("hashchange", () => this._onRouteChanged());
             window.addEventListener("popstate", () => this._onRouteChanged());
         },
@@ -174,7 +189,7 @@
                 selectors: {
                     mainStage: ".main-stage",
                     stage: ".gallery3d-stage",
-                    menuItem: "[data-dir-id],[data-dirid],[data-menu-id],[data-menuid]",
+                    menuItem: ".edge-link[data-dirid]",
                     facetItem: "[data-role='facet-item']",
                     facetContainer: "[data-role='facet-selector']",
                 },
@@ -207,10 +222,22 @@
 
         /* -------------------- routing (正式版只處理 g3d:) -------------------- */
         _onRouteChanged() {
-            const raw = (location.hash || "").replace(/^#/, "");
-            if (raw.toLowerCase().startsWith("g3d:")) {
-                this.restoreFromUrlState();
+            // ✅ 這次 route 變化是我們自己 commit 造成的：忽略一次，避免 restore 重跑造成 Facet API 重載
+            if (this._ignoreNextRouteOnce) {
+                this._ignoreNextRouteOnce = false;
+                return;
             }
+
+            const raw = (location.hash || "").replace(/^#/, "");
+
+            // 只處理 g3d: 狀態
+            if (!raw.toLowerCase().startsWith("g3d:")) return;
+
+            // 同一個 hash 不重複處理（防止某些瀏覽器/插件造成重入）
+            if (raw === this._lastHandledHash) return;
+            this._lastHandledHash = raw;
+
+            this.restoreFromUrlState();
         },
 
         _parseG3dStateFromUrl() {
@@ -248,6 +275,10 @@
         _commitG3dState(state, { replace = false } = {}) {
             const hash = this._buildG3dHash(state);
             const url = location.pathname + location.search + hash;
+
+            // ✅ 可能觸發 hashchange：先標記忽略一次，避免 restoreFromUrlState 又去打 onStateChanged
+            this._ignoreNextRouteOnce = true;
+
             if (replace) history.replaceState(state, "", url);
             else history.pushState(state, "", url);
         },
@@ -259,13 +290,13 @@
         },
 
         _syncFacetActiveByValue(facetValue) {
-            const items = qsa(document, self.opt.selectors.facetItem);
+            const items = qsa(document, this.opt.selectors.facetItem);
             if (!items.length) return;
 
             const target = items.find(x => String(x.dataset.facetValue || "") === String(facetValue || ""));
             if (!target) return;
 
-            const container = target.closest(self.opt.selectors.facetContainer) || target.parentElement;
+            const container = target.closest(this.opt.selectors.facetContainer) || target.parentElement;
             if (container) qsa(container, ".active").forEach(x => x.classList.remove("active"));
             target.classList.add("active");
         },
@@ -316,22 +347,23 @@
         /* -------------------- main stage resize -------------------- */
         _bindResize() {
             const resize = () => {
-                if (!self.els.mainStage) return;
+                if (!this.els || !this.els.mainStage) return;
 
-                const headerH = document.querySelector("header")?.offsetHeight ?? 0;
-                const footerH = document.querySelector("footer")?.offsetHeight ?? 0;
+                let headerH_tem = document.querySelector("header")?.offsetHeight ?? 0;
+                headerH_tem = headerH_tem == 0 ? document.querySelector("header .navbar")?.offsetHeight ?? 0 : headerH_tem;
+                const headerH = headerH_tem;
+                const footerH = document.querySelector(`[data-role="facet-selector"]`)?.offsetHeight ?? 0;
 
                 const availH = window.innerHeight - headerH - footerH;
                 const availW = window.innerWidth;
 
                 const ratio = availW / availH;
                 let w, h;
-
                 if (ratio > this.imgRatio) { h = availH; w = h * this.imgRatio; }
                 else { w = availW; h = w / this.imgRatio; }
 
-                self.els.mainStage.style.width = w + "px";
-                self.els.mainStage.style.height = h + "px";
+                this.els.mainStage.style.width = w + "px";
+                this.els.mainStage.style.height = h + "px";
             };
 
             window.addEventListener("resize", resize);
@@ -341,10 +373,9 @@
         /* -------------------- menu selector (menus -> dirId) -------------------- */
         _bindMenuSelector() {
             document.addEventListener("click", (e) => {
-                const el = e.target.closest(self.opt.selectors.menuItem);
+                const el = e.target.closest(this.opt.selectors.menuItem);
                 if (!el) return;
 
-                // ✅ 正式版只接受：dirId/menuId 類 data-*
                 const menuKey =
                     el.dataset.dirId ||
                     el.dataset.dirid ||
@@ -364,6 +395,8 @@
                     st.menu = String(menuKey);
                     st.facet = st.facet || this._getActiveFacetValue();
                     this._commitG3dState(st, { replace: true });
+
+                    // ✅ menu click 本來就要換資料：這裡照舊，不靠 route restore
                     callDirectoryFacet("onStateChanged", { menu: st.menu, facet: st.facet }, ctx);
                 }
             });
@@ -372,14 +405,13 @@
         /* -------------------- facet selector (facet) -------------------- */
         _bindFacetSelector() {
             document.addEventListener("click", (e) => {
-                const el = e.target.closest(self.opt.selectors.facetItem);
+                const el = e.target.closest(this.opt.selectors.facetItem);
                 if (!el) return;
 
-                // ✅ 正式版：只接受 data-facet-value
                 const facetValue = String(el.dataset.facetValue || "");
                 if (!facetValue) return;
 
-                const container = el.closest(self.opt.selectors.facetContainer) || el.parentElement;
+                const container = el.closest(this.opt.selectors.facetContainer) || el.parentElement;
                 if (container) qsa(container, ".active").forEach(x => x.classList.remove("active"));
                 el.classList.add("active");
 
@@ -391,6 +423,8 @@
                     st.facet = facetValue;
                     st.menu = st.menu || this._getActiveMenuKey();
                     this._commitG3dState(st, { replace: true });
+
+                    // ✅ facet click 本來就要換資料：這裡照舊，不靠 route restore
                     callDirectoryFacet("onStateChanged", { menu: st.menu, facet: st.facet }, ctx);
                 }
             });
@@ -401,13 +435,15 @@
             const st = this._parseG3dStateFromUrl();
             if (!st || !st.item) return;
 
+            // 先同步 UI (menu/facet/mode/canvas)
             if (st.menu) this._setActiveMenuKey(st.menu);
             if (st.facet) this._syncFacetActiveByValue(st.facet);
 
             this._setExpanded(String(st.mode || "").toLowerCase() === "wide");
             this.canvas.show();
 
-            const url = self.opt.urlBuilder({
+            // 先載 viewer
+            const url = this.opt.urlBuilder({
                 id: st.item,
                 item: st.item,
                 menu: st.menu,
@@ -415,7 +451,23 @@
             });
             if (url) this.viewer.loadUrl(url);
 
-            callDirectoryFacet("onStateChanged", { menu: st.menu || "", facet: st.facet || "" }, { source: "restore" });
+            // ✅ 關鍵：只有當「menu/facet 跟目前狀態不同」才呼叫 onStateChanged，避免 hashchange 造成 Facet API 重跑
+            const currentMenu = this._getActiveMenuKey();
+            const currentFacet = this._getActiveFacetValue();
+
+            const needMenuSync = (st.menu || "") !== (currentMenu || "");
+            const needFacetSync = (st.facet || "") !== (currentFacet || "");
+
+            // 另外：如果目前 facet 按鈕區根本還沒 render（第一次進來），也需要讓 DirectoryFacet 跑一次把 facet 生出來
+            const facetUiReady = document.querySelectorAll(this.opt.selectors.facetItem).length > 0;
+
+            if (needMenuSync || needFacetSync || !facetUiReady) {
+                callDirectoryFacet(
+                    "onStateChanged",
+                    { menu: st.menu || "", facet: st.facet || "" },
+                    { source: "restore" }
+                );
+            }
         },
 
         /* -------------------- Gallery item click -------------------- */
@@ -437,8 +489,38 @@
 
             this._commitG3dState({ menu, facet, item: String(id), mode }, { replace: false });
 
-            const url = self.opt.urlBuilder({ id: String(id), item: String(id), menu, facet });
+            const url = this.opt.urlBuilder({ id: String(id), item: String(id), menu, facet });
             if (url) this.viewer.loadUrl(url);
+        },
+
+        _bootInitialMenu() {
+            const st = this._parseG3dStateFromUrl();
+            if (st && st.item) return;
+
+            const raw = (location.hash || "").replace(/^#/, "").trim();
+            let menuFromHash = "";
+
+            if (raw.toLowerCase().startsWith("menu-")) {
+                menuFromHash = raw.slice(5).trim();
+            }
+
+            if (menuFromHash) {
+                this._setActiveMenuKey(menuFromHash);
+                callDirectoryFacet("onMenuChanged", String(menuFromHash), { source: "boot-hash" });
+                return;
+            }
+
+            const def =
+                document.querySelector(".edge-menu [data-default='1'][data-dirid], .edge-menu [data-default='1'][data-dir-id]") ||
+                document.querySelector(".edge-menu [data-dirid], .edge-menu [data-dir-id]");
+
+            if (!def) return;
+
+            const dirId = def.dataset.dirId || def.dataset.dirid || def.getAttribute("data-dirid") || def.getAttribute("data-dir-id") || "";
+            if (!dirId) return;
+
+            this._setActiveMenuKey(dirId);
+            callDirectoryFacet("onMenuChanged", String(dirId), { source: "boot", el: def });
         },
     };
 

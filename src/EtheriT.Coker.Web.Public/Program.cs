@@ -503,6 +503,12 @@ app.MapControllerRoute(
     pattern: "api/{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
+    name: "Embed",
+    pattern: "embed/posts/{id}",
+    defaults: new { controller = "Page", action = "Embed" }
+);
+
+app.MapControllerRoute(
     name: "Page",
     pattern: "{website}/{key}/{option?}/{detailId?}/{search?}",
     defaults: new { controller = "Page", action = "Index" },

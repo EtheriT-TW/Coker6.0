@@ -31,7 +31,7 @@
             .then(response => response.json())
             .then(data => {
                 const container = modal.querySelector('.modal-body .otherLoginList');
-
+                if (!container) return;
                 const enabledKeys = Object.entries(data)
                     .filter(([key, value]) => key.endsWith('Enabled') && value === true);
 

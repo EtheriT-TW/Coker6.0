@@ -53,6 +53,7 @@
         "wwwroot/Shared/js/BGCanvas.js",
         "wwwroot/Shared/js/Contact.js",
         "wwwroot/Shared/js/DefineModule.js",
+        "wwwroot/Shared/js/DirectoryFacet.js",
         "wwwroot/Shared/js/DirectoryGetData.js",
         "wwwroot/Shared/js/Frame.js",
         "wwwroot/Shared/js/FlipBook.js",

@@ -112,10 +112,22 @@
         background-attachment: local;
     }
 /* Firefox */
+.gallery-offcanvas .offcanvas-header {
+    position:absolute;
+    top:0;
+    right:1rem;
+    z-index:5;
+}
+    .gallery-offcanvas .offcanvas-header .btn-close {
+        border: none;
+        font-size: 1rem;
+        font-weight: bold;
+    }
 .gallery-offcanvas .offcanvas-body {
     scrollbar-width: thin;
     scrollbar-color: var(--gallery-scroll-thumb) var(--gallery-scroll-track);
     z-index: 1;
+    padding: 0;
 }
 
     .gallery-offcanvas .offcanvas-body .canvas-image-wrap {

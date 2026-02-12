@@ -51,6 +51,12 @@
                 items: Array.isArray(opts.items) ? opts.items : null,
                 renderItem: (typeof opts.renderItem === 'function') ? opts.renderItem : null,
                 visibleCount: 30,
+                // items 會插入/搜尋的容器（預設：stage 內的 data-role=catalog-items）
+                itemsHostSelector: '[data-role="catalog-items"]',
+                // 少於此數量時強制 grid（預設 6；你可設成 visibleCount）
+                gridThreshold: (typeof opts.gridThreshold === 'number' ? opts.gridThreshold : 6),
+                // items 變更後是否自動依張數切換模式
+                autoMode: (typeof opts.autoMode === 'boolean' ? opts.autoMode : true),
                 toolbar: true,
                 i18n,
                 on: Object.assign({ itemClick: null }, (opts.on || {})),
@@ -63,13 +69,21 @@
             this.holderEl = this.wrapperEl.closest(this.opts.holderSelector) || document.querySelector(this.opts.holderSelector);
 
             // state
-            this.allCards = Array.from(this.stageEl.querySelectorAll(this.opts.cardSelector));
+            // items host（真正插卡片的容器）
+            this.itemsHostEl = this.stageEl.querySelector(this.opts.itemsHostSelector) || this.stageEl;
+            // state（只抓 items host 內的 cards，避免 templates 被算進去）
+            this.allCards = Array.from(this.itemsHostEl.querySelectorAll(this.opts.cardSelector));
             this.cards = [];
             this.extraCards = [];
 
             this.total = 0;
             this.displayMode = 'carousel';
             this.forceGridMode = false;
+
+            // 使用者手動選擇模式（null=未選；'grid'/'carousel'）
+            this.userSelectedMode = null;
+            // 是否已完成一次完整初始化（toolbar/bind/layout）
+            this._inited = false;
 
             this.indexFloat = 0;
             this.autoTimer = null;
@@ -96,7 +110,21 @@
             if (Array.isArray(this.opts.items)) {
                 this.setItems(this.opts.items, { silent: true });
             }
-            if (!this.allCards.length) return this;
+            // 若此時尚無卡片，也先完成 toolbar/事件初始化，等資料進來再 refresh/setItems
+            if (!this._inited) {
+                if (this.opts.toolbar) this._ensureToolbar();
+                this._bindEvents();
+                this._inited = true;
+            }
+            if (!this.allCards.length) {
+                this.total = 0;
+                this.forceGridMode = this._shouldForceGrid();
+                this.displayMode = 'grid';
+                if (this.toolbarRowEl) this.toolbarRowEl.classList.add('d-none');
+                if (this.btnMode) this.btnMode.disabled = true;
+                this._switchToGrid(true);
+                return this;
+            }
 
             const maxItems = (typeof this.opts.maxItems === 'number' && this.opts.maxItems > 0)
                 ? this.opts.maxItems
@@ -115,7 +143,7 @@
             this.extraCards = this.allCards.slice(limit);
 
             this.total = this.cards.length;
-            this.forceGridMode = this.total < 6;
+            this.forceGridMode = this._shouldForceGrid();
             this.displayMode = this.forceGridMode ? 'grid' : 'carousel';
 
             // grid-only 標記（保持原本「格狀可看全部」的行為）
@@ -128,11 +156,12 @@
             this._ensureReflections();
 
             // 建工具列（你的選項：A，工具列屬於元件的一部分）
-            if (this.opts.toolbar) this._ensureToolbar();
-
-            // 綁事件
-            this._bindEvents();
-
+            // 建工具列 / 綁事件（只做一次）
+            if (!this._inited) {
+                if (this.opts.toolbar) this._ensureToolbar();
+                this._bindEvents();
+                this._inited = true;
+            }
             // 初次 layout / 自動播放
             if (this.displayMode === 'grid') this._syncGridColumnsByTotal();
             if (this.forceGridMode) {
@@ -142,6 +171,16 @@
                 this._startAuto();
             }
             return this;
+        }
+
+
+        /** 內部：依目前設定判斷是否應強制 grid（少卡片） */
+        _shouldForceGrid() {
+            const t = (typeof this.opts.gridThreshold === 'number' && this.opts.gridThreshold > 0)
+                ? this.opts.gridThreshold
+                : 6;
+            const n = (typeof this.totalAll === "number") ? this.totalAll : this.total;
+            return n < t;
         }
 
         destroy() {
@@ -155,8 +194,27 @@
  * 取得目前 items（由 DOM 反推）
  */
         getItems() {
-            const cards = Array.from(this.stageEl.querySelectorAll(this.opts.cardSelector));
+            const cards = Array.from(this.itemsHostEl.querySelectorAll(this.opts.cardSelector));
             return cards.map(card => this._extractItemFromCard(card));
+        }
+
+        /**
+         * 從目前 DOM（itemsHost）重新抓 card，並依張數/模式重新 layout
+         * - 外部若採用「先 append DOM 再觸發」可呼叫這個
+         */
+        refreshFromDom(opt) {
+            const options = opt || {};
+            const preserveIndex = options.preserveIndex !== false;
+            const prevIndex = this.indexFloat;
+            this._stopAuto();
+            if (!this._inited) {
+                if (this.opts.toolbar) this._ensureToolbar();
+                this._bindEvents();
+                this._inited = true;
+            }
+            this._stopInertia();
+            this.allCards = Array.from(this.itemsHostEl.querySelectorAll(this.opts.cardSelector));
+            this._refreshAfterItemsChanged({ preserveIndex, prevIndex });
         }
 
         /**
@@ -174,10 +232,16 @@
             this._stopInertia();
 
             // 先建立 template（優先用現有第一張 card）
+            if (!this._inited) {
+                if (this.opts.toolbar) this._ensureToolbar();
+                this._bindEvents();
+                this._inited = true;
+            }
+
             const template = this._getCardTemplate();
 
             // 清空 stage
-            this.stageEl.innerHTML = '';
+            this.itemsHostEl.innerHTML = '';
 
             // 重建 cards
             (items || []).forEach((it) => {
@@ -186,11 +250,11 @@
                 card.classList.remove('grid-only', 'is-front');
 
                 this._applyItemToCard(card, it);
-                this.stageEl.appendChild(card);
+                this.itemsHostEl.appendChild(card);
             });
 
             // 重新抓卡片集合
-            this.allCards = Array.from(this.stageEl.querySelectorAll(this.opts.cardSelector));
+            this.allCards = Array.from(this.itemsHostEl.querySelectorAll(this.opts.cardSelector));
 
             // 重新切分 / 套狀態 / layout
             this._refreshAfterItemsChanged({ preserveIndex, prevIndex });
@@ -200,6 +264,34 @@
                 // 用 event delegation + elementFromPoint，因此通常不需要重綁。
             }
         }
+        /**
+         * 從目前 DOM（itemsHostEl）重新同步 cards，並依據數量自動切換 grid / carousel，更新 toolbar。
+         * 使用情境：外部（例如 DirectoryDataInsert）已經把 .gallery3d-card 插好了，只需要讓元件「重新算一次」。
+         * @param {{preserveIndex?:boolean}} opt
+         */
+        syncFromDom(opt) {
+            const options = opt || {};
+            const prevIndex = this.indexFloat;
+
+            this._stopAuto();
+            this._stopInertia();
+
+            if (!this._inited) {
+                if (this.opts.toolbar) this._ensureToolbar();
+                this._bindEvents();
+                this._inited = true;
+            }
+
+            this.allCards = Array.from(this.itemsHostEl.querySelectorAll(this.opts.cardSelector));
+
+            this._refreshAfterItemsChanged({
+                preserveIndex: !!options.preserveIndex,
+                prevIndex
+            });
+            return this;
+        }
+
+
 
         /**
          * 新增 item（預設 append，亦可指定插入 index）
@@ -212,13 +304,13 @@
 
             this._applyItemToCard(card, item);
 
-            const cards = Array.from(this.stageEl.querySelectorAll(this.opts.cardSelector));
+            const cards = Array.from(this.itemsHostEl.querySelectorAll(this.opts.cardSelector));
             const insertAt = (typeof index === 'number') ? Math.max(0, Math.min(index, cards.length)) : cards.length;
 
-            if (insertAt >= cards.length) this.stageEl.appendChild(card);
-            else this.stageEl.insertBefore(card, cards[insertAt]);
+            if (insertAt >= cards.length) this.itemsHostEl.appendChild(card);
+            else this.itemsHostEl.insertBefore(card, cards[insertAt]);
 
-            this.allCards = Array.from(this.stageEl.querySelectorAll(this.opts.cardSelector));
+            this.allCards = Array.from(this.itemsHostEl.querySelectorAll(this.opts.cardSelector));
             this._refreshAfterItemsChanged({ preserveIndex: true, prevIndex: this.indexFloat });
         }
 
@@ -226,7 +318,7 @@
          * 移除 item：可傳 index 或 predicate(card, index) => boolean
          */
         removeItem(indexOrPredicate) {
-            const cards = Array.from(this.stageEl.querySelectorAll(this.opts.cardSelector));
+            const cards = Array.from(this.itemsHostEl.querySelectorAll(this.opts.cardSelector));
             let removeIndex = -1;
 
             if (typeof indexOrPredicate === 'number') {
@@ -239,7 +331,7 @@
 
             cards[removeIndex].remove();
 
-            this.allCards = Array.from(this.stageEl.querySelectorAll(this.opts.cardSelector));
+            this.allCards = Array.from(this.itemsHostEl.querySelectorAll(this.opts.cardSelector));
             this._refreshAfterItemsChanged({ preserveIndex: true, prevIndex: this.indexFloat });
             return true;
         }
@@ -248,7 +340,7 @@
          * 更新 item：以 index 找到卡片後套用 patch（部分更新）
          */
         updateItem(index, patch) {
-            const cards = Array.from(this.stageEl.querySelectorAll(this.opts.cardSelector));
+            const cards = Array.from(this.itemsHostEl.querySelectorAll(this.opts.cardSelector));
             if (index < 0 || index >= cards.length) return false;
 
             const card = cards[index];
@@ -269,7 +361,7 @@
                 ? this.opts.maxItems
                 : null;
 
-            this.allCards = Array.from(this.stageEl.querySelectorAll(this.opts.cardSelector));
+            this.allCards = Array.from(this.itemsHostEl.querySelectorAll(this.opts.cardSelector));
             if (maxItems != null && this.allCards.length > maxItems) {
                 this.allCards.slice(maxItems).forEach(el => el.remove());
                 this.allCards = this.allCards.slice(0, maxItems);
@@ -278,23 +370,36 @@
             this.cards = this.allCards.slice(0, limit);
             this.extraCards = this.allCards.slice(limit);
 
+            const prevForced = this.forceGridMode;
+
+            this.totalAll = this.allCards.length; 
             this.total = this.cards.length;
-            this.forceGridMode = this.total < 6;
+            this.forceGridMode = this._shouldForceGrid();
 
-            // grid-only 標記
-            this.extraCards.forEach(c => c.classList.add('grid-only'));
-            this.cards.forEach(c => c.classList.remove('grid-only'));
+            this.allCards.forEach(el => el.classList.remove('grid-only'));
+            this.extraCards.forEach(el => el.classList.add('grid-only'));
 
-            this._applyCardWidth();
+            // ✅ 有卡片就一定要有 cardWidthRatio；首次資料進來尤其需要
+            if (this.total > 0) {
+                this._applyCardWidth();
+            }
+
+            // ✅ 外部 append 的卡片，倒影可能不存在
             this._ensureReflections();
 
+            // toolbar / mode 按鈕狀態
             if (this.forceGridMode) {
-                // 少卡片：維持你原本「強制 grid」策略
                 if (this.toolbarRowEl) this.toolbarRowEl.classList.add('d-none');
-                this._switchToGrid(true);
-                return;
+                if (this.btnMode) this.btnMode.disabled = true;
             } else {
                 if (this.toolbarRowEl) this.toolbarRowEl.classList.remove('d-none');
+                if (this.btnMode) this.btnMode.disabled = false;
+            }
+
+            if (this.forceGridMode) {
+                // 少卡片：強制 grid（不讓使用者切換）
+                this._switchToGrid(true);
+                return;
             }
 
             // preserve index
@@ -305,23 +410,27 @@
             } else {
                 this.indexFloat = 0;
             }
-            if (this.displayMode === 'grid') {
-                this._switchToGrid(true);
-                this._syncGridColumnsByTotal(); // 保險
-            } 
-            // 回到目前模式做 layout
-            if (this.displayMode === 'grid') {
-                this._switchToGrid(true);
-            } else {
-                this._layout();
-                if (!this.userPaused) this._startAuto();
+            // 若上一輪是強制 grid（少卡），而現在已解除，且使用者沒有手動鎖定 grid，則自動切回 carousel
+            if (this.opts.autoMode && prevForced && this.displayMode === 'grid' && this.userSelectedMode !== 'grid') {
+                this._switchToCarousel();
+                return;
             }
+
+            if (this.displayMode === 'grid') {
+                this._switchToGrid(true);
+                this._syncGridColumnsByTotal();
+                return;
+            }
+
+            // carousel
+            this._layout();
+            if (!this.userPaused) this._startAuto();
         }
 
         /** 內部：取得 card template（優先 clone 現有第一張） */
         _getCardTemplate() {
             // 若 stage 內本來就有 card，用第一張當 template
-            const existing = this.stageEl.querySelector(this.opts.cardSelector);
+            const existing = this.itemsHostEl.querySelector(this.opts.cardSelector);
             if (existing) return existing.cloneNode(true);
 
             // fallback：如果完全沒有任何 card（純 items 初始化），用 minimal template
@@ -352,6 +461,10 @@
             const cap = card.querySelector('figcaption');
             if (cap) cap.textContent = (it.title != null) ? String(it.title) : '';
 
+            // ✅ id：統一寫到 card 的 data-id，方便外部/內部追蹤
+            if (it.id != null && it.id !== '') card.setAttribute('data-id', String(it.id));
+            else card.removeAttribute('data-id');
+
             // 你若有 link/btn 等延伸欄位，也可以在這裡套用
             // e.g. card.dataset.id = it.id;
         }
@@ -360,7 +473,14 @@
         _extractItemFromCard(card) {
             const img = card.querySelector('img.main');
             const cap = card.querySelector('figcaption');
+
+            const id =
+                (card && card.dataset && (card.dataset.id || card.dataset.articleId || card.dataset.postId)) ||
+                card.getAttribute("data-id") ||
+                "";
+
             return {
+                id: id,
                 src: img ? img.src : '',
                 title: cap ? cap.textContent.trim() : ''
             };
@@ -505,8 +625,13 @@
             if (this.btnMode) {
                 this.btnMode.addEventListener('click', () => {
                     if (this.forceGridMode) return;
-                    if (this.displayMode === 'carousel') this._switchToGrid(false);
-                    else this._switchToCarousel();
+                    if (this.displayMode === 'carousel') {
+                        this.userSelectedMode = 'grid';
+                        this._switchToGrid(false);
+                    } else {
+                        this.userSelectedMode = 'carousel';
+                        this._switchToCarousel();
+                    }
                 });
             }
 
@@ -622,7 +747,6 @@
 
             const stepRad = 2 * Math.PI / total;
             const minRadiusByChord = (cardWidth * spacingFactor) / (2 * Math.sin(stepRad / 2));
-
             const minRadius = wrapperRect.width * 0.30;
             const maxRadius = wrapperRect.width * 1.20;
 

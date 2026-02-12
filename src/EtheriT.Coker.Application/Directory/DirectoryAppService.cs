@@ -1011,8 +1011,8 @@ namespace EtheriT.Coker.Application.Directory
                             break;
                     }
 
-                    var page = (int)dto.Page;
-                    var shownum = (int)dto.ShowNum == -500 ? DataIds.Count() : (int)dto.ShowNum;
+                    var page = dto.Page == null ? 1 : dto.Page.Value;
+                    var shownum = dto.ShowNum==null || dto.ShowNum.Value <= 0 ? DataIds.Count() : dto.ShowNum.Value;
                     if (dto.MaxLen == null) dto.MaxLen = 0;
                     if (DataIds.Count < dto.MaxLen || dto.MaxLen == 0)
                     {
@@ -1941,12 +1941,11 @@ namespace EtheriT.Coker.Application.Directory
 
             try
             {
-                var websiteId = await loginUserData.GetWebsiteId();
+                var websiteId = loginUserData.GetFrontWebsiteId();
 
-                // 1) Directory + Ranges
                 var dir = await db.Directory
                     .Include(d => d.DirectoryFacetRanges)
-                    .FirstOrDefaultAsync(d => d.Id == directoryId && d.FK_WebsiteId == websiteId && !d.IsDeleted);
+                    .FirstOrDefaultAsync(d => d.Id == directoryId && d.FK_WebsiteId == websiteId);
 
                 if (dir == null)
                 {
@@ -1955,31 +1954,35 @@ namespace EtheriT.Coker.Application.Directory
                     return res;
                 }
 
-                // 2) Only 商品/文章 have facet requirement, but 商品不做日期 facet（依你前面規格）
                 var dirType = (DirectoryTypeEnum)dir.Type;
 
-                // 如果不是商品/文章 → 回空
                 if (dirType != DirectoryTypeEnum.商品 && dirType != DirectoryTypeEnum.文章)
                 {
                     res.Success = true;
-                    res.Object = new DirectoryGetFacetResponseDto { DirectoryId = directoryId };
+                    res.Object = new DirectoryGetFacetResponseDto
+                    {
+                        DirectoryId = directoryId,
+                        Items = new List<DirectoryFacetItemDto>() // ✅ 永遠回空陣列，不回 null
+                    };
                     return res;
                 }
 
-                // 商品：不產生任何日期 facet；若 FacetType=Tag 仍可回 Tag（看你是否要）
-                // 目前先遵照你「商品不應該有日期分類」：日期型全部回空
                 if (dirType == DirectoryTypeEnum.商品 &&
                     (dir.FacetType == DirectoryFacetTypeEnum.Year ||
                      dir.FacetType == DirectoryFacetTypeEnum.Month ||
                      dir.FacetType == DirectoryFacetTypeEnum.YearMonth))
                 {
                     res.Success = true;
-                    res.Object = new DirectoryGetFacetResponseDto { DirectoryId = directoryId };
+                    res.Object = new DirectoryGetFacetResponseDto
+                    {
+                        DirectoryId = directoryId,
+                        Items = new List<DirectoryFacetItemDto>() // ✅ 永遠回空陣列，不回 null
+                    };
                     return res;
                 }
 
-                // 3) Build items by facet type
-                List<DirectoryFacetItemDto> items;
+                // ✅ 先給預設空陣列，避免任何分支漏 assign 變成 null
+                var items = new List<DirectoryFacetItemDto>();
 
                 switch (dir.FacetType)
                 {
@@ -1987,14 +1990,9 @@ namespace EtheriT.Coker.Application.Directory
                     case DirectoryFacetTypeEnum.Month:
                     case DirectoryFacetTypeEnum.YearMonth:
                         {
-                            // 日期型：只支援文章，且來源固定 NodeDate
                             if (dirType != DirectoryTypeEnum.文章)
-                            {
-                                items = new List<DirectoryFacetItemDto>();
                                 break;
-                            }
 
-                            // Enabled ranges + sorted
                             var enabledRanges = (dir.DirectoryFacetRanges ?? new List<DirectoryFacetRange>())
                                 .Where(r => r.Enabled && !r.IsDeleted)
                                 .OrderBy(r => r.Sort)
@@ -2002,22 +2000,39 @@ namespace EtheriT.Coker.Application.Directory
                                 .Select(r => (Start: r.Start, End: r.End))
                                 .ToList();
 
-                            // 取得此目錄下「真的有資料」的 NodeDate（這裡我用最保守方式：直接從文章本身抓 NodeDate）
-                            // 若你的目錄與文章關聯是透過 Tag_Associates + GetReleInfo 才能算出來，
-                            // 你之後把這段替換成你既有的 GetReleInfo 取文章Id流程即可（後續你說會討論）。
-                            var nodeDates = await db.Article
+                            // 1️、 先取出「此目錄所要求的 Tag 清單」
+                            var dirTagIds = await db.Tag_Associates
                                 .AsNoTracking()
-                                .Where(a => a.FK_WebsiteId == websiteId && !a.IsDeleted)
-                                .Where(a => a.Visible && !a.RemovedFromShelves)
-                                .Where(a => a.NodeDate != null)
-                                .Select(a => a.NodeDate!.Value)
+                                .Where(x => x.Type == TagAssociateTypeEnum.目錄
+                                         && x.FK_AId == directoryId)
+                                .Select(x => x.FK_TId)
+                                .Distinct()
                                 .ToListAsync();
 
-                            if (nodeDates.Count == 0)
-                            {
-                                items = new List<DirectoryFacetItemDto>();
+                            if (dirTagIds.Count == 0)
                                 break;
-                            }
+
+                            // 2️、 找出「同時擁有全部這些 Tag」的文章
+                            var nodeDates = await (
+                                from ta in db.Tag_Associates.AsNoTracking()
+                                join a in db.Article.AsNoTracking()
+                                    on ta.FK_AId equals a.Id
+                                where ta.Type == TagAssociateTypeEnum.文章
+                                      && dirTagIds.Contains(ta.FK_TId)
+                                      && a.FK_WebsiteId == websiteId
+                                      && !a.IsDeleted
+                                      && a.Visible
+                                      && !a.RemovedFromShelves
+                                      && a.NodeDate != null
+                                group ta by new { a.Id, a.NodeDate } into g
+                                // ⭐ 關鍵：文章擁有的目錄 Tag 數量 == 目錄所需 Tag 數量
+                                where g.Select(x => x.FK_TId).Distinct().Count() == dirTagIds.Count
+                                select g.Key.NodeDate!.Value
+                            ).ToListAsync();
+
+                            if (nodeDates.Count == 0)
+                                break;
+
 
                             items = dir.FacetType switch
                             {
@@ -2033,6 +2048,11 @@ namespace EtheriT.Coker.Application.Directory
                                 _ => new List<DirectoryFacetItemDto>()
                             };
 
+                            items = items
+                                .OrderByDescending(x => x.End)
+                                .ThenByDescending(x => x.Start)
+                                .ToList();
+
                             break;
                         }
 
@@ -2043,15 +2063,7 @@ namespace EtheriT.Coker.Application.Directory
                         }
 
                     case DirectoryFacetTypeEnum.DocumentType:
-                        {
-                            // 你尚未提供 DocumentType 的實際資料來源（文章欄位/獨立表/某種 tag 群組）
-                            // 這裡先明確回空，避免做錯
-                            items = new List<DirectoryFacetItemDto>();
-                            break;
-                        }
-
                     default:
-                        items = new List<DirectoryFacetItemDto>();
                         break;
                 }
 
@@ -2059,7 +2071,7 @@ namespace EtheriT.Coker.Application.Directory
                 res.Object = new DirectoryGetFacetResponseDto
                 {
                     DirectoryId = directoryId,
-                    Items = items
+                    Items = items ?? new List<DirectoryFacetItemDto>() // ✅ 雙保險
                 };
                 return res;
             }

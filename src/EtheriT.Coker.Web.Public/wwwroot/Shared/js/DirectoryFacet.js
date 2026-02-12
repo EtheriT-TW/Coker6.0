@@ -1,475 +1,455 @@
 ﻿//# sourceURL=DirectoryFacet.js
 (function (w, $) {
     "use strict";
-
-    // --- Guard ---
     if (!$) return;
 
     var DirectoryFacet = (w.DirectoryFacet = w.DirectoryFacet || {});
 
-    // ===== Settings (可由 DirectoryFacet.configure 覆寫) =====
+    // ======================
+    // Settings
+    // ======================
     var settings = {
         frameSelector: ".catalog_frame",
 
-        // Facet UI 插入位置（frame 內）
-        facetContainerSelector: "[data-dir-facet-container], .dir_facet_container",
+        facetContainerSelector: '[data-role="facet-items"]',
+        facetItemTemplateSelector: '[data-role="facet-item"]',
 
-        // Menu 切換用（可自行呼叫 bindMenuList）
-        menuItemSelector: "[data-dirid]",
-
-        // 預設是否 DOMReady 自動 init
-        autoInit: true,
-
-        // 是否快取 facet options（以 dirId 為 key）
-        enableCache: true,
-
-        // Facet 儲存到 frame 的 data key
         facetDataKey: "facet",
-
-        // Facet 清單載入中 flag
+        facetOptionsKey: "facetOptions",
         facetLoadingKey: "facetLoading",
 
-        // Facet 的「全部」按鈕
-        showAllItem: true,
-        allText: "全部",
+        enableCache: true,
 
-        // 觸發目錄內容重載方式：
-        // 1) 優先呼叫 initElemntAndLoadDir($frame, "1")
-        // 2) 若不存在，fallback 用 trigger("filter")
+        // 讀取中顯示
+        loading: {
+            enabled: true,
+            text: "載入中…",
+            // 簡易 spinner（不吃外部 icon/字型）
+            // 你可以用 CSS 覆蓋 .facet-loading / .facet-spinner
+            html:
+                '<div class="facet-loading" role="status" aria-live="polite" aria-busy="true">' +
+                '  <span class="facet-spinner" aria-hidden="true"></span>' +
+                '  <span class="facet-loading-text"></span>' +
+                '</div>'
+        },
+
+        // 空資料/錯誤顯示（可自行調整文案）
+        emptyText: "",
+        errorText: "載入失敗",
+
         reloadContent: function ($frame) {
             if (typeof w.initElemntAndLoadDir === "function") {
-                $frame.removeData("page"); // 重置分頁
+                $frame.removeData("page").removeData("init");
+                $frame.find("[style]").removeAttr("style");
+                $frame.find(`.catalog`).empty();
                 w.initElemntAndLoadDir($frame, "1");
                 return;
             }
             $frame.trigger("filter");
         },
 
-        // 你後端 facet API 的 request payload 組法（走 Coker.Directory.getFacet）
         buildFacetRequest: function ($frame) {
-            // dirid 可能是 "1,2,3" 或 "xxx-6u3" 這種字串
-            var dirRaw = getDirId($frame);
-            var dirIds = normalizeDirId(dirRaw);
-
-            return {
-                DirectoryId: dirIds && dirIds.length === 1 ? dirIds[0] : (dirIds || dirRaw),
-                SiteId: getSiteId(),
-                CalendarType: $frame.data("calendarType") // 可無
-            };
+            var dirId = getDirId($frame);
+            return { Id: toLong(dirId) };
         },
 
-        // Facet options response 解析（容錯 Success/success + Items/items）
         normalizeFacetResponse: function (resp) {
-            var ok = resp && (resp.success === true || resp.Success === true);
-            var items = (resp && (resp.items || resp.Items)) || [];
-            if (!ok) items = [];
+            if (!resp) return [];
 
-            // items 期望格式：
-            // { key, text, type, count, payload }
-            // 若你後端回來字段不同，可以在這裡做映射
-            return items;
-        },
+            var ok =
+                resp.Success === true ||
+                resp.success === true ||
+                (resp.Success == null && resp.success == null);
 
-        // Facet item UI 產生（可自行改成 template / badge 等）
-        renderItem: function (item, isActive) {
-            var key = item && item.key != null ? String(item.key) : "";
-            var text = item && (item.text != null ? String(item.text) : key);
-            var count = (item && typeof item.count === "number") ? item.count : null;
+            if (!ok) return [];
 
-            var cls = "btn btn-sm me-2 mb-2 dir-facet-item " + (isActive ? "btn-primary active" : "btn-outline-secondary");
-            var countHtml = (count != null) ? '<span class="ms-2 text-black-50">(' + count + ')</span>' : "";
+            // 支援 Object / object / Items / items
+            var root = resp.Object || resp.object || resp;
+            var rawItems =
+                (root && (root.Items || root.items)) ||
+                resp.Items ||
+                resp.items ||
+                [];
 
-            return (
-                '<button type="button"' +
-                ' class="' + cls + '"' +
-                ' data-facet-key="' + escapeAttr(key) + '"' +
-                ' data-facet-type="' + escapeAttr(item.type || "") + '"' +
-                '>' +
-                escapeHtml(text) +
-                countHtml +
-                '</button>'
-            );
-        },
+            if (!rawItems || !rawItems.length) return [];
 
-        // 「全部」按鈕 UI
-        renderAllItem: function (type, isActive) {
-            var cls = "btn btn-sm me-2 mb-2 dir-facet-item dir-facet-all " + (isActive ? "btn-primary active" : "btn-outline-secondary");
-            return (
-                '<button type="button"' +
-                ' class="' + cls + '"' +
-                ' data-facet-all="1"' +
-                ' data-facet-type="' + escapeAttr(type || "") + '"' +
-                '>' +
-                escapeHtml(settings.allText) +
-                '</button>'
-            );
+            var out = [];
+            for (var i = 0; i < rawItems.length; i++) {
+                var it = rawItems[i] || {};
+                var s = toInt(it.start != null ? it.start : it.Start);
+                var e = toInt(it.end != null ? it.end : it.End);
+
+                var key = String(s) + "-" + String(e);
+                var label = String(it.label != null ? it.label : (it.Label != null ? it.Label : ""));
+
+                out.push({
+                    key: key,
+                    text: label || key,
+
+                    start: s,
+                    end: e,
+                    label: label,
+
+                    Start: s,
+                    End: e,
+                    Label: label
+                });
+            }
+
+            return out;
         }
     };
 
-    // ===== Cache =====
-    var cache = {
-        optionsByDirId: {} // dirId(string) => items[]
-    };
+    var cache = { optionsByDirId: {} };
 
-    // ===== Public API =====
-
-    /**
-     * 覆寫設定
-     */
+    // ======================
+    // Public
+    // ======================
     DirectoryFacet.configure = function (opt) {
         if (!opt || typeof opt !== "object") return;
-        Object.keys(opt).forEach(function (k) {
-            settings[k] = opt[k];
-        });
+        Object.keys(opt).forEach(function (k) { settings[k] = opt[k]; });
     };
 
-    /**
-     * 初始化：對 scope 內所有 frame 掛 facet reload、並首次載入 facet
-     */
     DirectoryFacet.init = function (scope) {
         var $scope = scope ? $(scope) : $(document);
-        var $frames = $scope.find(settings.frameSelector);
+        var $frame = $scope.find(settings.frameSelector).first();
+        if (!$frame.length) return;
 
-        $frames.each(function () {
-            var $frame = $(this);
-            if ($frame.data("facetInit")) return;
-            $frame.data("facetInit", true);
+        if ($frame.data("facetInit")) return;
+        $frame.data("facetInit", true);
 
-            // facet:reload 事件（menu 切換 dirid 或外部要求重撈）
-            $frame.off("facet:reload.dirFacet").on("facet:reload.dirFacet", function (e, force) {
-                DirectoryFacet.load($frame, !!force);
-            });
-
-            // facet item click（委派）
-            $frame.off("click.dirFacet").on("click.dirFacet", ".dir-facet-item", function (e) {
-                e.preventDefault();
-
-                var $btn = $(this);
-                // 全部
-                if ($btn.attr("data-facet-all") === "1" || $btn.data("facet-all") === 1) {
-                    DirectoryFacet.clear($frame, {
-                        type: String($btn.data("facet-type") || "")
-                    });
-                    return;
-                }
-
-                // 套用某個 facet
-                var key = String($btn.data("facet-key") || "");
-                var items = $frame.data("facetOptions") || [];
-                var facet = findFacetByKey(items, key);
-                if (!facet) return;
-
-                DirectoryFacet.apply($frame, facet);
-            });
-
-            // 首次載入 facet（不自動載內容，避免干擾你原本初始化節奏）
-            DirectoryFacet.load($frame, false);
-        });
+        clearFacetUI();
     };
 
-    /**
-     * 載入 facet options 並 render（只處理分類 UI）
-     * @param {jQuery} $frame
-     * @param {boolean} forceReload
-     */
+    DirectoryFacet.onMenuChanged = function (menuKey, ctx) {
+        var $frame = $(settings.frameSelector).first();
+        if (!$frame.length) return;
+
+        var dirId = String(menuKey || "");
+        if (!dirId) return;
+
+        DirectoryFacet.switchDirectory($frame, dirId, null, ctx);
+    };
+
+    DirectoryFacet.onFacetChanged = function (facetValue, ctx) {
+        var $frame = $(settings.frameSelector).first();
+        if (!$frame.length) return;
+
+        facetValue = String(facetValue || "");
+        if (!facetValue) return;
+
+        var items = $frame.data(settings.facetOptionsKey) || [];
+        var facet = findFacetByKey(items, facetValue);
+        if (!facet) return;
+
+        applyFacet($frame, facet);
+    };
+
+    DirectoryFacet.onStateChanged = function (state, ctx) {
+        state = state || {};
+        var menu = state.menu != null ? String(state.menu) : "";
+        var facet = state.facet != null ? String(state.facet) : "";
+
+        var $frame = $(settings.frameSelector).first();
+        if (!$frame.length) return;
+
+        if (menu) {
+            DirectoryFacet.switchDirectory($frame, menu, facet, ctx);
+            return;
+        }
+
+        if (facet) DirectoryFacet.onFacetChanged(facet, ctx);
+    };
+
+    DirectoryFacet.switchDirectory = function ($frame, newDirId, preferFacetValue, ctx) {
+        $frame = $frame && $frame.length ? $frame : $(settings.frameSelector).first();
+        if (!$frame.length) return $.Deferred().reject("no frame").promise();
+
+        newDirId = String(newDirId || "");
+        if (!newDirId) return $.Deferred().reject("no dirId").promise();
+
+        $frame.attr("data-dirid", newDirId);
+        $frame.data("dirid", newDirId);
+
+        $frame.removeData("page");
+        $frame.removeData(settings.facetDataKey);
+        $frame.removeData(settings.facetOptionsKey);
+
+        clearFacetUI();
+
+        return DirectoryFacet.load($frame, true)
+            .done(function (items) {
+                if (!items || !items.length) return;
+
+                var chosen = null;
+                if (preferFacetValue) chosen = findFacetByKey(items, preferFacetValue);
+                if (!chosen) chosen = items[0];
+
+                applyFacet($frame, chosen);
+            });
+    };
+
     DirectoryFacet.load = function ($frame, forceReload) {
         $frame = $frame && $frame.length ? $frame : $(settings.frameSelector).first();
         if (!$frame.length) return $.Deferred().reject("no frame").promise();
 
         var dirId = String(getDirId($frame) || "");
         if (!dirId) {
-            renderFacet($frame, []);
-            return $.Deferred().resolve({ success: true, items: [] }).promise();
-        }
-
-        // container required
-        var $ct = resolveFacetContainer($frame);
-        if (!$ct.length) {
-            // 不自動建立，避免插錯位置；你要就自己在版型放容器
-            return $.Deferred().resolve({ success: true, items: [] }).promise();
-        }
-
-        // cache
-        if (settings.enableCache && !forceReload && cache.optionsByDirId[dirId]) {
-            var cached = cache.optionsByDirId[dirId];
-            $frame.data("facetOptions", cached);
-            renderFacet($frame, cached);
-            return $.Deferred().resolve({ success: true, items: cached }).promise();
+            clearFacetUI();
+            return $.Deferred().resolve([]).promise();
         }
 
         // loading guard
-        if ($frame.data(settings.facetLoadingKey)) return $.Deferred().reject("loading").promise();
-        $frame.data(settings.facetLoadingKey, true);
-
-        // build request
-        var payload = settings.buildFacetRequest($frame);
-
-        // call Coker API (no URL here)
-        if (!w.Coker || !Coker.Directory || typeof Coker.Directory.getFacet !== "function") {
-            $frame.data(settings.facetLoadingKey, false);
-            return $.Deferred().reject("Coker.Directory.getFacet not found").promise();
+        if ($frame.data(settings.facetLoadingKey)) {
+            return $.Deferred().reject("loading").promise();
         }
 
-        return Coker.Directory.getFacet(payload)
-            .done(function (resp) {
-                var items = settings.normalizeFacetResponse(resp) || [];
-                $frame.data("facetOptions", items);
+        // cache hit
+        if (settings.enableCache && !forceReload && cache.optionsByDirId[dirId]) {
+            var cached = cache.optionsByDirId[dirId];
+            $frame.data(settings.facetOptionsKey, cached);
+            renderFacetButtons(cached);
+            return $.Deferred().resolve(cached).promise();
+        }
 
-                if (settings.enableCache) {
-                    cache.optionsByDirId[dirId] = items;
+        if (!w.Coker || !Coker.Directory || typeof Coker.Directory.getFacet !== "function") {
+            showErrorUI("Coker.Directory.getFacet not found");
+            return $.Deferred().reject("no api").promise();
+        }
+
+        $frame.data(settings.facetLoadingKey, true);
+
+        // ✅ 先顯示載入中
+        showLoadingUI();
+
+        var payload = settings.buildFacetRequest($frame);
+
+        return Coker.Directory.getFacet(payload)
+            .then(function (resp) {
+                var items = settings.normalizeFacetResponse(resp) || [];
+                $frame.data(settings.facetOptionsKey, items);
+
+                if (settings.enableCache) cache.optionsByDirId[dirId] = items;
+
+                if (!items.length) {
+                    showEmptyUI();
+                } else {
+                    renderFacetButtons(items);
                 }
 
-                renderFacet($frame, items);
+                return items;
             })
             .fail(function () {
-                renderFacet($frame, []);
+                showErrorUI(settings.errorText);
+                return [];
             })
             .always(function () {
                 $frame.data(settings.facetLoadingKey, false);
             });
     };
 
-    /**
-     * 套用 facet：存 data + 更新 active + 觸發內容重載
-     * @param {jQuery} $frame
-     * @param {object} facet
-     */
-    DirectoryFacet.apply = function ($frame, facet) {
-        $frame = $frame && $frame.length ? $frame : $(settings.frameSelector).first();
-        if (!$frame.length) return;
+    // ======================
+    // UI helpers
+    // ======================
+    function showLoadingUI() {
+        if (!settings.loading || settings.loading.enabled !== true) return;
 
-        $frame.data(settings.facetDataKey, facet);
+        var $ct = $(settings.facetContainerSelector).first();
+        if (!$ct.length) return;
 
-        setActiveByKey($frame, facet && facet.key != null ? String(facet.key) : "");
+        $ct.empty();
 
-        // 提供外部 hook（例如你下一步要把 facet 合併進 filtered 再送出）
-        $frame.trigger("facet:change", [facet]);
+        var html = String(settings.loading.html || "");
+        if (!html) html = '<div class="facet-loading" role="status" aria-live="polite" aria-busy="true">載入中…</div>';
 
-        // 內容重載（走你既有流程）
-        settings.reloadContent($frame);
-    };
+        var $ui = $(html);
+        var $t = $ui.find(".facet-loading-text");
+        if ($t.length) $t.text(String(settings.loading.text || "載入中…"));
+        else $ui.text(String(settings.loading.text || "載入中…"));
 
-    /**
-     * 清除 facet（可指定只清某 type；目前先做全清/同 type 清）
-     */
-    DirectoryFacet.clear = function ($frame, opt) {
-        $frame = $frame && $frame.length ? $frame : $(settings.frameSelector).first();
-        if (!$frame.length) return;
+        $ct.append($ui);
 
-        opt = opt || {};
-        var cur = $frame.data(settings.facetDataKey);
-
-        // 若指定 type，且目前 type 不一致，則不動作
-        if (opt.type && cur && String(cur.type || "") !== String(opt.type)) return;
-
-        $frame.removeData(settings.facetDataKey);
-        setActiveByKey($frame, ""); // active 回到 all
-
-        $frame.trigger("facet:change", [null]);
-        settings.reloadContent($frame);
-    };
-
-    /**
-     * menuList 綁定：點 menu item (data-dirid) => 切換共用 frame dirid => reload facet + reload content
-     * @param {string} menuSelector
-     * @param {string} frameSelector
-     */
-    DirectoryFacet.bindMenuList = function (menuSelector, frameSelector) {
-        var $menu = $(menuSelector || ".menuList");
-        var $frame = frameSelector ? $(frameSelector).first() : $(settings.frameSelector).first();
-        if (!$menu.length || !$frame.length) return;
-
-        $menu.off("click.dirFacetMenu").on("click.dirFacetMenu", settings.menuItemSelector, function (e) {
-            e.preventDefault();
-
-            var $it = $(this);
-            var dirid = $it.data("dirid");
-            if (dirid == null || dirid === "") dirid = $it.attr("data-dirid");
-            if (dirid == null || dirid === "") return;
-
-            DirectoryFacet.switchDirectory($frame, String(dirid));
-        });
-    };
-
-    /**
-     * 切換共用 frame 的 dirid（你說的情境：同一 frame，只改 dirid）
-     * - 清除 page & facet
-     * - facet:reload (force)
-     * - reload content
-     */
-    DirectoryFacet.switchDirectory = function ($frame, newDirId) {
-        $frame = $frame && $frame.length ? $frame : $(settings.frameSelector).first();
-        if (!$frame.length) return;
-
-        newDirId = String(newDirId || "");
-        if (!newDirId) return;
-
-        // 更新 dirid（字串安全）
-        $frame.attr("data-dirid", newDirId);
-        $frame.data("dirid", newDirId);
-
-        // 清 page + facet（避免上個目錄殘留）
-        $frame.removeData("page");
-        $frame.removeData(settings.facetDataKey);
-
-        // 也清掉 filtered 內 facet（如果你未來把 facet 寫入 filtered）
-        // 這段不會破壞你原本過濾器，只清 filtered.facet
-        var filtered = $frame.data("filtered");
-        filtered = normalizeFiltered(filtered);
-        if (filtered && typeof filtered === "object") {
-            delete filtered.facet;
-            $frame.data("filtered", filtered);
-        }
-
-        // 重撈 facet options（force reload，避免 cache 誤用）
-        $frame.trigger("facet:reload", [true]);
-
-        // 重載內容（先不等 facet，讓內容先出；若你要等 facet 完再 reload，可改成 load().always 後呼叫）
-        settings.reloadContent($frame);
-    };
-
-    // ===== Internals =====
-
-    function getSiteId() {
-        return (typeof w.SiteId === "undefined") ? 0 : w.SiteId;
+        ensureSpinnerStyleOnce();
     }
 
+    function showEmptyUI() {
+        var txt = String(settings.emptyText || "");
+        var $ct = $(settings.facetContainerSelector).first指出;
+        if (!$ct.length) return;
+
+        $ct.empty();
+        if (!txt) return; // 你若不想顯示空資料訊息，保持空白即可
+        $ct.append($('<div class="facet-empty" role="status" aria-live="polite"></div>').text(txt));
+    }
+
+    function showErrorUI(msg) {
+        var txt = String(msg || settings.errorText || "載入失敗");
+        var $ct = $(settings.facetContainerSelector).first();
+        if (!$ct.length) return;
+
+        $ct.empty();
+        $ct.append($('<div class="facet-error" role="status" aria-live="polite"></div>').text(txt));
+    }
+
+    function ensureSpinnerStyleOnce() {
+        // 只注入一次最基本 spinner 樣式（不影響你原本 CSS，可自行覆蓋）
+        if (w.__facetSpinnerStyleInjected) return;
+        w.__facetSpinnerStyleInjected = true;
+
+        var css =
+            ".facet-loading{display:inline-flex;align-items:center;gap:.5rem;}" +
+            ".facet-spinner{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;display:inline-block;animation:facetspin .8s linear infinite;opacity:.7;}" +
+            "@keyframes facetspin{to{transform:rotate(360deg);}}";
+
+        var el = document.createElement("style");
+        el.type = "text/css";
+        el.appendChild(document.createTextNode(css));
+        document.head.appendChild(el);
+    }
+
+    // ======================
+    // Internals
+    // ======================
     function getDirId($frame) {
         var v = $frame.data("dirid");
         if (v == null || v === "") v = $frame.attr("data-dirid");
         return v != null ? String(v) : "";
     }
 
-    function normalizeDirId(raw) {
-        if (raw == null) return null;
-        if (Array.isArray(raw)) return raw.map(function (x) { return String(x); });
-
-        var s = String(raw);
-        // 若是 "1,2,3"
-        if (s.indexOf(",") >= 0) {
-            var arr = s.split(",").map(function (x) { return x.trim(); }).filter(Boolean);
-            return arr.length ? arr : null;
-        }
-        return [s];
+    function toLong(v) {
+        var n = Number(String(v || "").trim());
+        return Number.isFinite(n) ? n : v;
     }
 
-    function normalizeFiltered(v) {
-        if (!v) return {};
-        if (typeof v === "object") return v;
-        if (typeof v === "string") {
-            try {
-                var o = JSON.parse(v);
-                if (o && typeof o === "object") return o;
-            } catch (_) { }
-        }
-        return {};
-    }
-
-    function resolveFacetContainer($frame) {
-        return $frame.find(settings.facetContainerSelector).first();
-    }
-
-    function escapeHtml(str) {
-        str = (str == null) ? "" : String(str);
-        return str
-            .replaceAll("&", "&amp;")
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
-            .replaceAll('"', "&quot;")
-            .replaceAll("'", "&#39;");
-    }
-
-    function escapeAttr(str) {
-        return escapeHtml(str).replaceAll("`", "&#96;");
+    function toInt(v) {
+        var n = parseInt(v, 10);
+        return Number.isFinite(n) ? n : 0;
     }
 
     function findFacetByKey(items, key) {
         if (!items || !items.length) return null;
+        key = String(key || "");
         for (var i = 0; i < items.length; i++) {
-            if (String(items[i].key) === String(key)) return items[i];
+            if (String(items[i].key) === key) return items[i];
         }
         return null;
     }
 
-    function renderFacet($frame, items) {
-        var $ct = resolveFacetContainer($frame);
+    function clearFacetUI() {
+        var $ct = $(settings.facetContainerSelector).first();
         if (!$ct.length) return;
-
-        items = items || [];
-
-        if (!items.length) {
-            $ct.empty().addClass("d-none");
-            return;
-        }
-
-        $ct.removeClass("d-none").empty();
-
-        var cur = $frame.data(settings.facetDataKey);
-        var curKey = (cur && cur.key != null) ? String(cur.key) : "";
-
-        var html = "";
-
-        // 依 type 分組（如果你的 facet response 有 type；沒有就當成單組）
-        var groups = groupByType(items);
-
-        Object.keys(groups).forEach(function (type) {
-            // group block
-            html += '<div class="dir-facet-group mb-2" data-facet-group="' + escapeAttr(type) + '">';
-
-            // all item
-            if (settings.showAllItem) {
-                var allActive = !(cur && String(cur.type || "") === String(type));
-                html += settings.renderAllItem(type, allActive);
-            }
-
-            // items
-            groups[type].forEach(function (it) {
-                var active = (cur && String(cur.type || "") === String(type) && String(it.key) === curKey);
-                html += settings.renderItem(it, active);
-            });
-
-            html += "</div>";
-        });
-
-        $ct.append(html);
+        $ct.empty();
     }
 
-    function groupByType(items) {
-        var map = {};
+    function renderFacetButtons(items) {
+        var $ct = $(settings.facetContainerSelector).first();
+        if (!$ct.length) return;
+
+        $ct.empty();
+
+        if (!items || !items.length) return;
+
+        var $tpl = $(settings.facetItemTemplateSelector).first();
+        if (!$tpl.length) return;
+
         for (var i = 0; i < items.length; i++) {
-            var t = items[i].type != null ? String(items[i].type) : "";
-            if (!map[t]) map[t] = [];
-            map[t].push(items[i]);
+            var it = items[i];
+            var $btn = $tpl.clone(false);
+
+            $btn.removeAttr("hidden").removeAttr("aria-hidden");
+            $btn.attr("data-facet-value", String(it.key || ""));
+            $btn.prop("disabled", false);
+
+            $btn.removeClass("active");
+            $btn.text(String(it.text || ""));
+
+            $ct.append($btn);
         }
-        return map;
     }
 
-    function setActiveByKey($frame, key) {
-        var $ct = resolveFacetContainer($frame);
+    function applyFacet($frame, facet) {
+        if (!facet) return;
+
+        var s = toInt(facet.start != null ? facet.start : facet.Start);
+        var e = toInt(facet.end != null ? facet.end : facet.End);
+        var label = String(facet.label != null ? facet.label : (facet.Label != null ? facet.Label : (facet.text || "")));
+        var key = String(facet.key || (String(s) + "-" + String(e)));
+
+        var model = {
+            key: key,
+
+            start: s,
+            end: e,
+            label: label,
+
+            Start: s,
+            End: e,
+            Label: label
+        };
+
+        $frame.data(settings.facetDataKey, model);
+
+        setActiveFacetValue(model.key);
+
+        $frame.trigger("facet:change", [model]);
+
+        settings.reloadContent($frame);
+    }
+
+    function setActiveFacetValue(facetValue) {
+        facetValue = String(facetValue || "");
+        var $ct = $(settings.facetContainerSelector).first();
         if (!$ct.length) return;
 
-        $ct.find(".dir-facet-item").removeClass("active btn-primary").addClass("btn-outline-secondary");
-        if (!key) {
-            // active all (each group)
-            $ct.find(".dir-facet-all").each(function () {
-                var $b = $(this);
-                $b.addClass("active btn-primary").removeClass("btn-outline-secondary");
-            });
-            return;
-        }
+        $ct.find(".active").removeClass("active");
+        if (!facetValue) return;
 
-        $ct.find(".dir-facet-item").each(function () {
+        $ct.find("[data-facet-value]").each(function () {
             var $b = $(this);
-            if (String($b.data("facet-key") || "") === String(key)) {
-                $b.addClass("active btn-primary").removeClass("btn-outline-secondary");
+            if (String($b.attr("data-facet-value") || "") === facetValue) {
+                $b.addClass("active");
             }
         });
     }
+    function stepFacet(step) {
+        var $ct = $(settings.facetContainerSelector).first(); // [data-role="facet-items"]
+        if (!$ct.length) return;
 
-    // ===== Auto init =====
+        // 只找「可見且非 template」的 facet-item（你 template 仍是 hidden）
+        var $items = $ct.find("[data-facet-value]").filter(function () {
+            var $b = $(this);
+            return !$b.is("[hidden]") && $b.attr("aria-hidden") !== "true";
+        });
+
+        if (!$items.length) return;
+
+        // 目前 active
+        var $active = $items.filter(".active").first();
+
+        // 沒 active：預設第一個（next）或最後一個（prev）
+        var idx = $active.length ? $items.index($active) : (step > 0 ? -1 : $items.length);
+
+        var nextIdx = idx + (step > 0 ? 1 : -1);
+        if (nextIdx < 0) nextIdx = 0;
+        if (nextIdx >= $items.length) nextIdx = $items.length - 1;
+
+        var $target = $items.eq(nextIdx);
+        if (!$target.length) return;
+
+        // 觸發「切換 facet」：等同使用者點選
+        $target.trigger("click");
+    }
+
+
     $(function () {
-        if (!settings.autoInit) return;
         DirectoryFacet.init(document);
+        $(document)
+            .on("click", "[data-role='facet-prev']", function () {
+                stepFacet(-1);
+            })
+            .on("click", "[data-role='facet-next']", function () {
+                stepFacet(1);
+            });
     });
 
 })(window, window.jQuery);

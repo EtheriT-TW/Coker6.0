@@ -242,7 +242,6 @@ function DirectoryDataGet($item, option) {
         }
 
         $item.data("init", "true");
-
         if (result.releInfos.length > 0 && result.releInfos[0].type == 1) {
             var hasbuybtn = false;
             if (typeof ($item.data("hasbuybtn")) == "string") hasbuybtn = $item.data("hasbuybtn").toLowerCase() === "true";
@@ -274,6 +273,7 @@ function DirectoryDataGet($item, option) {
                 SwiperInit({ autoplay: true });
             }
         }
+        $item.trigger("catalog:rendered", [{ reason: "initElemntAndLoadDir" }]);
     })
 }
 function DirectoryDataInsert($item, result) {
@@ -295,10 +295,8 @@ function DirectoryDataInsert($item, result) {
             else $item.data("default_img_link", $item.find(".details_display").attr("src"));
         }
     }
-
     result != null && result.forEach(function (data) {
         var content = $(temp).clone();
-
         if ($item.hasClass("hover_display_details") && typeof (OrgName) != "undefined") content.data("img_link", data.mainImage);
 
         if ($item.hasClass("hasBuyBtn")) {
@@ -533,9 +531,8 @@ function DirectoryDataInsert($item, result) {
         content.find(".shareBlock").data("href", path);
 
         if (data.type == 1 && typeof (IsLogin) != "undefined" && IsLogin) ProdFavBtnSet(content, data)
-
         $catalog.append(content);
-
+        $(content).attr({ "data-id": data.id });
         if (data.type == 1 && content.find(".btn_addToCar").length > 0) {
             content.find(".btn_addToCar").on("click", function (e) {
                 e.preventDefault();

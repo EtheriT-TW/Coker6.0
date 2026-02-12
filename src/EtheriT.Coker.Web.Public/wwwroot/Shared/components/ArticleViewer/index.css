@@ -6,11 +6,11 @@
 
     /* 窄/寬模式：直接控制 iframe viewport 寬度（重點） */
     .article-viewer.article-viewer--narrow {
-        max-width: 520px; /* 窄閱讀寬度 */
+        max-width: 100%; /* 窄閱讀寬度 */
     }
 
     .article-viewer.article-viewer--wide {
-        max-width: 980px; /* 寬閱讀寬度 */
+        max-width: 100%; /* 寬閱讀寬度 */
     }
 
     /* loading 狀態（可選） */

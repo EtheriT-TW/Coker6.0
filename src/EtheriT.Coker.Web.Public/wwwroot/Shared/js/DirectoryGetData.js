@@ -32,6 +32,7 @@
                 FindNearest: FindNearest,
                 Longitude: Longitude,
                 Latitude: Latitude,
+                Facet: typeof ($self.attr("data-facet")) == "undefined" ? null : ($self.attr("data-facet") || null)
             }
             $self.find(".catalog>.template").remove();
             DirectoryDataGet($self, option);
@@ -61,7 +62,7 @@ function DirectoryGetDataInit() {
             $self.data("prevdirid", dirid);
             $self.find(".title").text("");
             $self.find(".accordion").empty();
-            Directory.getDirectoryMenuData({
+            co.Directory.getDirectoryMenuData({
                 Ids: dirid,
                 WebsiteId: typeof (SiteId) != "undefined" ? SiteId : 0,
                 showUnvisible: showUnvisible
@@ -123,7 +124,7 @@ function DirectoryGetDataInit() {
     $(".advertise_directory").each(function () {
         const $self = $(this);
         const dirid = typeof ($self.data("dirid")) != "undefined" ? typeof ($self.data("dirid")) == "string" ? $self.data("dirid").split(",") : [$self.data("dirid")] : 0;
-        Directory.getDirectoryAdvertiseData({
+        co.Directory.getDirectoryAdvertiseData({
             Ids: dirid,
             WebsiteId: typeof (SiteId) != "undefined" ? SiteId : 0,
             showUnvisible: true
@@ -405,7 +406,7 @@ function DirectoryDataInsert($item, result) {
         else content.find(".address").text(data.address);
         if (data.startTime != null && data.startTime != "") {
             var startTime = new Date(data.startTime);
-            content.find(".startTime").text(`${startTime.getFullYear()}/${String(startTime.getMonth() + 1).padStart(2, '0')}/${String(startTime.getDate()).padStart(2, '0') }`);
+            content.find(".startTime").text(`${startTime.getFullYear()}/${String(startTime.getMonth() + 1).padStart(2, '0')}/${String(startTime.getDate()).padStart(2, '0')}`);
         } else {
             content.find(".startTime").each((i, e) => {
                 if (e.tagName.toLowerCase() == "span") $(e).parent().remove();
@@ -441,7 +442,7 @@ function DirectoryDataInsert($item, result) {
             content.find(".price-grid").removeClass("price").empty().html(html);
             content.find(".normal-price").removeClass("price").empty().addClass("text-end").html(html);
         }
-        
+
         const hasBonus = !co.String.isNullOrEmpty(data.bonus) && !co.util.money.isZeroPriceValue(data.bonus);
         const hideCash = hasBonus && co.util.money.isZeroPriceValue(data.price);
         if (data.priceDisplayText != null) {
@@ -760,7 +761,7 @@ function InsertAdDatat($frame, result) {
             var tags = "";
             for (var i = 0; i < result.tagDatas.length; i++) {
                 var taglink = typeof (OrgName) == "undefined" ? "" : `/${OrgName}/Search/Get/${result.tagDatas[i].searchId}/${result.tagDatas[i].title}`;
-                tags += `<a href="${taglink}" title="${cokerI18n("LinkTo", result.tagDatas[i].title) }" class="pe-2">#${result.tagDatas[i].title}</a>`;
+                tags += `<a href="${taglink}" title="${cokerI18n("LinkTo", result.tagDatas[i].title)}" class="pe-2">#${result.tagDatas[i].title}</a>`;
             }
             $frame.find(".tag").append(tags);
         }

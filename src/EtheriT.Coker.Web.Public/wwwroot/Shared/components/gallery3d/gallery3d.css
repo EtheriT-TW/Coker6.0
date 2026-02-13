@@ -1,3 +1,11 @@
+:root {
+    --gallery-accent: #8a7a67;
+    --gallery-accent-hover: #5c5246;
+    --gallery-scroll-track: rgb(244 239 232 / 20%);
+    --gallery-scroll-thumb: var(--gallery-accent);
+    --gallery-scroll-thumb-hover: var(--gallery-accent-hover);
+}
+
 .main-stage {
     position: absolute;
     left: 50%;
@@ -75,6 +83,7 @@
     left: 50%;
     width: 26%;
     height: auto;
+    aspect-ratio: 4 / 3; /* carousel 模式統一卡片比例，讓每張圖片顯示尺寸一致 */
     margin: 0;
     transform-style: preserve-3d;
     transition: transform 0.32s ease-out, opacity 0.32s ease-out, filter 0.32s ease-out;
@@ -212,6 +221,7 @@
     justify-content: center;
     pointer-events: none;
 }
+
 .gallery-toolbar-row {
     display: inline-flex;
     align-items: center;
@@ -238,7 +248,7 @@
     align-items: center;
     gap: 6px;
     padding: 8px 0px;
-    color:#fff;
+    color: #fff;
 }
 
 .gallery-toolbar button {
@@ -364,6 +374,7 @@
             box-shadow: none;
             aspect-ratio: 3 / 4;
         }
+
     .gallery3d-wrapper.mode-grid .grid-count-1 .gallery3d-card .card-main,
     .gallery3d-wrapper.mode-grid .grid-count-2 .gallery3d-card .card-main,
     .gallery3d-wrapper.mode-grid .grid-count-3 .gallery3d-card .card-main {

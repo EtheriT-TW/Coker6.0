@@ -21,6 +21,7 @@
         next: '下一張 ▶',
         pause: '暫停',
         play: '播放',
+        reset: '回到一張',
         indicator: (idx1, total) => `第 ${idx1} / ${total} 張`,
     };
 
@@ -43,6 +44,7 @@
                 wrapperSelector: '.gallery3d-wrapper',
                 holderSelector: '.gallery-holder',
                 autoPlayInterval: 2600,
+                autoPlayStartDelay: 5000,
                 dragPixelsPerStep: 140,
                 scaleMin: 0.80,
                 scaleMax: 1.08,
@@ -87,6 +89,8 @@
 
             this.indexFloat = 0;
             this.autoTimer = null;
+            this.autoStartTimer = null;
+            this._autoStartedOnce = false;
             this.userPaused = false;
 
             this.isDragging = false;
@@ -102,6 +106,7 @@
             this.toolbarRowEl = null;
             this.btnMode = null;
             this.btnPause = null;
+            this.btnReset = null;
             this.indicatorEl = null;
             this.carouselControlsEl = null;
         }
@@ -168,7 +173,7 @@
                 this._switchToGrid(true);
             } else {
                 this._layout();
-                this._startAuto();
+                this._startAuto({ delay: this.opts.autoPlayStartDelay, force: true });
             }
             return this;
         }
@@ -372,7 +377,7 @@
 
             const prevForced = this.forceGridMode;
 
-            this.totalAll = this.allCards.length; 
+            this.totalAll = this.allCards.length;
             this.total = this.cards.length;
             this.forceGridMode = this._shouldForceGrid();
 
@@ -538,6 +543,7 @@
                 this.toolbarRowEl = mainStage.querySelector('.gallery-toolbar-row');
                 this.btnMode = this.toolbarRowEl.querySelector('[data-role="mode"]');
                 this.btnPause = this.toolbarRowEl.querySelector('[data-role="pause"]');
+                this.btnReset = this.toolbarRowEl.querySelector('[data-role="reset"]');
                 this.indicatorEl = this.toolbarRowEl.querySelector('[data-role="indicator"]');
                 this.carouselControlsEl = this.toolbarRowEl.querySelector('[data-role="controls"]');
                 return;
@@ -564,6 +570,7 @@
             ctrlBox.setAttribute('data-role', 'controls');
             ctrlBox.innerHTML = `
             <div class="gallery-toolbar-inner">
+                <button type="button" data-role="reset" title="${this.opts.i18n.reset || 'Reset'}" aria-label="${this.opts.i18n.reset || 'Reset'}">⟳</button>
                 <button type="button" data-dir="-1">${this.opts.i18n.prev}</button>
                 <button type="button" data-dir="1">${this.opts.i18n.next}</button>
                 <button type="button" data-role="pause">${this.opts.i18n.pause}</button>
@@ -581,6 +588,7 @@
             this.toolbarRowEl = row;
             this.btnMode = row.querySelector('[data-role="mode"]');
             this.btnPause = row.querySelector('[data-role="pause"]');
+            this.btnReset = row.querySelector('[data-role="reset"]');
             this.indicatorEl = row.querySelector('[data-role="indicator"]');
             this.carouselControlsEl = row.querySelector('[data-role="controls"]');
 
@@ -618,6 +626,23 @@
                         this.btnPause.textContent = this.opts.i18n.pause;
                         this._startAuto();
                     }
+                });
+            }
+
+
+            // reset to first + delay autoplay
+            if (this.btnReset) {
+                this.btnReset.addEventListener('click', () => {
+                    if (this.displayMode !== 'carousel') return;
+
+                    // reset always resumes autoplay after delay
+                    this.userPaused = false;
+                    if (this.btnPause) this.btnPause.textContent = this.opts.i18n.pause;
+
+                    this._stopInertia();
+                    this.indexFloat = 0;
+                    this._layout();
+                    this._startAuto({ delay: this.opts.autoPlayStartDelay, force: true });
                 });
             }
 
@@ -805,17 +830,47 @@
             this.stageEl.style.transform = `rotateX(${opts.tiltX}deg)`;
         }
 
-        _startAuto() {
+        _startAuto(opt) {
             if (this.forceGridMode) return;
             if (this.userPaused || this.displayMode !== 'carousel') return;
+
+            const o = opt || {};
+            const delay = (typeof o.delay === 'number' && o.delay > 0) ? o.delay : 0;
+
+            // 只在「初次」或 force 時做延遲；其他情況（例如使用者點上一張/下一張）維持立即開始
+            const useDelay = (o.force === true) || (!this._autoStartedOnce && Math.round(normalizeIndex(this.indexFloat, this.total)) === 0);
+            const delayMs = useDelay ? delay : 0;
+
             this._stopAuto();
+
+            if (delayMs > 0) {
+                this.autoStartTimer = setTimeout(() => {
+                    // timeout 期間可能被切到 grid / 暫停 / destroy
+                    if (this.forceGridMode) return;
+                    if (this.userPaused || this.displayMode !== 'carousel') return;
+
+                    this.autoTimer = setInterval(() => {
+                        this.indexFloat = normalizeIndex(this.indexFloat + 1, this.total);
+                        this._layout();
+                    }, this.opts.autoPlayInterval);
+
+                    this._autoStartedOnce = true;
+                }, delayMs);
+                return;
+            }
+
             this.autoTimer = setInterval(() => {
                 this.indexFloat = normalizeIndex(this.indexFloat + 1, this.total);
                 this._layout();
             }, this.opts.autoPlayInterval);
+
+            this._autoStartedOnce = true;
         }
 
         _stopAuto() {
+            if (this.autoStartTimer) clearTimeout(this.autoStartTimer);
+            this.autoStartTimer = null;
+
             if (this.autoTimer) clearInterval(this.autoTimer);
             this.autoTimer = null;
         }
@@ -830,7 +885,7 @@
             if (Math.abs(this.velocity) < 0.00018) {
                 this.indexFloat = normalizeIndex(Math.round(this.indexFloat), this.total);
                 this._layout();
-                this._startAuto();
+                this._startAuto({ delay: this.opts.autoPlayStartDelay, force: true });
                 return;
             }
             let prev = performance.now();

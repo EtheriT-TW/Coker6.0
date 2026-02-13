@@ -2,10 +2,10 @@
     "use strict";
 
     /**
-     * ArticleViewer (CSP-friendly)
-     * - ���ϥΥ��� inline style�]element.style.*�^
-     * - autoHeight=true�G�q�����e���׫�A�g iframe height attribute�]px �Ʀr�^
-     * - autoHeight=false�Giframe �H CSS �����e���A�u�ʥ浹�e���].article-viewer�^
+     * ArticleViewer (CSP-friendly-ish)
+     * - 盡量不使用 element.style.*（主題變數改用 <style> 注入）
+     * - autoHeight=true：量測內容高度後，寫 iframe height attribute（px 數字）
+     * - autoHeight=false：iframe 填滿容器高度、由 iframe 自己滾（offcanvas-body 會 overflow:hidden）
      */
     class ArticleViewer {
         /**
@@ -34,7 +34,7 @@
                     extraHeight: 8,
                     remeasureDelayMs: 80,
                     remeasureTimes: 6,
-                    autoHeight: true, // ���s�W
+                    autoHeight: true,
                     onLoad: null,
                     onError: null,
                     onHeight: null,
@@ -46,6 +46,8 @@
             this.iframe = null;
             this.mode = "narrow";
             this._disposed = false;
+
+            this.loadingEl = null;
 
             this._lastHeight = 0;
             this._pendingRaf = 0;
@@ -61,6 +63,7 @@
             if (!container || !(container instanceof HTMLElement)) {
                 throw new Error("ArticleViewer.mount(container): container must be an HTMLElement.");
             }
+
             this.container = container;
 
             // container class (for CSS)
@@ -77,11 +80,11 @@
 
                 // scrolling strategy
                 if (this.opt.autoHeight !== false) {
-                    // autoHeight�G�~�h���u�Aiframe ���׷|�Q����n
+                    // autoHeight：外層不滾，iframe 高度會被算到剛好
                     this.iframe.setAttribute("scrolling", "no");
                     this.iframe.setAttribute("height", String(this.opt.minHeight));
                 } else {
-                    // fill�G���ץ浹 CSS�]100%�^�A���e�W�L�Ѯe���u
+                    // fill：iframe 撐滿容器，自己滾
                     this.iframe.setAttribute("scrolling", "yes");
                     this.iframe.removeAttribute("height");
                 }
@@ -92,15 +95,31 @@
 
                 this.iframe.addEventListener("load", () => this._onLoad());
                 this.iframe.addEventListener("error", (err) => this._onError(err));
+
+                // 預設：mount 就是 iframe 模式（你的 page.js 目前就是這樣使用）
+                this._setIframeMode(true);
             }
 
-            // ensure container is clean + append
-            if (!this.container.contains(this.iframe)) {
+            // build loading overlay
+            if (!this.loadingEl) {
+                this.loadingEl = document.createElement("div");
+                this.loadingEl.className = "article-viewer-loading";
+                this.loadingEl.setAttribute("data-role", "article-viewer-loading");
+                this.loadingEl.setAttribute("aria-hidden", "true");
+                this.loadingEl.innerHTML = `
+                    <div class="spinner" aria-hidden="true"></div>
+                    <div class="text">載入中</div>
+                `.trim();
+            }
+
+            // ensure container has overlay + iframe (order matters)
+            if (!this.container.contains(this.loadingEl) || !this.container.contains(this.iframe)) {
                 this.container.innerHTML = "";
+                this.container.appendChild(this.loadingEl);
                 this.container.appendChild(this.iframe);
             }
 
-            // message + resize listeners
+            // listeners
             window.addEventListener("message", this._onMessageBound);
             window.addEventListener("resize", this._onResizeBound);
 
@@ -111,7 +130,7 @@
         }
 
         /**
-         * Set mode: 'narrow' or 'wide' (controls container class; you define CSS)
+         * Set mode: 'narrow' or 'wide'
          * @param {'narrow'|'wide'} mode
          */
         setMode(mode) {
@@ -121,8 +140,23 @@
             this.container.classList.toggle("article-viewer--wide", this.mode === "wide");
             this.container.classList.toggle("article-viewer--narrow", this.mode !== "wide");
 
-            // reflow might change height (only when autoHeight)
             this.remeasure();
+        }
+
+        /**
+         * clear iframe
+         * @returns
+         */
+        clear() {
+            if (!this.iframe) return;
+
+            // 關掉 loading，避免 UI 殘留
+            this._markLoading(false);
+
+            // 直接卸載 iframe 內容（停止影片/音訊/網路請求）
+            this.iframe.onload = null; // 可選：避免 about:blank 觸發舊 onload 流程
+            this.iframe.srcdoc = "";
+            this.iframe.src = "about:blank";
         }
 
         /**
@@ -132,7 +166,11 @@
         loadUrl(url) {
             if (!this.iframe) throw new Error("ArticleViewer.loadUrl: call mount(container) first.");
             this._ensureNotDisposed();
-            this._markLoading();
+
+            // ★重點：切第二篇時，先把舊內容關掉（避免新 loading 疊舊畫面）
+            this._markLoading(true);
+            this._stopCurrentLoad();
+
             this.iframe.removeAttribute("srcdoc");
             this.iframe.src = url;
         }
@@ -144,7 +182,9 @@
         loadHtml(html) {
             if (!this.iframe) throw new Error("ArticleViewer.loadHtml: call mount(container) first.");
             this._ensureNotDisposed();
-            this._markLoading();
+
+            this._markLoading(true);
+            this._stopCurrentLoad();
 
             // srcdoc often becomes opaque origin; same-origin measurement may fail
             this.iframe.src = "about:blank";
@@ -158,7 +198,6 @@
             if (!this.iframe || this._disposed) return;
             if (this.opt.autoHeight === false) return;
 
-            // throttle via rAF
             if (this._pendingRaf) cancelAnimationFrame(this._pendingRaf);
             this._pendingRaf = requestAnimationFrame(() => {
                 this._pendingRaf = 0;
@@ -172,8 +211,7 @@
         reset() {
             if (!this.iframe) return;
             this._markLoading(false);
-            this.iframe.srcdoc = "";
-            this.iframe.src = "about:blank";
+            this._stopCurrentLoad();
             if (this.opt.autoHeight !== false) {
                 this._setHeight(this.opt.minHeight);
             }
@@ -208,7 +246,18 @@
             this.container.classList.toggle("article-viewer--loading", !!isLoading);
         }
 
+        _stopCurrentLoad() {
+            if (!this.iframe) return;
+            // about:blank 可中止前一個 request + 清畫面（避免疊在一起）
+            this.iframe.srcdoc = "";
+            this.iframe.src = "about:blank";
+        }
+
         _onLoad() {
+            // iframe load 完：先把主題 + 捲軸 CSS 注入，再收起 loading
+            this._syncThemeVarsToIframe();
+            this._injectScrollbarCssToIframe();
+
             this._markLoading(false);
 
             if (typeof this.opt.onLoad === "function") {
@@ -269,7 +318,7 @@
 
             this._lastHeight = h;
 
-            // �� CSP-friendly: use attribute instead of inline style
+            // CSP-friendly: use attribute instead of inline style
             this.iframe.setAttribute("height", String(h));
 
             if (typeof this.opt.onHeight === "function") {
@@ -287,6 +336,81 @@
             if (data && data.type === "ARTICLE_VIEWER_HEIGHT" && typeof data.height === "number") {
                 this._setHeight(data.height + (this.opt.extraHeight || 0));
             }
+        }
+
+        _setIframeMode(isIframe) {
+            if (!this.container) return;
+
+            const offcanvasBody = this.container.closest(".offcanvas-body");
+            if (!offcanvasBody) return;
+
+            // ★你的需求：只有「真的用 iframe」時才加 use-iframe
+            offcanvasBody.classList.toggle("use-iframe", !!isIframe);
+        }
+
+        /**
+         * （保留未來 DOM 模式可能性）
+         * 你如果之後要回 DOM 插入，就呼叫這個，會自動把 use-iframe 拿掉
+         */
+        loadDom(nodeOrHtml) {
+            this._setIframeMode(false);
+            // TODO: 你未來要 DOM mode 時再補
+        }
+
+        _syncThemeVarsToIframe() {
+            const doc = this.iframe && this.iframe.contentDocument;
+            if (!doc) return;
+
+            const id = "av-theme-vars";
+            const src = getComputedStyle(document.documentElement);
+
+            const keys = [
+                "--gallery-scroll-track",
+                "--gallery-scroll-thumb",
+                "--gallery-scroll-thumb-hover",
+                "--gallery-accent",
+                "--gallery-accent-hover",
+                "--gallery-accent-contrast",
+            ];
+
+            let css = ":root{";
+            keys.forEach(k => {
+                const v = src.getPropertyValue(k).trim();
+                if (v) css += `${k}:${v};`;
+            });
+            css += "}";
+
+            let style = doc.getElementById(id);
+            if (!style) {
+                style = doc.createElement("style");
+                style.id = id;
+                doc.head.appendChild(style);
+            }
+            style.textContent = css;
+        }
+
+        _injectScrollbarCssToIframe() {
+            const doc = this.iframe && this.iframe.contentDocument;
+            if (!doc) return;
+
+            const id = "av-scrollbar-style";
+            let style = doc.getElementById(id);
+            if (!style) {
+                style = doc.createElement("style");
+                style.id = id;
+                doc.head.appendChild(style);
+            }
+
+            style.textContent = `
+                html, body {
+                    scrollbar-width: thin;
+                    scrollbar-color: var(--gallery-scroll-thumb) var(--gallery-scroll-track);
+                }
+                body::-webkit-scrollbar { width: 6px; }
+                body::-webkit-scrollbar-track { background: var(--gallery-scroll-track); border-radius: 999px; }
+                body::-webkit-scrollbar-thumb { background: var(--gallery-scroll-thumb); border-radius: 999px; border: 1px solid var(--gallery-scroll-track); }
+                body::-webkit-scrollbar-thumb:hover { background: var(--gallery-scroll-thumb-hover); }
+            `.trim();
         }
     }
 

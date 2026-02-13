@@ -1,4 +1,11 @@
 /* ==== Offcanvas 捲軸樣式 ==== */
+:root {
+    --gallery-accent: #8a7a67;
+    --gallery-accent-hover: #5c5246;
+    --gallery-scroll-track: rgb(244 239 232 / 20%);
+    --gallery-scroll-thumb: var(--gallery-accent);
+    --gallery-scroll-thumb-hover: var(--gallery-accent-hover);
+}
 /* Offcanvas 內容區：上方 meta 區塊 */
 .gallery-offcanvas .canvas-meta {
     margin: 0 0.5rem 1.5rem;
@@ -153,4 +160,13 @@
 
         .gallery-offcanvas .offcanvas-body::-webkit-scrollbar-thumb:hover {
             background-color: var(--gallery-scroll-thumb-hover);
+        }
+    /* iframe 模式：殼不要滾，交給 iframe 滾 */
+    .gallery-offcanvas .offcanvas-body.use-iframe {
+        overflow: hidden; /* 關鍵：避免雙重捲動 */
+        scrollbar-width: auto; /* 可選：Firefox，避免你原本 thin 的效果殘留 */
+    }
+        .gallery-offcanvas .offcanvas-body.use-iframe .article-viewer {
+            height: 100%;
+            overflow: hidden;
         }

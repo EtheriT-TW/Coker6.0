@@ -175,6 +175,10 @@
         $frame.removeData(settings.facetDataKey);
         $frame.removeData(settings.facetOptionsKey);
 
+        // Clear facet snapshot when switching directory
+        $frame.removeAttr("data-facet");
+
+
         clearFacetUI();
 
         return DirectoryFacet.load($frame, true)
@@ -302,7 +306,6 @@
             "@keyframes facetspin{to{transform:rotate(360deg);}}";
 
         var el = document.createElement("style");
-        el.type = "text/css";
         el.appendChild(document.createTextNode(css));
         document.head.appendChild(el);
     }
@@ -370,25 +373,81 @@
     function applyFacet($frame, facet) {
         if (!facet) return;
 
-        var s = toInt(facet.start != null ? facet.start : facet.Start);
-        var e = toInt(facet.end != null ? facet.end : facet.End);
-        var label = String(facet.label != null ? facet.label : (facet.Label != null ? facet.Label : (facet.text || "")));
-        var key = String(facet.key || (String(s) + "-" + String(e)));
+        // Facet item schema differs by FacetType (Year/Month/YearMonth may have start/end; Tag/DocumentType usually only has key/id/label)
+        var rawLabel = (facet.label != null ? facet.label : (facet.Label != null ? facet.Label : (facet.text || "")));
+        var label = String(rawLabel || "");
+
+        // "key" is the UI selection key (used to highlight the clicked button)
+        var key = String(facet.key != null ? facet.key : (facet.Key != null ? facet.Key : ""));
+
+        // Detect start/end existence (don't default to 0 when missing)
+        var hasStart = (facet.start != null || facet.Start != null);
+        var hasEnd = (facet.end != null || facet.End != null);
+
+        var s = null;
+        var e = null;
+
+        if (hasStart) {
+            var ns = parseInt((facet.start != null ? facet.start : facet.Start), 10);
+            if (Number.isFinite(ns)) s = ns;
+        }
+        if (hasEnd) {
+            var ne = parseInt((facet.end != null ? facet.end : facet.End), 10);
+            if (Number.isFinite(ne)) e = ne;
+        }
+
+        // Build the value list that will be sent to GetReleInfo (A scheme: comma-separated values, NO range syntax)
+        var values = [];
+        if (s != null && e != null) {
+            var a = Math.min(s, e);
+            var b = Math.max(s, e);
+
+            // Expand inclusive range into value list (usually small: years/months)
+            for (var i = a; i <= b; i++) values.push(String(i));
+
+            // If key is empty, use a stable key for UI highlight
+            if (!key) key = (a === b) ? String(a) : (String(a) + "-" + String(b));
+        } else {
+            // Prefer id/value/key; fall back to label only if nothing else exists
+            var v = (facet.id != null ? facet.id :
+                (facet.Id != null ? facet.Id :
+                    (facet.value != null ? facet.value :
+                        (facet.Value != null ? facet.Value :
+                            (key || "")))));
+            v = String(v || "").trim();
+            if (!v) v = label;
+            values = v ? [v] : [];
+
+            if (!key) key = v;
+        }
+
+        var facetValueString = values.join(",");
+
+        // Store facet "state snapshot" on the frame for DirectoryGetData/GetReleInfo
+        // A scheme: data-facet="<v1,v2,...>"
+        $frame.attr("data-facet", facetValueString);
 
         var model = {
             key: key,
-
-            start: s,
-            end: e,
             label: label,
-
-            Start: s,
-            End: e,
-            Label: label
+            values: values,
+            value: facetValueString
         };
+
+        // Keep legacy fields to avoid breaking existing code that reads facetDataKey
+        if (s != null) {
+            model.start = s;
+            model.Start = s;
+        }
+        if (e != null) {
+            model.end = e;
+            model.End = e;
+        }
+        model.Label = label;
 
         $frame.data(settings.facetDataKey, model);
 
+        // UI highlight is based on the clicked facet key (not the expanded value list)
         setActiveFacetValue(model.key);
 
         $frame.trigger("facet:change", [model]);

@@ -39,7 +39,7 @@
             }
         } else {
             $("#SwitchPage .btn_list").attr("href", catalog)
-            Directory.SwitchPage({ id: articleid, dirids: diridList, routername: routername, searchtext: searchtext, type: 2 }).done(function (result) {
+            co.Directory.SwitchPage({ id: articleid, dirids: diridList, routername: routername, searchtext: searchtext, type: 2 }).done(function (result) {
                 if (result.length > 0) {
                     if (routername == "search") {
                         var orgname = catalog.replace("/search", "")

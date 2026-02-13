@@ -16,6 +16,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public double? Longitude { get; set; }
         public double? Latitude { get; set; }
         public bool? FindNearest { get; set; } = false;
+        public string? Facet { get; set; } = string.Empty;
         public List<DirectoryFilterDto> Filters { get; set; } = new List<DirectoryFilterDto>();
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }

@@ -387,6 +387,13 @@
 
                 this._setActiveMenuKey(menuKey);
 
+                // ✅ 切換目錄：先清掉 iframe（停影片），再關閉 offcanvas
+                if (this.viewer && typeof this.viewer.clear === "function") {
+                    this.viewer.clear();
+                }
+                this._setExpanded(false);
+                this.canvas.hide();
+
                 const ctx = { source: "menu", el };
                 callDirectoryFacet("onMenuChanged", String(menuKey), ctx);
 

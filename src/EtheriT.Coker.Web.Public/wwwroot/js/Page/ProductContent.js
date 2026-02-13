@@ -1029,7 +1029,7 @@ function SwitchPage() {
         }
     } else {
         $("#SwitchPage .btn_list").attr("href", catalog)
-        Directory.SwitchPage({ id: productid, dirids: diridList, routername: routername, searchtext: searchtext, filters: filter, type: 1 }).done(function (result) {
+        co.Directory.SwitchPage({ id: productid, dirids: diridList, routername: routername, searchtext: searchtext, filters: filter, type: 1 }).done(function (result) {
             if (result.length > 0) {
                 if (routername == "search") {
                     sessionStorage.setItem(`product-${searchtext}`, JSON.stringify(result));

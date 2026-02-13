@@ -1380,6 +1380,30 @@
     overflow: hidden;
 }
 
+.facet-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.facet-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    animation: facetspin .8s linear infinite;
+    opacity: .7;
+}
+
+@keyframes facetspin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
 @media (min-width: 992px) {
     .navbar-expand-lg .navbar-collapse {
         flex-basis: unset;

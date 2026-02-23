@@ -3,6 +3,7 @@ var keyId, disp_opt = true, DirectoryId = 0, DirectoryType = "n";
 let directory_list, editor, permissionDetailsModal;
 let DirectorytForms, $DirectorytTags;
 let ArticletForms, $ArticletTags, ArticletId;
+var total_files = [];
 
 function PageReady() {
     DirectorytForms = $('#DirectorytForm');
@@ -11,6 +12,9 @@ function PageReady() {
     co.PowerManagement.GetPermission().done(function (permission) {
         if (!permission.CanCreate) $(".btn_add").remove();
     });
+
+    /* File Upload */
+    co.File.ListFileInit();
 
     ElementInit();
     WebmenuListModalInit();
@@ -176,7 +180,6 @@ function ElementInit() {
     $(DirectorytForms).find(".webmenu > input").attr("disabled", "disabled")
 }
 
-
 function hashChange(e) {
     if (!!e) {
         HashDataEdit();
@@ -289,6 +292,13 @@ function FormDataClear() {
     $title_text.val("");
     $description_text.val("");
 }
+function ArticleDataClear() {
+    $(".data_upload").each(function () {
+        UploadPreviewFrameClear($(this));
+    });
+    $(".data_upload > ul > .upload_list").remove();
+    total_files = [];
+}
 
 function FormDataSet(result) {
     FormDataClear();
@@ -366,13 +376,55 @@ function AddUpArticlet(success_text, error_text) {
                 success();
             });
         } else success();
+
+        if (total_files.length > 0) {
+            //console.log(total_files)
+            $("#ArticleFiles > ul > li.upload_list").each(function () {
+                var $self = $(this);
+                var data = [];
+                if (typeof ($self.data("id")) != "undefined") data = total_files.find(item => $self.data("id") == item.Id);
+                else if (typeof ($self.data("tempid")) != "undefined") data = total_files.find(item => $self.data("tempid") == item.TempId);
+
+                if (typeof (data["Id"]) == "undefined" || (!data["IsEncryption"] && $self.find(".btn_lock").hasClass("lock"))) {
+                    var formData = new FormData();
+                    formData.append("files", data["File"]);
+                    formData.append("type", 15);
+                    if (typeof (data["Id"]) != "undefined") formData.append("id", data["Id"]);
+                    formData.append("sid", result.message);
+                    formData.append("serno", $self.find(".ser_no").val());
+                    formData.append("isEncryption", $self.find(".btn_lock").hasClass("lock"));
+                    co.File.Upload(formData).done(function (result) {
+                        console.log(result)
+                    })
+                } else if (data['SerNo'] != $self.find(".ser_no").val()) {
+                    co.File.fileSortChange({
+                        Id: data["Id"],
+                        sid: result.message,
+                        SerNo: $self.find(".ser_no").val(),
+                    });
+                }
+            });
+
+            //移除要移除的檔案
+            total_files.forEach(file => {
+                if ((typeof (file["IsDelete"]) != "undefined" && file["IsDelete"] == true && typeof (file["Id"]) != "undefined")) {
+                    var deleteid_list = [];
+                    deleteid_list.push(file["Id"]);
+                    co.File.DeleteFileById({
+                        Sid: parseInt(result.message),
+                        Type: 15,
+                        Fid: deleteid_list,
+                    })
+                }
+            });
+        }
     });
 }
 
 function MoveToContent() {
     $(DirectorytForms).removeClass("was-validated");
     if (!!keyId && isNaN(keyId)) {
-        
+
     }
 
     if (keyId == 0) {
@@ -403,10 +455,10 @@ function MoveToItemList() {
     else if (para.length > 1 && !isNaN(para[1])) {
         DirectoryId = parseInt(para[1]);
         DirectoryType = para[0];
-
         switch (DirectoryType) {
             case "Articles":
                 directoryDatailList.component.refresh();
+                ArticleDataClear();
                 break
             default:
                 BackToList();
@@ -439,6 +491,10 @@ function MoveToItemArticle() {
                             result.ImageUpload = 1;
                             co.Form.insertData(result, "#ArticletForm");
                             $ArticletTags.TagDataSet(result.tagDatas);
+
+                            result.files.forEach(file => {
+                                UploadListAdd(file, $("#ArticleFiles"));
+                            })
                         } else BackToList();
                     })
                 } else {
@@ -491,4 +547,174 @@ function deleteArticlesButtonClicked(e) {
             }
         });
     });
+}
+
+function UploadListAdd(result, $target) {
+    var item = $($("#TemplateUploadList").html()).clone();
+    var item_serno = item.find(".ser_no"),
+        item_btn_remove = item.find(".btn_remove"),
+        item_btn_lock = item.find(".btn_lock");
+    var tempId = total_files.length;
+    if (typeof (file_num) == "undefined") file_num = 0;
+    var file_num = $target.find("ul > li.upload_list").length;
+
+    if (result == null) {
+        // 沒有上傳檔案的話執行此處內容
+        // 新增新的欄位
+        file_num += 1;
+
+        $target.find("ul > li").each(function () {
+            var $self = $(this);
+            if ($self.hasClass("upload_list") && $self.find(".title").text() == "") {
+                $self.remove();
+                file_num -= 1;
+            }
+        })
+
+        item.data("tempid", tempId);
+        item.data("serno", file_num);
+        item_serno.val(file_num);
+
+        // 如果新增時沒有可選的檔案上傳類型且data裡面存有檔案上傳類型的話
+        if ($target.find(".select_frame").length == 0 && typeof ($target.data("uploadtype")) != "undefined")
+            // 直接指定該欄位為data裡面存的類型
+            item.data("uploadtype", $target.data("uploadtype"));
+        else
+            // 否則先設置為0
+            item.data("uploadtype", 0);
+
+        item.data("edit", false);
+        item.on("click", function () {
+            co.File.ListFile($(this));
+        })
+    } else if (typeof (result.id) == "undefined") {
+        // 此處為新上傳檔案執行的內容
+        item.data("tempid", result.TempId);
+        item.data("serno", file_num);
+        item_serno.val(file_num);
+        item.data("uploadtype", result.Type);
+        item.data("edit", false);
+        item.find(".title").text(result.Name);
+    } else {
+        // 此處為已有檔案帶入部分
+        console.log(result)
+        file_num += 1;
+        item.data("id", result.id);
+        item.data("serno", file_num);
+        item.data("oldserno", file_num);
+        item_serno.val(file_num);
+        item.data("uploadtype", result.fileType);
+        item.data("edit", false);
+        item.find(".title").text(result.name);
+        if (result.isEncryption) {
+            item_btn_lock.addClass("lock");
+            item_btn_lock.attr({
+                title: "已上鎖檔案不可解鎖",
+                "data-status": "locked"
+            });
+        }
+
+        var obj = {};
+        obj["Id"] = result.id;
+        obj["Name"] = result.name;
+        obj["SerNo"] = file_num;
+        var link = result.link[0];
+        if (result.fileType == 4) {
+            obj["File"] = result.name;
+        } else {
+            obj["File"] = link;
+        }
+        obj["Type"] = result.fileType;
+        obj["IsDelete"] = false;
+        obj["IsEncryption"] = result.isEncryption;
+        total_files.push(obj);
+
+    }
+
+    // 以下為檔案排序判斷與調整
+    item_serno.on("blur", function () {
+        var $self = $(this);
+        var $uploadList = $target.find(".upload_list");
+        if ($self.val() < 1) {
+            $self.val(1);
+        } else if ($self.val() > $uploadList.length) {
+            $self.val($uploadList.length);
+        }
+        if ($self.val() != item.data("serno")) {
+            if ($self.val() > item.data("serno")) {
+                SortChange($uploadList, "bigger", item.data("serno"), $self.val())
+                $("#ProductForm > .data_upload > ul").children("li").eq(parseInt($self.val()) - 1).after(item);
+            } else if ($self.val() < item.data("serno")) {
+                SortChange($uploadList, "smaller", $self.val(), item.data("serno"))
+                $("#ProductForm > .data_upload > ul").children("li").eq(parseInt($self.val()) - 1).before(item);
+            }
+        }
+        item.data("serno", $self.val());
+    })
+
+    // 檔案是否上鎖的按鈕
+    item_btn_lock.on('click', function (e) {
+        e.preventDefault();
+        var $self = $(this);
+        if ($self.data("status") == "locked") co.sweet.warn("操作無效", "已上鎖檔案不可解鎖。");
+        else $self.toggleClass('lock');
+    });
+
+    // 檔案移除
+    item_btn_remove.on("click", function (e) {
+        e.preventDefault();
+        var $self = $(this).parents("li").first();
+        var $uploadList = $target.find(".upload_list");
+        var file_num = $target.find("ul > li.upload_list").length;
+        // 將所有排序調整
+        if (item.data("serno") < file_num) {
+            SortChange($uploadList, "bigger", item.data("serno"), file_num);
+        }
+        // 如果是已存在資料庫的檔案
+        if (typeof ($self.data("id")) != "undefined") {
+            total_files.find(item => item["Id"] == $self.data("id"))["IsDelete"] = true;
+        } else if (typeof ($self.data("tempid")) != "undefined") {
+            // 如果是剛上傳的檔案 要清掉現有暫存檔案裡面的
+            var tempid = $self.data("tempid");
+            var index = total_files.findIndex(item => item["TempId"] == tempid);
+            if (index >= 0) {
+                total_files.splice(index, 1);
+                total_files.forEach(file => {
+                    file["TempId"] = file["TempId"] > tempid ? file["TempId"] - 1 : file["TempId"];
+                })
+            }
+        }
+
+        UploadPreviewFrameClear($target);
+        $self.remove();
+    })
+
+    $target.find("ul > .btn_upload_add").before(item);
+    co.File.ListFile(item);
+}
+function SortChange($self, change, minindex, maxindex) {
+    $self.each(function () {
+        var $li_self = $(this)
+        if (change == "bigger") {
+            if ($li_self.data("serno") > minindex && $li_self.data("serno") <= maxindex) {
+                $li_self.find(".ser_no").val(parseInt($li_self.data("serno")) - 1);
+                $li_self.data("serno", $li_self.find(".ser_no").val());
+            }
+        } else if (change == "smaller") {
+            if ($li_self.data("serno") >= minindex && $li_self.data("serno") < maxindex) {
+                $li_self.find(".ser_no").val(parseInt($li_self.data("serno")) + 1);
+                $li_self.data("serno", $li_self.find(".ser_no").val());
+            }
+        }
+    })
+}
+function UploadPreviewFrameClear($target) {
+    var $self = $target.find(".preview_frame");
+    $self.find(".default_frame").addClass("d-flex");
+    $self.find(".upload_frame").addClass("d-none");
+    $self.find(".media_frame").removeClass("d-flex");
+    $self.find(".youtube_frame").removeClass("d-flex");
+    $self.find(".select_frame").removeClass("d-flex");
+    $self.find(".youtube_preview").empty();
+    $self.find(".media_preview > div").empty();
 }

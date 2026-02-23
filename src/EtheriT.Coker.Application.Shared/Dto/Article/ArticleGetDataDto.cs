@@ -1,4 +1,5 @@
 ﻿
+using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 
@@ -23,5 +24,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
         public bool RemovedFromShelves { get; set; }
         public NewsletterFrameDto? DataJson { get; set; }
         public List<TagGetSelectedDto> TagDatas { get; set; }
+        public List<FileGetArticleDisplayDto> Files { get; set; }
     }
 }

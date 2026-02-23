@@ -1767,5 +1767,94 @@ namespace EtheriT.Coker.Application
 
             return aes.IV.Concat(cipher).ToArray();
         }
+        public async Task<DownloadPayload> DecryptFile(long fid)
+        {
+            var response = new DownloadPayload();
+            try
+            {
+                var siteId = configuration.GetValue<long>("WebConfig:SiteId");
+                var website = await db.Websites.Where(e => e.Id == siteId).FirstOrDefaultAsync();
+
+                var fileUpload = await db.FileUploads.Where(f => f.Id == fid).FirstOrDefaultAsync();
+                if (fileUpload == null) throw new Exception("查無檔案");
+                response.ContentType = fileUpload.ContentType;
+                response.FileName = fileUpload.OriginalFileName;
+
+                var RooyFilePath = configuration.GetValue<string>("VirtualDirectory:upload");
+                string relativePath = fileUpload.DownloadFileName.Replace("/upload/", "").Replace("/", Path.DirectorySeparatorChar.ToString()).TrimStart(Path.DirectorySeparatorChar);
+                string physicalPath = Path.Combine(RooyFilePath, relativePath);
+
+                if (!System.IO.File.Exists(physicalPath)) throw new Exception("查無檔案位置");
+
+                if (!fileUpload.IsEncryption)
+                {
+                    response.IsEncryptedFile = false;
+                    var fs = new FileStream(physicalPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    response.PhysicalPath = physicalPath;
+                }
+                else
+                {
+                    response.IsEncryptedFile = true;
+                    using var fileStream = new FileStream(physicalPath, FileMode.Open, FileAccess.Read);
+
+                    byte[] magic = new byte[5];
+                    fileStream.Read(magic, 0, 5);
+                    string magicString = Encoding.UTF8.GetString(magic);
+
+                    if (magicString != "FENC1") throw new Exception("檔案格式不正確");
+
+                    int version = fileStream.ReadByte();
+
+                    byte[] nonce = new byte[12];
+                    fileStream.Read(nonce, 0, 12);
+
+                    byte[] tag = new byte[16];
+                    fileStream.Read(tag, 0, 16);
+
+                    byte[] keyLengthBytes = new byte[4];
+                    fileStream.Read(keyLengthBytes, 0, 4);
+
+                    int keyLength = BitConverter.ToInt32(keyLengthBytes, 0);
+
+                    byte[] encryptedFileKey = new byte[keyLength];
+                    fileStream.Read(encryptedFileKey, 0, keyLength);
+
+                    long cipherLength = fileStream.Length - fileStream.Position;
+                    byte[] ciphertext = new byte[cipherLength];
+                    fileStream.Read(ciphertext, 0, (int)cipherLength);
+
+                    byte[] fileKey = UnprotectFileKey(encryptedFileKey);
+                    byte[] plaintext = new byte[ciphertext.Length];
+                    using var aes = new AesGcm(fileKey, tagSizeInBytes: 16);
+                    aes.Decrypt(nonce, ciphertext, tag, plaintext);
+
+                    response.Bytes = plaintext;
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.ErrorMessage = ex.Message;
+            }
+            return response;
+        }
+        private byte[] UnprotectFileKey(byte[] encrypted)
+        {
+            using var aes = Aes.Create();
+
+            var MasterKey = configuration.GetValue<string>("Security:FILE_MASTER_KEY");
+            if (string.IsNullOrEmpty(MasterKey)) throw new Exception("FILE_MASTER_KEY 未設定");
+
+            byte[] masterKey = Convert.FromBase64String(MasterKey);
+            if (masterKey.Length != 32) throw new Exception("FILE_MASTER_KEY 長度錯誤，必須是 32 bytes");
+
+            aes.Key = masterKey;
+
+            byte[] iv = encrypted[..16];
+            byte[] cipher = encrypted[16..];
+            aes.IV = iv;
+            using var decryptor = aes.CreateDecryptor();
+            return decryptor.TransformFinalBlock(cipher, 0, cipher.Length);
+        }
     }
 }

@@ -12,7 +12,8 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     public class FileController : Controller
     {
         private readonly IFileUploadAppService fileUploadAppService;
-        public FileController(IFileUploadAppService fileUploadAppService) { 
+        public FileController(IFileUploadAppService fileUploadAppService)
+        {
             this.fileUploadAppService = fileUploadAppService;
         }
         [HttpPost]

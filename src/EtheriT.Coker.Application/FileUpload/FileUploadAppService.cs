@@ -20,6 +20,8 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.AccessControl;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Application
@@ -79,7 +81,7 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-        public async Task<UploadFileOutputDto> uploadFiles(IList<IFormFile> files, int type, long sid, int serno, string page)
+        public async Task<UploadFileOutputDto> uploadFiles(IList<IFormFile> files, int type, long id, long sid, int serno, string page, bool isEncryption)
         {
             UploadFileOutputDto response = new UploadFileOutputDto
             {
@@ -88,7 +90,7 @@ namespace EtheriT.Coker.Application
             };
             try
             {
-                List<FileItemDto> filds = await SaveFile(files, type, serno, page, sid);
+                List<FileItemDto> filds = await SaveFile(files, type, serno, page, id, sid, isEncryption);
                 response.Files = filds.FindAll(e => e.Id != 0 && e.Id != null);
                 response.ErrorFiles = filds.FindAll(e => e.Id == 0 || e.Id == null).Select(e => e.Name).ToList();
                 if (response.ErrorFiles.Count == 0) response.Success = true;
@@ -466,7 +468,6 @@ namespace EtheriT.Coker.Application
                 Size = dto.Size
             });
         }
-
         public async Task<List<FileGetImgDto>> getImgsFiles(FileGetImgsInputDto dto)
         {
             if (dto?.Sid == null || dto.Sid.Count == 0) return new();
@@ -487,7 +488,8 @@ namespace EtheriT.Coker.Application
                 .GroupBy(x => x.UploadId)
                 .ToDictionary(
                     g => g.Key,
-                    g => {
+                    g =>
+                    {
                         var first = g.OrderBy(x => x.SerNo).First();
                         return (Sid: first.Sid, BindName: first.Name);
                     });
@@ -513,13 +515,11 @@ namespace EtheriT.Coker.Application
 
             return imgDtos;
         }
-
         public async Task<List<string>> getImgFilesById(List<long> ids, int size)
         {
             var imgDtos = await _getLinksByUploadIdsAsync(ids, size);
             return imgDtos.Select(i => i.Link).ToList();
         }
-
         private async Task<List<FileGetImgDto>> _getLinksByUploadIdsAsync(
             List<long> uploadIds, int size,
             Dictionary<long, (long Sid, string? BindName)>? uploadIdMeta = null)
@@ -656,7 +656,6 @@ namespace EtheriT.Coker.Application
 
             return result;
         }
-
         public async Task<List<FileGetProdDisplayDto>> getProdFiles(long Pid)
         {
             var output = new List<FileGetProdDisplayDto>();
@@ -689,6 +688,51 @@ namespace EtheriT.Coker.Application
                                 FileType = 5,
                                 Link = new List<string> { MediaLink },
                                 SerNo = fb.SerNo,
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return output;
+        }
+        public async Task<List<FileGetArticleDisplayDto>> getArticleFiles(long Aid)
+        {
+            var output = new List<FileGetArticleDisplayDto>();
+            string orgName = await loginUserData.GetWebsiteOrgName();
+            try
+            {
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                if (websiteId == 0)
+                {
+                    websiteId = await loginUserData.GetWebsiteId();
+                }
+
+                var fbs = await (db.FileBinds.Where(e => e.Sid == Aid && e.type == (int)FileBindTypeEnum.文章檔案).Where(e => !e.IsDeleted).OrderBy(e => e.SerNo)).ToListAsync();
+                if (fbs != null)
+                {
+                    foreach (var fb in fbs)
+                    {
+                        var fu = await (db.FileUploads.Where(e => e.Id == fb.FK_FileUploadId)).FirstOrDefaultAsync();
+                        if (fu != null)
+                        {
+                            string MediaLink = fb.MediaLink;
+                            if (orgName != "")
+                            {
+                                MediaLink = MediaLink.Replace("upload", $"upload/{orgName}");
+                            }
+                            if (MediaLink == "") MediaLink = fu.DownloadFileName ?? "";
+                            output.Add(new FileGetArticleDisplayDto
+                            {
+                                Id = fu.Id,
+                                Name = fb.Name,
+                                FileType = 5,
+                                Link = new List<string> { MediaLink },
+                                SerNo = fb.SerNo,
+                                isEncryption = fu.IsEncryption
                             });
                         }
                     }
@@ -891,7 +935,7 @@ namespace EtheriT.Coker.Application
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                var checkStatus = new List<int> { (int)FileBindTypeEnum.產品, (int)FileBindTypeEnum.產品檔案 };
+                var checkStatus = new List<int> { (int)FileBindTypeEnum.產品, (int)FileBindTypeEnum.產品檔案, (int)FileBindTypeEnum.文章檔案 };
                 var userid = await loginUserData.GetUserId();
                 var db_fb = await db.FileBinds.Where(e => !e.IsDeleted && e.Sid == dto.sid && e.FK_FileUploadId == dto.id)
                     .Where(e => checkStatus.Contains(e.type))
@@ -1219,17 +1263,23 @@ namespace EtheriT.Coker.Application
 
             return (root + orgName + "/" + after).Replace("//", "/");
         }
-
-        private async Task<List<FileItemDto>> SaveFile(IList<IFormFile> files, int asotype, int serno, string directory, long sid)
+        private async Task<List<FileItemDto>> SaveFile(IList<IFormFile> files, int asotype, int serno, string directory, long id, long sid, bool isEncryption)
         {
             List<FileItemDto> outputs = new List<FileItemDto>();
             List<FileBind> fileBinds = new List<FileBind>();
             long userId = await loginUserData.GetUserId();
-            foreach (var file in files)
+            if (files.Any())
             {
-                outputs.Add(await SaveFile(file, directory));
+                foreach (var file in files)
+                {
+                    outputs.Add(await SaveFile(file, directory, false, true, id, isEncryption));
+                }
+                ;
             }
-            ;
+            else if (id != 0)
+            {
+                outputs.Add(await SaveFile(null, directory, false, true, id, isEncryption));
+            }
             outputs.ForEach(e =>
             {
                 if (e.Id != 0)
@@ -1253,43 +1303,120 @@ namespace EtheriT.Coker.Application
             db.SaveChanges();
             return outputs;
         }
-        private async Task<FileItemDto> SaveFile(IFormFile file, string directory, bool isTemp = false, bool convert = true)
+        private async Task<FileItemDto> SaveFile(IFormFile? file, string directory, bool isTemp = false, bool convert = true, long id = 0, bool isEncryption = false)
         {
-            if (file.Length > 0)
+            if ((file != null && file.Length > 0) || id > 0)
             {
                 string orgName = await loginUserData.GetWebsiteOrgName();
                 Guid key = Guid.NewGuid();
-                string[] sp = file.FileName.Split('.');
-                string ext = sp[sp.Length - 1];
                 var rootPath = $"{_folder}/{orgName}";
                 var directoryPath = $"{rootPath}/{directory}";
-                var path = $"/{directory}/{key}.{ext}";
-                if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception("Type Error");
-                if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
-                using (var stream = file.OpenReadStream())
+
+                if ((file != null && file.Length > 0))
                 {
-                    string ContentType = file.ContentType;
-                    long fileLength = file.Length;
-                    if (convert && IsAllowedFileType(file.ContentType))
+                    string[] sp = file.FileName.Split('.');
+                    string ext = sp[sp.Length - 1];
+                    var path = $"/{directory}/{key}.{ext}";
+
+                    if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception("Type Error");
+                    if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
+                    using (var stream = file.OpenReadStream())
                     {
-                        var fileInfo = await ConvertImageAsync(stream, directoryPath, directory, key.ToString());
-                        path = fileInfo.Path;
-                        ContentType = fileInfo.ContentType;
-                        fileLength = fileInfo.FileLength;
-                    }
-                    else
-                    {
-                        using (var fileStream = new FileStream($"{rootPath}{path}", FileMode.Create))
+                        string ContentType = file.ContentType;
+                        long fileLength = file.Length;
+                        if (convert && IsAllowedFileType(file.ContentType))
                         {
-                            await file.CopyToAsync(fileStream);
+                            var fileInfo = await ConvertImageAsync(stream, directoryPath, directory, key.ToString());
+                            path = fileInfo.Path;
+                            ContentType = fileInfo.ContentType;
+                            fileLength = fileInfo.FileLength;
+                        }
+                        else
+                        {
+                            using (var fileStream = new FileStream($"{rootPath}{path}", FileMode.Create))
+                            {
+                                if (isEncryption) await EncryptAndSaveAsync(fileStream, stream);
+                                else await file.CopyToAsync(fileStream);
+                            }
+                        }
+                        if (isTemp)
+                        {
+                            return new FileItemDto
+                            {
+                                Name = file.FileName,
+                                Path = $@"/upload{path}".Replace("/upload/", $"/upload/{orgName}/"),
+                                Guid = Guid.NewGuid()
+                            };
+                        }
+                        else
+                        {
+                            try
+                            {
+                                FileUpload fileUpload = new FileUpload
+                                {
+                                    FK_WebsiteId = await loginUserData.GetWebsiteId(),
+                                    FileGuid = key,
+                                    GuidKey = Guid.NewGuid(),
+                                    DownloadFileName = $@"/upload{path}",
+                                    OriginalFileName = file.FileName,
+                                    ContentType = ContentType,
+                                    Size = fileLength,
+                                    IsEncryption = isEncryption
+                                };
+
+                                db.FileUploads.Add(fileUpload);
+                                await loginUserData.SaveChanges(fileUpload);
+                                return new FileItemDto
+                                {
+                                    Id = fileUpload.Id,
+                                    Name = fileUpload.OriginalFileName,
+                                    Path = fileUpload.DownloadFileName.Replace("/upload/", $"/upload/{orgName}/"),
+                                    Guid = fileUpload.GuidKey,
+                                };
+                            }
+                            catch (Exception e)
+                            {
+                                return new FileItemDto
+                                {
+                                    Id = 0,
+                                    Name = file.FileName
+                                };
+                            }
                         }
                     }
+                }
+                else if (id != 0 && isEncryption)
+                {
+                    var siteId = configuration.GetValue<long>("WebConfig:SiteId");
+                    var website = await db.Websites.Where(e => e.Id == siteId).FirstOrDefaultAsync();
+
+                    var fileUpload = await db.FileUploads.Where(f => f.Id == id).FirstOrDefaultAsync();
+                    if (fileUpload == null) throw new Exception("查無檔案");
+                    if (fileUpload.IsEncryption) throw new Exception("原檔案已加密");
+
+                    string[] sp = fileUpload.OriginalFileName.Split('.');
+                    string ext = sp[sp.Length - 1];
+                    var path = $"/{directory}/{key}.{ext}";
+
+                    var RooyFilePath = Path.Combine(configuration.GetValue<string>("VirtualDirectory:upload"), orgName);
+                    string relativePath = fileUpload.DownloadFileName.Replace("/upload/", "").Replace("/", Path.DirectorySeparatorChar.ToString()).TrimStart(Path.DirectorySeparatorChar);
+                    string physicalPath = Path.Combine(RooyFilePath, relativePath);
+
+                    if (!System.IO.File.Exists(physicalPath)) throw new Exception("查無檔案位置");
+                    long filelength;
+                    using (var fileStream = new FileStream(physicalPath, FileMode.Open, FileAccess.Read))
+                    using (var fileStream_temp = new FileStream($"{rootPath}{path}", FileMode.Create, FileAccess.Write))
+                    {
+                        filelength = fileStream.Length;
+                        await EncryptAndSaveAsync(fileStream_temp, fileStream);
+                    }
+
                     if (isTemp)
                     {
                         return new FileItemDto
                         {
                             Name = file.FileName,
-                            Path = $@"/upload{path}".Replace("/upload/", $"/upload/{orgName}/"),
+                            Path = fileUpload.DownloadFileName,
                             Guid = Guid.NewGuid()
                         };
                     }
@@ -1297,25 +1424,29 @@ namespace EtheriT.Coker.Application
                     {
                         try
                         {
-                            FileUpload fileUpload = new FileUpload
+                            FileUpload new_fileUpload = new FileUpload
                             {
                                 FK_WebsiteId = await loginUserData.GetWebsiteId(),
                                 FileGuid = key,
                                 GuidKey = Guid.NewGuid(),
                                 DownloadFileName = $@"/upload{path}",
-                                OriginalFileName = file.FileName,
-                                ContentType = ContentType,
-                                Size = fileLength
+                                OriginalFileName = fileUpload.OriginalFileName,
+                                ContentType = fileUpload.ContentType,
+                                Size = filelength,
+                                IsEncryption = isEncryption
                             };
 
-                            db.FileUploads.Add(fileUpload);
-                            await loginUserData.SaveChanges(fileUpload);
+                            db.FileUploads.Add(new_fileUpload);
+                            await loginUserData.SaveChanges(new_fileUpload);
+
+                            await deleteFile(fileUpload.GuidKey);
+
                             return new FileItemDto
                             {
-                                Id = fileUpload.Id,
-                                Name = fileUpload.OriginalFileName,
-                                Path = fileUpload.DownloadFileName.Replace("/upload/", $"/upload/{orgName}/"),
-                                Guid = fileUpload.GuidKey,
+                                Id = new_fileUpload.Id,
+                                Name = new_fileUpload.OriginalFileName,
+                                Path = new_fileUpload.DownloadFileName.Replace("/upload/", $"/upload/{orgName}/"),
+                                Guid = new_fileUpload.GuidKey,
                             };
                         }
                         catch (Exception e)
@@ -1328,6 +1459,7 @@ namespace EtheriT.Coker.Application
                         }
                     }
                 }
+                else throw new Exception("上傳失敗");
             }
             else throw new Exception("上傳失敗");
         }
@@ -1539,7 +1671,6 @@ namespace EtheriT.Coker.Application
                 FileLength = originalSize
             };
         }
-
         private string GetExtension(MagickFormat format)
         {
             return format switch
@@ -1555,7 +1686,6 @@ namespace EtheriT.Coker.Application
                 _ => ".img"
             };
         }
-
         private string GetMimeType(MagickFormat format)
         {
             return format switch
@@ -1570,6 +1700,72 @@ namespace EtheriT.Coker.Application
                 MagickFormat.Heif => "image/heif",
                 _ => "application/octet-stream"
             };
+        }
+        private async Task<ResponseMessageDto> EncryptAndSaveAsync(FileStream fileStream, Stream stream)
+        {
+            var response = new ResponseMessageDto();
+
+            try
+            {
+                byte[] fileKey = RandomNumberGenerator.GetBytes(32);
+                byte[] nonce = RandomNumberGenerator.GetBytes(12);
+
+                const int TagSize = 16;
+                using var aes = new AesGcm(fileKey, TagSize);
+
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                byte[] plaintext = ms.ToArray();
+                byte[] ciphertext = new byte[plaintext.Length];
+
+                byte[] tag = new byte[16];
+                aes.Encrypt(nonce, plaintext, ciphertext, tag);
+
+                // 加密資料存入Header
+                // 1. magic = 識別碼 判斷是否為加密檔(File ENCryption)以及其版本(1)
+                // 2. 加密的版本
+                // 3. nonce
+                // 4. tag
+                // 5. fileKey的長度
+                // 6. fileKey
+
+                byte[] magic = System.Text.Encoding.ASCII.GetBytes("FENC1");
+                await fileStream.WriteAsync(magic);
+                await fileStream.WriteAsync(new byte[] { 1 });
+                await fileStream.WriteAsync(nonce);
+                await fileStream.WriteAsync(tag);
+                byte[] encryptedFileKey = ProtectedFileKey(fileKey);
+                byte[] keyLengthBytes = BitConverter.GetBytes(encryptedFileKey.Length);
+                await fileStream.WriteAsync(keyLengthBytes);
+                await fileStream.WriteAsync(encryptedFileKey);
+
+                await fileStream.WriteAsync(ciphertext);
+
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
+        }
+        private byte[] ProtectedFileKey(byte[] fileKey)
+        {
+            using var aes = Aes.Create();
+
+            var MasterKey = configuration.GetValue<string>("Security:FILE_MASTER_KEY");
+            if (string.IsNullOrEmpty(MasterKey)) throw new Exception("FILE_MASTER_KEY 未設定");
+
+            byte[] masterKey = Convert.FromBase64String(MasterKey);
+            if (masterKey.Length != 32) throw new Exception("FILE_MASTER_KEY 長度錯誤，必須是 32 bytes");
+
+            aes.Key = masterKey;
+            aes.GenerateIV();
+
+            using var encryptor = aes.CreateEncryptor();
+            var cipher = encryptor.TransformFinalBlock(fileKey, 0, fileKey.Length);
+
+            return aes.IV.Concat(cipher).ToArray();
         }
     }
 }

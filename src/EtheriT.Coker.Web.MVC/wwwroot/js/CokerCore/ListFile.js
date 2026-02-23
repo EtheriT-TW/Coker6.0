@@ -281,9 +281,9 @@
                                 total_files.push(obj);
                                 temp_files.push(obj)
                             })
-
                             file_num--;
-                            temp_files.forEach(function (file) {
+                            temp_files.forEach(function (file, index) {
+                                if (index > 0) UploadListAdd(null, $root);
                                 UploadListAdd(file, $root);
                             })
                             break;

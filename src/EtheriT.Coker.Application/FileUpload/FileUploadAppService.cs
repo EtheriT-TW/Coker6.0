@@ -7,6 +7,7 @@ using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Application.Shared.Templates;
+using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Core.Models;
@@ -34,11 +35,13 @@ namespace EtheriT.Coker.Application
         private readonly string _folder;
         private readonly string AppName;
         private readonly IConfiguration configuration;
+        private readonly ITokenAppService tokenAppService;
         public FileUploadAppService(
             IOptions<VirtualDirectory> fileAllow,
             LoginUserData loginUserData,
             CokerDbContext db,
-            IConfiguration configuration
+            IConfiguration configuration,
+            ITokenAppService tokenAppService
         )
         {
             this.fileAllow = fileAllow.Value.FileAllow;
@@ -47,6 +50,7 @@ namespace EtheriT.Coker.Application
             _folder = fileAllow.Value.upload;
             AppName = "FileUpload";
             this.configuration = configuration;
+            this.tokenAppService = tokenAppService;
         }
         public async Task<UploadFileOutputDto> uploadTempFiles(IList<IFormFile> files)
         {
@@ -1770,10 +1774,13 @@ namespace EtheriT.Coker.Application
         public async Task<DownloadPayload> DecryptFile(long fid)
         {
             var response = new DownloadPayload();
+            var checktokenresponse = await tokenAppService.CheckToken(null);
+            var siteId = configuration.GetValue<long>("WebConfig:SiteId");
+            var website = await db.Websites.Where(e => e.Id == siteId).FirstOrDefaultAsync();
+
             try
             {
-                var siteId = configuration.GetValue<long>("WebConfig:SiteId");
-                var website = await db.Websites.Where(e => e.Id == siteId).FirstOrDefaultAsync();
+                if (!checktokenresponse.IsLogin) throw new Exception("尚未登入");
 
                 var fileUpload = await db.FileUploads.Where(f => f.Id == fid).FirstOrDefaultAsync();
                 if (fileUpload == null) throw new Exception("查無檔案");

@@ -478,7 +478,7 @@ function ready() {
     })
 
     $("#ResetModal .btn_resetforget").on("click", function () {
-        Coker.sweet.confirm(local.ConfirmSendResetPasswordMailToEmail.format($("#ResetForm").data("Email")), "", local.Yes,local.No, function () {
+        Coker.sweet.confirm(local.ConfirmSendResetPasswordMailToEmail.format($("#ResetForm").data("Email")), "", local.Yes, local.No, function () {
             Coker.sweet.loading();
             var data = {};
             data.Email = $("#ResetForm").data("Email");
@@ -615,6 +615,53 @@ function ready() {
             var $self = $(this);
             $self.find("[src='/images/noImg.jpg']").addClass("custom_visibility_hidden");
             $self.find("[src='/images/UploadImg.png']").addClass("custom_visibility_hidden");
+        });
+    }
+
+    if ($(".btn_downloadEncryptedFile").length > 0) {
+        $(".btn_downloadEncryptedFile").on('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            var $this = $(this);
+            if (typeof ($(this).data("fid")) === "undefined") {
+                Coker.sweet.error("檔案下載發生錯誤", "檔案編號不存在", null, false);
+            } else {
+                Coker.File.DownloadEncryptedFile($this.data('fid'))
+                    .done(function (data, status, xhr) {
+                        var blob = new Blob([data]);
+                        var link = document.createElement("a");
+
+                        var fileName = "download";
+                        var cd = xhr.getResponseHeader("Content-Disposition");
+
+                        if (cd) {
+                            var mStar = cd.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+                            if (mStar && mStar[1]) {
+                                fileName = decodeURIComponent(mStar[1].trim());
+                            } else {
+                                var m = cd.match(/filename\s*=\s*("?)([^\";]+)\1/i);
+                                if (m && m[2]) fileName = m[2].trim();
+                            }
+                        }
+
+                        if (!/\.[a-z0-9]+$/i.test(fileName)) {
+                            var ct = (xhr.getResponseHeader("Content-Type") || "").toLowerCase();
+                            if (ct.includes("pdf")) fileName += ".pdf";
+                        }
+
+                        link.href = window.URL.createObjectURL(blob);
+                        link.download = fileName;
+
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    })
+                    .fail(function (jqXHR, textStatus, errorThrown) {
+                        Coker.sweet.error("下載失敗", jqXHR.responseText || "系統錯誤，請稍後再試", null, false);
+                    });
+            }
         });
     }
 }

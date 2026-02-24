@@ -633,9 +633,11 @@ namespace EtheriT.Coker.Application.Article
                                         {
                                             var newNode = template.Clone();
 
-                                            var link = file.isEncryption ? $"/api/File/DecryptFile?fid={file.Id}" : ((file.Link != null && file.Link.Count > 0) ? file.Link[0] : "");
-                                            newNode.SetAttributeValue("href", link);
+                                            newNode.SetAttributeValue("href", "");
                                             newNode.SetAttributeValue("download", file.Name);
+                                            newNode.SetAttributeValue("data-fid", file.Id.ToString());
+                                            var currentClass = newNode.GetAttributeValue("class", "");
+                                            newNode.SetAttributeValue("class", $"btn_downloadEncryptedFile {currentClass} locked");
 
                                             foreach (var n in newNode.DescendantsAndSelf()) n.Attributes.Remove("id");
 
@@ -655,10 +657,9 @@ namespace EtheriT.Coker.Application.Article
                                 var Final_Html = "";
                                 foreach (var file in Files)
                                 {
-
-                                    var link = file.isEncryption ? $"/api/File/DecryptFile?fid={file.Id}" : ((file.Link != null && file.Link.Count > 0) ? file.Link[0] : "");
-
-                                    var html = $@"<a href=""{link}"" download=""{file.Name}"" class=""link_with_icon d-flex text-decoration-none"" data-edit-type=""File"">
+                                    var namesplit = file.Name.Split('.');
+                                    var extension = namesplit[namesplit.Length - 1];
+                                    var html = $@"<a href="""" download=""{file.Name}"" class=""btn_downloadEncryptedFile link_with_icon d-flex text-decoration-none locked"" data-edit-type=""File"" data-fid=""{file.Id}"" data-extension=""{extension}"">
                                                                 <div class=""icon pe-2""></div>
                                                                 <div class=""name text-black"">{file.Name}</div>
                                                             </a>";

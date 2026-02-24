@@ -8,6 +8,7 @@ using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
@@ -19,6 +20,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -612,63 +614,97 @@ namespace EtheriT.Coker.Application.Article
                         var Files = await fileUploadAppService.getArticleFiles(articl.Id);
                         if (Files.Any())
                         {
-                            string decoded = WebUtility.HtmlDecode(result.Html);
-                            if (decoded.Contains("data-edit-type=\"File\""))
+
+                            var doc = htmlProcessor.LoadHtml(stringHandler.HtmlDecode(result.Html));
+                            var EditData = htmlProcessor.Find(doc, "[data-edit-type]");
+                            var FileNode = EditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "File").ToList();
+                            var FilesNode = EditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "Files").ToList();
+
+                            if (FileNode.Any() || FilesNode.Any())
                             {
-                                var doc = new HtmlDocument();
-                                doc.LoadHtml(decoded);
-
-                                var templateNodes = doc.DocumentNode.SelectNodes("//a[@data-edit-type='File']");
-
-                                if (templateNodes != null)
+                                foreach (var node in FileNode)
                                 {
-                                    var templates = templateNodes.ToList();
+                                    var thisnode = node;
+                                    if (node.Name != "a") thisnode = node.SelectSingleNode(".//a");
+                                    var File = Files[0];
 
-                                    foreach (var templateNode in templates)
+                                    var namesplit = File.Name.Split('.');
+                                    var extension = namesplit[namesplit.Length - 1];
+
+                                    thisnode.SetAttributeValue("download", File.Name);
+                                    thisnode.SetAttributeValue("data-fid", File.Id.ToString());
+                                    thisnode.SetAttributeValue("data-extension", extension);
+
+                                    if (File.isEncryption)
                                     {
-                                        var template = templateNode.Clone();
-                                        HtmlNode lastInserted = templateNode;
-
-                                        foreach (var file in Files)
-                                        {
-                                            var newNode = template.Clone();
-
-                                            newNode.SetAttributeValue("href", "");
-                                            newNode.SetAttributeValue("download", file.Name);
-                                            newNode.SetAttributeValue("data-fid", file.Id.ToString());
-                                            var currentClass = newNode.GetAttributeValue("class", "");
-                                            newNode.SetAttributeValue("class", $"btn_downloadEncryptedFile {currentClass} locked");
-
-                                            foreach (var n in newNode.DescendantsAndSelf()) n.Attributes.Remove("id");
-
-                                            templateNode.ParentNode.InsertAfter(newNode, lastInserted);
-                                            lastInserted = newNode;
-                                        }
-
-                                        templateNode.Remove();
+                                        thisnode.SetAttributeValue("href", "");
+                                        thisnode.SetAttributeValue("class", $"btn_downloadEncryptedFile {thisnode.GetAttributeValue("class", "")} locked");
+                                    }
+                                    else
+                                    {
+                                        thisnode.SetAttributeValue("href", File.Link[0]);
                                     }
                                 }
 
-                                string updatedDecodedHtml = doc.DocumentNode.OuterHtml;
-                                result.Html = WebUtility.HtmlEncode(updatedDecodedHtml);
+                                foreach (var node in FilesNode)
+                                {
+                                    var originalchildnode = node.SelectSingleNode(".//a");
+                                    if (originalchildnode == null) continue;
+
+                                    foreach (var File in Files)
+                                    {
+                                        var childnode = originalchildnode.CloneNode(true);
+                                        var namesplit = File.Name.Split('.');
+                                        var extension = namesplit[namesplit.Length - 1];
+
+                                        childnode.SetAttributeValue("id", "");
+                                        childnode.SetAttributeValue("download", File.Name);
+                                        childnode.SetAttributeValue("data-fid", File.Id.ToString());
+                                        childnode.SetAttributeValue("data-extension", extension);
+
+                                        if (File.isEncryption)
+                                        {
+                                            childnode.SetAttributeValue("href", "");
+                                            childnode.SetAttributeValue("class", $"btn_downloadEncryptedFile {childnode.GetAttributeValue("class", "")} locked");
+                                        }
+                                        else
+                                        {
+                                            childnode.SetAttributeValue("href", File.Link[0]);
+                                        }
+
+                                        node.AppendChild(childnode);
+                                    }
+                                    originalchildnode.Remove();
+                                }
+
+                                result.Html = doc.DocumentNode.OuterHtml;
                             }
                             else
                             {
+                                string decoded = WebUtility.HtmlDecode(result.Html);
+
                                 var Final_Html = "";
                                 foreach (var file in Files)
                                 {
+                                    var link = file.isEncryption ? "" : file.Link[0];
+                                    var classtext = file.isEncryption ? "btn_downloadEncryptedFile link_with_icon d-flex text-decoration-none locked" : "link_with_icon d-flex text-decoration-none";
+
                                     var namesplit = file.Name.Split('.');
                                     var extension = namesplit[namesplit.Length - 1];
-                                    var html = $@"<a href="""" download=""{file.Name}"" class=""btn_downloadEncryptedFile link_with_icon d-flex text-decoration-none locked"" data-edit-type=""File"" data-fid=""{file.Id}"" data-extension=""{extension}"">
+
+                                    var html = $@"<a href=""{link}"" download=""{file.Name}"" class=""{classtext}"" data-edit-type=""File"" data-fid=""{file.Id}"" data-extension=""{extension}"">
                                                                 <div class=""icon pe-2""></div>
                                                                 <div class=""name text-black"">{file.Name}</div>
                                                             </a>";
+
                                     Final_Html += html;
                                 }
+
                                 decoded += Final_Html;
                                 result.Html = WebUtility.HtmlEncode(decoded);
                             }
                         }
+
                         result.LastModificationTime = articl.LastModificationTime ?? articl.CreationTime;
                         result.Popular = articl.PopularVisible ? articl.Popular : null;
                         var images = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { Sid = articl.Id, Type = (int)FileBindTypeEnum.文章管理, Size = 1 });

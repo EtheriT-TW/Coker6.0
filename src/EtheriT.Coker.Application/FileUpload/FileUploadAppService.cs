@@ -1780,7 +1780,7 @@ namespace EtheriT.Coker.Application
 
             try
             {
-                if (!checktokenresponse.IsLogin) throw new Exception("尚未登入");
+                if (!checktokenresponse.IsLogin) throw new Exception("加密檔需登入後才可進行下載");
 
                 var fileUpload = await db.FileUploads.Where(f => f.Id == fid).FirstOrDefaultAsync();
                 if (fileUpload == null) throw new Exception("查無檔案");

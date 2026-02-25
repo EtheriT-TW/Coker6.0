@@ -63,6 +63,7 @@ function ready() {
         if (location.pathname.toLowerCase().indexOf("/article/") >= 0) $conten.html($(`<div class="container isArticle">`).html(ele.textContent || ele.innerText));
         else if (location.pathname.toLowerCase().indexOf("/product/") >= 0) $conten.find("#ProductDescription > Content").html(ele.textContent || ele.innerText);
         else $conten.html(ele.textContent || ele.innerText);
+        if (PageType != "" && typeof PageType === "string") $conten.addClass(PageType);
         $conten.find("[draggable]").removeAttr("draggable");
         if ($conten.find("#CustMain").length > 0) $("#jumpToCenter").attr("href", "#CustMain");
         $conten.removeClass("d-none");
@@ -93,7 +94,7 @@ function ready() {
     if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
     if ($(".shareBlock").length > 0) ShareBlockInit();
     if ($(".flipdown").length > 0) FlipTimer();
-    if ($(".article-tags").length > 0 && $conten.children(".isArticle").length > 0) ArticleTagsInit();
+    if ($(".article-tags").length > 0 && $conten.hasClass("article")) ArticleTagsInit();
     if ($(".ContactForm").length > 0) {
         setContact();//From表單驗證碼
     }
@@ -119,7 +120,9 @@ function ready() {
             });
         });
     }
-    if (location.hash != "" && $(location.hash).length > 0) $(location.hash).goTo(45);
+
+    const hashRegex = /^#[a-zA-Z0-9\-_]+$/;
+    if (location.hash != "" && hashRegex.test(location.hash) && $(location.hash).length > 0) $(location.hash).goTo(45);
     if ($("video").length > 0) {
         $("video").each(function () {
             if (typeof (this.video) != "undefined") {

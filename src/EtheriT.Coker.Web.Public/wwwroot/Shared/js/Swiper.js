@@ -639,7 +639,7 @@ function SwiperInit(obj) {
                 var index = $self.find("a").index(this);
                 var $items = [];
                 var $images = [];
-                $self.find(".templatecontent img").each(function () {
+                $self.find(".templatecontent img,.swiper-slide img").each(function () {
                     var obj = {};
                     var $a = $(this).parents("a");
                     var link = $a.data("link") || "";

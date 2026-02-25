@@ -5,7 +5,7 @@
     Coker.extend({
         Token: {
             GetToken: function () {
-                return Coker.api.post("/api/Token/CreateToken");
+                return Coker.api.post("/api/Token/CreateToken", null, { auth: false });
             },
             CheckToken: function () {
                 return Coker.api.get("/api/Token/CheckToken/");

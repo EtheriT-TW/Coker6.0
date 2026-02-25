@@ -34,6 +34,7 @@
                     extraHeight: 8,
                     remeasureDelayMs: 80,
                     remeasureTimes: 6,
+                    nonce: document.querySelector('meta[name="csp-nonce"]').getAttribute('content'),
                     autoHeight: true,
                     onLoad: null,
                     onError: null,
@@ -384,6 +385,7 @@
             if (!style) {
                 style = doc.createElement("style");
                 style.id = id;
+                style.setAttribute('nonce', this.opt.nonce);
                 doc.head.appendChild(style);
             }
             style.textContent = css;
@@ -398,6 +400,7 @@
             if (!style) {
                 style = doc.createElement("style");
                 style.id = id;
+                style.setAttribute('nonce', this.opt.nonce);
                 doc.head.appendChild(style);
             }
 

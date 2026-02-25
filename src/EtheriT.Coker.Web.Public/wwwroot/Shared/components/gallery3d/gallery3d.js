@@ -21,7 +21,7 @@
         next: '下一張 ▶',
         pause: '暫停',
         play: '播放',
-        reset: '回到一張',
+        reset: '回到第一個',
         indicator: (idx1, total) => `第 ${idx1} / ${total} 張`,
     };
 

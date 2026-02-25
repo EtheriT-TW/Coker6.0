@@ -84,6 +84,7 @@
     }
     <script nonce="@ViewBag.Nonce">
         sessionStorage.setItem("PageKey","@ViewBag.PageKey");
+        const local = @Html.Raw(L.getAllJsonString());
         const SiteId = @ViewBag.SiteId;
         const SearchWord = @Html.Raw(ViewBag.SearchWord);
         const BackstageUrl = "@ViewBag.BackstageUrl";
@@ -91,6 +92,7 @@
         const OAuthError = "@ViewBag.OAuthError";
         const RootId = "@ViewBag.RootId";
         const PageId = "@ViewData["Id"]";
+        const PageType = "@ViewBag.option";
         const orderPrice = @ViewBag.priceOrder.ToString().ToLower();
         window.CI360 = { notInitOnLoad: true }
         window.onload = function () {

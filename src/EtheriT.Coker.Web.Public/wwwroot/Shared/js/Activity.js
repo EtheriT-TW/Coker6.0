@@ -112,9 +112,13 @@ function namecontrol(id) {
 function ArticleTagsInit() {
     co.Tag.GetArticleDataAll(PageId).done(function (res) {
         let template = $(".tags-template").html();
-        if (template == "") template = "<span></span>";
-        $(res).forEach(function (item) {
-            $(".article-tags").append($(template).text(item.title));
-        });
+        if (template == "" || typeof template === "undefined") template = "<a></a>";
+        const htmlContent = res.map(item => {
+            const $el = $(template).text(item.title);
+            const $l = $el[0].tagName.toLowerCase() === "a" ? $el : $el.find("a").first();
+            $l.attr({ href: `/${OrgName}/Search/Get/0/${item.title}`, title: `連結至：搜尋${item.title}頁面(另開新視窗)`, target: "_blank", rel: "noopener noreferrer" });
+            return $el[0].outerHTML;
+        }).join('');
+        $(".article-tags").append(htmlContent);
     });
 }

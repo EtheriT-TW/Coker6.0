@@ -31,6 +31,11 @@
                 thousandSign: function (input) {
                     var num = parseFloat(String(input).replace(/,/g, ""));
                     return isNaN(num) ? "0" : num.toLocaleString();
+                },
+                replace: function (str, ...args) {
+                    return str.replace(/\{(\d+)\}/g, (match, index) => {
+                        return typeof args[index] !== "undefined" ? args[index] : match;
+                    });
                 }
             }
         }

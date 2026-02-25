@@ -306,7 +306,25 @@
         },
 
         _setActiveMenuKey(menuKey) {
-            document.documentElement.setAttribute("data-menu", String(menuKey || ""));
+            const key = String(menuKey || "");
+            document.documentElement.setAttribute("data-menu", key);
+
+            const items = document.querySelectorAll(this.opt.selectors.menuItem);
+            items.forEach(el => {
+                const k =
+                    el.dataset.dirId ||
+                    el.dataset.dirid ||
+                    el.dataset.menuId ||
+                    el.dataset.menuid ||
+                    el.getAttribute("data-dirid") ||
+                    el.getAttribute("data-dir-id") ||
+                    "";
+                const hit = String(k || "") === key;
+
+                el.classList.toggle("active", hit);
+                if (hit) el.setAttribute("aria-current", "true");
+                else el.removeAttribute("aria-current");
+            });
         },
 
         /* -------------------- offcanvas -------------------- */
@@ -331,6 +349,19 @@
 
             this.canvasEl.addEventListener("hidden.bs.offcanvas", () => {
                 this._setExpanded(false);
+
+                const st = this._parseG3dStateFromUrl();
+                if (st && st.item) {
+                    const menu = st.menu || this._getActiveMenuKey();
+                    const facet = st.facet || this._getActiveFacetValue();
+
+                    // 停止 iframe 內容（避免 YT/音訊繼續跑）
+                    if (this.viewer && typeof this.viewer.clear === "function") {
+                        this.viewer.clear();
+                    }
+
+                    this._commitG3dState({ menu, facet }, { replace: true });
+                }
             });
         },
 
@@ -440,41 +471,31 @@
         /* -------------------- restore from url -------------------- */
         restoreFromUrlState() {
             const st = this._parseG3dStateFromUrl();
-            if (!st || !st.item) return;
+            if (!st) return;
 
-            // 先同步 UI (menu/facet/mode/canvas)
+            // ✅ 即使沒有 item，也要先同步 menu/facet
             if (st.menu) this._setActiveMenuKey(st.menu);
             if (st.facet) this._syncFacetActiveByValue(st.facet);
+
+            // 如果目前 facet UI 還沒 render，或 menu/facet 跟目前不同，讓 DirectoryFacet 跑一次把 facet/cata 生出來
+            const currentMenu = this._getActiveMenuKey();
+            const currentFacet = this._getActiveFacetValue();
+            const needMenuSync = (st.menu || "") !== (currentMenu || "");
+            const needFacetSync = (st.facet || "") !== (currentFacet || "");
+            const facetUiReady = document.querySelectorAll(this.opt.selectors.facetItem).length > 0;
+
+            if (needMenuSync || needFacetSync || !facetUiReady) {
+                callDirectoryFacet("onStateChanged", { menu: st.menu || "", facet: st.facet || "" }, { source: "restore" });
+            }
+
+            // ✅ 只有有 item 才開 offcanvas / load viewer
+            if (!st.item) return;
 
             this._setExpanded(String(st.mode || "").toLowerCase() === "wide");
             this.canvas.show();
 
-            // 先載 viewer
-            const url = this.opt.urlBuilder({
-                id: st.item,
-                item: st.item,
-                menu: st.menu,
-                facet: st.facet
-            });
+            const url = this.opt.urlBuilder({ id: st.item, item: st.item, menu: st.menu, facet: st.facet });
             if (url) this.viewer.loadUrl(url);
-
-            // ✅ 關鍵：只有當「menu/facet 跟目前狀態不同」才呼叫 onStateChanged，避免 hashchange 造成 Facet API 重跑
-            const currentMenu = this._getActiveMenuKey();
-            const currentFacet = this._getActiveFacetValue();
-
-            const needMenuSync = (st.menu || "") !== (currentMenu || "");
-            const needFacetSync = (st.facet || "") !== (currentFacet || "");
-
-            // 另外：如果目前 facet 按鈕區根本還沒 render（第一次進來），也需要讓 DirectoryFacet 跑一次把 facet 生出來
-            const facetUiReady = document.querySelectorAll(this.opt.selectors.facetItem).length > 0;
-
-            if (needMenuSync || needFacetSync || !facetUiReady) {
-                callDirectoryFacet(
-                    "onStateChanged",
-                    { menu: st.menu || "", facet: st.facet || "" },
-                    { source: "restore" }
-                );
-            }
         },
 
         /* -------------------- Gallery item click -------------------- */
@@ -502,7 +523,7 @@
 
         _bootInitialMenu() {
             const st = this._parseG3dStateFromUrl();
-            if (st && st.item) return;
+            if (st && (st.menu || st.item)) return;
 
             const raw = (location.hash || "").replace(/^#/, "").trim();
             let menuFromHash = "";

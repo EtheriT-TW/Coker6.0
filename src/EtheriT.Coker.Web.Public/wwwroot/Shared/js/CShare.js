@@ -152,6 +152,7 @@
         function buildShareUrl() {
             // use location.origin + settings.href (fits your usage)
             var full = normalizePath(settings.href || location.pathname);
+            if (full.includes("/embed/posts/")) full = full.replace("/embed/posts/", `/${settings.orgName}/search/article/`);
             return encodeURIComponent(full);
         }
 
@@ -228,8 +229,7 @@
             var targetRelAttr = isEmail ? '' : ' target="_blank" rel="noopener noreferrer"';
 
             var shareToText = t((settings.i18n || {}).shareToText, '');
-            var titleAttr = (shareToText ? (shareToText + ' ') : '') + item.name;
-
+            var titleAttr = co.util.string.replace(shareToText, item.name);
             _this.append(
                 '\n<a href="' + link + '" title="' + titleAttr + '"' +
                 targetRelAttr +

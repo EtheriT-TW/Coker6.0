@@ -280,6 +280,7 @@ var grapesInit = function (options) {
                                 iframe.local = result;
                             });
                         }
+                        iframe.OrgName = typeof OrgName === "undefined" ? "" : OrgName;
                         const init = function () {
                             if (typeof (iframe.jqueryExtend) != "undefined" && typeof (iframe.local) != "undefined") iframe.jqueryExtend();
                             else timer = setTimeout(init, 100);

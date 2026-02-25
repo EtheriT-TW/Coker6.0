@@ -677,7 +677,7 @@ header {
         flex-direction: column;
     }
 
-        #Offcanvas_Mega_Menu > ul > .title > .content > ul > li, a {
+        #Offcanvas_Mega_Menu > ul > .title > .content > ul > li, #Offcanvas_Mega_Menu > ul > .title > .content > ul > li > a {
             padding-right: 0 !important;
         }
 

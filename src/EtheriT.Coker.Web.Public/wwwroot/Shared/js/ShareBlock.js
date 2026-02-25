@@ -10,6 +10,7 @@
                 description: 'jQuery plugin - C Share buttons...',
                 showButtons: ['email', 'plurk', 'twitter', 'fb', 'line'],
                 href: href,
+                orgName: typeof OrgName === "undefined" ? "" : OrgName,
                 i18n: {
                     shareToText: local.shareTo,
                     confirmTitle: local.MailtoHintTitle,

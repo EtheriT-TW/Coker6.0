@@ -17,6 +17,7 @@ namespace EtheriT.Coker.Application.Shared.Tag
         public Task<List<TagGetSelectedDto>> GetTagAssociate(TagAssociateGetDto dto);
         public Task<List<TagGetAllDataDto>> GetProductDataAll(long PId);
         public Task<List<TagGetAllDataDto>> GetAdvertiseDataAll(long AdId);
+        public Task<List<TagGetAllDataDto>> GetArticleDataAll(long AId);
         public Task<TagGetAllListDto?> GetTagByName(string name);
         public Task<ResponseMessageDto> TagDelete(long Id);
         public Task<ResponseMessageDto> TagGroupDelete(long Id);

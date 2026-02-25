@@ -31,6 +31,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -308,197 +309,1004 @@ namespace EtheriT.Coker.Application.Directory
 
             return output;
         }
+        #region ===== Search =====
+        // ✅ 介面不變：SearchReleInfo(DirectoryReleInfoInputDto dto)
+        // ✅ SearchProd 不再需要（可刪除/覆蓋）
+        // ✅ 只有需要的 Query 才會被建立（依 SearchId）
+        // ✅ 修正 OrderBy / ThenBy、skip 計算
+        // ✅ 共用：搜尋條件、Filters/DirectoryType 產生、使用者加權排序（無行為資料就回到預設）
+        // ✅ 文章：只有「標籤」Filter；選單：無 Filter；商品：標籤 + 技術文件 + DirectoryType
+        // ✅ 商品排序規則（Status / Ser_No / ItemNo / Id）不變，只修正 ThenBy 串接與 EF 可翻譯性
+
         private async Task<DirectoryReleInfoGetDto> SearchReleInfo(DirectoryReleInfoInputDto dto)
         {
-            long SearchId = dto.Ids.Count > 0 ? dto.Ids[0] : 0;
-            long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
-            if (!string.IsNullOrEmpty(dto.SearchText)) await custSearchAppService.SaveSearchLog(new SaveSearchLogDto
+            // ---------- 基本參數 ----------
+            long searchId = (dto.Ids != null && dto.Ids.Count > 0) ? dto.Ids[0] : 0;
+            long websiteId = (dto.SiteId == null || dto.SiteId == 0) ? await loginUserData.GetWebsiteId() : dto.SiteId.Value;
+
+            var output = new DirectoryReleInfoGetDto
             {
-                Key = dto.SearchText,
-                FK_CustSearchId = SearchId,
-                FK_WebsiteId = dto.SiteId ?? 0
-            });
-            if (SearchId == 3) return await SearchProd(dto);
-            var output = new DirectoryReleInfoGetDto { ReleInfos = new List<DirectoryReleInfoDto>() };
-            int page = (int)dto.Page;
-            int shownum = (int)dto.ShowNum;
-            if (string.IsNullOrEmpty(dto.SearchText))
+                ReleInfos = new List<DirectoryReleInfoDto>(),
+                DirectoryType = new List<DirectoryListBySearchDto>(),
+                Filter = new List<DirectorySearchTypeListDto>()
+            };
+
+            // 沒有 keyword 就直接回空（沿用你原本語意）
+            if (string.IsNullOrWhiteSpace(dto.SearchText))
             {
                 output.TotalCount = 0;
                 output.TotalPage = 0;
                 return output;
             }
-            Regex imgRegex = new Regex("(?:src=[\\S]*quot;)[\\S]*(?:quot;)", RegexOptions.IgnoreCase);
-            var data1 = db.WebMenus.Include(e => e.Website).Where(e => !e.IsDeleted)
-                            .Where(e => e.FK_WebsiteId == WebsiteID)
-                            .Where(e => e.Visible)
-                            .Where(e => !string.IsNullOrEmpty(e.RouterName))
-                            .Where(e => !string.IsNullOrEmpty(e.Html))
-                            .Where(e =>
-                                (e.Title ?? "").Contains(dto.SearchText ?? "") ||
-                                (e.Html ?? "").Contains(dto.SearchText ?? "")
-                            );
-            var data2 = db.Article.Include(e => e.Website).Where(e => !e.IsDeleted)
-                            .Where(e => e.FK_WebsiteId == WebsiteID)
-                            .Where(e => !string.IsNullOrEmpty(e.Html))
-                            .Where(e => e.Visible)
-                            .Where(e =>
-                                e.permanent ||
-                                (e.StartTime.Value <= DateTime.Now && e.EndTime.Value >= DateTime.Now)
-                            )
-                            .Where(e =>
-                                (e.Title ?? "").Contains(dto.SearchText ?? "") ||
-                                (e.Description ?? "").Contains(dto.SearchText ?? "") ||
-                                (e.Html ?? "").Contains(dto.SearchText ?? "") ||
-                                db.Tag_Associates.Include(ta => ta.Tag)
-                                    .Where(ta => !ta.IsDeleted && ta.Type == TagAssociateTypeEnum.文章 && ta.FK_AId == e.Id && ta.Tag != null && ta.Tag.Title == dto.SearchText).Any()
-                            );
-            int skip = shownum == -500 ? 0 : (page - 1) * shownum - 1;
-            if (skip < 0) skip = 0;
-            //Regex.Replace(m.Html, @"<(.|\n)*?>", "")
-            switch (SearchId)
+
+            // 記錄搜尋 log（沿用你原本語意）
+            await custSearchAppService.SaveSearchLog(new SaveSearchLogDto
             {
+                Key = dto.SearchText,
+                FK_CustSearchId = searchId,
+                FK_WebsiteId = dto.SiteId ?? 0
+            });
+
+            // 分頁修正（原本 -1 會造成跳筆）
+            int page = (dto.Page.HasValue && dto.Page.Value > 0) ? dto.Page.Value : 1;
+            int showNum = (dto.ShowNum.HasValue ? dto.ShowNum.Value : 12);
+            if (showNum <= 0 && showNum != -500) showNum = 12;
+
+            int skip = (showNum == -500) ? 0 : (page - 1) * showNum;
+
+            // 圖片 fallback（沿用你原本 regex）
+            Regex imgRegex = new Regex("(?:src=[\\S]*quot;)[\\S]*(?:quot;)", RegexOptions.IgnoreCase);
+
+            // ---------- 決定本次要查哪些類型（依 SearchId） ----------
+            bool includeMenu = false;
+            bool includeArticle = false;
+            bool includeProd = false;
+
+            switch (searchId)
+            {
+                case 3:
+                    includeProd = true;
+                    break;
+
                 case 1:
-                    var art1 = await (
-                        from a in data2
-                        join ta in db.Tag_Associates.Where(e => !e.IsDeleted) on a.Id equals ta.FK_AId
-                        join t in db.Tags.Where(e => !e.IsDeleted) on ta.FK_TId equals t.Id
-                        where t.FK_WebsiteId == WebsiteID && t.Id == 42
-                        select new DirectoryReleInfoDto
-                        {
-                            Id = a.Id,
-                            Title = a.Title,
-                            Link = $"/article/",
-                            type = DirectoryTypeEnum.文章,
-                            OrgName = a.Website.OrgName,
-                            SerNo = a.SerNO,
-                            Description = a.Description,
-                            MainImage = a.Html,
-                        }
-                    ).ToListAsync();
-                    if (shownum == -500) shownum = art1.Count();
-                    var dataMargin1 = art1.OrderBy(e => e.NodeDate)
-                        .ThenBy(e => e.SerNo)
-                        .ThenByDescending(e => e.Id)
-                        .Skip(skip).Take(shownum);
-                    var list1 = dataMargin1.Select(e => new DirectoryReleInfoDto
-                    {
-                        Id = e.Id,
-                        Title = e.Title,
-                        Link = e.type == DirectoryTypeEnum.文章 ? e.Link + e.Id : "/" + e.Link,
-                        OrgName = e.OrgName,
-                        type = e.type,
-                        SerNo = e.SerNo,
-                        Description = string.IsNullOrEmpty(e.Description) ? getSearchDescription(e.MainImage, dto.SearchText) : getSearchDescription(e.Description, dto.SearchText),
-                        MainImage = imgRegex.Match(e.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "")
-                    }).ToList();
-                    output.TotalCount = art1.Count();
-                    output.ReleInfos.AddRange(list1);
-                    break;
                 case 2:
-                    var art2 = await (
-                        from a in data2
-                        join ta in db.Tag_Associates.Where(e => !e.IsDeleted) on a.Id equals ta.FK_AId
-                        join t in db.Tags.Where(e => !e.IsDeleted) on ta.FK_TId equals t.Id
-                        where t.FK_WebsiteId == WebsiteID && t.Id == 46
-                        select new DirectoryReleInfoDto
-                        {
-                            Id = a.Id,
-                            Title = a.Title,
-                            Link = $"/article/",
-                            type = DirectoryTypeEnum.文章,
-                            OrgName = a.Website.OrgName,
-                            SerNo = a.SerNO,
-                            Description = a.Description,
-                            MainImage = a.Html,
-                        }
-                    ).ToListAsync();
-                    if (shownum == -500) shownum = art2.Count();
-                    var dataMargin2 = art2.OrderBy(e => e.NodeDate)
-                        .ThenBy(e => e.SerNo)
-                        .ThenByDescending(e => e.Id)
-                        .Skip(skip).Take(shownum);
-                    var list2 = dataMargin2.Select(e => new DirectoryReleInfoDto
-                    {
-                        Id = e.Id,
-                        Title = e.Title,
-                        Link = e.type == DirectoryTypeEnum.文章 ? e.Link + e.Id : "/" + e.Link,
-                        OrgName = e.OrgName,
-                        type = e.type,
-                        SerNo = e.SerNo,
-                        Description = string.IsNullOrEmpty(e.Description) ? getSearchDescription(e.MainImage, dto.SearchText) : getSearchDescription(e.Description, dto.SearchText),
-                        MainImage = imgRegex.Match(e.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "")
-                    }).ToList();
-                    output.TotalCount = art2.Count();
-                    output.ReleInfos.AddRange(list2);
+                    includeArticle = true;
                     break;
-                default:
-                    var menu = await data1.Select(m => new DirectoryReleInfoDto
+
+                default: // 0 或其他：預設搜尋選單 + 文章
+                    includeMenu = true;
+                    includeArticle = true;
+                    break;
+            }
+            bool hasAnyFilter = HasAnyEffectiveFilter(dto);
+
+            if (hasAnyFilter || (searchId == 0 && dto.DirectoryType > 0))
+            {
+                includeMenu = false;
+            }
+
+            // ---------- 取得使用者加權資料（可為空） ----------
+            var userCtx = await GetUserSearchContextAsync();
+
+            // ---------- 建立 Query（只建需要的） ----------
+            IQueryable<WebMenu>? menuQ = null;
+            IQueryable<Core.Models.Article>? articleQ = null;
+            IQueryable<Prod>? prodQ = null;
+
+            if (includeMenu)
+            {
+                // ✅ base query 不 Include(Website)（Count/Union 更輕，回查詳細資料仍 Include）
+                menuQ = db.WebMenus
+                    .AsNoTracking()
+                    .Where(x => !x.IsDeleted)
+                    .Where(x => x.FK_WebsiteId == websiteId)
+                    .Where(x => x.Visible)
+                    .Where(x => !string.IsNullOrEmpty(x.RouterName))
+                    .Where(x => !string.IsNullOrEmpty(x.Html))
+                    .Where(x =>
+                        (x.Title ?? "").Contains(dto.SearchText!) ||
+                        (x.Html ?? "").Contains(dto.SearchText!)
+                    );
+            }
+
+            if (includeArticle)
+            {
+                // ✅ base query 不 Include(Website)（Count/Union 更輕，回查詳細資料仍 Include）
+                articleQ = db.Article
+                    .AsNoTracking()
+                    //.Include(x => x.Website) // ❌ 拿掉
+                    .Where(x => !x.IsDeleted)
+                    .Where(x => x.FK_WebsiteId == websiteId)
+                    .Where(x => x.Visible)
+                    .Where(x => !string.IsNullOrEmpty(x.Html))
+                    .Where(x =>
+                        x.permanent ||
+                        (
+                            x.StartTime.HasValue && x.EndTime.HasValue &&
+                            x.StartTime.Value <= DateTime.Now &&
+                            x.EndTime.Value >= DateTime.Now
+                        )
+                    )
+                    .Where(x =>
+                        (x.Title ?? "").Contains(dto.SearchText!) ||
+                        (x.Description ?? "").Contains(dto.SearchText!) ||
+                        (x.Html ?? "").Contains(dto.SearchText!) ||
+                        db.Tag_Associates
+                            .AsNoTracking()
+                            //.Include(ta => ta.Tag) // ❌ 拿掉（Any/Where 不需要 Include）
+                            .Where(ta => !ta.IsDeleted)
+                            .Where(ta => ta.Type == TagAssociateTypeEnum.文章 && ta.FK_AId == x.Id)
+                            .Where(ta => ta.Tag != null && !ta.Tag.IsDeleted && ta.Tag.FK_WebsiteId == websiteId)
+                            .Where(ta => (ta.Tag!.Title ?? "").Contains(dto.SearchText!))
+                            .Any()
+                    );
+
+                // SearchId 1/2：固定 tag 條件（你原本是 hardcode tagId 42/46）
+                if (searchId == 1) articleQ = ApplyArticleFixedTag(articleQ, websiteId, 42);
+                if (searchId == 2) articleQ = ApplyArticleFixedTag(articleQ, websiteId, 46);
+
+                // 額外：日期範圍（若你要用 dto.StartDate/EndDate 過濾文章 NodeDate）
+                if (dto.StartDate.HasValue)
+                    articleQ = articleQ.Where(a => a.NodeDate.HasValue && a.NodeDate.Value >= dto.StartDate.Value.Date);
+                if (dto.EndDate.HasValue)
+                    articleQ = articleQ.Where(a => a.NodeDate.HasValue && a.NodeDate.Value <= dto.EndDate.Value.Date.AddDays(1).AddTicks(-1));
+            }
+
+            if (includeProd)
+            {
+                prodQ = BuildProdBaseSearchQuery(dto, websiteId);
+
+                // 額外：日期範圍（商品用 StartTime/EndTime 或你要的邏輯，這裡用你 dto 欄位）
+                if (dto.StartDate.HasValue)
+                    prodQ = prodQ.Where(p => p.StartTime.HasValue && p.StartTime.Value >= dto.StartDate.Value.Date);
+                if (dto.EndDate.HasValue)
+                    prodQ = prodQ.Where(p => p.EndTime.HasValue && p.EndTime.Value <= dto.EndDate.Value.Date.AddDays(1).AddTicks(-1));
+            }
+
+            // ---------- 先產生 Filters / DirectoryType（依類型） ----------
+            if (includeProd && prodQ != null)
+            {
+                await FillProdFiltersAndDirectoryTypeAsync(output, dto, websiteId, prodQ);
+                // 把 dto.Filters / dto.DirectoryType 套到 prodQ（真正過濾結果）
+                prodQ = ApplyProdFilters(prodQ, dto, websiteId);
+            }
+            else if (includeArticle && articleQ != null)
+            {
+                await FillArticleTagFiltersAsync(output, websiteId, articleQ);
+                // 文章只支援「標籤」filters（你說的 C）
+                articleQ = ApplyArticleFilters(articleQ, dto, websiteId);
+            }
+            // menu 沒有 filters（你說的 D）
+
+            // ---------- ✅ 統一計算總筆數：改成 union Count 一次 ----------
+            var unionForCount = BuildUnionQuery(menuQ, articleQ, prodQ, websiteId, userCtx, dto);
+            int totalCount = await unionForCount.CountAsync();
+
+            output.TotalCount = totalCount;
+
+            if (showNum == -500) showNum = totalCount;
+            output.TotalPage = (showNum <= 0) ? 0 : (int)Math.Ceiling(totalCount / (double)showNum);
+
+            // ---------- 沒資料直接回 ----------
+            if (totalCount <= 0)
+                return output;
+
+            // ---------- 建立「統一排序用」的 Union Row ----------
+            var union = BuildUnionQuery(menuQ, articleQ, prodQ, websiteId, userCtx, dto);
+
+            // 只取當頁 ids（穩定排序：最後一定要有 TieBreaker）
+            var pageRows = await union
+                .Skip(skip)
+                .Take(showNum)
+                .ToListAsync();
+
+            // ---------- 回查詳細資料並組 DTO ----------
+            var menuIds = pageRows.Where(r => r.Type == DirectoryTypeEnum.選單).Select(r => r.Id).ToList();
+            var articleIds = pageRows.Where(r => r.Type == DirectoryTypeEnum.文章).Select(r => r.Id).ToList();
+            var prodIds = pageRows.Where(r => r.Type == DirectoryTypeEnum.商品).Select(r => r.Id).ToList();
+
+            var menus = (menuIds.Count == 0) ? new List<WebMenu>() :
+                await db.WebMenus.AsNoTracking().Include(x => x.Website)
+                    .Where(x => menuIds.Contains(x.Id))
+                    .ToListAsync();
+
+            var articles = (articleIds.Count == 0) ? new List<Core.Models.Article>() :
+                await db.Article.AsNoTracking().Include(x => x.Website)
+                    .Where(x => articleIds.Contains(x.Id))
+                    .ToListAsync();
+
+            var prods = (prodIds.Count == 0) ? new List<Prod>() :
+                await db.Prods.AsNoTracking().Include(x => x.Website)
+                    .Where(x => prodIds.Contains(x.Id))
+                    .ToListAsync();
+
+            // 文章圖片批次（沿用你原本）
+            var articleImages = (articleIds.Count == 0) ? new List<FileGetImgDto>() :
+                await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
+                {
+                    Sid = articleIds,
+                    Type = (int)FileBindTypeEnum.文章管理,
+                    Size = 3
+                });
+
+            // ✅ 商品主圖改成批次：避免每筆商品 await getImgFiles（N+1）
+            var prodMainImageMap = new Dictionary<long, string>();
+            if (prodIds.Count > 0)
+            {
+                var prodImgs = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
+                {
+                    Sid = prodIds,
+                    Type = (int)FileBindTypeEnum.產品,
+                    Size = 1
+                });
+
+                // 每個 Sid 取第一張（getImgsFiles 本身已做 Sid order + serno order，但這裡再保險）
+                prodMainImageMap = prodImgs
+                    .Where(x => x.Sid > 0 && !string.IsNullOrEmpty(x.Link))
+                    .GroupBy(x => x.Sid)
+                    .ToDictionary(g => g.Key, g => g.OrderBy(x => x.Id).Select(x => x.Link).First());
+            }
+
+            // 標籤：文章/商品（只對當頁 ids）
+            var articleTags = await GetTagsForObjectsAsync(websiteId, TagAssociateTypeEnum.文章, articleIds);
+            var prodTags = await GetTagsForObjectsAsync(websiteId, TagAssociateTypeEnum.商品, prodIds);
+
+            // ✅ 用 Dictionary 取代 FirstOrDefault（避免 O(n^2)）
+            var menuMap = menus.ToDictionary(x => x.Id);
+            var articleMap = articles.ToDictionary(x => x.Id);
+            var prodMap = prods.ToDictionary(x => x.Id);
+
+            // 組裝輸出（依 pageRows 原順序）
+            foreach (var row in pageRows)
+            {
+                if (row.Type == DirectoryTypeEnum.選單)
+                {
+                    if (!menuMap.TryGetValue(row.Id, out var m)) continue;
+
+                    output.ReleInfos.Add(new DirectoryReleInfoDto
                     {
                         Id = m.Id,
                         Title = m.Title,
-                        Link = Convert.ToString(m.RouterName),
-                        OrgName = m.Website.OrgName,
+                        Link = "/" + Convert.ToString(m.RouterName),
+                        OrgName = m.Website?.OrgName ?? "",
                         type = DirectoryTypeEnum.選單,
                         SerNo = m.SerNO,
-                        Description = m.Description,
-                        MainImage = m.Html,
-                    }).ToListAsync();
-                    var art = await data2.Select(a => new DirectoryReleInfoDto
+                        Description = string.IsNullOrEmpty(m.Description)
+                            ? getSearchDescription(m.Html, dto.SearchText)
+                            : getSearchDescription(m.Description, dto.SearchText),
+                        MainImage = imgRegex.Match(m.Html ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "")
+                    });
+                }
+                else if (row.Type == DirectoryTypeEnum.文章)
+                {
+                    if (!articleMap.TryGetValue(row.Id, out var a)) continue;
+
+                    var imgs = articleImages.Where(i => i.Sid == a.Id).ToList();
+                    output.ReleInfos.Add(new DirectoryReleInfoDto
                     {
                         Id = a.Id,
                         Title = a.Title,
-                        Link = $"/article/",
+                        Link = "/article/" + a.Id,
+                        OrgName = a.Website?.OrgName ?? "",
                         type = DirectoryTypeEnum.文章,
-                        OrgName = a.Website.OrgName,
                         SerNo = a.SerNO,
-                        Description = a.Description,
-                        MainImage = a.Html,
-                    }).ToListAsync();
-
-                    var mCount = menu.Count();
-                    var aCount = art.Count();
-
-                    if (shownum == -500) shownum = mCount + aCount;
-                    var dataMargin = menu.Union(art).OrderBy(e => e.NodeDate)
-                        .ThenBy(e => e.SerNo)
-                        .ThenByDescending(e => e.Id)
-                        .Skip(skip).Take(shownum);
-
-                    var articleImages = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
-                    {
-                        Sid = art.Select(e => e.Id).ToList(),
-                        Type = (int)FileBindTypeEnum.文章管理,
-                        Size = 3
+                        NodeDate = a.NodeDate,
+                        StartTime = a.StartTime,
+                        EndTime = a.EndTime,
+                        Description = string.IsNullOrEmpty(a.Description)
+                            ? getSearchDescription(a.Html, dto.SearchText)
+                            : getSearchDescription(a.Description, dto.SearchText),
+                        MainImage = (imgs.Count > 0)
+                            ? imgs[0].Link
+                            : imgRegex.Match(a.Html ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", ""),
+                        tags = articleTags.TryGetValue(a.Id, out var t) ? t : null
                     });
+                }
+                else if (row.Type == DirectoryTypeEnum.商品)
+                {
+                    if (!prodMap.TryGetValue(row.Id, out var p)) continue;
 
-
-
-                    var list = await Task.WhenAll(dataMargin.Select(async e =>
+                    // filters querystring（沿用你原本）
+                    var filtersStr = "";
+                    if (dto.Filters != null && dto.Filters.Count > 0)
                     {
-                        List<FileGetImgDto> imagedata = new List<FileGetImgDto>();
-                        if (e.type == DirectoryTypeEnum.文章) imagedata = articleImages.FindAll(f => f.Sid == e.Id);
+                        var json = JsonConvert.SerializeObject(dto.Filters);
+                        if (!string.IsNullOrWhiteSpace(json))
+                            filtersStr = "?filter=" + json;
+                    }
 
-                        return new DirectoryReleInfoDto
-                        {
-                            Id = e.Id,
-                            Title = e.Title,
-                            Link = e.type == DirectoryTypeEnum.文章 ? e.Link + e.Id : "/" + e.Link,
-                            OrgName = e.OrgName,
-                            type = e.type,
-                            SerNo = e.SerNo,
-                            Description = string.IsNullOrEmpty(e.Description) ? getSearchDescription(e.MainImage, dto.SearchText) : getSearchDescription(e.Description, dto.SearchText),
-                            MainImage = imagedata.Count > 0 ? imagedata[0].Link :
-                                imgRegex.Match(e.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "")
-                        };
-                    }));
+                    var dtoItem = new DirectoryReleInfoDto
+                    {
+                        Id = p.Id,
+                        Title = p.Title,
+                        Link = $"/product/{p.Id}{filtersStr}",
+                        OrgName = p.Website?.OrgName ?? "",
+                        type = DirectoryTypeEnum.商品,
+                        SerNo = p.Ser_No,
+                        ItemNo = p.ItemNo,
+                        Description = string.IsNullOrEmpty(p.Description)
+                            ? getSearchDescription(p.Html, dto.SearchText)
+                            : getSearchDescription(p.Description, dto.SearchText),
+                        MainImage = p.Html,
+                        Status = p.Status,
+                        StatusName = p.Status.ToString(),
+                        tags = prodTags.TryGetValue(p.Id, out var pt) ? pt : null
+                    };
 
-                    output.TotalCount = mCount + aCount;
-                    output.ReleInfos.AddRange(list);
-                    break;
+                    // ✅ 商品主圖：先用「檔案綁定」的第一張；沒有才 fallback 用 Html regex
+                    if (prodMainImageMap.TryGetValue(p.Id, out var mainLink) && !string.IsNullOrEmpty(mainLink))
+                    {
+                        dtoItem.MainImage = mainLink;
+                    }
+                    else
+                    {
+                        dtoItem.MainImage = imgRegex.Match(dtoItem.MainImage ?? "").Value
+                            .Replace("quot;", "")
+                            .Replace("src=&", "")
+                            .Replace("&", "")
+                            .Replace("amp;", "");
+                    }
+
+                    // ✅ 商品價格：維持你原本邏輯（只對當頁做）
+                    await FillProdPriceAsync(dtoItem, websiteId);
+
+                    output.ReleInfos.Add(dtoItem);
+                }
             }
-            output.TotalPage = (int)Math.Ceiling(output.TotalCount / (double)shownum);
+
             return output;
+
+            // ====================== local helpers ======================
+
+            IQueryable<Core.Models.Article> ApplyArticleFixedTag(IQueryable<Core.Models.Article> q, long wId, long fixedTagId)
+            {
+                // 你原本是 join tag_associate / tags；這裡用 Any 讓 SQL 比較乾淨
+                return q.Where(a =>
+                    db.Tag_Associates.AsNoTracking()
+                        .Where(ta => !ta.IsDeleted && ta.Type == TagAssociateTypeEnum.文章 && ta.FK_AId == a.Id)
+                        .Join(db.Tags.AsNoTracking().Where(t => !t.IsDeleted && t.FK_WebsiteId == wId),
+                              ta => ta.FK_TId,
+                              t => t.Id,
+                              (ta, t) => t.Id)
+                        .Any(tid => tid == fixedTagId)
+                );
+            }
+            // ---------- local helpers（放在 SearchReleInfo 內） ----------
+            static bool HasAnyEffectiveFilter(DirectoryReleInfoInputDto dto)
+            {
+                if (dto.DirectoryType > 0) return true;
+
+                if (dto.Filters == null || dto.Filters.Count == 0) return false;
+
+                // 你目前 filters 結構：Filter -> Group -> Tags
+                foreach (var f in dto.Filters)
+                {
+                    if (f?.Group == null) continue;
+                    foreach (var g in f.Group)
+                    {
+                        if (g?.Tags != null && g.Tags.Count > 0)
+                            return true;
+                    }
+                }
+                return false;
+            }
+        }
+
+        private sealed class UserSearchContext
+        {
+            public Guid? UUID { get; set; }
+            public List<long> RelevantTagIds { get; set; } = new();
+        }
+
+        private async Task<UserSearchContext> GetUserSearchContextAsync()
+        {
+            var ctx = new UserSearchContext();
+
+            Guid uuid;
+            try
+            {
+                uuid = await tokenAppService.GetUUID();
+                ctx.UUID = uuid;
+            }
+            catch
+            {
+                // 沒 token 就回空（走預設排序）
+                return ctx;
+            }
+
+            // 分群（優先）
+            var grouping = await db.UserGroupingDetails
+                .AsNoTracking()
+                .Include(e => e.userGrouping)
+                .FirstOrDefaultAsync(e => e.UUID == uuid);
+
+            if (grouping != null)
+            {
+                ctx.RelevantTagIds = await db.Tag_Associates.AsNoTracking()
+                    .Where(e => !e.IsDeleted)
+                    .Where(e => e.Type == TagAssociateTypeEnum.使用者分群 && e.FK_AId == grouping.FK_GropingId)
+                    .Select(e => e.FK_TId)
+                    .ToListAsync();
+
+                if (ctx.RelevantTagIds.Count > 0) return ctx;
+            }
+
+            // 個人標籤（前 5）
+            ctx.RelevantTagIds = await db.UserTagStatistics
+                .AsNoTracking()
+                .Where(ut => ut.UUID == uuid)
+                .OrderByDescending(ut => ut.Weight)
+                .Take(5)
+                .Select(ut => ut.FK_TagId)
+                .ToListAsync();
+
+            return ctx;
+        }
+
+        private IQueryable<Prod> BuildProdBaseSearchQuery(DirectoryReleInfoInputDto dto, long websiteId)
+        {
+            // ✅ 只做 keyword 搜尋，不做 filters（filters 在 ApplyProdFilters）
+            var q = db.Prods
+                .AsNoTracking()
+                .Include(e => e.Website)
+                .Where(e => !e.IsDeleted)
+                .Where(e => !e.RemovedFromShelves)
+                .Where(e => e.Visible)
+                .Where(e => e.FK_WebsiteId == websiteId);
+
+            var kw = dto.SearchText ?? "";
+            q = q.Where(e =>
+                e.Title.Contains(kw) ||
+                e.Introduction.Contains(kw) ||
+                e.Description.Contains(kw) ||
+                (e.Html ?? "").Contains(kw) ||
+                (e.ItemNo != null && e.ItemNo.Contains(kw)) ||
+                db.Tag_Associates.AsNoTracking()
+                    .Include(t => t.Tag)
+                    .Where(t => !t.IsDeleted && t.Type == TagAssociateTypeEnum.商品)
+                    .Where(t => t.Tag != null && !t.Tag.IsDeleted && t.Tag.FK_WebsiteId == websiteId)
+                    .Where(t => (t.Tag!.Title ?? "").Contains(kw))
+                    .Select(t => t.FK_AId).Contains(e.Id) ||
+                db.Prod_TechCerts.AsNoTracking()
+                    .Include(t => t.TechnicalCertificate)
+                    .Where(t => !t.IsDeleted)
+                    .Where(t => t.TechnicalCertificate != null && !t.TechnicalCertificate.IsDeleted && t.TechnicalCertificate.FK_WebsiteId == websiteId)
+                    .Where(t => !string.IsNullOrEmpty(t.TechnicalCertificate!.Title) && t.TechnicalCertificate!.Title.Contains(kw))
+                    .Select(t => t.FK_PId).Contains(e.Id)
+            );
+
+            return q;
+        }
+
+        private IQueryable<Prod> ApplyProdFilters(IQueryable<Prod> prods, DirectoryReleInfoInputDto dto, long websiteId)
+        {
+            // ✅ DirectoryType（你目前用 long；0 = 不限制）
+            // 你說不能只用 !=0 判斷語意，但現階段 input 就是 0/目錄id，我們仍採 0=all
+            if (dto.DirectoryType > 0)
+            {
+                var dirId = dto.DirectoryType;
+
+                // 目錄 tag -> 商品 tag -> 商品
+                prods = prods.Where(p =>
+                    db.Tag_Associates.AsNoTracking()
+                        .Where(a => !a.IsDeleted && a.Type == TagAssociateTypeEnum.商品)
+                        .Where(a => a.Tag != null && !a.Tag.IsDeleted && a.Tag.FK_WebsiteId == websiteId)
+                        .Where(prodTag =>
+                            db.Tag_Associates.AsNoTracking()
+                                .Where(d => !d.IsDeleted && d.Type == TagAssociateTypeEnum.目錄 && d.FK_AId == dirId)
+                                .Select(d => d.FK_TId)
+                                .Contains(prodTag.FK_TId)
+                        )
+                        .Select(a => a.FK_AId)
+                        .Contains(p.Id)
+                );
+            }
+
+            if (dto.Filters == null || dto.Filters.Count == 0)
+                return prods;
+
+            foreach (var f in dto.Filters)
+            {
+                foreach (var g in f.Group ?? new List<DirectoryGroupFilterDto>())
+                {
+                    if (g.Tags == null || g.Tags.Count == 0) continue;
+
+                    if (f.Type == DirectorySearchTypeEnum.標籤)
+                    {
+                        // groupId != 0：限制在某 TagGroup
+                        if (g.Id != 0)
+                        {
+                            var ids =
+                                from p in prods
+                                join ta in db.Tag_Associates.AsNoTracking()
+                                        .Include(e => e.Tag)
+                                        .Where(e => !e.IsDeleted && e.Type == TagAssociateTypeEnum.商品 && e.Tag != null && !e.Tag.IsDeleted)
+                                    on p.Id equals ta.FK_AId
+                                join tg in db.Tag_TagGroups.AsNoTracking()
+                                        .Include(e => e.Tag_Group)
+                                        .Where(e => !e.IsDeleted && e.Tag_Group != null && !e.Tag_Group.IsDeleted && e.Tag_Group.FK_WebsiteId == websiteId)
+                                    on ta.FK_TId equals tg.FK_TId
+                                where tg.FK_TGId == g.Id && g.Tags.Contains(ta.FK_TId)
+                                select p.Id;
+
+                            prods = prods.Where(p => ids.Contains(p.Id));
+                        }
+                        else
+                        {
+                            var ids =
+                                from p in prods
+                                join ta in db.Tag_Associates.AsNoTracking()
+                                        .Include(e => e.Tag)
+                                        .Where(e => !e.IsDeleted && e.Type == TagAssociateTypeEnum.商品 && e.Tag != null && !e.Tag.IsDeleted)
+                                    on p.Id equals ta.FK_AId
+                                where g.Tags.Contains(ta.FK_TId)
+                                select p.Id;
+
+                            prods = prods.Where(p => ids.Contains(p.Id));
+                        }
+                    }
+                    else if (f.Type == DirectorySearchTypeEnum.技術文件)
+                    {
+                        var ids =
+                            from p in prods
+                            join t in db.Prod_TechCerts.AsNoTracking()
+                                    .Include(e => e.TechnicalCertificate)
+                                    .Where(e => !e.IsDeleted && e.TechnicalCertificate != null && !e.TechnicalCertificate.IsDeleted && e.TechnicalCertificate.FK_WebsiteId == websiteId)
+                                on p.Id equals t.FK_PId
+                            where g.Tags.Contains(t.FK_TCId)
+                            select p.Id;
+
+                        prods = prods.Where(p => ids.Contains(p.Id));
+                    }
+                }
+            }
+
+            return prods;
+        }
+
+        IQueryable<Core.Models.Article> ApplyArticleFilters(
+            IQueryable<Core.Models.Article> articles,
+            DirectoryReleInfoInputDto dto,
+            long websiteId)
+        {
+            // ✅ DirectoryType（文章也要支援，語意與商品一致：目錄 tag -> 文章 tag -> 文章）
+            if (dto.DirectoryType > 0)
+            {
+                var dirId = dto.DirectoryType;
+
+                articles = articles.Where(a =>
+                    db.Tag_Associates.AsNoTracking()
+                        .Where(x => !x.IsDeleted && x.Type == TagAssociateTypeEnum.文章)
+                        .Where(x => x.Tag != null && !x.Tag.IsDeleted && x.Tag.FK_WebsiteId == websiteId)
+                        .Where(artTag =>
+                            db.Tag_Associates.AsNoTracking()
+                                .Where(d => !d.IsDeleted && d.Type == TagAssociateTypeEnum.目錄 && d.FK_AId == dirId)
+                                .Select(d => d.FK_TId)
+                                .Contains(artTag.FK_TId)
+                        )
+                        .Select(x => x.FK_AId)
+                        .Contains(a.Id)
+                );
+            }
+
+            // 文章只支援標籤 Filter（你原本的邏輯保留）
+            if (dto.Filters == null || dto.Filters.Count == 0) return articles;
+
+            var tagFilter = dto.Filters.FirstOrDefault(x => x.Type == DirectorySearchTypeEnum.標籤);
+            if (tagFilter == null) return articles;
+
+            var tagIds = tagFilter.Group
+                .SelectMany(g => g.Tags ?? new List<long>())
+                .Distinct()
+                .ToList();
+
+            if (tagIds.Count == 0) return articles;
+
+            articles = articles.Where(a =>
+                db.Tag_Associates.AsNoTracking()
+                    .Where(ta => !ta.IsDeleted && ta.Type == TagAssociateTypeEnum.文章 && ta.FK_AId == a.Id)
+                    .Where(ta => ta.Tag != null && !ta.Tag.IsDeleted && ta.Tag.FK_WebsiteId == websiteId)
+                    .Where(ta => tagIds.Contains(ta.FK_TId))
+                    .Any()
+            );
+
+            return articles;
+        }
+
+        private IQueryable<UnionRow> BuildUnionQuery(
+            IQueryable<WebMenu>? menuQ,
+            IQueryable<Core.Models.Article>? articleQ,
+            IQueryable<Prod>? prodQ,
+            long websiteId,
+            UserSearchContext? userCtx,
+            DirectoryReleInfoInputDto dto)
+        {
+            IReadOnlyList<long> relevantTagIds = userCtx != null ? userCtx.RelevantTagIds : new List<long>();
+
+            IQueryable<UnionRow>? union = null;
+
+            // 1) WebMenu
+            if (menuQ != null)
+            {
+                var q =
+                    from m in menuQ
+                    select new UnionRow
+                    {
+                        Id = m.Id,
+                        Type = DirectoryTypeEnum.選單,
+                        NodeDate = null,
+                        SerNo = m.SerNO,
+                        ItemNo = null,
+                        MatchCount = 0,
+
+                        SortType = 1,
+                        SortSoldOut = 0,
+                        SortDiscontinued = 0,
+                    };
+
+                union = union == null ? q : union.Union(q);
+            }
+
+            // 2) Article
+            if (articleQ != null)
+            {
+                var q =
+                    from a in articleQ
+                    select new UnionRow
+                    {
+                        Id = a.Id,
+                        Type = DirectoryTypeEnum.文章,
+                        NodeDate = a.NodeDate,
+                        SerNo = a.SerNO,
+                        ItemNo = null,
+
+                        MatchCount = (relevantTagIds.Count == 0)
+                            ? 0
+                            : db.Tag_Associates
+                                .Where(t => !t.IsDeleted
+                                            && t.Type == TagAssociateTypeEnum.文章
+                                            && t.FK_AId == a.Id
+                                            && relevantTagIds.Contains(t.FK_TId))
+                                .Count(),
+
+                        SortType = 1,
+                        SortSoldOut = 0,
+                        SortDiscontinued = 0,
+                    };
+
+                union = union == null ? q : union.Union(q);
+            }
+
+            // 3) Product
+            if (prodQ != null)
+            {
+                var q =
+                    from p in prodQ
+                    select new UnionRow
+                    {
+                        Id = p.Id,
+                        Type = DirectoryTypeEnum.商品,
+                        NodeDate = null,
+                        SerNo = p.Ser_No,
+                        ItemNo = p.ItemNo,
+
+                        MatchCount = (relevantTagIds.Count == 0)
+                            ? 0
+                            : db.Tag_Associates
+                                .Where(t => !t.IsDeleted
+                                            && t.Type == TagAssociateTypeEnum.商品
+                                            && t.FK_AId == p.Id
+                                            && relevantTagIds.Contains(t.FK_TId))
+                                .Count(),
+
+                        // ✅ 商品優先 + 商品狀態排序鍵（投影成欄位）
+                        SortType = 0,
+                        SortSoldOut = (p.Status == ProdStatusEnum.售完) ? 1 : 0,
+                        SortDiscontinued = (p.Status == ProdStatusEnum.停產) ? 1 : 0,
+                    };
+
+                union = union == null ? q : union.Union(q);
+            }
+
+            // 回傳空集合（不依賴 DbSet<UnionRow>）
+            if (union == null)
+            {
+                if (menuQ != null) return menuQ.Select(_ => new UnionRow()).Where(_ => false);
+                if (articleQ != null) return articleQ.Select(_ => new UnionRow()).Where(_ => false);
+                if (prodQ != null) return prodQ.Select(_ => new UnionRow()).Where(_ => false);
+                return Enumerable.Empty<UnionRow>().AsQueryable();
+            }
+
+            // ✅ 關鍵：ORDER BY 全部改成「欄位」，避免 SQL Server 判定為常數運算式
+            var ordered =
+                union
+                    .OrderBy(x => x.SortType)                 // 商品優先
+                    .ThenBy(x => x.SortSoldOut)               // 售完排後（升冪：0 在前、1 在後）
+                    .ThenBy(x => x.SortDiscontinued)          // 停產排後
+                    .ThenByDescending(x => x.MatchCount)      // 使用者匹配數（商品+文章）
+                    .ThenByDescending(x => x.NodeDate)        // 文章日期
+                    .ThenBy(x => x.SerNo)                     // 通用 SerNo
+                    .ThenBy(x => x.ItemNo)                    // 商品 ItemNo
+                    .ThenByDescending(x => x.Id);             // 最終穩定
+
+            return ordered;
+        }
+
+        private async Task FillProdFiltersAndDirectoryTypeAsync(
+            DirectoryReleInfoGetDto output,
+            DirectoryReleInfoInputDto dto,
+            long websiteId,
+            IQueryable<Prod> baseProdQ)
+        {
+            // 這裡只做「可選項」的蒐集（不改結果），並且避免撈全表：只對 keyword 結果範圍做彙整
+            // ⚠ 只要你 keyword 結果本身就有上萬筆，任何彙整都會重；但這些是 UI 必要資訊，只能做「彙整 SQL」。
+
+            // 先拿 keyword 結果 ids（用 subquery，不 ToList 全部）
+            var prodIdsQ = baseProdQ.Select(p => p.Id);
+
+            // 1) 標籤 Filter（含 TagGroup + Other）
+            //    只取商品關聯到的 tag，並計算 count
+            var tagBindQ = db.Tag_Associates.AsNoTracking()
+                .Include(e => e.Tag)
+                .Where(e => !e.IsDeleted)
+                .Where(e => e.Type == TagAssociateTypeEnum.商品)
+                .Where(e => e.Tag != null && !e.Tag.IsDeleted && e.Tag.FK_WebsiteId == websiteId)
+                .Where(e => prodIdsQ.Contains(e.FK_AId));
+
+            // TagGroup ids（用於分 Other）
+            var groupedTagIds = await db.Tag_TagGroups.AsNoTracking()
+                .Include(e => e.Tag)
+                .Where(e => !e.IsDeleted)
+                .Where(e => e.Tag != null && !e.Tag.IsDeleted && e.Tag.FK_WebsiteId == websiteId)
+                .Select(e => e.FK_TId)
+                .Distinct()
+                .ToListAsync();
+
+            // Other（不在任何 TagGroup 裡）
+            var otherTagAgg = await tagBindQ
+                .Where(tb => !groupedTagIds.Contains(tb.FK_TId))
+                .GroupBy(tb => new { tb.FK_TId, Title = tb.Tag!.Title })
+                .Select(g => new TagGetSelectedDto
+                {
+                    FK_TId = g.Key.FK_TId,
+                    Tag_Name = g.Key.Title ?? "",
+                    count = g.Count()
+                })
+                .ToListAsync();
+
+            if (otherTagAgg.Count > 0)
+            {
+                output.Filter.Add(new DirectorySearchTypeListDto
+                {
+                    Id = 0,
+                    Type = DirectorySearchTypeEnum.標籤,
+                    Name = L.get("Other"),
+                    Tags = otherTagAgg
+                });
+            }
+
+            // 每個 TagGroup 的 tags + count
+            var tagGroups = await db.Tag_Groups.AsNoTracking()
+                .Where(tg => !tg.IsDeleted && tg.FK_WebsiteId == websiteId)
+                .Select(tg => new { tg.Id, tg.Title })
+                .ToListAsync();
+
+            foreach (var tg in tagGroups)
+            {
+                var tags = await (
+                    from t in db.Tags.AsNoTracking().Where(x => !x.IsDeleted && x.FK_WebsiteId == websiteId)
+                    join m in db.Tag_TagGroups.AsNoTracking().Where(x => !x.IsDeleted) on t.Id equals m.FK_TId
+                    where m.FK_TGId == tg.Id
+                    select new TagGetSelectedDto
+                    {
+                        FK_TId = t.Id,
+                        Tag_Name = t.Title,
+                        count = tagBindQ.Count(b => b.FK_TId == t.Id)
+                    }
+                ).ToListAsync();
+
+                output.Filter.Add(new DirectorySearchTypeListDto
+                {
+                    Id = tg.Id,
+                    Type = DirectorySearchTypeEnum.標籤,
+                    Name = tg.Title,
+                    Tags = tags
+                });
+            }
+
+            // 2) 技術文件 Filter（只有商品有）
+            var tecBindQ = db.Prod_TechCerts.AsNoTracking()
+                .Include(x => x.TechnicalCertificate)
+                .Where(x => !x.IsDeleted)
+                .Where(x => x.TechnicalCertificate != null && !x.TechnicalCertificate.IsDeleted && x.TechnicalCertificate.FK_WebsiteId == websiteId)
+                .Where(x => prodIdsQ.Contains(x.FK_PId));
+
+            var tecAgg = await tecBindQ
+                .GroupBy(x => new { x.FK_TCId, Title = x.TechnicalCertificate!.Title })
+                .Select(g => new TagGetSelectedDto
+                {
+                    FK_TId = g.Key.FK_TCId,
+                    Tag_Name = g.Key.Title ?? "",
+                    count = g.Count()
+                })
+                .ToListAsync();
+
+            if (tecAgg.Count > 0)
+            {
+                output.Filter.Add(new DirectorySearchTypeListDto
+                {
+                    Id = 0,
+                    Type = DirectorySearchTypeEnum.技術文件,
+                    Name = "技術文件",
+                    Tags = tecAgg
+                });
+            }
+
+            // 3) DirectoryType（目錄篩選用）
+            //    依你原本語意：找出「哪些目錄的 tag 與這批商品 tag 有交集」
+            //    注意：只做可選項，不套用 dto.DirectoryType（那是結果過濾）
+            var prodTagIdsQ = tagBindQ.Select(x => x.FK_TId).Distinct();
+
+            output.DirectoryType = await (
+                from dir in db.Directory.AsNoTracking()
+                    .Where(d => !d.IsDeleted && d.FK_WebsiteId == websiteId)
+                where db.Tag_Associates.AsNoTracking()
+                    .Where(a => !a.IsDeleted && a.Type == TagAssociateTypeEnum.目錄 && a.FK_AId == dir.Id)
+                    .Select(a => a.FK_TId)
+                    .Any(dirTagId => prodTagIdsQ.Contains(dirTagId))
+                select new DirectoryListBySearchDto
+                {
+                    Id = dir.Id,
+                    Name = dir.Title
+                }
+            ).ToListAsync();
+        }
+
+        async Task FillArticleTagFiltersAsync(
+    DirectoryReleInfoGetDto output,
+    long websiteId,
+    IQueryable<Core.Models.Article> articleQ)
+        {
+            // 文章：標籤 Filter + DirectoryType（目錄篩選用）
+            var artIdsQ = articleQ.Select(a => a.Id);
+
+            var tagBindQ = db.Tag_Associates.AsNoTracking()
+                .Include(e => e.Tag)
+                .Where(e => !e.IsDeleted)
+                .Where(e => e.Type == TagAssociateTypeEnum.文章)
+                .Where(e => e.Tag != null && !e.Tag.IsDeleted && e.Tag.FK_WebsiteId == websiteId)
+                .Where(e => artIdsQ.Contains(e.FK_AId));
+
+            // 1) 標籤 Filter（維持你原本）
+            var tagAgg = await tagBindQ
+                .GroupBy(tb => new { tb.FK_TId, Title = tb.Tag!.Title })
+                .Select(g => new TagGetSelectedDto
+                {
+                    FK_TId = g.Key.FK_TId,
+                    Tag_Name = g.Key.Title ?? "",
+                    count = g.Count()
+                })
+                .ToListAsync();
+
+            if (tagAgg.Count > 0)
+            {
+                output.Filter.Add(new DirectorySearchTypeListDto
+                {
+                    Id = 0,
+                    Type = DirectorySearchTypeEnum.標籤,
+                    Name = "標籤",
+                    Tags = tagAgg
+                });
+            }
+
+            // 2) DirectoryType（目錄篩選用）
+            //    與商品同語意：找出「哪些目錄的 tag 與這批文章 tag 有交集」
+            //    只做可選項，不套用 dto.DirectoryType（套用在 ApplyArticleFilters）
+            var artTagIdsQ = tagBindQ.Select(x => x.FK_TId).Distinct();
+
+            output.DirectoryType = await (
+                from dir in db.Directory.AsNoTracking()
+                    .Where(d => !d.IsDeleted && d.FK_WebsiteId == websiteId)
+                where db.Tag_Associates.AsNoTracking()
+                    .Where(a => !a.IsDeleted && a.Type == TagAssociateTypeEnum.目錄 && a.FK_AId == dir.Id)
+                    .Select(a => a.FK_TId)
+                    .Any(dirTagId => artTagIdsQ.Contains(dirTagId))
+                select new DirectoryListBySearchDto
+                {
+                    Id = dir.Id,
+                    Name = dir.Title
+                }
+            ).ToListAsync();
+        }
+
+        private async Task<Dictionary<long, List<TagGetSelectedDto>>> GetTagsForObjectsAsync(
+            long websiteId,
+            TagAssociateTypeEnum type,
+            List<long> objectIds)
+        {
+            var dict = new Dictionary<long, List<TagGetSelectedDto>>();
+            if (objectIds == null || objectIds.Count == 0) return dict;
+
+            var rows = await (
+                from ta in db.Tag_Associates.AsNoTracking().Include(x => x.Tag)
+                where !ta.IsDeleted
+                where ta.Type == type
+                where objectIds.Contains(ta.FK_AId)
+                where ta.Tag != null && !ta.Tag.IsDeleted && ta.Tag.FK_WebsiteId == websiteId
+                select new
+                {
+                    ObjId = ta.FK_AId,
+                    TagId = ta.FK_TId,
+                    Title = ta.Tag!.Title
+                }
+            ).ToListAsync();
+
+            foreach (var r in rows)
+            {
+                if (!dict.TryGetValue(r.ObjId, out var list))
+                {
+                    list = new List<TagGetSelectedDto>();
+                    dict[r.ObjId] = list;
+                }
+
+                list.Add(new TagGetSelectedDto
+                {
+                    FK_TId = r.TagId,
+                    Tag_Name = r.Title ?? ""
+                });
+            }
+
+            return dict;
+        }
+
+        private async Task FillProdPriceAsync(DirectoryReleInfoDto data, long websiteId)
+        {
+            // 你原本的 showprice 判斷
+            var storeReset = await (
+                from sd in db.StoreSetDetail
+                join ss in db.StoreSet on sd.FK_StoreSetId equals ss.Id
+                where sd.FK_WebsiteId == websiteId
+                where ss.key == "storeBuyState"
+                select sd.value
+            ).FirstOrDefaultAsync();
+
+            var showPrice = !(storeReset == "noPayNoShow");
+            if (!showPrice) return;
+
+            // stock / price
+            var stocks = await db.Prod_Stocks.AsNoTracking()
+                .Where(e => !e.IsDeleted && e.FK_Pid == data.Id)
+                .ToListAsync();
+
+            var stockIds = stocks.Select(s => s.Id).ToList();
+            if (stockIds.Count == 0) return;
+
+            var tokenUuid = await tokenAppService.GetUUID();
+            var token = await db.Tokens.AsNoTracking().FirstOrDefaultAsync(e => e.UUID == tokenUuid);
+
+            var prices = await productAppService.GetPriceByStock(stockIds);
+            if (prices == null || prices.Count == 0) return;
+
+            var tempPrice = prices.OrderByDescending(p => p.Price).FirstOrDefault();
+            var stock = stocks.FirstOrDefault(s => tempPrice != null && s.Id == tempPrice.FK_PSId);
+
+            if (stock == null || stock.IsTimePrice)
+            {
+                data.Price = L.get("MarketPrice");
+                data.SuggestPrice = null;
+                data.OriPrice = null;
+                return;
+            }
+
+            if (token?.UserID == null && tempPrice?.FK_RId == 1)
+            {
+                var suggest = stock.Price;
+                if (suggest > 0) data.SuggestPrice = suggest.ToString("N0");
+            }
+
+            data.Bonus = tempPrice?.Bonus.ToString("N0");
+            data.Price = tempPrice?.Price?.ToString("N0") ?? "0";
+            data.OriPrice = tempPrice?.OriPrice?.ToString("N0") ?? "0";
         }
         private async Task<DirectoryReleInfoGetDto> SearchProd(DirectoryReleInfoInputDto dto)
         {
@@ -803,6 +1611,8 @@ namespace EtheriT.Coker.Application.Directory
             output.ReleInfos = list;
             return output;
         }
+        #endregion
+
         private static readonly Regex RxRemoveIcons = new(
             @"<\s*(?:span|i)\b[^>]*\bclass\s*=\s*""[^""]*\bmaterial-symbols-outlined\b[^""]*""[^>]*>.*?<\s*/\s*(?:span|i)\s*>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
@@ -999,13 +1809,35 @@ namespace EtheriT.Coker.Application.Directory
                                 }
                             }
                             corr = tempcorr;
-                            DataIds = db.Article
+                            var articleQuery = db.Article
                                        .Where(e => allIds.Contains(e.Id) && !notTagIds.Contains(e.Id))
                                        .Where(e => !e.IsDeleted)
                                        .Where(e => e.Visible)
                                        .Where(e => siteIds.Contains(e.FK_WebsiteId))
-                                       .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime))
-                                       .Select(e => e.Id).ToList();
+                                       .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime));
+                            if (!string.IsNullOrEmpty(dto.Facet) && db_d != null && db_d.Any())
+                            {
+                                var dir = db_d.First();
+                                switch (dir.FacetType) {
+                                    case DirectoryFacetTypeEnum.Year:
+                                        var years = dto.Facet
+                                            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                            .Select(s => s.Trim())
+                                            .Select(s => int.TryParse(s, out var y) ?
+                                                dir.CalendarType == DirectoryCalendarTypeEnum.民國年? (int?)y + 1911 : (int?)y : 
+                                            null)
+                                            .Where(y => y.HasValue)
+                                            .Select(y => y!.Value)
+                                            .ToHashSet();
+                                        if (years.Count > 0)
+                                        {
+                                            articleQuery = articleQuery.Where(e =>
+                                                e.NodeDate.HasValue && years.Contains(e.NodeDate.Value.Year));
+                                        }
+                                        break;
+                                }
+                            }
+                            DataIds = articleQuery.Select(e => e.Id).ToList();
                             break;
                         default:
                             break;
@@ -1994,11 +2826,13 @@ namespace EtheriT.Coker.Application.Directory
                                 break;
 
                             var enabledRanges = (dir.DirectoryFacetRanges ?? new List<DirectoryFacetRange>())
-                                .Where(r => r.Enabled && !r.IsDeleted)
+                                .Where(r => r.Enabled)
                                 .OrderBy(r => r.Sort)
                                 .ThenBy(r => r.Id)
                                 .Select(r => (Start: r.Start, End: r.End))
                                 .ToList();
+
+                            enabledRanges = NormalizeFacetRanges(enabledRanges, dir.FacetType, dir.CalendarType);
 
                             // 1️、 先取出「此目錄所要求的 Tag 清單」
                             var dirTagIds = await db.Tag_Associates
@@ -2206,79 +3040,108 @@ namespace EtheriT.Coker.Application.Directory
             Func<int, int, string> labelRange)
         {
             var items = new List<DirectoryFacetItemDto>();
-            if (availableKeys.Count == 0) return items;
+            if (availableKeys == null || availableKeys.Count == 0) return items;
 
-            var ranges = configuredRanges
-                .Select(r => (Start: Math.Min(r.Start, r.End), End: Math.Max(r.Start, r.End)))
+            availableKeys = availableKeys
+                .Distinct()
+                .OrderBy(x => x)
                 .ToList();
 
-            int i = 0;
-            while (i < availableKeys.Count)
+            // normalize ranges
+            var ranges = (configuredRanges ?? new List<(int Start, int End)>())
+                .Select(r => (Start: Math.Min(r.Start, r.End), End: Math.Max(r.Start, r.End)))
+                .Where(r => r.Start > 0 && r.End > 0)
+                .OrderBy(r => r.Start)
+                .ThenBy(r => r.End)
+                .ToList();
+
+            // 先依「設定的 ranges」組段：只要該段內有任何 key，就輸出整段
+            var covered = new HashSet<int>();
+
+            foreach (var r in ranges)
             {
-                var key = availableKeys[i];
+                bool hasAny = false;
 
-                var rangeIdx = FindRangeIndex(ranges, key);
-                if (rangeIdx >= 0)
+                // availableKeys 已排序，用線性掃描即可（這裡用簡單寫法，效能也足夠）
+                foreach (var k in availableKeys)
                 {
-                    var r = ranges[rangeIdx];
+                    if (k < r.Start) continue;
+                    if (k > r.End) break;
 
-                    if (HasAnyKeyInRange(availableKeys, i, r.Start, r.End))
-                    {
-                        items.Add(new DirectoryFacetItemDto
-                        {
-                            Start = r.Start,
-                            End = r.End,
-                            Label = labelRange(r.Start, r.End)
-                        });
-
-                        while (i < availableKeys.Count && availableKeys[i] <= r.End) i++;
-                    }
-                    else
-                    {
-                        items.Add(new DirectoryFacetItemDto
-                        {
-                            Start = key,
-                            End = key,
-                            Label = labelSingle(key)
-                        });
-                        i++;
-                    }
-
-                    continue;
+                    hasAny = true;
+                    covered.Add(k);
                 }
 
-                // 不在任何 configured range → 單點補洞
+                if (hasAny)
+                {
+                    items.Add(new DirectoryFacetItemDto
+                    {
+                        Start = r.Start,
+                        End = r.End,
+                        Label = labelRange(r.Start, r.End)
+                    });
+                }
+            }
+
+            // 再補洞：所有不在任何 range 內的 key，輸出單點
+            foreach (var k in availableKeys)
+            {
+                if (covered.Contains(k)) continue;
+
                 items.Add(new DirectoryFacetItemDto
                 {
-                    Start = key,
-                    End = key,
-                    Label = labelSingle(key)
+                    Start = k,
+                    End = k,
+                    Label = labelSingle(k)
                 });
-                i++;
             }
 
             return items;
+        }
 
-            static int FindRangeIndex(List<(int Start, int End)> ranges, int key)
+        private static List<(int Start, int End)> NormalizeFacetRanges(
+    List<(int Start, int End)> ranges,
+    DirectoryFacetTypeEnum facetType,
+    DirectoryCalendarTypeEnum calendarType)
+        {
+            if (ranges == null || ranges.Count == 0) return new List<(int Start, int End)>();
+
+            // 只在「民國年」模式下需要把 AD -> ROC
+            if (calendarType != DirectoryCalendarTypeEnum.民國年)
+                return ranges;
+
+            // 小工具：如果已經是 ROC（通常 < 1911），就不要再轉一次
+            static int ToRocYearIfAd(int y) => y >= 1912 ? (y - 1911) : y;
+
+            // YearMonth：判斷像 202501 這種 ADYYYYMM 才轉；11201 這種 ROCYYYYMM 不轉
+            static int ToRocYmIfAd(int ym)
             {
-                for (int idx = 0; idx < ranges.Count; idx++)
+                if (ym <= 0) return ym;
+                var y = ym / 100;
+                var m = ym % 100;
+
+                // 粗判斷：AD 年通常 >= 1912，且月份 1..12
+                if (y >= 1912 && m >= 1 && m <= 12)
                 {
-                    var r = ranges[idx];
-                    if (key >= r.Start && key <= r.End) return idx;
+                    var rocY = y - 1911;
+                    return (rocY * 100) + m;
                 }
-                return -1;
+
+                return ym; // 看起來已經是 ROCYYYYMM
             }
 
-            static bool HasAnyKeyInRange(List<int> keys, int startIndex, int start, int end)
+            return facetType switch
             {
-                for (int j = startIndex; j < keys.Count; j++)
-                {
-                    if (keys[j] < start) continue;
-                    if (keys[j] > end) break;
-                    return true;
-                }
-                return false;
-            }
+                DirectoryFacetTypeEnum.Year => ranges
+                    .Select(r => (Start: ToRocYearIfAd(r.Start), End: ToRocYearIfAd(r.End)))
+                    .ToList(),
+
+                DirectoryFacetTypeEnum.YearMonth => ranges
+                    .Select(r => (Start: ToRocYmIfAd(r.Start), End: ToRocYmIfAd(r.End)))
+                    .ToList(),
+
+                _ => ranges // Month / 其他：不轉
+            };
         }
 
         #endregion

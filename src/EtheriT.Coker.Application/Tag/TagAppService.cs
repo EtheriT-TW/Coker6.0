@@ -1,4 +1,5 @@
-﻿using DevExtreme.AspNet.Data;
+﻿using DevExpress.XtraCharts.Native;
+using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
@@ -423,7 +424,35 @@ namespace EtheriT.Coker.Application.Tag
 
             }
 
-            return null;
+            return new List<TagGetAllDataDto>();
+        }
+        public async Task<List<TagGetAllDataDto>> GetArticleDataAll(long AId) {
+            try
+            {
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                if (WebsiteID == 0)
+                {
+                    WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
+                }
+                var output = await(from ta in db.Tag_Associates
+                                   where !ta.IsDeleted && ta.FK_AId == AId && ta.Type == TagAssociateTypeEnum.文章
+                                   from t in db.Tags
+                                   where ta.FK_TId == t.Id && t.FK_WebsiteId == WebsiteID
+                                   select new TagGetAllDataDto
+                                   {
+                                       Id = ta.Id,
+                                       FK_TId = ta.FK_TId,
+                                       Title = t.Title
+                                   }).ToListAsync();
+
+                return output;
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return new List<TagGetAllDataDto>();
         }
         public async Task<TagGetAllListDto?> GetTagByName(string name)
         {

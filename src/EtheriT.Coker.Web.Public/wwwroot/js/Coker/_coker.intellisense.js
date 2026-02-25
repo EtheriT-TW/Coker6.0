@@ -289,6 +289,15 @@
  */
 
 /* =========================================================
+ * File API
+ * ========================================================= */
+
+/**
+ * @typedef {Object} CokerFileApi
+ * @property {(fid:number)=>JQuery.jqXHR<any>} DownloadEncryptedFile
+ */
+
+/* =========================================================
  * ThirdParty API
  * ========================================================= */
 
@@ -452,6 +461,9 @@
  * @property {CokerLegacyForm} Form - legacy alias
  * @property {CokerLegacySweet} sweet - legacy alias
  * @property {CokerLegacySearch} Search - legacy alias
+ * 
+ *  @property {CokerFileApi} File
+ * 
  */
 
 /**

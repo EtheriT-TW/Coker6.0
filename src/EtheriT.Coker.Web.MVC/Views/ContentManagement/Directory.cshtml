@@ -330,6 +330,43 @@
                         <label class="form-check-label fs-6 pe-2" for="ArticleSortCheck">自訂排序</label>
                     </div>
                 </div>
+
+                <div id="ArticleFiles" class="data_upload row mx-0 border rounded mb-3 p-3 position-relative" data-uploadtype="5">
+                    <ul class="col-12 p-0 overflow-auto mb-0">
+                        <li class="btn_upload_add border mb-1 p-1 shadow-sm">
+                            <button class="bg-transparent border-0 d-flex justify-content-center p-0 w-100" title="新增檔案">
+                                <span class="icon poiter  material-symbols-outlined">add</span>
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="preview_frame col-12 border p-2 mb-2 d-none">
+                        <div class="default_frame h-100 d-none d-flex justify-content-center align-items-center"><span>點選 + 號新增檔案</span></div>
+                        <div class="upload_frame custom-file-container" data-upload-id="ProdFile"></div>
+                    </div>
+                    <div class="position-absolute upload_title bg-white">檔案下載</div>
+                    <div class="position-absolute upload_warning bg-white">已上鎖檔案不可解鎖</div>
+                </div>
+
+                <template id="TemplateUploadList">
+                    <li class="upload_list d-flex align-items-center border bg-white shadow-sm px-2 py-1 gap-2 mb-1">
+                        <div class="serNoTool gap-2 ">
+                            <span class="icon move material-symbols-outlined" title="變更順序">open_with</span>
+                            <input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="" step="1">
+                        </div>
+                        <span class="title ml-2 flex-grow-1 overflow-auto"></span>
+                        <img class="thumb_img" src="/images/noImg.jpg" />
+                        <a href="" class="btn_link d-flex bg-transparent border-0 p-0 d-none" target="_blank" title="開啟檔案">
+                            <span class="icon poiter  material-symbols-outlined">search</span>
+                        </a>
+                        <button class="btn_lock d-flex bg-transparent border-0 p-0" title="是否加密">
+                            <span class="icon poiter lock material-symbols-outlined">lock</span>
+                            <span class="icon poiter unlock material-symbols-outlined">lock_open_right</span>
+                        </button>
+                        <button class="btn_remove d-flex bg-transparent border-0 p-0" title="移除檔案">
+                            <span class="icon poiter  material-symbols-outlined">delete</span>
+                        </button>
+                    </li>
+                </template>
             </form>
         </div>
     </div>

@@ -1,33 +1,31 @@
-﻿using DevExtreme.AspNet.Data;
+﻿using AutoMapper;
+using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
-using EtheriT.Coker.Application.Shared.Article;
-using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json;
-using EtheriT.Coker.Application.Shared.Dto.Article;
-using EtheriT.Coker.Application.Dto;
-using Microsoft.EntityFrameworkCore;
-using AutoMapper;
-using System.Web;
-using EtheriT.Coker.Application.Shared.Dto.WebMenu;
-using EtheriT.Coker.Application.Shared.Dto;
-using Microsoft.Extensions.Configuration;
-using EtheriT.Coker.Application.Shared.Dto.Tag;
-using EtheriT.Coker.Application.Shared.Tag;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
-using EtheriT.Coker.Application.Shared.Dto.Files;
-using EtheriT.Coker.Application.Shared.Dto.Directory;
-using System.Linq;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using EtheriT.Coker.Application.Common;
-using System.Text.RegularExpressions;
+using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Article;
+using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Article;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
+using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Newsletter;
-using DevExtreme.AspNet.Data.ResponseModel;
-using System.Net;
-using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
+using EtheriT.Coker.Application.Shared.Tag;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using HtmlAgilityPack;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using System.Net;
+using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -272,9 +270,16 @@ namespace EtheriT.Coker.Application.Article
                             NodeDate = e.NodeDate,
                             RemovedFromShelves = !e.RemovedFromShelves,
                             permanent = e.permanent,
-                            DataJson = string.IsNullOrEmpty(e.DataJson) ? null : JsonConvert.DeserializeObject<NewsletterFrameDto>(e.DataJson)
+                            DataJson = string.IsNullOrEmpty(e.DataJson) ? null : JsonConvert.DeserializeObject<NewsletterFrameDto>(e.DataJson),
+                            Files = new List<FileGetArticleDisplayDto>()
                         }
                     ).FirstOrDefaultAsync();
+
+                    var fileDatas = await fileUploadAppService.getArticleFiles(output.Id);
+                    if (fileDatas != null)
+                    {
+                        output.Files = fileDatas;
+                    }
 
                     if (output != null)
                     {
@@ -606,6 +611,100 @@ namespace EtheriT.Coker.Application.Article
                         result.Html = articl.Html;
                         result.Css = articl.Css;
                         result.Html = result.Html != null ? result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "") : result.Html;
+                        var Files = await fileUploadAppService.getArticleFiles(articl.Id);
+                        if (Files.Any())
+                        {
+
+                            var doc = htmlProcessor.LoadHtml(stringHandler.HtmlDecode(result.Html));
+                            var EditData = htmlProcessor.Find(doc, "[data-edit-type]");
+                            var FileNode = EditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "File").ToList();
+                            var FilesNode = EditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "Files").ToList();
+
+                            if (FileNode.Any() || FilesNode.Any())
+                            {
+                                foreach (var node in FileNode)
+                                {
+                                    var thisnode = node;
+                                    if (node.Name != "a") thisnode = node.SelectSingleNode(".//a");
+                                    var File = Files[0];
+
+                                    var namesplit = File.Name.Split('.');
+                                    var extension = namesplit[namesplit.Length - 1];
+
+                                    thisnode.SetAttributeValue("download", File.Name);
+                                    thisnode.SetAttributeValue("data-fid", File.Id.ToString());
+                                    thisnode.SetAttributeValue("data-extension", extension);
+
+                                    if (File.isEncryption)
+                                    {
+                                        thisnode.SetAttributeValue("href", "");
+                                        thisnode.SetAttributeValue("class", $"btn_downloadEncryptedFile {thisnode.GetAttributeValue("class", "")} locked");
+                                    }
+                                    else
+                                    {
+                                        thisnode.SetAttributeValue("href", File.Link[0]);
+                                    }
+                                }
+
+                                foreach (var node in FilesNode)
+                                {
+                                    var originalchildnode = node.SelectSingleNode(".//a");
+                                    if (originalchildnode == null) continue;
+
+                                    foreach (var File in Files)
+                                    {
+                                        var childnode = originalchildnode.CloneNode(true);
+                                        var namesplit = File.Name.Split('.');
+                                        var extension = namesplit[namesplit.Length - 1];
+
+                                        childnode.SetAttributeValue("id", "");
+                                        childnode.SetAttributeValue("download", File.Name);
+                                        childnode.SetAttributeValue("data-fid", File.Id.ToString());
+                                        childnode.SetAttributeValue("data-extension", extension);
+
+                                        if (File.isEncryption)
+                                        {
+                                            childnode.SetAttributeValue("href", "");
+                                            childnode.SetAttributeValue("class", $"btn_downloadEncryptedFile {childnode.GetAttributeValue("class", "")} locked");
+                                        }
+                                        else
+                                        {
+                                            childnode.SetAttributeValue("href", File.Link[0]);
+                                        }
+
+                                        node.AppendChild(childnode);
+                                    }
+                                    originalchildnode.Remove();
+                                }
+
+                                result.Html = doc.DocumentNode.OuterHtml;
+                            }
+                            else
+                            {
+                                string decoded = WebUtility.HtmlDecode(result.Html);
+
+                                var Final_Html = "";
+                                foreach (var file in Files)
+                                {
+                                    var link = file.isEncryption ? "" : file.Link[0];
+                                    var classtext = file.isEncryption ? "btn_downloadEncryptedFile link_with_icon d-flex text-decoration-none locked" : "link_with_icon d-flex text-decoration-none";
+
+                                    var namesplit = file.Name.Split('.');
+                                    var extension = namesplit[namesplit.Length - 1];
+
+                                    var html = $@"<a href=""{link}"" download=""{file.Name}"" class=""{classtext}"" data-edit-type=""File"" data-fid=""{file.Id}"" data-extension=""{extension}"">
+                                                                <div class=""icon pe-2""></div>
+                                                                <div class=""name text-black"">{file.Name}</div>
+                                                            </a>";
+
+                                    Final_Html += html;
+                                }
+
+                                decoded += Final_Html;
+                                result.Html = WebUtility.HtmlEncode(decoded);
+                            }
+                        }
+
                         result.LastModificationTime = articl.LastModificationTime ?? articl.CreationTime;
                         result.Popular = articl.PopularVisible ? articl.Popular : null;
                         var images = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { Sid = articl.Id, Type = (int)FileBindTypeEnum.文章管理, Size = 1 });
@@ -621,19 +720,22 @@ namespace EtheriT.Coker.Application.Article
             }
             return result;
         }
-        public async Task<ResponseMessageDto> FindArticleOrgName(long Id) {
+        public async Task<ResponseMessageDto> FindArticleOrgName(long Id)
+        {
             ResponseMessageDto response = new ResponseMessageDto();
-            try {
+            try
+            {
                 var siteData = await loginUserData.GetAllFrontWebsiteIdAndOrgName();
                 var siteids = siteData.Select(x => x.Id).ToList();
                 var ariricle = await db.Article.Where(e => siteids.Contains(e.FK_WebsiteId) && e.Id == Id && !e.RemovedFromShelves).FirstOrDefaultAsync();
                 if (ariricle == null) throw new Exception("文章不存在");
                 var orgName = siteData.FirstOrDefault(e => e.Id == ariricle.FK_WebsiteId)?.OrgName ?? "";
-                if(string.IsNullOrEmpty(orgName)) throw new Exception("文章不存在於您的網站或子網站");
+                if (string.IsNullOrEmpty(orgName)) throw new Exception("文章不存在於您的網站或子網站");
                 response.Message = orgName;
                 response.Success = true;
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 response.Message = e.Message;
             }
             return response;

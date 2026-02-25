@@ -109,4 +109,12 @@ function namecontrol(id) {
     
 }
 
-
+function ArticleTagsInit() {
+    co.Tag.GetArticleDataAll(PageId).done(function (res) {
+        let template = $(".tags-template").html();
+        if (template == "") template = "<span></span>";
+        $(res).forEach(function (item) {
+            $(".article-tags").append($(template).text(item.title));
+        });
+    });
+}

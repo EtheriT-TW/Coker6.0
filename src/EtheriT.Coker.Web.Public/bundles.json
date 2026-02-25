@@ -97,7 +97,8 @@
         "wwwroot/js/Coker/coker.api.order.js",
         "wwwroot/js/Coker/coker.api.payment.js",
         "wwwroot/js/Coker/coker.api.directory.js",
-        "wwwroot/js/Coker/coker.api.token.js"
+        "wwwroot/js/Coker/coker.api.token.js",
+        "wwwroot/js/Coker/coker.api.tags.js"
       ]
     },
     {

@@ -93,6 +93,7 @@ function ready() {
     if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
     if ($(".shareBlock").length > 0) ShareBlockInit();
     if ($(".flipdown").length > 0) FlipTimer();
+    if ($(".article-tags").length > 0 && $conten.children(".isArticle").length > 0) ArticleTagsInit();
     if ($(".ContactForm").length > 0) {
         setContact();//From表單驗證碼
     }

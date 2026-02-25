@@ -296,7 +296,7 @@
             $item.find(".typeName").text(element.name);
             if ($tagTarget.children("li").length > 0) $traget.append($item);
         });
-        if ($(".search-category .active").data("id") != "3" || $(".searchText").text().trim() == "") $("#filterBlock").addClass("d-none");
+        if ($(".searchText").text().trim() == "") $("#filterBlock").addClass("d-none");
         else $("#filterBlock").removeClass("d-none");
         clearTimeout(timer);
     })

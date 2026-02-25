@@ -22,6 +22,12 @@ namespace EtheriT.Coker.Web.Public.Middlewares
         }
         public async Task InvokeAsync(HttpContext context)
         {
+            if (context.Request.Path.StartsWithSegments("/api/File/DecryptFile"))
+            {
+                await _next(context);
+                return;
+            }
+
             var nonce = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
             using (var scope = _serviceProvider.CreateScope())
             {

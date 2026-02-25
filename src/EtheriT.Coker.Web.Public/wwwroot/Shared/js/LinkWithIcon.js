@@ -10,6 +10,10 @@
                 $self.attr("href", data_url)
             }
             var type = data_url.substring(data_url.lastIndexOf('.') + 1, data_url.length);
+
+            if ($self.hasClass("locked")) $self.find(".icon").append('<i class="fa-solid fa-lock pe-2"></i>');
+
+            if (type == "" && typeof ($self.data("extension")) != "undefined") type = $self.data("extension");
             switch (type) {
                 case "jpg":
                 case "jpeg":

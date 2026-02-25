@@ -19,5 +19,6 @@ namespace EtheriT.Coker.Core.Models
         public Guid? FileGuid { get; set; }
         public Website Website { get; set; }
         public List<FileBind>? fileBinds { get; set; }
+        public bool IsEncryption { get; set; } = false;
     }
 }

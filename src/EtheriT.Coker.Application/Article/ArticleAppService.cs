@@ -14,8 +14,8 @@ using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Processor;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
 using EtheriT.Coker.Application.Shared.Tag;
+using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.Mvc;
@@ -38,6 +38,7 @@ namespace EtheriT.Coker.Application.Article
         private readonly IConfiguration configuration;
         private readonly ITagAppService tagAppService;
         private readonly IFileUploadAppService fileUploadAppService;
+        private readonly ITokenAppService tokenAppService;
         private readonly string ServiceName;
         private readonly IHtmlProcessor htmlProcessor;
         public ArticleAppService(
@@ -48,6 +49,7 @@ namespace EtheriT.Coker.Application.Article
             IConfiguration configuration,
             ITagAppService tagAppService,
             IFileUploadAppService fileUploadAppService,
+            ITokenAppService tokenAppService,
             IHtmlProcessor htmlProcessor
         )
         {
@@ -57,6 +59,7 @@ namespace EtheriT.Coker.Application.Article
             this.configuration = configuration;
             this.tagAppService = tagAppService;
             this.fileUploadAppService = fileUploadAppService;
+            this.tokenAppService = tokenAppService;
             this.stringHandler = stringHandler;
             this.htmlProcessor = htmlProcessor;
             ServiceName = "Article";
@@ -611,10 +614,13 @@ namespace EtheriT.Coker.Application.Article
                         result.Html = articl.Html;
                         result.Css = articl.Css;
                         result.Html = result.Html != null ? result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "") : result.Html;
+
+                        var checktokenresponse = await tokenAppService.CheckToken(null);
+                        var isLogin = checktokenresponse.IsLogin;
+
                         var Files = await fileUploadAppService.getArticleFiles(articl.Id);
                         if (Files.Any())
                         {
-
                             var doc = htmlProcessor.LoadHtml(stringHandler.HtmlDecode(result.Html));
                             var EditData = htmlProcessor.Find(doc, "[data-edit-type]");
                             var FileNode = EditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "File").ToList();
@@ -624,85 +630,87 @@ namespace EtheriT.Coker.Application.Article
                             {
                                 foreach (var node in FileNode)
                                 {
-                                    var thisnode = node;
-                                    if (node.Name != "a") thisnode = node.SelectSingleNode(".//a");
                                     var File = Files[0];
 
-                                    var namesplit = File.Name.Split('.');
-                                    var extension = namesplit[namesplit.Length - 1];
-
-                                    thisnode.SetAttributeValue("download", File.Name);
-                                    thisnode.SetAttributeValue("data-fid", File.Id.ToString());
-                                    thisnode.SetAttributeValue("data-extension", extension);
-
-                                    if (File.isEncryption)
+                                    var thisnode = node.Name == "a" ? node : node.SelectSingleNode(".//a");
+                                    if (thisnode == null)
                                     {
-                                        thisnode.SetAttributeValue("href", "");
-                                        thisnode.SetAttributeValue("class", $"btn_downloadEncryptedFile {thisnode.GetAttributeValue("class", "")} locked");
+                                        var html = $@"<a  class=""download-item link_with_icon do_not_rename  d-flex text-decoration-none edit_lock align-items-center"" data-edit-type=""File"">
+                                                                                 <div class=""icon""></div>
+                                                                                 <span class=""file-name name"" data-edit-label=""檔案名稱"" data-edit-type=""string"" data-edit-format=""{{value}}""></span>
+                                                                                 <span class=""download-btn""></span>
+                                                                             </a>";
+
+                                        var newNode = HtmlNode.CreateNode(html);
+                                        node.ParentNode.ReplaceChild(newNode, node);
+                                        thisnode = newNode;
                                     }
-                                    else
-                                    {
-                                        thisnode.SetAttributeValue("href", File.Link[0]);
-                                    }
+
+                                    FileHtmlNodeSet(thisnode, File, "1", isLogin);
                                 }
 
                                 foreach (var node in FilesNode)
                                 {
-                                    var originalchildnode = node.SelectSingleNode(".//a");
-                                    if (originalchildnode == null) continue;
+                                    var originalchildnode = node.Name == "a" ? node : node.SelectSingleNode(".//a");
 
-                                    foreach (var File in Files)
+                                    if (originalchildnode == null)
                                     {
+                                        var html = $@"<a  class=""download-item link_with_icon do_not_rename  d-flex text-decoration-none edit_lock align-items-center"" data-edit-type=""File"">
+                                                                                 <div class=""icon""></div>
+                                                                                 <span class=""file-name name"" data-edit-label=""檔案名稱"" data-edit-type=""string"" data-edit-format=""{{value}}""></span>
+                                                                                 <span class=""download-btn""></span>
+                                                                             </a>";
+
+                                        var newNode = HtmlNode.CreateNode(html);
+                                        node.ParentNode.ReplaceChild(newNode, node);
+                                        originalchildnode = newNode;
+                                    }
+
+                                    for (var index = 0; index < Files.Count; index++)
+                                    {
+                                        var File = Files[index];
+
                                         var childnode = originalchildnode.CloneNode(true);
-                                        var namesplit = File.Name.Split('.');
-                                        var extension = namesplit[namesplit.Length - 1];
-
-                                        childnode.SetAttributeValue("id", "");
-                                        childnode.SetAttributeValue("download", File.Name);
-                                        childnode.SetAttributeValue("data-fid", File.Id.ToString());
-                                        childnode.SetAttributeValue("data-extension", extension);
-
-                                        if (File.isEncryption)
-                                        {
-                                            childnode.SetAttributeValue("href", "");
-                                            childnode.SetAttributeValue("class", $"btn_downloadEncryptedFile {childnode.GetAttributeValue("class", "")} locked");
-                                        }
-                                        else
-                                        {
-                                            childnode.SetAttributeValue("href", File.Link[0]);
-                                        }
+                                        FileHtmlNodeSet(childnode, File, (index + 1).ToString(), isLogin);
 
                                         node.AppendChild(childnode);
                                     }
+
                                     originalchildnode.Remove();
                                 }
 
                                 result.Html = doc.DocumentNode.OuterHtml;
                             }
-                            else
-                            {
-                                string decoded = WebUtility.HtmlDecode(result.Html);
 
-                                var Final_Html = "";
-                                foreach (var file in Files)
-                                {
-                                    var link = file.isEncryption ? "" : file.Link[0];
-                                    var classtext = file.isEncryption ? "btn_downloadEncryptedFile link_with_icon d-flex text-decoration-none locked" : "link_with_icon d-flex text-decoration-none";
+                            // 原先html沒有相關區塊需自動補上 後來不需要了
+                            //string decoded = WebUtility.HtmlDecode(result.Html);
 
-                                    var namesplit = file.Name.Split('.');
-                                    var extension = namesplit[namesplit.Length - 1];
+                            //var Final_Html = "";
+                            //for (var index = 0; index < Files.Count(); index++)
+                            //{
+                            //    var File = Files[index];
+                            //    var link = File.isEncryption ? "" : File.Link[0];
 
-                                    var html = $@"<a href=""{link}"" download=""{file.Name}"" class=""{classtext}"" data-edit-type=""File"" data-fid=""{file.Id}"" data-extension=""{extension}"">
-                                                                <div class=""icon pe-2""></div>
-                                                                <div class=""name text-black"">{file.Name}</div>
-                                                            </a>";
+                            //    var classtext = File.isEncryption ? "btn_downloadEncryptedFile do_not_rename download-item link_with_icon d-flex text-decoration-none edit_lock align-items-center locked" : "do_not_rename download-item link_with_icon d-flex text-decoration-none edit_lock align-items-center";
 
-                                    Final_Html += html;
-                                }
+                            //    var namesplit = File.Name.Split('.');
+                            //    var extension = namesplit[namesplit.Length - 1];
 
-                                decoded += Final_Html;
-                                result.Html = WebUtility.HtmlEncode(decoded);
-                            }
+                            //    var downloadIconHtml = File.isEncryption ? (isLogin ? "<i class=\"fa-lock-open fas\"></i>" : "<i class=\"fas fa-lock\"></i>") : "<span class=\"download-text\">下載</span>";
+
+                            //    var html = $@"<a  href=""{link}"" download=""{File.Name}"" class=""{classtext}"" data-edit-type=""File"" data-fid=""{File.Id}"" data-extension=""{extension}"">
+                            //                                             <div class=""icon pe-2""></div>
+                            //                                             <span class=""file-name name"" data-edit-label=""檔案名稱"" data-edit-type=""string"" data-edit-format=""{{index}}. {{value}}"">{index + 1}.{File.Name}</span>
+                            //                                             <span class=""download-btn"">
+                            //                                                 {downloadIconHtml}
+                            //                                             </span>
+                            //                                         </a>";
+
+                            //    Final_Html += html;
+                            //}
+
+                            //decoded += Final_Html;
+                            //result.Html = WebUtility.HtmlEncode(decoded);
                         }
 
                         result.LastModificationTime = articl.LastModificationTime ?? articl.CreationTime;
@@ -719,6 +727,60 @@ namespace EtheriT.Coker.Application.Article
             {
             }
             return result;
+        }
+        private void FileHtmlNodeSet(HtmlNode MainNode, FileGetArticleDisplayDto File, string index, bool IsLogin)
+        {
+            var namesplit = File.Name.Split('.');
+            var extension = namesplit[namesplit.Length - 1];
+            var filename = namesplit[0];
+
+            MainNode.SetAttributeValue("download", File.Name);
+            MainNode.SetAttributeValue("data-fid", File.Id.ToString());
+            MainNode.SetAttributeValue("data-extension", extension);
+
+            if (File.isEncryption)
+            {
+                MainNode.SetAttributeValue("href", "");
+                MainNode.SetAttributeValue("class", $"btn_downloadEncryptedFile do_not_rename {MainNode.GetAttributeValue("class", "")}");
+            }
+            else
+            {
+                MainNode.SetAttributeValue("href", File.Link[0]);
+                MainNode.SetAttributeValue("class", $"do_not_rename {MainNode.GetAttributeValue("class", "")}");
+            }
+
+            var namenode = MainNode.SelectSingleNode(".//span[contains(@class,'file-name') or contains(@class,'name')]");
+            if (namenode != null)
+            {
+                var format = namenode.GetAttributeValue("data-edit-format", "");
+                if (format != "") filename = format.Replace("{index}", index).Replace("{value}", filename);
+                namenode.RemoveAllChildren();
+                namenode.AppendChild(namenode.OwnerDocument.CreateTextNode(filename));
+            }
+
+            var downloadbtnNode = MainNode.SelectSingleNode(".//span[contains(@class,'download-btn')]");
+
+            if (downloadbtnNode != null)
+            {
+                HtmlNode insidenode = null;
+                if (File.isEncryption)
+                {
+                    if (IsLogin) insidenode = downloadbtnNode.SelectSingleNode(".//i[contains(@class,'fa-lock-open')]");
+                    else insidenode = downloadbtnNode.SelectSingleNode(".//i[contains(@class,'fa-lock')]");
+                }
+                else insidenode = downloadbtnNode.SelectSingleNode(".//span[contains(@class,'download-text')]");
+
+                if (insidenode != null)
+                {
+                    downloadbtnNode.RemoveAllChildren();
+                    downloadbtnNode.AppendChild(insidenode.CloneNode(true));
+                }
+            }
+            else if (File.isEncryption && !IsLogin)
+            {
+                downloadbtnNode = HtmlNode.CreateNode("<span class=\"download-btn\"><i class=\"fas fa-lock\"></i></span>");
+                MainNode.AppendChild(downloadbtnNode);
+            }
         }
         public async Task<ResponseMessageDto> FindArticleOrgName(long Id)
         {

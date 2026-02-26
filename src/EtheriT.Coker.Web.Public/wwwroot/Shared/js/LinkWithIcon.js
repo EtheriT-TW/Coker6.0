@@ -9,10 +9,8 @@
                 data_url = data_url.substring(0, data_url.indexOf("?v="));
                 $self.attr("href", data_url)
             }
+
             var type = data_url.substring(data_url.lastIndexOf('.') + 1, data_url.length);
-
-            if ($self.hasClass("locked")) $self.find(".icon").append('<i class="fa-solid fa-lock pe-2"></i>');
-
             if (type == "" && typeof ($self.data("extension")) != "undefined") type = $self.data("extension");
             switch (type) {
                 case "jpg":
@@ -55,11 +53,13 @@
             $self.attr("download", local.UnnamedFile);
         }
         $self.attr("title", local.LinkToAndBlank.format($self.attr("download")));
-        $self.find(".name").text($self.attr("download").replace(`.${type}`, ""));
-        if (type == "pdf")
-            $self.attr({ target: "_blank", rel:"noopener noreferrer" }).removeAttr("download");
-        else if (!(new RegExp(`[\.]{1}${type}$`, "gi")).test($self.attr("download"))) $self.attr("download", `${$self.attr("download")}.${type}`);
-        else $self.attr("download", `${$self.attr("download")}`);
+        if (!$self.hasClass("do_not_rename")) {
+            $self.find(".name").text($self.attr("download").replace(`.${type}`, ""));
+            if (type == "pdf")
+                $self.attr({ target: "_blank", rel: "noopener noreferrer" }).removeAttr("download");
+            else if (!(new RegExp(`[\.]{1}${type}$`, "gi")).test($self.attr("download"))) $self.attr("download", `${$self.attr("download")}.${type}`);
+            else $self.attr("download", `${$self.attr("download")}`);
+        }
         $self.data("old_href", data_url);
     })
 }

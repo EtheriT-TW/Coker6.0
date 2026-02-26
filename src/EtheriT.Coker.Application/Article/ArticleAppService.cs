@@ -248,44 +248,43 @@ namespace EtheriT.Coker.Application.Article
         {
             try
             {
-                var result = db.Article;
+                var result = await db.Article.Where(a => a.Id == Id).FirstOrDefaultAsync();
 
                 if (result != null)
                 {
-                    var output = await (
-                        from e in result
-                        where e.Id == Id
-                        where !e.IsDeleted
-                        select new ArticleGetDataDto
-                        {
-                            Id = e.Id,
-                            Title = e.Title,
-                            Subtitle = e.Subtitle,
-                            Description = e.Description,
-                            Longitude = e.Longitude,
-                            Latitude = e.Latitude,
-                            Visible = e.Visible,
-                            SerNO = e.SerNO,
-                            PopularVisible = e.PopularVisible,
-                            TagDatas = new List<TagGetSelectedDto>(),
-                            StartTime = e.StartTime,
-                            EndTime = e.EndTime,
-                            NodeDate = e.NodeDate,
-                            RemovedFromShelves = !e.RemovedFromShelves,
-                            permanent = e.permanent,
-                            DataJson = string.IsNullOrEmpty(e.DataJson) ? null : JsonConvert.DeserializeObject<NewsletterFrameDto>(e.DataJson),
-                            Files = new List<FileGetArticleDisplayDto>()
-                        }
-                    ).FirstOrDefaultAsync();
-
-                    var fileDatas = await fileUploadAppService.getArticleFiles(output.Id);
-                    if (fileDatas != null)
+                    var output = new ArticleGetDataDto
                     {
-                        output.Files = fileDatas;
-                    }
+                        Id = result.Id,
+                        Title = result.Title,
+                        Subtitle = result.Subtitle,
+                        Description = result.Description,
+                        Longitude = result.Longitude,
+                        Latitude = result.Latitude,
+                        Visible = result.Visible,
+                        SerNO = result.SerNO,
+                        PopularVisible = result.PopularVisible,
+                        TagDatas = new List<TagGetSelectedDto>(),
+                        StartTime = result.StartTime,
+                        EndTime = result.EndTime,
+                        NodeDate = result.NodeDate,
+                        RemovedFromShelves = !result.RemovedFromShelves,
+                        permanent = result.permanent,
+                        DataJson = string.IsNullOrEmpty(result.DataJson) ? null : JsonConvert.DeserializeObject<NewsletterFrameDto>(result.DataJson),
+                        FileAreas = null,
+                        Files = new List<FileGetArticleDisplayDto>()
+                    };
 
                     if (output != null)
                     {
+                        // 此處讀Html裡有哪些地方需要傳檔案
+                        output.FileAreas = GetFileAreas(result.Html);
+
+                        var fileDatas = await fileUploadAppService.getArticleFiles(output.Id);
+                        if (fileDatas != null)
+                        {
+                            output.Files = fileDatas;
+                        }
+
                         var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
                         {
                             Fk_Aid = output.Id,
@@ -307,6 +306,27 @@ namespace EtheriT.Coker.Application.Article
             {
                 return null;
             }
+        }
+        private List<FileTypeAreaDto> GetFileAreas(string html)
+        {
+            var output = new List<FileTypeAreaDto>();
+
+            if (html != "")
+            {
+                var doc = htmlProcessor.LoadHtml(stringHandler.HtmlDecode(html));
+                var FileAreas = htmlProcessor.Find(doc, "[data-edit-type]");
+                var ResultNodes = FileAreas.Where(d => d.GetAttributeValue("data-edit-type", "") == "File" || d.GetAttributeValue("data-edit-type", "") == "Files").ToList();
+                foreach (var node in ResultNodes)
+                {
+                    var temp = new FileTypeAreaDto();
+                    temp.type = node.GetAttributeValue("data-edit-type", "");
+                    temp.key = node.GetAttributeValue("data-edit-key", "").Trim('“', '”', '"'); ;
+                    temp.label = node.GetAttributeValue("data-edit-label", "").Trim('“', '”', '"'); ;
+
+                    output.Add(temp);
+                }
+            }
+            return output;
         }
         public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto)
         {

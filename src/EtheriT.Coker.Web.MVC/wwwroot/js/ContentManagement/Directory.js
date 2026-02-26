@@ -13,9 +13,6 @@ function PageReady() {
         if (!permission.CanCreate) $(".btn_add").remove();
     });
 
-    /* File Upload */
-    co.File.ListFileInit();
-
     ElementInit();
     WebmenuListModalInit();
     $DirectorytTags = $(DirectorytForms).find(".InputTag").TagListModalInit();
@@ -298,6 +295,7 @@ function ArticleDataClear() {
     });
     $(".data_upload > ul > .upload_list").remove();
     total_files = [];
+    $(".data_upload").remove();
 }
 
 function FormDataSet(result) {
@@ -378,9 +376,9 @@ function AddUpArticlet(success_text, error_text) {
         } else success();
 
         if (total_files.length > 0) {
-            //console.log(total_files)
-            $("#ArticleFiles > ul > li.upload_list").each(function () {
+            $(".data_upload > ul > li.upload_list").each(function () {
                 var $self = $(this);
+                var parentarea = $self.parents(".data_upload");
                 var data = [];
                 if (typeof ($self.data("id")) != "undefined") data = total_files.find(item => $self.data("id") == item.Id);
                 else if (typeof ($self.data("tempid")) != "undefined") data = total_files.find(item => $self.data("tempid") == item.TempId);
@@ -388,6 +386,7 @@ function AddUpArticlet(success_text, error_text) {
                 if (typeof (data["Id"]) == "undefined" || (!data["IsEncryption"] && $self.find(".btn_lock").hasClass("lock"))) {
                     var formData = new FormData();
                     formData.append("files", data["File"]);
+                    formData.append("areakey", parentarea.data("key"));
                     formData.append("type", 15);
                     if (typeof (data["Id"]) != "undefined") formData.append("id", data["Id"]);
                     formData.append("sid", result.message);
@@ -489,11 +488,31 @@ function MoveToItemArticle() {
                             result.startEndDate = 0;
                             result.sortCheckbox = 1;
                             result.ImageUpload = 1;
+
+                            if (result.fileAreas.length > 0) {
+                                // 處理檔案上傳的區塊
+                                result.fileAreas.forEach(function (area) {
+                                    var item = $($("#TemplateArticleFile").html()).clone();
+                                    var item_title = item.find(".upload_title"),
+                                        item_upload_frame = item.find(".upload_frame");
+                                    if (area.type == "File") item_title.text(`${area.label} (單一檔案上傳)`);
+                                    else item_title.text(`${area.label} (多檔案上傳)`);
+                                    item.attr({
+                                        "data-edit-type": area.type,
+                                        "data-key": area.key,
+                                    });
+                                    item_upload_frame.attr("data-upload-id", `${area.key}File`);
+                                    $("#ArticletForm").append(item);
+                                });
+                            }
+                            co.File.ListFileInit();
+
                             co.Form.insertData(result, "#ArticletForm");
+
                             $ArticletTags.TagDataSet(result.tagDatas);
 
                             result.files.forEach(file => {
-                                UploadListAdd(file, $("#ArticleFiles"));
+                                UploadListAdd(file, $(`.data_upload[data-key="${file.areakey}"]`));
                             })
                         } else BackToList();
                     })
@@ -548,7 +567,6 @@ function deleteArticlesButtonClicked(e) {
         });
     });
 }
-
 function UploadListAdd(result, $target) {
     var item = $($("#TemplateUploadList").html()).clone();
     var item_serno = item.find(".ser_no"),
@@ -691,6 +709,10 @@ function UploadListAdd(result, $target) {
 
     $target.find("ul > .btn_upload_add").before(item);
     co.File.ListFile(item);
+
+    if ($target.data("edit-type") == "File" && result != null) {
+        $target.find(".btn_upload_add").remove()
+    }
 }
 function SortChange($self, change, minindex, maxindex) {
     $self.each(function () {

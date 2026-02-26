@@ -20,36 +20,36 @@
                 case "png":
                 case "gif":
                 case "avif":
-                    $self.find(".icon").append('<i class="fa-solid fa-file-image font-yellow"></i>');
+                    $self.find(".icon").append('<i class="fa-solid fa-file-image"></i>');
                     break;
                 case "pdf":
-                    $self.find(".icon").append('<i class="fa-solid fa-file-pdf font-rad"></i>');
+                    $self.find(".icon").append('<i class="fa-solid fa-file-pdf"></i>');
                     break;
                 case "doc":
                 case "docx":
                 case "odt":
-                    $self.find(".icon").append('<i class="fa-solid fa-file-word font-blue"></i>');
+                    $self.find(".icon").append('<i class="fa-solid fa-file-word"></i>');
                     break;
                 case "ppt":
                 case "pptx":
                 case "odp":
-                    $self.find(".icon").append('<i class="fa-solid fa-file-powerpoint font-orange"></i>');
+                    $self.find(".icon").append('<i class="fa-solid fa-file-powerpoint"></i>');
                     break;
                 case "xls":
                 case "xlsx":
                 case "ods":
-                    $self.find(".icon").append('<i class="fa-solid fa-file-excel font-green"></i>');
+                    $self.find(".icon").append('<i class="fa-solid fa-file-excel"></i>');
                     break;
                 case "zip":
                 case "rar":
                     $self.find(".icon").append('<i class="fa-solid fa-file-zipper"></i>');
                     break;
                 default:
-                    $self.find(".icon").append('<i class="fa-solid fa-file font-gray"></i>');
+                    $self.find(".icon").append('<i class="fa-solid fa-file"></i>');
                     break;
             }
         } else {
-            $self.find(".icon").append('<i class="fa-solid fa-file font-gray"></i>');
+            $self.find(".icon").append('<i class="fa-solid fa-file"></i>');
         }
         if (typeof ($self.attr("download")) == "undefined") {
             $self.attr("download", local.UnnamedFile);

@@ -395,20 +395,20 @@ function AddUpArticlet(success_text, error_text) {
                     co.File.Upload(formData).done(function (result) {
                         console.log(result)
                     })
-                } else if (data['SerNo'] != $self.find(".ser_no").val()) {
-                    co.File.fileSortChange({
-                        Id: data["Id"],
-                        sid: result.message,
-                        SerNo: $self.find(".ser_no").val(),
-                    });
-                }
+                } else {
+                    var SerNoChange = data['SerNo'] != Number($self.find(".ser_no").val());
+                    var IsVisibleChange = data["IsVisible"] != !$self.find(".btn_visibility").hasClass("invisible");
+                    var AreaKeyChange = $self.data("old-editkey") != $parentarea.data("key");
 
-                if ($self.data("old-editkey") != $parentarea.data("key")) {
-                    co.File.fileAreaKeyChange({
-                        Id: data["Id"],
-                        sid: result.message,
-                        areaKey: $parentarea.data("key"),
-                    });
+                    if (SerNoChange || IsVisibleChange || AreaKeyChange) {
+                        co.File.fileDataChange({
+                            Id: data["Id"],
+                            SId: result.message,
+                            SerNo: SerNoChange ? $self.find(".ser_no").val() : null,
+                            IsVisible: IsVisibleChange ? !$self.find(".btn_visibility").hasClass("invisible") : null,
+                            AreaKey: AreaKeyChange ? $parentarea.data("key") : null,
+                        });
+                    }
                 }
             });
 
@@ -599,7 +599,8 @@ function UploadListAdd(result, $target) {
     var item = $($("#TemplateUploadList").html()).clone();
     var item_serno = item.find(".ser_no"),
         item_btn_remove = item.find(".btn_remove"),
-        item_btn_lock = item.find(".btn_lock");
+        item_btn_lock = item.find(".btn_lock"),
+        item_visibility = item.find(".btn_visibility");
 
     if (isUseLessFile) {
         var html = `<select class="form-select form-select-sm area_select" aria-label="AreaKey Select" name="editkey"><option selected disabled value="">請選擇對應區塊</option></select>`;
@@ -674,10 +675,12 @@ function UploadListAdd(result, $target) {
             "data-oldserno": file_num,
             "data-uploadtype": result.fileType,
             "data-edit": false,
+            "data-old-isvisible": result.isVisible,
             "data-old-editkey": result.areakey,
         })
         item_serno.val(file_num);
         item.find(".title").text(result.name);
+        if (!result.isVisible) item_visibility.addClass("invisible");
         if (result.isEncryption) {
             item_btn_lock.addClass("lock");
             item_btn_lock.attr({
@@ -723,6 +726,12 @@ function UploadListAdd(result, $target) {
         }
         item.data("serno", $self.val());
     })
+
+    // 檔案是否顯示的按鈕
+    item_visibility.on('click', function (e) {
+        e.preventDefault();
+        $(this).toggleClass('invisible');
+    });
 
     // 檔案是否上鎖的按鈕
     item_btn_lock.on('click', function (e) {

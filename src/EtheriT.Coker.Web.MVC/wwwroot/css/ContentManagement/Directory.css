@@ -75,8 +75,26 @@ input[type="number"] {
     width: 1.5rem;
 }
 
+.data_upload .btn_visibility span.invisible {
+    visibility: visible !important;
+}
+
+.data_upload .btn_visibility span.invisible {
+    display: none;
+    color: #CCC;
+}
+
+.data_upload .btn_visibility.invisible span.invisible {
+    display: flex;
+}
+
+.data_upload .btn_visibility.invisible span.visible {
+    display: none;
+}
+
 .data_upload .btn_lock span.lock {
     display: none;
+    color: #CCC;
 }
 
 .data_upload .btn_lock.lock span.lock {
@@ -117,4 +135,9 @@ input[type="number"] {
     box-shadow: none !important;
     background-image: var(--bs-form-select-bg-img) !important;
     padding-right: 2.25rem !important;
+}
+
+.data_upload .btn_remove {
+    color: #B02A37;
+    margin-left: 0.5rem;
 }

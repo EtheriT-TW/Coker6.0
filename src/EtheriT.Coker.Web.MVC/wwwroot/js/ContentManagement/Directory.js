@@ -499,7 +499,7 @@ function MoveToItemArticle() {
                                     else item_title.text(`${area.label} (多檔案上傳)`);
                                     item.attr({
                                         "data-edit-type": area.type,
-                                        "data-key": area.key,
+                                        "data-key": area.key.toLowerCase(),
                                     });
                                     item_upload_frame.attr("data-upload-id", `${area.key}File`);
                                     $("#ArticletForm").append(item);
@@ -512,7 +512,7 @@ function MoveToItemArticle() {
                             $ArticletTags.TagDataSet(result.tagDatas);
 
                             result.files.forEach(file => {
-                                UploadListAdd(file, $(`.data_upload[data-key="${file.areakey}"]`));
+                                UploadListAdd(file, $(`.data_upload[data-key="${file.areakey.toLowerCase()}"]`));
                             })
                         } else BackToList();
                     })

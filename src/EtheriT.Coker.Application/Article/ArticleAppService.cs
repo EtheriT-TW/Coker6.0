@@ -639,55 +639,29 @@ namespace EtheriT.Coker.Application.Article
                         var isLogin = checktokenresponse.IsLogin;
 
                         var Files = await fileUploadAppService.getArticleFiles(articl.Id);
-                        if (Files.Any())
+
+                        var doc = htmlProcessor.LoadHtml(stringHandler.HtmlDecode(result.Html));
+                        var EditData = htmlProcessor.Find(doc, "[data-edit-type]");
+                        var FileInsertNode = EditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "File" || d.GetAttributeValue("data-edit-type", "") == "Files").ToList();
+
+                        if (FileInsertNode.Any())
                         {
-                            var doc = htmlProcessor.LoadHtml(stringHandler.HtmlDecode(result.Html));
-                            var EditData = htmlProcessor.Find(doc, "[data-edit-type]");
-                            var FileNode = EditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "File").ToList();
-                            var FilesNode = EditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "Files").ToList();
-
-                            if (FileNode.Any() || FilesNode.Any())
+                            foreach (var node in FileInsertNode)
                             {
-                                foreach (var node in FileNode)
+                                var nodeType = node.GetAttributeValue("data-edit-type", "");
+                                var areaKey = node.GetAttributeValue("data-edit-key", "");
+                                var isSingle = nodeType.Equals("File", StringComparison.OrdinalIgnoreCase);
+
+                                var templateName = node.GetAttributeValue("data-edit-template", "");
+                                var templateNode = !string.IsNullOrWhiteSpace(templateName) ? htmlProcessor.Find(doc, $"#{templateName}")?.FirstOrDefault() : null;
+
+                                if (templateNode == null)
                                 {
-                                    var File = Files[0];
-
-                                    if (File.areakey.ToLower() == node.GetAttributeValue("data-edit-key", "").ToLower())
-                                    {
-                                        var thisnode = node.Name == "a" ? node : node.SelectSingleNode(".//a");
-                                        if (thisnode == null)
-                                        {
-                                            var html = $@"<a  class=""download-item link_with_icon do_not_rename  d-flex text-decoration-none edit_lock align-items-center"" data-edit-type=""File"">
-                                                                                 <div class=""icon""></div>
-                                                                                 <span class=""file-name name"" data-edit-label=""檔案名稱"" data-edit-type=""string"" data-edit-format=""{{value}}""></span>
-                                                                                 <span class=""download-btn""></span>
-                                                                             </a>";
-
-                                            var newNode = HtmlNode.CreateNode(html);
-                                            node.ParentNode.ReplaceChild(newNode, node);
-                                            thisnode = newNode;
-                                        }
-
-                                        FileHtmlNodeSet(thisnode, File, "1", isLogin);
-                                    }
-                                }
-
-                                HtmlNode? templateNode = null;
-
-                                foreach (var node in FilesNode)
-                                {
-                                    var areaKey = node.GetAttributeValue("data-edit-key", "");
-
-                                    var templateName = node.GetAttributeValue("data-edit-template", "");
-                                    templateNode = !string.IsNullOrWhiteSpace(templateName)
-                                        ? htmlProcessor.Find(doc, $"#{templateName}")?.FirstOrDefault()
-                                        : null;
-
-                                    if (templateNode == null)
-                                    {
-                                        var html = @$"<a id=""{templateName}"" class=""download-item link_with_icon do_not_rename d-flex text-decoration-none edit_lock align-items-center d-none"">
+                                    var format = isSingle ? "{value}" : "{index}. {value}";
+                                    var idAttr = !string.IsNullOrWhiteSpace(templateName) ? $@" id=""{templateName}""" : "";
+                                    var html = @$"<a{idAttr} class=""download-item link_with_icon do_not_rename d-flex text-decoration-none edit_lock align-items-center d-none"">
                                                                         <div class=""icon pe-2""></div>
-                                                                        <span data-edit-label=""檔案名稱"" data-edit-type=""string"" data-edit-format=""{{index}}. {{value}}"" class=""file-name name""></span>
+                                                                        <span data-edit-label=""檔案名稱"" data-edit-type=""string"" data-edit-format=""{format}"" class=""file-name name""></span>
                                                                         <span class=""download-btn"">
                                                                             <i class=""fas fa-lock""></i>
                                                                             <span class=""download-text"">下載</span>
@@ -695,72 +669,42 @@ namespace EtheriT.Coker.Application.Article
                                                                         </span>
                                                                       </a>";
 
-                                        var newNode = HtmlNode.CreateNode(html);
-                                        node.PrependChild(newNode);
-                                        templateNode = newNode;
-                                    }
-
-                                    var oldItems = node.SelectNodes(".//a[contains(@class,'download-item') and not(contains(@class,'d-none'))]");
-                                    if (oldItems != null)
-                                        foreach (var it in oldItems) it.Remove();
-
-                                    var actualIndex = 1;
-                                    for (var index = 0; index < Files.Count; index++)
-                                    {
-                                        var file = Files[index];
-
-                                        if (file.areakey.Equals(areaKey, StringComparison.OrdinalIgnoreCase))
-                                        {
-                                            var child = templateNode.CloneNode(true);
-                                            child.Attributes.Remove("id");
-                                            child.SetAttributeValue(
-                                                "class",
-                                                string.Join(" ",
-                                                    child.GetAttributeValue("class", "")
-                                                        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                                                        .Where(c => c != "d-none"))
-                                            );
-
-                                            FileHtmlNodeSet(child, file, actualIndex.ToString(), isLogin);
-                                            actualIndex++;
-
-                                            node.AppendChild(child);
-                                        }
-                                    }
+                                    templateNode = HtmlNode.CreateNode(html);
+                                    node.PrependChild(templateNode);
                                 }
 
-                                result.Html = doc.DocumentNode.OuterHtml;
+                                node.SelectNodes(".//a[contains(@class,'download-item') and not(contains(@class,'d-none'))]")?.ToList().ForEach(n => n.Remove());
+
+                                node.SelectSingleNode(".//div[contains(@class,'no-files-msg')]")?.Remove();
+
+                                var candidates = Files.Where(f => f.isVisible && f.areakey.Equals(areaKey, StringComparison.OrdinalIgnoreCase));
+
+                                if (isSingle) candidates = candidates.Take(1);
+
+                                var list = candidates.ToList();
+
+                                if (list.Count > 0)
+                                {
+                                    var actualIndex = 1;
+                                    foreach (var file in list)
+                                    {
+                                        var child = templateNode.CloneNode(true);
+                                        child.Attributes.Remove("id");
+                                        child.SetAttributeValue("class", string.Join(" ", child.GetAttributeValue("class", "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Where(c => c != "d-none")));
+
+                                        FileHtmlNodeSet(child, file, actualIndex.ToString(), isLogin);
+                                        actualIndex++;
+
+                                        node.AppendChild(child);
+                                    }
+                                }
+                                else
+                                {
+                                    node.AppendChild(HtmlNode.CreateNode("<div class='no-files-msg'>無相關檔案可顯示</div>"));
+                                }
                             }
 
-                            // 原先html沒有相關區塊需自動補上 後來不需要了
-                            //string decoded = WebUtility.HtmlDecode(result.Html);
-
-                            //var Final_Html = "";
-                            //for (var index = 0; index < Files.Count(); index++)
-                            //{
-                            //    var File = Files[index];
-                            //    var link = File.isEncryption ? "" : File.Link[0];
-
-                            //    var classtext = File.isEncryption ? "btn_downloadEncryptedFile do_not_rename download-item link_with_icon d-flex text-decoration-none edit_lock align-items-center locked" : "do_not_rename download-item link_with_icon d-flex text-decoration-none edit_lock align-items-center";
-
-                            //    var namesplit = File.Name.Split('.');
-                            //    var extension = namesplit[namesplit.Length - 1];
-
-                            //    var downloadIconHtml = File.isEncryption ? (isLogin ? "<i class=\"fa-lock-open fas\"></i>" : "<i class=\"fas fa-lock\"></i>") : "<span class=\"download-text\">下載</span>";
-
-                            //    var html = $@"<a  href=""{link}"" download=""{File.Name}"" class=""{classtext}"" data-edit-type=""File"" data-fid=""{File.Id}"" data-extension=""{extension}"">
-                            //                                             <div class=""icon pe-2""></div>
-                            //                                             <span class=""file-name name"" data-edit-label=""檔案名稱"" data-edit-type=""string"" data-edit-format=""{{index}}. {{value}}"">{index + 1}.{File.Name}</span>
-                            //                                             <span class=""download-btn"">
-                            //                                                 {downloadIconHtml}
-                            //                                             </span>
-                            //                                         </a>";
-
-                            //    Final_Html += html;
-                            //}
-
-                            //decoded += Final_Html;
-                            //result.Html = WebUtility.HtmlEncode(decoded);
+                            result.Html = doc.DocumentNode.OuterHtml;
                         }
 
                         result.LastModificationTime = articl.LastModificationTime ?? articl.CreationTime;

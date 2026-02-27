@@ -74,7 +74,7 @@ namespace EtheriT.Coker.Application
             {
                 foreach (var file in files)
                 {
-                    FileItemDto item = await SaveFile(file, type, isTemp);
+                    FileItemDto item = await SaveFile(file, "", type, isTemp);
                     response.Files.Add(item);
                 }
                 response.Success = true;
@@ -85,7 +85,7 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-        public async Task<UploadFileOutputDto> uploadFiles(IList<IFormFile> files, int type, long id, long sid, int serno, string page, bool isEncryption)
+        public async Task<UploadFileOutputDto> uploadFiles(IList<IFormFile> files, string areakey, int type, long id, long sid, int serno, string page, bool isEncryption)
         {
             UploadFileOutputDto response = new UploadFileOutputDto
             {
@@ -94,7 +94,7 @@ namespace EtheriT.Coker.Application
             };
             try
             {
-                List<FileItemDto> filds = await SaveFile(files, type, serno, page, id, sid, isEncryption);
+                List<FileItemDto> filds = await SaveFile(files, areakey, type, serno, page, id, sid, isEncryption);
                 response.Files = filds.FindAll(e => e.Id != 0 && e.Id != null);
                 response.ErrorFiles = filds.FindAll(e => e.Id == 0 || e.Id == null).Select(e => e.Name).ToList();
                 if (response.ErrorFiles.Count == 0) response.Success = true;
@@ -736,7 +736,8 @@ namespace EtheriT.Coker.Application
                                 FileType = 5,
                                 Link = new List<string> { MediaLink },
                                 SerNo = fb.SerNo,
-                                isEncryption = fu.IsEncryption
+                                isEncryption = fu.IsEncryption,
+                                areakey = fu.AreaKey ?? ""
                             });
                         }
                     }
@@ -1267,7 +1268,7 @@ namespace EtheriT.Coker.Application
 
             return (root + orgName + "/" + after).Replace("//", "/");
         }
-        private async Task<List<FileItemDto>> SaveFile(IList<IFormFile> files, int asotype, int serno, string directory, long id, long sid, bool isEncryption)
+        private async Task<List<FileItemDto>> SaveFile(IList<IFormFile> files, string areakey, int asotype, int serno, string directory, long id, long sid, bool isEncryption)
         {
             List<FileItemDto> outputs = new List<FileItemDto>();
             List<FileBind> fileBinds = new List<FileBind>();
@@ -1276,13 +1277,13 @@ namespace EtheriT.Coker.Application
             {
                 foreach (var file in files)
                 {
-                    outputs.Add(await SaveFile(file, directory, false, true, id, isEncryption));
+                    outputs.Add(await SaveFile(file, areakey, directory, false, true, id, isEncryption));
                 }
                 ;
             }
             else if (id != 0)
             {
-                outputs.Add(await SaveFile(null, directory, false, true, id, isEncryption));
+                outputs.Add(await SaveFile(null, "", directory, false, true, id, isEncryption));
             }
             outputs.ForEach(e =>
             {
@@ -1307,7 +1308,7 @@ namespace EtheriT.Coker.Application
             db.SaveChanges();
             return outputs;
         }
-        private async Task<FileItemDto> SaveFile(IFormFile? file, string directory, bool isTemp = false, bool convert = true, long id = 0, bool isEncryption = false)
+        private async Task<FileItemDto> SaveFile(IFormFile? file, string areakey, string directory, bool isTemp = false, bool convert = true, long id = 0, bool isEncryption = false)
         {
             if ((file != null && file.Length > 0) || id > 0)
             {
@@ -1365,7 +1366,8 @@ namespace EtheriT.Coker.Application
                                     OriginalFileName = file.FileName,
                                     ContentType = ContentType,
                                     Size = fileLength,
-                                    IsEncryption = isEncryption
+                                    IsEncryption = isEncryption,
+                                    AreaKey = areakey
                                 };
 
                                 db.FileUploads.Add(fileUpload);

@@ -9,5 +9,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Files
         public List<string> Link { get; set; }
         public int SerNo { get; set; }
         public bool isEncryption { get; set; }
+        public string areakey { get; set; }
     }
 }

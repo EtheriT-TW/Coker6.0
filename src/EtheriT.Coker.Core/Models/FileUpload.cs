@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Core.Models
 {
-    public class FileUpload: FullAuditedEntity
+    public class FileUpload : FullAuditedEntity
     {
         public long FK_WebsiteId { get; set; }
         public Guid GuidKey { get; set; }
@@ -20,5 +20,6 @@ namespace EtheriT.Coker.Core.Models
         public Website Website { get; set; }
         public List<FileBind>? fileBinds { get; set; }
         public bool IsEncryption { get; set; } = false;
+        public string? AreaKey { get; set; }
     }
 }

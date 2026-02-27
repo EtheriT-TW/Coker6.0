@@ -496,8 +496,10 @@
                     $parent.find(".youtube_frame").removeClass("d-none").addClass("d-flex");
                     break;
                 case 5:
+                    var $parent = $self.parents(".data_upload");
                     if ($self.find(".title").text() == "") {
-                        upload_file = co.File.UploadFileInit("ProdFile");
+                        if (typeof ($parent.data("key")) == "undefined") upload_file = co.File.UploadFileInit("ProdFile");
+                        else upload_file = co.File.UploadFileInit(`${$parent.data("key") }File`);
                         $parent.find(".upload_frame").removeClass("d-none");
                         $parent.find(".image-preview").addClass("d-none");
                     } //else $parent.find(".default_frame").removeClass("d-none").addClass("d-flex");

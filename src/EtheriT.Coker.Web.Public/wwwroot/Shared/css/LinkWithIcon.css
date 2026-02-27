@@ -1,4 +1,9 @@
-﻿.link_with_icon .fa-file-image {
+﻿.link_with_icon .icon {
+    text-align: start;
+    width: 1.5rem;
+}
+
+.link_with_icon .fa-file-image {
     color: #ff9500;
 }
 

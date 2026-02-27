@@ -782,7 +782,7 @@ namespace EtheriT.Coker.Application.Article
         {
             var namesplit = File.Name.Split('.');
             var extension = namesplit[namesplit.Length - 1];
-            var filename = namesplit[0];
+            var filename = string.Join(".", namesplit.Take(namesplit.Length - 1));
 
             MainNode.SetAttributeValue("download", File.Name);
             MainNode.SetAttributeValue("data-fid", File.Id.ToString());

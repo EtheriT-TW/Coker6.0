@@ -501,7 +501,7 @@ function MoveToItemArticle() {
                                         "data-edit-type": area.type,
                                         "data-key": area.key.toLowerCase(),
                                     });
-                                    item_upload_frame.attr("data-upload-id", `${area.key}File`);
+                                    item_upload_frame.attr("data-upload-id", `${area.key.toLowerCase()}file`);
                                     $("#ArticletForm").append(item);
                                 });
                             }
@@ -615,7 +615,6 @@ function UploadListAdd(result, $target) {
         item.find(".title").text(result.Name);
     } else {
         // 此處為已有檔案帶入部分
-        console.log(result)
         file_num += 1;
         item.data("id", result.id);
         item.data("serno", file_num);

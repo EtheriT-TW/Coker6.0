@@ -15,7 +15,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                 table: "FileBinds",
                 type: "bit",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
         }
 
         /// <inheritdoc />

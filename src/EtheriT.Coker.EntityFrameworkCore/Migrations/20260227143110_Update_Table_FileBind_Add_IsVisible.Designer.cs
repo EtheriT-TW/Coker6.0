@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    [Migration("20260227134852_Update_Table_FileBind_Add_IsVisible")]
+    [Migration("20260227143110_Update_Table_FileBind_Add_IsVisible")]
     partial class Update_Table_FileBind_Add_IsVisible
     {
         /// <inheritdoc />

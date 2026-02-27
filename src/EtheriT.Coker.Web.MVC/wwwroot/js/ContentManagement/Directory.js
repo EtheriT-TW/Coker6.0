@@ -704,13 +704,17 @@ function UploadListAdd(result, $target) {
 
         UploadPreviewFrameClear($target);
         $self.remove();
+
+        if (($target.data("edit-type") == "File")) {
+            $target.find(".btn_upload_add").removeClass("d-none")
+        }
     })
 
     $target.find("ul > .btn_upload_add").before(item);
     co.File.ListFile(item);
 
-    if ($target.data("edit-type") == "File" && result != null) {
-        $target.find(".btn_upload_add").remove()
+    if (($target.data("edit-type") == "File" && result != null)) {
+        $target.find(".btn_upload_add").addClass("d-none")
     }
 }
 function SortChange($self, change, minindex, maxindex) {

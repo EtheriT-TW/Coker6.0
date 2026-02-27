@@ -672,39 +672,61 @@ namespace EtheriT.Coker.Application.Article
                                     }
                                 }
 
+                                HtmlNode? templateNode = null;
+
                                 foreach (var node in FilesNode)
                                 {
-                                    var originalchildnode = node.Name == "a" ? node : node.SelectSingleNode(".//a");
+                                    var areaKey = node.GetAttributeValue("data-edit-key", "");
 
-                                    if (originalchildnode == null)
+                                    var templateName = node.GetAttributeValue("data-edit-template", "");
+                                    templateNode = !string.IsNullOrWhiteSpace(templateName)
+                                        ? htmlProcessor.Find(doc, $"#{templateName}")?.FirstOrDefault()
+                                        : null;
+
+                                    if (templateNode == null)
                                     {
-                                        var html = $@"<a  class=""download-item link_with_icon do_not_rename  d-flex text-decoration-none edit_lock align-items-center"" data-edit-type=""File"">
-                                                                                 <div class=""icon""></div>
-                                                                                 <span class=""file-name name"" data-edit-label=""檔案名稱"" data-edit-type=""string"" data-edit-format=""{{value}}""></span>
-                                                                                 <span class=""download-btn""></span>
-                                                                             </a>";
+                                        var html = @$"<a id=""{templateName}"" class=""download-item link_with_icon do_not_rename d-flex text-decoration-none edit_lock align-items-center d-none"">
+                                                                        <div class=""icon pe-2""></div>
+                                                                        <span data-edit-label=""檔案名稱"" data-edit-type=""string"" data-edit-format=""{{index}}. {{value}}"" class=""file-name name""></span>
+                                                                        <span class=""download-btn"">
+                                                                            <i class=""fas fa-lock""></i>
+                                                                            <span class=""download-text"">下載</span>
+                                                                            <i class=""fas fa-lock-open""></i>
+                                                                        </span>
+                                                                      </a>";
 
                                         var newNode = HtmlNode.CreateNode(html);
-                                        node.ParentNode.ReplaceChild(newNode, node);
-                                        originalchildnode = newNode;
+                                        node.PrependChild(newNode);
+                                        templateNode = newNode;
                                     }
 
-                                    var ActualIndex = 1;
+                                    var oldItems = node.SelectNodes(".//a[contains(@class,'download-item') and not(contains(@class,'d-none'))]");
+                                    if (oldItems != null)
+                                        foreach (var it in oldItems) it.Remove();
+
+                                    var actualIndex = 1;
                                     for (var index = 0; index < Files.Count; index++)
                                     {
-                                        var File = Files[index];
+                                        var file = Files[index];
 
-                                        if (File.areakey.ToLower() == node.GetAttributeValue("data-edit-key", "").ToLower())
+                                        if (file.areakey.Equals(areaKey, StringComparison.OrdinalIgnoreCase))
                                         {
-                                            var childnode = originalchildnode.CloneNode(true);
-                                            FileHtmlNodeSet(childnode, File, ActualIndex.ToString(), isLogin);
-                                            ActualIndex++;
+                                            var child = templateNode.CloneNode(true);
+                                            child.Attributes.Remove("id");
+                                            child.SetAttributeValue(
+                                                "class",
+                                                string.Join(" ",
+                                                    child.GetAttributeValue("class", "")
+                                                        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                                        .Where(c => c != "d-none"))
+                                            );
 
-                                            node.AppendChild(childnode);
+                                            FileHtmlNodeSet(child, file, actualIndex.ToString(), isLogin);
+                                            actualIndex++;
+
+                                            node.AppendChild(child);
                                         }
                                     }
-
-                                    originalchildnode.Remove();
                                 }
 
                                 result.Html = doc.DocumentNode.OuterHtml;
@@ -793,10 +815,10 @@ namespace EtheriT.Coker.Application.Article
                 HtmlNode insidenode = null;
                 if (File.isEncryption)
                 {
-                    if (IsLogin) insidenode = downloadbtnNode.SelectSingleNode(".//i[contains(@class,'fa-lock-open')]");
-                    else insidenode = downloadbtnNode.SelectSingleNode(".//i[contains(@class,'fa-lock')]");
+                    if (IsLogin) insidenode = downloadbtnNode.SelectSingleNode(".//i[contains(@class,'fa-lock-open')]") ?? HtmlNode.CreateNode("<i class=\"fas fa-lock-open\"></i>");
+                    else insidenode = downloadbtnNode.SelectSingleNode(".//i[contains(@class,'fa-lock')]") ?? HtmlNode.CreateNode("<i class=\"fas fa-lock\"></i>");
                 }
-                else insidenode = downloadbtnNode.SelectSingleNode(".//span[contains(@class,'download-text')]");
+                else insidenode = downloadbtnNode.SelectSingleNode(".//span[contains(@class,'download-text')]") ?? HtmlNode.CreateNode("<span class=\"download-text\">下載</span></span>");
 
                 if (insidenode != null)
                 {

@@ -652,21 +652,24 @@ namespace EtheriT.Coker.Application.Article
                                 {
                                     var File = Files[0];
 
-                                    var thisnode = node.Name == "a" ? node : node.SelectSingleNode(".//a");
-                                    if (thisnode == null)
+                                    if (File.areakey.ToLower() == node.GetAttributeValue("data-edit-key", "").ToLower())
                                     {
-                                        var html = $@"<a  class=""download-item link_with_icon do_not_rename  d-flex text-decoration-none edit_lock align-items-center"" data-edit-type=""File"">
+                                        var thisnode = node.Name == "a" ? node : node.SelectSingleNode(".//a");
+                                        if (thisnode == null)
+                                        {
+                                            var html = $@"<a  class=""download-item link_with_icon do_not_rename  d-flex text-decoration-none edit_lock align-items-center"" data-edit-type=""File"">
                                                                                  <div class=""icon""></div>
                                                                                  <span class=""file-name name"" data-edit-label=""檔案名稱"" data-edit-type=""string"" data-edit-format=""{{value}}""></span>
                                                                                  <span class=""download-btn""></span>
                                                                              </a>";
 
-                                        var newNode = HtmlNode.CreateNode(html);
-                                        node.ParentNode.ReplaceChild(newNode, node);
-                                        thisnode = newNode;
-                                    }
+                                            var newNode = HtmlNode.CreateNode(html);
+                                            node.ParentNode.ReplaceChild(newNode, node);
+                                            thisnode = newNode;
+                                        }
 
-                                    FileHtmlNodeSet(thisnode, File, "1", isLogin);
+                                        FileHtmlNodeSet(thisnode, File, "1", isLogin);
+                                    }
                                 }
 
                                 foreach (var node in FilesNode)
@@ -686,14 +689,19 @@ namespace EtheriT.Coker.Application.Article
                                         originalchildnode = newNode;
                                     }
 
+                                    var ActualIndex = 1;
                                     for (var index = 0; index < Files.Count; index++)
                                     {
                                         var File = Files[index];
 
-                                        var childnode = originalchildnode.CloneNode(true);
-                                        FileHtmlNodeSet(childnode, File, (index + 1).ToString(), isLogin);
+                                        if (File.areakey.ToLower() == node.GetAttributeValue("data-edit-key", "").ToLower())
+                                        {
+                                            var childnode = originalchildnode.CloneNode(true);
+                                            FileHtmlNodeSet(childnode, File, ActualIndex.ToString(), isLogin);
+                                            ActualIndex++;
 
-                                        node.AppendChild(childnode);
+                                            node.AppendChild(childnode);
+                                        }
                                     }
 
                                     originalchildnode.Remove();

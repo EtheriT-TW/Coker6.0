@@ -729,6 +729,14 @@ namespace EtheriT.Coker.Application
                                 MediaLink = MediaLink.Replace("upload", $"upload/{orgName}");
                             }
                             if (MediaLink == "") MediaLink = fu.DownloadFileName ?? "";
+
+                            if (fu.AreaKey != null && fu.AreaKey != fb.AreaKey)
+                            {
+                                fb.AreaKey = fu.AreaKey;
+                                fu.AreaKey = null;
+                                db.SaveChanges();
+                            }
+
                             output.Add(new FileGetArticleDisplayDto
                             {
                                 Id = fu.Id,
@@ -737,7 +745,7 @@ namespace EtheriT.Coker.Application
                                 Link = new List<string> { MediaLink },
                                 SerNo = fb.SerNo,
                                 isEncryption = fu.IsEncryption,
-                                areakey = fu.AreaKey ?? ""
+                                areakey = fb.AreaKey ?? ""
                             });
                         }
                     }
@@ -960,6 +968,41 @@ namespace EtheriT.Coker.Application
             }
             return response;
 
+        }
+        public async Task<ResponseMessageDto> fileAreaKeyChange(FileChangeKeyAreaDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var userid = await loginUserData.GetUserId();
+                var db_fb = await db.FileBinds.Where(e => !e.IsDeleted && e.Sid == dto.sid && e.FK_FileUploadId == dto.id)
+                    .Where(e => e.type == (int)FileBindTypeEnum.文章檔案)
+                    .FirstOrDefaultAsync();
+                var db_fu = await db.FileUploads.Where(e => e.Id == dto.id).FirstOrDefaultAsync();
+                if (db_fb != null && db_fu != null)
+                {
+
+                    if (db_fu.AreaKey != null)
+                    {
+                        db_fu.AreaKey = null;
+                        db_fu.LastModifierUserId = userid;
+                        db_fu.LastModificationTime = DateTime.Now;
+                    }
+
+                    db_fb.AreaKey = dto.areaKey;
+                    db_fb.LastModifierUserId = userid;
+                    db_fb.LastModificationTime = DateTime.Now;
+
+                    db.SaveChanges();
+                    response.Success = true;
+                }
+                else throw new Exception("查無對應資料");
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
         }
         public async Task<ResponseMessageDto> deleteFile(string path)
         {
@@ -1299,6 +1342,7 @@ namespace EtheriT.Coker.Application
                         SerNo = serno,
                         MediaLink = "",
                         FK_FileUploadId = e.Id,
+                        AreaKey = areakey
                     };
                     loginUserData.setOptionParameter(fb, userId);
                     fileBinds.Add(fb);
@@ -1367,7 +1411,6 @@ namespace EtheriT.Coker.Application
                                     ContentType = ContentType,
                                     Size = fileLength,
                                     IsEncryption = isEncryption,
-                                    AreaKey = areakey
                                 };
 
                                 db.FileUploads.Add(fileUpload);

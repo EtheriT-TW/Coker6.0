@@ -75,6 +75,16 @@
                 dataType: "json"
             });
         },
+        fileAreaKeyChange: function (data) {
+            return $.ajax({
+                url: "/api/FileUpload/fileAreaKeyChange",
+                type: "Post",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
         Delete: function (guid) {
             return $.ajax({
                 url: "/api/FileUpload/DeleteFile",

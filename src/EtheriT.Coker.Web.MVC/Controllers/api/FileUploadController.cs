@@ -114,6 +114,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await fileUploadAppService.fileSortChange(dto);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> fileAreaKeyChange(FileChangeKeyAreaDto dto)
+        {
+            return await fileUploadAppService.fileAreaKeyChange(dto);
+        }
         [HttpDelete]
         public async Task<ResponseMessageDto> DeleteFile(DeleteDtoByKey dto)
         {

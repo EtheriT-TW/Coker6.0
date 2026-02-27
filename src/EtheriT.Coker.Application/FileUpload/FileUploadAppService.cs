@@ -729,6 +729,14 @@ namespace EtheriT.Coker.Application
                                 MediaLink = MediaLink.Replace("upload", $"upload/{orgName}");
                             }
                             if (MediaLink == "") MediaLink = fu.DownloadFileName ?? "";
+
+                            if (fu.AreaKey != null && fu.AreaKey != fb.AreaKey)
+                            {
+                                fb.AreaKey = fu.AreaKey;
+                                fu.AreaKey = null;
+                                db.SaveChanges();
+                            }
+
                             output.Add(new FileGetArticleDisplayDto
                             {
                                 Id = fu.Id,
@@ -737,7 +745,7 @@ namespace EtheriT.Coker.Application
                                 Link = new List<string> { MediaLink },
                                 SerNo = fb.SerNo,
                                 isEncryption = fu.IsEncryption,
-                                areakey = fu.AreaKey ?? ""
+                                areakey = fb.AreaKey ?? ""
                             });
                         }
                     }
@@ -1299,6 +1307,7 @@ namespace EtheriT.Coker.Application
                         SerNo = serno,
                         MediaLink = "",
                         FK_FileUploadId = e.Id,
+                        AreaKey = areakey
                     };
                     loginUserData.setOptionParameter(fb, userId);
                     fileBinds.Add(fb);
@@ -1367,7 +1376,6 @@ namespace EtheriT.Coker.Application
                                     ContentType = ContentType,
                                     Size = fileLength,
                                     IsEncryption = isEncryption,
-                                    AreaKey = areakey
                                 };
 
                                 db.FileUploads.Add(fileUpload);

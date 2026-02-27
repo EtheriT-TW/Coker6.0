@@ -94,6 +94,7 @@
         const PageId = "@ViewData["Id"]";
         const PageType = "@ViewBag.option";
         const orderPrice = @ViewBag.priceOrder.ToString().ToLower();
+        const totalBonus = @Json.Serialize(ViewBag.UserBonus ?? 0);
         window.CI360 = { notInitOnLoad: true }
         window.onload = function () {
             ready();
@@ -141,7 +142,7 @@
             gtag('config', "@ViewBag.GA4");
             @if (!string.IsNullOrEmpty(ViewBag.GoogleAds))
             {
-                @: gtag('config', '@ViewBag.GoogleAds');
+                    @: gtag('config', '@ViewBag.GoogleAds');
             }
         </script>
     }
@@ -324,7 +325,7 @@
                                 </div>
                             </div>
                             <div class="d-flex justify-content-end">
-                                @if(!string.IsNullOrEmpty(ViewBag.PrivacyPolicy))
+                                @if (!string.IsNullOrEmpty(ViewBag.PrivacyPolicy))
                                 {
                                     <button class="border-0 bg-transparent text-black-50" type="button" data-bs-toggle="modal" data-bs-target="#PrivacyStatementModal"> @L.get("PrivacyPolicy") </button>
                                 }

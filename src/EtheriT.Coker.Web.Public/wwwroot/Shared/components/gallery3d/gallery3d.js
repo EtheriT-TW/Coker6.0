@@ -23,6 +23,7 @@
         play: '播放',
         reset: '回到第一個',
         indicator: (idx1, total) => `第 ${idx1} / ${total} 張`,
+        gridIndicator: (total) => `共 ${total} 張`
     };
 
     class Gallery3D {
@@ -181,6 +182,16 @@
 
         /** 內部：依目前設定判斷是否應強制 grid（少卡片） */
         _shouldForceGrid() {
+            const w = window.innerWidth || document.documentElement.clientWidth || 0;
+            const isPortrait = window.matchMedia && window.matchMedia('(orientation: portrait)').matches;
+
+            // 你要的規則（自行調整門檻）
+            const lockPhoneMax = 768;      // 手機
+            const lockPortraitMax = 1024;  // 平板直/手機直
+
+            if (w <= lockPhoneMax) return true;
+            if (isPortrait && w <= lockPortraitMax) return true;
+
             const t = (typeof this.opts.gridThreshold === 'number' && this.opts.gridThreshold > 0)
                 ? this.opts.gridThreshold
                 : 6;
@@ -495,7 +506,7 @@
             const total = this.total;
             const opts = this.opts;
 
-            const maxWidthFewCards = 60;   // <=4
+            const maxWidthFewCards = 36;   // <=4
             const midWidthPercent = 36;    // ~10
             const minWidthPercent = 22;    // many
             const fewCardsThreshold = 4;
@@ -513,8 +524,11 @@
                 return midWidthPercent + (minWidthPercent - midWidthPercent) * k;
             };
 
-            this.cardWidthPercent = getCardWidthPercent(total);
-            this.cardWidthRatio = (this.cardWidthPercent / 100) * opts.scaleMax;
+            this.baseCardWidthPercent = getCardWidthPercent(total);
+            this.baseCardWidthRatio = (this.baseCardWidthPercent / 100) * opts.scaleMax;
+
+            this.cardWidthPercent = this.baseCardWidthPercent;
+            this.cardWidthRatio = this.baseCardWidthRatio;
 
             this.cards.forEach(card => {
                 card.style.width = this.cardWidthPercent + '%';
@@ -765,20 +779,66 @@
             const activeIndex = Math.round(normalizeIndex(this.indexFloat, total));
             const stepDeg = 360 / total;
 
-            // 半徑等比縮放（原本算法保留）
+            // 半徑等比縮放
             const wrapperRect = this.wrapperEl.getBoundingClientRect();
-            const cardWidth = wrapperRect.width * this.cardWidthRatio;
-            const spacingFactor = 1.10;
+
+            // 先回到「基準卡片寬度」（避免前一次因為太擠而縮小後永久縮著）
+            if (typeof this.baseCardWidthPercent === 'number' && typeof this.baseCardWidthRatio === 'number') {
+                if (this.cardWidthPercent !== this.baseCardWidthPercent) {
+                    this.cardWidthPercent = this.baseCardWidthPercent;
+                    this.cardWidthRatio = this.baseCardWidthRatio;
+                    this.cards.forEach(c => c.style.width = this.cardWidthPercent + '%');
+                }
+            }
+
+            const spacingFactor = (typeof opts.spacingFactor === 'number' && opts.spacingFactor > 0)
+                ? opts.spacingFactor
+                : 1.10;
 
             const stepRad = 2 * Math.PI / total;
-            const minRadiusByChord = (cardWidth * spacingFactor) / (2 * Math.sin(stepRad / 2));
-            const minRadius = wrapperRect.width * 0.30;
-            const maxRadius = wrapperRect.width * 1.20;
 
-            let radius = minRadiusByChord;
-            radius = clamp(radius, minRadius, maxRadius);
+            // 半徑上/下限：不要再讓 maxRadius = 1.20 這麼大，會直接撞旁邊 UI
+            const radiusMinRatio = (typeof opts.radiusMinRatio === 'number') ? opts.radiusMinRatio : 0.30;
+            const radiusMaxRatio = (typeof opts.radiusMaxRatio === 'number') ? opts.radiusMaxRatio : 0.55;
 
-            // 依張數動態調整整個圓環垂直位置（原本算法保留）
+            const minRadius = wrapperRect.width * radiusMinRatio;
+            const maxRadius = wrapperRect.width * radiusMaxRatio;
+
+            // 依目前卡片寬度推 chord 所需半徑
+            let cardWidth = wrapperRect.width * this.cardWidthRatio;
+            let minRadiusByChord = (cardWidth * spacingFactor) / (2 * Math.sin(stepRad / 2));
+
+            // 先用 chord 推半徑，但一定被 cap 在 [minRadius, maxRadius]
+            let radius = clamp(minRadiusByChord, minRadius, maxRadius);
+
+            // ✅ 如果「理論所需半徑」比 maxRadius 還大：代表空間不夠，必須縮卡片寬度
+            if (minRadiusByChord > maxRadius) {
+                // 在既定 radius 下，最多允許的 cardWidth（避免互撞）
+                const fitCardWidth = (2 * radius * Math.sin(stepRad / 2)) / spacingFactor;
+
+                // 反推成百分比（以 wrapper 寬度 + scaleMax 為基準）
+                const targetPercent = (fitCardWidth / (wrapperRect.width * opts.scaleMax)) * 100;
+
+                const minCardWidthPercent = (typeof opts.minCardWidthPercent === 'number')
+                    ? opts.minCardWidthPercent
+                    : 14; // 你可調：過小會看不清楚，但可避免重疊
+
+                const nextPercent = clamp(targetPercent, minCardWidthPercent, this.cardWidthPercent);
+
+                // 套用縮小後的卡片寬度（等比縮圖，不靠硬縮半徑）
+                if (Math.abs(nextPercent - this.cardWidthPercent) > 0.2) {
+                    this.cardWidthPercent = nextPercent;
+                    this.cardWidthRatio = (this.cardWidthPercent / 100) * opts.scaleMax;
+                    this.cards.forEach(c => c.style.width = this.cardWidthPercent + '%');
+
+                    // 更新 cardWidth（後面 ring 位置計算需要）
+                    cardWidth = wrapperRect.width * this.cardWidthRatio;
+                    minRadiusByChord = (cardWidth * spacingFactor) / (2 * Math.sin(stepRad / 2));
+                    // radius 仍維持 cap 後值即可（我們的目標就是不突破 maxRadius）
+                }
+            }
+
+            // 依張數動態調整整個圓環垂直位置
             let ringYOffset = 0;
             const baseCardsForY = 8;
             const midCardsForY = 16;
@@ -819,15 +879,38 @@
                 card.classList.toggle('is-front', i === activeIndex);
             });
 
-            if (this.indicatorEl) {
-                const idx1 = Math.round(normalizeIndex(this.indexFloat, total)) + 1;
-                const txt = (typeof this.opts.i18n.indicator === 'function')
-                    ? this.opts.i18n.indicator(idx1, total)
-                    : DEFAULT_I18N.indicator(idx1, total);
+            this._updateToolbar();
+            this.stageEl.style.transform = `rotateX(${opts.tiltX}deg)`;
+        }
+
+        _updateToolbar() {
+            if (!this.indicatorEl) return;
+
+            const i18n = this.opts.i18n || DEFAULT_I18N;
+
+            // Grid：顯示總張數
+            if (this.wrapperEl.classList.contains('mode-grid')) {
+                const total = this.allCards.length;
+
+                // 支援使用者自訂 i18n.gridIndicator，沒有就 fallback DEFAULT_I18N.gridIndicator
+                const txt = (typeof i18n.gridIndicator === 'function')
+                    ? i18n.gridIndicator(total)
+                    : `共 ${total} 張`; // 最後保底（通常不會走到，除非你沒加 DEFAULT_I18N）
+
                 this.indicatorEl.textContent = txt;
+                return;
             }
 
-            this.stageEl.style.transform = `rotateX(${opts.tiltX}deg)`;
+            // Carousel：沿用你原本 indicator(i, total) 的 i18n
+            const total = this.total;
+            const idx1 = Math.round(normalizeIndex(this.indexFloat, total)) + 1;
+
+            const txt = (typeof i18n.indicator === 'function')
+                ? i18n.indicator(idx1, total)
+                : DEFAULT_I18N.indicator(idx1, total);
+
+            this.indicatorEl.textContent = txt;
+            if (this.btnMode) this.btnMode.disabled = !!this.forceGridMode;
         }
 
         _startAuto(opt) {
@@ -910,18 +993,23 @@
         }
 
         _syncGridColumnsByTotal() {
-            const n = this.allCards.length; // 已被 maxItems 裁切後的有效數量
+            this.stageEl.classList.remove('grid-row-1');
 
-            this.stageEl.classList.remove(
-                'grid-cols-5',
-                'grid-count-1', 'grid-count-2', 'grid-count-3'
-            );
+            if (this._rafGridRowMeasure) cancelAnimationFrame(this._rafGridRowMeasure);
+            this._rafGridRowMeasure = requestAnimationFrame(() => {
+                const tops = new Set();
 
-            if (n >= 4) {
-                this.stageEl.classList.add('grid-cols-5');
-            } else {
-                this.stageEl.classList.add(`grid-count-${Math.max(1, n)}`);
-            }
+                for (const c of this.allCards) {
+                    if (!c.isConnected) continue;
+                    const r = c.getBoundingClientRect();
+                    if (r.width <= 0 || r.height <= 0) continue;
+                    tops.add(Math.round(r.top)); // 容忍 1px 誤差
+                }
+
+                if (tops.size === 1) {
+                    this.stageEl.classList.add('grid-row-1');
+                }
+            });
         }
 
         _switchToGrid(initial) {
@@ -941,8 +1029,7 @@
                     c.style.zIndex = '';
                 });
 
-                if (this.carouselControlsEl) this.carouselControlsEl.style.display = 'none';
-                if (this.indicatorEl) this.indicatorEl.textContent = '';
+                this._updateToolbar();
                 if (this.btnMode) this.btnMode.textContent = this.opts.i18n.modeGrid;
             }, initial ? 0 : 180);
         }

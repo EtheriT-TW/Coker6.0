@@ -16,6 +16,7 @@ namespace EtheriT.Coker.Core.Models
         public int num { get; set; }
         public int SerNo { get; set; }
         public string MediaLink { get; set; }
+        public string? AreaKey { get; set; }
         public long? FK_FileUploadId { get; set; }
         public FileUpload? fileUpload { get; set; }
     }

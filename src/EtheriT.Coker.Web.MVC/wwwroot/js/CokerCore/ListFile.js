@@ -27,7 +27,7 @@
             if (value.startsWith('https://www.youtube.com/watch?')) {
                 videoId = urlParams.get('v');
                 starttime = urlParams.get('t');
-                if(starttime == null) starttime = "0";
+                if (starttime == null) starttime = "0";
             } else if (value.startsWith('https://youtu.be/') ||
                 value.startsWith("https://www.youtube.com/shorts/") ||
                 value.startsWith("https://youtube.com/shorts/") ||
@@ -499,7 +499,7 @@
                     var $parent = $self.parents(".data_upload");
                     if ($self.find(".title").text() == "") {
                         if (typeof ($parent.data("key")) == "undefined") upload_file = co.File.UploadFileInit("ProdFile");
-                        else upload_file = co.File.UploadFileInit(`${$parent.data("key") }File`);
+                        else upload_file = co.File.UploadFileInit(`${$parent.data("key").toLowerCase()}file`);
                         $parent.find(".upload_frame").removeClass("d-none");
                         $parent.find(".image-preview").addClass("d-none");
                     } //else $parent.find(".default_frame").removeClass("d-none").addClass("d-flex");

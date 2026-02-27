@@ -34,14 +34,14 @@ input[type="number"] {
     content: '/150';
 }
 
-#ArticleFiles .upload_title {
+.data_upload .upload_title {
     width: fit-content;
     line-height: 1.5rem;
     top: -0.75rem;
     color: #888;
 }
 
-#ArticleFiles .upload_warning {
+.data_upload .upload_warning {
     width: fit-content;
     line-height: 1.5rem;
     bottom: -0.75rem;
@@ -49,49 +49,49 @@ input[type="number"] {
     color: #C88;
 }
 
-#ArticleFiles .thumb_img {
+.data_upload .thumb_img {
     display: none;
 }
 
-#ArticleFiles .icon.pointer {
+.data_upload .icon.pointer {
     cursor: pointer;
 }
 
-#ArticleFiles .icon.move {
+.data_upload .icon.move {
     cursor: move;
 }
 
-#ArticleFiles .serNoTool {
+.data_upload .serNoTool {
     cursor: move;
     display: flex;
     align-items: center;
 }
 
-#ArticleFiles .btn_upload_add {
+.data_upload .btn_upload_add {
     height: 2.25rem;
 }
 
-#ArticleFiles .upload_list .ser_no {
+.data_upload .upload_list .ser_no {
     width: 1.5rem;
 }
 
-#ArticleFiles .btn_lock span.lock {
+.data_upload .btn_lock span.lock {
     display: none;
 }
 
-#ArticleFiles .btn_lock.lock span.lock {
+.data_upload .btn_lock.lock span.lock {
     display: flex;
 }
 
-#ArticleFiles .btn_lock[data-status="locked"] span.lock {
+.data_upload .btn_lock[data-status="locked"] span.lock {
     cursor: not-allowed;
 }
 
-#ArticleFiles .btn_lock.lock span.unlock {
+.data_upload .btn_lock.lock span.unlock {
     display: none;
 }
 
-#ArticleFiles .sortable-placeholder {
+.data_upload .sortable-placeholder {
     width: 100%;
     height: 50px;
     background: #f0f0f0;

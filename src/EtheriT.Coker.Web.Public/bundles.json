@@ -153,6 +153,7 @@
         "wwwroot/Shared/css/Flipdown.css",
         "wwwroot/Shared/css/Frame.css",
         "wwwroot/Shared/css/HoverEffect.css",
+        "wwwroot/Shared/css/LinkWithIcon.css",
         "wwwroot/Shared/css/Swiper.css"
       ]
     },

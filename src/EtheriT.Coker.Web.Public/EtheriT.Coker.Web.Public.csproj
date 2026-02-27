@@ -50,6 +50,7 @@
 		<Content Remove="wwwroot\Shared\css\Frame.css" />
 		<Content Remove="wwwroot\Shared\css\HoverEffect.css" />
 		<Content Remove="wwwroot\Shared\css\Swiper.css" />
+		<Content Remove="wwwroot\Shared\css\LinkWithIcon.css" />
 		<Content Remove="wwwroot\Shared\js\Activity.js" />
 		<Content Remove="wwwroot\Shared\js\AnchorPoint.js" />
 		<Content Remove="wwwroot\Shared\js\BGCanvas.js" />
@@ -166,6 +167,7 @@
 		<None Include="wwwroot\Shared\css\Flipdown.css" />
 		<None Include="wwwroot\Shared\css\Frame.css" />
 		<None Include="wwwroot\Shared\css\HoverEffect.css" />
+		<None Include="wwwroot\Shared\css\LinkWithIcon.css" />
 		<None Include="wwwroot\Shared\css\Swiper.css" />
 		<None Include="wwwroot\Shared\js\Activity.js" />
 		<None Include="wwwroot\Shared\js\AnchorPoint.js" />

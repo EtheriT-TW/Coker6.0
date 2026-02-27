@@ -23,8 +23,8 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 55%;
-    max-width: 80vw;
+    width: 80%;
+    max-width: 70vw;
     aspect-ratio: 16 / 9;
     pointer-events: none;
 }
@@ -83,7 +83,7 @@
     left: 50%;
     width: 26%;
     height: auto;
-    aspect-ratio: 4 / 3; /* carousel 模式統一卡片比例，讓每張圖片顯示尺寸一致 */
+    aspect-ratio: 3 / 4; /* carousel 模式統一卡片比例，讓每張圖片顯示尺寸一致 */
     margin: 0;
     transform-style: preserve-3d;
     transition: transform 0.32s ease-out, opacity 0.32s ease-out, filter 0.32s ease-out;
@@ -235,6 +235,9 @@
     width: fit-content;
     pointer-events: auto;
 }
+.gallery-holder.grid-mode ~ .gallery-toolbar-wrap .gallery-toolbar-controls button {
+    display: none;
+}
 
 /* 兩個 toolbar 自己不再有 margin-top，只負責內部樣式 */
 .gallery-toolbar {
@@ -281,8 +284,8 @@
 /* Grid 模式 */
 .gallery3d-wrapper.mode-grid {
     width: 80%;
-    height: 65%;
-    margin: 10% auto;
+    height: 70%;
+    margin: 8% auto;
     --grid-gap-x: 28px;
     --grid-gap-y: 24px;
     --col5: calc((100% - (4 * var(--grid-gap-x))) / 5);
@@ -296,28 +299,22 @@
         padding: 32px 40px 40px;
         overflow-y: auto;
         justify-items: center;
+        height: 100%;
     }
         /* >=4：固定 5 欄，靠左 */
-        .gallery3d-wrapper.mode-grid .gallery3d-stage.grid-cols-5 {
+        .gallery3d-wrapper.mode-grid .gallery3d-stage {
             grid-template-columns: repeat(5, var(--col5));
             justify-content: start;
         }
-
-        /* <4：用「實際張數」決定欄數，但欄寬仍用 5欄基準，整排置中 */
-        .gallery3d-wrapper.mode-grid .gallery3d-stage.grid-count-1 {
-            grid-template-columns: repeat(1, var(--col3));
-            justify-content: center;
-        }
-
-        .gallery3d-wrapper.mode-grid .gallery3d-stage.grid-count-2 {
-            grid-template-columns: repeat(2, var(--col3));
-            justify-content: center;
-        }
-
-        .gallery3d-wrapper.mode-grid .gallery3d-stage.grid-count-3 {
-            grid-template-columns: repeat(3, var(--col3));
-            justify-content: center;
-        }
+            .gallery3d-wrapper.mode-grid .gallery3d-stage.grid-row-1 {
+                --row1-col: 17.5%;
+                grid-auto-flow: column;
+                grid-template-columns: none;
+                grid-auto-columns: clamp(150px, var(--row1-col), 240px);
+                align-content: center;
+                align-items: center;
+                justify-content: center;
+            }
     /* ==== Grid 模式捲軸樣式 ==== */
 
     /* Firefox 專用：細捲軸 + 色彩 */
@@ -375,12 +372,6 @@
             aspect-ratio: 3 / 4;
         }
 
-    .gallery3d-wrapper.mode-grid .grid-count-1 .gallery3d-card .card-main,
-    .gallery3d-wrapper.mode-grid .grid-count-2 .gallery3d-card .card-main,
-    .gallery3d-wrapper.mode-grid .grid-count-3 .gallery3d-card .card-main {
-        aspect-ratio: 3 / 4;
-    }
-
     .gallery3d-wrapper.mode-grid .gallery3d-stage {
         align-items: start; /* grid items 不要垂直 stretch */
         align-content: start; /* 多餘高度留在下面，不要把 row 拉高 */
@@ -404,9 +395,18 @@
     }
 
     .gallery-holder {
-        width: 100%;
-        max-width: 90vw;
+        width: 92%;
+        max-width: 92vw;
+        aspect-ratio: 4 / 3;
     }
+
+    .gallery3d-wrapper.mode-grid .gallery3d-stage {
+        grid-template-columns: repeat(4, var(--col5));
+    }
+        .gallery3d-wrapper.mode-grid .gallery3d-stage.grid-row-1 {
+            --row1-col: 22%;
+            grid-auto-columns: clamp(140px, var(--row1-col), 220px);
+        }
 }
 
 @media (max-width: 768px) {
@@ -417,8 +417,35 @@
     }
 
     .gallery3d-wrapper.mode-grid .gallery3d-stage {
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(3, minmax(180px, 1fr));
         padding: 24px 16px 32px;
         gap: 20px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .js-gallery3d-page .main-stage {
+        height: 80vh !important;
+    }
+    .gallery3d-wrapper.mode-grid {
+        width: 100%;
+        height: 80%;
+    }
+    .gallery-holder {
+        width: 96%;
+        max-width: 96vw;
+        aspect-ratio: 1 / 1;
+    }
+        .gallery-holder.grid-mode {
+            left: calc(50% - 15px);
+        }
+    .gallery3d-wrapper.mode-grid .gallery3d-stage {
+        grid-template-columns: repeat(2, minmax(calc(50% - 5px), 1fr));
+        gap: 10px;
+    }
+
+    .gallery3d-wrapper.mode-grid .gallery3d-stage.grid-row-1 {
+        --row1-col: 46%;
+        grid-auto-columns: clamp(140px, var(--row1-col), 420px);
     }
 }

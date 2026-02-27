@@ -2196,11 +2196,9 @@ function ShoppingCartDataInsert(data, $self) {
                 break;
         }
     }
-    console.log(data, $self);
     $self.find("[data-key]").each(function () {
         var $this = $(this);
         var key = $this.data("key");
-        console.log(key, data[key]);
         if (typeof ($this.data("key")) != "undefined" && !! $this.data("key")) {
             if ($this.hasClass("price")) {
                 $this.text(data[key].toLocaleString());

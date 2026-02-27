@@ -7,9 +7,7 @@
 <link rel="stylesheet" href="~/css//Page/Member.min.css" asp-append-version="true" />
 <script src="/js/Page/Member.min.js" asp-append-version="true"></script>
 <script nonce="@ViewBag.Nonce">
-    const PageKey = "@Model.option";
-    const local = @Html.Raw(L.getAllJsonString());
-    const bonus = @Json.Serialize(ViewBag.UserBonus ?? 0);
+    const PageKey = "Member";
 </script>
 @Html.AntiForgeryToken()
 <!-- Modal -->

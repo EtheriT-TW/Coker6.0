@@ -8,8 +8,6 @@
 @model PageViewModel
 <script nonce="@ViewBag.Nonce">
     const PageKey = "@Model.option";
-    const local = @Html.Raw(L.getAllJsonString());
-    const totalBonus = @Json.Serialize(ViewBag.UserBonus ?? 0);
     const MinOrderForRedemption = @Json.Serialize(ViewBag.MinOrderForRedemption ?? 0);
     const MaxRedemptionPercent = @Json.Serialize(ViewBag.MaxRedemptionPercent ?? 0);
     const MinOrderForEarnPoints = @Json.Serialize(ViewBag.MinOrderForEarnPoints ?? 0);

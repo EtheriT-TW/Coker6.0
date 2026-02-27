@@ -22,26 +22,13 @@
 		<Content Remove="Views\Page\OrderManagement.cshtml" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.css" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.min.css" />
-		<Content Remove="wwwroot\js\Coker\coker.alias.js" />
-		<Content Remove="wwwroot\js\Coker\coker.api.favorites.js" />
-		<Content Remove="wwwroot\js\Coker\coker.api.order.js" />
-		<Content Remove="wwwroot\js\Coker\coker.api.payment.js" />
-		<Content Remove="wwwroot\js\Coker\coker.api.thirdparty.js" />
-		<Content Remove="wwwroot\js\Coker\coker.api.Token.js" />
-		<Content Remove="wwwroot\js\Coker\coker.api.user.js" />
-		<Content Remove="wwwroot\js\Coker\coker.config.js" />
-		<Content Remove="wwwroot\js\Coker\coker.core.js" />
-		<Content Remove="wwwroot\js\Coker\coker.dom.zipcode.js" />
-		<Content Remove="wwwroot\js\Coker\coker.feature.search.js" />
-		<Content Remove="wwwroot\js\Coker\coker.form.js" />
-		<Content Remove="wwwroot\js\Coker\coker.ui.sweet.js" />
-		<Content Remove="wwwroot\js\Coker\coker.util.device.js" />
-		<Content Remove="wwwroot\js\Coker\coker.util.html.js" />
-		<Content Remove="wwwroot\js\Coker\coker.util.money.js" />
-		<Content Remove="wwwroot\js\Coker\coker.util.string.js" />
-		<Content Remove="wwwroot\js\Coker\_coker.intellisense.js" />
+		<Content Remove="wwwroot\js\Coker\*.js" />
+		<Content Remove="wwwroot\js\Page\Index.js" />
 		<Content Remove="wwwroot\js\Page\OrderManagement.js" />
 		<Content Remove="wwwroot\js\Page\OrderManagement.min.js" />
+		<Content Remove="wwwroot\js\Page\ProductContent.js" />
+		<Content Remove="wwwroot\js\Page\Search.js" />
+		<Content Remove="wwwroot\js\Page\ShoppingCart.js" />
 		<Content Remove="wwwroot\lib\pdf-viewer\external\pdfjs-4.5.136-dist\LICENSE" />
 		<Content Remove="wwwroot\lib\pdf-viewer\LICENSE" />
 		<Content Remove="wwwroot\lib\pdf-viewer\README.md" />
@@ -155,8 +142,11 @@
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Include="wwwroot\css\Page\Member.css" />
-		<None Include="wwwroot\js\Coker\coker.alias.js" />
 		<None Include="wwwroot\js\Coker\*.js" />
+		<None Include="wwwroot\js\Page\Index.js" />
+		<None Include="wwwroot\js\Page\ProductContent.js" />
+		<None Include="wwwroot\js\Page\Search.js" />
+		<None Include="wwwroot\js\Page\ShoppingCart.js" />
 		<None Include="wwwroot\lib\pdf-viewer\external\pdfjs-4.5.136-dist\LICENSE" />
 		<None Include="wwwroot\lib\pdf-viewer\LICENSE" />
 		<None Include="wwwroot\lib\pdf-viewer\README.md" />

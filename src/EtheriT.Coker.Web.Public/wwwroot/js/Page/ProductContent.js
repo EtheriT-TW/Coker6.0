@@ -15,7 +15,7 @@ function PageReady() {
     else CanShop = false;
 
     window.CI360.init();
-    if (ProdId != null && !isNaN(ProdId)) Pid = ProdId;
+    if (PageId != null && !isNaN(PageId)) Pid = PageId;
     else Pid = location.pathname.substring(location.pathname.lastIndexOf("/") + 1);
     if (isNaN(Pid) && /\/[\d]+\//.test(location.pathname)) {
         const para = location.pathname.match(/\/[\d]+\//g);
@@ -390,7 +390,7 @@ function PageDefaultSet(result) {
 
             if (item.bonus > 0) {
                 if (CanShop) {
-                    if (bonus > item.bonus) {
+                    if (totalBonus > item.bonus) {
                         price_temp.find(".discount").removeClass("bonus_lack");
                         price_temp.find("input").prop("disabled", false);
                     }
@@ -680,7 +680,7 @@ function SpecRadio() {
                             else price_text = `紅利${self_item.bonus}點`;
 
                             if (CanShop) {
-                                if (bonus > self_item.bonus) {
+                                if (totalBonus > self_item.bonus) {
                                     price_temp.find(".discount").removeClass("bonus_lack");
                                     price_temp.find("input").prop("disabled", false);
                                 }

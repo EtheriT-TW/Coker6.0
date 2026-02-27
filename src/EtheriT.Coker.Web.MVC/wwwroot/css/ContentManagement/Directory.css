@@ -99,3 +99,22 @@ input[type="number"] {
     margin: 5px 0;
     visibility: visible !important;
 }
+
+#UselessFileFrame .btn_upload_add, #UselessFileFrame .serNoTool {
+    display: none;
+}
+
+#UselessFileFrame select.area_select {
+    width: 9rem;
+}
+
+.was-validated #UselessFileFrame .form-select,
+.was-validated #UselessFileFrame .form-select:valid,
+.was-validated #UselessFileFrame .form-select:invalid,
+.was-validated #UselessFileFrame .form-select.is-valid,
+.was-validated #UselessFileFrame .form-select.is-invalid {
+    border-color: #ced4da !important;
+    box-shadow: none !important;
+    background-image: var(--bs-form-select-bg-img) !important;
+    padding-right: 2.25rem !important;
+}

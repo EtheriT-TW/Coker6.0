@@ -378,7 +378,7 @@ function AddUpArticlet(success_text, error_text) {
         if (total_files.length > 0) {
             $(".data_upload > ul > li.upload_list").each(function () {
                 var $self = $(this);
-                var parentarea = $self.parents(".data_upload");
+                var $parentarea = $self.parents(".data_upload");
                 var data = [];
                 if (typeof ($self.data("id")) != "undefined") data = total_files.find(item => $self.data("id") == item.Id);
                 else if (typeof ($self.data("tempid")) != "undefined") data = total_files.find(item => $self.data("tempid") == item.TempId);
@@ -386,7 +386,7 @@ function AddUpArticlet(success_text, error_text) {
                 if (typeof (data["Id"]) == "undefined" || (!data["IsEncryption"] && $self.find(".btn_lock").hasClass("lock"))) {
                     var formData = new FormData();
                     formData.append("files", data["File"]);
-                    formData.append("areakey", parentarea.data("key"));
+                    formData.append("areakey", $parentarea.data("key"));
                     formData.append("type", 15);
                     if (typeof (data["Id"]) != "undefined") formData.append("id", data["Id"]);
                     formData.append("sid", result.message);
@@ -400,6 +400,14 @@ function AddUpArticlet(success_text, error_text) {
                         Id: data["Id"],
                         sid: result.message,
                         SerNo: $self.find(".ser_no").val(),
+                    });
+                }
+
+                if ($self.data("old-editkey") != $parentarea.data("key")) {
+                    co.File.fileAreaKeyChange({
+                        Id: data["Id"],
+                        sid: result.message,
+                        areaKey: $parentarea.data("key"),
                     });
                 }
             });
@@ -500,6 +508,7 @@ function MoveToItemArticle() {
                                     item.attr({
                                         "data-edit-type": area.type,
                                         "data-key": area.key.toLowerCase(),
+                                        "data-label": area.label,
                                     });
                                     item_upload_frame.attr("data-upload-id", `${area.key.toLowerCase()}file`);
                                     $("#ArticletForm").append(item);
@@ -568,10 +577,52 @@ function deleteArticlesButtonClicked(e) {
     });
 }
 function UploadListAdd(result, $target) {
+
+    var isUseLessFile = false;
+    if ($target.length == 0) {
+        if ($("#UselessFileFrame").length == 0) {
+            var item = $($("#TemplateArticleFile").html()).clone();
+            var item_title = item.find(".upload_title");
+            item_title.text("無對應區塊檔案 ")
+            item.attr({
+                "Id": "UselessFileFrame",
+                "data-edit-type": "Files"
+            })
+            $("#ArticletForm").append(item);
+            co.File.ListFileInit();
+        }
+        $target = $("#UselessFileFrame");
+        isUseLessFile = true;
+    }
+
     var item = $($("#TemplateUploadList").html()).clone();
     var item_serno = item.find(".ser_no"),
         item_btn_remove = item.find(".btn_remove"),
         item_btn_lock = item.find(".btn_lock");
+
+    if (isUseLessFile) {
+        var html = `<select class="form-select form-select-sm area_select" aria-label="AreaKey Select" name="editkey"><option selected disabled value="">請選擇對應區塊</option></select>`;
+        item.prepend(html);
+        $(".data_upload").not("#UselessFileFrame").each(function () {
+            var $this = $(this);
+            var option = `<option value="${$this.data("label")}">${$this.data("label")}</option>`
+            item.find("select.area_select").append(option);
+        });
+        item.find("select.area_select").on("change", function () {
+            var $this = $(this);
+            var $parent = $this.parents("li.upload_list");
+            var $RelatedFrame = $(`.data_upload[data-label="${$this.val()}"]`)
+            if ($RelatedFrame.data("edit-type") == "File" && $RelatedFrame.find("li.upload_list").length > 0) {
+                co.sweet.warn("無法移動", `【${$this.val()}】僅能上傳一個檔案，請選擇其他區塊`);
+                $this.val(null);
+            } else {
+                UploadListAdd(result, $RelatedFrame)
+                if ($parent.siblings("li.upload_list ").length == 0) $parent.parents(".data_upload").remove();
+                else $parent.remove();
+            }
+        });
+    }
+
     var tempId = total_files.length;
     if (typeof (file_num) == "undefined") file_num = 0;
     var file_num = $target.find("ul > li.upload_list").length;
@@ -616,12 +667,15 @@ function UploadListAdd(result, $target) {
     } else {
         // 此處為已有檔案帶入部分
         file_num += 1;
-        item.data("id", result.id);
-        item.data("serno", file_num);
-        item.data("oldserno", file_num);
+        item.attr({
+            "data-id": result.id,
+            "data-serno": file_num,
+            "data-oldserno": file_num,
+            "data-uploadtype": result.fileType,
+            "data-edit": false,
+            "data-old-editkey": result.areakey,
+        })
         item_serno.val(file_num);
-        item.data("uploadtype", result.fileType);
-        item.data("edit", false);
         item.find(".title").text(result.name);
         if (result.isEncryption) {
             item_btn_lock.addClass("lock");

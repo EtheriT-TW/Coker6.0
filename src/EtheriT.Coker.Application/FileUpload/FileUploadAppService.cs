@@ -745,6 +745,7 @@ namespace EtheriT.Coker.Application
                                 Link = new List<string> { MediaLink },
                                 SerNo = fb.SerNo,
                                 isEncryption = fu.IsEncryption,
+                                isVisible = fb.IsVisible,
                                 areakey = fb.AreaKey ?? ""
                             });
                         }
@@ -969,34 +970,27 @@ namespace EtheriT.Coker.Application
             return response;
 
         }
-        public async Task<ResponseMessageDto> fileAreaKeyChange(FileChangeKeyAreaDto dto)
+        public async Task<ResponseMessageDto> fileDataChange(FileDataChangeDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
                 var userid = await loginUserData.GetUserId();
-                var db_fb = await db.FileBinds.Where(e => !e.IsDeleted && e.Sid == dto.sid && e.FK_FileUploadId == dto.id)
+                var db_fb = await db.FileBinds.Where(e => !e.IsDeleted && e.Sid == dto.SId && e.FK_FileUploadId == dto.Id)
                     .Where(e => e.type == (int)FileBindTypeEnum.文章檔案)
                     .FirstOrDefaultAsync();
-                var db_fu = await db.FileUploads.Where(e => e.Id == dto.id).FirstOrDefaultAsync();
-                if (db_fb != null && db_fu != null)
+                if (db_fb != null)
                 {
-
-                    if (db_fu.AreaKey != null)
-                    {
-                        db_fu.AreaKey = null;
-                        db_fu.LastModifierUserId = userid;
-                        db_fu.LastModificationTime = DateTime.Now;
-                    }
-
-                    db_fb.AreaKey = dto.areaKey;
+                    if (dto.SerNo.HasValue) db_fb.SerNo = dto.SerNo.Value;
+                    if (dto.AreaKey != null) db_fb.AreaKey = dto.AreaKey;
+                    if (dto.IsVisible.HasValue) db_fb.IsVisible = dto.IsVisible.Value;
                     db_fb.LastModifierUserId = userid;
                     db_fb.LastModificationTime = DateTime.Now;
 
                     db.SaveChanges();
                     response.Success = true;
                 }
-                else throw new Exception("查無對應資料");
+                else throw new Exception("查無對應FileBinds");
             }
             catch (Exception ex)
             {

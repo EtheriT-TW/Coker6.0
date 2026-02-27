@@ -372,6 +372,8 @@
                 "--gallery-accent",
                 "--gallery-accent-hover",
                 "--gallery-accent-contrast",
+                "--gallery-accent-border",
+                "--gallery-accent-contaner-background"
             ];
 
             let css = ":root{";
@@ -386,7 +388,7 @@
                 style = doc.createElement("style");
                 style.id = id;
                 style.setAttribute('nonce', this.opt.nonce);
-                doc.head.appendChild(style);
+                doc.body.appendChild(style);
             }
             style.textContent = css;
         }
@@ -401,7 +403,7 @@
                 style = doc.createElement("style");
                 style.id = id;
                 style.setAttribute('nonce', this.opt.nonce);
-                doc.head.appendChild(style);
+                doc.body.appendChild(style);
             }
 
             style.textContent = `

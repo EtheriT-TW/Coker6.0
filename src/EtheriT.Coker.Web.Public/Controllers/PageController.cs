@@ -274,7 +274,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.MenuBread = await webMenuApplication.GetMenuBread(PageData.Id);
                         model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto { siteId = defaultData.Id, articleId = id });
                         remoteInputDto.FK_ArticleId = model.PageData.Id;
-                        model.ParentData = PageData;
+                        model.ParentData = await webMenuApplication.GetParentConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id }); ;
                         model.PageData.PageView = "Article";
                         model.PageData.LayoutType = defaultData.Layout_Type;
                         model.PageData.holdPage = HoldPageNameEnum.Article;

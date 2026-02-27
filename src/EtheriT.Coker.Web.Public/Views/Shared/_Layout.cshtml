@@ -8,6 +8,11 @@
 @{
     var nonce = ViewContext.HttpContext.Items["CSPNonce"] as string;
     ViewBag.Nonce = nonce;
+    var bodyClass = string.Join(" ",
+        ViewData["bodyClass"]?.ToString(),
+        ViewBag.NoCopy?.ToString(),
+        ViewBag.option?.ToString()
+    ).Trim();
 }
 <!DOCTYPE html>
 <html lang="@ViewData["Locale"]">
@@ -248,7 +253,7 @@
         <!-- End Google Tag Manager -->
     }
 </head>
-<body id="@ViewData["Layout"]" class="@ViewData["bodyClass"] @ViewBag.NoCopy">
+<body id="@ViewData["Layout"]" class="@bodyClass">
     @if (!string.IsNullOrEmpty(ViewBag.GTM))
     {
         <!-- Google Tag Manager (noscript) -->

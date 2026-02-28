@@ -503,8 +503,8 @@ function MoveToItemArticle() {
                                     var item = $($("#TemplateArticleFile").html()).clone();
                                     var item_title = item.find(".upload_title"),
                                         item_upload_frame = item.find(".upload_frame");
-                                    if (area.type == "File") item_title.text(`${area.label} (單一檔案上傳)`);
-                                    else item_title.text(`${area.label} (多檔案上傳)`);
+                                    if (area.type == "File") item_title.text(`${area.label} (單一檔案區塊)`);
+                                    else item_title.text(`${area.label} (多檔案區塊)`);
                                     item.attr({
                                         "data-edit-type": area.type,
                                         "data-key": area.key.toLowerCase(),
@@ -614,14 +614,9 @@ function UploadListAdd(result, $target) {
             var $this = $(this);
             var $parent = $this.parents("li.upload_list");
             var $RelatedFrame = $(`.data_upload[data-label="${$this.val()}"]`)
-            if ($RelatedFrame.data("edit-type") == "File" && $RelatedFrame.find("li.upload_list").length > 0) {
-                co.sweet.warn("無法移動", `【${$this.val()}】僅能上傳一個檔案，請選擇其他區塊`);
-                $this.val(null);
-            } else {
-                UploadListAdd(result, $RelatedFrame)
-                if ($parent.siblings("li.upload_list ").length == 0) $parent.parents(".data_upload").remove();
-                else $parent.remove();
-            }
+            UploadListAdd(result, $RelatedFrame)
+            if ($parent.siblings("li.upload_list ").length == 0) $parent.parents(".data_upload").remove();
+            else $parent.remove();
         });
     }
 
@@ -768,18 +763,10 @@ function UploadListAdd(result, $target) {
 
         UploadPreviewFrameClear($target);
         $self.remove();
-
-        if (($target.data("edit-type") == "File")) {
-            $target.find(".btn_upload_add").removeClass("d-none")
-        }
     })
 
     $target.find("ul > .btn_upload_add").before(item);
     co.File.ListFile(item);
-
-    if (($target.data("edit-type") == "File" && result != null)) {
-        $target.find(".btn_upload_add").addClass("d-none")
-    }
 }
 function SortChange($self, change, minindex, maxindex) {
     $self.each(function () {

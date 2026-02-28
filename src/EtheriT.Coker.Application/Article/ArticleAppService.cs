@@ -743,7 +743,7 @@ namespace EtheriT.Coker.Application.Article
                 MainNode.SetAttributeValue("class", $"do_not_rename {MainNode.GetAttributeValue("class", "")}");
             }
 
-            var namenode = MainNode.SelectSingleNode(".//span[contains(@class,'file-name') or contains(@class,'name')]");
+            var namenode = MainNode.SelectSingleNode(".//*[" + "contains(concat(' ', normalize-space(@class), ' '), ' file-name ') " + "or contains(concat(' ', normalize-space(@class), ' '), ' name ')" + "]" );
             if (namenode != null)
             {
                 var format = namenode.GetAttributeValue("data-edit-format", "");
@@ -752,17 +752,17 @@ namespace EtheriT.Coker.Application.Article
                 namenode.AppendChild(namenode.OwnerDocument.CreateTextNode(filename));
             }
 
-            var downloadbtnNode = MainNode.SelectSingleNode(".//span[contains(@class,'download-btn')]");
+            var downloadbtnNode = MainNode.SelectSingleNode(".//*[contains(concat(' ', normalize-space(@class), ' '), ' download-btn ')]");
 
             if (downloadbtnNode != null)
             {
                 HtmlNode insidenode = null;
                 if (File.isEncryption)
                 {
-                    if (IsLogin) insidenode = downloadbtnNode.SelectSingleNode(".//i[contains(@class,'fa-lock-open')]") ?? HtmlNode.CreateNode("<i class=\"fas fa-lock-open\"></i>");
-                    else insidenode = downloadbtnNode.SelectSingleNode(".//i[contains(@class,'fa-lock')]") ?? HtmlNode.CreateNode("<i class=\"fas fa-lock\"></i>");
+                    if (IsLogin) insidenode = downloadbtnNode.SelectSingleNode(".//*[contains(concat(' ', normalize-space(@class), ' '), ' lock-open ')]") ?? HtmlNode.CreateNode("<i class=\"lock-open fas fa-lock-open\"></i>");
+                    else insidenode = downloadbtnNode.SelectSingleNode(".//*[contains(concat(' ', normalize-space(@class), ' '), ' lock ')]") ?? HtmlNode.CreateNode("<i class=\"lock fas fa-lock\"></i>");
                 }
-                else insidenode = downloadbtnNode.SelectSingleNode(".//span[contains(@class,'download-text')]") ?? HtmlNode.CreateNode("<span class=\"download-text\">下載</span></span>");
+                else insidenode = downloadbtnNode.SelectSingleNode(".//*[contains(concat(' ', normalize-space(@class), ' '), ' default ')]") ?? HtmlNode.CreateNode("<span class=\"default\">下載</span>");
 
                 if (insidenode != null)
                 {

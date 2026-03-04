@@ -88,6 +88,7 @@
         "wwwroot/js/Coker/coker.form.js",
         "wwwroot/js/Coker/coker.ui.sweet.js",
         "wwwroot/js/Coker/coker.feature.search.js",
+        "wwwroot/js/Coker/coker.page.init.js",
         "wwwroot/js/Coker/coker.loader.js",
 
         "wwwroot/js/Coker/coker.api.activity.js",

@@ -146,7 +146,11 @@
             if (!this.canvasRefs.host) throw new Error("viewer host not found.");
 
             // viewer：同容器高、溢出用 scroll（不做高度計算）
-            this.viewer = new global.ArticleViewer({ autoHeight: false });
+            this.viewer = new global.ArticleViewer({
+                autoHeight: false,
+                onLoad: () => this._hookIframeOverlayEvents(),
+                onError: () => this._unhookIframeOverlayEvents(true),
+            });
             this.viewer.mount(this.canvasRefs.host);
             this.viewer.setMode("narrow");
 
@@ -181,6 +185,20 @@
             }
             window.addEventListener("hashchange", () => this._onRouteChanged());
             window.addEventListener("popstate", () => this._onRouteChanged());
+            document.querySelectorAll('.edge-menu .dropdown-menu .edge-link')
+                .forEach(link => {
+                    link.addEventListener('click', function () {
+                        const text = this.textContent.trim();
+                        const dropdown = this.closest('.dropdown');
+                        const toggle = dropdown?.querySelector('.dropdown-toggle');
+                        if (toggle) toggle.textContent = text;
+
+                        if (toggle && window.bootstrap?.Dropdown) {
+                            const dd = window.bootstrap.Dropdown.getOrCreateInstance(toggle);
+                            dd.hide();
+                        }
+                    });
+                });
         },
 
         _mergeDefaults(o) {
@@ -349,6 +367,7 @@
 
             this.canvasEl.addEventListener("hidden.bs.offcanvas", () => {
                 this._setExpanded(false);
+                this._unhookIframeOverlayEvents(true);
 
                 const st = this._parseG3dStateFromUrl();
                 if (st && st.item) {
@@ -363,6 +382,93 @@
                     this._commitG3dState({ menu, facet }, { replace: true });
                 }
             });
+        },
+
+        _hookIframeOverlayEvents() {
+            // 先清掉舊的（避免切文章反覆掛）
+            this._unhookIframeOverlayEvents(true);
+
+            const iframe = this.viewer && this.viewer.iframe;
+            if (!iframe) return;
+
+            let doc = null;
+            try {
+                doc = iframe.contentDocument;
+            } catch {
+                // 非同源就無解（但你目前是同網域）
+                return;
+            }
+            if (!doc) return;
+
+            // 狀態：iframe 內是否還有任何 overlay 開著
+            this._iframeOverlayOpenCount = 0;
+
+            const shell = this.canvasEl;
+
+            const applyShellState = () => {
+                const open = (this._iframeOverlayOpenCount || 0) > 0;
+                shell.classList.toggle("shell-close-hidden", open);
+            };
+
+            const isRealOverlayEl = (target) => {
+                if (!target || target.nodeType !== 1) return false;
+
+                // 排除不是 modal/offcanvas 的事件（保守）
+                if (target.classList.contains("modal")) return true;
+                if (target.classList.contains("offcanvas")) return true;
+
+                // 有些情況事件 target 可能是內層節點，往上找
+                if (target.closest && (target.closest(".modal") || target.closest(".offcanvas"))) return true;
+
+                return false;
+            };
+
+            const onShown = (ev) => {
+                if (!isRealOverlayEl(ev.target)) return;
+                this._iframeOverlayOpenCount = (this._iframeOverlayOpenCount || 0) + 1;
+                applyShellState();
+            };
+
+            const onHidden = (ev) => {
+                if (!isRealOverlayEl(ev.target)) return;
+                this._iframeOverlayOpenCount = Math.max(0, (this._iframeOverlayOpenCount || 0) - 1);
+                applyShellState();
+            };
+
+            // ✅ 用 capture=true：就算 iframe 內 stopPropagation 也比較不容易漏
+            doc.addEventListener("shown.bs.modal", onShown, true);
+            doc.addEventListener("hidden.bs.modal", onHidden, true);
+            doc.addEventListener("shown.bs.offcanvas", onShown, true);
+            doc.addEventListener("hidden.bs.offcanvas", onHidden, true);
+
+            // 初始同步：如果 iframe 內本來就有顯示中的 overlay（極少數，但保險）
+            try {
+                const hasOpen =
+                    doc.querySelector(".modal.show, .offcanvas.show") != null;
+                this._iframeOverlayOpenCount = hasOpen ? 1 : 0;
+                applyShellState();
+            } catch { /* ignore */ }
+
+            // 存起來以便 unhook
+            this._iframeOverlayHooks = { doc, onShown, onHidden };
+        },
+
+        _unhookIframeOverlayEvents(forceShowShellClose = false) {
+            const h = this._iframeOverlayHooks;
+            if (h && h.doc) {
+                try {
+                    h.doc.removeEventListener("shown.bs.modal", h.onShown, true);
+                    h.doc.removeEventListener("hidden.bs.modal", h.onHidden, true);
+                    h.doc.removeEventListener("shown.bs.offcanvas", h.onShown, true);
+                    h.doc.removeEventListener("hidden.bs.offcanvas", h.onHidden, true);
+                } catch { /* ignore */ }
+            }
+            this._iframeOverlayHooks = null;
+            this._iframeOverlayOpenCount = 0;
+
+            if (forceShowShellClose && this.canvasEl) {
+                this.canvasEl.classList.remove("shell-close-hidden");
+            }
         },
 
         _setExpanded(expanded) {

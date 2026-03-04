@@ -1,9 +1,11 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Web.MVC.Startup
 @using EtheriT.Coker.Application.Shared.Dto.Member
+@using EtheriT.Coker.Web.MVC.Extensions
 @model EtheriT.Coker.Application.Shared.Dto.Permissions.SavePermissionsItem
 @{
     ViewData["Title"] = "MemberList";
+    var bonusPerm = Context.GetBonusPermission();
 }
 
 <link rel="stylesheet" href="~/css/MemberManagement/MemberData.min.css" asp-append-version="true" />
@@ -24,7 +26,7 @@
             @if (Model.IsGranted){
                 <button class="btn_resendCreateNoticeMail btn btn-warning border-0 px-4 py-1 text-white fw-bold fs-5 d-none">發送會員開通信</button>
             }
-            <button class="btn_save btn-primary border-0 px-4 py-1 text-white fw-bold fs-5 d-none">儲存</button>
+            <button class="btn_save btn-primary border-0 px-4 py-1 text-white fw-bold fs-5 d-none" type="submit" form="MemberForm">儲存</button>
 		</div>
 	</div>
 
@@ -71,7 +73,9 @@
                     c.AddFor(e => e.TelPhone).Caption("電話");
                     c.AddFor(e => e.Address).Caption("地址");
                     c.AddFor(e => e.Email).Caption("Email");
-                    c.AddFor(e => e.Bonus).Caption("紅利");
+                    if(bonusPerm.CanExe){
+                        c.AddFor(e => e.Bonus).Caption("紅利");
+                    }
                     c.AddFor(e => e.Total).Caption("訂購總金額");
                     c.AddFor(e => e.Level).Caption("會員等級").Lookup(lookup =>
                         lookup.DataSource("getMemberLevel")
@@ -155,8 +159,8 @@
                                 <label class="px-4" for="InputBirthday">生日</label>
                             </div>
                             <div class="form-floating mb-3 col-12 col-sm-6">
-                                <input id="InputCellPhone" class="phone form-control" type="tel" placeholder="0987654321" value="0987654321" pattern="[0][9]\d{8}" maxlength="10" required>
-                                <label class="required px-4" for="InputCellPhone">手機號碼</label>
+                                <input id="InputCellPhone" class="phone form-control" type="tel" placeholder="0987654321" value="0987654321" pattern="[0][9]\d{8}" maxlength="10">
+                                <label class=" px-4" for="InputCellPhone">手機號碼</label>
                             </div>
                             <div class="row">
                                 <div class="form-floating mb-3 col-4 col-sm-2">
@@ -177,8 +181,8 @@
                                 <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
                                 <div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
                                 <div class="form-floating mb-3 col-12 col-sm-6">
-                                    <input id="InputAddress" class="address form-control" type="text" placeholder="復興四路" value="復興四路" required>
-                                    <label class="px-4 required" for="InputAddress">地址</label>
+                                    <input id="InputAddress" class="address form-control" type="text" placeholder="復興四路" value="復興四路">
+                                    <label class="px-4" for="InputAddress">地址</label>
                                 </div>
                             </div>
                         </form>
@@ -247,7 +251,7 @@
                         </div>
                     </div>
 
-                    @if (BonusPermission.CanExe)
+                    @if (bonusPerm.CanExe)
                     {
                         <div class="card border-0 mb-3">
                             <div class="card-body bonus_point">

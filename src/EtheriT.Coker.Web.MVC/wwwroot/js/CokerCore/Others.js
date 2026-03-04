@@ -164,12 +164,14 @@
             $address = $TWzipcode.find('.address');
             $county = $TWzipcode.children('.county');
             $district = $TWzipcode.children('.district');
-
+            const isRequired = $address.prop("required");
             $county.children('select').attr({
                 id: `SelectCity_${reandomStr}`,
                 class: "city form-select"
-            }).prop("required", $address.prop("required"));
-            $county.append(`<label class='px-4 required' for='SelectCity_${reandomStr}'>縣市</label>`);
+            }).prop("required", isRequired);
+            var $countyLabel = $(`<label class='px-4' for='SelectCity_${reandomStr}'>縣市</label>`);
+            if (isRequired) $countyLabel.addClass("required");
+            $county.append($countyLabel);
             var $county_first_option = $county.children('select').children('option').first();
             $county_first_option.text("請選擇縣市");
             $county_first_option.attr('disabled', 'disabled');
@@ -177,8 +179,10 @@
             $district.children('select').attr({
                 id: `SelectTown_${reandomStr}`,
                 class: "town form-select"
-            }).prop("required", $address.prop("required"));
-            $district.append(`<label class='required' for='SelectTown_${reandomStr}'>鄉鎮</label>`);
+            }).prop("required", isRequired);
+            var $reandomLabel = $(`<label for='SelectTown_${reandomStr}'>鄉鎮</label>`);
+            if (isRequired) $reandomLabel.addClass("required");
+            $district.append($reandomLabel);
             var $district_first_option = $district.children('select').children('option').first();
             $district_first_option.text("請選擇鄉鎮");
             $district_first_option.attr('disabled', 'disabled');

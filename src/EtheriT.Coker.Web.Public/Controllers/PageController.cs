@@ -256,6 +256,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 option = key;
             }
             model.option = key;
+            ViewBag.option = model.option.ToLower();
             GetFrontContenOutputDto? PageData =  null;
             if (string.IsNullOrEmpty(option)) option = "";
             if (!UseLegacyPathHandling(website, key, option))
@@ -278,6 +279,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.PageData.PageView = "Article";
                         model.PageData.LayoutType = defaultData.Layout_Type;
                         model.PageData.holdPage = HoldPageNameEnum.Article;
+                        ViewBag.option = option.ToLower();
                         if (key == "article")
                         {
                             model.PageData.VisibleHeader = true;
@@ -325,6 +327,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                                 model.PageData.PageView = "Product";
                                 model.PageData.LayoutType = defaultData.Layout_Type;
                                 model.PageData.holdPage = HoldPageNameEnum.Article;
+                                ViewBag.option = option.ToLower();
                                 if (key == "product")
                                 {
                                     model.PageData.VisibleHeader = true;
@@ -397,6 +400,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         view = "Index";
                         break;
                     default:
+                        ViewBag.option = key.ToLower();
                         if (key.ToLower() == "search")
                         {
                             model.PageData = PageData;
@@ -514,7 +518,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.RootId = await webMenuApplication.GetRootId(key);
             ViewBag.isLogin = false;
             ViewBag.SiteId = siteId;
-            ViewBag.option = option.ToLower();
             try
             {
                 var tokenItem = await tokenAppService.CreateToken();

@@ -373,7 +373,8 @@
                 "--gallery-accent-hover",
                 "--gallery-accent-contrast",
                 "--gallery-accent-border",
-                "--gallery-accent-contaner-background"
+                "--gallery-accent-contaner-background",
+                "--gallery-theme-title"
             ];
 
             let css = ":root{";

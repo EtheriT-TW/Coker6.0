@@ -44,6 +44,7 @@
                 cardSelector: '.gallery3d-card',
                 wrapperSelector: '.gallery3d-wrapper',
                 holderSelector: '.gallery-holder',
+                forceGridPhoneMaxWidth: 640,          // <= 640 強制 grid（手機）
                 autoPlayInterval: 2600,
                 autoPlayStartDelay: 5000,
                 dragPixelsPerStep: 140,
@@ -180,17 +181,17 @@
         }
 
 
-        /** 內部：依目前設定判斷是否應強制 grid（少卡片） */
+        /** 依目前設定判斷是否應強制 grid顯示 */
         _shouldForceGrid() {
             const w = window.innerWidth || document.documentElement.clientWidth || 0;
             const isPortrait = window.matchMedia && window.matchMedia('(orientation: portrait)').matches;
 
-            // 你要的規則（自行調整門檻）
-            const lockPhoneMax = 768;      // 手機
-            const lockPortraitMax = 1024;  // 平板直/手機直
+            // 寬度控制：如果螢幕寬度小於某值（預設 640），不論張數都強制 grid（手機優化）
+            const lockPhoneMax = (typeof this.opts.forceGridPhoneMaxWidth === 'number')
+                ? this.opts.forceGridPhoneMaxWidth
+                : 640;
 
             if (w <= lockPhoneMax) return true;
-            if (isPortrait && w <= lockPortraitMax) return true;
 
             const t = (typeof this.opts.gridThreshold === 'number' && this.opts.gridThreshold > 0)
                 ? this.opts.gridThreshold

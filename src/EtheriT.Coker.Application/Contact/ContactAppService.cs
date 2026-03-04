@@ -59,7 +59,7 @@ namespace EtheriT.Coker.Application.Contact
                 var code = dto.forms.Find(e => e.Name == "captcha");
                 var StoreSetId = (await db.StoreSet.Where(e => e.key == "EmailNotificationType").FirstOrDefaultAsync())?.Id;
                 var StoreSet = StoreSetId != null ? await db.StoreSetDetail.Where(e => e.FK_WebsiteId == siteId && e.FK_StoreSetId == StoreSetId).FirstOrDefaultAsync() : null;
-                var EmailNotificationType = int.Parse(StoreSet?.value ?? "0") ;
+                var EmailNotificationType = int.Parse(StoreSet?.value ?? "0");
 
                 var codeId = dto.forms.Find(e => e.Name == "captchaId");
                 if (codeId == null || code == null || !captchaAppService.Validate(codeId.Value, code.Value).Success) throw new Exception(L.get("VerificationCodeError"));

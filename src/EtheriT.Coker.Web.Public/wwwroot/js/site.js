@@ -61,9 +61,9 @@ function ready() {
             ele.textContent = $pe.html();
         }
         if (location.pathname.toLowerCase().indexOf("/article/") >= 0) $conten.html($(`<div class="container isArticle">`).html(ele.textContent || ele.innerText));
-        else if (location.pathname.toLowerCase().indexOf("/product/") >= 0) $conten.find("#ProductDescription > Content").html(ele.textContent || ele.innerText);
+        else if (location.pathname.toLowerCase().indexOf("/product/") >= 0) $conten.find("#ProductDescription > Content").html("");
         else $conten.html(ele.textContent || ele.innerText);
-        if (PageType != "" && typeof PageType === "string") $conten.addClass(PageType);
+        //if (PageType != "" && typeof PageType === "string") $conten.addClass(PageType);
         $conten.find("[draggable]").removeAttr("draggable");
         if ($conten.find("#CustMain").length > 0) $("#jumpToCenter").attr("href", "#CustMain");
         $conten.removeClass("d-none");
@@ -82,26 +82,9 @@ function ready() {
         $(".searchText").text($(".search-input").val());
         $("#Search_Result .catalog_frame").attr("data-search-text", $(".search-input").val());
     }
-    if ($(".catalog_frame").length > 0 || $(".menu_directory").length > 0 || $(".advertise_directory").length > 0) DirectoryGetDataInit();
-    //swiper內的元素有一個以上就開啟自動輪播(autoplay:true)
-    if ($(".one_swiper,.one_swiper_thumbs,.two_swiper,.three_swiper,.four_swiper,.five_swiper,.six_swiper,.picture-category,.three_two_grid_swiper,.vertical_swiper_thumbs").length > 0) SwiperInit({ autoplay: true });
-    if ($(".marqueeSwiper").length > 0) MarqueeSwiper(SiteId);
-    if ($(".masonry").length > 0 || $(".YTmodal_frame").length > 0) FrameInit();
-    if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
-    if ($(".hover_mask").length > 0) HoverEffectInit();
-    if ($(".sitemap_hierarchical_frame").length > 0) SitemapInit();
-    if ($(".link_with_icon").length > 0) LinkWithIconInit();
-    if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
-    if ($(".shareBlock").length > 0) ShareBlockInit();
-    if ($(".flipdown").length > 0) FlipTimer();
-    if ($(".article-tags").length > 0 && $conten.hasClass("article")) ArticleTagsInit();
-    if ($(".ContactForm").length > 0) {
-        setContact();//From表單驗證碼
-    }
-    if ($(".BGCanvas").length > 0) setBGCanvas();
-    if ($(".FlipBookItem").length > 0) FlipBookInit();
-    if ($(".MapMessage").length > 0) MapMessage();
-    if ($(".getlatlng").length > 0) GetLatLng();
+    co.page.init($conten);
+    co.page.observe("#ProductDescription > Content");
+    
     if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
 
     co.modules.gallery3d();

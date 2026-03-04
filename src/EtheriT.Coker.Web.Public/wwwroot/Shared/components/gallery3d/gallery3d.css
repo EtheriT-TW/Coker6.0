@@ -394,12 +394,6 @@
         margin: 0 8px;
     }
 
-    .gallery-holder {
-        width: 92%;
-        max-width: 92vw;
-        aspect-ratio: 4 / 3;
-    }
-
     .gallery3d-wrapper.mode-grid .gallery3d-stage {
         grid-template-columns: repeat(4, var(--col5));
     }
@@ -409,15 +403,27 @@
         }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) and (min-width:576px){
+    .gallery-holder {
+        width: calc(100% - 280px);
+        aspect-ratio: 4 / 3;
+    }
     .gallery3d-card {
         width: 220px;
         height: 145px;
         margin: -72px 0 0 -110px;
     }
+    .js-gallery3d-page .main-stage {
+        height: 80vh !important;
+    }
 
+    .gallery3d-wrapper.mode-grid {
+        width: calc(100% - 260px);
+        height: 90%;
+        margin: 0 5% 0 0;
+    }
     .gallery3d-wrapper.mode-grid .gallery3d-stage {
-        grid-template-columns: repeat(3, minmax(180px, 1fr));
+        grid-template-columns: repeat(3, minmax(calc(33.33% - 14px), 1fr));
         padding: 24px 16px 32px;
         gap: 20px;
     }

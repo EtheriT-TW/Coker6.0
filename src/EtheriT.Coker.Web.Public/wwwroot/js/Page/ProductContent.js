@@ -183,6 +183,7 @@ function PageDefaultSet(result) {
     if (spec_height > 96) {
         $btn_detailed.removeClass("d-none")
     }
+    
     if (result.html != null && result.html.trim() != "") $("#ProductDescription > Content").removeClass("d-none").html($.htmlDecode(result.html));
     else $("#ProductDescription,#btn_tab .description").remove();
 
@@ -280,6 +281,7 @@ function PageDefaultSet(result) {
     result.stocks.map(e => {
         if (e.timePrice) e.prices = [{price:0}];
     });
+    console.log(result.stocks[0].prices.length > 0 && result.stocks[0].prices[0].price != null);
     if (result.stocks.length > 1) {
         var obj = {};
 
@@ -408,12 +410,11 @@ function PageDefaultSet(result) {
                 price_temp.find(".ori_price").text(oriprice.toLocaleString('en-US'));
                 price_temp.find(".ori_price").removeClass("d-none")
             }
-
             if (!ShowMPrice && result.stocks[0].suggestPrice > 0 && result.stocks[0].suggestPrice != price) {
                 price_temp.find(".discount").empty();
                 price_temp.find(".discount").removeClass("price");
                 price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${result.stocks[0].suggestPrice.toLocaleString('en-US')}</div><div class="text-danger">  $${displayText}</div>`);
-            }
+            } else price_temp.find(".discount").text(displayText);
             if (result.stocks[0].timePrice) {
                 $(".btn_addToCar").addClass("d-none");
                 $(".priceframe + hr").addClass("d-none");

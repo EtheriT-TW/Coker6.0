@@ -1,9 +1,9 @@
 ﻿namespace EtheriT.Coker.Web.MVC.Startup
 {
-    public static class BonusPermission
+    public sealed class BonusPermission
     {
-
-        public static bool CanExe { get; set; } = false;
-        public static bool CanEdit { get; set; } = false;
+        public static readonly BonusPermission DenyAll = new BonusPermission();
+        public bool CanExe { get; set; } = false;
+        public bool CanEdit { get; set; } = false;
     }
 }

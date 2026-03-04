@@ -6,9 +6,11 @@
 @using EtheriT.Coker.Web.MVC.Models.ProductManagement
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @using EtheriT.Coker.Web.MVC.Startup
+@using EtheriT.Coker.Web.MVC.Extensions
 @model ProductManagementModel
 @{
     ViewData["Title"] = "ProductList";
+    var bonusPerm = Context.GetBonusPermission();
 }
 
 <link rel="stylesheet" href="~/css/ProductManagement/ProductList.min.css" asp-append-version="true" />
@@ -51,13 +53,13 @@
                         <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">現金</div>
                         <input class="input_cash form-control rounded" type="number" aria-label="Input Cash Price of Product" maxlength="9" value="0" step="any">
                     </div>
-                    @if (BonusPermission.CanExe)
+                    @if (bonusPerm.CanExe)
                     {
                         <div class="col bonus input-group">
                             <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">紅利</div>
                             <input class="input_bonus form-control rounded" type="number" 
                                 aria-label="Input Bonus Price of Product" maxlength="9" value="0" step="any" 
-                                @(BonusPermission.CanEdit ? null : "readonly")>
+                                @(bonusPerm.CanEdit ? null : "readonly")>
                         </div>
                     }
                     else

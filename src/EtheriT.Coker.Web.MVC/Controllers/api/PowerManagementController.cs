@@ -7,6 +7,7 @@ using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Dto.Permissions;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Role;
+using EtheriT.Coker.Web.MVC.Security.Permissions;
 using EtheriT.Coker.Web.MVC.Startup;
 using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 using Microsoft.AspNetCore.Authorization;
@@ -25,14 +26,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 		private readonly NavigationProvider navigation;
 		private readonly IPermissionsAppService permissionsAppService;
 		private readonly IAccountAppService accountAppService;
-        private readonly IMemoryCache memoryCache;
+        private readonly PermissionStateStore permissionStateStore;
         private readonly LoginUserData loginUserData;
-        public PowerManagementController(NavigationProvider navigation, IPermissionsAppService permissionsAppService, IAccountAppService accountAppService, IMemoryCache memoryCache, LoginUserData loginUserData)
+        public PowerManagementController(NavigationProvider navigation, IPermissionsAppService permissionsAppService, IAccountAppService accountAppService, PermissionStateStore permissionStateStore, LoginUserData loginUserData)
 		{
 			this.navigation = navigation;
 			this.permissionsAppService = permissionsAppService;
 			this.accountAppService = accountAppService;
-            this.memoryCache = memoryCache;
+            this.permissionStateStore = permissionStateStore;
             this.loginUserData = loginUserData;
         }
 		[HttpGet]
@@ -110,7 +111,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         [HttpGet]
         public async Task<JsonResult> GetPermission() {
             var userId = await loginUserData.GetUserId();
-            var permisssion = memoryCache.Get($"ThePermission:{userId}");
+            var websiteId = await loginUserData.GetWebsiteId();
+            var permisssion = permissionStateStore.GetOrDefault(websiteId, userId, ThePermission.DenyAll);
             if (permisssion != null)
             {
                 return new JsonResult(permisssion, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });

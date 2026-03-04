@@ -7,7 +7,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Caching.Memory;
-using EtheriT.Coker.Web.MVC.Extensions;
+using EtheriT.Coker.Web.MVC.Common;
+using EtheriT.Coker.Web.MVC.Security.Permissions;
 
 namespace EtheriT.Coker.Web.MVC.Startup
 {
@@ -15,6 +16,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly LoginUserData loginUserData;
+        private readonly PermissionStateStore permissionStateStore;
         private readonly IPermissionsAppService permissionsAppService;
         private readonly IWebsiteApplication websiteApplication;
         private readonly IMemoryCache memoryCache;
@@ -22,6 +24,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
             IPermissionsAppService permissionsAppService,
             IHttpContextAccessor httpContextAccessor,
             IWebsiteApplication websiteApplication,
+            PermissionStateStore permissionStateStore,
             IMemoryCache memoryCache
         )
         {
@@ -30,6 +33,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
             _httpContextAccessor = httpContextAccessor;
             this.websiteApplication = websiteApplication;
             this.memoryCache = memoryCache;
+            this.permissionStateStore = permissionStateStore;
         }
         public async Task<Site> getMenus()
         {
@@ -670,7 +674,9 @@ namespace EtheriT.Coker.Web.MVC.Startup
         public async Task setUserJob(Site site)
         {
             var userId = await loginUserData.GetUserId();
+            var websiteId = await loginUserData.GetWebsiteId();
             ThePermission ThePermission = new ThePermission();
+            BonusPermission bonusPermission = new BonusPermission();
             ThePermission.Initable = false;
             ThePermission.superManager = await permissionsAppService.IsPowerUserPermissions();
             ThePermission.systemManager = await loginUserData.isSystemUser();
@@ -753,12 +759,12 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 JobMenu? Bonus = FindJob(site.Jobs, "BonusManagement", "Settings");
                 if (Bonus != null)
                 {
-                    BonusPermission.CanExe = Bonus.Enable;
-                    BonusPermission.CanEdit = Bonus.CanUpdate;
+                    bonusPermission.CanExe = Bonus.Enable;
+                    bonusPermission.CanEdit = Bonus.CanUpdate;
                 }
                 else {
-                    BonusPermission.CanExe = false;
-                    BonusPermission.CanEdit = false;
+                    bonusPermission.CanExe = false;
+                    bonusPermission.CanEdit = false;
                 }
 
                 site.Jobs.ForEach(e =>
@@ -787,13 +793,11 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 }
             }
             ThePermission.Initable = true;
-            if(_httpContextAccessor.HttpContext!= null)
-            {
-                _httpContextAccessor.HttpContext.Items[CokerItemKeys.Permission] = ThePermission;
-                _httpContextAccessor.HttpContext.Items[CokerItemKeys.HasManySystem] = await websiteApplication.hasManySystem();
-            }
 
-            memoryCache.Set($"ThePermission:{userId}", ThePermission, TimeSpan.FromMinutes(5));
+            permissionStateStore.Set(websiteId,userId, ThePermission);
+            permissionStateStore.Set(websiteId, userId, bonusPermission);
+            var ctx = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException("PermissionStateStore requires an active HttpContext.");
+                ctx.Items[CokerContextKeys.HasManySystem] = await websiteApplication.hasManySystem();
         }
         public JobMenu? FindJob(List<JobMenu> jobs, string Controller, string Action)
         {

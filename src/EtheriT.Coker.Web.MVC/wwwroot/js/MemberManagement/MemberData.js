@@ -32,7 +32,10 @@ function PageReady() {
         isMailLock = true;
     }
 
-    $(".btn_save").on("click", DataSave);
+    $("#MemberForm").on("submit", function (e) {
+        e.preventDefault();
+        DataSave();
+    });
     $(".btn_resendCreateNoticeMail").on("click", function (e) {
         e.preventDefault();
         co.Member.ResendFrontUserCreateNoticeMail(keyId).done(function (resulte) {
@@ -280,6 +283,12 @@ function Update(success_text, error_text) {
             sex = $(this).val();
         }
     })
+    const addressParts = [
+        $address_city.val(),
+        $address_town.val(),
+        $address.val()
+    ].filter(Boolean);
+
     co.Member.FrontAddUpdate({
         Id: keyId,
         Name: $name.val(),
@@ -290,7 +299,7 @@ function Update(success_text, error_text) {
         Birthday: $birthday.val(),
         CellPhone: $cellphone.val(),
         TelPhone: $telphone_area.val() == "" ? "" : $telphone_area.val() + "-" + $telphone.val() + ($telphone_ext.val() == "" ? "" : "#" + $telphone_ext.val()),
-        Address: $address_city.val() + " " + $address_town.val() + " " + $address.val(),
+        Address: addressParts.length ? addressParts.join(" ") : null,
         RoleId: $("#MemberLevel ").val(),
     }).done(function () {
         Coker.sweet.success(success_text, null, true);

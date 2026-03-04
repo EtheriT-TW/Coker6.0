@@ -62,7 +62,6 @@ var PreLoader;
         // 檢查是否按下 Ctrl + S
         if (event.ctrlKey && event.key === "s") {
             event.preventDefault(); // 阻止瀏覽器的預設儲存行為
-
             let form = findBestFormForSave();
             if (form) {
                 form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
@@ -84,10 +83,10 @@ var PreLoader;
         // 標記為提交中
         form.dataset.submitting = "true";
 
-        // 模擬表單提交延遲，1 秒後取消標記
+        // 模擬表單提交延遲，2 秒後取消標記
         setTimeout(() => {
             form.dataset.submitting = "false";
-        }, 1000);
+        }, 2000);
     });
     if (!!co.Cookie.Get("isLogin")) setTimeout(continueLoginState, co.Data.Time.ReCheckTime - 1000);
     if (!co.Cookie.Get("isLogin")) {

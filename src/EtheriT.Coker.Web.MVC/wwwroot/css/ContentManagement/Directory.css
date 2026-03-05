@@ -49,10 +49,6 @@ input[type="number"] {
     color: #C88;
 }
 
-.data_upload .thumb_img {
-    display: none;
-}
-
 .data_upload .icon.pointer {
     cursor: pointer;
 }

@@ -749,7 +749,7 @@ namespace EtheriT.Coker.Application
                                 Id = fu.Id,
                                 Name = fb.Name,
                                 FileType = 5,
-                                Link = new List<string> { MediaLink },
+                                Link = new List<string> { MediaLink.Replace("upload", $"upload/{orgName}") },
                                 SerNo = fb.SerNo,
                                 isEncryption = fu.IsEncryption,
                                 isVisible = fb.IsVisible,

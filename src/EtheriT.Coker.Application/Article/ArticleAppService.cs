@@ -700,7 +700,7 @@ namespace EtheriT.Coker.Application.Article
                                 }
                                 else
                                 {
-                                    node.AppendChild(HtmlNode.CreateNode("<div class='no-files-msg'>無相關檔案可顯示</div>"));
+                                    node.AppendChild(HtmlNode.CreateNode("<div class=\"no-files-msg\">無相關檔案可顯示</div>"));
                                 }
                             }
 

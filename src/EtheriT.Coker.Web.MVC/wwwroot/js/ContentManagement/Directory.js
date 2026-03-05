@@ -589,7 +589,6 @@ function deleteArticlesButtonClicked(e) {
     });
 }
 function UploadListAdd(result, $target) {
-
     var isUseLessFile = false;
     if ($target.length == 0) {
         if ($("#UselessFileFrame").length == 0) {
@@ -610,6 +609,7 @@ function UploadListAdd(result, $target) {
     var item = $($("#TemplateUploadList").html()).clone();
     var item_serno = item.find(".ser_no"),
         item_size = item.find("span.size"),
+        item_btn_preview = item.find(".btn_preview"),
         item_btn_remove = item.find(".btn_remove"),
         item_btn_lock = item.find(".btn_lock"),
         item_visible = item.find("label.visible");
@@ -675,6 +675,7 @@ function UploadListAdd(result, $target) {
         item.data("uploadtype", result.Type);
         item.data("edit", false);
         item.find(".title").text(result.Name);
+        item_btn_preview.data("priviewUrl", URL.createObjectURL(result.File));
 
         if (result.File.size < 1024) item_size.text(result.File.size + " B");
         else if (result.File.size < 1024 * 1024) item_size.text((result.File.size / 1024).toFixed(1) + " KB");
@@ -696,6 +697,7 @@ function UploadListAdd(result, $target) {
         item_serno.val(file_num);
         item.find(".title").text(result.name);
         item_size.text(result.size);
+        item_btn_preview.data("priviewUrl", result.link[0]);
         item_visible.find("input").prop("checked", result.isVisible);
         if (result.isEncryption) {
             item_btn_lock.addClass("lock");
@@ -741,6 +743,11 @@ function UploadListAdd(result, $target) {
             }
         }
         item.data("serno", $self.val());
+    })
+
+    item_btn_preview.on("click", function (e) {
+        e.preventDefault();
+        window.open(item_btn_preview.data("priviewUrl"), "_blank");
     })
 
     // 檔案是否上鎖的按鈕

@@ -361,11 +361,13 @@
                             <input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="" step="1">
                         </div>
                         <span class="title ml-2 flex-grow-1 overflow-auto"></span>
+                        <span class="size"></span>
                         <img class="thumb_img" src="/images/noImg.jpg" />
-                        <button class="btn_visibility d-flex bg-transparent border-0 p-0" title="是否顯示">
-                            <span class="icon poiter visible material-symbols-outlined">visibility</span>
-                            <span class="icon poiter invisible material-symbols-outlined">visibility_off</span>
-                        </button>
+                        <label class="d-flex visible" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示" data-bs-container="body">
+                            <input type="checkbox" class="selectedItem input_visible" name="" value="true" />
+                            <span class="material-symbols-outlined" title="是否顯示">visibility</span>
+                            <span class="material-symbols-outlined" title="是否顯示">visibility_off</span>
+                        </label>
                         <button class="btn_lock d-flex bg-transparent border-0 p-0" title="是否加密">
                             <span class="icon poiter lock material-symbols-outlined">lock</span>
                             <span class="icon poiter unlock material-symbols-outlined">lock_open_right</span>

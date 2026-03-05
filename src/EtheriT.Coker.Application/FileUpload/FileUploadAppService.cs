@@ -85,7 +85,7 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-        public async Task<UploadFileOutputDto> uploadFiles(IList<IFormFile> files, string areakey, int type, long id, long sid, int serno, string page, bool isEncryption)
+        public async Task<UploadFileOutputDto> uploadFiles(IList<IFormFile> files, string areakey, int type, long id, long sid, int serno, string page, bool isVisible, bool isEncryption)
         {
             UploadFileOutputDto response = new UploadFileOutputDto
             {
@@ -94,7 +94,7 @@ namespace EtheriT.Coker.Application
             };
             try
             {
-                List<FileItemDto> filds = await SaveFile(files, areakey, type, serno, page, id, sid, isEncryption);
+                List<FileItemDto> filds = await SaveFile(files, areakey, type, serno, page, id, sid, isVisible, isEncryption);
                 response.Files = filds.FindAll(e => e.Id != 0 && e.Id != null);
                 response.ErrorFiles = filds.FindAll(e => e.Id == 0 || e.Id == null).Select(e => e.Name).ToList();
                 if (response.ErrorFiles.Count == 0) response.Success = true;
@@ -737,6 +737,13 @@ namespace EtheriT.Coker.Application
                                 db.SaveChanges();
                             }
 
+                            var size = "0";
+
+                            if (fu.Size < 1024) size = $"{fu.Size} B";
+                            else if (fu.Size < 1024 * 1024) size = $"{fu.Size / 1024.0:F1} KB";
+                            else if (fu.Size < 1024 * 1024 * 1024) size = $"{fu.Size / (1024.0 * 1024):F1} MB";
+                            else size = $"{fu.Size / (1024.0 * 1024 * 1024):F1} GB";
+
                             output.Add(new FileGetArticleDisplayDto
                             {
                                 Id = fu.Id,
@@ -746,7 +753,8 @@ namespace EtheriT.Coker.Application
                                 SerNo = fb.SerNo,
                                 isEncryption = fu.IsEncryption,
                                 isVisible = fb.IsVisible,
-                                areakey = fb.AreaKey ?? ""
+                                areakey = fb.AreaKey ?? "",
+                                size = size,
                             });
                         }
                     }
@@ -1305,7 +1313,7 @@ namespace EtheriT.Coker.Application
 
             return (root + orgName + "/" + after).Replace("//", "/");
         }
-        private async Task<List<FileItemDto>> SaveFile(IList<IFormFile> files, string areakey, int asotype, int serno, string directory, long id, long sid, bool isEncryption)
+        private async Task<List<FileItemDto>> SaveFile(IList<IFormFile> files, string areakey, int asotype, int serno, string directory, long id, long sid, bool isVisible, bool isEncryption)
         {
             List<FileItemDto> outputs = new List<FileItemDto>();
             List<FileBind> fileBinds = new List<FileBind>();
@@ -1336,6 +1344,7 @@ namespace EtheriT.Coker.Application
                         SerNo = serno,
                         MediaLink = "",
                         FK_FileUploadId = e.Id,
+                        IsVisible = isVisible,
                         AreaKey = areakey
                     };
                     loginUserData.setOptionParameter(fb, userId);

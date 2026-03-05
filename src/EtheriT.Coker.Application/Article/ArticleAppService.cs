@@ -277,7 +277,7 @@ namespace EtheriT.Coker.Application.Article
                     if (output != null)
                     {
                         // 此處讀Html裡有哪些地方需要傳檔案
-                        output.FileAreas = GetFileAreas(result.Html);
+                        output.FileAreas = GetFileAreas(result.SaveHtml);
 
                         var fileDatas = await fileUploadAppService.getArticleFiles(output.Id);
                         if (fileDatas != null)

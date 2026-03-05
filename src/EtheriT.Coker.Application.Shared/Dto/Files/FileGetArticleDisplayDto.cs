@@ -11,5 +11,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Files
         public bool isVisible { get; set; }
         public bool isEncryption { get; set; }
         public string areakey { get; set; }
+        public string size { get; set; }
     }
 }

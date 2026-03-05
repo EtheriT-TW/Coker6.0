@@ -75,22 +75,26 @@ input[type="number"] {
     width: 1.5rem;
 }
 
-.data_upload .btn_visibility span.invisible {
-    visibility: visible !important;
+.data_upload label.visible {
+    position: relative;
+    cursor: pointer;
 }
 
-.data_upload .btn_visibility span.invisible {
-    display: none;
-    color: #CCC;
-}
+    .data_upload label.visible span:nth-of-type(1) {
+        display: none;
+    }
 
-.data_upload .btn_visibility.invisible span.invisible {
+    .data_upload label.visible span:nth-of-type(2) {
+        display: flex;
+    }
+
+.data_upload label.visible input:checked ~ span:nth-of-type(1) {
     display: flex;
 }
 
-.data_upload .btn_visibility.invisible span.visible {
-    display: none;
-}
+    .data_upload label.visible input:checked ~ span:nth-of-type(2) {
+        display: none;
+    }
 
 .data_upload .btn_lock span.lock {
     display: none;

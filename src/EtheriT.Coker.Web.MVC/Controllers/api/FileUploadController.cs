@@ -30,7 +30,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpPost]
         //[ValidateAntiForgeryToken]
-        public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files, [FromForm] string? areakey, [FromForm] int type, [FromForm] long? id, [FromForm] long? sid, [FromForm] int serno, [FromForm] bool convert = true, [FromForm] bool isEncryption = false)
+        public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files, [FromForm] string? areakey, [FromForm] int type, [FromForm] long? id, [FromForm] long? sid, [FromForm] int serno, [FromForm] bool isVisible, [FromForm] bool convert = true, [FromForm] bool isEncryption = false)
         {
             FileBindTypeEnum s = (FileBindTypeEnum)type;
             switch (s)
@@ -38,7 +38,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 case FileBindTypeEnum.產品:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Product", convert);
                 case FileBindTypeEnum.產品檔案:
-                    return await fileUploadAppService.uploadFiles(files, areakey ?? "", type, id ?? 0, (long)sid, serno, "Product/File", false);
+                    return await fileUploadAppService.uploadFiles(files, areakey ?? "", type, id ?? 0, (long)sid, serno, "Product/File", isVisible, false);
                 case FileBindTypeEnum.選單圖:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Menu", convert);
                 case FileBindTypeEnum.選單Icon:
@@ -52,7 +52,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 case FileBindTypeEnum.文章管理:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Article", convert);
                 case FileBindTypeEnum.文章檔案:
-                    return await fileUploadAppService.uploadFiles(files, areakey ?? "", type, id ?? 0, (long)sid, serno, "Article/File", isEncryption);
+                    return await fileUploadAppService.uploadFiles(files, areakey ?? "", type, id ?? 0, (long)sid, serno, "Article/File", isVisible , isEncryption);
                 case FileBindTypeEnum.進入廣告:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "EnterAd", convert);
                 case FileBindTypeEnum.自訂廣告:

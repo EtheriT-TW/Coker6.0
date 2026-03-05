@@ -194,11 +194,8 @@
                 name: "articleTags",
                 key: "coker_inited_articleTags",
                 test: function ($root) {
-                    // keep your original logic concept: #conten.article + .article-tags
-                    // root-scoped:
-                    var $conten = $root.find("#conten");
-                    if ($root.is("#conten")) $conten = $root;
-                    return $conten.length > 0 && $conten.hasClass("article") && has($root, ".article-tags");
+                    var $conten = $root.closest(".article");
+                    return $conten.length > 0 && has($root, ".article-tags");
                 },
                 run: function ($root) {
                     if (isFn(w.ArticleTagsInit)) w.ArticleTagsInit($root);

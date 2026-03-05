@@ -4,6 +4,7 @@ let directory_list, editor, permissionDetailsModal;
 let DirectorytForms, $DirectorytTags;
 let ArticletForms, $ArticletTags, ArticletId;
 var total_files = [];
+let plan = "";
 
 function PageReady() {
     DirectorytForms = $('#DirectorytForm');
@@ -71,6 +72,10 @@ function PageReady() {
     (() => {
         Array.from(ArticletForms).forEach(form => {
             form.addEventListener('submit', event => {
+                console.log("submit")
+                if (event.submitter && event.submitter.classList.contains('btn_to_canvas')) {
+                    plan = "canvas";
+                }
                 if (!form.checkValidity()) {
                     event.preventDefault()
                     event.stopPropagation()
@@ -361,7 +366,8 @@ function AddUpArticlet(success_text, error_text) {
         const success = function () {
             Coker.sweet.success(success_text, null, true);
             directoryDatailList.component.refresh();
-            location.hash = `Articles_${DirectoryId}`;
+            if (plan == "canvas") location.hash = `ArticlesEditorView_${DirectoryId}_${result.message}`;
+            else location.hash = `Articles_${DirectoryId}`;
         }
 
         if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").id == 0) {
@@ -455,6 +461,7 @@ function BackToList() {
 
 function MoveToItemList() {
     const para = window.location.hash.replace("#", "").split("_");
+    plan = "";
     $("#pages>.card,#TopLine").addClass("d-none");
     $("#DirectoryItemps").removeClass("d-none");
     const items = $(`#DirectoryItemps>.${para[0].toLowerCase()}`).removeClass("d-none");
@@ -462,6 +469,8 @@ function MoveToItemList() {
     else if (para.length > 1 && !isNaN(para[1])) {
         DirectoryId = parseInt(para[1]);
         DirectoryType = para[0];
+        $("body").removeClass("grapesEdit");
+        $(".linkToFront").addClass("d-none")
         switch (DirectoryType) {
             case "Articles":
                 directoryDatailList.component.refresh();
@@ -496,6 +505,7 @@ function MoveToItemArticle() {
                             result.startEndDate = 0;
                             result.sortCheckbox = 1;
                             result.ImageUpload = 1;
+                            $(".linkToFront").removeClass("d-none").attr("href", `${defaultUrl}/${OrgName}/search/article/${result.id}`);
 
                             if (result.fileAreas.length > 0) {
                                 // 處理檔案上傳的區塊

@@ -94,6 +94,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     CreationTime = new DateTime(2024, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ObjectType
                 {
+                    Id = 13,
+                    Title = "文章樣板",
+                    SerNo = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2026, 3, 4, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ObjectType
+                {
                     Id = 99,
                     Title = "小工具",
                     SerNo = 500,

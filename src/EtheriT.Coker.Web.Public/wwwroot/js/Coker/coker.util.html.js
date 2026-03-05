@@ -8,9 +8,16 @@
             html: {
                 replaceAndSinge: function (str) {
                     if (!str) return "";
-                    var s = String(str).replace(/&amp;/g, "&");
-                    // 若仍含 &amp;，遞迴處理
-                    return (s.indexOf("&amp;") > -1) ? Coker.util.html.replaceAndSinge(s) : s;
+
+                    let s = String(str);
+                    const re = /&amp;((?:lt|gt|quot|apos);|#\d+;|#x[0-9a-fA-F]+;)/g;
+
+                    for (let i = 0; i < 5; i++) {
+                        if (!re.test(s)) break;
+                        s = s.replace(re, "&$1");
+                    }
+
+                    return s;
                 },
 
                 htmlEncode: function (text) {

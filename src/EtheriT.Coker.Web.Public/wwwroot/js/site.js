@@ -89,7 +89,7 @@ function ready() {
     }
     co.page.init($conten);
     co.page.observe("#ProductDescription > Content");
-    
+
     if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
 
     co.modules.gallery3d();
@@ -622,8 +622,22 @@ function ready() {
             } else {
                 Coker.File.DownloadEncryptedFile($this.data('fid'))
                     .done(function (data, status, xhr) {
-                        var blob = new Blob([data]);
-                        var link = document.createElement("a");
+
+                        var contentType = xhr.getResponseHeader("Content-Type") || "";
+
+                        if (contentType.includes("application/json")) {
+
+                            var reader = new FileReader();
+                            reader.onload = function () {
+                                var result = JSON.parse(reader.result);
+                                Coker.sweet.error("預覽或下載失敗", result.errorMessage || "檔案預覽或下載失敗");
+                            };
+                            reader.readAsText(data);
+
+                            return;
+                        }
+
+                        var blob = new Blob([data], { type: contentType });
 
                         var fileName = "download";
                         var cd = xhr.getResponseHeader("Content-Disposition");
@@ -638,20 +652,27 @@ function ready() {
                             }
                         }
 
-                        if (!/\.[a-z0-9]+$/i.test(fileName)) {
-                            var ct = (xhr.getResponseHeader("Content-Type") || "").toLowerCase();
-                            if (ct.includes("pdf")) fileName += ".pdf";
+                        var blobUrl = window.URL.createObjectURL(blob);
+
+                        var canPreview = contentType.includes("pdf") || contentType.startsWith("image/") || contentType.startsWith("text/");
+
+                        if (canPreview) window.open(blobUrl, "_blank");
+                        else {
+                            var link = document.createElement("a");
+                            link.href = blobUrl;
+                            link.download = fileName;
+
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
                         }
 
-                        link.href = window.URL.createObjectURL(blob);
-                        link.download = fileName;
-
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+                        setTimeout(function () {
+                            window.URL.revokeObjectURL(blobUrl);
+                        }, 1000);
                     })
-                    .fail(function (jqXHR, textStatus, errorThrown) {
-                        Coker.sweet.error("下載失敗", jqXHR.responseText || "系統錯誤，請稍後再試", null, false);
+                    .fail(function (jqXHR) {
+                        Coker.sweet.error("預覽或下載失敗", jqXHR.responseText.split('{"StatusCode"')[0].trim() || "系統錯誤，請稍後再試");
                     });
             }
         });

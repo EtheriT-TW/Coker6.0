@@ -10,6 +10,7 @@ using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
@@ -128,6 +129,38 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> DeleteFileById(FileDeleteDto dto)
         {
             return await fileUploadAppService.deleteFileById(dto);
+        }
+        [HttpGet]
+        public async Task<IActionResult> DecryptFile(long fid)
+        {
+            var result = await fileUploadAppService.DecryptFile(fid);
+
+            if (!result.Success) return BadRequest(result.ErrorMessage);
+
+            var disposition = CanInline(result.ContentType) ? "inline" : "attachment";
+
+            var ext = Path.GetExtension(result.FileName);
+            var asciiFileName = $"download{ext}";
+
+            var contentDisposition = new ContentDispositionHeaderValue(disposition)
+            {
+                FileName = asciiFileName,
+                FileNameStar = result.FileName
+            };
+
+            Response.Headers["Content-Disposition"] = contentDisposition.ToString();
+
+            if (!result.IsEncryptedFile)
+            {
+                var stream = new FileStream(result.PhysicalPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                return File(stream, result.ContentType);
+            }
+            else return File(result.Bytes, result.ContentType);
+        }
+        private bool CanInline(string? contentType)
+        {
+            if (string.IsNullOrWhiteSpace(contentType)) return false;
+            return contentType.StartsWith("image/") || contentType == "application/pdf" || contentType.StartsWith("text/") || contentType.StartsWith("video/");
         }
     }
 }

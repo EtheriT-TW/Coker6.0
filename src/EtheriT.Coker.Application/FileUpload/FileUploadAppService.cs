@@ -744,12 +744,14 @@ namespace EtheriT.Coker.Application
                             else if (fu.Size < 1024 * 1024 * 1024) size = $"{fu.Size / (1024.0 * 1024):F1} MB";
                             else size = $"{fu.Size / (1024.0 * 1024 * 1024):F1} GB";
 
+                            var link = fu.IsEncryption ? $"/api/FileUpload/DecryptFile?fid={fu.Id}" : MediaLink.Replace("upload", $"upload/{orgName}");
+
                             output.Add(new FileGetArticleDisplayDto
                             {
                                 Id = fu.Id,
                                 Name = fb.Name,
                                 FileType = 5,
-                                Link = new List<string> { MediaLink.Replace("upload", $"upload/{orgName}") },
+                                Link = new List<string> { link },
                                 SerNo = fb.SerNo,
                                 isEncryption = fu.IsEncryption,
                                 isVisible = fb.IsVisible,
@@ -1822,13 +1824,23 @@ namespace EtheriT.Coker.Application
         public async Task<DownloadPayload> DecryptFile(long fid)
         {
             var response = new DownloadPayload();
-            var checktokenresponse = await tokenAppService.CheckToken(null);
             var siteId = configuration.GetValue<long>("WebConfig:SiteId");
-            var website = await db.Websites.Where(e => e.Id == siteId).FirstOrDefaultAsync();
+
+            var isFront = siteId != 0;
 
             try
             {
-                if (!checktokenresponse.IsLogin) throw new Exception("加密檔需登入後才可進行下載");
+                var isLogin = false;
+                if (isFront) isLogin = (await tokenAppService.CheckToken(null)).IsLogin;
+                else
+                {
+                    siteId = await loginUserData.GetWebsiteId();
+                    isLogin = loginUserData.IsLoggedIn();
+                }
+
+                var website = await db.Websites.Where(e => e.Id == siteId).FirstOrDefaultAsync();
+
+                if (!isLogin) throw new Exception("加密檔需登入後才可進行預覽或下載");
 
                 var fileUpload = await db.FileUploads.Where(f => f.Id == fid).FirstOrDefaultAsync();
                 if (fileUpload == null) throw new Exception("查無檔案");
@@ -1838,6 +1850,7 @@ namespace EtheriT.Coker.Application
                 var RooyFilePath = configuration.GetValue<string>("VirtualDirectory:upload");
                 string relativePath = fileUpload.DownloadFileName.Replace("/upload/", "").Replace("/", Path.DirectorySeparatorChar.ToString()).TrimStart(Path.DirectorySeparatorChar);
                 string physicalPath = Path.Combine(RooyFilePath, relativePath);
+                if (!isFront) physicalPath =  physicalPath.Replace("upload", $"upload\\{website.OrgName}");
 
                 if (!System.IO.File.Exists(physicalPath)) throw new Exception("查無檔案位置");
 

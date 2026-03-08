@@ -85,7 +85,7 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-        public async Task<UploadFileOutputDto> uploadFiles(IList<IFormFile> files, string areakey, int type, long id, long sid, int serno, string page, bool isVisible, bool isEncryption)
+        public async Task<UploadFileOutputDto> uploadFiles(IList<IFormFile> files, string filename, string areakey, int type, long id, long sid, int serno, string page, bool isVisible, bool isEncryption)
         {
             UploadFileOutputDto response = new UploadFileOutputDto
             {
@@ -94,7 +94,7 @@ namespace EtheriT.Coker.Application
             };
             try
             {
-                List<FileItemDto> filds = await SaveFile(files, areakey, type, serno, page, id, sid, isVisible, isEncryption);
+                List<FileItemDto> filds = await SaveFile(files, filename, areakey, type, serno, page, id, sid, isVisible, isEncryption);
                 response.Files = filds.FindAll(e => e.Id != 0 && e.Id != null);
                 response.ErrorFiles = filds.FindAll(e => e.Id == 0 || e.Id == null).Select(e => e.Name).ToList();
                 if (response.ErrorFiles.Count == 0) response.Success = true;
@@ -750,6 +750,7 @@ namespace EtheriT.Coker.Application
                             {
                                 Id = fu.Id,
                                 Name = fb.Name,
+                                Extension = GetExtension(fu.ContentType),
                                 FileType = 5,
                                 Link = new List<string> { link },
                                 SerNo = fb.SerNo,
@@ -767,6 +768,43 @@ namespace EtheriT.Coker.Application
 
             }
             return output;
+        }
+        private string GetExtension(string ContentType)
+        {
+            var mimeMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                // Office
+                { "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "docx" },
+                { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "xlsx" },
+                { "application/vnd.openxmlformats-officedocument.presentationml.presentation", "pptx" },
+                { "application/msword", "doc" },
+                { "application/vnd.ms-excel", "xls" },
+                { "application/vnd.ms-powerpoint", "ppt" },
+
+                // PDF
+                { "application/pdf", "pdf" },
+
+                // Text
+                { "text/plain", "txt" },
+
+                // Images
+                { "image/png", "png" },
+                { "image/jpeg", "jpg" },
+                { "image/jpg", "jpg" },
+                { "image/gif", "gif" },
+                { "image/webp", "webp" },
+                { "image/svg+xml", "svg" },
+                { "image/bmp", "bmp" },
+
+                // Archive
+                { "application/zip", "zip" },
+                { "application/x-rar-compressed", "rar" },
+                { "application/x-7z-compressed", "7z" },
+            };
+
+            string ext = mimeMap.TryGetValue(ContentType, out var value) ? value : "";
+
+            return ext;
         }
         public async Task<List<FileGetDisplayDto>> getAdvertiseFiles(long Aid, int type)
         {
@@ -992,6 +1030,7 @@ namespace EtheriT.Coker.Application
                 if (db_fb != null)
                 {
                     if (dto.SerNo.HasValue) db_fb.SerNo = dto.SerNo.Value;
+                    if (dto.FileName != null) db_fb.Name = dto.FileName;
                     if (dto.AreaKey != null) db_fb.AreaKey = dto.AreaKey;
                     if (dto.IsVisible.HasValue) db_fb.IsVisible = dto.IsVisible.Value;
                     db_fb.LastModifierUserId = userid;
@@ -1315,7 +1354,7 @@ namespace EtheriT.Coker.Application
 
             return (root + orgName + "/" + after).Replace("//", "/");
         }
-        private async Task<List<FileItemDto>> SaveFile(IList<IFormFile> files, string areakey, int asotype, int serno, string directory, long id, long sid, bool isVisible, bool isEncryption)
+        private async Task<List<FileItemDto>> SaveFile(IList<IFormFile> files, string filename, string areakey, int asotype, int serno, string directory, long id, long sid, bool isVisible, bool isEncryption)
         {
             List<FileItemDto> outputs = new List<FileItemDto>();
             List<FileBind> fileBinds = new List<FileBind>();
@@ -1339,7 +1378,7 @@ namespace EtheriT.Coker.Application
                     FileBind fb = new FileBind
                     {
                         Guid = Guid.NewGuid(),
-                        Name = e.Name,
+                        Name = filename ?? e.Name,
                         type = asotype,
                         Sid = sid,
                         num = 1,
@@ -1850,7 +1889,7 @@ namespace EtheriT.Coker.Application
                 var RooyFilePath = configuration.GetValue<string>("VirtualDirectory:upload");
                 string relativePath = fileUpload.DownloadFileName.Replace("/upload/", "").Replace("/", Path.DirectorySeparatorChar.ToString()).TrimStart(Path.DirectorySeparatorChar);
                 string physicalPath = Path.Combine(RooyFilePath, relativePath);
-                if (!isFront) physicalPath =  physicalPath.Replace("upload", $"upload\\{website.OrgName}");
+                if (!isFront) physicalPath = physicalPath.Replace("upload", $"upload\\{website.OrgName}");
 
                 if (!System.IO.File.Exists(physicalPath)) throw new Exception("查無檔案位置");
 

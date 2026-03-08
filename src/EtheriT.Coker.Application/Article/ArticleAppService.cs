@@ -724,13 +724,9 @@ namespace EtheriT.Coker.Application.Article
         }
         private void FileHtmlNodeSet(HtmlNode MainNode, FileGetArticleDisplayDto File, string index, bool IsLogin)
         {
-            var namesplit = File.Name.Split('.');
-            var extension = namesplit[namesplit.Length - 1];
-            var filename = string.Join(".", namesplit.Take(namesplit.Length - 1));
-
             MainNode.SetAttributeValue("download", File.Name);
             MainNode.SetAttributeValue("data-fid", File.Id.ToString());
-            MainNode.SetAttributeValue("data-extension", extension);
+            MainNode.SetAttributeValue("data-extension", File.Extension);
 
             if (File.isEncryption)
             {
@@ -743,13 +739,13 @@ namespace EtheriT.Coker.Application.Article
                 MainNode.SetAttributeValue("class", $"do_not_rename {MainNode.GetAttributeValue("class", "")}");
             }
 
-            var namenode = MainNode.SelectSingleNode(".//*[" + "contains(concat(' ', normalize-space(@class), ' '), ' file-name ') " + "or contains(concat(' ', normalize-space(@class), ' '), ' name ')" + "]" );
+            var namenode = MainNode.SelectSingleNode(".//*[" + "contains(concat(' ', normalize-space(@class), ' '), ' file-name ') " + "or contains(concat(' ', normalize-space(@class), ' '), ' name ')" + "]");
             if (namenode != null)
             {
                 var format = namenode.GetAttributeValue("data-edit-format", "");
-                if (format != "") filename = format.Replace("{index}", index).Replace("{value}", filename);
+                if (format != "") File.Name = format.Replace("{index}", index).Replace("{value}", File.Name);
                 namenode.RemoveAllChildren();
-                namenode.AppendChild(namenode.OwnerDocument.CreateTextNode(filename));
+                namenode.AppendChild(namenode.OwnerDocument.CreateTextNode(File.Name));
             }
 
             var downloadbtnNode = MainNode.SelectSingleNode(".//*[contains(concat(' ', normalize-space(@class), ' '), ' download-btn ')]");

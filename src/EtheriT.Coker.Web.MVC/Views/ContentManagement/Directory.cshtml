@@ -35,58 +35,58 @@
                     <span class="material-symbols-outlined">add</span>
                 </button>
                 @(
-                    Html.DevExtreme().DataGrid<DirectoryGetListDto>()
-                    .DataSource(d => d.RemoteController().Key("Id")
-                    .LoadUrl("/api/Directory/GetAllList").LoadMethod("Get")
-                    )
-                    .RemoteOperations(true)
-                    .ColumnHidingEnabled(true)
-                    .ShowBorders(true)
-                    .FilterRow(filterRow => filterRow
-                    .Visible(true)
-                    .ApplyFilter(GridApplyFilterMode.Auto)
-                    )
-                    .SearchPanel(searchPanel => searchPanel
-                    .Visible(true)
-                    .Width(480)
-                    .Placeholder("請輸入要搜尋的資料")
-                    )
-                    .ShowRowLines(true)
-                    .Columns(c =>
-                    {
-                        c.AddFor(e => e.Id).Caption("ID").Width(40).AllowEditing(false);
-                        c.AddFor(e => e.Title).Caption("標題");
-                        c.AddFor(e => e.Description).Caption("描述");
-                        c.AddFor(e => e.Type).Caption("綁定內容").Width(100);
-                        c.AddFor(e => e.Items).Caption("綁定標籤、選單");
-                        c.AddFor(e => e.Visible).Caption("是否顯示").Width(100);
-                        c.Add()
-                        .Type(GridCommandColumnType.Buttons)
-                        .Buttons(b =>
-                        {
-                            b.Add().Name("edit").Visible(perm.CanUpdate).OnClick("editButtonClicked");
-                            b.Add().Icon("verticalaligncenter").Visible(perm.CanVisble).OnClick("reladataButtonClicked");
-                            b.Add().Icon("group").Name("group").Visible(perm.superManager).OnClick("groupArticlesButtonClicked");
-                            b.Add().Name("delete").Visible(perm.CanRemove).OnClick("deleteButtonClicked");
-                        });
-                    })
-                    .ColumnAutoWidth(true)
-                    .Paging(paging => paging.PageSize(30))
-                    .Pager(pager =>
-                    {
-                        pager.Visible(true);
-                        pager.ShowPageSizeSelector(true);
-                        pager.AllowedPageSizes(new[] { 10, 20, 30 });
-                        pager.ShowInfo(true);
-                    })
-                    .Editing(editing =>
-                    {
-                        editing.AllowDeleting(true);
-                        editing.AllowUpdating(true);
-                        editing.UseIcons(true);
-                    })
-                    .OnContentReady("contentReady")
-                    )
+                                Html.DevExtreme().DataGrid<DirectoryGetListDto>()
+                                .DataSource(d => d.RemoteController().Key("Id")
+                                .LoadUrl("/api/Directory/GetAllList").LoadMethod("Get")
+                                )
+                                .RemoteOperations(true)
+                                .ColumnHidingEnabled(true)
+                                .ShowBorders(true)
+                                .FilterRow(filterRow => filterRow
+                                .Visible(true)
+                                .ApplyFilter(GridApplyFilterMode.Auto)
+                                )
+                                .SearchPanel(searchPanel => searchPanel
+                                .Visible(true)
+                                .Width(480)
+                                .Placeholder("請輸入要搜尋的資料")
+                                )
+                                .ShowRowLines(true)
+                                .Columns(c =>
+                                {
+                                    c.AddFor(e => e.Id).Caption("ID").Width(40).AllowEditing(false);
+                                    c.AddFor(e => e.Title).Caption("標題");
+                                    c.AddFor(e => e.Description).Caption("描述");
+                                    c.AddFor(e => e.Type).Caption("綁定內容").Width(100);
+                                    c.AddFor(e => e.Items).Caption("綁定標籤、選單");
+                                    c.AddFor(e => e.Visible).Caption("是否顯示").Width(100);
+                                    c.Add()
+                                    .Type(GridCommandColumnType.Buttons)
+                                    .Buttons(b =>
+                                    {
+                                        b.Add().Name("edit").Visible(perm.CanUpdate).OnClick("editButtonClicked");
+                                        b.Add().Icon("verticalaligncenter").Visible(perm.CanVisble).OnClick("reladataButtonClicked");
+                                        b.Add().Icon("group").Name("group").Visible(perm.superManager).OnClick("groupArticlesButtonClicked");
+                                        b.Add().Name("delete").Visible(perm.CanRemove).OnClick("deleteButtonClicked");
+                                    });
+                                })
+                                .ColumnAutoWidth(true)
+                                .Paging(paging => paging.PageSize(30))
+                                .Pager(pager =>
+                                {
+                                    pager.Visible(true);
+                                    pager.ShowPageSizeSelector(true);
+                                    pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                                    pager.ShowInfo(true);
+                                })
+                                .Editing(editing =>
+                                {
+                                    editing.AllowDeleting(true);
+                                    editing.AllowUpdating(true);
+                                    editing.UseIcons(true);
+                                })
+                                .OnContentReady("contentReady")
+                                )
             </div>
         </div>
         <div id="DirectoryContent" class="card border-0 d-none">
@@ -146,7 +146,7 @@
                     <input id="InputTag" class="form-control rounded text-start InputTag formItem" name="TagSelected" type="button" aria-label="Input Tag" data-bs-toggle="modal" data-bs-target="#TagModal">
                 </div>
 
-                @await Component.InvokeAsync(nameof(Modal), new {dispaly = "WebmenuListModal"})
+                @await Component.InvokeAsync(nameof(Modal), new { dispaly = "WebmenuListModal" })
 
             </form>
         </div>
@@ -167,66 +167,66 @@
                         </button>
                     </div>
                     @(
-                        Html.DevExtreme().DataGrid<DirectoryReleInfoDto>()
-                                .DataSource(d => d.RemoteController().Key("Id")
-                                    .LoadUrl("/api/Directory/GetDirectoryDetailList").LoadMethod("Get")
-                                    .LoadParams(new
-                                    {
-                                        id = new JS("GetDirectoryId"),
-                                        type = new JS("GetDirectoryType")
-                                    })
-                            )
-                        .OnContentReady("DirectoryDatailListReady")
-                        .HeaderFilter(headerFilter => headerFilter.Visible(true))
-                        .RemoteOperations(true)
-                        .ColumnHidingEnabled(true)
-                        .ShowBorders(true)
-                        .FilterRow(filterRow => filterRow
-                            .Visible(true)
-                            .ApplyFilter(GridApplyFilterMode.Auto)
-                        )
-                        .SearchPanel(searchPanel => searchPanel
-                            .Visible(true)
-                            .Width(480)
-                            .Placeholder("請輸入要搜尋的資料")
-                        )
-                        .ShowRowLines(true)
-                        .Columns(c =>
-                        {
-                            c.AddFor(e => e.Id).Caption("編號").Width(90);
-                            c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90);
-                            c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90);
-                            c.AddFor(e => e.Title).Caption("標題");
-                            c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90);
-                            c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(false);
-                            c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(false);
-                            c.AddFor(e => e.SerNo).Caption("排序").Width(90);
-                            c.AddFor(e => e.LastModificationTime).SortOrder(SortOrder.Desc).Format("yyyy/MM/dd HH:mm").Caption("最後編輯日期").Width(160);
-                            c.Add()
-                            .Type(GridCommandColumnType.Buttons)
-                            .Buttons(b =>
-                            {
-                                b.Add().Name("edit").Visible(perm.CanUpdate).OnClick("editArticlesButtonClicked");
-                                b.Add().Icon("palette").Visible(perm.CanUpdate).Name("edit").OnClick("paletteArticlesButtonClicked");
-                                b.Add().Name("delete").Visible(perm.CanRemove).OnClick("deleteArticlesButtonClicked");
-                            });
-                        })
-                        .ColumnAutoWidth(true)
-                        .Paging(paging => paging.PageSize(30))
-                        .Pager(pager =>
-                        {
-                            pager.Visible(true);
-                            pager.ShowPageSizeSelector(true);
-                            pager.AllowedPageSizes(new[] { 10, 20, 30 });
-                            pager.ShowInfo(true);
-                        })
-                        .Editing(editing =>
-                        {
-                            editing.AllowDeleting(true);
-                            editing.AllowUpdating(true);
-                            editing.UseIcons(true);
-                        })
-                    )
+                                        Html.DevExtreme().DataGrid<DirectoryReleInfoDto>()
+                                        .DataSource(d => d.RemoteController().Key("Id")
+                                        .LoadUrl("/api/Directory/GetDirectoryDetailList").LoadMethod("Get")
+                                        .LoadParams(new
+                                        {
+                                            id = new JS("GetDirectoryId"),
+                                            type = new JS("GetDirectoryType")
+                                        })
+                                        )
+                                        .OnContentReady("DirectoryDatailListReady")
+                                        .HeaderFilter(headerFilter => headerFilter.Visible(true))
+                                        .RemoteOperations(true)
+                                        .ColumnHidingEnabled(true)
+                                        .ShowBorders(true)
+                                        .FilterRow(filterRow => filterRow
+                                        .Visible(true)
+                                        .ApplyFilter(GridApplyFilterMode.Auto)
+                                        )
+                                        .SearchPanel(searchPanel => searchPanel
+                                        .Visible(true)
+                                        .Width(480)
+                                        .Placeholder("請輸入要搜尋的資料")
+                                        )
+                                        .ShowRowLines(true)
+                                        .Columns(c =>
+                                        {
+                                            c.AddFor(e => e.Id).Caption("編號").Width(90);
+                                            c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90);
+                                            c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90);
+                                            c.AddFor(e => e.Title).Caption("標題");
+                                            c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90);
+                                            c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(false);
+                                            c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(false);
+                                            c.AddFor(e => e.SerNo).Caption("排序").Width(90);
+                                            c.AddFor(e => e.LastModificationTime).SortOrder(SortOrder.Desc).Format("yyyy/MM/dd HH:mm").Caption("最後編輯日期").Width(160);
+                                            c.Add()
+                                            .Type(GridCommandColumnType.Buttons)
+                                            .Buttons(b =>
+                                            {
+                                                b.Add().Name("edit").Visible(perm.CanUpdate).OnClick("editArticlesButtonClicked");
+                                                b.Add().Icon("palette").Visible(perm.CanUpdate).Name("edit").OnClick("paletteArticlesButtonClicked");
+                                                b.Add().Name("delete").Visible(perm.CanRemove).OnClick("deleteArticlesButtonClicked");
+                                            });
+                                        })
+                                        .ColumnAutoWidth(true)
+                                        .Paging(paging => paging.PageSize(30))
+                                        .Pager(pager =>
+                                        {
+                                            pager.Visible(true);
+                                            pager.ShowPageSizeSelector(true);
+                                            pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                                            pager.ShowInfo(true);
+                                        })
+                                        .Editing(editing =>
+                                        {
+                                            editing.AllowDeleting(true);
+                                            editing.AllowUpdating(true);
+                                            editing.UseIcons(true);
+                                        })
+                                        )
                 </div>
             </div>
             <div class="products d-none"></div>
@@ -264,7 +264,7 @@
                 <input name="fK_WebsiteId" type="hidden" />
                 <div class="d-flex align-self-center mb-3 justify-content-between flex-wrap-reverse flex-md-nowrap">
                     <div id="ImageUpload" name="ImageUpload" data-form-type="images" data-image-type="6" data-image-size="3" data-target="id" class="d-flex justify-content-center image_upload" data-issinge="true" data-needcompress="false">
-                        @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
+                        @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadModal" })
                     </div>
                     <div class="d-flex">
                         <input type="checkbox" id="ArticletFormVisible" class="selectedItem" name="visible" value="true" />
@@ -360,7 +360,7 @@
                             <span class="icon move material-symbols-outlined" title="變更順序">open_with</span>
                             <input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="" step="1">
                         </div>
-                        <span class="title ml-2 flex-grow-1 overflow-auto"></span>
+                        <input class="name rounded border flex-grow-1" type="text" aria-label="File Name" name="name" title="檔案名稱" value="" autocomplete="off">
                         <span class="size"></span>
                         <button class="btn_preview d-flex bg-transparent border-0 p-0 text-info" title="預覽檔案">
                             <span class="material-symbols-outlined">search</span>
@@ -382,7 +382,7 @@
             </form>
         </div>
     </div>
-    
+
 </div>
 
 <!-- Directory Facet Config Modal -->

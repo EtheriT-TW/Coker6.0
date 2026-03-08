@@ -10,8 +10,8 @@
                 $self.attr("href", data_url)
             }
 
-            var type = data_url.substring(data_url.lastIndexOf('.') + 1, data_url.length);
-            if (type == "" && typeof ($self.data("extension")) != "undefined") type = $self.data("extension");
+            var type = typeof ($self.data("extension")) == "undefined" ? data_url.substring(data_url.lastIndexOf('.') + 1, data_url.length) : $self.data("extension");
+            //if (type == "" && typeof ($self.data("extension")) != "undefined") type = $self.data("extension");
             switch (type) {
                 case "jpg":
                 case "jpeg":

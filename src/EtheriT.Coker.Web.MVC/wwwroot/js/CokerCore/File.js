@@ -8,8 +8,8 @@
                 headers: _c.Data.Header,
                 contentType: false,
                 crossDomain: false,
-                dataType: 'json',
-                mimeType: "multipart/form-data",
+                //dataType: 'json',
+                //mimeType: "multipart/form-data",
                 processData: false
             });
         },

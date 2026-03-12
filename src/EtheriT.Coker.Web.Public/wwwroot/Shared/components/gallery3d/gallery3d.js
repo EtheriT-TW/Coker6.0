@@ -23,7 +23,7 @@
         play: '播放',
         reset: '回到第一個',
         indicator: (idx1, total) => `第 ${idx1} / ${total} 張`,
-        gridIndicator: (total) => `共 ${total} 張`
+        gridIndicator: (total, visibleCount) => !!visibleCount ? `顯示 ${visibleCount} / ${total} 張` : `共 ${total} 張`
     };
 
     class Gallery3D {
@@ -111,6 +111,8 @@
             this.btnReset = null;
             this.indicatorEl = null;
             this.carouselControlsEl = null;
+            this.searchInputEl = null;
+            this.searchKeyword = '';
         }
 
         mount() {
@@ -561,6 +563,7 @@
                 this.btnReset = this.toolbarRowEl.querySelector('[data-role="reset"]');
                 this.indicatorEl = this.toolbarRowEl.querySelector('[data-role="indicator"]');
                 this.carouselControlsEl = this.toolbarRowEl.querySelector('[data-role="controls"]');
+                this.searchInputEl = this.toolbarRowEl.querySelector('[data-role="grid-search"]');
                 return;
             }
 
@@ -593,9 +596,25 @@
             </div>
             `;
 
+            //過濾器
+            const searchBox = document.createElement('div');
+            searchBox.className = 'gallery-toolbar gallery-toolbar-search';
+            searchBox.setAttribute('data-role', 'search-wrap');
+            searchBox.innerHTML = `
+            <div class="gallery-toolbar-inner">
+                <input
+                    type="text"
+                    class="gallery-grid-search-input"
+                    data-role="grid-search"
+                    placeholder="搜尋標題..."
+                    autocomplete="off">
+            </div>
+            `;
+
             wrap.appendChild(row);
             row.appendChild(modeBox);
             row.appendChild(ctrlBox);
+            row.appendChild(searchBox);
 
             // 放在 holder 之後（與原本結構一致）
             mainStage.appendChild(wrap);
@@ -606,6 +625,7 @@
             this.btnReset = row.querySelector('[data-role="reset"]');
             this.indicatorEl = row.querySelector('[data-role="indicator"]');
             this.carouselControlsEl = row.querySelector('[data-role="controls"]');
+            this.searchInputEl = row.querySelector('[data-role="grid-search"]');
 
             if (this.forceGridMode) {
                 row.classList.add('d-none');
@@ -613,8 +633,37 @@
             }
         }
 
+        _normalizeSearchText(text) {
+            return String(text || '').trim().toLowerCase();
+        }
+
+        _applyGridFilter(keyword) {
+            this.searchKeyword = String(keyword || '');
+            const q = this._normalizeSearchText(this.searchKeyword);
+
+            this.allCards.forEach(card => {
+                const caption = card.querySelector('figcaption');
+                const title = this._normalizeSearchText(caption ? caption.textContent : '');
+                const matched = !q || title.includes(q);
+
+                card.classList.toggle('is-filter-hidden', !matched);
+            });
+
+            if (this.displayMode === 'grid') {
+                this._syncGridColumnsByTotal();
+                this._updateToolbar();
+            }
+        }
+
         _bindEvents() {
             const opts = this.opts;
+
+            //Grid filter
+            if (this.searchInputEl) {
+                this.searchInputEl.addEventListener('input', (e) => {
+                    this._applyGridFilter(e.target.value);
+                });
+            }
 
             // prev/next
             if (this.toolbarRowEl) {
@@ -891,11 +940,12 @@
 
             // Grid：顯示總張數
             if (this.wrapperEl.classList.contains('mode-grid')) {
+                const visibleCount = this.allCards.filter(card => !card.classList.contains('is-filter-hidden')).length;
                 const total = this.allCards.length;
 
                 // 支援使用者自訂 i18n.gridIndicator，沒有就 fallback DEFAULT_I18N.gridIndicator
                 const txt = (typeof i18n.gridIndicator === 'function')
-                    ? i18n.gridIndicator(total)
+                    ? i18n.gridIndicator(total, visibleCount)
                     : `共 ${total} 張`; // 最後保底（通常不會走到，除非你沒加 DEFAULT_I18N）
 
                 this.indicatorEl.textContent = txt;
@@ -1030,6 +1080,12 @@
                     c.style.zIndex = '';
                 });
 
+                if (this.searchInputEl) {
+                    this.searchInputEl.disabled = false;
+                    this.searchInputEl.value = this.searchKeyword || '';
+                }
+
+                this._applyGridFilter(this.searchKeyword);
                 this._updateToolbar();
                 if (this.btnMode) this.btnMode.textContent = this.opts.i18n.modeGrid;
             }, initial ? 0 : 180);
@@ -1041,6 +1097,14 @@
             if (this.holderEl) this.holderEl.classList.remove('grid-mode');
 
             if (this.carouselControlsEl) this.carouselControlsEl.style.display = '';
+
+            this.allCards.forEach(card => {
+                card.classList.remove('is-filter-hidden');
+            });
+
+            if (this.searchInputEl) {
+                this.searchInputEl.disabled = true;
+            }
 
             setTimeout(() => {
                 this.indexFloat = normalizeIndex(Math.round(this.indexFloat), this.total);

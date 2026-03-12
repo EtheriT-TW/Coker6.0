@@ -119,6 +119,37 @@ function SwiperInit(obj) {
         }
     });
 
+    function stopSwiperModalMedia(swiperInstance) {
+        if (!swiperInstance || !swiperInstance.wrapperEl) return;
+
+        var $wrapper = $(swiperInstance.wrapperEl);
+
+        // 停止 HTML5 video
+        $wrapper.find('video').each(function () {
+            try {
+                this.pause();
+                this.currentTime = 0;
+            } catch (_) { }
+        });
+
+        // 停止 iframe（YT / FB）
+        $wrapper.find('iframe').each(function () {
+            var $iframe = $(this);
+            var src = $iframe.attr('src') || $iframe.data('src') || '';
+
+            // 最保險：直接清空 src
+            if (src) {
+                $iframe.data('src', src);
+                $iframe.attr('src', '');
+            }
+        });
+
+        // 停掉 swiper autoplay
+        if (swiperInstance.autoplay && typeof swiperInstance.autoplay.stop === 'function') {
+            swiperInstance.autoplay.stop();
+        }
+    }
+
     $(".one_swiper").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
@@ -557,6 +588,19 @@ function SwiperInit(obj) {
         }
     });
     if ($(".picture-category").length > 0 && $("#SwiperModal").length > 0) {
+        function pushUniqueItem(items, seen, item) {
+            const key = [
+                item.type || "",
+                item.src || "",
+                item.ratio || ""
+            ].join("|");
+
+            if (seen.has(key)) return false;
+
+            seen.add(key);
+            items.push(item);
+            return true;
+        }
         if (!!!$(this).data("isinit")) {
             const $header_text = $("#SwiperModal .modal-header .imgalt");
             $header_text.text("");
@@ -628,7 +672,18 @@ function SwiperInit(obj) {
                 }
             };
             let pictureSwiper = new Swiper("#pictureSwiper", pictureSwiperOptions);
-
+            function restoreActivePictureSwiperMedia(index) {
+                var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(index);
+                var $video = activeSlide.find('video');
+                var $iframe = activeSlide.find('iframe');
+                if ($video.length > 0) {
+                    var startTime = parseFloat($video.data('starttime')) || 0;
+                    $video[0].currentTime = startTime;
+                    $video[0].play();
+                } else if ($iframe.length > 0 && $iframe.data('src') && !$iframe.attr('src')) {
+                    $iframe.attr('src', $iframe.data('src'));
+                }
+            }
             $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
                 pictureSwiper.removeAllSlides();
                 pictureSwiperThumbs.removeAllSlides();
@@ -639,7 +694,10 @@ function SwiperInit(obj) {
                 var index = $self.find("a").index(this);
                 var $items = [];
                 var $images = [];
-                $self.find(".templatecontent img,.swiper-slide img").each(function () {
+                var seenItems = new Set();
+                $self.find(".templatecontent img,.swiper-slide img").filter(function () {
+                    return $(this).closest('.swiper-thumbs').length === 0;
+                }).each(function () {
                     var obj = {};
                     var $a = $(this).parents("a");
                     var link = $a.data("link") || "";
@@ -649,10 +707,14 @@ function SwiperInit(obj) {
                     keep_time = keep_time * 1000;
                     obj['src'] = $(this).attr("src");
                     obj['alt'] = typeof ($(this).attr("alt")) == "undefined" ? "" : $(this).attr("alt");
-                    $images.push(obj);
-                    if (link.startsWith("https://www.youtube.com") || link.startsWith("https://www.facebook.com")) $items.push({ type: "iframe", src: link, ratio: ratio, startTime: start_time, keepTime: keep_time });
-                    else if (isVideoFile(link)) $items.push({ type: "video", src: link, ratio: ratio, startTime: start_time, keepTime: keep_time });
-                    else $items.push({ type: "image", src: obj['src'], keepTime: keep_time, alt: obj['alt'] });
+                    
+                    let item = null;
+                    if (link.startsWith("https://www.youtube.com") || link.startsWith("https://www.facebook.com")) item = { type: "iframe", src: link, ratio: ratio, startTime: start_time, keepTime: keep_time };
+                    else if (isVideoFile(link)) item = { type: "video", src: link, ratio: ratio, startTime: start_time, keepTime: keep_time };
+                    else item = { type: "image", src: obj['src'], keepTime: keep_time, alt: obj['alt'] };
+                    if (pushUniqueItem($items, seenItems, item)) {
+                        $images.push(obj);
+                    }
                 });
                 $header_text.text($images[index]['alt']);
 
@@ -678,7 +740,7 @@ function SwiperInit(obj) {
                     } else if (item.type === "iframe") {
                         newSlide = `<div class="swiper-slide" data-swiper-autoplay="${item.keepTime}">
                             <div class="video-content video-${item.ratio}">
-                                <iframe src="${item.src}" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+                                <iframe data-src="${item.src}" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
                             </div>
                         </div>`;
                     }
@@ -727,12 +789,14 @@ function SwiperInit(obj) {
                         $('#pictureSwiper').swiperBindEven(pictureSwiper);
                     }
                     pictureSwiper.slideToLoop(index, 0,false);
-                    pictureSwiperThumbs.slideTo(index, 0,false);
+                    pictureSwiperThumbs.slideTo(index, 0, false);
+                    restoreActivePictureSwiperMedia(index);
                 });
                 $('#SwiperModal').off("hide.bs.modal").on("hide.bs.modal", function () {
                     document.activeElement.blur();
                 });
                 $('#SwiperModal').off("hidden.bs.modal").on("hidden.bs.modal", function () {
+                    stopSwiperModalMedia(pictureSwiper);
                     self.focus();
                 });
                 return false;

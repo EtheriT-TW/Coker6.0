@@ -48,6 +48,7 @@
     {
       "output": "Shared/shared.min.js",
       "input": [
+        "wwwroot/Shared/js/JqueryExtends.js",
         "wwwroot/Shared/js/AnchorPoint.js",
         "wwwroot/Shared/js/Activity.js",
         "wwwroot/Shared/js/BGCanvas.js",
@@ -61,7 +62,6 @@
         "wwwroot/Shared/js/GetLatLng.js",
         "wwwroot/Shared/js/HoverEffect.js",
         "wwwroot/Shared/js/i18n.js",
-        "wwwroot/Shared/js/JqueryExtends.js",
         "wwwroot/Shared/js/LinkWithIcon.js",
         "wwwroot/Shared/js/MapMessage.js",
         "wwwroot/Shared/js/MarqueeSwiper.js",

@@ -4,6 +4,7 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Headers;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
 {
@@ -24,17 +25,34 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         [HttpGet]
         public async Task<IActionResult> DecryptFile(long fid)
         {
-            var decryptfile_response = await fileUploadAppService.DecryptFile(fid);
+            var result = await fileUploadAppService.DecryptFile(fid);
 
-            if (!decryptfile_response.Success) return StatusCode(403, decryptfile_response.ErrorMessage);
+            if (!result.Success) return BadRequest(result.ErrorMessage);
 
-            var contentType = decryptfile_response.ContentType ?? "application/octet-stream";
+            var disposition = CanInline(result.ContentType) ? "inline" : "attachment";
 
-            if (decryptfile_response.IsEncryptedFile)
+            var ext = Path.GetExtension(result.FileName);
+            var asciiFileName = $"download{ext}";
+
+            var contentDisposition = new ContentDispositionHeaderValue(disposition)
             {
-                return File(decryptfile_response.Bytes, contentType, decryptfile_response.FileName);
+                FileName = asciiFileName,
+                FileNameStar = result.FileName
+            };
+
+            Response.Headers["Content-Disposition"] = contentDisposition.ToString();
+
+            if (!result.IsEncryptedFile)
+            {
+                var stream = new FileStream(result.PhysicalPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                return File(stream, result.ContentType);
             }
-            return PhysicalFile(decryptfile_response.PhysicalPath, contentType, decryptfile_response.FileName);
+            else return File(result.Bytes, result.ContentType);
+        }
+        private bool CanInline(string? contentType)
+        {
+            if (string.IsNullOrWhiteSpace(contentType)) return false;
+            return contentType.StartsWith("image/") || contentType == "application/pdf" || contentType.StartsWith("text/") || contentType.StartsWith("video/");
         }
     }
 }

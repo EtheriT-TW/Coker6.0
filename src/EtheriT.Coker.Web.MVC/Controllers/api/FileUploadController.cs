@@ -10,6 +10,7 @@ using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
@@ -30,7 +31,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpPost]
         //[ValidateAntiForgeryToken]
-        public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files, [FromForm] string? areakey, [FromForm] int type, [FromForm] long? id, [FromForm] long? sid, [FromForm] int serno, [FromForm] bool isVisible, [FromForm] bool convert = true, [FromForm] bool isEncryption = false)
+        public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files, [FromForm] string? areakey, [FromForm] string? filename, [FromForm] int type, [FromForm] long? id, [FromForm] long? sid, [FromForm] int serno, [FromForm] bool isVisible, [FromForm] bool convert = true, [FromForm] bool isEncryption = false)
         {
             FileBindTypeEnum s = (FileBindTypeEnum)type;
             switch (s)
@@ -38,7 +39,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 case FileBindTypeEnum.產品:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Product", convert);
                 case FileBindTypeEnum.產品檔案:
-                    return await fileUploadAppService.uploadFiles(files, areakey ?? "", type, id ?? 0, (long)sid, serno, "Product/File", isVisible, false);
+                    return await fileUploadAppService.uploadFiles(files, filename ?? "", areakey ?? "", type, id ?? 0, (long)sid, serno, "Product/File", isVisible, false);
                 case FileBindTypeEnum.選單圖:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Menu", convert);
                 case FileBindTypeEnum.選單Icon:
@@ -52,7 +53,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 case FileBindTypeEnum.文章管理:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Article", convert);
                 case FileBindTypeEnum.文章檔案:
-                    return await fileUploadAppService.uploadFiles(files, areakey ?? "", type, id ?? 0, (long)sid, serno, "Article/File", isVisible , isEncryption);
+                    return await fileUploadAppService.uploadFiles(files, filename ?? "", areakey ?? "", type, id ?? 0, (long)sid, serno, "Article/File", isVisible, isEncryption);
                 case FileBindTypeEnum.進入廣告:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "EnterAd", convert);
                 case FileBindTypeEnum.自訂廣告:
@@ -128,6 +129,38 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> DeleteFileById(FileDeleteDto dto)
         {
             return await fileUploadAppService.deleteFileById(dto);
+        }
+        [HttpGet]
+        public async Task<IActionResult> DecryptFile(long fid)
+        {
+            var result = await fileUploadAppService.DecryptFile(fid);
+
+            if (!result.Success) return BadRequest(result.ErrorMessage);
+
+            var disposition = CanInline(result.ContentType) ? "inline" : "attachment";
+
+            var ext = Path.GetExtension(result.FileName);
+            var asciiFileName = $"download{ext}";
+
+            var contentDisposition = new ContentDispositionHeaderValue(disposition)
+            {
+                FileName = asciiFileName,
+                FileNameStar = result.FileName
+            };
+
+            Response.Headers["Content-Disposition"] = contentDisposition.ToString();
+
+            if (!result.IsEncryptedFile)
+            {
+                var stream = new FileStream(result.PhysicalPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                return File(stream, result.ContentType);
+            }
+            else return File(result.Bytes, result.ContentType);
+        }
+        private bool CanInline(string? contentType)
+        {
+            if (string.IsNullOrWhiteSpace(contentType)) return false;
+            return contentType.StartsWith("image/") || contentType == "application/pdf" || contentType.StartsWith("text/") || contentType.StartsWith("video/");
         }
     }
 }

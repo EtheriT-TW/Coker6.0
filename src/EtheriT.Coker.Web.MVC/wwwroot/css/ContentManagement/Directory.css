@@ -71,6 +71,11 @@ input[type="number"] {
     width: 1.5rem;
 }
 
+.data_upload .upload_list .size {
+    width: 4.5rem;
+    text-align: right;
+}
+
 .data_upload label.visible {
     position: relative;
     cursor: pointer;

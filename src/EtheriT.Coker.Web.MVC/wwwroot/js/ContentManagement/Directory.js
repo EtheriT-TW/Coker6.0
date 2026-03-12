@@ -362,79 +362,206 @@ function AddUpArticlet(success_text, error_text) {
             Fid: $("#ImageUpload .img_input_frame").data("delectList")
         });
     }
-    co.Articles.AddUp(data).done((result) => {
-        const success = function () {
-            Coker.sweet.success(success_text, null, true);
-            directoryDatailList.component.refresh();
-            if (plan == "canvas") location.hash = `ArticlesEditorView_${DirectoryId}_${result.message}`;
-            else location.hash = `Articles_${DirectoryId}`;
-        }
+    co.Articles.AddUp(data)
+        .done((result) => {
+            co.sweet.loading();
+            var requests = [];
 
-        if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").id == 0) {
-            var formData = new FormData();
-            formData.append("files", $("#ImageUpload .img_input").data("file").File);
-            formData.append("type", 6);
-            formData.append("sid", result.message);
-            formData.append("serno", 500);
-            co.File.Upload(formData).done(function () {
-                success();
-            });
-        } else success();
+            if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").id == 0) {
+                console.log($("#ImageUpload .img_input").data("file").File)
+                var formData = new FormData();
+                formData.append("files", $("#ImageUpload .img_input").data("file").File);
+                formData.append("type", 6);
+                formData.append("sid", result.message);
+                formData.append("serno", 500);
+                requests.push(
+                    wrapRequest(
+                        co.File.Upload(formData),
+                        {
+                            action: "圖片上傳",
+                            areaKey: "ImageUpload",
+                            fileName: $self.find("input[name='name']").val() || "未命名檔案",
+                            fileId: null,
+                            tempId: null,
+                        }
+                    )
+                )
+            }
 
-        if (total_files.length > 0) {
-            $(".data_upload > ul > li.upload_list").each(function () {
-                var $self = $(this);
-                var $parentarea = $self.parents(".data_upload");
-                var data = [];
-                if (typeof ($self.data("id")) != "undefined") data = total_files.find(item => $self.data("id") == item.Id);
-                else if (typeof ($self.data("tempid")) != "undefined") data = total_files.find(item => $self.data("tempid") == item.TempId);
+            if (total_files.length > 0) {
+                $(".data_upload > ul > li.upload_list").each(function () {
+                    var $self = $(this);
+                    var $parentarea = $self.parents(".data_upload");
+                    var data = [];
+                    if (typeof ($self.data("id")) != "undefined") data = total_files.find(item => $self.data("id") == item.Id);
+                    else if (typeof ($self.data("tempid")) != "undefined") data = total_files.find(item => $self.data("tempid") == item.TempId);
 
-                if (typeof (data["Id"]) == "undefined" || (!data["IsEncryption"] && $self.find(".btn_lock").hasClass("lock"))) {
-                    var formData = new FormData();
-                    formData.append("files", data["File"]);
-                    formData.append("areakey", $parentarea.data("key"));
-                    formData.append("type", 15);
-                    if (typeof (data["Id"]) != "undefined") formData.append("id", data["Id"]);
-                    formData.append("sid", result.message);
-                    formData.append("serno", $self.find(".ser_no").val());
-                    formData.append("isVisible", $self.find("label.visible input").prop("checked"));
-                    formData.append("isEncryption", $self.find(".btn_lock").hasClass("lock"));
-                    co.File.Upload(formData).done(function (result) {
-                        console.log(result)
-                    })
-                } else {
-                    var SerNoChange = data['SerNo'] != Number($self.find(".ser_no").val());
-                    var IsVisibleChange = data["IsVisible"] != $self.find("label.visible input").prop("checked");
-                    var AreaKeyChange = $self.data("old-editkey") != $parentarea.data("key");
+                    if (typeof (data["Id"]) == "undefined" || (!data["IsEncryption"] && $self.find(".btn_lock").hasClass("lock"))) {
+                        var formData = new FormData();
+                        formData.append("files", data["File"]);
+                        formData.append("areakey", $parentarea.data("key"));
+                        formData.append("type", 15);
+                        if (typeof (data["Id"]) != "undefined") formData.append("id", data["Id"]);
+                        formData.append("sid", result.message);
+                        formData.append("serno", $self.find(".ser_no").val());
+                        formData.append("filename", $self.find("input[name='name']").val());
+                        formData.append("isVisible", $self.find("label.visible input").prop("checked"));
+                        formData.append("isEncryption", $self.find(".btn_lock").hasClass("lock"));
+                        requests.push(
+                            wrapRequest(
+                                co.File.Upload(formData),
+                                {
+                                    action: "檔案上傳",
+                                    areaKey: $parentarea.data("key"),
+                                    fileName: $self.find("input[name='name']").val() || "未命名檔案",
+                                    fileId: typeof (data["Id"]) != "undefined" ? formData.append("id", data["Id"]) : null,
+                                    tempId: typeof ($self.data("tempid")) != "undefined" ? $self.data("tempid") : null,
+                                }
+                            )
+                        )
+                    } else {
+                        var SerNoChange = data['SerNo'] != Number($self.find(".ser_no").val());
+                        var FileNameChange = $self.data("oldname") != $self.find("input[name='name']").val();
+                        var IsVisibleChange = data["IsVisible"] != $self.find("label.visible input").prop("checked");
+                        var AreaKeyChange = $self.data("old-editkey") != $parentarea.data("key");
 
-                    if (SerNoChange || IsVisibleChange || AreaKeyChange) {
-                        co.File.fileDataChange({
-                            Id: data["Id"],
-                            SId: result.message,
-                            SerNo: SerNoChange ? $self.find(".ser_no").val() : null,
-                            IsVisible: IsVisibleChange ? $self.find("label.visible input").prop("checked") : null,
-                            AreaKey: AreaKeyChange ? $parentarea.data("key") : null,
-                        });
+                        if (SerNoChange || FileNameChange || IsVisibleChange || AreaKeyChange) {
+                            requests.push(
+                                wrapRequest(
+                                    co.File.fileDataChange({
+                                        Id: data["Id"],
+                                        SId: result.message,
+                                        SerNo: SerNoChange ? $self.find(".ser_no").val() : null,
+                                        FileName: FileNameChange ? $self.find("input[name='name']").val() : null,
+                                        IsVisible: IsVisibleChange ? $self.find("label.visible input").prop("checked") : null,
+                                        AreaKey: AreaKeyChange ? $parentarea.data("key") : null,
+                                    }),
+                                    {
+                                        action: "檔案修改",
+                                        areaKey: $parentarea.data("key"),
+                                        fileName: $self.find("input[name='name']").val() || "未命名檔案",
+                                        fileId: data["Id"],
+                                        tempId: null,
+                                    }
+                                )
+                            )
+                        }
                     }
-                }
-            });
+                });
 
-            //移除要移除的檔案
-            total_files.forEach(file => {
-                if ((typeof (file["IsDelete"]) != "undefined" && file["IsDelete"] == true && typeof (file["Id"]) != "undefined")) {
-                    var deleteid_list = [];
-                    deleteid_list.push(file["Id"]);
-                    co.File.DeleteFileById({
-                        Sid: parseInt(result.message),
-                        Type: 15,
-                        Fid: deleteid_list,
-                    })
-                }
+                //移除要移除的檔案
+                total_files.forEach(file => {
+                    if ((typeof (file["IsDelete"]) != "undefined" && file["IsDelete"] == true && typeof (file["Id"]) != "undefined")) {
+                        var deleteid_list = [];
+                        deleteid_list.push(file["Id"]);
+                        requests.push(
+                            wrapRequest(
+                                co.File.DeleteFileById({
+                                    Sid: parseInt(result.message),
+                                    Type: 15,
+                                    Fid: deleteid_list,
+                                }),
+                                {
+                                    action: "檔案刪除",
+                                    areaKey: "DeleteFile",
+                                    fileName: file["Name"] || "未命名檔案",
+                                    fileId: file["Id"],
+                                    tempId: file["TempId"],
+                                }
+                            )
+                        )
+                    }
+                });
+            }
+
+            $.when.apply($, requests).done(function () {
+                var results = [];
+
+                if (requests.length === 1) results = [arguments[0]];
+                else for (let i = 0; i < arguments.length; i++)  results.push(arguments[i]);
+
+                var errortext = [];
+
+                $.each(results, function (index, item) {
+                    if (!item) return;
+                    if (item.success) return;
+
+                    var name = item.meta?.fileName || `第 ${index + 1} 筆`;
+                    var actionfail = item.meta?.action ? item.meta.action + "失敗" : "";
+
+                    switch (item.httpStatus) {
+                        case 400:
+                            if ((item.responseText || "").includes("Request body too large")) errortext.push(`【${name}】檔案過大 ${actionfail}`);
+                            else errortext.push(`【${name}】資料格式錯誤 ${actionfail}`);
+                            break;
+                        case 413:
+                            errortext.push(`【${name}】檔案過大 ${actionfail}`);
+                            break;
+                        case 500:
+                            errortext.push(`【${name}】伺服器錯誤 ${actionfail}`);
+                            break;
+                        case 0:
+                            errortext.push(`【${name}】網路連線失敗 ${actionfail}`);
+                            break;
+                        default:
+                            errortext.push(`【${name}】錯誤 (${item.httpStatus}) ${actionfail}`);
+                            break;
+                    }
+                });
+
+                if (errortext.length > 0) co.sweet.error("錯誤", errortext.join("<br>"));
+                else co.sweet.success(success_text, null, true);
+
+                directoryDatailList.component.refresh();
+
+                if (plan == "canvas") location.hash = `ArticlesEditorView_${DirectoryId}_${result.message}`;
+                else location.hash = `Articles_${DirectoryId}`;
             });
-        }
-    });
+        })
+        .fail(function () {
+            co.sweet.error("文章儲存發生錯誤");
+        });
 }
+function wrapRequest(req, meta) {
+    var dfd = $.Deferred();
 
+    if (!req || typeof req.done !== "function" || typeof req.fail !== "function") {
+        dfd.resolve({
+            success: false,
+            meta: meta,
+            httpStatus: undefined,
+            responseText: "",
+            reason: "invalid-request-object"
+        });
+        return dfd.promise();
+    }
+
+    req.done(function (data, textStatus, jqXHR) {
+        const payload = {
+            success: true,
+            meta: meta,
+            data: data,
+            textStatus: textStatus,
+            httpStatus: jqXHR ? jqXHR.status : req.status,
+            responseText: jqXHR ? (jqXHR.responseText || "") : (req.responseText || "")
+        };
+        dfd.resolve(payload);
+    });
+
+    req.fail(function (jqXHR, textStatus, errorThrown) {
+        const payload = {
+            success: false,
+            meta: meta,
+            textStatus: textStatus,
+            error: errorThrown,
+            httpStatus: jqXHR ? jqXHR.status : req.status,
+            responseText: jqXHR ? (jqXHR.responseText || "") : (req.responseText || "")
+        };
+        dfd.resolve(payload);
+    });
+
+    return dfd.promise();
+}
 function MoveToContent() {
     $(DirectorytForms).removeClass("was-validated");
     if (!!keyId && isNaN(keyId)) {
@@ -607,7 +734,8 @@ function UploadListAdd(result, $target) {
     }
 
     var item = $($("#TemplateUploadList").html()).clone();
-    var item_serno = item.find(".ser_no"),
+    var item_name = item.find("input[name='name']"),
+        item_serno = item.find(".ser_no"),
         item_size = item.find("span.size"),
         item_btn_preview = item.find(".btn_preview"),
         item_btn_remove = item.find(".btn_remove"),
@@ -638,30 +766,24 @@ function UploadListAdd(result, $target) {
     if (typeof (file_num) == "undefined") file_num = 0;
     var file_num = $target.find("ul > li.upload_list").length;
 
+    $target.find("ul > li").each(function () {
+        var $self = $(this);
+        if ($self.hasClass("upload_list") && $self.find("input[name='name']").val() == "") {
+            $self.remove();
+        }
+    })
+
     if (result == null) {
         // 沒有上傳檔案的話執行此處內容
         // 新增新的欄位
         file_num += 1;
 
-        $target.find("ul > li").each(function () {
-            var $self = $(this);
-            if ($self.hasClass("upload_list") && $self.find(".title").text() == "") {
-                $self.remove();
-                file_num -= 1;
-            }
-        })
-
         item.data("tempid", tempId);
         item.data("serno", file_num);
         item_serno.val(file_num);
 
-        // 如果新增時沒有可選的檔案上傳類型且data裡面存有檔案上傳類型的話
-        if ($target.find(".select_frame").length == 0 && typeof ($target.data("uploadtype")) != "undefined")
-            // 直接指定該欄位為data裡面存的類型
-            item.data("uploadtype", $target.data("uploadtype"));
-        else
-            // 否則先設置為0
-            item.data("uploadtype", 0);
+        if ($target.find(".select_frame").length == 0 && typeof ($target.data("uploadtype")) != "undefined") item.data("uploadtype", $target.data("uploadtype"));
+        else item.data("uploadtype", 0);
 
         item.data("edit", false);
         item.on("click", function () {
@@ -669,12 +791,16 @@ function UploadListAdd(result, $target) {
         })
     } else if (typeof (result.id) == "undefined") {
         // 此處為新上傳檔案執行的內容
-        item.data("tempid", result.TempId);
-        item.data("serno", file_num);
+        item.attr({
+            "data-tempid": result.TempId,
+            "data-serno": file_num,
+            "data-uploadtype": result.Type,
+            "data-oldname": result.Name,
+            "data-edit": false,
+        })
+        item_name.val(result.Name);
+        item_name.attr("placeholder", result.Name);
         item_serno.val(file_num);
-        item.data("uploadtype", result.Type);
-        item.data("edit", false);
-        item.find(".title").text(result.Name);
         item_btn_preview.data("priviewUrl", URL.createObjectURL(result.File));
 
         if (result.File.size < 1024) item_size.text(result.File.size + " B");
@@ -689,13 +815,15 @@ function UploadListAdd(result, $target) {
             "data-id": result.id,
             "data-serno": file_num,
             "data-oldserno": file_num,
+            "data-oldname": result.name,
             "data-uploadtype": result.fileType,
             "data-edit": false,
             "data-old-isvisible": result.isVisible,
             "data-old-editkey": result.areakey,
         })
         item_serno.val(file_num);
-        item.find(".title").text(result.name);
+        item_name.val(result.name);
+        item_name.attr("placeholder", result.name);
         item_size.text(result.size);
         item_btn_preview.data("priviewUrl", result.link[0]);
         item_visible.find("input").prop("checked", result.isVisible);
@@ -721,7 +849,6 @@ function UploadListAdd(result, $target) {
         obj["IsDelete"] = false;
         obj["IsEncryption"] = result.isEncryption;
         total_files.push(obj);
-
     }
 
     // 以下為檔案排序判斷與調整
@@ -743,6 +870,12 @@ function UploadListAdd(result, $target) {
             }
         }
         item.data("serno", $self.val());
+    })
+
+    // 以下為檔名調整判斷
+    item_name.on("blur", function () {
+        var $self = $(this);
+        if ($self.val() == "") $self.val(item.data("oldname"));
     })
 
     item_btn_preview.on("click", function (e) {

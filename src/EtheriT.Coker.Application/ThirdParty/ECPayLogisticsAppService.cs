@@ -223,6 +223,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 return false;
             }
         }
+        private async Task<ECPayLogisticsCreateRequestDto> ECPayExpressRequestBody(ECPayThirdPartyDataDto ThirdPartyData, Core.Models.Order_Header ohdata, Core.Models.LogisticsSetting LogisticsSetting, List<string> prod_titles)
         {
             ECPayLogisticsCreateRequestDto RequestBody = new ECPayLogisticsCreateRequestDto();
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");

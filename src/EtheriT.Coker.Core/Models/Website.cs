@@ -60,5 +60,6 @@ namespace EtheriT.Coker.Core.Models
         public List<PaymentTypesValue> paymentTypesValues { get; set; }
         public List<Template> Templates { get; set; }
         public List<FlowSize> flowSizes { get; set; }
+        public ICollection<LogisticsBox> logisticsBoxes { get; set; }
     }
 }

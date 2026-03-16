@@ -10,5 +10,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType.Logistics
     {
         免運費 = 1,
         單筆計算 = 2,
+        依箱計費 = 3
     }
 }

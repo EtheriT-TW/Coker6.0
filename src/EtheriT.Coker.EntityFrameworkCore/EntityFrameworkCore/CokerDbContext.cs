@@ -38,6 +38,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Order_Header> Order_Headers { get; set; }
         public DbSet<Order_Details> Order_Details { get; set; }
         public DbSet<LogisticsSetting> LogisticsSettings { get; set; }
+        public DbSet<LogisticsBox> LogisticsBoxs { get; set; }
+        public DbSet<LogisticsBoxFee> LogisticsBoxFees { get; set; }
         public DbSet<PaymentType> PaymentTypes { get; set; }
         public DbSet<PaymentTypesValue> PaymentTypesValues { get; set; }
         public DbSet<LogisticsPaymentRestriction> LogisticsType_Payments { get; set; }
@@ -250,6 +252,20 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(l => l.FreigntStatusType).HasDefaultValue(FreigntStatusTypeEnum.一般);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
+            modelBuilder.Entity<LogisticsBox>(o => {
+                o.HasOne(u => u.Website).WithMany(u => u.logisticsBoxes).HasForeignKey(f => f.FK_WebsiteId);
+                o.Property(l => l.IsActive).HasDefaultValue(true);
+                o.HasIndex(x => new { x.FK_WebsiteId, x.CapacityPoint })
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0");
+            });
+            modelBuilder.Entity<LogisticsBoxFee>(o => {
+                o.HasOne(u => u.LogisticsSetting).WithMany(u => u.logisticsBoxFees).HasForeignKey(f => f.FK_LogisticsSettingId);
+                o.HasOne(u => u.logisticsBox).WithMany(u => u.logisticsBoxFees).HasForeignKey(f => f.FK_LogisticsBoxId);
+                o.HasIndex(x => new { x.FK_LogisticsBoxId, x.FK_LogisticsSettingId })
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0");
+            });
             modelBuilder.Entity<PaymentType>(o =>
             {
                 o.HasQueryFilter(e => !e.IsDeleted);
@@ -355,6 +371,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.Prod).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_Pid).OnDelete(DeleteBehavior.Cascade);
                 o.Property(p => p.IsTimePrice).HasDefaultValue(false);
+                o.Property(p => p.PackingPoint).HasDefaultValue(1);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<ShoppingCart>(o =>

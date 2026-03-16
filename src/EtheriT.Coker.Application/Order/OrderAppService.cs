@@ -182,7 +182,7 @@ namespace EtheriT.Coker.Application.Order
                 DetailBuildResult? detailResult = null;
 
                 var bonusOk = await shoppingCartAppService.checkBonusCanUse(uuid, dto.OrderDetails);
-                if(!bonusOk) throw new Exception("紅利點數不足，請重新確認後再送出訂單。");
+                if (!bonusOk) throw new Exception("紅利點數不足，請重新確認後再送出訂單。");
 
                 // 1) 正式訂單才需要檢查購物車 / 庫存 / 計算金額
                 if (!isTemp)
@@ -204,31 +204,15 @@ namespace EtheriT.Coker.Application.Order
                     // 4) PaySelect 區：目前你專案還沒用到，可以先空實作
                     // var paySelects = BuildPaySelectSection(header, dto);
 
-                    var logset = await db.LogisticsSettings.Where(e => e.Id == header.Shipping).FirstOrDefaultAsync();
-                    if(logset != null && ((int)logset.LogisticsType >= 8 && (int)logset.LogisticsType <= 15))
-                    {
-                        var CVSStoreId = "";
-                        foreach (var cart in detailResult.ShoppingCarts)
-                        {
-                            if (CVSStoreId == "")
-                            {
-                                CVSStoreId = cart.CVSStoreID;
-                                break;
-                            }
-                        }
-
-                        if (CVSStoreId != "")
-                        {
-                            var prod_titles = detailResult.StockDict.Values.Select(v => v.Prod.Title).ToList();
-                            await ecPayLogisticsAppService.ECPayLogisticsExpressCreate(header.Id, prod_titles);
-                        }
-                    }
-                    
                     // 5) 真正儲存所有資料（detail + cart + stock + logs）
                     await SaveOrderAsync(header, detailResult, logs, now, userId, isTemp);
 
                     await tx.CommitAsync();
                 });
+
+                var prod_titles = detailResult.StockDict.Values.Select(v => v.Prod.Title).ToList();
+                var LogisticsResponse = await ecPayLogisticsAppService.ECPayLogisticsExpressCreate(header.Id, prod_titles);
+                if (!LogisticsResponse.Success) throw new Exception(LogisticsResponse.Message);
 
                 // 6) Commit 後，處理付款訊息 + 寄信（失敗也不要 rollback 訂單）
                 await FillPaymentMessageAndSendMailAsync(dto, websiteId, header!, output);
@@ -327,11 +311,14 @@ namespace EtheriT.Coker.Application.Order
             }
             // 5) 訂單紅利抵扣
             var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
-            if (bonusSetting != null && bonusSetting.MaxRedemptionPercent != null && bonusSetting.MaxRedemptionPercent > 0) {
+            if (bonusSetting != null && bonusSetting.MaxRedemptionPercent != null && bonusSetting.MaxRedemptionPercent > 0)
+            {
                 var userBonus = (await bonusManagementAppService.GetQueryFrontUsersTotalAvaliableBonus(new List<Guid> { uuid })).FirstOrDefault();
-                if (userBonus != null) {
+                if (userBonus != null)
+                {
                     var memberBonusAmount = Math.Max(0, userBonus.TotalAvaliableBonus - totalBonus);
-                    if (memberBonusAmount > 0) {
+                    if (memberBonusAmount > 0)
+                    {
                         var bonusDiscount = Math.Floor(subtotal * bonusSetting.MaxRedemptionPercent.Value / 100);
                         var canRedeem = Math.Min(bonusDiscount, memberBonusAmount);
                         subtotal -= canRedeem;
@@ -411,7 +398,7 @@ namespace EtheriT.Coker.Application.Order
                 oh.Fk_Tid = token.RefreshToken;
                 oh.Fk_UserId = userId;
                 oh.CreationTime = now;
-               
+
                 db.Order_Headers.Add(oh);
                 await db.SaveChangesAsync();           // 取得 oh.Id 給後續 detail 用
 
@@ -1303,9 +1290,30 @@ namespace EtheriT.Coker.Application.Order
         }
         public async Task<List<EnumDictionaryDto>> GetShippingTypeEnum()
         {
-            Dictionary<string, int> shippingTypeEnums = Enum.GetValues(typeof(ShippingTypeEnum))
-                                        .Cast<ShippingTypeEnum>()
-                                        .ToDictionary(k => k.ToString(), v => (int)v);
+            long WebsiteId = await loginUserData.GetWebsiteId();
+
+            var removeList = new List<int> { };
+
+            var thirdPartyKeypairValues = await (from tpkv in db.ThirdPartyKeypairValues
+                                                 join tpk in db.ThirdPartyKeypairs on tpkv.FK_ThirdPartyKeypairId equals tpk.Id
+                                                 join tp in db.ThirdParties on tpk.FK_TPid equals tp.Id
+                                                 where tp.Title == "綠界物流"
+                                                 where tpkv.FK_WebsiteId == WebsiteId
+                                                 select new KeyValueDto() { Key = tpk.Code, Value = tpkv.Value }).ToListAsync();
+
+            if (!thirdPartyKeypairValues.Any()) removeList = Enumerable.Range(8, 10).ToList();
+            else
+            {
+                var thirdPartyDict = thirdPartyKeypairValues.ToDictionary(e => e.Key, e => e.Value);
+                if (thirdPartyDict.GetValueOrDefault("EnableB2C") == "false") removeList.AddRange(Enumerable.Range(8, 4).ToList());
+                if (thirdPartyDict.GetValueOrDefault("EnableC2C") == "false") removeList.AddRange(Enumerable.Range(12, 4).ToList());
+                //if (thirdPartyDict.GetValueOrDefault("EnableHomeDelivery") == "false") removeList.AddRange(Enumerable.Range(16, 2).ToList());
+                removeList.AddRange(Enumerable.Range(16, 2).ToList());
+            }
+
+            Dictionary<string, int> shippingTypeEnums = Enum.GetValues<ShippingTypeEnum>()
+                                                                                                              .Where(e => !removeList.Contains((int)e))
+                                                                                                              .ToDictionary(k => k.ToString(), v => (int)v);
 
             var enumDictionaryDto = from data in shippingTypeEnums
                                     select new EnumDictionaryDto
@@ -1408,19 +1416,20 @@ namespace EtheriT.Coker.Application.Order
                 long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
                 if (WebsiteID == 0) WebsiteID = await loginUserData.GetWebsiteId();
                 var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
-                var StoreSet = await storeSetAppService.getValues(new StoreSetGetValueInput { SiteId = WebsiteID, key= "HasInvoice" });
+                var StoreSet = await storeSetAppService.getValues(new StoreSetGetValueInput { SiteId = WebsiteID, key = "HasInvoice" });
                 var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
                 var order_details = await GetOrderDetails(ohid);
-                bool hasInvoice = 
+                bool hasInvoice =
                     StoreSet != null && StoreSet.Success && StoreSet.detailItem != null && StoreSet.detailItem.value != null &&
                     string.Join(",", StoreSet.detailItem.value) != "DisabledInvoice";
 
 
                 if (order_header != null && order_details != null)
                 {
-                    var InvoiceRecipient = order_header.InvoiceRecipient == 1 ? "訂購人" :  "收件人";
+                    var InvoiceRecipient = order_header.InvoiceRecipient == 1 ? "訂購人" : "收件人";
                     var InvoiceTable = string.Empty;
-                    if (hasInvoice) {
+                    if (hasInvoice)
+                    {
                         InvoiceTable = $"""
                         <tr class='thead'>
                             <td colspan='6'>發票類型：{order_header.PersonalInvoiceType}</td>
@@ -1437,7 +1446,8 @@ namespace EtheriT.Coker.Application.Order
                                     </tr>
                                 """;
                             }
-                        } else if (order_header.InvoiceType == InvoiceTypeEnum.公司發票)
+                        }
+                        else if (order_header.InvoiceType == InvoiceTypeEnum.公司發票)
                         {
                             InvoiceTable += $"<tr>" +
                                                             $"<td colspan='2'>發票抬頭</td>" +
@@ -1454,9 +1464,9 @@ namespace EtheriT.Coker.Application.Order
                         }
                         InvoiceTable += $"""<tr class='thead'><td scope='col' colspan='6'>發票寄送：{InvoiceRecipient}</td></tr>""";
                     }
-                    
+
                     var Shipping = await db.LogisticsSettings.Where(e => e.Id == order_header.Shipping).FirstOrDefaultAsync();
-                    var PaymentType = await db.PaymentTypes.Where(e => e.Id == order_header.Payment).Select(e => new { e.Title,e.FK_ThirdPartyId }).FirstOrDefaultAsync();
+                    var PaymentType = await db.PaymentTypes.Where(e => e.Id == order_header.Payment).Select(e => new { e.Title, e.FK_ThirdPartyId }).FirstOrDefaultAsync();
                     if (PaymentType == null) throw new Exception("查無付款方式資料");
 
                     var ThirdParty = await (from tpk in db.ThirdPartyKeypairs
@@ -1488,7 +1498,9 @@ namespace EtheriT.Coker.Application.Order
                                                                 $"<td colspan='4'>{data.Value}</td>" +
                                                                 $"</tr>";
                         }
-                    } else if (order_header.Payment == 29) { //郵政劃撥
+                    }
+                    else if (order_header.Payment == 29)
+                    { //郵政劃撥
                         PaymentTable = $"<tr>" +
                                                         $"<td colspan='6' class='text-red'>您選擇的付款方式為郵政劃撥，目前尚未付款完成，請您於繳費期限內完成，繳費完成後請主動與公司客服聯絡。若逾期未付清款項將自動取消本訂單，謝謝。</td>" +
                                                         $"</tr>" +
@@ -1513,12 +1525,12 @@ namespace EtheriT.Coker.Application.Order
                             <td  colspan='2' class='text-start'>{data.Title}</td>
                             <td>{Specification}</td>
                             <td class='text-end'>{(
-                                data.Price > 0?
+                                data.Price > 0 ?
                                     data.BonusPrice != null && data.BonusPrice > 0 ?
                                         data.Price.ToString("$#,##0") + $"{data.BonusPrice.Value.ToString("Ⓟ#,##0")}" :
                                         data.Price.ToString("$#,##0") :
                                     data.BonusPrice != null && data.BonusPrice > 0 ?
-                                        $"{data.BonusPrice.Value.ToString("Ⓟ#,##0")}":0
+                                        $"{data.BonusPrice.Value.ToString("Ⓟ#,##0")}" : 0
                             )}</td>
                             <td class='text-center'>{data.Quantity}</td>
                             <td class='text-end'>{(
@@ -1604,7 +1616,7 @@ namespace EtheriT.Coker.Application.Order
                  <td colspan='6' class='text-end text-bold'>消費總計<span class='text-red ms-1 text-size1_5'>{(order_header.Freight + order_header.Subtotal).ToString("$#,##0")}</span></td>
                  </tr>
                 {(
-                    order_header.Bonus != null && order_header.Bonus > 0 ? 
+                    order_header.Bonus != null && order_header.Bonus > 0 ?
                     $@"<tr>
                         <td colspan='6' class='text-end text-bold'>總使用紅利<span class='text-red ms-1 text-size1_25'>{order_header.Bonus.Value.ToString("$#,##0")}</span></td>
                     </tr>" :
@@ -1684,7 +1696,7 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 var webSiteId = await loginUserData.GetWebsiteId();
-                if(webSiteId == 0) webSiteId = loginUserData.GetFrontWebsiteId();
+                if (webSiteId == 0) webSiteId = loginUserData.GetFrontWebsiteId();
                 var order = await db.Order_Headers.Where(e => e.Id == dto.Id && e.FK_WebsiteId == webSiteId).FirstOrDefaultAsync();
                 if (order == null) throw new Exception("訂單不存在");
 

@@ -13,5 +13,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty
         public string Code { get; set; } = string.Empty;
         public string Value { get; set; } = string.Empty;
         public string PromptText { get; set; } = string.Empty;
+        public string InputType { get; set; } = string.Empty;
     }
 }

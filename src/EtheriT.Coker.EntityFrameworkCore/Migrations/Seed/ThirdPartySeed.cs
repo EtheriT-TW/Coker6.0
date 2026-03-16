@@ -1,4 +1,4 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 using EtheriT.Coker.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,7 +6,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
 {
     public static class ThirdPartySeed
     {
-        public static void Seed(ModelBuilder modelBuilder) {
+        public static void Seed(ModelBuilder modelBuilder)
+        {
             //金流
             modelBuilder.Entity<ThirdParty>().HasData(
                 new ThirdParty
@@ -16,6 +17,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     ser_no = 1,
                     CreatorUserId = 1,
+                    ServiceType = ThirdPartyServiceTypeEnum.Payment,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
 
                 }, new ThirdParty
@@ -25,6 +27,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     ser_no = 500,
                     CreatorUserId = 1,
+                    ServiceType = ThirdPartyServiceTypeEnum.Payment,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }, new ThirdParty
                 {
@@ -33,6 +36,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     ser_no = 500,
                     CreatorUserId = 1,
+                    ServiceType = ThirdPartyServiceTypeEnum.Payment,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }, new ThirdParty
                 {
@@ -41,6 +45,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     ser_no = 500,
                     CreatorUserId = 1,
+                    ServiceType = ThirdPartyServiceTypeEnum.Payment,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }, new ThirdParty
                 {
@@ -49,6 +54,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     ser_no = 2,
                     CreatorUserId = 1,
+                    ServiceType = ThirdPartyServiceTypeEnum.Payment,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdParty
                 {
@@ -57,6 +63,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     ser_no = 1,
                     CreatorUserId = 1,
+                    ServiceType = ThirdPartyServiceTypeEnum.Payment,
+                    CreationTime = new DateTime(2025, 12, 26, 15, 09, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdParty
+                {
+                    Id = 7,
+                    Title = "綠界物流",
+                    IsDeleted = false,
+                    ser_no = 1,
+                    CreatorUserId = 1,
+                    ServiceType = ThirdPartyServiceTypeEnum.Logistics,
                     CreationTime = new DateTime(2025, 12, 26, 15, 09, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }
             );
@@ -68,6 +84,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Title = "匯款銀行代號",
                     Code = "bankNo",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -76,6 +93,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Title = "匯款帳號",
                     Code = "account",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -84,6 +102,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Title = "戶名",
                     Code = "shopID",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -92,6 +111,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Title = "PchomePayAppId",
                     Code = "account",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -100,6 +120,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Title = "PchomePaySecre",
                     Code = "code1",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -109,6 +130,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     PromptText = "※預設為5天，最短1天，最長可設定為5天，超過一律以5天計算",
                     Code = "expire_days",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -117,6 +139,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Title = "Channel ID",
                     Code = "account",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -125,6 +148,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Title = "Channel Secret Key",
                     Code = "code1",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -133,6 +157,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Title = "商店代號",
                     Code = "MerchantID",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -140,8 +165,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     FK_TPid = 4,
                     Title = "平台代號",
                     PromptText = "※非專案合作請留空",
-                    Code = "PlatformID ",
+                    Code = "PlatformID",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -150,6 +176,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Title = "HashKey",
                     Code = "HashKey",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -158,6 +185,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Title = "HashIV",
                     Code = "HashIV",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -167,6 +195,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     PromptText = "※預設為3天，最短1天，最長可設定為60天，超過一律以60天計算",
                     Code = "ExpireDate",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -176,6 +205,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     PromptText = "※預設為7天，最短1天，最長可設定為30天，超過一律以30天計算",
                     Code = "StoreExpireDate_Barcode",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -185,6 +215,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     PromptText = "※預設為7天，最短1天，最長可設定為30天，超過一律以30天計算",
                     Code = "StoreExpireDate_CVS",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -193,6 +224,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Title = "郵局帳號",
                     Code = "PostAccount",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2025, 12, 26, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ThirdPartyKeypair
                 {
@@ -201,7 +233,81 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Title = "郵局戶名",
                     Code = "PostName",
                     CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
                     CreationTime = new DateTime(2025, 12, 26, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 18,
+                    FK_TPid = 7,
+                    Title = "商店代號",
+                    Code = "MerchantID",
+                    CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 19,
+                    FK_TPid = 7,
+                    Title = "平台代號",
+                    PromptText = "※非專案合作請留空",
+                    Code = "PlatformID",
+                    CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 20,
+                    FK_TPid = 7,
+                    Title = "HashKey",
+                    Code = "HashKey",
+                    CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 21,
+                    FK_TPid = 7,
+                    Title = "HashIV",
+                    Code = "HashIV",
+                    CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.text,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 22,
+                    FK_TPid = 7,
+                    Title = "是否啟用大宗寄倉",
+                    Code = "EnableB2C",
+                    CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.checkbox,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 23,
+                    FK_TPid = 7,
+                    Title = "是否啟用超商門市寄/取件",
+                    Code = "EnableC2C",
+                    CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.checkbox,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 24,
+                    FK_TPid = 7,
+                    Title = "是否代收貨款",
+                    Code = "IsCollection",
+                    CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.checkbox,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 25,
+                    FK_TPid = 7,
+                    Title = "是否啟用宅配",
+                    Code = "EnableHomeDelivery",
+                    CreatorUserId = 1,
+                    InputType = ThirdPartyKeypairInputTypeEnum.checkbox,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }
             );
             modelBuilder.Entity<PaymentType>().HasData(

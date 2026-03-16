@@ -1,0 +1,68 @@
+﻿@using EtheriT.Coker.Application.Shared.Dto.ThirdParty
+@using EtheriT.Coker.Application.Shared.Dto.enumType
+@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal;
+@model EtheriT.Coker.Application.Dto.ResponseMessageDto;
+<link rel="stylesheet" href="~/css/StoreSettings/LogisticsSettings.min.css" asp-append-version="true" />
+<script src="~/js/StoreSettings/LogisticsSettings.min.js" asp-append-version="true"></script>
+
+<div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
+    <div class="title fw-bold fs-3">物流設定</div>
+</div>
+<div id="WebDataMain">
+    <!-- Google Setting -->
+    <div class="py-2">
+        <form id="StoreSet" class="card border-0">
+            <div class="accordion" id="ThirdParty">
+                @if (Model.Success && Model.Object != null)
+                {
+                    GetAllThirdPartyOutputDto Object = (GetAllThirdPartyOutputDto)Model.Object;
+                    for (int i = 0; i < Object.thirdPartyItems.Count; i++)
+                    {
+                        var group = Object.thirdPartyItems[i];
+                        <div class="accordion-item" data-groupid="@group.Id">
+                            <h2 class="accordion-header" id="ThirdParty_Head@(group.Id)">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#ThirdParty_Body@(group.Id)" aria-expanded="true" aria-controls="ThirdParty_Body@(group.Id)">
+                                    <span class="material-symbols-outlined">
+                                        check
+                                    </span>
+                                    @group.Title
+                                </button>
+                            </h2>
+                            <div id="ThirdParty_Body@(group.Id)" class="accordion-collapse collapse" aria-labelledby="ThirdParty_Head@(group.Id)" data-bs-parent="#ThirdParty">
+                                <div class="accordion-body">
+                                    <fieldset id="thirdPartyForm_@group.Id">
+                                        @for (int j = 0; j < group.ThirdPartyKeypairs.Count; j++)
+                                        {
+                                            var item = group.ThirdPartyKeypairs[j];
+                                            var showPromptText = item.PromptText != "" ? "showPromptText" : "";
+                                            @switch (item.InputType)
+                                            {
+                                                case "text":
+                                                    <div class="d-flex align-items-center @showPromptText">
+                                                        <label class="form-label m-0" for="@item.Code">@item.Title</label>
+                                                        <input type="text" id="@item.Code" name="@item.Code" class="form-control text-center rounded mx-3" value="@item.Value" placeholder="">
+                                                        <span class="promptText">@item.PromptText</span>
+                                                    </div>
+                                                    break;
+                                                case "checkbox":
+                                                    <div class="d-flex align-items-center form-check @showPromptText">
+                                                        <input type="checkbox" id="@item.Code" name="@item.Code" class="form-check-input text-center rounded mx-3" value="@item.Value" @(item.Value == "true" ? "checked" : "") placeholder="">
+                                                        <label class="form-label m-0" for="@item.Code">@item.Title</label>
+                                                        <span class="promptText">@item.PromptText</span>
+                                                    </div>
+                                                    break;
+                                            }
+                                        }
+                                    </fieldset>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-center m-4">
+                        <button class="btn submit rounded-2 bg-danger text-white" type="submit">儲存</button>
+                    </div>
+                }
+            </div>
+        </form>
+    </div>
+</div>

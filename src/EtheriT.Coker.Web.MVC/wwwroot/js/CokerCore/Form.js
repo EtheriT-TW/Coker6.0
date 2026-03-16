@@ -1,6 +1,6 @@
 ﻿Coker.extend({
     Form: {
-        set: function (id,method) {
+        set: function (id, method) {
             const form = document.getElementById(id);
             form.addEventListener('submit', event => {
                 event.preventDefault();
@@ -56,7 +56,7 @@
                     case "images":
                         if (!!!$e.data("init")) {
                             $e.ImageUploadModalClear();
-                            $e.data("init",true)
+                            $e.data("init", true)
                         }
                         co.File.getImgFile({ Sid: obj[$e.data("target")], Type: $e.data("image-type"), Size: $e.data("image-size") }).done(function (file) {
                             if (file.length > 0)
@@ -122,7 +122,6 @@
                         formDataObject[$e.attr("name")] = co.Zipcode.getData($e);
                         break;
                     case "tags":
-                        console.log($e.find(".InputTag"));
                         formDataObject[$e.attr("name")] = $e.find(".InputTag").data("tagList");
                         break;
                 }
@@ -143,11 +142,9 @@
                 switch (element.type) {
                     case "checkbox":
                         if (!fieldsetData[element.name]) {
-                            fieldsetData[element.name] = [];
+                            fieldsetData[element.name] = "";
                         }
-                        if (element.checked) {
-                            fieldsetData[element.name].push(element.value);
-                        }
+                        fieldsetData[element.name] = element.checked;
                         break;
                     case "select-multiple":
                         fieldsetData[element.name] = Array.from(element.selectedOptions).map(option => option.value);
@@ -193,7 +190,7 @@
             });
             form.reset();
             if ($(form).find("[name='id']").length > 0) $(form).find("[name='id']").val(0);
-        }, getFileForm: function (id,type = 0) {
+        }, getFileForm: function (id, type = 0) {
             var formData = new FormData();
             formData.append("files", $(`#${id} .img_input`).data("file").File);
             formData.append("type", type);

@@ -5,6 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Dto\ThirdParty\ECPayLogistics\ECPayLogisticsCreateRequestHomeDto.cs" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DevExtreme.AspNet.Core" Version="24.2.6" />
     <PackageReference Include="DevExtreme.AspNet.Data" Version="5.0.0" />

@@ -156,6 +156,25 @@ function PageReady() {
                     buy_step_swiper.slideTo(0);
                     return;
                 } else {
+                    var select_cart_data = shopping_cart_data
+                        .filter(item => getSelectedCartIds().includes(item.Id))
+                        .reverse();
+
+                    var isdefault = true;
+
+                    for (var i = 0; i < select_cart_data.length; i++) {
+                        var $select_input = $('input[data-subtype="' + select_cart_data[i].logisticsSubType + '"]');
+                        if ($select_input.length > 0) {
+                            $select_input.val(select_cart_data[i].cvsStoreName);
+                            var $radio = $select_input.siblings('input[name="RadioShipping"]');
+                            $radio.prop('checked', true);
+                            isdefault = false;
+                            break;
+                        }
+                    }
+
+                    if (isdefault) $('input[data-isdefault="True"][name="RadioShipping"]').prop('checked', true);
+
                     enforceFreightVisibility();
                     OrdererFilled = FormCheck(OrdererForms);
                     RecipientFilled = FormCheck(RecipientForms);
@@ -819,6 +838,8 @@ function CartListAdd(data, $container) {
             obj['Quantity'] = data.quantity;
             obj['Bonus'] = data.bonus;
             obj['freight'] = data.freight;
+            obj['cvsStoreName'] = data.cvsStoreName;
+            obj['logisticsSubType'] = data.logisticsSubType;
             shopping_cart_data.push(obj);
             refreshHasProds();
         }
@@ -838,7 +859,7 @@ function CartListAdd(data, $container) {
         Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
             const $group = $self.closest('li.purchase_group');
             CartDelete($self, $self.data("scId"), "成功移除商品", "移除商品發生未知錯誤")
-            
+
             if ($group.length) {
                 if ($group.find('li.purchase_item').length === 0) {
                     $group.remove();
@@ -884,7 +905,7 @@ function CartListAdd(data, $container) {
     if ($template.find(".btn_move_to_favorites").length > 0) {
         if (islogin) {
             var $btn_favorites = $template.find(".btn_move_to_favorites");
-            if(data.quantity) $btn_favorites.parent("span").removeClass("d-none");
+            if (data.quantity) $btn_favorites.parent("span").removeClass("d-none");
 
             Coker.Favorites.Check(data.pId).done(function (check) {
                 if (check.success) {
@@ -1090,7 +1111,7 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity) {
             Coker.sweet.error(title, message, null, true);
             $qty.val(oldQty);
             return;
-        }        
+        }
 
         // 標記錯誤
         $li.addClass('cart-item-error');
@@ -1318,7 +1339,7 @@ function RadioPayment() {
 }
 function Step3Monitor() {
 
-    OrdererFilled = FormCheck(OrdererForms)    
+    OrdererFilled = FormCheck(OrdererForms)
     if (RecipientOpen) {
         RecipientFilled = FormCheck(RecipientForms);
     } else {
@@ -1599,7 +1620,7 @@ function PersonalInvoiceMode() {
     switch (this.value) {
         case "mobile":
             $(`.invoice-row[data-personal="mobile"]`).removeClass("d-none");
-            $(InvoicePersonalTypeForms).find("input").prop("required",true)
+            $(InvoicePersonalTypeForms).find("input").prop("required", true)
             $("#InvoiceForm").addClass("d-none");
             break;
         case "paper":
@@ -1962,7 +1983,7 @@ async function OrderHeaderAdd() {
                                         break;
                                     case "Default":
                                         setTimeout(function () {
-                                            buy_step_swiper.slideNext(); 
+                                            buy_step_swiper.slideNext();
                                             buy_step_swiper.update();
                                             buy_step_swiper.disable();
                                         }, 300);
@@ -2064,7 +2085,7 @@ function OrderSuccess(result) {
     }
     invoice_data.typeTitle = invoiceType_data.typeTitle;
     ShoppingCartDataInsert(invoice_data, $("#Step4 .invoice_type"));
-    
+
     switch (invoice_data.invoiceRecipient) {
         case 1:
             ShoppingCartDataInsert(order_data, $("#Step4 .invoice_data .orderer"));
@@ -2199,7 +2220,7 @@ function ShoppingCartDataInsert(data, $self) {
     $self.find("[data-key]").each(function () {
         var $this = $(this);
         var key = $this.data("key");
-        if (typeof ($this.data("key")) != "undefined" && !! $this.data("key")) {
+        if (typeof ($this.data("key")) != "undefined" && !!$this.data("key")) {
             if ($this.hasClass("price")) {
                 $this.text(data[key].toLocaleString());
             }

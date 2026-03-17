@@ -17,6 +17,7 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -45,13 +46,14 @@ namespace EtheriT.Coker.Application.ThirdParty
             ThirdPartyClient_Front = httpClientFactory.CreateClient("ThirdPartyClient_Front");
         }
 
-        public async Task<ResponseMessageDto> GetAllThirdParty()
+        public async Task<ResponseMessageDto> GetAllThirdParty(ThirdPartyServiceTypeEnum ServeiceType)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
                 var websiteId = await loginUserData.GetWebsiteId();
                 var result = from s in db.ThirdParties.Where(e => !e.IsDeleted)
+                             where s.ServiceType == ServeiceType
                              orderby s.ser_no
                              select new ThirdPartyItemOutputDto
                              {
@@ -84,6 +86,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                                     Title = k.Title ?? "",
                                                     Value = Value,
                                                     PromptText = k.PromptText ?? "",
+                                                    InputType = k.InputType.ToString() ?? "",
                                                 }).ToList()
                              };
                 response.Object = new GetAllThirdPartyOutputDto
@@ -113,9 +116,11 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (payment_type != null && payments != null)
                 {
-                    foreach (var payment in payments)
-                    {
-                        payment.Used = false;
+                    if (dto.ServiceType == ThirdPartyServiceTypeEnum.Payment ) {
+                        foreach (var payment in payments)
+                        {
+                            payment.Used = false;
+                        }
                     }
                     if (dto.PaymentType != null)
                     {

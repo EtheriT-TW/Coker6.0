@@ -1,9 +1,4 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.StoreSet;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 
 namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty
 {
@@ -11,5 +6,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty
     {
         public List<ThirdPartyGroupInputDto>? ThirdParties {  get; set; }
         public List<string>? PaymentType { get; set; }
+        public ThirdPartyServiceTypeEnum ServiceType { get; set; }
     }
 }

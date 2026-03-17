@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260315151756_Update_ThirdParty_Add_ServiceType_ThirdPartyKeypair_Add_InputType_Seed")]
+    partial class Update_ThirdParty_Add_ServiceType_ThirdPartyKeypair_Add_InputType_Seed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1456,119 +1459,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("FK_WebsiteId");
 
                     b.ToTable("JsonObjects");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsBox", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<int>("CapacityPoint")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreationTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
-
-                    b.Property<long>("CreatorUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("DeleterUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("FK_WebsiteId")
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("LastModifierUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Sort")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FK_WebsiteId", "CapacityPoint")
-                        .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
-
-                    b.ToTable("LogisticsBoxs");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsBoxFee", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreationTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
-
-                    b.Property<long>("CreatorUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("DeleterUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("FK_LogisticsBoxId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("FK_LogisticsSettingId")
-                        .HasColumnType("bigint");
-
-                    b.Property<decimal>("Fee")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("LastModifierUserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FK_LogisticsSettingId");
-
-                    b.HasIndex("FK_LogisticsBoxId", "FK_LogisticsSettingId")
-                        .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
-
-                    b.ToTable("LogisticsBoxFees");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsPaymentRestriction", b =>
@@ -3896,11 +3786,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int?>("Min_Qty")
                         .HasColumnType("int");
 
-                    b.Property<int>("PackingPoint")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(1);
-
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
@@ -3932,7 +3817,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             IsTimePrice = false,
                             Min_Qty = 1,
-                            PackingPoint = 0,
                             Price = 30000m,
                             Ser_No = 500,
                             Stock = 100
@@ -3949,7 +3833,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             IsTimePrice = false,
                             Min_Qty = 1,
-                            PackingPoint = 0,
                             Price = 28000m,
                             Ser_No = 500,
                             Stock = 100
@@ -3966,7 +3849,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             IsTimePrice = false,
                             Min_Qty = 1,
-                            PackingPoint = 0,
                             Price = 28500m,
                             Ser_No = 500,
                             Stock = 100
@@ -3983,7 +3865,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             IsTimePrice = false,
                             Min_Qty = 1,
-                            PackingPoint = 0,
                             Price = 9500m,
                             Ser_No = 500,
                             Stock = 100
@@ -4000,7 +3881,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             IsTimePrice = false,
                             Min_Qty = 1,
-                            PackingPoint = 0,
                             Price = 13000m,
                             Ser_No = 500,
                             Stock = 100
@@ -4017,7 +3897,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             IsTimePrice = false,
                             Min_Qty = 1,
-                            PackingPoint = 0,
                             Price = 24300m,
                             Ser_No = 500,
                             Stock = 100
@@ -4034,7 +3913,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             IsTimePrice = false,
                             Min_Qty = 1,
-                            PackingPoint = 0,
                             Price = 9500m,
                             Ser_No = 500,
                             Stock = 100
@@ -4051,7 +3929,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             IsTimePrice = false,
                             Min_Qty = 1,
-                            PackingPoint = 0,
                             Price = 14800m,
                             Ser_No = 500,
                             Stock = 100
@@ -7105,36 +6982,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("FK_Website");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsBox", b =>
-                {
-                    b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
-                        .WithMany("logisticsBoxes")
-                        .HasForeignKey("FK_WebsiteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Website");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsBoxFee", b =>
-                {
-                    b.HasOne("EtheriT.Coker.Core.Models.LogisticsBox", "logisticsBox")
-                        .WithMany("logisticsBoxFees")
-                        .HasForeignKey("FK_LogisticsBoxId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("EtheriT.Coker.Core.Models.LogisticsSetting", "LogisticsSetting")
-                        .WithMany("logisticsBoxFees")
-                        .HasForeignKey("FK_LogisticsSettingId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("LogisticsSetting");
-
-                    b.Navigation("logisticsBox");
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsPaymentRestriction", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.PaymentType", "PaymentType")
@@ -7828,18 +7675,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Directories");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsBox", b =>
-                {
-                    b.Navigation("logisticsBoxFees");
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsSetting", b =>
                 {
                     b.Navigation("MappingLogisticsSettingAndProds");
 
                     b.Navigation("Order_Headers");
-
-                    b.Navigation("logisticsBoxFees");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ObjectType", b =>
@@ -8036,8 +7876,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("flowSizes");
 
                     b.Navigation("jsonObjects");
-
-                    b.Navigation("logisticsBoxes");
 
                     b.Navigation("paymentTypesValues");
 

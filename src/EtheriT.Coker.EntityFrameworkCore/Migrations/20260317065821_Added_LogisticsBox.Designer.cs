@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    [Migration("20260316074244_Added_LogisticsBox")]
+    [Migration("20260317065821_Added_LogisticsBox")]
     partial class Added_LogisticsBox
     {
         /// <inheritdoc />
@@ -7002,7 +7002,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasOne("EtheriT.Coker.Core.Models.LogisticsSetting", "LogisticsSetting")
                         .WithMany("logisticsBoxFees")
                         .HasForeignKey("FK_LogisticsSettingId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("LogisticsSetting");

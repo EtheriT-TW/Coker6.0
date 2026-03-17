@@ -260,7 +260,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                     .HasFilter("[IsDeleted] = 0");
             });
             modelBuilder.Entity<LogisticsBoxFee>(o => {
-                o.HasOne(u => u.LogisticsSetting).WithMany(u => u.logisticsBoxFees).HasForeignKey(f => f.FK_LogisticsSettingId);
+                o.HasOne(u => u.LogisticsSetting).WithMany(u => u.logisticsBoxFees).HasForeignKey(f => f.FK_LogisticsSettingId).OnDelete(DeleteBehavior.NoAction);
                 o.HasOne(u => u.logisticsBox).WithMany(u => u.logisticsBoxFees).HasForeignKey(f => f.FK_LogisticsBoxId);
                 o.HasIndex(x => new { x.FK_LogisticsBoxId, x.FK_LogisticsSettingId })
                     .IsUnique()

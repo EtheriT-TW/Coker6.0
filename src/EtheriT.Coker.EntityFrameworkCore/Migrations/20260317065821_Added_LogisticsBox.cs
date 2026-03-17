@@ -78,65 +78,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         name: "FK_LogisticsBoxFees_LogisticsSettings_FK_LogisticsSettingId",
                         column: x => x.FK_LogisticsSettingId,
                         principalTable: "LogisticsSettings",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
-
-            migrationBuilder.UpdateData(
-                table: "Prod_Stocks",
-                keyColumn: "Id",
-                keyValue: 1L,
-                columns: new string[0],
-                values: new object[0]);
-
-            migrationBuilder.UpdateData(
-                table: "Prod_Stocks",
-                keyColumn: "Id",
-                keyValue: 2L,
-                columns: new string[0],
-                values: new object[0]);
-
-            migrationBuilder.UpdateData(
-                table: "Prod_Stocks",
-                keyColumn: "Id",
-                keyValue: 3L,
-                columns: new string[0],
-                values: new object[0]);
-
-            migrationBuilder.UpdateData(
-                table: "Prod_Stocks",
-                keyColumn: "Id",
-                keyValue: 4L,
-                columns: new string[0],
-                values: new object[0]);
-
-            migrationBuilder.UpdateData(
-                table: "Prod_Stocks",
-                keyColumn: "Id",
-                keyValue: 5L,
-                columns: new string[0],
-                values: new object[0]);
-
-            migrationBuilder.UpdateData(
-                table: "Prod_Stocks",
-                keyColumn: "Id",
-                keyValue: 6L,
-                columns: new string[0],
-                values: new object[0]);
-
-            migrationBuilder.UpdateData(
-                table: "Prod_Stocks",
-                keyColumn: "Id",
-                keyValue: 7L,
-                columns: new string[0],
-                values: new object[0]);
-
-            migrationBuilder.UpdateData(
-                table: "Prod_Stocks",
-                keyColumn: "Id",
-                keyValue: 8L,
-                columns: new string[0],
-                values: new object[0]);
 
             migrationBuilder.CreateIndex(
                 name: "IX_LogisticsBoxFees_FK_LogisticsBoxId_FK_LogisticsSettingId",

@@ -6999,7 +6999,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasOne("EtheriT.Coker.Core.Models.LogisticsSetting", "LogisticsSetting")
                         .WithMany("logisticsBoxFees")
                         .HasForeignKey("FK_LogisticsSettingId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("LogisticsSetting");

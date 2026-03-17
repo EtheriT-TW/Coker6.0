@@ -2,11 +2,10 @@
     const formId = "StoreSet";
     co.Form.set(formId, () => {
         const array = co.Object.objectToArray(co.Form.getJson(formId, true));
-        const PaymentType = array[co.Array.Search(array, { key: "paymentType" })];
         const savaData = {
-            PaymentType: PaymentType != null ? PaymentType.value : null,
+            PaymentType: null,
             ThirdParties: [],
-            ServiceType: 1,
+            ServiceType: 2,
         };
         $("#ThirdParty>.accordion-item").each(function () {
             const $e = $(this);

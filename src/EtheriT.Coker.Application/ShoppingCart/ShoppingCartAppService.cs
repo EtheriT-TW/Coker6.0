@@ -378,7 +378,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
             return response;
         }
-
         private void LogCartEventAsync(long pid, long? userId, Guid uuid, LogActionEnum action, int before, int after)
         {
             db.Prod_Logs.Add(new Prod_Log

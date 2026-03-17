@@ -652,11 +652,11 @@
                                 {
                                     var check = freight.Set_Default ? "checked" : "";
                                     <div class="form-check text-start col-12 col-sm-3 my-2">
-                                        <input id="FreeShip_@freight.Id" class="form-check-input" type="radio" name="RadioShipping" value="@freight.Id" data-freignt-status-type="@freight.freigntStatusType" data-freight="@freight.Freight" data-lowcon="@freight.Low_Con" data-disfreight="@freight.Dis_Freight" @check required>
+                                        <input id="FreeShip_@freight.Id" class="form-check-input" type="radio" name="RadioShipping" value="@freight.Id" data-freignt-status-type="@freight.freigntStatusType" data-freight="@freight.Freight" data-lowcon="@freight.Low_Con" data-disfreight="@freight.Dis_Freight" data-isdefault="@freight.Set_Default" @check required>
                                         <label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
                                         @if (freight.GetMap)
                                         {
-                                            <input type="button" class="btn_getmap bg-transparent border-0 ms-1 text-decoration-underline" value="選擇門市" data-subtype="@freight.LogisticsSubType">
+                                            <input type="button" class="btn_getmap bg-transparent border-0 ms-1 text-decoration-underline" value="選擇門市" data-subtype="@freight.LogisticsSubType" title="選擇門市">
                                         }
                                         @{
                                             if (!has_invalid)

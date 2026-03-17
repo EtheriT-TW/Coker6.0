@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Shared.ThirdParty;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
+using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.StoreSet;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,7 +22,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         }
         public async Task<IActionResult> PaymentSettings()
         {
-            var response = await _thirdPartyAppService.GetAllThirdParty();
+            var response = await _thirdPartyAppService.GetAllThirdParty(ThirdPartyServiceTypeEnum.Payment);
             ViewData["Title"] = "PaymentSettings";
             return View("PaymentSettings", response);
         }
@@ -38,6 +39,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         }
         public IActionResult BonusSettings() {
             return View();
+        }
+        public async Task<IActionResult> LogisticsSettings()
+        {
+            var response = await _thirdPartyAppService.GetAllThirdParty(ThirdPartyServiceTypeEnum.Logistics);
+            ViewData["Title"] = "LogisticsSettings";
+            return View("LogisticsSettings", response);
         }
     }
 }

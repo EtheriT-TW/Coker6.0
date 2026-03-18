@@ -30,6 +30,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await freightAppService.GetAllList(loadOptions);
         }
         [HttpGet]
+        public async Task<JsonResult> GetLogisticsBoxAllList(DataSourceLoadOptions loadOptions)
+        {
+            return await freightAppService.GetLogisticsBoxAllList(loadOptions);
+        }
+        [HttpGet]
         public async Task<FreightDto> GetOne(long Id)
         {
             return await freightAppService.GetOne(Id);

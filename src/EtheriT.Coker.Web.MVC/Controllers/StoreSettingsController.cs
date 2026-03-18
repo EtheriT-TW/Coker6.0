@@ -46,5 +46,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             ViewData["Title"] = "LogisticsSettings";
             return View("LogisticsSettings", response);
         }
+        public IActionResult LogisticsBox() {
+            return View();
+        }
     }
 }

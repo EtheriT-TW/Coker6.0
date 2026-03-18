@@ -8,7 +8,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayLogistics
         public string MerchantTradeDate { get; set; }
         public virtual string LogisticsType { get; } = "";
         public string LogisticsSubType { get; set; }
-        public int GoodsAmount { get; set; }
+        public decimal GoodsAmount { get; set; }
         public string IsCollection { get; set; }
         public string GoodsName { get; set; }
         public string SenderName { get; set; }

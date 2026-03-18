@@ -48,12 +48,11 @@ function ready() {
     $(".menu-item").on("focus", menuMouseover);
     $(".menu-item").on("blur", menuMouseout);
     if ($conten.length > 0) {
-        let s;
+        let s = $conten.html();
         let rawText = $conten.text();
         if (/&amp;(?:lt|gt|quot|apos|#\d+|#x[0-9a-f]+);/i.test(rawText)) s = co.stringManager.ReplaceAndSinge(rawText);
-        else if (/[<>]/.test(s)) s = co.stringManager.htmlEncode(rawText);
+        else if (/[<>]/.test(s)) s = co.stringManager.htmlEncode(s);
         else s = rawText;
-
         let ele = document.createElement('span');
         ele.innerHTML = s;
         if ($parentConten.length > 0 && $parentConten.text().indexOf("subpage_content") >= 0) {

@@ -306,6 +306,13 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Controller="StoreSettings",
                                 Action="LogisticsSettings",
                                 Icon="hand_package",
+                            },
+                            new JobMenu{
+                                PageName="LogisticsBox",
+                                Title="箱型設定",
+                                Controller="StoreSettings",
+                                Action="LogisticsBox",
+                                Icon="box_edit",
                             }
                         }
                     },

@@ -5,7 +5,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto
     {
         public string order_id { get; set; }
         public List<string> pay_type { get; set; }
-        public int amount { get; set; }
+        public decimal amount { get; set; }
         public List<PChomePayItemsDto> items { get; set; }
         public string return_url { get; set; }
         public string fail_return_url { get; set; }

@@ -748,7 +748,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             ohdata.TransactionId = OrderInfo.MerchantTradeNo;
                             db.SaveChanges();
 
-                            OrderInfo.TotalAmount = ohdata.Subtotal + ohdata.Freight;
+                            OrderInfo.TotalAmount = Convert.ToInt32(ohdata.Subtotal + ohdata.Freight);
 
                             if (_env.IsProduction()) OrderInfo.ReturnURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayReturn";
                             else OrderInfo.ReturnURL = "https://lcb.develop.coker.ezsale.tw/api/ThirdParty/ECPayReturn";

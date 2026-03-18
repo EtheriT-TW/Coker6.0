@@ -448,6 +448,8 @@ namespace EtheriT.Coker.Application
                 .ReverseMap()
                 .ForMember(e => e.ProdIds, option => option.MapFrom(c => c.MappingLogisticsSettingAndProds == null ? new List<ProdSelectedDto>() : c.MappingLogisticsSettingAndProds.Select(e => new ProdSelectedDto { Id = e.FK_LogisticsSettingId, FK_ProdId = e.FK_ProdId, IsDeleted = false,prod_Name = e.Prod.Title })));
 
+            CreateMap<GetLogisticsBoxAllListInputDto, LogisticsBox>().ReverseMap();
+
             //Permissions
             CreateMap<SavePermissionsItem, Core.Models.Permissions>().ReverseMap();
             //FileUpload

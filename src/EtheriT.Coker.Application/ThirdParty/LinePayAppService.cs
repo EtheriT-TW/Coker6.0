@@ -562,7 +562,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 {
                     RequestBody.currency = "TWD";
 
-                    RequestBody.amount = (ohdata.Subtotal + ohdata.Freight).ToString();
+                    RequestBody.amount = Convert.ToInt32(Math.Round(ohdata.Subtotal + ohdata.Freight)).ToString();
                     var oid = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
                     if (ohdata.TransactionId == null) RequestBody.orderId = $"{DateTime.Now.ToString("yyyyMMdd")}{oid}";
                     else
@@ -577,7 +577,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                     Packages.Add(new LinePayPackageDto()
                     {
                         id = oid,
-                        amount = (ohdata.Subtotal + ohdata.Freight).ToString(),
+                        amount = Convert.ToInt32(Math.Round(ohdata.Subtotal + ohdata.Freight)).ToString(),
                         userFee = 0.ToString(),
                         name = $"訂單編號：{oid}",
                     });
@@ -591,7 +591,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             name = od.Title,
                             imageUrl = $"{Website.DefaultUrl}{od.ImagePath}".Replace($"/{Website.OrgName}/", "/"),
                             quantity = od.Quantity.ToString(),
-                            price = od.Price.ToString(),
+                            price = Convert.ToInt32(Math.Round(od.Price)).ToString(),
                         });
                     }
 
@@ -602,7 +602,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                         name = "運費",
                         imageUrl = "",
                         quantity = 1.ToString(),
-                        price = ohdata.Freight.ToString(),
+                        price = Convert.ToInt32(Math.Round(ohdata.Freight)).ToString(),
                     });
                     RequestBody.packages = Packages;
 

@@ -211,8 +211,8 @@ namespace EtheriT.Coker.Application.Order
                 });
 
                 var prod_titles = detailResult.StockDict.Values.Select(v => v.Prod.Title).ToList();
-                var LogisticsResponse = await ecPayLogisticsAppService.ECPayLogisticsExpressCreate(header.Id, prod_titles);
-                if (!LogisticsResponse.Success) throw new Exception(LogisticsResponse.Message);
+                //var LogisticsResponse = await ecPayLogisticsAppService.ECPayLogisticsExpressCreate(header.Id, prod_titles);
+                //if (!LogisticsResponse.Success) throw new Exception(LogisticsResponse.Message);
 
                 // 6) Commit 後，處理付款訊息 + 寄信（失敗也不要 rollback 訂單）
                 await FillPaymentMessageAndSendMailAsync(dto, websiteId, header!, output);

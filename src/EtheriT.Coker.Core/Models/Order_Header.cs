@@ -47,12 +47,12 @@ namespace EtheriT.Coker.Core.Models
         public long Payment { get; set; }
         public OrderStatusEnum State { get; set; }
         public DateTime? CompletedDate { get; set; }
-        public int Subtotal { get; set; }
-        public int? Discount { get; set; }
+        public decimal Subtotal { get; set; }
+        public decimal? Discount { get; set; }
         public int? Bonus { get; set; }
         public int? GetBonus { get; set; }
         public long? CouponId { get; set; }
-        public int Freight { get; set; }
+        public decimal Freight { get; set; }
         public int? Service_Charge { get; set; }
         [StringLength(500)]
         public string? Memo { get; set; }

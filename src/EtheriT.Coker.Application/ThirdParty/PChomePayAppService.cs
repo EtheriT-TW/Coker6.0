@@ -402,7 +402,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
-        public async Task<ResponseMessageDto> PChomePayRefund(long ohid, int? refund)
+        public async Task<ResponseMessageDto> PChomePayRefund(long ohid, decimal? refund)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try

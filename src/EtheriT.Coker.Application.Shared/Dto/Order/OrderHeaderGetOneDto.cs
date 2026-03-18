@@ -33,12 +33,12 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public DateTime? CompletedDate { get; set; }
         public string StateStr { get; set; }
         public string Remark { get; set; }
-        public int Subtotal { get; set; }
-        public int Total { get; set; }
-        public int? Discount { get; set; }
+        public decimal Subtotal { get; set; }
+        public decimal Total { get; set; }
+        public decimal? Discount { get; set; }
         public int? Bonus { get; set; }
         public long? CouponId { get; set; }
-        public int Freight { get; set; }
+        public decimal Freight { get; set; }
         public int? Service_Charge { get; set; }
         public string CreationTime { get; set; }
         public string Memo { get; set; }

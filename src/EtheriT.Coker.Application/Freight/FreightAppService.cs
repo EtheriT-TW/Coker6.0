@@ -108,6 +108,24 @@ namespace EtheriT.Coker.Application.Freight
 
             return new JsonResult(new List<FreightGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
+        public async Task<JsonResult> GetLogisticsBoxAllList(DataSourceLoadOptions loadOptions) {
+            try {
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                var dataQuery = db.LogisticsBoxs
+                    .Where(x => x.FK_WebsiteId == WebsiteID)
+                    .Select(x => new GetLogisticsBoxAllListInputDto
+                    {
+                        Id = x.Id,
+                        Name = x.Name,
+                        IsActive = x.IsActive,
+                        Sort = x.Sort
+                    });
+                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            }
+            catch (Exception e) { }
+            return new JsonResult(new List<FreightGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
         public async Task<FreightDto> GetOne(long Id)
         {
             try

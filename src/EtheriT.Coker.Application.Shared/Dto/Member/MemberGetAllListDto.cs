@@ -16,7 +16,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Member
         public string? Address { get; set; }
         public string Email { get; set; }
         public int Bonus { get; set; }
-        public int? Total { get; set; }
+        public decimal? Total { get; set; }
         public long? Level { get; set; }
         public DateTime CreationTime { get; set; }
 

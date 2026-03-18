@@ -16,7 +16,7 @@ namespace EtheriT.Coker.Core.Models
         public int OldQuantity { get; set; }
         public int Quantity { get; set; }
         public decimal Price { get; set; }
-        public int? Discont { get; set; }
+        public decimal? Discont { get; set; }
         public int? Bonus { get; set; }
         public int? PriceType { get; set; }
         public bool IsAdditional { get; set; }

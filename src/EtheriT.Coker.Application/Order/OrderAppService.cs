@@ -210,9 +210,15 @@ namespace EtheriT.Coker.Application.Order
                     await tx.CommitAsync();
                 });
 
-                var prod_titles = detailResult.StockDict.Values.Select(v => v.Prod.Title).ToList();
-                //var LogisticsResponse = await ecPayLogisticsAppService.ECPayLogisticsExpressCreate(header.Id, prod_titles);
-                //if (!LogisticsResponse.Success) throw new Exception(LogisticsResponse.Message);
+                var LogisticsSetting = await db.LogisticsSettings.Where(e => e.Id == dto.Shipping).FirstOrDefaultAsync();
+                if (LogisticsSetting == null) throw new Exception("查無運費設置");
+                var LogisticsType = LogisticsSetting.LogisticsType;
+                if ((int)LogisticsType >= 8 && (int)LogisticsType <= 17)
+                {
+                    var prod_titles = detailResult.StockDict.Values.Select(v => v.Prod.Title).ToList();
+                    var LogisticsResponse = await ecPayLogisticsAppService.ECPayLogisticsExpressCreate(header.Id, prod_titles, LogisticsType);
+                    if (!LogisticsResponse.Success) throw new Exception(LogisticsResponse.Message);
+                }
 
                 // 6) Commit 後，處理付款訊息 + 寄信（失敗也不要 rollback 訂單）
                 await FillPaymentMessageAndSendMailAsync(dto, websiteId, header!, output);

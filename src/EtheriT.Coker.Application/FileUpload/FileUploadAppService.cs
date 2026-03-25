@@ -730,13 +730,6 @@ namespace EtheriT.Coker.Application
                             }
                             if (MediaLink == "") MediaLink = fu.DownloadFileName ?? "";
 
-                            if (fu.AreaKey != null && fu.AreaKey != fb.AreaKey)
-                            {
-                                fb.AreaKey = fu.AreaKey;
-                                fu.AreaKey = null;
-                                db.SaveChanges();
-                            }
-
                             var size = "0";
 
                             if (fu.Size < 1024) size = $"{fu.Size} B";

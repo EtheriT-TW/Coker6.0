@@ -3,7 +3,7 @@
         save: function (html, css) {
             var _dfr = $.Deferred();
             co.Templates.saveDefaultFooter({
-                Id: $("#gjs").data("id"),
+                Id: $("#gjs").data("id")||0,
                 SaveHtml: html,
                 SaveCss: css
             }).then(function (resutlt) {
@@ -15,7 +15,7 @@
         import: function (html, css) {
             var _dfr = $.Deferred();
             co.Templates.importDefaultFooter({
-                Id: $("#gjs").data("id"),
+                Id: $("#gjs").data("id")||0,
                 SaveHtml: html,
                 SaveCss: css
             }).then(function (resutlt) {

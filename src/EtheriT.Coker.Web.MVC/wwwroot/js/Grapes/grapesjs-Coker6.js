@@ -300,7 +300,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                             AssetManager.open();
                             AssetManager.onSelect((result) => {
                                 var LinkWithIconInit = $(".gjs-frame")[0].contentWindow.LinkWithIconInit;
-                                if (OldName == "") OldName = result.attributes.name;
+                                if (!!!OldName) OldName = result.attributes.name;
                                 editor.getSelected().set("attributes", {
                                     "href": result.id,
                                     "download": OldName,

@@ -466,6 +466,10 @@
 @media (max-width: 575.98px) {
     .js-gallery3d-page .main-stage {
         height: 80vh !important;
+        margin:0;
+    }
+    .gallery-toolbar-row {
+        padding: 0 4px;
     }
     .gallery3d-wrapper.mode-grid {
         width: 100%;
@@ -476,9 +480,6 @@
         max-width: 96vw;
         aspect-ratio: 1 / 1;
     }
-        .gallery-holder.grid-mode {
-            left: calc(50% - 15px);
-        }
     .gallery3d-wrapper.mode-grid .gallery3d-stage {
         grid-template-columns: repeat(2, minmax(calc(50% - 5px), 1fr));
         gap: 10px;

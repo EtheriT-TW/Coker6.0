@@ -31,18 +31,19 @@ namespace EtheriT.Coker.Application.JsonObject
             {
                 dto.FK_WebsiteId = await loginUserData.GetWebsiteId();
             }
-            Core.Models.JsonObject? header = await db.JsonObjects.Where(e => !e.IsDeleted).Where(e => e.Type == (int)dto.Type).Where(e => e.FK_WebsiteId == dto.FK_WebsiteId).FirstOrDefaultAsync();
+            Core.Models.JsonObject? header = await db.JsonObjects.Where(e => e.CacheKey == dto.CacheKey).Where(e => e.FK_WebsiteId == dto.FK_WebsiteId).FirstOrDefaultAsync();
             string jsonStr = dto.Json;
             if (header == null)
             {
                 header = new Core.Models.JsonObject
                 {
-                    Type = (int)dto.Type,
+                    CacheKey = dto.CacheKey,
                     FK_WebsiteId = dto.FK_WebsiteId.Value
                 };
                 db.JsonObjects.Add(header);
             }
             header.Json = jsonStr;
+            header.Version = dto.CacheVersion;
             await loginUserData.SaveChanges(header);
             return response;
         }

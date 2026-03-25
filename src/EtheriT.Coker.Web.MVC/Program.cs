@@ -371,6 +371,7 @@ builder.Services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 builder.Services.AddSingleton<IThumbnailGeneratorService, ThumbnailGeneratorService>();
 builder.Services.AddScoped<IMailTemplateAppService, MailTemplateAppService>();
 builder.Services.AddScoped<ICookieManagerAppService, CookieManagerAppService>();
+builder.Services.AddScoped<IWebsiteCacheStateAppService, WebsiteCacheStateAppService>();
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

@@ -44,14 +44,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 OrgName = await loginUserData.GetWebsiteOrgName(),
                 Jobs = new List<JobMenu> {
                     new JobMenu{
-                        PageName="Dashboard",
-                        Title="儀表板",
-                        Controller="Dashboard",
-                        Action="Index",
-                        Icon="public",
-                        CollapseId=""
-                    },
-                    new JobMenu{
                         PageName="OrderManagement",
                         Title="訂單管理",
                         Icon="receipt_long",
@@ -313,6 +305,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Controller="StoreSettings",
                                 Action="LogisticsBox",
                                 Icon="box_edit",
+                                Enable=false,
                             }
                         }
                     },
@@ -494,6 +487,14 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Icon=""
                             }
                         }
+                    },
+                    new JobMenu{
+                        PageName="Dashboard",
+                        Title="儀表板",
+                        Controller="Dashboard",
+                        Action="Index",
+                        Icon="public",
+                        CollapseId=""
                     }
                 }
             };

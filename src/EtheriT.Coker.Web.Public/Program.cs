@@ -235,6 +235,7 @@ builder.Services.AddScoped<IHtmlProcessor, HtmlProcessor>();
 builder.Services.AddScoped<ITemplatesApplicationService, TemplatesApplicationService> ();
 builder.Services.AddScoped<ICookieManagerAppService, CookieManagerAppService>();
 builder.Services.AddScoped<IMailTemplateAppService, MailTemplateAppService>();
+builder.Services.AddScoped<IWebsiteCacheStateAppService, WebsiteCacheStateAppService>();
 builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<CustomDtoMapper>();});
 
 builder.Services.AddSingleton<JumpRedirectCache>();

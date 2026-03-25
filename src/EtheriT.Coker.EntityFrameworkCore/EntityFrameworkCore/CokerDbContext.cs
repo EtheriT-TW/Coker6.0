@@ -100,7 +100,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<BonusLog> BonusLog { get; set; }
         public DbSet<BonusLiability> BonusLiabilities { get; set; }
         public DbSet<BonusLogDetail> bonusLogDetails { get; set; }
-
+        public DbSet<WebsiteCacheState> WebsiteCacheStates { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -130,7 +130,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<FrontUser>(o =>
             {
-                o.HasIndex(x => new { x.UUID, x.IsDeleted }).IsUnique(); ;
+                o.HasIndex(x => new { x.UUID, x.IsDeleted }).IsUnique();
                 o.HasOne(f => f.User).WithMany(u => u.frontUsers).HasForeignKey(f => f.FK_User);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
@@ -578,8 +578,17 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.Property(t => t.CreationTime).HasDefaultValueSql("getdate()");
                 o.HasOne(f => f.FK_Website).WithMany(w => w.jsonObjects).HasForeignKey(e => e.FK_WebsiteId);
+                o.Property(x => x.CacheKey).HasDefaultValue(WebsiteCacheKeys.Menu);
+                o.HasIndex(x => new { x.FK_WebsiteId, x.CacheKey }).IsUnique();
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
+            modelBuilder.Entity<WebsiteCacheState>(o =>
+            {
+                o.HasOne(f => f.Website).WithMany(w => w.websiteCacheStates).HasForeignKey(e => e.FK_WebsiteId);
+                o.Property(x => x.Version).HasDefaultValue(1);
+                o.HasIndex(x => new { x.FK_WebsiteId, x.CacheKey }).IsUnique();
+            });
+
             modelBuilder.Entity<Contact>(o =>
             {
                 o.HasOne(f => f.WebMenu).WithMany(w => w.Contacts).HasForeignKey(e => e.FK_WebMenuId);

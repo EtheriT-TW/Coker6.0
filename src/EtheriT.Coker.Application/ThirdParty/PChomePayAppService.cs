@@ -760,7 +760,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                     }
                     else throw new Exception("付款方式錯誤");
 
-                    PaymentBody.amount = ohdata.Subtotal + ohdata.Freight;
+                    PaymentBody.amount = Convert.ToInt32(Math.Round(ohdata.Subtotal + ohdata.Freight));
 
                     var items = new List<PChomePayItemsDto>();
                     var items_length = 0;

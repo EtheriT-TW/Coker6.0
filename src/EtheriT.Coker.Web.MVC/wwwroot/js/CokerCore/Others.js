@@ -216,7 +216,8 @@
             editor.setStyle(css);
             editor.setComponents(html);
         },
-        setFile: function (editor,id,type) {
+        setFile: function (editor, id, type) {
+            if(!!!id) return
             co.File.getFileList({ id: id, type: type }).done(function (result) {
                 if (result.success) {
                     var images = [];

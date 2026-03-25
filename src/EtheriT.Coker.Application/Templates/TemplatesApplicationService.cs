@@ -38,7 +38,8 @@ namespace EtheriT.Coker.Application.Templates
             CokerDbContext db, LoginUserData loginUserData, StringHandler stringHandler,
             IMapper mapper, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IHtmlProcessor htmlProcessor,
             IFileUploadAppService fileUploadAppService
-        ) {
+        )
+        {
             this.db = db;
             this.loginUserData = loginUserData;
             this.mapper = mapper;
@@ -82,10 +83,11 @@ namespace EtheriT.Coker.Application.Templates
                         if (footerEntity != null)
                         {
                             footerSection.footerTemplateDto = mapper.Map<FooterTemplateDto>(footerEntity);
-                            if (isFront) {
+                            if (isFront)
+                            {
                                 footerSection.footerTemplateDto.html = footerEntity.html;
                                 footerSection.footerTemplateDto.css = footerEntity.css;
-                            } 
+                            }
                         }
                     }
 
@@ -99,35 +101,42 @@ namespace EtheriT.Coker.Application.Templates
                 throw new Exception(ex.Message, ex);
             }
         }
-        public async Task<ResponseMessageDto> GetDefaultFooterTemplatesAsync() {
+        public async Task<ResponseMessageDto> GetDefaultFooterTemplatesAsync()
+        {
             var response = new ResponseMessageDto();
-            try {
+            try
+            {
                 var websiteId = await loginUserData.GetWebsiteId();
                 var templateSections = await db.TemplateSections
                     .Include(x => x.template)
                     .Include(x => x.footerTemplates)
                     .Where(x => x.sectionType == SectionTypeEnum.頁尾 && x.template.FK_WebsiteID == websiteId)
                     .FirstOrDefaultAsync();
-                if (templateSections != null)
+                if (templateSections != null && templateSections.footerTemplates != null)
                 {
                     response.Object = mapper.Map<TemplateSectionsDto>(templateSections);
                 }
-                else {
+                else
+                {
                     var temp = await getDefaultTemplate();
                     var section = await getDefaultTemplateSections(temp.Id, SectionTypeEnum.頁尾);
                     response.Object = mapper.Map<TemplateSectionsDto>(section);
                 }
                 response.Success = true;
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 response.Error = e.Message;
             }
 
             return response;
         }
-        private async Task<Template> getDefaultTemplate() {
+        private async Task<Template> getDefaultTemplate()
+        {
             var websiteId = await loginUserData.GetWebsiteId();
             var template = await db.Templates.Where(e => e.FK_WebsiteID == websiteId && e.Enable).FirstOrDefaultAsync();
-            if (template == null) {
+            if (template == null)
+            {
                 var web = await db.Websites.FirstOrDefaultAsync(e => e.Id == websiteId);
                 template = new Template
                 {
@@ -175,6 +184,17 @@ namespace EtheriT.Coker.Application.Templates
                 db.TemplateSections.Add(section);
                 await loginUserData.SaveChanges(section);
             }
+            else if (section.footerTemplates == null && typeEnum == SectionTypeEnum.頁尾)
+            {
+                var footer = new FooterTemplate
+                {
+                    FK_TemplateSectionsId = section.Id,
+                    saveCss = string.Empty,
+                    saveHtml = string.Empty,
+                };
+                section.footerTemplates = footer;
+                await loginUserData.SaveChanges(section);
+            }
             return section;
         }
         public async Task<ResponseMessageDto> importDefaultFooter(MenuSaveContenDto dto)
@@ -212,12 +232,14 @@ namespace EtheriT.Coker.Application.Templates
             {
                 throw new Exception(e.Message, e);
             }
-            finally {
+            finally
+            {
                 await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
         }
-        public async Task<ResponseMessageDto> saveDefaultFooter(MenuSaveContenDto dto) {
+        public async Task<ResponseMessageDto> saveDefaultFooter(MenuSaveContenDto dto)
+        {
             var response = new ResponseMessageDto();
             try
             {
@@ -227,7 +249,8 @@ namespace EtheriT.Coker.Application.Templates
                     .ThenInclude(x => x.template)
                     .Where(x => x.Id == dto.Id && x.templateSections.template.FK_WebsiteID == websiteId)
                     .FirstOrDefaultAsync();
-                if (foot != null) {
+                if (foot != null)
+                {
                     dto.SaveHtml = stringHandler.HtmlEncode(dto.SaveHtml);
                     foot.saveHtml = dto.SaveHtml;
                     foot.saveCss = dto.SaveCss;
@@ -246,7 +269,8 @@ namespace EtheriT.Coker.Application.Templates
             }
             return response;
         }
-        public async Task<ResponseMessageDto> saveDefaultHeader(HeaderTemplateDto dto) {
+        public async Task<ResponseMessageDto> saveDefaultHeader(HeaderTemplateDto dto)
+        {
             var response = new ResponseMessageDto();
             try
             {
@@ -272,9 +296,10 @@ namespace EtheriT.Coker.Application.Templates
                             foreach (var e in config.Sliders)
                             {
                                 var isDeleted = !dto.ContentConfig.Sliders.Any(x => x.DesktopImage == e.DesktopImage);
-                                if (!string.IsNullOrEmpty(e.DesktopImage) && !e.DesktopImage.StartsWith("http") && isDeleted) {
+                                if (!string.IsNullOrEmpty(e.DesktopImage) && !e.DesktopImage.StartsWith("http") && isDeleted)
+                                {
                                     var file = db.FileUploads.Where(f => f.DownloadFileName == e.DesktopImage).FirstOrDefault();
-                                    if(file!=null) await fileUploadAppService.deleteFile(file.GuidKey);
+                                    if (file != null) await fileUploadAppService.deleteFile(file.GuidKey);
                                 }
 
                                 isDeleted = !dto.ContentConfig.Sliders.Any(x => x.MobileImage == e.MobileImage);
@@ -302,7 +327,8 @@ namespace EtheriT.Coker.Application.Templates
             }
             return response;
         }
-        public async Task<ResponseMessageDto> getDefaultHeader() {
+        public async Task<ResponseMessageDto> getDefaultHeader()
+        {
             var response = new ResponseMessageDto();
             try
             {
@@ -312,11 +338,12 @@ namespace EtheriT.Coker.Application.Templates
                 {
                     var dto = mapper.Map<HeaderTemplateDto>(header);
                     HeaderContentConfigDto? config = JsonConvert.DeserializeObject<HeaderContentConfigDto>(header.ContentConfig);
-                    if (config != null) {
+                    if (config != null)
+                    {
                         var orgName = await loginUserData.GetWebsiteOrgName();
                         config.Sliders.ForEach(e =>
                         {
-                            if(!string.IsNullOrEmpty(e.DesktopImage) && !e.DesktopImage.StartsWith("http"))
+                            if (!string.IsNullOrEmpty(e.DesktopImage) && !e.DesktopImage.StartsWith("http"))
                                 e.DesktopImage = e.DesktopImage.Replace("/upload/", $"/upload/{orgName}/");
                             if (!string.IsNullOrEmpty(e.MobileImage) && !e.MobileImage.StartsWith("http"))
                                 e.MobileImage = e.MobileImage.Replace("/upload/", $"/upload/{orgName}/");

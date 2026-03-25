@@ -20,6 +20,5 @@ namespace EtheriT.Coker.Core.Models
         public Website Website { get; set; }
         public List<FileBind>? fileBinds { get; set; }
         public bool IsEncryption { get; set; } = false;
-        public string? AreaKey { get; set; }
     }
 }

@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260321084406_Update_Table_FileUpload_Remove_Areakey")]
+    partial class Update_Table_FileUpload_Remove_Areakey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1410,12 +1413,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("CacheKey")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("nvarchar(450)")
-                        .HasDefaultValue("menu");
-
                     b.Property<DateTime>("CreationTime")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -1451,13 +1448,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("Version")
-                        .HasColumnType("bigint");
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_WebsiteId", "CacheKey")
-                        .IsUnique();
+                    b.HasIndex("FK_WebsiteId");
 
                     b.ToTable("JsonObjects");
                 });
@@ -6504,60 +6500,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         });
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.WebsiteCacheState", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("CacheKey")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
-
-                    b.Property<DateTime>("CreationTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
-
-                    b.Property<long>("CreatorUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("DeleterUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("FK_WebsiteId")
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("LastModifierUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("Version")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasDefaultValue(1L);
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FK_WebsiteId", "CacheKey")
-                        .IsUnique();
-
-                    b.ToTable("WebsiteCacheStates");
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.storeSetItem", b =>
                 {
                     b.Property<long>("Id")
@@ -7813,17 +7755,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.WebsiteCacheState", b =>
-                {
-                    b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
-                        .WithMany("websiteCacheStates")
-                        .HasForeignKey("FK_WebsiteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Website");
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.storeSetItem", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.StoreSet", "storeSet")
@@ -8111,8 +8042,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("paymentTypesValues");
 
                     b.Navigation("thirdPartyKeypairValues");
-
-                    b.Navigation("websiteCacheStates");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Web.Core.Models.User", b =>

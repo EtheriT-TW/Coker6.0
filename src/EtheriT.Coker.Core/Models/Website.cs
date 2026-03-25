@@ -61,5 +61,6 @@ namespace EtheriT.Coker.Core.Models
         public List<Template> Templates { get; set; }
         public List<FlowSize> flowSizes { get; set; }
         public ICollection<LogisticsBox> logisticsBoxes { get; set; }
+        public ICollection<WebsiteCacheState> websiteCacheStates { get; set; }
     }
 }

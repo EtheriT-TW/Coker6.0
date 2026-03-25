@@ -193,11 +193,45 @@ namespace EtheriT.Coker.Application
         public long GetFrontWebsiteId() {
             return configuration.GetValue<long>("WebConfig:SiteId");
         }
+        public async Task<long> GetCommonWebsiteId(string orgName = "") {
+            var websiteId = await GetWebsiteId();
+            if (websiteId == 0) websiteId = GetFrontWebsiteId();
+
+            if (string.IsNullOrWhiteSpace(orgName)) return websiteId;
+
+            var rootOrgName = await GetWebsiteOrgName(websiteId);
+            if (string.Equals(rootOrgName, orgName, StringComparison.OrdinalIgnoreCase))
+                return websiteId;
+
+            var childId = await GetChildWesiteIdByOrgName(orgName);
+            if (childId != 0)
+                return childId;
+
+            return websiteId;
+        }
         public List<string> GetFrontChildOrgName()
         {
             var list = configuration.GetSection("WebConfig:childSiteOrgName").Get<List<string>>();
             if (list == null) list = new List<string>();
             return list;
+        }
+        public async Task<bool> IsChildOrgName(string orgName) { 
+            var childOrgNames = GetFrontChildOrgName();
+            if (childOrgNames.Contains(orgName)) { 
+                var siteId = GetFrontWebsiteId();
+                var siteIds = await db.Websites.Where(e => childOrgNames.Contains(e.OrgName)).Select(e => e.Id).ToListAsync();
+                var hasWeb = db.MappingWebsiteRelationship.Where(e => e.FatherId == siteId && siteIds.Contains(e.Id)).Any();
+                return hasWeb;
+            }
+            else return false;
+        }
+        public async Task<long> GetChildWesiteIdByOrgName(string orgName) {
+            long id = 0;
+            bool isChild = await IsChildOrgName(orgName);
+            if (!isChild) return id;
+            var web = await db.Websites.Where(e => e.OrgName == orgName).FirstOrDefaultAsync();
+            if (web != null) id = web.Id;
+            return id;
         }
         public async Task<string> GetWebsiteName() {
             Guid s = GetSecret();

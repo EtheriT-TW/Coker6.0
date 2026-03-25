@@ -48,9 +48,17 @@
                 autoPlayInterval: 2600,
                 autoPlayStartDelay: 5000,
                 dragPixelsPerStep: 140,
-                scaleMin: 0.80,
-                scaleMax: 1.08,
+                scaleMin: 0.76,
+                scaleMax: 1.04,
                 tiltX: -5,
+                spacingFactor: 1.0,         // 卡片間距安全係數
+                radiusMinRatio: 0.30,
+                radiusMaxRatio: 0.68,        // 原本 0.55，放大可用半徑
+                minCardWidthPercent: 12,     // 原本實際 fallback 是 14，太保守
+                denseModeStart: 18,          // 18 張開始進入密集模式
+                denseScaleMin: 0.70,
+                denseScaleMax: 0.96,
+                overlapPaddingPx: 18,         // 額外防碰撞緩衝
                 maxItems: null,
                 items: Array.isArray(opts.items) ? opts.items : null,
                 renderItem: (typeof opts.renderItem === 'function') ? opts.renderItem : null,
@@ -841,50 +849,80 @@
                 }
             }
 
+            const denseModeStart = (typeof opts.denseModeStart === 'number') ? opts.denseModeStart : 18;
+            const isDense = total >= denseModeStart;
+
+            const effectiveScaleMax = isDense
+                ? ((typeof opts.denseScaleMax === 'number') ? opts.denseScaleMax : 0.96)
+                : opts.scaleMax;
+
+            const effectiveScaleMin = isDense
+                ? ((typeof opts.denseScaleMin === 'number') ? opts.denseScaleMin : 0.70)
+                : opts.scaleMin;
+
             const spacingFactor = (typeof opts.spacingFactor === 'number' && opts.spacingFactor > 0)
                 ? opts.spacingFactor
-                : 1.10;
+                : 1.16;
+
+            const overlapPaddingPx = (typeof opts.overlapPaddingPx === 'number')
+                ? opts.overlapPaddingPx
+                : 18;
 
             const stepRad = 2 * Math.PI / total;
 
-            // 半徑上/下限：不要再讓 maxRadius = 1.20 這麼大，會直接撞旁邊 UI
-            const radiusMinRatio = (typeof opts.radiusMinRatio === 'number') ? opts.radiusMinRatio : 0.30;
-            const radiusMaxRatio = (typeof opts.radiusMaxRatio === 'number') ? opts.radiusMaxRatio : 0.55;
+            const radiusMinBase = (typeof opts.radiusMinRatio === 'number') ? opts.radiusMinRatio : 0.28;
+            const radiusMaxBase = (typeof opts.radiusMaxRatio === 'number') ? opts.radiusMaxRatio : 0.58;
+
+            let dynamicRadiusMaxRatio;
+
+            if (total <= 8) {
+                dynamicRadiusMaxRatio = 0.42;
+            } else if (total <= 12) {
+                dynamicRadiusMaxRatio = 0.46;
+            } else if (total <= 16) {
+                dynamicRadiusMaxRatio = 0.50;
+            } else if (total <= 20) {
+                dynamicRadiusMaxRatio = 0.54;
+            } else if (total <= 24) {
+                dynamicRadiusMaxRatio = 0.58;
+            } else {
+                dynamicRadiusMaxRatio = radiusMaxBase; // 例如 0.58 或你想給 0.60
+            }
+
+            const radiusMinRatio = radiusMinBase;
+            const radiusMaxRatio = Math.min(dynamicRadiusMaxRatio, radiusMaxBase);
 
             const minRadius = wrapperRect.width * radiusMinRatio;
             const maxRadius = wrapperRect.width * radiusMaxRatio;
 
-            // 依目前卡片寬度推 chord 所需半徑
-            let cardWidth = wrapperRect.width * this.cardWidthRatio;
-            let minRadiusByChord = (cardWidth * spacingFactor) / (2 * Math.sin(stepRad / 2));
+            // 用「目前卡片寬度 + 最大縮放 + 安全邊距」來算最小所需半徑
+            let cardWidth = wrapperRect.width * (this.cardWidthPercent / 100);
+            let effectiveCardWidth = (cardWidth * effectiveScaleMax) + overlapPaddingPx;
+            let minRadiusByChord = (effectiveCardWidth * spacingFactor) / (2 * Math.sin(stepRad / 2));
 
-            // 先用 chord 推半徑，但一定被 cap 在 [minRadius, maxRadius]
             let radius = clamp(minRadiusByChord, minRadius, maxRadius);
 
-            // ✅ 如果「理論所需半徑」比 maxRadius 還大：代表空間不夠，必須縮卡片寬度
+            // 如果在最大半徑下仍塞不下，就再縮卡片
             if (minRadiusByChord > maxRadius) {
-                // 在既定 radius 下，最多允許的 cardWidth（避免互撞）
-                const fitCardWidth = (2 * radius * Math.sin(stepRad / 2)) / spacingFactor;
+                const fitEffectiveWidth = (2 * radius * Math.sin(stepRad / 2)) / spacingFactor;
+                const fitCardWidth = Math.max(0, fitEffectiveWidth - overlapPaddingPx);
 
-                // 反推成百分比（以 wrapper 寬度 + scaleMax 為基準）
-                const targetPercent = (fitCardWidth / (wrapperRect.width * opts.scaleMax)) * 100;
+                const targetPercent = (fitCardWidth / wrapperRect.width) * 100;
 
                 const minCardWidthPercent = (typeof opts.minCardWidthPercent === 'number')
                     ? opts.minCardWidthPercent
-                    : 14; // 你可調：過小會看不清楚，但可避免重疊
+                    : 10;
 
                 const nextPercent = clamp(targetPercent, minCardWidthPercent, this.cardWidthPercent);
 
-                // 套用縮小後的卡片寬度（等比縮圖，不靠硬縮半徑）
                 if (Math.abs(nextPercent - this.cardWidthPercent) > 0.2) {
                     this.cardWidthPercent = nextPercent;
-                    this.cardWidthRatio = (this.cardWidthPercent / 100) * opts.scaleMax;
+                    this.cardWidthRatio = this.cardWidthPercent / 100;
                     this.cards.forEach(c => c.style.width = this.cardWidthPercent + '%');
 
-                    // 更新 cardWidth（後面 ring 位置計算需要）
-                    cardWidth = wrapperRect.width * this.cardWidthRatio;
-                    minRadiusByChord = (cardWidth * spacingFactor) / (2 * Math.sin(stepRad / 2));
-                    // radius 仍維持 cap 後值即可（我們的目標就是不突破 maxRadius）
+                    cardWidth = wrapperRect.width * (this.cardWidthPercent / 100);
+                    effectiveCardWidth = (cardWidth * effectiveScaleMax) + overlapPaddingPx;
+                    minRadiusByChord = (effectiveCardWidth * spacingFactor) / (2 * Math.sin(stepRad / 2));
                 }
             }
 
@@ -917,7 +955,7 @@
                 const z = Math.cos(rad) * radius - radius;
 
                 const dist = Math.min(Math.abs(normalized) / 180, 1);
-                const scale = opts.scaleMax - (opts.scaleMax - opts.scaleMin) * dist;
+                const scale = effectiveScaleMax - (effectiveScaleMax - effectiveScaleMin) * dist;
                 const opacity = 1 - dist * 0.60;
 
                 const extraTilt = (i === activeIndex && tiltX !== 0) ? -tiltX : 0;

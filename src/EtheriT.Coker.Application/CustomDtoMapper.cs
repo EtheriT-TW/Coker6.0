@@ -35,6 +35,7 @@ using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto;
 using EtheriT.Coker.Application.Shared.Dto.Token;
 using EtheriT.Coker.Application.Shared.Dto.UserHabits;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
@@ -302,6 +303,30 @@ namespace EtheriT.Coker.Application
                  .ForMember(e => e.ProdStockId, option => option.MapFrom(c => c.PSId))
                  .ForMember(e => e.Describe, option => option.MapFrom(c => c.Description))
                 .ReverseMap();
+
+            //ThirdParty
+            CreateMap<PayOrderItem, LinePayProductsDto>()
+                .ForMember(d => d.id, o => o.MapFrom(s => s.ItemId ?? ""))
+                .ForMember(d => d.name, o => o.MapFrom(s => s.Name))
+                .ForMember(d => d.imageUrl, o => o.MapFrom(s => s.ImageUrl ?? ""))
+                .ForMember(d => d.quantity, o => o.MapFrom(s => s.Quantity.ToString()))
+                .ForMember(d => d.price, o => o.MapFrom(s => s.PayUnitPrice.ToString()));
+
+            CreateMap<PayOrderData, LinePayPackageDto>()
+                .ForMember(d => d.id, o => o.MapFrom(s => s.OrderId))
+                .ForMember(d => d.amount, o => o.MapFrom(s => s.PayableAmount.ToString()))
+                .ForMember(d => d.userFee, o => o.MapFrom(s => "0"))
+                .ForMember(d => d.name, o => o.MapFrom(s => $"訂單編號：{s.OrderId}"))
+                .ForMember(d => d.products, o => o.MapFrom(s => s.Items));
+
+            CreateMap<PayOrderData, LinePayRequestBodyDto>()
+                .ForMember(d => d.amount, o => o.MapFrom(s => s.PayableAmount.ToString()))
+                .ForMember(d => d.currency, o => o.MapFrom(s => s.Currency))
+                .ForMember(d => d.orderId, o => o.MapFrom(s => $"{s.PaymentTime:yyyyMMdd}{s.OrderId}"))
+                .ForMember(d => d.packages, o => o.MapFrom(s => new List<PayOrderData> { s }))
+                .ForMember(d => d.redirectUrls, o => o.Ignore())
+                .ForMember(d => d.options, o => o.Ignore());
+
 
             //ShoppingCart
             CreateMap<Core.Models.ShoppingCart, Core.Models.Prod_Stock>()

@@ -9,7 +9,6 @@
     "use strict";
 
     var Coker = (w.Coker = w.Coker || {});
-
     // If you already use module-guard, keep consistent with your core. :contentReference[oaicite:0]{index=0}
     if (typeof Coker.defineModule === "function") {
         Coker.defineModule("page-init", factory);

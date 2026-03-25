@@ -1,6 +1,7 @@
 ﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.WebsiteCache;
 using EtheriT.Coker.Application.Shared.Dto.Webs;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
@@ -35,7 +36,7 @@ namespace EtheriT.Coker.Application
         public async Task<Urlset> GetUrlsetAsync() {
             SiteMapDto Sitemap = new SiteMapDto();
             foreach (var site in webSites) {
-                var header = await db.JsonObjects.Where(e => e.Type == (int)JsonObjectEnum.主選單).Where(e => e.FK_WebsiteId == site.Id).FirstOrDefaultAsync();
+                var header = await db.JsonObjects.Where(e => e.CacheKey == WebsiteCacheKeys.Menu).Where(e => e.FK_WebsiteId == site.Id).FirstOrDefaultAsync();
                 if (header != null && !string.IsNullOrEmpty(header.Json))
                 {
                     var list = JsonConvert.DeserializeObject<List<MenuItemDto>>(header.Json);

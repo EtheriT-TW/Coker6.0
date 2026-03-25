@@ -312,7 +312,9 @@ function DirectoryDataInsert($item, result) {
         }
 
         let path, target;
-        if (isSearch || window.location.pathname.toLowerCase().indexOf("search") > 0 || window.location.pathname.toLowerCase().indexOf("techcert") > 0) {
+        const pathSegments = window.location.pathname.toLowerCase().split('/');
+        const isSpecificPage = pathSegments.includes("search") || pathSegments.includes("techcert");
+        if (isSearch || isSpecificPage) {
             var links = data.link.split("?filter=");
             data.link = links[0];
             var filter = links.length > 1 ? "?filter=" + links[1] : "";

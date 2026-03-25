@@ -56,6 +56,7 @@ namespace EtheriT.Coker.Application.Order
         private readonly MailAppService mailAppService;
         private readonly IConfiguration configuration;
         private readonly IBonusManagementAppService bonusManagementAppService;
+        private readonly IFileUploadAppService fileUploadAppService;
         private readonly IMapper mapper;
         public OrderAppService(
             CokerDbContext db,
@@ -68,6 +69,7 @@ namespace EtheriT.Coker.Application.Order
             IBonusManagementAppService bonusManagementAppService,
             MailAppService mailAppService,
             IConfiguration configuration,
+            IFileUploadAppService fileUploadAppService,
             IMapper mapper
         )
         {
@@ -81,6 +83,7 @@ namespace EtheriT.Coker.Application.Order
             this.mailAppService = mailAppService;
             this.configuration = configuration;
             this.bonusManagementAppService = bonusManagementAppService;
+            this.fileUploadAppService = fileUploadAppService;
             this.mapper = mapper;
 
         }
@@ -1060,10 +1063,11 @@ namespace EtheriT.Coker.Application.Order
                                     stock.Stock -= scdata.Quantity;
                                     stock.LastModifierUserId = userid;
                                     stock.LastModificationTime = DateTime.Now;
-                                    subtotal += (decimal)scdata.Price * scdata.Quantity;
+                                    subtotal += scdata.Price * scdata.Quantity;
                                 }
                                 else throw new Exception("查無庫存資料");
                             }
+                            subtotal = subtotal - (ohdata.Discount ?? 0) - (ohdata.Bonus ?? 0);
                             if (subtotal == dto.Subtotal)
                             {
                                 ohdata.Subtotal = (int)Math.Round(subtotal, MidpointRounding.AwayFromZero);
@@ -1073,7 +1077,12 @@ namespace EtheriT.Coker.Application.Order
                                 db.SaveChanges();
                                 response.Success = true;
                             }
-                            else throw new Exception("變更訂單發生錯誤");
+                            else
+                            {
+                                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                                Console.WriteLine($"Order=>OrderRepay：計算金額與前端傳入金額不符，計算金額：{subtotal}，前端傳入金額：{dto.Subtotal}");
+                                throw new Exception("變更訂單發生錯誤");
+                            }
                         }
                         else throw new Exception("查無庫存資料");
                     }
@@ -2171,6 +2180,245 @@ namespace EtheriT.Coker.Application.Order
             if (string.IsNullOrEmpty(value)) return defaultValue;
             if (!int.TryParse(value, out var parsed)) return defaultValue;
             return Math.Clamp(parsed, min, max);
+        }
+        public async Task<ResponseMessageDto> GetForPaymentAsync(long ohid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var websiteId = await loginUserData.GetCommonWebsiteId();
+                List<OrderStatusEnum> canPayStates = new List<OrderStatusEnum>() { OrderStatusEnum.待確認, OrderStatusEnum.待付款, OrderStatusEnum.付款失敗 };
+                var order = await db.Order_Headers.AsNoTracking().Where(o => o.Id == ohid && canPayStates.Contains(o.State) && o.FK_WebsiteId == websiteId)
+                    .Select(x => new
+                    {
+                        x.Id,
+                        OrderNo = x.Id.ToString("D9"),
+                        PaymentTime = DateTime.Now,
+                        ShippingFee = x.Freight,
+                        UseBonusAmount = x.Bonus ?? 0,
+                        CouponDiscount = 0m,
+                        Discount = x.Discount ?? 0
+                    }).FirstOrDefaultAsync();
+                if (order == null) throw new Exception("查無訂單資料或訂單狀態不正確");
+
+                var details = await db.Order_Details
+                    .AsNoTracking()
+                    .Where(x => x.FK_OId == ohid && !x.IsDeleted)
+                    .Select(x => new
+                    {
+                        DetailId = x.Id,
+                        CartId = x.ShoppingCart != null ? x.ShoppingCart.Id : 0,
+                        ProductId = x.ShoppingCart != null && x.ShoppingCart.Prod_Stock != null
+                            ? x.ShoppingCart.Prod_Stock.FK_Pid
+                            : 0,
+                        ProductName =
+                            x.ShoppingCart != null && !string.IsNullOrWhiteSpace(x.ShoppingCart.ProdName)
+                                ? x.ShoppingCart.ProdName
+                                : (x.ShoppingCart != null && x.ShoppingCart.Prod_Stock != null && x.ShoppingCart.Prod_Stock.Prod != null ? x.ShoppingCart.Prod_Stock.Prod.Title : null),
+                        Quantity = x.ShoppingCart != null ? x.ShoppingCart.Quantity : 0,
+                        UnitPrice = x.ShoppingCart != null ? x.ShoppingCart.Price : 0m
+                    })
+                    .ToListAsync();
+                if (!details.Any()) throw new Exception("查無訂單明細資料");
+
+                var payData = new PayOrderData
+                {
+                    OrderId = order.OrderNo,
+                    PaymentTime = order.PaymentTime,
+                    Currency = "TWD"
+                };
+                var prodIds = details.Select(x => x.ProductId).Where(x => x > 0).Distinct().ToList();
+                var prodImages = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto { Sid = prodIds, Size = 3, Type = (int)FileBindTypeEnum.產品 });
+                var Website = await db.Websites.Where(e => e.Id == websiteId).FirstOrDefaultAsync();
+                foreach (var detail in details)
+                {
+                    if (detail.Quantity <= 0) throw new Exception($"明細 {detail.DetailId} 數量不可小於等於 0");
+                    if (detail.UnitPrice < 0) throw new Exception($"明細 {detail.DetailId} 單價不可小於 0");
+
+                    var productName = string.IsNullOrWhiteSpace(detail.ProductName)
+                        ? $"商品#{detail.CartId}"
+                        : detail.ProductName;
+
+                    decimal originalLineAmount = detail.UnitPrice * detail.Quantity;
+                    var imgUrl = prodImages.FirstOrDefault(x => x.Sid == detail.ProductId)?.Link ?? "";
+                    if (string.IsNullOrEmpty(imgUrl) || Website == null) imgUrl = null;
+                    else imgUrl = $"{Website.DefaultUrl}{imgUrl}";
+                    payData.Items.Add(new PayOrderItem
+                    {
+                        ItemId = detail.ProductId.ToString(),
+                        Name = productName,
+                        Quantity = detail.Quantity,
+                        OriginalUnitPrice = detail.UnitPrice,
+                        OriginalLineAmount = originalLineAmount,
+                        PayUnitPrice = (int)Math.Round(detail.UnitPrice, MidpointRounding.AwayFromZero),
+                        PayLineAmount = (int)Math.Round(originalLineAmount, MidpointRounding.AwayFromZero),
+                        ImageUrl = imgUrl,
+                        IsShipping = false
+                    });
+                }
+
+                decimal shippingFee = order.ShippingFee;
+                if (shippingFee > 0)
+                {
+                    payData.Items.Add(new PayOrderItem
+                    {
+                        ItemId = "shipping",
+                        Name = "運費",
+                        Quantity = 1,
+                        OriginalUnitPrice = shippingFee,
+                        OriginalLineAmount = shippingFee,
+                        PayUnitPrice = (int)Math.Round(shippingFee, MidpointRounding.AwayFromZero),
+                        PayLineAmount = (int)Math.Round(shippingFee, MidpointRounding.AwayFromZero),
+                        IsShipping = true
+                    });
+                }
+
+                int totalAdjustment = 0;
+                if (order.UseBonusAmount > 0)
+                {
+                    int bonus = order.UseBonusAmount;
+                    payData.Adjustments.Add(new PayOrderAdjustment
+                    {
+                        Type = "Bonus",
+                        Name = "紅利折抵",
+                        Amount = bonus
+                    });
+                    totalAdjustment += bonus;
+                }
+
+                if (order.CouponDiscount > 0)
+                {
+                    int coupon = (int)Math.Round(order.CouponDiscount, MidpointRounding.AwayFromZero);
+                    payData.Adjustments.Add(new PayOrderAdjustment
+                    {
+                        Type = "Coupon",
+                        Name = "優惠券折抵",
+                        Amount = coupon
+                    });
+                    totalAdjustment += coupon;
+                }
+
+                if (order.Discount > 0)
+                {
+                    int discount = (int)Math.Round(order.Discount, MidpointRounding.AwayFromZero);
+                    payData.Adjustments.Add(new PayOrderAdjustment
+                    {
+                        Type = "Discount",
+                        Name = "訂單折抵",
+                        Amount = discount
+                    });
+                    totalAdjustment += discount;
+                }
+
+                var targetItems = payData.Items.Where(x => !x.IsShipping && x.PayLineAmount > 0).ToList();
+                int goodsTotal = targetItems.Sum(x => x.PayLineAmount);
+
+                if (totalAdjustment > goodsTotal) throw new Exception("折抵金額不可大於商品總額");
+
+                if (totalAdjustment > 0)
+                {
+                    int allocated = 0;
+
+                    for (int i = 0; i < targetItems.Count; i++)
+                    {
+                        var item = targetItems[i];
+                        int share = i == targetItems.Count - 1
+                            ? totalAdjustment - allocated
+                            : (int)Math.Floor((decimal)totalAdjustment * item.PayLineAmount / goodsTotal);
+
+                        if (i != targetItems.Count - 1)
+                        {
+                            allocated += share;
+                        }
+
+                        item.PayLineAmount -= share;
+                        if (item.PayLineAmount < 0)
+                        {
+                            item.PayLineAmount = 0;
+                        }
+                    }
+                }
+
+                payData.Items = NormalizePayItems(payData.Items);
+                payData.PayableAmount = payData.Items.Sum(x => x.PayLineAmount);
+                response.Object = payData;
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
+        }
+        private List<PayOrderItem> NormalizePayItems(List<PayOrderItem> items)
+        {
+            List<PayOrderItem> result = new List<PayOrderItem>();
+
+            foreach (var item in items)
+            {
+                if (item.Quantity <= 0)
+                    throw new Exception($"品項 {item.Name} 的數量不可小於等於 0");
+
+                if (item.PayLineAmount < 0)
+                    throw new Exception($"品項 {item.Name} 的支付金額不可小於 0");
+
+                // 運費或單件商品，直接處理
+                if (item.Quantity == 1)
+                {
+                    item.PayUnitPrice = item.PayLineAmount;
+                    result.Add(item);
+                    continue;
+                }
+
+                int basePrice = item.PayLineAmount / item.Quantity;
+                int remainder = item.PayLineAmount % item.Quantity;
+
+                // 可整除，維持一筆
+                if (remainder == 0)
+                {
+                    item.PayUnitPrice = basePrice;
+                    result.Add(item);
+                    continue;
+                }
+
+                // 不可整除，拆成兩筆
+                int lowQty = item.Quantity - remainder;
+                int highQty = remainder;
+
+                if (lowQty > 0)
+                {
+                    result.Add(new PayOrderItem
+                    {
+                        ItemId = item.ItemId,
+                        Name = item.Name,
+                        Quantity = lowQty,
+                        OriginalUnitPrice = item.OriginalUnitPrice,
+                        OriginalLineAmount = item.OriginalUnitPrice * lowQty,
+                        PayUnitPrice = basePrice,
+                        PayLineAmount = basePrice * lowQty,
+                        IsShipping = item.IsShipping,
+                        ImageUrl = item.ImageUrl
+                    });
+                }
+
+                if (highQty > 0)
+                {
+                    result.Add(new PayOrderItem
+                    {
+                        ItemId = item.ItemId,
+                        Name = item.Name,
+                        Quantity = highQty,
+                        OriginalUnitPrice = item.OriginalUnitPrice,
+                        OriginalLineAmount = item.OriginalUnitPrice * highQty,
+                        PayUnitPrice = basePrice + 1,
+                        PayLineAmount = (basePrice + 1) * highQty,
+                        IsShipping = item.IsShipping,
+                        ImageUrl = item.ImageUrl
+                    });
+                }
+            }
+
+            return result;
         }
     }
 }

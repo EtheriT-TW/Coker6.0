@@ -34,14 +34,15 @@ namespace EtheriT.Coker.Application
         private readonly CokerDbContext db;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly LoginUserData loginUserData;
-		private readonly StringHandler stringHandler;
-		private readonly IMapper mapper;
+        private readonly StringHandler stringHandler;
+        private readonly IMapper mapper;
         private readonly IConfiguration Configuration;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly IJsonObjectAppService jsonObjectAppService;
         private readonly IPermissionsAppService permissionsAppService;
+        private readonly IWebsiteCacheStateAppService websiteCacheStateAppService;
         private readonly IHtmlProcessor htmlProcessor;
-		public WebMenuApplication(
+        public WebMenuApplication(
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
             LoginUserData loginUserData,
@@ -50,9 +51,10 @@ namespace EtheriT.Coker.Application
             IFileUploadAppService fileUploadAppService,
             IJsonObjectAppService jsonObjectAppService,
             IPermissionsAppService permissionsAppService,
-			IHtmlProcessor htmlProcessor,
-			StringHandler stringHandler
-		)
+            IWebsiteCacheStateAppService websiteCacheStateAppService,
+            IHtmlProcessor htmlProcessor,
+            StringHandler stringHandler
+        )
         {
             this.db = db;
             this.httpContextAccessor = httpContextAccessor;
@@ -63,10 +65,11 @@ namespace EtheriT.Coker.Application
             this.fileUploadAppService = fileUploadAppService;
             this.jsonObjectAppService = jsonObjectAppService;
             this.permissionsAppService = permissionsAppService;
+            this.websiteCacheStateAppService = websiteCacheStateAppService;
             this.htmlProcessor = htmlProcessor;
             this.stringHandler = stringHandler;
 
-		}
+        }
         public async Task<SiteMapDto> GetAll()
         {
             SiteMapDto response = new SiteMapDto { Success = false };
@@ -87,35 +90,10 @@ namespace EtheriT.Coker.Application
             SiteMapDto response = new SiteMapDto { Success = false };
             try
             {
-                var header = await db.JsonObjects.Where(e => e.Type == (int)JsonObjectEnum.主選單).Where(e => e.FK_WebsiteId == WebsiteID).FirstOrDefaultAsync();
-                var lastUpdateMenu = await db.WebMenus.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID)
-                        .OrderByDescending(e => e.LastModificationTime).ThenByDescending(e => e.CreationTime)
-                        .FirstOrDefaultAsync();
-                var jsonStr = "";
-                if (lastUpdateMenu != null)
-                {
-                    DateTime lastUpdate = lastUpdateMenu.LastModificationTime != null ? lastUpdateMenu.LastModificationTime.Value : lastUpdateMenu.CreationTime;
-                    if (header == null || string.IsNullOrEmpty(header.Json) ||
-                        (
-                            (header.LastModificationTime != null && header.LastModificationTime < lastUpdate) ||
-                            (header.LastModificationTime == null && header.CreationTime < lastUpdate)
-                        )
-                    )
-                    {
-                        jsonStr = await GetDisplayChildAndSaveCache(null, WebsiteID);
-                    }
-                    else
-                    {
-                        if (!string.IsNullOrEmpty(header.Json))
-                        {
-                            response.Message = header.Json;
-                            jsonStr = header.Json;
-                        }
-                        else jsonStr = await GetDisplayChildAndSaveCache(null, WebsiteID);
-                    }
-                }
-                else jsonStr = await GetDisplayChildAndSaveCache(null, WebsiteID);
-                response.Maps = JsonConvert.DeserializeObject<List<MenuItemDto>>(jsonStr) ?? new List<MenuItemDto>();
+                var cacheResult = await GetOrRefreshDisplayMenuCacheAsync(WebsiteID, true);
+
+                response.Message = cacheResult.Json;
+                response.Maps = JsonConvert.DeserializeObject<List<MenuItemDto>>(cacheResult.Json) ?? new List<MenuItemDto>();
                 response.Success = true;
             }
             catch (Exception ex)
@@ -124,18 +102,22 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-        public async Task<SiteMapDto> GetSiteMap() {
+        public async Task<SiteMapDto> GetSiteMap()
+        {
             SiteMapDto response = new SiteMapDto { Success = false };
-            try { 
+            try
+            {
                 var siteId = loginUserData.GetFrontWebsiteId();
                 var child = loginUserData.GetFrontChildOrgName();
                 response = await GetDisplayAll(siteId);
                 if (child != null && child.Any())
                 {
-                    child.ForEach(item => {
+                    child.ForEach(item =>
+                    {
                         item = item.ToLower().Trim();
                     });
-                    foreach (var e in response.Maps) {
+                    foreach (var e in response.Maps)
+                    {
                         var link = (e.LinkUrl ?? "").Replace("/", "").ToLower().Trim();
                         if (child.Contains(link))
                         {
@@ -148,7 +130,9 @@ namespace EtheriT.Coker.Application
                         }
                     }
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 response.Error = ex.Message;
             }
             return response;
@@ -157,45 +141,45 @@ namespace EtheriT.Coker.Application
         {
             try
             {
-                var header = await db.JsonObjects.Where(e => e.Type == (int)JsonObjectEnum.主選單).Where(e => e.FK_WebsiteId == WebsiteID).FirstOrDefaultAsync();
-                var lastUpdateMenu = await db.WebMenus.Where(e => e.FK_WebsiteId == WebsiteID)
-                        .OrderByDescending(e => e.LastModificationTime).ThenByDescending(e => e.DeletionTime).ThenByDescending(e => e.CreationTime)
-                        .FirstOrDefaultAsync();
-                var jsonStr = "";
-                if (lastUpdateMenu != null)
-                {
-                    DateTime lastUpdate = lastUpdateMenu.LastModificationTime != null ? lastUpdateMenu.LastModificationTime.Value : lastUpdateMenu.CreationTime;
-                    if (lastUpdateMenu.DeletionTime != null && lastUpdate < lastUpdateMenu.DeletionTime) lastUpdate = lastUpdateMenu.DeletionTime.Value;
-                    if (header == null ||
-                        !string.IsNullOrEmpty(header.Json) && (
-                            (header.LastModificationTime != null && header.LastModificationTime < lastUpdate) ||
-                            (header.LastModificationTime == null && header.CreationTime < lastUpdate)
-                        )
-                    )
-                    {
-                        jsonStr = await GetDisplayChildAndSaveCache(null, WebsiteID);
-                    }
-                    else
-                    {
-                        if (string.IsNullOrEmpty(header.Json))
-                            jsonStr = await GetDisplayChildAndSaveCache(null, WebsiteID);
-                    }
-                }
-                else jsonStr = await GetDisplayChildAndSaveCache(null, WebsiteID);
-                if (!string.IsNullOrEmpty(jsonStr))
-                {
-                    await jsonObjectAppService.AddUp(new JsonObjectAddDto
-                    {
-                        Type = JsonObjectEnum.主選單,
-                        FK_WebsiteId = WebsiteID,
-                        Json = jsonStr
-                    });
-                }
+                await GetOrRefreshDisplayMenuCacheAsync(WebsiteID, true);
             }
             catch (Exception e)
             {
 
             }
+        }
+
+        private async Task<(string Json, long Version)> GetOrRefreshDisplayMenuCacheAsync(long websiteId, bool saveWhenRebuild = true)
+        {
+            var currentVersion = await websiteCacheStateAppService.EnsureVersionByWebsiteIdAsync(websiteId, WebsiteCacheKeys.Menu, 1);
+
+            var header = await db.JsonObjects
+                .Where(e => e.FK_WebsiteId == websiteId && e.CacheKey == WebsiteCacheKeys.Menu)
+                .FirstOrDefaultAsync();
+
+            bool cacheHit = header != null
+                && !string.IsNullOrWhiteSpace(header.Json)
+                && header.Version == currentVersion;
+
+            if (cacheHit)
+            {
+                return (header!.Json, currentVersion);
+            }
+
+            var jsonStr = await GetDisplayChildAndSaveCache(null, websiteId);
+
+            if (saveWhenRebuild)
+            {
+                await jsonObjectAppService.AddUp(new JsonObjectAddDto
+                {
+                    FK_WebsiteId = websiteId,
+                    CacheKey = WebsiteCacheKeys.Menu,
+                    CacheVersion = currentVersion,
+                    Json = jsonStr
+                });
+            }
+
+            return (jsonStr, currentVersion);
         }
         private async Task<List<MenuItemDto>> GetChild(long? id)
         {
@@ -207,7 +191,8 @@ namespace EtheriT.Coker.Application
                 List<long> RoleIds = await loginUserData.GetUserRoleIds();
                 bool isSuperUser = await permissionsAppService.IsPowerUserPermissions();
                 IQueryable<WebMenu> AllMenus = db.WebMenus.Where(m => !m.IsDeleted && m.FK_WebsiteId == WebsiteID && m.FK_TopNodeId == id);
-                if (!isSuperUser) {
+                if (!isSuperUser)
+                {
                     var per = await db.PermissionDetail.Where(e => e.FK_WebsiteId == WebsiteID)
                         .Where(e => e.FK_UserId == UserID || (e.FK_RoleId != null && RoleIds.Contains(e.FK_RoleId.Value)))
                         .Where(e => e.Type == (int)PermissionDetailsTypeEnum.選單)
@@ -251,7 +236,7 @@ namespace EtheriT.Coker.Application
                             m.OverImgName = data[0].Name;
                         }
                     }
-                    if ((m.icon??"").StartsWith("IconId"))
+                    if ((m.icon ?? "").StartsWith("IconId"))
                     {
                         var s = m.icon.Split(":");
                         if (s.Length > 1 && !string.IsNullOrEmpty(s[1]))
@@ -276,11 +261,11 @@ namespace EtheriT.Coker.Application
         }
         private async Task<string> GetDisplayChildAndSaveCache(long? id, long WebsiteID)
         {
-            var menus = await GetDisplayChild(id, WebsiteID, false,true);
+            var menus = await GetDisplayChild(id, WebsiteID, false, true);
             string jsonStr = JsonConvert.SerializeObject(menus);
             return jsonStr;
         }
-        private async Task<List<MenuItemDto>> GetDisplayChild(long? id, long WebsiteID, bool getDirectoryMenuData = false,bool ShowToMenu = false)
+        private async Task<List<MenuItemDto>> GetDisplayChild(long? id, long WebsiteID, bool getDirectoryMenuData = false, bool ShowToMenu = false)
         {
             try
             {
@@ -502,7 +487,7 @@ namespace EtheriT.Coker.Application
                 output.Add(new GetMenuBreadDto
                 {
                     Title = result.Title,
-                    Link = string.IsNullOrEmpty(result.RouterName)? result.LinkUrl! : string.IsNullOrEmpty(htmlProcessor.text(stringHandler.HtmlDecode(result.Html)))?"": $"/{orgName}/{result.RouterName}",
+                    Link = string.IsNullOrEmpty(result.RouterName) ? result.LinkUrl! : string.IsNullOrEmpty(htmlProcessor.text(stringHandler.HtmlDecode(result.Html))) ? "" : $"/{orgName}/{result.RouterName}",
                 });
             }
 
@@ -513,7 +498,8 @@ namespace EtheriT.Coker.Application
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                if (!string.IsNullOrEmpty(dto.RouterName)) {
+                if (!string.IsNullOrEmpty(dto.RouterName))
+                {
                     var siteId = await loginUserData.GetWebsiteId();
                     var menu = await db.WebMenus.Where(e => e.RouterName == dto.RouterName && e.FK_WebsiteId == siteId).FirstOrDefaultAsync();
                     if (menu != null && menu.Id != dto.Id) throw new Exception("此路由名稱已被使用，請更換其他名稱");
@@ -525,6 +511,7 @@ namespace EtheriT.Coker.Application
                     response.Message = newId.ToString();
                 }
                 else await Update(dto);
+                await websiteCacheStateAppService.TouchAsync(WebsiteCacheKeys.Menu);
                 response.Success = true;
             }
             catch (Exception ex)
@@ -626,8 +613,8 @@ namespace EtheriT.Coker.Application
             {
                 var side = await db.Websites.Where(e => e.Id == dto.siteId).FirstOrDefaultAsync();
                 var menu = await db.WebMenus.Where(e => !e.IsDeleted).Where(e => !e.RemovedFromShelves).Where(e => e.FK_WebsiteId == dto.siteId)
-                        .Where(e => 
-                            e.RouterName.ToLower() == dto.key.ToLower() || 
+                        .Where(e =>
+                            e.RouterName.ToLower() == dto.key.ToLower() ||
                             (e.PageType == PageTypeEnum.購物車 && dto.key.ToLower() == "shoppingcar") ||
                             (e.PageType == PageTypeEnum.會員 && dto.key.ToLower() == "member") ||
                             (e.PageType == PageTypeEnum.搜尋 && dto.key.ToLower() == "search")
@@ -681,15 +668,15 @@ namespace EtheriT.Coker.Application
                 if (menu != null)
                 {
                     string Orgname = await loginUserData.GetWebsiteOrgName();
-					importDto.Html = stringHandler.HtmlDecode(importDto.Html);
-					importDto.Html = htmlProcessor.RemoveNode(importDto.Html??"", ".backstageType");
+                    importDto.Html = stringHandler.HtmlDecode(importDto.Html);
+                    importDto.Html = htmlProcessor.RemoveNode(importDto.Html ?? "", ".backstageType");
 
-					importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
+                    importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
                     importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
-					menu.PageText = htmlProcessor.text(importDto.Html);
-					importDto.Html = stringHandler.HtmlEncode(importDto.Html);
-					mapper.Map(importDto, menu);
-					await loginUserData.SaveChanges(menu);
+                    menu.PageText = htmlProcessor.text(importDto.Html);
+                    importDto.Html = stringHandler.HtmlEncode(importDto.Html);
+                    mapper.Map(importDto, menu);
+                    await loginUserData.SaveChanges(menu);
                     response.Success = true;
                 }
                 else throw new Exception("資料不存在");
@@ -736,7 +723,7 @@ namespace EtheriT.Coker.Application
                         .Where(e => e.FK_WebsiteId == siteID)
                         .FirstOrDefaultAsync();
                 if (item == null) throw new Exception("資料不存在");
-                else if(item.FK_ChildNodes != null && item.FK_ChildNodes.Any()) throw new Exception("該選單還有其他子選單，無法刪除");
+                else if (item.FK_ChildNodes != null && item.FK_ChildNodes.Any()) throw new Exception("該選單還有其他子選單，無法刪除");
                 else
                 {
                     item.IsDeleted = true;
@@ -762,6 +749,7 @@ namespace EtheriT.Coker.Application
                         });
                     }
                 }
+                await websiteCacheStateAppService.TouchAsync(WebsiteCacheKeys.Menu);
             }
             catch (Exception ex)
             {
@@ -788,23 +776,28 @@ namespace EtheriT.Coker.Application
                         await loginUserData.SaveChanges(item);
                     }
                 }
+                await websiteCacheStateAppService.TouchAsync(WebsiteCacheKeys.Menu);
             }
             catch (Exception ex)
             {
                 response.Success = false;
                 response.Error = ex.ToString();
             }
-            await loginUserData.SetLogs( JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<ResponseMessageDto> SetVisible(SetVisibleDto dto) {
+        public async Task<ResponseMessageDto> SetVisible(SetVisibleDto dto)
+        {
             ResponseMessageDto response = new ResponseMessageDto();
-            try {
+            try
+            {
                 long webSiteId = await loginUserData.GetWebsiteId();
                 var menu = await db.WebMenus.Where(e => e.Id == dto.Id && e.FK_WebsiteId == webSiteId).FirstOrDefaultAsync();
-                if (menu != null) {
+                if (menu != null)
+                {
                     menu.Visible = dto.IsVisible;
                     await loginUserData.SaveChanges(menu);
+                    await websiteCacheStateAppService.TouchAsync(WebsiteCacheKeys.Menu);
                     response.Success = true;
                 }
                 else throw new Exception("資料不存在");
@@ -820,13 +813,13 @@ namespace EtheriT.Coker.Application
         public PageTypeDto GetPageTypeList()
         {
             PageTypeDto response = new PageTypeDto { Success = true };
-            List<string> enNames = new List<string> {"", "Home", "ShoppingCar", "Member", "Search", "" };
+            List<string> enNames = new List<string> { "", "Home", "ShoppingCar", "Member", "Search", "" };
             try
             {
                 response.Type = Enum.GetValues(typeof(PageTypeEnum))
-                .Cast<PageTypeEnum>().Select((e,index) =>
+                .Cast<PageTypeEnum>().Select((e, index) =>
                 {
-                    return new EnumDictionaryDto { Key = e.ToString(), Value = (int)e,EnName = enNames[index] };
+                    return new EnumDictionaryDto { Key = e.ToString(), Value = (int)e, EnName = enNames[index] };
                 }).ToList();
             }
             catch (Exception e)
@@ -858,36 +851,39 @@ namespace EtheriT.Coker.Application
                     CreationTime = DateTime.Now,
                     CreatorUserId = userId,
                     IsDeleted = false,
-                    VisibleFooter=true,
-                    VisibleHeader=true,
-                    VisibleTitle=true,
-                    RemovedFromShelves=false
+                    VisibleFooter = true,
+                    VisibleHeader = true,
+                    VisibleTitle = true,
+                    RemovedFromShelves = false
                 };
                 newMenus.Add(menu);
             });
             db.WebMenus.AddRange(newMenus);
             await db.SaveChangesAsync();
+            await websiteCacheStateAppService.TouchAsync(WebsiteCacheKeys.Menu);
         }
-        public async Task<bool> checkHasShoppingCar(long siteId) {
-            await CheckDisplayAll(siteId);
+        public async Task<bool> checkHasShoppingCar(long siteId)
+        {
             var item = db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId && !e.RemovedFromShelves && e.PageType == PageTypeEnum.購物車);
             return item.Any();
         }
-        public async Task<bool> checkHasMember(long siteId) {
-			var item = db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId && !e.RemovedFromShelves && e.PageType == PageTypeEnum.會員);
-			return item.Any();
-		}
+        public async Task<bool> checkHasMember(long siteId)
+        {
+            var item = db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId && !e.RemovedFromShelves && e.PageType == PageTypeEnum.會員);
+            return item.Any();
+        }
         public async Task<long> GetRootId(string name)
         {
             name = name.ToLower().Trim();
             var siteId = loginUserData.GetFrontWebsiteId();
-            var menu = await db.WebMenus.Include(e => e.FK_RootNode).Where(e =>  e.FK_WebsiteId == siteId &&  
-                ((e.RouterName == name && e.PageType == PageTypeEnum.一般頁面) || (name=="home" && new List<string?> {"/","/home" }.Contains(e.LinkUrl)) )).FirstOrDefaultAsync();
-            if(menu != null && menu.FK_RootNode != null) return menu.FK_RootNode.Id;
+            var menu = await db.WebMenus.Include(e => e.FK_RootNode).Where(e => e.FK_WebsiteId == siteId &&
+                ((e.RouterName == name && e.PageType == PageTypeEnum.一般頁面) || (name == "home" && new List<string?> { "/", "/home" }.Contains(e.LinkUrl)))).FirstOrDefaultAsync();
+            if (menu != null && menu.FK_RootNode != null) return menu.FK_RootNode.Id;
             else if (menu != null) return menu.Id;
             return 0;
         }
-        public async Task<List<JumpRuleDto>> GetJumpRulesAsync() {
+        public async Task<List<JumpRuleDto>> GetJumpRulesAsync()
+        {
             var WebsiteID = loginUserData.GetFrontWebsiteId();
             var list = await db.WebMenus
                 .Where(x => !string.IsNullOrEmpty(x.RouterName)

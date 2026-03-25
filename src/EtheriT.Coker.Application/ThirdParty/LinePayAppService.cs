@@ -1,19 +1,22 @@
-﻿using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto;
+﻿using AutoMapper;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
+using EtheriT.Coker.Application.Shared.Dto.Order;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto;
+using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.ThirdParty;
+using EtheriT.Coker.Application.Webs.Dto;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.EntityFrameworkCore;
-using EtheriT.Coker.Application.Shared.Order;
 using static EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto.LinePayRequestBodyDto;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
-using Microsoft.AspNetCore.Mvc;
-using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -24,12 +27,14 @@ namespace EtheriT.Coker.Application.ThirdParty
         private readonly LoginUserData loginUserData;
         private readonly IConfiguration configuration;
         private readonly IOrderAppService orderAppService;
+        private readonly IMapper mapper;
         public LinePayAppService(
             IHttpClientFactory httpClientFactory,
             CokerDbContext db,
             LoginUserData loginUserData,
             IConfiguration configuration,
-            IOrderAppService orderAppService
+            IOrderAppService orderAppService,
+            IMapper mapper
         )
         {
             ThirdPartyClient_Line = httpClientFactory.CreateClient("ThirdPartyClient_Line");
@@ -37,6 +42,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             this.loginUserData = loginUserData;
             this.configuration = configuration;
             this.orderAppService = orderAppService;
+            this.mapper = mapper;
         }
         public async Task<ResponseMessageDto> LinePayRequest(long ohid)
         {
@@ -556,69 +562,46 @@ namespace EtheriT.Coker.Application.ThirdParty
 
             try
             {
-                var oddatas = await orderAppService.GetOrderDetails(ohdata.Id);
+                if (Website == null) throw new Exception("查無網站資料");
 
-                if (oddatas.Any())
+                var paymentResult = await orderAppService.GetForPaymentAsync(ohdata.Id);
+                if (!paymentResult.Success)
+                    throw new Exception(paymentResult.Message ?? "取得付款資料失敗");
+
+                var payData = paymentResult.Object as PayOrderData;
+                if (payData == null)
+                    throw new Exception("付款資料格式錯誤");
+
+                if (ohdata.TransactionId != null)
                 {
-                    RequestBody.currency = "TWD";
+                    if (ohdata.RepayTimes == null) ohdata.RepayTimes = 1;
+                    else ohdata.RepayTimes += 1;
 
-                    RequestBody.amount = Convert.ToInt32(Math.Round(ohdata.Subtotal + ohdata.Freight)).ToString();
-                    var oid = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
-                    if (ohdata.TransactionId == null) RequestBody.orderId = $"{DateTime.Now.ToString("yyyyMMdd")}{oid}";
-                    else
-                    {
-                        if (ohdata.RepayTimes == null) ohdata.RepayTimes = 1;
-                        else ohdata.RepayTimes += 1;
-                        db.SaveChanges();
-                        RequestBody.orderId = $"{DateTime.Now.ToString("yyyyMMdd")}{oid}-{ohdata.RepayTimes}";
-                    }
+                    db.SaveChanges();
 
-                    var Packages = new List<LinePayPackageDto>();
-                    Packages.Add(new LinePayPackageDto()
-                    {
-                        id = oid,
-                        amount = Convert.ToInt32(Math.Round(ohdata.Subtotal + ohdata.Freight)).ToString(),
-                        userFee = 0.ToString(),
-                        name = $"訂單編號：{oid}",
-                    });
-
-                    var Products = new List<LinePayProductsDto>();
-                    foreach (var od in oddatas)
-                    {
-                        Products.Add(new LinePayProductsDto()
-                        {
-                            id = od.PId.ToString(),
-                            name = od.Title,
-                            imageUrl = $"{Website.DefaultUrl}{od.ImagePath}".Replace($"/{Website.OrgName}/", "/"),
-                            quantity = od.Quantity.ToString(),
-                            price = Convert.ToInt32(Math.Round(od.Price)).ToString(),
-                        });
-                    }
-
-                    Packages[0].products = Products;
-                    Packages[0].products.Add(new LinePayProductsDto()
-                    {
-                        id = "",
-                        name = "運費",
-                        imageUrl = "",
-                        quantity = 1.ToString(),
-                        price = Convert.ToInt32(Math.Round(ohdata.Freight)).ToString(),
-                    });
-                    RequestBody.packages = Packages;
-
-                    RequestBody.redirectUrls = new LinePayRedirectUrlsDto();
-                    RequestBody.redirectUrls.confirmUrl = $"{Website.DefaultUrl}/api/ThirdParty/LinePayConfirm";
-                    RequestBody.redirectUrls.cancelUrl = $"{Website.DefaultUrl}/api/ThirdParty/LinePayCancel";
-
-                    RequestBody.options = new LinePayOptionDto();
-
-                    RequestBody.options.payment = new LinePayOptionDto.LinePayPaymentDto();
-                    RequestBody.options.payment.capture = true;
-
-                    RequestBody.options.display = new LinePayOptionDto.LinePayDisplayDto();
-                    RequestBody.options.display.locale = "zh_TW";
-                    RequestBody.options.display.checkConfirmUrlBrowser = false;
+                    payData.OrderId = $"{payData.OrderId}-{ohdata.RepayTimes}";
                 }
+
+                RequestBody = mapper.Map<LinePayRequestBodyDto>(payData);
+
+                RequestBody.redirectUrls = new LinePayRedirectUrlsDto
+                {
+                    confirmUrl = $"{Website.DefaultUrl}/api/ThirdParty/LinePayConfirm",
+                    cancelUrl = $"{Website.DefaultUrl}/api/ThirdParty/LinePayCancel"
+                };
+
+                RequestBody.options = new LinePayOptionDto
+                {
+                    payment = new LinePayOptionDto.LinePayPaymentDto
+                    {
+                        capture = true
+                    },
+                    display = new LinePayOptionDto.LinePayDisplayDto
+                    {
+                        locale = "zh_TW",
+                        checkConfirmUrlBrowser = false
+                    }
+                };
             }
             catch (Exception ex)
             {

@@ -17,7 +17,7 @@
 
             /** 取得綠界 Token */
             ECPayGetToken: function (data) {
-                return Coker.api.post("/api/ThirdParty/ECPayGetToken");
+                return Coker.api.post("/api/ThirdParty/ECPayGetToken", data);
             },
 
             /** 建立綠界付款 */

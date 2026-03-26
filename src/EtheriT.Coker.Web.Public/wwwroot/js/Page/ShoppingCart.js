@@ -1795,7 +1795,7 @@ async function OrderHeaderAdd() {
     var ids = getSelectedCartIds();
     var data = shopping_cart_data.filter(e => ids.includes(e.Id));
 
-    if (($("#RadioPayment > .form-check").length > 1 & $("#radio_payment_ECPay").length > 0 && $("#radio_payment_ECPay").prop("checked")) || $("#ECPayPayment").length > 0) {
+    if (($("#RadioPayment > .form-check").length > 1 & $("#radio_payment_ECPay").length > 0 && $("#radio_payment_ECPay").prop("checked")) || ($(".ecpay_loading").is(":hidden") && $("#ECPayPayment").length > 0)) {
         GetECPayType();
 
         if (order_header_data.payment != 27) {

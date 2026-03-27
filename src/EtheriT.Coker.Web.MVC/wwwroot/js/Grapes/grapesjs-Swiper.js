@@ -341,6 +341,7 @@ grapesjs.plugins.add('grapesjs-Swiper', (editor, options) => {
                                             $iframe.attr("data-keep_time", obj.keepTime);
                                             $($slide).attr("data-swiper-autoplay", obj.keepTime * 1000);
                                         }
+                                        $($slide).children('a').hide();
                                         $($slide).append($iframe.appendTo("<div>"));
                                     }
                                     if ($($slide).find("video,iframe").length > 0 && $($slide).find("img").length == 1) {

@@ -106,7 +106,8 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
         myModal.show();
     });
 
-    editor.on('component:selected', () => {
+    editor.on('component:selected', (component) => {
+        const el = component.getEl();
         //console.log("component:selected")
         // whenever a component is selected in the editor
 
@@ -128,6 +129,14 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                 toolbar: [...defaultToolbar, { attributes: { class: commandIcon }, command: commandToAdd }]
             });
         }
+        //Double click event for component
+        if (!el) return;
+        if (el.__hasDblclickHandler) return;
+        el.__hasDblclickHandler = true;
+
+        el.addEventListener('dblclick', () => {
+            handleComponentDblclick(editor, component);
+        });
     });
 
     editor.DomComponents.addType('image', {
@@ -288,6 +297,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
         isComponent: el => el.classList?.contains('link_with_icon'),
         model: {
             defaults: {
+                dblclickAction: 'traits',
                 traits: [
                     // Strings are automatically converted to text types
                     { name: 'download', type: 'text', label: '檔案名稱', placeholder: '請輸入檔案名稱' },
@@ -320,7 +330,8 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
         view: {
             init() {
                 this.setLink();
-            }, setLink: function () {
+            },
+            setLink: function () {
                 setTimeout(function () {
                     var LinkWithIconInit = $(".gjs-frame")[0].contentWindow.LinkWithIconInit;
                     LinkWithIconInit();
@@ -1072,6 +1083,28 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
         if (classList.indexOf("anchor_title") > -1) iframe.AnchorPointInit();
     });
 
+    //dbClick 事件監聽
+    function openTraitPanel(editor) {
+        const traitBtn = editor.Panels.getButton('views', 'open-tm');
+        if (traitBtn) {
+            traitBtn.set('active', true);
+            return true;
+        }
+        return false;
+    }
+    function handleComponentDblclick(editor, component) {
+        const action = component.get('dblclickAction');
+
+        switch (action) {
+            case 'traits':
+                openTraitPanel(editor);
+                break;
+
+            case 'none':
+            default:
+                break;
+        }
+    }
     /*editor.on('selector:add', selector => {
         selector.set({
             // Can't be seen by the style manager, therefore even by the user

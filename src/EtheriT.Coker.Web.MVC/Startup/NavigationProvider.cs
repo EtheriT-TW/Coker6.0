@@ -304,8 +304,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Title="箱型設定",
                                 Controller="StoreSettings",
                                 Action="LogisticsBox",
-                                Icon="box_edit",
-                                Enable=false,
+                                Icon="box_edit"
                             }
                         }
                     },

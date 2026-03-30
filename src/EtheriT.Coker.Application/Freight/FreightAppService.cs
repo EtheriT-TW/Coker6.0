@@ -118,6 +118,7 @@ namespace EtheriT.Coker.Application.Freight
                         Id = x.Id,
                         Name = x.Name,
                         IsActive = x.IsActive,
+                        CapacityPoint = x.CapacityPoint,
                         Sort = x.Sort
                     });
                 var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);

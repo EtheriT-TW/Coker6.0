@@ -1728,7 +1728,7 @@
 
     .type_change_frame > .catalog .title {
         line-height: 1.5rem;
-        max-height: 3rem;
+        max-height: 4rem;
     }
 
     .type_change_frame > .catalog .description {

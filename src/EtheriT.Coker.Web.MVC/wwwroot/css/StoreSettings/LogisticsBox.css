@@ -1,2 +1,47 @@
-﻿body {
+﻿
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.z-index-up {
+    z-index: 10;
+}
+
+/* List */
+.btn_back {
+    color: #4E565A;
+}
+
+.btn_add {
+    z-index: 1;
+}
+
+/* Content */
+#LogisticsBoxContent > .card-header {
+    background-color: var(--color-gray-bg-dark);
+}
+
+/* Form */
+#LogisticsBoxForm .item {
+    width: auto;
+}
+#LogisticsBoxForm > div > .name > input {
+    padding-left: 5.5rem;
+}
+
+#LogisticsBoxForm .freight > input {
+    padding-left: 6.5rem;
+}
+
+#LogisticsBoxForm .low_con > input {
+    padding-left: 6.5rem;
+}
+
+#LogisticsBoxForm .dfreight > input {
+    padding-left: 7.5rem;
 }

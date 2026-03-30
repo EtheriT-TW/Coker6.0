@@ -725,7 +725,7 @@ function SwiperInit(obj) {
                     if (item.type === "image") {
                         newSlide = `<div class="swiper-slide" data-swiper-autoplay="${item.keepTime}">
                             <div class="swiper-zoom-container">
-                                <img src="${item.src}" alt="${item.alt}" />
+                                <img src="${item.src}" alt="${item.alt}" loading="lazy" />
                             </div>
                         </div>`;
                     } else if (item.type === "video") {

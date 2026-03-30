@@ -44,6 +44,7 @@
 							c.AddFor(e => e.Id).Caption("編號").Width(50);
 							c.AddFor(e => e.Name).Caption("標題");
 							c.AddFor(e => e.Sort).Caption("排序");
+							c.AddFor(e => e.CapacityPoint).Caption("點數");
 							c.AddFor(e => e.IsActive).Caption("顯示");
 							c.Add().Type(GridCommandColumnType.Buttons)
 								.Buttons(b =>
@@ -87,40 +88,34 @@
 
 			<form id="LogisticsBoxForm" class="card-body needs-validation">
 				<input name="Id" type="hidden" />
-
+				<div class="row justify-content-end g-3">
+					<div class="item">
+						<input type="checkbox" id="BoxEnable" class="selectedItem" name="isActive" value="true" />
+						<label for="BoxEnable" class="mx-3" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="啟用箱型">
+							<span class="material-symbols-outlined fs-2">visibility</span>
+							<span class="material-symbols-outlined fs-2">visibility_off</span>
+						</label>
+					</div>
+				</div>
+				<div class="title border mb-3 p-2 rounded">
+					<div class="d-flex justify-content-between w-100">
+						<span class="input-group-text bg-transparent border-0 p-0 required_all">名稱</span>
+					</div>
+					<input id="InputName" name="name" class="form-control" type="text" maxlength="50" autocomplete="off" required placeholder="請輸入箱型名稱" />
+					<div class="invalid-feedback">請輸入箱型名稱。</div>
+				</div>
 				<div class="row g-3">
 					<div class="col-12 col-lg-6">
-						<label for="InputName" class="form-label fw-bold">名稱</label>
-						<input id="InputName" class="form-control" type="text" maxlength="50" autocomplete="off" required />
-						<div class="invalid-feedback">請輸入箱型名稱。</div>
-					</div>
-
-					<div class="col-12 col-lg-3">
 						<label for="InputCapacityPoint" class="form-label fw-bold">容量點數</label>
-						<input id="InputCapacityPoint" class="form-control" type="number" min="1" step="1" required />
-						<div class="form-text">此箱型可承載的 PackingPoint 上限。</div>
+						<input id="InputCapacityPoint" class="form-control" name="capacityPoint" type="number" min="1" step="1" required />
+						<div class="form-text">此箱型可承載的商品點數上限。</div>
 						<div class="invalid-feedback">請輸入大於 0 的整數。</div>
 					</div>
 
-					<div class="col-12 col-lg-3">
+					<div class="col-12 col-lg-6">
 						<label for="InputSort" class="form-label fw-bold">排序</label>
-						<input id="InputSort" class="form-control" type="number" step="1" value="0" required />
+						<input id="InputSort" class="form-control" name="sort" type="number" step="1" value="0" required />
 						<div class="invalid-feedback">請輸入排序值。</div>
-					</div>
-
-					<div class="col-12 col-lg-4">
-						<div class="form-check form-switch mt-2">
-							<input id="InputIsActive" class="form-check-input" type="checkbox" checked />
-							<label class="form-check-label fw-bold" for="InputIsActive">啟用箱型</label>
-						</div>
-						<div class="text-muted small mt-1">停用後保留資料，但不建議提供新設定使用。</div>
-					</div>
-
-					<div class="col-12">
-						<div class="alert alert-light border mb-0" role="alert">
-							<div class="fw-bold mb-1">目前模式</div>
-							<div id="BoxFormHint" class="text-muted">此頁目前僅完成前端互動，尚未串接儲存 API。</div>
-						</div>
 					</div>
 				</div>
 			</form>

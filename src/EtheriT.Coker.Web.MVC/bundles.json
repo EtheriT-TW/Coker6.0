@@ -22,6 +22,7 @@
         "wwwroot/js/CokerCore/File.js",
         "wwwroot/js/CokerCore/Form.js",
         "wwwroot/js/CokerCore/Freight.js",
+        "wwwroot/js/CokerCore/HashPage.js",
         "wwwroot/js/CokerCore/HtmlContent.js",
         "wwwroot/js/CokerCore/ListFile.js",
         "wwwroot/js/CokerCore/Member.js",
@@ -129,6 +130,12 @@
     }
   ],
   "styles": [
+    {
+      "output": "css/CokerCore.min.css",
+      "input": [
+        "wwwroot/css/CokerCore/hashPage.css"
+      ]
+    },
     {
       "output": "lib/sweetalert2/dist/sweetalert2.min.css",
       "input": [

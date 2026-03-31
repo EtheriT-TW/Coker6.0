@@ -183,6 +183,145 @@
             const index = _c.Array.Search(array, obj);
             if(index >-1) array.splice(index, 1);
         }
+    },
+    request: {
+        buildQueryString: function (params) {
+            if (!params) return "";
+            const searchParams = new URLSearchParams();
+
+            Object.keys(params).forEach(key => {
+                const value = params[key];
+                if (value === undefined || value === null) return;
+
+                if (Array.isArray(value)) {
+                    value.forEach(item => {
+                        if (item !== undefined && item !== null) {
+                            searchParams.append(key, item);
+                        }
+                    });
+                } else if (typeof value === "object") {
+                    searchParams.append(key, JSON.stringify(value));
+                } else {
+                    searchParams.append(key, value);
+                }
+            });
+
+            const query = searchParams.toString();
+            return query ? `?${query}` : "";
+        },
+
+        mergeHeaders: function (headers) {
+            return {
+                ..._c.Data.Header,
+                ...(headers || {})
+            };
+        },
+
+        tryParseResponse: async function (response) {
+            const contentType = response.headers.get("content-type") || "";
+
+            if (contentType.includes("application/json")) {
+                const text = await response.text();
+                return text ? JSON.parse(text) : null;
+            }
+
+            if (contentType.includes("text/")) {
+                return await response.text();
+            }
+
+            return await response.blob();
+        },
+
+        unwrapResult: function (result) {
+            if (result && typeof result === "object" && "success" in result) {
+                if (result.success === false) {
+                    const error = new Error(result.error || result.message || "Request failed");
+                    error.result = result;
+                    error.status = result.status || 400;
+                    throw error;
+                }
+            }
+
+            return result;
+        },
+
+        send: async function (url, options = {}) {
+            const method = (options.method || "GET").toUpperCase();
+            const params = options.params || null;
+            const data = options.data;
+            const headers = _c.request.mergeHeaders(options.headers);
+            const fetchOptions = {
+                method,
+                headers,
+                credentials: options.credentials || "same-origin"
+            };
+
+            let finalUrl = url;
+
+            if (params && (method === "GET" || method === "DELETE")) {
+                finalUrl += _c.request.buildQueryString(params);
+            }
+
+            if (data !== undefined && data !== null && method !== "GET" && method !== "DELETE") {
+                if (data instanceof FormData) {
+                    fetchOptions.body = data;
+                    delete fetchOptions.headers["Content-Type"];
+                    delete fetchOptions.headers["content-type"];
+                } else {
+                    fetchOptions.body = JSON.stringify(data);
+                    if (!fetchOptions.headers["Content-Type"] && !fetchOptions.headers["content-type"]) {
+                        fetchOptions.headers["Content-Type"] = "application/json; charset=utf-8";
+                    }
+                }
+            }
+
+            const response = await fetch(finalUrl, fetchOptions);
+            const result = await _c.request.tryParseResponse(response);
+
+            if (!response.ok) {
+                const error = new Error(
+                    (result && (result.error || result.message)) || `HTTP ${response.status}`
+                );
+                error.status = response.status;
+                error.response = response;
+                error.result = result;
+                throw error;
+            }
+
+            return _c.request.unwrapResult(result);
+        },
+
+        get: function (url, params = null, options = {}) {
+            return _c.request.send(url, {
+                ...options,
+                method: "GET",
+                params: params
+            });
+        },
+
+        post: function (url, data = null, options = {}) {
+            return _c.request.send(url, {
+                ...options,
+                method: "POST",
+                data: data
+            });
+        },
+
+        put: function (url, data = null, options = {}) {
+            return _c.request.send(url, {
+                ...options,
+                method: "PUT",
+                data: data
+            });
+        },
+
+        delete: function (url, params = null, options = {}) {
+            return _c.request.send(url, {
+                ...options,
+                method: "DELETE",
+                params: params
+            });
+        }
     }
 }
 const _c = Coker;

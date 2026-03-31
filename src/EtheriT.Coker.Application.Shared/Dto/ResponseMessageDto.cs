@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,5 +14,6 @@ namespace EtheriT.Coker.Application.Dto
         public string? Error { get; set; }
         public string? Message { get; set; }
         public object? Object { get; set; }
+        public ErrorCodeEnum ErrorCode { get; set; } = ErrorCodeEnum.None;
     }
 }

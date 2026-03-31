@@ -2,6 +2,7 @@
 using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.Product;
@@ -311,6 +312,175 @@ namespace EtheriT.Coker.Application.Freight
             }
 
             await db.SaveChangesAsync();
+        }
+        public async Task<ResponseMessageDto> LogisticsBoxAddUp(GetLogisticsBoxAllListInputDto dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                long websiteId = await loginUserData.GetWebsiteId();
+
+                if (string.IsNullOrWhiteSpace(dto.Name))
+                {
+                    output.ErrorCode = ErrorCodeEnum.ValidationError;
+                    output.Error = "名稱不可為空";
+                    output.Message = "儲存失敗";
+                    return output;
+                }
+
+                LogisticsBox? entity;
+
+                if (dto.Id == 0)
+                {
+                    entity = new LogisticsBox
+                    {
+                        FK_WebsiteId = websiteId,
+                        Name = dto.Name.Trim(),
+                        IsActive = dto.IsActive,
+                        CapacityPoint = dto.CapacityPoint,
+                        Sort = dto.Sort
+                    };
+
+                    db.LogisticsBoxs.Add(entity);
+                }
+                else
+                {
+                    entity = await db.LogisticsBoxs
+                        .Where(x => x.Id == dto.Id && x.FK_WebsiteId == websiteId && !x.IsDeleted)
+                        .FirstOrDefaultAsync();
+
+                    if (entity == null)
+                    {
+                        output.ErrorCode = ErrorCodeEnum.NotFound;
+                        output.Error = "查無箱型資料";
+                        output.Message = "儲存失敗";
+                        return output;
+                    }
+
+                    entity.Name = dto.Name.Trim();
+                    entity.IsActive = dto.IsActive;
+                    entity.CapacityPoint = dto.CapacityPoint;
+                    entity.Sort = dto.Sort;
+                }
+
+                await loginUserData.SaveChanges(entity);
+
+                output.Success = true;
+                output.Message = "儲存成功";
+                output.Object = new
+                {
+                    id = entity.Id
+                };
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.ErrorCode = ErrorCodeEnum.ServerError;
+                output.Error = e.Message;
+                output.Message = "儲存失敗";
+            }
+
+            await loginUserData.SetLogs(
+                JsonConvert.SerializeObject(dto),
+                JsonConvert.SerializeObject(output)
+            );
+
+            return output;
+        }
+
+        public async Task<ResponseMessageDto> LogisticsBoxGetOne(long Id)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                long websiteId = await loginUserData.GetWebsiteId();
+
+                var entity = await db.LogisticsBoxs
+                    .Where(x => x.Id == Id && x.FK_WebsiteId == websiteId && !x.IsDeleted)
+                    .Select(x => new GetLogisticsBoxAllListInputDto
+                    {
+                        Id = x.Id,
+                        Name = x.Name,
+                        IsActive = x.IsActive,
+                        CapacityPoint = x.CapacityPoint,
+                        Sort = x.Sort
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (entity == null)
+                {
+                    output.ErrorCode = ErrorCodeEnum.NotFound;
+                    output.Error = "查無箱型資料";
+                    output.Message = "查詢失敗";
+                    return output;
+                }
+
+                output.Success = true;
+                output.Message = "查詢成功";
+                output.Object = entity;
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.ErrorCode = ErrorCodeEnum.ServerError;
+                output.Error = e.Message;
+                output.Message = "查詢失敗";
+            }
+
+            await loginUserData.SetLogs(
+                JsonConvert.SerializeObject(new { Id }),
+                JsonConvert.SerializeObject(output)
+            );
+
+            return output;
+        }
+
+        public async Task<ResponseMessageDto> LogisticsBoxDelete(long Id)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                long websiteId = await loginUserData.GetWebsiteId();
+                long userId = await loginUserData.GetUserId();
+
+                var entity = await db.LogisticsBoxs
+                    .Where(x => x.Id == Id && x.FK_WebsiteId == websiteId && !x.IsDeleted)
+                    .FirstOrDefaultAsync();
+
+                if (entity == null)
+                {
+                    output.ErrorCode = ErrorCodeEnum.NotFound;
+                    output.Error = "查無箱型資料";
+                    output.Message = "刪除失敗";
+                    return output;
+                }
+
+                entity.IsDeleted = true;
+                entity.DeletionTime = DateTime.Now;
+                entity.DeleterUserId = userId;
+
+                await db.SaveChangesAsync();
+
+                output.Success = true;
+                output.Message = "刪除成功";
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.ErrorCode = ErrorCodeEnum.ServerError;
+                output.Error = e.Message;
+                output.Message = "刪除失敗";
+            }
+
+            await loginUserData.SetLogs(
+                JsonConvert.SerializeObject(new { Id }),
+                JsonConvert.SerializeObject(output)
+            );
+
+            return output;
         }
     }
 }

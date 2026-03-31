@@ -4,6 +4,7 @@ using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Freight;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using EtheriT.Coker.Application.Common;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -33,6 +34,24 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<JsonResult> GetLogisticsBoxAllList(DataSourceLoadOptions loadOptions)
         {
             return await freightAppService.GetLogisticsBoxAllList(loadOptions);
+        }
+        [HttpPost]
+        public async Task<IActionResult> LogisticsBoxAddUp(GetLogisticsBoxAllListInputDto dto)
+        {
+            var result = await freightAppService.LogisticsBoxAddUp(dto);
+            return result.ToActionResult(this);
+        }
+        [HttpGet]
+        public async Task<IActionResult> LogisticsBoxGetOne(long Id)
+        {
+            var result = await freightAppService.LogisticsBoxGetOne(Id);
+            return result.ToActionResult(this);
+        }
+        [HttpDelete]
+        public async Task<IActionResult> LogisticsBoxDelete(long Id)
+        {
+            var result = await freightAppService.LogisticsBoxDelete(Id);
+            return result.ToActionResult(this);
         }
         [HttpGet]
         public async Task<FreightDto> GetOne(long Id)

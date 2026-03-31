@@ -11,6 +11,9 @@ namespace EtheriT.Coker.Application.Shared.Freight
         public Task<ResponseMessageDto> AddUp(FreightDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
         public Task<JsonResult> GetLogisticsBoxAllList(DataSourceLoadOptions loadOptions);
+        public Task<ResponseMessageDto> LogisticsBoxAddUp(GetLogisticsBoxAllListInputDto dto);
+        public Task<ResponseMessageDto> LogisticsBoxGetOne(long Id);
+        public Task<ResponseMessageDto> LogisticsBoxDelete(long Id);
         public Task<FreightDto> GetOne(long Id);
         public Task<JsonResult> GetDisplay();
         public Task<ResponseMessageDto> Delete(long Id);

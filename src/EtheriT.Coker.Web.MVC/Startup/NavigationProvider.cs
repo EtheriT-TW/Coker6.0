@@ -555,6 +555,14 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         {
                             PageName = "SaleQuantityStaging",
                             Enable = false
+                        },new JobMenu
+                        {
+                            PageName = "LogisticsSettings",
+                            Enable = false
+                        },new JobMenu
+                        {
+                            PageName = "LogisticsBox",
+                            Enable = false
                         }
                     });
                     break;
@@ -612,6 +620,14 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         {
                             PageName = "SaleQuantityStaging",
                             Enable = false
+                        },new JobMenu
+                        {
+                            PageName = "LogisticsSettings",
+                            Enable = false
+                        },new JobMenu
+                        {
+                            PageName = "LogisticsBox",
+                            Enable = false
                         }
                     });
                     break;
@@ -649,6 +665,14 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         },new JobMenu
                         {
                             PageName = "SaleQuantityStaging",
+                            Enable = false
+                        },new JobMenu
+                        {
+                            PageName = "LogisticsSettings",
+                            Enable = false
+                        },new JobMenu
+                        {
+                            PageName = "LogisticsBox",
                             Enable = false
                         }
                     });

@@ -8,117 +8,164 @@
 <link rel="stylesheet" href="~/css/StoreSettings/LogisticsBox.min.css" asp-append-version="true" />
 <script src="~/js/StoreSettings/LogisticsBox.min.js" asp-append-version="true"></script>
 
-<div class="">
-	<div id="TopLine" class="d-flex justify-content-between mb-4">
-		<div class="d-flex">
-			<div class="title fw-bold fs-3">箱型設定</div>
-		</div>
-	</div>
+<div id="LogisticsBoxPage" class="hash-page">
+	<!-- List -->
+	<section id="LogisticsBoxList" data-hash-page="List">
+		<div class="card hash-card mb-3">
+			<div class="card-header">
+				<div class="hash-toolbar w-100">
+					<h2 class="hash-title mb-0">箱型管理</h2>
 
-	<div id="" class="py-2">
-		<div id="LogisticsBoxList" class="card border-0">
-			<div class="card-body position-relative pb-5">
-				<button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
-					<span class="material-symbols-outlined">add</span>
-				</button>
+					<div class="hash-actions">
+						<button type="button"
+								class="btn btn-primary btn_add"
+								data-hash-go="new">
+							<i class="material-symbols-outlined">
+								add
+							</i>
+							新增箱型
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="card-body">
 				@(
 					Html.DevExtreme().DataGrid<GetLogisticsBoxAllListInputDto>()
-						.DataSource(d => d.RemoteController().Key("Id")
-						.LoadUrl("/api/Freight/GetLogisticsBoxAllList").LoadMethod("Get")
-						)
-						.RemoteOperations(true)
-						.ColumnHidingEnabled(true)
-						.ShowBorders(true)
-						.FilterRow(filterRow => filterRow
-						.Visible(true)
-						.ApplyFilter(GridApplyFilterMode.Auto)
-						)
-						.SearchPanel(searchPanel => searchPanel
-						.Visible(true)
-						.Width(480)
-						.Placeholder("請輸入要搜尋的資料")
-						)
-						.ShowRowLines(true)
-						.Columns(c =>
+					.DataSource(d => d.RemoteController().Key("Id")
+					.LoadUrl("/api/Freight/GetLogisticsBoxAllList").LoadMethod("Get")
+					)
+					.RemoteOperations(true)
+					.ColumnHidingEnabled(true)
+					.ShowBorders(true)
+					.FilterRow(filterRow => filterRow
+					.Visible(true)
+					.ApplyFilter(GridApplyFilterMode.Auto)
+					)
+					.SearchPanel(searchPanel => searchPanel
+					.Visible(true)
+					.Width(480)
+					.Placeholder("請輸入要搜尋的資料")
+					)
+					.ShowRowLines(true)
+					.Columns(c =>
+					{
+						c.AddFor(e => e.Id).Caption("編號").Width(50);
+						c.AddFor(e => e.Name).Caption("標題");
+						c.AddFor(e => e.Sort).Caption("排序");
+						c.AddFor(e => e.CapacityPoint).Format("#,##0").Caption("點數");
+						c.AddFor(e => e.IsActive).Caption("顯示");
+						c.Add().Type(GridCommandColumnType.Buttons)
+						.Buttons(b =>
 						{
-							c.AddFor(e => e.Id).Caption("編號").Width(50);
-							c.AddFor(e => e.Name).Caption("標題");
-							c.AddFor(e => e.Sort).Caption("排序");
-							c.AddFor(e => e.CapacityPoint).Caption("點數");
-							c.AddFor(e => e.IsActive).Caption("顯示");
-							c.Add().Type(GridCommandColumnType.Buttons)
-								.Buttons(b =>
-								{
-									b.Add().Name("edit").OnClick("editButtonClicked");
-									b.Add().Name("delete").OnClick("deleteButtonClicked");
-								});
-						})
-						.ColumnAutoWidth(true)
-						.Paging(paging => paging.PageSize(30))
-						.Pager(pager =>
-						{
-							pager.Visible(true);
-							pager.ShowPageSizeSelector(true);
-							pager.AllowedPageSizes(new[] { 10, 20, 30 });
-							pager.ShowInfo(true);
-						})
-						.Editing(editing =>
-						{
-							editing.AllowDeleting(true);
-							editing.AllowUpdating(true);
-							editing.UseIcons(true);
-						})
-						.OnContentReady("contentReady")
-						)
+							b.Add().Name("edit").OnClick("editButtonClicked");
+							b.Add().Name("delete").OnClick("deleteButtonClicked");
+						});
+					})
+					.ColumnAutoWidth(true)
+					.Paging(paging => paging.PageSize(30))
+					.Pager(pager =>
+					{
+						pager.Visible(true);
+						pager.ShowPageSizeSelector(true);
+						pager.AllowedPageSizes(new[] { 10, 20, 30 });
+						pager.ShowInfo(true);
+					})
+					.Editing(editing =>
+					{
+						editing.AllowDeleting(true);
+						editing.AllowUpdating(true);
+						editing.UseIcons(true);
+					})
+					.OnContentReady("contentReady")
+				)
 			</div>
 		</div>
+	</section>
 
-		<div id="LogisticsBoxContent" class="card border-0 d-none">
-			<div class="card-header d-flex justify-content-between">
-				<div class="fw-bold fs-5 d-flex align-items-center">
-					<button class="btn_back d-flex bg-transparent border-0 align-items-center">
-						<span class="material-symbols-outlined">
-							keyboard_backspace
-						</span>
-					</button>
-					<div class="lh-lg title"></div>
+	<!-- Content -->
+	<section id="LogisticsBoxContent" data-hash-page="Content" class="d-none">
+		<div class="card hash-card">
+			<div class="card-header">
+				<div class="hash-toolbar w-100">
+					<div class="hash-actions">
+						<button type="button"
+								class="btn btn-light btn_back"
+								data-hash-back>
+							<i class="material-symbols-outlined">
+								arrow_back_ios
+							</i>
+							回上一頁
+						</button>
+					</div>
+
+					<h2 class="hash-title mb-0" data-hash-title>編輯箱型</h2>
+
+					<div class="hash-actions">
+						<button type="submit"
+								class="btn btn-primary"
+								form="LogisticsBoxForm">
+							<i class="material-symbols-outlined">
+								save
+							</i>
+							儲存
+						</button>
+					</div>
 				</div>
-				<button class="btn_done btn-primary border-0 px-3 py-1 text-white" form="LogisticsBoxForm">　儲存　</button>
 			</div>
 
-			<form id="LogisticsBoxForm" class="card-body needs-validation">
-				<input name="Id" type="hidden" />
-				<div class="row justify-content-end g-3">
-					<div class="item">
-						<input type="checkbox" id="BoxEnable" class="selectedItem" name="isActive" value="true" />
-						<label for="BoxEnable" class="mx-3" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="啟用箱型">
-							<span class="material-symbols-outlined fs-2">visibility</span>
-							<span class="material-symbols-outlined fs-2">visibility_off</span>
-						</label>
+			<div class="card-body">
+				<form id="LogisticsBoxForm" class="card-body needs-validation">
+					<input name="id" type="hidden" />
+					<div class="row g-3">
+						<div class="col-12 col-lg-6">
+							<label for="InputName" class="form-label fw-bold">名稱</label>
+							<input id="InputName" class="form-control" type="text" name="name" maxlength="50" autocomplete="off" required />
+							<div class="invalid-feedback">請輸入箱型名稱。</div>
+						</div>
+						<div class="col-12 col-lg-6 d-flex justify-content-end">
+							<div class="item">
+								<input type="checkbox" data-form-type="boolean" id="BoxEnable" class="selectedItem" name="isActive" checked value="true" />
+								<label for="BoxEnable" class="mx-3" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="啟用箱型">
+									<span class="material-symbols-outlined fs-2">visibility</span>
+									<span class="material-symbols-outlined fs-2">visibility_off</span>
+								</label>
+							</div>
+						</div>
 					</div>
-				</div>
-				<div class="title border mb-3 p-2 rounded">
-					<div class="d-flex justify-content-between w-100">
-						<span class="input-group-text bg-transparent border-0 p-0 required_all">名稱</span>
-					</div>
-					<input id="InputName" name="name" class="form-control" type="text" maxlength="50" autocomplete="off" required placeholder="請輸入箱型名稱" />
-					<div class="invalid-feedback">請輸入箱型名稱。</div>
-				</div>
-				<div class="row g-3">
-					<div class="col-12 col-lg-6">
-						<label for="InputCapacityPoint" class="form-label fw-bold">容量點數</label>
-						<input id="InputCapacityPoint" class="form-control" name="capacityPoint" type="number" min="1" step="1" required />
-						<div class="form-text">此箱型可承載的商品點數上限。</div>
-						<div class="invalid-feedback">請輸入大於 0 的整數。</div>
-					</div>
+					<div class="row g-3">
+						<div class="col-12 col-lg-6">
+							<label for="InputCapacityPoint" class="form-label fw-bold">容量點數</label>
+							<input id="InputCapacityPoint" class="form-control" name="capacityPoint" type="number" min="1" step="1" required />
+							<div class="form-text">此箱型可承載的商品點數上限。</div>
+							<div class="invalid-feedback">請輸入大於 0 的整數。</div>
+						</div>
 
-					<div class="col-12 col-lg-6">
-						<label for="InputSort" class="form-label fw-bold">排序</label>
-						<input id="InputSort" class="form-control" name="sort" type="number" step="1" value="0" required />
-						<div class="invalid-feedback">請輸入排序值。</div>
+						<div class="col-12 col-lg-6">
+							<label for="InputSort" class="form-label fw-bold">排序</label>
+							<input id="InputSort" class="form-control" name="sort" type="number" step="1" value="500" required />
+							<div class="invalid-feedback">請輸入排序值。</div>
+						</div>
 					</div>
-				</div>
-			</form>
+					<div class="mt-4 hash-actions d-flex gap-2 justify-content-end">
+						<button type="button"
+								class="btn btn-light"
+								data-hash-back>
+							<i class="material-symbols-outlined">
+								close
+							</i>
+							取消
+						</button>
+
+						<button type="submit" class="btn btn-primary">
+							<i class="material-symbols-outlined">
+								add
+							</i>
+							儲存
+						</button>
+					</div>
+				</form>
+			</div>
 		</div>
-	</div>
+	</section>
 </div>

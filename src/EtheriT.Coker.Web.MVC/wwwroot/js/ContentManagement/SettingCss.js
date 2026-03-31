@@ -235,7 +235,7 @@ window.PageReady = function () {
     });
     var autocomplete = ace.require("ace/autocomplete").FilteredList;
     editor.completers = [cssCompleter]; 
-    co.Form.set(formId, function () {
+    co.Form.init(formId, function () {
         co.sweet.confirm("是否確認儲存?", "即將將您設定的css發佈在前台所有網站上!", "確認", "取消", function () {
             var Errors = editor.getSession().getAnnotations();
             const firstErrorIndex = Errors.findIndex(ann => ann.type === "error");

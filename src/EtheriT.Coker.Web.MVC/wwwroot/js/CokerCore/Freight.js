@@ -28,8 +28,20 @@
         });
     }
 }
+const logisticsBox = {
+    Get: function (id) {
+        return co.request.get("/api/Freight/LogisticsBoxGetOne", { id: id });
+    },
+    AddUp: function (dto) {
+        return co.request.post("/api/Freight/LogisticsBoxAddUp", dto);
+    },
+    Delete: function (id) {
+        return co.request.delete("/api/Freight/LogisticsBoxDelete", { id: id });
+    }
+};
 Coker.extend({
-    Freight: freightModel
+    Freight: freightModel,
+    LogisticsBox: logisticsBox
 });
 /** @type {typeof freightModel} */
 co.Freight;

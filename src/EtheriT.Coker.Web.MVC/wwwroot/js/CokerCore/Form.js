@@ -1,17 +1,5 @@
 ﻿Coker.extend({
     Form: {
-        set: function (id, method) {
-            const form = document.getElementById(id);
-            form.addEventListener('submit', event => {
-                event.preventDefault();
-                event.stopPropagation();
-                let check = form.checkValidity();
-                if (check) {
-                    method();
-                }
-                form.classList.add('was-validated');
-            }, false);
-        },
         insertData: function (obj, $self) {
             if (typeof ($self) == "undefined" || $self == null) $self = $("form").first();
             else if (typeof ($self) == "string") {
@@ -67,7 +55,7 @@
                         $e.empty().html($("<div>").html(value).html());
                         break;
                     default:
-                        $e.val(value);
+                        $e.val(_c.Form.formatElementValue($e, value));
                         break;
                 }
             }
@@ -94,26 +82,97 @@
                                         $e.val(co.Date.GetDateTimeStr(obj[key]));
                                         break;
                                     default:
-                                        $e.val(obj[key]);
+                                        $e.val(_c.Form.formatElementValue($e, obj[key]));
                                         break;
                                 }
                                 break;
                             default:
-                                $e.val(obj[key]);
+                                $e.val(_c.Form.formatElementValue($e, obj[key]));
                                 break;
                         }
                     }
                 }// else console.log(key);
             }
         },
+        normalizeElementValue: function (elementOrJq, value) {
+            const $e = elementOrJq instanceof jQuery ? elementOrJq : $(elementOrJq);
+
+            if (!$e.length) return value;
+            if (value === null || value === undefined) return value;
+
+            const inputType = String($e.attr("type") || "").toLowerCase();
+            const originType = String($e.attr("data-origin-type") || "").toLowerCase();
+            const formType = String($e.attr("data-form-type") || "").toLowerCase();
+
+            if (Array.isArray(value)) {
+                return value.map(v => _c.Form.normalizeElementValue($e, v));
+            }
+
+            if (formType === "boolean") {
+                if (inputType === "checkbox") {
+                    return value === true || value === "true" || value === "on" || value === "1";
+                }
+
+                if (inputType === "radio") {
+                    if (value === "true") return true;
+                    if (value === "false") return false;
+                }
+            }
+
+            if (
+                originType === "number" ||
+                inputType === "number" ||
+                formType === "number" ||
+                formType === "number-format"
+            ) {
+                const raw = String(value).replace(/,/g, "").trim();
+                if (raw === "") return null;
+                return Number(raw);
+            }
+
+            return value;
+        },
+        formatElementValue: function (elementOrJq, value) {
+            const $e = elementOrJq instanceof jQuery ? elementOrJq : $(elementOrJq);
+
+            if (!$e.length) return value;
+            if (value === null || value === undefined) return "";
+
+            const inputType = String($e.attr("type") || "").toLowerCase();
+            const originType = String($e.attr("data-origin-type") || "").toLowerCase();
+            const formType = String($e.attr("data-form-type") || "").toLowerCase();
+
+            if (
+                originType === "number" ||
+                inputType === "number" ||
+                formType === "number" ||
+                formType === "number-format"
+            ) {
+                const raw = String(value).replace(/,/g, "").trim();
+                if (raw === "" || isNaN(raw)) return "";
+                return Number(raw).toLocaleString();
+            }
+
+            return value;
+        },
         getJson: function (id, isArrayType) {
-            let form = document.getElementById(id);
-            let formFields = new FormData(form);
+            const form = document.getElementById(id);
+            const $form = $(`#${id}`);
+            const formFields = new FormData(form);
             let isArray = typeof (isArrayType) == "undefined" ? false : isArrayType;
+
             let formDataObject = Object.fromEntries(Array.from(formFields.keys(), key => {
-                const val = formFields.getAll(key)
-                return [key, (isArray || val.length > 1) ? val : val.pop()]
+                const values = formFields.getAll(key);
+                const $field = $(`#${id}`).find(`[name="${key}"]`).first();
+
+                return [
+                    key,
+                    (isArray || values.length > 1)
+                        ? values.map(v => _c.Form.normalizeElementValue($field, v))
+                        : _c.Form.normalizeElementValue($field, values.pop())
+                ];
             }));
+
             let exItems = $(`#${id}`).find(`div[name]`);
             exItems.each(function () {
                 const $e = $(this);
@@ -126,11 +185,38 @@
                         break;
                 }
             });
+
             if (formDataObject.startEndDate) {
                 const d = formDataObject.startEndDate.split("~");
                 formDataObject.StartTime = d[0].trim();
                 if (d.length > 1) formDataObject.EndTime = d[1].trim();
             }
+
+            const checkboxNames = [...new Set(
+                $form.find('input[type="checkbox"][name]')
+                    .map(function () { return this.name; })
+                    .get()
+            )];
+
+            checkboxNames.forEach(function (name) {
+                const $items = $form.find(`input[type="checkbox"][name="${name}"]`);
+                if ($items.length === 0) return;
+
+                const formType = String($items.first().attr("data-form-type") || "").toLowerCase();
+
+                if (formType === "boolean") {
+                    if (typeof formDataObject[name] === "undefined") {
+                        formDataObject[name] = false;
+                    }
+                    return;
+                }
+
+                if (typeof formDataObject[name] === "undefined") {
+                    formDataObject[name] = [];
+                }
+            });
+
+
             return formDataObject;
         },
         getJsonByFieldset: function (id, isArrayType) {
@@ -138,38 +224,119 @@
             const isArray = typeof (isArrayType) == "undefined" ? false : isArrayType;
             const elements = fieldset.querySelectorAll('input, select, textarea');
             const fieldsetData = {};
+
             elements.forEach(element => {
                 switch (element.type) {
                     case "checkbox":
-                        if (!fieldsetData[element.name]) {
-                            fieldsetData[element.name] = "";
-                        }
                         fieldsetData[element.name] = element.checked;
                         break;
                     case "select-multiple":
                         fieldsetData[element.name] = Array.from(element.selectedOptions).map(option => option.value);
                         break;
                     default:
-                        fieldsetData[element.name] = element.value;
+                        fieldsetData[element.name] = _c.Form.normalizeElementValue(element, element.value);
                         break;
                 }
             });
+
             return fieldsetData;
         },
         init: function (id, fun) {
             const form = document.getElementById(id);
-            form.addEventListener('submit', event => {
-                $(form).find(".customValidity").get(0).setCustomValidity("");
-                if (!form.checkValidity()) {
-                    event.preventDefault()
-                    event.stopPropagation()
-                } else {
-                    event.preventDefault();
-                    fun && fun(id);
+            if (!form) return;
+
+            const parseNumber = (val) => {
+                if (val === null || val === undefined || val === "") return "";
+                return String(val).replace(/,/g, "").trim();
+            };
+
+            $(form).find('input[type="number"]').each(function () {
+                const $input = $(this);
+
+                if ($input.data("number-format-init")) return;
+                $input.data("number-format-init", true);
+
+                $input.attr("data-origin-type", "number");
+                $input.attr("type", "text");
+
+                if (!$input.attr("inputmode")) {
+                    $input.attr("inputmode", "numeric");
                 }
+
+                $input.on("focus.numberFormat", function () {
+                    $input.val(parseNumber($input.val()));
+                });
+
+                $input.on("blur.numberFormat", function () {
+                    $input.val(_c.Form.formatElementValue($input, $input.val()));
+                });
+
+                $input.on("input.numberFormat", function () {
+                    let val = $input.val();
+                    val = String(val).replace(/[^\d]/g, "");
+                    $input.val(val);
+                });
+
+                const initVal = $input.val();
+                if (initVal !== null && initVal !== undefined && initVal !== "") {
+                    $input.val(_c.Form.formatElementValue($input, initVal));
+                }
+            });
+
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                if (form.dataset.submitting === "true") {
+                    event.stopImmediatePropagation();
+                    return;
+                }
+
+                const customValidity = $(form).find(".customValidity").get(0);
+                if (customValidity) customValidity.setCustomValidity("");
+
+                $(form).find('[data-origin-type="number"]').each(function () {
+                    const $input = $(this);
+                    $input.val(parseNumber($input.val()));
+                });
+                if (!form.checkValidity()) {
+                    event.stopPropagation();
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                form.dataset.submitting = "true";
                 form.classList.add('was-validated');
-            }, false)
-        }, clear: function (id) {
+
+                let result = null;
+
+                try {
+                    result = fun && fun(id);
+                } catch (error) {
+                    form.dataset.submitting = "false";
+                    throw error;
+                }
+
+                // jQuery ajax / jqXHR
+                if (result && typeof result.always === "function") {
+                    result.always(function () {
+                        form.dataset.submitting = "false";
+                    });
+                    return;
+                }
+
+                // Promise
+                if (result && typeof result.finally === "function") {
+                    result.finally(function () {
+                        form.dataset.submitting = "false";
+                    });
+                    return;
+                }
+
+                // 同步函式
+                form.dataset.submitting = "false";
+            }, false);
+        },
+        clear: function (id) {
             const form = document.getElementById(id);
             const $items = $(`[data-form-type]`);
             _c.Form.insertData(_c.Form.getJson(id), `#${id}`);

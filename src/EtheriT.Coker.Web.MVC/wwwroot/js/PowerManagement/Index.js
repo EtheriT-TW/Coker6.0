@@ -393,7 +393,7 @@
         if (data.password.length < 8 || password > 30) setPasswordError("密碼長度需在8~30個字元");
         else if (data.password != data.PasswordConfirm) setPasswordError("密碼與密碼驗證不相符");
         else {
-            co.PowerManagement.AddUser(data).done(function (resule) {
+            return co.PowerManagement.AddUser(data).done(function (resule) {
                 if (resule.success) {
                     $(`#offcanvastopByAddUser [name="email"]`).val(data.account);
                     $("#offcanvastopByAddUser .submit").trigger("click");
@@ -406,6 +406,7 @@
                 }
             });
         }
+        return null;
     });
     $("#offcanvastopByRole .submit").on("click", () => {
         const text = $(`#offcanvastopByRole [name="name"]`).val();

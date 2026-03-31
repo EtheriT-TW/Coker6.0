@@ -1,6 +1,6 @@
 ﻿function PageReady() {
     const formId = "StoreSet";
-    co.Form.set(formId, () => {
+    co.Form.init(formId, () => {
         const array = co.Object.objectToArray(co.Form.getJson(formId, true));
         const PaymentType = array[co.Array.Search(array, { key: "paymentType" })];
         const savaData = {

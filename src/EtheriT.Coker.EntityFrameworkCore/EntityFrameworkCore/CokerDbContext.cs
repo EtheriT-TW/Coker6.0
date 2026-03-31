@@ -258,6 +258,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasIndex(x => new { x.FK_WebsiteId, x.CapacityPoint })
                     .IsUnique()
                     .HasFilter("[IsDeleted] = 0");
+                o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<LogisticsBoxFee>(o => {
                 o.HasOne(u => u.LogisticsSetting).WithMany(u => u.logisticsBoxFees).HasForeignKey(f => f.FK_LogisticsSettingId).OnDelete(DeleteBehavior.NoAction);
@@ -265,6 +266,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasIndex(x => new { x.FK_LogisticsBoxId, x.FK_LogisticsSettingId })
                     .IsUnique()
                     .HasFilter("[IsDeleted] = 0");
+                o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<PaymentType>(o =>
             {

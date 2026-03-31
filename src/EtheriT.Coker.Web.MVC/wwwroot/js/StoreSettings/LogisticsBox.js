@@ -1,252 +1,161 @@
 ﻿(function () {
     "use strict";
 
-    let keyId = null;
+    const FORM_ID = "LogisticsBoxForm";
     let box_list = null;
-    let lastHash = "";
+    let hashPage = null;
 
-    const HASH_LIST = "List";
-    const HASH_NEW = "new";
-
-    function getHash() {
-        return (window.location.hash || "").replace(/^#/, "").trim();
-    }
-
-    function setHash(value) {
-        const nextHash = String(value || "").trim();
-
-        if (!nextHash) {
-            window.location.hash = HASH_LIST;
-            return;
+    function clearForm() {
+        if (window.co && co.Form && typeof co.Form.clear === "function") {
+            co.Form.clear(FORM_ID);
+        } else {
+            const form = document.getElementById(FORM_ID);
+            if (form) {
+                form.reset();
+                $(form).removeClass("was-validated");
+            }
         }
-
-        if (getHash() === nextHash) {
-            HashDataEdit();
-            return;
-        }
-
-        window.location.hash = nextHash;
     }
 
-    function isNumericHash(hash) {
-        return /^\d+$/.test(hash);
-    }
-
-    function showList() {
-        $("#LogisticsBoxList").removeClass("d-none");
-        $("#LogisticsBoxContent").addClass("d-none");
-    }
-
-    function showContent() {
-        $("#LogisticsBoxList").addClass("d-none");
-        $("#LogisticsBoxContent").removeClass("d-none");
-        moveToContent();
-    }
-
-    function moveToContent() {
-        const $target = $("#LogisticsBoxContent");
-        if (!$target.length) return;
-
-        $("html, body").stop().animate({
-            scrollTop: Math.max($target.offset().top - 20, 0)
-        }, 200);
-    }
-
-    function setContentTitle(text) {
-        $("#LogisticsBoxContent .title").text(text || "");
-    }
-
-    function resetForm() {
-        const $form = $("#LogisticsBoxForm");
-
-        if ($form.length && $form[0]) {
-            $form[0].reset();
-        }
-
-        $form.removeClass("was-validated");
-
-        $('input[name="Id"]').val("");
-        $("#InputName").val("");
-        $("#InputCapacityPoint").val("");
-        $("#InputSort").val(0);
-        $("#InputIsActive").prop("checked", true);
-    }
-
-    function fillForm(data) {
+    function insertFormData(data) {
         if (!data) return;
 
-        $('input[name="Id"]').val(data.Id ?? data.id ?? "");
-        $("#InputName").val(data.Name ?? data.name ?? "");
-        $("#InputCapacityPoint").val(data.CapacityPoint ?? data.capacityPoint ?? "");
-        $("#InputSort").val(data.Sort ?? data.sort ?? 0);
+        if (window.co && co.Form && typeof co.Form.insertData === "function") {
+            co.Form.insertData(data, `#${FORM_ID}`);
+        }
+    }
 
-        const isActive = data.IsActive ?? data.isActive;
-        $("#InputIsActive").prop("checked", isActive === undefined ? true : !!isActive);
+    function getFormData() {
+        if (window.co && co.Form && typeof co.Form.getJson === "function") {
+            return co.Form.getJson(FORM_ID);
+        }
+
+        return {};
+    }
+
+    async function loadEditData(id) {
+        try {
+            const res = await co.LogisticsBox.Get(id);
+
+            insertFormData(res.object);
+            $(`#${FORM_ID} [name="id"]`).val(id);
+        } catch (err) {
+            co.sweet.error("讀取失敗", err.result?.error || err.message || "讀取失敗");
+        }
     }
 
     function enterNewMode() {
-        keyId = null;
-        resetForm();
-        setContentTitle("新增箱型");
-        showContent();
+        clearForm();
+        $("#LogisticsBoxContent [data-hash-title]").text("新增箱型");
     }
 
-    function enterEditMode(id) {
-        keyId = parseInt(id, 10);
-        resetForm();
-        $('input[name="Id"]').val(keyId);
-        setContentTitle("編輯箱型");
-        showContent();
-        loadEditData(keyId);
+    async function enterEditMode(id) {
+        clearForm();
+        $("#LogisticsBoxContent [data-hash-title]").text("編輯箱型");
+        $(`#${FORM_ID} [name="id"]`).val(id);
+        await loadEditData(id);
     }
 
-    function loadEditData(id) {
-        if (!id) return;
+    async function submitForm() {
+        const dto = getFormData();
 
-        // 若你之後有單筆查詢 API，可直接接這裡。
-        // 目前先做「不報錯、可正常切頁」的安全寫法。
+        if (window.co && co.LogisticsBox && typeof co.LogisticsBox.AddUp === "function") {
+            try {
+                const res = await co.LogisticsBox.AddUp(dto);
 
-        if (
-            window.co &&
-            co.LogisticsBox &&
-            typeof co.LogisticsBox.Get === "function"
-        ) {
-            co.LogisticsBox.Get(id)
-                .done(function (res) {
-                    fillForm(res);
-                });
+                Coker.sweet.success(res.message || "儲存成功", null, true);
 
-            return;
-        }
-    }
-
-    function HashDataEdit() {
-        const hash = getHash();
-
-        if (!hash || hash.toLowerCase() === HASH_LIST.toLowerCase()) {
-            keyId = null;
-            showList();
-            return;
-        }
-
-        if (hash.toLowerCase() === HASH_NEW.toLowerCase()) {
-            enterNewMode();
-            return;
-        }
-
-        if (isNumericHash(hash)) {
-            enterEditMode(hash);
-            return;
-        }
-
-        // 不認得的 hash，一律回列表
-        setHash(HASH_LIST);
-    }
-
-    function hashChange(e) {
-        HashDataEdit();
-
-        if (e && typeof e.preventDefault === "function") {
-            e.preventDefault();
-        }
-    }
-
-    function bindHashChange() {
-        if ("onhashchange" in window) {
-            window.addEventListener("hashchange", hashChange);
-        } else {
-            setInterval(function () {
-                const currentHash = window.location.hash;
-                if (currentHash !== lastHash) {
-                    lastHash = currentHash;
-                    HashDataEdit();
-                }
-            }, 300);
-        }
-
-        lastHash = window.location.hash;
-    }
-
-    function bindButtons() {
-        $(".btn_add")
-            .off("click.logisticsbox")
-            .on("click.logisticsbox", function (e) {
-                e.preventDefault();
-                setHash(HASH_NEW);
-            });
-
-        $(".btn_back")
-            .off("click.logisticsbox")
-            .on("click.logisticsbox", function (e) {
-                e.preventDefault();
-                setHash(HASH_LIST);
-            });
-
-        $("#LogisticsBoxForm")
-            .off("submit.logisticsbox")
-            .on("submit.logisticsbox", function (e) {
-                e.preventDefault();
-
-                const form = this;
-                if (form && typeof form.checkValidity === "function" && !form.checkValidity()) {
-                    $(form).addClass("was-validated");
-                    return;
+                if (box_list && typeof box_list.refresh === "function") {
+                    box_list.refresh();
                 }
 
-                const dto = {
-                    Id: $('input[name="Id"]').val() ? parseInt($('input[name="Id"]').val(), 10) : null,
-                    Name: $("#InputName").val()?.trim() || "",
-                    CapacityPoint: parseInt($("#InputCapacityPoint").val(), 10) || 0,
-                    Sort: parseInt($("#InputSort").val(), 10) || 0,
-                    IsActive: $("#InputIsActive").is(":checked")
-                };
+                if (hashPage) {
+                    hashPage.goList();
+                }
 
-                console.log("LogisticsBox submit dto:", dto);
+                return res;
+            } catch (err) {
+                co.sweet.error("儲存失敗", err.result?.error || err.message || "儲存失敗");
+                throw err;
+            }
+        }
 
-                // 尚未串接儲存 API 時，至少不讓表單整頁送出
-                Coker?.sweet?.warning?.("尚未串接儲存 API", "目前僅完成前端互動");
+        console.log("LogisticsBox submit dto:", dto);
+        Coker.sweet.warning("尚未串接儲存 API", "找不到 co.LogisticsBox.AddUp");
+        return null;
+    }
+
+    function bindForm() {
+        const form = document.getElementById(FORM_ID);
+        if (!form) return;
+
+        if (window.co && co.Form && typeof co.Form.init === "function") {
+            co.Form.init(FORM_ID, function () {
+                return submitForm();
             });
+            return;
+        }
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+            await submitForm();
+        });
     }
 
     const edit = function (e) {
-        if (!e || !e.row) return;
-        setHash(e.row.key);
+        if (!e || !e.row || !hashPage) return;
+        hashPage.goId(e.row.key);
     };
 
     const del = function (e) {
         if (!e || !e.row) return;
 
-        Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-            co.LogisticsBox.Delete(e.row.key).done(function () {
-                Coker.sweet.success("刪除成功", null, true);
+        Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", async function () {
+            try {
+                const res = await co.LogisticsBox.Delete(e.row.key);
+
+                Coker.sweet.success(res.message || "刪除成功", null, true);
 
                 if (e.component && typeof e.component.refresh === "function") {
                     e.component.refresh();
                 }
 
-                if (String(getHash()) === String(e.row.key)) {
-                    setHash(HASH_LIST);
+                if (hashPage) {
+                    hashPage.goList();
                 }
-            });
+            } catch (err) {
+                co.sweet.error("刪除失敗", err.result?.error || err.message || "刪除失敗");
+            }
         });
     };
 
     const gridReady = function (e) {
         box_list = e && e.component ? e.component : e;
-        bindButtons();
-        HashDataEdit();
     };
 
     const init = function () {
-        bindHashChange();
-        bindButtons();
+        bindForm();
 
-        if (!getHash()) {
-            setHash(HASH_LIST);
-            return;
-        }
-
-        HashDataEdit();
+        hashPage = Coker.HashPage.create({
+            root: "#LogisticsBoxPage",
+            defaultHash: "List",
+            listHash: "List",
+            newHash: "new",
+            listPageKey: "List",
+            contentPageKey: "Content",
+            titleSelector: "[data-hash-title]",
+            scrollTarget: '[data-hash-page="Content"]',
+            useStack: true,
+            onList: function () {
+                // 預設不自動 refresh，避免重置使用者狀態
+            },
+            onNew: function () {
+                enterNewMode();
+            },
+            onEdit: function (state) {
+                enterEditMode(state.id);
+            }
+        });
     };
 
     window.PageReady = init;

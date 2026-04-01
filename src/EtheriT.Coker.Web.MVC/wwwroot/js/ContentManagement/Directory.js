@@ -388,6 +388,8 @@ function AddUpArticlet(success_text, error_text) {
                 )
             }
 
+            var isFileUploaded = false, isFileUpdated = false, isFileDeleted = false;
+
             if (total_files.length > 0) {
                 $(".data_upload > ul > li.upload_list").each(function () {
                     var $self = $(this);
@@ -407,6 +409,7 @@ function AddUpArticlet(success_text, error_text) {
                         formData.append("filename", $self.find("input[name='name']").val());
                         formData.append("isVisible", $self.find("label.visible input").prop("checked"));
                         formData.append("isEncryption", $self.find(".btn_lock").hasClass("lock"));
+                        if (typeof (data["Id"]) != "undefined") formData.append("id", data["Id"]);
                         requests.push(
                             wrapRequest(
                                 co.File.Upload(formData),
@@ -414,15 +417,16 @@ function AddUpArticlet(success_text, error_text) {
                                     action: "檔案上傳",
                                     areaKey: $parentarea.data("key"),
                                     fileName: $self.find("input[name='name']").val() || "未命名檔案",
-                                    fileId: typeof (data["Id"]) != "undefined" ? formData.append("id", data["Id"]) : null,
+                                    fileId: typeof (data["Id"]) != "undefined" ? data["Id"] : null,
                                     tempId: typeof ($self.data("tempid")) != "undefined" ? $self.data("tempid") : null,
                                 }
                             )
                         )
+                        isFileUploaded = true;
                     } else {
                         var SerNoChange = data['SerNo'] != Number($self.find(".ser_no").val());
                         var FileNameChange = $self.data("oldname") != $self.find("input[name='name']").val();
-                        var IsVisibleChange = data["IsVisible"] != $self.find("label.visible input").prop("checked");
+                        var IsVisibleChange = $self.data("old-isvisible") != $self.find("label.visible input").prop("checked");
                         var AreaKeyChange = $self.data("old-editkey") != $parentarea.data("key");
 
                         if (SerNoChange || FileNameChange || IsVisibleChange || AreaKeyChange) {
@@ -445,6 +449,7 @@ function AddUpArticlet(success_text, error_text) {
                                     }
                                 )
                             )
+                            isFileUpdated = true;
                         }
                     }
                 });
@@ -470,11 +475,16 @@ function AddUpArticlet(success_text, error_text) {
                                 }
                             )
                         )
+                        isFileDeleted = true;
                     }
                 });
             }
 
             $.when.apply($, requests).done(function () {
+                if (isFileUploaded || isFileUpdated || isFileDeleted) {
+                    co.Articles.RebuildContentWithFiles(parseInt(result.message));
+                }
+
                 var results = [];
 
                 if (requests.length === 1) results = [arguments[0]];

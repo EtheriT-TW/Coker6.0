@@ -199,32 +199,54 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return response;
         }
         [HttpGet]
-        public async Task<IActionResult> ECPayLogisticsGetMap(string SCIds, string LogisticsSubType )
+        public async Task<IActionResult> ECPayLogisticsGetMap(string SCIds, string LogisticsSubType)
         {
-            var response = await ecPayLogisticsAppService.ECPayLogisticsGetMap(SCIds, LogisticsSubType);
-            if (response.Success) return Content(response.Message, "text/html", Encoding.UTF8);
-            else
+            try
             {
-                var errorHtml = $@"<html>
-                                                        <head>
-                                                            <meta charset='utf-8' />
-                                                            <title>門市選取失敗</title>
-                                                        </head>
-                                                        <body>
-                                                            <h2>門市選取失敗</h2>
-                                                            <p>{WebUtility.HtmlEncode(response.Message)}</p>
-                                                            <button onclick='history.back()'>返回上一頁</button>
-                                                        </body>
-                                                       </html>";
-                return Content(errorHtml, "text/html", Encoding.UTF8);
+                var baseUrl = configuration["ThirdParty:ECPayLogistics:LogisticsUrl"];
+                var actionUrl = $"{baseUrl}/Express/map";
+
+                ECPayLogisticsMapRequestDto ResquestBody = await ecPayLogisticsAppService.ECPayLogisticsGetMapRequestBody(SCIds, LogisticsSubType);
+
+                var html = $@"<!DOCTYPE html>
+                                            <html>
+                                            <head>
+                                                <meta charset='utf-8' />
+                                                <title>Redirecting...</title>
+                                            </head>
+                                            <body>
+                                                <form id='form' method='post' action='{actionUrl}'>
+                                                    <input type='hidden' name='MerchantID' value='{WebUtility.HtmlEncode(ResquestBody.MerchantID)}' />
+                                                    <input type='hidden' name='MerchantTradeNo' value='{WebUtility.HtmlEncode(ResquestBody.MerchantTradeNo)}' />
+                                                    <input type='hidden' name='LogisticsType' value='{WebUtility.HtmlEncode(ResquestBody.LogisticsType)}' />
+                                                    <input type='hidden' name='LogisticsSubType' value='{WebUtility.HtmlEncode(ResquestBody.LogisticsSubType)}' />
+                                                    <input type='hidden' name='IsCollection' value='{WebUtility.HtmlEncode(ResquestBody.IsCollection)}' />
+                                                    <input type='hidden' name='ServerReplyURL' value='{WebUtility.HtmlEncode(ResquestBody.ServerReplyURL)}' />
+                                                    <input type='hidden' name='ExtraData' value='{WebUtility.HtmlEncode(ResquestBody.ExtraData)}' />
+                                                </form>
+
+                                                <script>
+                                                    document.getElementById('form').submit();
+                                                </script>
+                                            </body>
+                                            </html>";
+                return Content(html, "text/html");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
         }
         [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> ECPayLogisticsGetMapResponse([FromForm] ECPayLogisticsMapResponseDto ResultResponseData)
         {
-            await ecPayLogisticsAppService.ECPayLogisticsGetMapResponse(ResultResponseData);
-            return Content("1|OK");
+            var response = await ecPayLogisticsAppService.ECPayLogisticsGetMapResponse(ResultResponseData);
+            var redirectUrl = response?.Message;
+
+            if (string.IsNullOrWhiteSpace(redirectUrl)) return Content("1|OK");
+
+            return LocalRedirect(redirectUrl);
         }
     }
 }

@@ -18,6 +18,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -116,7 +117,8 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (payment_type != null && payments != null)
                 {
-                    if (dto.ServiceType == ThirdPartyServiceTypeEnum.Payment ) {
+                    if (dto.ServiceType == ThirdPartyServiceTypeEnum.Payment)
+                    {
                         foreach (var payment in payments)
                         {
                             payment.Used = false;
@@ -195,6 +197,55 @@ namespace EtheriT.Coker.Application.ThirdParty
                     {
                         db.AddRange(AddData);
                         await db.SaveChangesAsync();
+                    }
+                }
+                if (dto.ServiceType == ThirdPartyServiceTypeEnum.Logistics)
+                {
+                    foreach (var ThirdPartie in dto.ThirdParties)
+                    {
+                        foreach (var value in ThirdPartie.value)
+                        {
+                            var LogisticsType = new List<ShippingTypeEnum> { };
+
+                            if (value.key == "EnableB2C" && value.value == "false")
+                            {
+                                LogisticsType.AddRange(new[]
+                                {
+                                    ShippingTypeEnum.綠界_大宗寄倉_全家,
+                                    ShippingTypeEnum.綠界_大宗寄倉_711冷凍店取,
+                                    ShippingTypeEnum.綠界_大宗寄倉_711超商,
+                                    ShippingTypeEnum.綠界_大宗寄倉_萊爾富,
+                                });
+                            }
+                            if (value.key == "EnableC2C" && value.value == "false")
+                            {
+                                LogisticsType.AddRange(new[]
+                                {
+                                    ShippingTypeEnum.綠界_門市寄取_711超商,
+                                    ShippingTypeEnum.綠界_門市寄取_OK超商,
+                                    ShippingTypeEnum.綠界_門市寄取_全家,
+                                    ShippingTypeEnum.綠界_門市寄取_萊爾富,
+                                });
+                            }
+                            if (value.key == "EnableHomeDelivery" && value.value == "false")
+                            {
+                                LogisticsType.AddRange(new[]
+                                {
+                                    ShippingTypeEnum.綠界_黑貓,
+                                    ShippingTypeEnum.綠界_中華郵政,
+                                });
+                            }
+
+                            var db_logistics= await db.LogisticsSettings.Where(e => e.FK_WebsiteId == websiteId && LogisticsType.Contains(e.LogisticsType) && e.FreigntStatusType != FreigntStatusTypeEnum.停用).ToListAsync();
+                            foreach (var item in db_logistics)
+                            {
+                                item.FreigntStatusType = FreigntStatusTypeEnum.停用;
+                                item.LastModifierUserId = userId;
+                                item.LastModificationTime = DateTime.Now;
+                            }
+
+                            await db.SaveChangesAsync();
+                        }
                     }
                 }
                 response.Success = true;

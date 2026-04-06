@@ -18,7 +18,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType.Logistics
         綠界_門市寄取_711超商 = 13,
         綠界_門市寄取_萊爾富 = 14,
         綠界_門市寄取_OK超商 = 15,
-        //綠界_黑貓 = 16,
-        //綠界_中華郵政 = 17,
+        綠界_黑貓 = 16,
+        綠界_中華郵政 = 17,
     }
 }

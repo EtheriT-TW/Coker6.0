@@ -162,13 +162,13 @@ function FormDataSet(result) {
     $set_default.prop("checked", result.set_Default);
     $title.val(result.title);
     $preserve.val(result.preserveType);
-    $shipping.val(result.freigntType);
+    $shipping.val(result.logisticsType);
     $freigntStatusType.val(result.freigntStatusType);
     $freight.val(result.freight);
     $low_con.val(result.low_Con);
     $d_freight.val(result.dis_Freight);
     $pricing_method.each(function () {
-        if ($(this).val() == result.freigntType) {
+        if ($(this).val() == result.logisticsType) {
             $(this).prop('checked', true)
             FreightRadio();
         }

@@ -39,6 +39,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public int Freight { get; set; }
         public int? Service_Charge { get; set; }
         public string? CVSStoreID { get; set; }
+        public string? CVSStoreName { get; set; }
+        public string? CVSAddress { get; set; }
+        public string? CVSTelephone { get; set; }
+        public string? CVSOutSide { get; set; }
         public List<OrderDetailAddDto> OrderDetails { get; set; }
     }
 }

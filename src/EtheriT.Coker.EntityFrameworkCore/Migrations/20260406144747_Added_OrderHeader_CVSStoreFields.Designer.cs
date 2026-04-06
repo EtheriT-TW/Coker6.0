@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260406144747_Added_OrderHeader_CVSStoreFields")]
+    partial class Added_OrderHeader_CVSStoreFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4393,19 +4396,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int?>("Bonus")
                         .HasColumnType("int");
 
-                    b.Property<string>("CVSAddress")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CVSOutSide")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("CVSStoreID")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CVSStoreName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CVSTelephone")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreationTime")

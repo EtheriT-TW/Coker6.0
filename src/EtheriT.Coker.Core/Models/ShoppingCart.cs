@@ -28,6 +28,9 @@ namespace EtheriT.Coker.Core.Models
         public string? LogisticsSubType  { get; set; }
         public string? CVSStoreID { get; set; }
         public string? CVSStoreName { get; set; }
+        public string? CVSAddress { get; set; }
+        public string? CVSTelephone { get; set; }
+        public string? CVSOutSide { get; set; }
         public ICollection<Token> Tokens { get; set; }
         public Prod_Stock Prod_Stock { get; set; }
         public Prod_Price? Prod_Price { get; set; }

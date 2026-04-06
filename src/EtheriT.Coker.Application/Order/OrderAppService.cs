@@ -576,7 +576,7 @@ namespace EtheriT.Coker.Application.Order
 
                 if (result != null)
                 {
-                    var ship_text = "";
+                    string ship_text = "";
                     if (result.Shipping == 0)
                     {
                         ship_text = "郵寄掛號";
@@ -742,6 +742,7 @@ namespace EtheriT.Coker.Application.Order
                     var shipping_str1 = shipping?.Title ?? "";
                     var shipping_str3 = (shipping?.LogisticsType ?? ShippingTypeEnum.郵寄掛號).ToString().Replace("_", "/");
                     temp_output.Shipping = shipping_str1 != "" ? shipping_str3 != "" ? $"{shipping_str1}　{shipping_str3}" : $"{shipping_str1}" : "";
+                    temp_output.LogisticsType = ((int)shipping?.LogisticsType).ToString();
                     var payment = await (from pt in db.PaymentTypes
                                          join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
                                          where ptv.FK_WebsiteId == WebsiteId

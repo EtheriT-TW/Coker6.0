@@ -168,7 +168,13 @@ function PageReady() {
                             $select_input.val(select_cart_data[i].cvsStoreName);
                             var $radio = $select_input.siblings('input[name="RadioShipping"]');
                             $radio.prop('checked', true);
-                            $radio.data("cvsstoreid", select_cart_data[i].cvsStoreID);
+                            $radio.attr({
+                                "data-cvsstoreid": select_cart_data[i].cvsStoreID,
+                                "data-cvsstorename": select_cart_data[i].cvsStoreName,
+                                "data-cvsaddress": select_cart_data[i].cvsAddress,
+                                "data-cvstelephone": select_cart_data[i].cvsTelephone,
+                                "data-cvsoutside": select_cart_data[i].cvsOutSide,
+                            })
                             isdefault = false;
                             break;
                         }
@@ -839,8 +845,11 @@ function CartListAdd(data, $container) {
             obj['Quantity'] = data.quantity;
             obj['Bonus'] = data.bonus;
             obj['freight'] = data.freight;
-            obj['cvsStoreName'] = data.cvsStoreName;
             obj['cvsStoreID'] = data.cvsStoreID;
+            obj['cvsStoreName'] = data.cvsStoreName;
+            obj['cvsAddress'] = data.cvsAddress;
+            obj['cvsTelephone'] = data.cvsTelephone;
+            obj['cvsOutSide'] = data.cvsOutSide;
             obj['logisticsSubType'] = data.logisticsSubType;
             shopping_cart_data.push(obj);
             refreshHasProds();
@@ -1688,7 +1697,11 @@ function DeleteRecipient() {
 function OrderDataGet() {
     var shipping_radio = $(`[name="RadioShipping"]:checked`);
     order_header_data.shipping = shipping_radio.val();
-    order_header_data.CVSStoreID = shipping_radio.data("cvsstoreid") ?? null;
+    order_header_data.CVSStoreID = shipping_radio.attr("data-cvsstoreid") ?? null;
+    order_header_data.CVSStoreName = shipping_radio.attr("data-cvsstorename") ?? null;
+    order_header_data.CVSAddress = shipping_radio.attr("data-cvsaddress") ?? null;
+    order_header_data.CVSTelephone = shipping_radio.attr("data-cvstelephone") ?? null;
+    order_header_data.CVSOutSide = shipping_radio.attr("data-cvsoutside") ?? null;
 
     if (typeof (order_header_data.payment) != "undefined" && (!((order_header_data.payment >= 16 && order_header_data.payment <= 23) || order_header_data.payment === 27))) {
         order_header_data.payment = $(`[name="RadioPayment"]:checked`).val();
@@ -1859,7 +1872,7 @@ async function OrderHeaderAdd() {
 
             var shipping_radio = $(`[name="RadioShipping"]:checked`);
             order_header_data.shipping = shipping_radio.val();
-            order_header_data.CVSStoreID = shipping_radio.data("cvsstoreid") ?? null;
+            order_header_data.CVSStoreID = shipping_radio.attr("data-cvsstoreid") ?? null;
 
             var shipping_radio = $(`[name="RadioShipping"][value="${order_header_data.shipping}"]`);
             var hasBtnGetMap = shipping_radio.siblings('.btn_getmap').length > 0;

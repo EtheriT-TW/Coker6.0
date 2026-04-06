@@ -206,31 +206,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                 var baseUrl = configuration["ThirdParty:ECPayLogistics:LogisticsUrl"];
                 var actionUrl = $"{baseUrl}/Express/map";
 
-                ECPayLogisticsMapRequestDto ResquestBody = await ecPayLogisticsAppService.ECPayLogisticsGetMapRequestBody(SCIds, LogisticsSubType);
+                ECPayLogisticsMapRequestDto RequestBody = await ecPayLogisticsAppService.ECPayLogisticsGetMapRequestBody(SCIds, LogisticsSubType);
 
-                var html = $@"<!DOCTYPE html>
-                                            <html>
-                                            <head>
-                                                <meta charset='utf-8' />
-                                                <title>Redirecting...</title>
-                                            </head>
-                                            <body>
-                                                <form id='form' method='post' action='{actionUrl}'>
-                                                    <input type='hidden' name='MerchantID' value='{WebUtility.HtmlEncode(ResquestBody.MerchantID)}' />
-                                                    <input type='hidden' name='MerchantTradeNo' value='{WebUtility.HtmlEncode(ResquestBody.MerchantTradeNo)}' />
-                                                    <input type='hidden' name='LogisticsType' value='{WebUtility.HtmlEncode(ResquestBody.LogisticsType)}' />
-                                                    <input type='hidden' name='LogisticsSubType' value='{WebUtility.HtmlEncode(ResquestBody.LogisticsSubType)}' />
-                                                    <input type='hidden' name='IsCollection' value='{WebUtility.HtmlEncode(ResquestBody.IsCollection)}' />
-                                                    <input type='hidden' name='ServerReplyURL' value='{WebUtility.HtmlEncode(ResquestBody.ServerReplyURL)}' />
-                                                    <input type='hidden' name='ExtraData' value='{WebUtility.HtmlEncode(ResquestBody.ExtraData)}' />
-                                                </form>
-
-                                                <script>
-                                                    document.getElementById('form').submit();
-                                                </script>
-                                            </body>
-                                            </html>";
-                return Content(html, "text/html");
+                return Content(GenerateAutoPostForm(actionUrl, RequestBody), "text/html");
             }
             catch (Exception ex)
             {
@@ -247,6 +225,55 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             if (string.IsNullOrWhiteSpace(redirectUrl)) return Content("1|OK");
 
             return LocalRedirect(redirectUrl);
+        }
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<IActionResult> ECPayLogisticsCreate(long ohid)
+        {
+            try
+            {
+                var baseUrl = configuration["ThirdParty:ECPayLogistics:LogisticsUrl"];
+                var actionUrl = $"{baseUrl}/Express/Create";
+
+                ECPayLogisticsCreateCVSRequestDto RequestBody = await ecPayLogisticsAppService.ECPayLogisticsExpressCVSCreate(ohid);
+
+                return Content(GenerateAutoPostForm(actionUrl, RequestBody), "text/html");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        private string GenerateAutoPostForm(string actionUrl, object RequestBody)
+        {
+            var props = RequestBody.GetType().GetProperties();
+
+            var inputs = new StringBuilder();
+
+            foreach (var prop in props)
+            {
+                var name = prop.Name;
+                var value = prop.GetValue(RequestBody)?.ToString() ?? "";
+
+                inputs.AppendLine($@"<input type='hidden' name='{name}' value='{WebUtility.HtmlEncode(value)}' />");
+            }
+
+            var html = $@"<!DOCTYPE html>
+                                            <html>
+                                            <head>
+                                                <meta charset='utf-8' />
+                                                <title>Redirecting...</title>
+                                            </head>
+                                            <body>
+                                                <form id='form' method='post' action='{actionUrl}'>
+                                                    {inputs}
+                                                </form>
+                                                <script>
+                                                    document.getElementById('form').submit();
+                                                </script>
+                                            </body>
+                                            </html>";
+            return html;
         }
     }
 }

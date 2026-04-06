@@ -31,6 +31,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public int Stock { get; set; }
         public string? LogisticsSubType { get; set; }
         public string? CVSStoreName { get; set; }
+        public string? CVSStoreID { get; set; }
         public FreightGetAllListDto? Freight { get; set; }
     }
 }

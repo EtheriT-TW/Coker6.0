@@ -38,6 +38,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public long? CouponId { get; set; }
         public int Freight { get; set; }
         public int? Service_Charge { get; set; }
+        public string? CVSStoreID { get; set; }
         public List<OrderDetailAddDto> OrderDetails { get; set; }
     }
 }

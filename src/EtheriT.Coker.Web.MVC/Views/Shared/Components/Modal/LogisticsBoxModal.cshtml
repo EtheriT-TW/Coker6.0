@@ -1,0 +1,82 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Freight
+
+<link rel="stylesheet" href="~/css/Components/LogisticsBoxModal.min.css" asp-append-version="true" />
+<script src="~/js/Components/ModuleSelect.min.js" asp-append-version="true"></script>
+<script src="~/js/Components/LogisticsBoxModal.min.js" asp-append-version="true"></script>
+@{
+    await Html.RenderPartialAsync(@"DevExpress\_GridCSRF");
+}
+<div id="LogisticsBoxModal" class="modal fade" tabindex="-1" aria-labelledby="LogisticsBoxModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="LogisticsBoxModalLabel">選擇箱型</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="bg-white p-3">
+                    @(
+                        Html.DevExtreme().DataGrid<GetLogisticsBoxAllSelectDto>()
+                        .DataSource(d => 
+                            d.RemoteController().Key("Id")
+                            .LoadUrl("/api/Freight/GetLogisticsBoxSelectList").LoadMethod("Get")
+                            .LoadParams(new { ids = new JS("getLogisticsBoxSelectSort") })
+                        )
+                        .ID("devLogisticsBoxListModalGrid")
+                        .Selection(s =>
+                            s.Mode(SelectionMode.Multiple).ShowCheckBoxesMode(GridSelectionShowCheckBoxesMode.Always)
+                        )
+                        .RemoteOperations(true)
+                        .ColumnHidingEnabled(false)
+                        .ShowBorders(true)
+                        .FilterRow(filterRow => filterRow
+                            .Visible(true)
+                            .ApplyFilter(GridApplyFilterMode.OnClick)
+                        )
+                        .SearchPanel(searchPanel => searchPanel
+                            .Visible(true)
+                            .Placeholder("請輸入要搜尋的資料")
+                        )
+                        .Columns(c =>
+                        {
+                            c.AddFor(e => e.IsSelected).Caption("是否勾選").Visible(false).SortOrder(SortOrder.Desc);
+                            c.AddFor(e => e.Name).Caption("箱型名稱").Width(150);
+                            c.AddFor(e => e.CapacityPoint).Caption("箱型點數");
+                            c.AddFor(e => e.IsActive).Caption("是否啟用");
+                        })
+                        .Toolbar(toolbar =>
+                        {
+                            toolbar.Items(items =>
+                            {
+                                items.Add()
+                            .Location(ToolbarItemLocation.Before)
+                            .Widget(w =>
+                                w.Button()
+                                .Text("選項清除")
+                                .Disabled(true)
+                                .OnClick("LogisticsBox_ClearBtnClick")
+                                .OnInitialized("LogisticsBox_ClearBtnInit")
+                            );
+                            });
+                            toolbar.Items(i =>
+                            {
+                                i.Add()
+                            .Name(DataGridToolbarItem.SearchPanel)
+                            .ShowText(ToolbarItemShowTextMode.Always)
+                            .Location(ToolbarItemLocation.After);
+                            });
+                        })
+                        .OnSelectionChanged("LogisticsBox_SelectChange")
+                        .OnContentReady("LogisticsBoxContentReady")
+                        .Paging(paging => paging.PageSize(10))
+                    )
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn_logisticsBox_save btn btn-primary">確認</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,24 @@
+﻿#LogisticsBoxModal > .modal-dialog {
+    min-width: 40vw;
+}
+
+#LogisticsBoxModal .dx-datagrid-search-panel {
+    width: fit-content !important;
+}
+
+.modal-open .wrapper {
+    transition: unset !important;
+    filter: unset !important;
+}
+
+#devLogisticsBoxListModalGrid {
+    width: 100%;
+}
+
+    #devLogisticsBoxListModalGrid .dx-datagrid-rowsview .dx-row > td {
+        vertical-align: middle;
+    }
+
+#InputLogisticsBox {
+    padding: 1.5rem 0 0 5rem;
+}

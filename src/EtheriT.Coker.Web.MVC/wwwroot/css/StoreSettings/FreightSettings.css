@@ -12,7 +12,7 @@ input[type="number"] {
     z-index: 10;
 }
 
-/* Product List */
+/* Freight List */
 .btn_back {
     color: #4E565A;
 }
@@ -21,12 +21,12 @@ input[type="number"] {
     z-index: 1;
 }
 
-/* Product Content */
+/* Freight Content */
 #FreightContent > .card-header {
     background-color: var(--color-gray-bg-dark);
 }
 
-/* Product Form */
+/* FreightForm */
 #FreightForm > div > .name > input {
     padding-left: 5.5rem;
 }
@@ -42,3 +42,86 @@ input[type="number"] {
 #FreightForm .dfreight > input {
     padding-left: 7.5rem;
 }
+
+.logisticsBoxSection {
+    border: 1px solid #dee2e6;
+    border-radius: .5rem;
+    padding: 1rem;
+    background: #fff;
+    margin-bottom: 1rem;
+    max-width: 800px;
+}
+
+    .logisticsBoxSection #InputLogisticsBox {
+        padding: 0.5rem 1rem;
+    }
+
+.logistics-box-row {
+    min-height: 38px;
+    padding: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.logistics-box-name {
+    min-width: 0;
+    word-break: break-all;
+}
+
+.logistics-box-actions {
+    white-space: nowrap;
+}
+
+#LogisticsBoxSelectedList {
+    border-top: dashed 1px #dee2e6;
+    padding: 1rem;
+}
+
+    #LogisticsBoxSelectedList:empty::before {
+        content: "尚未選擇箱型";
+        display: block;
+        text-align: center;
+        color: #6c757d;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    #LogisticsBoxSelectedList > .text-muted {
+        text-align: center;
+        color: #6c757d;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    #LogisticsBoxSelectedList .remove-btn {
+        opacity: 0.6;
+        width: 24px;
+        margin-top: 5px;
+    }
+
+        #LogisticsBoxSelectedList .remove-btn > .material-symbols-outlined {
+            font-weight: bold;
+        }
+
+        #LogisticsBoxSelectedList .remove-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+    #LogisticsBoxSelectedList .logistics-box-price {
+        width: 220px;
+    }
+        #LogisticsBoxSelectedList .logistics-box-price > .text-muted {
+            width: 50px;
+        }
+
+    #LogisticsBoxSelectedList .form-control {
+        text-align: center;
+    }
+
+#FreightForm #InputProd {
+    padding: 1.5rem 0 0 5.5rem;
+}
+    #FreightForm #InputProd:not(:disabled) {
+        background: linear-gradient(to right, #fff 5rem, #F0F7FF 5rem);
+        cursor: pointer;
+    }

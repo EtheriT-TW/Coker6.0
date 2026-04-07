@@ -37,30 +37,37 @@ namespace EtheriT.Coker.Application.Freight
         }
         public async Task<ResponseMessageDto> AddUp(FreightDto dto)
         {
-
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
 
             try
             {
-                long WebsiteID = await loginUserData.GetWebsiteId();
+                long websiteId = await loginUserData.GetWebsiteId();
                 LogisticsSetting? ls;
-                if (dto.Id == 0)
+
+                if (dto.Id == null || dto.Id == 0)
                 {
                     ls = mapper.Map<LogisticsSetting>(dto);
-                    ls.FK_WebsiteId = WebsiteID;
+                    ls.FK_WebsiteId = websiteId;
+
                     db.LogisticsSettings.Add(ls);
                 }
                 else
                 {
-                    ls = db.LogisticsSettings.Where(e => e.Id == dto.Id).FirstOrDefault();
-                    if (ls != null)
-                    {
-                        mapper.Map(dto, ls);
-                    }
-                    else throw new Exception("查無運費資料");
+                    ls = await db.LogisticsSettings
+                        .Include(x => x.logisticsBoxFees)
+                        .FirstOrDefaultAsync(e => e.Id == dto.Id && !e.IsDeleted);
+
+                    if (ls == null)
+                        throw new Exception("查無運費資料");
+
+                    mapper.Map(dto, ls);
                 }
+
                 await loginUserData.SaveChanges(ls);
-                await SyncProdMappingsAsync(ls.Id, dto.ProdIds, WebsiteID);
+
+                await SyncProdMappingsAsync(ls.Id, dto.ProdIds, websiteId);
+                await SyncLogisticsBoxFeesAsync(ls.Id, dto.LogisticsBoxFees, websiteId, dto.FreigntType);
+
                 output.Success = true;
             }
             catch (Exception e)
@@ -68,8 +75,97 @@ namespace EtheriT.Coker.Application.Freight
                 output.Success = false;
                 output.Error = e.Message;
             }
-            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto),JsonConvert.SerializeObject(output));
+
+            await loginUserData.SetLogs(
+                JsonConvert.SerializeObject(dto),
+                JsonConvert.SerializeObject(output)
+            );
+
             return output;
+        }
+        private async Task SyncLogisticsBoxFeesAsync(
+            long logisticsSettingId,
+            List<LogisticsBoxFeeDto>? dtoFees,
+            long websiteId,
+            FreigntTypeEnum freigntType)
+        {
+            dtoFees ??= new List<LogisticsBoxFeeDto>();
+
+            var dbFees = await db.LogisticsBoxFees
+                .Where(x => x.FK_LogisticsSettingId == logisticsSettingId && !x.IsDeleted)
+                .ToListAsync();
+
+            // 若不是以箱計費，直接把既有明細刪除
+            if (freigntType != FreigntTypeEnum.依箱計費)
+            {
+                foreach (var fee in dbFees)
+                {
+                    fee.IsDeleted = true;
+                }
+                await loginUserData.SaveChanges(dbFees);
+                return;
+            }
+
+            // 驗證
+            if (!dtoFees.Any())
+                throw new Exception("以箱計費至少需設定一筆箱型費用。");
+
+            if (dtoFees.Any(x => x.Fee <= 0))
+                throw new Exception("箱型費用不可小於等於 0。");
+
+            var duplicatedBoxIds = dtoFees
+                .GroupBy(x => x.FK_LogisticsBoxId)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+
+            if (duplicatedBoxIds.Any())
+                throw new Exception("箱型費用設定不可重複。");
+
+            // 驗證箱型是否屬於本站且存在
+            var boxIds = dtoFees.Select(x => x.FK_LogisticsBoxId).Distinct().ToList();
+
+            var validBoxIds = await db.LogisticsBoxs
+                .Where(x => x.FK_WebsiteId == websiteId && !x.IsDeleted && boxIds.Contains(x.Id))
+                .Select(x => x.Id)
+                .ToListAsync();
+
+            var invalidBoxIds = boxIds.Except(validBoxIds).ToList();
+            if (invalidBoxIds.Any())
+                throw new Exception("包含無效的箱型資料。");
+
+            // 先處理更新 / 新增
+            foreach (var dtoFee in dtoFees)
+            {
+                var exist = dbFees.FirstOrDefault(x => x.FK_LogisticsBoxId == dtoFee.FK_LogisticsBoxId);
+
+                if (exist != null)
+                {
+                    exist.Fee = dtoFee.Fee;
+                    exist.IsDeleted = false;
+                }
+                else
+                {
+                    db.LogisticsBoxFees.Add(new LogisticsBoxFee
+                    {
+                        FK_LogisticsSettingId = logisticsSettingId,
+                        FK_LogisticsBoxId = dtoFee.FK_LogisticsBoxId,
+                        Fee = dtoFee.Fee
+                    });
+                }
+            }
+
+            // 刪除不存在於 dto 的舊資料
+            var dtoBoxIds = dtoFees.Select(x => x.FK_LogisticsBoxId).ToHashSet();
+
+            foreach (var dbFee in dbFees)
+            {
+                if (!dtoBoxIds.Contains(dbFee.FK_LogisticsBoxId))
+                {
+                    dbFee.IsDeleted = true;
+                }
+            }
+            await loginUserData.SaveChanges(dbFees);
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
@@ -109,30 +205,96 @@ namespace EtheriT.Coker.Application.Freight
 
             return new JsonResult(new List<FreightGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        public async Task<JsonResult> GetLogisticsBoxAllList(DataSourceLoadOptions loadOptions) {
-            try {
-                long WebsiteID = await loginUserData.GetWebsiteId();
-                var dataQuery = db.LogisticsBoxs
-                    .Where(x => x.FK_WebsiteId == WebsiteID)
-                    .Select(x => new GetLogisticsBoxAllListInputDto
+        private async Task<IQueryable<GetLogisticsBoxAllListInputDto>> GetLogisticsBoxBaseQueryAsync()
+        {
+            long websiteId = await loginUserData.GetWebsiteId();
+
+            return db.LogisticsBoxs
+                .Where(x => x.FK_WebsiteId == websiteId)
+                .Select(x => new GetLogisticsBoxAllListInputDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    IsActive = x.IsActive,
+                    CapacityPoint = x.CapacityPoint,
+                    Sort = x.Sort
+                });
+        }
+        public async Task<JsonResult> GetLogisticsBoxAllList(DataSourceLoadOptions loadOptions)
+        {
+            try
+            {
+                var query = await GetLogisticsBoxBaseQueryAsync();
+                var output = await DataSourceLoader.LoadAsync(query, loadOptions);
+                return new JsonResult(output, new JsonSerializerSettings
+                {
+                    ContractResolver = new DefaultContractResolver()
+                });
+            }
+            catch (Exception)
+            {
+                return new JsonResult(new List<GetLogisticsBoxAllListInputDto>(), new JsonSerializerSettings
+                {
+                    ContractResolver = new DefaultContractResolver()
+                });
+            }
+        }
+        public async Task<JsonResult> GetLogisticsBoxSelectList(DataSourceLoadOptions loadOptions, string? ids = null)
+        {
+            try
+            {
+                List<long> selectedIds = new();
+
+                if (!string.IsNullOrWhiteSpace(ids))
+                {
+                    selectedIds = ids
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => long.TryParse(x, out var v) ? v : (long?)null)
+                        .Where(x => x.HasValue)
+                        .Select(x => x!.Value)
+                        .ToList();
+                }
+
+                var baseQuery = await GetLogisticsBoxBaseQueryAsync();
+
+                var query = baseQuery
+                    .Where(x => x.IsActive)
+                    .Select(x => new GetLogisticsBoxAllSelectDto
                     {
                         Id = x.Id,
                         Name = x.Name,
                         IsActive = x.IsActive,
                         CapacityPoint = x.CapacityPoint,
-                        Sort = x.Sort
-                    });
-                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                        Sort = x.Sort,
+                        IsSelected = selectedIds.Contains(x.Id)
+                    })
+                    .OrderBy(x => x.Sort)
+                    .ThenBy(x => x.CapacityPoint)
+                    .ThenBy(x => x.Name);
+
+                var output = await DataSourceLoader.LoadAsync(query, loadOptions);
+
+                return new JsonResult(output, new JsonSerializerSettings
+                {
+                    ContractResolver = new DefaultContractResolver()
+                });
             }
-            catch (Exception e) { }
-            return new JsonResult(new List<FreightGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            catch (Exception ex)
+            {
+                // 建議至少 log
+                // logger.LogError(ex, "GetLogisticsBoxSelectList failed");
+
+                return new JsonResult(new List<GetLogisticsBoxAllSelectDto>(), new JsonSerializerSettings
+                {
+                    ContractResolver = new DefaultContractResolver()
+                });
+            }
         }
         public async Task<FreightDto> GetOne(long Id)
         {
             try
             {
-                var result = db.LogisticsSettings.Include(e => e.MappingLogisticsSettingAndProds).ThenInclude(e => e.Prod).Where(e => e.Id == Id && !e.IsDeleted).FirstOrDefault();
+                var result = db.LogisticsSettings.Include(e => e.MappingLogisticsSettingAndProds).ThenInclude(e => e.Prod).Include(e => e.logisticsBoxFees).ThenInclude(e => e.logisticsBox).Where(e => e.Id == Id && !e.IsDeleted).FirstOrDefault();
 
                 if (result != null)
                 {

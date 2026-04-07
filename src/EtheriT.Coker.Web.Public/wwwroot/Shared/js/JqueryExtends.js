@@ -97,10 +97,20 @@ function jqueryExtend() {
                                 obj.title = field.closest('.d-flex').prevAll('.title').first().text().trim() ||
                                     field.closest('.d-flex').prevAll('label').first().text().trim() || "";
                                 obj.value = '';
+
                                 $(form).find(`[name="${obj.name}"]:checked`).each(function () {
-                                    const lbl = $(this).nextAll("label").text().trim();
+                                    const $checked = $(this);
+                                    let lbl = $checked.nextAll("label").first().text().trim();
+                                    const extraInput = $checked.closest('.form-check, .checkbox_input_text').find('input[type="text"]');
+
+                                    if (extraInput.length && extraInput.val().trim()) {
+                                        lbl += `：${extraInput.val().trim()}`;
+                                        excludedNames.push(extraInput.attr("name"));
+                                    }
+
                                     obj.value += lbl + " ,";
                                 });
+
                                 obj.value = obj.value.replace(/ ,$/, '');
                                 break;
 

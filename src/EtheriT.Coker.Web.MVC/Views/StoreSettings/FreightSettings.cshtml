@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="~/css/StoreSettings/FreightSettings.min.css" asp-append-version="true" />
 <script src="~/js/StoreSettings/FreightSettings.min.js" asp-append-version="true"></script>
 
+
 <div class="">
 	<div id="TopLine" class="d-flex justify-content-between mb-4">
 		<div class="d-flex">
@@ -15,8 +16,8 @@
 		</div>
 	</div>
 
-	<div id="" class="py-2">
-		<div id="FreightList" class="card border-0">
+	<div id="FreightPageRoot" class="py-2">
+		<div id="FreightList" data-hash-page="List" class="card border-0">
 			<div class="card-body position-relative pb-5">
 				<button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
 					<span class="material-symbols-outlined">add</span>
@@ -72,7 +73,7 @@
 			</div>
 		</div>
 
-		<div id="FreightContent" class="card border-0 d-none">
+		<div id="FreightContent" data-hash-page="Content" class="card border-0 d-none">
 			<div class="card-header d-flex justify-content-between">
 				<div class="fw-bold fs-5 d-flex align-items-center">
 					<button class="btn_back d-flex bg-transparent border-0 align-items-center">
@@ -80,14 +81,14 @@
 							keyboard_backspace
 						</span>
 					</button>
-					<div class="lh-lg">運費設定</div>
+					<div class="lh-lg" data-hash-title>運費設定</div>
 				</div>
 				<button class="btn_done btn-primary border-0 px-3 py-1 text-white" form="FreightForm">　儲存　</button>
 			</div>
 
 			<form id="FreightForm" class="card-body needs-validation">
 				<div class="form-check mb-3">
-					<input id="CheckDefault" class="form-check-input" type="checkbox" value="">
+					<input id="CheckDefault" class="form-check-input" name="Set_Default" type="checkbox" value="true">
 					<label class="form-check-label" for="CheckDefault">設定為預設運費</label>
 				</div>
 
@@ -96,40 +97,43 @@
 						<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
 							<span class="material-symbols-outlined me-1 required_sign">local_shipping</span>名稱
 						</div>
-						<input id="InputName" class="form-control rounded" type="text" aria-label="Input Name of Freight" autocomplete="off" required>
+						<input id="InputName" class="form-control rounded" name="Title" type="text" aria-label="Input Name of Freight" autocomplete="off" required>
 					</div>
 
 					<div class="col-6 col-sm-3 mb-3 d-none">
-						<select id="SelectPreserve" class="form-select" aria-label="Preserve Select"></select>
+						<select id="SelectPreserve" class="form-select" name="PreserveType" aria-label="Preserve Select"></select>
 					</div>
 
 					<div class="col-6 col-sm-3 mb-3">
-						<select id="SelectStatus" class="form-select" aria-label="Status Select" required></select>
+						<select id="SelectStatus" class="form-select" name="LogisticsType" aria-label="Status Select" required></select>
 					</div>
 
 					<div class="col-6 col-sm-3 mb-3">
-						<select id="SelectShipping" class="form-select" aria-label="Shipping Select" required></select>
+						<select id="SelectShipping" class="form-select" name="FreigntStatusType" aria-label="Shipping Select" required></select>
 					</div>
 				</div>
 
 				<div class="d-flex mb-3">
 					<div class="form-check me-5">
-						<input id="FreightRadio_Free" class="form-check-input" type="radio" name="FreightRadio" value="1">
+						<input id="FreightRadio_Free" class="form-check-input" type="radio" name="FreigntType" value="1">
 						<label class="form-check-label" for="FreightRadio_Free">免運</label>
 					</div>
 					<div class="form-check me-5">
-						<input id="FreightRadio_Single" class="form-check-input" type="radio" name="FreightRadio" value="2">
+						<input id="FreightRadio_Single" class="form-check-input" type="radio" name="FreigntType" value="2">
 						<label class="form-check-label" for="FreightRadio_Single">單筆計算</label>
 					</div>
+					<div class="form-check me-5">
+						<input id="FreightRadio_Box" class="form-check-input" type="radio" name="FreigntType" value="3">
+						<label class="form-check-label" for="FreightRadio_Box">已箱計費</label>
+					</div>
 				</div>
-
-				<div class="row">
+				<div class="row logisticsPrice">
 					<div class="col-6 col-sm-3 mb-3">
 						<div class="freight input-group mb-3">
 							<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
 								<span class="material-symbols-outlined me-1">paid</span>單筆運費
 							</div>
-							<input id="InputFreight" class="form-control rounded" type="number" aria-label="Input Freight" disabled="disabled" required>
+							<input id="InputFreight" class="form-control rounded" type="number" name="Freight" aria-label="Input Freight" disabled="disabled" required>
 						</div>
 					</div>
 					<div class="col-6 col-sm-3 mb-3">
@@ -137,7 +141,7 @@
 							<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
 								<span class="material-symbols-outlined me-1">toll</span>折抵低消
 							</div>
-							<input id="InputLowCon" class="form-control rounded" type="number" aria-label="Input Low Consumption" disabled="disabled" required>
+							<input id="InputLowCon" class="form-control rounded" type="number" name="Low_Con" aria-label="Input Low Consumption" disabled="disabled" required>
 						</div>
 					</div>
 					<div class="col-6 col-sm-3 mb-3">
@@ -145,18 +149,28 @@
 							<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
 								<span class="material-symbols-outlined me-1">generating_tokens</span>折抵後運費
 							</div>
-							<input id="InputDfreight" class="form-control rounded" type="number" aria-label="Input Discounted Freight" disabled="disabled" required>
+							<input id="InputDfreight" class="form-control rounded" type="number" name="Dis_Freight" aria-label="Input Discounted Freight" disabled="disabled" required>
 						</div>
 					</div>
 				</div>
-				<div class="prod input-group mb-3" name="prods" data-form-type="prods">
-					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1">alternate_email</span>商品
+				<div class="d-flex gap-3">
+					<div class="logisticsBoxSection col-6 d-none">
+						<button type="button" id="InputLogisticsBox" class="btn btn-outline-primary btn-sm">
+							選擇箱型
+						</button>
+						<div id="LogisticsBoxSelectedList" class="mt-2"></div>
 					</div>
-					<textarea id="InputProd" class="form-control rounded text-start InputProd formItem" name="ProdSelected" aria-label="Input Prod" data-bs-toggle="modal" data-bs-target="#ProdModal" readonly></textarea>
+
+					<div class="prod input-group mb-3" name="prods" data-form-type="prods col">
+						<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+							<span class="material-symbols-outlined me-1">alternate_email</span>商品
+						</div>
+						<textarea id="InputProd" class="form-control rounded text-start InputProd formItem" name="ProdSelected" aria-label="Input Prod" data-bs-toggle="modal" data-bs-target="#ProdModal" readonly></textarea>
+					</div>
 				</div>
 			</form>
 			@await Component.InvokeAsync(nameof(Modal), new { dispaly = "ProdSelectModal" })
+			@await Component.InvokeAsync(nameof(Modal), new { dispaly = "LogisticsBoxModal" })
 		</div>
 	</div>
 </div>

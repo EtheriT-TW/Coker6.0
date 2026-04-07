@@ -5,6 +5,7 @@
             else if (typeof ($self) == "string") {
                 $self = /^#/.test($self) ? $($self) : $(`#${$self}`);
             }
+
             const formTypeSet = (type, $e, value) => {
                 switch (type) {
                     case "zipcode":
@@ -13,87 +14,130 @@
                             addr: value
                         });
                         break;
+
                     case "date_range":
                         if (!!!$e.data('daterangepicker')) _c.Picker.Init($e);
                         if (!!obj[$e.data("start")] || !!obj[$e.data("end")]) {
                             $e.data('daterangepicker').setStartDate(obj[$e.data("start")]);
                             $e.data('daterangepicker').setEndDate(obj[$e.data("end")]);
-                        } else $e.val("");
+                        } else {
+                            $e.val("");
+                        }
                         break;
+
                     case "date":
-                        if (!!!$e.data('daterangepicker'))
-                            _c.Picker.Init($e, { singleDatePicker: true, timePicker: false, locale: { format: 'YYYY/MM/DD' } });
+                        if (!!!$e.data('daterangepicker')) {
+                            _c.Picker.Init($e, {
+                                singleDatePicker: true,
+                                timePicker: false,
+                                locale: { format: 'YYYY/MM/DD' }
+                            });
+                        }
                         $e.data('daterangepicker').setStartDate(value || Date.now());
                         break;
+
                     case "disabled":
                         $e.on("change", function () {
-                            const checked = $(this).data("direct") == "reverse" ? !$(this).prop("checked") : $(this).prop("checked");
-                            if (checked) $(`#${$(this).data("target")}`).attr("disabled", "disabled").val("");
-                            else $(`#${$(this).data("target")}`).removeAttr("disabled")
+                            const checked = $(this).data("direct") == "reverse"
+                                ? !$(this).prop("checked")
+                                : $(this).prop("checked");
+
+                            if (checked) {
+                                $(`#${$(this).data("target")}`).attr("disabled", "disabled").val("");
+                            } else {
+                                $(`#${$(this).data("target")}`).removeAttr("disabled");
+                            }
                         });
 
                         if (!!$e.data("value")) {
                             let _v = $(`#${$e.data("target")}`).val();
                             if (typeof ($e.data("value")) == "number") _v = parseInt(_v);
                             else if (typeof ($e.data("value")) == "string") _v = _v.toString();
-                            value = $e.data("direct") == "reverse" ? !($e.data("value") == _v) : $e.data("value") == _v;
+
+                            value = $e.data("direct") == "reverse"
+                                ? !($e.data("value") == _v)
+                                : $e.data("value") == _v;
                         }
+
                         $e.prop("checked", value);
                         $e.trigger("change");
                         break;
+
                     case "images":
                         if (!!!$e.data("init")) {
                             $e.ImageUploadModalClear();
-                            $e.data("init", true)
+                            $e.data("init", true);
                         }
-                        co.File.getImgFile({ Sid: obj[$e.data("target")], Type: $e.data("image-type"), Size: $e.data("image-size") }).done(function (file) {
-                            if (file.length > 0)
-                                ImageUploadModalDataInsert($e, file[0].id, file[0].link, file[0].name)
+                        co.File.getImgFile({
+                            Sid: obj[$e.data("target")],
+                            Type: $e.data("image-type"),
+                            Size: $e.data("image-size")
+                        }).done(function (file) {
+                            if (file.length > 0) {
+                                ImageUploadModalDataInsert($e, file[0].id, file[0].link, file[0].name);
+                            }
                         });
                         break;
+
                     case "html":
                         $e.empty().html($("<div>").html(value).html());
                         break;
+
+                    case "custom":
+                        const setterName = $e.data("setter");
+                        if (setterName && typeof window[setterName] === "function") {
+                            window[setterName](value, $e, obj);
+                        }
+                        break;
+
                     default:
                         $e.val(_c.Form.formatElementValue($e, value));
                         break;
                 }
-            }
+            };
+
             for (const key in obj) {
                 const $e = $self.find(`[name="${key}"]`);
                 if ($e.length > 0) {
                     if (!!$e.data("form-type")) {
-                        formTypeSet($e.data("form-type"), $e, obj[key])
+                        formTypeSet($e.data("form-type"), $e, obj[key]);
                     } else {
                         switch ($e[0].tagName) {
                             case "INPUT":
-                                switch ($e.attr("type").toLowerCase()) {
+                                switch (($e.attr("type") || "").toLowerCase()) {
                                     case "radio":
                                         $self.find(`[name="${key}"][value="${obj[key]}"]`).prop("checked", true);
                                         break;
+
                                     case "checkbox":
                                         if (Array.isArray(obj[key])) {
                                             $(obj[key]).each(function (index, element) {
                                                 $self.find(`[name="${key}"][value="${element}"]`).prop("checked", true);
                                             });
-                                        } else $self.find(`[name="${key}"][value="${obj[key]}"]`).prop("checked", true);
+                                        } else {
+                                            $self.find(`[name="${key}"][value="${obj[key]}"]`).prop("checked", true);
+                                        }
                                         break;
+
                                     case "datetime-local":
                                         $e.val(co.Date.GetDateTimeStr(obj[key]));
                                         break;
+
                                     default:
                                         $e.val(_c.Form.formatElementValue($e, obj[key]));
                                         break;
                                 }
                                 break;
+
                             default:
                                 $e.val(_c.Form.formatElementValue($e, obj[key]));
                                 break;
                         }
                     }
-                }// else console.log(key);
+                }
             }
         },
+
         normalizeElementValue: function (elementOrJq, value) {
             const $e = elementOrJq instanceof jQuery ? elementOrJq : $(elementOrJq);
 
@@ -132,6 +176,7 @@
 
             return value;
         },
+
         formatElementValue: function (elementOrJq, value) {
             const $e = elementOrJq instanceof jQuery ? elementOrJq : $(elementOrJq);
 
@@ -155,6 +200,73 @@
 
             return value;
         },
+
+        bindNumberFormatter: function (elementOrJq) {
+            const $input = elementOrJq instanceof jQuery ? elementOrJq : $(elementOrJq);
+            if (!$input.length) return;
+
+            const parseNumber = (val) => {
+                if (val === null || val === undefined || val === "") return "";
+                return String(val).replace(/,/g, "").trim();
+            };
+
+            $input.each(function () {
+                const $e = $(this);
+
+                if ($e.data("number-format-init")) return;
+                $e.data("number-format-init", true);
+
+                if (!$e.attr("data-origin-type")) {
+                    $e.attr("data-origin-type", "number");
+                }
+
+                if (($e.attr("type") || "").toLowerCase() === "number") {
+                    $e.attr("type", "text");
+                }
+
+                if (!$e.attr("inputmode")) {
+                    $e.attr("inputmode", "numeric");
+                }
+
+                if (!$e.attr("data-form-type")) {
+                    $e.attr("data-form-type", "number-format");
+                }
+
+                $e.on("focus.numberFormat", function () {
+                    $e.val(parseNumber($e.val()));
+                });
+
+                $e.on("blur.numberFormat", function () {
+                    $e.val(_c.Form.formatElementValue($e, $e.val()));
+                });
+
+                $e.on("input.numberFormat", function () {
+                    let val = $e.val();
+                    val = String(val).replace(/[^\d]/g, "");
+                    $e.val(val);
+                });
+
+                const initVal = $e.val();
+                if (initVal !== null && initVal !== undefined && initVal !== "") {
+                    $e.val(_c.Form.formatElementValue($e, initVal));
+                }
+            });
+        },
+
+        initNumberFormatter: function (scope) {
+            let $scope = null;
+
+            if (!scope) $scope = $(document);
+            else if (scope instanceof jQuery) $scope = scope;
+            else $scope = $(scope);
+
+            if (!$scope.length) return;
+
+            _c.Form.bindNumberFormatter(
+                $scope.find('input[type="number"], input[data-form-type="number"], input[data-form-type="number-format"]')
+            );
+        },
+
         getJson: function (id, isArrayType) {
             const form = document.getElementById(id);
             const $form = $(`#${id}`);
@@ -173,15 +285,23 @@
                 ];
             }));
 
-            let exItems = $(`#${id}`).find(`div[name]`);
+            let exItems = $(`#${id}`).find(`[name][data-form-type]`);
             exItems.each(function () {
                 const $e = $(this);
                 switch ($e.data("form-type")) {
                     case "zipcode":
                         formDataObject[$e.attr("name")] = co.Zipcode.getData($e);
                         break;
+
                     case "tags":
                         formDataObject[$e.attr("name")] = $e.find(".InputTag").data("tagList");
+                        break;
+
+                    case "custom":
+                        const getterName = $e.data("getter");
+                        if (getterName && typeof window[getterName] === "function") {
+                            formDataObject[$e.attr("name")] = window[getterName]($e, formDataObject);
+                        }
                         break;
                 }
             });
@@ -216,12 +336,11 @@
                 }
             });
 
-
             return formDataObject;
         },
+
         getJsonByFieldset: function (id, isArrayType) {
             const fieldset = document.getElementById(id);
-            const isArray = typeof (isArrayType) == "undefined" ? false : isArrayType;
             const elements = fieldset.querySelectorAll('input, select, textarea');
             const fieldsetData = {};
 
@@ -241,6 +360,7 @@
 
             return fieldsetData;
         },
+
         init: function (id, fun) {
             const form = document.getElementById(id);
             if (!form) return;
@@ -250,38 +370,7 @@
                 return String(val).replace(/,/g, "").trim();
             };
 
-            $(form).find('input[type="number"]').each(function () {
-                const $input = $(this);
-
-                if ($input.data("number-format-init")) return;
-                $input.data("number-format-init", true);
-
-                $input.attr("data-origin-type", "number");
-                $input.attr("type", "text");
-
-                if (!$input.attr("inputmode")) {
-                    $input.attr("inputmode", "numeric");
-                }
-
-                $input.on("focus.numberFormat", function () {
-                    $input.val(parseNumber($input.val()));
-                });
-
-                $input.on("blur.numberFormat", function () {
-                    $input.val(_c.Form.formatElementValue($input, $input.val()));
-                });
-
-                $input.on("input.numberFormat", function () {
-                    let val = $input.val();
-                    val = String(val).replace(/[^\d]/g, "");
-                    $input.val(val);
-                });
-
-                const initVal = $input.val();
-                if (initVal !== null && initVal !== undefined && initVal !== "") {
-                    $input.val(_c.Form.formatElementValue($input, initVal));
-                }
-            });
+            _c.Form.initNumberFormatter(form);
 
             form.addEventListener('submit', function (event) {
                 event.preventDefault();
@@ -298,6 +387,7 @@
                     const $input = $(this);
                     $input.val(parseNumber($input.val()));
                 });
+
                 if (!form.checkValidity()) {
                     event.stopPropagation();
                     form.classList.add('was-validated');
@@ -316,7 +406,6 @@
                     throw error;
                 }
 
-                // jQuery ajax / jqXHR
                 if (result && typeof result.always === "function") {
                     result.always(function () {
                         form.dataset.submitting = "false";
@@ -324,7 +413,6 @@
                     return;
                 }
 
-                // Promise
                 if (result && typeof result.finally === "function") {
                     result.finally(function () {
                         form.dataset.submitting = "false";
@@ -332,32 +420,44 @@
                     return;
                 }
 
-                // 同步函式
                 form.dataset.submitting = "false";
             }, false);
         },
+
         clear: function (id) {
             const form = document.getElementById(id);
             const $items = $(`[data-form-type]`);
+
             _c.Form.insertData(_c.Form.getJson(id), `#${id}`);
+
             $items.each(function (i, e) {
                 const $e = $(e);
                 switch ($e.data("form-type")) {
                     case "images":
                         if (!!!$e.data("init")) {
                             $e.ImageUploadModalClear();
-                            $e.data("init", true)
-                        } else $e.ImageUploadModalClear();
+                            $e.data("init", true);
+                        } else {
+                            $e.ImageUploadModalClear();
+                        }
                         break;
+
                     case "date":
                         $e.data('daterangepicker').setStartDate(_c.Date.GetDateTimeStr(Date.now()));
                         $e.data('daterangepicker').setEndDate(null);
                         break;
                 }
             });
+
             form.reset();
-            if ($(form).find("[name='id']").length > 0) $(form).find("[name='id']").val(0);
-        }, getFileForm: function (id, type = 0) {
+            if ($(form).find("[name='id']").length > 0) {
+                $(form).find("[name='id']").val(0);
+            }
+
+            _c.Form.initNumberFormatter(form);
+        },
+
+        getFileForm: function (id, type = 0) {
             var formData = new FormData();
             formData.append("files", $(`#${id} .img_input`).data("file").File);
             formData.append("type", type);

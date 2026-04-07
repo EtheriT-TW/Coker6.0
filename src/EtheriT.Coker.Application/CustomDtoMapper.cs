@@ -468,10 +468,34 @@ namespace EtheriT.Coker.Application
 
             //LogisticsSetting
             CreateMap<FreightDto, LogisticsSetting>()
-                .ForMember(e => e.Low_Con, option => option.MapFrom(c => c.Low_Con == null ? 0 : c.Low_Con))
-                .ForMember(e => e.Dis_Freight, option => option.MapFrom(c => c.Dis_Freight == null ? 0 : c.Dis_Freight))
-                .ReverseMap()
-                .ForMember(e => e.ProdIds, option => option.MapFrom(c => c.MappingLogisticsSettingAndProds == null ? new List<ProdSelectedDto>() : c.MappingLogisticsSettingAndProds.Select(e => new ProdSelectedDto { Id = e.FK_LogisticsSettingId, FK_ProdId = e.FK_ProdId, IsDeleted = false,prod_Name = e.Prod.Title })));
+                .ForMember(e => e.Low_Con, option => option.MapFrom(c => c.Low_Con ?? 0))
+                .ForMember(e => e.Dis_Freight, option => option.MapFrom(c => c.Dis_Freight ?? 0))
+                .ForMember(e => e.logisticsBoxFees, option => option.Ignore())
+                .ForMember(e => e.MappingLogisticsSettingAndProds, option => option.Ignore());
+
+            CreateMap<LogisticsSetting, FreightDto>()
+                .ForMember(e => e.ProdIds, option => option.MapFrom(c =>
+                    c.MappingLogisticsSettingAndProds == null
+                        ? new List<ProdSelectedDto>()
+                        : c.MappingLogisticsSettingAndProds.Select(e => new ProdSelectedDto
+                        {
+                            Id = e.FK_LogisticsSettingId,
+                            FK_ProdId = e.FK_ProdId,
+                            IsDeleted = false,
+                            prod_Name = e.Prod.Title
+                        }).ToList()))
+                .ForMember(e => e.LogisticsBoxFees, option => option.MapFrom(c =>
+                    c.logisticsBoxFees == null
+                        ? new List<LogisticsBoxFeeDto>()
+                        : c.logisticsBoxFees
+                            .Where(x => !x.IsDeleted)
+                            .Select(x => new LogisticsBoxFeeDto
+                            {
+                                Id = x.Id,
+                                FK_LogisticsBoxId = x.FK_LogisticsBoxId,
+                                Fee = x.Fee,
+                                Name = x.logisticsBox != null ? x.logisticsBox.Name : ""
+                            }).ToList()));
 
             CreateMap<GetLogisticsBoxAllListInputDto, LogisticsBox>().ReverseMap();
 

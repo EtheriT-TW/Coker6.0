@@ -216,16 +216,7 @@
         },
 
         fillForm: function (result) {
-            _c.Form.insertData({
-                Title: result.title,
-                PreserveType: result.preserveType,
-                LogisticsType: result.freigntType,
-                FreigntStatusType: result.freigntStatusType,
-                Freight: result.freight,
-                Low_Con: result.low_Con,
-                Dis_Freight: result.dis_Freight,
-                FreigntType: result.freigntType
-            }, "#" + this.formId);
+            _c.Form.insertData(result, "#" + this.formId);
 
             this.$setDefault.prop("checked", !!result.set_Default);
 

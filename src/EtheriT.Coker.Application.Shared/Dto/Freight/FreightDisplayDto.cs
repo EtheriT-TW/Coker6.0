@@ -15,5 +15,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Freight
         public String Describe { get; set; }
         public bool GetMap { get; set; }
         public string LogisticsSubType { get; set; }
+        public string CVSStoreID { get; set; }
     }
 }

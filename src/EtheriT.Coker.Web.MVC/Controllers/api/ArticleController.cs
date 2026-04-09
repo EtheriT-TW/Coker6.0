@@ -54,5 +54,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await articleAppService.SaveConten(dto);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> RebuildContentWithFiles(long AId)
+        {
+            return await articleAppService.RebuildContentWithFiles(AId);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> RebuildAllContentWithFiles()
+        {
+            return await articleAppService.RebuildAllContentWithFiles();
+        }
     }
 }

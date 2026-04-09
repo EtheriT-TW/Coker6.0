@@ -20,6 +20,8 @@ namespace EtheriT.Coker.Application.Shared.Article
         public Task<ResponseMessageDto> ImportConten(ArticleSaveContenDto dto);
         public Task<ResponseMessageDto> SaveConten(ArticleSaveContenDto dto);
         public Task<GetFrontContenOutputDto> GetFrontConten(ArticleGetFrontContenInputDto dto);
+        public Task<ResponseMessageDto> RebuildContentWithFiles(long AId);
+        public Task<ResponseMessageDto> RebuildAllContentWithFiles();
         public Task<ResponseMessageDto> FindArticleOrgName(long Id);
     }
 }

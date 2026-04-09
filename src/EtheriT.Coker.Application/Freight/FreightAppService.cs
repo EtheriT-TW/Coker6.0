@@ -321,6 +321,7 @@ namespace EtheriT.Coker.Application.Freight
                 {
                     var output = from e in result
                                  where !e.IsDeleted && e.FK_WebsiteId == webid
+                                 where e.FreigntStatusType != FreigntStatusTypeEnum.停用
                                  select new FreightDisplayDto
                                  {
                                      Id = e.Id,
@@ -366,7 +367,6 @@ namespace EtheriT.Coker.Application.Freight
                 ContractResolver = new DefaultContractResolver()
             });
         }
-
         private static string GetLogisticsSubType(int typecode)
         {
             string LogisticsSubType = "";
@@ -401,7 +401,6 @@ namespace EtheriT.Coker.Application.Freight
 
             return LogisticsSubType;
         }
-
         public async Task<ResponseMessageDto> Delete(long Id)
         {
 
@@ -550,7 +549,6 @@ namespace EtheriT.Coker.Application.Freight
 
             return output;
         }
-
         public async Task<ResponseMessageDto> LogisticsBoxGetOne(long Id)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -598,7 +596,6 @@ namespace EtheriT.Coker.Application.Freight
 
             return output;
         }
-
         public async Task<ResponseMessageDto> LogisticsBoxDelete(long Id)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };

@@ -23,7 +23,6 @@ using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
 using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
-using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
@@ -50,7 +49,6 @@ namespace EtheriT.Coker.Application.Order
         private readonly LoginUserData loginUserData;
         private readonly ITokenAppService tokenAppService;
         private readonly IShoppingCartAppService shoppingCartAppService;
-        private readonly IECPayLogisticsAppService ecPayLogisticsAppService;
         private readonly IAccountAppService accountAppService;
         private readonly IStoreSetAppService storeSetAppService;
         private readonly MailAppService mailAppService;
@@ -63,7 +61,6 @@ namespace EtheriT.Coker.Application.Order
             LoginUserData loginUserData,
             ITokenAppService tokenAppService,
             IShoppingCartAppService shoppingCartAppService,
-            IECPayLogisticsAppService ecPayLogisticsAppService,
             IAccountAppService accountAppService,
             IStoreSetAppService storeSetAppService,
             IBonusManagementAppService bonusManagementAppService,
@@ -77,7 +74,6 @@ namespace EtheriT.Coker.Application.Order
             this.loginUserData = loginUserData;
             this.tokenAppService = tokenAppService;
             this.shoppingCartAppService = shoppingCartAppService;
-            this.ecPayLogisticsAppService = ecPayLogisticsAppService;
             this.accountAppService = accountAppService;
             this.storeSetAppService = storeSetAppService;
             this.mailAppService = mailAppService;
@@ -212,16 +208,6 @@ namespace EtheriT.Coker.Application.Order
 
                     await tx.CommitAsync();
                 });
-
-                var LogisticsSetting = await db.LogisticsSettings.Where(e => e.Id == dto.Shipping).FirstOrDefaultAsync();
-                if (LogisticsSetting == null) throw new Exception("查無運費設置");
-                var LogisticsType = LogisticsSetting.LogisticsType;
-                if ((int)LogisticsType >= 8 && (int)LogisticsType <= 17)
-                {
-                    var prod_titles = detailResult.StockDict.Values.Select(v => v.Prod.Title).ToList();
-                    var LogisticsResponse = await ecPayLogisticsAppService.ECPayLogisticsExpressCreate(header.Id, prod_titles, LogisticsType);
-                    if (!LogisticsResponse.Success) throw new Exception(LogisticsResponse.Message);
-                }
 
                 // 6) Commit 後，處理付款訊息 + 寄信（失敗也不要 rollback 訂單）
                 await FillPaymentMessageAndSendMailAsync(dto, websiteId, header!, output);
@@ -394,8 +380,6 @@ namespace EtheriT.Coker.Application.Order
                             throw new Exception(bonusResult.Message ?? "紅利點數扣除失敗，無法建立訂單。");
                     }
                 }
-
-                oh.CVSStoreID = detailResult.ShoppingCarts[0].CVSStoreID;
                 await loginUserData.SaveChanges(oh);   // 這裡需要 Save 一次，拿到穩定的 oh.Id
             }
             else
@@ -438,8 +422,6 @@ namespace EtheriT.Coker.Application.Order
                             oh.GetBonus = earnPoints;
                         }
                     }
-
-                    oh.CVSStoreID = detailResult.ShoppingCarts[0].CVSStoreID;
                     await db.SaveChangesAsync();
                 }
             }
@@ -594,7 +576,7 @@ namespace EtheriT.Coker.Application.Order
 
                 if (result != null)
                 {
-                    var ship_text = "";
+                    string ship_text = "";
                     if (result.Shipping == 0)
                     {
                         ship_text = "郵寄掛號";
@@ -760,6 +742,7 @@ namespace EtheriT.Coker.Application.Order
                     var shipping_str1 = shipping?.Title ?? "";
                     var shipping_str3 = (shipping?.LogisticsType ?? ShippingTypeEnum.郵寄掛號).ToString().Replace("_", "/");
                     temp_output.Shipping = shipping_str1 != "" ? shipping_str3 != "" ? $"{shipping_str1}　{shipping_str3}" : $"{shipping_str1}" : "";
+                    temp_output.LogisticsType = ((int)shipping?.LogisticsType).ToString();
                     var payment = await (from pt in db.PaymentTypes
                                          join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
                                          where ptv.FK_WebsiteId == WebsiteId

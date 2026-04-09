@@ -57,6 +57,14 @@
                 data: JSON.stringify(data),
                 dataType: "json"
             });
+        },
+        RebuildContentWithFiles: function (data) {
+            return $.ajax({
+                url: "/api/Article/RebuildContentWithFiles?AId=" + parseInt(data),
+                type: "POST",
+                headers: _c.Data.Header,
+                dataType: "json"
+            });
         }
     }
 });

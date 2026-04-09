@@ -168,6 +168,13 @@ function PageReady() {
                             $select_input.val(select_cart_data[i].cvsStoreName);
                             var $radio = $select_input.siblings('input[name="RadioShipping"]');
                             $radio.prop('checked', true);
+                            $radio.attr({
+                                "data-cvsstoreid": select_cart_data[i].cvsStoreID,
+                                "data-cvsstorename": select_cart_data[i].cvsStoreName,
+                                "data-cvsaddress": select_cart_data[i].cvsAddress,
+                                "data-cvstelephone": select_cart_data[i].cvsTelephone,
+                                "data-cvsoutside": select_cart_data[i].cvsOutSide,
+                            })
                             isdefault = false;
                             break;
                         }
@@ -838,7 +845,11 @@ function CartListAdd(data, $container) {
             obj['Quantity'] = data.quantity;
             obj['Bonus'] = data.bonus;
             obj['freight'] = data.freight;
+            obj['cvsStoreID'] = data.cvsStoreID;
             obj['cvsStoreName'] = data.cvsStoreName;
+            obj['cvsAddress'] = data.cvsAddress;
+            obj['cvsTelephone'] = data.cvsTelephone;
+            obj['cvsOutSide'] = data.cvsOutSide;
             obj['logisticsSubType'] = data.logisticsSubType;
             shopping_cart_data.push(obj);
             refreshHasProds();
@@ -1315,9 +1326,10 @@ function Step2Monitor() {
     buy_step_swiper.update();
 }
 function RadioShipping() {
-    ori_freight = $(this).data("freight");
-    low_con = $(this).data("lowcon");
-    disfreight = $(this).data("disfreight");
+    var $this = $(this);
+    ori_freight = $this.data("freight");
+    low_con = $this.data("lowcon");
+    disfreight = $this.data("disfreight");
     freight = ori_freight
     TotalCount();
     if (HasECPay) ECPaymentChange();
@@ -1683,9 +1695,15 @@ function DeleteRecipient() {
 }
 // 訂購人資料寫入 order_header_data
 function OrderDataGet() {
-    order_header_data.shipping = $(`[name="RadioShipping"]:checked`).val();
+    var shipping_radio = $(`[name="RadioShipping"]:checked`);
+    order_header_data.shipping = shipping_radio.val();
+    order_header_data.CVSStoreID = shipping_radio.attr("data-cvsstoreid") ?? null;
+    order_header_data.CVSStoreName = shipping_radio.attr("data-cvsstorename") ?? null;
+    order_header_data.CVSAddress = shipping_radio.attr("data-cvsaddress") ?? null;
+    order_header_data.CVSTelephone = shipping_radio.attr("data-cvstelephone") ?? null;
+    order_header_data.CVSOutSide = shipping_radio.attr("data-cvsoutside") ?? null;
 
-    if (!((order_header_data.payment >= 16 && order_header_data.payment <= 23) || order_header_data.payment === 27)) {
+    if (typeof (order_header_data.payment) != "undefined" && (!((order_header_data.payment >= 16 && order_header_data.payment <= 23) || order_header_data.payment === 27))) {
         order_header_data.payment = $(`[name="RadioPayment"]:checked`).val();
     }
 
@@ -1795,7 +1813,7 @@ async function OrderHeaderAdd() {
     var ids = getSelectedCartIds();
     var data = shopping_cart_data.filter(e => ids.includes(e.Id));
 
-    if (($("#RadioPayment > .form-check").length > 1 & $("#radio_payment_ECPay").length > 0 && $("#radio_payment_ECPay").prop("checked")) || ($(".ecpay_loading").is(":hidden") && $("#ECPayPayment").length > 0)) {
+    if (($("#RadioPayment > .form-check").length > 1 && $("#radio_payment_ECPay").length > 0 && $("#radio_payment_ECPay").prop("checked")) || ($(".ecpay_loading").is(":hidden") && $("#ECPayPayment").length > 0)) {
         GetECPayType();
 
         if (order_header_data.payment != 27) {
@@ -1815,6 +1833,8 @@ async function OrderHeaderAdd() {
             } else checksuccess = false;
         }
     }
+
+    if (typeof (order_header_data.payment) == "undefined") order_header_data.payment = $(`[name="RadioPayment"]:checked`).val();
 
     Coker.Order.CheckStock(data).done(function (result) {
         if (result.success) {
@@ -1848,6 +1868,17 @@ async function OrderHeaderAdd() {
             if (!InvoiceDataGet()) {
                 checksuccess = false;
                 Coker.sweet.warning("請注意", "請確實填寫發票資料！", null);
+            }
+
+            var shipping_radio = $(`[name="RadioShipping"]:checked`);
+            order_header_data.shipping = shipping_radio.val();
+            order_header_data.CVSStoreID = shipping_radio.attr("data-cvsstoreid") ?? null;
+
+            var shipping_radio = $(`[name="RadioShipping"][value="${order_header_data.shipping}"]`);
+            var hasBtnGetMap = shipping_radio.siblings('.btn_getmap').length > 0;
+            if (hasBtnGetMap && order_header_data.CVSStoreID == null) {
+                checksuccess = false;
+                Coker.sweet.warning("請注意", "請選擇取貨門市！", null);
             }
 
             if (checksuccess) {

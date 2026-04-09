@@ -65,6 +65,10 @@ namespace EtheriT.Coker.Core.Models
         public string? AllPayLogisticsID { get; set; }
         public string? MerchantTradeNo { get; set; }
         public string? CVSStoreID { get; set; }
+        public string? CVSStoreName { get; set; }
+        public string? CVSAddress { get; set; }
+        public string? CVSTelephone { get; set; }
+        public string? CVSOutSide { get; set; }
         public string? LogisticsStatusCode { get; set; }
         public DateTime? LogisticsUpdateStatusDate { get; set; }
         public string? CVSPaymentNo { get; set; }

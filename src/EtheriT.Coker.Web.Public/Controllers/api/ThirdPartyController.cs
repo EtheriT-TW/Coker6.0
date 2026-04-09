@@ -199,32 +199,81 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return response;
         }
         [HttpGet]
-        public async Task<IActionResult> ECPayLogisticsGetMap(string SCIds, string LogisticsSubType )
+        public async Task<IActionResult> ECPayLogisticsGetMap(string SCIds, string LogisticsSubType)
         {
-            var response = await ecPayLogisticsAppService.ECPayLogisticsGetMap(SCIds, LogisticsSubType);
-            if (response.Success) return Content(response.Message, "text/html", Encoding.UTF8);
-            else
+            try
             {
-                var errorHtml = $@"<html>
-                                                        <head>
-                                                            <meta charset='utf-8' />
-                                                            <title>門市選取失敗</title>
-                                                        </head>
-                                                        <body>
-                                                            <h2>門市選取失敗</h2>
-                                                            <p>{WebUtility.HtmlEncode(response.Message)}</p>
-                                                            <button onclick='history.back()'>返回上一頁</button>
-                                                        </body>
-                                                       </html>";
-                return Content(errorHtml, "text/html", Encoding.UTF8);
+                var baseUrl = configuration["ThirdParty:ECPayLogistics:LogisticsUrl"];
+                var actionUrl = $"{baseUrl}/Express/map";
+
+                ECPayLogisticsMapRequestDto RequestBody = await ecPayLogisticsAppService.ECPayLogisticsGetMapRequestBody(SCIds, LogisticsSubType);
+
+                return Content(GenerateAutoPostForm(actionUrl, RequestBody), "text/html");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
         }
         [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> ECPayLogisticsGetMapResponse([FromForm] ECPayLogisticsMapResponseDto ResultResponseData)
         {
-            await ecPayLogisticsAppService.ECPayLogisticsGetMapResponse(ResultResponseData);
-            return Content("1|OK");
+            var response = await ecPayLogisticsAppService.ECPayLogisticsGetMapResponse(ResultResponseData);
+            var redirectUrl = response?.Message;
+
+            if (string.IsNullOrWhiteSpace(redirectUrl)) return Content("1|OK");
+
+            return LocalRedirect(redirectUrl);
+        }
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<IActionResult> ECPayLogisticsCreate(long ohid)
+        {
+            try
+            {
+                var baseUrl = configuration["ThirdParty:ECPayLogistics:LogisticsUrl"];
+                var actionUrl = $"{baseUrl}/Express/Create";
+
+                ECPayLogisticsCreateCVSRequestDto RequestBody = await ecPayLogisticsAppService.ECPayLogisticsExpressCVSCreate(ohid);
+
+                return Content(GenerateAutoPostForm(actionUrl, RequestBody), "text/html");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        private string GenerateAutoPostForm(string actionUrl, object RequestBody)
+        {
+            var props = RequestBody.GetType().GetProperties();
+
+            var inputs = new StringBuilder();
+
+            foreach (var prop in props)
+            {
+                var name = prop.Name;
+                var value = prop.GetValue(RequestBody)?.ToString() ?? "";
+
+                inputs.AppendLine($@"<input type='hidden' name='{name}' value='{WebUtility.HtmlEncode(value)}' />");
+            }
+
+            var html = $@"<!DOCTYPE html>
+                                            <html>
+                                            <head>
+                                                <meta charset='utf-8' />
+                                                <title>Redirecting...</title>
+                                            </head>
+                                            <body>
+                                                <form id='form' method='post' action='{actionUrl}'>
+                                                    {inputs}
+                                                </form>
+                                                <script>
+                                                    document.getElementById('form').submit();
+                                                </script>
+                                            </body>
+                                            </html>";
+            return html;
         }
     }
 }

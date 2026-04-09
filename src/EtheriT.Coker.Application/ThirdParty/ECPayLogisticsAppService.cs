@@ -2,10 +2,12 @@
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
+using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayLogistics;
+using EtheriT.Coker.Application.Shared.Order;
+using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Shared.ThirdParty;
-using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -23,14 +25,16 @@ namespace EtheriT.Coker.Application.ThirdParty
     {
         private readonly HttpClient ThirdPartyClient_ECPayLogistics;
         private readonly CokerDbContext db;
-        private readonly ITokenAppService tokenAppService;
+        private readonly IOrderAppService orderAppService;
+        private readonly IShoppingCartAppService shoppingCartAppService;
         private readonly LoginUserData loginUserData;
         private readonly IConfiguration configuration;
         private readonly IMapper mapper;
         public ECPayLogisticsAppService(
             IHttpClientFactory httpClientFactory,
             CokerDbContext db,
-            ITokenAppService tokenAppService,
+            IOrderAppService orderAppService,
+            IShoppingCartAppService shoppingCartAppService,
             LoginUserData loginUserData,
             IConfiguration configuration,
             IMapper mapper
@@ -38,52 +42,41 @@ namespace EtheriT.Coker.Application.ThirdParty
         {
             ThirdPartyClient_ECPayLogistics = httpClientFactory.CreateClient("ThirdPartyClient_ECPayLogistics");
             this.db = db;
-            this.tokenAppService = tokenAppService;
+            this.orderAppService = orderAppService;
+            this.shoppingCartAppService = shoppingCartAppService;
             this.loginUserData = loginUserData;
             this.configuration = configuration;
             this.mapper = mapper;
         }
-        public async Task<ResponseMessageDto> ECPayLogisticsGetMap(string SCIds, string LogisticsSubType)
+        public async Task<ECPayLogisticsMapRequestDto> ECPayLogisticsGetMapRequestBody(string SCIds, string LogisticsSubType)
         {
-            ResponseMessageDto response = new ResponseMessageDto();
+            ECPayLogisticsMapRequestDto RequestBody = new ECPayLogisticsMapRequestDto();
             try
             {
                 var ThirdPartyData = await ECPayGetThirdPartyData();
-                var uuid = await tokenAppService.GetUUID();
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
                 var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
 
-                if (ThirdPartyData.MerchantID != null)
-                {
-                    var RequestUri = "/Express/map";
+                if (string.IsNullOrWhiteSpace(ThirdPartyData?.MerchantID)) throw new Exception("商家未確實設置綠界物流資料");
 
-                    var RequestBody = new ECPayLogisticsMapRequestDto();
-                    RequestBody.MerchantID = ThirdPartyData.MerchantID;
-                    RequestBody.MerchantTradeNo = GenMerchantTradeNo();
-                    RequestBody.LogisticsSubType = LogisticsSubType;
-                    RequestBody.IsCollection = ThirdPartyData.IsCollection;
-                    RequestBody.ServerReplyURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayLogisticsGetMapResponse";
-                    RequestBody.ExtraData = SCIds;
-                    var content = new StringContent(JsonConvert.SerializeObject(RequestBody), Encoding.UTF8, "application/json");
-                    var PostResponse = await ThirdPartyClient_ECPayLogistics.PostAsync(RequestUri, content);
-                    PostResponse.EnsureSuccessStatusCode();
-
-                    response.Success = true;
-                    response.Message = await PostResponse.Content.ReadAsStringAsync();
-
-                    return response;
-                }
-                else throw new Exception("商家未確實設置綠界物流資料");
-            }
-            catch (HttpRequestException ex)
-            {
-                response.Message = $"Request failed: {ex.Message}";
+                RequestBody.MerchantID = ThirdPartyData.MerchantID;
+                RequestBody.MerchantTradeNo = GenMerchantTradeNo();
+                RequestBody.LogisticsSubType = LogisticsSubType;
+                RequestBody.IsCollection = ThirdPartyData.IsCollection;
+                RequestBody.ServerReplyURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayLogisticsGetMapResponse";
+                RequestBody.ExtraData = SCIds;
+                return RequestBody;
             }
             catch (Exception ex)
             {
-                response.Message = $"Other failed: {ex.Message}";
+                await loginUserData.SetLogs(
+                    0,
+                    configuration.GetValue<long>("WebConfig:SiteId"),
+                    "BuildECPayLogisticsMapRequest",
+                    $"failed: {ex.Message}"
+                );
+                throw;
             }
-            return response;
         }
         private static string GenMerchantTradeNo()
         {
@@ -110,12 +103,9 @@ namespace EtheriT.Coker.Application.ThirdParty
 
             try
             {
-                var ThirdPartyData = await ECPayGetThirdPartyData() ?? throw new Exception("商家未確實設置綠界物流資料");
-
                 await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayLogisticsExpressCreate", JsonConvert.SerializeObject(ResultResponseData));
 
                 var scids = JsonConvert.DeserializeObject<List<long>>(ResultResponseData.ExtraData);
-
                 var scdatas = await db.ShoppingCarts.Where(e => scids.Contains(e.Id)).ToListAsync();
 
                 if (!scdatas.Any()) throw new Exception($"查無購物車資訊");
@@ -125,103 +115,24 @@ namespace EtheriT.Coker.Application.ThirdParty
                     scdata.LogisticsSubType = ResultResponseData.LogisticsSubType;
                     scdata.CVSStoreID = ResultResponseData.CVSStoreID;
                     scdata.CVSStoreName = ResultResponseData.CVSStoreName;
+                    scdata.CVSAddress = ResultResponseData.CVSAddress;
+                    scdata.CVSTelephone = ResultResponseData.CVSTelephone;
+                    scdata.CVSOutSide = ResultResponseData.CVSOutSide;
                 }
-
                 db.SaveChanges();
 
                 response.Success = true;
                 response.Message = $"/{Website.OrgName}/ShoppingCar";
-                return response;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
                 Console.WriteLine($"ECPayLogistics=>ECPayLogisticsGetMapResponse回傳資料：{ex.Message}");
-                response.Message = $"/{Website.OrgName}/ShoppingCar,{ex.Message}";
-                return response;
-            }
-        }
-        public async Task<ResponseMessageDto> ECPayLogisticsExpressCreate(long ohid, List<string> prod_titles, ShippingTypeEnum LogisticsType)
-        {
-            ResponseMessageDto response = new ResponseMessageDto();
-            try
-            {
-                ECPayThirdPartyDataDto ThirdPartyData = await ECPayGetThirdPartyData();
-
-                if (string.IsNullOrEmpty(ThirdPartyData.MerchantID) || string.IsNullOrEmpty(ThirdPartyData.HashKey) || string.IsNullOrEmpty(ThirdPartyData.HashIV)) throw new Exception("查無ECPay所需參數");
-
-                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-                if (ohdata == null) throw new Exception("查無訂單資訊");
-
-                var RequestUri = "/Express/Create";
-
-                StringContent content = null;
-
-                if ((int)LogisticsType == 16 || (int)LogisticsType == 17)
-                {
-                    ECPayLogisticsCreateHomeRequestDto RequestBody = new ECPayLogisticsCreateHomeRequestDto();
-                    RequestBody = await ECPayExpressHomeRequestBody(ThirdPartyData, ohdata, LogisticsType, prod_titles);
-
-                    content = new StringContent(JsonConvert.SerializeObject(RequestBody), Encoding.UTF8, "application/json");
-                }
-                else
-                {
-                    ECPayLogisticsCreateCVSRequestDto RequestBody = new ECPayLogisticsCreateCVSRequestDto();
-                    RequestBody = await ECPayExpressCVSRequestBody(ThirdPartyData, ohdata, LogisticsType, prod_titles);
-
-                    content = new StringContent(JsonConvert.SerializeObject(RequestBody), Encoding.UTF8, "application/json");
-                }
-
-                var PostResponse = await ThirdPartyClient_ECPayLogistics.PostAsync(RequestUri, content);
-                PostResponse.EnsureSuccessStatusCode();
-                var Response = await PostResponse.Content.ReadAsStringAsync();
-
-                if (Response.Length > 0)
-                {
-                    if (int.Parse(Response.Split('|')[0]) == 1) response.Success = true;
-                    response.Message = Response.Split('|')[1];
-                    await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayLogisticsExpressCreate", Response);
-
-                    return response;
-                }
-                else throw new Exception($"無法取得門市訂單建立資訊");
-
-            }
-            catch (Exception ex)
-            {
-                response.Message = $"ECPayCreatePayment failed: {ex.Message}";
+                response.Message = $"/{Website.OrgName}/ShoppingCar?error={Uri.EscapeDataString(ex.Message)}";
             }
             return response;
         }
-        public async Task<bool> ECPayLogisticsExpressCreateResponse(ECPayLogisticsCreateResponseDto ResultResponseData)
-        {
-            try
-            {
-                var ThirdPartyData = await ECPayGetThirdPartyData() ?? throw new Exception("商家未確實設置綠界物流資料");
-
-                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayLogisticsExpressCreate", JsonConvert.SerializeObject(ResultResponseData));
-
-                var ohdata = await db.Order_Headers.Where(e => e.MerchantTradeNo == ResultResponseData.MerchantTradeNo).FirstOrDefaultAsync();
-                if (ohdata == null) throw new Exception($"查無訂單資訊");
-
-                ohdata.LogisticsStatusCode = ResultResponseData.RtnCode;
-                ohdata.AllPayLogisticsID = ResultResponseData.AllPayLogisticsID;
-                ohdata.LogisticsUpdateStatusDate = DateTime.ParseExact(ResultResponseData.UpdateStatusDate, "yyyy/MM/dd HH:mm", CultureInfo.InvariantCulture);
-                ohdata.CVSPaymentNo = ResultResponseData.CVSPaymentNo;
-                ohdata.CVSValidationNo = ResultResponseData.CVSValidationNo;
-                ohdata.BookingNote = ResultResponseData.BookingNote;
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"-------------錯誤訊息查看-------------");
-                Console.WriteLine($"ECPayLogistics=>ECPayReturn回傳資料：{ex.Message}");
-                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayLogisticsExpressCreateResponse", $"ECPayLogistics=>ECPayReturn回傳資料：{ex.Message}");
-                return false;
-            }
-        }
-        private async Task<ECPayLogisticsCreateRequestDto> ECPayExpressRequestBody(ECPayThirdPartyDataDto ThirdPartyData, Core.Models.Order_Header ohdata, ShippingTypeEnum LogisticsType, List<string> prod_titles)
+        private async Task<ECPayLogisticsCreateRequestDto> ECPayExpressRequestBody(ECPayThirdPartyDataDto ThirdPartyData, Core.Models.Order_Header ohdata, ShippingTypeEnum LogisticsType)
         {
             ECPayLogisticsCreateRequestDto RequestBody = new ECPayLogisticsCreateRequestDto();
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
@@ -274,6 +185,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                 RequestBody.IsCollection = ThirdPartyData.IsCollection;
 
                 var itemlist = "";
+                var prod_titles = (await orderAppService.GetOrderDetails(ohdata.Id)).Select(e => e.Title);
+                prod_titles = prod_titles.Distinct();
                 foreach (var prod_title in prod_titles)
                 {
                     var title = prod_title.Length > 50 ? $"{prod_title.Substring(0, 47)}..." : prod_title;
@@ -314,13 +227,13 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return RequestBody;
         }
-        private async Task<ECPayLogisticsCreateCVSRequestDto> ECPayExpressCVSRequestBody(ECPayThirdPartyDataDto ThirdPartyData, Core.Models.Order_Header ohdata, ShippingTypeEnum LogisticsType, List<string> prod_titles)
+        private async Task<ECPayLogisticsCreateCVSRequestDto> ECPayExpressCVSRequestBody(ECPayThirdPartyDataDto ThirdPartyData, Core.Models.Order_Header ohdata, ShippingTypeEnum LogisticsType)
         {
             ECPayLogisticsCreateCVSRequestDto RequestBody = new ECPayLogisticsCreateCVSRequestDto();
 
             try
             {
-                RequestBody = mapper.Map<ECPayLogisticsCreateCVSRequestDto>(await ECPayExpressRequestBody(ThirdPartyData, ohdata, LogisticsType, prod_titles));
+                RequestBody = mapper.Map<ECPayLogisticsCreateCVSRequestDto>(await ECPayExpressRequestBody(ThirdPartyData, ohdata, LogisticsType));
 
                 if (ThirdPartyData.IsCollection == "Y") RequestBody.CollectionAmount = RequestBody.GoodsAmount; else RequestBody.CollectionAmount = 0;
 
@@ -336,7 +249,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return RequestBody;
         }
-        private async Task<ECPayLogisticsCreateHomeRequestDto> ECPayExpressHomeRequestBody(ECPayThirdPartyDataDto ThirdPartyData, Core.Models.Order_Header ohdata, ShippingTypeEnum LogisticsType, List<string> prod_titles)
+        private async Task<ECPayLogisticsCreateHomeRequestDto> ECPayExpressHomeRequestBody(ECPayThirdPartyDataDto ThirdPartyData, Core.Models.Order_Header ohdata, ShippingTypeEnum LogisticsType)
         {
             //public string GoodsWeight { get; set; }
             //public string Temperature { get; set; }
@@ -346,7 +259,7 @@ namespace EtheriT.Coker.Application.ThirdParty
 
             try
             {
-                RequestBody = mapper.Map<ECPayLogisticsCreateHomeRequestDto>(await ECPayExpressRequestBody(ThirdPartyData, ohdata, LogisticsType, prod_titles));
+                RequestBody = mapper.Map<ECPayLogisticsCreateHomeRequestDto>(await ECPayExpressRequestBody(ThirdPartyData, ohdata, LogisticsType));
 
                 RequestBody.GoodsWeight = RequestBody.GoodsWeight;
                 RequestBody.SenderAddress = ohdata.OrdererAddress.Replace(" ", "");
@@ -408,6 +321,16 @@ namespace EtheriT.Coker.Application.ThirdParty
             string checkMacValue = BitConverter.ToString(hashBytes).Replace("-", "").ToUpper();
 
             return checkMacValue;
+        }
+
+        public Task<ECPayLogisticsCreateCVSRequestDto> ECPayLogisticsExpressCVSCreate(long ohid)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> ECPayLogisticsExpressCreateResponse(ECPayLogisticsCreateResponseDto ResultResponseData)
+        {
+            throw new NotImplementedException();
         }
     }
 }

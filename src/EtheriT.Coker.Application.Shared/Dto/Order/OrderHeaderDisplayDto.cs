@@ -42,5 +42,11 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? RefundTransactionId { get; set; }
         public string? CreationTime { get; set; }
         public bool CanRefund { get; set; } = false;
+        public string LogisticsType { get; set; }
+        public string? CVSStoreID { get; set; }
+        public string? CVSStoreName { get; set; }
+        public string? CVSAddress { get; set; }
+        public string? CVSTelephone { get; set; }
+        public string? CVSOutSide { get; set; }
     }
 }

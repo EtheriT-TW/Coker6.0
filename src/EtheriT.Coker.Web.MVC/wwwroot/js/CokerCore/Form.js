@@ -575,7 +575,6 @@
 
             _c.Form.initNumberFormatter(form);
         },
-
         getFileForm: function (id, type = 0) {
             var formData = new FormData();
             formData.append("files", $(`#${id} .img_input`).data("file").File);

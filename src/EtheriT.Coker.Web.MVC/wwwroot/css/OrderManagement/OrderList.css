@@ -1,4 +1,8 @@
 ﻿
+.tool button {
+    border-radius: var(--bs-border-radius);
+}
+
 .color_red_number {
     color: var(--colors-red-text);
 }
@@ -37,6 +41,7 @@
 .pro_unit::before {
     content: "\55ae\50f9\ff1a$";
 }
+
 .pro_unitBonus::before {
     content: "\7d05\5229\ff1a";
 }
@@ -57,6 +62,10 @@
     #OrderData > .offcanvas-body {
         position: sticky;
         top: 5rem;
+    }
+
+    #OrderData > .card-body > .row > .col > div > div:first-child {
+        width: 5rem;
     }
 
 /* ManagementData */

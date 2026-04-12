@@ -1,5 +1,5 @@
 ﻿function PageReady() {
-    const formId = "StoreSet";
+    const formId = "#StoreSet";
     co.Form.init(formId, () => {
         const array = co.Object.objectToArray(co.Form.getJson(formId, true));
         const savaData = {
@@ -10,9 +10,11 @@
         $("#ThirdParty>.accordion-item").each(function () {
             const $e = $(this);
             const Id = $e.data("groupid");
+            var value = co.Object.objectToArray(co.Form.getJson(`#thirdPartyForm_${Id}`, true));
+            value = ValueCheck(value);
             savaData.ThirdParties.push({
                 id: Id,
-                value: co.Object.objectToArray(co.Form.getJsonByFieldset(`thirdPartyForm_${Id}`, true))
+                value: value
             });
         });
         co.Product.ThirdParty.save(savaData).done(function (result) {
@@ -21,4 +23,17 @@
         });
         return false;
     });
+}
+
+function ValueCheck(values) {
+    values.forEach((value) => {
+        if (Array.isArray(value.value)) {
+            if (value.value.length > 0) {
+                value.value = String(value.value[0]);
+            } else {
+                value.value = "";
+            }
+        }
+    });
+    return values;
 }

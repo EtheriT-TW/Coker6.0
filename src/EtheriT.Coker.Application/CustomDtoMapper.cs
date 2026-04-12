@@ -35,6 +35,7 @@ using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayLogistics;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto;
 using EtheriT.Coker.Application.Shared.Dto.Token;
 using EtheriT.Coker.Application.Shared.Dto.UserHabits;
@@ -327,6 +328,8 @@ namespace EtheriT.Coker.Application
                 .ForMember(d => d.redirectUrls, o => o.Ignore())
                 .ForMember(d => d.options, o => o.Ignore());
 
+            CreateMap<ECPayLogisticsCreateCVSRequestDto, ECPayLogisticsCreateRequestDto>()
+                .ReverseMap();
 
             //ShoppingCart
             CreateMap<Core.Models.ShoppingCart, Core.Models.Prod_Stock>()

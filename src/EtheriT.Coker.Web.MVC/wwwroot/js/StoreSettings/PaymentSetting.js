@@ -1,5 +1,5 @@
 ﻿function PageReady() {
-    const formId = "StoreSet";
+    const formId = "#StoreSet";
     co.Form.init(formId, () => {
         const array = co.Object.objectToArray(co.Form.getJson(formId, true));
         const PaymentType = array[co.Array.Search(array, { key: "paymentType" })];
@@ -13,7 +13,7 @@
             const Id = $e.data("groupid");
             savaData.ThirdParties.push({
                 id: Id,
-                value: co.Object.objectToArray(co.Form.getJsonByFieldset(`thirdPartyForm_${Id}`, true))
+                value: co.Object.objectToArray(co.Form.getJson(`#thirdPartyForm_${Id}`, true))
             });
         });
         co.Product.ThirdParty.save(savaData).done(function (result) {

@@ -113,7 +113,7 @@ function bindProdTarget(target) {
 
     el.addEventListener("click", function (evt) {
         evt.preventDefault();
-        getInstance().open(el);
+        ProdListModalApi.open(el);
     });
 
     return el;
@@ -128,35 +128,113 @@ function bindAll(selector) {
 }
 
 const ProdListModalApi = {
+    defaultTarget: null,
+    activeTarget: null,
+
     get instance() {
         return getInstance();
     },
 
-    bind: function (target) {
-        return bindProdTarget(target);
+    resolveElement: function (target) {
+        return ensureElement(target);
     },
 
-    bindAll: function (selector) {
-        return bindAll(selector);
+    setDefaultTarget: function (target) {
+        const el = this.resolveElement(target);
+        if (!el) return null;
+
+        bindProdTarget(el);
+        this.defaultTarget = el;
+        return el;
+    },
+
+    getDefaultTarget: function () {
+        return this.defaultTarget || null;
+    },
+
+    setActiveTarget: function (target) {
+        const el = this.resolveElement(target);
+        if (!el) return null;
+
+        bindProdTarget(el);
+        this.activeTarget = el;
+        return el;
+    },
+
+    getActiveTarget: function () {
+        return this.activeTarget || null;
+    },
+
+    getCurrentTarget: function () {
+        return this.activeTarget || this.defaultTarget || null;
+    },
+
+    bind: function (target, options) {
+        const el = bindProdTarget(target);
+        if (!el) return null;
+
+        const settings = Object.assign({
+            setAsDefault: false
+        }, options || {});
+
+        if (!this.defaultTarget || settings.setAsDefault === true) {
+            this.defaultTarget = el;
+        }
+
+        return el;
+    },
+
+    bindAll: function (selector, options) {
+        const elements = bindAll(selector);
+        const settings = Object.assign({
+            setFirstAsDefault: true
+        }, options || {});
+
+        if (settings.setFirstAsDefault && !this.defaultTarget && elements.length > 0) {
+            this.defaultTarget = elements[0];
+        }
+
+        return elements;
     },
 
     open: function (target) {
-        return getInstance().open(target);
+        const nextTarget = this.resolveElement(target) || this.defaultTarget;
+
+        if (!nextTarget) {
+            return Promise.resolve();
+        }
+
+        this.setActiveTarget(nextTarget);
+        return getInstance().open(nextTarget);
     },
 
-    clear: function (target) {
+    clear: function () {
+        const target = this.getCurrentTarget();
+        if (!target) return Promise.resolve();
+
         return getInstance().clear(target);
     },
 
-    setData: function (target, datas) {
-        return getInstance().setData(target, datas);
+    setData: function (datas) {
+        const target = this.getCurrentTarget();
+        if (!target) return Promise.resolve();
+
+        return getInstance().setData(target, datas || []);
     },
 
-    getState: function (target) {
+    getState: function () {
+        const target = this.getCurrentTarget();
+        if (!target) {
+            return { items: [], selectedKeys: [], selectedRows: [], text: "無" };
+        }
+
         return getInstance().getState(target);
     },
 
-    getActiveKeysCsv: function (target) {
+    getActiveKeysCsv: function () {
+        const target = this.getCurrentTarget();
+        if (!target) return "";
+
         return getInstance().getActiveKeysCsv(target);
     },
 
@@ -190,6 +268,12 @@ const ProdListModalApi = {
             }
         } catch (err) {
             console.error(err);
+        }
+    },
+
+    loadParams: {
+        pids: function () {
+            return window.ProdListModalApi.getActiveKeysCsv();
         }
     }
 };

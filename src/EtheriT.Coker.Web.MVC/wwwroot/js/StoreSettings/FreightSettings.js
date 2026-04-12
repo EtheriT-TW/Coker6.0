@@ -70,18 +70,16 @@
 
         initModalSelectors: function () {
             const self = this;
-            const prodTarget = document.querySelector(this.prodInputSelector);
-            const logisticsTarget = document.querySelector(this.logisticsBoxInputSelector);
 
-            if (window.ProdListModalApi && prodTarget) {
-                window.ProdListModalApi.bind(prodTarget);
+            if (window.ProdListModalApi) {
+                window.ProdListModalApi.bind(this.prodInputSelector, { setAsDefault: true });
             }
 
-            if (window.LogisticsBoxModalApi && logisticsTarget) {
-                window.LogisticsBoxModalApi.bind(logisticsTarget);
+            if (window.LogisticsBoxModalApi) {
+                window.LogisticsBoxModalApi.bind(this.logisticsBoxInputSelector, { setAsDefault: true });
 
-                window.LogisticsBoxModalApi.setAfterSaveCallback(function (target, state) {
-                    self.renderLogisticsBoxUI(target, state);
+                window.LogisticsBoxModalApi.setAfterSaveCallback(function () {
+                    self.renderLogisticsBoxUI();
                 });
             }
         },
@@ -214,11 +212,13 @@
             this.$inputProd.attr("disabled", "disabled");
 
             if (window.ProdListModalApi) {
-                window.ProdListModalApi.clear(this.prodInputSelector);
+                window.ProdListModalApi.setActiveTarget(this.prodInputSelector);
+                window.ProdListModalApi.clear();
             }
 
             if (window.LogisticsBoxModalApi) {
-                window.LogisticsBoxModalApi.clear(this.logisticsBoxInputSelector);
+                window.LogisticsBoxModalApi.setActiveTarget(this.logisticsBoxInputSelector);
+                window.LogisticsBoxModalApi.clear();
             }
 
             this.clearLogisticsBoxUI();
@@ -231,6 +231,14 @@
 
             _c.Form.insertData(result, "#" + this.formId);
             this.$setDefault.prop("checked", !!result.set_Default);
+
+            if (window.ProdListModalApi) {
+                window.ProdListModalApi.setActiveTarget(this.prodInputSelector);
+            }
+
+            if (window.LogisticsBoxModalApi) {
+                window.LogisticsBoxModalApi.setActiveTarget(this.logisticsBoxInputSelector);
+            }
 
             const prodPromise = this.setFreightProdIds(result.prodIds || []);
             const logisticsPromise = this.setFreightLogisticsBoxFeesData(result.logisticsBoxFees || []);
@@ -284,11 +292,15 @@
             else this.$inputProd.attr("disabled", "disabled");
         },
 
-        renderLogisticsBoxUI: function (target, state) {
+        renderLogisticsBoxUI: function () {
             const container = this.$logisticsBoxSelectedList[0];
             if (!container) return;
 
-            const currentState = state || this.getLogisticsBoxState(target);
+            if (window.LogisticsBoxModalApi) {
+                window.LogisticsBoxModalApi.setActiveTarget(this.logisticsBoxInputSelector);
+            }
+
+            const currentState = this.getLogisticsBoxState();
             const items = (currentState.items || []).filter(function (x) {
                 return !x.IsDeleted;
             });
@@ -346,7 +358,7 @@
                 const removeBtn = row.querySelector(".remove-btn");
                 removeBtn.addEventListener("click", function () {
                     item.IsDeleted = true;
-                    self.renderLogisticsBoxUI(target, currentState);
+                    self.renderLogisticsBoxUI();
                 });
 
                 container.appendChild(row);
@@ -362,15 +374,17 @@
                 return { items: [], selectedKeys: [], selectedRows: [], text: "無" };
             }
 
-            return window.ProdListModalApi.getState(this.prodInputSelector);
+            window.ProdListModalApi.setActiveTarget(this.prodInputSelector);
+            return window.ProdListModalApi.getState();
         },
 
-        getLogisticsBoxState: function (target) {
+        getLogisticsBoxState: function () {
             if (!window.LogisticsBoxModalApi) {
                 return { items: [], selectedKeys: [], selectedRows: [], text: "無" };
             }
 
-            return window.LogisticsBoxModalApi.getState(target || this.logisticsBoxInputSelector);
+            window.LogisticsBoxModalApi.setActiveTarget(this.logisticsBoxInputSelector);
+            return window.LogisticsBoxModalApi.getState();
         },
 
         getFreightProdIds: function () {
@@ -389,7 +403,9 @@
 
         setFreightProdIds: function (value) {
             if (!window.ProdListModalApi) return Promise.resolve();
-            return window.ProdListModalApi.setData(this.prodInputSelector, value || []);
+
+            window.ProdListModalApi.setActiveTarget(this.prodInputSelector);
+            return window.ProdListModalApi.setData(value || []);
         },
 
         getFreightLogisticsBoxFeesData: function () {
@@ -421,10 +437,10 @@
 
             const self = this;
 
-            return window.LogisticsBoxModalApi.setData(this.logisticsBoxInputSelector, rows)
-                .then(function () {
-                    self.renderLogisticsBoxUI(self.logisticsBoxInputSelector);
-                });
+            window.LogisticsBoxModalApi.setActiveTarget(this.logisticsBoxInputSelector);
+            return window.LogisticsBoxModalApi.setData(rows).then(function () {
+                self.renderLogisticsBoxUI();
+            });
         },
 
         validateLogisticsBoxFees: function () {
@@ -519,55 +535,6 @@
 
     window.deleteButtonClicked = function (e) {
         FreightPage.onDeleteClick(e);
-    };
-
-    // 給 DevExtreme / Razor 若仍需字串 callback，可在頁面層只保留極薄轉接
-    window.FreightProdModalContentReady = function (e) {
-        if (window.ProdListModalApi) {
-            window.ProdListModalApi.onGridContentReady(e);
-        }
-    };
-
-    window.FreightProdModalSelectChange = function (e) {
-        if (window.ProdListModalApi) {
-            window.ProdListModalApi.onSelectionChanged(e);
-        }
-    };
-
-    window.FreightProdModalClearBtnInit = function (e) {
-        if (window.ProdListModalApi) {
-            window.ProdListModalApi.onClearButtonInit(e);
-        }
-    };
-
-    window.FreightProdModalClearBtnClick = function () {
-        if (window.ProdListModalApi) {
-            return window.ProdListModalApi.onClearButtonClick();
-        }
-    };
-
-    window.FreightLogisticsBoxModalContentReady = function (e) {
-        if (window.LogisticsBoxModalApi) {
-            window.LogisticsBoxModalApi.onGridContentReady(e);
-        }
-    };
-
-    window.FreightLogisticsBoxModalSelectChange = function (e) {
-        if (window.LogisticsBoxModalApi) {
-            window.LogisticsBoxModalApi.onSelectionChanged(e);
-        }
-    };
-
-    window.FreightLogisticsBoxModalClearBtnInit = function (e) {
-        if (window.LogisticsBoxModalApi) {
-            window.LogisticsBoxModalApi.onClearButtonInit(e);
-        }
-    };
-
-    window.FreightLogisticsBoxModalClearBtnClick = function () {
-        if (window.LogisticsBoxModalApi) {
-            return window.LogisticsBoxModalApi.onClearButtonClick();
-        }
     };
 
 })(window, window.jQuery);

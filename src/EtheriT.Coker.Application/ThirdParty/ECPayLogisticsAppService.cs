@@ -1,12 +1,10 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayLogistics;
 using EtheriT.Coker.Application.Shared.Order;
-using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
@@ -26,7 +24,6 @@ namespace EtheriT.Coker.Application.ThirdParty
     {
         private readonly CokerDbContext db;
         private readonly IOrderAppService orderAppService;
-        private readonly IShoppingCartAppService shoppingCartAppService;
         private readonly LoginUserData loginUserData;
         private readonly IConfiguration configuration;
         private readonly IMapper mapper;
@@ -34,7 +31,6 @@ namespace EtheriT.Coker.Application.ThirdParty
             IHttpClientFactory httpClientFactory,
             CokerDbContext db,
             IOrderAppService orderAppService,
-            IShoppingCartAppService shoppingCartAppService,
             LoginUserData loginUserData,
             IConfiguration configuration,
             IMapper mapper
@@ -42,7 +38,6 @@ namespace EtheriT.Coker.Application.ThirdParty
         {
             this.db = db;
             this.orderAppService = orderAppService;
-            this.shoppingCartAppService = shoppingCartAppService;
             this.loginUserData = loginUserData;
             this.configuration = configuration;
             this.mapper = mapper;

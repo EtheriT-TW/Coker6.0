@@ -20,7 +20,7 @@
                         .DataSource(d => 
                             d.RemoteController().Key("Id")
                             .LoadUrl("/api/Freight/GetLogisticsBoxSelectList").LoadMethod("Get")
-                            .LoadParams(new { ids = new JS("getLogisticsBoxSelectSort") })
+                            .LoadParams(new { ids = new JS("LogisticsBoxModalApi.loadParams.ids") })
                         )
                         .ID("devLogisticsBoxListModalGrid")
                         .Selection(s =>
@@ -54,8 +54,8 @@
                                 w.Button()
                                 .Text("選項清除")
                                 .Disabled(true)
-                                .OnClick("LogisticsBox_ClearBtnClick")
-                                .OnInitialized("LogisticsBox_ClearBtnInit")
+                                .OnClick("LogisticsBoxModalApi.onClearButtonClick")
+                                .OnInitialized("LogisticsBoxModalApi.onClearButtonInit")
                             );
                             });
                             toolbar.Items(i =>
@@ -66,8 +66,8 @@
                             .Location(ToolbarItemLocation.After);
                             });
                         })
-                        .OnSelectionChanged("LogisticsBox_SelectChange")
-                        .OnContentReady("LogisticsBoxContentReady")
+                        .OnSelectionChanged("LogisticsBoxModalApi.onSelectionChanged")
+                        .OnContentReady("LogisticsBoxModalApi.onGridContentReady")
                         .Paging(paging => paging.PageSize(10))
                     )
                 </div>

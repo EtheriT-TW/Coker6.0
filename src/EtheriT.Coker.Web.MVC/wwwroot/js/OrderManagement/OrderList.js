@@ -1,7 +1,7 @@
 ﻿var keyId
 var order_list
-let $btn_reSend, $btn_save;
-var oristate = 0, payment = "", isCashOnDelivery = false, transactionId = "", thirdparty = 0;
+let $btn_reSend, $btn_save, $btn_createLogistics, $btn_printShippingLabel;
+var oristate = 0, payment = "", isCashOnDelivery = false, transactionId = "", thirdparty = 0, ECPayLogisticsTypeStr = "", ECPayLogisticsSubTypeStr = "";
 function PageReady() {
     OrderDataCollapse();
     $(window).resize(OrderDataCollapse);
@@ -202,6 +202,59 @@ function PageReady() {
         //});
     });
 
+    $btn_createLogistics.on("click", function () {
+        if (!ECPayLogisticsTypeStr) co.sweet.error("錯誤", "取得物流方式發生錯誤", null, false);
+        else {
+            const form = document.createElement("form");
+            form.method = "post";
+            form.action = "/api/ThirdParty/HandleThirdPartyLogistics";
+
+            const data = {
+                Action: "CreateLogistics",
+                OrderId: keyId,
+                ExtraData: "CVS",
+            };
+
+            for (const key in data) {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = key;
+                input.value = data[key];
+                form.appendChild(input);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+
+    $btn_printShippingLabel.on("click", function () {
+        if (!ECPayLogisticsSubTypeStr) co.sweet.error("錯誤", "取得物流子類型發生錯誤", null, false);
+        else {
+            const form = document.createElement("form");
+            form.method = "post";
+            form.target = "_blank";
+            form.action = "/api/ThirdParty/HandleThirdPartyLogistics";
+
+            const data = {
+                Action: "PrintOrderInfo",
+                OrderId: keyId,
+                ExtraData: "C2C711",
+            };
+
+            for (const key in data) {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = key;
+                input.value = data[key];
+                form.appendChild(input);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
     } else {
@@ -252,6 +305,8 @@ function ElementInit() {
     /*bottom*/
     $btn_reSend = $(".btn_reSend");
     $btn_save = $(".btn_save");
+    $btn_createLogistics = $(".btn_createLogistics");
+    $btn_printShippingLabel = $(".btn_printShippingLabel");
 }
 function FormDataClear() {
     keyId = 0;
@@ -382,6 +437,11 @@ function HeaderDataInsert(data) {
         })
         $("#OrdererData .btn_orderer_data").text((`000000000${data.ordererId}`).substring(data.ordererId.toString().length));
     }
+
+    if (data.allPayLogisticsID) $btn_printShippingLabel.removeClass("d-none");
+    if (data.logisticsType >= 8 && data.logisticsType <= 17) $btn_createLogistics.removeClass("d-none");
+    ECPayLogisticsTypeStr = data.logisticsTypeStr;
+    ECPayLogisticsSubTypeStr = data.logisticsSubTypeStr;
 }
 function HeaderDataSet(result) {
     thirdparty = result.thirdParties;
@@ -519,13 +579,25 @@ function DataInsert(data, frame) {
                 case "spec":
                     var spec = data['s1Title'] + (data['s2Title'] == "" ? "" : ` ${data['s2Title']}`)
                     $this.text(spec);
+                case "shipping":
+                    if (!!!data[key] && $this.text() == "") $this.addClass("d-none");
+                    else if (!!data[key]) {
+                        $this.removeClass("d-none");
+                        $this.html(data[key].replace("　", "<br>"));
+                    }
+                    break;
+                case "cvsinfo":
+                    if (data.cvsStoreName != null && data.cvsAddress != null) {
+                        var $cvsinfo = $("#OrderData > .card-body > .row > .col > .storeinfo");
+                        $cvsinfo.removeClass("d-none")
+                        $cvsinfo.find(".order_cvsinfo").html(`${data.cvsStoreName}<br>${data.cvsAddress}`)
+                    }
                     break;
                 default:
                     if ($this.data("key") != "invoiceRecipient") {
                         if (!!!data[key] && $this.text() == "") $this.addClass("d-none");
                         else $this.removeClass("d-none").text(data[key]);
                     }
-                    
                     break;
             }
         }
@@ -546,6 +618,8 @@ function BackToList() {
     $("#PrintR001").addClass("d-none");
     $btn_reSend.addClass("d-none");
     $btn_save.addClass("d-none");
+    $btn_createLogistics.addClass("d-none");
+    $btn_printShippingLabel.addClass("d-none");
     window.location.hash = ""
     $("#OrderDetails > .card-body > .purchase_list > .purchase_item").each(function () {
         $(this).remove();

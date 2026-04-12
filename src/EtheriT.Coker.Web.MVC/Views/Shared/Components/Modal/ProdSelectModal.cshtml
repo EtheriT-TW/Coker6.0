@@ -19,7 +19,7 @@
                         Html.DevExtreme().DataGrid<ProductSelectGetAllListDto>()
                             .DataSource(d => d.RemoteController().Key("Id")
                             .LoadUrl("/api/Product/GetAllList").LoadMethod("Get")
-                            .LoadParams(new { pids = new JS("getSelectSort") })
+                            .LoadParams(new { pids = new JS("ProdListModalApi.loadParams.pids") })
                         )
                         .ID("devProdListModalGrid")
                         .Selection(s =>
@@ -66,8 +66,8 @@
                                         w.Button()
                                         .Text("選項清除")
                                         .Disabled(true)
-                                        .OnClick("prodList_ClearBtnClick")
-                                        .OnInitialized("prodList_ClearBtnInit")
+                                        .OnClick("ProdListModalApi.onClearButtonClick")
+                                        .OnInitialized("ProdListModalApi.onClearButtonInit")
                                     );
                             });
                             toolbar.Items(i =>
@@ -78,8 +78,8 @@
                                     .Location(ToolbarItemLocation.After);
                             });
                         })
-                        .OnSelectionChanged("prodList_SelectChange")
-                        .OnContentReady("prodContentReady")
+                        .OnSelectionChanged("ProdListModalApi.onSelectionChanged")
+                        .OnContentReady("ProdListModalApi.onGridContentReady")
                         .Paging(paging => paging.PageSize(10))
                     )
                 </div>

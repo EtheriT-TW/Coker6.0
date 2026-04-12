@@ -1337,9 +1337,9 @@ namespace EtheriT.Coker.Application.Order
 
             return enumDictionaryDto.ToList();
         }
-        public List<SelectDto> GetFreigntStatusTypEnum()
+        public List<SelectDto> GetFreightStatusTypeEnum()
         {
-            return EnumHelper.EnumToKeyValueList<FreigntStatusTypeEnum>();
+            return EnumHelper.EnumToKeyValueList<FreightStatusTypeEnum>();
         }
         public async Task<ResponseMessageDto> OrderStateChange(long ohid, int state)
         {

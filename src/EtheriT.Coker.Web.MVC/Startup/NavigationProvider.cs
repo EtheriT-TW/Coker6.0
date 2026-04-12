@@ -291,6 +291,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Controller="StoreSettings",
                                 Action="MarketingSettings",
                                 Icon="confirmation_number",
+                                Enable=false
                             },
                             new JobMenu{
                                 PageName="LogisticsSettings",

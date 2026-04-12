@@ -4,6 +4,7 @@
     const FreightPage = {
         formId: "FreightForm",
         pageRootSelector: "#FreightPageRoot",
+        prodInputSelector: "#InputProd",
         logisticsBoxInputSelector: "#InputLogisticsBox",
         logisticsBoxSectionSelector: ".logisticsBoxSection",
         logisticsPriceSectionSelector: ".logisticsPriceSection",
@@ -12,16 +13,17 @@
         hashPage: null,
         freightListGridEvent: null,
         keyId: 0,
+        isInitialized: false,
 
         $setDefault: null,
         $title: null,
         $preserve: null,
         $shipping: null,
-        $freigntStatusType: null,
+        $freightStatusType: null,
         $freight: null,
         $lowCon: null,
         $dFreight: null,
-        $freigntType: null,
+        $freightType: null,
         $inputProd: null,
         $inputLogisticsBox: null,
         $logisticsBoxSection: null,
@@ -29,11 +31,14 @@
         $logisticsBoxSelectedList: null,
 
         init: function () {
+            if (this.isInitialized) return;
+            this.isInitialized = true;
+
             this.cacheElements();
             this.initCommonForm();
+            this.initModalSelectors();
             this.initHashPage();
             this.initStaticEvents();
-            this.initModalSelectors();
             this.loadEnums();
         },
 
@@ -42,12 +47,12 @@
             this.$title = $("#InputName");
             this.$preserve = $("#SelectPreserve");
             this.$shipping = $("#SelectShipping");
-            this.$freigntStatusType = $("#SelectStatus");
+            this.$freightStatusType = $("#SelectStatus");
             this.$freight = $("#InputFreight");
             this.$lowCon = $("#InputLowCon");
             this.$dFreight = $("#InputDfreight");
-            this.$freigntType = $("input[name='FreigntType']");
-            this.$inputProd = $("#InputProd");
+            this.$freightType = $("input[name='FreightType']");
+            this.$inputProd = $(this.prodInputSelector);
 
             this.$inputLogisticsBox = $(this.logisticsBoxInputSelector);
             this.$logisticsBoxSection = $(this.logisticsBoxSectionSelector);
@@ -57,9 +62,28 @@
 
         initCommonForm: function () {
             const self = this;
+
             _c.Form.init(this.formId, function () {
                 return self.submitForm();
             });
+        },
+
+        initModalSelectors: function () {
+            const self = this;
+            const prodTarget = document.querySelector(this.prodInputSelector);
+            const logisticsTarget = document.querySelector(this.logisticsBoxInputSelector);
+
+            if (window.ProdListModalApi && prodTarget) {
+                window.ProdListModalApi.bind(prodTarget);
+            }
+
+            if (window.LogisticsBoxModalApi && logisticsTarget) {
+                window.LogisticsBoxModalApi.bind(logisticsTarget);
+
+                window.LogisticsBoxModalApi.setAfterSaveCallback(function (target, state) {
+                    self.renderLogisticsBoxUI(target, state);
+                });
+            }
         },
 
         initHashPage: function () {
@@ -95,9 +119,13 @@
 
             $(".btn_back").off("click.freight").on("click.freight", function (e) {
                 e.preventDefault();
+
                 Coker.sweet.confirm("返回運費列表", "資料將不被保存", "確定", "取消", function () {
-                    if (self.hashPage) self.hashPage.back();
-                    else history.back();
+                    if (self.hashPage) {
+                        self.hashPage.goList();
+                    } else {
+                        window.location.hash = "List";
+                    }
                 });
             });
 
@@ -106,31 +134,13 @@
                 if (self.hashPage) self.hashPage.goNew();
             });
 
-            this.$freigntStatusType.off("change.freight").on("change.freight", function () {
+            this.$freightStatusType.off("change.freight").on("change.freight", function () {
                 self.applyFreightStatusUI();
             });
 
-            this.$freigntType.off("change.freight").on("change.freight", function () {
+            this.$freightType.off("change.freight").on("change.freight", function () {
                 self.applyFreightTypeUI();
             });
-        },
-
-        initModalSelectors: function () {
-            const self = this;
-
-            if (typeof prodListModalInit === "function") {
-                prodListModalInit();
-            }
-
-            if (window.LogisticsBoxModalApi) {
-                LogisticsBoxModalApi.bind(document.querySelector(this.logisticsBoxInputSelector));
-
-                if (typeof LogisticsBoxModalApi.setAfterSaveCallback === "function") {
-                    LogisticsBoxModalApi.setAfterSaveCallback(function (target, state) {
-                        self.renderLogisticsBoxUI(target, state);
-                    });
-                }
-            }
         },
 
         loadEnums: function () {
@@ -150,11 +160,12 @@
                 });
             });
 
-            co.Order.GetFreigntStatusTypEnum().done(function (result) {
-                self.$freigntStatusType.empty();
+            co.Order.GetFreightStatusTypeEnum().done(function (result) {
+                self.$freightStatusType.empty();
                 $(result).each(function () {
-                    self.$freigntStatusType.append($("<option>").attr({ value: this.id }).text(this.name));
+                    self.$freightStatusType.append($("<option>").attr({ value: this.id }).text(this.name));
                 });
+
                 self.applyFreightStatusUI();
             });
         },
@@ -168,8 +179,8 @@
             this.clearFormState();
 
             this.$preserve.val(1);
-            this.$freigntStatusType.val(1);
-            this.$freigntType.filter("[value='1']").prop("checked", true);
+            this.$freightStatusType.val(1);
+            this.$freightType.filter("[value='1']").prop("checked", true);
 
             this.applyFreightTypeUI();
             this.applyFreightStatusUI();
@@ -202,12 +213,12 @@
             this.$setDefault.prop("checked", false);
             this.$inputProd.attr("disabled", "disabled");
 
-            if (typeof ProdDataClear === "function") {
-                ProdDataClear();
+            if (window.ProdListModalApi) {
+                window.ProdListModalApi.clear(this.prodInputSelector);
             }
 
             if (window.LogisticsBoxModalApi) {
-                LogisticsBoxModalApi.clear(document.querySelector(this.logisticsBoxInputSelector));
+                window.LogisticsBoxModalApi.clear(this.logisticsBoxInputSelector);
             }
 
             this.clearLogisticsBoxUI();
@@ -216,24 +227,22 @@
         },
 
         fillForm: function (result) {
-            _c.Form.insertData(result, "#" + this.formId);
+            const self = this;
 
+            _c.Form.insertData(result, "#" + this.formId);
             this.$setDefault.prop("checked", !!result.set_Default);
 
-            if (typeof window.setFreightProdIds === "function") {
-                window.setFreightProdIds(result.prodIds || []);
-            }
+            const prodPromise = this.setFreightProdIds(result.prodIds || []);
+            const logisticsPromise = this.setFreightLogisticsBoxFeesData(result.logisticsBoxFees || []);
 
-            if (typeof window.setFreightLogisticsBoxFeesData === "function") {
-                window.setFreightLogisticsBoxFeesData(result.logisticsBoxFees || [], this.$logisticsBoxSelectedList, result);
-            }
-
-            this.applyFreightTypeUI();
-            this.applyFreightStatusUI();
+            Promise.all([prodPromise, logisticsPromise]).finally(function () {
+                self.applyFreightTypeUI();
+                self.applyFreightStatusUI();
+            });
         },
 
         getCurrentFreightType: function () {
-            const $checked = this.$freigntType.filter(":checked").first();
+            const $checked = this.$freightType.filter(":checked").first();
             return $checked.length ? parseInt($checked.val(), 10) : 0;
         },
 
@@ -269,7 +278,7 @@
         },
 
         applyFreightStatusUI: function () {
-            const type = parseInt(this.$freigntStatusType.val() || 0, 10);
+            const type = parseInt(this.$freightStatusType.val() || 0, 10);
 
             if (type === 2) this.$inputProd.removeAttr("disabled");
             else this.$inputProd.attr("disabled", "disabled");
@@ -279,8 +288,10 @@
             const container = this.$logisticsBoxSelectedList[0];
             if (!container) return;
 
-            const currentState = state || LogisticsBoxModalApi.getState(target);
-            const items = (currentState.items || []).filter(x => !x.IsDeleted);
+            const currentState = state || this.getLogisticsBoxState(target);
+            const items = (currentState.items || []).filter(function (x) {
+                return !x.IsDeleted;
+            });
 
             container.innerHTML = "";
 
@@ -312,7 +323,7 @@
                             <input type="number"
                                    name="Fee"
                                    class="form-control logistics-box-fee-input"
-                                   value="${item.Price ?? ""}"
+                                   value="${item.Fee ?? ""}"
                                    placeholder="0" />
                         </div>
                     </div>
@@ -323,9 +334,9 @@
 
                 $input.off("blur.freightFee").on("blur.freightFee", function () {
                     const val = _c.Form.normalizeElementValue($input, $input.val());
-                    item.Price = val || 0;
+                    item.Fee = val || 0;
 
-                    if (!item.Price || item.Price <= 0) {
+                    if (!item.Fee || item.Fee <= 0) {
                         $input.addClass("is-invalid");
                     } else {
                         $input.removeClass("is-invalid");
@@ -346,17 +357,88 @@
             this.$logisticsBoxSelectedList.empty();
         },
 
+        getProdState: function () {
+            if (!window.ProdListModalApi) {
+                return { items: [], selectedKeys: [], selectedRows: [], text: "無" };
+            }
+
+            return window.ProdListModalApi.getState(this.prodInputSelector);
+        },
+
+        getLogisticsBoxState: function (target) {
+            if (!window.LogisticsBoxModalApi) {
+                return { items: [], selectedKeys: [], selectedRows: [], text: "無" };
+            }
+
+            return window.LogisticsBoxModalApi.getState(target || this.logisticsBoxInputSelector);
+        },
+
+        getFreightProdIds: function () {
+            const state = this.getProdState();
+
+            return (state.items || [])
+                .filter(function (x) { return !x.IsDeleted; })
+                .map(function (x) {
+                    return {
+                        Id: x.Id || 0,
+                        FK_ProdId: x.FK_ProdId || 0,
+                        IsDeleted: x.IsDeleted === true
+                    };
+                });
+        },
+
+        setFreightProdIds: function (value) {
+            if (!window.ProdListModalApi) return Promise.resolve();
+            return window.ProdListModalApi.setData(this.prodInputSelector, value || []);
+        },
+
+        getFreightLogisticsBoxFeesData: function () {
+            const state = this.getLogisticsBoxState();
+
+            return (state.items || [])
+                .filter(function (x) { return !x.IsDeleted; })
+                .map(function (x) {
+                    return {
+                        Id: x.Id || 0,
+                        FK_LogisticsBoxId: x.FK_LogisticsBoxId || 0,
+                        Fee: x.Fee || 0
+                    };
+                });
+        },
+
+        setFreightLogisticsBoxFeesData: function (value) {
+            if (!window.LogisticsBoxModalApi) return Promise.resolve();
+
+            const rows = (value || []).map(function (x) {
+                return {
+                    Id: x.id ?? x.Id ?? 0,
+                    FK_LogisticsBoxId: x.fK_LogisticsBoxId ?? x.FK_LogisticsBoxId ?? 0,
+                    Name: x.logisticsBox_Name ?? x.LogisticsBox_Name ?? x.name ?? x.Name ?? "",
+                    Fee: x.fee ?? x.Fee ?? 0,
+                    IsDeleted: x.IsDeleted === true
+                };
+            });
+
+            const self = this;
+
+            return window.LogisticsBoxModalApi.setData(this.logisticsBoxInputSelector, rows)
+                .then(function () {
+                    self.renderLogisticsBoxUI(self.logisticsBoxInputSelector);
+                });
+        },
+
         validateLogisticsBoxFees: function () {
-            const data = window.getFreightLogisticsBoxFeesData
-                ? window.getFreightLogisticsBoxFeesData(this.$logisticsBoxSelectedList)
-                : [];
+            const data = this.getFreightLogisticsBoxFeesData();
 
             if (!data.length) {
                 Coker.sweet.error("錯誤", "請至少選擇一個箱型。", null, true);
                 return false;
             }
 
-            const invalid = data.find(x => !x.Fee || Number(x.Fee) <= 0);
+            const invalid = data.find(function (x) {
+                return !x.Fee || Number(x.Fee) <= 0;
+            });
+
             if (invalid) {
                 Coker.sweet.error("錯誤", "箱型運費不可為 0。", null, true);
                 return false;
@@ -374,12 +456,8 @@
 
             const payload = _c.Form.getJson(this.formId);
             payload.Id = this.keyId;
-            payload.ProdIds = typeof prod_list !== "undefined" ? prod_list : [];
-            if (!Array.isArray(payload.LogisticsBoxFees)) {
-                payload.LogisticsBoxFees = window.getFreightLogisticsBoxFeesData
-                    ? window.getFreightLogisticsBoxFeesData()
-                    : [];
-            }
+            payload.ProdIds = this.getFreightProdIds();
+            payload.LogisticsBoxFees = this.getFreightLogisticsBoxFeesData();
 
             if (freightType === 3) {
                 payload.Freight = 0;
@@ -389,14 +467,16 @@
                 payload.LogisticsBoxFees = [];
             }
 
+            const self = this;
+
             return co.Freight.AddUp(payload)
-                .done(() => {
+                .done(function () {
                     Coker.sweet.success("運費設定儲存成功", null, true);
 
-                    setTimeout(() => {
-                        if (this.hashPage) this.hashPage.goList();
-                        if (this.freightListGridEvent && this.freightListGridEvent.component) {
-                            this.freightListGridEvent.component.refresh();
+                    setTimeout(function () {
+                        if (self.hashPage) self.hashPage.goList();
+                        if (self.freightListGridEvent && self.freightListGridEvent.component) {
+                            self.freightListGridEvent.component.refresh();
                         }
                     }, 300);
                 })
@@ -423,52 +503,6 @@
         }
     };
 
-    window.getFreightProdIds = function () {
-        return typeof prod_list !== "undefined" ? prod_list : [];
-    };
-
-    window.setFreightProdIds = function (value) {
-        if (typeof ProdDataSet === "function") {
-            ProdDataSet(value || []);
-        }
-    };
-
-    window.getFreightLogisticsBoxFeesData = function () {
-        const target = document.querySelector(FreightPage.logisticsBoxInputSelector);
-        if (!window.LogisticsBoxModalApi || !target) return [];
-
-        const state = LogisticsBoxModalApi.getState(target);
-
-        return (state.items || [])
-            .filter(x => !x.IsDeleted)
-            .map(function (x) {
-                return {
-                    Id: x.Id || 0,
-                    FK_LogisticsBoxId: x.FK_LogisticsBoxId,
-                    Fee: x.Price || 0
-                };
-            });
-    };
-
-    window.setFreightLogisticsBoxFeesData = function (value) {
-        if (!window.LogisticsBoxModalApi) return;
-
-        const target = document.querySelector(FreightPage.logisticsBoxInputSelector);
-        const rows = (value || []).map(function (x) {
-            return {
-                Id: x.id || 0,
-                FK_LogisticsBoxId: x.fK_LogisticsBoxId,
-                Name: x.logisticsBox_Name || x.name || "",
-                Price: x.fee || 0,
-                IsDeleted: false
-            };
-        });
-
-        LogisticsBoxModalApi.setData(target, rows).then(function () {
-            FreightPage.renderLogisticsBoxUI(target);
-        });
-    };
-
     window.FreightSettingsPageReady = function () {
         FreightPage.init();
     };
@@ -485,6 +519,55 @@
 
     window.deleteButtonClicked = function (e) {
         FreightPage.onDeleteClick(e);
+    };
+
+    // 給 DevExtreme / Razor 若仍需字串 callback，可在頁面層只保留極薄轉接
+    window.FreightProdModalContentReady = function (e) {
+        if (window.ProdListModalApi) {
+            window.ProdListModalApi.onGridContentReady(e);
+        }
+    };
+
+    window.FreightProdModalSelectChange = function (e) {
+        if (window.ProdListModalApi) {
+            window.ProdListModalApi.onSelectionChanged(e);
+        }
+    };
+
+    window.FreightProdModalClearBtnInit = function (e) {
+        if (window.ProdListModalApi) {
+            window.ProdListModalApi.onClearButtonInit(e);
+        }
+    };
+
+    window.FreightProdModalClearBtnClick = function () {
+        if (window.ProdListModalApi) {
+            return window.ProdListModalApi.onClearButtonClick();
+        }
+    };
+
+    window.FreightLogisticsBoxModalContentReady = function (e) {
+        if (window.LogisticsBoxModalApi) {
+            window.LogisticsBoxModalApi.onGridContentReady(e);
+        }
+    };
+
+    window.FreightLogisticsBoxModalSelectChange = function (e) {
+        if (window.LogisticsBoxModalApi) {
+            window.LogisticsBoxModalApi.onSelectionChanged(e);
+        }
+    };
+
+    window.FreightLogisticsBoxModalClearBtnInit = function (e) {
+        if (window.LogisticsBoxModalApi) {
+            window.LogisticsBoxModalApi.onClearButtonInit(e);
+        }
+    };
+
+    window.FreightLogisticsBoxModalClearBtnClick = function () {
+        if (window.LogisticsBoxModalApi) {
+            return window.LogisticsBoxModalApi.onClearButtonClick();
+        }
     };
 
 })(window, window.jQuery);

@@ -236,10 +236,10 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 });
                             }
 
-                            var db_logistics= await db.LogisticsSettings.Where(e => e.FK_WebsiteId == websiteId && LogisticsType.Contains(e.LogisticsType) && e.FreigntStatusType != FreigntStatusTypeEnum.停用).ToListAsync();
+                            var db_logistics= await db.LogisticsSettings.Where(e => e.FK_WebsiteId == websiteId && LogisticsType.Contains(e.LogisticsType) && e.FreightStatusType != FreightStatusTypeEnum.停用).ToListAsync();
                             foreach (var item in db_logistics)
                             {
-                                item.FreigntStatusType = FreigntStatusTypeEnum.停用;
+                                item.FreightStatusType = FreightStatusTypeEnum.停用;
                                 item.LastModifierUserId = userId;
                                 item.LastModificationTime = DateTime.Now;
                             }

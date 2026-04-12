@@ -62,9 +62,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await orderAppService.GetShippingTypeEnum();
         }
         [HttpPost]
-        public List<SelectDto> GetFreigntStatusTypEnum()
+        public List<SelectDto> GetFreightStatusTypeEnum()
         {
-            return orderAppService.GetFreigntStatusTypEnum();
+            return orderAppService.GetFreightStatusTypeEnum();
         }
         [HttpGet]
         public async Task<ResponseMessageDto> SendMail(long Id)

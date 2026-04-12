@@ -67,9 +67,9 @@ const orderModel = {
             headers: _c.Data.Header
         });
     },
-    GetFreigntStatusTypEnum: function () {
+    GetFreightStatusTypeEnum: function () {
         return $.ajax({
-            url: "/api/Order/GetFreigntStatusTypEnum",
+            url: "/api/Order/GetFreightStatusTypeEnum",
             type: "POST",
             headers: _c.Data.Header
         });

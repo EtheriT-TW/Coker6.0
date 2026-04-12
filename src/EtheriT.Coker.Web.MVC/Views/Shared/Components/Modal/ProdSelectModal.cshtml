@@ -2,7 +2,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.Product
 
 <link rel="stylesheet" href="~/css/Components/ProdListModal.min.css" asp-append-version="true" />
-<script src="~/js/Components/ProdListModal.min.js" asp-append-version="true"></script>
+<script type="module" data-init-function="ProdListModalApi" src="~/js/Components/ProdListModal.min.js" asp-append-version="true"></script>
 @{
     await Html.RenderPartialAsync(@"DevExpress\_GridCSRF");
 }

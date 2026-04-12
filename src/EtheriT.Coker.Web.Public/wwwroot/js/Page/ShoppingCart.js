@@ -378,10 +378,10 @@ function PageReady() {
             if ($checked.length) RadioShipping.call($checked[0]);
 
         } else {
-            // 👉 一般運費情境：隱藏所有特殊運費（freigntStatusType = 2）
+            // 👉 一般運費情境：隱藏所有特殊運費（freightStatusType = 2）
             $inputs.each(function () {
                 const $input = $(this);
-                const statusType = Number($input.data('freignt-status-type')) || 0;
+                const statusType = Number($input.data('freight-status-type')) || 0;
                 const $formCheck = $input.closest('.form-check');
                 const $describe = $formCheck.next('.freight-describe');
                 const isSpecial = (statusType === 2); // 特殊運費

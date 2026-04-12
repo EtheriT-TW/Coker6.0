@@ -66,7 +66,8 @@ namespace EtheriT.Coker.Application.Freight
                 await loginUserData.SaveChanges(ls);
 
                 await SyncProdMappingsAsync(ls.Id, dto.ProdIds, websiteId);
-                await SyncLogisticsBoxFeesAsync(ls.Id, dto.LogisticsBoxFees, websiteId, dto.FreigntType);
+                if(dto.FreightType == FreightTypeEnum.依箱計費)
+                    await SyncLogisticsBoxFeesAsync(ls.Id, dto.LogisticsBoxFees, websiteId, dto.FreightType);
 
                 output.Success = true;
             }
@@ -87,7 +88,7 @@ namespace EtheriT.Coker.Application.Freight
             long logisticsSettingId,
             List<LogisticsBoxFeeDto>? dtoFees,
             long websiteId,
-            FreigntTypeEnum freigntType)
+            FreightTypeEnum freightType)
         {
             dtoFees ??= new List<LogisticsBoxFeeDto>();
 
@@ -96,7 +97,7 @@ namespace EtheriT.Coker.Application.Freight
                 .ToListAsync();
 
             // 若不是以箱計費，直接把既有明細刪除
-            if (freigntType != FreigntTypeEnum.依箱計費)
+            if (freightType != FreightTypeEnum.依箱計費)
             {
                 foreach (var fee in dbFees)
                 {
@@ -183,12 +184,12 @@ namespace EtheriT.Coker.Application.Freight
                                         Id = e.Id,
                                         Title = e.Title,
                                         Describe =
-                                            e.FreigntStatusType.ToString() + " - " +
+                                            e.FreightStatusType.ToString() + " - " +
                                             e.LogisticsType.ToString()
                                                 .Replace("_", "/")
                                                 .Replace("Seven", "7-11") + "，" +
-                                            (e.FreigntType == FreigntTypeEnum.免運費
-                                                ? e.FreigntType.ToString()
+                                            (e.FreightType == FreightTypeEnum.免運費
+                                                ? e.FreightType.ToString()
                                                 : e.Freight == e.Dis_Freight
                                                     ? $"單筆計算{e.Freight}元"
                                                     : $"單筆計算{e.Freight}元(滿{e.Low_Con}元{(e.Dis_Freight == 0 ? "免運" : $"運費{e.Dis_Freight}元")})")
@@ -321,7 +322,7 @@ namespace EtheriT.Coker.Application.Freight
                 {
                     var output = from e in result
                                  where !e.IsDeleted && e.FK_WebsiteId == webid
-                                 where e.FreigntStatusType != FreigntStatusTypeEnum.停用
+                                 where e.FreightStatusType != FreightStatusTypeEnum.停用
                                  select new FreightDisplayDto
                                  {
                                      Id = e.Id,
@@ -330,14 +331,14 @@ namespace EtheriT.Coker.Application.Freight
                                      Low_Con = e.Low_Con,
                                      Dis_Freight = e.Dis_Freight,
                                      Set_Default = e.Set_Default,
-                                     freigntStatusType = (int)e.FreigntStatusType,
+                                     FreightStatusType = (int)e.FreightStatusType,
                                      Describe =
                                          e.LogisticsType.ToString()
                                              .Replace("_", "/")
                                              .Replace("Seven", "7-11") + "，" +
                                          (
-                                             e.FreigntType == FreigntTypeEnum.免運費
-                                                 ? e.FreigntType.ToString()
+                                             e.FreightType == FreightTypeEnum.免運費
+                                                 ? e.FreightType.ToString()
                                                  : e.Freight == e.Dis_Freight
                                                      ? $"單筆計算{e.Freight}元"
                                                      : $"單筆計算{e.Freight}元(滿{e.Low_Con}元{(e.Dis_Freight == 0 ? "免運" : $"運費{e.Dis_Freight}元")})"

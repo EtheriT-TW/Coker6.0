@@ -10,13 +10,13 @@ namespace EtheriT.Coker.Core.Models
         [StringLength(50)] public string Title { get; set; }
         public PreserveTypeEnum PreserveType { get; set; }
         public ShippingTypeEnum LogisticsType { get; set; }
-        public FreigntTypeEnum FreigntType { get; set; }
-        public FreigntStatusTypeEnum FreigntStatusType { get; set; }
+        public FreightTypeEnum FreightType { get; set; }
+        public FreightStatusTypeEnum FreightStatusType { get; set; }
         public int? Freight { get; set; }
         public int? Low_Con { get; set; }
         public int? Dis_Freight { get; set; }
         public bool Set_Default { get; set; }
-        public int? FreigntAmt2 { get; set; }
+        public int? FreightAmt2 { get; set; }
         public Website? Website { get; set; }
         public ICollection<MappingLogisticsSettingAndProd> MappingLogisticsSettingAndProds { get; set; }
         public ICollection<Order_Header> Order_Headers { get; set; }

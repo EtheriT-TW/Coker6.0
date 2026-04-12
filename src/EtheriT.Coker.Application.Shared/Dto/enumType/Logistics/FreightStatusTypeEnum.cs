@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Shared.Dto.enumType.Logistics
 {
-    public enum FreigntTypeEnum
+    public enum FreightStatusTypeEnum
     {
-        免運費 = 1,
-        單筆計算 = 2,
-        依箱計費 = 3
+        停用 = 0,
+        一般 = 1,
+        特殊 = 2
     }
 }

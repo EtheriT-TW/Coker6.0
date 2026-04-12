@@ -25,7 +25,7 @@ namespace EtheriT.Coker.Application.Shared.Order
         public Task<List<EnumDictionaryDto>> GetPreserveTypeEnum();
         public Task<List<EnumDictionaryDto>> GetShippingTypeEnum();
         public Task<List<EnumDictionaryDto>> GetPaymentTypeEnum();
-        public List<SelectDto> GetFreigntStatusTypEnum();
+        public List<SelectDto> GetFreightStatusTypeEnum();
         public Task<ResponseMessageDto> OrderStateChange(long ohid, int state);
         public Task<ResponseMessageDto> SendMail(long ohid);
         public List<SelectDto> getOrderStatusLookup();

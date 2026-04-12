@@ -247,7 +247,7 @@
  * @property {()=>AjaxPromise<any>} GetOrderStatusLookup
  * @property {()=>AjaxPromise<any>} GetPreserveTypeEnum
  * @property {()=>AjaxPromise<any>} GetShippingTypeEnum
- * @property {()=>AjaxPromise<any>} GetFreigntStatusTypEnum
+ * @property {()=>AjaxPromise<any>} GetFreightStatusTypeEnum
  */
 
 /**

@@ -67,13 +67,67 @@
         }
     },
     Page: {
+        getPendingModuleInitFunctions: function () {
+            const scripts = Array.from(
+                document.querySelectorAll('script[type="module"][data-init-function]')
+            );
+
+            return scripts
+                .map(function (script) {
+                    return String(script.dataset.initFunction || "").trim();
+                })
+                .filter(function (name) {
+                    return !!name && typeof window[name] === "undefined";
+                });
+        },
+
+        waitForModuleInitFunctions: function (timeoutMs, intervalMs) {
+            const timeout = typeof timeoutMs === "number" ? timeoutMs : 5000;
+            const interval = typeof intervalMs === "number" ? intervalMs : 50;
+
+            return new Promise(function (resolve, reject) {
+                const start = Date.now();
+
+                function check() {
+                    const pending = Coker.Page.getPendingModuleInitFunctions();
+
+                    if (pending.length === 0) {
+                        resolve();
+                        return;
+                    }
+
+                    if (Date.now() - start >= timeout) {
+                        reject(new Error("等待 module 初始化逾時: " + pending.join(", ")));
+                        return;
+                    }
+
+                    setTimeout(check, interval);
+                }
+
+                check();
+            });
+        },
+
         Ready: function () {
             if (location.pathname != "/") {
                 co.Cookie.EffectiveTime = co.Data.Time.DataRetentionLongTime;
                 Coker.Cookie.Add("lastViewPage", location.pathname);
                 co.Cookie.EffectiveTime = co.Data.Time.DataRetentionTime;
             }
-            typeof (PageReady) === "function" && PageReady();
+
+            Coker.Page.waitForModuleInitFunctions(5000, 50)
+                .then(function () {
+                    typeof (PageReady) === "function" && PageReady();
+                })
+                .catch(function (err) {
+                    console.error(err);
+
+                    if (window.Coker &&
+                        Coker.sweet &&
+                        typeof Coker.sweet.error === "function") {
+                        Coker.sweet.error("錯誤", "頁面元件載入失敗，請重新整理頁面。", null, true);
+                    }
+                });
         }
     },
     i18: {

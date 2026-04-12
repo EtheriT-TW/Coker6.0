@@ -2,8 +2,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.Freight
 
 <link rel="stylesheet" href="~/css/Components/LogisticsBoxModal.min.css" asp-append-version="true" />
-<script src="~/js/Components/ModuleSelect.min.js" asp-append-version="true"></script>
-<script src="~/js/Components/LogisticsBoxModal.min.js" asp-append-version="true"></script>
+<script type="module" data-init-function="LogisticsBoxModalApi" src="~/js/Components/LogisticsBoxModal.min.js" asp-append-version="true"></script>
 @{
     await Html.RenderPartialAsync(@"DevExpress\_GridCSRF");
 }

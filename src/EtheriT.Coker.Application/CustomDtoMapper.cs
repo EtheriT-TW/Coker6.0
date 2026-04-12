@@ -354,11 +354,11 @@ namespace EtheriT.Coker.Application
                                         .Replace("Seven", "7-11")
                                     + "，" +
                                     (
-                                        x.LogisticsSetting.FreigntType == FreigntTypeEnum.免運費
+                                        x.LogisticsSetting.FreightType == FreightTypeEnum.免運費
                                             // 免運：直接寫免運費
                                             ? "免運費"
                                             // 非免運：基本運費描述
-                                            : x.LogisticsSetting.FreigntType.ToString()
+                                            : x.LogisticsSetting.FreightType.ToString()
                                               + x.LogisticsSetting.Freight + "元"
                                               // 若有滿額條件才顯示括號內容
                                               + (

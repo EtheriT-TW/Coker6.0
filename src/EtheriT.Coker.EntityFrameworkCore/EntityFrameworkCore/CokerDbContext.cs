@@ -249,7 +249,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<LogisticsSetting>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.LogisticsSettings).HasForeignKey(f => f.FK_WebsiteId);
-                o.Property(l => l.FreigntStatusType).HasDefaultValue(FreigntStatusTypeEnum.一般);
+                o.Property(l => l.FreightStatusType).HasDefaultValue(FreightStatusTypeEnum.一般);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<LogisticsBox>(o => {

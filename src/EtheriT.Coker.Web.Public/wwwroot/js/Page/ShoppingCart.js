@@ -19,7 +19,7 @@ var hasProds = false;
 
 var islogin = false;
 
-var datachange = true, HasECPay = false, ECPayInit = false, ECPayMonitor = false;
+var datachange = true, HasECPay = false, HasECPayLogistics = false, ECPayInit = false, ECPayMonitor = false;
 
 var RecipientsList_dxData;
 
@@ -175,6 +175,7 @@ function PageReady() {
                                 "data-cvstelephone": select_cart_data[i].cvsTelephone,
                                 "data-cvsoutside": select_cart_data[i].cvsOutSide,
                             })
+                            RadioShipping();
                             isdefault = false;
                             break;
                         }
@@ -501,7 +502,74 @@ function PageReady() {
         if (HasECPay) ECPaymentChange();
     })
 
+    const raw = sessionStorage.getItem("orderForm");
+    if (raw) {
+        const data = JSON.parse(raw);
+        const savedAt = data.savedAt;
+        const now = Date.now();
+        const diffMinutes = (now - savedAt) / 1000 / 60;
+
+        if (diffMinutes < 30) {
+            var formData = data.formData;
+            console.log(formData)
+
+            OrdererEdit(true)
+            var ordererAddress = formData.ordererAddress;
+
+            co.Form.insertData(formData, "#Form_Orderer");
+            $("#OrdererInputAddress").val(ordererAddress.substring(ordererAddress.indexOf(" ", ordererAddress.indexOf(" ") + 1)).trim())
+
+            co.Zipcode.setData({
+                el: $("#Orderer_TWzipcode"),
+                addr: ordererAddress
+            });
+
+            if (data.RecipientType == "edit") {
+                $("[name='RecipientRadio'][value='edit']").prop("checked", true);
+                RecipientRadio()
+                var recipientAddress = formData.recipientAddress;
+
+                co.Form.insertData(formData, "#RecipientForm");
+                $("#RecipientInputAddress").val(recipientAddress.substring(recipientAddress.indexOf(" ", recipientAddress.indexOf(" ") + 1)).trim())
+
+                co.Zipcode.setData({
+                    el: $("#Recipient_TWzipcode"),
+                    addr: recipientAddress
+                });
+            }
+
+            if (formData.invoiceType == 2) {
+                $("[name='InvoiceType'][value='company']").prop("checked", true);
+                InvoiceTypeRadio();
+                var invoiceAddress = formData.invoiceAddress;
+
+                co.Form.insertData(formData, "#Form_Invoice");
+                $("#InvoiceInputAddress").val(invoiceAddress.substring(invoiceAddress.indexOf(" ", invoiceAddress.indexOf(" ") + 1)).trim())
+
+                co.Zipcode.setData({
+                    el: $("#Invoice_TWzipcode"),
+                    addr: invoiceAddress
+                });
+            }
+
+            if (formData.invoiceRecipient == 2) $("[name='InvoiceRadio'][value='order']").prop("checked", true);
+        }
+        sessionStorage.removeItem("orderForm");
+    }
+
     $(".btn_getmap").on("click", function () {
+        AllDataGet(false);
+
+        console.log(order_header_data)
+
+        const dataToSave = {
+            formData: order_header_data,
+            RecipientType: $(`[name="RecipientRadio"]:checked`).val(),
+            savedAt: Date.now()
+        };
+
+        sessionStorage.setItem("orderForm", JSON.stringify(dataToSave));
+
         var $btn = $(this);
         var $radio = $btn.prev('input[name="RadioShipping"]');
         $radio.prop('checked', true);
@@ -1326,7 +1394,7 @@ function Step2Monitor() {
     buy_step_swiper.update();
 }
 function RadioShipping() {
-    var $this = $(this);
+    var $this = $("[name='RadioShipping']:checked");
     ori_freight = $this.data("freight");
     low_con = $this.data("lowcon");
     disfreight = $this.data("disfreight");
@@ -1378,118 +1446,105 @@ function Step3Monitor() {
     shipMethodsChosen = FormCheck(ShippingForms);
     payMethodsChosen = FormCheck(PaymentForms);
 }
+function ECLogisticsChange() {
+    if (AllDataGet(false)) {
+        ShippingForms.removeClass("d-none");
+        $(".ecpayLogisticsWarning").addClass("d-none")
+    }
+    else {
+        ShippingForms.addClass("d-none");
+        $(".ecpayLogisticsWarning").removeClass("d-none")
+    }
+}
 function ECPaymentChange() {
-    //console.log("ECPaymentChange")
-    //console.log("ECPayMonitor", ECPayMonitor)
     if (!ECPayMonitor) return;
-    var checksuccess = true;
 
     Step3Monitor();
 
     $(".ecpayWarning").removeClass("d-none");
     $("#ECPayPayment").empty();
 
-    var checkOrderer = !OrdererOpen || FormCheck(OrdererForms);
-    var checkRecipient = !RecipientOpen || FormCheck(RecipientForms);
-    var checkInvoice = !InvoiceOpen || FormCheck(InvoiceForms);
-    var checkShipping = FormCheck(ShippingForms);
+    if (AllDataGet(false)) {
+        $(".ecpayWarning").addClass("d-none");
+        $(".ecpay_loading").removeClass("d-none");
+        $("#radio_payment_ECPay").prop("checked", true);
+        $("input[name='RadioPayment']").prop("disabled", true);
 
-    if (checkOrderer && checkRecipient && checkInvoice && checkShipping) {
-        OrderDataGet();
-        OrdererDataGet();
-        if (OrdererOpen && (order_data.zone == "" ^ order_data.ordererTelePhone == "")) checksuccess = false;
-        RecipientDataGet();
-        if ($(`[name="RecipientRadio"]:checked`).val() == "edit") {
-            if (recipient_data.zone == "" ^ recipient_data.recipientTelePhone == "") checksuccess = false;
-        }
-        InvoiceDataGet();
+        $("#RadioPayment div.form-check").each(function () {
+            var $self = $(this);
+            if ($self.children("input").attr("id") == "radio_payment_ECPay") $self.addClass("d-none");
+            else $self.removeClass("d-none");
+        });
 
-        if (checksuccess) {
-            $(".ecpayWarning").addClass("d-none");
-            $(".ecpay_loading").removeClass("d-none");
-            $("#radio_payment_ECPay").prop("checked", true);
-            $("input[name='RadioPayment']").prop("disabled", true);
+        var timeout = 0;
+        var checkInterval = setInterval(function () {
+            if (ECPayInit === true) {
+                clearInterval(checkInterval);
+                Coker.ThirdParty.ECPayGetToken(order_header_data).done(function (result) {
+                    if (result.success) {
+                        var message = result.message.split(",");
+                        order_header_data.orderId = message[0];
 
-            $("#RadioPayment div.form-check").each(function () {
-                var $self = $(this);
-                if ($self.children("input").attr("id") == "radio_payment_ECPay") $self.addClass("d-none");
-                else $self.removeClass("d-none");
-            });
+                        ECPay.createPayment(message[1], ECPay.Language.zhTW, function (errMsg) {
+                            if (errMsg != null) {
+                                $(".ecpay_loading").text(`串接綠界發生錯誤(${errMsg})`);
+                            } else {
+                                var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
+                                $ECPayList.first().next('li').addClass("first");
+                                $ECPayList.last().addClass("last");
 
-            var timeout = 0;
-            var checkInterval = setInterval(function () {
-                if (ECPayInit === true) {
-                    clearInterval(checkInterval);
-                    Coker.ThirdParty.ECPayGetToken(order_header_data).done(function (result) {
-                        if (result.success) {
-                            var message = result.message.split(",");
-                            order_header_data.orderId = message[0];
+                                $("#ECPayPayment").on("click", function () {
+                                    var $this_radio = $("#radio_payment_ECPay");
+                                    var $parentFormCheck = $this_radio.closest('.form-check');
+                                    var $prevPayment = $parentFormCheck.prevAll('.form-check').first().find('.payment_display');
+                                    $('#RadioPayment .payment_display').removeClass("checked first last");
+                                    $this_radio.prop("checked", true);
+                                    $('#RadioPayment .payment_display').first().addClass("first");
+                                    $prevPayment.addClass('last');
 
-                            ECPay.createPayment(message[1], ECPay.Language.zhTW, function (errMsg) {
-                                if (errMsg != null) {
-                                    $(".ecpay_loading").text(`串接綠界發生錯誤(${errMsg})`);
-                                } else {
-                                    var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
-                                    $ECPayList.first().next('li').addClass("first");
-                                    $ECPayList.last().addClass("last");
+                                    if ($(".ecpay_loading").hasClass("d-none")) {
+                                        $ECPayList.removeClass("first last")
+                                        var $activeLi = $ECPayList.filter('.ecpay-pl-act');
 
-                                    $("#ECPayPayment").on("click", function () {
-                                        var $this_radio = $("#radio_payment_ECPay");
-                                        var $parentFormCheck = $this_radio.closest('.form-check');
-                                        var $prevPayment = $parentFormCheck.prevAll('.form-check').first().find('.payment_display');
-                                        $('#RadioPayment .payment_display').removeClass("checked first last");
-                                        $this_radio.prop("checked", true);
-                                        $('#RadioPayment .payment_display').first().addClass("first");
-                                        $prevPayment.addClass('last');
-
-                                        if ($(".ecpay_loading").hasClass("d-none")) {
-                                            $ECPayList.removeClass("first last")
-                                            var $activeLi = $ECPayList.filter('.ecpay-pl-act');
-
-                                            if ($activeLi.prev('li').length == 0) {
-                                                if ($('#RadioPayment .payment_display').length > 1) $prevPayment.addClass('last');
-                                            }
-                                            else {
-                                                if ($('#RadioPayment .payment_display').length == 1) $ECPayList.first().addClass("first");
-                                                $prevPayment.removeClass("last");
-                                                $activeLi.prev('li').addClass("last");
-                                            }
-                                            $activeLi.addClass("first last")
-                                            $activeLi.next('li').addClass("first");
-                                            $ECPayList.last().addClass("last");
+                                        if ($activeLi.prev('li').length == 0) {
+                                            if ($('#RadioPayment .payment_display').length > 1) $prevPayment.addClass('last');
                                         }
+                                        else {
+                                            if ($('#RadioPayment .payment_display').length == 1) $ECPayList.first().addClass("first");
+                                            $prevPayment.removeClass("last");
+                                            $activeLi.prev('li').addClass("last");
+                                        }
+                                        $activeLi.addClass("first last")
+                                        $activeLi.next('li').addClass("first");
+                                        $ECPayList.last().addClass("last");
+                                    }
 
+                                    buy_step_swiper.update();
+                                })
+
+                                var checkPayExist = setInterval(function () {
+                                    if (typeof window.Pay !== "undefined") {
+                                        clearInterval(checkPayExist);
+                                        $(".ecpay_loading").addClass("d-none");
+                                        $("input[name='RadioPayment']").prop("disabled", false);
                                         buy_step_swiper.update();
-                                    })
-
-                                    var checkPayExist = setInterval(function () {
-                                        if (typeof window.Pay !== "undefined") {
-                                            clearInterval(checkPayExist);
-                                            $(".ecpay_loading").addClass("d-none");
-                                            $("input[name='RadioPayment']").prop("disabled", false);
-                                            buy_step_swiper.update();
-                                        }
-                                    }, 1000);
-                                }
-                            }, 'V2');
-                        } else {
-                            $(".ecpay_loading").text(`串接綠界發生錯誤，請稍後嘗試`);
-                            console.log(result.message)
-                        }
-                    });
-                } else {
-                    timeout += 100;
-                    if (timeout >= 10000) { // 最多等 10 秒
-                        clearInterval(checkInterval);
-                        $(".ecpay_loading").text(`串接綠界發生錯誤(初始化失敗-逾時)`);
+                                    }
+                                }, 1000);
+                            }
+                        }, 'V2');
+                    } else {
+                        $(".ecpay_loading").text(`串接綠界發生錯誤，請稍後嘗試`);
+                        console.log(result.message)
                     }
+                });
+            } else {
+                timeout += 100;
+                if (timeout >= 10000) { // 最多等 10 秒
+                    clearInterval(checkInterval);
+                    $(".ecpay_loading").text(`串接綠界發生錯誤(初始化失敗-逾時)`);
                 }
-            }, 100);
-        } else {
-            $(".ecpayWarning").removeClass("d-none");
-            $("#RadioPayment div.form-check").addClass("d-none");
-        }
-
+            }
+        }, 100);
     } else {
         $(".ecpayWarning").removeClass("d-none");
         $("#RadioPayment div.form-check").addClass("d-none");
@@ -1564,22 +1619,22 @@ function OrdererEdit(isopen) {
     buy_step_swiper.update();
 }
 function RecipientRadio() {
-    var $self = $(this)
+    const value = $("[name='RecipientRadio']:checked").val();
     recipient_data = {};
-    if ($self.val() == "edit") {
+
+    if (value == "edit") {
         $("#RecipientForm > .default_data").addClass("d-none");
         $("#RecipientForm > form").removeClass("d-none");
         RecipientOpen = true;
         RecipientFilled = false;
         RecipientFormClear();
-    } else if ($self.val() == "order") {
+    } else if (value == "order") {
         $("#RecipientForm > .default_data").addClass("d-none");
         $("#RecipientForm > form").addClass("d-none");
         RecipientOpen = false;
         RecipientFilled = true;
         RecipientSameOrderer();
-    }
-    else {
+    } else {
         $("#RecipientForm > .default_data").addClass("d-none");
         $("#RecipientForm > form").addClass("d-none");
         RecipientOpen = false;
@@ -1643,8 +1698,9 @@ function PersonalInvoiceMode() {
     }
 }
 function InvoiceTypeRadio() {
+    const value = $("[name='InvoiceType']:checked").val();
     $(`#invoiceType .invoice-block`).addClass("d-none");
-    switch (this.value) {
+    switch (value) {
         case "personal":
             $("#InvoiceInputPersonal").removeClass("d-none");
             $("#InvoiceForm").removeClass("d-none");
@@ -1723,9 +1779,11 @@ function OrderDataGet() {
     }
 }
 function OrdererDataGet() {
-    if (!FormCheck(OrdererForms)) return false;
     order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
-    order_data.ordererAddress = `${order_data.county} ${order_data.district} ${order_data.ordererAddress}`;
+
+    var country = order_data.county ? `${order_data.county} ` : "";
+    var district = order_data.district ? `${order_data.district} ` : "";
+    order_data.ordererAddress = `${country}${district}${order_data.ordererAddress}`;
     if (order_data.ordererTelePhone != "" && order_data.zone != "") {
         order_data.ordererTelePhone = `${order_data.zone}-${order_data.ordererTelePhone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
     }
@@ -1734,22 +1792,27 @@ function OrdererDataGet() {
         if (key.startsWith("orderer") > 0) order_header_data[key] = order_data[key]
     }
 
+    if (!FormCheck(OrdererForms)) return false;
     return true;
 }
 // 收件人資料寫入 order_header_data
 function RecipientDataGet() {
+    var checkform = false;
+
     switch ($(`[name="RecipientRadio"]:checked`).val()) {
         case "order":
             RecipientSameOrderer();
             break;
         case "edit":
-            if (!FormCheck(RecipientForms)) return false;
             recipient_data = co.Form.getJson($("#Form_Recipient").attr("id"));
-            recipient_data.recipientAddress = `${recipient_data.county} ${recipient_data.district} ${recipient_data.recipientAddress}`;
+            var country = recipient_data.county ? `${recipient_data.county} ` : "";
+            var district = recipient_data.district ? `${recipient_data.district} ` : "";
+            recipient_data.recipientAddress = `${country}${district}${recipient_data.recipientAddress}`;
             recipient_data.recipientTelePhone = "";
             if (recipient_data.recipientTelePhone != "" && recipient_data.zone != "") {
                 recipient_data.recipientTelePhone = `${recipient_data.zone}-${recipient_data.recipientTelePhone}` + (recipient_data.ext == "" ? "" : `-${recipient_data.ext}`);
             }
+            checkform = true;
             break;
     }
 
@@ -1757,10 +1820,12 @@ function RecipientDataGet() {
         if (key.startsWith("recipient") > 0) order_header_data[key] = recipient_data[key]
     }
 
+    if (checkform && !FormCheck(RecipientForms)) return false;
     return true;
 }
 // 發票資料寫入 order_header_data
 function InvoiceDataGet() {
+    var checkform = false;
     switch ($(`[name="InvoiceType"]:checked`).val()) {
         case "personal":
             if (InvoicePersonalTypeForms.length && !FormCheck(InvoicePersonalTypeForms)) return false;
@@ -1778,9 +1843,11 @@ function InvoiceDataGet() {
             invoiceType_data.PersonalInvoiceType = order_header_data.PersonalInvoiceType;
             break;
         case "company":
-            if (!FormCheck(InvoiceForms)) return false;
+            checkform = true
             invoice_data = co.Form.getJson($("#Form_Invoice").attr("id"));
-            order_header_data.invoiceAddress = `${invoice_data.county} ${invoice_data.district} ${invoice_data.invoiceAddress}`;
+            var country = invoice_data.county ? `${invoice_data.county} ` : "";
+            var district = invoice_data.district ? `${invoice_data.district} ` : "";
+            invoice_data.invoiceAddress = `${country}${district}${invoice_data.invoiceAddress}`;
             order_header_data.invoiceType = 2;
             break;
     }
@@ -1795,8 +1862,45 @@ function InvoiceDataGet() {
     for (var key in invoice_data) {
         order_header_data[key] = invoice_data[key]
     }
-
+    if (checkform && !FormCheck(InvoiceForms)) return false;
     return true;
+}
+function AllDataGet(EnableWarning) {
+    var checksuccess = true;
+
+    RadioPayment();
+    OrderDataGet();
+
+    if (!OrdererDataGet()) {
+        checksuccess = false;
+        if (EnableWarning) Coker.sweet.warning("請注意", "請確實填寫訂購人資料！", null);
+    }
+    else {
+        if (order_data.zone == "" ^ order_data.ordererTelePhone == "") {
+            if (EnableWarning) Coker.sweet.warning("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null);
+            checksuccess = false;
+        }
+    }
+
+    if (!RecipientDataGet()) {
+        checksuccess = false;
+        if (EnableWarning) Coker.sweet.warning("請注意", "請確實填寫收件人資料！", null);
+    }
+    else {
+        if ($(`[name="RecipientRadio"]:checked`).val() == "edit") {
+            if (recipient_data.zone == "" ^ recipient_data.recipientTelePhone == "") {
+                if (EnableWarning) Coker.sweet.warning("資料填寫錯誤", "如要提供收件人電話資訊，請確實填寫區碼與聯絡電話。", null);
+                checksuccess = false;
+            }
+        }
+    }
+
+    if (!InvoiceDataGet()) {
+        checksuccess = false;
+        if (EnableWarning) Coker.sweet.warning("請注意", "請確實填寫發票資料！", null);
+    }
+
+    return checksuccess;
 }
 function getSelectedCartIds() {
     const ids = [];
@@ -1838,37 +1942,7 @@ async function OrderHeaderAdd() {
 
     Coker.Order.CheckStock(data).done(function (result) {
         if (result.success) {
-            RadioPayment();
-            OrderDataGet();
-
-            if (!OrdererDataGet()) {
-                checksuccess = false;
-                Coker.sweet.warning("請注意", "請確實填寫訂購人資料！", null);
-            }
-            else {
-                if (order_data.zone == "" ^ order_data.ordererTelePhone == "") {
-                    Coker.sweet.warning("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null);
-                    checksuccess = false;
-                }
-            }
-
-            if (!RecipientDataGet()) {
-                checksuccess = false;
-                Coker.sweet.warning("請注意", "請確實填寫收件人資料！", null);
-            }
-            else {
-                if ($(`[name="RecipientRadio"]:checked`).val() == "edit") {
-                    if (recipient_data.zone == "" ^ recipient_data.recipientTelePhone == "") {
-                        Coker.sweet.warning("資料填寫錯誤", "如要提供收件人電話資訊，請確實填寫區碼與聯絡電話。", null);
-                        checksuccess = false;
-                    }
-                }
-            }
-
-            if (!InvoiceDataGet()) {
-                checksuccess = false;
-                Coker.sweet.warning("請注意", "請確實填寫發票資料！", null);
-            }
+            var checksuccess = AllDataGet(true)
 
             var shipping_radio = $(`[name="RadioShipping"]:checked`);
             order_header_data.shipping = shipping_radio.val();
@@ -1878,7 +1952,7 @@ async function OrderHeaderAdd() {
             var hasBtnGetMap = shipping_radio.siblings('.btn_getmap').length > 0;
             if (hasBtnGetMap && order_header_data.CVSStoreID == null) {
                 checksuccess = false;
-                Coker.sweet.warning("請注意", "請選擇取貨門市！", null);
+                if (EnableWarning) Coker.sweet.warning("請注意", "請選擇取貨門市！", null);
             }
 
             if (checksuccess) {

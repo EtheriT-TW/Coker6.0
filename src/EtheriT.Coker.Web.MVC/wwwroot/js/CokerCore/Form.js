@@ -210,4 +210,6 @@
     window._c = window._c || {};
     window._c.Form = Form;
 
+    window.co = window.co || {};
+    window.co.Form = Form;
 })(window);

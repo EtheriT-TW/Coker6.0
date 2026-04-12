@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
@@ -7,6 +8,7 @@ using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Net;
 using System.Text;
 
@@ -227,22 +229,91 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return LocalRedirect(redirectUrl);
         }
         [HttpPost]
-        [AllowAnonymous]
-        public async Task<IActionResult> ECPayLogisticsCreate(long ohid)
+        public async Task<ResponseMessageDto> HandleThirdPartyLogistics(HandleThirdPartyLogisticsDto dto)
         {
-            try
+            ResponseMessageDto response = new ResponseMessageDto();
+            var CheckSource = await thirdPartyAppService.CheckSource(dto.Token);
+            if (CheckSource.Success)
             {
                 var baseUrl = configuration["ThirdParty:ECPayLogistics:LogisticsUrl"];
-                var actionUrl = $"{baseUrl}/Express/Create";
+                string actionUrl = "";
 
-                ECPayLogisticsCreateCVSRequestDto RequestBody = await ecPayLogisticsAppService.ECPayLogisticsExpressCVSCreate(ohid);
+                switch (dto.Action)
+                {
+                    case "CreateLogistics":
+                        actionUrl = $"{baseUrl}/Express/Create";
+                        switch (dto.ExtraData)
+                        {
+                            case "CVS":
+                                ECPayLogisticsCreateCVSRequestDto RequestBody = await ecPayLogisticsAppService.ECPayLogisticsExpressCVSCreate(dto.OrderId);
+                                response.Message = $"{actionUrl}&&{JsonConvert.SerializeObject(RequestBody)}";
+                                response.Success = true;
+                                break;
+                            case "HOME":
 
-                return Content(GenerateAutoPostForm(actionUrl, RequestBody), "text/html");
+                                break;
+                            default:
+                                response.Message = $"物流方式【{dto.ExtraData}】不支援";
+                                break;
+                        }
+                        break;
+                    case "PrintOrderInfo":
+                        ResponseMessageDto RequestBodyResponse = new ResponseMessageDto();
+                        bool GetResponse = true;
+                        switch (dto.ExtraData)
+                        {
+                            case "C2C711":
+                                actionUrl = $"{baseUrl}/Express/PrintUniMartC2COrderInfo";
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.UniMart, dto.OrderId);
+                                break;
+                            case "C2CFAMI":
+                                actionUrl = $"{baseUrl}/Express/PrintFAMIC2COrderInfo";
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.FAMI, dto.OrderId);
+                                break;
+                            case "C2CHILIFE":
+                                actionUrl = $"{baseUrl}/Express/PrintHILIFEC2COrderInfo";
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.HILIFE, dto.OrderId);
+                                break;
+                            case "C2COKMART":
+                                actionUrl = $"{baseUrl}/Express/PrintOKMARTC2COrderInfo";
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.OKMART, dto.OrderId);
+                                break;
+                            case "B2C":
+                            case "HOME":
+                                actionUrl = $"{baseUrl}/helper/printTradeDocument";
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.B2C, dto.OrderId);
+                                break;
+                            default:
+                                GetResponse = false;
+                                response.Message = $"物流方式【{dto.ExtraData}】不支援";
+                                break;
+                        }
+                        if (GetResponse)
+                        {
+                            if (string.IsNullOrEmpty(RequestBodyResponse.Message)) throw new Exception("取得RequestBodyResponse發生錯誤");
+                            if (!RequestBodyResponse.Success) throw new Exception(RequestBodyResponse.Message);
+                            response.Message = $"{actionUrl}&&{RequestBodyResponse.Message}";
+                            response.Success = true;
+                        }
+                        break;
+                    default:
+                        response.Message = $"查詢動作【{dto.Action}】不支援";
+                        break;
+                }
             }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            else response.Error = "Token 驗證錯誤";
+            return response;
+        }
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<IActionResult> ECPayLogisticsExpressCreateResponse([FromForm] ECPayLogisticsCreateResponseDto ResultResponseData)
+        {
+            var response = await ecPayLogisticsAppService.ECPayLogisticsExpressCreateResponse(ResultResponseData);
+            var redirectUrl = response?.Message;
+
+            if (string.IsNullOrWhiteSpace(redirectUrl)) return Content("1|OK");
+
+            return LocalRedirect(redirectUrl);
         }
         private string GenerateAutoPostForm(string actionUrl, object RequestBody)
         {

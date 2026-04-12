@@ -13,5 +13,6 @@ namespace EtheriT.Coker.Application.Shared.ThirdParty
         public Task<List<ThirdPartyKeypairItemOutputDto>> GetPaymentResult(long paytypeid);
         public Task<ResponseMessageDto> CheckSource(string Token);
         public Task<ResponseMessageDto> HandleThirdPartyPayment(HandleThirdPartyPaymentDto dto);
+        public Task<ResponseMessageDto> HandleThirdPartyLogistics(HandleThirdPartyLogisticsDto dto);
     }
 }

@@ -742,7 +742,37 @@ namespace EtheriT.Coker.Application.Order
                     var shipping_str1 = shipping?.Title ?? "";
                     var shipping_str3 = (shipping?.LogisticsType ?? ShippingTypeEnum.郵寄掛號).ToString().Replace("_", "/");
                     temp_output.Shipping = shipping_str1 != "" ? shipping_str3 != "" ? $"{shipping_str1}　{shipping_str3}" : $"{shipping_str1}" : "";
-                    temp_output.LogisticsType = ((int)shipping?.LogisticsType).ToString();
+                    temp_output.LogisticsType = ((int)shipping?.LogisticsType);
+                    temp_output.LogisticsTypeStr = "CVS";
+
+                    switch (shipping?.LogisticsType)
+                    {
+                        case ShippingTypeEnum.綠界_大宗寄倉_全家:
+                        case ShippingTypeEnum.綠界_大宗寄倉_711超商:
+                        case ShippingTypeEnum.綠界_大宗寄倉_711冷凍店取:
+                        case ShippingTypeEnum.綠界_大宗寄倉_萊爾富:
+                            temp_output.LogisticsSubTypeStr = "B2C";
+                            break;
+                        case ShippingTypeEnum.綠界_門市寄取_711超商:
+                            temp_output.LogisticsSubTypeStr = "C2C711";
+                            break;
+                        case ShippingTypeEnum.綠界_門市寄取_全家:
+                            temp_output.LogisticsSubTypeStr = "C2CFAMI";
+                            break;
+                        case ShippingTypeEnum.綠界_門市寄取_萊爾富:
+                            temp_output.LogisticsSubTypeStr = "C2CHILIFE";
+                            break;
+                        case ShippingTypeEnum.綠界_門市寄取_OK超商:
+                            temp_output.LogisticsTypeStr = "CVS";
+                            temp_output.LogisticsSubTypeStr = "C2COKMART";
+                            break;
+                        case ShippingTypeEnum.綠界_黑貓:
+                        case ShippingTypeEnum.綠界_中華郵政:
+                            temp_output.LogisticsTypeStr = "HOME";
+                            temp_output.LogisticsSubTypeStr = "HOME";
+                            break;
+                    }
+
                     var payment = await (from pt in db.PaymentTypes
                                          join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
                                          where ptv.FK_WebsiteId == WebsiteId

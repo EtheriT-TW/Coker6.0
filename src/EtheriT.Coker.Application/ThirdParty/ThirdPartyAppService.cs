@@ -1,24 +1,23 @@
 ﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
+using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.ThirdParty;
-using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
-using EtheriT.Coker.Core.Models;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json;
-using Microsoft.Extensions.Configuration;
 using EtheriT.Coker.Application.Token;
-using DevExpress.Data.Mask;
+using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
 using System.Security.Policy;
 using System.Text;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -236,7 +235,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 });
                             }
 
-                            var db_logistics= await db.LogisticsSettings.Where(e => e.FK_WebsiteId == websiteId && LogisticsType.Contains(e.LogisticsType) && e.FreigntStatusType != FreigntStatusTypeEnum.停用).ToListAsync();
+                            var db_logistics = await db.LogisticsSettings.Where(e => e.FK_WebsiteId == websiteId && LogisticsType.Contains(e.LogisticsType) && e.FreigntStatusType != FreigntStatusTypeEnum.停用).ToListAsync();
                             foreach (var item in db_logistics)
                             {
                                 item.FreigntStatusType = FreigntStatusTypeEnum.停用;
@@ -404,52 +403,69 @@ namespace EtheriT.Coker.Application.ThirdParty
         public async Task<ResponseMessageDto> HandleThirdPartyPayment(HandleThirdPartyPaymentDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
-
             try
             {
-                var Token = await tokenAppService.CheckToken(null);
-                var websiteId = await loginUserData.GetWebsiteId();
-                var website = await db.Websites.Where(e => e.Id == websiteId).FirstOrDefaultAsync();
-
-                if (Token != null)
-                {
-                    if (website != null)
-                    {
-                        dto.Token = Token.Token;
-
-
-                        var frontApiUrl = "";
-                        if (_env.IsProduction()) frontApiUrl = $"{website.DefaultUrl}/api/ThirdParty/HandleThirdPartyPayment";
-                        else frontApiUrl = $"https://lcb.develop.coker.ezsale.tw/api/ThirdParty/HandleThirdPartyPayment";
-
-                        var jsonContent = new StringContent(JsonConvert.SerializeObject(dto), Encoding.UTF8, "application/json");
-
-                        try
-                        {
-                            var postresponse = await ThirdPartyClient_Front.PostAsync(frontApiUrl, jsonContent);
-
-                            if (postresponse.IsSuccessStatusCode)
-                            {
-                                response.Success = true;
-                                var content = await postresponse.Content.ReadAsStringAsync();
-                                var temp_response = JsonConvert.DeserializeObject<ResponseMessageDto>(content);
-                                response = temp_response;
-                            }
-                            else response.Message = $"{postresponse.StatusCode}, Failed to call front API";
-                        }
-                        catch (Exception ex)
-                        {
-                            response.Message = $"Error calling front API: {ex.Message}";
-                        }
-                    }
-                    else throw new Exception("取得網站內容發生錯誤");
-                }
-                else throw new Exception("取得Token發生錯誤");
+                response = await CallFrontApi("HandleThirdPartyPayment", dto);
             }
             catch (Exception ex)
             {
                 response.Message = ex.Message;
             }
+            return response;
+        }
+        public async Task<ResponseMessageDto> HandleThirdPartyLogistics(HandleThirdPartyLogisticsDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                response = await CallFrontApi("HandleThirdPartyLogistics", dto);
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
+        }
+        private async Task<ResponseMessageDto> CallFrontApi(string apiPath, object dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var token = await tokenAppService.CheckToken(null);
+                if (token == null) throw new Exception("取得Token發生錯誤");
+
+                var websiteId = await loginUserData.GetWebsiteId();
+
+                var website = await db.Websites.Where(e => e.Id == websiteId).FirstOrDefaultAsync();
+                if (website == null) throw new Exception("取得網站內容發生錯誤");
+
+                var dtoType = dto.GetType();
+                var tokenProp = dtoType.GetProperty("Token");
+                tokenProp?.SetValue(dto, token.Token);
+
+                var frontApiUrl = _env.IsProduction() ? $"{website.DefaultUrl}/api/ThirdParty/{apiPath}" : $"https://lcb.develop.coker.ezsale.tw/api/ThirdParty/{apiPath}";
+                var jsonContent = new StringContent(JsonConvert.SerializeObject(dto), Encoding.UTF8, "application/json");
+                var postresponse = await ThirdPartyClient_Front.PostAsync(frontApiUrl, jsonContent);
+
+                if (postresponse.IsSuccessStatusCode)
+                {
+                    var content = await postresponse.Content.ReadAsStringAsync();
+                    var idx = content.IndexOf("\"message\":");
+                    if (idx > -1)
+                    {
+                        var sub = content.Substring(idx + 10);
+                        var html = sub;
+                    }
+                    var obj = JsonConvert.DeserializeObject<ResponseMessageDto>(content.Trim().Trim('"').Replace("\\r\\n", ""));
+                    response = JsonConvert.DeserializeObject<ResponseMessageDto>(content);
+                }
+                else response.Message = $"{postresponse.StatusCode}, Failed to call front API";
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+
             return response;
         }
     }

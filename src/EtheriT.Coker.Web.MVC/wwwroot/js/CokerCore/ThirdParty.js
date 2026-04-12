@@ -37,6 +37,26 @@
                 data: { ohid: ohid, thirdparty: thirdparty },
             });
         },
+        CreateLogistics: function (ohid) {
+            return $.ajax({
+                url: "/api/ThirdParty/HandleThirdPartyPayment/",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+            });
+        },
+        HandleThirdPartyLogistics: function (data) {
+            return $.ajax({
+                url: "/api/ThirdParty/HandleThirdPartyLogistics/",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+            });
+        },
         Line: {
             Confirm: function (ohid) {
                 return $.ajax({

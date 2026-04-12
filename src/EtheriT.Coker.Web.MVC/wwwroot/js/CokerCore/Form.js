@@ -338,6 +338,9 @@
         getJson: function (id, isArrayType) {
             const form = document.getElementById(id);
             if (!form) return {};
+            if ((form.tagName || "").toUpperCase() === "FIELDSET") {
+                return _c.Form.getJsonByFieldset(id, isArrayType);
+            }
             const $form = $(`#${id}`);
             const formFields = new FormData(form);
             let isArray = typeof (isArrayType) == "undefined" ? false : isArrayType;

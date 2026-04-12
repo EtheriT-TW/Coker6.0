@@ -1,5 +1,5 @@
 ﻿function PageReady() {
-    const formId = "#StoreSet";
+    const formId = "StoreSet";
     co.Form.init(formId, () => {
         const array = co.Object.objectToArray(co.Form.getJson(formId, true));
         const savaData = {
@@ -10,7 +10,7 @@
         $("#ThirdParty>.accordion-item").each(function () {
             const $e = $(this);
             const Id = $e.data("groupid");
-            var value = co.Object.objectToArray(co.Form.getJson(`#thirdPartyForm_${Id}`, true));
+            var value = co.Object.objectToArray(co.Form.getJson(`thirdPartyForm_${Id}`, true));
             value = ValueCheck(value);
             savaData.ThirdParties.push({
                 id: Id,

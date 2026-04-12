@@ -63,7 +63,7 @@ var PreLoader;
         if (event.ctrlKey && event.key === "s") {
             event.preventDefault(); // 阻止瀏覽器的預設儲存行為
             let form = findBestFormForSave();
-            console.log("觸發 Ctrl+S，找到的表單：", form);
+            //console.log("觸發 Ctrl+S，找到的表單：", form);
             if (form) {
                 form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
             }

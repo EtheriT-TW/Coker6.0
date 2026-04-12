@@ -203,7 +203,7 @@ function PageReady() {
     });
 
     $btn_createLogistics.on("click", function () {
-        if (!ECPayLogisticsTypeStr) co.sweet.error("錯誤", 取得物流方式發生錯誤, null, false);
+        if (!ECPayLogisticsTypeStr) co.sweet.error("錯誤", "取得物流方式發生錯誤", null, false);
         else {
             const form = document.createElement("form");
             form.method = "post";
@@ -229,7 +229,7 @@ function PageReady() {
     });
 
     $btn_printShippingLabel.on("click", function () {
-        if (!ECPayLogisticsSubTypeStr) co.sweet.error("錯誤", 取得物流子類型發生錯誤, null, false);
+        if (!ECPayLogisticsSubTypeStr) co.sweet.error("錯誤", "取得物流子類型發生錯誤", null, false);
         else {
             const form = document.createElement("form");
             form.method = "post";

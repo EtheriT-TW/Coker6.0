@@ -651,13 +651,34 @@
                                 @foreach (var freight in Model.freightModels ?? new List<FreightDisplayDto>())
                                 {
                                     var check = freight.Set_Default ? "checked" : "";
+                                    var boxFeesJson = System.Text.Json.JsonSerializer.Serialize(freight.LogisticsBoxFees ?? new List<LogisticsBoxFeeDisplayDto>());
+
                                     <div class="form-check text-start col-12 col-sm-3 my-2">
-                                        <input id="FreeShip_@freight.Id" class="form-check-input" type="radio" name="RadioShipping" value="@freight.Id" data-freight-status-type="@freight.FreightStatusType" data-freight="@freight.Freight" data-lowcon="@freight.Low_Con" data-disfreight="@freight.Dis_Freight" data-isdefault="@freight.Set_Default" @check required>
+                                        <input id="FreeShip_@freight.Id"
+                                               class="form-check-input"
+                                               type="radio"
+                                               name="RadioShipping"
+                                               value="@freight.Id"
+                                               data-freight-status-type="@freight.FreightStatusType"
+                                               data-freight-type="@((int)freight.FreightType)"
+                                               data-freight="@(freight.Freight)"
+                                               data-lowcon="@(freight.Low_Con)"
+                                               data-disfreight="@(freight.Dis_Freight)"
+                                               data-isdefault="@freight.Set_Default"
+                                               data-boxfees='@Html.Raw(boxFeesJson)'
+                                               @check
+                                               required>
                                         <label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
+
                                         @if (freight.GetMap)
                                         {
-                                            <input type="button" class="btn_getmap bg-transparent border-0 ms-1 text-decoration-underline" value="選擇門市" data-subtype="@freight.LogisticsSubType" title="選擇門市">
+                                            <input type="button"
+                                                   class="btn_getmap bg-transparent border-0 ms-1 text-decoration-underline"
+                                                   value="選擇門市"
+                                                   data-subtype="@freight.LogisticsSubType"
+                                                   title="選擇門市">
                                         }
+
                                         @{
                                             if (!has_invalid)
                                             {
@@ -666,7 +687,10 @@
                                             }
                                         }
                                     </div>
-                                    <div class="text-start freight-describe col-12 col-sm-9 my-2">@freight.Describe</div>
+
+                                    <div class="text-start freight-describe col-12 col-sm-9 my-2">
+                                        @freight.Describe
+                                    </div>
                                 }
                             }
                             else
@@ -696,6 +720,7 @@
                         </div>
                         <div class="py-2 d-flex justify-content-end text-end">
                             <div class="shipping_memo">再購買<sapn class="price"></sapn>免運</div>
+                            <div class="shipping_box_memo small text-muted d-none"></div>
                             <div>運費</div>
                             <div class="shipping_fee price">0</div>
                         </div>

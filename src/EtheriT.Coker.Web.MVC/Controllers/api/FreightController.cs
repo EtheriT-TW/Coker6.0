@@ -40,6 +40,16 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await freightAppService.GetLogisticsBoxSelectList(loadOptions, ids);
         }
+        [HttpGet]
+        public async Task<ResponseMessageDto> LogisticsBoxRequires()
+        {
+            ResponseMessageDto result = new ResponseMessageDto
+            {
+                Success = true,
+                Object = await freightAppService.RequiresLogisticsBoxAsync()
+            };
+            return result;
+        }
         [HttpPost]
         public async Task<IActionResult> LogisticsBoxAddUp(GetLogisticsBoxAllListInputDto dto)
         {

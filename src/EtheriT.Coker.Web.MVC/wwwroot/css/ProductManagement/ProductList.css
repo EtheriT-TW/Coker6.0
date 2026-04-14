@@ -154,6 +154,9 @@ input[type="number"] {
     margin: 1rem;
     padding: 1.5rem;
 }
+    #Spec_Frame.no-logistics-box .packingPoint {
+        display: none;
+    }
 
     #Spec_Frame > .specList {
         display: table;

@@ -244,6 +244,7 @@ namespace EtheriT.Coker.Application.Product
                             FK_S1id = item.FK_S1id,
                             FK_S2id = item.FK_S2id,
                             Stock = item.Stock,
+                            PackingPoint = item.PackingPoint,
                             Min_Qty = item.Min_Qty,
                             Alert_Qty = item.Alert_Qty,
                             IsTimePrice = item.TimePrice,
@@ -277,6 +278,7 @@ namespace EtheriT.Coker.Application.Product
                             db_ps.Alert_Qty = item.Alert_Qty;
                             db_ps.Ser_No = item.Ser_No;
                             db_ps.SubItemNo = item.SubItemNo;
+                            db_ps.PackingPoint = item.PackingPoint;
                             db_ps.Price = item.Price;
                             db_ps.LastModificationTime = DateTime.Now;
                             db_ps.LastModifierUserId = usetId;
@@ -707,6 +709,7 @@ namespace EtheriT.Coker.Application.Product
                                         Price = ps.Price,
                                         Min_Qty = ps.Min_Qty,
                                         Stock = ps.Stock,
+                                        PackingPoint = ps.PackingPoint,
                                         Alert_Qty = ps.Alert_Qty,
                                         SubItemNo = ps.SubItemNo ?? "",
                                         Ser_No = ps.Ser_No,

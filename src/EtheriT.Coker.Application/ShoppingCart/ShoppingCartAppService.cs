@@ -450,11 +450,14 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 }
 
                 var shoppingCarts = await db.ShoppingCarts
-                        .Include(e => e.Prod_Stock)
-                            .ThenInclude(e => e.Prod)
-                                .ThenInclude(e => e.MappingLogisticsSettingAndProds)
-                                    .ThenInclude(e => e.LogisticsSetting)
-                        .Where(e => scids.Contains(e.Id)).ToListAsync();
+                    .Include(e => e.Prod_Stock)
+                        .ThenInclude(e => e.Prod)
+                            .ThenInclude(e => e.MappingLogisticsSettingAndProds)
+                                .ThenInclude(e => e.LogisticsSetting)
+                                    .ThenInclude(e => e.logisticsBoxFees)
+                                        .ThenInclude(e => e.logisticsBox)
+                    .Where(e => scids.Contains(e.Id))
+                    .ToListAsync();
 
                 foreach (var shoppingCart in shoppingCarts)
                 {
@@ -562,7 +565,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     // ✅ 現在要結帳的單價＆紅利
                     temp_output.Price = currentPrice;
                     temp_output.Bonus = currentBonus;
-
+                    temp_output.PackingPoint = prod_stocks.PackingPoint;
 
                     if (!temp_output.Available) temp_output.Quantity = 0;
                     temp_output.Subtotal = temp_output.Price * temp_output.Quantity;

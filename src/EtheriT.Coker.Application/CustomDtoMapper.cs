@@ -46,6 +46,7 @@ using EtheriT.Coker.Web.Core.Models;
 using Newtonsoft.Json;
 using System.Net;
 using System.Text.RegularExpressions;
+using EtheriT.Coker.Application.Common;
 
 namespace EtheriT.Coker.Application
 {
@@ -343,42 +344,58 @@ namespace EtheriT.Coker.Application
                 .ForMember(d => d.SCId, m => m.MapFrom(s => s.Id))
                 .ForMember(d => d.PSId, m => m.MapFrom(s => s.FK_PSid))
                 .ForMember(d => d.PPId, m => m.MapFrom(s => s.FK_PriceId))
+
+                // 先只抓必要資料（避免在 SQL 做複雜字串）
                 .ForMember(d => d.Freight, m => m.MapFrom(s =>
                     (s.Prod_Stock != null && s.Prod_Stock.Prod != null)
                         ? s.Prod_Stock.Prod.MappingLogisticsSettingAndProds
-                            .Where(x => x.FK_ProdId == s.Prod_Stock.FK_Pid && x.LogisticsSetting != null)
+                            .Where(x =>
+                                x.FK_ProdId == s.Prod_Stock.FK_Pid &&
+                                x.LogisticsSetting != null &&
+                                !x.LogisticsSetting.IsDeleted &&
+                                x.LogisticsSetting.FreightStatusType != FreightStatusTypeEnum.停用
+                            )
+                            .OrderBy(x => x.LogisticsSetting!.FreightStatusType)
+                            .ThenBy(x => x.LogisticsSetting!.LogisticsType)
                             .Select(x => new FreightGetAllListDto
                             {
                                 Id = x.LogisticsSetting!.Id,
                                 Title = x.LogisticsSetting.Title,
-                                Describe =
-                                    x.LogisticsSetting.LogisticsType.ToString()
-                                        .Replace("_", "/")
-                                        .Replace("Seven", "7-11")
-                                    + "，" +
-                                    (
-                                        x.LogisticsSetting.FreightType == FreightTypeEnum.免運費
-                                            // 免運：直接寫免運費
-                                            ? "免運費"
-                                            // 非免運：基本運費描述
-                                            : x.LogisticsSetting.FreightType.ToString()
-                                              + x.LogisticsSetting.Freight + "元"
-                                              // 若有滿額條件才顯示括號內容
-                                              + (
-                                                    x.LogisticsSetting.Low_Con > 0
-                                                        ? "(滿" + x.LogisticsSetting.Low_Con + "元"
-                                                          + (
-                                                                x.LogisticsSetting.Dis_Freight == 0
-                                                                    ? "免運)"
-                                                                    : "運費" + x.LogisticsSetting.Dis_Freight + "元)"
-                                                            )
-                                                        : string.Empty
-                                                )
-                                    )
+
+                                // 先只放基本資訊，Describe 之後補
+                                Describe = ""
                             })
                             .FirstOrDefault()
                         : null
                 ))
+
+                // ⭐ 關鍵：這裡補完整 Describe
+                .AfterMap((src, dest) =>
+                {
+                    if (src.Prod_Stock?.Prod == null || dest.Freight == null) return;
+
+                    var mapping = src.Prod_Stock.Prod.MappingLogisticsSettingAndProds
+                        .Where(x =>
+                            x.FK_ProdId == src.Prod_Stock.FK_Pid &&
+                            x.LogisticsSetting != null &&
+                            !x.LogisticsSetting.IsDeleted &&
+                            x.LogisticsSetting.FreightStatusType != FreightStatusTypeEnum.停用
+                        )
+                        .OrderBy(x => x.LogisticsSetting!.FreightStatusType)
+                        .ThenBy(x => x.LogisticsSetting!.LogisticsType)
+                        .FirstOrDefault();
+
+                    var ls = mapping?.LogisticsSetting;
+                    if (ls == null) return;
+
+                    dest.Freight.Describe = DisplayTextFormatter.Freight(
+                        ls,
+                        includeStatus: false,
+                        detailedBoxText: true,
+                        includePackingHint: true
+                    );
+                })
+
                 .ReverseMap();
 
 
@@ -499,6 +516,49 @@ namespace EtheriT.Coker.Application
                                 Fee = x.Fee,
                                 Name = x.logisticsBox != null ? x.logisticsBox.Name : ""
                             }).ToList()));
+
+            CreateMap<LogisticsSetting, FreightGetAllListDto>()
+                .ForMember(d => d.Describe, m => m.Ignore())
+                .AfterMap((src, dest) =>
+                {
+                    dest.Describe = DisplayTextFormatter.Freight(
+                        src,
+                        includeStatus: true,
+                        detailedBoxText: false,
+                        includePackingHint: false
+                    );
+                });
+
+            CreateMap<LogisticsBoxFee, LogisticsBoxFeeDisplayDto>()
+                .ForMember(d => d.LogisticsBoxId, m => m.MapFrom(s => s.FK_LogisticsBoxId))
+                .ForMember(d => d.Name, m => m.MapFrom(s => s.logisticsBox != null ? s.logisticsBox.Name : ""))
+                .ForMember(d => d.CapacityPoint, m => m.MapFrom(s => s.logisticsBox != null ? s.logisticsBox.CapacityPoint : 0))
+                .ForMember(d => d.Fee, m => m.MapFrom(s => s.Fee));
+
+            CreateMap<LogisticsSetting, FreightDisplayDto>()
+                .ForMember(d => d.Freight, m => m.MapFrom(s => s.Freight ?? 0))
+                .ForMember(d => d.FreightStatusType, m => m.MapFrom(s => (int)s.FreightStatusType))
+                .ForMember(d => d.FreightType, m => m.MapFrom(s => (int)s.FreightType))
+                .ForMember(d => d.GetMap, m => m.MapFrom(s => (int)s.LogisticsType >= 8 && (int)s.LogisticsType <= 15))
+                .ForMember(d => d.LogisticsSubType, m => m.Ignore())
+                .ForMember(d => d.Describe, m => m.Ignore())
+                .ForMember(d => d.LogisticsBoxFees, m => m.MapFrom(s => s.logisticsBoxFees))
+                .AfterMap((src, dest) =>
+                {
+                    dest.Describe = DisplayTextFormatter.Freight(
+                        src,
+                        includeStatus: false,
+                        detailedBoxText: true,
+                        includePackingHint: true
+                    );
+
+                    dest.LogisticsSubType = DisplayTextFormatter.LogisticsSubType(src.LogisticsType);
+
+                    dest.LogisticsBoxFees = (dest.LogisticsBoxFees ?? new List<LogisticsBoxFeeDisplayDto>())
+                        .OrderBy(x => x.CapacityPoint)
+                        .ThenBy(x => x.LogisticsBoxId)
+                        .ToList();
+                });
 
             CreateMap<GetLogisticsBoxAllListInputDto, LogisticsBox>().ReverseMap();
 

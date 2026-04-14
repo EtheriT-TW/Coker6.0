@@ -172,39 +172,32 @@ namespace EtheriT.Coker.Application.Freight
         {
             try
             {
-                long WebsiteID = await loginUserData.GetWebsiteId();
-                var result = db.LogisticsSettings;
+                long websiteId = await loginUserData.GetWebsiteId();
 
-                if (result != null)
+                var data = await db.LogisticsSettings
+                    .AsNoTracking()
+                    .Include(e => e.logisticsBoxFees)
+                        .ThenInclude(e => e.logisticsBox)
+                    .Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId)
+                    .ToListAsync();
+
+                var mapped = mapper.Map<List<FreightGetAllListDto>>(data);
+
+                var output = DataSourceLoader.Load(mapped, loadOptions);
+
+                return new JsonResult(output, new JsonSerializerSettings
                 {
-                    var dataQuery = from e in result
-                                    where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
-                                    select new FreightGetAllListDto
-                                    {
-                                        Id = e.Id,
-                                        Title = e.Title,
-                                        Describe =
-                                            e.FreightStatusType.ToString() + " - " +
-                                            e.LogisticsType.ToString()
-                                                .Replace("_", "/")
-                                                .Replace("Seven", "7-11") + "，" +
-                                            (e.FreightType == FreightTypeEnum.免運費
-                                                ? e.FreightType.ToString()
-                                                : e.Freight == e.Dis_Freight
-                                                    ? $"單筆計算{e.Freight}元"
-                                                    : $"單筆計算{e.Freight}元(滿{e.Low_Con}元{(e.Dis_Freight == 0 ? "免運" : $"運費{e.Dis_Freight}元")})")
-                                    };
-                    var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-                }
-                else throw new Exception("查無運費資料");
+                    ContractResolver = new DefaultContractResolver()
+                });
             }
-            catch (Exception e)
+            catch (Exception)
             {
-
             }
 
-            return new JsonResult(new List<FreightGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            return new JsonResult(new List<FreightGetAllListDto>(), new JsonSerializerSettings
+            {
+                ContractResolver = new DefaultContractResolver()
+            });
         }
         private async Task<IQueryable<GetLogisticsBoxAllListInputDto>> GetLogisticsBoxBaseQueryAsync()
         {
@@ -316,50 +309,24 @@ namespace EtheriT.Coker.Application.Freight
             try
             {
                 var webid = Configuration.GetValue<long>("WebConfig:SiteId");
-                var result = db.LogisticsSettings;
 
-                if (result != null)
-                {
-                    var output = from e in result
-                                 where !e.IsDeleted && e.FK_WebsiteId == webid
-                                 where e.FreightStatusType != FreightStatusTypeEnum.停用
-                                 select new FreightDisplayDto
-                                 {
-                                     Id = e.Id,
-                                     Title = e.Title,
-                                     Freight = e.Freight ?? 0,
-                                     Low_Con = e.Low_Con,
-                                     Dis_Freight = e.Dis_Freight,
-                                     Set_Default = e.Set_Default,
-                                     FreightStatusType = (int)e.FreightStatusType,
-                                     Describe =
-                                         e.LogisticsType.ToString()
-                                             .Replace("_", "/")
-                                             .Replace("Seven", "7-11") + "，" +
-                                         (
-                                             e.FreightType == FreightTypeEnum.免運費
-                                                 ? e.FreightType.ToString()
-                                                 : e.Freight == e.Dis_Freight
-                                                     ? $"單筆計算{e.Freight}元"
-                                                     : $"單筆計算{e.Freight}元(滿{e.Low_Con}元{(e.Dis_Freight == 0 ? "免運" : $"運費{e.Dis_Freight}元")})"
-                                         ),
-                                     GetMap = (int)e.LogisticsType >= 8 && (int)e.LogisticsType <= 15,
-                                     LogisticsSubType = GetLogisticsSubType((int)e.LogisticsType)
-                                 };
+                var data = await db.LogisticsSettings
+                    .AsNoTracking()
+                    .Include(e => e.logisticsBoxFees)
+                        .ThenInclude(e => e.logisticsBox)
+                    .Where(e => !e.IsDeleted && e.FK_WebsiteId == webid)
+                    .Where(e => e.FreightStatusType != FreightStatusTypeEnum.停用)
+                    .ToListAsync();
 
-                    return new JsonResult(output, new JsonSerializerSettings
-                    {
-                        ContractResolver = new DefaultContractResolver()
-                    });
-                }
-                else
+                var output = mapper.Map<List<FreightDisplayDto>>(data);
+
+                return new JsonResult(output, new JsonSerializerSettings
                 {
-                    throw new Exception("查無運費資料");
-                }
+                    ContractResolver = new DefaultContractResolver()
+                });
             }
             catch (Exception ex)
             {
-                // 建議可記錄 log
                 Console.WriteLine(ex.Message);
             }
 
@@ -641,6 +608,19 @@ namespace EtheriT.Coker.Application.Freight
             );
 
             return output;
+        }
+        public async Task<bool> RequiresLogisticsBoxAsync()
+        {
+            long websiteId = await loginUserData.GetWebsiteId();
+
+            return await db.LogisticsSettings
+                .AsNoTracking()
+                .AnyAsync(x =>
+                    x.FK_WebsiteId == websiteId &&
+                    x.FreightStatusType != FreightStatusTypeEnum.停用 &&
+                    x.FreightType == FreightTypeEnum.依箱計費 &&
+                    x.logisticsBoxFees.Any()
+                );
         }
     }
 }

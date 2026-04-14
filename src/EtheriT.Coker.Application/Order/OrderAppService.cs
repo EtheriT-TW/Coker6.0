@@ -221,19 +221,13 @@ namespace EtheriT.Coker.Application.Order
 
             return output;
         }
-        private async Task<DetailBuildResult> BuildDetailSectionAsync(
-            OrderHeaderAddDto dto,
-            long? userId,
-            Guid uuid,
-            DateTime now)
+        private async Task<DetailBuildResult> BuildDetailSectionAsync(OrderHeaderAddDto dto, long? userId, Guid uuid, DateTime now)
         {
             if (dto.OrderDetails == null || dto.OrderDetails.Count == 0)
                 throw new Exception("沒有任何購買項目，無法建立訂單。");
 
-            // 只信「有哪些購物車 Id 要結帳」
             var cartIds = dto.OrderDetails.Select(d => d.Id).ToList();
 
-            // 1) 把購物車 + 庫存 + 價格資訊一次從 DB 撈出來
             var carts = await db.ShoppingCarts
                 .Include(sc => sc.Prod_Stock)
                     .ThenInclude(ps => ps.Prod)
@@ -241,7 +235,7 @@ namespace EtheriT.Coker.Application.Order
                 .Where(sc =>
                     cartIds.Contains(sc.Id) &&
                     sc.UUID == uuid &&
-                    !sc.IsOrder)                      // 只允許未結帳的購物車
+                    !sc.IsOrder)
                 .ToListAsync();
 
             if (carts.Count == 0)
@@ -250,7 +244,6 @@ namespace EtheriT.Coker.Application.Order
             if (carts.Count != cartIds.Count)
                 throw new Exception("購物車資料有誤，請重新整理後再嘗試。");
 
-            // 建立 Stock 快取
             var stockDict = carts
                 .Select(sc => sc.Prod_Stock)
                 .Where(ps => ps != null)
@@ -265,12 +258,11 @@ namespace EtheriT.Coker.Application.Order
                     throw new Exception($"找不到商品庫存資料（購物車ID={sc.Id}）。");
 
                 var currentStock = stock.Stock ?? 0;
-                var qty = sc.Quantity;    // ✅ 完全用 DB 裡的數量，不信 request
+                var qty = sc.Quantity;
 
                 if (currentStock < qty)
                     throw new Exception($"商品庫存不足（購物車ID={sc.Id}），剩餘 {currentStock}，欲購買 {qty}。");
 
-                // 2) 以 Prod_Price 為準，決定單價與紅利
                 decimal unitPrice;
                 int unitBonus;
 
@@ -281,7 +273,6 @@ namespace EtheriT.Coker.Application.Order
                 }
                 else
                 {
-                    // 備援：若沒有綁 Prod_Price，就用購物車裡當時的快照
                     unitPrice = (decimal)sc.Price;
                     unitBonus = sc.Bonus ?? 0;
                 }
@@ -292,19 +283,17 @@ namespace EtheriT.Coker.Application.Order
                 subtotal += lineAmount;
                 totalBonus += lineBonus;
 
-                // 3) 在記憶體中同步購物車資料為「標準答案」
                 sc.Price = unitPrice;
                 sc.Bonus = unitBonus;
                 sc.IsOrder = true;
                 sc.LastModifierUserId = userId;
                 sc.LastModificationTime = now;
 
-                // 4) 庫存扣除（同樣只是記憶體變動，之後一起 Save）
                 stock.Stock = currentStock - qty;
                 stock.LastModifierUserId = userId;
                 stock.LastModificationTime = now;
             }
-            // 5) 訂單紅利抵扣
+
             var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
             if (bonusSetting != null && bonusSetting.MaxRedemptionPercent != null && bonusSetting.MaxRedemptionPercent > 0)
             {
@@ -322,30 +311,36 @@ namespace EtheriT.Coker.Application.Order
                 }
             }
 
+            var freightResult = await CalculateFreightAsync(dto.Shipping, carts, subtotal);
+
             return new DetailBuildResult
             {
                 ShoppingCarts = carts,
                 StockDict = stockDict,
                 Subtotal = (int)Math.Round(subtotal, MidpointRounding.AwayFromZero),
-                TotalBonus = (int)Math.Round(totalBonus, MidpointRounding.AwayFromZero)
+                TotalBonus = (int)Math.Round(totalBonus, MidpointRounding.AwayFromZero),
+                Freight = freightResult.Freight,
+                PackingPointTotal = freightResult.PackingPointTotal,
+                BoxUsages = freightResult.BoxUsages
             };
         }
         private async Task<Order_Header> BuildHeaderSectionAsync(
             OrderHeaderAddDto dto,
             long websiteId,
-            Guid uuid,                  // 若你實際不是 Guid，這邊改掉即可
-            dynamic token,              // 這裡用 dynamic 是為了不跟你實際型別打架
+            Guid uuid,
+            dynamic token,
             long? userId,
             DateTime now,
             bool isTemp,
             DetailBuildResult? detailResult)
         {
             Order_Header? oh;
-            // 修改暫存單訂單為正式訂單
+
             if (dto.OrderId != null)
             {
                 oh = await db.Order_Headers
                     .FirstOrDefaultAsync(e => e.Id == dto.OrderId && e.IsTemp);
+
                 if (oh == null)
                     throw new Exception("找不到對應的暫存訂單。");
 
@@ -357,11 +352,12 @@ namespace EtheriT.Coker.Application.Order
                 oh.Fk_UserId = userId;
                 oh.CreationTime = now;
 
-                // 正式單用我們自己算的 subtotal 蓋掉前端
                 if (!isTemp && detailResult != null)
                 {
                     oh.Subtotal = detailResult.Subtotal;
                     oh.Bonus = detailResult.TotalBonus;
+                    oh.Freight = detailResult.Freight;
+
                     if (detailResult.TotalBonus > 0)
                     {
                         var bonusResult = await bonusManagementAppService.SaveTransaction(new CreateUserTransactionDto
@@ -379,12 +375,35 @@ namespace EtheriT.Coker.Application.Order
                         if (!bonusResult.Success)
                             throw new Exception(bonusResult.Message ?? "紅利點數扣除失敗，無法建立訂單。");
                     }
+
+                    var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
+                    if (bonusSetting != null && bonusSetting.RewardRatePercent != null && bonusSetting.RewardRatePercent > 0)
+                    {
+                        var earnPoints = (int)Math.Floor(detailResult.Subtotal * bonusSetting.RewardRatePercent.Value / 100);
+                        oh.GetBonus = earnPoints > 0 ? earnPoints : 0;
+                    }
+                    else
+                    {
+                        oh.GetBonus = 0;
+                    }
+
+                    if (detailResult.BoxUsages != null && detailResult.BoxUsages.Any())
+                    {
+                        var boxMemo = string.Join("、", detailResult.BoxUsages
+                            .Select(x => $"{x.Name} × {x.Count}"));
+
+                        oh.SystemMemo = $"配箱資訊：{boxMemo}（總點數：{detailResult.PackingPointTotal}，運費：{detailResult.Freight}）";
+                    }
+                    else
+                    {
+                        oh.SystemMemo = null;
+                    }
                 }
-                await loginUserData.SaveChanges(oh);   // 這裡需要 Save 一次，拿到穩定的 oh.Id
+
+                await loginUserData.SaveChanges(oh);
             }
             else
             {
-                // 新建訂單（正式或暫存）
                 oh = mapper.Map<Order_Header>(dto);
                 oh.FK_WebsiteId = websiteId;
                 oh.FK_UUID = uuid;
@@ -393,12 +412,14 @@ namespace EtheriT.Coker.Application.Order
                 oh.CreationTime = now;
 
                 db.Order_Headers.Add(oh);
-                await db.SaveChangesAsync();           // 取得 oh.Id 給後續 detail 用
+                await db.SaveChangesAsync();
 
                 if (!isTemp && detailResult != null)
                 {
                     oh.Subtotal = detailResult.Subtotal;
                     oh.Bonus = detailResult.TotalBonus;
+                    oh.Freight = detailResult.Freight;
+
                     if (detailResult.TotalBonus > 0)
                     {
                         var bonusResult = await bonusManagementAppService.SaveTransaction(new CreateUserTransactionDto
@@ -411,8 +432,11 @@ namespace EtheriT.Coker.Application.Order
                             RefKey = oh.Id,
                             Type = BonusLogTypeEnum.Redeem
                         });
-                        if (!bonusResult.Success) throw new Exception(bonusResult.Message ?? "紅利點數扣除失敗，無法建立訂單。");
+
+                        if (!bonusResult.Success)
+                            throw new Exception(bonusResult.Message ?? "紅利點數扣除失敗，無法建立訂單。");
                     }
+
                     var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
                     if (bonusSetting != null && bonusSetting.RewardRatePercent != null && bonusSetting.RewardRatePercent > 0)
                     {
@@ -422,11 +446,190 @@ namespace EtheriT.Coker.Application.Order
                             oh.GetBonus = earnPoints;
                         }
                     }
+
+                    if (detailResult.BoxUsages != null && detailResult.BoxUsages.Any())
+                    {
+                        var boxMemo = string.Join("、", detailResult.BoxUsages
+                            .Select(x => $"{x.Name} × {x.Count}"));
+
+                        oh.SystemMemo = $"配箱資訊：{boxMemo}（總點數：{detailResult.PackingPointTotal}，運費：{detailResult.Freight}）";
+                    }
+                    else
+                    {
+                        oh.SystemMemo = null;
+                    }
+
                     await db.SaveChangesAsync();
                 }
             }
 
             return oh;
+        }
+        private async Task<FreightCalcResult> CalculateFreightAsync(long shippingId, List<Coker.Core.Models.ShoppingCart> carts, decimal subtotal)
+        {
+            var setting = await db.LogisticsSettings
+                .Include(x => x.logisticsBoxFees)
+                    .ThenInclude(x => x.logisticsBox)
+                .FirstOrDefaultAsync(x => x.Id == shippingId && !x.IsDeleted);
+
+            if (setting == null)
+                throw new Exception("查無運費設定資料。");
+
+            switch (setting.FreightType)
+            {
+                case FreightTypeEnum.免運費:
+                    return new FreightCalcResult
+                    {
+                        Freight = 0,
+                        PackingPointTotal = 0,
+                        BoxUsages = new List<BoxUsageResult>()
+                    };
+
+                case FreightTypeEnum.依箱計費:
+                    var totalPackingPoint = GetTotalPackingPoint(carts);
+                    return CalculateBoxFreight(setting, totalPackingPoint);
+
+                case FreightTypeEnum.單筆計算:
+                default:
+                    return CalculateNormalFreight(setting, subtotal);
+            }
+        }
+        private int GetTotalPackingPoint(List<Coker.Core.Models.ShoppingCart> carts)
+        {
+            return carts.Sum(sc =>
+            {
+                var point = sc.Prod_Stock?.PackingPoint ?? 0;
+                return point * sc.Quantity;
+            });
+        }
+        private FreightCalcResult CalculateNormalFreight(LogisticsSetting setting, decimal subtotal)
+        {
+            var freight = (int)Math.Round(setting.Freight ?? 0m, MidpointRounding.AwayFromZero);
+            var lowCon = (int)Math.Round(setting.Low_Con ?? 0m, MidpointRounding.AwayFromZero);
+            var disFreight = (int)Math.Round(setting.Dis_Freight ?? 0m, MidpointRounding.AwayFromZero);
+
+            if (lowCon > 0 && subtotal >= lowCon)
+            {
+                freight = disFreight;
+            }
+
+            return new FreightCalcResult
+            {
+                Freight = freight,
+                PackingPointTotal = 0,
+                BoxUsages = new List<BoxUsageResult>()
+            };
+        }
+        private FreightCalcResult CalculateBoxFreight(LogisticsSetting setting, int totalPackingPoint)
+        {
+            var fees = (setting.logisticsBoxFees ?? new List<LogisticsBoxFee>())
+                .Where(x => x.logisticsBox != null && !x.logisticsBox.IsDeleted && x.Fee >= 0)
+                .Select(x => new
+                {
+                    LogisticsBoxId = x.FK_LogisticsBoxId,
+                    Name = x.logisticsBox!.Name ?? "",
+                    CapacityPoint = x.logisticsBox.CapacityPoint,
+                    Fee = x.Fee
+                })
+                .Where(x => x.CapacityPoint > 0)
+                .OrderBy(x => x.CapacityPoint)
+                .ThenBy(x => x.Fee)
+                .ToList();
+
+            if (!fees.Any() || totalPackingPoint <= 0)
+            {
+                return new FreightCalcResult
+                {
+                    Freight = 0,
+                    PackingPointTotal = totalPackingPoint,
+                    BoxUsages = new List<BoxUsageResult>()
+                };
+            }
+
+            var bestUnitBox = fees
+                .OrderBy(x => x.Fee / x.CapacityPoint)
+                .First();
+
+            int remaining = totalPackingPoint;
+            decimal totalFreight = 0;
+            var used = new List<BoxUsageResult>();
+
+            if (remaining > bestUnitBox.CapacityPoint)
+            {
+                var count = remaining / bestUnitBox.CapacityPoint;
+                if (count > 0)
+                {
+                    used.Add(new BoxUsageResult
+                    {
+                        LogisticsBoxId = bestUnitBox.LogisticsBoxId,
+                        Name = bestUnitBox.Name,
+                        CapacityPoint = bestUnitBox.CapacityPoint,
+                        Fee = bestUnitBox.Fee,
+                        Count = count
+                    });
+
+                    totalFreight += count * bestUnitBox.Fee;
+                    remaining -= count * bestUnitBox.CapacityPoint;
+                }
+            }
+
+            if (remaining > 0)
+            {
+                var fitBox = fees.FirstOrDefault(x => x.CapacityPoint >= remaining);
+
+                if (fitBox == null)
+                {
+                    fitBox = fees.Last();
+                    var extraCount = (int)Math.Ceiling((decimal)remaining / fitBox.CapacityPoint);
+
+                    used.Add(new BoxUsageResult
+                    {
+                        LogisticsBoxId = fitBox.LogisticsBoxId,
+                        Name = fitBox.Name,
+                        CapacityPoint = fitBox.CapacityPoint,
+                        Fee = fitBox.Fee,
+                        Count = extraCount
+                    });
+
+                    totalFreight += extraCount * fitBox.Fee;
+                }
+                else
+                {
+                    used.Add(new BoxUsageResult
+                    {
+                        LogisticsBoxId = fitBox.LogisticsBoxId,
+                        Name = fitBox.Name,
+                        CapacityPoint = fitBox.CapacityPoint,
+                        Fee = fitBox.Fee,
+                        Count = 1
+                    });
+
+                    totalFreight += fitBox.Fee;
+                }
+            }
+
+            var merged = used
+                .GroupBy(x => x.LogisticsBoxId)
+                .Select(g =>
+                {
+                    var first = g.First();
+                    return new BoxUsageResult
+                    {
+                        LogisticsBoxId = first.LogisticsBoxId,
+                        Name = first.Name,
+                        CapacityPoint = first.CapacityPoint,
+                        Fee = first.Fee,
+                        Count = g.Sum(x => x.Count)
+                    };
+                })
+                .ToList();
+
+            return new FreightCalcResult
+            {
+                Freight = (int)Math.Round(totalFreight, MidpointRounding.AwayFromZero),
+                PackingPointTotal = totalPackingPoint,
+                BoxUsages = merged
+            };
         }
         private List<Prod_Log> BuildLogSection(
             Order_Header header,
@@ -1135,61 +1338,59 @@ namespace EtheriT.Coker.Application.Order
             }
             return output;
         }
-        public async Task<OrderDisplayDto> ReorderDisplay(long ohid)
+        public async Task<ResponseMessageDto> ReorderDisplay(long ohid)
         {
-            OrderDisplayDto output = new OrderDisplayDto();
+            var output = new ResponseMessageDto();
+
             try
             {
-                var order_headers = await GetHeaderDisplay(new List<long> { ohid }, false);
-                if (order_headers.Any())
+                var orderHeaders = await GetHeaderDisplay(new List<long> { ohid }, false);
+                if (!orderHeaders.Any())
+                    throw new Exception("查無訂單資訊");
+
+                var oldOrderDetails = await GetDetailsDisplay(ohid);
+                if (!oldOrderDetails.Any())
+                    throw new Exception("查無舊訂單資訊");
+
+                var newOrderDetails = await shoppingCartAppService.GetAll();
+                if (!newOrderDetails.Any())
+                    throw new Exception("查無再次下訂資訊");
+
+                var oldPsIds = oldOrderDetails
+                    .Select(x => x.ProdStockId)
+                    .ToHashSet();
+
+                // 只留下這張舊訂單對應的商品
+                var result = newOrderDetails
+                    .Where(x => oldPsIds.Contains(x.PSId))
+                    .ToList();
+
+                // 補舊訂單差異資料
+                foreach (var item in result)
                 {
-                    output.OrderHeader = order_headers[0];
-                    List<OrderDetailDisplayDto> order_details = new List<OrderDetailDisplayDto>();
-                    List<OrderDetailDisplayDto> order_details_lock = new List<OrderDetailDisplayDto>();
-                    var old_order_details = await GetDetailsDisplay(output.OrderHeader.Id);
-                    var new_order_details = await shoppingCartAppService.GetAll();
-                    if (old_order_details.Any())
-                    {
-                        if (new_order_details.Any())
-                        {
-                            output.OrderDetails = new List<OrderDetailDisplayDto>();
-                            foreach (var old_order_detail in old_order_details)
-                            {
-                                if (new_order_details.Find(e => e.PSId == old_order_detail.ProdStockId) != null)
-                                {
-                                    var temp_new_order_detail = mapper.Map<OrderDetailDisplayDto>(new_order_details.Find(e => e.PSId == old_order_detail.ProdStockId));
-                                    old_order_detail.Price = old_order_detail.Price;
-                                    if (temp_new_order_detail.Price != old_order_detail.Price) temp_new_order_detail.OldPrice = old_order_detail.Price;
-                                    else temp_new_order_detail.OldPrice = 0;
-                                    if (temp_new_order_detail.Quantity != old_order_detail.Quantity) temp_new_order_detail.OldQuantity = old_order_detail.Quantity;
-                                    temp_new_order_detail.Step = old_order_detail.Step;
-                                    output.OrderDetails.Add(temp_new_order_detail);
-                                }
-                                else
-                                {
-                                    old_order_detail.Quantity = 0;
-                                    order_details_lock.Add(old_order_detail);
-                                }
-                            }
-                            if (output.OrderDetails.Any())
-                            {
-                                output.OrderDetails.AddRange(order_details_lock);
-                                output.Success = true;
-                            }
-                            else throw new Exception("查無再次下訂資訊");
-                        }
-                        else throw new Exception("查無再次下訂資訊");
-                    }
-                    else throw new Exception("查無舊訂單資訊");
+                    var oldItem = oldOrderDetails.FirstOrDefault(x => x.ProdStockId == item.PSId);
+                    if (oldItem == null) continue;
+
+                    if (item.Price != oldItem.Price)
+                        item.OldPrice = oldItem.Price;
+
+                    if (item.Quantity != oldItem.Quantity)
+                        item.OldQuantity = oldItem.Quantity;
+
+                    item.Step = oldItem.Step;
                 }
-                else throw new Exception("查無訂單資訊");
+
+                output.Success = true;
+                output.Object = result;
             }
             catch (Exception ex)
             {
-                output.OrderHeader = new OrderHeaderDisplayDto();
+                output.Success = false;
                 output.Error = "Error";
                 output.Message = ex.Message;
+                output.Object = null;
             }
+
             return output;
         }
         public async Task<OrderDataGetAllDto> GetHistoryOrder(int page)
@@ -1629,6 +1830,14 @@ namespace EtheriT.Coker.Application.Order
                  <tr>
                  <td colspan='6'>{order_header.Remark}</td>
                  </tr>
+                {(
+                    !string.IsNullOrWhiteSpace(order_header.SystemMemo)
+                    ? $@"<tr class='thead'><td scope='col' colspan='6'>系統資訊</td></tr>
+                         <tr>
+                             <td colspan='6'>{order_header.SystemMemo}</td>
+                         </tr>"
+                    : ""
+                )}
                  <tr class='thead'>
                  <td scope='col' colspan='2' class='text-center'>購物明細</td>
                  <td scope='col' class='text-center'>規格</td>
@@ -1679,7 +1888,7 @@ namespace EtheriT.Coker.Application.Order
                     }
                     else
                     {
-                        var smtp = await storeSetAppService.getValues(new Shared.Dto.StoreSet.StoreSetGetValueInput { SiteId = WebsiteID, key = "SMTPAccount" });
+                        var smtp = await storeSetAppService.getValues(new StoreSetGetValueInput { SiteId = WebsiteID, key = "SMTPAccount" });
                         if (smtp != null && smtp.Success && smtp.detailItem != null && smtp.detailItem.value != null && smtp.detailItem.value.Count > 0)
                         {
                             cc.Email = smtp.detailItem.value[0];

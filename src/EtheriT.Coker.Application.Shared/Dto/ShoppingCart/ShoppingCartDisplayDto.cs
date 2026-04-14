@@ -29,6 +29,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public decimal Subtotal { get; set; }
         public decimal SubtotalBonus { get; set; }
         public int Stock { get; set; }
+        public int PackingPoint { get; set; } = 1;
         public string? LogisticsSubType { get; set; }
         public string? CVSStoreID { get; set; }
         public string? CVSStoreName { get; set; }

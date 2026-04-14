@@ -409,7 +409,12 @@ input[type="number"] {
         margin: 0 0.5rem;
         font-weight: bold;
     }
-
+.shipping_box_memo {
+    margin-top: 0.2rem;
+    margin-right: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--gray-text);
+}
 /* Step3 */
 #Step3 > .card-header > a {
     font-size: 0.8rem;

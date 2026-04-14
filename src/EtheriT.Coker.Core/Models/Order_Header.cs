@@ -56,6 +56,8 @@ namespace EtheriT.Coker.Core.Models
         public int? Service_Charge { get; set; }
         [StringLength(500)]
         public string? Memo { get; set; }
+        [StringLength(1000)]
+        public string? SystemMemo { get; set; }
         public string? TransactionId { get; set; }
         public string? refundTransactionId { get; set; }
         public DateTime? refundTransactionDate { get; set; }

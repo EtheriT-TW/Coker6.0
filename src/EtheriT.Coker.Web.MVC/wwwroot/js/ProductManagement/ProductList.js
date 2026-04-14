@@ -1,5 +1,5 @@
 ﻿var $display, $removedFromShelves, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count,
-    $marks, $price, $subItemNo, $stock_number, $alert_number, $min_number, $date, $picker, $permanent, $itemNo, $itemNo_count;
+    $marks, $price, $subItemNo, $stock_number, $packingPoint_number, $alert_number, $min_number, $date, $picker, $permanent, $itemNo, $itemNo_count;
 var startDate, endDate, keyId, price_tid, temp_psid
 var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], spec_pick_list, suggest_price_list = []
 var $price_modal, priceModal
@@ -39,11 +39,17 @@ function toolbarPreparing(e) {
     });
 }
 
-function PageReady() {
+async function PageReady() {
     ElementInit();
     TechCertListModalInit();
     TagListModalInit();
-
+    try {
+        const LogisticsBoxRequires = await co.LogisticsBox.Requires();
+        if (!LogisticsBoxRequires.object) throw new Error("不需要物流箱");
+    } catch (error) {
+        $("#Spec_Frame").addClass("no-logistics-box");
+    }
+    
     // 啟動
     const editor = grapesInit({
         save: function (html, css) {
@@ -293,6 +299,7 @@ function ElementInit() {
     $price = $(".input_price");
     $subItemNo = $(".input_subItemNo");
     $stock_number = $(".input_stock_number");
+    $packingPoint_number = $(".input_packingPoint_number");
     $min_number = $(".input_min_number");
     $alert_number = $(".input_alert_number");
     $date = $("#InputDate");
@@ -366,6 +373,7 @@ function FormDataClear() {
     $price.val("");
     $subItemNo.val("");
     $stock_number.val(0);
+    $packingPoint_number.val(1);
     $alert_number.val("");
     $min_number.val(1);
     $permanent.prop("checked", false);
@@ -644,10 +652,12 @@ function SpecAdd(result) {
         item_subItemNo = item.find(".input_subItemNo"),
         item_min = item.find(".input_min_number"),
         item_stock = item.find(".input_stock_number"),
+        item_packingPoint = item.find(".input_packingPoint_number"),
         item_alert = item.find(".input_alert_number"),
         item_collapse = item.find(".collapse"),
         item_btn_expand = item.find(".btn_expand"),
         item_btn_delete = item.find(".btn_remove");
+
     if (result != null) {
         item.find(".ser_no").val(result.ser_No);
         item.data("serno", result.ser_No);
@@ -698,8 +708,8 @@ function SpecAdd(result) {
             })
             item_select_input_1.removeAttr("disabled")
 
-            var temp_spec_list = spec_pick_list.find(item => item.id == item_select_1.val())
-            if (temp_spec_list.specs.length > 0) {
+            var temp_spec_list = spec_pick_list.find(item => item.id == item_select_1.val());
+            if (!!temp_spec_list && temp_spec_list.specs.length > 0) {
                 temp_spec_list.specs.forEach(item => {
                     item_select_list_1.append(`<option value="${item.title}" data-sid="${item.id}"></option>`)
                     if (item.id == result.fK_S1id) {
@@ -782,6 +792,7 @@ function SpecAdd(result) {
         if ($self.val() < 1 || $self.val() == "") $self.val(1);
     });
     item_stock.val(result != null ? (result.stock ?? 0) + result.orderStock : 0);
+    item_packingPoint.val(result != null ? result.packingPoint ?? 1 : 1);
     item_alert.val("");
     item_alert.val(result != null ? result.alert_Qty : "");
     item_collapse.attr("id", "CollapseDetail" + spec_num);
@@ -899,6 +910,7 @@ function SpecAdd(result) {
 
     $price = $(".input_price");
     $stock_number = $(".input_stock_number");
+    $packingPoint_number = $(".input_packingPoint_number");
     $min_number = $(".input_min_number");
     $alert_number = $(".input_alert_number");
 
@@ -1147,6 +1159,7 @@ function AddUp(success_text, error_text, target) {
         obj["Price"] = isNaN(obj["Price"]) ? 0 : Number(obj["Price"]);
         obj["FK_S1id"] = fk_sid[0];
         obj["FK_S2id"] = fk_sid[1];
+        obj["PackingPoint"] = $self.find(".input_packingPoint_number").val() ?? 1;
         obj["Stock"] = $self.find(".input_stock_number").val();
         obj["Alert_Qty"] = $self.find(".input_alert_number").val();
         obj["Min_Qty"] = $self.find(".input_min_number").val();

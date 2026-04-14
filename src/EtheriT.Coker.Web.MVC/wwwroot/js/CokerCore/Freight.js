@@ -37,6 +37,9 @@ const logisticsBox = {
     },
     Delete: function (id) {
         return co.request.delete("/api/Freight/LogisticsBoxDelete", { id: id });
+    },
+    Requires: function () {
+        return co.request.get("/api/Freight/LogisticsBoxRequires");
     }
 };
 Coker.extend({

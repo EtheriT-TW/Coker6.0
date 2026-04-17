@@ -1,0 +1,204 @@
+﻿/* ===== Price: hidden ===== */
+.price.notshow::before {
+    content: '';
+}
+
+/* ===== Price container ===== */
+.price-grid,
+.normal-price,
+.price {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    line-height: 1.35;
+    width: 100%;
+    min-width: 0;
+}
+
+    .price-grid:empty,
+    .normal-price:empty,
+    .price:empty {
+        display: none;
+    }
+
+    /* ===== Generic line reset ===== */
+    .price-grid > div,
+    .normal-price > div,
+    .price > div {
+        margin: 0;
+        padding: 0;
+        min-width: 0;
+        max-width: 100%;
+        white-space: normal;
+    }
+
+/* ===== Original / suggested price ===== */
+.origin-price {
+    color: #8a8f98;
+    font-size: 0.9rem;
+    line-height: 1.35;
+    font-weight: 400;
+    display: block;
+    margin: 0;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.08em;
+}
+
+    /* 建議售價 */
+    .origin-price.text-decoration-line-through {
+        color: #8a8f98;
+    }
+
+/* 會員模式中的中間比較價 */
+.role-origin-price {
+    color: #8a8f98;
+    font-size: 0.92rem;
+    line-height: 1.35;
+    font-weight: 400;
+    display: block;
+    margin: 0;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.08em;
+}
+
+/* ===== Main price ===== */
+.sale-price {
+    color: #d9534f;
+    font-weight: 700;
+    font-size: 1.08rem;
+    line-height: 1.4;
+    display: block;
+    margin: 0;
+}
+
+/* 當前角色價 */
+.role-current-price {
+    color: #d9534f;
+    font-weight: 700;
+    font-size: 1.08rem;
+    line-height: 1.4;
+    display: block;
+    margin: 0;
+}
+
+/* ===== Cash + Bonus combo ===== */
+.combo-price {
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    gap: 0.15rem;
+    max-width: 100%;
+}
+
+    .combo-price .cash-price,
+    .combo-price .plus-sign,
+    .combo-price .bonus-price {
+        display: inline-block;
+        white-space: nowrap;
+        color: inherit;
+        font-weight: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        margin: 0;
+        padding: 0;
+        vertical-align: baseline;
+    }
+
+    .combo-price .plus-sign {
+        letter-spacing: 0;
+    }
+
+/* ===== Vertical rhythm ===== */
+.origin-price + .origin-price,
+.origin-price + .role-origin-price,
+.role-origin-price + .role-origin-price {
+    margin-top: 0.02rem;
+}
+
+.origin-price + .sale-price,
+.origin-price + .role-current-price,
+.role-origin-price + .sale-price,
+.role-origin-price + .role-current-price {
+    margin-top: 0.08rem;
+}
+
+/* ===== Directory card compatibility ===== */
+.type_change_frame .price-grid,
+.type_change_frame .normal-price,
+.type_change_frame .price {
+    margin-top: 0.2rem;
+    margin-bottom: 0.2rem;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.type_change_frame .sale-price,
+.type_change_frame .origin-price,
+.type_change_frame .role-origin-price,
+.type_change_frame .role-current-price {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    letter-spacing: 0;
+}
+
+/* 避免卡片內預設粗體把比較價也變太重 */
+.type_change_frame .catalog .price-grid,
+.type_change_frame .catalog .normal-price,
+.type_change_frame .catalog .price {
+    font-weight: 400;
+}
+
+/* 主售價維持醒目 */
+.type_change_frame .catalog .sale-price,
+.type_change_frame .catalog .role-current-price {
+    font-weight: 700;
+}
+
+/* 比較價維持較淡 */
+.type_change_frame .catalog .origin-price,
+.type_change_frame .catalog .role-origin-price {
+    font-weight: 400;
+}
+
+/* 避免某些卡片結構把 span 撐壞 */
+.type_change_frame .price-grid span,
+.type_change_frame .normal-price span,
+.type_change_frame .price span {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* ===== Compact card mode ===== */
+.type_change_frame .catalog .sale-price,
+.type_change_frame .catalog .origin-price,
+.type_change_frame .catalog .role-origin-price,
+.type_change_frame .catalog .role-current-price {
+    max-width: 100%;
+}
+
+/* ===== Small screens fallback ===== */
+@media (max-width: 576px) {
+    .sale-price,
+    .role-current-price {
+        font-size: 1rem;
+        line-height: 1.35;
+    }
+
+    .origin-price,
+    .role-origin-price {
+        font-size: 0.84rem;
+        line-height: 1.3;
+    }
+
+    .combo-price {
+        gap: 0.1rem;
+    }
+
+    .type_change_frame .price-grid,
+    .type_change_frame .normal-price,
+    .type_change_frame .price {
+        margin-top: 0.15rem;
+        margin-bottom: 0.15rem;
+    }
+}

@@ -370,7 +370,7 @@
                 </div>
             }
             <div id="favorite-tab-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="favorite-tab" tabindex="2">
-                <div class="nodata h5 text-center fw-bold  d-none">@L.get("EmptyFavorites")</div>
+                <div class="nodata h5 text-center fw-bold d-none">@L.get("EmptyFavorites")</div>
 
                 <div class="btn_switchViewType d-flex justify-content-end m-3 mt-0 d-none">
                     <button class="align-items-center bg-transparent border-0 d-flex mx-1 focus" data-type="grid">
@@ -392,24 +392,30 @@
                                 </div>
                                 <figcaption class="w-100">
                                     <div>
-                                        <div data-key="itemNo" class=""></div>
-                                        <div data-key="title" class=""></div>
+                                        <div data-key="itemNo" class="itemNo"></div>
+                                        <div data-key="title" class="title"></div>
                                     </div>
-                                    <div data-key="description"></div>
+
+                                    <div data-key="description" class="description"></div>
+
+                                    <div class="tags"></div>
+                                    <div class="status-slot"></div>
+
                                     <div class="price_group">
-                                        <div data-key="oriPrice" class="text-decoration-line-through"></div>
-                                        <div data-key="price" class="fw-bold text-danger"></div>
+                                        <div class="price-grid"></div>
                                     </div>
                                 </figcaption>
                             </figure>
                         </a>
+
                         <div class="shareBlock mt-1 p-1 position-absolute rounded-circle w-auto">
                             <button class="btn_share bg-transparent border-0" title="@L.get("ShareProduct")">
                                 <i class="fa-solid fa-share text-white"></i>
                                 <span class="d-none">@L.get("Share")</span>
                             </button>
                         </div>
-                        <div class="favbtn position-absolute w-auto p-1 mt-2 rounded-circle">
+
+                        <div class="favbtn position-absolute w-auto p-1 mt-2 rounded-circle favorite-slot">
                             <button class="btn_favorite bg-transparent border-0" title="@L.get("RemoveFavorite")">
                                 <i class="font-rad fa-solid fa-heart"></i>
                             </button>
@@ -417,8 +423,7 @@
                     </div>
                 </template>
 
-                <div class="content row px-5 type_grid" data-storagename="Favorite">
-                </div>
+                <div class="content row px-5 type_grid" data-storagename="Favorite"></div>
 
                 <ul class="page_btn d-flex justify-content-center my-4 pagination d-none" data-init="false">
                     <li class="page-item btn_prev">

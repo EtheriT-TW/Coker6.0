@@ -967,100 +967,569 @@ namespace EtheriT.Coker.Application.Product
         {
             try
             {
-                var UUID = await tokenAppService.GetUUID();
-                var token = await db.Tokens.Where(e => e.UUID == UUID).FirstOrDefaultAsync();
-                long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
-                var priceOrder = await storeSetAppService.getValues(new Shared.Dto.StoreSet.StoreSetGetValueInput { 
+                var uuid = await tokenAppService.GetUUID();
+                var token = await db.Tokens
+                    .Where(e => e.UUID == uuid)
+                    .FirstOrDefaultAsync();
+
+                long websiteId = dto.SiteId == 0
+                    ? await loginUserData.GetWebsiteId()
+                    : (long)dto.SiteId;
+
+                var priceOrder = await storeSetAppService.getValues(new Shared.Dto.StoreSet.StoreSetGetValueInput
+                {
                     key = "priceOrder",
-                    SiteId = WebsiteID
+                    SiteId = websiteId
                 });
-                var order = priceOrder.Success && priceOrder.detailItem != null && priceOrder.detailItem.key == "priceOrder" && priceOrder.detailItem.value != null && priceOrder.detailItem.value.Contains("LtoH");
+
+                var orderLowToHigh =
+                    priceOrder.Success &&
+                    priceOrder.detailItem != null &&
+                    priceOrder.detailItem.key == "priceOrder" &&
+                    priceOrder.detailItem.value != null &&
+                    priceOrder.detailItem.value.Contains("LtoH");
+
                 string orgName = await loginUserData.GetWebsiteOrgName();
+
                 var output = new List<DirectoryReleInfoDto>();
-                var productData = new List<ProdGetDataDto>();
-                var result = await db.Prods.Where(e => dto.Ids.Contains(e.Id) && !e.IsDeleted && e.FK_WebsiteId == WebsiteID)
+
+                var result = await db.Prods
+                    .Where(e => dto.Ids.Contains(e.Id) && !e.IsDeleted && e.FK_WebsiteId == websiteId)
                     .OrderBy(e => e.Ser_No)
                     .ThenByDescending(e => e.Status == ProdStatusEnum.新品)
                     .ThenByDescending(e => e.Status != ProdStatusEnum.售完)
                     .ThenByDescending(e => e.Status != ProdStatusEnum.停產)
-                    .ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
+                    .ThenBy(e => e.ItemNo)
+                    .ThenBy(e => e.Title)
+                    .ThenByDescending(e => e.Id)
                     .ToListAsync();
-                if (result != null)
-                {
-                    productData.AddRange(mapper.Map<List<ProdGetDataDto>>(result));
-                }
-                else throw new Exception("查無商品資料");
 
-                if (productData != null)
+                if (result == null || !result.Any())
+                    throw new Exception("查無商品資料");
+
+                var productData = mapper.Map<List<ProdGetDataDto>>(result);
+
+                output = (from p in productData
+                          select new DirectoryReleInfoDto
+                          {
+                              Id = p.Id,
+                              FId = null,
+                              Title = p.Title,
+                              ItemNo = p.ItemNo,
+                              Link = $"/product/{p.Id}",
+                              type = DirectoryTypeEnum.商品,
+                              Description = p.Description,
+                              SerNo = p.Ser_No,
+                              Status = p.Status,
+                              StatusName = Enum.GetName(typeof(ProdStatusEnum), (ProdStatusEnum)p.Status) ?? string.Empty,
+                              tags = (from t in db.Tags.Where(e => e.FK_WebsiteId == websiteId)
+                                      join a in db.Tag_Associates.Where(e => !e.IsDeleted)
+                                                   .Where(e => e.FK_AId == p.Id)
+                                                   .Where(e => e.Type == TagAssociateTypeEnum.商品)
+                                          on t.Id equals a.FK_TId
+                                      group t by new { t.Id, t.Title } into g
+                                      select new TagGetSelectedDto
+                                      {
+                                          FK_TId = g.Key.Id,
+                                          Tag_Name = g.Key.Title
+                                      }).ToList(),
+                              MainImage = ((from f in db.FileBinds.Include(e => e.fileUpload)
+                                            .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
+                                            .Where(e => e.fileUpload != null
+                                                     && e.fileUpload.FK_WebsiteId == websiteId
+                                                     && e.fileUpload.ContentType.StartsWith("image"))
+                                            .OrderBy(e => e.SerNo)
+                                            .ThenBy(e => e.CreationTime)
+                                            select new DirectoryReleInfoDto
+                                            {
+                                                Link = (f.fileUpload != null
+                                                            ? (f.fileUpload.DownloadFileName ?? "/images/noImg.jpg")
+                                                            : "/images/noImg.jpg")
+                                                        .Replace("upload", $"upload/{orgName}")
+                                                        .Replace("//", "/")
+                                            }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
+                          }).ToList();
+
+                // 一次取得所有商品的目錄價格
+                var priceMap = await GetDirectoryPriceMapAsync(
+                    output.Select(e => e.Id).ToList(),
+                    websiteId,
+                    orderLowToHigh);
+
+                for (int i = 0; i < output.Count; i++)
                 {
-                    output = (from p in productData
-                              select new DirectoryReleInfoDto
-                              {
-                                  Id = p.Id,
-                                  FId = null,
-                                  Title = p.Title,
-                                  ItemNo = p.ItemNo,
-                                  Link = $"/product/{p.Id}",
-                                  type = DirectoryTypeEnum.商品,
-                                  Description = p.Description,
-                                  SerNo = p.Ser_No,
-                                  Status = p.Status,
-                                  StatusName = Enum.GetName(typeof(ProdStatusEnum), (ProdStatusEnum)p.Status),
-                                  tags = (from t in db.Tags.Where(e => e.FK_WebsiteId == WebsiteID)
-                                          join a in db.Tag_Associates.Where(e => !e.IsDeleted)
-                                                       .Where(e => e.FK_AId == p.Id)
-                                                       .Where(e => e.Type == TagAssociateTypeEnum.商品) on t.Id equals a.FK_TId
-                                          group t by new { t.Id, t.Title } into g
-                                          select new TagGetSelectedDto
-                                          {
-                                              FK_TId = g.Key.Id,
-                                              Tag_Name = g.Key.Title
-                                          }).ToList(),
-                                  MainImage = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                                  .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
-                                                  .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteID && e.fileUpload.ContentType.StartsWith("image"))
-                                                  .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
-                                                select new DirectoryReleInfoDto
-                                                {
-                                                    Link = (f.fileUpload != null ? (f.fileUpload.DownloadFileName ?? "/images/noImg.jpg") : "/images/noImg.jpg").Replace("upload", $"upload/{orgName}").Replace("//", "/")
-                                                }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
-                              }).ToList();
-                    for (int i = 0; i < output.Count; i++)
+                    var data = output[i];
+
+                    var favorite = await db.Favorites
+                        .Where(e => e.UUID == uuid
+                                 && e.FK_AssocId == data.Id
+                                 && e.Type == (int)FavoritesTypeEnum.商品)
+                        .FirstOrDefaultAsync();
+
+                    if (favorite != null)
+                        data.FId = favorite.Id;
+
+                    if (priceMap.TryGetValue(data.Id, out var priceInfo))
                     {
-                        var data = output[i];
-                        var favorites = await db.Favorites.Where(e => e.UUID == UUID & e.FK_AssocId == data.Id && e.Type == (int)FavoritesTypeEnum.商品).FirstOrDefaultAsync();
-                        if (favorites != null) data.FId = favorites.Id;
-
-                        var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).ToListAsync();
-                        var stockids = stocks.Where(e => e.FK_Pid == data.Id && !e.IsTimePrice).Select(e => e.Id).ToList();
-                        var prices = await GetPriceByStock(stockids);
-
-                        var temp_price = order ? prices.MinBy(e => e.Price): prices.MaxBy(e => e.Price);
-                        var theStock = temp_price == null ? stocks.FirstOrDefault() : stocks.Where(e => e.Id == temp_price.FK_PSId).FirstOrDefault();
-                        if (token?.UserID == null && temp_price?.FK_RId == 1)
-                        {
-                            var SuggestPrice = stocks.Where(e => e.Id == temp_price.FK_PSId).Select(e => e.Price).FirstOrDefault();
-                            if (SuggestPrice > 0) data.SuggestPrice = (SuggestPrice).ToString("N0");
-                        }
-                        data.IsTimePrice = theStock?.IsTimePrice ?? false;
-                        data.Price = temp_price?.Price?.ToString("N0");
-                        data.Bonus = temp_price != null && temp_price.Bonus > 0 ? temp_price.Bonus.ToString("N0") : null;
-                        data.OriPrice = temp_price?.OriPrice?.ToString("N0") ?? "0"; 
-                        
-                        if (data.IsTimePrice)
-                        {
-                            data.PriceDisplayText = L.get("MarketPrice");
-                            data.SuggestPrice = null;
-                            data.OriPrice = null;
-                        }
+                        mapper.Map(priceInfo, data);
                     }
+                    else
+                    {
+                        data.IsTimePrice = false;
+                        data.Price = null;
+                        data.Bonus = null;
+                        data.OriPrice = null;
+                        data.SuggestPrice = null;
+                        data.PriceDisplayText = null;
+                        data.BaseRoleName = null;
+                        data.CurrentRoleName = null;
+                    }
+
+                    // 時價時，沿用你原本的顯示邏輯
+                    if (data.IsTimePrice)
+                    {
+                        data.PriceDisplayText = L.get("MarketPrice");
+                        data.SuggestPrice = null;
+                        data.OriPrice = null;
+                        data.BaseRoleName = null;
+                        data.CurrentRoleName = null;
+                    }
+
+                    // 如果你仍想保留「訪客且非會員價時才顯示 SuggestPrice」的舊規則，
+                    // 就把這段改回條件判斷；目前這版以 GetDirectoryPriceMapAsync 的結果為準。
                 }
+
                 return output;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return null;
             }
+        }
+        private async Task<Dictionary<long, DirectoryPriceResultDto>> GetDirectoryPriceMapAsync(
+            List<long> productIds,
+            long websiteId,
+            bool orderLowToHigh
+        ){
+            var result = new Dictionary<long, DirectoryPriceResultDto>();
+
+            try
+            {
+                if (productIds == null || productIds.Count == 0)
+                    return result;
+
+                var uuid = await tokenAppService.GetUUID();
+                var roleId = await EnsureFrontUserRoleAsync(uuid, websiteId);
+
+                var frontRoles = await db.Roles
+                    .Where(e => e.Type == RoleTypeEnum.前台 && e.FK_WebsiteId == websiteId && !e.IsDeleted)
+                    .OrderBy(e => e.Ser_No)
+                    .Select(e => new
+                    {
+                        e.Id,
+                        e.Name
+                    })
+                    .ToListAsync();
+
+                var roleLevels = new List<(long Id, string Name)>{
+                    (1, "非會員")
+                };
+
+                roleLevels.AddRange(frontRoles.Select(e => (e.Id, e.Name ?? string.Empty)));
+
+                var roleIndex = roleLevels.FindIndex(e => e.Id == roleId);
+                if (roleIndex < 0)
+                    roleIndex = 0;
+
+                var visibleRoleIds = roleLevels
+                    .Take(roleIndex + 1)
+                    .Select(e => e.Id)
+                    .ToList();
+
+                var stocks = await db.Prod_Stocks
+                    .Where(e => productIds.Contains(e.FK_Pid) && !e.IsDeleted)
+                    .ToListAsync();
+
+                if (!stocks.Any())
+                    return result;
+
+                var stockIds = stocks.Select(e => e.Id).ToList();
+
+                var prices = await db.Prod_Prices
+                    .Where(e => stockIds.Contains(e.FK_PSId) && !e.IsDeleted)
+                    .ToListAsync();
+
+                var stocksByProduct = stocks
+                    .GroupBy(e => e.FK_Pid)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                var pricesByStock = prices
+                    .GroupBy(e => e.FK_PSId)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                foreach (var productId in productIds)
+                {
+                    if (!stocksByProduct.TryGetValue(productId, out var productStocks) || !productStocks.Any())
+                        continue;
+
+                    var candidates = new List<(
+                        Prod_Stock Stock,
+                        Prod_Price Price,
+                        string? CurrentRoleName,
+                        bool IsMemberPrice,
+                        int Rank,
+                        decimal SortValue,
+                        decimal? OriPrice,
+                        string? BaseRoleName
+                    )>();
+
+                    foreach (var stock in productStocks.Where(e => !e.IsTimePrice))
+                    {
+                        if (!pricesByStock.TryGetValue(stock.Id, out var stockPrices) || !stockPrices.Any())
+                            continue;
+
+                        var selected = SelectDirectoryDisplayPriceForStock(
+                            stockPrices,
+                            visibleRoleIds,
+                            roleLevels,
+                            roleIndex,
+                            orderLowToHigh);
+
+                        if (selected == null || selected.Price == null)
+                            continue;
+
+                        var basePriceInfo = GetBasePriceInfo(stockPrices, roleLevels);
+
+                        candidates.Add((
+                            Stock: stock,
+                            Price: selected.Price,
+                            CurrentRoleName: selected.CurrentRoleName,
+                            IsMemberPrice: selected.IsMemberPrice,
+                            Rank: selected.Rank,
+                            SortValue: selected.SortValue,
+                            OriPrice: basePriceInfo.Price,
+                            BaseRoleName: basePriceInfo.BaseRoleName
+                        ));
+                    }
+
+                    if (candidates.Any())
+                    {
+                        var chosen = orderLowToHigh
+                        ? candidates
+                            .OrderBy(e => e.SortValue)
+                            .ThenBy(e => e.Price.Bonus ?? 0)
+                            .ThenBy(e => e.Rank)
+                            .ThenBy(e => e.Stock.Ser_No)
+                            .ThenBy(e => e.Stock.Id)
+                            .First()
+                        : candidates
+                            .OrderByDescending(e => e.SortValue)
+                            .ThenBy(e => e.Price.Bonus ?? 0)
+                            .ThenBy(e => e.Rank)
+                            .ThenBy(e => e.Stock.Ser_No)
+                            .ThenBy(e => e.Stock.Id)
+                            .First();
+
+                        var priceValue = chosen.Price.Price ?? 0;
+                        var bonusValue = chosen.Price.Bonus ?? 0;
+
+                        result[productId] = new DirectoryPriceResultDto
+                        {
+                            ProductId = productId,
+                            Price = priceValue > 0 ? priceValue.ToString("N0") : null,
+                            Bonus = bonusValue > 0 ? bonusValue.ToString("N0") : null,
+                            OriPrice = chosen.OriPrice.HasValue && chosen.OriPrice.Value > 0
+                                ? chosen.OriPrice.Value.ToString("N0")
+                                : null,
+                            SuggestPrice = chosen.Stock.Price > 0
+                                ? chosen.Stock.Price.ToString("N0")
+                                : null,
+                            IsTimePrice = false,
+                            IsMemberPrice = chosen.IsMemberPrice,
+                            PriceDisplayText = null,
+                            BaseRoleName = chosen.BaseRoleName,
+                            CurrentRoleName = chosen.CurrentRoleName
+                        };
+
+                        continue;
+                    }
+
+                    // 沒有非時價時，若有時價 stock，回時價
+                    var timeStock = productStocks.FirstOrDefault(e => e.IsTimePrice);
+                    if (timeStock != null)
+                    {
+                        result[productId] = new DirectoryPriceResultDto
+                        {
+                            ProductId = productId,
+                            Price = null,
+                            Bonus = null,
+                            OriPrice = null,
+                            SuggestPrice = null,
+                            IsTimePrice = true,
+                            IsMemberPrice = false,
+                            PriceDisplayText = L.get("MarketPrice")
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("-------------錯誤訊息查看-------------");
+                Console.WriteLine($"Product=>GetDirectoryPriceMapAsync回傳資料：{ex.Message}");
+            }
+
+            return result;
+        }
+        private sealed class DirectoryDisplayPriceSelection
+        {
+            public Prod_Price? Price { get; set; }
+            public string? CurrentRoleName { get; set; }
+            public bool IsMemberPrice { get; set; }
+            public int Rank { get; set; }
+            public decimal SortValue { get; set; }
+            public bool IsBonusPrice { get; set; }
+        }
+        private DirectoryDisplayPriceSelection? SelectDirectoryDisplayPriceForStock(
+            List<Prod_Price> stockPrices,
+            List<long> visibleRoleIds,
+            List<(long Id, string Name)> roleLevels,
+            int roleIndex,
+            bool orderLowToHigh
+        ){
+            if (stockPrices == null || stockPrices.Count == 0)
+                return null;
+
+            var candidates = new List<DirectoryDisplayPriceSelection>();
+
+            // 目前身份可見的現金價
+            for (int index = roleIndex; index >= 0; index--)
+            {
+                var currentRole = roleLevels[index];
+
+                var cash = stockPrices
+                    .Where(e => (e.Bonus ?? 0) == 0 && e.FK_RId == currentRole.Id)
+                    .OrderBy(e => e.Price ?? 0)
+                    .ThenBy(e => e.Id)
+                    .FirstOrDefault();
+
+                if (cash != null)
+                {
+                    candidates.Add(new DirectoryDisplayPriceSelection
+                    {
+                        Price = cash,
+                        CurrentRoleName = currentRole.Name,
+                        IsMemberPrice = cash.FK_RId > 1,
+                        Rank = 0,
+                        SortValue = cash.Price ?? 0,
+                        IsBonusPrice = false
+                    });
+
+                    break;
+                }
+            }
+
+            // 目前身份可見的紅利價
+            var bonusMatched = stockPrices
+                .Where(e => (e.Bonus ?? 0) > 0 && visibleRoleIds.Contains(e.FK_RId))
+                .OrderBy(e => e.Price ?? 0)
+                .ThenBy(e => e.Bonus ?? 0)
+                .ThenBy(e => e.Id)
+                .FirstOrDefault();
+
+            if (bonusMatched != null)
+            {
+                var roleName = roleLevels
+                    .Where(e => e.Id == bonusMatched.FK_RId)
+                    .Select(e => e.Name)
+                    .FirstOrDefault();
+
+                candidates.Add(new DirectoryDisplayPriceSelection
+                {
+                    Price = bonusMatched,
+                    CurrentRoleName = roleName ?? "",
+                    IsMemberPrice = bonusMatched.FK_RId > 1,
+                    Rank = 1,
+                    SortValue = (bonusMatched.Price ?? 0),
+                    IsBonusPrice = true
+                });
+            }
+
+            if (!candidates.Any())
+            {
+                var fallbackCash = stockPrices
+                    .Where(e => (e.Bonus ?? 0) == 0)
+                    .OrderBy(e => (e.FK_RId == 1 || e.FK_RId == 0) ? 0 : 1)
+                    .ThenBy(e => e.FK_RId)
+                    .ThenBy(e => e.Price ?? 0)
+                    .ThenBy(e => e.Id)
+                    .FirstOrDefault();
+
+                if (fallbackCash != null)
+                {
+                    var roleName = roleLevels
+                        .Where(e => e.Id == fallbackCash.FK_RId)
+                        .Select(e => e.Name)
+                        .FirstOrDefault();
+
+                    return new DirectoryDisplayPriceSelection
+                    {
+                        Price = fallbackCash,
+                        CurrentRoleName = roleName ?? "",
+                        IsMemberPrice = fallbackCash.FK_RId > 1,
+                        Rank = 2,
+                        SortValue = fallbackCash.Price ?? 0,
+                        IsBonusPrice = false
+                    };
+                }
+
+                var fallbackBonus = stockPrices
+                    .Where(e => (e.Bonus ?? 0) > 0)
+                    .OrderBy(e => (e.FK_RId == 1 || e.FK_RId == 0) ? 0 : 1)
+                    .ThenBy(e => e.FK_RId)
+                    .ThenBy(e => e.Price ?? 0)
+                    .ThenBy(e => e.Bonus ?? 0)
+                    .ThenBy(e => e.Id)
+                    .FirstOrDefault();
+
+                if (fallbackBonus != null)
+                {
+                    var roleName = roleLevels
+                        .Where(e => e.Id == fallbackBonus.FK_RId)
+                        .Select(e => e.Name)
+                        .FirstOrDefault();
+
+                    return new DirectoryDisplayPriceSelection
+                    {
+                        Price = fallbackBonus,
+                        CurrentRoleName = roleName ?? "",
+                        IsMemberPrice = fallbackBonus.FK_RId > 1,
+                        Rank = 3,
+                        SortValue = fallbackBonus.Price ?? 0,
+                        IsBonusPrice = true
+                    };
+                }
+
+                return null;
+            }
+
+            return orderLowToHigh
+                ? candidates
+                    .OrderBy(e => e.SortValue)
+                    .ThenBy(e => e.Price?.Bonus ?? 0)
+                    .ThenBy(e => e.Rank)
+                    .First()
+                : candidates
+                    .OrderByDescending(e => e.SortValue)
+                    .ThenBy(e => e.Price?.Bonus ?? 0)
+                    .ThenBy(e => e.Rank)
+                    .First();
+        }
+        private (decimal? Price, string? BaseRoleName) GetBasePriceInfo(
+            List<Prod_Price> stockPrices,
+            List<(long Id, string Name)> roleLevels
+        )
+        {
+            if (stockPrices == null || stockPrices.Count == 0)
+                return (null, null);
+
+            // 1. 優先抓非會員現金價
+            var guestCash = stockPrices
+                .Where(e =>
+                    (e.FK_RId == 1 || e.FK_RId == 0) &&
+                    (e.Bonus ?? 0) == 0 &&
+                    (e.Price ?? 0) > 0)
+                .OrderBy(e => e.FK_RId == 1 ? 0 : 1)
+                .ThenBy(e => e.Price ?? 0)
+                .ThenBy(e => e.Id)
+                .FirstOrDefault();
+
+            if (guestCash != null)
+                return (guestCash.Price, "非會員");
+
+            // 2. 沒有非會員價，退第一級前台角色價
+            var firstFrontRole = roleLevels.Skip(1).FirstOrDefault();
+            if (firstFrontRole.Id == 0)
+                return (null, null);
+
+            var firstRoleCash = stockPrices
+                .Where(e =>
+                    e.FK_RId == firstFrontRole.Id &&
+                    (e.Bonus ?? 0) == 0 &&
+                    (e.Price ?? 0) > 0)
+                .OrderBy(e => e.Price ?? 0)
+                .ThenBy(e => e.Id)
+                .FirstOrDefault();
+
+            if (firstRoleCash != null)
+                return (firstRoleCash.Price, firstFrontRole.Name);
+
+            return (null, null);
+        }
+        private async Task<long> EnsureFrontUserRoleAsync(Guid uuid, long websiteId)
+        {
+            // 非會員預設角色
+            const long guestRoleId = 1;
+
+            var token = await db.Tokens
+                .Where(e => e.UUID == uuid)
+                .FirstOrDefaultAsync();
+
+            // 訪客
+            if (token?.UserID == null)
+                return guestRoleId;
+
+            var mappedRoleId = await db.MappingUserAndRoles
+                .Where(e => e.UUID == uuid)
+                .Select(e => (long?)e.RoleId)
+                .FirstOrDefaultAsync();
+
+            // 已有正常角色
+            if (mappedRoleId.HasValue && mappedRoleId.Value > 1)
+                return mappedRoleId.Value;
+
+            // 找排序最低的前台角色
+            var fallbackRoleId = await db.Roles
+                .Where(e => e.Type == RoleTypeEnum.前台 && e.FK_WebsiteId == websiteId && !e.IsDeleted)
+                .OrderBy(e => e.Ser_No)
+                .Select(e => (long?)e.Id)
+                .FirstOrDefaultAsync();
+
+            if (!fallbackRoleId.HasValue)
+                return guestRoleId;
+
+            // 若本來完全沒資料，新增
+            if (!mappedRoleId.HasValue)
+            {
+                db.MappingUserAndRoles.Add(new MappingUserAndRole
+                {
+                    UUID = uuid,
+                    RoleId = fallbackRoleId.Value
+                });
+            }
+            else
+            {
+                // 若有資料但角色值異常(例如 0)，更新成最低前台角色
+                var mapping = await db.MappingUserAndRoles
+                    .Where(e => e.UUID == uuid)
+                    .FirstOrDefaultAsync();
+
+                if (mapping != null)
+                {
+                    mapping.RoleId = fallbackRoleId.Value;
+                }
+                else
+                {
+                    db.MappingUserAndRoles.Add(new MappingUserAndRole
+                    {
+                        UUID = uuid,
+                        RoleId = fallbackRoleId.Value
+                    });
+                }
+            }
+
+            await db.SaveChangesAsync();
+
+            return fallbackRoleId.Value;
         }
         /* Delete */
         public async Task<ResponseMessageDto> ProdDelete(long Id)

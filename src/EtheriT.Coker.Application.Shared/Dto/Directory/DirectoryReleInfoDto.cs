@@ -31,6 +31,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public string? OriPrice { get; set; }
         public string? Bonus { get; set; }
         public string? SuggestPrice { get; set; }
+        public string? BaseRoleName { get; set; }   // "非會員" 或 第一級角色名稱
+        public string? CurrentRoleName { get; set; }      // 當前角色名稱
+        public bool IsMemberPrice { get; set; }
         public bool IsTimePrice { get; set; }
         public string? ItemNo { get; set; }
         public int? ClickTimes { get; set; }

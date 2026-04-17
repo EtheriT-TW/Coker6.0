@@ -83,71 +83,44 @@ namespace EtheriT.Coker.Application.Favorites
         {
             var output = new FavoritesGetDisplayAllDto();
             Guid UUID = await tokenAppService.GetUUID();
-            var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
 
             try
             {
-                var favorites = await db.Favorites.Where(e => e.UUID == UUID).ToListAsync();
-                if (favorites != null)
+                var favoriteProductIds = await db.Favorites
+                    .Where(e => e.UUID == UUID && e.Type == (int)FavoritesTypeEnum.商品)
+                    .OrderByDescending(e => e.Id)
+                    .Select(e => e.FK_AssocId)
+                    .ToListAsync();
+
+                output.Page_Total = (int)Math.Ceiling(favoriteProductIds.Count / 8.0);
+
+                var pageProductIds = favoriteProductIds
+                    .Skip((page - 1) * 8)
+                    .Take(8)
+                    .ToList();
+
+                if (pageProductIds.Count == 0)
                 {
-                    var favorites_data = (from favorite in favorites
-                                          join prod in db.Prods on favorite.FK_AssocId equals prod.Id
-                                          where favorite.UUID == UUID && favorite.Type == (int)FavoritesTypeEnum.商品
-                                          orderby favorite.Id descending
-                                          select new FavoritesGetDisplayOneDto()
-                                          {
-                                              FId = favorite.Id,
-                                              PId = prod.Id,
-                                              Title = prod.Title,
-                                              Introduction = prod.Introduction,
-                                              Description = prod.Description,
-                                              Link = "/product/" + prod.Id,
-                                              Image = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                                              .Where(e => e.Sid == prod.Id && e.type == (int)FileBindTypeEnum.產品)
-                                                              .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId && e.fileUpload.ContentType.StartsWith("image"))
-                                                              .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
-                                                        select new DirectoryReleInfoDto
-                                                        {
-                                                            Link = (f.fileUpload != null ? (f.fileUpload.DownloadFileName ?? "/images/noImg.jpg") : "/images/noImg.jpg")
-                                                        }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
-                                              Price = "",
-                                              OriPrice = "",
-                                              ItemNo = prod.ItemNo,
-                                          }).ToList();
-                    output.Page_Total = (int)Math.Ceiling(favorites_data.Count / 8.0);
-                    favorites_data = favorites_data.Skip((page - 1) * 8).Take(8).ToList();
-
-                    var sotreset = await (from sd in db.StoreSetDetail
-                                          join ss in db.StoreSet on sd.FK_StoreSetId equals ss.Id
-                                          where sd.FK_WebsiteId == WebsiteId
-                                          where ss.key == "storeBuyState"
-                                          select sd.value).FirstOrDefaultAsync();
-
-                    var showprice = !(sotreset == "noPayNoShow");
-
-                    if (showprice)
-                    {
-                        for (var i = 0; i < favorites_data.Count; i++)
-                        {
-                            var data = favorites_data[i];
-                            //var favorites = await db.Favorites.Where(e => e.UUID == UUID & e.FK_AssocId == data.Id && e.Type == (int)FavoritesTypeEnum.商品).FirstOrDefaultAsync();
-                            //if (favorites != null) data.FId = favorites.Id;
-
-                            var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == data.PId).ToListAsync();
-                            var stockids = stocks.Select(e => e.Id).ToList();
-                            var prices = await productAppService.GetPriceByStock(stockids);
-
-                            var temp_price = prices.Where(e => e.Price == (prices.Max(e => e.Price))).FirstOrDefault();
-                            data.OriPrice = temp_price?.OriPrice.HasValue == true ? "$" + temp_price.OriPrice.Value.ToString("N0") : "";
-                            data.Price = temp_price?.Price.HasValue == true ? "$" + temp_price.Price.Value.ToString("N0") : "$0";
-                            if (data.OriPrice == data.Price) data.OriPrice = "";
-                            if (data.OriPrice != "") data.Price = $"會員價 {data.Price}";
-                        }
-                    }
-
-                    output.Data = favorites_data;
+                    output.Data = new List<DirectoryReleInfoDto>();
                     output.Success = true;
+                    return output;
                 }
+
+                var releInfos = await productAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
+                {
+                    Ids = pageProductIds,
+                    SiteId = websiteId
+                }) ?? new List<DirectoryReleInfoDto>();
+
+                var releMap = releInfos.ToDictionary(x => x.Id, x => x);
+
+                output.Data = pageProductIds
+                    .Where(id => releMap.ContainsKey(id))
+                    .Select(id => releMap[id])
+                    .ToList();
+
+                output.Success = true;
             }
             catch (Exception ex)
             {

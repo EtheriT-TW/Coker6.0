@@ -17,6 +17,7 @@ namespace EtheriT.Coker.Core.Models
         public int? Dis_Freight { get; set; }
         public bool Set_Default { get; set; }
         public int? FreightAmt2 { get; set; }
+        public bool SupportCashOnDelivery { get; set; } = false;
         public Website? Website { get; set; }
         public ICollection<MappingLogisticsSettingAndProd> MappingLogisticsSettingAndProds { get; set; }
         public ICollection<Order_Header> Order_Headers { get; set; }

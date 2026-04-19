@@ -235,7 +235,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 });
                             }
 
-                            var db_logistics= await db.LogisticsSettings.Where(e => e.FK_WebsiteId == websiteId && LogisticsType.Contains(e.LogisticsType) && e.FreightStatusType != FreightStatusTypeEnum.停用).ToListAsync();
+                            var db_logistics = await db.LogisticsSettings.Where(e => e.FK_WebsiteId == websiteId && LogisticsType.Contains(e.LogisticsType) && e.FreightStatusType != FreightStatusTypeEnum.停用).ToListAsync();
                             foreach (var item in db_logistics)
                             {
                                 item.FreightStatusType = FreightStatusTypeEnum.停用;
@@ -405,6 +405,9 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
+                var token = await tokenAppService.CheckToken(null);
+                if (token == null) throw new Exception("取得Token發生錯誤");
+                dto.Token = token.Token;
                 response = await CallFrontApi("HandleThirdPartyPayment", dto);
             }
             catch (Exception ex)
@@ -418,6 +421,13 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
+                //var websiteId = await loginUserData.GetWebsiteId();
+                //var token = await tokenAppService.CheckToken(null);
+                //if (token == null) throw new Exception("取得Token發生錯誤");
+                //else if (token.Success == false) throw new Exception(token.Error);
+                //if (token == null) await loginUserData.SetLogs(0, websiteId, $"ECPayLogisticsExpressCreate", "取得Token發生錯誤");
+                //else if (token.Success == false) await loginUserData.SetLogs(0, websiteId, $"ECPayLogisticsExpressCreate", token.Error ?? "取得Token發生錯誤");
+                //dto.Token = token.Token;
                 response = await CallFrontApi("HandleThirdPartyLogistics", dto);
             }
             catch (Exception ex)
@@ -431,19 +441,12 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                var token = await tokenAppService.CheckToken(null);
-                if (token == null) throw new Exception("取得Token發生錯誤");
-
                 var websiteId = await loginUserData.GetWebsiteId();
-
                 var website = await db.Websites.Where(e => e.Id == websiteId).FirstOrDefaultAsync();
                 if (website == null) throw new Exception("取得網站內容發生錯誤");
 
-                var dtoType = dto.GetType();
-                var tokenProp = dtoType.GetProperty("Token");
-                tokenProp?.SetValue(dto, token.Token);
-
                 var frontApiUrl = _env.IsProduction() ? $"{website.DefaultUrl}/api/ThirdParty/{apiPath}" : $"https://lcb.develop.coker.ezsale.tw/api/ThirdParty/{apiPath}";
+                //var frontApiUrl = $"https://localhost:7193/api/ThirdParty/{apiPath}";
                 var jsonContent = new StringContent(JsonConvert.SerializeObject(dto), Encoding.UTF8, "application/json");
                 var postresponse = await ThirdPartyClient_Front.PostAsync(frontApiUrl, jsonContent);
 
@@ -465,7 +468,6 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 response.Message = ex.Message;
             }
-
             return response;
         }
     }

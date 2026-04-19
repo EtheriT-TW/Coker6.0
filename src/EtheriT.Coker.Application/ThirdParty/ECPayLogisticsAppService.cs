@@ -406,8 +406,10 @@ namespace EtheriT.Coker.Application.ThirdParty
                 ThirdPartyData.MerchantID = thirdPartyDict.GetValueOrDefault("MerchantID") ?? throw new Exception("商家未確實設置綠界物流資料");
                 ThirdPartyData.HashKey = thirdPartyDict.GetValueOrDefault("HashKey") ?? throw new Exception("商家未確實設置綠界物流資料");
                 ThirdPartyData.HashIV = thirdPartyDict.GetValueOrDefault("HashIV") ?? throw new Exception("商家未確實設置綠界物流資料");
-                var IsCollection = thirdPartyDict.GetValueOrDefault("IsCollection") ?? throw new Exception("商家未確實設置綠界物流資料");
-                ThirdPartyData.IsCollection = IsCollection == "true" ? "Y" : "N";
+                //var IsCollection = thirdPartyDict.GetValueOrDefault("IsCollection") ?? throw new Exception("商家未確實設置綠界物流資料");
+                //ThirdPartyData.IsCollection = IsCollection == "true" ? "Y" : "N";
+                ThirdPartyData.IsCollection = "Y";
+
             }
             catch (Exception ex)
             {

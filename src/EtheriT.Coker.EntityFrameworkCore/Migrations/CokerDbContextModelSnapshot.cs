@@ -6098,6 +6098,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_TPid = 7L,
                             InputType = 2,
                             IsDeleted = false,
+                            PromptText = "如需啟用請記得至綠界後台測標",
                             Title = "是否啟用大宗寄倉"
                         },
                         new
@@ -6119,7 +6120,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 1L,
                             FK_TPid = 7L,
                             InputType = 2,
-                            IsDeleted = false,
+                            IsDeleted = true,
                             Title = "是否代收貨款"
                         },
                         new

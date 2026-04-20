@@ -15,7 +15,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                 keyColumn: "Id",
                 keyValue: 22L,
                 column: "PromptText",
-                value: "如需啟用請記得至綠界後台進行測標");
+                value: "如需啟用請記得至綠界後台測標");
 
             migrationBuilder.UpdateData(
                 table: "ThirdPartyKeypairs",

@@ -201,14 +201,14 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return response;
         }
         [HttpGet]
-        public async Task<IActionResult> ECPayLogisticsGetMap(string SCIds, string LogisticsSubType)
+        public async Task<IActionResult> ECPayLogisticsGetMap(string SCIds, string LogisticsSubType, string IsCollection)
         {
             try
             {
                 var baseUrl = configuration["ThirdParty:ECPayLogistics:LogisticsUrl"];
                 var actionUrl = $"{baseUrl}/Express/map";
 
-                ECPayLogisticsMapRequestDto RequestBody = await ecPayLogisticsAppService.ECPayLogisticsGetMapRequestBody(SCIds, LogisticsSubType);
+                ECPayLogisticsMapRequestDto RequestBody = await ecPayLogisticsAppService.ECPayLogisticsGetMapRequestBody(SCIds, LogisticsSubType, IsCollection);
 
                 return Content(GenerateAutoPostForm(actionUrl, RequestBody), "text/html");
             }

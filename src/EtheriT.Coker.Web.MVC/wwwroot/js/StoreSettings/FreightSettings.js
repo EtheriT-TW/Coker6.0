@@ -19,6 +19,8 @@
         $title: null,
         $preserve: null,
         $shipping: null,
+        $isCashOnDelivery: null,
+        $isCashOnDelivery_parent: null,
         $freightStatusType: null,
         $freight: null,
         $lowCon: null,
@@ -47,6 +49,8 @@
             this.$title = $("#InputName");
             this.$preserve = $("#SelectPreserve");
             this.$shipping = $("#SelectShipping");
+            this.$isCashOnDelivery = $("#SupportCashOnDeliveryCheckBox");
+            this.$isCashOnDelivery_parent = this.$isCashOnDelivery.closest(".form-check");
             this.$freightStatusType = $("#SelectStatus");
             this.$freight = $("#InputFreight");
             this.$lowCon = $("#InputLowCon");
@@ -139,6 +143,13 @@
             this.$freightType.off("change.freight").on("change.freight", function () {
                 self.applyFreightTypeUI();
             });
+
+            this.$shipping.on("change", function () {
+                var $this = $(this)
+                var value = $this.val();
+                if (value >= 8 && value <= 15) self.$isCashOnDelivery_parent.removeClass("d-none");
+                else self.$isCashOnDelivery_parent.addClass("d-none");
+            })
         },
 
         loadEnums: function () {
@@ -182,6 +193,10 @@
 
             this.applyFreightTypeUI();
             this.applyFreightStatusUI();
+
+            var value = this.$shipping.val();
+            if (value >= 8 && value <= 15) this.$isCashOnDelivery_parent.removeClass("d-none");
+            else this.$isCashOnDelivery_parent.addClass("d-none");
         },
 
         onEnterEdit: function (id) {
@@ -210,6 +225,7 @@
 
             this.$setDefault.prop("checked", false);
             this.$inputProd.attr("disabled", "disabled");
+            this.$isCashOnDelivery_parent.addClass("d-none");
 
             if (window.ProdListModalApi) {
                 window.ProdListModalApi.setActiveTarget(this.prodInputSelector);
@@ -247,6 +263,9 @@
                 self.applyFreightTypeUI();
                 self.applyFreightStatusUI();
             });
+
+            if (result.logisticsType >= 8 && result.logisticsType <= 15) self.$isCashOnDelivery_parent.removeClass("d-none");
+            else self.$isCashOnDelivery_parent.addClass("d-none");
         },
 
         getCurrentFreightType: function () {
@@ -474,6 +493,7 @@
             payload.Id = this.keyId;
             payload.ProdIds = this.getFreightProdIds();
             payload.LogisticsBoxFees = this.getFreightLogisticsBoxFeesData();
+            this.$isCashOnDelivery_parent.hasClass("d-none") ? payload.SupportCashOnDelivery = false : payload.SupportCashOnDelivery = !!payload.SupportCashOnDelivery;
 
             if (freightType === 3) {
                 payload.Freight = 0;

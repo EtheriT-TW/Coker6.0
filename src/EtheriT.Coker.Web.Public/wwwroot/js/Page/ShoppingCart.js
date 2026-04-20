@@ -7,7 +7,7 @@ var shipping = null, payment = null;
 
 var ShippingForms, PaymentForms, OrdererForms, RecipientForms, InvoiceForms, InvoicePersonalTypeForms;
 var OrdererOpen = false, RecipientOpen = false, InvoiceOpen = false;
-var shipMethodsChosen = false, payMethodsChosen = false, OrdererFilled = true, RecipientFilled = true, InvoiceFilled = true;
+var shipMethodsChosen = false, payMethodsChosen = false, OrdererFilled = true, RecipientFilled = true, InvoiceFilled = true, SupportCashOnDelivery;
 var $Orderer_TWzipcode, $Recipient_TWzipcode, $Invoice_TWzipcode;
 var $orderer_name, $orderer_sex, $orderer_email, $orderer_cellphone, $orderer_telphone_area, $orderer_telphone, $orderer_telphone_ext, $orderer_address_city, $orderer_address_town, $orderer_address;
 var $recipient_name, $recipient_sex, $recipient_email, $recipient_cellphone, $recipient_telphone_area, $recipient_telphone, $recipient_telphone_ext, $recipient_address_city, $recipient_address_town, $recipient_address, $remark;
@@ -31,13 +31,17 @@ function PageReady() {
     $('#RadioPayment .payment_display').on("click", function () {
         var $this_radio = $(this);
         var $parentFormCheck = $this_radio.closest('.form-check');
-        var $prevPayment = $parentFormCheck.prevAll('.form-check').first().find('.payment_display');
-        var $nextPayment = $parentFormCheck.nextAll('.form-check').first().find('.payment_display');
+        var $prevPayment = $parentFormCheck.prevAll('.form-check:not(.d-none)').first().find('.payment_display');
+        var $nextPayment = $parentFormCheck.nextAll('.form-check:not(.d-none)').first().find('.payment_display');
         $('#RadioPayment .payment_display').removeClass("checked first last");
         $(`#${$this_radio.data("radioid")}`).prop("checked", true);
         $this_radio.addClass("checked");
-        $('#RadioPayment .payment_display').first().addClass("first");
-        $('#RadioPayment .payment_display').last().addClass("last");
+        $('#RadioPayment .form-check:not(.d-none) .payment_display')
+            .first()
+            .addClass("first");
+        $('#RadioPayment .form-check:not(.d-none) .payment_display')
+            .last()
+            .addClass("last");
         $prevPayment.addClass('last');
         $nextPayment.addClass('first');
     });
@@ -568,7 +572,6 @@ function PageReady() {
         };
 
         sessionStorage.setItem("orderForm", JSON.stringify(dataToSave));
-
         var $btn = $(this);
         var $radio = $btn.prev('input[name="RadioShipping"]');
         $radio.prop('checked', true);
@@ -577,8 +580,8 @@ function PageReady() {
         var scids = JSON.stringify(shopping_cart_data.map(c => c.Id));
 
         $form.find('input[name="LogisticsSubType"]').val($btn.data('subtype'));
-
         $form.find('input[name="SCIds"]').val(scids);
+        $form.find('input[name="IsCollection"]').val($btn.data("support-cash-on-delivery") == "True" ? "Y" : "N");
 
         $form.submit();
     })
@@ -1366,7 +1369,7 @@ function TotalCount() {
             $earnText.text("");
         }
     }
-    
+
     $(".shipping_fee").text(freight.toLocaleString());
 
     // 運費提醒
@@ -1461,6 +1464,50 @@ function RadioShipping() {
     TotalCount();
 
     if (HasECPay) ECPaymentChange();
+
+    var this_SupportCashOnDelivery = $this.data("support-cash-on-delivery") == "True";
+    if (SupportCashOnDelivery != this_SupportCashOnDelivery) {
+        UpdatePaymentVisibility({
+            isCOD: this_SupportCashOnDelivery,
+            isECPayMode: ECPayMonitor
+        })
+        SupportCashOnDelivery = this_SupportCashOnDelivery;
+    }
+}
+// Toggle Payment By SupportCashOnDelivery && ECPay
+function UpdatePaymentVisibility({ isCOD, isECPayMode }) {
+    $("#RadioPayment .form-check").each(function () {
+        var $self = $(this);
+        var $input = $self.find("input");
+
+        var val = Number($input.val());
+        var isECPay = $input.attr("id") === "radio_payment_ECPay";
+
+        var shouldShow = true;
+
+        if (isCOD) shouldShow = (val === 28);
+        else if (val === 28) shouldShow = false;
+
+        if (isECPayMode && isECPay) shouldShow = false;
+
+        $self.toggleClass("d-none", !shouldShow);
+    });
+
+    var $items = $("#RadioPayment .form-check:not(.d-none)");
+    var $first = $items.first();
+
+    if ($first.length > 0) {
+        $("#RadioPayment input").prop("checked", false);
+        $("#RadioPayment .payment_display").removeClass("checked");
+
+        var $input = $first.find("input");
+        var $display = $first.find(".payment_display");
+
+        $input.prop("checked", true);
+        $display.addClass("checked");
+        $input.trigger("change");
+        $input.closest('.form-check').nextAll('.form-check:not(.d-none)').first().find('.payment_display').addClass("first");
+    }
 }
 function RadioPayment() {
     var $pay_text = $(".payment_method");
@@ -1530,10 +1577,9 @@ function ECPaymentChange() {
         $("#radio_payment_ECPay").prop("checked", true);
         $("input[name='RadioPayment']").prop("disabled", true);
 
-        $("#RadioPayment div.form-check").each(function () {
-            var $self = $(this);
-            if ($self.children("input").attr("id") == "radio_payment_ECPay") $self.addClass("d-none");
-            else $self.removeClass("d-none");
+        UpdatePaymentVisibility({
+            isCOD: SupportCashOnDelivery,
+            isECPayMode: true
         });
 
         var timeout = 0;

@@ -269,7 +269,7 @@ namespace EtheriT.Coker.Application.Token
                         }
                     }
                 }
-                else throw new Exception();
+                else throw new Exception("Token取得錯誤");
             }
             catch (Exception e)
             {

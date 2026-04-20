@@ -203,56 +203,81 @@ function PageReady() {
     });
 
     $btn_createLogistics.on("click", function () {
-        if (!ECPayLogisticsTypeStr) co.sweet.error("錯誤", "取得物流方式發生錯誤", null, false);
-        else {
-            const form = document.createElement("form");
-            form.method = "post";
-            form.action = "/api/ThirdParty/HandleThirdPartyLogistics";
-
-            const data = {
-                Action: "CreateLogistics",
-                OrderId: keyId,
-                ExtraData: "CVS",
-            };
-
-            for (const key in data) {
-                const input = document.createElement("input");
-                input.type = "hidden";
-                input.name = key;
-                input.value = data[key];
-                form.appendChild(input);
-            }
-
-            document.body.appendChild(form);
-            form.submit();
+        co.sweet.loading();
+        if (!ECPayLogisticsTypeStr) {
+            co.sweet.error("錯誤", "取得物流方式發生錯誤", null, false);
+            return;
         }
+
+        var $iframe = $("#ecpayFrame");
+        if ($iframe.length == 0) {
+            $iframe = $("<iframe>", {
+                id: "ecpayFrame",
+                name: "ecpayFrame"
+            }).hide();
+            $("body").append($iframe);
+        }
+        $iframe.show();
+
+        const $form = $("<form>", {
+            method: "post",
+            action: "/api/ThirdParty/HandleThirdPartyLogistics",
+            target: "ecpayFrame"
+        });
+
+        const data = {
+            Action: "CreateLogistics",
+            OrderId: keyId,
+            ExtraData: "CVS",
+        };
+
+        $.each(data, function (key, value) {
+            $("<input>", {
+                type: "hidden",
+                name: key,
+                value: value
+            }).appendTo($form);
+        });
+
+        $("body").append($form);
+        $form.submit();
+        $form.remove();
+
+        setTimeout(function () {
+            co.sweet.success("物流訂單請求已送出，將刷新頁面");
+            location.reload();
+        }, 5000);
     });
 
     $btn_printShippingLabel.on("click", function () {
-        if (!ECPayLogisticsSubTypeStr) co.sweet.error("錯誤", "取得物流子類型發生錯誤", null, false);
-        else {
-            const form = document.createElement("form");
-            form.method = "post";
-            form.target = "_blank";
-            form.action = "/api/ThirdParty/HandleThirdPartyLogistics";
-
-            const data = {
-                Action: "PrintOrderInfo",
-                OrderId: keyId,
-                ExtraData: "C2C711",
-            };
-
-            for (const key in data) {
-                const input = document.createElement("input");
-                input.type = "hidden";
-                input.name = key;
-                input.value = data[key];
-                form.appendChild(input);
-            }
-
-            document.body.appendChild(form);
-            form.submit();
+        if (!ECPayLogisticsSubTypeStr) {
+            co.sweet.error("錯誤", "取得物流子類型發生錯誤", null, false);
+            return;
         }
+
+        const $form = $("<form>", {
+            method: "post",
+            action: "/api/ThirdParty/HandleThirdPartyLogistics",
+            target: "_blank"
+        });
+
+        const data = {
+            Action: "PrintOrderInfo",
+            OrderId: keyId,
+            ExtraData: ECPayLogisticsSubTypeStr,
+        };
+
+        $.each(data, function (key, value) {
+            $("<input>", {
+                type: "hidden",
+                name: key,
+                value: value
+            }).appendTo($form);
+        });
+
+        $("body").append($form);
+        $form.submit();
+        $form.remove();
     });
 
     if ("onhashchange" in window) {
@@ -439,7 +464,7 @@ function HeaderDataInsert(data) {
     }
 
     if (data.allPayLogisticsID) $btn_printShippingLabel.removeClass("d-none");
-    if (data.logisticsType >= 8 && data.logisticsType <= 17) $btn_createLogistics.removeClass("d-none");
+    else if (data.logisticsType >= 8 && data.logisticsType <= 17) $btn_createLogistics.removeClass("d-none");
     ECPayLogisticsTypeStr = data.logisticsTypeStr;
     ECPayLogisticsSubTypeStr = data.logisticsSubTypeStr;
 }

@@ -1,12 +1,12 @@
 ﻿/* ===== Price: hidden ===== */
-.price.notshow::before {
+.catalog_frame .price.notshow::before {
     content: '';
 }
 
 /* ===== Price container ===== */
-.price-grid,
-.normal-price,
-.price {
+.catalog_frame .price-grid,
+.catalog_frame .normal-price,
+.catalog_frame .price {
     display: flex;
     flex-direction: column;
     gap: 0;
@@ -15,16 +15,16 @@
     min-width: 0;
 }
 
-    .price-grid:empty,
-    .normal-price:empty,
-    .price:empty {
+    .catalog_frame .price-grid:empty,
+    .catalog_frame .normal-price:empty,
+    .catalog_frame .price:empty {
         display: none;
     }
 
     /* ===== Generic line reset ===== */
-    .price-grid > div,
-    .normal-price > div,
-    .price > div {
+    .catalog_frame .price-grid > div,
+    .catalog_frame .normal-price > div,
+    .catalog_frame .price > div {
         margin: 0;
         padding: 0;
         min-width: 0;
@@ -33,7 +33,7 @@
     }
 
 /* ===== Original / suggested price ===== */
-.origin-price {
+.catalog_frame .origin-price {
     color: #8a8f98;
     font-size: 0.9rem;
     line-height: 1.35;
@@ -45,12 +45,12 @@
 }
 
     /* 建議售價 */
-    .origin-price.text-decoration-line-through {
+    .catalog_frame .origin-price.text-decoration-line-through {
         color: #8a8f98;
     }
 
 /* 會員模式中的中間比較價 */
-.role-origin-price {
+.catalog_frame .role-origin-price {
     color: #8a8f98;
     font-size: 0.92rem;
     line-height: 1.35;
@@ -62,7 +62,7 @@
 }
 
 /* ===== Main price ===== */
-.sale-price {
+.catalog_frame .sale-price {
     color: #d9534f;
     font-weight: 700;
     font-size: 1.08rem;

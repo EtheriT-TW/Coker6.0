@@ -102,6 +102,8 @@
         const totalBonus = @Json.Serialize(ViewBag.UserBonus ?? 0);
         window.SiteId = SiteId;
         window.CI360 = { notInitOnLoad: true }
+        window.totalBonus = totalBonus;
+        window.orderPrice = orderPrice;
         window.onload = function () {
             ready();
         }

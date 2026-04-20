@@ -328,6 +328,8 @@ builder.Services.AddScoped<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddScoped<IMemberAppService, MemberAppService>();
 builder.Services.AddScoped<IFreightAppService, FreightAppService>();
 builder.Services.AddScoped<IProductAppService, ProductAppService>();
+builder.Services.AddScoped<IFrontRoleContextService, FrontRoleContextService>();
+builder.Services.AddScoped<IProductDisplayPriceService, ProductDisplayPriceService>();
 builder.Services.AddScoped<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddScoped<ITechnicalCertificateAppService, TechnicalCertificateAppService>();
 builder.Services.AddScoped<IWebMenuApplication, WebMenuApplication>();

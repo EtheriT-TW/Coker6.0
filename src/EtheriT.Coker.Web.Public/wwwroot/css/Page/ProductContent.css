@@ -1,5 +1,4 @@
-﻿
-input::-webkit-outer-spin-button,
+﻿input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     -webkit-appearance: none;
 }
@@ -8,12 +7,8 @@ input[type="number"] {
     -moz-appearance: textfield;
 }
 
-
-input[type="number"] {
-    -moz-appearance: textfield;
-}
-
-.container-fluid > .btn_swiper_next_product, .btn_swiper_prev_product {
+.container-fluid > .btn_swiper_next_product,
+.btn_swiper_prev_product {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -29,10 +24,7 @@ i.fa-chevron-right {
     line-height: 1;
 }
 
-.describe > ul {
-    padding-left: 0rem;
-}
-
+.describe > ul,
 .specification > ul {
     padding-left: 0rem;
 }
@@ -108,17 +100,17 @@ i.fa-chevron-right {
     }
 
     #Pro_Image.loading::after {
-        content: "\f110"; /* Font Awesome 的 fa-spinner 圖示 */
+        content: "\f110";
         font-family: "Font Awesome 6 Free";
-        font-weight: 900; /* solid 款式 */
+        font-weight: 900;
         font-size: 2rem;
         color: rgba(0,0,0,0.6);
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        animation: fa-spin 1s linear infinite; /* 自帶的轉圈效果 */
-        z-index: 10; /* 蓋在縮圖之上 */
+        animation: fa-spin 1s linear infinite;
+        z-index: 10;
     }
 
 #Pro_Youtube {
@@ -137,16 +129,15 @@ i.fa-chevron-right {
         max-height: 100%;
     }
 
-
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_360view {
         pointer-events: none;
-        Opacity: 0.8;
+        opacity: 0.8;
         transform: scale(0.2);
     }
 
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_image {
         display: none;
-        Opacity: 0.6;
+        opacity: 0.6;
         pointer-events: none;
         transform: scale(0.1);
     }
@@ -157,15 +148,15 @@ i.fa-chevron-right {
 
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_video {
         font-size: 4.5rem;
-        Opacity: 0.8;
-        pointer-events: none
+        opacity: 0.8;
+        pointer-events: none;
     }
 
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_youtube {
         font-size: 4.5rem;
         color: #FF0000;
-        Opacity: 0.8;
-        pointer-events: none
+        opacity: 0.8;
+        pointer-events: none;
     }
 
 /* PreviewSwiper */
@@ -191,7 +182,8 @@ i.fa-chevron-right {
     font-size: 1rem;
 }
 
-    #Product > .content > .describe > .introduce, #ProductDescription {
+    #Product > .content > .describe > .introduce,
+    #ProductDescription {
         list-style: none;
         padding: 0;
     }
@@ -217,12 +209,6 @@ i.fa-chevron-right {
             display: flex;
             align-items: center;
         }
-
-/*
-        #Product > .content > .describe > .introduce > li::before {
-            content: '\ff0e';
-        }
-    */
 
 #Product > .image {
     position: relative;
@@ -308,37 +294,176 @@ i.fa-chevron-right {
         height: 3.25rem;
     }
 
-#Product > .content > .priceframe > div > .price {
+/* ===== 價格卡：single inline role / multi badge ===== */
+
+#Product > .content > .priceframe {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.price-option-card {
+    width: 100%;
+}
+
+.price-option-input {
+    display: none;
+}
+
+.price-option-label {
+    display: block;
+    cursor: pointer;
+    margin: 0;
+}
+
+.price-option-body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+    padding: 0.85rem 0.95rem;
+    background-color: #fff;
+    border: 1px solid transparent;
+}
+
+/* 只有可選卡才有外框 */
+.price-option-card.is-selectable .price-option-body {
+    border-color: var(--gray-light);
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.price-option-card.is-selectable .price-option-input:not(.d-none):checked + .price-option-label .price-option-body {
+    border-color: var(--red-main);
+    box-shadow: 0 0 0 1px rgba(192, 58, 34, 0.12);
+}
+
+/* ===== 多價：badge 掛在框上 ===== */
+
+.price-option-card.is-multi-price.has-role-badge {
+    padding-top: 0.65rem;
+}
+
+    .price-option-card.is-multi-price.has-role-badge .price-option-body {
+        padding-top: 1.1rem;
+    }
+
+.price-role-badge {
+    position: absolute;
+    top: -0.65rem;
+    left: -0.85rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    height: 1.5rem;
+    padding: 0 0.65rem;
+    border-radius: 999px;
+    background-color: #f3f3f3;
     color: var(--gray-text);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    border: 1px solid #e2e2e2;
 }
 
-#Product > .content > .priceframe .discount {
-    white-space: nowrap;
-    font-size: 1.2rem;
+.price-option-card.is-selectable .price-option-input:not(.d-none):checked + .price-option-label .price-role-badge {
+    border-color: var(--red-main);
+    color: var(--red-main);
+    background-color: #fff;
 }
 
-    #Product > .content > .priceframe .discount.mprice::before {
-        content: '會員價 $';
-    }
+/* ===== 單價：角色名稱直接顯示在售價前，弱化 ===== */
 
-    #Product > .content > .priceframe .discount.bonus_lack {
-        text-decoration: line-through;
-        position: relative;
-    }
+.sale-role-name {
+    display: inline-block;
+    font-size: 0.92rem;
+    color: #8a8a8a;
+    font-weight: 400;
+    line-height: 1.2;
+}
 
-        #Product > .content > .priceframe .discount.bonus_lack::after {
-            position: absolute;
-            content: "紅利點數不足";
-            padding-left: 1rem;
-            font-size: 1rem;
-            bottom: 0.15rem;
-            right: -7rem;
-        }
+.price-option-card.is-single-price .price-option-main {
+    display: flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+}
 
-#Product > .content > .priceframe > .model {
-    white-space: nowrap;
+.price-option-card.is-single-price .sale-role-name.d-none {
+    display: none !important;
+}
+
+/* 單價時不需要 badge 掛在框上 */
+.price-option-card.is-single-price .price-role-badge {
+    display: none !important;
+}
+
+/* ===== 比較資訊 ===== */
+
+.price-option-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    margin-bottom: 0.08rem;
+}
+
+.suggest-price,
+.original-price {
+    font-size: 0.88rem;
+    color: #8a8a8a;
+    line-height: 1.35;
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
+
+/* ===== 主價格 ===== */
+
+.price-option-main {
+    line-height: 1.2;
+}
+
+.sale-price {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--red-main);
+    letter-spacing: 0.01em;
+    display: inline-block;
+    line-height: 1.15;
+}
+
+/* 多價時主價縮小，避免卡片太高 */
+.price-option-card.is-multi-price .price-option-body {
+    padding-bottom: 0.68rem;
+    gap: 0.18rem;
+}
+
+.price-option-card.is-multi-price .sale-price {
+    font-size: 1.05rem;
+    line-height: 1.2;
+}
+
+.price-option-card.is-multi-price .suggest-price,
+.price-option-card.is-multi-price .original-price {
+    font-size: 0.82rem;
+    line-height: 1.25;
+}
+
+.price-option-card.is-multi-price .price-option-sub {
+    margin-top: 0.04rem;
     font-size: 0.8rem;
-    color: var(--gray-text);
+    line-height: 1.25;
+}
+
+/* 單價維持大字 */
+.price-option-card.is-single-price .sale-price {
+    font-size: 1.8rem;
+    line-height: 1.15;
+}
+
+/* 紅利不足 */
+.sale-price.bonus_lack {
+    text-decoration: line-through;
+    opacity: 0.7;
 }
 
 /* Product - Options */
@@ -408,7 +533,8 @@ input:disabled + .btn_radio {
         content: '加入購物車';
     }
 
-    #Product > .content > .btn_addToCar.close, #Product > .content > .btn_addToCar.bonus_lack {
+    #Product > .content > .btn_addToCar.close,
+    #Product > .content > .btn_addToCar.bonus_lack {
         background-color: gray;
         cursor: default;
         line-height: 3;
@@ -485,11 +611,13 @@ input:disabled + .btn_radio {
     padding: 0.5rem 2rem;
 }
 
-    .nav-link:focus, .nav-link:hover {
+    .nav-link:focus,
+    .nav-link:hover {
         color: var(--red-text);
     }
 
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
     font-weight: bold;
     color: var(--red-text);
     background-color: var(--red-main-light);
@@ -522,7 +650,6 @@ input:disabled + .btn_radio {
         }
 
 /* TechnicalDocuments */
-
 #TechnicalDocuments > #FileDownload > .file > a > div::after {
     font-family: 'Font Awesome 6 Free';
     font-weight: 900;
@@ -539,8 +666,6 @@ input:disabled + .btn_radio {
     height: 6rem;
 }
 
-#TechnicalDocuments > .techcert_list > .badge_1 {
-}
 /* FileDownload */
 #FileDownload > .File_list {
     margin: 1rem 0;
@@ -606,6 +731,10 @@ input:disabled + .btn_radio {
     #CenterLine {
         justify-content: center !important;
     }
+
+    .sale-price {
+        font-size: 1.55rem;
+    }
 }
 
 @media only screen and (max-width: 576px) {
@@ -625,7 +754,6 @@ input:disabled + .btn_radio {
         top: -50% !important;
         right: -10% !important;
     }
-
 
     #Product > .content > .describe:has(> .track) > .introduce {
         padding-right: 2.25rem;
@@ -660,6 +788,16 @@ input:disabled + .btn_radio {
         display: flex;
         justify-content: center;
         align-items: center;
+    }
+
+    .sale-price {
+        font-size: 1.4rem;
+    }
+
+    .suggest-price,
+    .original-price,
+    .price-option-sub {
+        font-size: 0.85rem;
     }
 }
 

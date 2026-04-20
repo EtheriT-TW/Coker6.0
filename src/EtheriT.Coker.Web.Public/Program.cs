@@ -13,6 +13,7 @@ using EtheriT.Coker.Application.HtmlContent;
 using EtheriT.Coker.Application.Import;
 using EtheriT.Coker.Application.JsonObject;
 using EtheriT.Coker.Application.Marquee;
+using EtheriT.Coker.Application.Member;
 using EtheriT.Coker.Application.Newsletter;
 using EtheriT.Coker.Application.Order;
 using EtheriT.Coker.Application.Permissions;
@@ -33,6 +34,7 @@ using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.JsonObject;
 using EtheriT.Coker.Application.Shared.Marquee;
+using EtheriT.Coker.Application.Shared.Member;
 using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Product;
@@ -236,6 +238,8 @@ builder.Services.AddScoped<ITemplatesApplicationService, TemplatesApplicationSer
 builder.Services.AddScoped<ICookieManagerAppService, CookieManagerAppService>();
 builder.Services.AddScoped<IMailTemplateAppService, MailTemplateAppService>();
 builder.Services.AddScoped<IWebsiteCacheStateAppService, WebsiteCacheStateAppService>();
+builder.Services.AddScoped<IFrontRoleContextService, FrontRoleContextService>();
+builder.Services.AddScoped<IProductDisplayPriceService, ProductDisplayPriceService>();
 builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<CustomDtoMapper>();});
 
 builder.Services.AddSingleton<JumpRedirectCache>();

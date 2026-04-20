@@ -15,6 +15,14 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public string? ItemNo {  get; set; }
         public int Status { get; set; }
         public string StatusName { get; set; }
+        public string? Price { get; set; }
+        public string? Bonus { get; set; }
+        public string? OriPrice { get; set; }
+        public string? SuggestPrice { get; set; }
+        public bool IsTimePrice { get; set; }
+        public string? PriceDisplayText { get; set; }
+        public string? BaseRoleName { get; set; }
+        public string? CurrentRoleName { get; set; }
         public List<TagGetSelectedDto> TagDatas { get; set; }
         public List<TechCertDisplayDto> TechCertDatas { get; set; }
         public List<ProductStockDto> Stocks { get; set; }

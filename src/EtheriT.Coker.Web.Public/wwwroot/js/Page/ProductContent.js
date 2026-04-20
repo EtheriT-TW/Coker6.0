@@ -1,1078 +1,1522 @@
-﻿var $input_quantity
-var Pid, s1, s2
-var s1_list = [], s2_list = [], spectype_list, spec_list, price_list = [], img_origin_list
-var preview_swiper, product_swiper, $pro_itemNo, $counter_input;
-var CanShop;
-const showRange = false;
+﻿(function (window, $) {
+    'use strict';
 
-function PageReady() {
-
-    ElementInit();
-
-    if ($('#SwitchPage').length > 0 && $('#SwitchPage').css('display') !== 'none') SwitchPage();
-
-    if ($(".btn_addToCar").length > 0) CanShop = true;
-    else CanShop = false;
-
-    window.CI360.init();
-    if (PageId != null && !isNaN(PageId)) Pid = PageId;
-    else Pid = location.pathname.substring(location.pathname.lastIndexOf("/") + 1);
-    if (isNaN(Pid) && /\/[\d]+\//.test(location.pathname)) {
-        const para = location.pathname.match(/\/[\d]+\//g);
-        if (para.length > 0) {
-            Pid = para[para.length - 1].replace(/\//g, "");
-        }
-    }
-    Product.Log.Click(Pid).done(function () {
-        //ProdHistorySet();
-    });
-
-    Product.GetOne.ProdMainDisplay(Pid).done(function (result) {
-        if (result != null) {
-            PageDefaultSet(result);
-        } else {
-            window.location.href = window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/"));
-        }
-    });
-
-    $(".pro_display").on("click", ShowBigPro);
-    const proDisplayModal = document.getElementById('ProDisplayModal')
-    proDisplayModal.addEventListener('hidden.bs.modal', event => {
-        window.CI360.destroy();
-        $("#Pro_Youtube").attr("src", "");
-        $("#Pro_Video").attr("src", "");
-    })
-
-    $(".btn_addToCar").on("click", function () {
-        if (!$(".btn_addToCar").hasClass("close") && !$(".btn_addToCar").hasClass("bonus_lack")) AddToCart();
-    });
-
-    $('#shareBlock').cShare({
-        description: 'jQuery plugin - C Share buttons',
-        showButtons: ['fb', 'line', 'plurk', 'twitter', 'email']
-    });
-
-    $(document).on('click', '.btn_count_plus', function () {
-        $input_quantity.val(parseInt($input_quantity.val()) + parseInt($input_quantity.attr("step")));
-        $input_quantity.trigger("change");
-    });
-    $(document).on('click', '.btn_count_minus', function () {
-        $input_quantity.val(parseInt($input_quantity.val()) - parseInt($input_quantity.attr("step")));
-        if ($input_quantity.val() == 0) {
-            $input_quantity.val(parseInt($input_quantity.attr("step")));
-        }
-        $input_quantity.trigger("change");
-    });
-    $input_quantity.on("change", function () {
-        var $self = $(this);
-        let v = $self.val() - $self.val() % $self.attr("step");
-        if (v > parseInt($self.attr("max"))) {
-            v = parseInt($self.attr("max")) - parseInt($self.attr("max")) % $self.attr("step");
-        }
-        if (v < parseInt($self.attr("min"))) v = parseInt($self.attr("min"));
-        $self.val(v);
-    });
-    const getCurrentIndex = () => {
-        const currentIndex = img_origin_list.findIndex(
-            item => item.id == $("#ProDisplayModal").data("id")
-        );
-        return currentIndex + 1; // 因為css nth-child從1開始計數，所以需要+1
-    }
-    $("#ProDisplayModal .btn-tool.prev-btn").on("click", function (e) {
-        e.preventDefault();
-        const currentIndex = getCurrentIndex();
-        let prevIndex = currentIndex - 1;
-        if (prevIndex <= 0) prevIndex = img_origin_list.length; // 循環到最後一個
-        const prevItem = $(`.ProductSwiper>.swiper-wrapper>.swiper-slide:nth-child(${prevIndex}) [data-id]`);
-        showProItem(prevItem);
-    });
-    $("#ProDisplayModal .btn-tool.next-btn").on("click", function (e) {
-        e.preventDefault();
-        const currentIndex = getCurrentIndex();
-        let nextIndex = currentIndex + 1;
-        if (nextIndex > img_origin_list.length) nextIndex = 1; // 循環到第一個
-        const nextItem = $(`.ProductSwiper>.swiper-wrapper>.swiper-slide:nth-child(${nextIndex}) [data-id]`);
-        showProItem(nextItem);
-    });
-
-    var $radio_btn = $('#Product > .content > .options > .radio > .control')
-    if ($radio_btn.children().length <= 2) {
-        $radio_btn.children('label').toggleClass('pe-none');
+    if (!$) {
+        throw new Error('ProductContent requires jQuery.');
     }
 
-    $(".btn_tc").on("click", function () {
-        $("#ProductDescription").removeClass("active show")
-        $("#TechnicalDocuments").addClass("active show")
-        $("#pills-description-tab").removeClass("active")
-        $("#pills-documents-tab").addClass("active")
-        var btn_data = $(this).data("tcid")
-        $(".badge_directions").each(function () {
-            var $self = $(this)
-            if ($self.data("pro_tc") == btn_data) {
-                $('html, body').animate({ scrollTop: $self.offset().top - ($("header").height() * 2) }, 0);
-            }
-        })
-    })
+    const DEFAULT_TEXTS = {
+        marketPrice: '時價',
+        prodEmpty: '缺貨',
+        addCartNeedPrivacy: '若要進行商品選購，請先同意隱私權政策',
+        addCartNeedSelection: '請確實選擇規格及購買數量',
+        addCartSuccess: '商品已成功加入購物車',
+        addCartError: '商品加入購物車發生錯誤',
+        addCartWarningTitle: '請注意',
+        commonErrorTitle: '錯誤',
+        suggestedPrice: '建議售價',
+        removeFavorite: '移除收藏',
+        addFavorite: '加入收藏',
+        removeFavoriteSuccess: '已將商品從收藏中移除',
+        addFavoriteSuccess: '成功將商品加入收藏',
+        bonusInsufficient: '紅利不足',
+        bonusApplied: '含紅利折抵'
+    };
 
-    if ($(".btn_favorites").length > 0) {
-        Coker.Favorites.Check(Pid).done(function (check) {
-            if (check.success) {
-                $(".btn_favorites").data("Fid", check.message);
-                $(".btn_favorites").addClass("turn")
-                $(".btn_favorites").attr("title", "移除收藏")
-            }
+    const DEFAULTS = {
+        root: '#Product',
+        pageRoot: document,
+        productId: null,
+        canShop: true,
+        showRange: false,
+        orderPrice: false,
+        totalBonus: 0,
+        orgName: typeof window.OrgName !== 'undefined' ? window.OrgName : '',
+        texts: Object.assign({}, DEFAULT_TEXTS),
+        i18n: null,
+        selectors: {
+            modal: '#ProDisplayModal',
+            mainContent: 'Content#main',
+            product: '#Product',
+            imageRoot: '.image',
+            content: '.content',
+            productSwiper: '.ProductSwiper',
+            productSwiperWrapper: '.ProductSwiper > .swiper-wrapper',
+            previewSwiper: '.PreviewSwiper',
+            previewSwiperWrapper: '.PreviewSwiper > .swiper-wrapper',
+            priceFrame: '.priceframe',
+            options: '.options',
+            quantityInput: '.input_pro_quantity',
+            quantityWrap: '.counter_input',
+            addToCartButton: '.btn_addToCar',
+            title: '.pro_title',
+            itemNo: '.pro_itemNo',
+            introduce: '.introduce',
+            specList: '#SpecCollapse > ul',
+            detailedButton: '.btn_detailed',
+            htmlPanel: '#ProductDescription > Content',
+            tagList: '.pro_tag',
+            techCertRoot: '.pro_tc',
+            techCertList: '.pro_tc > ul',
+            techCertContent: '.pro_tc_content > .techcert_list',
+            filesTab: '#btn_tab > .files',
+            fileDownload: '#FileDownload',
+            fileList: '#FileDownload > .File_list',
+            tabButtons: '#btn_tab>li>button',
+            switchPage: '#SwitchPage',
+            shareBlock: '.shareBlock',
+            favoritesButton: '.btn_favorites'
+        },
+        templates: {
+            imageSlide: '#TemplateImageSlide',
+            videoSlide: '#TemplateVideoSlide',
+            ytVideoSlide: '#TemplateYTVideoSlide',
+            previewSlide: '#TemplatePreviewSlide',
+            slide3d: '#Template3DSlide',
+            specRadio: '#Template_Spec_Radio',
+            priceItem: '#PriceListTemplate'
+        },
+        api: {
+            clickLog: (pid) => Product.Log.Click(pid),
+            getMainDisplay: (pid) => Product.GetOne.ProdMainDisplay(pid),
+            addToCart: (payload) => Product.AddUp.Cart(payload),
+            getCartDropOne: (id) => Product.GetOne.Cart(id),
+            checkFavorite: (pid) => window.Coker?.Favorites?.Check ? Coker.Favorites.Check(pid) : null,
+            addFavorite: (pid) => window.Coker?.Favorites?.Add ? Coker.Favorites.Add(pid) : null,
+            deleteFavorite: (fid) => window.Coker?.Favorites?.Delete ? Coker.Favorites.Delete(fid) : null,
+            switchPage: (args) => window.co?.Directory?.SwitchPage ? co.Directory.SwitchPage(args) : null
+        },
+        hooks: {
+            afterLoad: null,
+            afterRender: null,
+            beforeAddToCart: null,
+            afterAddToCart: null,
+            onSelectionChanged: null
+        }
+    };
+
+    function toInt(value, fallback = 0) {
+        const num = parseInt(value, 10);
+        return Number.isNaN(num) ? fallback : num;
+    }
+
+    function normalizeNullableInt(value, fallback = 0) {
+        if (value === null || typeof value === 'undefined' || value === '') return fallback;
+        return toInt(value, fallback);
+    }
+
+    function cloneTemplate(selector) {
+        return $($(selector).html()).clone();
+    }
+
+    function htmlDecode(value) {
+        if (!value) return '';
+        if ($.htmlDecode) return $.htmlDecode(value);
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = value;
+        return textarea.value;
+    }
+
+    function formatNumber(value) {
+        return normalizeNullableInt(value).toLocaleString('en-US');
+    }
+
+    function formatText(template, params) {
+        if (!params) return template;
+        return String(template).replace(/\{(\w+)\}/g, function (_, key) {
+            return params[key] != null ? params[key] : '';
         });
-        $(".btn_favorites").on("click", function () {
-            var $self = $(this);
-            if ($self.hasClass("turn")) {
-                Coker.Favorites.Delete($(this).data("Fid")).done(function (result) {
-                    if (result.success) {
-                        $self.removeClass("turn")
-                        $self.attr("title", "加入收藏")
-                        Coker.sweet.success("已將商品從收藏中移除", null, true);
-                    }
-                });
-            } else {
-                Coker.Favorites.Add(Pid).done(function (favorites) {
-                    if (favorites.success) {
-                        $self.addClass("turn")
-                        $self.data("Fid", favorites.message);
-                        $self.attr("title", "移除收藏")
-                        Coker.sweet.success("成功將商品加入收藏", null, true);
-                    }
-                });
+    }
+
+    function resolveText(options, key, fallback, params) {
+        const defaultText =
+            fallback ??
+            options?.texts?.[key] ??
+            DEFAULT_TEXTS[key] ??
+            key;
+
+        if (typeof options?.i18n === 'function') {
+            const translated = options.i18n(key, defaultText, params);
+            if (translated != null && translated !== '') {
+                return formatText(translated, params);
             }
-        })
-    }
-}
-function ElementInit() {
-    $input_quantity = $('.input_pro_quantity');
-    $counter_input = $(".counter_input");
-    $prod_content = $("#Product > .content");
-    $pro_name = $prod_content.find('.pro_title');
-    $pro_itemNo = $prod_content.find('.pro_itemNo');
-    $pro_introduce = $prod_content.find('.introduce');
-    $pro_specification = $("#SpecCollapse > ul").first();
-    $pro_price = $prod_content.find(".ori_price");
-    $pro_discount = $prod_content.find(".discount");
-    $btn_detailed = $prod_content.find(".btn_detailed");
-
-    $options = $prod_content.find(".options");
-}
-function PageDefaultSet(result) {
-    if (result.status == 2) {
-        CanShop = false;
-        $counter_input.addClass("isEmpty");
-        $(".btn_addToCar").addClass("close")
-        result.stocks.forEach(stock => {
-            stock.stock = 0;
-        });
-    } else if (result.stocks.length == 1 && result.stocks[0].stock <= 0) {
-        $(".btn_addToCar").addClass("close")
-        $("#Product .content .options").addClass("d-none")
-    }
-
-    $pro_name.text(result.title);
-    $pro_itemNo.text(result.itemNo);
-    $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")
-    $pro_specification.append("<li>" + result.description.replaceAll("\n", "</li><li>") + "</li>")
-    var spec_height = 0;
-    $pro_specification.children("li").each(function (index) {
-        spec_height += $(this).height();
-    })
-    if (spec_height > 96) {
-        $btn_detailed.removeClass("d-none")
-    }
-    
-    if (result.html != null && result.html.trim() != "") $("#ProductDescription > Content").removeClass("d-none").html($.htmlDecode(result.html));
-    else $("#ProductDescription,#btn_tab .description").remove();
-
-    result.techCertDatas.forEach(item => {
-        if (item.img_small.length > 0) {
-            item.img_small.forEach(function (img) {
-                $(".pro_tc > ul").append(`<li class="me-1"><button class="btn_tc bg-transparent border-0" data-tcid="${item.id}"><img src="${img.link}" alt="${img.name}" /></button></li>`);
-                $(".pro_tc > ul img").imgCheck();
-            })
-
-            item.img_orig.forEach(function (img) {
-                $(".pro_tc_content > .techcert_list").append(`<div class="badge_${item.id} row pb-3">
-			                                                      <div class="col-12 col-lg-2 col-md-5 text-center verticalAlign">
-				                                                      <img class="" src="${img.link}" alt="${img.name}" />
-			                                                      </div>
-			                                                      <div class="description align-self-center col">${item.description}</div>
-		                                                      </div>
-		                                                      <hr class="m-1" />`)
-                $(".pro_tc_content > .techcert_list img").imgCheck();
-            })
-        } else {
-            $(".pro_tc").addClass("d-none");
         }
-    });
-    if (result.status != 0) {
-        $("#Product>.image").append(`<span class="status status${result.status}">${result.statusName}</span>`);
+
+        return formatText(defaultText, params);
     }
 
-    if (!$(".pro_tc").hasClass("d-none")) {
-        $(".btn_tc").on("click", function () {
-            $("#TabContent .tab-pane").removeClass("active show")
-            $("#TechnicalDocuments").addClass("active show")
-            $("#btn_tab .nav-link").removeClass("active")
-            $("#pills-documents-tab").addClass("active")
-            var $self_btn = $(this);
-            $('html, body').animate({ scrollTop: $(`.badge_${$self_btn.data("tcid")}`).offset().top - $("header > nav").height() * 2 }, 0);
-        })
-    }
-    if (result.techCertDatas.length == 0) $("#btn_tab > .technical,.pro_tc").remove();
+    function formatPriceText(price, bonus, withDollar = true) {
+        price = normalizeNullableInt(price);
+        bonus = normalizeNullableInt(bonus);
 
-    const stocks = result.stocks || [];
+        const money = withDollar ? `$${formatNumber(price)}` : formatNumber(price);
 
-    // 是否有時價
-    const hasTimePrice = stocks.some(s => s.timePrice);
+        if (bonus > 0) {
+            if (price === 0) return `紅利:${formatNumber(bonus)}`;
+            return `${money} + 紅利:${formatNumber(bonus)}`;
+        }
 
-    // 收集所有價格
-    const allPriceObjects = stocks
-        .filter(s => !s.timePrice && s.prices.length > 0)
-        .flatMap(s => s.prices.map(p => ({
-            total: (p.price || 0) + (p.bonus || 0),
-            price: p.price || 0,
-            bonus: p.bonus || 0
-        })));
-
-    let minprice, maxprice;
-    if (allPriceObjects.length > 0) {
-        minprice = Math.min(...allPriceObjects.map(x => x.total));
-        maxprice = Math.max(...allPriceObjects.map(x => x.total));
+        return money;
     }
 
-    // 接下來組合顯示文字
-    let displayText = '';
-    const target = orderPrice ? minprice : maxprice;
-    if (hasTimePrice && allPriceObjects.length === 0) {
-        displayText = local.MarketPrice;
-    } else if (hasTimePrice && allPriceObjects.length > 0) {
-        displayText = showRange ? `${minprice.toLocaleString('en-US')} ~ ${local.MarketPrice}` : target;
-    } else if (!hasTimePrice && allPriceObjects.length > 0) {
-        if (showRange) {
-            if (minprice === maxprice) {
-                // 只有一種價格，顯示詳細組成
-                const match = allPriceObjects.find(x => x.total === minprice);
-                displayText =
-                    match.bonus === 0
-                        ? `${match.price.toLocaleString('en-US')}`
-                        : match.price === 0
-                            ? `紅利:${match.bonus.toLocaleString('en-US')}`
-                            : `${match.price.toLocaleString('en-US')} + 紅利:${match.bonus.toLocaleString('en-US')}`;
-            } else {
-                displayText = `${minprice.toLocaleString('en-US')} ~ ${maxprice.toLocaleString('en-US')}`;
+    function analyzeSpecStructure(stocks) {
+        const safeStocks = Array.isArray(stocks) ? stocks : [];
+
+        const s1Ids = [...new Set(
+            safeStocks
+                .map(x => normalizeNullableInt(x.fK_S1id ?? x.s1id))
+                .filter(x => x > 0)
+        )];
+
+        const s2Ids = [...new Set(
+            safeStocks
+                .map(x => normalizeNullableInt(x.fK_S2id ?? x.s2id))
+                .filter(x => x > 0)
+        )];
+
+        return {
+            hasS1: s1Ids.length > 0,
+            hasS2: s2Ids.length > 0,
+            s1Count: s1Ids.length,
+            s2Count: s2Ids.length,
+            mode:
+                s1Ids.length === 0 && s2Ids.length === 0
+                    ? 'none'
+                    : s1Ids.length > 0 && s2Ids.length === 0
+                        ? 'single'
+                        : 'double'
+        };
+    }
+
+    function buildPriceSummary(stocks, options) {
+        const safeStocks = Array.isArray(stocks) ? stocks : [];
+        const hasTimePrice = safeStocks.some(x => !!x.timePrice);
+        const priceCandidates = safeStocks
+            .filter(x => !x.timePrice)
+            .flatMap(x => (x.prices || []).map(p => ({
+                total: normalizeNullableInt(p.price) + normalizeNullableInt(p.bonus),
+                price: normalizeNullableInt(p.price),
+                bonus: normalizeNullableInt(p.bonus)
+            })));
+
+        if (hasTimePrice && priceCandidates.length === 0) {
+            return resolveText(options, 'marketPrice');
+        }
+
+        if (priceCandidates.length === 0) {
+            return '';
+        }
+
+        const totals = priceCandidates.map(x => x.total);
+        const min = Math.min(...totals);
+        const max = Math.max(...totals);
+        const target = options.orderPrice ? min : max;
+
+        if (hasTimePrice && priceCandidates.length > 0) {
+            return options.showRange
+                ? `$${formatNumber(min)} ~ ${resolveText(options, 'marketPrice')}`
+                : `$${formatNumber(target)}`;
+        }
+
+        if (options.showRange) {
+            if (min === max) {
+                const single = priceCandidates.find(x => x.total === min);
+                return formatPriceText(single.price, single.bonus);
             }
-        } else {
-            // 單一價格顯示(orderPrice決定用min或max)
-            const match = allPriceObjects.find(x => x.total === target);
-            displayText =
-                match.bonus === 0
-                    ? `${match.price.toLocaleString('en-US')}`
-                    : match.price === 0
-                        ? `紅利:${match.bonus.toLocaleString('en-US')}`
-                        : `${match.price.toLocaleString('en-US')} + 紅利:${match.bonus.toLocaleString('en-US')}`;
+            return `$${formatNumber(min)} ~ $${formatNumber(max)}`;
         }
-    } else {
-        displayText = '';
+
+        const selected = priceCandidates.find(x => x.total === target);
+        return formatPriceText(selected.price, selected.bonus);
     }
-    result.stocks.map(e => {
-        if (e.timePrice) e.prices = [{price:0}];
-    });
-    console.log(result.stocks[0].prices.length > 0 && result.stocks[0].prices[0].price != null);
-    if (result.stocks.length > 1) {
-        var obj = {};
 
-        var item1 = $($("#Template_Spec_Radio").html()).clone(), item2 = $($("#Template_Spec_Radio").html()).clone();
-        var item1_control = item1.find(".spec_control"),
-            item2_control = item2.find(".spec_control");
+    function buildPriceViewModel(priceItem, stock, controller, product) {
+        const currentPrice = normalizeNullableInt(priceItem.price);
+        const currentBonus = normalizeNullableInt(priceItem.bonus);
+        const originalPrice = normalizeNullableInt(priceItem.oriPrice);
+        const suggestPrice = normalizeNullableInt(stock.suggestPrice);
+        const isTimePrice = !!stock.timePrice;
+        const disabled = !!priceItem.disabled;
 
-        item1.data("stype", 1)
-        item2.data("stype", 2)
+        const itemRoleName = priceItem.roleName || '';
+        const baseRoleName = product.baseRoleName || priceItem.baseRoleName || '非會員';
 
-        var hasstock = false;
-        result.stocks.forEach(data => {
-            if (data.prices.length > 0 && data.prices[0].price != null) {
-                var prices = [];
-                data.prices.forEach(function (self_data) {
-                    var temp_obj = {
-                        fK_RId: self_data.fK_RId,
-                        priceid: self_data.id,
-                        price: self_data.price,
-                        oriprice: self_data.oriPrice,
-                        bonus: self_data.bonus
-                    }
-                    prices.push(temp_obj);
-                })
-                obj = {
-                    priceid: data.prices[0].id,
-                    s1id: data.fK_S1id,
-                    s2id: data.fK_S2id,
-                    timePrice: data.timePrice,
-                    stock: data.stock,
-                    minQty: data.min_Qty,
-                    price: data.prices[0].price,
-                    prices: prices,
-                    suggestprice: data.price,
-                };
-                price_list.push(obj);
-                obj = {}
-                var nostock = "";
-                if (data.stock <= 0 && CanShop) {
-                    nostock = 'disabled="disabled"'
-                } else {
-                    hasstock = true;
+        const saleText = isTimePrice
+            ? controller.t('marketPrice')
+            : formatPriceText(currentPrice, currentBonus);
+
+        const showSuggestPrice =
+            !isTimePrice &&
+            suggestPrice > 0 &&
+            suggestPrice !== currentPrice;
+
+        const showOriginalPrice =
+            !isTimePrice &&
+            originalPrice > 0 &&
+            originalPrice !== currentPrice;
+
+        const originalPriceText = showOriginalPrice
+            ? `${baseRoleName} $${formatNumber(originalPrice)}`
+            : '';
+
+        const showBonusLack =
+            disabled &&
+            currentBonus > 0;
+
+        // 核心規則：
+        // 只有「這筆價格有自己的角色名稱，且它不是基準角色」時才顯示
+        const showRoleName =
+            !!itemRoleName &&
+            itemRoleName !== baseRoleName;
+
+        return {
+            saleText,
+            roleName: itemRoleName,
+            showRoleName,
+            showSuggestPrice,
+            suggestPriceText: showSuggestPrice
+                ? `${controller.t('suggestedPrice')}$${formatNumber(suggestPrice)}`
+                : '',
+            showOriginalPrice,
+            originalPriceText,
+            showBonusLack
+        };
+    }
+
+    class ProductSelectionEngine {
+        constructor(product, options) {
+            this.product = product || { stocks: [] };
+            this.options = options;
+            this.canShop = !!options.canShop;
+            this.stocks = Array.isArray(this.product.stocks) ? this.product.stocks.map(this.normalizeStock.bind(this)) : [];
+            this.specMap = this.buildSpecMap();
+            this.specMode = analyzeSpecStructure(this.stocks).mode;
+            this.current = {
+                s1: null,
+                s2: null,
+                priceId: null,
+                quantity: 1
+            };
+            this.bootstrap();
+        }
+
+        normalizeStock(stock) {
+            const prices = Array.isArray(stock.prices) ? stock.prices : [];
+            const normalized = {
+                id: normalizeNullableInt(stock.id),
+                s1id: normalizeNullableInt(stock.fK_S1id ?? stock.s1id),
+                s2id: normalizeNullableInt(stock.fK_S2id ?? stock.s2id),
+                s1Title: stock.s1_Title || stock.s1Title || '',
+                s2Title: stock.s2_Title || stock.s2Title || '',
+                stock: normalizeNullableInt(stock.stock),
+                minQty: Math.max(normalizeNullableInt(stock.min_Qty ?? stock.minQty, 1), 1),
+                timePrice: !!stock.timePrice,
+                suggestPrice: normalizeNullableInt(stock.suggestPrice ?? stock.price),
+                prices: prices.map(p => ({
+                    id: normalizeNullableInt(p.id),
+                    roleId: normalizeNullableInt(p.fK_RId ?? p.roleId),
+                    roleName: p.roleName || p.baseRoleName || '',
+                    price: normalizeNullableInt(p.price),
+                    bonus: normalizeNullableInt(p.bonus),
+                    oriPrice: normalizeNullableInt(p.oriPrice)
+                }))
+            };
+
+            if (normalized.timePrice && normalized.prices.length === 0) {
+                normalized.prices = [{ id: 0, roleId: 0, roleName: '', price: 0, bonus: 0, oriPrice: 0 }];
+            }
+
+            return normalized;
+        }
+
+        buildSpecMap() {
+            const spec1 = new Map();
+            const spec2 = new Map();
+
+            this.stocks.forEach(stock => {
+                if (stock.s1id > 0 && !spec1.has(stock.s1id)) {
+                    spec1.set(stock.s1id, stock.s1Title);
                 }
-
-                if (data.fK_S1id > 0) {
-                    if (s1_list.indexOf(data.fK_S1id) < 0) {
-                        item1_control.append(`<input id="s1_${data.fK_S1id}" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="${data.fK_S1id}" ${nostock}>`);
-                        item1_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + data.fK_S1id + '">' + data.s1_Title + '</label>');
-                        s1_list.push(data.fK_S1id);
-                    } else {
-                        if (data.stock > 0) item1_control.find(`#s1_${data.fK_S1id}`).prop("disabled", false);
-                    }
-                } else {
-                    if (!s1 >= 0) {
-                        s1 = 0;
-                    }
+                if (stock.s2id > 0 && !spec2.has(stock.s2id)) {
+                    spec2.set(stock.s2id, stock.s2Title);
                 }
-
-                if (data.fK_S2id > 0) {
-                    if (s2_list.indexOf(data.fK_S2id) < 0) {
-                        item2_control.append(`<input id="s2_${data.fK_S2id}" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="${data.fK_S2id}" ${nostock}>`);
-                        item2_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + data.fK_S2id + '">' + data.s2_Title + '</label>');
-                        s2_list.push(data.fK_S2id);
-                    }
-                } else {
-                    if (!s2 >= 0) {
-                        s2 = 0;
-                    }
-                }
-            }
-        });
-        if (!hasstock) {
-            $("#Product .content .options").addClass("d-none")
-            $(".btn_addToCar").addClass("close")
-        }
-        else {
-            $counter_input.removeClass("isEmpty");
-        }
-
-        $options.prepend(item2);
-        $options.prepend(item1);
-
-        $radio = $("#Product > .content > .options > .radio");
-        $radio.each(function () {
-            $input = $(this).children(".spec_control").children("input")
-            $input.each(function () {
-                $(this).on("change", SpecRadio)
-            })
-        })
-        $(".priceframe").empty();
-        var price_temp = $($("#PriceListTemplate").html()).clone();
-        price_temp.find(".discount").text(displayText);
-        price_temp.find("input").addClass("d-none");
-        $(".priceframe").append(price_temp);
-    } else if (result.stocks[0].prices.length > 0 && result.stocks[0].prices[0].price != null) {
-        s1 = result.stocks[0].fK_S1id;
-        s2 = result.stocks[0].fK_S2id;
-
-        $(".priceframe").empty();
-        result.stocks[0].prices.forEach(function (item) {
-            var price = item.price;
-            var oriprice = item.oriPrice;
-            var price_temp = $($("#PriceListTemplate").html()).clone();
-
-            price_temp.find("input").data("priceid", item.id)
-            price_temp.find("input").attr("id", `price_${item.id}`);
-            price_temp.find("label").attr("for", `price_${item.id}`);
-
-            if (item.bonus > 0) {
-                if (CanShop) {
-                    if (totalBonus > item.bonus) {
-                        price_temp.find(".discount").removeClass("bonus_lack");
-                        price_temp.find("input").prop("disabled", false);
-                    }
-                    else {
-                        price_temp.find(".discount").addClass("bonus_lack");
-                        price_temp.find("input").prop("disabled", true);
-                    }
-                }
-            }
-            price_temp.find(".discount").text(formatPrice(item.price, item.bonus));
-            const ShowMPrice = item.fK_RId != 1 && oriprice > price;
-            if (ShowMPrice) price_temp.find(".discount").addClass("mprice");
-
-            if (oriprice > price) {
-                price_temp.find(".ori_price").text(oriprice.toLocaleString('en-US'));
-                price_temp.find(".ori_price").removeClass("d-none")
-            }
-            if (!ShowMPrice && result.stocks[0].suggestPrice > 0 && result.stocks[0].suggestPrice != price) {
-                price_temp.find(".discount").empty();
-                price_temp.find(".discount").removeClass("price");
-                price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${result.stocks[0].suggestPrice.toLocaleString('en-US')}</div><div class="text-danger">  $${displayText}</div>`);
-            } else price_temp.find(".discount").text(displayText);
-            if (result.stocks[0].timePrice) {
-                $(".btn_addToCar").addClass("d-none");
-                $(".priceframe + hr").addClass("d-none");
-                $options.addClass("d-none");
-            }
-
-            if ($(".priceframe").children().length == 0 && !price_temp.find("input").prop("disabled")) price_temp.find("input").prop("checked", true);
-            $(".priceframe").append(price_temp);
-        });
-
-        if (!CanShop || $(".priceframe input").length == 1 || $(".btn_addToCar").hasClass("close")) $(".priceframe input").addClass("d-none");
-        else $(".priceframe input").removeClass("d-none");
-        if ($(".priceframe input:checked").length == 0) $(".btn_addToCar").addClass("bonus_lack")
-        else $(".btn_addToCar").removeClass("bonus_lack")
-
-    } else {
-        $(".btn_addToCar").addClass("d-none");
-        $(".priceframe").addClass("d-none");
-        $(".options").addClass("d-none");
-    }
-    if (result.stocks.length > 0) {
-        $input_quantity.attr({
-            min: result.stocks[0].min_Qty,
-            max: result.stocks[0].stock - (result.stocks[0].stock % result.stocks[0].min_Qty),
-            step: result.stocks[0].min_Qty ?? 1
-        });
-        if (result.stocks[0].stock >= result.stocks[0].min_Qty) {
-            $counter_input.removeClass("isEmpty");
-            $input_quantity.trigger("change");
-        }
-    }
-
-    var $product_swiper = $(".ProductSwiper > .swiper-wrapper"), $preview_swiper = $(".PreviewSwiper > .swiper-wrapper");
-
-    if (result.id == 1 && false) {
-        var demo_slide = $($("#TemplateDemoSlide").html()).clone();
-        var demo_pre_slide = $($("#TemplateDemoPreviewSlide").html()).clone();
-        $product_swiper.append(demo_slide);
-        $preview_swiper.append(demo_pre_slide);
-    } else {
-        result.img_Medium.forEach(img_med => {
-            var slide = $($("#TemplateImageSlide").html()).clone();
-            var slide_image = slide.find(".pro_display");
-            slide_image.attr({
-                "alt": img_med.name,
-                "data-id": img_med.id
             });
-            switch (img_med.fileType) {
-                case 3:
-                    slide = $($("#TemplateVideoSlide").html()).clone();
-                    var slide_video = slide.find(".pro_display");
-                    slide_video.attr({
-                        "alt": img_med.name,
-                        "data-id": img_med.id,
-                        "src": img_med.link[0],
-                    })
-                    break;
-                case 4:
-                    slide.addClass("bg-black")
-                    var videoid = img_med.name.split("&t=")[0];
-                    slide_image.attr({
-                        "data-display-protype": "youtube",
-                        "data-youtube-link": img_med.name,
-                        src: `https://img.youtube.com/vi/${videoid}/hqdefault.jpg`
-                    })
-                    slide_image.siblings(".schematic_image").replaceWith('<div class="schematic_youtube position-absolute"><i class="fa-brands fa-youtube"></i></div>');
-                    break;
-                default:
-                    slide_image.attr("src", img_med.link[0]);
-                    break;
+
+            return { spec1, spec2 };
+        }
+
+        bootstrap() {
+            if (this.stocks.length === 0) return;
+
+            const firstAvailable = this.stocks.find(x => !this.canShop || x.stock >= x.minQty) || this.stocks[0];
+
+            if (this.specMode === 'none') {
+                this.current.s1 = 0;
+                this.current.s2 = 0;
+            } else if (this.specMode === 'single') {
+                this.current.s1 = firstAvailable.s1id;
+                this.current.s2 = 0;
+            } else {
+                this.current.s1 = firstAvailable.s1id;
+                this.current.s2 = firstAvailable.s2id;
             }
-            slide_image.imgCheck();
-            $product_swiper.append(slide);
-        });
 
-        result.img_Small.forEach(img_small => {
-            var pre_slide = $($("#TemplatePreviewSlide").html()).clone();
-            var pre_slide_image = pre_slide.find("img");
-            pre_slide_image.attr("alt", img_small.name);
-            switch (img_small.fileType) {
-                case 3:
-                    pre_slide_image.attr("src", "/images/videopreview.jpg");
-                    break;
-                case 4:
-                    var videoid = img_small.name.split("&t=")[0];
-                    pre_slide_image.attr({ src: `https://img.youtube.com/vi/${videoid}/hqdefault.jpg` })
-                    break;
-                default:
-                    pre_slide_image.attr("src", img_small.link[0]);
-                    break;
+            const activeStock = this.getActiveStock();
+            if (activeStock && activeStock.prices.length > 0) {
+                const firstEnabledPrice = activeStock.prices.find(p => !this.isBonusLack(p)) || activeStock.prices[0];
+                this.current.priceId = firstEnabledPrice.id;
+                this.current.quantity = activeStock.minQty;
             }
-            pre_slide_image.data("id", img_small.id);
-            pre_slide_image.imgCheck();
-            $preview_swiper.append(pre_slide);
-        });
-        if (result.img_Small.length == 1) $(".PreviewSwiper,.btn_swiper_prev_product,.btn_swiper_next_product").addClass("d-none");
-    }
-    if (result.img_Small.length > 1) {
-        preview_swiper = new Swiper(".PreviewSwiper", {
-            a11y: true,
-            slidesPerView: 4,
-            loop: false,
-            spaceBetween: 10,
-            freeMode: true,
-            watchSlidesProgress: true,
-            scrollbar: {
-                el: ".swiper-scrollbar",
-            },
-            breakpoints: {
-                576: {
-                    slidesPerView: 4,
-                },
-                768: {
-                    slidesPerView: 6,
-                },
-                992: {
-                    slidesPerView: 8,
-                }
-            }
-        });
+        }
 
-        product_swiper = new Swiper(".ProductSwiper", {
-            a11y: true,
-            spaceBetween: 15,
-            loop: true,
-            navigation: {
-                nextEl: ".btn_swiper_next_product",
-                prevEl: ".btn_swiper_prev_product",
-            },
-            breakpoints: {
-                768: {
-                    allowTouchMove: true,
-                },
-                992: {
-                    allowTouchMove: false,
-                }
-            },
-            thumbs: {
-                swiper: preview_swiper,
-            },
-        });
-    }
-    $product_swiper.find(".pro_display").on("click", ShowBigPro);
-    img_origin_list = result.img_Original;
+        getSpec1Options() {
+            return Array.from(this.specMap.spec1.entries()).map(([id, title]) => ({
+                id,
+                title,
+                enabled: this.stocks.some(x => x.s1id === id && (!this.canShop || x.stock >= x.minQty))
+            }));
+        }
 
-    if (result.tagDatas.length > 0) {
-        result.tagDatas.forEach(item => {
-            $(".pro_tag").prepend(`<li><a class="round_tag rounded-pill me-1 px-3 py-1" href="/${OrgName}/Search/Get/3/${item.tag_Name}">${item.tag_Name}</a></li>`);
-        })
-    } else {
-        $(".pro_tag").addClass("d-none");
-    }
+        getSpec2Options(spec1Id) {
+            return this.stocks
+                .filter(x => x.s1id === normalizeNullableInt(spec1Id))
+                .map(x => ({
+                    id: x.s2id,
+                    title: x.s2Title,
+                    enabled: !this.canShop || x.stock >= x.minQty
+                }))
+                .filter(x => x.id > 0)
+                .filter((item, index, array) => array.findIndex(x => x.id === item.id) === index);
+        }
 
-    if (result.files != null && result.files.length > 0) {
-        result.files.forEach(function (file) {
-            var link = IsFaPage == true ? file.link : file.link.replace("upload", `upload/${OrgName}`);
-            $("#FileDownload>.File_list").append(`
-            <div class="file border-bottom">
-                <a href="${link}" download="${file.name}" title="${file.name}" class="link_with_icon d-flex text-decoration-none edit_lock">
-                    <div draggable="true" class="icon pe-2"></div>
-                    <div draggable="true" class="name">${file.name}
-                </div></a>
-            </div>`)
-        });
-    } else $("#btn_tab > .files,#FileDownload").remove();
-    $("#btn_tab>li>button").first().trigger("click");
-    LinkWithIconInit();
+        setSpec(type, id) {
+            const value = normalizeNullableInt(id);
 
-    if (!CanShop) $(".counter").addClass("d-none");
-}
-function formatPrice(price, bonus) {
-    if (bonus > 0) {
-        if (price === 0) return `紅利:${bonus.toLocaleString('en-US')}`;
-        return `${price.toLocaleString('en-US')} + 紅利:${bonus.toLocaleString('en-US')}`;
-    }
-    return price.toLocaleString('en-US');
-}
-function SpecRadio() {
-    $self = $(this);
-    $self_p = $self.parents(".radio").first();
-    $self_s = $self_p.siblings(".radio");
-    $input_quantity.val($input_quantity.attr("step"));
+            if (type === 1) {
+                this.current.s1 = value;
 
-    switch ($self_p.data("stype")) {
-        case 1:
-            s1 = $self.val()
-            var temp_list = []
-            price_list.forEach(function (item) {
-                if (item.s1id == s1) {
-                    temp_list.push(item.s2id)
-                }
-            })
-            $self_s.find("input").attr("disabled", "disabled");
-            var radioclosenum = $self_s.find("input").length;
-            $self_s.find("input").each(function () {
-                $radio = $(this)
-                if (temp_list.indexOf(parseInt($radio.val())) > -1 && (price_list.find(e => e.s1id == s1 && e.s2id == $radio.val()).stock > 0 || !CanShop)) {
-                    $radio.removeAttr("disabled");
-                    radioclosenum -= 1;
-                }
-            })
-            if (radioclosenum == $self_s.find("input").length) {
-                $(".btn_addToCar").addClass("close")
-                $counter_input.addClass("isEmpty");
-            }
-            if ($self_s.find("input[value='" + parseInt(s2) + "']").attr("disabled") == "disabled") {
-                s2 = null;
-            }
-            var checknow = $self_s.find(`input:checked`);
-            if (!(checknow.length > 0 && typeof (checknow.attr("disabled")) == "undefined")) {
-                $self_s.find(`input`).prop("checked", false)
-                if ($self_s.find(`input:not([disabled])`).length > 0 && $self_s.find(`input:not([disabled]):checked`).length == 0) {
-                    $self_s.find(`input:not([disabled])`).first().prop("checked", true).trigger("change");
-                }
-            }
-            break;
-        case 2:
-            s2 = $self.val()
-            var temp_list = [];
-            price_list.forEach(function (item) {
-                if (item.s2id == s2) {
-                    temp_list.push(item.s1id)
-                }
-            })
-            if ($self_s.find("input[value='" + parseInt(s2) + "']").attr("disabled") == "disabled") {
-                s1 = null;
-            }
-            var radioclosenum = 0;
-            $self_s.find("input").each(function () {
-                $radio = $(this)
-                var this_price_list = price_list.find(e => e.s1id == $radio.val() && e.s2id == s2);
-                if (typeof (this_price_list) != "undefined" && this_price_list.stock <= 0 && CanShop) {
-                    $radio.attr("disabled", "disabled");
-                    radioclosenum += 1;
-                } else $radio.removeAttr("disabled");
-            })
-            if (radioclosenum == $self_s.find("input").length) {
-                $(".btn_addToCar").addClass("close")
-                $counter_input.addClass("isEmpty");
-            }
-            break;
-    }
-
-    if (s1 != null) {
-        price_list.forEach(function (item) {
-            if (item.s1id == s1 && (item.s2id == 0 || item.s2id == s2)) {
-                $(".priceframe").empty();
-                item.prices.forEach(function (self_item) {
-
-                    var price = self_item.price;
-                    var oriprice = self_item.oriprice;
-                    var price_temp = $($("#PriceListTemplate").html()).clone();
-
-                    price_temp.find("input").data("priceid", self_item.priceid)
-                    price_temp.find("input").attr("id", `price_${self_item.priceid}`);
-                    price_temp.find("label").attr("for", `price_${self_item.priceid}`);
-
-                    var price_text = "";
-                    if (item.timePrice) {
-                        price_temp.find(".discount").removeClass("price").text(local.MarketPrice);
-                    } else {
-                        if (self_item.bonus > 0) {
-                            if (price > 0) price_text = `${price.toLocaleString('en-US')}+紅利${self_item.bonus}點`;
-                            else price_text = `紅利${self_item.bonus}點`;
-
-                            if (CanShop) {
-                                if (totalBonus > self_item.bonus) {
-                                    price_temp.find(".discount").removeClass("bonus_lack");
-                                    price_temp.find("input").prop("disabled", false);
-                                }
-                                else {
-                                    price_temp.find(".discount").addClass("bonus_lack");
-                                    price_temp.find("input").prop("disabled", true);
-                                }
-                            }
-                        } else price_text = price.toLocaleString('en-US');
-
-                        const ShowMPrice = self_item.fK_RId != 1;
-                        if (ShowMPrice) price_temp.find(".discount").addClass("mprice");
-
-                        if (!ShowMPrice && item.suggestprice > 0 && item.suggestprice != price) {
-                            price_temp.find(".discount").empty();
-                            price_temp.find(".discount").removeClass("price");
-                            price_temp.find(".discount").append(`<div class="text-body-tertiary text-decoration-line-through fs-5 pe-2">建議售價$${item.suggestprice.toLocaleString('en-US')}</div><div class="text-danger"> $${price_text}</div>`);
-                        }
-                        else price_temp.find(".discount").text(price_text);
-
-                        
-
-                        if (oriprice > price) {
-                            price_temp.find(".ori_price").text(oriprice.toLocaleString('en-US'));
-                            price_temp.find(".ori_price").removeClass("d-none")
-                        }
+                if (this.specMode === 'double') {
+                    const validS2 = this.getSpec2Options(value).filter(x => x.enabled);
+                    if (validS2.length === 0) {
+                        this.current.s2 = null;
+                    } else if (!validS2.some(x => x.id === this.current.s2)) {
+                        this.current.s2 = validS2[0].id;
                     }
-
-                    if ($(".priceframe").children().length == 0 && !price_temp.find("input").prop("disabled")) price_temp.find("input").prop("checked", true);
-                    $(".priceframe").append(price_temp);
-                });
-
-                $input_quantity.attr({
-                    min: item.minQty,
-                    max: item.stock - (item.stock % item.minQty),
-                    step: item.minQty ?? 1
-                });
-                if (item.stock < item.minQty) $counter_input.addClass("isEmpty");
-                else {
-                    $counter_input.removeClass("isEmpty");
                 }
-                $input_quantity.trigger("change");
             }
-        })
+
+            if (type === 2) {
+                this.current.s2 = value;
+            }
+
+            const activeStock = this.getActiveStock();
+            if (activeStock) {
+                const enabledPrice = activeStock.prices.find(p => !this.isBonusLack(p)) || activeStock.prices[0] || null;
+                this.current.priceId = enabledPrice ? enabledPrice.id : null;
+                this.current.quantity = activeStock.minQty;
+            }
+        }
+
+        getActiveStock() {
+            if (this.stocks.length === 0) return null;
+            if (this.stocks.length === 1) return this.stocks[0];
+
+            if (this.specMode === 'none') {
+                return this.stocks[0] || null;
+            }
+
+            if (this.specMode === 'single') {
+                return this.stocks.find(stock =>
+                    normalizeNullableInt(stock.s1id) === normalizeNullableInt(this.current.s1)
+                ) || null;
+            }
+
+            return this.stocks.find(stock => {
+                const s1Matched = normalizeNullableInt(stock.s1id) === normalizeNullableInt(this.current.s1);
+                const s2Matched = normalizeNullableInt(stock.s2id) === normalizeNullableInt(this.current.s2 || 0);
+                return s1Matched && s2Matched;
+            }) || null;
+        }
+
+        getPriceOptions() {
+            const stock = this.getActiveStock();
+            if (!stock) return [];
+
+            return stock.prices.map(price => ({
+                ...price,
+                disabled: this.isBonusLack(price),
+                checked: normalizeNullableInt(price.id) === normalizeNullableInt(this.current.priceId),
+                stock
+            }));
+        }
+
+        isBonusLack(price) {
+            if (!this.canShop) return false;
+            const bonus = normalizeNullableInt(price.bonus);
+            if (bonus <= 0) return false;
+            return normalizeNullableInt(this.options.totalBonus) < bonus;
+        }
+
+        setPrice(priceId) {
+            this.current.priceId = normalizeNullableInt(priceId, null);
+        }
+
+        setQuantity(quantity) {
+            const stock = this.getActiveStock();
+            if (!stock) return;
+
+            const step = stock.minQty;
+            const min = step;
+            const max = stock.stock - (stock.stock % step);
+            let value = normalizeNullableInt(quantity, min);
+
+            value -= value % step;
+            if (value < min) value = min;
+            if (max > 0 && value > max) value = max;
+            if (value === 0) value = min;
+
+            this.current.quantity = value;
+        }
+
+        decreaseStockAfterAdd() {
+            const stock = this.getActiveStock();
+            if (!stock) return;
+            stock.stock = Math.max(stock.stock - normalizeNullableInt(this.current.quantity), 0);
+        }
+
+        canAddToCart() {
+            const stock = this.getActiveStock();
+            if (!this.canShop) return false;
+            if (!stock) return false;
+            if (stock.timePrice) return false;
+            if (stock.stock < stock.minQty) return false;
+            if (!this.current.priceId) return false;
+            return true;
+        }
+
+        buildCartPayload(productId) {
+            return {
+                FK_Pid: normalizeNullableInt(productId),
+                FK_PriceId: normalizeNullableInt(this.current.priceId),
+                FK_S1id: normalizeNullableInt(this.current.s1),
+                FK_S2id: normalizeNullableInt(this.current.s2),
+                Quantity: normalizeNullableInt(this.current.quantity)
+            };
+        }
     }
 
-    if (s2 == null) s2 = 0
-    var this_price_list = price_list.find(e => e.s1id == s1 && e.s2id == s2);
-    if (this_price_list.stock <= 0 || this_price_list.timePrice) {
-        $(".btn_addToCar").addClass("close")
-    }
-    else {
-        $(".btn_addToCar").removeClass("close")
-        $input_quantity.attr("max", this_price_list.stock)
+    class ProductMediaViewer {
+        constructor(options) {
+            this.options = options;
+            this.$modal = $(options.selectors.modal);
+            this.$image = $('#Pro_Image');
+            this.$video = $('#Pro_Video');
+            this.$youtube = $('#Pro_Youtube');
+            this.$view360 = $('#Pro_360View');
+            this.items = [];
+            this.bindModalEvents();
+        }
+
+        setItems(items) {
+            this.items = Array.isArray(items) ? items : [];
+        }
+
+        bindModalEvents() {
+            const modalElement = this.$modal.get(0);
+            if (!modalElement) return;
+
+            modalElement.addEventListener('hidden.bs.modal', () => {
+                if (window.CI360) window.CI360.destroy();
+                this.$video.attr('src', '').addClass('d-none');
+                this.$youtube.attr('src', '').addClass('d-none');
+                this.$image.addClass('d-none').empty();
+                this.$view360.addClass('d-none').empty();
+            });
+
+            this.$modal.find('.btn-tool.prev-btn').off('click').on('click', (e) => {
+                e.preventDefault();
+                this.move(-1);
+            });
+
+            this.$modal.find('.btn-tool.next-btn').off('click').on('click', (e) => {
+                e.preventDefault();
+                this.move(1);
+            });
+        }
+
+        move(step) {
+            if (!this.items.length) return;
+            const currentId = normalizeNullableInt(this.$modal.data('id'));
+            let index = this.items.findIndex(x => normalizeNullableInt(x.id) === currentId);
+            if (index < 0) index = 0;
+            index = (index + step + this.items.length) % this.items.length;
+            this.showById(this.items[index].id);
+        }
+
+        showById(id) {
+            const item = this.items.find(x => normalizeNullableInt(x.id) === normalizeNullableInt(id));
+            if (!item) return;
+
+            this.$modal.data('id', item.id);
+
+            const type = item.fileType === 3
+                ? 'video'
+                : item.fileType === 4
+                    ? 'youtube'
+                    : item.fileType === 5
+                        ? '360view'
+                        : 'image';
+
+            this.render(item, type);
+        }
+
+        render(item, type) {
+            if (window.CI360) window.CI360.destroy();
+
+            this.$image.addClass('d-none').empty();
+            this.$video.addClass('d-none').attr('src', '');
+            this.$youtube.addClass('d-none').attr('src', '');
+            this.$view360.addClass('d-none').empty();
+
+            if (type === 'video') {
+                this.$video.removeClass('d-none').attr('src', item.link[0]);
+                return;
+            }
+
+            if (type === 'youtube') {
+                const youtubeParts = (item.name || '').split('&t=');
+                let url = `https://www.youtube-nocookie.com/embed/${youtubeParts[0]}`;
+                if (youtubeParts[1]) url += `?start=${youtubeParts[1]}`;
+                this.$youtube.removeClass('d-none').attr('src', url);
+                return;
+            }
+
+            if (type === '360view') {
+                this.$view360.removeClass('d-none');
+                if (item.folder) this.$view360.attr('data-folder', item.folder);
+                if (item.filenameX) this.$view360.attr('data-filename-x', item.filenameX);
+                if (item.amountX) this.$view360.attr('data-amount-x', item.amountX);
+
+                if (window.CI360) {
+                    this.$view360.addClass('cloudimage-360');
+                    setTimeout(() => {
+                        window.CI360.add('Pro_360View');
+                    }, 50);
+                }
+                return;
+            }
+
+            const src = item.link[0];
+            const $img = $('<img>').attr({ src, alt: item.name || '' }).css({
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain'
+            });
+
+            this.$image.removeClass('d-none').append($img);
+        }
     }
 
-    if (!CanShop || $(".priceframe input").length == 1 || $(".btn_addToCar").hasClass("close")) $(".priceframe input").addClass("d-none");
-    else $(".priceframe input").removeClass("d-none");
-    if ($(".priceframe input:checked").length == 0) $(".btn_addToCar").addClass("bonus_lack")
-    else $(".btn_addToCar").removeClass("bonus_lack")
-}
-function AddToCart() {
-    if (localStorage.getItem('AgreePrivacy') == null) {
-        Coker.sweet.warning("請注意", "若要進行商品選購，請先同意隱私權政策", null);
-    } else {
-        if (s1 != null && s2 != null && $input_quantity.val() != 0) {
-            Product.AddUp.Cart({
-                FK_Pid: parseInt(Pid),
-                FK_PriceId: $(".priceframe input[type='radio']:checked").data("priceid"),
-                FK_S1id: s1,
-                FK_S2id: s2,
-                Quantity: $input_quantity.val(),
-            }).done(function (result) {
-                if (result.success) {
-                    Coker.sweet.success("商品已成功加入購物車", null, true);
-                    var type = (result.message).substr(0, 1);
-                    var id = (result.message).substr(1);
-                    Product.GetOne.Cart(id).done(function (result) {
-                        if (type == 'N') {
-                            CartDropAdd(result);
-                        } else {
-                            CartDropUpdate(result);
-                        }
+    class ProductContentController {
+        constructor(options) {
+            this.options = $.extend(true, {}, DEFAULTS, options || {});
+            this.$pageRoot = $(this.options.pageRoot);
+            this.$root = this.$pageRoot.find(this.options.selectors.product);
+            this.$contentRoot = this.$root.find(this.options.selectors.content);
+            this.$quantityInput = this.$root.find(this.options.selectors.quantityInput);
+            this.$quantityWrap = this.$root.find(this.options.selectors.quantityWrap);
+            this.$addToCartButton = this.$pageRoot.find(this.options.selectors.addToCartButton);
+            this.options.totalBonus = normalizeNullableInt(this.options.totalBonus, 0);
+            this.options.orderPrice = !!this.options.orderPrice;
+            this.state = {
+                productId: this.resolveProductId(),
+                product: null,
+                selection: null,
+                previewSwiper: null,
+                productSwiper: null
+            };
+            this.mediaViewer = new ProductMediaViewer(this.options);
+        }
+
+        t(key, fallback, params) {
+            return resolveText(this.options, key, fallback, params);
+        }
+
+        resolveProductId() {
+            if (this.options.productId != null) return this.options.productId;
+            if (typeof window.PageId !== 'undefined' && window.PageId != null && !Number.isNaN(window.PageId)) {
+                return window.PageId;
+            }
+
+            let pid = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);
+            if (Number.isNaN(Number(pid)) && /\/[\d]+\//.test(location.pathname)) {
+                const parts = location.pathname.match(/\/[\d]+\//g);
+                if (parts && parts.length > 0) {
+                    pid = parts[parts.length - 1].replace(/\//g, '');
+                }
+            }
+            return pid;
+        }
+
+        init() {
+            this.bindStaticEvents();
+            this.logClick();
+            return this.load();
+        }
+
+        bindStaticEvents() {
+            const selectors = this.options.selectors;
+
+            this.$pageRoot.off('click.productContent', '.btn_count_plus').on('click.productContent', '.btn_count_plus', () => {
+                const current = normalizeNullableInt(this.$quantityInput.val(), 1);
+                const step = normalizeNullableInt(this.$quantityInput.attr('step'), 1);
+                this.state.selection.setQuantity(current + step);
+                this.renderQuantity();
+            });
+
+            this.$pageRoot.off('click.productContent', '.btn_count_minus').on('click.productContent', '.btn_count_minus', () => {
+                const current = normalizeNullableInt(this.$quantityInput.val(), 1);
+                const step = normalizeNullableInt(this.$quantityInput.attr('step'), 1);
+                this.state.selection.setQuantity(current - step);
+                this.renderQuantity();
+            });
+
+            this.$pageRoot.off('change.productContent', selectors.quantityInput).on('change.productContent', selectors.quantityInput, (e) => {
+                this.state.selection.setQuantity($(e.currentTarget).val());
+                this.renderQuantity();
+            });
+
+            this.$pageRoot.off('click.productContent', selectors.addToCartButton).on('click.productContent', selectors.addToCartButton, () => {
+                this.addToCart();
+            });
+
+            this.$pageRoot.off('change.productContent', 'input[name="S1_Radio"]').on('change.productContent', 'input[name="S1_Radio"]', (e) => {
+                this.state.selection.setSpec(1, $(e.currentTarget).val());
+                this.renderSelectionArea();
+            });
+
+            this.$pageRoot.off('change.productContent', 'input[name="S2_Radio"]').on('change.productContent', 'input[name="S2_Radio"]', (e) => {
+                this.state.selection.setSpec(2, $(e.currentTarget).val());
+                this.renderSelectionArea();
+            });
+
+            this.$pageRoot.off('change.productContent', 'input[name="priceRadio"]').on('change.productContent', 'input[name="priceRadio"]', (e) => {
+                this.state.selection.setPrice($(e.currentTarget).data('priceid'));
+                this.syncButtonState();
+            });
+
+            this.$pageRoot.off('click.productContent', '.pro_display').on('click.productContent', '.pro_display', (e) => {
+                const id = $(e.currentTarget).data('id');
+                this.mediaViewer.showById(id);
+            });
+
+            this.$pageRoot.off('click.productContent', '.btn_tc').on('click.productContent', '.btn_tc', (e) => {
+                $('#ProductDescription').removeClass('active show');
+                $('#TechnicalDocuments').addClass('active show');
+                $('#btn_tab .nav-link').removeClass('active');
+                $('#pills-documents-tab').addClass('active');
+
+                const tcid = $(e.currentTarget).data('tcid');
+                const $target = $(`.badge_${tcid}`);
+                if ($target.length > 0) {
+                    $('html, body').animate({ scrollTop: $target.offset().top - ($('header > nav').height() || $('header').height() || 0) * 2 }, 0);
+                }
+            });
+        }
+
+        logClick() {
+            try {
+                this.options.api.clickLog(this.state.productId);
+            } catch (error) {
+                console.warn('Product click log failed.', error);
+            }
+        }
+
+        load() {
+            return this.options.api.getMainDisplay(this.state.productId).done((result) => {
+                if (!result) {
+                    window.location.href = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+                    return;
+                }
+
+                this.state.product = result;
+                this.state.selection = new ProductSelectionEngine(result, this.options);
+
+                if (typeof this.options.hooks.afterLoad === 'function') {
+                    this.options.hooks.afterLoad(result, this);
+                }
+
+                this.render();
+            });
+        }
+
+        render() {
+            const result = this.state.product;
+            const selectors = this.options.selectors;
+            const $root = this.$root;
+            const $content = this.$contentRoot;
+
+            if (result.status == 2) {
+                this.options.canShop = false;
+                this.state.selection.canShop = false;
+                result.stocks?.forEach(stock => { stock.stock = 0; });
+            }
+
+            $content.find(selectors.title).text(result.title || '');
+            $content.find(selectors.itemNo).text(result.itemNo || '');
+
+            const introHtml = (result.introduction || '')
+                .split('\n')
+                .filter(Boolean)
+                .map(x => `<li>${x}</li>`)
+                .join('');
+            $content.find(selectors.introduce).html(introHtml);
+
+            const descHtml = (result.description || '')
+                .split('\n')
+                .filter(Boolean)
+                .map(x => `<li>${x}</li>`)
+                .join('');
+            $root.find(selectors.specList).html(descHtml);
+
+            this.toggleSpecDetailButton();
+            this.renderHtmlContent();
+            this.renderTechCerts();
+            this.renderFiles();
+            this.renderTags();
+            this.renderStatus();
+            this.renderMedia();
+            this.renderSelectionArea();
+            this.initShare();
+            this.initFavorite();
+            this.initSwitchPage();
+
+            const $main = this.$pageRoot.find(selectors.mainContent);
+            $main.removeClass('d-none');
+
+            const $firstTab = this.$pageRoot.find(selectors.tabButtons).first();
+            if ($firstTab.length > 0) {
+                $firstTab.trigger('click');
+            }
+
+            if (typeof this.options.hooks.afterRender === 'function') {
+                this.options.hooks.afterRender(result, this);
+            }
+        }
+
+        toggleSpecDetailButton() {
+            const $btn = this.$root.find(this.options.selectors.detailedButton);
+            const $list = this.$root.find(this.options.selectors.specList);
+            let specHeight = 0;
+
+            $list.children('li').each(function () {
+                specHeight += $(this).outerHeight(true) || 0;
+            });
+
+            if (specHeight > 96) {
+                $btn.removeClass('d-none');
+            } else {
+                $btn.addClass('d-none');
+            }
+        }
+
+        renderHtmlContent() {
+            const html = this.state.product.html;
+            const selectors = this.options.selectors;
+            if (html && html.trim() !== '') {
+                $(selectors.htmlPanel).removeClass('d-none').html(htmlDecode(html));
+            } else {
+                $('#ProductDescription,#btn_tab .description').remove();
+            }
+        }
+
+        renderTechCerts() {
+            const result = this.state.product;
+            const selectors = this.options.selectors;
+            const $root = this.$pageRoot;
+            const $list = $root.find(selectors.techCertList).empty();
+            const $content = $root.find(selectors.techCertContent).empty();
+
+            if (!Array.isArray(result.techCertDatas) || result.techCertDatas.length === 0) {
+                $('#btn_tab > .technical,.pro_tc').remove();
+                return;
+            }
+
+            let hasAnyImage = false;
+
+            result.techCertDatas.forEach(item => {
+                (item.img_small || []).forEach(img => {
+                    hasAnyImage = true;
+                    $list.append(`<li class="me-1"><button class="btn_tc bg-transparent border-0" data-tcid="${item.id}"><img src="${img.link}" alt="${img.name}" /></button></li>`);
+                });
+
+                (item.img_orig || []).forEach(img => {
+                    $content.append(`
+                        <div class="badge_${item.id} row pb-3">
+                            <div class="col-12 col-lg-2 col-md-5 text-center verticalAlign">
+                                <img src="${img.link}" alt="${img.name}" />
+                            </div>
+                            <div class="description align-self-center col">${item.description || ''}</div>
+                        </div>
+                        <hr class="m-1" />
+                    `);
+                });
+            });
+
+            if (!hasAnyImage) {
+                $('.pro_tc').addClass('d-none');
+            }
+
+            $root.find('.pro_tc img, .pro_tc_content img').imgCheck?.();
+        }
+
+        renderFiles() {
+            const result = this.state.product;
+            const selectors = this.options.selectors;
+            const $list = $(selectors.fileList).empty();
+
+            if (!Array.isArray(result.files) || result.files.length === 0) {
+                $('#btn_tab > .files,#FileDownload').remove();
+                return;
+            }
+
+            result.files.forEach(file => {
+                const link = window.IsFaPage === true ? file.link : file.link.replace('upload', `upload/${this.options.orgName}`);
+                $list.append(`
+                    <div class="file border-bottom">
+                        <a href="${link}" download="${file.name}" title="${file.name}" class="link_with_icon d-flex text-decoration-none edit_lock">
+                            <div draggable="true" class="icon pe-2"></div>
+                            <div draggable="true" class="name">${file.name}</div>
+                        </a>
+                    </div>
+                `);
+            });
+
+            if (window.LinkWithIconInit) {
+                window.LinkWithIconInit();
+            }
+        }
+
+        renderTags() {
+            const result = this.state.product;
+            const $tagList = $(this.options.selectors.tagList).empty();
+
+            if (!Array.isArray(result.tagDatas) || result.tagDatas.length === 0) {
+                $tagList.addClass('d-none');
+                return;
+            }
+
+            result.tagDatas.forEach(item => {
+                $tagList.prepend(`<li><a class="round_tag rounded-pill me-1 px-3 py-1" href="/${this.options.orgName}/Search/Get/3/${item.tag_Name}">${item.tag_Name}</a></li>`);
+            });
+        }
+
+        renderStatus() {
+            const result = this.state.product;
+            this.$root.find('.status').remove();
+            if (normalizeNullableInt(result.status) !== 0) {
+                this.$root.find('.image').append(`<span class="status status${result.status}">${result.statusName}</span>`);
+            }
+        }
+
+        renderMedia() {
+            const result = this.state.product;
+            const selectors = this.options.selectors;
+            const templates = this.options.templates;
+            const $productWrapper = this.$root.find(selectors.productSwiperWrapper).empty();
+            const $previewWrapper = this.$root.find(selectors.previewSwiperWrapper).empty();
+            const medium = Array.isArray(result.img_Medium) ? result.img_Medium : [];
+            const small = Array.isArray(result.img_Small) ? result.img_Small : [];
+            const original = Array.isArray(result.img_Original) ? result.img_Original : [];
+
+            medium.forEach(img => {
+                let $slide;
+
+                if (img.fileType === 3) {
+                    $slide = cloneTemplate(templates.videoSlide);
+                    $slide.find('.pro_display').attr({
+                        src: img.link[0],
+                        alt: img.name,
+                        'data-id': img.id,
+                        'data-display-protype': 'video'
                     });
-                    if (price_list.length > 0) {
-                        var this_price_list = price_list.find(e => e.s1id == s1 && e.s2id == s2);
-                        this_price_list.stock -= $input_quantity.val();
-                        $input_quantity.attr("max", this_price_list.stock)
-                        if (this_price_list.stock <= 0) {
-                            if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
-                            if (!$counter_input.hasClass("isEmpty")) $counter_input.addClass("isEmpty");
-                        }
-                    } else {
-                        var stock = $input_quantity.attr("max") - $input_quantity.val();
-                        if (stock <= 0) {
-                            if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
-                            if (!$counter_input.hasClass("isEmpty")) $counter_input.addClass("isEmpty");
-                        } else {
-                            $input_quantity.attr("max", stock)
-                        }
-                    }
-                    $input_quantity.val($input_quantity.attr("step"));
+                } else if (img.fileType === 4) {
+                    $slide = cloneTemplate(templates.ytVideoSlide);
+                    const videoid = (img.name || '').split('&t=')[0];
+                    $slide.find('.pro_display').attr({
+                        src: `https://img.youtube.com/vi/${videoid}/hqdefault.jpg`,
+                        alt: img.name,
+                        'data-id': img.id,
+                        'data-youtube-link': img.name,
+                        'data-display-protype': 'youtube'
+                    });
+                } else if (img.fileType === 5) {
+                    $slide = cloneTemplate(templates.slide3d);
+                    $slide.find('.pro_display').attr({
+                        src: img.link?.[0] || '',
+                        alt: img.name,
+                        'data-id': img.id,
+                        'data-display-protype': '360view',
+                        'data-filename-x': img.filenameX || '{index}.jpg',
+                        'data-amount-x': img.amountX || 15
+                    });
                 } else {
-                    if (result.error == "商品庫存不足") {
+                    $slide = cloneTemplate(templates.imageSlide);
+                    $slide.find('.pro_display').attr({
+                        src: img.link[0],
+                        alt: img.name,
+                        'data-id': img.id,
+                        'data-display-protype': 'image'
+                    });
+                }
+
+                $slide.find('.pro_display').imgCheck?.();
+                $productWrapper.append($slide);
+            });
+
+            small.forEach(img => {
+                const $slide = cloneTemplate(templates.previewSlide);
+                const $img = $slide.find('img');
+                let src = img.link?.[0] || '';
+
+                if (img.fileType === 3) src = '/images/videopreview.jpg';
+                if (img.fileType === 4) {
+                    const videoid = (img.name || '').split('&t=')[0];
+                    src = `https://img.youtube.com/vi/${videoid}/hqdefault.jpg`;
+                }
+
+                $img.attr({ src, alt: img.name }).data('id', img.id);
+                $img.imgCheck?.();
+                $previewWrapper.append($slide);
+            });
+
+            this.mediaViewer.setItems(original);
+            this.initSwipers(small.length);
+        }
+
+        initSwipers(smallCount) {
+            if (this.state.previewSwiper && this.state.previewSwiper.destroy) this.state.previewSwiper.destroy(true, true);
+            if (this.state.productSwiper && this.state.productSwiper.destroy) this.state.productSwiper.destroy(true, true);
+
+            if (smallCount <= 1) {
+                $('.PreviewSwiper,.btn_swiper_prev_product,.btn_swiper_next_product').toggleClass('d-none', smallCount <= 1);
+                return;
+            }
+
+            this.state.previewSwiper = new Swiper('.PreviewSwiper', {
+                a11y: true,
+                slidesPerView: 4,
+                loop: false,
+                spaceBetween: 10,
+                freeMode: true,
+                watchSlidesProgress: true,
+                scrollbar: { el: '.swiper-scrollbar' },
+                breakpoints: {
+                    576: { slidesPerView: 4 },
+                    768: { slidesPerView: 6 },
+                    992: { slidesPerView: 8 }
+                }
+            });
+
+            this.state.productSwiper = new Swiper('.ProductSwiper', {
+                a11y: true,
+                spaceBetween: 15,
+                loop: true,
+                navigation: {
+                    nextEl: '.btn_swiper_next_product',
+                    prevEl: '.btn_swiper_prev_product'
+                },
+                breakpoints: {
+                    768: { allowTouchMove: true },
+                    992: { allowTouchMove: false }
+                },
+                thumbs: { swiper: this.state.previewSwiper }
+            });
+        }
+
+        renderSelectionArea() {
+            this.renderSpecs();
+            this.renderPrices();
+            this.renderQuantity();
+            this.syncButtonState();
+
+            if (typeof this.options.hooks.onSelectionChanged === 'function') {
+                this.options.hooks.onSelectionChanged(this.state.selection, this);
+            }
+        }
+
+        renderSpecs() {
+            const selectors = this.options.selectors;
+            const templates = this.options.templates;
+            const $options = this.$root.find(selectors.options);
+            $options.find('.radio').remove();
+
+            const stocks = this.state.selection.stocks || [];
+            const specInfo = analyzeSpecStructure(stocks);
+
+            if (specInfo.mode === 'none') {
+                return;
+            }
+
+            const spec1Options = this.state.selection.getSpec1Options();
+            const spec2Options = this.state.selection.getSpec2Options(this.state.selection.current.s1);
+
+            if (specInfo.mode === 'double' && spec2Options.length > 0) {
+                const $spec2 = cloneTemplate(templates.specRadio).attr('data-stype', '2');
+                const $control = $spec2.find('.spec_control');
+
+                spec2Options.forEach(item => {
+                    const checked = item.id === this.state.selection.current.s2 ? 'checked' : '';
+                    const disabled = item.enabled ? '' : 'disabled="disabled"';
+                    $control.append(`
+                        <input id="s2_${item.id}" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="${item.id}" ${checked} ${disabled}>
+                    `);
+                    $control.append(`
+                        <label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_${item.id}">
+                            ${item.title}
+                        </label>
+                    `);
+                });
+
+                $options.prepend($spec2);
+            }
+
+            if (specInfo.mode === 'single' || specInfo.mode === 'double') {
+                const $spec1 = cloneTemplate(templates.specRadio).attr('data-stype', '1');
+                const $spec1Control = $spec1.find('.spec_control');
+
+                spec1Options.forEach(item => {
+                    const checked = item.id === this.state.selection.current.s1 ? 'checked' : '';
+                    const disabled = item.enabled ? '' : 'disabled="disabled"';
+                    $spec1Control.append(`
+                        <input id="s1_${item.id}" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="${item.id}" ${checked} ${disabled}>
+                    `);
+                    $spec1Control.append(`
+                        <label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_${item.id}">
+                            ${item.title}
+                        </label>
+                    `);
+                });
+
+                $options.prepend($spec1);
+            }
+        }
+
+        renderPrices() {
+            const $priceFrame = this.$root.find(this.options.selectors.priceFrame).empty();
+            const priceOptions = this.state.selection.getPriceOptions();
+            const summaryText = this.state.product.priceDisplayText || buildPriceSummary(this.state.product.stocks, this.options);
+            const hasMultiplePrice = priceOptions.length > 1;
+
+            if (!priceOptions.length) {
+                this.$addToCartButton.addClass('d-none');
+                $priceFrame.addClass('d-none');
+                this.$root.find('.options').addClass('d-none');
+                return;
+            }
+
+            $priceFrame.removeClass('d-none');
+
+            priceOptions.forEach((item, index) => {
+                const $price = cloneTemplate(this.options.templates.priceItem);
+
+                const $input = $price.find('.price-option-input');
+                const $label = $price.find('.price-option-label');
+                const $roleBadge = $price.find('.price-role-badge');
+                const $roleName = $price.find('.price-role-name');
+                const $meta = $price.find('.price-option-meta');
+                const $suggestPrice = $price.find('.suggest-price');
+                const $originalPrice = $price.find('.original-price');
+                const $saleRoleName = $price.find('.sale-role-name');
+                const $salePrice = $price.find('.sale-price');
+                const $sub = $price.find('.price-option-sub');
+                const $badge = $price.find('.price-badge');
+                const $hint = $price.find('.price-hint');
+
+                const id = `price_${item.id || index}`;
+                const stock = item.stock;
+                const vm = buildPriceViewModel(item, stock, this, this.state.product);
+
+                const isSelectable = hasMultiplePrice && this.state.selection.canAddToCart();
+
+                $price.toggleClass('is-multi-price', hasMultiplePrice);
+                $price.toggleClass('is-single-price', !hasMultiplePrice);
+                $price.toggleClass('is-selectable', isSelectable);
+
+                $input
+                    .attr('id', id)
+                    .attr('name', 'priceRadio')
+                    .data('priceid', item.id)
+                    .prop('disabled', !!item.disabled)
+                    .prop('checked', !!item.checked)
+                    .toggleClass('d-none', !isSelectable);
+
+                $label.attr('for', id);
+
+                // multi: badge 顯示
+                if (hasMultiplePrice && vm.showRoleName) {
+                    $roleBadge.removeClass('d-none');
+                    $roleName.text(vm.roleName);
+                    $price.addClass('has-role-badge');
+                } else {
+                    $roleBadge.addClass('d-none');
+                    $roleName.text('');
+                    $price.removeClass('has-role-badge');
+                }
+
+                // single: 角色名稱直接放在金額前
+                if (!hasMultiplePrice && vm.showRoleName) {
+                    $saleRoleName.removeClass('d-none').text(`${vm.roleName} `);
+                } else {
+                    $saleRoleName.addClass('d-none').text('');
+                }
+
+                $salePrice
+                    .text(hasMultiplePrice ? vm.saleText : (summaryText || vm.saleText))
+                    .removeClass('bonus_lack');
+
+                let hasMeta = false;
+
+                if (vm.showSuggestPrice) {
+                    $suggestPrice.removeClass('d-none').text(vm.suggestPriceText);
+                    hasMeta = true;
+                } else {
+                    $suggestPrice.addClass('d-none').text('');
+                }
+
+                if (vm.showOriginalPrice) {
+                    $originalPrice.removeClass('d-none').text(vm.originalPriceText);
+                    hasMeta = true;
+                } else {
+                    $originalPrice.addClass('d-none').text('');
+                }
+
+                if (hasMeta) {
+                    $meta.removeClass('d-none');
+                } else {
+                    $meta.addClass('d-none');
+                }
+
+                let hasSub = false;
+
+                if (vm.showBonusLack) {
+                    $badge.removeClass('d-none').text(this.t('bonusInsufficient'));
+                    $salePrice.addClass('bonus_lack');
+                    hasSub = true;
+                } else {
+                    $badge.addClass('d-none').text('');
+                }
+
+                if ($hint.length > 0) {
+                    $hint.addClass('d-none').text('');
+                }
+
+                if (hasSub) {
+                    $sub.removeClass('d-none');
+                } else {
+                    $sub.addClass('d-none');
+                }
+
+                $priceFrame.append($price);
+            });
+        }
+
+        renderQuantity() {
+            const stock = this.state.selection.getActiveStock();
+            if (!stock) return;
+
+            const min = stock.minQty;
+            const max = stock.stock - (stock.stock % stock.minQty);
+            this.$quantityInput.attr({ min, max, step: stock.minQty }).val(this.state.selection.current.quantity);
+
+            if (stock.stock < stock.minQty) {
+                this.$quantityWrap.addClass('isEmpty');
+            } else {
+                this.$quantityWrap.removeClass('isEmpty');
+            }
+        }
+
+        syncButtonState() {
+            const stock = this.state.selection.getActiveStock();
+            const canAdd = this.state.selection.canAddToCart();
+            const priceOptions = this.state.selection.getPriceOptions();
+            const hasBonusLackOption = priceOptions.some(x => !!x.disabled && normalizeNullableInt(x.bonus) > 0);
+            const selectedPrice = priceOptions.find(x => normalizeNullableInt(x.id) === normalizeNullableInt(this.state.selection.current.priceId));
+            const selectedIsBonusLack = !!selectedPrice && !!selectedPrice.disabled && normalizeNullableInt(selectedPrice.bonus) > 0;
+
+            this.$addToCartButton.removeClass('close bonus_lack');
+
+            if (!this.options.canShop || !stock || stock.timePrice) {
+                this.$addToCartButton.addClass('close');
+            } else if (!canAdd) {
+                if (selectedIsBonusLack) {
+                    this.$addToCartButton.addClass('bonus_lack');
+                } else {
+                    this.$addToCartButton.addClass('close');
+                }
+            }
+
+            if (!this.options.canShop || !stock) {
+                this.$root.find('.counter').addClass('d-none');
+            } else {
+                this.$root.find('.counter').removeClass('d-none');
+            }
+        }
+
+        addToCart() {
+            if (typeof this.options.hooks.beforeAddToCart === 'function') {
+                const shouldContinue = this.options.hooks.beforeAddToCart(this);
+                if (shouldContinue === false) return;
+            }
+
+            if (localStorage.getItem('AgreePrivacy') == null) {
+                Coker.sweet.warning(
+                    this.t('addCartWarningTitle'),
+                    this.t('addCartNeedPrivacy'),
+                    null
+                );
+                return;
+            }
+
+            if (!this.state.selection.canAddToCart()) {
+                Coker.sweet.warning(
+                    this.t('addCartWarningTitle'),
+                    this.t('addCartNeedSelection'),
+                    null,
+                    false
+                );
+                return;
+            }
+
+            const payload = this.state.selection.buildCartPayload(this.state.productId);
+
+            this.options.api.addToCart(payload).done((result) => {
+                if (!result.success) {
+                    if (result.error === '商品庫存不足') {
                         Coker.sweet.warning(result.error, result.message, function () {
                             location.reload(true);
                         }, false);
                     } else {
-                        Coker.sweet.error("商品加入購物車發生錯誤", result.message, null, true);
+                        Coker.sweet.error(
+                            this.t('commonErrorTitle'),
+                            result.message || this.t('addCartError'),
+                            null,
+                            true
+                        );
                     }
+                    return;
                 }
-            }).fail(function () {
-                Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
+
+                Coker.sweet.success(this.t('addCartSuccess'), null, true);
+
+                const type = (result.message || '').substr(0, 1);
+                const id = (result.message || '').substr(1);
+
+                this.options.api.getCartDropOne(id).done((drop) => {
+                    if (type === 'N') {
+                        if (typeof window.CartDropAdd === 'function') window.CartDropAdd(drop);
+                    } else {
+                        if (typeof window.CartDropUpdate === 'function') window.CartDropUpdate(drop);
+                    }
+                });
+
+                this.state.selection.decreaseStockAfterAdd();
+                this.state.selection.setQuantity(this.state.selection.getActiveStock()?.minQty || 1);
+                this.renderSelectionArea();
+
+                if (typeof this.options.hooks.afterAddToCart === 'function') {
+                    this.options.hooks.afterAddToCart(result, this);
+                }
+            }).fail(() => {
+                Coker.sweet.error(
+                    this.t('commonErrorTitle'),
+                    this.t('addCartError'),
+                    null,
+                    true
+                );
             });
-        } else {
-            Coker.sweet.warning("請注意", "請確實選擇規格及購買數量", null, false);
-        }
-    }
-}
-function ShowBigPro() {
-    var pro_self = $(this);
-    showProItem(pro_self);
-}
-
-function showProItem(pro_self) {
-    const itemType = pro_self.data("display-protype"); // "image", "video", "youtube", "360view"
-    // 通用:先清除舊CI360
-    window.CI360.destroy();
-
-    // 通用:先清空容器
-    $("#Pro_Image").addClass("d-none");
-    $("#Pro_Video").addClass("d-none").attr("src", "");
-    $("#Pro_Youtube").addClass("d-none").attr("src", "");
-    $("#Pro_360View").addClass("d-none");
-
-    // 通用:取得資料
-    var pro_viewModalSpace = $("#ProDisplayModal > .modal-dialog > .modal-content > .modal-body");
-    pro_viewModalSpace.children(".pro_img").addClass("d-none");
-    pro_viewModalSpace.children(".pro_youtube").addClass("d-none");
-    pro_viewModalSpace.children(".pro_360view").addClass("d-none");
-    const img_data = img_origin_list.find(item => item.id == pro_self.data("id"));
-    $("#ProDisplayModal").data("id", img_data.id);
-    // 根據類型分流
-    switch (itemType) {
-        case "image":
-            $("#Pro_Image").removeClass("d-none");
-            $(".modal-dialog").removeClass("ytshow")
-            pro_viewModalSpace.children(".pro_img").removeClass("d-none");
-            pro_viewModalSpace.children(".pro_video").addClass("d-none");
-            loadImageInModal(pro_self, img_data);
-            break;
-        case "video":
-            $(".modal-dialog").removeClass("ytshow")
-            pro_viewModalSpace.children(".pro_img").addClass("d-none");
-            pro_viewModalSpace.children(".pro_video").removeClass("d-none");
-            $("#ProDisplayModal .modal-dialog").removeAttr("style");
-            $("#ProDisplayModal .modal-body").removeAttr("style");
-            $("#ProDisplayModal .modal-dialog").css("width", "auto");
-            $("#ProDisplayModal .modal-body").css("height", "auto");
-            $("#Pro_Video").removeClass("d-none").attr("src", img_data.link[0]);
-            break;
-        case "youtube":
-            $(".modal-dialog").addClass("ytshow")
-            pro_viewModalSpace.children(".pro_youtube").removeClass("d-none");
-            pro_viewModalSpace.children(".pro_img").addClass("d-none");
-            pro_viewModalSpace.children(".pro_video").addClass("d-none");
-            const pro_YoutubeLink = pro_self.data("youtube-link").split("&t=");
-            let url = "https://www.youtube-nocookie.com/embed/" + pro_YoutubeLink[0];
-            if (pro_YoutubeLink[1]) url += `?start=${pro_YoutubeLink[1]}`;
-            $("#ProDisplayModal .modal-dialog").removeAttr("style");
-            $("#ProDisplayModal .modal-body").removeAttr("style");
-            $("#ProDisplayModal .modal-body").css("height", "auto");
-            $("#Pro_Youtube").removeClass("d-none").attr("src", url);
-            break;
-        case "360view":
-            if ($(".modal-dialog").hasClass("ytshow")) $(".modal-dialog").removeClass("ytshow")
-            pro_viewModalSpace.children(".pro_360view").removeClass("d-none");
-            pro_viewModalSpace.children(".pro_video").removeClass("d-none");
-            $("#Pro_360View").removeClass("d-none");
-            load360InModal(pro_self);
-            break;
-    }
-}
-function loadImageInModal(pro_self) {
-    var img_data = img_origin_list.find(item => item.id == pro_self.data("id"));
-    var pro_filename = img_data.link[0];
-    var pro_folder = pro_filename.substr(0, pro_filename.lastIndexOf('/') + 1);
-    pro_filename = pro_filename.substr(pro_filename.lastIndexOf('/') + 1);
-
-    var proImage_Self = $("#Pro_Image");
-    proImage_Self.empty();
-    proImage_Self.attr({
-        "data-filename-x": pro_filename,
-        "data-folder": pro_folder
-    });
-
-    const preloadImg = new Image();
-    preloadImg.src = pro_folder + pro_filename;
-
-    preloadImg.onload = function () {
-        const dialog = $("#ProDisplayModal .modal-dialog");
-        const imgWidth = preloadImg.naturalWidth;
-        const imgHeight = preloadImg.naturalHeight;
-        const imgRatio = imgWidth / imgHeight;
-        const rectBefore = dialog[0].getBoundingClientRect();
-        const beforeW = Math.round(rectBefore.width);
-        const beforeH = Math.round(rectBefore.height);
-        const currentWidth = dialog.outerWidth();
-        const currentHeight = dialog.outerHeight();
-        dialog.css({ width: currentWidth, height: currentHeight });
-        void dialog[0].offsetWidth;
-
-        const winWidth = window.innerWidth;
-        const winHeight = window.innerHeight;
-
-        let maxWidthRatio = 0.8;
-        if (imgRatio > 1.2) maxWidthRatio = 0.9;
-
-        const maxWidth = winWidth * maxWidthRatio;
-        const maxHeight = winHeight * 0.9;
-
-        const heightByMaxWidth = maxWidth / imgRatio;
-        let targetWidth, targetHeight;
-
-        if (heightByMaxWidth <= maxHeight) {
-            targetWidth = maxWidth;
-            targetHeight = heightByMaxWidth;
-        } else {
-            targetHeight = maxHeight;
-            targetWidth = maxHeight * imgRatio;
         }
 
-        dialog.css({
-            minWidth: "",
-            minHeight: "",
-            width: targetWidth + "px",
-            height: targetHeight + "px",
-            maxWidth: "100%",
-            maxHeight: ""
-        });
-        const sizeChanged = (beforeW !== Math.round(targetWidth)) || (beforeH !== Math.round(targetHeight));
-        const thumbSrc = pro_self.attr("src");
-        const thumbImg = $('<img>').attr("src", thumbSrc).css({
-            width: "100%",
-            height: "100%",
-            objectFit: "contain",
-            opacity: 0.6,
-            position: "absolute",
-            top: 0,
-            left: 0,
-            zIndex: 1
-        });
-        proImage_Self.append(thumbImg);
-        proImage_Self.css("position", "relative");
-        proImage_Self.addClass("loading");
+        initShare() {
+            const $share = $(this.options.selectors.shareBlock);
+            if ($share.length > 0 && typeof $share.cShare === 'function') {
+                $share.cShare({
+                    description: 'jQuery plugin - C Share buttons',
+                    showButtons: ['fb', 'line', 'plurk', 'twitter', 'email']
+                });
+            }
+        }
 
-        const proceed = () => {
-            proImage_Self.addClass("cloudimage-360");
-            setTimeout(() => {
-                window.CI360.add("Pro_Image");
-                setTimeout(() => {
-                    const canvas = $("#Pro_Image canvas");
-                    const canvasHeight = canvas.outerHeight();
-                    $("#ProDisplayModal .modal-body").css({
-                        height: canvasHeight + "px"
+        initFavorite() {
+            const $btn = this.$pageRoot.find(this.options.selectors.favoritesButton);
+            if ($btn.length === 0) return;
+            if (!this.options.api.checkFavorite || !this.options.api.addFavorite || !this.options.api.deleteFavorite) return;
+
+            this.options.api.checkFavorite(this.state.productId)?.done((check) => {
+                if (check && check.success) {
+                    $btn.data('Fid', check.message);
+                    $btn.addClass('turn');
+                    $btn.attr('title', this.t('removeFavorite'));
+                } else {
+                    $btn.attr('title', this.t('addFavorite'));
+                }
+            });
+
+            $btn.off('click.productFavorite').on('click.productFavorite', () => {
+                if ($btn.hasClass('turn')) {
+                    this.options.api.deleteFavorite($btn.data('Fid'))?.done((result) => {
+                        if (result.success) {
+                            $btn.removeClass('turn');
+                            $btn.attr('title', this.t('addFavorite'));
+                            Coker.sweet.success(this.t('removeFavoriteSuccess'), null, true);
+                        }
                     });
-                    thumbImg.remove();
-                    proImage_Self.removeClass("loading");
-                }, 50);
-            }, 300);
-        };
-        if (sizeChanged) {
-            let finished = false;
-            const finish = () => {
-                if (finished) return;
-                finished = true;
-                dialog.off("transitionend._resize");
-                proceed();
+                } else {
+                    this.options.api.addFavorite(this.state.productId)?.done((favorites) => {
+                        if (favorites.success) {
+                            $btn.addClass('turn');
+                            $btn.data('Fid', favorites.message);
+                            $btn.attr('title', this.t('removeFavorite'));
+                            Coker.sweet.success(this.t('addFavoriteSuccess'), null, true);
+                        }
+                    });
+                }
+            });
+        }
+
+        initSwitchPage() {
+            const $switch = $(this.options.selectors.switchPage);
+            if ($switch.length === 0 || !this.options.api.switchPage) return;
+
+            const currentUrl = window.location.pathname + window.location.search;
+            const productMarker = '/product/';
+            const productIndex = currentUrl.indexOf(productMarker);
+
+            if (productIndex < 0) {
+                $switch.remove();
+                return;
+            }
+
+            const catalog = currentUrl.substring(0, productIndex);
+            const pathAfterProduct = currentUrl.split('/product/')[1] || '';
+            const pathPart = pathAfterProduct.split('?')[0];
+            const pathParts = pathPart.split('/').filter(Boolean);
+            const productid = pathParts[0];
+            const searchtext = decodeURIComponent(pathParts[1] || '');
+            const urlParams = new URLSearchParams(window.location.search);
+            const dirid = urlParams.get('dirid');
+            const diridList = dirid == null ? null : dirid.split(',').map(Number);
+            const filter = urlParams.get('filter');
+            const routername = catalog.substring(catalog.lastIndexOf('/') + 1);
+
+            $switch.find('.btn_list').attr('href', catalog);
+
+            const bindSearchMode = (list) => {
+                if (!Array.isArray(list) || list.length === 0) {
+                    $switch.remove();
+                    return;
+                }
+
+                const index = list.findIndex(p => String(p.key) === String(productid));
+                $switch.find('.btn_list').attr('href', `${catalog}/Get/3/${searchtext}`);
+
+                if (index > 0) {
+                    const prev = list[index - 1];
+                    const link = `${catalog}/product/${prev.key}/${searchtext}${filter ? `?filter=${filter}` : ''}`;
+                    $switch.find('.btn_prev').attr({ href: link, title: prev.value }).removeClass('disabled');
+                }
+
+                if (index < list.length - 1 && index >= 0) {
+                    const next = list[index + 1];
+                    const link = `${catalog}/product/${next.key}/${searchtext}${filter ? `?filter=${filter}` : ''}`;
+                    $switch.find('.btn_next').attr({ href: link, title: next.value }).removeClass('disabled');
+                }
             };
 
-            // 先清一次，避免累積監聽
-            dialog.off("transitionend._resize").on("transitionend._resize", function (e) {
-                if (e.target === dialog[0]) finish(); // 只接受對話框本身的 transition
-            });
-
-            // 保底：就算 transition 被打斷，也會在 350ms 後繼續
-            setTimeout(finish, 350);
-        } else {
-            // 沒有尺寸變化 → 下一幀直接執行後續
-            requestAnimationFrame(proceed);
-        }
-    };
-}
-function load360InModal(pro_self) {
-    const pro360View_Self = $("#Pro_360View");
-    pro360View_Self.attr("data-filename-x", pro_self.data("filename-x"));
-    pro360View_Self.attr("data-amount-x", pro_self.data("amount-x"));
-    pro360View_Self.css("position", "relative");
-
-    const dialog = document.querySelector("#ProDisplayModal .modal-dialog");
-    dialog.addEventListener("transitionend", function handler(e) {
-        //if (e.propertyName === "height" || e.propertyName === "width") {
-        dialog.removeEventListener("transitionend", handler);
-        const pro360View = document.getElementById("Pro_360View");
-        pro360View.classList.add("cloudimage-360");
-        window.CI360.add("Pro_360View");
-        //}
-    });
-}
-
-function SwitchPage() {
-    var currentUrl = window.location.pathname + window.location.search;
-    var catalog = currentUrl.substring(0, currentUrl.indexOf('/product'));
-    var productid = (currentUrl.split('/product/')[1]).split('?')[0].split('/')[0];
-    var searchtext = decodeURIComponent((currentUrl.split('/product/')[1]).split('?')[0].split('/')[1]);
-    var urlParams = new URLSearchParams(window.location.search);
-    var dirid = urlParams.get('dirid');
-    var diridList = dirid == null ? null : dirid.split(',').map(Number);
-    var filter = urlParams.get('filter');
-
-    var routername = catalog.substring(catalog.lastIndexOf("/") + 1)
-
-    if (routername == "search" && sessionStorage.getItem(`product-${searchtext}`)) {
-        $("#SwitchPage .btn_list").attr("href", `${catalog}/Get/3/${searchtext}`)
-        var plist = JSON.parse(sessionStorage.getItem(`product-${searchtext}`));
-        var index = plist.findIndex(p => p.key == productid);
-        if (plist.length > 0) {
-            if (index > 0) {
-                var link = `${catalog}/product/${plist[index - 1].key}/${searchtext}?filter=${filter}`;
-                $("#SwitchPage .btn_prev").attr({
-                    href: link,
-                    title: plist[index - 1].value
-                })
-                $("#SwitchPage .btn_prev").removeClass("disabled")
+            if (routername === 'search' && searchtext && sessionStorage.getItem(`product-${searchtext}`)) {
+                bindSearchMode(JSON.parse(sessionStorage.getItem(`product-${searchtext}`)));
+                return;
             }
-            if (index < plist.length - 1) {
-                var link = `${catalog}/product/${plist[index + 1].key}/${searchtext}?filter=${filter}`;
-                $("#SwitchPage .btn_next").attr({
-                    href: link,
-                    title: plist[index + 1].value
-                })
-                $("#SwitchPage .btn_next").removeClass("disabled")
-            }
-        } else {
-            $('#SwitchPage').remove();
-        }
-    } else {
-        $("#SwitchPage .btn_list").attr("href", catalog)
-        co.Directory.SwitchPage({ id: productid, dirids: diridList, routername: routername, searchtext: searchtext, filters: filter, type: 1 }).done(function (result) {
-            if (result.length > 0) {
-                if (routername == "search") {
+
+            this.options.api.switchPage({
+                id: productid,
+                dirids: diridList,
+                routername: routername,
+                searchtext: searchtext,
+                filters: filter,
+                type: 1
+            })?.done((result) => {
+                if (!Array.isArray(result) || result.length === 0) {
+                    $switch.remove();
+                    return;
+                }
+
+                if (routername === 'search') {
                     sessionStorage.setItem(`product-${searchtext}`, JSON.stringify(result));
-                    var index = result.findIndex(p => p.key == productid);
-                    if (index > 0) {
-                        $("#SwitchPage .btn_prev").removeClass("disabled")
-                        var link = `${catalog}/product/${result[index - 1].key}/${searchtext}?filter=${filter}`;
-                        $("#SwitchPage .btn_prev").attr({
-                            href: link,
-                            title: result[index - 1].value
-                        })
-                        $("#SwitchPage .btn_prev").removeClass("disabled")
-                    }
-                    if (index < result.length - 1) {
-                        var link = `${catalog}/product/${result[index + 1].key}/${searchtext}?filter=${filter}`;
-                        $("#SwitchPage .btn_next").attr({
-                            href: link,
-                            title: result[index + 1].value
-                        })
-                        $("#SwitchPage .btn_next").removeClass("disabled")
-                    }
-                } else {
-                    if (result[0].key != null) {
-                        $("#SwitchPage .btn_prev").removeClass("disabled")
-                        var link = `${catalog}/product/${result[0].key}`;
-                        $("#SwitchPage .btn_prev").attr({
-                            href: link,
-                            title: result[0].value
-                        })
-                    }
-                    if (result[1].key != null) {
-                        $("#SwitchPage .btn_next").removeClass("disabled")
-                        var link = `${catalog}/product/${result[1].key}`;
-                        $("#SwitchPage .btn_next").attr({
-                            href: link,
-                            title: result[1].value
-                        })
+                    bindSearchMode(result);
+                    return;
+                }
+
+                if (result[0]?.key != null) {
+                    $switch.find('.btn_prev').attr({
+                        href: `${catalog}/product/${result[0].key}`,
+                        title: result[0].value
+                    }).removeClass('disabled');
+                }
+
+                if (result[1]?.key != null) {
+                    $switch.find('.btn_next').attr({
+                        href: `${catalog}/product/${result[1].key}`,
+                        title: result[1].value
+                    }).removeClass('disabled');
+                }
+            });
+        }
+    }
+
+    function createProductContent(options) {
+        const controller = new ProductContentController(options);
+        controller.init();
+        return controller;
+    }
+
+    window.ProductContentModule = {
+        create: createProductContent,
+        ProductContentController,
+        ProductSelectionEngine,
+        ProductMediaViewer,
+        formatPriceText,
+        buildPriceSummary,
+        resolveText,
+        analyzeSpecStructure,
+        buildPriceViewModel
+    };
+
+    window.PageReady = function () {
+        window.productContentPage = createProductContent({
+            canShop: $('.btn_addToCar').length > 0,
+            totalBonus: typeof totalBonus !== 'undefined' ? totalBonus : 0,
+            orderPrice: typeof orderPrice !== 'undefined' ? orderPrice : false,
+            i18n: function (key, fallback) {
+                if (window.L && typeof window.L.get === 'function') {
+                    const value = window.L.get(key);
+                    return value || fallback;
+                }
+
+                if (window.local && typeof window.local === 'object') {
+                    const legacyMap = {
+                        marketPrice: 'MarketPrice',
+                        prodEmpty: 'ProdEmpty'
+                    };
+                    const legacyKey = legacyMap[key];
+                    if (legacyKey && window.local[legacyKey]) {
+                        return window.local[legacyKey];
                     }
                 }
-            } else {
-                $('#SwitchPage').remove();
+
+                return fallback;
             }
         });
-    }
-} 
+    };
+
+})(window, window.jQuery);

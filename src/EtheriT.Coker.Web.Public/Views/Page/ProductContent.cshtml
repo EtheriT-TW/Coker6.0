@@ -272,26 +272,30 @@
             {
                 @* <div class="priceframe  flex-wrap"> *@
                 <template id="PriceListTemplate">
-                    <div class="price-option form-check">
-                        <input class="form-check-input price-option-input" type="radio" name="priceRadio" id="">
-                        <label class="form-check-label price-option-label" for="">
-                            <div class="price-option-card">
-                                <div class="price-option-body">
-                                    <div class="price-option-head d-none">
-                                        <span class="price-role-name"></span>
-                                    </div>
+                    <div class="price-option-card">
+                        <input type="radio" class="price-option-input d-none" name="priceRadio" />
+                        <label class="price-option-label d-block" for="">
+                            <div class="price-option-body">
 
-                                    <div class="price-option-main">
-                                        <span class="ori_price d-none"></span>
-                                        <span class="discount text-danger"></span>
-                                    </div>
-
-                                    <div class="price-option-sub d-none">
-                                        <span class="suggest-price d-none"></span>
-                                        <span class="price-badge d-none"></span>
-                                        <span class="price-hint d-none"></span>
-                                    </div>
+                                <div class="price-role-badge d-none">
+                                    <span class="price-role-name"></span>
                                 </div>
+
+                                <div class="price-option-meta d-none">
+                                    <div class="suggest-price d-none"></div>
+                                    <div class="original-price d-none"></div>
+                                </div>
+
+                                <div class="price-option-main">
+                                    <span class="sale-role-name d-none"></span>
+                                    <span class="sale-price text-danger fw-bold"></span>
+                                </div>
+
+                                <div class="price-option-sub d-none">
+                                    <span class="price-badge d-none"></span>
+                                    <span class="price-hint d-none"></span>
+                                </div>
+
                             </div>
                         </label>
                     </div>

@@ -186,12 +186,6 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 return BadRequest(ex.Message);
             }
         }
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> ECPayLogisticsExpressCreateClientResponse(string ohid)
-        {
-            return LocalRedirect($"/OrderManagement#{ohid}");
-        }
         private string GenerateAutoPostForm(string actionUrl, object RequestBody)
         {
             var props = RequestBody.GetType().GetProperties();

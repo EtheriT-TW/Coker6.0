@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260419160257_Update_LogisticsSetting_SupportCashOnDelivery")]
+    partial class Update_LogisticsSetting_SupportCashOnDelivery
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -6098,7 +6101,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_TPid = 7L,
                             InputType = 2,
                             IsDeleted = false,
-                            PromptText = "如需啟用請記得至綠界後台測標",
                             Title = "是否啟用大宗寄倉"
                         },
                         new
@@ -6120,7 +6122,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 1L,
                             FK_TPid = 7L,
                             InputType = 2,
-                            IsDeleted = true,
+                            IsDeleted = false,
                             Title = "是否代收貨款"
                         },
                         new

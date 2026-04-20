@@ -561,8 +561,6 @@ function PageReady() {
     $(".btn_getmap").on("click", function () {
         AllDataGet(false);
 
-        console.log(order_header_data)
-
         const dataToSave = {
             formData: order_header_data,
             RecipientType: $(`[name="RecipientRadio"]:checked`).val(),

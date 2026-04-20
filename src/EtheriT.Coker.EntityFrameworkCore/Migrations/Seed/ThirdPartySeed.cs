@@ -277,6 +277,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Id = 22,
                     FK_TPid = 7,
                     Title = "是否啟用大宗寄倉",
+                    PromptText = "如需啟用請記得至綠界後台測標",
                     Code = "EnableB2C",
                     CreatorUserId = 1,
                     InputType = ThirdPartyKeypairInputTypeEnum.checkbox,
@@ -299,6 +300,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     CreatorUserId = 1,
                     InputType = ThirdPartyKeypairInputTypeEnum.checkbox,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                    IsDeleted = true,
                 }, new ThirdPartyKeypair
                 {
                     Id = 25,

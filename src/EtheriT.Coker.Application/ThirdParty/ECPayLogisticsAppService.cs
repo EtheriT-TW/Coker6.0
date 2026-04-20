@@ -187,7 +187,10 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var user = await db.FrontUsers.Where(e => e.UUID == ohdata.FK_UUID).FirstOrDefaultAsync();
 
                 RequestBody.MerchantID = ThirdPartyData.MerchantID;
-                RequestBody.MerchantTradeNo = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
+                var MerchantTradeNo = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
+                RequestBody.MerchantTradeNo = MerchantTradeNo;
+                ohdata.MerchantTradeNo = MerchantTradeNo;
+                db.SaveChanges();
                 RequestBody.MerchantTradeDate = DateTimeNow.ToString("yyyy/MM/dd HH:mm:ss");
 
                 var LogisticsSetting = await db.LogisticsSettings.Where(e => e.Id == ohdata.Shipping).FirstOrDefaultAsync();
@@ -260,8 +263,7 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 RequestBody.TradeDesc = $"{Website.Title}-商品購買交易";
 
-                RequestBody.ServerReplyURL = $"{BackstageUrl}api/ThirdParty/ECPayLogisticsExpressCreateResponse";
-                //RequestBody.ClientReplyURL = $"{BackstageUrl}";
+                RequestBody.ServerReplyURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayLogisticsExpressCreateResponse";
                 RequestBody.ClientReplyURL = "";
 
                 RequestBody.Remark = ohdata.Remark;
@@ -275,25 +277,27 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return RequestBody;
         }
-        public async Task<ResponseMessageDto> ECPayLogisticsExpressCreateResponse(ECPayLogisticsCreateResponseDto ResultResponseData)
+        public async Task<ResponseMessageDto> ECPayLogisticsExpressCreateResponse(Dictionary<string, string> ResultResponseData)
         {
             ResponseMessageDto response = new ResponseMessageDto();
-            var WebsiteId = await loginUserData.GetWebsiteId();
+            var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
             var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
 
             try
             {
-                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayLogisticsExpressCreate", JsonConvert.SerializeObject(ResultResponseData));
+                await loginUserData.SetLogs(0, WebsiteId, $"ECPayLogisticsExpressCreateResponse", JsonConvert.SerializeObject(ResultResponseData));
 
-                var ohdata = await db.Order_Headers.Where(e => e.MerchantTradeNo == ResultResponseData.MerchantTradeNo).FirstOrDefaultAsync();
-                if (ohdata == null) throw new Exception($"查無訂單資訊");
+                var ohdata = await db.Order_Headers.Where(e => e.MerchantTradeNo == ResultResponseData["MerchantTradeNo"]).FirstOrDefaultAsync();
 
-                ohdata.LogisticsStatusCode = ResultResponseData.RtnCode;
-                ohdata.AllPayLogisticsID = ResultResponseData.AllPayLogisticsID;
-                ohdata.LogisticsUpdateStatusDate = DateTime.ParseExact(ResultResponseData.UpdateStatusDate, "yyyy/MM/dd HH:mm", CultureInfo.InvariantCulture);
-                ohdata.CVSPaymentNo = ResultResponseData.CVSPaymentNo;
-                ohdata.CVSValidationNo = ResultResponseData.CVSValidationNo;
-                ohdata.BookingNote = ResultResponseData.BookingNote;
+                if (ohdata == null) throw new Exception("查無訂單資訊");
+
+                ohdata.LogisticsStatusCode = ResultResponseData["RtnCode"];
+                ohdata.AllPayLogisticsID = ResultResponseData["AllPayLogisticsID"];
+
+                if (DateTime.TryParseExact(ResultResponseData["UpdateStatusDate"], "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var updateDate)) ohdata.LogisticsUpdateStatusDate = updateDate;
+                ohdata.CVSPaymentNo = ResultResponseData["CVSPaymentNo"];
+                ohdata.CVSValidationNo = ResultResponseData["CVSValidationNo"];
+                ohdata.BookingNote = ResultResponseData["BookingNote"];
 
                 db.SaveChanges();
 
@@ -305,7 +309,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
                 Console.WriteLine($"ECPayLogistics=>ECPayLogisticsExpressCreateResponse回傳資料：{ex.Message}");
                 response.Message = $"ECPayLogistics=>ECPayLogisticsExpressCreateResponse回傳資料：{ex.Message}";
-                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayLogisticsExpressCreateError", ex.Message);
+                await loginUserData.SetLogs(0, WebsiteId, $"ECPayLogisticsExpressCreateError", ex.Message);
             }
             return response;
         }
@@ -342,11 +346,11 @@ namespace EtheriT.Coker.Application.ThirdParty
                         case ECPayLogisticsPrintOrderInfoEnum.UniMart:
                             var RequestBody_711 = new ECPayLogisticsPrintShippingLabelC2C711RequestDto()
                             {
-                                MerchantID = "2000933",
-                                AllPayLogisticsID = "3403343",
-                                CVSPaymentNo = "D8782187",
-                                CVSValidationNo = "9649",
-                                PlatformID = "",
+                                MerchantID = ThirdPartyData.MerchantID,
+                                AllPayLogisticsID = ohdata.AllPayLogisticsID,
+                                CVSPaymentNo = ohdata.CVSPaymentNo,
+                                CVSValidationNo = ohdata.CVSValidationNo,
+                                PlatformID = ThirdPartyData.PlatformID,
                             };
 
                             RequestBody_711.CheckMacValue = Encrypt(RequestBody_711, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
@@ -402,8 +406,10 @@ namespace EtheriT.Coker.Application.ThirdParty
                 ThirdPartyData.MerchantID = thirdPartyDict.GetValueOrDefault("MerchantID") ?? throw new Exception("商家未確實設置綠界物流資料");
                 ThirdPartyData.HashKey = thirdPartyDict.GetValueOrDefault("HashKey") ?? throw new Exception("商家未確實設置綠界物流資料");
                 ThirdPartyData.HashIV = thirdPartyDict.GetValueOrDefault("HashIV") ?? throw new Exception("商家未確實設置綠界物流資料");
-                var IsCollection = thirdPartyDict.GetValueOrDefault("IsCollection") ?? throw new Exception("商家未確實設置綠界物流資料");
-                ThirdPartyData.IsCollection = IsCollection == "true" ? "Y" : "N";
+                //var IsCollection = thirdPartyDict.GetValueOrDefault("IsCollection") ?? throw new Exception("商家未確實設置綠界物流資料");
+                //ThirdPartyData.IsCollection = IsCollection == "true" ? "Y" : "N";
+                ThirdPartyData.IsCollection = "Y";
+
             }
             catch (Exception ex)
             {

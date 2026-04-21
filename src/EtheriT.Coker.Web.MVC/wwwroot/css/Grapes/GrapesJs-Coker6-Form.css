@@ -1,11 +1,15 @@
-﻿/* 容器 */
+﻿/* =========================
+   Modal Container
+========================= */
 .ds-modal {
     min-width: 520px;
-    max-width: 820px;
+    max-width: 900px;
     padding: 8px 4px;
 }
 
-/* 工具列：上下兩層排列 */
+/* =========================
+   Toolbar
+========================= */
 .ds-toolbar {
     display: grid;
     gap: 10px;
@@ -25,7 +29,9 @@
     opacity: .8;
 }
 
-/* 貼多行區塊（獨立一列） */
+/* =========================
+   Bulk Input
+========================= */
 .ds-bulk {
     display: grid;
     gap: 6px;
@@ -34,6 +40,8 @@
 .ds-label {
     font-size: 12px;
     opacity: .85;
+    margin-bottom: 4px;
+    display: block;
 }
 
 .ds-textarea {
@@ -47,29 +55,70 @@
     background: #fff;
 }
 
-/* 列表與每列 */
+/* =========================
+   List
+========================= */
 .ds-list {
     display: grid;
-    gap: 8px;
+    gap: 10px;
 }
 
+/* =========================
+   Row Layout（重點）
+========================= */
 .ds-row {
     display: grid;
-    grid-template-columns: auto 1fr auto; /* 把手 / 輸入框 / 刪除 */
-    gap: 10px;
-    align-items: center;
+    grid-template-columns: 32px minmax(0, 1fr) 32px;
+    gap: 12px;
+    align-items: start;
 }
 
-/* 把手、輸入、刪除鍵 */
+/* =========================
+   Handle / Delete
+========================= */
 .ds-handle {
     cursor: move;
     user-select: none;
-    padding: 0 8px;
+    padding: 6px 6px;
     color: #666;
     border: 1px dashed #bbb;
     border-radius: 4px;
+    align-self: center;
+    text-align: center;
 }
 
+.ds-del {
+    border: none;
+    background: transparent;
+    color: #d64545;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0 4px;
+    line-height: 1;
+    align-self: center;
+}
+
+    .ds-del:hover {
+        color: #c03434;
+    }
+
+/* =========================
+   Fields（兩欄核心）
+========================= */
+.ds-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    min-width: 0;
+}
+
+/* 每一個欄位 */
+.ds-field {
+    min-width: 0;
+}
+
+/* Input */
 .ds-input {
     width: 100%;
     box-sizing: border-box;
@@ -79,22 +128,9 @@
     background: #fff;
 }
 
-.ds-del {
-    border: none;
-    background: transparent;
-    color: #d64545; /* 醒目但不刺眼 */
-    font-weight: 700;
-    cursor: pointer;
-    font-size: 18px;
-    padding: 0 4px;
-    line-height: 1;
-}
-
-    .ds-del:hover {
-        color: #c03434;
-    }
-
-/* 底部動作按鈕 */
+/* =========================
+   Actions
+========================= */
 .ds-actions {
     display: flex;
     gap: 8px;
@@ -130,10 +166,26 @@
     width: 100%;
 }
 
-/* jQuery UI 的 placeholder */
+/* =========================
+   Sortable Placeholder
+========================= */
 .ds-placeholder {
     background: #f0f4ff;
     border: 1px dashed #4c6ef5;
     min-height: 38px;
     border-radius: 6px;
+}
+
+/* =========================
+   Responsive（手機）
+========================= */
+@media (max-width: 768px) {
+    .ds-row {
+        grid-template-columns: 32px minmax(0, 1fr) 32px;
+    }
+
+    .ds-fields {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
 }

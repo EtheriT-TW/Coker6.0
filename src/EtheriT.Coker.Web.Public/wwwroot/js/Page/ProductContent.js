@@ -1338,12 +1338,8 @@
         }
 
         initShare() {
-            const $share = $(this.options.selectors.shareBlock);
-            if ($share.length > 0 && typeof $share.cShare === 'function') {
-                $share.cShare({
-                    description: 'jQuery plugin - C Share buttons',
-                    showButtons: ['fb', 'line', 'plurk', 'twitter', 'email']
-                });
+            if (typeof window.ShareBlockInit === 'function') {
+                window.ShareBlockInit();
             }
         }
 

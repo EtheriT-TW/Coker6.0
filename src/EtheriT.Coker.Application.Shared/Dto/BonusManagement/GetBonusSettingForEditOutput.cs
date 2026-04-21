@@ -8,6 +8,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.BonusManagement
 {
     public class GetBonusSettingForEditOutput
     {
+        /// <summary>
+        /// 是否啟用紅利功能
+        /// </summary>
+        public bool BonusEnabled { get; set; }
         public long SiteId { get; set; }
 
         /// <summary>

@@ -468,6 +468,20 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     jobID = "E001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2025, 12, 22, 14, 09, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 27,
+                    key = "BonusEnabled",
+                    name = "紅利功能啟用",
+                    memo = "是否啟用紅利功能",
+                    FK_StoreSetGroupId = 6,
+                    type = SeoSetDataTypeEnum.checkBox,
+                    maxlength = 0,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "B001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 7, 25, 19, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(

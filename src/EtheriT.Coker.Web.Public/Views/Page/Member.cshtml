@@ -176,6 +176,17 @@
                     </span>@L.get("BrowsingHistory")
                 </button>
             </li>
+
+            @if (ViewBag.BonusEnabled)
+            {
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="bonus-tab" data-bs-toggle="tab" data-bs-target="#bonus-tab-pane" type="button" role="tab" aria-controls="bonus-tab-pane" aria-selected="false">
+                        <span class="material-symbols-outlined mx-2">
+                            savings
+                        </span>現有紅利
+                    </button>
+                </li>
+            }
         </ul>
         <div id="TabContent" class="tab-content">
             <div id="info-tab-pane" class="tab-pane fade show active" role="tabpanel" aria-labelledby="info-tab" tabindex="0">
@@ -188,7 +199,7 @@
                         </div>
                         <fieldset class="row mb-3 col-12 col-sm-6 ">
                             <legend class="col-form-label col-sm-2 pt-0 align-content-center">@L.get("Gender")</legend>
-                            <div class="col-sm-10 align-content-center">
+                            <div class="col-sm-10 align-content-center position-relative">
                                 <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="sex" id="inputSex1" value="1">
                                     <label class="form-check-label" for="inputSex1">@L.get("GenderMale")</label>
@@ -203,8 +214,8 @@
                                 </div>
                                 @if (ViewBag.BonusEnabled)
                                 {
-                                    <div class="form-check-inline">
-                                        使用者剩餘紅利：@ViewBag.UserBonus
+                                    <div id="UserBonus" class="form-check-inline">
+                                        使用者剩餘紅利：@((Convert.ToDecimal(ViewBag.UserBonus)).ToString("N0"))
                                     </div>
                                 }
                             </div>
@@ -263,9 +274,88 @@
                     </div>
                 </div>
             </div>
+            @if (ViewBag.BonusEnabled)
+            {
+                <div id="bonus-tab-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="bonus-tab" tabindex="1">
+                    <div class="nodata h5 text-center fw-bold d-none">目前沒有紅利資料</div>
+
+                    <ul class="page_btn d-flex justify-content-center mb-4 pagination d-none" data-init="false">
+                        <li class="page-item btn_prev">
+                            <button class="page-link text-black" title="上一頁">
+                                <i class="fa-solid fa-angle-left"></i>
+                            </button>
+                        </li>
+                        <li class="page-item btn_next">
+                            <button class="page-link text-black" title="下一頁">
+                                <i class="fa-solid fa-angle-right"></i>
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="content"></div>
+
+                    <template id="Template_Bonus_List">
+                        <div class="bonus_frame border rounded-3 p-3 mb-3 bg-white">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                                <div class="bonus_note_wrap">
+                                    <div class="text-muted small mb-1">獲得原因</div>
+                                    <div class="bonus_note fw-bold"></div>
+                                </div>
+                            </div>
+
+                            <div class="row text-center g-3 mb-3 bonus_summary">
+                                <div class="col-6 col-md-3">
+                                    <div class="text-muted small">生效日</div>
+                                    <div class="bonus_start fw-semibold"></div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="text-muted small">到期日</div>
+                                    <div class="bonus_end fw-semibold"></div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="text-muted small">獲得點數</div>
+                                    <div class="bonus_add fw-bold text-success"></div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="text-muted small">剩餘點數</div>
+                                    <div class="bonus_remain fw-bold text-danger"></div>
+                                </div>
+                            </div>
+
+                            <div class="collapse bonus_logs">
+                                <div class="card card-body mt-2">
+                                    <div class="row fw-bold text-center border-bottom pb-2 mb-2">
+                                        <div class="col-4">日期</div>
+                                        <div class="col-4">使用原因</div>
+                                        <div class="col-4">使用點數</div>
+                                    </div>
+                                    <div class="bonus_log_list"></div>
+                                    <div class="bonus_log_empty text-center text-muted d-none">無使用紀錄</div>
+                                </div>
+                            </div>
+
+                            <button class="btn_bonus_collapse btn btn-outline-secondary w-100 mt-3"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    aria-expanded="false"
+                                    title="查看使用紀錄">
+                                查看使用紀錄
+                            </button>
+                        </div>
+                    </template>
+
+                    <template id="Template_Bonus_Log_List">
+                        <div class="row text-center py-2 border-bottom bonus_log_item">
+                            <div class="col-4 log_date"></div>
+                            <div class="col-4 log_reason"></div>
+                            <div class="col-4 log_use text-danger"></div>
+                        </div>
+                    </template>
+                </div>
+            }
             @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
             {
-                <div id="profile-tab-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="profile-tab" tabindex="1">
+                <div id="profile-tab-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="profile-tab" tabindex="2">
                     <div class="nodata h5 text-center fw-bold d-none">@L.get("EmptyOrderHistory")</div>
 
                     <ul class="page_btn d-flex justify-content-center mb-4 pagination d-none" data-init="false">
@@ -336,6 +426,10 @@
                                         <div class="col-10 text-end align-content-center fw-bold">總使用紅利：</div>
                                         <div class="header_totalBonus price col-2 text-end align-content-center fw-bold"></div>
                                     </div>
+                                    <div id="carrier" class="row line-top">
+                                        <div class="col-12 col-lg-1">載具號碼：</div>
+                                        <div class="col-12 col-lg-11 header_carrier"></div>
+                                    </div>
                                     <div id="remarkLine" class="row line-top">
                                         <div class="col-12 col-lg-1">備註：</div>
                                         <div class="col-12 col-lg-11 header_remark"></div>
@@ -369,7 +463,7 @@
 
                 </div>
             }
-            <div id="favorite-tab-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="favorite-tab" tabindex="2">
+            <div id="favorite-tab-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="favorite-tab" tabindex="3">
                 <div class="nodata h5 text-center fw-bold d-none">@L.get("EmptyFavorites")</div>
 
                 <div class="btn_switchViewType d-flex justify-content-end m-3 mt-0 d-none">
@@ -379,49 +473,7 @@
                     <button class="align-items-center bg-transparent border-0 d-flex mx-1" data-type="list">
                         <span class="material-symbols-outlined fs-5 me-1">view_list</span>@L.get("TabImageText")
                     </button>
-                </div>
-
-                <template id="FavoriteTemplate">
-                    <div class="type_change_frame row position-relative mb-3">
-                        <a data-key="link" class="rounded">
-                            <figure>
-                                <div class="image_frame">
-                                    <div>
-                                        <img data-key="image" src="" alt="" />
-                                    </div>
-                                </div>
-                                <figcaption class="w-100">
-                                    <div>
-                                        <div data-key="itemNo" class="itemNo"></div>
-                                        <div data-key="title" class="title"></div>
-                                    </div>
-
-                                    <div data-key="description" class="description"></div>
-
-                                    <div class="tags"></div>
-                                    <div class="status-slot"></div>
-
-                                    <div class="price_group">
-                                        <div class="price-grid"></div>
-                                    </div>
-                                </figcaption>
-                            </figure>
-                        </a>
-
-                        <div class="shareBlock mt-1 p-1 position-absolute rounded-circle w-auto">
-                            <button class="btn_share bg-transparent border-0" title="@L.get("ShareProduct")">
-                                <i class="fa-solid fa-share text-white"></i>
-                                <span class="d-none">@L.get("Share")</span>
-                            </button>
-                        </div>
-
-                        <div class="favbtn position-absolute w-auto p-1 mt-2 rounded-circle favorite-slot">
-                            <button class="btn_favorite bg-transparent border-0" title="@L.get("RemoveFavorite")">
-                                <i class="font-rad fa-solid fa-heart"></i>
-                            </button>
-                        </div>
-                    </div>
-                </template>
+                </div>\
 
                 <div class="content row px-5 type_grid" data-storagename="Favorite"></div>
 
@@ -438,73 +490,79 @@
                     </li>
                 </ul>
             </div>
-            <div id="history-tab-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="history-tab" tabindex="3">
+            <div id="history-tab-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="history-tab" tabindex="4">
                 <div class="nodata h5 text-center fw-bold d-none">@L.get("EmptyBrowsingHistory")</div>
 
-                <div class="btn_switchViewType d-flex justify-content-end m-3 mt-0 d-none">
-                    <button class="align-items-center bg-transparent border-0 d-flex mx-1 focus" data-type="grid">
-                        <span class="material-symbols-outlined fs-5 me-1">grid_on</span>@L.get("TabImage")
+                <div class="btn_switchViewType d-flex justify-content-end m-3 d-none">
+                    <button type="button" class="focus" data-type="grid">
+                        <span class="material-symbols-outlined">grid_view</span>
                     </button>
-                    <button class="align-items-center bg-transparent border-0 d-flex mx-1" data-type="list">
-                        <span class="material-symbols-outlined fs-5 me-1">view_list</span>@L.get("TabImageText")
+                    <button type="button" data-type="list">
+                        <span class="material-symbols-outlined">view_list</span>
                     </button>
                 </div>
 
-                <template id="BrowsingTemplate">
-                    <div class="type_change_frame row position-relative mb-3">
-                        <a data-key="link" class="rounded">
-                            <figure>
-                                <div class="image_frame">
-                                    <div>
-                                        <img data-key="image" src="" alt="" />
-                                    </div>
-                                </div>
-                                <figcaption class="w-100">
-                                    <div>
-                                        <div data-key="itemNo" class=""></div>
-                                        <div data-key="title" class=""></div>
-                                    </div>
-                                    <div data-key="description"></div>
-                                    <div class="price_group">
-                                        <div data-key="oriPrice" class="text-decoration-line-through"></div>
-                                        <div data-key="price" class="fw-bold text-danger"></div>
-                                    </div>
-                                </figcaption>
-                            </figure>
-                        </a>
-                        <div class="shareBlock mt-1 p-1 position-absolute rounded-circle w-auto">
-                            <button class="btn_share bg-transparent border-0" title="@L.get("ShareProduct")">
-                                <i class="fa-solid fa-share text-white"></i>
-                                <span class="d-none">分享</span>
-                            </button>
-                        </div>
-                        <div class="favbtn position-absolute w-auto p-1 mt-2 rounded-circle">
-                            <button class="btn_favorite bg-transparent border-0" title="@L.get("AddFavorite")">
-                                <i class="font-rad fa-regular fa-heart"></i>
-                            </button>
-                        </div>
-                    </div>
-                </template>
-
-                <div class="content row px-5 type_grid" data-storagename="Browsing">
-                </div>
-
-                <ul class="page_btn d-flex justify-content-center my-4 pagination d-none" data-init="false">
+                <ul class="page_btn d-flex justify-content-center mb-4 pagination d-none" data-init="false">
                     <li class="page-item btn_prev">
-                        <button class="page-link text-black" title="@L.get("PaginationPrev")">
+                        <button class="page-link text-black" title="上一頁">
                             <i class="fa-solid fa-angle-left"></i>
                         </button>
                     </li>
                     <li class="page-item btn_next">
-                        <button class="page-link text-black" title="@L.get("PaginationNext")">
+                        <button class="page-link text-black" title="下一頁">
                             <i class="fa-solid fa-angle-right"></i>
                         </button>
                     </li>
                 </ul>
 
-                <div class="text-center pe-sm-5">@L.get("NoteBrowsingHistorySixMonthsOnly")</div>
+                <div class="content row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3" data-storagename="Browsing"></div>
 
+                <div class="templatecontent-tag d-none">
+                    <span class="badge bg-light text-dark border me-1"></span>
+                </div>
             </div>
+
+            <template id="FavoriteTemplate">
+                <div class="type_change_frame row position-relative mb-3">
+                    <a data-key="link" class="rounded">
+                        <figure>
+                            <div class="image_frame">
+                                <div>
+                                    <img data-key="image" src="" alt="" />
+                                </div>
+                            </div>
+                            <figcaption class="w-100">
+                                <div>
+                                    <div data-key="itemNo" class="itemNo"></div>
+                                    <div data-key="title" class="title"></div>
+                                </div>
+
+                                <div data-key="description" class="description"></div>
+
+                                <div class="tags"></div>
+                                <div class="status-slot"></div>
+
+                                <div class="price_group">
+                                    <div class="price-grid"></div>
+                                </div>
+                            </figcaption>
+                        </figure>
+                    </a>
+
+                    <div class="shareBlock mt-1 p-1 position-absolute rounded-circle w-auto">
+                        <button class="btn_share bg-transparent border-0" title="@L.get("ShareProduct")">
+                            <i class="fa-solid fa-share text-white"></i>
+                            <span class="d-none">@L.get("Share")</span>
+                        </button>
+                    </div>
+
+                    <div class="favbtn position-absolute w-auto p-1 mt-2 rounded-circle favorite-slot">
+                        <button class="btn_favorite bg-transparent border-0" title="@L.get("RemoveFavorite")">
+                            <i class="font-rad fa-solid fa-heart"></i>
+                        </button>
+                    </div>
+                </div>
+            </template>
         </div>
     </div>
 </Content>

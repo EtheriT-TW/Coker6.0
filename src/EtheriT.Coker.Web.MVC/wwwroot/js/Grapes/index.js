@@ -292,7 +292,7 @@ var grapesInit = function (options) {
                             { key: "ViewTypeChangeInit", state: false, run: true, class: [], parameter: {} },
                             { key: "SitemapInit", state: false, run: true, class: [], parameter: {} },
                             { key: "HoverEffectInit", state: false, run: true, class: [], parameter: {} },
-                            { key: "DirectoryGetDataInit", state: false, run: true, class: [], parameter: {} },
+                            { key: "DirectoryGetDataInit", state: false, run: true, class: [], parameter: null },
                             { key: "LinkWithIconInit", state: false, run: true, class: [], parameter: {} },
                             { key: "AnchorPointInit", state: false, run: true, class: [], parameter: {} },
                             { key: "ShareBlockInit", state: false, run: true, class: [], parameter: {} },

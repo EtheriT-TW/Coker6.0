@@ -64,7 +64,18 @@ function PageReady() {
                 contentType: 'application/json; charset=utf-8',
                 data: { ohid: ohid },
             });
-        }
+        },
+        GetBonusHistory: function (page) {
+            return $.ajax({
+                url: "/api/Bonus/GetFrontUserBonusHistory/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: { page: page },
+            });
+        },
     };
 
     let addr = $("#TWzipcode .address").val();
@@ -245,6 +256,9 @@ function Member(data) {
 
     $("#ToolList > li button").on("click", function () {
         switch ($(this).attr("id")) {
+            case "bonus-tab":
+                window.location.hash = "#bonus";
+                break;
             case "profile-tab":
                 window.location.hash = "#order";
                 break;
@@ -281,59 +295,190 @@ function hashChange(e) {
 }
 
 function WebPageChange() {
-    if (!window.location.hash.startsWith(`#${TabNow}`)) {
-        $("#TabContent > div").each(function () {
-            var $this = $(this);
-            if ($this.hasClass("active")) $this.removeClass("active");
-            if ($this.hasClass("show")) $this.removeClass("show");
-        });
+    const hash = window.location.hash || "";
 
-        $("#ToolList > li button").each(function () {
-            var $this = $(this);
-            if ($this.hasClass("active")) $this.removeClass("active");
-        });
+    if (hash.startsWith("#bonus")) {
+        if ($("#TabContent > div#bonus-tab-pane").length <= 0) {
+            window.location.hash = "";
+            return;
+        }
 
-        if (window.location.hash.startsWith("#order")) {
-            if ($("#TabContent > div#profile-tab-pane").length > 0) {
-                $("#TabContent > div#profile-tab-pane").addClass("active show");
-                $("#ToolList > li button#profile-tab").addClass("active");
-                if (window.location.hash.indexOf("-") > 0) {
-                    var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
-                    if (!isNaN(Number(pagenumber))) SetHistoryOrderPage(pagenumber);
-                    else window.location.hash = "#order-1";
-                } else {
-                    window.location.hash = "#order-1";
-                }
+        $("#TabContent > div").removeClass("active show");
+        $("#ToolList > li button").removeClass("active");
+
+        $("#TabContent > div#bonus-tab-pane").addClass("active show");
+        $("#ToolList > li button#bonus-tab").addClass("active");
+
+        if (hash.indexOf("-") > 0) {
+            var pagenumber = hash.substring(hash.indexOf("-") + 1);
+            if (!isNaN(Number(pagenumber))) {
+                SetBonusPage(Number(pagenumber));
+                TabNow = "bonus";
             } else {
-                window.location.hash = "";
+                window.location.hash = "#bonus-1";
             }
-        } else if (window.location.hash.startsWith("#browsing")) {
-            $("#TabContent > div#history-tab-pane").addClass("active show");
-            $("#ToolList > li button#history-tab").addClass("active");
-            if (window.location.hash.indexOf("-") > 0) {
-                var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
-                if (!isNaN(Number(pagenumber))) SetBrowsingHistoryPage(pagenumber);
-                else window.location.hash = "#browsing-1";
+        } else {
+            window.location.hash = "#bonus-1";
+        }
+
+        return;
+    }
+
+    if (hash.startsWith("#order")) {
+        if ($("#TabContent > div#profile-tab-pane").length <= 0) {
+            window.location.hash = "";
+            return;
+        }
+
+        $("#TabContent > div").removeClass("active show");
+        $("#ToolList > li button").removeClass("active");
+
+        $("#TabContent > div#profile-tab-pane").addClass("active show");
+        $("#ToolList > li button#profile-tab").addClass("active");
+
+        if (hash.indexOf("-") > 0) {
+            var pagenumber = hash.substring(hash.indexOf("-") + 1);
+            if (!isNaN(Number(pagenumber))) {
+                SetHistoryOrderPage(Number(pagenumber));
+                TabNow = "order";
+            } else {
+                window.location.hash = "#order-1";
+            }
+        } else {
+            window.location.hash = "#order-1";
+        }
+
+        return;
+    }
+
+    if (hash.startsWith("#browsing")) {
+        $("#TabContent > div").removeClass("active show");
+        $("#ToolList > li button").removeClass("active");
+
+        $("#TabContent > div#history-tab-pane").addClass("active show");
+        $("#ToolList > li button#history-tab").addClass("active");
+
+        if (hash.indexOf("-") > 0) {
+            var pagenumber = hash.substring(hash.indexOf("-") + 1);
+            if (!isNaN(Number(pagenumber))) {
+                SetBrowsingHistoryPage(Number(pagenumber));
+                TabNow = "browsing";
             } else {
                 window.location.hash = "#browsing-1";
             }
-        } else if (window.location.hash.startsWith("#favorites")) {
-            $("#TabContent > div#favorite-tab-pane").addClass("active show");
-            $("#ToolList > li button#favorite-tab").addClass("active");
-            if (window.location.hash.indexOf("-") > 0) {
-                var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
-                if (!isNaN(Number(pagenumber))) SetFavoritesPage(pagenumber);
-                else window.location.hash = "#favorites-1";
+        } else {
+            window.location.hash = "#browsing-1";
+        }
+
+        return;
+    }
+
+    if (hash.startsWith("#favorites")) {
+        $("#TabContent > div").removeClass("active show");
+        $("#ToolList > li button").removeClass("active");
+
+        $("#TabContent > div#favorite-tab-pane").addClass("active show");
+        $("#ToolList > li button#favorite-tab").addClass("active");
+
+        if (hash.indexOf("-") > 0) {
+            var pagenumber = hash.substring(hash.indexOf("-") + 1);
+            if (!isNaN(Number(pagenumber))) {
+                SetFavoritesPage(Number(pagenumber));
+                TabNow = "favorites";
             } else {
                 window.location.hash = "#favorites-1";
             }
         } else {
-            $("#TabContent > div#info-tab-pane").addClass("active show");
-            $("#ToolList > li button#info-tab").addClass("active");
+            window.location.hash = "#favorites-1";
         }
+
+        return;
     }
+
+    $("#TabContent > div").removeClass("active show");
+    $("#ToolList > li button").removeClass("active");
+
+    $("#TabContent > div#info-tab-pane").addClass("active show");
+    $("#ToolList > li button#info-tab").addClass("active");
+    TabNow = "info";
 }
 
+function SetBonusPage(number) {
+    const $pane = $("#bonus-tab-pane");
+    const $content = $pane.find(".content");
+    const $pageBtn = $pane.find(".page_btn");
+    const $noData = $pane.find(".nodata");
+
+    Coker.Member.GetBonusHistory(number).done(function (result) {
+        const datas = result && Array.isArray(result.data) ? result.data : [];
+
+        if (datas.length > 0) {
+            $noData.addClass("d-none");
+
+            if (result.page_Total > 1) {
+                $pageBtn.removeClass("d-none");
+                if (!$pageBtn.data("init")) {
+                    PageButtonInit($pageBtn, result.page_Total, "bonus");
+                }
+                ContentPageChage($pageBtn, number, result.page_Total);
+            } else {
+                $pageBtn.addClass("d-none");
+            }
+
+            BonusTemplateDataInsert($content, datas);
+        } else if (number != 1) {
+            window.location.hash = "#bonus-1";
+        } else {
+            $pageBtn.addClass("d-none");
+            $noData.removeClass("d-none");
+            $content.empty();
+        }
+    });
+}
+function BonusTemplateDataInsert($content, datas) {
+    $content.empty();
+
+    $.each(datas, function (index, data) {
+        const frame = $($("#Template_Bonus_List").html()).clone();
+
+        frame.find(".bonus_start").text(Coker.util.string.dateText(data.startTime));
+        frame.find(".bonus_end").text(Coker.util.string.dateText(data.endTime));
+        frame.find(".bonus_add").text(Coker.util.string.thousandSign(data.addBonus));
+        frame.find(".bonus_remain").text(Coker.util.string.thousandSign(data.remainBonus));
+
+        if (!Coker.util.string.isNullOrEmpty(data.note)) {
+            frame.find(".bonus_note").text(data.note);
+        } else {
+            frame.find(".bonus_note").text("未提供");
+        }
+
+        const collapseClass = `bonus_collapse_${data.id}`;
+        frame.find(".bonus_logs").addClass(collapseClass);
+        frame.find(".btn_bonus_collapse").attr("data-bs-target", `.${collapseClass}`);
+
+        frame.find(".btn_bonus_collapse").on("click", function () {
+            if ($(this).hasClass("collapsed")) $(this).text("查看使用紀錄");
+            else $(this).text("關閉使用紀錄");
+        });
+
+        const $logList = frame.find(".bonus_log_list");
+        const logs = Array.isArray(data.useLogs) ? data.useLogs : [];
+
+        if (logs.length > 0) {
+            $.each(logs, function (i, log) {
+                const logFrame = $($("#Template_Bonus_Log_List").html()).clone();
+                logFrame.find(".log_date").text(Coker.util.string.dateText(log.creationTime));
+                logFrame.find(".log_reason").text(log.reason || "");
+                logFrame.find(".log_use").text(Coker.util.string.thousandSign(log.useBonus));
+                $logList.append(logFrame);
+            });
+        } else {
+            frame.find(".bonus_log_empty").removeClass("d-none");
+        }
+
+        $content.append(frame);
+    });
+}
 function SetMemberData() {
     Coker.User.GetUser().done(function (result) {
         if (result.success) {
@@ -573,6 +718,9 @@ function HistoryTemplateDataInsert(Datas) {
         frame.find(".collapse .header_freight").text((order_header.freight).toLocaleString());
         frame.find(".collapse .header_total").text((order_header.total).toLocaleString());
         frame.find(".collapse .header_remark").text(order_header.remark);
+        if (!!order_header.carrier) frame.find(".collapse .header_carrier").text(order_header.carrier);
+        else frame.find(".collapse .header_carrier").closest(".row").remove();
+
         if (order_header.bonus == 0) frame.find(".collapse .header_totalBonus").closest(".row").remove();
         else frame.find(".collapse .header_totalBonus").text((order_header.bonus).toLocaleString());
 
@@ -629,20 +777,48 @@ function SetFavoritesPage(number) {
 }
 
 function SetBrowsingHistoryPage(number) {
+    const $pane = $("#history-tab-pane");
+    const $content = $pane.find(".content");
+    const $pageBtn = $pane.find(".page_btn");
+    const $noData = $pane.find(".nodata");
+    const $switch = $pane.find(".btn_switchViewType");
+    const templateHtml = $("#FavoriteTemplate").html();
+
     Product.GetAll.History(number).done(function (result) {
-        if (result.success && result.data.length > 0) {
+        const datas = result && Array.isArray(result.data) ? result.data : [];
+
+        if (result.success && datas.length > 0) {
+            $noData.addClass("d-none");
+
             if (result.page_Total > 1) {
-                if (!$("#history-tab-pane .page_btn").data("init")) {
-                    PageButtonInit($("#history-tab-pane .page_btn"), result.page_Total, "browsing");
+                $pageBtn.removeClass("d-none");
+                if (!$pageBtn.data("init")) {
+                    PageButtonInit($pageBtn, result.page_Total, "browsing");
                 }
-                ContentPageChage($("#history-tab-pane .page_btn"), number, result.page_Total);
+                ContentPageChage($pageBtn, number, result.page_Total);
+            } else {
+                $pageBtn.addClass("d-none");
             }
-            if ($("#history-tab-pane .btn_switchViewType").hasClass("d-none")) $("#history-tab-pane .btn_switchViewType").removeClass("d-none");
-            MemberTemplateDataInsert($("#history-tab-pane .content"), $("#BrowsingTemplate"), result.data);
+
+            $switch.removeClass("d-none");
+
+            if (window.DirectoryRenderer && typeof window.DirectoryRenderer.renderItemsByExternalTemplate === "function") {
+                DirectoryRenderer.renderItemsByExternalTemplate(
+                    $pane,
+                    $content,
+                    templateHtml,
+                    datas
+                );
+            } else {
+                MemberTemplateDataInsert($content, $("#FavoriteTemplate"), datas);
+            }
         } else if (number != 1) {
             window.location.hash = "#browsing-1";
         } else {
-            if ($("#history-tab-pane .nodata").hasClass("d-none")) $("#history-tab-pane .nodata").removeClass("d-none");
+            $pageBtn.addClass("d-none");
+            $switch.addClass("d-none");
+            $noData.removeClass("d-none");
+            $content.empty();
         }
     });
 }

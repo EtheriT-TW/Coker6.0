@@ -204,7 +204,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.PrivacyPolicy = privacyPolicy != null && privacyPolicy.value != null && privacyPolicy.value.Any() ? string.Join(",", privacyPolicy.value) : "";
             ViewBag.HasInvoice = HasInvoice;
             ViewBag.Carrier = Carrier;
-            ViewBag.BonusEnabled = bonusSetting.MaxRedemptionPercent > 0;
+            ViewBag.BonusEnabled = bonusSetting.BonusEnabled;
             if (template != null)
             {
                 var header = template.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.表頭);

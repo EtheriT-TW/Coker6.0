@@ -9,6 +9,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.BonusManagement
     public class CreateOrUpdateSettingsDto
     {
         /// <summary>
+        /// 是否啟用紅利功能
+        /// </summary>
+        public bool BonusEnabled { get; set; }
+        /// <summary>
         /// 迎新禮 (加入會員贈送紅利的點數)
         /// </summary>
         public int? SignupBonusPoints { get; set; }

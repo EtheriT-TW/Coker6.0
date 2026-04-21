@@ -17,7 +17,7 @@ namespace EtheriT.Coker.Application.Shared.BonusManagement
         /// 取得紅利設定
         /// </summary>
         /// <returns></returns>
-        Task<GetBonusSettingForEditOutput> GetBonusSettingForEdit();
+        Task<GetBonusSettingForEditOutput> GetBonusSettingForEdit(long websiteID = 0);
 
         /// <summary>
         /// 取得紅利設定說明
@@ -81,5 +81,12 @@ namespace EtheriT.Coker.Application.Shared.BonusManagement
         /// <param name="orderId"></param>
         /// <returns></returns>
         Task<ResponseMessageDto> RevokeEarnByOrderAsync(Guid memberUuid, long orderId, string? reason = null);
+        /// <summary>
+        /// 前台會員紅利異動紀錄列表
+        /// </summary>
+        /// <param name="page"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
+        Task<GetFrontUserBonusHistoryOutput> GetFrontUserBonusHistory(int page, int pageSize);
     }
 }

@@ -34,6 +34,7 @@
 		<Content Remove="wwwroot\lib\pdf-viewer\README.md" />
 		<Content Remove="wwwroot\Shared\components\ArticleViewer\index.css" />
 		<Content Remove="wwwroot\Shared\components\ArticleViewer\Index.js" />
+		<Content Remove="wwwroot\Shared\components\Directory\js\blocks.js" />
 		<Content Remove="wwwroot\Shared\components\Gallery3DShowcase\page.css" />
 		<Content Remove="wwwroot\Shared\components\Gallery3DShowcase\page.js" />
 		<Content Remove="wwwroot\Shared\components\gallery3d\gallery3d.css" />
@@ -144,6 +145,7 @@
 		</None>
 		<None Include="wwwroot\css\Page\Member.css" />
 		<None Include="wwwroot\js\Coker\*.js" />
+		<None Include="wwwroot\Shared\components\Directory\**\*.*" />
 		<None Include="wwwroot\js\Page\Index.js" />
 		<None Include="wwwroot\js\Page\ProductContent.js" />
 		<None Include="wwwroot\js\Page\Search.js" />

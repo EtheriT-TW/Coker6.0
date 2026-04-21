@@ -756,7 +756,7 @@ namespace EtheriT.Coker.Application.Authorization
                     await loginUserData.SaveChanges(frontuser);
                     userid = frontuser.Id;
 
-                    var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
+                    var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit(dto.WebsiteId);
                     string bonusStr = string.Empty;
                     if (bonusSetting != null && bonusSetting.SignupBonusPoints != null && bonusSetting.SignupBonusPoints > 0) {
                         await bonusManagementAppService.SaveTransaction(new CreateUserTransactionDto { 

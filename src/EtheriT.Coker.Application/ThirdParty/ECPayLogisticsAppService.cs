@@ -42,7 +42,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             this.configuration = configuration;
             this.mapper = mapper;
         }
-        public async Task<ECPayLogisticsMapRequestDto> ECPayLogisticsGetMapRequestBody(string SCIds, string LogisticsSubType)
+        public async Task<ECPayLogisticsMapRequestDto> ECPayLogisticsGetMapRequestBody(string SCIds, string LogisticsSubType, string IsCollection)
         {
             ECPayLogisticsMapRequestDto RequestBody = new ECPayLogisticsMapRequestDto();
             try
@@ -56,7 +56,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 RequestBody.MerchantID = ThirdPartyData.MerchantID;
                 RequestBody.MerchantTradeNo = GenMerchantTradeNo();
                 RequestBody.LogisticsSubType = LogisticsSubType;
-                RequestBody.IsCollection = ThirdPartyData.IsCollection;
+                RequestBody.IsCollection = IsCollection;
                 RequestBody.ServerReplyURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayLogisticsGetMapResponse";
                 RequestBody.ExtraData = SCIds;
                 return RequestBody;
@@ -159,7 +159,10 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 RequestBody = mapper.Map<ECPayLogisticsCreateCVSRequestDto>(await ECPayExpressRequestBody(ThirdPartyData, ohdata));
 
-                if (ThirdPartyData.IsCollection == "Y") RequestBody.CollectionAmount = RequestBody.GoodsAmount;
+                var db_logistics_setting = await db.LogisticsSettings.Where(e => e.Id == ohdata.Shipping).FirstOrDefaultAsync();
+                if (db_logistics_setting == null) throw new Exception("查無運費資訊");
+
+                if (db_logistics_setting.SupportCashOnDelivery) RequestBody.CollectionAmount = RequestBody.GoodsAmount;
                 else RequestBody.CollectionAmount = 0;
 
                 RequestBody.ReceiverStoreID = ohdata.CVSStoreID;
@@ -196,6 +199,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var LogisticsSetting = await db.LogisticsSettings.Where(e => e.Id == ohdata.Shipping).FirstOrDefaultAsync();
                 if (LogisticsSetting == null) throw new Exception("查無運費設置");
                 var LogisticsType = LogisticsSetting.LogisticsType;
+                RequestBody.IsCollection = LogisticsSetting.SupportCashOnDelivery ? "Y" : "N";
 
                 switch ((int)LogisticsType)
                 {
@@ -231,7 +235,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                         break;
                 }
                 RequestBody.GoodsAmount = (int)(ohdata.Subtotal + ohdata.Freight);
-                RequestBody.IsCollection = ThirdPartyData.IsCollection;
 
                 var itemlist = "";
                 var prod_titles = (await orderAppService.GetOrderDetails(ohdata.Id)).Select(e => e.Title);
@@ -406,9 +409,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                 ThirdPartyData.MerchantID = thirdPartyDict.GetValueOrDefault("MerchantID") ?? throw new Exception("商家未確實設置綠界物流資料");
                 ThirdPartyData.HashKey = thirdPartyDict.GetValueOrDefault("HashKey") ?? throw new Exception("商家未確實設置綠界物流資料");
                 ThirdPartyData.HashIV = thirdPartyDict.GetValueOrDefault("HashIV") ?? throw new Exception("商家未確實設置綠界物流資料");
-                //var IsCollection = thirdPartyDict.GetValueOrDefault("IsCollection") ?? throw new Exception("商家未確實設置綠界物流資料");
-                //ThirdPartyData.IsCollection = IsCollection == "true" ? "Y" : "N";
-                ThirdPartyData.IsCollection = "Y";
 
             }
             catch (Exception ex)

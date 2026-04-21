@@ -7,24 +7,8 @@
 @{
     ViewData["Title"] = "BonusTransaction";
 }
-<style>
-    #root {
-        display: flex;
-        flex-direction: row;
-        width: 100%;
-        gap: 10px;
-    }
-    #left {
-        flex: 0 0 43%;
-        max-width: 45%;
-        min-width: 0;
-    }
-    #right {
-        flex: 0 0 55%;
-        max-width: 55%;
-        min-width: 0;
-    }
-</style>
+
+<link type="text/css" rel="stylesheet" href="~/css/BonusManagement/Transaction.min.css" asp-append-version="true" />
 <div id="root">
     <div id="left">
         @(Html.DevExtreme().Form<CreateUserTransactionDto>()
@@ -307,7 +291,7 @@
 
             Coker.sweet.confirm(
                 "即將儲存",
-                "本次影響" + memberCount + "人，每人點數" + opText + point + "點",
+                "本次設定" + memberCount + "人，每人點數" + opText + point + "點",
                 "儲存",
                 "取消",
                 function () {

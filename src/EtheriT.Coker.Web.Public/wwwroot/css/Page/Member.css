@@ -491,7 +491,7 @@
     top: 3.5em;
 }
 /* Favorites：共用 Directory renderer 後補的樣式 */
-#favorite-tab-pane .tags {
+.tab-pane .tags {
     display: flex;
     flex-wrap: wrap;
     gap: 0.375rem;
@@ -500,54 +500,111 @@
     min-height: 1.75rem;
 }
 
-    #favorite-tab-pane .tags .badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.2rem 0.45rem;
-        font-size: 0.75rem;
-        font-weight: 400;
-        color: #666;
-        background-color: #f1f1f1;
-        border: 1px solid #ddd;
-        border-radius: 999px;
-        line-height: 1.2;
-        cursor: pointer;
-    }
+.tab-pane .tags .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #666;
+    background-color: #f1f1f1;
+    border: 1px solid #ddd;
+    border-radius: 999px;
+    line-height: 1.2;
+    cursor: pointer;
+}
 
-#favorite-tab-pane .price_group {
+.tab-pane .price_group {
     margin-top: 1rem;
     text-align: start;
 }
 
-#favorite-tab-pane .price-grid .origin-price {
+.tab-pane .price-grid .origin-price {
     color: #888;
     font-size: 0.95rem;
     text-decoration: line-through;
     margin-bottom: 0.15rem;
 }
 
-#favorite-tab-pane .price-grid .sale-price {
+.tab-pane .price-grid .sale-price {
     color: #dc3545;
     font-weight: 700;
     font-size: 1rem;
     line-height: 1.4;
 }
 
-#favorite-tab-pane .price-grid .combo-price {
+.tab-pane .price-grid .combo-price {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.25rem;
 }
 
-#favorite-tab-pane .price-grid .cash-price,
-#favorite-tab-pane .price-grid .bonus-price {
+.tab-pane .price-grid .cash-price,
+.tab-pane .price-grid .bonus-price {
     display: inline-block;
 }
 
-#favorite-tab-pane .price-grid .plus-sign {
+.tab-pane .price-grid .plus-sign {
     color: #dc3545;
     font-weight: 700;
+}
+
+
+/* Button Favorites*/
+.favbtn {
+    margin-right: 0.5rem;
+    top: 1.5rem;
+    right: 0rem;
+}
+
+    .favbtn .btn_favorite {
+        width: 30px;
+        height: 30px;
+        padding: 0rem;
+    }
+
+#UserBonus {
+    position: absolute;
+    margin-right: -0.5rem;
+    right: 0;
+}
+
+.bonus_frame {
+    background: #fff;
+    border: 1px solid #dee2e6 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    padding: 1rem !important;
+}
+
+.bonus_note {
+    font-size: 1rem;
+    color: #212529;
+}
+
+.bonus_summary .text-muted,
+.bonus_status_wrap .text-muted,
+.bonus_note_wrap .text-muted {
+    font-size: 0.85rem;
+}
+
+.bonus_note_wrap {
+    display: flex;
+    gap: 0.5rem;
+    padding:0 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.bonus_summary .fw-semibold,
+.bonus_summary .fw-bold,
+.bonus_status_wrap .fs-5 {
+    font-size: 1.05rem;
+}
+
+.btn_bonus_collapse {
+    border-radius: 0.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
 }
 
 @media (max-width:1200px) {
@@ -600,19 +657,6 @@
         display: none;
     }
 }
-
-/* Button Favorites*/
-.favbtn {
-    margin-right: 0.5rem;
-    top: 1.5rem;
-    right: 0rem;
-}
-
-    .favbtn .btn_favorite {
-        width: 30px;
-        height: 30px;
-        padding: 0rem;
-    }
 
 @media (max-width:1024px) {
     #info-tab-pane .btn_area button {

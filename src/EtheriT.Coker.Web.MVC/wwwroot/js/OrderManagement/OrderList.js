@@ -310,6 +310,7 @@ function ElementInit() {
     /* Header */
     $order_status = $(".status_select")
     $order_notes = $(".order_notes")
+    $order_systemMemos = $(".order_systemMemos")
     $memo_block = $(".memo_block");
 
     /* Recipient */
@@ -338,7 +339,8 @@ function FormDataClear() {
 
     $order_status.val(0);
     $order_status.prop("disabled", false);
-    $order_notes.text("")
+    $order_notes.text("");
+    $order_systemMemos.text("");
 
     $(".confirm").addClass("d-none");
     $(".btn_recheck").addClass("d-none");
@@ -498,8 +500,9 @@ function HeaderDataSet(result) {
 
     if (result.bonus == 0) $(".bonusLine").addClass("d-none");
     else $(".bonusLine").removeClass("d-none");
-
+    
     $order_notes.text(result.remark)
+    $order_systemMemos.text(result.systemMemo)
     $recipient_name.text(result.recipient)
     $recipient_cellphone.text(result.recipientCellPhone)
     var re_telIndex = result.recipientTelePhone.indexOf("-", 5)

@@ -1509,97 +1509,78 @@ namespace EtheriT.Coker.Application.Product
         public async Task<ProdGetHistoryDisplayAllDto> GetHistoryDisplay(int page)
         {
             var output = new ProdGetHistoryDisplayAllDto();
+
             try
             {
-                Guid UUID = await tokenAppService.GetUUID();
-                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                if (page <= 0) page = 1;
 
-                var prod_Logs = await (from prod_log in db.Prod_Logs
-                                       where prod_log.UUID == UUID
-                                       where prod_log.Action == LogActionEnum.點擊
-                                       where (DateTime.Compare(DateTime.Now.AddMonths(-3), (DateTime)prod_log.CreationTime) < 0)
-                                       orderby prod_log.CreationTime descending
-                                       select prod_log.FK_Pid).ToListAsync();
-                List<long> pids = new List<long>();
+                Guid uuid = await tokenAppService.GetUUID();
+                long websiteId = configuration.GetValue<long>("WebConfig:SiteId");
 
-                if (prod_Logs.Count > 0)
+                var prodLogs = await db.Prod_Logs
+                    .Where(e => e.UUID == uuid)
+                    .Where(e => e.Action == LogActionEnum.點擊)
+                    .Where(e => DateTime.Now.AddMonths(-3) < e.CreationTime)
+                    .OrderByDescending(e => e.CreationTime)
+                    .Select(e => e.FK_Pid)
+                    .ToListAsync();
+
+                var pids = new List<long>();
+                foreach (var pid in prodLogs)
                 {
-                    foreach (var prod_log in prod_Logs)
+                    if (!pids.Contains(pid))
                     {
-                        if (!pids.Contains(prod_log))
-                        {
-                            pids.Add(prod_log);
-                        }
+                        pids.Add(pid);
                     }
                 }
 
-                if (pids.Count > 0)
+                if (!pids.Any())
                 {
-                    var prod_log_data = (from pid in pids
-                                         join prod in db.Prods on pid equals prod.Id
-                                         select new ProdGetHistoryDisplayOneDto()
-                                         {
-                                             PId = prod.Id,
-                                             Title = prod.Title,
-                                             Introduction = prod.Introduction,
-                                             Description = prod.Description,
-                                             Link = "/product/" + prod.Id,
-                                             Image = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                                             .Where(e => e.Sid == prod.Id && e.type == (int)FileBindTypeEnum.產品)
-                                                             .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId && e.fileUpload.ContentType.StartsWith("image"))
-                                                             .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
-                                                       select new DirectoryReleInfoDto
-                                                       {
-                                                           Link = (f.fileUpload != null ? (f.fileUpload.DownloadFileName ?? "/images/noImg.jpg") : "/images/noImg.jpg")
-                                                       }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
-                                             OriPrice = "",
-                                             Price = "",
-                                             ItemNo = prod.ItemNo,
-                                         }).ToList();
-
-                    output.Page_Total = (int)Math.Ceiling(prod_log_data.Count / 8.0);
-                    prod_log_data = prod_log_data.Skip((page - 1) * 8).Take(8).ToList();
-
-                    var sotreset = await (from sd in db.StoreSetDetail
-                                          join ss in db.StoreSet on sd.FK_StoreSetId equals ss.Id
-                                          where sd.FK_WebsiteId == WebsiteId
-                                          where ss.key == "storeBuyState"
-                                          select sd.value).FirstOrDefaultAsync();
-
-                    var showprice = !(sotreset == "noPayNoShow");
-
-                    if (showprice)
-                    {
-                        for (var i = 0; i < prod_log_data.Count; i++)
-                        {
-                            var data = prod_log_data[i];
-                            //var favorites = await db.Favorites.Where(e => e.UUID == UUID & e.FK_AssocId == data.Id && e.Type == (int)FavoritesTypeEnum.商品).FirstOrDefaultAsync();
-                            //if (favorites != null) data.FId = favorites.Id;
-
-                            var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == data.PId).ToListAsync();
-                            var stockids = stocks.Select(e => e.Id).ToList();
-                            var prices = await GetPriceByStock(stockids);
-
-                            var temp_price = prices.Where(e => e.Price == (prices.Max(e => e.Price))).FirstOrDefault();
-                            data.OriPrice = temp_price?.OriPrice.HasValue == true ? "$" + temp_price.OriPrice.Value.ToString("N0") : "";
-                            data.Price = temp_price?.Price.HasValue == true ? "$" + temp_price.Price.Value.ToString("N0") : "$0";
-                            if (data.OriPrice == data.Price) data.OriPrice = "";
-                            if (data.OriPrice != "") data.Price = $"會員價 {data.Price}";
-                        }
-                    }
-
-                    output.Data = prod_log_data;
                     output.Success = true;
-
+                    output.Data = new List<DirectoryReleInfoDto>();
+                    output.Page_Total = 0;
                     return output;
                 }
-                else throw new Exception("查無商品資料");
+
+                const int pageSize = 8;
+                output.Page_Total = (int)Math.Ceiling(pids.Count / (double)pageSize);
+
+                var pageIds = pids
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                var directoryData = await GetDirectoryReleInfo(new DirectoryReleInfoInputDto
+                {
+                    Ids = pageIds,
+                    SiteId = websiteId
+                });
+
+                if (directoryData == null)
+                {
+                    output.Success = false;
+                    output.Error = "查無商品資料";
+                    output.Data = new List<DirectoryReleInfoDto>();
+                    return output;
+                }
+
+                output.Data = pageIds
+                    .Join(directoryData,
+                        pid => pid,
+                        item => item.Id,
+                        (pid, item) => item)
+                    .ToList();
+
+                output.Success = true;
+                return output;
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                output.Error = e.Message;
+                output.Success = false;
+                output.Error = ex.Message;
+                output.Data = new List<DirectoryReleInfoDto>();
+                return output;
             }
-            return output;
         }
 
         public async Task<GetProdContenDto> GetConten(SearchIDDto dto)

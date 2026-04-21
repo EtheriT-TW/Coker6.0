@@ -26,6 +26,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             SettingsViewModel model = new SettingsViewModel()
             {
                 // 取得紅利設定
+                BonusEnabled = bonusSettingData.BonusEnabled,
                 SiteId = bonusSettingData.SiteId,
                 SignupBonusPoints = bonusSettingData.SignupBonusPoints,
                 MinOrderForRedemption = bonusSettingData.MinOrderForRedemption,

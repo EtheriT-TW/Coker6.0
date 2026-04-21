@@ -1,0 +1,29 @@
+﻿#root {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 10px;
+}
+
+#left {
+    flex: 0 0 43%;
+    max-width: 45%;
+    min-width: 0;
+}
+
+#right {
+    flex: 0 0 55%;
+    max-width: 55%;
+    min-width: 0;
+}
+
+#helpedInfo_showSelectedMember:after {
+    content: "已選擇名單: ";
+    padding-left: 3px;
+}
+
+#showSelectedMemberDiv {
+    margin-top: 5px;
+    font-size: 1.2rem;
+    font-weight: bold;
+}

@@ -11,6 +11,11 @@
         .ID("bonusSettingsForm")
         .Items(items =>
         {
+            items.AddSimpleFor(m => m.BonusEnabled)
+                .Label(l => l.Text("紅利功能啟用")
+                             .Alignment(HorizontalAlignment.Right))
+                .Editor(e => e.CheckBox())
+                .Visible(true);
             // 群組1：迎新禮設定
             items.AddGroup()
                 .Caption("迎新禮設定")

@@ -29,6 +29,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? RecipientTelePhone { get; set; }
         public string RecipientAddress { get; set; }
         public string? Remark { get; set; }
+        public string? SystemMemo { get; set; }
         public int InvoiceRecipient { get; set; }
         public string? InvoiceTitle { get; set; }
         public string? UniformId { get; set; }

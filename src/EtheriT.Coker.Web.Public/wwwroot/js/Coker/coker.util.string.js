@@ -36,7 +36,31 @@
                     return str.replace(/\{(\d+)\}/g, (match, index) => {
                         return typeof args[index] !== "undefined" ? args[index] : match;
                     });
-                }
+                },
+                dateText: function (value, format) {
+                    if (typeof value === "undefined" || value === null || value === "") return "";
+
+                    var date = new Date(value);
+                    if (isNaN(date.getTime())) return value;
+
+                    var y = date.getFullYear();
+                    var m = String(date.getMonth() + 1).padStart(2, "0");
+                    var d = String(date.getDate()).padStart(2, "0");
+
+                    if (!format || format === "yyyy/MM/dd") {
+                        return `${y}/${m}/${d}`;
+                    }
+
+                    if (format === "yyyy-MM-dd") {
+                        return `${y}-${m}-${d}`;
+                    }
+
+                    if (format === "yyyyMMdd") {
+                        return `${y}${m}${d}`;
+                    }
+
+                    return `${y}/${m}/${d}`;
+                },
             }
         }
     });
@@ -47,5 +71,6 @@
     Coker.String.isNullOrEmpty = Coker.String.isNullOrEmpty || Coker.util.string.isNullOrEmpty;
     Coker.String.getWeekNumber = Coker.String.getWeekNumber || Coker.util.string.getWeekNumber;
     Coker.String.thousandSign = Coker.String.thousandSign || Coker.util.string.thousandSign;
+    Coker.String.dateText = Coker.String.dateText || Coker.util.string.dateText;
 
 })(window);

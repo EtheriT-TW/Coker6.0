@@ -816,6 +816,7 @@ namespace EtheriT.Coker.Application.Order
                         CompletedDate = result.CompletedDate,
                         StateStr = ((OrderStatusEnum)result.State).ToString(),
                         Remark = (result.Remark == "" || result.Remark == null) ? "無" : result.Remark,
+                        SystemMemo = (result.SystemMemo == "" || result.SystemMemo == null) ? "無" : result.SystemMemo,
                         Subtotal = result.Subtotal,
                         Total = result.Subtotal + result.Freight,
                         Discount = result.Discount,

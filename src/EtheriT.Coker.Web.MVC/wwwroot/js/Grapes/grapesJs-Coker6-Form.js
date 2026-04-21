@@ -1,33 +1,122 @@
 ﻿grapesjs.plugins.add('grapesJs-Coker6-Form', (editor, options) => {
-    // ============ GrapesJS plugin: Dynamic Select with + button ============
     const bm = editor.BlockManager;
     const domc = editor.DomComponents;
     const tm = editor.TraitManager;
 
-    // 工具：用 options 陣列同步 <option> 子節點
+    function toStr(v) {
+        return (v ?? '').toString();
+    }
+
+    function trimStr(v) {
+        return toStr(v).trim();
+    }
+
+    function normalizeOptionItem(item) {
+        if (item == null) {
+            return { value: '', displayText: '' };
+        }
+
+        // 舊格式：["A", "B"]
+        if (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean') {
+            const s = toStr(item);
+            return {
+                value: s,
+                displayText: s
+            };
+        }
+
+        // 新格式：{ value, displayText }
+        const value = item.value != null ? toStr(item.value) : '';
+        let displayText = item.displayText != null ? toStr(item.displayText) : '';
+
+        if (!displayText && value) {
+            displayText = value;
+        }
+
+        return {
+            value,
+            displayText
+        };
+    }
+
+    function normalizeOptions(options) {
+        if (!Array.isArray(options)) return [];
+        return options
+            .map(normalizeOptionItem)
+            .filter(opt => trimStr(opt.displayText) !== '');
+    }
+
+    // 將 options 同步成 <option value="...">displayText</option>
     const syncOptionsToChildren = (component) => {
-        const opts = (component.get('options') || []).map(v => (v ?? '').toString());
+        const opts = normalizeOptions(component.get('options') || []);
 
-        // 先清空子節點
         component.components().reset([]);
-
         const children = component.components();
 
-        opts.forEach(txt => {
-            // 新增 <option value="...">
-            let optComp = children.add({ tagName: 'option', attributes: { value: txt } });
-            // 某些版本回傳陣列，某些回傳單一 Component
+        opts.forEach(opt => {
+            let optComp = children.add({
+                tagName: 'option',
+                attributes: { value: toStr(opt.value) }
+            });
             optComp = Array.isArray(optComp) ? optComp[0] : optComp;
 
-            // 在 <option> 內放純文字（textnode）
-            let textNode = optComp.components().add({ type: 'textnode', content: txt });
+            let textNode = optComp.components().add({
+                type: 'textnode',
+                content: toStr(opt.displayText)
+            });
             textNode = Array.isArray(textNode) ? textNode[0] : textNode;
         });
     };
+
+    // 從現有子節點抽取 <option> → 新格式
+    const extractOptionsFromChildren = (component) => {
+        const res = [];
+        const children = component.components && component.components();
+        if (!children || !children.length) return res;
+
+        children.each(ch => {
+            const tag = (ch.get && ch.get('tagName')) || '';
+            if ((tag || '').toLowerCase() !== 'option') return;
+
+            const attrs = (ch.getAttributes && ch.getAttributes()) || ch.get('attributes') || {};
+            const value = attrs && attrs.value != null ? toStr(attrs.value) : '';
+
+            let displayText = '';
+            const tnode = ch.components && ch.components().models.find(m => {
+                const t = m.get && (m.get('type') || m.get('tagName'));
+                return t === 'textnode';
+            });
+
+            if (tnode) {
+                displayText = toStr(tnode.get && tnode.get('content'));
+            }
+
+            if (!displayText && value) {
+                displayText = value;
+            }
+
+            if (trimStr(displayText) !== '') {
+                res.push({
+                    value,
+                    displayText
+                });
+            }
+        });
+
+        return res;
+    };
+
+    function makeOptionDraft(opt) {
+        const normalized = normalizeOptionItem(opt);
+        return {
+            value: normalized.value,
+            displayText: normalized.displayText
+        };
+    }
+
     function openOptionsModal(editor, component) {
         const modal = editor.Modal;
 
-        // —— 容器（只掛 class，不寫行內樣式）——
         const wrap = document.createElement('div');
         wrap.className = 'ds-modal';
 
@@ -44,11 +133,16 @@
 
         const bulkLabel = document.createElement('label');
         bulkLabel.className = 'ds-label';
-        bulkLabel.textContent = '或貼上多行（每行一個選項，Ctrl + Enter 可快速加入）：';
+        bulkLabel.textContent = '或貼上多行（每行一個選項；若未指定 提交值，則 提交值 與顯示文字相同）：';
 
         const bulkArea = document.createElement('textarea');
         bulkArea.className = 'ds-textarea';
-        bulkArea.placeholder = '每一行會變成一個選項（會自動忽略空白行）';
+        bulkArea.placeholder = [
+            '貼上格式支援：',
+            '1. 單欄：台北市',
+            '2. 雙欄：A001 | 台北市',
+            '3. 提交值 可空：| 請選擇'
+        ].join('\n');
 
         bulkBox.appendChild(bulkLabel);
         bulkBox.appendChild(bulkArea);
@@ -79,8 +173,22 @@
         wrap.appendChild(list);
         wrap.appendChild(actions);
 
-        // —— 一列（含拖曳把手）——
-        const makeRow = (text = '') => {
+        const ensureDisplayText = (row) => {
+            const valueInput = row.querySelector('.ds-input-value');
+            const textInput = row.querySelector('.ds-input-text');
+            if (!valueInput || !textInput) return;
+
+            const value = toStr(valueInput.value);
+            const displayText = toStr(textInput.value);
+
+            if (!trimStr(displayText) && trimStr(value)) {
+                textInput.value = value;
+            }
+        };
+
+        const makeRow = (item = { value: '', displayText: '' }) => {
+            const rowData = makeOptionDraft(item);
+
             const row = document.createElement('div');
             row.className = 'ds-row';
 
@@ -89,11 +197,43 @@
             handle.textContent = '≡';
             handle.title = '拖曳以排序';
 
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'ds-input';
-            input.value = text;
-            input.placeholder = '輸入選項文字';
+            const fields = document.createElement('div');
+            fields.className = 'ds-fields';
+
+            const valueWrap = document.createElement('div');
+            valueWrap.className = 'ds-field ds-field-value';
+
+            const valueLabel = document.createElement('label');
+            valueLabel.className = 'ds-label';
+            valueLabel.textContent = '提交值';
+
+            const valueInput = document.createElement('input');
+            valueInput.type = 'text';
+            valueInput.className = 'ds-input ds-input-value';
+            valueInput.value = rowData.value;
+            valueInput.placeholder = '可留空';
+
+            valueWrap.appendChild(valueLabel);
+            valueWrap.appendChild(valueInput);
+
+            const textWrap = document.createElement('div');
+            textWrap.className = 'ds-field ds-field-text';
+
+            const textLabel = document.createElement('label');
+            textLabel.className = 'ds-label';
+            textLabel.textContent = '顯示文字';
+
+            const textInput = document.createElement('input');
+            textInput.type = 'text';
+            textInput.className = 'ds-input ds-input-text';
+            textInput.value = rowData.displayText;
+            textInput.placeholder = '不可留空';
+
+            textWrap.appendChild(textLabel);
+            textWrap.appendChild(textInput);
+
+            fields.appendChild(valueWrap);
+            fields.appendChild(textWrap);
 
             const del = document.createElement('button');
             del.type = 'button';
@@ -103,33 +243,124 @@
             del.addEventListener('click', () => row.remove());
 
             row.appendChild(handle);
-            row.appendChild(input);
+            row.appendChild(fields);
             row.appendChild(del);
+
+            // value 變更規則：
+            // 1. 若 displayText 為空 → 自動帶入 value
+            // 2. 若 displayText == 舊 value → 視為跟隨狀態，改成新 value
+            valueInput.addEventListener('input', () => {
+                const oldValue = toStr(valueInput.dataset.prevValue ?? '');
+                const newValue = toStr(valueInput.value);
+                const currentText = toStr(textInput.value);
+
+                if (!trimStr(currentText)) {
+                    textInput.value = newValue;
+                } else if (currentText === oldValue) {
+                    textInput.value = newValue;
+                }
+
+                valueInput.dataset.prevValue = newValue;
+            });
+
+            valueInput.addEventListener('blur', () => {
+                ensureDisplayText(row);
+                valueInput.dataset.prevValue = toStr(valueInput.value);
+            });
+
+            // displayText focus 規則：
+            // 若 displayText == value，清空以方便輸入自訂文字
+            textInput.addEventListener('focus', () => {
+                const value = toStr(valueInput.value);
+                const displayText = toStr(textInput.value);
+
+                if (displayText === value) {
+                    textInput.value = '';
+                }
+            });
+
+            // displayText blur 規則：
+            // 若空白，自動補回 value
+            textInput.addEventListener('blur', () => {
+                if (!trimStr(textInput.value)) {
+                    textInput.value = toStr(valueInput.value);
+                }
+            });
+
+            valueInput.dataset.prevValue = toStr(valueInput.value);
+
             return row;
         };
 
-        // 依現有 options 畫出列表
-        const opts = (component.get('options') || []).map(v => (v ?? '').toString());
-        if (opts.length === 0) list.appendChild(makeRow('選項1'));
-        else opts.forEach(v => list.appendChild(makeRow(v)));
-
-        // 新增
-        function importFromTextarea(bulkArea, list, makeRow) {
-            const buf = (bulkArea.value || '').trim();
-            if (!buf) return 0;
-            const lines = buf.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-            lines.forEach(v => list.appendChild(makeRow(v)));
-            bulkArea.value = '';
-            return lines.length;
+        const opts = normalizeOptions(component.get('options') || []);
+        if (opts.length === 0) {
+            list.appendChild(makeRow({ value: '', displayText: '選項1' }));
+        } else {
+            opts.forEach(opt => list.appendChild(makeRow(opt)));
         }
-        // 「新增一列」：若 textarea 有內容，先匯入，不另外新增空白列
+
+        function parseBulkLine(line) {
+            const raw = toStr(line).trim();
+            if (!raw) return null;
+
+            // 支援：
+            // A001 | 台北市
+            // A001,台北市
+            // A001\t台北市
+            // 單欄：台北市 -> value/displayText 同值
+            let parts = null;
+
+            if (raw.includes('|')) {
+                parts = raw.split('|');
+            } else if (raw.includes('\t')) {
+                parts = raw.split('\t');
+            } else if (raw.includes(',')) {
+                parts = raw.split(',');
+            }
+
+            if (parts && parts.length >= 2) {
+                const value = toStr(parts[0]).trim();
+                let displayText = toStr(parts.slice(1).join(parts === raw.split('|') ? '|' : parts === raw.split('\t') ? '\t' : ',')).trim();
+
+                if (!displayText && value) {
+                    displayText = value;
+                }
+
+                if (!displayText) return null;
+
+                return { value, displayText };
+            }
+
+            return {
+                value: raw,
+                displayText: raw
+            };
+        }
+
+        function importFromTextarea(bulkArea, list, makeRow) {
+            const buf = toStr(bulkArea.value).trim();
+            if (!buf) return 0;
+
+            const lines = buf.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+            let count = 0;
+
+            lines.forEach(line => {
+                const parsed = parseBulkLine(line);
+                if (!parsed) return;
+                list.appendChild(makeRow(parsed));
+                count++;
+            });
+
+            bulkArea.value = '';
+            return count;
+        }
+
         addBtn.addEventListener('click', () => {
             const added = importFromTextarea(bulkArea, list, makeRow);
-            if (added > 0) return;                 // 已匯入多行，就不再加空白
-            list.appendChild(makeRow(''));         // 否則就加一列空白
+            if (added > 0) return;
+            list.appendChild(makeRow({ value: '', displayText: '' }));
         });
 
-        // 可選：在 textarea 內 Ctrl+Enter / Cmd+Enter 直接匯入（不用移開焦點）
         bulkArea.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
@@ -137,25 +368,69 @@
             }
         });
 
-        // 取消
         btnCancel.addEventListener('click', () => modal.close());
 
-        // 儲存：回寫 options 並同步 <option>
         btnSave.addEventListener('click', () => {
-            const inputs = Array.from(list.querySelectorAll('input.ds-input'));
-            const values = inputs.map(i => (i.value || '').trim()).filter(Boolean);
-            component.set('options', values);     // 觸發你的 change:options
+            const rows = Array.from(list.querySelectorAll('.ds-row'));
+            const values = [];
+            let firstInvalidInput = null;
+
+            rows.forEach(row => {
+                const valueInput = row.querySelector('.ds-input-value');
+                const textInput = row.querySelector('.ds-input-text');
+
+                if (!valueInput || !textInput) return;
+
+                let value = toStr(valueInput.value);
+                let displayText = toStr(textInput.value);
+
+                // blur 規則在儲存前再保底一次
+                if (!trimStr(displayText)) {
+                    displayText = value;
+                    textInput.value = displayText;
+                }
+
+                value = toStr(value);
+                displayText = toStr(displayText);
+
+                // 若整列都空，直接忽略
+                if (!trimStr(value) && !trimStr(displayText)) {
+                    valueInput.classList.remove('is-invalid');
+                    textInput.classList.remove('is-invalid');
+                    return;
+                }
+
+                // displayText 不可空
+                if (!trimStr(displayText)) {
+                    textInput.classList.add('is-invalid');
+                    if (!firstInvalidInput) firstInvalidInput = textInput;
+                    return;
+                }
+
+                valueInput.classList.remove('is-invalid');
+                textInput.classList.remove('is-invalid');
+
+                values.push({
+                    value,
+                    displayText
+                });
+            });
+
+            if (firstInvalidInput) {
+                firstInvalidInput.focus();
+                return;
+            }
+
+            component.set('options', values);
             modal.close();
         });
 
-        // 開啟 Modal
         modal.open({ title: '編輯下拉選項', content: wrap });
 
-        // —— 啟用 jQuery UI Sortable（用把手拖曳）——
         const $ = window.jQuery;
         if ($ && $.fn && $.fn.sortable) {
             setTimeout(() => {
-                try { $(list).sortable('destroy'); } catch { }
+                try { $(list).sortable('destroy'); } catch (_) { }
                 $(list).sortable({
                     items: '.ds-row',
                     handle: '.ds-handle',
@@ -165,39 +440,11 @@
                     forcePlaceholderSize: true,
                     start: (e, ui) => ui.placeholder.height(ui.item.outerHeight()),
                 });
-                try { $(list).disableSelection && $(list).disableSelection(); } catch { }
+                try { $(list).disableSelection && $(list).disableSelection(); } catch (_) { }
             }, 0);
         }
     }
 
-    // 從現有子節點抽取 <option> 的 value/文字 → 轉成 options 陣列
-    const extractOptionsFromChildren = (component) => {
-        const res = [];
-        const children = component.components && component.components();
-        if (!children || !children.length) return res;
-
-        children.each(ch => {
-            const tag = (ch.get && ch.get('tagName')) || '';
-            if ((tag || '').toLowerCase() !== 'option') return;
-
-            const attrs = (ch.getAttributes && ch.getAttributes()) || ch.get('attributes') || {};
-            const val = attrs && attrs.value;
-
-            // 找 textnode 內容當作顯示文字
-            let txt = '';
-            const tnode = ch.components && ch.components().models.find(m => {
-                const t = m.get && (m.get('type') || m.get('tagName'));
-                return t === 'textnode';
-            });
-            if (tnode) txt = tnode.get && tnode.get('content');
-
-            res.push(((val != null ? val : txt) || '').toString());
-        });
-
-        return res;
-    };
-
-    // 定義 component type
     domc.addType('dynamic-select', {
         isComponent: el => el.tagName === 'SELECT',
         model: {
@@ -206,36 +453,44 @@
                 attributes: {
                     'data-dynamic-select': '1',
                 },
-                // 預設一個選項，value 與 text 同值
                 options: [],
-                // 讓 Style Manager 比較好用
                 traits: [
-                    { type: 'options-modal-launcher', label: '選項' } // 自訂 trait（見下）
+                    { type: 'options-modal-launcher', label: '選項' }
                 ],
                 toolbar: [
                     { attributes: { class: 'fa fa-edit', title: '編輯選項 (E)' }, command: 'open-ds-editor' },
-                    // 可以保留複製/刪除的預設按鈕
                 ]
             },
 
-            // 初始化時把 options 同步成 <option>
             init() {
                 if (!this.get('_bootstrapped')) {
                     const extracted = extractOptionsFromChildren(this);
-                    if (extracted.length) this.set('options', extracted, { silent: true });
+                    if (extracted.length) {
+                        this.set('options', extracted, { silent: true });
+                    } else {
+                        const normalized = normalizeOptions(this.get('options') || []);
+                        if (normalized.length) {
+                            this.set('options', normalized, { silent: true });
+                        }
+                    }
                     this.set('_bootstrapped', true);
                 }
-                this.on('change:options', () => syncOptionsToChildren(this));
-                // 第一次同步
+
+                this.on('change:options', () => {
+                    const normalized = normalizeOptions(this.get('options') || []);
+                    this.set('options', normalized, { silent: true });
+                    syncOptionsToChildren(this);
+                });
+
                 syncOptionsToChildren(this);
             },
 
-            // 匯出 HTML 時確保 children 跟 options 一致
             toHTML(...args) {
                 syncOptionsToChildren(this);
                 return this.constructor.__super__.toHTML.apply(this, args);
             }
         },
+
         view: {
             events: {
                 mousedown: 'intercept',
@@ -243,11 +498,10 @@
                 dblclick: 'openEditor',
             },
 
-            // 攔截原生互動，同時強制選取這個 component
             intercept(e) {
-                e.preventDefault(); // 不讓原生 select 展開
+                e.preventDefault();
                 const ed = this.em.get('Editor');
-                if (ed) ed.select(this.model); // ← 讓它在 GrapesJS 視為「已選取」
+                if (ed) ed.select(this.model);
                 return false;
             },
 
@@ -262,7 +516,6 @@
         }
     });
 
-    // Trait：只放一顆按鈕 → 按下開啟 Modal
     tm.addType('options-modal-launcher', {
         createInput: ({ component }) => {
             const btn = document.createElement('button');
@@ -274,22 +527,12 @@
         }
     });
 
-
-    // Block：一鍵插入
-    /*bm.add('dynamic-select', {
-        label: '下拉選單',
-        category: '表單',
-        content: {
-            type: 'dynamic-select',
-            attributes: { class: 'gjs-dyn-select' },
-            // 初始內文會被 options 覆蓋，不用放 children
-        }
-    });*/
-
     editor.Commands.add('open-ds-editor', {
         run(ed) {
             const sel = ed.getSelected();
-            if (sel && sel.get('type') === 'dynamic-select') openOptionsModal(ed, sel);
+            if (sel && sel.get('type') === 'dynamic-select') {
+                openOptionsModal(ed, sel);
+            }
         }
     });
 

@@ -13,6 +13,7 @@ using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.StoreSet;
+using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
@@ -35,11 +36,13 @@ namespace EtheriT.Coker.Application.BonusManagement
         private readonly LoginUserData loginUserData;
         private readonly IStoreSetAppService _storeSetAppService;
         private readonly IMailTemplateAppService _mailTemplateAppService;
+        private readonly ITokenAppService _tokenAppService;
         private readonly MailAppService _mailAppService;
         private readonly IConfiguration _configuration;
 
         public BonusManagementAppService(IStoreSetAppService storeSetAppService,
                                          IMailTemplateAppService mailTemplateAppService,
+                                         ITokenAppService tokenAppService,
                                          MailAppService mailAppService,
                                          IConfiguration configuration,
                                          LoginUserData loginUserData,
@@ -47,17 +50,18 @@ namespace EtheriT.Coker.Application.BonusManagement
         {
             _storeSetAppService = storeSetAppService;
             _mailTemplateAppService = mailTemplateAppService;
+            _tokenAppService = tokenAppService;
             _mailAppService = mailAppService;
             _configuration = configuration;
             this.loginUserData = loginUserData;
             this.db = db;
         }
 
-        public async Task<GetBonusSettingForEditOutput> GetBonusSettingForEdit()
+        public async Task<GetBonusSettingForEditOutput> GetBonusSettingForEdit(long websiteID = 0)
         {
-            long websiteID = await loginUserData.GetWebsiteId();
+            if (websiteID == 0) websiteID = await loginUserData.GetWebsiteId();
             if (websiteID == 0) websiteID = loginUserData.GetFrontWebsiteId();
-            var bonusSettingData = await _storeSetAppService.getValues(new Shared.Dto.StoreSet.StoreSetGetValueInput
+            var bonusSettingData = await _storeSetAppService.getValues(new StoreSetGetValueInput
             {
                 SiteId = websiteID,
                 StoreSetGroupId = 6
@@ -68,6 +72,7 @@ namespace EtheriT.Coker.Application.BonusManagement
                 return new GetBonusSettingForEditOutput
                 {
                     SiteId = websiteID,
+                    BonusEnabled = this.GetBonusSettingValue<bool>(bonusSettingData, nameof(GetBonusSettingForEditOutput.BonusEnabled)) ?? false,
                     SignupBonusPoints = this.GetBonusSettingValue<int>(bonusSettingData, nameof(GetBonusSettingForEditOutput.SignupBonusPoints)),
                     MinOrderForRedemption = this.GetBonusSettingValue<decimal>(bonusSettingData, nameof(GetBonusSettingForEditOutput.MinOrderForRedemption)),
                     MaxRedemptionPercent = this.GetBonusSettingValue<decimal>(bonusSettingData, nameof(GetBonusSettingForEditOutput.MaxRedemptionPercent)),
@@ -567,6 +572,27 @@ namespace EtheriT.Coker.Application.BonusManagement
                         return (T?)(object)decimalValue;
                     }
                 }
+                else if (typeof(T) == typeof(bool))
+                {
+                    if (bool.TryParse(value, out bool boolValue))
+                    {
+                        return (T?)(object)boolValue;
+                    }
+                }
+                else if (typeof(T) == typeof(DateTime))
+                {
+                    if (DateTime.TryParse(value, out DateTime dateTimeValue))
+                    {
+                        return (T?)(object)dateTimeValue;
+                    }
+                }
+                else if (typeof(T).IsEnum)
+                {
+                    if (Enum.TryParse(typeof(T), value, out object? enumValue))
+                    {
+                        return (T?)enumValue;
+                    }
+                }
             }
             catch
             {
@@ -971,6 +997,109 @@ namespace EtheriT.Coker.Application.BonusManagement
                 result.Error = ex.Message;
                 return result;
             }
+        }
+        public async Task<GetFrontUserBonusHistoryOutput> GetFrontUserBonusHistory(int page, int pageSize)
+        {
+            var result = new GetFrontUserBonusHistoryOutput
+            {
+                Success = false,
+                Page_Total = 0,
+                Data = new List<GetFrontUserBonusHistoryItemDto>()
+            };
+
+            try
+            {
+                if (page <= 0) page = 1;
+                if (pageSize <= 0) pageSize = 10;
+
+                var frontUserUuid = await _tokenAppService.GetUUID();
+                if (frontUserUuid == Guid.Empty)
+                {
+                    return result;
+                }
+
+                var now = DateTime.Now;
+
+                // 只抓「目前存在的紅利池」
+                // 若你希望連餘額為 0 但仍在有效期間內也顯示，可拿掉 Balance > 0
+                var bonusQuery = db.Bonus
+                    .Where(x =>
+                        x.UUID == frontUserUuid &&
+                        !x.IsDeleted &&
+                        x.Status == BonusStatusEnum.Active &&
+                        x.StartDate <= now &&
+                        (x.EndDate == null || x.EndDate >= now))
+                    .OrderByDescending(x => x.StartDate)
+                    .ThenByDescending(x => x.Id);
+
+                var totalCount = await bonusQuery.CountAsync();
+                if (totalCount == 0)
+                {
+                    result.Success = true;
+                    return result;
+                }
+
+                var bonusList = await bonusQuery
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.StartDate,
+                        x.EndDate,
+                        x.Amount,
+                        x.Balance,
+                        x.Note
+                    })
+                    .ToListAsync();
+
+                var bonusIds = bonusList.Select(x => x.Id).ToList();
+
+                // 抓這批 Bonus 被使用的明細
+                // 只抓扣點紀錄，避免 Refund / Earn 等正向紀錄混入「使用紀錄」
+                var useLogRaw = await (
+                    from detail in db.bonusLogDetails
+                    join log in db.BonusLog on detail.FK_BonusLogsId equals log.Id
+                    where bonusIds.Contains(detail.FK_BonusId)
+                          && log.Amount < 0
+                    orderby log.ExecutionTime descending, log.Id descending
+                    select new
+                    {
+                        detail.FK_BonusId,
+                        log.ExecutionTime,
+                        log.Note,
+                        detail.UsedAmount
+                    }
+                ).ToListAsync();
+
+                result.Data = bonusList.Select(b => new GetFrontUserBonusHistoryItemDto
+                {
+                    Id = b.Id,
+                    StartTime = b.StartDate,
+                    EndTime = b.EndDate,
+                    AddBonus = b.Amount,
+                    RemainBonus = b.Balance,
+                    Note = b.Note,
+                    UseLogs = useLogRaw
+                        .Where(x => x.FK_BonusId == b.Id)
+                        .Select(x => new GetFrontUserBonusUsageLogDto
+                        {
+                            CreationTime = x.ExecutionTime,
+                            Reason = x.Note ?? string.Empty,
+                            UseBonus = (int)x.UsedAmount
+                        })
+                        .ToList()
+                }).ToList();
+
+                result.Page_Total = (int)Math.Ceiling(totalCount / (double)pageSize);
+                result.Success = true;
+            }
+            catch
+            {
+                throw;
+            }
+
+            return result;
         }
     }
 }

@@ -16,6 +16,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Freight
         public int? Dis_Freight { get; set; }
         public bool Set_Default { get; set; }
         public int? FreightAmt2 { get; set; }
+        public bool SupportCashOnDelivery { get; set; } = false;
         public List<ProdSelectedDto> ProdIds { get; set; } = new();
         public List<LogisticsBoxFeeDto> LogisticsBoxFees { get; set; } = new();
     }

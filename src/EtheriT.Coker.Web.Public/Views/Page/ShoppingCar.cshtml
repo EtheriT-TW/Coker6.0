@@ -666,6 +666,7 @@
                                                data-disfreight="@(freight.Dis_Freight)"
                                                data-isdefault="@freight.Set_Default"
                                                data-boxfees='@Html.Raw(boxFeesJson)'
+                                               data-support-cash-on-delivery = "@freight.SupportCashOnDelivery"
                                                @check
                                                required>
                                         <label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
@@ -676,6 +677,7 @@
                                                    class="btn_getmap bg-transparent border-0 ms-1 text-decoration-underline"
                                                    value="選擇門市"
                                                    data-subtype="@freight.LogisticsSubType"
+                                                   data-support-cash-on-delivery = "@freight.SupportCashOnDelivery"
                                                    title="選擇門市">
                                         }
 
@@ -703,6 +705,7 @@
                     <form id="ecpayLogisticsForm" method="get" action="/api/ThirdParty/ECPayLogisticsGetMap" class="d-none">
                         <input type="hidden" name="SCIds" />
                         <input type="hidden" name="LogisticsSubType" />
+                        <input type="hidden" name="IsCollection" />
                     </form>
 
                     <div class="priceline px-3 pe-sm-5 col-12 col-md-7 offset-md-5">

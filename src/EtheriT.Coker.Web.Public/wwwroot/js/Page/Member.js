@@ -809,8 +809,11 @@ function SetBrowsingHistoryPage(number) {
                     templateHtml,
                     datas
                 );
+
+                BrowsingFavoriteButtonInit($content);
             } else {
                 MemberTemplateDataInsert($content, $("#FavoriteTemplate"), datas);
+                BrowsingFavoriteButtonInit($content);
             }
         } else if (number != 1) {
             window.location.hash = "#browsing-1";
@@ -1079,7 +1082,31 @@ function FavoritesButtonInit(frame) {
         }
     });
 }
+function BrowsingFavoriteButtonInit($content) {
+    $content.find(".type_change_frame").each(function () {
+        const $frame = $(this);
+        const $btnFavorite = $frame.find(".btn_favorite");
+        const $icon = $btnFavorite.find("i");
 
+        if ($btnFavorite.length <= 0 || $icon.length <= 0) return;
+
+        const pid =
+            $frame.data("Pid") ||
+            $frame.data("pid") ||
+            $btnFavorite.data("Pid") ||
+            $btnFavorite.data("pid");
+
+        if (!pid) return;
+
+        $frame.data("Pid", pid);
+
+        $btnFavorite.data("Fid", "");
+        $btnFavorite.attr("title", "加入收藏");
+        $icon.removeClass("fa-solid").addClass("fa-regular");
+
+        FavoritesButtonInit($frame);
+    });
+}
 function ResetmailAction(data) {
     var input_data = co.Form.getJson($("#ResetEmailForm").attr("id"));
     if (input_data.email == old_email) {

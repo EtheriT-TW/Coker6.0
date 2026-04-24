@@ -295,19 +295,44 @@ namespace EtheriT.Coker.Application.Order
             }
 
             var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
-            if (bonusSetting != null && bonusSetting.MaxRedemptionPercent != null && bonusSetting.MaxRedemptionPercent > 0)
+
+            if (bonusSetting != null && bonusSetting.MaxRedemptionPercent > 0)
             {
-                var userBonus = (await bonusManagementAppService.GetQueryFrontUsersTotalAvaliableBonus(new List<Guid> { uuid })).FirstOrDefault();
+                var userBonus = (await bonusManagementAppService
+                    .GetQueryFrontUsersTotalAvaliableBonus(new List<Guid> { uuid }))
+                    .FirstOrDefault();
+
                 if (userBonus != null)
                 {
-                    var memberBonusAmount = Math.Max(0, userBonus.TotalAvaliableBonus - totalBonus);
-                    if (memberBonusAmount > 0)
+                    var availableBonus = userBonus.TotalAvaliableBonus;
+
+                    // 商品本身紅利
+                    var productBonus = totalBonus;
+
+                    // 剩餘可用紅利
+                    var remainingBonus = Math.Max(0, availableBonus - productBonus);
+
+                    int redeemBonus = 0;
+
+                    if (remainingBonus > 0)
                     {
+                        // 折抵上限：用「商品小計」
                         var bonusDiscount = Math.Floor(subtotal * bonusSetting.MaxRedemptionPercent.Value / 100);
-                        var canRedeem = Math.Min(bonusDiscount, memberBonusAmount);
-                        subtotal -= canRedeem;
-                        totalBonus += (int)canRedeem;
+
+                        redeemBonus = (int)Math.Min(bonusDiscount, remainingBonus);
+
+                        // 折抵只扣商品金額
+                        subtotal = Math.Max(0, subtotal - redeemBonus);
                     }
+
+                    // 最終紅利使用量（商品 + 折抵）
+                    var finalBonusUsed = productBonus + redeemBonus;
+
+                    // 最終防呆（非常重要）
+                    if (finalBonusUsed > availableBonus)
+                        throw new Exception("紅利點數不足，請重新確認後再送出訂單。");
+
+                    totalBonus = finalBonusUsed;
                 }
             }
 
@@ -1602,64 +1627,91 @@ namespace EtheriT.Coker.Application.Order
 
             try
             {
-                var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-                DateTime datetimenow = DateTime.Now;
-                if (order_header != null)
+                var orderHeader = await db.Order_Headers
+                    .Where(e => e.Id == ohid)
+                    .FirstOrDefaultAsync();
+
+                if (orderHeader == null)
+                    throw new Exception("查無訂單資訊");
+
+                var oldStatus = orderHeader.State;
+                var newStatus = (OrderStatusEnum)state;
+                var now = DateTime.Now;
+
+                if (oldStatus == newStatus)
                 {
-                    if (order_header.State != (OrderStatusEnum)state)
-                    {
-                        if (order_header.State == OrderStatusEnum.已付款) response.Message = "已付款";
-                        switch (state)
-                        {
-                            case (int)OrderStatusEnum.已取消:
-                            case (int)OrderStatusEnum.付款失敗:
-                                var shoppingCarts = await (from sc in db.ShoppingCarts
-                                                           join od in db.Order_Details on sc.Id equals od.FK_SCId
-                                                           where od.FK_OId == ohid && sc.IsOrder
-                                                           select sc).ToListAsync();
-                                if (shoppingCarts != null)
-                                {
-                                    foreach (var sc in shoppingCarts)
-                                    {
-                                        var prod_stock = await db.Prod_Stocks.Include(e => e.Prod).Where(e => e.Id == sc.FK_PSid).FirstOrDefaultAsync();
-                                        if (prod_stock != null)
-                                        {
-                                            if (prod_stock.Prod != null && prod_stock.Prod.Status == ProdStatusEnum.售完)
-                                            {
-                                                if (prod_stock.Prod.oStatus == null) prod_stock.Prod.Status = ProdStatusEnum.一般;
-                                                else prod_stock.Prod.Status = prod_stock.Prod.oStatus.Value;
-                                            }
-                                            prod_stock.Stock += sc.Quantity;
-                                        }
-                                    }
-                                    db.SaveChanges();
-                                }
-                                break;
-                            case (int)OrderStatusEnum.已完成:
-                                order_header.CompletedDate = datetimenow;
-                                break;
-                        }
-
-                        if (state == (int)OrderStatusEnum.已取消 && (order_header.State == OrderStatusEnum.待確認 || order_header.State == OrderStatusEnum.待付款))
-                        {
-                            order_header.TransactionId = null;
-                        }
-                        order_header.State = (OrderStatusEnum)state;
-
-                        if (order_header.State == OrderStatusEnum.已取消) await CancelOrderMailSend(order_header.Id, datetimenow);
-
-                        db.SaveChanges();
-                    }
                     response.Success = true;
+                    return response;
                 }
-                else throw new Exception("查無訂單資訊");
+
+                switch (newStatus)
+                {
+                    case OrderStatusEnum.已取消:
+                    case OrderStatusEnum.付款失敗:
+                        await RestoreStockByOrderAsync(orderHeader.Id);
+
+                        if (newStatus == OrderStatusEnum.已取消 &&
+                            (oldStatus == OrderStatusEnum.待確認 || oldStatus == OrderStatusEnum.待付款))
+                        {
+                            orderHeader.TransactionId = null;
+                        }
+
+                        break;
+
+                    case OrderStatusEnum.已完成:
+                        orderHeader.CompletedDate = now;
+                        break;
+                }
+
+                orderHeader.State = newStatus;
+
+                if (newStatus == OrderStatusEnum.已取消)
+                    await CancelOrderMailSend(orderHeader.Id, now);
+
+                await db.SaveChangesAsync();
+
+                response.Success = true;
             }
             catch (Exception ex)
             {
+                response.Success = false;
+                response.Error = ex.Message;
                 response.Message = ex.Message;
             }
 
             return response;
+        }
+        private async Task RestoreStockByOrderAsync(long orderId)
+        {
+            var shoppingCarts = await (
+                from sc in db.ShoppingCarts
+                join od in db.Order_Details on sc.Id equals od.FK_SCId
+                where od.FK_OId == orderId && sc.IsOrder
+                select sc
+            ).ToListAsync();
+
+            foreach (var sc in shoppingCarts)
+            {
+                var prodStock = await db.Prod_Stocks
+                    .Include(e => e.Prod)
+                    .Where(e => e.Id == sc.FK_PSid)
+                    .FirstOrDefaultAsync();
+
+                if (prodStock == null)
+                    continue;
+
+                if (prodStock.Prod != null && prodStock.Prod.Status == ProdStatusEnum.售完)
+                {
+                    prodStock.Prod.Status = prodStock.Prod.oStatus ?? ProdStatusEnum.一般;
+                }
+
+                prodStock.Stock += sc.Quantity;
+            }
+        }
+        private bool IsClosedOrderStatusForBonus(OrderStatusEnum state)
+        {
+            return state == OrderStatusEnum.已取消
+                || state == OrderStatusEnum.付款失敗;
         }
         public async Task<ResponseMessageDto> SendMail(long ohid)
         {
@@ -1954,123 +2006,166 @@ namespace EtheriT.Coker.Application.Order
         public async Task<ResponseMessageDto> UpdateStatus(OrderUpdateStatusDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
+
             try
             {
                 var webSiteId = await loginUserData.GetWebsiteId();
-                if (webSiteId == 0) webSiteId = loginUserData.GetFrontWebsiteId();
-                var order = await db.Order_Headers.Where(e => e.Id == dto.Id && e.FK_WebsiteId == webSiteId).FirstOrDefaultAsync();
-                if (order == null) throw new Exception("訂單不存在");
+                if (webSiteId == 0)
+                    webSiteId = loginUserData.GetFrontWebsiteId();
+
+                var order = await db.Order_Headers
+                    .Where(e => e.Id == dto.Id && e.FK_WebsiteId == webSiteId)
+                    .FirstOrDefaultAsync();
+
+                if (order == null)
+                    throw new Exception("訂單不存在");
 
                 var oldStatus = order.State;
                 var newStatus = dto.Status;
 
-                // 若狀態相同則只更新備註
-                if (oldStatus == newStatus && dto.Memo != null)
+                // 狀態相同，只更新備註
+                if (oldStatus == newStatus)
                 {
-                    order.Memo = dto.Memo;
-                    await loginUserData.SaveChanges(order);
+                    if (dto.Memo != null)
+                    {
+                        order.Memo = dto.Memo;
+                        await loginUserData.SaveChanges(order);
+                    }
+
                     response.Success = true;
+                    await loginUserData.SetLogs(
+                        JsonConvert.SerializeObject(dto),
+                        JsonConvert.SerializeObject(response)
+                    );
                     return response;
                 }
 
                 var strategy = db.Database.CreateExecutionStrategy();
+
                 await strategy.ExecuteAsync(async () =>
                 {
                     await using var tx = await db.Database.BeginTransactionAsync();
-                    // 3-1) 更新狀態（沿用你既有邏輯，含補庫存/CompletedDate/Cancel mail...等）
-                    response = await OrderStateChange(order.Id, (int)newStatus);
-                    if (!response.Success) throw new Exception(response.Message ?? "訂單狀態更新失敗");
 
-                    // 3-2) 重新抓一次 order（避免 OrderStateChange 內部 SaveChanges 造成你這裡 entity 狀態不一致）
+                    // 1. 先做狀態本身處理：庫存、CompletedDate、取消信、State
+                    response = await OrderStateChange(order.Id, (int)newStatus);
+
+                    if (!response.Success)
+                        throw new Exception(response.Message ?? response.Error ?? "訂單狀態更新失敗");
+
+                    // 2. 重新取回訂單
                     order = await db.Order_Headers
                         .Where(e => e.Id == dto.Id && e.FK_WebsiteId == webSiteId)
                         .FirstOrDefaultAsync();
 
-                    if (order == null) throw new Exception("訂單不存在");
+                    if (order == null)
+                        throw new Exception("訂單不存在");
 
-                    // 3-3) 更新 Memo
+                    // 3. 更新 Memo
                     if (dto.Memo != null)
-                    {
                         order.Memo = dto.Memo;
-                    }
 
                     await loginUserData.SaveChanges(order);
 
-                    // 3-4) 狀態事件：已完成 -> 發回饋
-                    if (newStatus == OrderStatusEnum.已完成)
-                    {
-                        var earnPoints = order.GetBonus ?? 0;
-                        if (earnPoints > 0)
-                        {
-                            var earnReason = $"完成訂單回饋紅利-訂單編號[{order.Id:D9}]";
-
-                            // 你需要在 Bonus service 補這支：EnsureEarnByOrderAsync
-                            var earnResult = await bonusManagementAppService.SaveTransaction(new CreateUserTransactionDto
-                            {
-                                MemberUUID = new List<Guid> { order.FK_UUID },
-                                RefKey = order.Id,
-                                TransactionOperation = "+",
-                                TransactionPoint = earnPoints,
-                                IsSendMail = false,
-                                TransactionReason = earnReason,
-                                Type = BonusLogTypeEnum.Earn,
-                                EnableIdempotencyByRefKey = true,
-                            });
-
-                            if (!earnResult.Success)
-                                throw new Exception(earnResult.Message ?? "回饋紅利發送失敗");
-                        }
-                    }
-
-                    // 3-5) 狀態事件：已取消/付款失敗 -> 補還折抵 + 追回回饋（若已發）
-                    if (newStatus == OrderStatusEnum.已取消 || newStatus == OrderStatusEnum.付款失敗)
-                    {
-                        // (A) 補還折抵
-                        var redeemed = order.Bonus ?? 0;
-                        if (redeemed > 0)
-                        {
-                            var refundReason = $"取消/作廢訂單退回折抵紅利-訂單編號[{order.Id:D9}]";
-
-                            // 你需要在 Bonus service 補這支：RefundRedeemByOrderAsync
-                            var refundResult = await bonusManagementAppService.RefundRedeemByOrderAsync(
-                                order.FK_UUID,
-                                order.Id,
-                                refundReason
-                            );
-
-                            if (!refundResult.Success)
-                                throw new Exception(refundResult.Message ?? "折抵紅利退回失敗");
-                        }
-
-                        // (B) 追回已發回饋（若曾發）
-                        var earnPoints = order.GetBonus ?? 0;
-                        if (earnPoints > 0)
-                        {
-                            var revokeReason = $"取消/作廢訂單追回回饋紅利-訂單編號[{order.Id:D9}]";
-
-                            // 你需要在 Bonus service 補這支：RevokeEarnByOrderAsync
-                            var revokeResult = await bonusManagementAppService.RevokeEarnByOrderAsync(
-                                order.FK_UUID,
-                                order.Id,
-                                revokeReason
-                            );
-
-                            if (!revokeResult.Success)
-                                throw new Exception(revokeResult.Message ?? "回饋紅利追回失敗");
-                        }
-                    }
+                    // 4. 紅利狀態事件
+                    await HandleOrderBonusStateChangeAsync(order, oldStatus, newStatus);
 
                     await tx.CommitAsync();
                 });
 
                 response.Success = true;
-                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(
+                    JsonConvert.SerializeObject(dto),
+                    JsonConvert.SerializeObject(response)
+                );
             }
             catch (Exception e)
             {
+                response.Success = false;
                 response.Error = e.Message;
             }
+
             return response;
+        }
+        private async Task HandleOrderBonusStateChangeAsync(
+            Order_Header order,
+            OrderStatusEnum oldStatus,
+            OrderStatusEnum newStatus)
+        {
+            if (oldStatus == newStatus)
+                return;
+
+            // 完成訂單：發放回饋紅利
+            if (newStatus == OrderStatusEnum.已完成 && oldStatus != OrderStatusEnum.已完成)
+            {
+                await AddEarnBonusByOrderAsync(order);
+                return;
+            }
+
+            // 取消 / 付款失敗 / 退貨 / 退款：退還已使用紅利
+            if (IsClosedOrderStatusForBonus(newStatus))
+            {
+                await RefundUsedBonusByOrderAsync(order);
+
+                // 已完成後才取消 / 退貨 / 退款：追回已發放回饋紅利
+                if (oldStatus == OrderStatusEnum.已完成)
+                {
+                    await RevokeEarnBonusByOrderAsync(order);
+                }
+            }
+        }
+        private async Task AddEarnBonusByOrderAsync(Order_Header order)
+        {
+            var earnPoints = order.GetBonus ?? 0;
+
+            if (earnPoints <= 0)
+                return;
+
+            var result = await bonusManagementAppService.SaveTransaction(new CreateUserTransactionDto
+            {
+                IsSendMail = false,
+                TransactionOperation = "+",
+                MemberUUID = new List<Guid> { order.FK_UUID },
+                TransactionPoint = earnPoints,
+                TransactionReason = $"完成訂單回饋紅利-訂單編號[{order.Id:D9}]",
+                RefKey = order.Id,
+                Type = BonusLogTypeEnum.Earn,
+                EnableIdempotencyByRefKey = true
+            });
+
+            if (!result.Success)
+                throw new Exception(result.Message ?? result.Error ?? "回饋紅利發送失敗。");
+        }
+        private async Task RefundUsedBonusByOrderAsync(Order_Header order)
+        {
+            var usedBonus = order.Bonus ?? 0;
+
+            if (usedBonus <= 0)
+                return;
+
+            var result = await bonusManagementAppService.RefundRedeemByOrderAsync(
+                order.FK_UUID,
+                order.Id,
+                $"訂單取消退回紅利點數-訂單編號[{order.Id:D9}]"
+            );
+
+            if (!result.Success)
+                throw new Exception(result.Message ?? result.Error ?? "訂單紅利退回失敗。");
+        }
+        private async Task RevokeEarnBonusByOrderAsync(Order_Header order)
+        {
+            var earnPoints = order.GetBonus ?? 0;
+
+            if (earnPoints <= 0)
+                return;
+
+            var result = await bonusManagementAppService.RevokeEarnByOrderAsync(
+                order.FK_UUID,
+                order.Id,
+                $"訂單退貨追回回饋紅利-訂單編號[{order.Id:D9}]"
+            );
+
+            if (!result.Success)
+                throw new Exception(result.Message ?? result.Error ?? "訂單回饋紅利追回失敗。");
         }
         public async Task<List<MemberOrderDto>> GetMemberOrder(Guid UUID)
         {
@@ -2383,36 +2478,48 @@ namespace EtheriT.Coker.Application.Order
                 var query = db.Order_Headers.Where(e => e.FK_WebsiteId == WebsiteID && payments.Contains(e.Payment) && e.State == OrderStatusEnum.待付款 && !e.IsTemp);
                 if (isuser) query = query.Where(e => e.FK_UUID == UUID);
                 List<Order_Header> order_Headers = await query.ToListAsync();
-                var hasChange = false;
-
                 foreach (var order in order_Headers)
                 {
+                    var shouldFail = false;
+
                     switch (order.Payment)
                     {
                         case 21:
-                            if (DateTimeNow > order.CreationTime.AddDays(expireDate).AddHours(1))
-                            {
-                                order.State = OrderStatusEnum.付款失敗;
-                                hasChange = true;
-                            }
+                            shouldFail = DateTimeNow > order.CreationTime.AddDays(expireDate).AddHours(1);
                             break;
+
                         case 22:
-                            if (DateTimeNow > order.CreationTime.AddDays(storeExpireBarcode + 2).AddHours(1))
-                            {
-                                order.State = OrderStatusEnum.付款失敗;
-                                hasChange = true;
-                            }
+                            shouldFail = DateTimeNow > order.CreationTime.AddDays(storeExpireBarcode + 2).AddHours(1);
                             break;
+
                         case 23:
-                            if (DateTimeNow > order.CreationTime.AddDays(storeExpireCVS).AddHours(1))
-                            {
-                                order.State = OrderStatusEnum.付款失敗;
-                                hasChange = true;
-                            }
+                            shouldFail = DateTimeNow > order.CreationTime.AddDays(storeExpireCVS).AddHours(1);
                             break;
                     }
+
+                    if (!shouldFail)
+                        continue;
+
+                    var oldStatus = order.State;
+
+                    var changeResult = await OrderStateChange(order.Id, (int)OrderStatusEnum.付款失敗);
+
+                    if (!changeResult.Success)
+                        throw new Exception(changeResult.Message ?? changeResult.Error ?? "逾期訂單狀態更新失敗。");
+
+                    var refreshedOrder = await db.Order_Headers
+                        .Where(e => e.Id == order.Id)
+                        .FirstOrDefaultAsync();
+
+                    if (refreshedOrder == null)
+                        throw new Exception("逾期訂單更新後查無訂單資料。");
+
+                    await HandleOrderBonusStateChangeAsync(
+                        refreshedOrder,
+                        oldStatus,
+                        OrderStatusEnum.付款失敗
+                    );
                 }
-                if (hasChange) db.SaveChanges();
                 response.Success = true;
             }
             catch (Exception ex)

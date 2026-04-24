@@ -717,8 +717,15 @@ function GetOrderPage() {
 function SuccessPageDataInsert(data) {
     var header = data.orderHeader;
     var details = data.orderDetails;
-    ShoppingCartDataInsert(header, $("#Step4 .card-body"))
-    TemplateDataInsert($("#Purchase"), $("#CollapsePurchase"), $("#Template_Purchase_Details"), details)
+
+    ShoppingCartDataInsert(header, $("#Step4 .card-body"));
+
+    var usedBonus = Number(header.bonus || header.Bonus || 0);
+
+    $("#Step4 .bonusUseTotal [data-key='bonus']")
+        .text(usedBonus > 0 ? `${usedBonus.toLocaleString()} 點` : "0 點");
+
+    TemplateDataInsert($("#Purchase"), $("#CollapsePurchase"), $("#Template_Purchase_Details"), details);
 }
 /* 元素初始化 */
 function ElementInit() {
@@ -1004,17 +1011,26 @@ function CartListAdd(data, $container) {
         var $self_bro = $(this).siblings(".pro_quantity");
         const $group = $template.closest('.purchase_group');
 
-        if ($self_bro.val() > parseInt($self_bro.attr("step"))) {
-            $self_bro.val(parseInt($self_bro.val()) - parseInt($self_bro.attr("step")));
-            CartQuantityUpdate(
-                $template.find(".pro_subtotal"),
-                data.price,
-                data.bonus,
-                $template.data("scId"),
-                Number($self_bro.val()),
-                $group
-            );
+        const currentQty = Number($self_bro.val() || 0);
+        const step = Number($self_bro.attr("step") || 1);
+        const nextQty = currentQty - step;
+
+        // 按鈕減量：下一次數量低於最小購買量時，走既有刪除流程
+        if (nextQty < step) {
+            $template.find(".btn_remove_pro").trigger("click");
+            return;
         }
+
+        $self_bro.val(nextQty);
+
+        CartQuantityUpdate(
+            $template.find(".pro_subtotal"),
+            data.price,
+            data.bonus,
+            $template.data("scId"),
+            nextQty,
+            $group
+        );
     });
 
     $template.find(".pro_quantity").on("change", function () {

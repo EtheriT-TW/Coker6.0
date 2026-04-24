@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Freight
         public bool Set_Default { get; set; }
         public int FreightStatusType { get; set; }
         public int FreightType { get; set; }
+        public int? DiscountFreightType { get; set; }
         public String Describe { get; set; }
         public bool GetMap { get; set; }
         public string LogisticsSubType { get; set; }

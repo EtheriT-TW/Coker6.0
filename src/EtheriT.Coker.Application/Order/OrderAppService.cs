@@ -392,7 +392,7 @@ namespace EtheriT.Coker.Application.Order
                         var boxMemo = string.Join("、", detailResult.BoxUsages
                             .Select(x => $"{x.Name} × {x.Count}"));
 
-                        oh.SystemMemo = $"配箱資訊：{boxMemo}（總點數：{detailResult.PackingPointTotal}，運費：{detailResult.Freight}）";
+                        oh.SystemMemo = $"配箱資訊：{boxMemo}";
                     }
                     else
                     {
@@ -487,7 +487,7 @@ namespace EtheriT.Coker.Application.Order
 
                 case FreightTypeEnum.依箱計費:
                     var totalPackingPoint = GetTotalPackingPoint(carts);
-                    return CalculateBoxFreight(setting, totalPackingPoint);
+                    return CalculateBoxFreight(setting, totalPackingPoint, subtotal);
 
                 case FreightTypeEnum.單筆計算:
                 default:
@@ -502,25 +502,40 @@ namespace EtheriT.Coker.Application.Order
                 return point * sc.Quantity;
             });
         }
+        private int ApplyDiscountFreight(LogisticsSetting setting, decimal subtotal, int originFreight)
+        {
+            var lowCon = setting.Low_Con ?? 0;
+            var disFreight = setting.Dis_Freight ?? 0;
+            var discountType = setting.DiscountFreightType;
+
+            if (lowCon <= 0 || subtotal < lowCon || discountType == null)
+                return originFreight;
+
+            switch (discountType.Value)
+            {
+                case DiscountFreightType.指定折抵後運費:
+                    return Math.Max(0, disFreight);
+
+                case DiscountFreightType.折抵固定運費金額:
+                    return Math.Max(0, originFreight - Math.Max(0, disFreight));
+
+                default:
+                    return originFreight;
+            }
+        }
         private FreightCalcResult CalculateNormalFreight(LogisticsSetting setting, decimal subtotal)
         {
-            var freight = (int)Math.Round(setting.Freight ?? 0m, MidpointRounding.AwayFromZero);
-            var lowCon = (int)Math.Round(setting.Low_Con ?? 0m, MidpointRounding.AwayFromZero);
-            var disFreight = (int)Math.Round(setting.Dis_Freight ?? 0m, MidpointRounding.AwayFromZero);
-
-            if (lowCon > 0 && subtotal >= lowCon)
-            {
-                freight = disFreight;
-            }
+            var originFreight = (int)Math.Round(setting.Freight ?? 0m, MidpointRounding.AwayFromZero);
+            var finalFreight = ApplyDiscountFreight(setting, subtotal, originFreight);
 
             return new FreightCalcResult
             {
-                Freight = freight,
+                Freight = finalFreight,
                 PackingPointTotal = 0,
                 BoxUsages = new List<BoxUsageResult>()
             };
         }
-        private FreightCalcResult CalculateBoxFreight(LogisticsSetting setting, int totalPackingPoint)
+        private FreightCalcResult CalculateBoxFreight(LogisticsSetting setting, int totalPackingPoint, decimal subtotal)
         {
             var fees = (setting.logisticsBoxFees ?? new List<LogisticsBoxFee>())
                 .Where(x => x.logisticsBox != null && !x.logisticsBox.IsDeleted && x.Fee >= 0)
@@ -624,9 +639,12 @@ namespace EtheriT.Coker.Application.Order
                 })
                 .ToList();
 
+            var originFreight = (int)Math.Round(totalFreight, MidpointRounding.AwayFromZero);
+            var finalFreight = ApplyDiscountFreight(setting, subtotal, originFreight);
+
             return new FreightCalcResult
             {
-                Freight = (int)Math.Round(totalFreight, MidpointRounding.AwayFromZero),
+                Freight = finalFreight,
                 PackingPointTotal = totalPackingPoint,
                 BoxUsages = merged
             };
@@ -1572,6 +1590,11 @@ namespace EtheriT.Coker.Application.Order
         public List<SelectDto> GetFreightStatusTypeEnum()
         {
             return EnumHelper.EnumToKeyValueList<FreightStatusTypeEnum>();
+        }
+
+        public List<SelectDto> GetDiscountFreightTypeEnum()
+        {
+            return EnumHelper.EnumToKeyValueList<DiscountFreightType>();
         }
         public async Task<ResponseMessageDto> OrderStateChange(long ohid, int state)
         {

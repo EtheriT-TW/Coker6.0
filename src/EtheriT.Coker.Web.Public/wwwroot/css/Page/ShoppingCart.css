@@ -269,28 +269,130 @@ input[type="number"] {
         width: 3rem;
     }
 
-
 .priceline {
     position: relative;
 }
 
-    .priceline > div > div:last-child {
-        width: 10rem;
+    .priceline .summary-panel {
+        position: relative;
     }
 
-    .priceline > .bonusRedeemHintLine {
-        position: absolute;
-        width: auto;
+    .priceline .summary-main-row,
+    .priceline .summary-total-row {
+        display: grid;
+        grid-template-columns: 1fr 12rem;
+        align-items: center;
+        column-gap: 1rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .priceline .summary-note-row {
+        display: grid;
+        grid-template-columns: 1fr 12rem;
+        align-items: center;
+        column-gap: 1rem;
+        margin-bottom: 0.55rem;
+    }
+
+    .priceline .summary-label,
+    .priceline .summary-note-label {
+        text-align: right;
+        color: #444;
+    }
+
+    .priceline .summary-amount {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .priceline .summary-note-value {
+        text-align: right;
+        color: #888;
+        font-size: 0.92rem;
+        line-height: 1.35;
+    }
+
+    .priceline .dual-price {
+        display: inline-flex;
+        justify-content: flex-end;
+        align-items: baseline;
+        gap: 0.35rem;
+        width: 100%;
+    }
+
+        .priceline .dual-price .bonus-part {
+            color: #666;
+            white-space: nowrap;
+        }
+
+        .priceline .dual-price .plus-sign {
+            color: #999;
+        }
+
+        .priceline .dual-price .cash-part {
+            color: #222;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+    .priceline .bonusDiscion {
+        color: #2e7d32;
+        font-weight: 500;
+    }
+
+    .priceline .summary-total-row {
+        border-top: 1px solid #ddd;
+        margin-top: 0.8rem;
+        padding-top: 0.8rem;
+    }
+
+    .priceline .bonusUseTotalValue {
+        color: #444;
+        font-weight: 500;
+    }
+
+    .priceline .summary-reward-row {
         display: flex;
-        justify-content: flex-start !important;
-        bottom: 0.5rem;
-        left: 0;
-        gap:1rem;
+        justify-content: flex-start;
+        margin-top: 0.9rem;
     }
 
+    .priceline .summary-reward-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 999px;
+        background: #fff7e8;
+        color: #9a6a00;
+        font-size: 0.92rem;
+        line-height: 1.2;
+    }
 
-        .priceline > .bonusRedeemHintLine > div.bonusRedeemHintText, .priceline > .bonusRedeemHintLine > div.bonusEarnHintText {
-            width: auto;
+    .priceline .summary-reward-icon {
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    .priceline .shipping_memo {
+        margin-right: 0.5rem;
+        color: #888;
+        font-size: 0.9rem;
+    }
+
+    .priceline .shipping_box_memo {
+        display: inline-block;
+        margin-right: 0.5rem;
+    }
+
+    .priceline .price-negative {
+        color: #2e7d32;
+        font-weight: 500;
+    }
+
+        .priceline .price-negative::before {
+            content: "-";
+            margin-right: 2px;
         }
 
 #Purchase_Null {
@@ -409,6 +511,7 @@ input[type="number"] {
         margin: 0 0.5rem;
         font-weight: bold;
     }
+
 .shipping_box_memo {
     margin-top: 0.2rem;
     margin-right: 0.5rem;
@@ -640,6 +743,17 @@ body > .popover.bs-popover-auto.fade {
     }
 }
 
+@media (min-width: 768px) {
+    .priceline .summary-panel .bonusRedeemHintLine {
+        position: absolute;
+        top: 0.5rem;
+        left: 0;
+        margin-top: 0;
+        display: flex;
+        justify-content: flex-start;
+    }
+}
+
 @media only screen and (max-width: 768px) {
     #Step4 .col-sm-2 {
         width: unset;
@@ -663,6 +777,13 @@ body > .popover.bs-popover-auto.fade {
 
     #OrdererForm > .default_data > div > div:nth-child(1) {
         width: auto;
+    }
+
+    .priceline .summary-panel .bonusRedeemHintLine {
+        position: static;
+        margin-top: 0.75rem;
+        display: flex;
+        justify-content: flex-start;
     }
 }
 

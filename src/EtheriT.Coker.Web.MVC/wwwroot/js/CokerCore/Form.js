@@ -572,6 +572,8 @@
             });
 
             form.reset();
+            $form.removeClass('was-validated');
+            $form.find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
             if ($form.find("[name='id']").length > 0) {
                 $form.find("[name='id']").val(0);
             }

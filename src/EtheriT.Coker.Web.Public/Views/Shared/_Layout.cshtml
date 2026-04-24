@@ -100,6 +100,7 @@
         const PageType = "@ViewBag.option";
         const orderPrice = @ViewBag.priceOrder.ToString().ToLower();
         const totalBonus = @Json.Serialize(ViewBag.UserBonus ?? 0);
+        window.__LOGIN_STATE__ = @(User.Identity?.IsAuthenticated == true ? "true" : "false");
         window.SiteId = SiteId;
         window.CI360 = { notInitOnLoad: true }
         window.totalBonus = totalBonus;

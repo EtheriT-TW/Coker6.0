@@ -25,6 +25,8 @@
         $freight: null,
         $lowCon: null,
         $dFreight: null,
+        $discountFreightType: null,
+        $discountFreightGroupSection: null,
         $freightType: null,
         $inputProd: null,
         $inputLogisticsBox: null,
@@ -55,6 +57,8 @@
             this.$freight = $("#InputFreight");
             this.$lowCon = $("#InputLowCon");
             this.$dFreight = $("#InputDfreight");
+            this.$discountFreightType = $("#SelectDiscountFreightType");
+            this.$discountFreightGroupSection = $(".discountFreightGroupSection");
             this.$freightType = $("input[name='FreightType']");
             this.$inputProd = $(this.prodInputSelector);
 
@@ -144,12 +148,28 @@
                 self.applyFreightTypeUI();
             });
 
-            this.$shipping.on("change", function () {
-                var $this = $(this)
-                var value = $this.val();
+            this.$discountFreightType.off("change.freight").on("change.freight", function () {
+                self.applyDiscountFreightTypeUI();
+            });
+
+            this.$shipping.off("change.freight").on("change.freight", function () {
+                var $this = $(this);
+                var value = Number($this.val() || 0);
                 if (value >= 8 && value <= 15) self.$isCashOnDelivery_parent.removeClass("d-none");
                 else self.$isCashOnDelivery_parent.addClass("d-none");
-            })
+            });
+
+            this.$lowCon.off("blur.freight").on("blur.freight", function () {
+                self.handleLowConRule();
+            });
+
+            this.$freight.off("blur.freight").on("blur.freight", function () {
+                self.validateDiscountFreightRelation(false);
+            });
+
+            this.$dFreight.off("blur.freight").on("blur.freight", function () {
+                self.validateDiscountFreightRelation(true);
+            });
         },
 
         loadEnums: function () {
@@ -177,6 +197,21 @@
 
                 self.applyFreightStatusUI();
             });
+
+            co.Order.GetDiscountFreightTypeEnum().done(function (result) {
+                self.$discountFreightType.empty();
+                self.$discountFreightType.append(
+                    $("<option>").attr({ value: "" }).text("不套用折抵運費")
+                );
+
+                $(result).each(function () {
+                    self.$discountFreightType.append(
+                        $("<option>").attr({ value: this.value ?? this.id }).text(this.key ?? this.name)
+                    );
+                });
+
+                self.applyDiscountFreightTypeUI();
+            });
         },
 
         onEnterList: function () {
@@ -193,8 +228,9 @@
 
             this.applyFreightTypeUI();
             this.applyFreightStatusUI();
+            this.applyDiscountFreightTypeUI();
 
-            var value = this.$shipping.val();
+            var value = Number(this.$shipping.val() || 0);
             if (value >= 8 && value <= 15) this.$isCashOnDelivery_parent.removeClass("d-none");
             else this.$isCashOnDelivery_parent.addClass("d-none");
         },
@@ -227,6 +263,10 @@
             this.$inputProd.attr("disabled", "disabled");
             this.$isCashOnDelivery_parent.addClass("d-none");
 
+            this.$discountFreightType.val("").attr("disabled", "disabled");
+            this.$discountFreightGroupSection.addClass("d-none");
+            this.$dFreight.val("").attr("disabled", "disabled").attr("placeholder", "請先選擇折抵方式");
+
             if (window.ProdListModalApi) {
                 window.ProdListModalApi.setActiveTarget(this.prodInputSelector);
                 window.ProdListModalApi.clear();
@@ -240,6 +280,7 @@
             this.clearLogisticsBoxUI();
             this.applyFreightTypeUI();
             this.applyFreightStatusUI();
+            this.applyDiscountFreightTypeUI();
         },
 
         fillForm: function (result) {
@@ -247,6 +288,10 @@
 
             _c.Form.insertData(result, "#" + this.formId);
             this.$setDefault.prop("checked", !!result.set_Default);
+
+            if (!result.discountFreightType && !result.DiscountFreightType) {
+                this.$discountFreightType.val("");
+            }
 
             if (window.ProdListModalApi) {
                 window.ProdListModalApi.setActiveTarget(this.prodInputSelector);
@@ -262,6 +307,8 @@
             Promise.all([prodPromise, logisticsPromise]).finally(function () {
                 self.applyFreightTypeUI();
                 self.applyFreightStatusUI();
+                self.applyDiscountFreightTypeUI();
+                self.handleLowConRule();
             });
 
             if (result.logisticsType >= 8 && result.logisticsType <= 15) self.$isCashOnDelivery_parent.removeClass("d-none");
@@ -273,35 +320,79 @@
             return $checked.length ? parseInt($checked.val(), 10) : 0;
         },
 
+        getDiscountFreightTypeValue: function () {
+            const raw = this.$discountFreightType.val();
+            return raw === "" || raw == null ? null : parseInt(raw, 10);
+        },
+
+        applyDiscountFreightTypeUI: function () {
+            const type = this.getCurrentFreightType();
+            const discountType = this.getDiscountFreightTypeValue();
+            const isSinglePricing = type === 2;
+            const isBoxPricing = type === 3;
+
+            if (isSinglePricing || isBoxPricing) {
+                this.$discountFreightGroupSection.removeClass("d-none");
+                this.$discountFreightType.removeAttr("disabled");
+
+                if (discountType != null) {
+                    this.$dFreight.removeAttr("disabled");
+
+                    if (discountType === 1) {
+                        this.$dFreight.attr("placeholder", "請輸入達門檻後的最終運費");
+                    } else if (discountType === 2) {
+                        this.$dFreight.attr("placeholder", "請輸入要折抵的運費金額");
+                    } else {
+                        this.$dFreight.attr("placeholder", "");
+                    }
+                } else {
+                    this.$dFreight.val("").attr("disabled", "disabled").attr("placeholder", "不套用折抵運費");
+                }
+                return;
+            }
+
+            this.$discountFreightGroupSection.addClass("d-none");
+            this.$discountFreightType.val("").attr("disabled", "disabled");
+            this.$dFreight.val("").attr("disabled", "disabled").attr("placeholder", "請先選擇折抵方式");
+        },
+
         applyFreightTypeUI: function () {
             const type = this.getCurrentFreightType();
             const isBoxPricing = type === 3;
+            const isSinglePricing = type === 2;
 
             if (isBoxPricing) {
                 this.$logisticsBoxSection.removeClass("d-none");
-                this.$logisticsPriceSection.addClass("d-none");
+                this.$logisticsPriceSection.removeClass("d-none");
 
                 this.$freight.val("").attr("disabled", "disabled");
-                this.$lowCon.val("").attr("disabled", "disabled");
-                this.$dFreight.val("").attr("disabled", "disabled");
+                this.$lowCon.removeAttr("disabled");
+
+                this.applyDiscountFreightTypeUI();
+                this.handleLowConRule();
+                return;
+            }
+
+            if (isSinglePricing) {
+                this.$logisticsBoxSection.addClass("d-none");
+                this.$logisticsPriceSection.removeClass("d-none");
+
+                this.$freight.removeAttr("disabled");
+                this.$lowCon.removeAttr("disabled");
+
+                this.applyDiscountFreightTypeUI();
+                this.handleLowConRule();
                 return;
             }
 
             this.$logisticsBoxSection.addClass("d-none");
+            this.$discountFreightGroupSection.addClass("d-none");
+            this.$discountFreightType.val("").attr("disabled", "disabled");
             this.$logisticsPriceSection.removeClass("d-none");
 
-            switch (type) {
-                case 2:
-                    this.$freight.removeAttr("disabled");
-                    this.$lowCon.removeAttr("disabled");
-                    this.$dFreight.removeAttr("disabled");
-                    break;
-                default:
-                    this.$freight.val("").attr("disabled", "disabled");
-                    this.$lowCon.val("").attr("disabled", "disabled");
-                    this.$dFreight.val("").attr("disabled", "disabled");
-                    break;
-            }
+            this.$freight.val("").attr("disabled", "disabled");
+            this.$lowCon.val("").attr("disabled", "disabled");
+            this.$dFreight.val("").attr("disabled", "disabled").attr("placeholder", "");
         },
 
         applyFreightStatusUI: function () {
@@ -309,6 +400,95 @@
 
             if (type === 2) this.$inputProd.removeAttr("disabled");
             else this.$inputProd.attr("disabled", "disabled");
+        },
+
+        handleLowConRule: function () {
+            const freightType = this.getCurrentFreightType();
+            const lowCon = Number(this.$lowCon.val() || 0);
+            const discountType = this.getDiscountFreightTypeValue();
+
+            if (freightType !== 2 && freightType !== 3) return;
+
+            if (lowCon <= 0) {
+                this.$discountFreightType.val("");
+                this.$dFreight.val("");
+                this.$dFreight.attr("disabled", "disabled");
+                this.applyDiscountFreightTypeUI();
+                return;
+            }
+
+            if (discountType == null) {
+                this.$discountFreightType.val("1");
+            }
+
+            this.applyDiscountFreightTypeUI();
+        },
+
+        normalizeDiscountFreightPayload: function (payload) {
+            const freightType = this.getCurrentFreightType();
+            const lowCon = Number(payload.Low_Con || 0);
+            const disFreight = Number(payload.Dis_Freight || 0);
+
+            if (disFreight < 0) payload.Dis_Freight = 0;
+
+            if (freightType !== 2 && freightType !== 3) {
+                payload.DiscountFreightType = null;
+                payload.Dis_Freight = 0;
+                return payload;
+            }
+
+            if (lowCon <= 0) {
+                payload.DiscountFreightType = null;
+                payload.Dis_Freight = 0;
+                return payload;
+            }
+
+            if (!payload.DiscountFreightType) {
+                payload.DiscountFreightType = null;
+                payload.Dis_Freight = 0;
+                return payload;
+            }
+
+            if (Number(payload.DiscountFreightType) === 2 && Number(payload.Dis_Freight || 0) === 0) {
+                payload.DiscountFreightType = null;
+                payload.Dis_Freight = 0;
+                return payload;
+            }
+
+            return payload;
+        },
+
+        validateDiscountFreightRelation: function (showMessage) {
+            const freightType = this.getCurrentFreightType();
+            const freight = Number(this.$freight.val() || 0);
+            const disFreight = Number(this.$dFreight.val() || 0);
+            const discountType = this.getDiscountFreightTypeValue();
+
+            this.$freight.removeClass("is-invalid");
+            this.$dFreight.removeClass("is-invalid");
+
+            if (freightType !== 2 && freightType !== 3) {
+                return true;
+            }
+
+            if (disFreight < 0) {
+                this.$dFreight.addClass("is-invalid");
+                if (showMessage) {
+                    Coker.sweet.error("錯誤", "折抵運費不可小於 0。", null, true);
+                }
+                return false;
+            }
+
+            if (freightType === 2 && discountType === 2 && disFreight > freight) {
+                this.$freight.addClass("is-invalid");
+                this.$dFreight.addClass("is-invalid");
+                if (showMessage) {
+                    Coker.sweet.error("錯誤", "單筆計算時，折抵固定運費不可大於單筆運費。", null, true);
+                }
+                return false;
+            }
+
+            return true;
         },
 
         renderLogisticsBoxUI: function () {
@@ -489,18 +669,34 @@
                 return $.Deferred().reject().promise();
             }
 
-            const payload = _c.Form.getJson(this.formId);
+            this.handleLowConRule();
+
+            if (!this.validateDiscountFreightRelation(true)) {
+                return $.Deferred().reject().promise();
+            }
+
+            let payload = _c.Form.getJson(this.formId);
             payload.Id = this.keyId;
             payload.ProdIds = this.getFreightProdIds();
             payload.LogisticsBoxFees = this.getFreightLogisticsBoxFeesData();
-            this.$isCashOnDelivery_parent.hasClass("d-none") ? payload.SupportCashOnDelivery = false : payload.SupportCashOnDelivery = !!payload.SupportCashOnDelivery;
+            payload = this.normalizeDiscountFreightPayload(payload);
+            this.$isCashOnDelivery_parent.hasClass("d-none")
+                ? payload.SupportCashOnDelivery = false
+                : payload.SupportCashOnDelivery = !!payload.SupportCashOnDelivery;
 
             if (freightType === 3) {
                 payload.Freight = 0;
-                payload.Low_Con = 0;
-                payload.Dis_Freight = 0;
+
+                if (!payload.DiscountFreightType) {
+                    payload.DiscountFreightType = null;
+                    payload.Dis_Freight = 0;
+                }
             } else {
                 payload.LogisticsBoxFees = [];
+
+                if (!payload.DiscountFreightType) {
+                    payload.DiscountFreightType = null;
+                }
             }
 
             const self = this;

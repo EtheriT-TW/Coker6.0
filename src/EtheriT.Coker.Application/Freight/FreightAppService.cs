@@ -35,6 +35,49 @@ namespace EtheriT.Coker.Application.Freight
             this.Configuration = Configuration;
             this.mapper = mapper;
         }
+        private void NormalizeDiscountFreight(LogisticsSetting ls)
+        {
+            var type = ls.DiscountFreightType;
+            var lowCon = ls.Low_Con ?? 0;
+            var disFreight = ls.Dis_Freight ?? 0;
+
+            // 1️⃣ 沒有折抵 → 全清
+            if (type == null)
+            {
+                ls.Dis_Freight = null;
+                return;
+            }
+
+            // 2️⃣ 無門檻 → 不套用
+            if (lowCon <= 0)
+            {
+                ls.DiscountFreightType = null;
+                ls.Dis_Freight = null;
+                return;
+            }
+
+            // 3️⃣ 折抵金額 <= 0 → 視為免運（統一）
+            if (disFreight <= 0)
+            {
+                ls.Dis_Freight = 0;
+
+                // 👉 統一為「指定折抵後運費」
+                ls.DiscountFreightType = DiscountFreightType.指定折抵後運費;
+
+                return;
+            }
+
+            // 4️⃣ 單筆計費限制
+            if (ls.FreightType == FreightTypeEnum.單筆計算)
+            {
+                if (ls.Freight.HasValue && disFreight > ls.Freight.Value)
+                {
+                    ls.Dis_Freight = ls.Freight.Value;
+                }
+            }
+
+            // 5️⃣ 已箱計費 → 不限制（讓計算端處理）
+        }
         public async Task<ResponseMessageDto> AddUp(FreightDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -63,11 +106,12 @@ namespace EtheriT.Coker.Application.Freight
                     mapper.Map(dto, ls);
                 }
 
+                NormalizeDiscountFreight(ls);
+
                 await loginUserData.SaveChanges(ls);
 
                 await SyncProdMappingsAsync(ls.Id, dto.ProdIds, websiteId);
-                if(dto.FreightType == FreightTypeEnum.依箱計費)
-                    await SyncLogisticsBoxFeesAsync(ls.Id, dto.LogisticsBoxFees, websiteId, dto.FreightType);
+                await SyncLogisticsBoxFeesAsync(ls.Id, dto.LogisticsBoxFees, websiteId, dto.FreightType);
 
                 output.Success = true;
             }

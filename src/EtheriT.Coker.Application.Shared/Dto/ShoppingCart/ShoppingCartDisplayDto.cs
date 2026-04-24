@@ -23,6 +23,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public decimal OldPrice { get; set; }
         public decimal Discont { get; set; }
         public int Bonus { get; set; }
+        public int OldBonus { get; set; }
         public int Quantity { get; set; }
         public int Step { get; set; }
         public int OldQuantity { get; set; }

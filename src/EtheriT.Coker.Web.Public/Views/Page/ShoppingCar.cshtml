@@ -283,30 +283,53 @@
                             </div>
                         </li>
                     </template>
-                    <ul class="purchase_list pb-4 ps-4 pe-5"></ul>
+                    <ul class="purchase_list ps-4 pe-5"></ul>
 
-                    <div class="priceline pe-sm-5 col-12 col-md-7 offset-md-5">
-                        <div class="py-2 d-flex justify-content-end text-end">
-                            <div>商品金額</div>
-                            <div data-key="subtotal" data-type="price" class="subtotal price"></div>
+                    <div class="priceline priceline-step1 pe-sm-5 col-12 col-md-7 offset-md-5">
+                        <div class="summary-main-row">
+                            <div class="summary-label">商品金額</div>
+                            <div class="summary-amount dual-price">
+                                <span class="bonus-part"><span class="bonus"></span>點</span>
+                                <span class="plus-sign">+</span>
+                                <span class="cash-part subtotal price"></span>
+                            </div>
                         </div>
-                        <div class="py-2 d-flex justify-content-end text-end bonusLine">
-                            <div>商品紅利</div>
-                            <div data-key="bonus" data-type="price" class="bonus"></div>
+
+                        <div class="summary-main-row bonusDiscionLine d-none">
+                            <div class="summary-label">紅利折抵</div>
+                            <div class="summary-amount bonusDiscion price-negative"></div>
                         </div>
-                        <div class="py-2 d-flex justify-content-end text-end bonusDiscionLine">
-                            <div>紅利抵扣</div>
-                            <div data-key="bonusDiscion" data-type="price" class="bonusDiscion"></div>
+
+                        <div class="summary-note-row bonusRuleLine d-none">
+                            <div class="summary-note-value bonusRedeemRuleText"></div>
+                            <div class="summary-note-label"></div>
                         </div>
-                        <div class="border-top  py-2 d-flex justify-content-end text-end">
-                            <div>小計</div>
-                            <div data-key="total" data-type="price" class="subtotal price fs-5 fw-bold red_text"></div>
-                        </div>
-                        <div class="py-1 d-flex justify-content-end text-end d-none bonusRedeemHintLine">
-                            <div class="bonusRedeemHintText"></div>
-                            <div class="bonusEarnHintText"></div>
+
+                        <div class="summary-panel">
+                            <div class="summary-total-row">
+                                <div class="summary-label">小計</div>
+                                <div data-key="payableSubtotal" class="summary-amount payable_subtotal price fs-5 fw-bold red_text"></div>
+                            </div>
+
+                            <div class="summary-main-row bonusUseTotalLine d-none">
+                                <div class="summary-label">使用紅利</div>
+                                <div class="summary-amount bonusUseTotalValue"></div>
+                            </div>
+
+                            <div class="summary-reward-row bonusRedeemHintLine d-none">
+                                <div class="summary-reward-box">
+                                    <i class="fa-solid fa-gift summary-reward-icon"></i>
+                                    <span class="bonusEarnHintText"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
+                    <div class="js-bonus-nextstep-hint text-danger small mb-2 d-none text-center">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                        <span class="js-bonus-nextstep-text"></span>
+                    </div>
+
                     <div class="swiper_button my-5 d-flex justify-content-center">
                         <a href="@ViewData["prodCatalog"]" title="繼續購物：回商品目錄" class="btn_backshop btn_gray_dark border-0 mx-2 p-0 py-2 rounded-3 text-center text-white">返回購物</a>
                         <button class="btn_swiper_next_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
@@ -661,12 +684,13 @@
                                                value="@freight.Id"
                                                data-freight-status-type="@freight.FreightStatusType"
                                                data-freight-type="@((int)freight.FreightType)"
+                                               data-discount-freight-type="@(freight.DiscountFreightType.HasValue ? ((int)freight.DiscountFreightType.Value).ToString() : "")"
                                                data-freight="@(freight.Freight)"
                                                data-lowcon="@(freight.Low_Con)"
                                                data-disfreight="@(freight.Dis_Freight)"
                                                data-isdefault="@freight.Set_Default"
                                                data-boxfees='@Html.Raw(boxFeesJson)'
-                                               data-support-cash-on-delivery = "@freight.SupportCashOnDelivery"
+                                               data-support-cash-on-delivery="@freight.SupportCashOnDelivery"
                                                @check
                                                required>
                                         <label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
@@ -677,7 +701,7 @@
                                                    class="btn_getmap bg-transparent border-0 ms-1 text-decoration-underline"
                                                    value="選擇門市"
                                                    data-subtype="@freight.LogisticsSubType"
-                                                   data-support-cash-on-delivery = "@freight.SupportCashOnDelivery"
+                                                   data-support-cash-on-delivery="@freight.SupportCashOnDelivery"
                                                    title="選擇門市">
                                         }
 
@@ -708,34 +732,52 @@
                         <input type="hidden" name="IsCollection" />
                     </form>
 
-                    <div class="priceline px-3 pe-sm-5 col-12 col-md-7 offset-md-5">
-                        <div class="py-2 d-flex justify-content-end text-end">
-                            <div>商品金額</div>
-                            <div class="subtotal price"></div>
+                    <div class="priceline priceline-step3 px-3 pe-sm-5 col-12 col-md-7 offset-md-5">
+                        <div class="summary-main-row">
+                            <div class="summary-label">商品金額</div>
+                            <div class="summary-amount dual-price">
+                                <span class="bonus-part"><span class="bonus"></span>點</span>
+                                <span class="plus-sign">+</span>
+                                <span class="cash-part subtotal price"></span>
+                            </div>
                         </div>
-                        <div class="py-2 d-flex justify-content-end text-end bonusLine">
-                            <div>商品紅利</div>
-                            <div class="bonus"></div>
+
+                        <div class="summary-main-row bonusDiscionLine d-none">
+                            <div class="summary-label">紅利折抵</div>
+                            <div class="summary-amount bonusDiscion price-negative"></div>
                         </div>
-                        <div class="py-2 d-flex justify-content-end text-end bonusDiscionLine">
-                            <div>紅利抵扣</div>
-                            <div data-key="bonusDiscion" data-type="price" class="bonusDiscion"></div>
+
+                        <div class="summary-note-row bonusRuleLine d-none">
+                            <div class="summary-note-value bonusRedeemRuleText"></div>
+                            <div class="summary-note-label"></div>
                         </div>
-                        <div class="py-2 d-flex justify-content-end text-end">
-                            <div class="shipping_memo">再購買<sapn class="price"></sapn>免運</div>
-                            <div class="shipping_box_memo small text-muted d-none"></div>
-                            <div>運費</div>
-                            <div class="shipping_fee price">0</div>
+
+                        <div class="summary-main-row">
+                            <div class="summary-label">
+                                <span class="shipping_memo d-none">再購買 <span class="price"></span> 可享運費優惠</span>
+                                <span class="shipping_box_memo small text-muted d-none"></span>
+                                運費
+                            </div>
+                            <div class="summary-amount shipping_fee price">0</div>
                         </div>
-                        <div class="py-2 border-top d-flex justify-content-end text-end">
-                            <div>小計</div>
-                            <div class="total_amount price  fs-5 fw-bold red_text"></div>
+                        <div class="summary-panel">
+                            <div class="summary-total-row">
+                                <div class="summary-label">小計</div>
+                                <div class="summary-amount total_amount price fs-5 fw-bold red_text"></div>
+                            </div>
+
+                            <div class="summary-main-row bonusUseTotalLine d-none">
+                                <div class="summary-label">使用紅利</div>
+                                <div class="summary-amount bonusUseTotalValue"></div>
+                            </div>
+
+                            <div class="summary-reward-row bonusRedeemHintLine d-none">
+                                <div class="summary-reward-box">
+                                    <i class="fa-solid fa-gift summary-reward-icon"></i>
+                                    <span class="bonusEarnHintText"></span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="py-1 d-flex justify-content-end text-end d-none bonusRedeemHintLine">
-                            <div class="bonusRedeemHintText"></div>
-                            <div class="bonusEarnHintText"></div>
-                        </div>
-                        <div class="d-flex justify-content-end"><button class="btn_back_to_check bg-transparent btn text-decoration-underline px-0">返回查看商品明細</button></div>
                     </div>
 
                     <div class="title px-3 py-2 my-3 d-flex align-items-center">
@@ -1061,5 +1103,5 @@
 
 
 <script src="@(ViewBag.IsProduction
-                    ? "https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"
-                    : "https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116")"></script>
+                            ? "https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"
+                            : "https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116")"></script>

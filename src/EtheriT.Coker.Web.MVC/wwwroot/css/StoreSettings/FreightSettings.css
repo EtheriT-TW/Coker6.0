@@ -43,6 +43,11 @@ input[type="number"] {
     padding-left: 7.5rem;
 }
 
+.discount-freight-type {
+    flex: 0 0 160px;
+    max-width: 160px;
+}
+
 .logisticsBoxSection {
     border: 1px solid #dee2e6;
     border-radius: .5rem;

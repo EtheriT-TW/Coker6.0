@@ -66,6 +66,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return orderAppService.GetFreightStatusTypeEnum();
         }
+        [HttpPost]
+        public List<SelectDto> GetDiscountFreightTypeEnum()
+        {
+            return orderAppService.GetDiscountFreightTypeEnum();
+        }
         [HttpGet]
         public async Task<ResponseMessageDto> SendMail(long Id)
         {

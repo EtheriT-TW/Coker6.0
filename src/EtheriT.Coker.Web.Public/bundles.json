@@ -83,6 +83,8 @@
         "wwwroot/js/Coker/coker.config.js",
         "wwwroot/js/Coker/coker.alias.js",
 
+        "wwwroot/js/Coker/coker.auth.js",
+
         "wwwroot/js/Coker/coker.util.string.js",
         "wwwroot/js/Coker/coker.util.html.js",
         "wwwroot/js/Coker/coker.util.money.js",

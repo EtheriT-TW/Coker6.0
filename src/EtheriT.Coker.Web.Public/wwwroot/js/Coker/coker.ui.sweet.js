@@ -122,20 +122,28 @@
                 },
 
                 warning: function (title, text, action) {
+                    var executed = false;
+
+                    function runActionOnce() {
+                        if (executed) return;
+                        executed = true;
+                        (typeof action === "function") && action();
+                    }
+
                     Swal.fire({
                         title: title,
                         text: text,
                         icon: "warning",
-                        showCancelButton: typeof action === "function",
+                        showCancelButton: false,
                         confirmButtonColor: "#3085d6",
-                        confirmButtonText: local.Confirm
+                        confirmButtonText: local.Confirm,
+                        allowOutsideClick: false
                     }).then(function () {
-                        (typeof action === "function") && action();
+                        runActionOnce();
                     });
 
-                    // 保留你原本的「3 秒後自動呼叫」行為
                     if (typeof action === "function") {
-                        setTimeout(action, 3000);
+                        setTimeout(runActionOnce, 3000);
                     }
                 }
             }

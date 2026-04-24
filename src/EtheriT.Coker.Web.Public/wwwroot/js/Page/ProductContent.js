@@ -442,18 +442,27 @@
             const stock = this.getActiveStock();
             if (!stock) return [];
 
-            return stock.prices.map(price => ({
-                ...price,
-                disabled: this.isBonusLack(price),
-                checked: normalizeNullableInt(price.id) === normalizeNullableInt(this.current.priceId),
-                stock
-            }));
+            return stock.prices.map(price => {
+                const disabled = this.isBonusLack(price);
+
+                return {
+                    ...price,
+                    disabled,
+                    checked: normalizeNullableInt(price.id) === normalizeNullableInt(this.current.priceId),
+                    stock
+                };
+            });
         }
 
         isBonusLack(price) {
             if (!this.canShop) return false;
+
             const bonus = normalizeNullableInt(price.bonus);
             if (bonus <= 0) return false;
+
+            const isLoggedIn = co.auth.isLoggedIn();
+            if (!isLoggedIn) return false;
+
             return normalizeNullableInt(this.options.totalBonus) < bonus;
         }
 
@@ -1105,7 +1114,6 @@
         renderPrices() {
             const $priceFrame = this.$root.find(this.options.selectors.priceFrame).empty();
             const priceOptions = this.state.selection.getPriceOptions();
-            const summaryText = this.state.product.priceDisplayText || buildPriceSummary(this.state.product.stocks, this.options);
             const hasMultiplePrice = priceOptions.length > 1;
 
             if (!priceOptions.length) {
@@ -1116,6 +1124,7 @@
             }
 
             $priceFrame.removeClass('d-none');
+            this.$root.find('.options').removeClass('d-none');
 
             priceOptions.forEach((item, index) => {
                 const $price = cloneTemplate(this.options.templates.priceItem);
@@ -1171,8 +1180,9 @@
                     $saleRoleName.addClass('d-none').text('');
                 }
 
+                // 下方價格區塊永遠顯示目前選中規格的價格
                 $salePrice
-                    .text(hasMultiplePrice ? vm.saleText : (summaryText || vm.saleText))
+                    .text(vm.saleText)
                     .removeClass('bonus_lack');
 
                 let hasMeta = false;
@@ -1240,9 +1250,15 @@
             const stock = this.state.selection.getActiveStock();
             const canAdd = this.state.selection.canAddToCart();
             const priceOptions = this.state.selection.getPriceOptions();
-            const hasBonusLackOption = priceOptions.some(x => !!x.disabled && normalizeNullableInt(x.bonus) > 0);
-            const selectedPrice = priceOptions.find(x => normalizeNullableInt(x.id) === normalizeNullableInt(this.state.selection.current.priceId));
-            const selectedIsBonusLack = !!selectedPrice && !!selectedPrice.disabled && normalizeNullableInt(selectedPrice.bonus) > 0;
+            const selectedPrice = priceOptions.find(
+                x => normalizeNullableInt(x.id) === normalizeNullableInt(this.state.selection.current.priceId)
+            );
+            const isLoggedIn = co.auth.isLoggedIn();
+            const selectedIsBonusLack =
+                isLoggedIn &&
+                !!selectedPrice &&
+                !!selectedPrice.disabled &&
+                normalizeNullableInt(selectedPrice.bonus) > 0;
 
             this.$addToCartButton.removeClass('close bonus_lack');
 
@@ -1272,8 +1288,42 @@
             if (localStorage.getItem('AgreePrivacy') == null) {
                 Coker.sweet.warning(
                     this.t('addCartWarningTitle'),
-                    this.t('addCartNeedPrivacy'),
-                    null
+                    this.t('addCartNeedPrivacy')
+                );
+                return;
+            }
+
+            const priceOptions = this.state.selection.getPriceOptions();
+            const selectedPrice = priceOptions.find(
+                x => normalizeNullableInt(x.id) === normalizeNullableInt(this.state.selection.current.priceId)
+            );
+            const isLoggedIn = co.auth.isLoggedIn();
+            const selectedBonus = normalizeNullableInt(selectedPrice?.bonus);
+
+            // 未登入且目前選的是紅利價：先要求登入
+            if (!isLoggedIn && selectedBonus > 0) {
+                Coker.sweet.warning(
+                    this.t('addCartWarningTitle'),
+                    '請登入會員',
+                    () => {
+                        if (typeof loginModal !== 'undefined' && loginModal && typeof loginModal.show === 'function') {
+                            loginModal.show();
+                        }
+                    }
+                );
+                return;
+            }
+
+            // 已登入但紅利不足（前端先做 UX 提示；後端仍需再驗證）
+            if (
+                isLoggedIn &&
+                selectedPrice &&
+                normalizeNullableInt(selectedPrice.bonus) > 0 &&
+                normalizeNullableInt(this.options.totalBonus) < normalizeNullableInt(selectedPrice.bonus)
+            ) {
+                Coker.sweet.warning(
+                    this.t('addCartWarningTitle'),
+                    this.t('bonusInsufficient')
                 );
                 return;
             }
@@ -1281,9 +1331,7 @@
             if (!this.state.selection.canAddToCart()) {
                 Coker.sweet.warning(
                     this.t('addCartWarningTitle'),
-                    this.t('addCartNeedSelection'),
-                    null,
-                    false
+                    this.t('addCartNeedSelection')
                 );
                 return;
             }
@@ -1295,13 +1343,12 @@
                     if (result.error === '商品庫存不足') {
                         Coker.sweet.warning(result.error, result.message, function () {
                             location.reload(true);
-                        }, false);
+                        });
                     } else {
                         Coker.sweet.error(
                             this.t('commonErrorTitle'),
                             result.message || this.t('addCartError'),
-                            null,
-                            true
+                            null
                         );
                     }
                     return;

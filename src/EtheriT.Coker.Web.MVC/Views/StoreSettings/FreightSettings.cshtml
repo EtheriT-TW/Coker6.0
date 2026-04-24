@@ -140,23 +140,51 @@
 							<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
 								<span class="material-symbols-outlined me-1">paid</span>單筆運費
 							</div>
-							<input id="InputFreight" class="form-control rounded" type="number" name="Freight" aria-label="Input Freight" disabled="disabled" required>
+							<input id="InputFreight"
+								   class="form-control rounded"
+								   type="number"
+								   name="Freight"
+								   aria-label="Input Freight"
+								   disabled="disabled"
+								   required>
 						</div>
 					</div>
+
 					<div class="col-6 col-sm-3 mb-3">
 						<div class="low_con input-group mb-3">
 							<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
 								<span class="material-symbols-outlined me-1">toll</span>折抵低消
 							</div>
-							<input id="InputLowCon" class="form-control rounded" type="number" name="Low_Con" aria-label="Input Low Consumption" disabled="disabled" required>
+							<input id="InputLowCon"
+								   class="form-control rounded"
+								   type="number"
+								   name="Low_Con"
+								   aria-label="Input Low Consumption"
+								   disabled="disabled"
+								   required>
 						</div>
 					</div>
-					<div class="col-6 col-sm-3 mb-3">
-						<div class="dfreight input-group mb-3">
-							<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-								<span class="material-symbols-outlined me-1">generating_tokens</span>折抵後運費
-							</div>
-							<input id="InputDfreight" class="form-control rounded" type="number" name="Dis_Freight" aria-label="Input Discounted Freight" disabled="disabled" required>
+
+					<div class="col-12 col-sm-6 mb-3 discountFreightGroupSection d-none">
+						<div class="input-group discount-freight-group">
+
+							<span class="input-group-text">折抵運費</span>
+
+							<select id="SelectDiscountFreightType"
+									class="form-select discount-freight-type"
+									name="DiscountFreightType"
+									disabled="disabled">
+							</select>
+
+							<span class="input-group-text">NT$</span>
+
+							<input id="InputDfreight"
+								   class="form-control"
+								   type="number"
+								   name="Dis_Freight"
+								   disabled="disabled"
+								   required>
+
 						</div>
 					</div>
 				</div>

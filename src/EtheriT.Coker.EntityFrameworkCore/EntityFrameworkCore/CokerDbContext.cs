@@ -250,6 +250,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.Website).WithMany(u => u.LogisticsSettings).HasForeignKey(f => f.FK_WebsiteId);
                 o.Property(l => l.FreightStatusType).HasDefaultValue(FreightStatusTypeEnum.一般);
+                o.Property(l => l.DiscountFreightType).HasDefaultValue(DiscountFreightType.指定折抵後運費);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<LogisticsBox>(o => {

@@ -2,7 +2,7 @@
 var gotop_switch = false, isCheckout = false;
 
 var subtotal, ori_freight, low_con, disfreight, freight, total;
-var freightType = 0, boxFees = [];
+var freightType = 0, discountFreightType = null, boxFees = [];
 var shipping = null, payment = null;
 
 var ShippingForms, PaymentForms, OrdererForms, RecipientForms, InvoiceForms, InvoicePersonalTypeForms;
@@ -58,6 +58,7 @@ function PageReady() {
 
         updateGroupSelectedSubtotal($group);
         TotalCount();
+        updateNextStepByBonus();
     });
 
     // 單一品項
@@ -68,6 +69,7 @@ function PageReady() {
 
         updateGroupSelectedSubtotal($group);
         TotalCount();
+        updateNextStepByBonus();
     });
 
 
@@ -144,6 +146,10 @@ function PageReady() {
                 const hasSelected = getSelectedCartIds().length > 0;
                 var $errorSelected = $('li.purchase_item.cart-item-error input[name="buyItems"]:checked');
 
+                const { bonus } = computeSelectedSubtotal();
+                const memberBonus = Number(totalBonus || 0);
+                const bonusNotEnough = Number(bonus || 0) > memberBonus;
+
                 if (!hasProds) {
                     Coker.sweet.warning("錯誤", "無可購買商品。", null, false);
                     buy_step_swiper.slideTo(0);
@@ -155,6 +161,15 @@ function PageReady() {
                     Coker.sweet.warning(
                         "無法結帳",
                         "您選取的商品中包含已下架或庫存不足的品項，請先調整或移除後再繼續結帳。",
+                        null,
+                        false
+                    );
+                    buy_step_swiper.slideTo(0);
+                    return;
+                } else if (bonusNotEnough) {
+                    Coker.sweet.warning(
+                        "紅利不足",
+                        `目前已選商品需紅利 ${Number(bonus || 0).toLocaleString()} 點，會員可用紅利 ${memberBonus.toLocaleString()} 點，請先調整商品或數量。`,
                         null,
                         false
                     );
@@ -757,6 +772,11 @@ function ElementInit() {
             disfreight = Number($(this).data("disfreight") || 0);
             freightType = Number($(this).data("freight-type") || 0);
 
+            var rawDiscountFreightType = $(this).attr("data-discount-freight-type");
+            discountFreightType = rawDiscountFreightType === "" || rawDiscountFreightType == null
+                ? null
+                : Number(rawDiscountFreightType);
+
             var rawBoxFees = $(this).attr("data-boxfees");
             try {
                 boxFees = rawBoxFees ? JSON.parse(rawBoxFees) : [];
@@ -858,7 +878,6 @@ function renderCartGroups(result) {
     $("#Purchase_Null").toggleClass("d-none", hasItems);
 
     buy_step_swiper.update();
-    updateOverallSubtotal(); // 若你要「已選合計」，可改成 TotalCount()
 }
 function updateOverallSubtotal() {
     let sum = 0;
@@ -882,6 +901,7 @@ function CartInit(result) {
 
     buy_step_swiper.update();
     TotalCount();
+    updateNextStepByBonus();
     PaymentHideShow();
     ValidateCartOnInit();
 
@@ -894,6 +914,7 @@ function CartInit(result) {
         // 計算小計與合計
         updateGroupSelectedSubtotal($firstGroup);
         TotalCount();
+        updateNextStepByBonus();
     }
 }
 function PaymentHideShow() {
@@ -965,32 +986,57 @@ function CartListAdd(data, $container) {
     $template.find(".btn_count_plus").on("click", function () {
         var $self_bro = $(this).siblings(".pro_quantity");
         const $group = $template.closest('.purchase_group');
+
         if ($self_bro.val() < max_quantity) {
-            $self_bro.val(parseInt($self_bro.val()) + parseInt($self_bro.attr("step")))
-            updateGroupSelectedSubtotal($group);
-            TotalCount();
-            CartQuantityUpdate($template.find(".pro_subtotal"), data.price, data.bonus, $template.data("scId"), $self_bro.val());
+            $self_bro.val(parseInt($self_bro.val()) + parseInt($self_bro.attr("step")));
+            CartQuantityUpdate(
+                $template.find(".pro_subtotal"),
+                data.price,
+                data.bonus,
+                $template.data("scId"),
+                Number($self_bro.val()),
+                $group
+            );
         }
     });
+
     $template.find(".btn_count_minus").on("click", function () {
         var $self_bro = $(this).siblings(".pro_quantity");
         const $group = $template.closest('.purchase_group');
+
         if ($self_bro.val() > parseInt($self_bro.attr("step"))) {
-            $self_bro.val(parseInt($self_bro.val()) - parseInt($self_bro.attr("step")))
-            updateGroupSelectedSubtotal($group);
-            TotalCount();
-            CartQuantityUpdate($template.find(".pro_subtotal"), data.price, data.bonus, $template.data("scId"), $self_bro.val());
+            $self_bro.val(parseInt($self_bro.val()) - parseInt($self_bro.attr("step")));
+            CartQuantityUpdate(
+                $template.find(".pro_subtotal"),
+                data.price,
+                data.bonus,
+                $template.data("scId"),
+                Number($self_bro.val()),
+                $group
+            );
         }
     });
+
     $template.find(".pro_quantity").on("change", function () {
         var $self = $(this);
         const $group = $template.closest('.purchase_group');
-        if ($self.val() < parseInt($self.attr("step"))) $self.val(parseInt($self.attr("step")));
-        else if ($self.val() > max_quantity) $self.val(max_quantity - (max_quantity % parseInt($self.attr("step"))))
-        else $self.val($self.val() - ($self.val() % parseInt($self.attr("step"))))
-        updateGroupSelectedSubtotal($group);
-        TotalCount();
-        CartQuantityUpdate($template.find(".pro_subtotal"), data.price, data.bonus, $template.data("scId"), $self.val());
+
+        if ($self.val() < parseInt($self.attr("step"))) {
+            $self.val(parseInt($self.attr("step")));
+        } else if ($self.val() > max_quantity) {
+            $self.val(max_quantity - (max_quantity % parseInt($self.attr("step"))));
+        } else {
+            $self.val($self.val() - ($self.val() % parseInt($self.attr("step"))));
+        }
+
+        CartQuantityUpdate(
+            $template.find(".pro_subtotal"),
+            data.price,
+            data.bonus,
+            $template.data("scId"),
+            Number($self.val()),
+            $group
+        );
     });
 
     if ($template.find(".btn_move_to_favorites").length > 0) {
@@ -1074,34 +1120,62 @@ function CartListInsert($frame, data) {
                     $self.text(data[key]);
                     break;
                 case "oldPrice": {
-                    // 後端定義：
-                    // oldPrice = 加入購物車 / 原訂單當下的成交價（ShoppingCart.Price）
-                    // price    = 現在要結帳的實際售價（Prod_Prices.Price）
                     var original = data.oldPrice;
                     var current = data.price;
 
-                    if (original != null && original > 0 && original !== current) {
-                        // 顯示舊價（例如：$360）
-                        $self.removeClass("d-none");
-                        $self.text(original.toLocaleString());
+                    var oldBonus = data.oldBonus || 0;
+                    var bonus = data.bonus || 0;
 
-                        var $priceDiv = $self.siblings("div[data-key='price']");
+                    var $priceDiv = $self.siblings("div[data-key='price']");
 
-                        // 清掉舊的狀態 class，避免重複 render 殘留
-                        $priceDiv
-                            .removeClass("price-up price-down price-changed text-danger text-success red_text");
+                    // 清掉舊 class（避免殘留）
+                    $priceDiv.removeClass("price-up price-down price-changed text-danger text-success red_text");
 
-                        // 共用：這筆商品價格有變動
-                        $priceDiv.addClass("price-changed");
+                    let hasChange = false;
 
-                        if (current > original) {
-                            // ➜ 價格變貴：警告
-                            $priceDiv.addClass("price-up text-danger red_text");
-                        } else if (current < original) {
-                            // ➜ 價格變便宜：驚喜
-                            $priceDiv.addClass("price-down text-success");
+                    // ===== 是否有任何變動 =====
+                    var priceChanged = (original != null && original > 0 && original !== current);
+                    var bonusChanged = (oldBonus !== bonus);
+
+                    if (priceChanged || bonusChanged) {
+                        hasChange = true;
+
+                        // ===== 舊價格顯示（關鍵修正）=====
+                        let oldText = "";
+
+                        if (oldBonus > 0) {
+                            if (original > 0) {
+                                oldText = `${original.toLocaleString()}+紅利${oldBonus.toLocaleString()}`;
+                            } else {
+                                oldText = `紅利${oldBonus.toLocaleString()}`;
+                            }
+                        } else {
+                            oldText = `${original.toLocaleString()}`;
                         }
+
+                        $self.removeClass("d-none");
+                        $self.text(oldText);
+
+                        // ===== 異動方向（統一判斷）=====
+                        if (priceChanged) {
+                            if (current > original) {
+                                $priceDiv.addClass("price-up text-danger red_text");
+                            } else {
+                                $priceDiv.addClass("price-down text-success");
+                            }
+                        }
+
+                        if (bonusChanged) {
+                            if (bonus > oldBonus) {
+                                $priceDiv.addClass("price-up text-danger red_text");
+                            } else {
+                                $priceDiv.addClass("price-down text-success");
+                            }
+                        }
+
+                        $priceDiv.addClass("price-changed");
                     }
+
                     break;
                 }
                 case "price": {
@@ -1171,13 +1245,12 @@ function CartListInsert($frame, data) {
     });
     return $frame;
 }
-function CartQuantityUpdate(self, price, bonus, scid, quantity) {
+function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
     if (quantity <= 0) return;
 
     var entry = shopping_cart_data.find(function (e) { return e.Id == scid; });
     var oldQty = entry ? entry.Quantity : quantity;
 
-    // 共用：依指定數量更新小計與文字顯示，並重算總計
     function updateSubtotalAndDisplay(qty) {
         var sub_price = price * qty;
         var sub_bonus = bonus * qty;
@@ -1186,53 +1259,61 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity) {
         self.data("subtotal_bonus", sub_bonus);
 
         var price_text = (sub_bonus > 0)
-            ? sub_price > 0 ? `${sub_price.toLocaleString()}+紅利${sub_bonus.toLocaleString()}` : `紅利${sub_bonus.toLocaleString()}`
+            ? (sub_price > 0
+                ? `${sub_price.toLocaleString()}+紅利${sub_bonus.toLocaleString()}`
+                : `紅利${sub_bonus.toLocaleString()}`)
             : `${sub_price.toLocaleString()}`;
 
         self.text(price_text);
-
-        TotalCount();
     }
 
-    // 共用錯誤處理：顯示錯誤 + 還原數量 & 顯示 + 標記不可選
-    function handleUpdateError(title, message) {
+    function syncGroupAndTotal() {
+        if ($group && $group.length) {
+            updateGroupSelectedSubtotal($group);
+        }
+        TotalCount();
+        updateNextStepByBonus();
+    }
+
+    function handleUpdateError(title, message, rollbackOnly) {
         var $li = self.closest('li.purchase_item');
-        if (title !== "") {
-            var $qty = $li.find('.pro_quantity');
-            Coker.sweet.error(title, message, null, true);
-            $qty.val(oldQty);
-            return;
-        }
+        var $qty = $li.find('.pro_quantity');
 
-        // 標記錯誤
-        $li.addClass('cart-item-error');
-
-        // 取消選取並鎖住 checkbox
-        var $itemCheckbox = $li.find('input[name="buyItems"]');
-        if ($itemCheckbox.length) {
-            $itemCheckbox.prop('checked', false);
-            $itemCheckbox.prop('disabled', true);
-        }
-
-        // 顯示錯誤訊息區塊（避免和初次載入重複，先移除舊的）
-        $li.find('.js-stock-error').remove();
-        var $content = $li.find('.content');
-        if (!$content.length) $content = $li;
-
-        var $msgDiv = $('<div class="js-stock-error text-danger small mt-1"></div>');
-        $msgDiv.text(message || '此商品目前無法購買，請調整或移除。');
-        $content.append($msgDiv);
-
+        $qty.val(oldQty);
         updateSubtotalAndDisplay(oldQty);
+
+        if (!rollbackOnly && title !== "") {
+            Coker.sweet.error(title, message, null, true);
+        }
+
+        if (!rollbackOnly) {
+            $li.addClass('cart-item-error');
+
+            var $itemCheckbox = $li.find('input[name="buyItems"]');
+            if ($itemCheckbox.length) {
+                $itemCheckbox.prop('checked', false);
+                $itemCheckbox.prop('disabled', true);
+            }
+
+            $li.find('.js-stock-error').remove();
+            var $content = $li.find('.content');
+            if (!$content.length) $content = $li;
+
+            var $msgDiv = $('<div class="js-stock-error text-danger small mt-1"></div>');
+            $msgDiv.text(message || '此商品目前無法購買，請調整或移除。');
+            $content.append($msgDiv);
+        }
+
+        syncGroupAndTotal();
     }
 
     Product.Update.Cart({
         Id: scid,
         Quantity: quantity
     }).done(function (result) {
-
-        // === 成功 ===
         if (result.success) {
+            var $li = self.closest('li.purchase_item');
+
             if (entry) {
                 entry.Price = price;
                 entry.Bonus = bonus;
@@ -1240,31 +1321,30 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity) {
                 entry.PackingPoint = Number(entry.PackingPoint || 0);
             }
 
-            // 移除錯誤標記，恢復可選
-            var $li = self.closest('li.purchase_item');
             $li.removeClass('cart-item-error');
             $li.find('.js-stock-error').remove();
+
             var $itemCheckbox = $li.find('input[name="buyItems"]');
             if ($itemCheckbox.length) {
                 $itemCheckbox.prop('disabled', false);
             }
-            if (!result.object.items[0].success) {
-                handleUpdateError("", result.object.items[0].message);
+
+            if (result.object?.items?.[0] && !result.object.items[0].success) {
+                handleUpdateError("", result.object.items[0].message, false);
+                return;
             }
 
             updateSubtotalAndDisplay(quantity);
+            syncGroupAndTotal();
             CartDropReset(scid, quantity);
             return;
         }
 
-        // === result.success == false：後端驗證沒過 ===
         var msg = result.message || "商品數量修改發生錯誤，請稍後再試。";
-        handleUpdateError("商品更改數量發生錯誤", msg);
+        handleUpdateError("商品更改數量發生錯誤", msg, false);
 
     }).fail(function () {
-
-        // === AJAX / 伺服器錯誤 ===
-        handleUpdateError("錯誤", "商品數量修改發生錯誤，請稍後再試。");
+        handleUpdateError("錯誤", "商品數量修改發生錯誤，請稍後再試。", false);
     });
 }
 function computeSelectedSubtotal() {
@@ -1294,51 +1374,62 @@ function TotalCount() {
     low_con = Number(shippingMeta.lowCon || 0);
     disfreight = Number(shippingMeta.disFreight || 0);
     freightType = Number(shippingMeta.freightType || 0);
+    discountFreightType = shippingMeta.discountFreightType == null ? null : Number(shippingMeta.discountFreightType);
     boxFees = shippingMeta.boxFees || [];
 
+    // 商品金額
     $(".subtotal").text(subtotal.toLocaleString());
 
-    const $bonusLine = $(".bonusLine");
+    // 商品紅利（作為附註，不放進主計算列）
+    const $bonusParts = $(".dual-price .bonus-part");
     if ((bonus || 0) > 0) {
-        $bonusLine.find('.bonus').text(bonus.toLocaleString());
-        $bonusLine.removeClass("d-none");
+        $(".bonus").text(bonus.toLocaleString());
+        $bonusParts.removeClass("d-none");
+        $(".dual-price .plus-sign").removeClass("d-none");
     } else {
-        $bonusLine.find('.bonus').text("");
-        $bonusLine.addClass("d-none");
+        $(".bonus").text("");
+        $bonusParts.addClass("d-none");
+        $(".dual-price .plus-sign").addClass("d-none");
     }
 
-    // 紅利折抵提示
-    const $redeemLine = $(".bonusRedeemHintLine");
-    const $redeemText = $redeemLine.find(".bonusRedeemHintText");
+    // ===== 紅利折抵規則 / 本次折抵 =====
     const $bonusDisconLine = $(".bonusDiscionLine");
+    const $bonusRuleLine = $(".bonusRuleLine");
+    const $redeemRuleText = $(".bonusRedeemRuleText");
+
+    // ===== 紅利回饋提示 =====
+    const $rewardRow = $(".bonusRedeemHintLine");
+    const $earnText = $(".bonusEarnHintText");
 
     const redeemEnabled = (MinOrderForRedemption > 0 && MaxRedemptionPercent > 0);
+
     let allBonus = Number(bonus || 0);
     let redeemAmount = 0;
     let payableSubtotal = subtotal;
 
-    if (!redeemEnabled) {
-        $redeemLine.addClass("d-none");
-        $bonusDisconLine.addClass("d-none");
-        $redeemText.text("");
-        $bonusDisconLine.find(".bonusDiscion").text("");
-    } else if (subtotal < MinOrderForRedemption) {
-        const diff = MinOrderForRedemption - subtotal;
-        $redeemText.removeClass("d-none").text(`再消費 $${diff.toLocaleString()} 可啟用紅利折抵`);
-        $redeemLine.removeClass("d-none");
-        $bonusDisconLine.addClass("d-none");
-        $bonusDisconLine.find(".bonusDiscion").text("");
+    // 1. 紅利折抵規則提示
+    if (redeemEnabled) {
+        if (subtotal < MinOrderForRedemption) {
+            const diff = MinOrderForRedemption - subtotal;
+            $redeemRuleText.text(`再消費 $${Number(diff).toLocaleString()} 可使用紅利折抵（最高 ${Number(MaxRedemptionPercent).toLocaleString()}%）`);
+        } else {
+            $redeemRuleText.text(`本單可使用紅利折抵（最高 ${Number(MaxRedemptionPercent).toLocaleString()}%）`);
+        }
+        $bonusRuleLine.removeClass("d-none");
     } else {
+        $redeemRuleText.text("");
+        $bonusRuleLine.addClass("d-none");
+    }
+
+    // 2. 本次實際折抵
+    if (redeemEnabled && subtotal >= MinOrderForRedemption) {
         const cap = Math.floor(subtotal * MaxRedemptionPercent / 100);
         const memberBonusAmount = Math.max(0, (totalBonus || 0) - bonus);
         redeemAmount = Math.min(cap, memberBonusAmount);
 
-        $redeemText.addClass("d-none").text("");
-
         if (redeemAmount > 0) {
             $bonusDisconLine.removeClass("d-none");
-            $bonusDisconLine.find(".bonusDiscion").text(redeemAmount.toLocaleString());
-            $redeemLine.removeClass("d-none");
+            $bonusDisconLine.find(".bonusDiscion").text(`${redeemAmount.toLocaleString()} 點`);
 
             allBonus += redeemAmount;
             payableSubtotal = Math.max(0, subtotal - redeemAmount);
@@ -1346,34 +1437,40 @@ function TotalCount() {
             $bonusDisconLine.addClass("d-none");
             $bonusDisconLine.find(".bonusDiscion").text("");
         }
+    } else {
+        $bonusDisconLine.addClass("d-none");
+        $bonusDisconLine.find(".bonusDiscion").text("");
     }
 
-    // 紅利回饋提示
-    const $earnText = $redeemLine.find(".bonusEarnHintText");
+    // Step1 小計（折抵後，不含運費）
+    $(".payable_subtotal").text(parseInt(payableSubtotal, 10).toLocaleString());
+
+    // ===== 紅利回饋提示 =====
     const earnEnabled = (MinOrderForEarnPoints > 0 && RewardRatePercent > 0);
 
     if (!earnEnabled) {
-        $earnText.addClass("d-none");
+        $rewardRow.addClass("d-none");
         $earnText.text("");
     } else if (subtotal < MinOrderForEarnPoints) {
         const diff = MinOrderForEarnPoints - subtotal;
+        $rewardRow.removeClass("d-none");
         $earnText.text(`再消費 $${diff.toLocaleString()} 可獲得紅利回饋`);
-        $earnText.removeClass("d-none");
     } else {
         const earnPoints = Math.floor(subtotal * RewardRatePercent / 100);
         if (earnPoints > 0) {
+            $rewardRow.removeClass("d-none");
             $earnText.text(`本單預計獲得紅利 ${earnPoints.toLocaleString()} 點`);
-            $earnText.removeClass("d-none");
         } else {
-            $earnText.addClass("d-none");
+            $rewardRow.addClass("d-none");
             $earnText.text("");
         }
     }
 
+    // ===== 運費 =====
     $(".shipping_fee").text(freight.toLocaleString());
 
-    // 運費提醒
-    if (freightResult.mode === 2 && freightResult.shortage > 0 && Number(ori_freight || 0) > Number(disfreight || 0)) {
+    // 運費提醒：單筆 / 箱型都支援，只要有門檻且未達成就顯示
+    if (shouldShowShippingShortage(freightResult)) {
         $(".shipping_memo .price").text(Number(freightResult.shortage).toLocaleString());
         $(".shipping_memo").removeClass("d-none");
     } else {
@@ -1381,7 +1478,7 @@ function TotalCount() {
         $(".shipping_memo .price").text("");
     }
 
-    // 箱型資訊顯示（有區塊就顯示，沒有就略過）
+    // ===== 箱型資訊 =====
     const $boxMemo = $(".shipping_box_memo");
     if ($boxMemo.length) {
         if (freightResult.mode === 3 && freightResult.boxResult && freightResult.boxResult.boxes.length > 0) {
@@ -1399,18 +1496,49 @@ function TotalCount() {
         }
     }
 
+    // ===== 全單紅利使用總計 =====
     if (allBonus > 0) {
-        $(".bonusUseTotal").removeClass("d-none");
-        $(".bonusUseTotal>.bonus").text(allBonus.toLocaleString());
+        $(".bonusUseTotalLine").removeClass("d-none");
+        $(".bonusUseTotalValue").text(`${allBonus.toLocaleString()} 點`);
     } else {
-        $(".bonusUseTotal").addClass("d-none");
-        $(".bonusUseTotal>.bonus").text("");
+        $(".bonusUseTotalLine").addClass("d-none");
+        $(".bonusUseTotalValue").text("");
     }
 
+    // ===== Step3 小計（折抵後 + 運費）=====
     total = payableSubtotal + freight;
     $(".total_amount").text(parseInt(total, 10).toLocaleString());
 
     PaymentHideShow();
+}
+function updateNextStepByBonus() {
+    const { bonus } = computeSelectedSubtotal();
+    const memberBonus = Number(totalBonus || 0);
+    const shortage = Math.max(0, Number(bonus || 0) - memberBonus);
+    const isEnough = shortage <= 0;
+    console.log(totalBonus);
+    const $nextBtn = $(".btn_swiper_next_buystep");
+    const $hint = $(".js-bonus-nextstep-hint");
+    const $hintText = $(".js-bonus-nextstep-text");
+
+    // 按鈕控制
+    $nextBtn.prop("disabled", !isEnough);
+    $nextBtn.toggleClass("disabled", !isEnough);
+
+    // 提示控制
+    if ($hint.length && $hintText.length) {
+        if (isEnough) {
+            $hint.addClass("d-none");
+            $hintText.text("");
+        } else {
+            $hint.removeClass("d-none");
+            $hintText.text(
+                `目前已選商品需紅利 ${Number(bonus || 0).toLocaleString()} 點，` +
+                `會員可用紅利 ${memberBonus.toLocaleString()} 點，` +
+                `尚差 ${shortage.toLocaleString()} 點。`
+            );
+        }
+    }
 }
 function CartDelete(self, id, success, error) {
     self.remove();
@@ -1424,6 +1552,7 @@ function CartDelete(self, id, success, error) {
         }
         CartDropReset(id, 0)
         TotalCount();
+        updateNextStepByBonus();
         if (parseInt($("#Car_Badge").text()) == 0) {
             DetailsClear();
         }
@@ -1450,6 +1579,11 @@ function RadioShipping() {
     low_con = Number($this.data("lowcon") || 0);
     disfreight = Number($this.data("disfreight") || 0);
     freightType = Number($this.data("freight-type") || 0);
+
+    var rawDiscountFreightType = $this.attr("data-discount-freight-type");
+    discountFreightType = rawDiscountFreightType === "" || rawDiscountFreightType == null
+        ? null
+        : Number(rawDiscountFreightType);
 
     var rawBoxFees = $this.attr("data-boxfees");
     try {
@@ -2675,6 +2809,7 @@ function getSelectedShippingMeta() {
         return {
             id: 0,
             freightType: 0,
+            discountFreightType: null,
             freight: 0,
             lowCon: 0,
             disFreight: 0,
@@ -2694,16 +2829,71 @@ function getSelectedShippingMeta() {
         }
     }
 
+    var rawDiscountFreightType = $selected.attr("data-discount-freight-type");
+
     return {
         id: Number($selected.val() || 0),
         freightType: Number($selected.data("freight-type") || 0),
+        discountFreightType: rawDiscountFreightType === "" || rawDiscountFreightType == null
+            ? null
+            : Number(rawDiscountFreightType),
         freight: Number($selected.data("freight") || 0),
         lowCon: Number($selected.data("lowcon") || 0),
         disFreight: Number($selected.data("disfreight") || 0),
         boxFees: Array.isArray(parsedBoxFees) ? parsedBoxFees : []
     };
 }
+function calculateDiscountTargetFreight(baseFreight, shippingMeta) {
+    var originFreight = Number(baseFreight || 0);
+    var disFreight = Number(shippingMeta.disFreight || 0);
+    var discountType = shippingMeta.discountFreightType == null
+        ? null
+        : Number(shippingMeta.discountFreightType);
 
+    if (discountType == null) {
+        return originFreight;
+    }
+
+    // 1 = 指定折抵後運費：Dis_Freight 本身就是最終運費
+    if (discountType === 1) {
+        return Math.max(0, disFreight);
+    }
+
+    // 2 = 折抵固定運費金額：Dis_Freight 是折抵金額，所以要從原運費扣掉
+    if (discountType === 2) {
+        return Math.max(0, originFreight - Math.max(0, disFreight));
+    }
+
+    return originFreight;
+}
+function shouldShowShippingShortage(freightResult) {
+    return Number(freightResult.shortage || 0) > 0;
+}
+function applyDiscountFreight(baseFreight, productSubtotal, shippingMeta) {
+    var originFreight = Number(baseFreight || 0);
+    var freeThreshold = Number(shippingMeta.lowCon || 0);
+    var disFreight = Number(shippingMeta.disFreight || 0);
+    var discountType = shippingMeta.discountFreightType == null
+        ? null
+        : Number(shippingMeta.discountFreightType);
+
+    // 沒有門檻 / 未達門檻 / 未設定折抵方式 => 原運費
+    if (freeThreshold <= 0 || productSubtotal < freeThreshold || discountType == null) {
+        return originFreight;
+    }
+
+    // 1 = 指定折抵後運費
+    if (discountType === 1) {
+        return Math.max(0, disFreight);
+    }
+
+    // 2 = 折抵固定運費金額
+    if (discountType === 2) {
+        return Math.max(0, originFreight - Math.max(0, disFreight));
+    }
+
+    return originFreight;
+}
 function getSelectedCartItems() {
     var ids = getSelectedCartIds();
     return shopping_cart_data.filter(function (x) {
@@ -2723,10 +2913,9 @@ function getSelectedPackingPoint() {
 function calculateNormalFreight(productSubtotal, shippingMeta) {
     var originFreight = Number(shippingMeta.freight || 0);
     var freeThreshold = Number(shippingMeta.lowCon || 0);
-    var discountedFreight = Number(shippingMeta.disFreight || 0);
 
     if (freeThreshold > 0 && productSubtotal >= freeThreshold) {
-        return discountedFreight;
+        return calculateDiscountTargetFreight(originFreight, shippingMeta);
     }
 
     return originFreight;
@@ -2852,6 +3041,12 @@ function calculateBoxFreightByTotalCapacity(totalPackingPoint, fees) {
 
 function calculateFreight(productSubtotal) {
     var shippingMeta = getSelectedShippingMeta();
+    var shortage = 0;
+    var lowConValue = Number(shippingMeta.lowCon || 0);
+
+    if (lowConValue > 0 && productSubtotal < lowConValue) {
+        shortage = lowConValue - productSubtotal;
+    }
 
     switch (shippingMeta.freightType) {
         case 1: // 免運費
@@ -2859,35 +3054,49 @@ function calculateFreight(productSubtotal) {
                 freight: 0,
                 mode: 1,
                 shortage: 0,
-                boxResult: null
+                boxResult: null,
+                originFreight: 0,
+                targetFreight: 0
             };
 
         case 3: { // 依箱計費
             var totalPackingPoint = getSelectedPackingPoint();
             var boxResult = calculateBoxFreightByTotalCapacity(totalPackingPoint, shippingMeta.boxFees);
 
+            // 箱型原始運費必須用實際配箱結果，不可用 radio data-freight
+            var boxOriginFreight = Number(boxResult.freight || 0);
+
+            // targetFreight 一律代表「達門檻後的最終運費」
+            var targetFreight = calculateDiscountTargetFreight(boxOriginFreight, shippingMeta);
+
+            var finalFreight = shortage > 0 ? boxOriginFreight : targetFreight;
+
             return {
-                freight: Number(boxResult.freight || 0),
+                freight: Number(finalFreight || 0),
                 mode: 3,
-                shortage: 0,
-                boxResult: boxResult
+                shortage: shortage,
+                boxResult: boxResult,
+                originFreight: boxOriginFreight,
+                targetFreight: targetFreight
             };
         }
 
         case 2: // 單筆計算
         default: {
-            var normalFreight = calculateNormalFreight(productSubtotal, shippingMeta);
-            var shortage = 0;
+            var originFreight = Number(shippingMeta.freight || 0);
 
-            if (Number(shippingMeta.lowCon || 0) > 0 && productSubtotal < Number(shippingMeta.lowCon || 0)) {
-                shortage = Number(shippingMeta.lowCon || 0) - productSubtotal;
-            }
+            // targetFreight 一律代表「達門檻後的最終運費」
+            var targetFreight = calculateDiscountTargetFreight(originFreight, shippingMeta);
+
+            var finalFreight = shortage > 0 ? originFreight : targetFreight;
 
             return {
-                freight: Number(normalFreight || 0),
+                freight: Number(finalFreight || 0),
                 mode: 2,
                 shortage: shortage,
-                boxResult: null
+                boxResult: null,
+                originFreight: originFreight,
+                targetFreight: targetFreight
             };
         }
     }

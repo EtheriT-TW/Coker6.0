@@ -73,7 +73,14 @@ const orderModel = {
             type: "POST",
             headers: _c.Data.Header
         });
-    }
+    },
+    GetDiscountFreightTypeEnum: function () {
+        return $.ajax({
+            url: "/api/Order/GetDiscountFreightTypeEnum",
+            type: "POST",
+            headers: _c.Data.Header
+        });
+    },
 }
 Coker.extend({
     Order: orderModel

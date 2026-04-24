@@ -11,6 +11,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Freight
         public ShippingTypeEnum LogisticsType { get; set; }
         public FreightTypeEnum FreightType { get; set; }
         public FreightStatusTypeEnum FreightStatusType { get; set; }
+        public DiscountFreightType? DiscountFreightType { get; set; }
         public int? Freight { get; set; }
         public int? Low_Con { get; set; }
         public int? Dis_Freight { get; set; }

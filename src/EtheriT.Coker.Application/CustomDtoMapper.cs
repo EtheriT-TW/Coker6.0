@@ -274,7 +274,7 @@ namespace EtheriT.Coker.Application
                 .ReverseMap();
             CreateMap<ProductImportUpateRegDto, ProductImportDto>()
                 .ForMember(e => e.ProdName, option => option.MapFrom(p => Normalize(p.ProdName)))
-                .ForMember(e => e.Price, option => option.MapFrom(p => ParseDouble(p.Price)??-1))
+                .ForMember(e => e.Price, option => option.MapFrom(p => ParseDouble(p.Price) ?? -1))
                 .ReverseMap()
                 .ForMember(e => e.ProdName, option => option.MapFrom(p => Normalize(p.ProdName)));
 
@@ -444,7 +444,7 @@ namespace EtheriT.Coker.Application
 
             CreateMap<DirectoryFacetRange, DirectoryFacetRangeDto>();
             CreateMap<DirectoryFacetRangeDto, DirectoryFacetRange>()
-                .ForMember(d => d.Id, opt => opt.Ignore()) 
+                .ForMember(d => d.Id, opt => opt.Ignore())
                 .ForMember(d => d.FK_DirectoryId, opt => opt.Ignore())
                 .ForMember(d => d.Directory, opt => opt.Ignore());
             CreateMap<Core.Models.Directory, DirectoryFacetConfigDto>()
@@ -540,7 +540,10 @@ namespace EtheriT.Coker.Application
                 .ForMember(d => d.Freight, m => m.MapFrom(s => s.Freight ?? 0))
                 .ForMember(d => d.FreightStatusType, m => m.MapFrom(s => (int)s.FreightStatusType))
                 .ForMember(d => d.FreightType, m => m.MapFrom(s => (int)s.FreightType))
-                .ForMember(d => d.GetMap, m => m.MapFrom(s => (int)s.LogisticsType >= 8 && (int)s.LogisticsType <= 15))
+                .ForMember(d => d.GetMap, m => m.MapFrom(s =>
+                    ((int)s.LogisticsType >= 8 && (int)s.LogisticsType <= 15)
+                    || new[] { 3, 4, 5, 7 }.Contains((int)s.LogisticsType)
+                ))
                 .ForMember(d => d.LogisticsSubType, m => m.Ignore())
                 .ForMember(d => d.Describe, m => m.Ignore())
                 .ForMember(d => d.LogisticsBoxFees, m => m.MapFrom(s => s.logisticsBoxFees))
@@ -596,8 +599,8 @@ namespace EtheriT.Coker.Application
                     ? new FooterTemplateDto
                     {
                         id = src.footerTemplates != null ? src.footerTemplates.Id : null,
-                        html = src.footerTemplates != null ? src.footerTemplates.saveHtml??"" : "",
-                        css = src.footerTemplates != null ? src.footerTemplates.saveCss??"" : ""
+                        html = src.footerTemplates != null ? src.footerTemplates.saveHtml ?? "" : "",
+                        css = src.footerTemplates != null ? src.footerTemplates.saveCss ?? "" : ""
                     } : null
                 ));
             CreateMap<TemplateSections, HeaderTemplateDto>()

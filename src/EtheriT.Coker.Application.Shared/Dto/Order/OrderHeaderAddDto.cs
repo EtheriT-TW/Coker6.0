@@ -14,6 +14,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? OrdererTelePhone { get; set; }
         public string OrdererCellPhone { get; set; }
         public string OrdererAddress { get; set; }
+        public string OrdererZipCode { get; set; }
         public long? RecipientId { get; set; }
         public string Recipient { get; set; }
         public int RecipientSex { get; set; }
@@ -21,6 +22,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? RecipientTelePhone { get; set; }
         public string RecipientCellPhone { get; set; }
         public string RecipientAddress { get; set; }
+        public string RecipientZipCode { get; set; }
         public string? Remark { get; set; }
         public int? InvoiceRecipient { get; set; }
         public string? InvoiceTitle { get; set; }

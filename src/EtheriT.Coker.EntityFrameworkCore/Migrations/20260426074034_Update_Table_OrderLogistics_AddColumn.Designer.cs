@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260426074034_Update_Table_OrderLogistics_AddColumn")]
+    partial class Update_Table_OrderLogistics_AddColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1648,11 +1651,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int?>("Dis_Freight")
                         .HasColumnType("int");
 
-                    b.Property<int?>("DiscountFreightType")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(1);
-
                     b.Property<long>("FK_WebsiteId")
                         .HasColumnType("bigint");
 
@@ -2465,8 +2463,35 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<string>("AllPayLogisticsID")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("Bonus")
                         .HasColumnType("int");
+
+                    b.Property<string>("BookingNote")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CVSAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CVSOutSide")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CVSPaymentNo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CVSStoreID")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CVSStoreName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CVSTelephone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CVSValidationNo")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Carrier")
                         .HasColumnType("nvarchar(max)");
@@ -2541,9 +2566,18 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("LogisticsStatusCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LogisticsUpdateStatusDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Memo")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("MerchantTradeNo")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Orderer")
                         .IsRequired()
@@ -2571,10 +2605,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("OrdererTelePhone")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("OrdererZipCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<long>("Payment")
                         .HasColumnType("bigint");
@@ -2608,10 +2638,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("RecipientTelePhone")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("RecipientZipCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Remark")
                         .HasMaxLength(500)

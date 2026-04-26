@@ -22,6 +22,7 @@ namespace EtheriT.Coker.Core.Models
         public string OrdererCellPhone { get; set; }
         [StringLength(250)]
         public string OrdererAddress { get; set; }
+        public string OrdererZipCode { get; set; }
         [StringLength(150)]
         public string Recipient { get; set; }
         public int RecipientSex { get; set; }
@@ -33,6 +34,7 @@ namespace EtheriT.Coker.Core.Models
         public string RecipientCellPhone { get; set; }
         [StringLength(250)]
         public string RecipientAddress { get; set; }
+        public string RecipientZipCode { get; set; }
         [StringLength(500)]
         public string? Remark { get; set; }
         public int? InvoiceRecipient { get; set; }
@@ -64,18 +66,6 @@ namespace EtheriT.Coker.Core.Models
         public int? RepayTimes { get; set; }
         public DateTime? RepayDate { get; set; }
         public bool IsTemp { get; set; }
-        public string? AllPayLogisticsID { get; set; }
-        public string? MerchantTradeNo { get; set; }
-        public string? CVSStoreID { get; set; }
-        public string? CVSStoreName { get; set; }
-        public string? CVSAddress { get; set; }
-        public string? CVSTelephone { get; set; }
-        public string? CVSOutSide { get; set; }
-        public string? LogisticsStatusCode { get; set; }
-        public DateTime? LogisticsUpdateStatusDate { get; set; }
-        public string? CVSPaymentNo { get; set; }
-        public string? CVSValidationNo { get; set; }
-        public string? BookingNote { get; set; }
         public PaymentType PaymentType { get; set; }
         public LogisticsSetting LogisticsSetting { get; set; }
         public List<Order_Details> Order_Details { get; set; }

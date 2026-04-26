@@ -279,7 +279,6 @@ namespace EtheriT.Coker.Application.Token
             finally { 
                 
             }
-
             return output;
         }
         public async Task<ResponseMessageDto> AgreePrivacy()

@@ -112,6 +112,8 @@ namespace EtheriT.Coker.Application.Freight
 
                 await SyncProdMappingsAsync(ls.Id, dto.ProdIds, websiteId);
                 await SyncLogisticsBoxFeesAsync(ls.Id, dto.LogisticsBoxFees, websiteId, dto.FreightType);
+                if (dto.FreightType == FreightTypeEnum.依箱計費)
+                    await SyncLogisticsBoxFeesAsync(ls.Id, dto.LogisticsBoxFees, websiteId, dto.FreightType);
 
                 output.Success = true;
             }
@@ -378,40 +380,6 @@ namespace EtheriT.Coker.Application.Freight
             {
                 ContractResolver = new DefaultContractResolver()
             });
-        }
-        private static string GetLogisticsSubType(int typecode)
-        {
-            string LogisticsSubType = "";
-
-            switch (typecode)
-            {
-                case 8:
-                    LogisticsSubType = "FAMI";
-                    break;
-                case 9:
-                    LogisticsSubType = "UNIMART";
-                    break;
-                case 10:
-                    LogisticsSubType = "UNIMARTFREEZE";
-                    break;
-                case 11:
-                    LogisticsSubType = "HILIFE";
-                    break;
-                case 12:
-                    LogisticsSubType = "FAMIC2C";
-                    break;
-                case 13:
-                    LogisticsSubType = "UNIMARTC2C";
-                    break;
-                case 14:
-                    LogisticsSubType = "HILIFEC2C";
-                    break;
-                case 15:
-                    LogisticsSubType = "OKMARTC2C";
-                    break;
-            }
-
-            return LogisticsSubType;
         }
         public async Task<ResponseMessageDto> Delete(long Id)
         {

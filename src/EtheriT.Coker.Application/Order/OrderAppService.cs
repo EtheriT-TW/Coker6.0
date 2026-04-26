@@ -430,6 +430,7 @@ namespace EtheriT.Coker.Application.Order
             else
             {
                 oh = mapper.Map<Order_Header>(dto);
+
                 oh.FK_WebsiteId = websiteId;
                 oh.FK_UUID = uuid;
                 oh.Fk_Tid = token.RefreshToken;
@@ -438,6 +439,35 @@ namespace EtheriT.Coker.Application.Order
 
                 db.Order_Headers.Add(oh);
                 await db.SaveChangesAsync();
+
+                if (detailResult != null)
+                {
+                    var LogisticsSubType = detailResult.ShoppingCarts[0].LogisticsSubType;
+                    if (LogisticsSubType != null)
+                    {
+                        var temp_shoppingcart = detailResult.ShoppingCarts[0];
+
+                        Order_Logistics ohlo = new Order_Logistics();
+
+                        ohlo.FK_OhId = oh.Id;
+                        ohlo.LogisticsSubType = LogisticsSubType;
+
+                        if (LogisticsSubType == "TCAT" || LogisticsSubType == "POST") ohlo.LogisticsType = "HOME";
+                        else ohlo.LogisticsType = "CVS";
+
+                        ohlo.CreatorUserId = userId ?? 0;
+                        ohlo.CreationTime = now;
+
+                        ohlo.CVSStoreID = dto.CVSStoreID;
+                        ohlo.CVSStoreName = dto.CVSStoreName;
+                        ohlo.CVSAddress = dto.CVSAddress;
+                        ohlo.CVSTelephone = dto.CVSTelephone;
+                        ohlo.CVSOutSide = dto.CVSOutSide;
+
+                        db.Order_Logistics.Add(ohlo);
+                        await db.SaveChangesAsync();
+                    }
+                }
 
                 if (!isTemp && detailResult != null)
                 {
@@ -711,6 +741,7 @@ namespace EtheriT.Coker.Application.Order
                 return;
 
             var ods = new List<Order_Details>();
+            var ohlo = await db.Order_Logistics.Where(e => e.FK_OhId == header.Id).FirstOrDefaultAsync();
 
             foreach (var sc in detailResult.ShoppingCarts)
             {
@@ -945,6 +976,7 @@ namespace EtheriT.Coker.Application.Order
                 foreach (var order_header in order_headers)
                 {
                     var temp_output = mapper.Map<OrderHeaderDisplayDto>(order_header);
+                    var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == order_header.Id).FirstOrDefaultAsync();
 
                     var userdata = await db.FrontUsers.Where(e => e.UUID == order_header.FK_UUID).FirstOrDefaultAsync();
                     if (userdata != null)
@@ -988,7 +1020,8 @@ namespace EtheriT.Coker.Application.Order
                     var shipping = await db.LogisticsSettings.Where(e => e.FK_WebsiteId == WebsiteId && e.Id == order_header.Shipping).FirstOrDefaultAsync();
                     var shipping_str1 = shipping?.Title ?? "";
                     var shipping_str3 = (shipping?.LogisticsType ?? ShippingTypeEnum.郵寄掛號).ToString().Replace("_", "/");
-                    temp_output.Shipping = shipping_str1 != "" ? shipping_str3 != "" ? $"{shipping_str1}　{shipping_str3}" : $"{shipping_str1}" : "";
+                    temp_output.Shipping = shipping_str1 != "" ? shipping_str3 != "" ? $"{shipping_str1} {shipping_str3}" : $"{shipping_str1}" : "";
+                    if (logistics != null && logistics.LogisticsType == "CVS") temp_output.Shipping += $"　{logistics.CVSStoreName}({logistics.CVSAddress})";
                     temp_output.LogisticsType = ((int)shipping?.LogisticsType);
                     temp_output.LogisticsTypeStr = "CVS";
 
@@ -1580,8 +1613,7 @@ namespace EtheriT.Coker.Application.Order
                 var thirdPartyDict = thirdPartyKeypairValues.ToDictionary(e => e.Key, e => e.Value);
                 if (thirdPartyDict.GetValueOrDefault("EnableB2C") == "false") removeList.AddRange(Enumerable.Range(8, 4).ToList());
                 if (thirdPartyDict.GetValueOrDefault("EnableC2C") == "false") removeList.AddRange(Enumerable.Range(12, 4).ToList());
-                //if (thirdPartyDict.GetValueOrDefault("EnableHomeDelivery") == "false") removeList.AddRange(Enumerable.Range(16, 2).ToList());
-                removeList.AddRange(Enumerable.Range(16, 2).ToList());
+                if (thirdPartyDict.GetValueOrDefault("EnableHomeDelivery") == "false") removeList.AddRange(Enumerable.Range(16, 2).ToList());
             }
 
             Dictionary<string, int> shippingTypeEnums = Enum.GetValues<ShippingTypeEnum>()
@@ -1774,6 +1806,10 @@ namespace EtheriT.Coker.Application.Order
                     var PaymentType = await db.PaymentTypes.Where(e => e.Id == order_header.Payment).Select(e => new { e.Title, e.FK_ThirdPartyId }).FirstOrDefaultAsync();
                     if (PaymentType == null) throw new Exception("查無付款方式資料");
 
+                    var CVSName = "";
+                    var Logistics = await db.Order_Logistics.Where(e => e.FK_OhId == order_header.Id).FirstOrDefaultAsync();
+                    if (Logistics != null) CVSName = $"　({Logistics.CVSStoreName}門市)";
+
                     var ThirdParty = await (from tpk in db.ThirdPartyKeypairs
                                             join tpkv in db.ThirdPartyKeypairValues on tpk.Id equals tpkv.FK_ThirdPartyKeypairId
                                             where tpk.FK_TPid == PaymentType.FK_ThirdPartyId
@@ -1935,7 +1971,7 @@ namespace EtheriT.Coker.Application.Order
                     </tr>" :
                     ""
                  )}
-                 <tr class='thead'><td colspan='6' scope='col'>運送方式：<span class='text-red ms-1 text-size1_5'>{Shipping!.Title}　{Shipping.LogisticsType}</span></td></tr>
+                 <tr class='thead'><td colspan='6' scope='col'>運送方式：<span class='text-red ms-1 text-size1_5'>{Shipping!.Title}　{Shipping.LogisticsType}{CVSName}</span></td></tr>
                  <tr class='thead'><td colspan='6'  scope='col'>付款方式：<span class='text-red ms-1 text-size1_5'>{PaymentType.Title}</span></td></tr>
                  {PaymentTable}
                  <tr class='thead'><td scope='col' colspan='6'>繳費資訊</td></tr>

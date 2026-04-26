@@ -84,6 +84,10 @@ namespace EtheriT.Coker.Application.Common
         {
             return logisticsType switch
             {
+                ShippingTypeEnum.OK取貨 => "OKMARTC2C",
+                ShippingTypeEnum.全家取貨 => "FAMIC2C",
+                ShippingTypeEnum.Seven取貨 => "UNIMARTC2C",
+                ShippingTypeEnum.萊爾富取貨 => "HILIFEC2C",
                 ShippingTypeEnum.綠界_大宗寄倉_全家 => "FAMI",
                 ShippingTypeEnum.綠界_大宗寄倉_711超商 => "UNIMART",
                 ShippingTypeEnum.綠界_大宗寄倉_711冷凍店取 => "UNIMARTFREEZE",

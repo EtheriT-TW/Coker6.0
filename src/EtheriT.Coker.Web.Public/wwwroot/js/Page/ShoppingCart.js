@@ -2036,9 +2036,9 @@ function OrderDataGet() {
 }
 function OrdererDataGet() {
     order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
-
     var country = order_data.county ? `${order_data.county} ` : "";
     var district = order_data.district ? `${order_data.district} ` : "";
+    order_data.ordererZipCode = order_data.zipcode ? `${order_data.zipcode}` : "";
     order_data.ordererAddress = `${country}${district}${order_data.ordererAddress}`;
     if (order_data.ordererTelePhone != "" && order_data.zone != "") {
         order_data.ordererTelePhone = `${order_data.zone}-${order_data.ordererTelePhone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
@@ -2063,6 +2063,7 @@ function RecipientDataGet() {
             recipient_data = co.Form.getJson($("#Form_Recipient").attr("id"));
             var country = recipient_data.county ? `${recipient_data.county} ` : "";
             var district = recipient_data.district ? `${recipient_data.district} ` : "";
+            recipient_data.recipientZipCode = recipient_data.zipcode ? `${recipient_data.zipcode}` : "";
             recipient_data.recipientAddress = `${country}${district}${recipient_data.recipientAddress}`;
             recipient_data.recipientTelePhone = "";
             if (recipient_data.recipientTelePhone != "" && recipient_data.zone != "") {

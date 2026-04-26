@@ -37,6 +37,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<WebMenu> WebMenus { get; set; }
         public DbSet<Order_Header> Order_Headers { get; set; }
         public DbSet<Order_Details> Order_Details { get; set; }
+        public DbSet<Order_Logistics> Order_Logistics { get; set; }
         public DbSet<LogisticsSetting> LogisticsSettings { get; set; }
         public DbSet<LogisticsBox> LogisticsBoxs { get; set; }
         public DbSet<LogisticsBoxFee> LogisticsBoxFees { get; set; }
@@ -244,6 +245,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.Order_Header).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_OId);
                 o.HasOne(u => u.ShoppingCart).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_SCId);
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<Order_Logistics>(o =>
+            {
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<LogisticsSetting>(o =>

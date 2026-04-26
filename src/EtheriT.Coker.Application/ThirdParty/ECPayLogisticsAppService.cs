@@ -51,9 +51,12 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
                 var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
 
-                if (string.IsNullOrWhiteSpace(ThirdPartyData?.MerchantID)) throw new Exception("商家未確實設置綠界物流資料");
+                var MerchantID = "";
 
-                RequestBody.MerchantID = ThirdPartyData.MerchantID;
+                if (string.IsNullOrWhiteSpace(ThirdPartyData?.MerchantID)) MerchantID = configuration.GetValue<string>("ThirdParty:ECPayLogistics:CokerMerchantID");
+                else MerchantID = ThirdPartyData.MerchantID;
+
+                RequestBody.MerchantID = MerchantID;
                 RequestBody.MerchantTradeNo = GenMerchantTradeNo();
                 RequestBody.LogisticsSubType = LogisticsSubType;
                 RequestBody.IsCollection = IsCollection;
@@ -157,16 +160,19 @@ namespace EtheriT.Coker.Application.ThirdParty
 
             try
             {
-                RequestBody = mapper.Map<ECPayLogisticsCreateCVSRequestDto>(await ECPayExpressRequestBody(ThirdPartyData, ohdata));
+                var LogisticsSetting = await db.LogisticsSettings.Where(e => e.Id == ohdata.Shipping).FirstOrDefaultAsync();
+                if (LogisticsSetting == null) throw new Exception("查無運費資訊");
 
-                var db_logistics_setting = await db.LogisticsSettings.Where(e => e.Id == ohdata.Shipping).FirstOrDefaultAsync();
-                if (db_logistics_setting == null) throw new Exception("查無運費資訊");
+                var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohdata.Id).FirstOrDefaultAsync();
+                if (logistics == null) throw new Exception("查無物流資訊");
 
-                if (db_logistics_setting.SupportCashOnDelivery) RequestBody.CollectionAmount = RequestBody.GoodsAmount;
+                RequestBody = mapper.Map<ECPayLogisticsCreateCVSRequestDto>(await ECPayExpressRequestBody(ThirdPartyData, ohdata, LogisticsSetting));
+
+                if (LogisticsSetting.SupportCashOnDelivery) RequestBody.CollectionAmount = RequestBody.GoodsAmount;
                 else RequestBody.CollectionAmount = 0;
 
-                RequestBody.ReceiverStoreID = ohdata.CVSStoreID;
-                RequestBody.ReturnStoreID = ohdata.CVSStoreID;
+                RequestBody.ReceiverStoreID = logistics.CVSStoreID;
+                RequestBody.ReturnStoreID = logistics.CVSStoreID;
                 RequestBody.CheckMacValue = Encrypt(RequestBody, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
             }
             catch (Exception ex)
@@ -177,7 +183,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return RequestBody;
         }
-        private async Task<ECPayLogisticsCreateRequestDto> ECPayExpressRequestBody(ECPayThirdPartyDataDto ThirdPartyData, Core.Models.Order_Header ohdata)
+        private async Task<ECPayLogisticsCreateRequestDto> ECPayExpressRequestBody(ECPayThirdPartyDataDto ThirdPartyData, Core.Models.Order_Header ohdata, Core.Models.LogisticsSetting LogisticsSetting)
         {
             ECPayLogisticsCreateRequestDto RequestBody = new ECPayLogisticsCreateRequestDto();
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
@@ -188,16 +194,16 @@ namespace EtheriT.Coker.Application.ThirdParty
             try
             {
                 var user = await db.FrontUsers.Where(e => e.UUID == ohdata.FK_UUID).FirstOrDefaultAsync();
+                var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohdata.Id).FirstOrDefaultAsync();
+                if (logistics == null) throw new Exception("查無物流資訊");
 
                 RequestBody.MerchantID = ThirdPartyData.MerchantID;
                 var MerchantTradeNo = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
                 RequestBody.MerchantTradeNo = MerchantTradeNo;
-                ohdata.MerchantTradeNo = MerchantTradeNo;
+                logistics.MerchantTradeNo = MerchantTradeNo;
                 db.SaveChanges();
                 RequestBody.MerchantTradeDate = DateTimeNow.ToString("yyyy/MM/dd HH:mm:ss");
 
-                var LogisticsSetting = await db.LogisticsSettings.Where(e => e.Id == ohdata.Shipping).FirstOrDefaultAsync();
-                if (LogisticsSetting == null) throw new Exception("查無運費設置");
                 var LogisticsType = LogisticsSetting.LogisticsType;
                 RequestBody.IsCollection = LogisticsSetting.SupportCashOnDelivery ? "Y" : "N";
 
@@ -289,23 +295,20 @@ namespace EtheriT.Coker.Application.ThirdParty
             try
             {
                 await loginUserData.SetLogs(0, WebsiteId, $"ECPayLogisticsExpressCreateResponse", JsonConvert.SerializeObject(ResultResponseData));
+                var logistics = await db.Order_Logistics.Where(e => e.MerchantTradeNo == ResultResponseData["MerchantTradeNo"]).FirstOrDefaultAsync();
+                if (logistics == null) throw new Exception($"查無訂單MerchantTradeNo{ResultResponseData["MerchantTradeNo"]}的物流資訊");
 
-                var ohdata = await db.Order_Headers.Where(e => e.MerchantTradeNo == ResultResponseData["MerchantTradeNo"]).FirstOrDefaultAsync();
+                logistics.LogisticsStatusCode = ResultResponseData["RtnCode"];
+                logistics.AllPayLogisticsID = ResultResponseData["AllPayLogisticsID"];
 
-                if (ohdata == null) throw new Exception("查無訂單資訊");
-
-                ohdata.LogisticsStatusCode = ResultResponseData["RtnCode"];
-                ohdata.AllPayLogisticsID = ResultResponseData["AllPayLogisticsID"];
-
-                if (DateTime.TryParseExact(ResultResponseData["UpdateStatusDate"], "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var updateDate)) ohdata.LogisticsUpdateStatusDate = updateDate;
-                ohdata.CVSPaymentNo = ResultResponseData["CVSPaymentNo"];
-                ohdata.CVSValidationNo = ResultResponseData["CVSValidationNo"];
-                ohdata.BookingNote = ResultResponseData["BookingNote"];
+                if (DateTime.TryParseExact(ResultResponseData["UpdateStatusDate"], "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var updateDate)) logistics.LastModificationTime = updateDate;
+                logistics.CVSPaymentNo = ResultResponseData["CVSPaymentNo"];
+                logistics.CVSValidationNo = ResultResponseData["CVSValidationNo"];
+                logistics.BookingNote = ResultResponseData["BookingNote"];
 
                 db.SaveChanges();
 
                 response.Success = true;
-                response.Message = $"/OrderManagement";
             }
             catch (Exception ex)
             {
@@ -328,6 +331,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                 {
                     var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
                     if (ohdata == null) throw new Exception($"查無訂單資訊");
+                    var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohdata.Id).FirstOrDefaultAsync();
+                    if (logistics == null) throw new Exception($"查無訂單物流資訊");
 
                     switch (type)
                     {
@@ -337,8 +342,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                             var RequestBody_C2C = new ECPayLogisticsPrintShippingLabelC2CRequestDto()
                             {
                                 MerchantID = ThirdPartyData.MerchantID,
-                                AllPayLogisticsID = ohdata.AllPayLogisticsID,
-                                CVSPaymentNo = ohdata.CVSPaymentNo,
+                                AllPayLogisticsID = logistics.AllPayLogisticsID,
+                                CVSPaymentNo = logistics.CVSPaymentNo,
                                 PlatformID = ThirdPartyData.PlatformID,
                             };
 
@@ -350,9 +355,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                             var RequestBody_711 = new ECPayLogisticsPrintShippingLabelC2C711RequestDto()
                             {
                                 MerchantID = ThirdPartyData.MerchantID,
-                                AllPayLogisticsID = ohdata.AllPayLogisticsID,
-                                CVSPaymentNo = ohdata.CVSPaymentNo,
-                                CVSValidationNo = ohdata.CVSValidationNo,
+                                AllPayLogisticsID = logistics.AllPayLogisticsID,
+                                CVSPaymentNo = logistics.CVSPaymentNo,
+                                CVSValidationNo = logistics.CVSValidationNo,
                                 PlatformID = ThirdPartyData.PlatformID,
                             };
 
@@ -364,7 +369,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             var RequestBody_B2C = new ECPayLogisticsPrintShippingLabelB2CRequestDto()
                             {
                                 MerchantID = ThirdPartyData.MerchantID,
-                                AllPayLogisticsID = ohdata.AllPayLogisticsID,
+                                AllPayLogisticsID = logistics.AllPayLogisticsID,
                                 PlatformID = ThirdPartyData.PlatformID,
                                 PrintMode = 1,
                             };

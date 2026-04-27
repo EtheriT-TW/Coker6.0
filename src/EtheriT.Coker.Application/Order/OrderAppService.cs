@@ -2045,9 +2045,8 @@ namespace EtheriT.Coker.Application.Order
 
             try
             {
-                var webSiteId = await loginUserData.GetWebsiteId();
-                if (webSiteId == 0)
-                    webSiteId = loginUserData.GetFrontWebsiteId();
+                var webSiteId = await loginUserData.GetCommonWebsiteId();
+                if (webSiteId == 0) throw new Exception("網站不存在");
 
                 var order = await db.Order_Headers
                     .Where(e => e.Id == dto.Id && e.FK_WebsiteId == webSiteId)

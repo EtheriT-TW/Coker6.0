@@ -78,16 +78,36 @@
     .type_grid > .type_change_frame > a img {
         border-radius: .5rem;
     }
+
 .type_list > .type_change_frame {
     padding: 0 0.5rem;
 }
-.type_list > .type_change_frame > a {
-    background-color: #eeeeee;
+
+    .type_list > .type_change_frame > a {
+        background-color: #eeeeee;
+    }
+
+        .type_list > .type_change_frame > a img {
+            border-radius: .5rem;
+        }
+
+.price-negative {
+    color: #2e7d32;
+    font-weight: 500;
 }
 
-    .type_list > .type_change_frame > a img {
-        border-radius: .5rem;
+    .price-negative:before {
+        content: "-";
     }
+.subtotalBlock {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: #ccc solid 1px;
+}
+.header_total {
+    color: var(--red-number);
+    font-size: 1.2rem;
+}
 
 #TabContent .content.type_grid figure {
     display: flex;
@@ -427,7 +447,7 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
-    padding-right:2rem;
+    padding-right: 2rem;
 }
 
 /* Button Share */
@@ -480,6 +500,7 @@
     display: flex;
     justify-content: flex-start;
 }
+
     #remarkLine > div {
         text-align-last: left;
     }
@@ -558,8 +579,8 @@
 /* Button Favorites*/
 .btn_fav {
     width: auto;
-    top:2.5rem;
-    right:0.2rem;
+    top: 2.5rem;
+    right: 0.2rem;
 }
 
 #UserBonus {
@@ -589,7 +610,7 @@
 .bonus_note_wrap {
     display: flex;
     gap: 0.5rem;
-    padding:0 0.5rem;
+    padding: 0 0.5rem;
     border-bottom: 1px solid #dee2e6;
 }
 

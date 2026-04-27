@@ -523,6 +523,7 @@ function PageReady() {
     })
 
     const raw = sessionStorage.getItem("orderForm");
+
     if (raw) {
         const data = JSON.parse(raw);
         const savedAt = data.savedAt;
@@ -575,6 +576,7 @@ function PageReady() {
             if (formData.invoiceRecipient == 2) $("[name='InvoiceRadio'][value='order']").prop("checked", true);
         }
         sessionStorage.removeItem("orderForm");
+        if (FormCheck(OrdererForms)) OrdererEdit(false);
     }
 
     $(".btn_getmap").on("click", function () {

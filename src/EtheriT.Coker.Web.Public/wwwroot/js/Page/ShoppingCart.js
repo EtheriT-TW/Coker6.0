@@ -558,8 +558,6 @@ function PageReady() {
                         TotalCount();
                         updateNextStepByBonus();
 
-                        sessionStorage.removeItem("orderForm");
-
                         buy_step_swiper.enable();
                         buy_step_swiper.slideTo(1);
 
@@ -604,6 +602,8 @@ function PageReady() {
 
                         if (formData.invoiceRecipient == 2) $("[name='InvoiceRadio'][value='order']").prop("checked", true);
                         if (FormCheck(OrdererForms)) OrdererEdit(false);
+
+                        sessionStorage.removeItem("orderForm");
                     }
                 }, 50);
             }
@@ -970,7 +970,8 @@ function PaymentHideShow() {
                 if (subtotal > $self_input.data("maxamount")) $self.addClass("d-none");
             }
         })
-    }
+        return true;
+    } else return false;
 }
 function CartListAdd(data, $container) {
     if (data.quantity > 0) {
@@ -1662,38 +1663,40 @@ function RadioShipping() {
     }
 }
 // Toggle Payment By SupportCashOnDelivery && ECPay
-function UpdatePaymentVisibility({ isCOD, isECPayMode }) {
-    $("#RadioPayment .form-check").each(function () {
-        var $self = $(this);
-        var $input = $self.find("input");
+function UpdatePaymentVisibility({ isCOD, isECPayMode, $clickElement }) {
+    if (PaymentHideShow()) {
+        $("#RadioPayment .form-check").each(function () {
+            var $self = $(this);
+            var $input = $self.find("input");
 
-        var val = Number($input.val());
-        var isECPay = $input.attr("id") === "radio_payment_ECPay";
+            var val = Number($input.val());
+            var isECPay = $input.attr("id") === "radio_payment_ECPay";
 
-        var shouldShow = true;
+            var shouldShow = true;
 
-        if (isCOD) shouldShow = (val === 28);
-        else if (val === 28) shouldShow = false;
+            if (isCOD) shouldShow = (val === 28);
+            else if (val === 28) shouldShow = false;
 
-        if (isECPayMode && isECPay) shouldShow = false;
+            if (isECPayMode && isECPay) shouldShow = false;
 
-        $self.toggleClass("d-none", !shouldShow);
-    });
+            $self.toggleClass("d-none", !shouldShow);
+        });
 
-    var $items = $("#RadioPayment .form-check:not(.d-none)");
-    var $first = $items.first();
+        var $items = $("#RadioPayment .form-check:not(.d-none)");
+        var $first = $items.first();
 
-    if ($first.length > 0) {
-        $("#RadioPayment input").prop("checked", false);
-        $("#RadioPayment .payment_display").removeClass("checked");
+        if ($first.length > 0) {
+            $("#RadioPayment input").prop("checked", false);
+            $("#RadioPayment .payment_display").removeClass("checked");
 
-        var $input = $first.find("input");
-        var $display = $first.find(".payment_display");
+            var $input = $first.find("input");
+            var $display = $first.find(".payment_display");
 
-        $input.prop("checked", true);
-        $display.addClass("checked");
-        $input.trigger("change");
-        $input.closest('.form-check').nextAll('.form-check:not(.d-none)').first().find('.payment_display').addClass("first");
+            $input.prop("checked", true);
+            $display.addClass("checked");
+            $input.trigger("change");
+            $input.closest('.form-check').nextAll('.form-check:not(.d-none)').first().find('.payment_display').addClass("first");
+        }
     }
 }
 function RadioPayment() {

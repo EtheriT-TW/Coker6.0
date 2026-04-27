@@ -532,51 +532,82 @@ function PageReady() {
 
         if (diffMinutes < 30) {
             var formData = data.formData;
-            console.log(formData)
+            var SelectedCartIds = data.SelectedCartIds;
 
-            OrdererEdit(true)
-            var ordererAddress = formData.ordererAddress;
+            if (SelectedCartIds.length > 0) {
+                var timer = setInterval(function () {
+                    co.sweet.loading();
+                    if ($('input[name="buyItems"]').length > 0) {
+                        clearInterval(timer);
+                        Swal.close();
+                        var $this_group;
 
-            co.Form.insertData(formData, "#Form_Orderer");
-            $("#OrdererInputAddress").val(ordererAddress.substring(ordererAddress.indexOf(" ", ordererAddress.indexOf(" ") + 1)).trim())
+                        $('input[name="buyItems"]').prop("checked", false);
 
-            co.Zipcode.setData({
-                el: $("#Orderer_TWzipcode"),
-                addr: ordererAddress
-            });
+                        $('input[name="buyItems"]').each(function () {
+                            var $this = $(this);
+                            var value = $this.val();
+                            if (SelectedCartIds.includes(Number(value))) {
+                                $this.prop("checked", true);
+                                $this_group = $this.closest('.purchase_group');
+                                clearOtherGroupsExcept($this_group);
+                            }
+                        });
 
-            if (data.RecipientType == "edit") {
-                $("[name='RecipientRadio'][value='edit']").prop("checked", true);
-                RecipientRadio()
-                var recipientAddress = formData.recipientAddress;
+                        if (typeof ($this_group) != "undefined") updateGroupSelectedSubtotal($this_group);
+                        TotalCount();
+                        updateNextStepByBonus();
 
-                co.Form.insertData(formData, "#RecipientForm");
-                $("#RecipientInputAddress").val(recipientAddress.substring(recipientAddress.indexOf(" ", recipientAddress.indexOf(" ") + 1)).trim())
+                        sessionStorage.removeItem("orderForm");
 
-                co.Zipcode.setData({
-                    el: $("#Recipient_TWzipcode"),
-                    addr: recipientAddress
-                });
+                        buy_step_swiper.enable();
+                        buy_step_swiper.slideTo(1);
+
+                        OrdererEdit(true)
+                        var ordererAddress = formData.ordererAddress;
+
+                        co.Form.insertData(formData, "#Form_Orderer");
+                        $("#OrdererInputAddress").val(ordererAddress.substring(ordererAddress.indexOf(" ", ordererAddress.indexOf(" ") + 1)).trim())
+
+                        co.Zipcode.setData({
+                            el: $("#Orderer_TWzipcode"),
+                            addr: ordererAddress
+                        });
+
+                        if (data.RecipientType == "edit") {
+                            $("[name='RecipientRadio'][value='edit']").prop("checked", true);
+                            RecipientRadio()
+                            var recipientAddress = formData.recipientAddress;
+
+                            co.Form.insertData(formData, "#RecipientForm");
+                            $("#RecipientInputAddress").val(recipientAddress.substring(recipientAddress.indexOf(" ", recipientAddress.indexOf(" ") + 1)).trim())
+
+                            co.Zipcode.setData({
+                                el: $("#Recipient_TWzipcode"),
+                                addr: recipientAddress
+                            });
+                        }
+
+                        if (formData.invoiceType == 2) {
+                            $("[name='InvoiceType'][value='company']").prop("checked", true);
+                            InvoiceTypeRadio();
+                            var invoiceAddress = formData.invoiceAddress;
+
+                            co.Form.insertData(formData, "#Form_Invoice");
+                            $("#InvoiceInputAddress").val(invoiceAddress.substring(invoiceAddress.indexOf(" ", invoiceAddress.indexOf(" ") + 1)).trim())
+
+                            co.Zipcode.setData({
+                                el: $("#Invoice_TWzipcode"),
+                                addr: invoiceAddress
+                            });
+                        }
+
+                        if (formData.invoiceRecipient == 2) $("[name='InvoiceRadio'][value='order']").prop("checked", true);
+                        if (FormCheck(OrdererForms)) OrdererEdit(false);
+                    }
+                }, 50);
             }
-
-            if (formData.invoiceType == 2) {
-                $("[name='InvoiceType'][value='company']").prop("checked", true);
-                InvoiceTypeRadio();
-                var invoiceAddress = formData.invoiceAddress;
-
-                co.Form.insertData(formData, "#Form_Invoice");
-                $("#InvoiceInputAddress").val(invoiceAddress.substring(invoiceAddress.indexOf(" ", invoiceAddress.indexOf(" ") + 1)).trim())
-
-                co.Zipcode.setData({
-                    el: $("#Invoice_TWzipcode"),
-                    addr: invoiceAddress
-                });
-            }
-
-            if (formData.invoiceRecipient == 2) $("[name='InvoiceRadio'][value='order']").prop("checked", true);
         }
-        sessionStorage.removeItem("orderForm");
-        if (FormCheck(OrdererForms)) OrdererEdit(false);
     }
 
     $(".btn_getmap").on("click", function () {
@@ -584,6 +615,7 @@ function PageReady() {
 
         const dataToSave = {
             formData: order_header_data,
+            SelectedCartIds: getSelectedCartIds(),
             RecipientType: $(`[name="RecipientRadio"]:checked`).val(),
             savedAt: Date.now()
         };

@@ -1808,7 +1808,7 @@ namespace EtheriT.Coker.Application.Order
 
                     var CVSName = "";
                     var Logistics = await db.Order_Logistics.Where(e => e.FK_OhId == order_header.Id).FirstOrDefaultAsync();
-                    if (Logistics != null) CVSName = $"　({Logistics.CVSStoreName}門市)";
+                    if (Logistics != null) CVSName = $"　({Logistics.CVSStoreName})";
 
                     var ThirdParty = await (from tpk in db.ThirdPartyKeypairs
                                             join tpkv in db.ThirdPartyKeypairValues on tpk.Id equals tpkv.FK_ThirdPartyKeypairId

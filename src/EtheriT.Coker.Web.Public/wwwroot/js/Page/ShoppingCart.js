@@ -532,51 +532,82 @@ function PageReady() {
 
         if (diffMinutes < 30) {
             var formData = data.formData;
-            console.log(formData)
+            var SelectedCartIds = data.SelectedCartIds;
 
-            OrdererEdit(true)
-            var ordererAddress = formData.ordererAddress;
+            if (SelectedCartIds.length > 0) {
+                var timer = setInterval(function () {
+                    co.sweet.loading();
+                    if ($('input[name="buyItems"]').length > 0) {
+                        clearInterval(timer);
+                        Swal.close();
+                        var $this_group;
 
-            co.Form.insertData(formData, "#Form_Orderer");
-            $("#OrdererInputAddress").val(ordererAddress.substring(ordererAddress.indexOf(" ", ordererAddress.indexOf(" ") + 1)).trim())
+                        $('input[name="buyItems"]').prop("checked", false);
 
-            co.Zipcode.setData({
-                el: $("#Orderer_TWzipcode"),
-                addr: ordererAddress
-            });
+                        $('input[name="buyItems"]').each(function () {
+                            var $this = $(this);
+                            var value = $this.val();
+                            if (SelectedCartIds.includes(Number(value))) {
+                                $this.prop("checked", true);
+                                $this_group = $this.closest('.purchase_group');
+                                clearOtherGroupsExcept($this_group);
+                            }
+                        });
 
-            if (data.RecipientType == "edit") {
-                $("[name='RecipientRadio'][value='edit']").prop("checked", true);
-                RecipientRadio()
-                var recipientAddress = formData.recipientAddress;
+                        if (typeof ($this_group) != "undefined") updateGroupSelectedSubtotal($this_group);
+                        TotalCount();
+                        updateNextStepByBonus();
 
-                co.Form.insertData(formData, "#RecipientForm");
-                $("#RecipientInputAddress").val(recipientAddress.substring(recipientAddress.indexOf(" ", recipientAddress.indexOf(" ") + 1)).trim())
+                        buy_step_swiper.enable();
+                        buy_step_swiper.slideTo(1);
 
-                co.Zipcode.setData({
-                    el: $("#Recipient_TWzipcode"),
-                    addr: recipientAddress
-                });
+                        OrdererEdit(true)
+                        var ordererAddress = formData.ordererAddress;
+
+                        co.Form.insertData(formData, "#Form_Orderer");
+                        $("#OrdererInputAddress").val(ordererAddress.substring(ordererAddress.indexOf(" ", ordererAddress.indexOf(" ") + 1)).trim())
+
+                        co.Zipcode.setData({
+                            el: $("#Orderer_TWzipcode"),
+                            addr: ordererAddress
+                        });
+
+                        if (data.RecipientType == "edit") {
+                            $("[name='RecipientRadio'][value='edit']").prop("checked", true);
+                            RecipientRadio()
+                            var recipientAddress = formData.recipientAddress;
+
+                            co.Form.insertData(formData, "#RecipientForm");
+                            $("#RecipientInputAddress").val(recipientAddress.substring(recipientAddress.indexOf(" ", recipientAddress.indexOf(" ") + 1)).trim())
+
+                            co.Zipcode.setData({
+                                el: $("#Recipient_TWzipcode"),
+                                addr: recipientAddress
+                            });
+                        }
+
+                        if (formData.invoiceType == 2) {
+                            $("[name='InvoiceType'][value='company']").prop("checked", true);
+                            InvoiceTypeRadio();
+                            var invoiceAddress = formData.invoiceAddress;
+
+                            co.Form.insertData(formData, "#Form_Invoice");
+                            $("#InvoiceInputAddress").val(invoiceAddress.substring(invoiceAddress.indexOf(" ", invoiceAddress.indexOf(" ") + 1)).trim())
+
+                            co.Zipcode.setData({
+                                el: $("#Invoice_TWzipcode"),
+                                addr: invoiceAddress
+                            });
+                        }
+
+                        if (formData.invoiceRecipient == 2) $("[name='InvoiceRadio'][value='order']").prop("checked", true);
+                        if (FormCheck(OrdererForms)) OrdererEdit(false);
+
+                        sessionStorage.removeItem("orderForm");
+                    }
+                }, 50);
             }
-
-            if (formData.invoiceType == 2) {
-                $("[name='InvoiceType'][value='company']").prop("checked", true);
-                InvoiceTypeRadio();
-                var invoiceAddress = formData.invoiceAddress;
-
-                co.Form.insertData(formData, "#Form_Invoice");
-                $("#InvoiceInputAddress").val(invoiceAddress.substring(invoiceAddress.indexOf(" ", invoiceAddress.indexOf(" ") + 1)).trim())
-
-                co.Zipcode.setData({
-                    el: $("#Invoice_TWzipcode"),
-                    addr: invoiceAddress
-                });
-            }
-
-            if (formData.invoiceRecipient == 2) $("[name='InvoiceRadio'][value='order']").prop("checked", true);
         }
-        sessionStorage.removeItem("orderForm");
-        if (FormCheck(OrdererForms)) OrdererEdit(false);
     }
 
     $(".btn_getmap").on("click", function () {
@@ -584,6 +615,7 @@ function PageReady() {
 
         const dataToSave = {
             formData: order_header_data,
+            SelectedCartIds: getSelectedCartIds(),
             RecipientType: $(`[name="RecipientRadio"]:checked`).val(),
             savedAt: Date.now()
         };
@@ -938,7 +970,8 @@ function PaymentHideShow() {
                 if (subtotal > $self_input.data("maxamount")) $self.addClass("d-none");
             }
         })
-    }
+        return true;
+    } else return false;
 }
 function CartListAdd(data, $container) {
     if (data.quantity > 0) {
@@ -1630,38 +1663,40 @@ function RadioShipping() {
     }
 }
 // Toggle Payment By SupportCashOnDelivery && ECPay
-function UpdatePaymentVisibility({ isCOD, isECPayMode }) {
-    $("#RadioPayment .form-check").each(function () {
-        var $self = $(this);
-        var $input = $self.find("input");
+function UpdatePaymentVisibility({ isCOD, isECPayMode, $clickElement }) {
+    if (PaymentHideShow()) {
+        $("#RadioPayment .form-check").each(function () {
+            var $self = $(this);
+            var $input = $self.find("input");
 
-        var val = Number($input.val());
-        var isECPay = $input.attr("id") === "radio_payment_ECPay";
+            var val = Number($input.val());
+            var isECPay = $input.attr("id") === "radio_payment_ECPay";
 
-        var shouldShow = true;
+            var shouldShow = true;
 
-        if (isCOD) shouldShow = (val === 28);
-        else if (val === 28) shouldShow = false;
+            if (isCOD) shouldShow = (val === 28);
+            else if (val === 28) shouldShow = false;
 
-        if (isECPayMode && isECPay) shouldShow = false;
+            if (isECPayMode && isECPay) shouldShow = false;
 
-        $self.toggleClass("d-none", !shouldShow);
-    });
+            $self.toggleClass("d-none", !shouldShow);
+        });
 
-    var $items = $("#RadioPayment .form-check:not(.d-none)");
-    var $first = $items.first();
+        var $items = $("#RadioPayment .form-check:not(.d-none)");
+        var $first = $items.first();
 
-    if ($first.length > 0) {
-        $("#RadioPayment input").prop("checked", false);
-        $("#RadioPayment .payment_display").removeClass("checked");
+        if ($first.length > 0) {
+            $("#RadioPayment input").prop("checked", false);
+            $("#RadioPayment .payment_display").removeClass("checked");
 
-        var $input = $first.find("input");
-        var $display = $first.find(".payment_display");
+            var $input = $first.find("input");
+            var $display = $first.find(".payment_display");
 
-        $input.prop("checked", true);
-        $display.addClass("checked");
-        $input.trigger("change");
-        $input.closest('.form-check').nextAll('.form-check:not(.d-none)').first().find('.payment_display').addClass("first");
+            $input.prop("checked", true);
+            $display.addClass("checked");
+            $input.trigger("change");
+            $input.closest('.form-check').nextAll('.form-check:not(.d-none)').first().find('.payment_display').addClass("first");
+        }
     }
 }
 function RadioPayment() {

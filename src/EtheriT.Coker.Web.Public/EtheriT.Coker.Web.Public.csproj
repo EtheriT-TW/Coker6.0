@@ -32,6 +32,7 @@
 		<Content Remove="wwwroot\lib\pdf-viewer\external\pdfjs-4.5.136-dist\LICENSE" />
 		<Content Remove="wwwroot\lib\pdf-viewer\LICENSE" />
 		<Content Remove="wwwroot\lib\pdf-viewer\README.md" />
+		<Content Remove="wwwroot\Shared\components\Directory\**\*.*" />
 		<Content Remove="wwwroot\Shared\components\ArticleViewer\index.css" />
 		<Content Remove="wwwroot\Shared\components\ArticleViewer\Index.js" />
 		<Content Remove="wwwroot\Shared\components\Directory\js\blocks.js" />

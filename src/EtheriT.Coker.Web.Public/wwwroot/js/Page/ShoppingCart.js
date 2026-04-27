@@ -647,6 +647,7 @@ function hashChange(e) {
     }
 }
 function GetOrderPage() {
+    console.log("GetOrderPage", window.location.search);
     if ($.isNumeric(window.location.search.substring(1))) {
         isCheckout = true;
         var ohid = parseInt(window.location.search.substring(1));
@@ -717,11 +718,11 @@ function GetOrderPage() {
 function SuccessPageDataInsert(data) {
     var header = data.orderHeader;
     var details = data.orderDetails;
-
+    console.log(0);
     ShoppingCartDataInsert(header, $("#Step4 .card-body"));
 
     var usedBonus = Number(header.bonus || header.Bonus || 0);
-
+    console.log(header.bonus, header.Bonus, usedBonus);
     $("#Step4 .bonusUseTotal [data-key='bonus']")
         .text(usedBonus > 0 ? `${usedBonus.toLocaleString()} 點` : "0 點");
 
@@ -1398,12 +1399,14 @@ function TotalCount() {
 
     // 商品紅利（作為附註，不放進主計算列）
     const $bonusParts = $(".dual-price .bonus-part");
+    const $priceBonus = $(".priceline .bonus");
+
     if ((bonus || 0) > 0) {
-        $(".bonus").text(bonus.toLocaleString());
+        $priceBonus.text(bonus.toLocaleString());
         $bonusParts.removeClass("d-none");
         $(".dual-price .plus-sign").removeClass("d-none");
     } else {
-        $(".bonus").text("");
+        $priceBonus.text("");
         $bonusParts.addClass("d-none");
         $(".dual-price .plus-sign").addClass("d-none");
     }

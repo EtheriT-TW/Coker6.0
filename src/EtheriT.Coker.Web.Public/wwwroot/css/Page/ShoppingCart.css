@@ -340,7 +340,7 @@ input[type="number"] {
         font-weight: 500;
     }
 
-    .priceline .summary-total-row {
+    .priceline .summary-panel {
         border-top: 1px solid #ddd;
         margin-top: 0.8rem;
         padding-top: 0.8rem;

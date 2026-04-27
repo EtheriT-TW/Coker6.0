@@ -704,25 +704,71 @@ function HistoryTemplateDataInsert(Datas) {
                     detail.bonus > 0 ? `${parseInt(detail.price).toLocaleString()}<br />紅利：${(detail.bonus).toLocaleString()}` : `${parseInt(detail.price).toLocaleString()}` :
                     `紅利：${(detail.bonus).toLocaleString()}`
                     }`);
-                list_frame.find(".quantity").text(detail.quantity);
-                list_frame.find(".subtotal").html(`${detail.price > 0 ?
-                    detail.bonus > 0 ? `${parseInt(detail.price) * parseInt(detail.quantity)}<br />紅利：${(detail.bonus * parseInt(detail.quantity)).toLocaleString()}` :
-                        parseInt(detail.price) * parseInt(detail.quantity) :
-                    `紅利：${(detail.bonus * parseInt(detail.quantity)).toLocaleString()}`
+                list_frame.find(".quantity").text(Coker.util.string.thousandSign(detail.quantity));
+                var detailPrice = parseInt(detail.price || 0);
+                var detailQty = parseInt(detail.quantity || 0);
+                var detailBonus = parseInt(detail.bonus || 0);
+                var detailSubtotal = detailPrice * detailQty;
+                var detailBonusSubtotal = detailBonus * detailQty;
+
+                list_frame.find(".subtotal").html(`${detailPrice > 0 ?
+                    detailBonus > 0
+                        ? `${detailSubtotal.toLocaleString()}<br />紅利：${detailBonusSubtotal.toLocaleString()}`
+                        : `${detailSubtotal.toLocaleString()}`
+                    :
+                    `紅利：${detailBonusSubtotal.toLocaleString()}`
                     }`);
                 frame.find(".list-group").append(list_frame);
             }
         });
 
-        frame.find(".collapse .header_subtotal").text((order_header.subtotal).toLocaleString());
-        frame.find(".collapse .header_freight").text((order_header.freight).toLocaleString());
-        frame.find(".collapse .header_total").text((order_header.total).toLocaleString());
-        frame.find(".collapse .header_remark").text(order_header.remark);
-        if (!!order_header.carrier) frame.find(".collapse .header_carrier").text(order_header.carrier);
-        else frame.find(".collapse .header_carrier").closest(".row").remove();
+        // ===== 商品原金額（未折抵） =====
+        var productAmount = 0;
 
-        if (order_header.bonus == 0) frame.find(".collapse .header_totalBonus").closest(".row").remove();
-        else frame.find(".collapse .header_totalBonus").text((order_header.bonus).toLocaleString());
+        // ===== 商品紅利 =====
+        var productBonus = 0;
+
+        $.each(order_details, function (index, detail) {
+            if (detail != null) {
+                var price = parseInt(detail.price || 0);
+                var qty = parseInt(detail.quantity || 0);
+                var bonus = parseInt(detail.bonus || 0);
+
+                productAmount += price * qty;
+                productBonus += bonus * qty;
+            }
+        });
+
+        // ===== 訂單紅利 =====
+        var totalBonus = parseInt(order_header.bonus || 0);
+
+        // ===== 紅利折抵 =====
+        var redeemBonus = Math.max(totalBonus - productBonus, 0);
+
+        // ===== 寫入畫面 =====
+        frame.find(".collapse .header_subtotal").text(Coker.util.string.thousandSign(productAmount));
+        frame.find(".collapse .header_freight").text(Coker.util.string.thousandSign(order_header.freight));
+        frame.find(".collapse .header_total").text(Coker.util.string.thousandSign(order_header.total));
+        frame.find(".collapse .header_remark").text(order_header.remark);
+
+        // ===== 紅利顯示 =====
+        if (totalBonus <= 0) {
+            frame.find(".collapse .bonus_summary_row").remove();
+        } else {
+            frame.find(".collapse .header_productBonus").text(`${Coker.util.string.thousandSign(productBonus)}點`);
+            frame.find(".collapse .header_redeemBonus").text(`${Coker.util.string.thousandSign(redeemBonus)}點`);
+            frame.find(".collapse .header_totalBonus").text(`${Coker.util.string.thousandSign(totalBonus)}點`);
+
+            // 沒有商品紅利 → 隱藏
+            if (productBonus <= 0) {
+                frame.find(".collapse .header_productBonus").closest(".row").remove();
+            }
+
+            // 沒有折抵 → 隱藏
+            if (redeemBonus <= 0) {
+                frame.find(".collapse .header_redeemBonus").closest(".row").remove();
+            }
+        }
 
         $("#profile-tab-pane .content").append(frame);
     });

@@ -1858,32 +1858,63 @@ namespace EtheriT.Coker.Application.Order
                         }
                     }
 
+                    static string FormatMoney(decimal value)
+                    {
+                        return value.ToString("$#,##0");
+                    }
+
+                    static string FormatBonus(decimal value)
+                    {
+                        return value.ToString("#,##0");
+                    }
+
+                    static string FormatPriceBonus(decimal price, decimal bonus)
+                    {
+                        if (price > 0 && bonus > 0)
+                            return $"{FormatMoney(price)}<br/>紅利：{FormatBonus(bonus)}";
+
+                        if (price > 0)
+                            return FormatMoney(price);
+
+                        if (bonus > 0)
+                            return $"紅利：{FormatBonus(bonus)}";
+
+                        return "$0";
+                    }
+
                     var DetailsTable = "";
+                    decimal productAmount = 0;
+                    decimal productBonus = 0;
+
                     foreach (var data in order_details)
                     {
-                        var Specification = data.S1Title != "" ? data.S2Title != "" ? $"{data.S1Title}、{data.S2Title}" : data.S1Title : "";
-                        DetailsTable += $@"<tr>
-                            <td  colspan='2' class='text-start'>{data.Title}</td>
-                            <td>{Specification}</td>
-                            <td class='text-end'>{(
-                                data.Price > 0 ?
-                                    data.BonusPrice != null && data.BonusPrice > 0 ?
-                                        data.Price.ToString("$#,##0") + $"{data.BonusPrice.Value.ToString("Ⓟ#,##0")}" :
-                                        data.Price.ToString("$#,##0") :
-                                    data.BonusPrice != null && data.BonusPrice > 0 ?
-                                        $"{data.BonusPrice.Value.ToString("Ⓟ#,##0")}" : 0
-                            )}</td>
-                            <td class='text-center'>{data.Quantity}</td>
-                            <td class='text-end'>{(
-                                data.Price > 0 ?
-                                    data.BonusPrice != null && data.BonusPrice > 0 ?
-                                        (data.Price * data.Quantity).ToString("$#,##0") + $"{(data.BonusPrice * data.Quantity).Value.ToString("Ⓟ#,##0")}" :
-                                        (data.Price * data.Quantity).ToString("$#,##0") :
-                                    data.BonusPrice != null && data.BonusPrice > 0 ?
-                                        $"{(data.BonusPrice * data.Quantity).Value.ToString("Ⓟ#,##0")}" : 0
-                            )}</td>
-                        </tr>";
+                        var specification = data.S1Title != ""
+                            ? data.S2Title != "" ? $"{data.S1Title}、{data.S2Title}" : data.S1Title
+                            : "";
+
+                        var unitPrice = data.Price;
+                        var unitBonus = data.BonusPrice ?? 0;
+                        var quantity = data.Quantity;
+
+                        var linePrice = unitPrice * quantity;
+                        var lineBonus = unitBonus * quantity;
+
+                        productAmount += linePrice;
+                        productBonus += lineBonus;
+
+                        DetailsTable += $"""
+                            <tr>
+                                <td colspan='2'>{data.Title}</td>
+                                <td style='text-align: center;'>{specification}</td>
+                                <td style='text-align: right;'>{FormatPriceBonus(unitPrice, unitBonus)}</td>
+                                <td style='text-align: center;'>{quantity}</td>
+                                <td style='text-align: right;'>{FormatPriceBonus(linePrice, lineBonus)}</td>
+                            </tr>
+                        """;
                     }
+
+                    var totalBonus = order_header.Bonus ?? 0;
+                    var redeemBonus = Math.Max(totalBonus - productBonus, 0);
 
                     var OrdererEmailSecret = (order_header.OrdererEmail.Length > 5 ? order_header.OrdererEmail.Substring(0, 4) : order_header.OrdererEmail.Substring(0, 1)) + "**********";
                     order_header.OrdererCellPhone = (order_header.OrdererCellPhone.Length > 4 ? order_header.OrdererCellPhone.Substring(0, 4) : order_header.OrdererCellPhone.Substring(0, 1)) + "******";
@@ -1959,18 +1990,28 @@ namespace EtheriT.Coker.Application.Order
                  </tr>
                  {DetailsTable}
                  <tr>
-                 <td colspan='6' class='text-end text-bold'>運費<span class='text-red ms-1 text-size1_25'>{order_header.Freight.ToString("$#,##0")}</span></td>
-                 </tr>
-                 <tr>
-                 <td colspan='6' class='text-end text-bold'>消費總計<span class='text-red ms-1 text-size1_5'>{(order_header.Freight + order_header.Subtotal).ToString("$#,##0")}</span></td>
-                 </tr>
+                    <td colspan='6' class='text-end text-bold'>商品金額<span class='ms-1 text-size1_25'>{productAmount.ToString("$#,##0")}</span></td>
+                </tr>
                 {(
-                    order_header.Bonus != null && order_header.Bonus > 0 ?
+                    redeemBonus > 0 ?
                     $@"<tr>
-                        <td colspan='6' class='text-end text-bold'>總使用紅利<span class='text-red ms-1 text-size1_25'>{order_header.Bonus.Value.ToString("$#,##0")}</span></td>
+                        <td colspan='6' class='text-end text-bold'>紅利折抵<span class='text-red ms-1 text-size1_25'>-{redeemBonus.ToString("#,##0")}點</span></td>
                     </tr>" :
                     ""
-                 )}
+                )}
+                <tr>
+                    <td colspan='6' class='text-end text-bold'>運費<span class='ms-1 text-size1_25'>{order_header.Freight.ToString("$#,##0")}</span></td>
+                </tr>
+                {(
+                    totalBonus > 0 ?
+                    $@"<tr>
+                        <td colspan='6' class='text-end text-bold'>總使用紅利<span class='text-red ms-1 text-size1_25'>{totalBonus.ToString("#,##0")}點</span></td>
+                    </tr>" :
+                    ""
+                )}
+                <tr>
+                    <td colspan='6' class='text-end text-bold'>消費總計<span class='text-red ms-1 text-size1_5'>{(order_header.Freight + order_header.Subtotal).ToString("$#,##0")}</span></td>
+                </tr>
                  <tr class='thead'><td colspan='6' scope='col'>運送方式：<span class='text-red ms-1 text-size1_5'>{Shipping!.Title}　{Shipping.LogisticsType}{CVSName}</span></td></tr>
                  <tr class='thead'><td colspan='6'  scope='col'>付款方式：<span class='text-red ms-1 text-size1_5'>{PaymentType.Title}</span></td></tr>
                  {PaymentTable}

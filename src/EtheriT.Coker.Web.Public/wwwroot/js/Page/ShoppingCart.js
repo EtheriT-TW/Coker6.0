@@ -536,8 +536,8 @@ function PageReady() {
             var SelectedCartIds = data.SelectedCartIds;
 
             if (SelectedCartIds.length > 0) {
+                co.sweet.loading();
                 var timer = setInterval(function () {
-                    co.sweet.loading();
                     if ($('input[name="buyItems"]').length > 0) {
                         clearInterval(timer);
                         Swal.close();

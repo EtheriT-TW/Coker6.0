@@ -13,6 +13,7 @@ var $orderer_name, $orderer_sex, $orderer_email, $orderer_cellphone, $orderer_te
 var $recipient_name, $recipient_sex, $recipient_email, $recipient_cellphone, $recipient_telphone_area, $recipient_telphone, $recipient_telphone_ext, $recipient_address_city, $recipient_address_town, $recipient_address, $remark;
 var $invoice_recipient, $invoice_title, $invoice_uniformid, $invoice_address_city, $invoice_address_town, $invoice_address;
 var $ship_method, $pay_method;
+var step4PaidDateHtml = "";
 
 var order_header_data = {}, user_data = {}, order_data = {}, recipient_data = {}, invoice_data = {}, invoiceType_data = {}, prod_data = {};
 var shopping_cart_data = [];
@@ -750,17 +751,21 @@ function GetOrderPage() {
     }
 }
 function SuccessPageDataInsert(data) {
-    var header = data.orderHeader;
-    var details = data.orderDetails;
-    console.log(0);
+    var header = data.orderHeader || {};
+    var details = data.orderDetails || [];
+
+    console.log(header);
+    console.log(details);
+
     ShoppingCartDataInsert(header, $("#Step4 .card-body"));
 
-    var usedBonus = Number(header.bonus || header.Bonus || 0);
-    console.log(header.bonus, header.Bonus, usedBonus);
-    $("#Step4 .bonusUseTotal [data-key='bonus']")
-        .text(usedBonus > 0 ? `${usedBonus.toLocaleString()} 點` : "0 點");
+    toggleStep4EndlineDisplay(header);
+    toggleStep4InvoiceDisplay(header);
+    toggleStep4PaymentDisplay(header);
 
     TemplateDataInsert($("#Purchase"), $("#CollapsePurchase"), $("#Template_Purchase_Details"), details);
+
+    buy_step_swiper.update();
 }
 /* 元素初始化 */
 function ElementInit() {
@@ -1172,99 +1177,92 @@ function CartListInsert($frame, data) {
                     $self.text(data[key]);
                     break;
                 case "oldPrice": {
-                    var original = data.oldPrice;
-                    var current = data.price;
+                    var original = Number(data.oldPrice || 0);
+                    var current = Number(data.price || 0);
 
-                    var oldBonus = data.oldBonus || 0;
-                    var bonus = data.bonus || 0;
+                    var oldBonus = Number(data.oldBonus || 0);
+                    var bonus = Number(data.bonus || 0);
 
                     var $priceDiv = $self.siblings("div[data-key='price']");
 
-                    // 清掉舊 class（避免殘留）
+                    // 先清乾淨，避免殘留上一筆狀態
+                    $self.addClass("d-none").text("");
                     $priceDiv.removeClass("price-up price-down price-changed text-danger text-success red_text");
+                    $priceDiv.removeData("price-display-mode");
 
-                    let hasChange = false;
+                    var priceChanged = original > 0 && current > 0 && original !== current;
+                    var bonusChanged = oldBonus !== bonus;
 
-                    // ===== 是否有任何變動 =====
-                    var priceChanged = (original != null && original > 0 && original !== current);
-                    var bonusChanged = (oldBonus !== bonus);
-
-                    if (priceChanged || bonusChanged) {
-                        hasChange = true;
-
-                        // ===== 舊價格顯示（關鍵修正）=====
-                        let oldText = "";
-
-                        if (oldBonus > 0) {
-                            if (original > 0) {
-                                oldText = `${original.toLocaleString()}+紅利${oldBonus.toLocaleString()}`;
-                            } else {
-                                oldText = `紅利${oldBonus.toLocaleString()}`;
-                            }
-                        } else {
-                            oldText = `${original.toLocaleString()}`;
-                        }
-
-                        $self.removeClass("d-none");
-                        $self.text(oldText);
-
-                        // ===== 異動方向（統一判斷）=====
-                        if (priceChanged) {
-                            if (current > original) {
-                                $priceDiv.addClass("price-up text-danger red_text");
-                            } else {
-                                $priceDiv.addClass("price-down text-success");
-                            }
-                        }
-
-                        if (bonusChanged) {
-                            if (bonus > oldBonus) {
-                                $priceDiv.addClass("price-up text-danger red_text");
-                            } else {
-                                $priceDiv.addClass("price-down text-success");
-                            }
-                        }
-
-                        $priceDiv.addClass("price-changed");
+                    // 價格與紅利都沒變：
+                    // 不顯示舊價，且目前價格改用 block 顯示
+                    if (!priceChanged && !bonusChanged) {
+                        $priceDiv.data("price-display-mode", "block");
+                        break;
                     }
 
+                    let oldText = "";
+
+                    if (oldBonus > 0) {
+                        if (original > 0) {
+                            oldText = `$${original.toLocaleString()} + 紅利${oldBonus.toLocaleString()}`;
+                        } else {
+                            oldText = `紅利${oldBonus.toLocaleString()}`;
+                        }
+                    } else {
+                        oldText = `$${original.toLocaleString()}`;
+                    }
+
+                    $self.removeClass("d-none");
+                    $self.text(oldText);
+
+                    if (priceChanged) {
+                        if (current > original) {
+                            $priceDiv.addClass("price-up text-danger red_text");
+                        } else {
+                            $priceDiv.addClass("price-down text-success");
+                        }
+                    }
+
+                    if (bonusChanged) {
+                        if (bonus > oldBonus) {
+                            $priceDiv.addClass("price-up text-danger red_text");
+                        } else {
+                            $priceDiv.addClass("price-down text-success");
+                        }
+                    }
+
+                    $priceDiv.addClass("price-changed");
                     break;
                 }
                 case "price": {
-                    // 現在要結帳的實際售價（Prod_Prices.Price）
-                    var unitPrice = data.price || 0;
-                    var price_text = "";
+                    var unitPrice = Number(data.price || 0);
+                    var bonus = Number(data.bonus || 0);
 
-                    if (data['bonus'] > 0) {
-                        if (unitPrice > 0) price_text = `${unitPrice.toLocaleString()}+紅利${data['bonus'].toLocaleString()}`;
-                        else price_text = `紅利${data['bonus'].toLocaleString()}`;
-                    } else {
-                        price_text = `${unitPrice.toLocaleString()}`;
+                    var cashText = unitPrice > 0
+                        ? `$${unitPrice.toLocaleString()}`
+                        : "";
+
+                    if (data.priceLabel != null && cashText) {
+                        cashText = `${data.priceLabel} ${cashText}`;
                     }
 
-                    price_text = data['priceLabel'] != null
-                        ? `${data['priceLabel']} $${price_text}`
-                        : `$${price_text}`;
+                    var mode = $self.data("price-display-mode") || "inline";
 
-                    $self.text(price_text);
+                    setCartPriceBlock($self, cashText, bonus, mode);
                     break;
                 }
                 case "subtotal": {
-                    // 小計一律用「現在售價」來算，才會跟訂單金額一致
-                    var unitPrice = data.price || 0;
-                    var qty = data['quantity'] || 0;
+                    var unitPrice = Number(data.price || 0);
+                    var qty = Number(data.quantity || 0);
                     var sub_price = unitPrice * qty;
-                    var sub_bonus = (data['bonus'] || 0) * qty;
-                    var price_text = "";
+                    var sub_bonus = Number(data.bonus || 0) * qty;
 
-                    if (sub_bonus > 0) {
-                        if (sub_price > 0) price_text = `$${sub_price.toLocaleString()}+紅利${sub_bonus.toLocaleString()}`
-                        else price_text = `紅利${sub_bonus.toLocaleString()}`
-                    } else {
-                        price_text = `$${sub_price.toLocaleString()}`
-                    }
+                    var cashText = sub_price > 0
+                        ? `$${sub_price.toLocaleString()}`
+                        : "";
 
-                    $self.text(price_text);
+                    setCartPriceBlock($self, cashText, sub_bonus, "block");
+
                     $self.data("subtotal", sub_price);
                     $self.data("subtotal_bonus", sub_bonus);
                     break;
@@ -1304,19 +1302,17 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
     var oldQty = entry ? entry.Quantity : quantity;
 
     function updateSubtotalAndDisplay(qty) {
-        var sub_price = price * qty;
-        var sub_bonus = bonus * qty;
+        var sub_price = Number(price || 0) * Number(qty || 0);
+        var sub_bonus = Number(bonus || 0) * Number(qty || 0);
 
         self.data("subtotal", sub_price);
         self.data("subtotal_bonus", sub_bonus);
 
-        var price_text = (sub_bonus > 0)
-            ? (sub_price > 0
-                ? `${sub_price.toLocaleString()}+紅利${sub_bonus.toLocaleString()}`
-                : `紅利${sub_bonus.toLocaleString()}`)
-            : `${sub_price.toLocaleString()}`;
+        var cashText = sub_price > 0
+            ? `$${sub_price.toLocaleString()}`
+            : "";
 
-        self.text(price_text);
+        setCartPriceBlock(self, cashText, sub_bonus);
     }
 
     function syncGroupAndTotal() {
@@ -1451,55 +1447,87 @@ function TotalCount() {
     const $bonusRuleLine = $(".bonusRuleLine");
     const $redeemRuleText = $(".bonusRedeemRuleText");
 
-    // ===== 紅利回饋提示 =====
-    const $rewardRow = $(".bonusRedeemHintLine");
-    const $earnText = $(".bonusEarnHintText");
-
     const redeemEnabled = (MinOrderForRedemption > 0 && MaxRedemptionPercent > 0);
 
     let allBonus = Number(bonus || 0);
     let redeemAmount = 0;
     let payableSubtotal = subtotal;
 
-    // 1. 紅利折抵規則提示
+    // 預設全部清空（避免殘留）
+    $bonusDisconLine.addClass("d-none");
+    $bonusDisconLine.find(".summary-label").text("紅利折抵");
+    $bonusDisconLine.find(".bonusDiscion").text("");
+
+    $bonusRuleLine.addClass("d-none");
+    $redeemRuleText.text("");
+
+    // ===== 狀態判斷 =====
     if (redeemEnabled) {
+
+        // 未達門檻
         if (subtotal < MinOrderForRedemption) {
+
             const diff = MinOrderForRedemption - subtotal;
-            $redeemRuleText.text(`再消費 $${Number(diff).toLocaleString()} 可使用紅利折抵（最高 ${Number(MaxRedemptionPercent).toLocaleString()}%）`);
-        } else {
-            $redeemRuleText.text(`本單可使用紅利折抵（最高 ${Number(MaxRedemptionPercent).toLocaleString()}%）`);
+
+            $redeemRuleText.text(
+                `再消費 $${diff.toLocaleString()} 可使用紅利折抵（最高 ${MaxRedemptionPercent}%）`
+            );
+
+            $bonusRuleLine.removeClass("d-none");
         }
-        $bonusRuleLine.removeClass("d-none");
-    } else {
-        $redeemRuleText.text("");
-        $bonusRuleLine.addClass("d-none");
-    }
 
-    // 2. 本次實際折抵
-    if (redeemEnabled && subtotal >= MinOrderForRedemption) {
-        const cap = Math.floor(subtotal * MaxRedemptionPercent / 100);
-        const memberBonusAmount = Math.max(0, (totalBonus || 0) - bonus);
-        redeemAmount = Math.min(cap, memberBonusAmount);
+        // 已達門檻
+        else {
 
-        if (redeemAmount > 0) {
-            $bonusDisconLine.removeClass("d-none");
-            $bonusDisconLine.find(".bonusDiscion").text(`${redeemAmount.toLocaleString()} 點`);
+            const cap = Math.floor(subtotal * MaxRedemptionPercent / 100);
+            const memberBonusAmount = Math.max(0, (totalBonus || 0) - bonus);
 
-            allBonus += redeemAmount;
-            payableSubtotal = Math.max(0, subtotal - redeemAmount);
-        } else {
-            $bonusDisconLine.addClass("d-none");
-            $bonusDisconLine.find(".bonusDiscion").text("");
+            redeemAmount = Math.min(cap, memberBonusAmount);
+
+            // ===== 有可折抵 =====
+            if (redeemAmount > 0) {
+
+                $bonusDisconLine.removeClass("d-none");
+
+                // label 覆蓋
+                $bonusDisconLine.find(".summary-label")
+                    .text(`本單可使用紅利折抵（最高 ${MaxRedemptionPercent}%）`);
+
+                // 金額
+                $bonusDisconLine.find(".bonusDiscion")
+                    .text(`${redeemAmount.toLocaleString()} 點`);
+
+                allBonus += redeemAmount;
+                payableSubtotal = Math.max(0, subtotal - redeemAmount);
+
+                // 👉 若「被紅利上限卡住」才顯示提示
+                if (memberBonusAmount < cap) {
+                    $redeemRuleText.text(
+                        `目前剩餘紅利 ${memberBonusAmount.toLocaleString()} 點，已全數折抵`
+                    );
+                    $bonusRuleLine.removeClass("d-none");
+                }
+            }
+
+            // ===== 可折抵但實際=0（紅利不足）=====
+            else {
+
+                $redeemRuleText.text(
+                    `目前剩餘紅利 ${memberBonusAmount.toLocaleString()} 點`
+                );
+
+                $bonusRuleLine.removeClass("d-none");
+            }
         }
-    } else {
-        $bonusDisconLine.addClass("d-none");
-        $bonusDisconLine.find(".bonusDiscion").text("");
     }
 
     // Step1 小計（折抵後，不含運費）
     $(".payable_subtotal").text(parseInt(payableSubtotal, 10).toLocaleString());
 
     // ===== 紅利回饋提示 =====
+    const $rewardRow = $(".bonusRedeemHintLine");
+    const $earnText = $(".bonusEarnHintText");
+
     const earnEnabled = (MinOrderForEarnPoints > 0 && RewardRatePercent > 0);
 
     if (!earnEnabled) {
@@ -1564,6 +1592,153 @@ function TotalCount() {
     $(".total_amount").text(parseInt(total, 10).toLocaleString());
 
     PaymentHideShow();
+}
+function setCartPriceBlock($target, cashText, bonusValue, mode) {
+    const bonus = Number(bonusValue || 0);
+
+    const $main = $target.find(".cart-price-main");
+    const $bonus = $target.find(".cart-price-bonus");
+
+    // ⭐ 預設 fallback：Step1（單行）
+    if (!mode) mode = "inline";
+
+    if (mode === "block") {
+        // ===== Step4：上下分行 =====
+        if ($main.length && $bonus.length) {
+            $main.text(cashText || "");
+
+            if (bonus > 0) {
+                $bonus.text(`紅利：${bonus.toLocaleString()}`);
+                $bonus.removeClass("d-none");
+            } else {
+                $bonus.text("");
+                $bonus.addClass("d-none");
+            }
+        } else {
+            // fallback
+            if (bonus > 0) {
+                $target.html(`${cashText}<br/>紅利：${bonus.toLocaleString()}`);
+            } else {
+                $target.text(cashText || "");
+            }
+        }
+    } else {
+        // ===== Step1：單行 =====
+        if (bonus > 0) {
+            $target.text(
+                cashText
+                    ? `${cashText} + 紅利${bonus.toLocaleString()}`
+                    : `紅利${bonus.toLocaleString()}`
+            );
+        } else {
+            $target.text(cashText || "");
+        }
+    }
+}
+function toNumberValue(value) {
+    if (value == null || value === "") return 0;
+    return Number(String(value).replaceAll(",", "")) || 0;
+}
+function getValueIgnoreCase(data, key) {
+    if (!data || !key) return undefined;
+
+    if (Object.prototype.hasOwnProperty.call(data, key)) {
+        return data[key];
+    }
+
+    var lowerCamelKey = key.charAt(0).toLowerCase() + key.slice(1);
+    if (Object.prototype.hasOwnProperty.call(data, lowerCamelKey)) {
+        return data[lowerCamelKey];
+    }
+
+    var pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
+    if (Object.prototype.hasOwnProperty.call(data, pascalKey)) {
+        return data[pascalKey];
+    }
+
+    return undefined;
+}
+function toggleStep4EndlineDisplay(header) {
+    header = header || {};
+
+    var productBonus = toNumberValue(getValueIgnoreCase(header, "productBonus"));
+    var redeemBonus = toNumberValue(getValueIgnoreCase(header, "redeemBonus"));
+    var totalBonus = toNumberValue(getValueIgnoreCase(header, "bonus"));
+
+    $("#Step4 .productBonusLine").toggleClass("d-none", productBonus <= 0);
+    $("#Step4 .bonusDiscionLine").toggleClass("d-none", redeemBonus <= 0);
+    $("#Step4 .bonusUseTotalLine").toggleClass("d-none", totalBonus <= 0);
+
+    // Step4 運費是費用列，0 元也要顯示
+    var freightText = String(getValueIgnoreCase(header, "freight") ?? "");
+    if (freightText !== "") {
+        $("#Step4 .shipping_fee").text(toNumberValue(freightText).toLocaleString());
+    }
+}
+
+function toggleStep4InvoiceDisplay(header) {
+    header = header || {};
+
+    var invoiceRecipient = Number(getValueIgnoreCase(header, "invoiceRecipient") || 0);
+
+    $("#Step4 .invoice_type .person").addClass("d-none");
+    $("#Step4 .invoice_type .company").addClass("d-none");
+    $("#Step4 .invoice_type .mobileCarrier").addClass("d-none");
+
+    $("#Step4 .invoice_data .orderer").addClass("d-none");
+    $("#Step4 .invoice_data .recipient").addClass("d-none");
+
+    var invoiceTypeTitle = String(getValueIgnoreCase(header, "invoiceTypeTitle") || "");
+    var personalInvoiceTypeTitle = String(getValueIgnoreCase(header, "personalInvoiceTypeTitle") || "");
+    var carrier = String(getValueIgnoreCase(header, "carrier") || "");
+
+    if (invoiceTypeTitle.indexOf("公司") >= 0) {
+        $("#Step4 .invoice_type .company").removeClass("d-none");
+    } else {
+        $("#Step4 .invoice_type .person").removeClass("d-none");
+
+        if (carrier !== "" || personalInvoiceTypeTitle.indexOf("載具") >= 0 || personalInvoiceTypeTitle.indexOf("手機") >= 0) {
+            $("#Step4 .invoice_type .mobileCarrier").removeClass("d-none");
+        }
+    }
+
+    switch (invoiceRecipient) {
+        case 1:
+            $("#Step4 .invoice_data .orderer").removeClass("d-none");
+            break;
+        case 2:
+            $("#Step4 .invoice_data .recipient").removeClass("d-none");
+            break;
+    }
+}
+
+function toggleStep4PaymentDisplay(header) {
+    header = header || {};
+
+    var payment = String(getValueIgnoreCase(header, "payment") || "");
+    var total = String(getValueIgnoreCase(header, "total") || "");
+    var memo = String(getValueIgnoreCase(header, "memo") || "");
+
+    if (payment !== "") {
+        $("#PaymentData").removeClass("d-none");
+        $("#PaymentData .payment_method").text(payment);
+    } else {
+        $("#PaymentData").addClass("d-none");
+    }
+
+    if (total !== "") {
+        $("#PaymentData .pay_info .total_amount").text(total);
+    }
+
+    $("#PaymentData .pay_info .paid_date").empty();
+
+    if (step4PaidDateHtml !== "") {
+        $("#PaymentData .pay_info .paid_date").append(step4PaidDateHtml);
+        $("#PaymentData .pay_info").removeClass("d-none");
+    } else if (memo !== "") {
+        $("#PaymentData .pay_info .paid_date").html(memo);
+        $("#PaymentData .pay_info").removeClass("d-none");
+    }
 }
 function updateNextStepByBonus() {
     const { bonus } = computeSelectedSubtotal();
@@ -2423,15 +2598,27 @@ function ValidateECPayPayment() {
     });
 }
 function OrderSuccess(result) {
-    var message = result.message.split(",")
+    var message = result.message.split(",");
     var order_header_id = message[1];
+
+    step4PaidDateHtml = message.length > 3 ? (message[3] || "") : "";
 
     CartClear();
 
-    $("#Step4 > .card-header > .order_number").text(("000000000" + order_header_id).substring(order_header_id.length));
-    $("#Step4 > .card-body .pruchase_content .order_time").text(`訂單成立時間：${message[2]}`);
+    $("#Step4 > .card-header > .order_number")
+        .text(("000000000" + order_header_id).substring(order_header_id.length));
 
-    $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
+    $("#Step4 > .card-body .pruchase_content .order_time")
+        .text(`訂單成立時間：${message[2]}`);
+
+    $("#Step4 > .card-body > .pruchase_content > .status_alert")
+        .text("訂單已成立，謝謝您的訂購！");
+
+    Coker.Order.GetAllData(order_header_id, true).done(function (results) {
+        if (results && results.length > 0) {
+            SuccessPageDataInsert(results[0]);
+        }
+    });
 
     if ($(".storememo").text() != "") {
         Swal.fire({
@@ -2440,100 +2627,24 @@ function OrderSuccess(result) {
             html: $(".storememo").text().replaceAll("\n", "<br/>"),
             focusConfirm: false,
             confirmButtonText: "確認",
-        }).then((confirm) => {
+        }).then(function () {
             if (result.error != null) {
                 if (!islogin) {
-                    Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。", null)
+                    Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。", null);
                 } else {
-                    Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。", null)
+                    Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。", null);
                 }
             }
         });
     } else {
         if (result.error != null) {
             if (!islogin) {
-                Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。", null)
+                Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。", null);
             } else {
-                Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。", null)
+                Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。", null);
             }
         }
     }
-
-    $(".storememo").empty();
-
-    ShoppingCartDataInsert(order_data, $("#Step4 .orderer_data"));
-    //HiddenCode($("#Step4 .orderer_data"))
-    ShoppingCartDataInsert(recipient_data, $("#Step4 .recipient_data"));
-    //HiddenCode($("#Step4 .recipient_data"))
-    invoice_data.invoiceType = order_header_data.invoiceType;
-    switch (order_header_data.invoiceType) {
-        case 1: //個人
-            invoiceType_data.typeTitle = "個人發票";
-            switch (invoiceType_data.PersonalInvoiceType) {
-                case 1: //紙本
-                    invoice_data.personalInvoiceTypeTitle = "紙本發票";
-                    break;
-                case 2: //載具
-                    invoice_data.personalInvoiceTypeTitle = "手機條碼";
-                    invoice_data.carrier = order_header_data.Carrier;
-            }
-            $("#Step4 .invoice_type .company").addClass("d-none");
-            break;
-        case 2: //公司
-            invoiceType_data.typeTitle = "公司發票";
-            invoiceType_data.invoiceAddress = order_header_data.invoiceAddress;
-            $("#Step4 .invoice_type .company").removeClass("d-none");
-            break;
-    }
-    invoice_data.typeTitle = invoiceType_data.typeTitle;
-    ShoppingCartDataInsert(invoice_data, $("#Step4 .invoice_type"));
-
-    switch (invoice_data.invoiceRecipient) {
-        case 1:
-            ShoppingCartDataInsert(order_data, $("#Step4 .invoice_data .orderer"));
-            //HiddenCode($("#Step4 .invoice_data .orderer"))
-            $("#Step4 .invoice_data .orderer").removeClass("d-none");
-            break;
-        case 2:
-            ShoppingCartDataInsert(recipient_data, $("#Step4 .invoice_data .recipient"));
-            //HiddenCode($("#Step4 .invoice_data .recipient"))
-            $("#Step4 .invoice_data .recipient").removeClass("d-none");
-            break;
-    }
-
-    $("#PaymentData .pay_info .paid_date").append(message[3]);
-    var tempmail = order_header_data.ordererEmail;
-    $("#PaymentData .pay_mail").append(`如因交易條件有誤、商品缺貨或價格物刊或有其他本公司無法接受訂單之情形,本公司保留商品出貨與否的權利。<br />．隨後我們也會將轉帳的資料mail到您指定的電子信箱:<code>${tempmail.substr(0, 1)}******&#8203;${tempmail.substr(tempmail.indexOf("@") - 1)}</code>`);
-
-    Coker.Order.GetDetails(order_header_id).done(function (message) {
-        if (message.length > 0) {
-            if (message.length > 1) {
-                $(".btn_view_list").removeClass("d-none")
-            }
-            for (var i = 0; i < message.length; i++) {
-                if (i == 0) {
-                    PurchaseAdd(message[i], $("#Step4 > .card-body > .pruchase_content > .purchase_list").first())
-                } else {
-                    PurchaseAdd(message[i], $("#Step4 > .card-body > .pruchase_content > .purchase_list.collapse"))
-                }
-            }
-        }
-    })
-
-    Coker.Payment.GetPaymentInfo(order_header_data.payment).done(function (message) {
-        console.log(message);
-        if (message != null && message.length > 0) {
-            var html = "";
-            $.each(message, function (index, value) {
-                html += `<div class="mb-2 row">
-                                        <div class="col-auto col-sm-2 py-0 text-end">${value.title}：</div>
-                                        <div class="col ps-0">${value.value}</div>
-                                    </div>`;
-            })
-            $(".pay_info > div").prepend(html);
-            $("#PaymentData .pay_info").removeClass("d-none");
-        }
-    });
 }
 function PurchaseAdd(result, item_list_ul) {
     var item = $($("#Template_Purchase_Details").html()).clone();
@@ -2598,35 +2709,26 @@ function HiddenCode($self) {
 }
 function ShoppingCartDataInsert(data, $self) {
     ShoppingCartDataClear($self);
-    if (typeof (data.invoiceType) != "undefined") {
-        switch (parseInt(data.invoiceType)) {
-            case 1:
-                $(".invoice_type .person").removeClass("d-none");
-                $(".invoice_type .mobileCarrier").removeClass("d-none");
-                break;
-            case 2:
-                $(".invoice_type .company").removeClass("d-none");
-                break;
-        }
-    }
-    if (typeof (data.invoiceRecipient) != "undefined") {
-        switch (parseInt(data.invoiceRecipient)) {
-            case 1:
-                $(".invoice_data .orderer").removeClass("d-none");
-                break;
-            case 2:
-                $(".invoice_data .recipient").removeClass("d-none");
-                break;
-        }
-    }
+
+    data = data || {};
+
     $self.find("[data-key]").each(function () {
         var $this = $(this);
         var key = $this.data("key");
-        if (typeof ($this.data("key")) != "undefined" && !!$this.data("key")) {
-            if ($this.hasClass("price")) {
-                $this.text(data[key].toLocaleString());
-            }
-            else $this.text(data[key]);
+
+        if (typeof key === "undefined" || !key) return;
+
+        var value = getValueIgnoreCase(data, key);
+
+        if (value == null) {
+            value = "";
+        }
+
+        if ($this.hasClass("price")) {
+            var num = toNumberValue(value);
+            $this.text(num > 0 ? num.toLocaleString() : "");
+        } else {
+            $this.text(value);
         }
     });
 }
@@ -2640,43 +2742,107 @@ function ShoppingCartDataClear($self) {
     });
 }
 function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas) {
-    $.each(datas, function (index, data) {
+    $Frame.empty();
+    $CollapseFrame.empty();
+
+    $.each(datas || [], function (index, data) {
         var $html = $($Template.html()).clone();
+
         $html.find("[data-key]").each(function () {
             var $this = $(this);
             var key = $this.data("key");
-            if (typeof ($this.data("key")) != "undefined") {
-                switch (key) {
-                    case "link":
-                        $this.attr({
-                            href: `/${OrgName}/Home/product/${data['prodId']}`,
-                            title: `連結至：${data['title']}(另開新視窗)`
-                        });
-                        break;
-                    case "imagePath":
-                        data[key] = data[key].replace(`/${OrgName}/`, '/');
-                        $this.attr({
-                            src: data[key],
-                            alt: data['title']
-                        });
-                        break;
-                    case "spec":
-                        $this.append(data['s1Title'] == "" ? "" : `<span class="border px-1 me-1">${data['s1Title']}</span>`)
-                        $this.append(data['s2Title'] == "" ? "" : `<span class="border px-1 me-1">${data['s2Title']}</span>`)
-                        break;
-                    default:
-                        if ($this.hasClass("price") && !$this.hasClass("pro_unit")) {
-                            $this.text(data[key].toLocaleString());
-                        }
-                        else $this.text(data[key]);
-                        break;
+
+            if (typeof key === "undefined" || !key) return;
+
+            switch (key) {
+                case "link":
+                    $this.attr({
+                        href: `/${OrgName}/Home/product/${getValueIgnoreCase(data, "prodId")}`,
+                        title: `連結至：${getValueIgnoreCase(data, "title") || ""}(另開新視窗)`
+                    });
+                    break;
+
+                case "imagePath": {
+                    var imagePath = String(getValueIgnoreCase(data, "imagePath") || "/images/noImg.jpg");
+                    imagePath = imagePath.replace(`/${OrgName}/`, "/");
+                    $this.attr({
+                        src: imagePath,
+                        alt: getValueIgnoreCase(data, "title") || ""
+                    });
+                    break;
+                }
+
+                case "spec": {
+                    var s1 = getValueIgnoreCase(data, "s1Title") || "";
+                    var s2 = getValueIgnoreCase(data, "s2Title") || "";
+
+                    $this.empty();
+                    if (s1 !== "") $this.append(`<span class="border px-1 me-1">${s1}</span>`);
+                    if (s2 !== "") $this.append(`<span class="border px-1 me-1">${s2}</span>`);
+                    break;
+                }
+
+                case "price": {
+                    var price = toNumberValue(getValueIgnoreCase(data, "price"));
+                    $this.text(price > 0 ? `$${price.toLocaleString()}` : "");
+                    break;
+                }
+
+                case "bonus": {
+                    var bonus = toNumberValue(getValueIgnoreCase(data, "bonus"));
+                    if (bonus > 0) {
+                        $this.text(`紅利：${bonus.toLocaleString()}`);
+                        $this.removeClass("d-none");
+                    } else {
+                        $this.text("");
+                        $this.addClass("d-none");
+                    }
+                    break;
+                }
+
+                case "subtotal": {
+                    var subtotal = toNumberValue(getValueIgnoreCase(data, "subtotal"));
+                    $this.text(subtotal > 0 ? `$${subtotal.toLocaleString()}` : "");
+                    break;
+                }
+
+                case "subtotalBonus": {
+                    var subtotalBonus = toNumberValue(getValueIgnoreCase(data, "subtotalBonus"));
+                    if (subtotalBonus > 0) {
+                        $this.text(`紅利：${subtotalBonus.toLocaleString()}`);
+                        $this.removeClass("d-none");
+                    } else {
+                        $this.text("");
+                        $this.addClass("d-none");
+                    }
+                    break;
+                }
+
+                case "quantity": {
+                    var qty = toNumberValue(getValueIgnoreCase(data, "quantity"));
+                    $this.text(`× ${qty.toLocaleString()}`);
+                    break;
+                }
+
+                default: {
+                    var value = getValueIgnoreCase(data, key);
+                    if (value == null) value = "";
+
+                    if ($this.hasClass("price")) {
+                        var num = toNumberValue(value);
+                        $this.text(num > 0 ? num.toLocaleString() : "");
+                    } else {
+                        $this.text(value);
+                    }
+                    break;
                 }
             }
         });
-        if (index == 0) {
+
+        if (index === 0) {
             $Frame.append($html);
         } else {
-            $(".btn_view_list").removeClass("d-none")
+            $(".btn_view_list").removeClass("d-none");
             $CollapseFrame.append($html);
         }
     });

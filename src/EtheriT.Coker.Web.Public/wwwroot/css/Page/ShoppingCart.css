@@ -385,15 +385,15 @@ input[type="number"] {
         margin-right: 0.5rem;
     }
 
-    .priceline .price-negative {
-        color: #2e7d32;
-        font-weight: 500;
-    }
+.price-negative {
+    color: #2e7d32;
+    font-weight: 500;
+}
 
-        .priceline .price-negative::before {
-            content: "-";
-            margin-right: 2px;
-        }
+    .price-negative::before {
+        content: "-";
+        margin-right: 2px;
+    }
 
 #Purchase_Null {
     display: flex;
@@ -716,6 +716,30 @@ body > .popover.bs-popover-auto.fade {
     font-size: 0.875rem;
 }
 
+/* Cart - price / bonus split display */
+.purchase_item .cart-price-block {
+    line-height: 1.25;
+}
+
+.purchase_item .cart-price-main {
+    white-space: nowrap;
+}
+
+.purchase_item .cart-price-bonus {
+    margin-top: 0.15rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.purchase_item .pro_unit .cart-price-bonus {
+    color: var(--gray-text);
+}
+
+.purchase_item .pro_subtotal .cart-price-bonus {
+    color: var(--red-number);
+}
+
 .purchase_item > .content > .js-stock-error {
     display: none;
 }
@@ -726,6 +750,12 @@ body > .popover.bs-popover-auto.fade {
     flex-direction: row;
 }
 /*RWD*/
+
+.productBonusValue {
+    color: #888;
+    font-size: 0.9rem;
+}
+
 @media (max-width: 1366px) {
 }
 

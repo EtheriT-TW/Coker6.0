@@ -18,53 +18,119 @@ namespace EtheriT.Coker.Web.MVC.Middleware
         }
         public async Task InvokeAsync(HttpContext context)
         {
-            bool isApiRequest = context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/front") || (context.Request.Path.Value??"").StartsWith("/DXX", StringComparison.OrdinalIgnoreCase);
+            var path = context.Request.Path.Value ?? "";
+
+            bool isApiRequest =
+                context.Request.Path.StartsWithSegments("/api") ||
+                context.Request.Path.StartsWithSegments("/front") ||
+                path.StartsWith("/DXX", StringComparison.OrdinalIgnoreCase);
+
             if (isApiRequest)
             {
-                await _next(context); return;
+                await _next(context);
+                return;
             }
-            else
+
+            using var scope = _scopeFactory.CreateScope();
+
+            var accountAppService = scope.ServiceProvider.GetRequiredService<IAccountAppService>();
+            var isAuthenticated = await accountAppService.Chech();
+
+            var controllerName = context.GetRouteData()?.Values["controller"]?.ToString();
+            var actionName = context.GetRouteData()?.Values["action"]?.ToString();
+
+            bool isAccountPage =
+                string.Equals(controllerName, "Account", StringComparison.OrdinalIgnoreCase);
+
+            bool isLoginPage =
+                string.Equals(controllerName, "Account", StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(actionName, "Index", StringComparison.OrdinalIgnoreCase);
+
+            bool isPublicAccountPage =
+                string.Equals(controllerName, "Account", StringComparison.OrdinalIgnoreCase) &&
+                (
+                    string.Equals(actionName, "Index", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(actionName, "Register", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(actionName, "Forget", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(actionName, "NewPassword", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(actionName, "Privacy", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(actionName, "Error", StringComparison.OrdinalIgnoreCase)
+                );
+
+            // 未登入：只允許登入、註冊、忘記密碼等 Account 頁面
+            if (!isAuthenticated.Success)
             {
-                using (var scope = _scopeFactory.CreateScope())
+                if (isPublicAccountPage)
                 {
-                    var _accountAppService = scope.ServiceProvider.GetRequiredService<IAccountAppService>();
-                    var isAuthenticated = await _accountAppService.Chech();
-                    var controllerName = context.GetRouteData()?.Values["controller"]?.ToString();
-                    var actionName = context.GetRouteData()?.Values["action"]?.ToString();
-                    if (isAuthenticated.Success && !string.IsNullOrEmpty(controllerName) && !string.IsNullOrEmpty(actionName) && !(controllerName == "Account" && actionName == "Index") && controllerName != "Welcome")
-                    {
-                        var _navigation = scope.ServiceProvider.GetRequiredService<NavigationProvider>();
-                        var site = await _navigation.getMenus();
-                        await _navigation.SetPower(site);
-                        await _navigation.SetWebsite(site);
-                        await _navigation.setUserJob(site);
-                        var menu = _navigation.FindJob(site.Jobs, controllerName, actionName);
-                        if (menu == null || !menu.CanVisble)
-                        {
-                            var firstMenu = FindFirstVisibleMenu(site.Jobs);
-                            if (firstMenu == null) context.Response.Redirect($"/Welcome");
-                            else context.Response.Redirect($"/{firstMenu.Controller}/{firstMenu.Action}");
-                            return;
-                        }
-                        // 用戶已登入，跳過
-                        await _next(context);
-                    }
+                    await _next(context);
+                    return;
+                }
+
+                var returnUrl = context.Request.PathBase + context.Request.Path + context.Request.QueryString;
+                var loginUrl = "/Account/Index";
+
+                if (!string.IsNullOrWhiteSpace(returnUrl) && returnUrl != "/")
+                {
+                    loginUrl += $"?returnUrl={Uri.EscapeDataString(returnUrl)}";
+                }
+
+                context.Response.Redirect(loginUrl);
+                return;
+            }
+
+            // 已登入：如果還進登入頁，就導到第一個有權限的頁面
+            if (isLoginPage)
+            {
+                var navigation = scope.ServiceProvider.GetRequiredService<NavigationProvider>();
+                var site = await navigation.getMenus();
+
+                await navigation.SetPower(site);
+                await navigation.SetWebsite(site);
+                await navigation.setUserJob(site);
+
+                var firstMenu = FindFirstVisibleMenu(site.Jobs);
+
+                if (firstMenu == null)
+                    context.Response.Redirect("/Welcome");
+                else
+                    context.Response.Redirect($"/{firstMenu.Controller}/{firstMenu.Action}");
+
+                return;
+            }
+
+            // Welcome 不做選單權限檢查
+            if (string.Equals(controllerName, "Welcome", StringComparison.OrdinalIgnoreCase))
+            {
+                await _next(context);
+                return;
+            }
+
+            // 其他頁面：登入後才檢查選單權限
+            if (!string.IsNullOrEmpty(controllerName) && !string.IsNullOrEmpty(actionName))
+            {
+                var navigation = scope.ServiceProvider.GetRequiredService<NavigationProvider>();
+                var site = await navigation.getMenus();
+
+                await navigation.SetPower(site);
+                await navigation.SetWebsite(site);
+                await navigation.setUserJob(site);
+
+                var menu = navigation.FindJob(site.Jobs, controllerName, actionName);
+
+                if (menu == null || !menu.CanVisble)
+                {
+                    var firstMenu = FindFirstVisibleMenu(site.Jobs);
+
+                    if (firstMenu == null)
+                        context.Response.Redirect("/Welcome");
                     else
-                    {
-                        // 如果未登入，進行第三方認證或顯示登入頁面
-                        var redirectUrl = context.Request.Path.ToString();
-                        var returnUrl = context.Request.Query["returnUrl"];
+                        context.Response.Redirect($"/{firstMenu.Controller}/{firstMenu.Action}");
 
-                        if (!string.IsNullOrEmpty(returnUrl))
-                        {
-                            // 這裡可以根據需要處理認證重定向邏輯
-                            context.Response.Redirect("/");
-                        }
-
-                        await _next(context);
-                    }
+                    return;
                 }
             }
+
+            await _next(context);
         }
         private JobMenu? FindFirstVisibleMenu(IEnumerable<JobMenu> menus)
         {

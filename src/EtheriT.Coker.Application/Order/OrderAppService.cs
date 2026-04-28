@@ -244,25 +244,38 @@ namespace EtheriT.Coker.Application.Order
             if (carts.Count != cartIds.Count)
                 throw new Exception("購物車資料有誤，請重新整理後再嘗試。");
 
+            // 同一個 StockId 可能因不同價格方案出現多筆購物車資料，所以這裡必須去重
             var stockDict = carts
                 .Select(sc => sc.Prod_Stock)
                 .Where(ps => ps != null)
-                .ToDictionary(ps => ps.Id);
+                .GroupBy(ps => ps!.Id)
+                .ToDictionary(g => g.Key, g => g.First()!);
+
+            // 庫存檢查與扣庫存要依 StockId 加總
+            var qtyByStockId = carts
+                .GroupBy(sc => sc.FK_PSid)
+                .ToDictionary(g => g.Key, g => g.Sum(sc => sc.Quantity));
+
+            foreach (var item in qtyByStockId)
+            {
+                var stockId = item.Key;
+                var totalQty = item.Value;
+
+                if (!stockDict.TryGetValue(stockId, out var stock) || stock == null)
+                    throw new Exception($"找不到商品庫存資料（StockId={stockId}）。");
+
+                var currentStock = stock.Stock ?? 0;
+
+                if (currentStock < totalQty)
+                    throw new Exception($"商品庫存不足（StockId={stockId}），剩餘 {currentStock}，欲購買 {totalQty}。");
+            }
 
             decimal subtotal = 0;
             decimal totalBonus = 0;
 
+            // 明細仍逐筆計算，因為同一個 StockId 可能有不同 PriceId / 不同價格條件
             foreach (var sc in carts)
             {
-                if (!stockDict.TryGetValue(sc.FK_PSid, out var stock) || stock == null)
-                    throw new Exception($"找不到商品庫存資料（購物車ID={sc.Id}）。");
-
-                var currentStock = stock.Stock ?? 0;
-                var qty = sc.Quantity;
-
-                if (currentStock < qty)
-                    throw new Exception($"商品庫存不足（購物車ID={sc.Id}），剩餘 {currentStock}，欲購買 {qty}。");
-
                 decimal unitPrice;
                 int unitBonus;
 
@@ -277,6 +290,8 @@ namespace EtheriT.Coker.Application.Order
                     unitBonus = sc.Bonus ?? 0;
                 }
 
+                var qty = sc.Quantity;
+
                 decimal lineAmount = unitPrice * qty;
                 int lineBonus = unitBonus * qty;
 
@@ -288,8 +303,14 @@ namespace EtheriT.Coker.Application.Order
                 sc.IsOrder = true;
                 sc.LastModifierUserId = userId;
                 sc.LastModificationTime = now;
+            }
 
-                stock.Stock = currentStock - qty;
+            // 扣庫存只能依 StockId 扣一次，避免同 StockId 多價格列互相覆蓋
+            foreach (var item in qtyByStockId)
+            {
+                var stock = stockDict[item.Key];
+
+                stock.Stock = (stock.Stock ?? 0) - item.Value;
                 stock.LastModifierUserId = userId;
                 stock.LastModificationTime = now;
             }
@@ -306,29 +327,22 @@ namespace EtheriT.Coker.Application.Order
                 {
                     var availableBonus = userBonus.TotalAvaliableBonus;
 
-                    // 商品本身紅利
                     var productBonus = totalBonus;
-
-                    // 剩餘可用紅利
                     var remainingBonus = Math.Max(0, availableBonus - productBonus);
 
                     int redeemBonus = 0;
 
                     if (remainingBonus > 0)
                     {
-                        // 折抵上限：用「商品小計」
                         var bonusDiscount = Math.Floor(subtotal * bonusSetting.MaxRedemptionPercent.Value / 100);
 
                         redeemBonus = (int)Math.Min(bonusDiscount, remainingBonus);
 
-                        // 折抵只扣商品金額
                         subtotal = Math.Max(0, subtotal - redeemBonus);
                     }
 
-                    // 最終紅利使用量（商品 + 折抵）
                     var finalBonusUsed = productBonus + redeemBonus;
 
-                    // 最終防呆（非常重要）
                     if (finalBonusUsed > availableBonus)
                         throw new Exception("紅利點數不足，請重新確認後再送出訂單。");
 
@@ -992,6 +1006,9 @@ namespace EtheriT.Coker.Application.Order
                     temp_output.Freight = order_header.Freight.ToString("#,##0");
                     temp_output.Total = (order_header.Subtotal + order_header.Freight).ToString("#,##0");
                     temp_output.StateStr = ((OrderStatusEnum)temp_output.State).ToString();
+                    temp_output.InvoiceTypeTitle = order_header.InvoiceType.ToString();
+                    temp_output.PersonalInvoiceTypeTitle = order_header.PersonalInvoiceType?.ToString();
+                    temp_output.Carrier = order_header.Carrier;
 
                     foreach (var property in temp_output.GetType().GetProperties())
                     {
@@ -1178,26 +1195,52 @@ namespace EtheriT.Coker.Application.Order
         public async Task<List<OrderDisplayDto>> GetOrderDisplay(List<long> ohids, bool check)
         {
             List<OrderDisplayDto> output = new List<OrderDisplayDto>();
+
             try
             {
                 var order_headers = await GetHeaderDisplay(ohids, check);
+
                 if (order_headers.Any())
                 {
                     foreach (var order_header in order_headers)
                     {
-                        var temp_output = new OrderDisplayDto();
-                        temp_output.OrderHeader = order_header;
-                        temp_output.OrderDetails = await GetDetailsDisplay(order_header.Id);
+                        var details = await GetDetailsDisplay(order_header.Id);
+
+                        var productSubtotal = details.Sum(x => x.Subtotal);
+                        var productBonus = details.Sum(x => x.SubtotalBonus);
+
+                        var totalBonus = 0;
+                        if (!string.IsNullOrWhiteSpace(order_header.Bonus))
+                        {
+                            int.TryParse(order_header.Bonus.Replace(",", ""), out totalBonus);
+                        }
+
+                        var redeemBonus = Math.Max(0, totalBonus - productBonus);
+
+                        order_header.ProductSubtotal = productSubtotal.ToString("#,##0");
+                        order_header.ProductBonus = productBonus.ToString("#,##0");
+                        order_header.RedeemBonus = redeemBonus.ToString("#,##0");
+
+                        var temp_output = new OrderDisplayDto
+                        {
+                            OrderHeader = order_header,
+                            OrderDetails = details
+                        };
+
                         output.Add(temp_output);
                     }
                 }
-                else throw new Exception("查無訂單資訊");
+                else
+                {
+                    throw new Exception("查無訂單資訊");
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
                 Console.WriteLine($"Order=>GetOrderDisplayOne：{ex.Message}");
             }
+
             return output;
         }
         public async Task<OrderDisplayDto> CheckOrder(long ohid)
@@ -1433,28 +1476,43 @@ namespace EtheriT.Coker.Application.Order
                 if (!newOrderDetails.Any())
                     throw new Exception("查無再次下訂資訊");
 
-                var oldPsIds = oldOrderDetails
-                    .Select(x => x.ProdStockId)
-                    .ToHashSet();
-
-                // 只留下這張舊訂單對應的商品
-                var result = newOrderDetails
-                    .Where(x => oldPsIds.Contains(x.PSId))
-                    .ToList();
-
-                // 補舊訂單差異資料
-                foreach (var item in result)
+                string BuildReorderKey(long psId, decimal price, int bonus)
                 {
-                    var oldItem = oldOrderDetails.FirstOrDefault(x => x.ProdStockId == item.PSId);
-                    if (oldItem == null) continue;
+                    return $"{psId}|{price:0.##}|{bonus}";
+                }
 
-                    if (item.Price != oldItem.Price)
-                        item.OldPrice = oldItem.Price;
+                var oldMap = oldOrderDetails
+                    .GroupBy(x => BuildReorderKey(
+                        x.ProdStockId,
+                        Convert.ToDecimal(x.Price),
+                        x.Bonus
+                    ))
+                    .ToDictionary(
+                        g => g.Key,
+                        g => new Queue<OrderDetailDisplayDto>(g)
+                    );
 
-                    if (item.Quantity != oldItem.Quantity)
-                        item.OldQuantity = oldItem.Quantity;
+                var result = new List<ShoppingCartDisplayDto>();
 
+                foreach (var item in newOrderDetails)
+                {
+                    var key = BuildReorderKey(
+                        item.PSId,
+                        Convert.ToDecimal(item.Price),
+                        item.Bonus
+                    );
+
+                    if (!oldMap.TryGetValue(key, out var queue) || queue.Count == 0)
+                        continue;
+
+                    var oldItem = queue.Dequeue();
+
+                    item.OldPrice = oldItem.Price;
+                    item.OldBonus = oldItem.Bonus;
+                    item.OldQuantity = oldItem.Quantity;
                     item.Step = oldItem.Step;
+
+                    result.Add(item);
                 }
 
                 output.Success = true;
@@ -2088,7 +2146,7 @@ namespace EtheriT.Coker.Application.Order
             {
                 var webSiteId = await loginUserData.GetCommonWebsiteId();
                 if (webSiteId == 0) throw new Exception("網站不存在");
-
+                Console.WriteLine($"webSiteId:{webSiteId}");
                 var order = await db.Order_Headers
                     .Where(e => e.Id == dto.Id && e.FK_WebsiteId == webSiteId)
                     .FirstOrDefaultAsync();
@@ -2142,9 +2200,11 @@ namespace EtheriT.Coker.Application.Order
 
                     await loginUserData.SaveChanges(order);
 
+                    Console.WriteLine($"HandleOrderBonusStateChangeAsync");
                     // 4. 紅利狀態事件
                     await HandleOrderBonusStateChangeAsync(order, oldStatus, newStatus);
 
+                    await db.SaveChangesAsync();
                     await tx.CommitAsync();
                 });
 
@@ -2167,6 +2227,7 @@ namespace EtheriT.Coker.Application.Order
             OrderStatusEnum oldStatus,
             OrderStatusEnum newStatus)
         {
+            Console.WriteLine($"oldStatus={oldStatus},newStatus={newStatus}");
             if (oldStatus == newStatus)
                 return;
 
@@ -2180,6 +2241,7 @@ namespace EtheriT.Coker.Application.Order
             // 取消 / 付款失敗 / 退貨 / 退款：退還已使用紅利
             if (IsClosedOrderStatusForBonus(newStatus))
             {
+                Console.WriteLine("RefundUsedBonusByOrderAsync");
                 await RefundUsedBonusByOrderAsync(order);
 
                 // 已完成後才取消 / 退貨 / 退款：追回已發放回饋紅利
@@ -2214,10 +2276,10 @@ namespace EtheriT.Coker.Application.Order
         private async Task RefundUsedBonusByOrderAsync(Order_Header order)
         {
             var usedBonus = order.Bonus ?? 0;
-
+            Console.WriteLine($"usedBonus={usedBonus}");
             if (usedBonus <= 0)
                 return;
-
+            Console.WriteLine($"RefundRedeemByOrderAsync");
             var result = await bonusManagementAppService.RefundRedeemByOrderAsync(
                 order.FK_UUID,
                 order.Id,

@@ -46,6 +46,12 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public int LogisticsType { get; set; }
         public string? LogisticsTypeStr { get; set; }
         public string? LogisticsSubTypeStr { get; set; }
+        public string ProductSubtotal { get; set; } = "0";
+        public string ProductBonus { get; set; } = "0";
+        public string RedeemBonus { get; set; } = "0";
+        public string? InvoiceTypeTitle { get; set; }
+        public string? PersonalInvoiceTypeTitle { get; set; }
+        public string? Carrier { get; set; }
         public string? AllPayLogisticsID { get; set; }
         public string? CVSStoreID { get; set; }
         public string? CVSStoreName { get; set; }

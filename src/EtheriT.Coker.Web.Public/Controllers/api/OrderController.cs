@@ -114,7 +114,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                 default:
                     response = await orderAppService.UpdateStatus(new OrderUpdateStatusDto { Id = ohid, Status = OrderStatusEnum.已取消, Memo = null });
                     if (response.Success && response.Message == "已付款") response.Message = "訂單已取消，請主動聯繫客服處理退款。";
-                    else response.Message = "訂單已取消。";
+                    else if(response.Success) response.Message = "訂單已取消。";
                     break;
             }
             if (response.Message == "") response.Message = "支付方式不存在";

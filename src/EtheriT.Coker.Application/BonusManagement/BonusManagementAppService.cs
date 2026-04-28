@@ -799,6 +799,7 @@ namespace EtheriT.Coker.Application.BonusManagement
                     .AnyAsync(x => x.UUID == memberUuid &&
                                    x.RefKey == orderId &&
                                    x.Type == BonusLogTypeEnum.Refund);
+                Console.WriteLine($"alreadyRefund：{alreadyRefund}");
                 if (alreadyRefund)
                 {
                     result.Success = true;
@@ -814,13 +815,17 @@ namespace EtheriT.Coker.Application.BonusManagement
                         x.Type == BonusLogTypeEnum.Redeem)
                     .OrderByDescending(x => x.ExecutionTime) // 或 OrderByDescending(x => x.Id)
                     .FirstOrDefaultAsync();
-
+                Console.WriteLine($"UUID：{memberUuid}");
+                Console.WriteLine($"RefKey：{orderId}");
+                Console.WriteLine($"BonusLogTypeEnum.Redeem：{(int)BonusLogTypeEnum.Redeem}");
+                Console.WriteLine($"redeemLog is null：{redeemLog == null}");
                 if (redeemLog == null)
                 {
                     result.Success = true;
                     return result;
                 }
 
+                Console.WriteLine($"redeemLog.Amount：{redeemLog.Amount}");
                 if (redeemLog.Amount >= 0)
                 {
                     result.Error = "該筆紀錄不是折抵（Amount 非負），無法退回。";
@@ -835,9 +840,10 @@ namespace EtheriT.Coker.Application.BonusManagement
                     .ToDictionaryAsync(b => b.Id);
 
                 int totalRefund = 0;
-
+                Console.WriteLine($"bonusIds：{JsonConvert.SerializeObject(bonusIds)}");
                 foreach (var d in redeemLog.BonusLogDetails)
                 {
+                    Console.WriteLine($"TryGetValue：{d.FK_BonusId},{!bonuses.TryGetValue(d.FK_BonusId, out var bonustest)}");
                     if (!bonuses.TryGetValue(d.FK_BonusId, out var bonus))
                     {
                         // 找不到原 Bonus：通常代表資料被刪/不一致，這種建議直接中止，避免錯帳
@@ -852,7 +858,7 @@ namespace EtheriT.Coker.Application.BonusManagement
 
                     totalRefund += (int)d.UsedAmount;
                 }
-
+                Console.WriteLine($"totalRefund={totalRefund}");
                 // 4) 寫入 Refund log（Amount 正值）
                 var refundLog = new BonusLog
                 {
@@ -876,6 +882,7 @@ namespace EtheriT.Coker.Application.BonusManagement
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error：{ex.Message}");
                 result.Error = ex.Message;
                 return result;
             }

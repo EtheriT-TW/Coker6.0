@@ -2424,7 +2424,7 @@ async function OrderHeaderAdd() {
             var hasBtnGetMap = shipping_radio.siblings('.btn_getmap').length > 0;
             if (hasBtnGetMap && order_header_data.CVSStoreID == null) {
                 checksuccess = false;
-                if (EnableWarning) Coker.sweet.warning("請注意", "請選擇取貨門市！", null);
+                Coker.sweet.warning("請注意", "請選擇取貨門市！", null);
             }
 
             if (checksuccess) {

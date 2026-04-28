@@ -209,44 +209,21 @@ function PageReady() {
             return;
         }
 
-        var $iframe = $("#ecpayFrame");
-        if ($iframe.length == 0) {
-            $iframe = $("<iframe>", {
-                id: "ecpayFrame",
-                name: "ecpayFrame"
-            }).hide();
-            $("body").append($iframe);
-        }
-        $iframe.show();
-
-        const $form = $("<form>", {
-            method: "post",
-            action: "/api/ThirdParty/HandleThirdPartyLogistics",
-            target: "ecpayFrame"
-        });
-
         const data = {
             Action: "CreateLogistics",
             OrderId: keyId,
             ExtraData: "CVS",
         };
 
-        $.each(data, function (key, value) {
-            $("<input>", {
-                type: "hidden",
-                name: key,
-                value: value
-            }).appendTo($form);
+        Coker.ThirdParty.HandleThirdPartyLogistics(data).done(function (result) {
+            if (result.success) {
+                co.sweet.success(result.message, function () { }, false);
+                $btn_printShippingLabel.removeClass("d-none");
+            } else {
+                co.sweet.error("訂單狀態錯誤", result.message);
+            }
+            $btn_createLogistics.addClass("d-none");
         });
-
-        $("body").append($form);
-        $form.submit();
-        $form.remove();
-
-        setTimeout(function () {
-            co.sweet.success("物流訂單請求已送出，將刷新頁面");
-            location.reload();
-        }, 5000);
     });
 
     $btn_printShippingLabel.on("click", function () {
@@ -257,7 +234,7 @@ function PageReady() {
 
         const $form = $("<form>", {
             method: "post",
-            action: "/api/ThirdParty/HandleThirdPartyLogistics",
+            action: "/api/ThirdParty/ECPayLogisticsPrintShippingLabel",
             target: "_blank"
         });
 
@@ -500,7 +477,7 @@ function HeaderDataSet(result) {
 
     if (result.bonus == 0) $(".bonusLine").addClass("d-none");
     else $(".bonusLine").removeClass("d-none");
-    
+
     $order_notes.text(result.remark)
     $order_systemMemos.text(result.systemMemo)
     $recipient_name.text(result.recipient)

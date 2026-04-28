@@ -124,7 +124,27 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 return BadRequest(ex.Message);
             }
         }
-        public async Task<IActionResult> HandleThirdPartyLogistics([FromForm] HandleThirdPartyLogisticsDto dto)
+        public async Task<ResponseMessageDto> HandleThirdPartyLogistics(HandleThirdPartyLogisticsDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                switch (dto.Action)
+                {
+                    case "CreateLogistics":
+                        response = await thirdPartyAppService.HandleThirdPartyLogistics(dto);
+                        break;
+                    default:
+                        throw new Exception($"查詢動作【{dto.Action}】不支援");
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
+        }
+        public async Task<IActionResult> ECPayLogisticsPrintShippingLabel([FromForm] HandleThirdPartyLogisticsDto dto)
         {
             try
             {
@@ -134,19 +154,6 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 
                 switch (dto.Action)
                 {
-                    case "CreateLogistics":
-                        response = await thirdPartyAppService.HandleThirdPartyLogistics(dto);
-
-                        if (string.IsNullOrEmpty(response.Message)) throw new Exception("RequestBody取得錯誤");
-                        if (!response.Success) throw new Exception(response.Message);
-
-                        message = response.Message.Split("&&");
-                        if (message.Length != 2) throw new Exception("資料錯誤");
-
-                        actionUrl = message[0];
-                        ECPayLogisticsCreateCVSRequestDto CreateRequestBody = JsonConvert.DeserializeObject<ECPayLogisticsCreateCVSRequestDto>(message[1]);
-                        if (CreateRequestBody == null) throw new Exception("RequestBody為空");
-                        return Content(GenerateAutoPostForm(actionUrl, CreateRequestBody), "text/html");
                     case "PrintOrderInfo":
                         response = await thirdPartyAppService.HandleThirdPartyLogistics(dto);
 
@@ -161,7 +168,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                         {
                             case "C2C711":
                                 ECPayLogisticsPrintShippingLabelC2C711RequestDto PrintShippingLabelC2C711RequestBody = JsonConvert.DeserializeObject<ECPayLogisticsPrintShippingLabelC2C711RequestDto>(message[1]);
-                                if(PrintShippingLabelC2C711RequestBody == null) throw new Exception("RequestBody為空");
+                                if (PrintShippingLabelC2C711RequestBody == null) throw new Exception("RequestBody為空");
                                 return Content(GenerateAutoPostForm(actionUrl, PrintShippingLabelC2C711RequestBody), "text/html");
                             case "C2CFAMI":
                             case "C2CHILIFE":

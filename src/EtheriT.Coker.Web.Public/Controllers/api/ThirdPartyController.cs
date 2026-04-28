@@ -232,76 +232,74 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<ResponseMessageDto> HandleThirdPartyLogistics(HandleThirdPartyLogisticsDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
-            //var CheckSource = await thirdPartyAppService.CheckSource(dto.Token);
-            //if (CheckSource.Success)
-            //{
-            var baseUrl = configuration["ThirdParty:ECPayLogistics:LogisticsUrl"];
-            string actionUrl = "";
-
-            switch (dto.Action)
+            var CheckSource = await thirdPartyAppService.CheckSource(dto.Token);
+            if (CheckSource.Success)
             {
-                case "CreateLogistics":
-                    actionUrl = $"{baseUrl}/Express/Create";
-                    switch (dto.ExtraData)
-                    {
-                        case "CVS":
-                            ECPayLogisticsCreateCVSRequestDto RequestBody = await ecPayLogisticsAppService.ECPayLogisticsExpressCVSCreate(dto.OrderId);
-                            response.Message = $"{actionUrl}&&{JsonConvert.SerializeObject(RequestBody)}";
-                            response.Success = true;
-                            break;
-                        case "HOME":
+                var baseUrl = configuration["ThirdParty:ECPayLogistics:LogisticsUrl"];
+                string actionUrl = "";
 
-                            break;
-                        default:
-                            response.Message = $"物流方式【{dto.ExtraData}】不支援";
-                            break;
-                    }
-                    break;
-                case "PrintOrderInfo":
-                    ResponseMessageDto RequestBodyResponse = new ResponseMessageDto();
-                    bool GetResponse = true;
-                    switch (dto.ExtraData)
-                    {
-                        case "C2C711":
-                            actionUrl = $"{baseUrl}/Express/PrintUniMartC2COrderInfo";
-                            RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.UniMart, dto.OrderId);
-                            break;
-                        case "C2CFAMI":
-                            actionUrl = $"{baseUrl}/Express/PrintFAMIC2COrderInfo";
-                            RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.FAMI, dto.OrderId);
-                            break;
-                        case "C2CHILIFE":
-                            actionUrl = $"{baseUrl}/Express/PrintHILIFEC2COrderInfo";
-                            RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.HILIFE, dto.OrderId);
-                            break;
-                        case "C2COKMART":
-                            actionUrl = $"{baseUrl}/Express/PrintOKMARTC2COrderInfo";
-                            RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.OKMART, dto.OrderId);
-                            break;
-                        case "B2C":
-                        case "HOME":
-                            actionUrl = $"{baseUrl}/helper/printTradeDocument";
-                            RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.B2C, dto.OrderId);
-                            break;
-                        default:
-                            GetResponse = false;
-                            response.Message = $"物流方式【{dto.ExtraData}】不支援";
-                            break;
-                    }
-                    if (GetResponse)
-                    {
-                        if (string.IsNullOrEmpty(RequestBodyResponse.Message)) throw new Exception("取得RequestBodyResponse發生錯誤");
-                        if (!RequestBodyResponse.Success) throw new Exception(RequestBodyResponse.Message);
-                        response.Message = $"{actionUrl}&&{RequestBodyResponse.Message}";
-                        response.Success = true;
-                    }
-                    break;
-                default:
-                    response.Message = $"查詢動作【{dto.Action}】不支援";
-                    break;
+                switch (dto.Action)
+                {
+                    case "CreateLogistics":
+                        actionUrl = $"{baseUrl}/Express/Create";
+                        switch (dto.ExtraData)
+                        {
+                            case "CVS":
+                                response = await ecPayLogisticsAppService.ECPayLogisticsExpressCVSCreate(dto.OrderId);
+                                break;
+                            case "HOME":
+
+                                break;
+                            default:
+                                response.Message = $"物流方式【{dto.ExtraData}】不支援";
+                                break;
+                        }
+                        break;
+                    case "PrintOrderInfo":
+                        ResponseMessageDto RequestBodyResponse = new ResponseMessageDto();
+                        bool GetResponse = true;
+                        switch (dto.ExtraData)
+                        {
+                            case "C2C711":
+                                actionUrl = $"{baseUrl}/Express/PrintUniMartC2COrderInfo";
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.UniMart, dto.OrderId);
+                                break;
+                            case "C2CFAMI":
+                                actionUrl = $"{baseUrl}/Express/PrintFAMIC2COrderInfo";
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.FAMI, dto.OrderId);
+                                break;
+                            case "C2CHILIFE":
+                                actionUrl = $"{baseUrl}/Express/PrintHILIFEC2COrderInfo";
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.HILIFE, dto.OrderId);
+                                break;
+                            case "C2COKMART":
+                                actionUrl = $"{baseUrl}/Express/PrintOKMARTC2COrderInfo";
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.OKMART, dto.OrderId);
+                                break;
+                            case "B2C":
+                            case "HOME":
+                                actionUrl = $"{baseUrl}/helper/printTradeDocument";
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.B2C, dto.OrderId);
+                                break;
+                            default:
+                                GetResponse = false;
+                                response.Message = $"物流方式【{dto.ExtraData}】不支援";
+                                break;
+                        }
+                        if (GetResponse)
+                        {
+                            if (string.IsNullOrEmpty(RequestBodyResponse.Message)) throw new Exception("取得RequestBodyResponse發生錯誤");
+                            if (!RequestBodyResponse.Success) throw new Exception(RequestBodyResponse.Message);
+                            response.Message = $"{actionUrl}&&{RequestBodyResponse.Message}";
+                            response.Success = true;
+                        }
+                        break;
+                    default:
+                        response.Message = $"查詢動作【{dto.Action}】不支援";
+                        break;
+                }
             }
-            //}
-            //else response.Error = "Token 驗證錯誤";
+            else response.Error = "Token 驗證錯誤";
             return response;
         }
         [HttpPost]

@@ -423,11 +423,9 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 var websiteId = await loginUserData.GetWebsiteId();
                 var token = await tokenAppService.CheckToken(null);
-                //if (token == null) throw new Exception("取得Token發生錯誤");
-                //else if (token.Success == false) throw new Exception(token.Error);
-                if (token == null) await loginUserData.SetLogs(0, websiteId, $"ECPayLogisticsExpressCreate", "取得Token發生錯誤");
-                else if (token.Success == false) await loginUserData.SetLogs(0, websiteId, $"ECPayLogisticsExpressCreate", token.Error ?? "取得Token發生錯誤");
-                //dto.Token = token.Token;
+                if (token == null) throw new Exception("取得Token發生錯誤");
+                else if (token.Success == false) throw new Exception(token.Error);
+                dto.Token = token.Token;
                 response = await CallFrontApi("HandleThirdPartyLogistics", dto);
             }
             catch (Exception ex)
@@ -446,7 +444,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (website == null) throw new Exception("取得網站內容發生錯誤");
 
                 var frontApiUrl = _env.IsProduction() ? $"{website.DefaultUrl}/api/ThirdParty/{apiPath}" : $"https://lcb.develop.coker.ezsale.tw/api/ThirdParty/{apiPath}";
-                //var frontApiUrl = $"https://localhost:7193/api/ThirdParty/{apiPath}";
                 var jsonContent = new StringContent(JsonConvert.SerializeObject(dto), Encoding.UTF8, "application/json");
                 var postresponse = await ThirdPartyClient_Front.PostAsync(frontApiUrl, jsonContent);
 

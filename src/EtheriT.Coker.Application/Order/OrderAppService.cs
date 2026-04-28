@@ -990,8 +990,6 @@ namespace EtheriT.Coker.Application.Order
                 foreach (var order_header in order_headers)
                 {
                     var temp_output = mapper.Map<OrderHeaderDisplayDto>(order_header);
-                    var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == order_header.Id).FirstOrDefaultAsync();
-
                     var userdata = await db.FrontUsers.Where(e => e.UUID == order_header.FK_UUID).FirstOrDefaultAsync();
                     if (userdata != null)
                     {
@@ -1038,7 +1036,14 @@ namespace EtheriT.Coker.Application.Order
                     var shipping_str1 = shipping?.Title ?? "";
                     var shipping_str3 = (shipping?.LogisticsType ?? ShippingTypeEnum.郵寄掛號).ToString().Replace("_", "/");
                     temp_output.Shipping = shipping_str1 != "" ? shipping_str3 != "" ? $"{shipping_str1} {shipping_str3}" : $"{shipping_str1}" : "";
-                    if (logistics != null && logistics.LogisticsType == "CVS") temp_output.Shipping += $"　{logistics.CVSStoreName}({logistics.CVSAddress})";
+
+                    var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == order_header.Id).FirstOrDefaultAsync();
+                    if (logistics != null)
+                    {
+                        temp_output.AllPayLogisticsID = logistics.AllPayLogisticsID;
+                        if (logistics.LogisticsType == "CVS") temp_output.Shipping += $"　{logistics.CVSStoreName}({logistics.CVSAddress})";
+                    }
+
                     temp_output.LogisticsType = ((int)shipping?.LogisticsType);
                     temp_output.LogisticsTypeStr = "CVS";
 

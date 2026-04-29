@@ -91,68 +91,53 @@ namespace EtheriT.Coker.Application.Member
 
         private async Task<long> EnsureFrontUserRoleAsync(Guid uuid, long websiteId, long guestRoleId)
         {
-            var token = await db.Tokens
-                .Where(e => e.UUID == uuid)
+            var userId = await db.Tokens
+                .Where(e => e.UUID == uuid && e.UserID != null && e.UserID > 0)
+                .OrderByDescending(e => e.StartTime)
+                .Select(e => e.UserID)
                 .FirstOrDefaultAsync();
 
-            // 訪客
-            if (token?.UserID == null)
+            if (userId == null || userId == 0)
                 return guestRoleId;
 
-            var mappedRoleId = await db.MappingUserAndRoles
-                .Where(e => e.UUID == uuid)
-                .Select(e => (long?)e.RoleId)
-                .FirstOrDefaultAsync();
-
-            // 已有正常角色
-            if (mappedRoleId.HasValue && mappedRoleId.Value > guestRoleId)
-                return mappedRoleId.Value;
-
-            // 找網站最低前台角色
-            var fallbackRoleId = await db.Roles
+            var validFrontRoleIds = await db.Roles
                 .Where(e =>
                     e.Type == RoleTypeEnum.前台 &&
                     e.FK_WebsiteId == websiteId &&
                     !e.IsDeleted)
                 .OrderBy(e => e.Ser_No)
                 .ThenBy(e => e.Id)
-                .Select(e => (long?)e.Id)
-                .FirstOrDefaultAsync();
+                .Select(e => e.Id)
+                .ToListAsync();
 
-            if (!fallbackRoleId.HasValue)
+            if (!validFrontRoleIds.Any())
                 return guestRoleId;
 
-            if (!mappedRoleId.HasValue)
+            var fallbackRoleId = validFrontRoleIds.First();
+
+            var mapping = await db.MappingUserAndRoles
+                .Where(e => e.UUID == uuid)
+                .FirstOrDefaultAsync();
+
+            if (mapping != null && validFrontRoleIds.Contains(mapping.RoleId))
+                return mapping.RoleId;
+
+            if (mapping == null)
             {
                 db.MappingUserAndRoles.Add(new MappingUserAndRole
                 {
                     UUID = uuid,
-                    RoleId = fallbackRoleId.Value
+                    RoleId = fallbackRoleId
                 });
             }
             else
             {
-                var mapping = await db.MappingUserAndRoles
-                    .Where(e => e.UUID == uuid)
-                    .FirstOrDefaultAsync();
-
-                if (mapping != null)
-                {
-                    mapping.RoleId = fallbackRoleId.Value;
-                }
-                else
-                {
-                    db.MappingUserAndRoles.Add(new MappingUserAndRole
-                    {
-                        UUID = uuid,
-                        RoleId = fallbackRoleId.Value
-                    });
-                }
+                mapping.RoleId = fallbackRoleId;
             }
 
             await db.SaveChangesAsync();
 
-            return fallbackRoleId.Value;
+            return fallbackRoleId;
         }
     }
 }

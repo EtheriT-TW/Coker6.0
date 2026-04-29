@@ -52,10 +52,18 @@ function PageReady() {
         const $group = $(this).closest('.purchase_group');
         const checked = this.checked;
 
-        if (checked) clearOtherGroupsExcept($group);     // 互斥：先清其他組
-        $group.find('.js-group-check').prop('indeterminate', false); // 讓第一次點擊不會卡在半選
+        const $validItems = $group.find('input[name="buyItems"]:enabled');
 
-        $group.find('input[name="buyItems"]').prop('checked', checked);
+        if ($validItems.length === 0) {
+            $(this).prop('checked', false);
+            return;
+        }
+
+        if (checked) clearOtherGroupsExcept($group);
+
+        $group.find('.js-group-check').prop('indeterminate', false);
+
+        $validItems.prop('checked', checked);
 
         updateGroupSelectedSubtotal($group);
         TotalCount();
@@ -954,11 +962,17 @@ function CartInit(result) {
 
     const $firstGroup = $('.purchase_group').first();
     if ($firstGroup.length) {
-        // 勾選整組
-        $firstGroup.find('.js-group-check').prop('checked', true);
-        $firstGroup.find('input[name="buyItems"]').prop('checked', true);
+        const $validItems = $firstGroup
+            .find('input[name="buyItems"]')
+            .not(':disabled');
 
-        // 計算小計與合計
+        if ($validItems.length > 0) {
+            $firstGroup.find('.js-group-check').prop('checked', true);
+            $validItems.prop('checked', true);
+        } else {
+            $firstGroup.find('.js-group-check').prop('checked', false);
+        }
+
         updateGroupSelectedSubtotal($firstGroup);
         TotalCount();
         updateNextStepByBonus();
@@ -983,7 +997,6 @@ function CartListAdd(data, $container) {
         var exists = shopping_cart_data.find(e => e.Id == data.scId);
 
         if (exists != null) {
-            // 已經存在就沿用目前的結帳單價（避免重複 push）
             data.price = exists.Price;
         } else {
             var obj = {};
@@ -1014,6 +1027,23 @@ function CartListAdd(data, $container) {
     $template.data("scId", data.scId);
     $template.attr('data-group-id', groupId);
     $template = CartListInsert($template, data);
+
+    if (Number(data.quantity || 0) <= 0 || data.available === false || data.available === "false") {
+        $template.addClass("cart-item-error");
+        $template.find('input[name="buyItems"]').prop({
+            checked: false,
+            disabled: true
+        });
+
+        var msg = data.describe || "此商品目前無法購買，請調整或移除。";
+        var $content = $template.find(".content");
+        if (!$content.length) $content = $template;
+
+        if ($template.find(".js-stock-error").length === 0) {
+            $content.append($('<div class="js-stock-error text-danger small mt-1"></div>').text(msg));
+        }
+    }
+
     $template.find(".btn_remove_pro").on("click", function () {
         var $self = $(this).parents("li").first();
         Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
@@ -1024,14 +1054,16 @@ function CartListAdd(data, $container) {
                 if ($group.find('li.purchase_item').length === 0) {
                     $group.remove();
                 } else {
-                    // 還有其他商品 → 更新群組小計/勾選狀態
                     updateGroupSelectedSubtotal($group);
                     TotalCount();
                 }
             }
         });
     });
+
     $template.find(".btn_count_plus").on("click", function () {
+        if ($template.hasClass("cart-item-error")) return;
+
         var $self_bro = $(this).siblings(".pro_quantity");
         const $group = $template.closest('.purchase_group');
 
@@ -1049,14 +1081,15 @@ function CartListAdd(data, $container) {
     });
 
     $template.find(".btn_count_minus").on("click", function () {
+        if ($template.hasClass("cart-item-error")) return;
+
         var $self_bro = $(this).siblings(".pro_quantity");
         const $group = $template.closest('.purchase_group');
 
         const currentQty = Number($self_bro.val() || 0);
         const step = Number($self_bro.attr("step") || 1);
         const nextQty = currentQty - step;
-
-        // 按鈕減量：下一次數量低於最小購買量時，走既有刪除流程
+        console.log(currentQty, step);
         if (nextQty < step) {
             $template.find(".btn_remove_pro").trigger("click");
             return;
@@ -1075,6 +1108,8 @@ function CartListAdd(data, $container) {
     });
 
     $template.find(".pro_quantity").on("change", function () {
+        if ($template.hasClass("cart-item-error")) return;
+
         var $self = $(this);
         const $group = $template.closest('.purchase_group');
 
@@ -1323,33 +1358,42 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
         updateNextStepByBonus();
     }
 
-    function handleUpdateError(title, message, rollbackOnly) {
+    function handleUpdateError(title, message, lockItem) {
         var $li = self.closest('li.purchase_item');
         var $qty = $li.find('.pro_quantity');
 
+        // 1. 回復原本數量與小計
         $qty.val(oldQty);
         updateSubtotalAndDisplay(oldQty);
 
-        if (!rollbackOnly && title !== "") {
-            Coker.sweet.error(title, message, null, true);
+        var displayMessage = message || "商品數量修改發生錯誤，請稍後再試。";
+
+        // 2. 彈出錯誤訊息
+        if (title) {
+            Coker.sweet.error(title, displayMessage, null, true);
         }
 
-        if (!rollbackOnly) {
+        // 3. 商品列紅字提示：不管有沒有鎖商品，都要顯示
+        $li.find('.js-stock-error').remove();
+
+        var $content = $li.find('.content');
+        if (!$content.length) $content = $li;
+
+        var $msgDiv = $('<div class="js-stock-error text-danger small mt-1"></div>');
+        $msgDiv.text(displayMessage);
+        $content.append($msgDiv);
+
+        // 4. 只有真正不可購買時才鎖住商品
+        if (lockItem === true) {
             $li.addClass('cart-item-error');
 
             var $itemCheckbox = $li.find('input[name="buyItems"]');
             if ($itemCheckbox.length) {
-                $itemCheckbox.prop('checked', false);
-                $itemCheckbox.prop('disabled', true);
+                $itemCheckbox.prop({
+                    checked: false,
+                    disabled: true
+                });
             }
-
-            $li.find('.js-stock-error').remove();
-            var $content = $li.find('.content');
-            if (!$content.length) $content = $li;
-
-            var $msgDiv = $('<div class="js-stock-error text-danger small mt-1"></div>');
-            $msgDiv.text(message || '此商品目前無法購買，請調整或移除。');
-            $content.append($msgDiv);
         }
 
         syncGroupAndTotal();
@@ -1378,7 +1422,11 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
             }
 
             if (result.object?.items?.[0] && !result.object.items[0].success) {
-                handleUpdateError("", result.object.items[0].message, false);
+                handleUpdateError(
+                    "商品數量無法更新",
+                    result.object.items[0].message || "庫存不足，已恢復為原本數量。",
+                    false
+                );
                 return;
             }
 
@@ -1392,7 +1440,7 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
         handleUpdateError("商品更改數量發生錯誤", msg, false);
 
     }).fail(function () {
-        handleUpdateError("錯誤", "商品數量修改發生錯誤，請稍後再試。", false);
+        handleUpdateError("錯誤", "商品數量修改發生錯誤，請稍後再試。", true);
     });
 }
 function computeSelectedSubtotal() {
@@ -1745,7 +1793,6 @@ function updateNextStepByBonus() {
     const memberBonus = Number(totalBonus || 0);
     const shortage = Math.max(0, Number(bonus || 0) - memberBonus);
     const isEnough = shortage <= 0;
-    console.log(totalBonus);
     const $nextBtn = $(".btn_swiper_next_buystep");
     const $hint = $(".js-bonus-nextstep-hint");
     const $hintText = $(".js-bonus-nextstep-text");
@@ -2612,38 +2659,69 @@ function OrderSuccess(result) {
         .text(`訂單成立時間：${message[2]}`);
 
     $("#Step4 > .card-body > .pruchase_content > .status_alert")
-        .text("訂單已成立，謝謝您的訂購！");
+        .text("訂單已成立，訂單明細載入中，請稍候...");
 
-    Coker.Order.GetAllData(order_header_id, true).done(function (results) {
-        if (results && results.length > 0) {
-            SuccessPageDataInsert(results[0]);
-        }
-    });
+    buy_step_swiper.enable();
+    buy_step_swiper.slideNext();
+    buy_step_swiper.update();
+    buy_step_swiper.disable();
 
-    if ($(".storememo").text() != "") {
-        Swal.fire({
-            title: "小提醒",
-            icon: "info",
-            html: $(".storememo").text().replaceAll("\n", "<br/>"),
-            focusConfirm: false,
-            confirmButtonText: "確認",
-        }).then(function () {
-            if (result.error != null) {
-                if (!islogin) {
-                    Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。", null);
-                } else {
-                    Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。", null);
-                }
-            }
-        });
-    } else {
-        if (result.error != null) {
-            if (!islogin) {
-                Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。", null);
+    Coker.sweet.processing(
+        "訂單成立中",
+        "正在載入訂單明細，請稍候..."
+    );
+
+    Coker.Order.GetAllData(order_header_id, true)
+        .done(function (results) {
+            if (results && results.length > 0) {
+                SuccessPageDataInsert(results[0]);
+
+                $("#Step4 > .card-body > .pruchase_content > .status_alert")
+                    .text("訂單已成立，謝謝您的訂購！");
             } else {
-                Coker.sweet.warning("信件發送失敗", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。", null);
+                $("#Step4 > .card-body > .pruchase_content > .status_alert")
+                    .text("訂單已成立，但查無訂單明細，請至會員管理歷史訂單中確認。");
             }
+        })
+        .fail(function () {
+            $("#Step4 > .card-body > .pruchase_content > .status_alert")
+                .text("訂單已成立，但訂單明細載入失敗，請至會員管理歷史訂單中確認。");
+        })
+        .always(function () {
+            Coker.sweet.close();
+            ShowOrderSuccessNotice(result);
+        });
+}
+
+function ShowOrderSuccessNotice(result) {
+    var storeMemoText = $.trim($(".storememo").text() || "");
+
+    function showMailErrorIfNeed() {
+        if (result.error == null) return;
+
+        if (!islogin) {
+            Coker.sweet.warning(
+                "信件發送失敗",
+                "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。",
+                null
+            );
+        } else {
+            Coker.sweet.warning(
+                "信件發送失敗",
+                "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。",
+                null
+            );
         }
+    }
+
+    if (storeMemoText !== "") {
+        Coker.sweet.notice(
+            "小提醒",
+            storeMemoText.replaceAll("\n", "<br/>"),
+            showMailErrorIfNeed
+        );
+    } else {
+        showMailErrorIfNeed();
     }
 }
 function PurchaseAdd(result, item_list_ul) {
@@ -2820,7 +2898,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas) {
 
                 case "quantity": {
                     var qty = toNumberValue(getValueIgnoreCase(data, "quantity"));
-                    $this.text(`× ${qty.toLocaleString()}`);
+                    $this.text(`${qty.toLocaleString()}`);
                     break;
                 }
 
@@ -3090,6 +3168,12 @@ function calculateDiscountTargetFreight(baseFreight, shippingMeta) {
     return originFreight;
 }
 function shouldShowShippingShortage(freightResult) {
+    var shippingMeta = getSelectedShippingMeta();
+
+    if (shippingMeta.discountFreightType == null) {
+        return false;
+    }
+
     return Number(freightResult.shortage || 0) > 0;
 }
 function applyDiscountFreight(baseFreight, productSubtotal, shippingMeta) {

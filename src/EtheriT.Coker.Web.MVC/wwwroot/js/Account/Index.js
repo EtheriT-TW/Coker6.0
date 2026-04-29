@@ -1,5 +1,4 @@
-﻿
-var PageReady = function () {
+﻿var PageReady = function () {
     var rule = document.getElementById("rule");
     var newpassword = document.getElementById("newpassword");
     var agnewpassword = document.getElementById("agnewpassword");
@@ -8,143 +7,97 @@ var PageReady = function () {
     var number = document.getElementById("number");
     var symbol = document.getElementById("symbol");
     var length = document.getElementById("length");
-    const lastViewPage = $.cookie("lastViewPage") || co.Data.DefauleUrl;
+
+    function getSafeReturnUrl() {
+        const defaultUrl = co.Data.DefauleUrl || "/";
+        const params = new URLSearchParams(window.location.search);
+        let url = params.get("returnUrl");
+
+        if (!url || typeof url !== "string") return defaultUrl;
+
+        try {
+            url = decodeURIComponent(url);
+        } catch {
+            return defaultUrl;
+        }
+
+        url = url.trim();
+
+        // 只允許站內相對路徑
+        if (!url.startsWith("/")) return defaultUrl;
+
+        // 避免 //evil.com 這種外部跳轉
+        if (url.startsWith("//")) return defaultUrl;
+
+        // 避免登入後又回到登入頁 / 註冊頁 / 忘記密碼頁
+        if (/^\/Account(\/|$)/i.test(url)) return defaultUrl;
+
+        return url;
+    }
+
+    const returnUrl = getSafeReturnUrl();
 
     if (!!co.Cookie.Get("isLogin")) {
         co.User.Check().done(function (result) {
-            if (result.success)
-                location.href = lastViewPage;
+            if (result.success) {
+                location.href = returnUrl;
+                return;
+            }
         });
     }
 
     $("#loginBtn").on("click", function (e) {
         e.preventDefault();
+
         co.User.Login({
             UserName: $("#username").val(),
             Password: $("#password").val()
         }).done(function (result) {
-            if (result.success) {
-                if (isNaN(co.Cookie.Get("LastWebSite"))) location.href = lastViewPage;
-                else {
-                    co.WebSite.exchange(co.Cookie.Get("LastWebSite")).done(function (result) {
-                        if (result.success) {
-                            location.href = lastViewPage;
-                        }
-                    });
+            if (!result.success) {
+                alert(result.error);
+                return;
+            }
+
+            const lastWebSite = co.Cookie.Get("LastWebSite");
+
+            // LastWebSite 應該是網站 ID，不應該是 /Account/Index
+            // 如果不是數字，就不要拿來 exchange，直接回 returnUrl
+            if (!lastWebSite || isNaN(lastWebSite)) {
+                location.href = returnUrl;
+                return;
+            }
+
+            co.WebSite.exchange(lastWebSite).done(function (exchangeResult) {
+                if (exchangeResult.success) {
+                    location.href = returnUrl;
+                } else {
+                    location.href = co.Data.DefauleUrl || "/";
                 }
-            } else alert(result.error);
+            });
         });
     });
 
     $("#verification-btn").on("click", function () {
-        
+
     });
+
     $("#subnewpsw").on("click", function () {
-        if (lowercase.innerHTML=='' && uppercase.innerHTML=='' &&
-            number.innerHTML=='' && symbol.innerHTML=='' &&
-            length.innerHTML=='' && agnewpassword.value == newpassword.value) {
+        if (lowercase.innerHTML == '' && uppercase.innerHTML == '' &&
+            number.innerHTML == '' && symbol.innerHTML == '' &&
+            length.innerHTML == '' && agnewpassword.value == newpassword.value) {
             alert("成功");
         } else {
             alert("失敗");
         }
     });
+
     $("#newpassword").on("focus", function () {
         $("#rule").css("display", "block");
         $("#short-rule").css("display", "none");
     });
+
     $("#newpassword").on("blur", function () {
         $("#short-rule").css("display", "block");
         $("#rule").css("display", "none");
     });
-    /*
-    newpassword.onkeyup = function () {
-        //小寫
-        var lower = /[a-z]/g;
-        if (newpassword.value.match(lower)) {
-            lowercase.classList.remove("invalid");
-            lowercase.innerHTML = '';
-        } else {
-            lowercase.innerHTML = '至少1個小寫字母';
-            lowercase.classList.add("invalid");
-        }
-        //大寫
-        var upper = /[A-Z]/g;
-        if (newpassword.value.match(upper)) {
-            uppercase.classList.remove("invalid");
-            uppercase.innerHTML = '';
-        } else {
-            uppercase.innerHTML = '至少1個大寫字母';
-            uppercase.classList.add("invalid");
-        }
-        //數字
-        var num = /[0-9]/g;
-        if (newpassword.value.match(num)) {
-            number.classList.remove("invalid");
-            number.innerHTML = '';
-        } else {
-            number.innerHTML = '至少1個數字';
-            number.classList.add("invalid");
-        }
-        //符號
-        var sym = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/g;
-        if (newpassword.value.match(sym)) {
-            symbol.classList.remove("invalid");
-            symbol.innerHTML = '';
-        } else {
-            symbol.innerHTML = '至少1個符號';
-            symbol.classList.add("invalid");
-        }
-        //大於8小於32
-        if (newpassword.value.length >= 8 && newpassword.value.length < 32) {
-            length.classList.remove("invalid");
-            length.innerHTML = '';
-        }else {
-            length.innerHTML = '至少8碼最多32碼';
-            length.classList.add("invalid");
-        }
-        
-    }*/
-
-}
-
-var togglePassword = function () {
-    var passwordInput = document.getElementById('password');
-    var toggleIcon = document.getElementById('togglePassword');
-
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        toggleIcon.classList.remove('fa-eye-slash');
-        toggleIcon.classList.add('fa-eye');
-    } else {
-        passwordInput.type = 'password';
-        toggleIcon.classList.remove('fa-eye');
-        toggleIcon.classList.add('fa-eye-slash');
-    }
-   
-};
-var togglePassword2 = function () {
-    var passwordInput = document.getElementById('newpassword');
-    var toggleIcon = document.getElementById('togglePassword2');
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        toggleIcon.classList.remove('fa-eye-slash');
-        toggleIcon.classList.add('fa-eye');
-    } else {
-        passwordInput.type = 'password';
-        toggleIcon.classList.remove('fa-eye');
-        toggleIcon.classList.add('fa-eye-slash');
-    }
-};
-var togglePassword3 = function () {
-    var passwordInput = document.getElementById('agnewpassword');
-    var toggleIcon = document.getElementById('togglePassword3');
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        toggleIcon.classList.remove('fa-eye-slash');
-        toggleIcon.classList.add('fa-eye');
-    } else {
-        passwordInput.type = 'password';
-        toggleIcon.classList.remove('fa-eye');
-        toggleIcon.classList.add('fa-eye-slash');
-    }
 };

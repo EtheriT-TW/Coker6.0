@@ -194,7 +194,10 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 }
 
                 // ===== 紅利檢查：有使用紅利時，必須登入且整個購物車紅利足夠 =====
-                if (bonus > 0)
+                var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
+                var bonusEnabled = bonusSetting?.BonusEnabled == true;
+
+                if (bonusEnabled && bonus > 0)
                 {
                     if (userid == 0)
                         throw new Exception("請登入會員");
@@ -260,7 +263,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             }
             catch (Exception ex)
             {
-                response.Error = "Erro";
+                response.Error = "Error";
                 response.Message = ex.Message;
             }
 
@@ -268,22 +271,31 @@ namespace EtheriT.Coker.Application.ShoppingCart
         }
         public async Task<bool> checkBonusCanUse(Guid uuid, List<OrderDetailAddDto> OrderDetails)
         {
-            var bonusData = await bonusManagementAppService.GetQueryFrontUsersTotalAvaliableBonus(new List<Guid>{ uuid });
+            var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
+            var bonusEnabled = bonusSetting?.BonusEnabled == true;
+
+            if (!bonusEnabled) return true;
+
+            var bonusData = await bonusManagementAppService.GetQueryFrontUsersTotalAvaliableBonus(new List<Guid> { uuid });
 
             var ids = OrderDetails.Select(e => e.Id).ToList();
-            var shoppingCarts = await db.ShoppingCarts.Include(e => e.Prod_Price)
+
+            var shoppingCarts = await db.ShoppingCarts
+                .Include(e => e.Prod_Price)
                 .Where(e => e.UUID == uuid && !e.IsOrder && ids.Contains(e.Id))
                 .ToListAsync();
-            var bonusNeeded = shoppingCarts.Sum(e => e.Prod_Price == null ? 0 : e.Prod_Price.Bonus * e.Quantity);
-            if(bonusNeeded == 0) return true;
-            if (bonusData != null)
-            {
-                
-                var bonus = bonusData.FirstOrDefault();
-                if (bonus!=null && bonus.TotalAvaliableBonus >= bonusNeeded)
-                    return true;
-            }
-            return false;
+
+            var bonusNeeded = shoppingCarts.Sum(e =>
+                e.Prod_Price == null
+                    ? (e.Bonus ?? 0) * e.Quantity
+                    : (e.Prod_Price.Bonus ?? 0) * e.Quantity
+            );
+
+            if (bonusNeeded == 0) return true;
+
+            var bonus = bonusData?.FirstOrDefault();
+
+            return bonus != null && bonus.TotalAvaliableBonus >= bonusNeeded;
         }
         public async Task<ResponseMessageDto> QuantityUpdate(List<ShoppingQuantityUpdateDto> dtos)
         {
@@ -304,16 +316,17 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     return response;
                 }
 
-
                 Guid uuid = await tokenAppService.GetUUID();
+
+                var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
+                var bonusEnabled = bonusSetting?.BonusEnabled == true;
+
                 var cartIds = dtos.Select(d => d.Id).Distinct().ToList();
 
-                // 撈出所有相關購物車項目
                 var carts = await db.ShoppingCarts
                     .Where(e => cartIds.Contains(e.Id) && !e.IsOrder)
                     .ToListAsync();
 
-                // 撈出所有相關庫存
                 var stockIds = carts.Select(c => c.FK_PSid).Distinct().ToList();
                 var stocks = await db.Prod_Stocks
                     .Where(s => stockIds.Contains(s.Id))
@@ -359,7 +372,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     itemResult.NewQuantity = original;
                     itemResult.Removed = false;
 
-                    // === 庫存不足：拒絕，不改 DB ===
                     if (stock <= 0)
                     {
                         itemResult.Success = false;
@@ -378,18 +390,31 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         continue;
                     }
 
+                    if (!bonusEnabled && (sc.Bonus ?? 0) > 0)
+                    {
+                        itemResult.Success = false;
+                        itemResult.Error = "BonusDisabled";
+                        itemResult.Message = "目前未開放紅利商品購買，請移除該品項後重新加入。";
+                        response.Success = false;
+                        continue;
+                    }
+
                     if (requested > stock)
                     {
                         itemResult.Success = false;
                         itemResult.Error = "StockNotEnough";
                         itemResult.Message = $"此商品目前剩餘 {stock} 件，請調整購買數量。";
-                        if (requested < original) {
+                        if (requested < original)
+                        {
                             sc.Quantity = requested;
-                        }else response.Success = false;
+                        }
+                        else
+                        {
+                            response.Success = false;
+                        }
                         continue;
                     }
 
-                    // === 紅利檢查：只檢查本次增加的差額 ===
                     if ((sc.Bonus ?? 0) > 0 && requested > original)
                     {
                         var incrementQty = requested - original;
@@ -407,7 +432,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         }
                     }
 
-                    // === 通過驗證：庫存足夠，才實際更新 ===
                     sc.Quantity = requested;
                     sc.OldQuantity = original;
                     sc.LastModificationTime = DateTime.Now;
@@ -427,7 +451,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     );
                 }
 
-                // 統一寫入：購物車 + Log
                 await db.SaveChangesAsync();
 
                 if (!response.Success)
@@ -522,8 +545,12 @@ namespace EtheriT.Coker.Application.ShoppingCart
             var Token = await tokenAppService.CheckToken(null);
             Guid UUID = await tokenAppService.GetUUID();
             long roleid = 1;
+
             try
             {
+                var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
+                var bonusEnabled = bonusSetting?.BonusEnabled == true;
+
                 if (Token != null && Token.IsLogin)
                 {
                     var temp_roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.Id).FirstOrDefaultAsync();
@@ -543,7 +570,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 foreach (var shoppingCart in shoppingCarts)
                 {
                     var prod_price_id = await db.Prod_Prices.Where(e => e.Id == shoppingCart.FK_PriceId).Select(e => e.Id).FirstOrDefaultAsync();
-                    if (prod_price_id == 0) //原先綁定的金額被刪掉就要重抓
+                    if (prod_price_id == 0)
                     {
                         var prices_data = await productAppService.GetPriceDataAll(shoppingCart.FK_PSid);
                         shoppingCart.FK_PriceId = prices_data[0].Id;
@@ -564,10 +591,12 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     temp_output.Title = prods?.Title ?? "";
                     if (shoppingCart.IsOrder)
                     {
-                        if (shoppingCart.ProdName != null && shoppingCart.ProdName != "") temp_output.Title = shoppingCart.ProdName;
+                        if (shoppingCart.ProdName != null && shoppingCart.ProdName != "")
+                        {
+                            temp_output.Title = shoppingCart.ProdName;
+                        }
                         else
                         {
-                            // 先前ShoppingCart尚未實際存ProdName要回存
                             var sc = await db.ShoppingCarts.FirstOrDefaultAsync(e => e.Id == shoppingCart.Id);
                             if (sc != null)
                             {
@@ -578,11 +607,13 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     }
                     else
                     {
-                        if (shoppingCart.ProdName != null && shoppingCart.ProdName != "") temp_output.OldTitle = shoppingCart.ProdName;
+                        if (shoppingCart.ProdName != null && shoppingCart.ProdName != "")
+                            temp_output.OldTitle = shoppingCart.ProdName;
                     }
 
                     var pid = prod_stocks?.Prod?.Id;
                     temp_output.PId = pid ?? 0;
+
                     var imagepath = await (from fu in db.FileUploads
                                            join fb in db.FileBinds on fu.Id equals fb.FK_FileUploadId
                                            where fb.Sid == pid && fb.type == (int)FileBindTypeEnum.產品
@@ -610,50 +641,59 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         prices = await productAppService.GetPriceByStock(new List<long> { (long)psid });
                     }
 
-                    // 以購物車上綁的 FK_PriceId 為主，找對應的 Prod_Price
                     if (shoppingCart.FK_PriceId != null)
                     {
                         prod_price = await db.Prod_Prices
                             .FirstOrDefaultAsync(e => e.Id == shoppingCart.FK_PriceId);
+                        temp_output.PPId = shoppingCart.FK_PriceId;
                     }
 
-                    // 預設：用購物車快照價當 fallback
                     decimal currentPrice = temp_output.OldPrice;
                     int currentBonus = shoppingCart.Bonus ?? 0;
 
                     if (prices.Any() && prod_price != null)
                     {
-                        // 依原本邏輯去對應現在有效的價格列
                         var temp_price = prices
                             .FirstOrDefault(e => e.Id == prod_price.Id)
-                            ?? prices.FirstOrDefault(e => e.Bonus == prod_price.Bonus);
+                            ?? prices.FirstOrDefault(e => e.Bonus == prod_price.Bonus)
+                            ?? prices.FirstOrDefault();
 
-                        if (temp_price != null && temp_price.Id != prod_price.Id)
+                        if (temp_price != null)
                         {
-                            // 原本綁的那列被刪掉了，就換成新的那列
-                            shoppingCart.FK_PriceId = temp_price.Id;
-                            prod_price = await db.Prod_Prices
-                                .FirstOrDefaultAsync(e => e.Id == temp_price.Id);
-                            await db.SaveChangesAsync();
+                            if (temp_price.Id != prod_price.Id)
+                            {
+                                shoppingCart.FK_PriceId = temp_price.Id;
+                                prod_price = await db.Prod_Prices
+                                    .FirstOrDefaultAsync(e => e.Id == temp_price.Id);
+                                await db.SaveChangesAsync();
+                            }
+
+                            currentPrice = prod_price?.Price ?? currentPrice;
+                            currentBonus = prod_price?.Bonus ?? currentBonus;
+
+                            if (prod_price?.FK_RId != 1)
+                                temp_output.PriceLabel = "會員價";
                         }
-
-                        currentPrice = prod_price?.Price ?? currentPrice;
-                        currentBonus = prod_price?.Bonus ?? currentBonus;
-
-                        if (prod_price?.FK_RId != 1)
-                            temp_output.PriceLabel = "會員價";
                     }
 
-                    // ✅ 現在要結帳的單價＆紅利
+                    if (!bonusEnabled && currentBonus > 0)
+                    {
+                        temp_output.Available = false;
+                        temp_output.Quantity = 0;
+                        temp_output.Describe = "目前未開放紅利商品購買，請移除該品項後重新選購。";
+                    }
+
                     temp_output.Price = currentPrice;
                     temp_output.Bonus = currentBonus;
                     temp_output.PackingPoint = prod_stocks.PackingPoint;
 
                     if (!temp_output.Available) temp_output.Quantity = 0;
+
                     temp_output.Subtotal = temp_output.Price * temp_output.Quantity;
                     temp_output.SubtotalBonus = temp_output.Bonus * temp_output.Quantity;
 
-                    temp_output.Describe = prods?.Description ?? "";
+                    if (string.IsNullOrWhiteSpace(temp_output.Describe))
+                        temp_output.Describe = prods?.Description ?? "";
 
                     temp_output.Step = prod_stocks?.Min_Qty ?? 1;
 
@@ -665,6 +705,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
                 Console.WriteLine($"ShoppingCart=>GetDisplay回傳資料：{ex.Message}");
             }
+
             return output;
         }
         public async Task<ResponseMessageDto> Reorder(List<long> scids)

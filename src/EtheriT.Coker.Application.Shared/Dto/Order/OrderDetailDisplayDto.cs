@@ -6,7 +6,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public long PId { get; set; }
         public long ProdId { get; set; }
         public long SCId { get; set; }
-        public long PSId { get; set; }
+        public long ProdPriceId { get; set; }
         public long ProdStockId { get; set; }
         public string Title { get; set; }
         public string OldTitle { get; set; }

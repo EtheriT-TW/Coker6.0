@@ -39,33 +39,24 @@ namespace EtheriT.Coker.Web.MVC.Middleware
             var controllerName = context.GetRouteData()?.Values["controller"]?.ToString();
             var actionName = context.GetRouteData()?.Values["action"]?.ToString();
 
-            bool isAccountPage =
+            bool isAccountController =
                 string.Equals(controllerName, "Account", StringComparison.OrdinalIgnoreCase);
 
-            bool isLoginPage =
-                string.Equals(controllerName, "Account", StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(actionName, "Index", StringComparison.OrdinalIgnoreCase);
+            bool isWelcomeController =
+                string.Equals(controllerName, "Welcome", StringComparison.OrdinalIgnoreCase);
 
-            bool isPublicAccountPage =
-                string.Equals(controllerName, "Account", StringComparison.OrdinalIgnoreCase) &&
-                (
-                    string.Equals(actionName, "Index", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(actionName, "Register", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(actionName, "Forget", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(actionName, "NewPassword", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(actionName, "Privacy", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(actionName, "Error", StringComparison.OrdinalIgnoreCase)
-                );
+            // Account 全部放行：
+            // Index / Register / Forget / NewPassword / Privacy / Error
+            // 不在 Middleware 裡面重新導頁，避免影響 token 更新或登入頁流程
+            if (isAccountController)
+            {
+                await _next(context);
+                return;
+            }
 
-            // 未登入：只允許登入、註冊、忘記密碼等 Account 頁面
+            // 未登入：非 Account 頁面才導回登入頁
             if (!isAuthenticated.Success)
             {
-                if (isPublicAccountPage)
-                {
-                    await _next(context);
-                    return;
-                }
-
                 var returnUrl = context.Request.PathBase + context.Request.Path + context.Request.QueryString;
                 var loginUrl = "/Account/Index";
 
@@ -78,34 +69,14 @@ namespace EtheriT.Coker.Web.MVC.Middleware
                 return;
             }
 
-            // 已登入：如果還進登入頁，就導到第一個有權限的頁面
-            if (isLoginPage)
-            {
-                var navigation = scope.ServiceProvider.GetRequiredService<NavigationProvider>();
-                var site = await navigation.getMenus();
-
-                await navigation.SetPower(site);
-                await navigation.SetWebsite(site);
-                await navigation.setUserJob(site);
-
-                var firstMenu = FindFirstVisibleMenu(site.Jobs);
-
-                if (firstMenu == null)
-                    context.Response.Redirect("/Welcome");
-                else
-                    context.Response.Redirect($"/{firstMenu.Controller}/{firstMenu.Action}");
-
-                return;
-            }
-
             // Welcome 不做選單權限檢查
-            if (string.Equals(controllerName, "Welcome", StringComparison.OrdinalIgnoreCase))
+            if (isWelcomeController)
             {
                 await _next(context);
                 return;
             }
 
-            // 其他頁面：登入後才檢查選單權限
+            // 已登入：檢查選單權限
             if (!string.IsNullOrEmpty(controllerName) && !string.IsNullOrEmpty(actionName))
             {
                 var navigation = scope.ServiceProvider.GetRequiredService<NavigationProvider>();

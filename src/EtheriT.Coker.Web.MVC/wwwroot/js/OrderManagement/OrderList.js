@@ -263,6 +263,17 @@ function PageReady() {
         setInterval(hashChange, 1000);
     }
 }
+function ToggleOrderBonusLines(data) {
+    data = data || {};
+
+    const productBonus = Number(String(data.productBonus || "0").replaceAll(",", ""));
+    const redeemBonus = Number(String(data.redeemBonus || "0").replaceAll(",", ""));
+    const totalBonus = Number(String(data.bonus || "0").replaceAll(",", ""));
+
+    $(".productBonusLine").toggleClass("d-none", productBonus <= 0);
+    $(".bonusDiscionLine").toggleClass("d-none", redeemBonus <= 0);
+    $(".bonusUseTotalLine").toggleClass("d-none", totalBonus <= 0);
+}
 function updateOrder() {
     co.Order.UpdateStatus({ Id: keyId, Status: $order_status.val(), Memo: $memo_block.val() }).done(function (result) {
         if (result.success) {
@@ -433,6 +444,8 @@ function HeaderDataInsert(data) {
     DataInsert(data, $("#OrderDetails .card-body > .purchase_amount"));
     DataInsert(data, $("#OrderData"));
 
+    ToggleOrderBonusLines(data);
+
     if (data.ordererId != null) {
         $("#OrdererData .btn_orderer_data").css('display', 'flex');
         $("#OrdererData .btn_orderer_data").attr({
@@ -444,6 +457,7 @@ function HeaderDataInsert(data) {
 
     if (data.allPayLogisticsID) $btn_printShippingLabel.removeClass("d-none");
     else if (data.logisticsType >= 8 && data.logisticsType <= 17) $btn_createLogistics.removeClass("d-none");
+
     ECPayLogisticsTypeStr = data.logisticsTypeStr;
     ECPayLogisticsSubTypeStr = data.logisticsSubTypeStr;
 }

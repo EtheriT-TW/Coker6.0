@@ -136,21 +136,34 @@
                     <div class="purchase_amount px-2 px-sm-5">
                         <div class="border-bottom py-2 text-end">
                             <div class="d-flex">
-                                <div class="col fw-bold">總金額：</div>
-                                <div data-key="subtotal" class="order_subtotal price color_red_number col-4 col-sm-2"></div>
+                                <div class="col fw-bold">商品金額：</div>
+                                <div data-key="productSubtotal" class="order_productSubtotal price color_red_number col-4 col-sm-2"></div>
                             </div>
-                            <div class="d-flex bonusLine">
-                                <div class="col fw-bold">使用總紅利：</div>
-                                <div data-key="bonus" class="order_bonus bonus color_red_number col-4 col-sm-2"></div>
+
+                            <div class="d-flex productBonusLine">
+                                <div class="col fw-bold">商品紅利：</div>
+                                <div data-key="productBonus" class="order_productBonus bonus color_red_number col-4 col-sm-2"></div>
                             </div>
+
+                            <div class="d-flex bonusDiscionLine">
+                                <div class="col fw-bold">紅利折抵：</div>
+                                <div data-key="redeemBonus" class="order_redeemBonus bonus color_red_number col-4 col-sm-2"></div>
+                            </div>
+
                             <div class="d-flex">
                                 <div class="col fw-bold">運費：</div>
                                 <div data-key="freight" class="order_freight price color_red_number col-4 col-sm-2"></div>
                             </div>
                         </div>
-                        <div class="row align-items-center text-end fw-bold">
+
+                        <div class="row align-items-center text-end fw-bold pt-3 bonusUseTotalLine">
+                            <div class="col fw-bold">使用總紅利：</div>
+                            <div data-key="bonus" class="order_bonus bonus color_red_number col-auto fs-5 text-end"></div>
+                        </div>
+
+                        <div class="row align-items-center text-end fw-bold pb-3">
                             <div class="col p-0">本次消費總金額：</div>
-                            <div data-key="total" class="order_total price color_red_number col-auto py-3 fs-5 text-end"></div>
+                            <div data-key="total" class="order_total price color_red_number col-auto fs-5 text-end"></div>
                         </div>
                     </div>
                 </div>

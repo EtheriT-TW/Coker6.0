@@ -24,6 +24,31 @@ namespace EtheriT.Coker.Application.Common
 
             string freightText;
 
+            bool hasDiscountRule =
+                source.DiscountFreightType != null &&
+                source.Low_Con != null &&
+                source.Low_Con > 0 &&
+                source.Dis_Freight != null &&
+                source.Dis_Freight >= 0;
+
+            string discountText = "";
+
+            if (hasDiscountRule)
+            {
+                discountText = source.DiscountFreightType switch
+                {
+                    DiscountFreightType.指定折抵後運費 =>
+                        source.Dis_Freight == 0
+                            ? $"滿{source.Low_Con}元免運"
+                            : $"滿{source.Low_Con}元運費{source.Dis_Freight}元",
+
+                    DiscountFreightType.折抵固定運費金額 =>
+                        $"滿{source.Low_Con}元折抵運費{source.Dis_Freight}元",
+
+                    _ => ""
+                };
+            }
+
             switch (source.FreightType)
             {
                 case FreightTypeEnum.免運費:
@@ -31,10 +56,13 @@ namespace EtheriT.Coker.Application.Common
                     break;
 
                 case FreightTypeEnum.單筆計算:
-                    freightText =
-                        source.Freight == source.Dis_Freight
-                            ? $"單筆計算{source.Freight}元"
-                            : $"單筆計算{source.Freight}元(滿{source.Low_Con}元{(source.Dis_Freight == 0 ? "免運" : $"運費{source.Dis_Freight}元")})";
+                    freightText = $"單筆計算{source.Freight}元";
+
+                    if (!string.IsNullOrWhiteSpace(discountText))
+                    {
+                        freightText += $"({discountText})";
+                    }
+
                     break;
 
                 case FreightTypeEnum.依箱計費:
@@ -51,9 +79,13 @@ namespace EtheriT.Coker.Application.Common
                             var feeText = string.Join(" / ",
                                 fees.Select(f => $"{f.logisticsBox!.Name} {FormatAmount(f.Fee)}元"));
 
+                            var boxDetailText = string.IsNullOrWhiteSpace(discountText)
+                                ? feeText
+                                : $"{feeText}，{discountText}";
+
                             freightText = includePackingHint
-                                ? $"依箱計費（依實際裝箱結果計算，{feeText}）"
-                                : $"依箱計費（{feeText}）";
+                                ? $"依箱計費（依實際裝箱結果計算，{boxDetailText}）"
+                                : $"依箱計費（{boxDetailText}）";
                         }
                         else
                         {

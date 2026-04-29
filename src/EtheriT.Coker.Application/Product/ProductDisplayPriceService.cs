@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.Directory;
+﻿using EtheriT.Coker.Application.Shared.BonusManagement;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Application.Shared.i18n;
@@ -12,10 +13,12 @@ namespace EtheriT.Coker.Application.Product
     public class ProductDisplayPriceService : IProductDisplayPriceService
     {
         private readonly CokerDbContext db;
+        private readonly IBonusManagementAppService bonusManagementAppService;
 
-        public ProductDisplayPriceService(CokerDbContext db)
+        public ProductDisplayPriceService(CokerDbContext db, IBonusManagementAppService bonusManagementAppService)
         {
             this.db = db;
+            this.bonusManagementAppService = bonusManagementAppService;
         }
 
         public async Task<Dictionary<long, DirectoryPriceResultDto>> GetDirectoryPriceMapAsync(
@@ -37,6 +40,8 @@ namespace EtheriT.Coker.Application.Product
                 var roleLevels = roleContext.RoleLevels
                     .Select(e => (e.Id, e.Name))
                     .ToList();
+                var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
+                var bonusEnabled = bonusSetting?.BonusEnabled == true;
 
                 var stocks = await db.Prod_Stocks
                     .Where(e => productIds.Contains(e.FK_Pid) && !e.IsDeleted)
@@ -85,7 +90,8 @@ namespace EtheriT.Coker.Application.Product
                             visibleRoleIds,
                             roleLevels,
                             roleIndex,
-                            orderLowToHigh);
+                            orderLowToHigh,
+                            bonusEnabled);
 
                         if (selected == null || selected.Price == null)
                             continue;
@@ -185,9 +191,9 @@ namespace EtheriT.Coker.Application.Product
             return map.TryGetValue(productId, out var result) ? result : null;
         }
         public async Task<List<ProductPriceDto>> GetDisplayPricesByStockAsync(
-            List<long> stockIds,
-            FrontRoleContextDto roleContext
-        )
+    List<long> stockIds,
+    FrontRoleContextDto roleContext
+)
         {
             var output = new List<ProductPriceDto>();
 
@@ -195,6 +201,9 @@ namespace EtheriT.Coker.Application.Product
             {
                 if (stockIds == null || stockIds.Count == 0)
                     return output;
+
+                var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
+                var bonusEnabled = bonusSetting?.BonusEnabled == true;
 
                 var roleLevels = roleContext.RoleLevels
                     .Select(e => (e.Id, e.Name))
@@ -216,7 +225,6 @@ namespace EtheriT.Coker.Application.Product
                     if (!pricesByStock.TryGetValue(stockId, out var stockPrices) || !stockPrices.Any())
                         continue;
 
-                    // 先選現金價
                     ProductPriceDto? selectedCash = null;
                     ProductPriceDto? guestCash = null;
 
@@ -294,7 +302,9 @@ namespace EtheriT.Coker.Application.Product
                         output.Add(selectedCash);
                     }
 
-                    // 再選紅利價（沿用你原本可見角色範圍概念）
+                    if (!bonusEnabled)
+                        continue;
+
                     var bonusEntity = stockPrices
                         .Where(e => (e.Bonus ?? 0) > 0 && visibleRoleIds.Contains(e.FK_RId))
                         .OrderBy(e => e.Price ?? 0)
@@ -347,7 +357,8 @@ namespace EtheriT.Coker.Application.Product
             List<long> visibleRoleIds,
             List<(long Id, string Name)> roleLevels,
             int roleIndex,
-            bool orderLowToHigh
+            bool orderLowToHigh,
+            bool bonusEnabled
         )
         {
             if (stockPrices == null || stockPrices.Count == 0)
@@ -381,29 +392,32 @@ namespace EtheriT.Coker.Application.Product
                 }
             }
 
-            var bonusMatched = stockPrices
-                .Where(e => (e.Bonus ?? 0) > 0 && visibleRoleIds.Contains(e.FK_RId))
-                .OrderBy(e => e.Price ?? 0)
-                .ThenBy(e => e.Bonus ?? 0)
-                .ThenBy(e => e.Id)
-                .FirstOrDefault();
-
-            if (bonusMatched != null)
+            if (bonusEnabled)
             {
-                var roleName = roleLevels
-                    .Where(e => e.Id == bonusMatched.FK_RId)
-                    .Select(e => e.Name)
+                var bonusMatched = stockPrices
+                    .Where(e => (e.Bonus ?? 0) > 0 && visibleRoleIds.Contains(e.FK_RId))
+                    .OrderBy(e => e.Price ?? 0)
+                    .ThenBy(e => e.Bonus ?? 0)
+                    .ThenBy(e => e.Id)
                     .FirstOrDefault();
 
-                candidates.Add(new DisplayPriceSelection
+                if (bonusMatched != null)
                 {
-                    Price = bonusMatched,
-                    CurrentRoleName = roleName ?? "",
-                    IsMemberPrice = bonusMatched.FK_RId > 1,
-                    Rank = 1,
-                    SortValue = bonusMatched.Price ?? 0,
-                    IsBonusPrice = true
-                });
+                    var roleName = roleLevels
+                        .Where(e => e.Id == bonusMatched.FK_RId)
+                        .Select(e => e.Name)
+                        .FirstOrDefault();
+
+                    candidates.Add(new DisplayPriceSelection
+                    {
+                        Price = bonusMatched,
+                        CurrentRoleName = roleName ?? "",
+                        IsMemberPrice = bonusMatched.FK_RId > 1,
+                        Rank = 1,
+                        SortValue = bonusMatched.Price ?? 0,
+                        IsBonusPrice = true
+                    });
+                }
             }
 
             if (!candidates.Any())
@@ -433,6 +447,9 @@ namespace EtheriT.Coker.Application.Product
                         IsBonusPrice = false
                     };
                 }
+
+                if (!bonusEnabled)
+                    return null;
 
                 var fallbackBonus = stockPrices
                     .Where(e => (e.Bonus ?? 0) > 0)

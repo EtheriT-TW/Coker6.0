@@ -45,7 +45,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await orderAppService.GetOrderDisplay(list_ohid, false);
         }
         [HttpGet]
-        public async Task<ResponseMessageDto> Delete(int id)
+        public async Task<ResponseMessageDto> Delete(long id)
         {
             return await orderAppService.Delete(id);
         }

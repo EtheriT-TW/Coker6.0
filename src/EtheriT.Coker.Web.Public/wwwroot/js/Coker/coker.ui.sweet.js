@@ -145,6 +145,40 @@
                     if (typeof action === "function") {
                         setTimeout(runActionOnce, 3000);
                     }
+                },
+
+                processing: function (title, html) {
+                    Swal.fire({
+                        icon: "info",
+                        title: title || local.Processing,
+                        html: html || local.FormReceivedPleaseWait,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: function () {
+                            Swal.showLoading();
+                        }
+                    });
+                },
+
+                notice: function (title, html, action) {
+                    Swal.fire({
+                        icon: "info",
+                        title: title,
+                        html: html,
+                        focusConfirm: false,
+                        confirmButtonColor: "#3085d6",
+                        confirmButtonText: local.Confirm,
+                        allowOutsideClick: false
+                    }).then(function (result) {
+                        if (result.isConfirmed) {
+                            (typeof action === "function") && action();
+                        }
+                    });
+                },
+
+                close: function () {
+                    Swal.close();
                 }
             }
         }
@@ -159,5 +193,8 @@
     Coker.sweet.confirm = Coker.sweet.confirm || Coker.ui.sweet.confirm;
     Coker.sweet.info = Coker.sweet.info || Coker.ui.sweet.info;
     Coker.sweet.warning = Coker.sweet.warning || Coker.ui.sweet.warning;
+    Coker.sweet.processing = Coker.sweet.processing || Coker.ui.sweet.processing;
+    Coker.sweet.notice = Coker.sweet.notice || Coker.ui.sweet.notice;
+    Coker.sweet.close = Coker.sweet.close || Coker.ui.sweet.close;
 
 })(window);

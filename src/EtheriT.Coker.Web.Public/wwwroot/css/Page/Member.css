@@ -66,6 +66,42 @@
         #profile-tab-pane .content .payment span {
             white-space: nowrap;
         }
+    #profile-tab-pane .order_extra_info {
+        padding-top: 0.75rem;
+    }
+
+    #profile-tab-pane .order_extra_item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    #profile-tab-pane .order_extra_label {
+        font-size: 0.8rem;
+        color: #888;
+    }
+
+    #profile-tab-pane .order_extra_value {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #212529;
+        word-break: break-all;
+    }
+
+    #profile-tab-pane .header_invoiceTypeTitle,
+    #profile-tab-pane .header_shipping,
+    #profile-tab-pane .header_carrier {
+        word-break: break-all;
+    }
+
+#systemMemoLine {
+    display: flex;
+    justify-content: flex-start;
+}
+
+    #systemMemoLine > div {
+        text-align-last: left;
+    }
 
 .isHide, .isWrap {
     display: none;
@@ -688,6 +724,53 @@
         justify-content: end;
     }
 
+    #profile-tab-pane .order_extra_item {
+        justify-content: flex-start;
+    }
+
+    #profile-tab-pane .order_extra_label {
+        min-width: 5rem;
+    }
+
+    #profile-tab-pane > .content .collapse {
+        width: 100%;
+    }
+
+    #profile-tab-pane > .content > div {
+        display: flex;
+        flex-wrap: wrap;
+        line-height: 1.7rem;
+    }
+
+        #profile-tab-pane > .content > div > div:not(.collapse) {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            margin-top: 0 !important;
+        }
+
+        #profile-tab-pane > .content > div > .collapse.show {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            margin-top: 0 !important;
+        }
+
+        #profile-tab-pane > .content > div > div:first-child > div {
+            width: auto;
+            text-align-last: left;
+        }
+
+        #profile-tab-pane > .content > div > div:nth-child(2) > div {
+            width: auto;
+            text-align-last: right !important;
+        }
+
+    #systemMemoLine > div:first-child {
+        width: 7rem;
+        text-align-last: right;
+    }
+
     .collapse > .card-body > div > div:first-child {
         width: 7rem;
         text-align-last: right;
@@ -703,10 +786,6 @@
 
     .quantity {
         width: auto;
-    }
-
-    #profile-tab-pane > .content .collapse {
-        width: 100%;
     }
 
     .isHide, .isWrap {
@@ -768,36 +847,6 @@
 
         .collapse > .card-body > div:nth-child(4) {
             padding-left: .9rem;
-        }
-
-    #profile-tab-pane > .content > div {
-        display: flex;
-        flex-wrap: wrap;
-        line-height: 1.7rem;
-    }
-
-        #profile-tab-pane > .content > div > div:not(.collapse) {
-            display: flex;
-            flex-direction: column;
-            flex: 1 1 auto;
-            margin-top: 0 !important;
-        }
-
-        #profile-tab-pane > .content > div > .collapse.show {
-            display: flex;
-            flex-direction: column;
-            flex: 1 1 auto;
-            margin-top: 0 !important;
-        }
-
-        #profile-tab-pane > .content > div > div:first-child > div {
-            width: auto;
-            text-align-last: left;
-        }
-
-        #profile-tab-pane > .content > div > div:nth-child(2) > div {
-            width: auto;
-            text-align-last: right !important;
         }
 
     #favorite-tab-pane {

@@ -749,7 +749,18 @@ function HistoryTemplateDataInsert(Datas) {
         frame.find(".collapse .header_subtotal").text(Coker.util.string.thousandSign(productAmount));
         frame.find(".collapse .header_freight").text(Coker.util.string.thousandSign(order_header.freight));
         frame.find(".collapse .header_total").text(Coker.util.string.thousandSign(order_header.total));
-        frame.find(".collapse .header_remark").text(order_header.remark);
+
+        frame.find(".collapse .header_invoiceTypeTitle").text(order_header.invoiceTypeTitle || "未提供");
+        frame.find(".collapse .header_shipping").text(order_header.shipping || "未提供");
+        frame.find(".collapse .header_remark").text(order_header.remark || "無");
+        frame.find(".collapse .header_systemMemo").text(order_header.systemMemo || "無");
+
+        if (Coker.util.string.isNullOrEmpty(order_header.carrier)) {
+            frame.find(".collapse #carrier").addClass("d-none");
+        } else {
+            frame.find(".collapse #carrier").removeClass("d-none");
+            frame.find(".collapse .header_carrier").text(order_header.carrier);
+        }
 
         // ===== 紅利顯示 =====
         if (totalBonus <= 0) {

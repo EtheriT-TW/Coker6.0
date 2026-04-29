@@ -426,7 +426,7 @@
                                         <div class="col-10 text-end align-content-center">運費：</div>
                                         <div class="header_freight price col-2 text-end align-content-center"></div>
                                     </div>
-                                    <div class="row d-lg-flex px-3 subtotalBlock">
+                                    <div class="row d-lg-flex px-3 subtotalBlock bonus_summary_row">
                                         <div class="col-10 text-end align-content-center fw-bold">總使用紅利：</div>
                                         <div class="header_totalBonus col-2 text-end align-content-center fw-bold"></div>
                                     </div>
@@ -434,11 +434,31 @@
                                         <div class="col-10 text-end align-content-center fw-bold">總金額：</div>
                                         <div class="header_total price col-2 text-end align-content-center fw-bold"></div>
                                     </div>
-                                    <div id="carrier" class="row line-top">
-                                        <div class="col-12 col-lg-2">載具號碼：</div>
-                                        <div class="col-12 col-lg-10 header_carrier"></div>
+                                    <div class="order_extra_info line-top mt-3">
+                                        <div class="row g-2">
+                                            <div class="col order_extra_item">
+                                                <div class="order_extra_label">發票類型：</div>
+                                                <div class="order_extra_value header_invoiceTypeTitle"></div>
+                                            </div>
+
+                                            <div class="col order_extra_item">
+                                                <div class="order_extra_label">取貨方式：</div>
+                                                <div class="order_extra_value header_shipping"></div>
+                                            </div>
+
+                                            <div id="carrier" class="col order_extra_item">
+                                                <div class="order_extra_label">載具號碼：</div>
+                                                <div class="order_extra_value header_carrier"></div>
+                                            </div>
+
+                                            <div id="systemMemoLine" class="col order_extra_item">
+                                                <div class="order_extra_label">系統備註：</div>
+                                                <div class="order_extra_value header_systemMemo"></div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div id="remarkLine" class="row line-top">
+
+                                    <div id="remarkLine" class="row line-top mt-3">
                                         <div class="col-12 col-lg-2">備註：</div>
                                         <div class="col-12 col-lg-10 header_remark"></div>
                                     </div>

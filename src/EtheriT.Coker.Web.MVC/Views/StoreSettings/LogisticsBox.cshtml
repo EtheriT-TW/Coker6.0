@@ -53,7 +53,7 @@
 						c.AddFor(e => e.Id).Caption("編號").Width(50);
 						c.AddFor(e => e.Name).Caption("標題");
 						c.AddFor(e => e.Sort).Caption("排序");
-						c.AddFor(e => e.CapacityPoint).Format("#,##0").Caption("點數");
+						c.AddFor(e => e.CapacityPoint).Format("#,##0").Caption("容積點數");
 						c.AddFor(e => e.IsActive).Caption("顯示");
 						c.Add().Type(GridCommandColumnType.Buttons)
 						.Buttons(b =>

@@ -748,7 +748,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             ohdata.TransactionId = OrderInfo.MerchantTradeNo;
                             db.SaveChanges();
 
-                            OrderInfo.TotalAmount = Convert.ToInt32(ohdata.Subtotal + ohdata.Freight);
+                            OrderInfo.TotalAmount = (int)(ohdata.Subtotal + ohdata.Freight);
 
                             if (_env.IsProduction()) OrderInfo.ReturnURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayReturn";
                             else OrderInfo.ReturnURL = "https://lcb.develop.coker.ezsale.tw/api/ThirdParty/ECPayReturn";
@@ -784,7 +784,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             ConsumerInfo.MerchantMemberID = user?.Id.ToString();
                             ConsumerInfo.Email = ohdata.OrdererEmail;
                             ConsumerInfo.Phone = ohdata.OrdererCellPhone;
-                            ConsumerInfo.Name = ohdata.Orderer;
+                            ConsumerInfo.Name = ResolveEcpaySenderName(ohdata.Orderer);
                             ConsumerInfo.CountryCode = "158";
                             ConsumerInfo.Address = ohdata.OrdererAddress.Replace(" ", "");
 
@@ -905,6 +905,52 @@ namespace EtheriT.Coker.Application.ThirdParty
                     }
                 }
             }
+        }
+        private string ResolveEcpaySenderName(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                throw new Exception("姓名不可為空");
+
+            input = input.Trim();
+
+            bool isAllChinese = input.All(c => c >= '\u4e00' && c <= '\u9fff');
+
+            bool isAllEnglish = input.All(c => (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
+
+            string cn = null;
+            string en = null;
+
+            if (isAllChinese)
+            {
+                cn = input;
+                if (cn.Length < 2) throw new Exception("中文姓名至少 2 字");
+                if (cn.Length > 5) cn = cn.Substring(0, 5);
+                return cn;
+            }
+
+            if (isAllEnglish)
+            {
+                en = input;
+                if (en.Length < 4) throw new Exception("英文姓名至少 4 個字母");
+                if (en.Length > 10) en = en.Substring(0, 10);
+                return en;
+            }
+
+            var match = System.Text.RegularExpressions.Regex.Match(input, @"^(?<cn>[\u4e00-\u9fff]{2,5})(?:[\(（](?<en>[A-Za-z]{4,10})[\)）])?$");
+
+            if (match.Success)
+            {
+                cn = match.Groups["cn"].Value;
+                en = match.Groups["en"].Success ? match.Groups["en"].Value : null;
+                return cn;
+            }
+
+            cn = new string(input.Where(c => c >= '\u4e00' && c <= '\u9fff').ToArray());
+            if (cn.Length >= 2) return cn.Substring(0, Math.Min(5, cn.Length));
+            en = new string(input.Where(c => (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')).ToArray());
+            if (en.Length >= 4) return en.Substring(0, Math.Min(10, en.Length));
+
+            throw new Exception("姓名格式不符合綠界規則");
         }
     }
 }

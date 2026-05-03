@@ -966,77 +966,6 @@ function CartInit(result) {
         updateNextStepByBonus();
     }
 }
-function ConfigurePaymentOptions(val) {
-    var $CheckedShipping = $('input[name="RadioShipping"]:checked');
-    if ($CheckedShipping.length == 0) return;
-
-    var canCashOnDelivery = $CheckedShipping.attr("data-support-cash-on-delivery").toLowerCase() === "true";
-
-    $(".noPaymentWarning").addClass("d-none");
-    $(".ecpayWarning").removeClass("d-none");
-    $("#RadioPayment input:radio").prop("checked", false);
-
-    if (canCashOnDelivery) {
-        $("#RadioPayment > .form-check").addClass("d-none");
-        $("#RadioPayment > .form-check > .payment_display").removeClass("checked");
-        $(".ecpayWarning").addClass("d-none");
-
-        var $codPayment = $("#RadioPayment input[value='28']");
-
-        if ($codPayment.length) {
-            $codPayment.prop("checked", true);
-
-            var $formCheck = $codPayment.closest(".form-check");
-            $formCheck.removeClass("d-none");
-            $formCheck.find(".payment_display").addClass("checked");
-        } else {
-            var $warning = $(".noPaymentWarning");
-
-            if (!$warning.length) {
-                $warning = $("<div>", {
-                    class: "noPaymentWarning",
-                    text: "店家尚未設定對應的付款方式"
-                }).appendTo("#RadioPayment");
-            }
-
-            $warning.removeClass("d-none");
-        }
-    } else {
-        var showpayment = false;
-
-        if (!HasECPay || ECPayReady) showpayment = true;
-
-        if (showpayment) {
-            var $list = $("#RadioPayment > .form-check");
-
-            $list.removeClass("d-none");
-            $list.has("input[value='28']").addClass("d-none");
-            $list.has("input[value='16']").addClass("d-none");
-
-            $(".ecpayWarning").addClass("d-none");
-
-            var $targetFormCheck = $(`#RadioPayment input[value="${val}"]`).closest(".form-check");
-            if (!$targetFormCheck.length) $targetFormCheck = $list.first();
-
-            updatePaymentRadioUI($targetFormCheck);
-        } else {
-            $("#RadioPayment .form-check input[value='28']").closest(".form-check").addClass("d-none");
-        }
-    }
-}
-function updatePaymentRadioUI($target) {
-    $('#RadioPayment .payment_display').removeClass("checked first last");
-
-    $target.find("input").prop("checked", true);
-    $target.find(".payment_display").addClass("checked");
-
-    var $visibleList = $("#RadioPayment > .form-check:not(.d-none)");
-
-    $visibleList.first().find(".payment_display").addClass("first");
-    $visibleList.last().find(".payment_display").addClass("last");
-    $target.prevAll(".form-check:not(.d-none)").first().find(".payment_display").addClass("last");
-    $target.nextAll(".form-check:not(.d-none)").first().find(".payment_display").addClass("first");
-}
 function CartListAdd(data, $container) {
     if (data.quantity > 0) {
         var exists = shopping_cart_data.find(e => e.Id == data.scId);
@@ -1772,7 +1701,6 @@ function toggleStep4EndlineDisplay(header) {
         $("#Step4 .shipping_fee").text(toNumberValue(freightText).toLocaleString());
     }
 }
-
 function toggleStep4InvoiceDisplay(header) {
     header = header || {};
 
@@ -1808,7 +1736,6 @@ function toggleStep4InvoiceDisplay(header) {
             break;
     }
 }
-
 function toggleStep4PaymentDisplay(header) {
     header = header || {};
 
@@ -1924,6 +1851,79 @@ function RadioShipping() {
 
     if (HasECPay) ECPaymentChange();
 }
+// 付款方式顯示的項目調整
+function ConfigurePaymentOptions(val) {
+    var $CheckedShipping = $('input[name="RadioShipping"]:checked');
+    if ($CheckedShipping.length == 0) return;
+
+    var canCashOnDelivery = $CheckedShipping.attr("data-support-cash-on-delivery").toLowerCase() === "true";
+
+    $(".noPaymentWarning").addClass("d-none");
+    $(".ecpayWarning").removeClass("d-none");
+    $("#RadioPayment input:radio").prop("checked", false);
+
+    if (canCashOnDelivery) {
+        $("#RadioPayment > .form-check").addClass("d-none");
+        $("#RadioPayment > .form-check > .payment_display").removeClass("checked");
+        $(".ecpayWarning").addClass("d-none");
+
+        var $codPayment = $("#RadioPayment input[value='28']");
+
+        if ($codPayment.length) {
+            $codPayment.prop("checked", true);
+
+            var $formCheck = $codPayment.closest(".form-check");
+            $formCheck.removeClass("d-none");
+            $formCheck.find(".payment_display").addClass("checked");
+        } else {
+            var $warning = $(".noPaymentWarning");
+
+            if (!$warning.length) {
+                $warning = $("<div>", {
+                    class: "noPaymentWarning",
+                    text: "店家尚未設定對應的付款方式"
+                }).appendTo("#RadioPayment");
+            }
+
+            $warning.removeClass("d-none");
+        }
+    } else {
+        var showpayment = false;
+
+        if (!HasECPay || ECPayReady) showpayment = true;
+
+        if (showpayment) {
+            var $list = $("#RadioPayment > .form-check");
+
+            $list.removeClass("d-none");
+            $list.has("input[value='28']").addClass("d-none");
+            $list.has("input[value='16']").addClass("d-none");
+
+            $(".ecpayWarning").addClass("d-none");
+
+            var $targetFormCheck = $(`#RadioPayment input[value="${val}"]`).closest(".form-check");
+            if (!$targetFormCheck.length) $targetFormCheck = $list.first();
+
+            updatePaymentRadioUI($targetFormCheck);
+        } else {
+            $("#RadioPayment .form-check input[value='28']").closest(".form-check").addClass("d-none");
+        }
+    }
+}
+// 付款方式顯示的class調整
+function updatePaymentRadioUI($target) {
+    $('#RadioPayment .payment_display').removeClass("checked first last");
+
+    $target.find("input").prop("checked", true);
+    $target.find(".payment_display").addClass("checked");
+
+    var $visibleList = $("#RadioPayment > .form-check:not(.d-none)");
+
+    $visibleList.first().find(".payment_display").addClass("first");
+    if (!ECPayReady) $visibleList.last().find(".payment_display").addClass("last");
+    $target.prevAll(".form-check:not(.d-none)").first().find(".payment_display").addClass("last");
+    $target.nextAll(".form-check:not(.d-none)").first().find(".payment_display").addClass("first");
+}
 function RadioPayment() {
     var $pay_text = $(".payment_method");
     $pay_text.addClass("fs-2 fw-bold px-3");
@@ -1940,7 +1940,6 @@ function RadioPayment() {
     buy_step_swiper.update();
 }
 function Step3Monitor() {
-
     OrdererFilled = FormCheck(OrdererForms)
     if (RecipientOpen) {
         RecipientFilled = FormCheck(RecipientForms);
@@ -1968,16 +1967,6 @@ function Step3Monitor() {
     shipMethodsChosen = FormCheck(ShippingForms);
     payMethodsChosen = FormCheck(PaymentForms);
 }
-function ECLogisticsChange() {
-    if (AllDataGet(false)) {
-        ShippingForms.removeClass("d-none");
-        $(".ecpayLogisticsWarning").addClass("d-none")
-    }
-    else {
-        ShippingForms.addClass("d-none");
-        $(".ecpayLogisticsWarning").removeClass("d-none")
-    }
-}
 function ECPaymentChange() {
     if (!ECPayMonitor) return;
 
@@ -1986,11 +1975,6 @@ function ECPaymentChange() {
     $("#ECPayPayment").empty();
 
     if (AllDataGet(false)) {
-        if (!ECPayReady) {
-            ECPayReady = true;
-            ConfigurePaymentOptions(null);
-        }
-
         var timeout = 0;
         var checkInterval = setInterval(function () {
             if (ECPayInit === true) {
@@ -2008,7 +1992,12 @@ function ECPaymentChange() {
                                 $ECPayList.first().next('li').addClass("first");
                                 $ECPayList.last().addClass("last");
 
-                                $("#ECPayPayment").on("click", function () {
+                                $("#ECPayPayment").on("click", function (e) {
+                                    const trusted = e.originalEvent?.isTrusted;
+                                    if (!trusted == true) return;
+
+                                    ConfigurePaymentOptions(16);
+
                                     var $this_radio = $("#radio_payment_ECPay");
                                     var $parentFormCheck = $this_radio.closest('.form-check');
                                     var $prevPayment = $parentFormCheck.prevAll('.form-check').first().find('.payment_display');
@@ -2041,10 +2030,14 @@ function ECPaymentChange() {
                                     if (typeof window.Pay !== "undefined") {
                                         clearInterval(checkPayExist);
                                         $(".ecpay_loading").addClass("d-none");
-                                        $("input[name='RadioPayment']").prop("disabled", false);
                                         buy_step_swiper.update();
                                     }
                                 }, 1000);
+
+                                if (!ECPayReady) {
+                                    ECPayReady = true;
+                                    ConfigurePaymentOptions(16);
+                                }
                             }
                         }, 'V2');
                     } else {
@@ -2691,7 +2684,6 @@ function OrderSuccess(result) {
             ShowOrderSuccessNotice(result);
         });
 }
-
 function ShowOrderSuccessNotice(result) {
     var storeMemoText = $.trim($(".storememo").text() || "");
 
@@ -3102,7 +3094,6 @@ function ValidateCartOnInit() {
         // 驗證失敗就當沒發生，不影響使用者操作
     });
 }
-
 function getSelectedShippingMeta() {
     var $selected = $("[name='RadioShipping']:checked");
     if (!$selected.length) {
@@ -3206,7 +3197,6 @@ function getSelectedCartItems() {
         return ids.includes(Number(x.Id));
     });
 }
-
 function getSelectedPackingPoint() {
     var items = getSelectedCartItems();
     return items.reduce(function (sum, item) {
@@ -3215,7 +3205,6 @@ function getSelectedPackingPoint() {
         return sum + (point * qty);
     }, 0);
 }
-
 function calculateNormalFreight(productSubtotal, shippingMeta) {
     var originFreight = Number(shippingMeta.freight || 0);
     var freeThreshold = Number(shippingMeta.lowCon || 0);
@@ -3226,7 +3215,6 @@ function calculateNormalFreight(productSubtotal, shippingMeta) {
 
     return originFreight;
 }
-
 function calculateBoxFreightByTotalCapacity(totalPackingPoint, fees) {
     var list = (fees || [])
         .map(function (x) {
@@ -3344,7 +3332,6 @@ function calculateBoxFreightByTotalCapacity(totalPackingPoint, fees) {
         totalPackingPoint: totalPackingPoint
     };
 }
-
 function calculateFreight(productSubtotal) {
     var shippingMeta = getSelectedShippingMeta();
     var shortage = 0;

@@ -38,6 +38,8 @@
             Page: page,
             ShowNum: shownum,
             MaxLen: maxlen,
+            Type: typeof $self.data("type") === "undefined" ? null : $self.data("type"),
+            SearchText: typeof $self.data("searchText") === "undefined" ? null : $self.data("searchText"),
             Filters: $self.data("filtered"),
             directoryType: $self.data("directoryTypeChecked"),
             target: typeof $self.data("target") === "undefined" ? null : $self.data("target"),

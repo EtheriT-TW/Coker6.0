@@ -14,6 +14,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Bonus;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.Order;
@@ -2219,7 +2220,6 @@ namespace EtheriT.Coker.Application.Order
             {
                 var webSiteId = await loginUserData.GetCommonWebsiteId();
                 if (webSiteId == 0) throw new Exception("網站不存在");
-                Console.WriteLine($"webSiteId:{webSiteId}");
                 var order = await db.Order_Headers
                     .Where(e => e.Id == dto.Id && e.FK_WebsiteId == webSiteId)
                     .FirstOrDefaultAsync();
@@ -2273,7 +2273,6 @@ namespace EtheriT.Coker.Application.Order
 
                     await loginUserData.SaveChanges(order);
 
-                    Console.WriteLine($"HandleOrderBonusStateChangeAsync");
                     // 4. 紅利狀態事件
                     await HandleOrderBonusStateChangeAsync(order, oldStatus, newStatus);
 
@@ -2300,7 +2299,6 @@ namespace EtheriT.Coker.Application.Order
             OrderStatusEnum oldStatus,
             OrderStatusEnum newStatus)
         {
-            Console.WriteLine($"oldStatus={oldStatus},newStatus={newStatus}");
             if (oldStatus == newStatus)
                 return;
 
@@ -2314,7 +2312,6 @@ namespace EtheriT.Coker.Application.Order
             // 取消 / 付款失敗 / 退貨 / 退款：退還已使用紅利
             if (IsClosedOrderStatusForBonus(newStatus))
             {
-                Console.WriteLine("RefundUsedBonusByOrderAsync");
                 await RefundUsedBonusByOrderAsync(order);
 
                 // 已完成後才取消 / 退貨 / 退款：追回已發放回饋紅利
@@ -2349,10 +2346,8 @@ namespace EtheriT.Coker.Application.Order
         private async Task RefundUsedBonusByOrderAsync(Order_Header order)
         {
             var usedBonus = order.Bonus ?? 0;
-            Console.WriteLine($"usedBonus={usedBonus}");
             if (usedBonus <= 0)
                 return;
-            Console.WriteLine($"RefundRedeemByOrderAsync");
             var result = await bonusManagementAppService.RefundRedeemByOrderAsync(
                 order.FK_UUID,
                 order.Id,

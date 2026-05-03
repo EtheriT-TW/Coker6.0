@@ -141,6 +141,9 @@ i.fa-chevron-right {
         pointer-events: none;
         transform: scale(0.1);
     }
+        .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_image > img {
+            pointer-events: none;
+        }
 
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .pro_display.img-fluid:hover + .schematic_image {
         display: block;
@@ -322,7 +325,7 @@ i.fa-chevron-right {
     flex-direction: column;
     gap: 0.22rem;
     padding: 0.85rem 0.95rem;
-    background-color: #fff;
+    background-color: transparent;
     border: 1px solid transparent;
 }
 

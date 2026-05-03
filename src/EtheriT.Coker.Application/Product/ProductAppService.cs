@@ -9,6 +9,7 @@ using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.Favorites;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Import;
@@ -1032,6 +1033,8 @@ namespace EtheriT.Coker.Application.Product
                     .Where(e => e.UUID == uuid)
                     .FirstOrDefaultAsync();
 
+                bool isFront = loginUserData.IsisFront();
+
                 long websiteId = dto.SiteId == 0
                     ? await loginUserData.GetWebsiteId()
                     : (long)dto.SiteId;
@@ -1049,7 +1052,7 @@ namespace EtheriT.Coker.Application.Product
                     priceOrder.detailItem.value != null &&
                     priceOrder.detailItem.value.Contains("LtoH");
 
-                string orgName = await loginUserData.GetWebsiteOrgName();
+                string orgName = await loginUserData.GetWebsiteOrgName(websiteId);
 
                 var output = new List<DirectoryReleInfoDto>();
 
@@ -1076,6 +1079,7 @@ namespace EtheriT.Coker.Application.Product
                               FId = null,
                               Title = p.Title,
                               ItemNo = p.ItemNo,
+                              OrgName = orgName,
                               Link = $"/product/{p.Id}",
                               type = DirectoryTypeEnum.商品,
                               Description = p.Description,
@@ -1105,7 +1109,7 @@ namespace EtheriT.Coker.Application.Product
                                                 Link = (f.fileUpload != null
                                                             ? (f.fileUpload.DownloadFileName ?? "/images/noImg.jpg")
                                                             : "/images/noImg.jpg")
-                                                        .Replace("upload", $"upload/{orgName}")
+                                                        .Replace("upload", isFront? "upload": $"upload/{orgName}")
                                                         .Replace("//", "/")
                                             }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
                           }).ToList();

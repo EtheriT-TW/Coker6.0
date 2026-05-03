@@ -493,6 +493,7 @@
     border: 0;
     background-color: transparent;
     z-index: 2;
+    width: 30px;
 }
 
     .btn_fav.type5 {

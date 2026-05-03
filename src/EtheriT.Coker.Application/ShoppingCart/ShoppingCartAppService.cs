@@ -3,6 +3,7 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;

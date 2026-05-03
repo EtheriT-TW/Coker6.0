@@ -581,48 +581,260 @@
 
         render(item, type) {
             if (window.CI360) window.CI360.destroy();
-
             this.$image.addClass('d-none').empty();
             this.$video.addClass('d-none').attr('src', '');
             this.$youtube.addClass('d-none').attr('src', '');
             this.$view360.addClass('d-none').empty();
 
             if (type === 'video') {
-                this.$video.removeClass('d-none').attr('src', item.link[0]);
+                this.resetModalSize();
+
+                this.$modal.find('.modal-dialog').css({
+                    width: 'min(90vw, 960px)',
+                    maxWidth: '100%'
+                });
+
+                this.$modal.find('.modal-body').css({
+                    height: 'min(70vh, 540px)'
+                });
+
+                this.$video
+                    .removeClass('d-none')
+                    .attr('src', item.link[0])
+                    .css({
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain'
+                    });
+
                 return;
             }
 
             if (type === 'youtube') {
+                this.resetModalSize();
+
+                this.$modal.find('.modal-dialog').addClass('ytshow').css({
+                    width: 'min(90vw, 960px)',
+                    maxWidth: '100%'
+                });
+
+                this.$modal.find('.modal-body').css({
+                    height: 'min(70vh, 540px)'
+                });
+
                 const youtubeParts = (item.name || '').split('&t=');
                 let url = `https://www.youtube-nocookie.com/embed/${youtubeParts[0]}`;
                 if (youtubeParts[1]) url += `?start=${youtubeParts[1]}`;
-                this.$youtube.removeClass('d-none').attr('src', url);
+
+                this.$youtube
+                    .removeClass('d-none')
+                    .attr('src', url)
+                    .css({
+                        width: '100%',
+                        height: '100%'
+                    });
+
                 return;
             }
 
             if (type === '360view') {
-                this.$view360.removeClass('d-none');
-                if (item.folder) this.$view360.attr('data-folder', item.folder);
-                if (item.filenameX) this.$view360.attr('data-filename-x', item.filenameX);
-                if (item.amountX) this.$view360.attr('data-amount-x', item.amountX);
 
-                if (window.CI360) {
+                // 重新抓 DOM（避免 CI360.destroy() 造成舊 reference 失效）
+                this.$view360 = $('#Pro_360View');
+
+                this.$view360
+                    .removeClass('d-none cloudimage-360 initialized')
+                    .empty()
+                    .css({
+                        position: 'relative',
+                        width: '100%',
+                        height: '100%'
+                    });
+
+                const src = item.link?.[0] || '';
+
+                if (!src) return;
+
+                const folder = src.substring(0, src.lastIndexOf('/') + 1);
+                const filename = src.substring(src.lastIndexOf('/') + 1);
+
+                const amountX = item.amountX || this.$view360.data('amount-x') || 15;
+
+                // ⚠️ 只補必要欄位，不覆蓋原本 HTML 設定
+                this.$view360.attr({
+                    'data-folder': folder,
+                    'data-filename-x': filename,
+                    'data-amount-x': amountX
+                });
+
+                // ⚠️ 先算 modal 尺寸（關鍵，不然 canvas = 0）
+                this.fitModalByImage(src, () => {
+
+                    // ⚠️ 再初始化 360
                     this.$view360.addClass('cloudimage-360');
+
                     setTimeout(() => {
+                        if (!window.CI360) return;
+
+                        window.CI360._viewers = window.CI360._viewers || [];
                         window.CI360.add('Pro_360View');
-                    }, 50);
-                }
+
+                        setTimeout(() => {
+                            const canvas = this.$view360.find('canvas');
+                            const h = canvas.outerHeight();
+
+                            if (h > 0) {
+                                this.$modal.find('.modal-body').css({
+                                    height: h + 'px'
+                                });
+                            }
+                        }, 120);
+
+                    }, 120);
+
+                });
+
                 return;
             }
 
             const src = item.link[0];
-            const $img = $('<img>').attr({ src, alt: item.name || '' }).css({
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain'
-            });
+            const folder = src.substring(0, src.lastIndexOf('/') + 1);
+            const filename = src.substring(src.lastIndexOf('/') + 1);
 
-            this.$image.removeClass('d-none').append($img);
+            this.$image
+                .removeClass('d-none')
+                .empty()
+                .removeClass('cloudimage-360')
+                .attr({
+                    'data-folder': folder,
+                    'data-filename-x': filename,
+                    'data-amount-x': 1
+                })
+                .css('position', 'relative');
+
+            this.fitModalByImage(src, () => {
+                this.$image.addClass('cloudimage-360');
+
+                setTimeout(() => {
+                    window.CI360._viewers = window.CI360._viewers || [];
+                    window.CI360.add('Pro_Image');
+
+                    setTimeout(() => {
+                        const canvasHeight = this.$image.find('canvas').outerHeight();
+                        if (canvasHeight > 0) {
+                            this.$modal.find('.modal-body').css({
+                                height: canvasHeight + 'px'
+                            });
+                        }
+                    }, 80);
+                }, 300);
+            });
+        }
+
+        resetModalSize() {
+            this.$modal.find('.modal-dialog').removeAttr('style').removeClass('ytshow');
+            this.$modal.find('.modal-body').removeAttr('style').css('height', 'auto');
+        }
+
+        fitModalByImage(src, callback) {
+            const dialog = this.$modal.find('.modal-dialog');
+            const body = this.$modal.find('.modal-body');
+
+            if (!src || dialog.length === 0) {
+                if (typeof callback === 'function') callback();
+                return;
+            }
+
+            const preloadImg = new Image();
+            preloadImg.src = src;
+
+            preloadImg.onload = () => {
+                const imgWidth = preloadImg.naturalWidth || 1;
+                const imgHeight = preloadImg.naturalHeight || 1;
+                const imgRatio = imgWidth / imgHeight;
+
+                const rectBefore = dialog[0].getBoundingClientRect();
+                const beforeW = Math.round(rectBefore.width);
+                const beforeH = Math.round(rectBefore.height);
+
+                const currentWidth = dialog.outerWidth();
+                const currentHeight = dialog.outerHeight();
+
+                dialog.css({
+                    width: currentWidth,
+                    height: currentHeight
+                });
+
+                void dialog[0].offsetWidth;
+
+                const winWidth = window.innerWidth;
+                const winHeight = window.innerHeight;
+
+                let maxWidthRatio = 0.8;
+                if (imgRatio > 1.2) maxWidthRatio = 0.9;
+
+                const maxWidth = winWidth * maxWidthRatio;
+                const maxHeight = winHeight * 0.9;
+
+                const heightByMaxWidth = maxWidth / imgRatio;
+                let targetWidth;
+                let targetHeight;
+
+                if (heightByMaxWidth <= maxHeight) {
+                    targetWidth = maxWidth;
+                    targetHeight = heightByMaxWidth;
+                } else {
+                    targetHeight = maxHeight;
+                    targetWidth = maxHeight * imgRatio;
+                }
+
+                dialog.css({
+                    minWidth: '',
+                    minHeight: '',
+                    width: targetWidth + 'px',
+                    height: targetHeight + 'px',
+                    maxWidth: '100%',
+                    maxHeight: ''
+                });
+
+                body.css({
+                    height: targetHeight + 'px'
+                });
+
+                const sizeChanged =
+                    beforeW !== Math.round(targetWidth) ||
+                    beforeH !== Math.round(targetHeight);
+
+                const proceed = () => {
+                    if (typeof callback === 'function') callback(targetWidth, targetHeight);
+                };
+
+                if (sizeChanged) {
+                    let finished = false;
+
+                    const finish = () => {
+                        if (finished) return;
+                        finished = true;
+                        dialog.off('transitionend.productMediaResize');
+                        proceed();
+                    };
+
+                    dialog
+                        .off('transitionend.productMediaResize')
+                        .on('transitionend.productMediaResize', function (e) {
+                            if (e.target === dialog[0]) finish();
+                        });
+
+                    setTimeout(finish, 350);
+                } else {
+                    requestAnimationFrame(proceed);
+                };
+            };
+
+            preloadImg.onerror = () => {
+                this.resetModalSize();
+                if (typeof callback === 'function') callback();
+            };
         }
     }
 

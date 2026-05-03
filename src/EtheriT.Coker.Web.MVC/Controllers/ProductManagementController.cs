@@ -1,4 +1,4 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Application.Shared.Dto.Specification;

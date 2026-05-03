@@ -47,6 +47,7 @@ using Newtonsoft.Json;
 using System.Net;
 using System.Text.RegularExpressions;
 using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 
 namespace EtheriT.Coker.Application
 {

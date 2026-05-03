@@ -1,5 +1,4 @@
-﻿
-using EtheriT.Coker.Application.Shared.Dto.enumType;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;

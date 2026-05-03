@@ -13,6 +13,7 @@ using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
@@ -266,46 +267,22 @@ namespace EtheriT.Coker.Application.Directory
                        .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == ProdStatusEnum.新品).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
                        .ThenByDescending(e => e.Id)
                        .Skip(skip).Take(shownum);
-            var list = await (from p in dataMargin
-                              select new DirectoryReleInfoDto
-                              {
-                                  Id = p.Id,
-                                  Title = p.Title,
-                                  Link = $"/product/{p.Id}",
-                                  OrgName = p.Website != null ? p.Website.OrgName : "",
-                                  type = DirectoryTypeEnum.商品,
-                                  SerNo = p.Ser_No,
-                                  ItemNo = p.ItemNo,
-                                  Description = p.Description,
-                                  MainImage = p.Html,
-                                  tags = (from t in db.Tags.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID)
-                                          join m in db.Tag_Associates.Where(e => !e.IsDeleted) on t.Id equals m.FK_TId
-                                          where m.FK_AId == p.Id
-                                          select new TagGetSelectedDto
-                                          {
-                                              Tag_Name = t.Title,
-                                              FK_TId = p.Id,
-                                          }).ToList(),
-                              }).ToListAsync();
-            for (int i = 0; i < list.Count; i++)
+            var pageProdIds = await dataMargin
+                .Select(p => p.Id)
+                .ToListAsync();
+
+            var list = await productAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
             {
-                var data = list[i];
-                var imgs = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
-                {
-                    Sid = data.Id,
-                    Size = 1,
-                    Type = (int)FileBindTypeEnum.產品
-                });
-                if (imgs.Any()) data.MainImage = imgs[0].Link;
-                else data.MainImage = imgRegex.Match(data.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "");
-                var s = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
-                var p = await db.Prod_Prices.Where(x => s.Contains(x.FK_PSId)).Where(e => !e.IsDeleted).ToListAsync();
-                decimal min = p.Min(e => e.Price) ?? 0;
-                decimal max = p.Max(e => e.Price) ?? 0;
-                if (min == max) data.Price = $"{max}";
-                else data.PriceDisplayText = $"{min.ToString("$#,##0")} ~ {max.ToString("$#,##0")}";
-            }
-            output.ReleInfos = list;
+                Ids = pageProdIds,
+                SiteId = WebsiteID
+            }) ?? new List<DirectoryReleInfoDto>();
+
+            var map = list.ToDictionary(x => x.Id);
+
+            output.ReleInfos = pageProdIds
+                .Where(id => map.ContainsKey(id))
+                .Select(id => map[id])
+                .ToList();
 
             return output;
         }
@@ -515,10 +492,15 @@ namespace EtheriT.Coker.Application.Directory
                     .Where(x => articleIds.Contains(x.Id))
                     .ToListAsync();
 
-            var prods = (prodIds.Count == 0) ? new List<Prod>() :
-                await db.Prods.AsNoTracking().Include(x => x.Website)
-                    .Where(x => prodIds.Contains(x.Id))
-                    .ToListAsync();
+            var prodDirectoryItems = (prodIds.Count == 0)
+                ? new List<DirectoryReleInfoDto>()
+                : await productAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
+                {
+                    Ids = prodIds,
+                    SiteId = websiteId
+                }) ?? new List<DirectoryReleInfoDto>();
+
+            var prodDirectoryMap = prodDirectoryItems.ToDictionary(x => x.Id);
 
             // 文章圖片批次（沿用你原本）
             var articleImages = (articleIds.Count == 0) ? new List<FileGetImgDto>() :
@@ -554,7 +536,6 @@ namespace EtheriT.Coker.Application.Directory
             // ✅ 用 Dictionary 取代 FirstOrDefault（避免 O(n^2)）
             var menuMap = menus.ToDictionary(x => x.Id);
             var articleMap = articles.ToDictionary(x => x.Id);
-            var prodMap = prods.ToDictionary(x => x.Id);
 
             // 組裝輸出（依 pageRows 原順序）
             foreach (var row in pageRows)
@@ -604,9 +585,8 @@ namespace EtheriT.Coker.Application.Directory
                 }
                 else if (row.Type == DirectoryTypeEnum.商品)
                 {
-                    if (!prodMap.TryGetValue(row.Id, out var p)) continue;
+                    if (!prodDirectoryMap.TryGetValue(row.Id, out var dtoItem)) continue;
 
-                    // filters querystring（沿用你原本）
                     var filtersStr = "";
                     if (dto.Filters != null && dto.Filters.Count > 0)
                     {
@@ -615,40 +595,7 @@ namespace EtheriT.Coker.Application.Directory
                             filtersStr = "?filter=" + json;
                     }
 
-                    var dtoItem = new DirectoryReleInfoDto
-                    {
-                        Id = p.Id,
-                        Title = p.Title,
-                        Link = $"/product/{p.Id}{filtersStr}",
-                        OrgName = p.Website?.OrgName ?? "",
-                        type = DirectoryTypeEnum.商品,
-                        SerNo = p.Ser_No,
-                        ItemNo = p.ItemNo,
-                        Description = string.IsNullOrEmpty(p.Description)
-                            ? getSearchDescription(p.Html, dto.SearchText)
-                            : getSearchDescription(p.Description, dto.SearchText),
-                        MainImage = p.Html,
-                        Status = p.Status,
-                        StatusName = p.Status.ToString(),
-                        tags = prodTags.TryGetValue(p.Id, out var pt) ? pt : null
-                    };
-
-                    // ✅ 商品主圖：先用「檔案綁定」的第一張；沒有才 fallback 用 Html regex
-                    if (prodMainImageMap.TryGetValue(p.Id, out var mainLink) && !string.IsNullOrEmpty(mainLink))
-                    {
-                        dtoItem.MainImage = mainLink;
-                    }
-                    else
-                    {
-                        dtoItem.MainImage = imgRegex.Match(dtoItem.MainImage ?? "").Value
-                            .Replace("quot;", "")
-                            .Replace("src=&", "")
-                            .Replace("&", "")
-                            .Replace("amp;", "");
-                    }
-
-                    // ✅ 商品價格：維持你原本邏輯（只對當頁做）
-                    await FillProdPriceAsync(dtoItem, websiteId);
+                    dtoItem.Link = $"/product/{dtoItem.Id}{filtersStr}";
 
                     output.ReleInfos.Add(dtoItem);
                 }
@@ -1843,31 +1790,51 @@ namespace EtheriT.Coker.Application.Directory
                             break;
                     }
 
-                    var page = dto.Page == null ? 1 : dto.Page.Value;
-                    var shownum = dto.ShowNum==null || dto.ShowNum.Value <= 0 ? DataIds.Count() : dto.ShowNum.Value;
-                    if (dto.MaxLen == null) dto.MaxLen = 0;
-                    if (DataIds.Count < dto.MaxLen || dto.MaxLen == 0)
-                    {
-                        output.TotalPage = (int)Math.Ceiling(DataIds.Count / (double)shownum);
-                        output.TotalCount = DataIds.Count;
-                    }
-                    else
-                    {
-                        output.TotalPage = (int)Math.Ceiling(dto.MaxLen.Value / (double)shownum);
-                        output.TotalCount = dto.MaxLen.Value;
-                    }
+                    var page = dto.Page == null || dto.Page.Value <= 0 ? 1 : dto.Page.Value;
+
+                    var shownum = dto.ShowNum == null || dto.ShowNum.Value <= 0
+                        ? DataIds.Count
+                        : dto.ShowNum.Value;
+
+                    var maxLen = dto.MaxLen ?? 0;
+
+                    var effectiveTotalCount = maxLen > 0
+                        ? Math.Min(DataIds.Count, maxLen)
+                        : DataIds.Count;
+
+                    output.TotalCount = effectiveTotalCount;
+                    output.TotalPage = shownum > 0
+                        ? (int)Math.Ceiling(effectiveTotalCount / (double)shownum)
+                        : 0;
+
+                    var pageDataIds = DataIds
+                        .Take(effectiveTotalCount)
+                        .Skip((page - 1) * shownum)
+                        .Take(shownum)
+                        .ToList();
+
                     switch ((DirectoryTypeEnum)db_d[0].Type)
                     {
                         case DirectoryTypeEnum.商品:
                             var tempproddata = await productAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
                             {
-                                Ids = DataIds.Skip((page - 1) * shownum).Take(shownum).ToList<long>(),
+                                Ids = pageDataIds,
                                 SiteId = WebsiteID
                             });
-                            foreach (var item in tempproddata)
+                            if (tempproddata != null && tempproddata.Count > 0)
                             {
                                 var dirid = string.Join(",", dto.Ids);
-                                item.Link += $"?dirid={dirid}";
+
+                                foreach (var item in tempproddata)
+                                {
+                                    item.Link += $"?dirid={dirid}";
+                                }
+
+                                output.ReleInfos = tempproddata;
+                            }
+                            else
+                            {
+                                output.ReleInfos = new List<DirectoryReleInfoDto>();
                             }
                             if (tempproddata != null)
                             {

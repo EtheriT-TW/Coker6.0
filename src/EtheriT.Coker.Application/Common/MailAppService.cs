@@ -101,15 +101,23 @@ namespace EtheriT.Coker.Application.Common
             ResponseMessageDto response = new ResponseMessageDto();
             string webUrl = await loginUserData.GetWebsiteUrl();
             string OrgName = await loginUserData.GetWebsiteOrgName();
+            long websiteId = await loginUserData.GetCommonWebsiteId();
             // 建立郵件
             var message = new MimeMessage();
             // 添加寄件者
             if (!string.IsNullOrWhiteSpace(dto.SMTP.UserName) && MailboxAddress.TryParse(dto.SMTP.UserName, out _))
             {
                 dto.Sender.Email = dto.SMTP.UserName;
+            } else if (!string.IsNullOrWhiteSpace(dto.SMTP.UserName)) {
+                var website = db.Websites.FirstOrDefault(e => e.Id == websiteId);
+                if (website != null && !string.IsNullOrWhiteSpace(website.ContactMail) &&
+                    MailboxAddress.TryParse(website.ContactMail, out _))
+                {
+                    dto.Sender.Email = website.ContactMail;
+                }
             }
 
-            message.From.Add(new MailboxAddress(webSiteName, dto.Sender.Email));
+                message.From.Add(new MailboxAddress(webSiteName, dto.Sender.Email));
 
             // 添加收件者
             foreach (var item in dto.Recipients)

@@ -1,4 +1,4 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Core.Entity;
 using System.ComponentModel.DataAnnotations;
 

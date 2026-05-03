@@ -193,6 +193,9 @@ namespace EtheriT.Coker.Application
         public long GetFrontWebsiteId() {
             return configuration.GetValue<long>("WebConfig:SiteId");
         }
+        public bool IsisFront() {
+            return GetFrontWebsiteId() != 0;
+        }
         public async Task<long> GetCommonWebsiteId(string orgName = "") {
             var websiteId = GetFrontWebsiteId();
             if (websiteId == 0) websiteId = await GetWebsiteId();

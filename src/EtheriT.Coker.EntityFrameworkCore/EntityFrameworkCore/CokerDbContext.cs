@@ -17,6 +17,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Directory = EtheriT.Coker.Core.Models.Directory;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 
 namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 {

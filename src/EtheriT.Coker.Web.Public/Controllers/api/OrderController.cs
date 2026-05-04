@@ -18,17 +18,20 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         private readonly ILinePayAppService linePayAppService;
         private readonly IPChomePayAppService pchomePayAppService;
         private readonly IECPayAppService eCPayAppService;
+        private readonly IConfiguration configuration;
         public OrderController(
             IOrderAppService orderAppService,
             ILinePayAppService linePayAppService,
             IPChomePayAppService pchomePayAppService,
-            IECPayAppService eCPayAppService
-            )
+            IECPayAppService eCPayAppService,
+            IConfiguration configuration
+        )
         {
             this.orderAppService = orderAppService;
             this.linePayAppService = linePayAppService;
             this.pchomePayAppService = pchomePayAppService;
             this.eCPayAppService = eCPayAppService;
+            this.configuration = configuration;
         }
 
         [HttpPost]
@@ -100,7 +103,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<ResponseMessageDto> CancelOrder(long ohid, int payment)
         {
             ResponseMessageDto response = new ResponseMessageDto();
-            switch (payment)
+            var actualPayment = ResolvePayment(payment);
+
+            switch (actualPayment)
             {
                 case 2:
                     response = await pchomePayAppService.PChomePayCancelOrder(ohid);
@@ -119,6 +124,23 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             }
             if (response.Message == "") response.Message = "支付方式不存在";
             return response;
+        }
+        private int ResolvePayment(int payment)
+        {
+            switch (payment)
+            {
+                case 4:
+                    var url = configuration.GetValue<string>("ThirdParty:ECPay:PaymentUrl");
+
+                    if (!string.IsNullOrWhiteSpace(url) && url.Contains("-stage"))
+                    {
+                        // 測試環境 → 不走退款
+                        return 0; // 讓 switch 走 default
+                    }
+                    break;
+            }
+
+            return payment;
         }
         [HttpGet]
 

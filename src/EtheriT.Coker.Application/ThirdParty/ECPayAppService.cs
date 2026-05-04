@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
+using DevExpress.CodeParser;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -642,6 +643,7 @@ namespace EtheriT.Coker.Application.ThirdParty
 
             try
             {
+                if (Website == null) throw new Exception("網站不存在");
                 if (ThirdPartyData.MerchantID != "" && ThirdPartyData.HashKey != "" && ThirdPartyData.HashIV != "")
                 {
                     var ohdata = await db.Order_Headers.Where(e => e.Id == dto.OrderId).FirstOrDefaultAsync();
@@ -748,7 +750,15 @@ namespace EtheriT.Coker.Application.ThirdParty
                             ohdata.TransactionId = OrderInfo.MerchantTradeNo;
                             db.SaveChanges();
 
-                            OrderInfo.TotalAmount = (int)(ohdata.Subtotal + ohdata.Freight);
+                            var paymentResult = await orderAppService.GetForPaymentAsync(ohdata.Id, isTemp: true);
+                            if (!paymentResult.Success)
+                                throw new Exception(paymentResult.Message ?? "取得付款資料失敗");
+
+                            var payData = paymentResult.Object as PayOrderData;
+                            if (payData == null)
+                                throw new Exception("付款資料格式錯誤");
+
+                            OrderInfo.TotalAmount = payData.PayableAmount;
 
                             if (_env.IsProduction()) OrderInfo.ReturnURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayReturn";
                             else OrderInfo.ReturnURL = "https://lcb.develop.coker.ezsale.tw/api/ThirdParty/ECPayReturn";

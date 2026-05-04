@@ -161,6 +161,10 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 if (currentStock <= 0)
                     throw new Exception("目前無庫存");
 
+                var prod = await db.Prods.FirstOrDefaultAsync(e => e.Id == proStock.FK_Pid && !e.RemovedFromShelves);
+                if(prod == null) throw new Exception("商品已下架");
+                else if(IsCantBuyProdState(prod)) throw new Exception("商品已售完");
+
                 Core.Models.ShoppingCart? sc = null;
                 if (dto.Id != null)
                 {
@@ -229,7 +233,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         FK_Uid = userid,
                         UUID = UUID,
                         Ser_No = 500,
-                        ProdName = dto.ProdName,
+                        ProdName = string.IsNullOrWhiteSpace(dto.ProdName) ? dto.ProdName: prod.Title,
                         CreatorUserId = userid,
                         CreationTime = date
                     };
@@ -269,6 +273,9 @@ namespace EtheriT.Coker.Application.ShoppingCart
             }
 
             return response;
+        }
+        private bool IsCantBuyProdState(Prod prod) {
+            return !(prod.Status != ProdStatusEnum.售完 && prod.Status != ProdStatusEnum.停產 && !prod.RemovedFromShelves);
         }
         public async Task<bool> checkBonusCanUse(Guid uuid, List<OrderDetailAddDto> OrderDetails)
         {

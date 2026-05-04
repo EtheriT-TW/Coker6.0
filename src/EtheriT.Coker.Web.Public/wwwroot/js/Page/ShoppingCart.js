@@ -205,12 +205,14 @@ function PageReady() {
                         $("#radio_recipient_order").trigger("change");
                         $("#radio_bill_orderer").trigger("change");
                     }
-                    if (datachange && HasECPay) {
+                    console.log("商品數量變更這邊沒有動到 先移除")
+                    //if (datachange && HasECPay) {
+                    if (HasECPay) {
                         var this_SupportCashOnDelivery = $("[name='RadioShipping']:checked").attr("data-support-cash-on-delivery").toLowerCase() == "true";
                         SupportCashOnDelivery = this_SupportCashOnDelivery;
                         if (!SupportCashOnDelivery) {
                             ECPaymentChange();
-                            datachange = false;
+                            //datachange = false;
                         }
                     }
                 }
@@ -1781,7 +1783,7 @@ function updateNextStepByBonus() {
 }
 function CartDelete(self, id, success, error) {
     self.remove();
-    datachange = true;
+    //datachange = true;
     Product.Delete.Cart(id).done(function () {
         Coker.sweet.success(success, null, true);
         var index = shopping_cart_data.findIndex(e => e.Id == id);

@@ -202,60 +202,60 @@ function PageReady() {
         //});
     });
 
-    $btn_createLogistics.on("click", function () {
-        co.sweet.loading();
-        if (!ECPayLogisticsTypeStr) {
-            co.sweet.error("錯誤", "取得物流方式發生錯誤", null, false);
-            return;
-        }
+    //$btn_createLogistics.on("click", function () {
+    //    co.sweet.loading();
+    //    if (!ECPayLogisticsTypeStr) {
+    //        co.sweet.error("錯誤", "取得物流方式發生錯誤", null, false);
+    //        return;
+    //    }
 
-        const data = {
-            Action: "CreateLogistics",
-            OrderId: keyId,
-            ExtraData: "CVS",
-        };
+    //    const data = {
+    //        Action: "CreateLogistics",
+    //        OrderId: keyId,
+    //        ExtraData: "CVS",
+    //    };
 
-        Coker.ThirdParty.HandleThirdPartyLogistics(data).done(function (result) {
-            if (result.success) {
-                co.sweet.success(result.message, function () { }, false);
-                $btn_printShippingLabel.removeClass("d-none");
-            } else {
-                co.sweet.error("訂單狀態錯誤", result.message);
-            }
-            $btn_createLogistics.addClass("d-none");
-        });
-    });
+    //    Coker.ThirdParty.HandleThirdPartyLogistics(data).done(function (result) {
+    //        if (result.success) {
+    //            co.sweet.success(result.message, function () { }, false);
+    //            $btn_printShippingLabel.removeClass("d-none");
+    //        } else {
+    //            co.sweet.error("訂單狀態錯誤", result.message);
+    //        }
+    //        $btn_createLogistics.addClass("d-none");
+    //    });
+    //});
 
-    $btn_printShippingLabel.on("click", function () {
-        if (!ECPayLogisticsSubTypeStr) {
-            co.sweet.error("錯誤", "取得物流子類型發生錯誤", null, false);
-            return;
-        }
+    //$btn_printShippingLabel.on("click", function () {
+    //    if (!ECPayLogisticsSubTypeStr) {
+    //        co.sweet.error("錯誤", "取得物流子類型發生錯誤", null, false);
+    //        return;
+    //    }
 
-        const $form = $("<form>", {
-            method: "post",
-            action: "/api/ThirdParty/ECPayLogisticsPrintShippingLabel",
-            target: "_blank"
-        });
+    //    const $form = $("<form>", {
+    //        method: "post",
+    //        action: "/api/ThirdParty/ECPayLogisticsPrintShippingLabel",
+    //        target: "_blank"
+    //    });
 
-        const data = {
-            Action: "PrintOrderInfo",
-            OrderId: keyId,
-            ExtraData: ECPayLogisticsSubTypeStr,
-        };
+    //    const data = {
+    //        Action: "PrintOrderInfo",
+    //        OrderId: keyId,
+    //        ExtraData: ECPayLogisticsSubTypeStr,
+    //    };
 
-        $.each(data, function (key, value) {
-            $("<input>", {
-                type: "hidden",
-                name: key,
-                value: value
-            }).appendTo($form);
-        });
+    //    $.each(data, function (key, value) {
+    //        $("<input>", {
+    //            type: "hidden",
+    //            name: key,
+    //            value: value
+    //        }).appendTo($form);
+    //    });
 
-        $("body").append($form);
-        $form.submit();
-        $form.remove();
-    });
+    //    $("body").append($form);
+    //    $form.submit();
+    //    $form.remove();
+    //});
 
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
@@ -455,8 +455,8 @@ function HeaderDataInsert(data) {
         $("#OrdererData .btn_orderer_data").text((`000000000${data.ordererId}`).substring(data.ordererId.toString().length));
     }
 
-    if (data.allPayLogisticsID) $btn_printShippingLabel.removeClass("d-none");
-    else if (data.logisticsType >= 8 && data.logisticsType <= 17) $btn_createLogistics.removeClass("d-none");
+    //if (data.allPayLogisticsID) $btn_printShippingLabel.removeClass("d-none");
+    //else if (data.logisticsType >= 8 && data.logisticsType <= 17) $btn_createLogistics.removeClass("d-none");
 
     ECPayLogisticsTypeStr = data.logisticsTypeStr;
     ECPayLogisticsSubTypeStr = data.logisticsSubTypeStr;

@@ -7,6 +7,7 @@
     .flipdown.dark1 .rotor-group:last-child {
         margin-right: 0;
     }
+
 .flipdown.dark1 .rotor {
     margin:0;
 }
@@ -24,4 +25,8 @@
 
 .flipdown.dark1.flipdown__theme-dark .rotor-group-heading:before {
     color: #FFF;
+}
+
+.FlipBook .page {
+    padding-top: 0
 }

@@ -2740,25 +2740,86 @@ namespace EtheriT.Coker.Application.Order
             if (!int.TryParse(value, out var parsed)) return defaultValue;
             return Math.Clamp(parsed, min, max);
         }
-        public async Task<ResponseMessageDto> GetForPaymentAsync(long ohid)
+        public async Task<ResponseMessageDto> GetForPaymentAsync(long ohid, bool isTemp = false)
         {
             ResponseMessageDto response = new ResponseMessageDto();
+
             try
             {
                 var websiteId = await loginUserData.GetCommonWebsiteId();
-                List<OrderStatusEnum> canPayStates = new List<OrderStatusEnum>() { OrderStatusEnum.待確認, OrderStatusEnum.待付款, OrderStatusEnum.付款失敗 };
-                var order = await db.Order_Headers.AsNoTracking().Where(o => o.Id == ohid && canPayStates.Contains(o.State) && o.FK_WebsiteId == websiteId)
+
+                var canPayStates = new List<OrderStatusEnum>
+                {
+                    OrderStatusEnum.待確認,
+                    OrderStatusEnum.待付款,
+                    OrderStatusEnum.付款失敗
+                };
+
+                var order = await db.Order_Headers
+                    .AsNoTracking()
+                    .Where(o =>
+                        o.Id == ohid &&
+                        o.FK_WebsiteId == websiteId &&
+                        canPayStates.Contains(o.State))
                     .Select(x => new
                     {
                         x.Id,
+                        x.IsTemp,
                         OrderNo = x.Id.ToString("D9"),
                         PaymentTime = DateTime.Now,
+                        ProductAmount = x.Subtotal,
                         ShippingFee = x.Freight,
                         UseBonusAmount = x.Bonus ?? 0,
                         CouponDiscount = 0m,
                         Discount = x.Discount ?? 0
-                    }).FirstOrDefaultAsync();
-                if (order == null) throw new Exception("查無訂單資料或訂單狀態不正確");
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (order == null)
+                    throw new Exception("查無訂單資料或訂單狀態不正確");
+
+                if (order.IsTemp && !isTemp)
+                    throw new Exception("暫存訂單不可使用一般付款檢查流程");
+
+                if (!order.IsTemp && isTemp)
+                    throw new Exception("正式訂單不可使用暫存付款檢查流程");
+
+                var payData = new PayOrderData
+                {
+                    OrderId = order.OrderNo,
+                    PaymentTime = order.PaymentTime,
+                    Currency = "TWD"
+                };
+
+                if (order.IsTemp)
+                {
+                    var amount = order.ProductAmount + order.ShippingFee;
+
+                    if (amount <= 0)
+                        throw new Exception("暫存訂單付款金額不可小於等於 0");
+
+                    payData.Items.Add(new PayOrderItem
+                    {
+                        ItemId = "temp-order",
+                        Name = "訂單金額",
+                        Quantity = 1,
+                        OriginalUnitPrice = amount,
+                        OriginalLineAmount = amount,
+                        PayUnitPrice = (int)Math.Round(amount, MidpointRounding.AwayFromZero),
+                        PayLineAmount = (int)Math.Round(amount, MidpointRounding.AwayFromZero),
+                        IsShipping = false
+                    });
+
+                    payData.PayableAmount = payData.Items.Sum(x => x.PayLineAmount);
+
+                    response.Object = payData;
+                    response.Success = true;
+                    return response;
+                }
+
+                var Website = await db.Websites
+                    .Where(e => e.Id == websiteId)
+                    .FirstOrDefaultAsync();
 
                 var details = await db.Order_Details
                     .AsNoTracking()
@@ -2773,35 +2834,52 @@ namespace EtheriT.Coker.Application.Order
                         ProductName =
                             x.ShoppingCart != null && !string.IsNullOrWhiteSpace(x.ShoppingCart.ProdName)
                                 ? x.ShoppingCart.ProdName
-                                : (x.ShoppingCart != null && x.ShoppingCart.Prod_Stock != null && x.ShoppingCart.Prod_Stock.Prod != null ? x.ShoppingCart.Prod_Stock.Prod.Title : null),
+                                : (x.ShoppingCart != null &&
+                                   x.ShoppingCart.Prod_Stock != null &&
+                                   x.ShoppingCart.Prod_Stock.Prod != null
+                                    ? x.ShoppingCart.Prod_Stock.Prod.Title
+                                    : null),
                         Quantity = x.ShoppingCart != null ? x.ShoppingCart.Quantity : 0,
                         UnitPrice = x.ShoppingCart != null ? x.ShoppingCart.Price : 0m
                     })
                     .ToListAsync();
-                if (!details.Any()) throw new Exception("查無訂單明細資料");
 
-                var payData = new PayOrderData
+                if (!details.Any())
+                    throw new Exception("查無訂單明細資料");
+
+                var prodIds = details
+                    .Select(x => x.ProductId)
+                    .Where(x => x > 0)
+                    .Distinct()
+                    .ToList();
+
+                var prodImages = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
                 {
-                    OrderId = order.OrderNo,
-                    PaymentTime = order.PaymentTime,
-                    Currency = "TWD"
-                };
-                var prodIds = details.Select(x => x.ProductId).Where(x => x > 0).Distinct().ToList();
-                var prodImages = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto { Sid = prodIds, Size = 3, Type = (int)FileBindTypeEnum.產品 });
-                var Website = await db.Websites.Where(e => e.Id == websiteId).FirstOrDefaultAsync();
+                    Sid = prodIds,
+                    Size = 3,
+                    Type = (int)FileBindTypeEnum.產品
+                });
+
                 foreach (var detail in details)
                 {
-                    if (detail.Quantity <= 0) throw new Exception($"明細 {detail.DetailId} 數量不可小於等於 0");
-                    if (detail.UnitPrice < 0) throw new Exception($"明細 {detail.DetailId} 單價不可小於 0");
+                    if (detail.Quantity <= 0)
+                        throw new Exception($"明細 {detail.DetailId} 數量不可小於等於 0");
+
+                    if (detail.UnitPrice < 0)
+                        throw new Exception($"明細 {detail.DetailId} 單價不可小於 0");
 
                     var productName = string.IsNullOrWhiteSpace(detail.ProductName)
                         ? $"商品#{detail.CartId}"
                         : detail.ProductName;
 
                     decimal originalLineAmount = detail.UnitPrice * detail.Quantity;
+
                     var imgUrl = prodImages.FirstOrDefault(x => x.Sid == detail.ProductId)?.Link ?? "";
-                    if (string.IsNullOrEmpty(imgUrl) || Website == null) imgUrl = null;
-                    else imgUrl = $"{Website.DefaultUrl}{imgUrl}";
+                    if (string.IsNullOrEmpty(imgUrl) || Website == null)
+                        imgUrl = null;
+                    else
+                        imgUrl = $"{Website.DefaultUrl}{imgUrl}";
+
                     payData.Items.Add(new PayOrderItem
                     {
                         ItemId = detail.ProductId.ToString(),
@@ -2833,46 +2911,57 @@ namespace EtheriT.Coker.Application.Order
                 }
 
                 int totalAdjustment = 0;
+
                 if (order.UseBonusAmount > 0)
                 {
                     int bonus = order.UseBonusAmount;
+
                     payData.Adjustments.Add(new PayOrderAdjustment
                     {
                         Type = "Bonus",
                         Name = "紅利折抵",
                         Amount = bonus
                     });
+
                     totalAdjustment += bonus;
                 }
 
                 if (order.CouponDiscount > 0)
                 {
                     int coupon = (int)Math.Round(order.CouponDiscount, MidpointRounding.AwayFromZero);
+
                     payData.Adjustments.Add(new PayOrderAdjustment
                     {
                         Type = "Coupon",
                         Name = "優惠券折抵",
                         Amount = coupon
                     });
+
                     totalAdjustment += coupon;
                 }
 
                 if (order.Discount > 0)
                 {
                     int discount = (int)Math.Round(order.Discount, MidpointRounding.AwayFromZero);
+
                     payData.Adjustments.Add(new PayOrderAdjustment
                     {
                         Type = "Discount",
                         Name = "訂單折抵",
                         Amount = discount
                     });
+
                     totalAdjustment += discount;
                 }
 
-                var targetItems = payData.Items.Where(x => !x.IsShipping && x.PayLineAmount > 0).ToList();
+                var targetItems = payData.Items
+                    .Where(x => !x.IsShipping && x.PayLineAmount > 0)
+                    .ToList();
+
                 int goodsTotal = targetItems.Sum(x => x.PayLineAmount);
 
-                if (totalAdjustment > goodsTotal) throw new Exception("折抵金額不可大於商品總額");
+                if (totalAdjustment > goodsTotal)
+                    throw new Exception("折抵金額不可大於商品總額");
 
                 if (totalAdjustment > 0)
                 {
@@ -2881,25 +2970,24 @@ namespace EtheriT.Coker.Application.Order
                     for (int i = 0; i < targetItems.Count; i++)
                     {
                         var item = targetItems[i];
+
                         int share = i == targetItems.Count - 1
                             ? totalAdjustment - allocated
                             : (int)Math.Floor((decimal)totalAdjustment * item.PayLineAmount / goodsTotal);
 
                         if (i != targetItems.Count - 1)
-                        {
                             allocated += share;
-                        }
 
                         item.PayLineAmount -= share;
+
                         if (item.PayLineAmount < 0)
-                        {
                             item.PayLineAmount = 0;
-                        }
                     }
                 }
 
                 payData.Items = NormalizePayItems(payData.Items);
                 payData.PayableAmount = payData.Items.Sum(x => x.PayLineAmount);
+
                 response.Object = payData;
                 response.Success = true;
             }
@@ -2907,6 +2995,7 @@ namespace EtheriT.Coker.Application.Order
             {
                 response.Message = ex.Message;
             }
+
             return response;
         }
         private List<PayOrderItem> NormalizePayItems(List<PayOrderItem> items)

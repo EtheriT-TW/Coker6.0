@@ -242,14 +242,13 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     GoogleTranslate = (GoogleTranslate != null && GoogleTranslate.value != null) ? String.Join(",", GoogleTranslate.value!) : "",
                     GTM = (GTM != null && GTM.value != null) ? String.Join(",", GTM.value!) : "",
                     storeBuyState = (storeBuyState != null && storeBuyState.value != null) ? String.Join(",", storeBuyState.value!) : "",
-                    storeMemo = (GA4 != null && storeMemo != null && storeMemo.value != null) ? String.Join(",", storeMemo.value!) : "",
+                    storeMemo = (storeMemo != null && storeMemo.value != null) ? String.Join(",", storeMemo.value!) : "",
                     linkMore = (linkMore != null && linkMore.value != null) ? String.Join(",", linkMore.value!) : "",
                     prodCatalog = (prodCatalog != null && prodCatalog.value != null) ? String.Join(",", prodCatalog.value!) : "",
                     membershipTerms = (membershipTerms != null && membershipTerms.value != null) ? String.Join(",", membershipTerms.value!) : "",
                 },
                 IsProduction = _env.IsProduction()
             };
-            ViewData["membershipTerms"] = model.storeSet.membershipTerms;
             string view;
             if (new List<string> { "article" }.Contains(key.ToLower()) && long.TryParse(option, out id))
             {
@@ -257,6 +256,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             }
             model.option = key;
             ViewBag.option = model.option.ToLower();
+            ViewBag.membershipTerms = model.storeSet.membershipTerms;
+            Console.WriteLine($"hasMembershipTerms：{(membershipTerms != null && membershipTerms.value != null)}");
             GetFrontContenOutputDto? PageData =  null;
             if (string.IsNullOrEmpty(option)) option = "";
             if (!UseLegacyPathHandling(website, key, option))

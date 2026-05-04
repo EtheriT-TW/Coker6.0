@@ -99,9 +99,11 @@ namespace EtheriT.Coker.Application.Common
         public async Task<ResponseMessageDto> sendMail(SenderDto dto, string? webSiteName)
         {
             ResponseMessageDto response = new ResponseMessageDto();
-            string webUrl = await loginUserData.GetWebsiteUrl();
-            string OrgName = await loginUserData.GetWebsiteOrgName();
             long websiteId = await loginUserData.GetCommonWebsiteId();
+            var website = db.Websites.FirstOrDefault(e => e.Id == websiteId);
+            if (website == null) throw new Exception("找不到網站");
+            string webUrl = website.DefaultUrl ?? string.Empty;
+            string OrgName = website.OrgName;
             // 建立郵件
             var message = new MimeMessage();
             // 添加寄件者
@@ -109,7 +111,7 @@ namespace EtheriT.Coker.Application.Common
             {
                 dto.Sender.Email = dto.SMTP.UserName;
             } else if (!string.IsNullOrWhiteSpace(dto.SMTP.UserName)) {
-                var website = db.Websites.FirstOrDefault(e => e.Id == websiteId);
+                
                 if (website != null && !string.IsNullOrWhiteSpace(website.ContactMail) &&
                     MailboxAddress.TryParse(website.ContactMail, out _))
                 {

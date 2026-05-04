@@ -518,6 +518,22 @@ input[type="number"] {
     font-size: 0.8rem;
     color: var(--gray-text);
 }
+
+/* ECPay */
+#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > #CreditCard .ecpay-pay-check label {
+    width: auto;
+}
+
+#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > #CreditCard .ecpay-pay-check .epc-txt {
+    max-width: unset;
+    display: flex;
+}
+
+.ecpay-pay-check > * {
+    display: flex;
+    align-items: center;
+}
+
 /* Step3 */
 #Step3 > .card-header > a {
     font-size: 0.8rem;

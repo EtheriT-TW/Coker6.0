@@ -206,8 +206,12 @@ function PageReady() {
                         $("#radio_bill_orderer").trigger("change");
                     }
                     if (datachange && HasECPay) {
-                        ECPaymentChange();
-                        datachange = false;
+                        var this_SupportCashOnDelivery = $("[name='RadioShipping']:checked").attr("data-support-cash-on-delivery").toLowerCase() == "true";
+                        SupportCashOnDelivery = this_SupportCashOnDelivery;
+                        if (!SupportCashOnDelivery) {
+                            ECPaymentChange();
+                            datachange = false;
+                        }
                     }
                 }
                 break;
@@ -316,17 +320,6 @@ function PageReady() {
     });
 
     ElementInit();
-
-    if (HasECPay) {
-        $(":input").on("blur input change", function () {
-            var $self = $(this);
-            if ($self.is(':radio')) {
-                if ($self.attr("name")?.includes("Sex")) ECPaymentChange();
-            } else {
-                ECPaymentChange();
-            }
-        });
-    }
 
     $(".btn_call_login").on("click", function (event) {
         loginModal.show();
@@ -1612,12 +1605,6 @@ function TotalCount() {
     // ===== Step3 小計（折抵後 + 運費）=====
     total = payableSubtotal + freight;
     $(".total_amount").text(parseInt(total, 10).toLocaleString());
-
-    var this_SupportCashOnDelivery = $("input[name='RadioShipping']:checked").data("support-cash-on-delivery").toLowerCase() == "true";
-    if (SupportCashOnDelivery != this_SupportCashOnDelivery) {
-        SupportCashOnDelivery = this_SupportCashOnDelivery;
-        ConfigurePaymentOptions(null);
-    }
 }
 function setCartPriceBlock($target, cashText, bonusValue, mode) {
     const bonus = Number(bonusValue || 0);
@@ -1847,9 +1834,20 @@ function RadioShipping() {
 
     freight = ori_freight;
 
+    var oldamount = $(".summary-amount.total_amount").first().text();
     TotalCount();
+    var newamount = $(".summary-amount.total_amount").first().text();
+    var isAmountChanged = oldamount != newamount;
 
-    if (HasECPay) ECPaymentChange();
+    var this_SupportCashOnDelivery = $this.attr("data-support-cash-on-delivery").toLowerCase() == "true";
+    var isSupportCashOnDeliveryChanged = SupportCashOnDelivery != this_SupportCashOnDelivery;
+    SupportCashOnDelivery = this_SupportCashOnDelivery;
+
+    if (!this_SupportCashOnDelivery && (isAmountChanged || isSupportCashOnDeliveryChanged) && HasECPay) ECPaymentChange();
+    else if (isSupportCashOnDeliveryChanged) {
+        $("#ECPayPayment").empty();
+        ConfigurePaymentOptions(null);
+    }
 }
 // 付款方式顯示的項目調整
 function ConfigurePaymentOptions(val) {
@@ -1858,12 +1856,12 @@ function ConfigurePaymentOptions(val) {
 
     var canCashOnDelivery = $CheckedShipping.attr("data-support-cash-on-delivery").toLowerCase() === "true";
 
+    $("#RadioPayment > .form-check").addClass("d-none");
     $(".noPaymentWarning").addClass("d-none");
     $(".ecpayWarning").removeClass("d-none");
     $("#RadioPayment input:radio").prop("checked", false);
 
     if (canCashOnDelivery) {
-        $("#RadioPayment > .form-check").addClass("d-none");
         $("#RadioPayment > .form-check > .payment_display").removeClass("checked");
         $(".ecpayWarning").addClass("d-none");
 
@@ -1909,6 +1907,7 @@ function ConfigurePaymentOptions(val) {
             $("#RadioPayment .form-check input[value='28']").closest(".form-check").addClass("d-none");
         }
     }
+    $(".ecpay_loading").addClass("d-none");
 }
 // 付款方式顯示的class調整
 function updatePaymentRadioUI($target) {
@@ -1971,10 +1970,12 @@ function ECPaymentChange() {
     if (!ECPayMonitor) return;
 
     Step3Monitor();
-
+    $(".ecpay_loading").removeClass("d-none");
+    $("#RadioPayment > .form-check").addClass("d-none");
     $("#ECPayPayment").empty();
+    ConfigurePaymentOptions(null);
 
-    if (AllDataGet(false)) {
+    if (AllDataGet(false) && !SupportCashOnDelivery) {
         var timeout = 0;
         var checkInterval = setInterval(function () {
             if (ECPayInit === true) {
@@ -1988,6 +1989,9 @@ function ECPaymentChange() {
                             if (errMsg != null) {
                                 $(".ecpay_loading").text(`串接綠界發生錯誤(${errMsg})`);
                             } else {
+                                ECPayReady = true;
+                                ConfigurePaymentOptions(16);
+
                                 var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
                                 $ECPayList.first().next('li').addClass("first");
                                 $ECPayList.last().addClass("last");
@@ -2033,11 +2037,6 @@ function ECPaymentChange() {
                                         buy_step_swiper.update();
                                     }
                                 }, 1000);
-
-                                if (!ECPayReady) {
-                                    ECPayReady = true;
-                                    ConfigurePaymentOptions(16);
-                                }
                             }
                         }, 'V2');
                     } else {
@@ -2269,8 +2268,8 @@ function OrderDataGet() {
     order_header_data.CVSTelephone = shipping_radio.attr("data-cvstelephone") ?? null;
     order_header_data.CVSOutSide = shipping_radio.attr("data-cvsoutside") ?? null;
 
-    if (typeof (order_header_data.payment) != "undefined" && (!((order_header_data.payment >= 16 && order_header_data.payment <= 23) || order_header_data.payment === 27))) {
-        order_header_data.payment = $(`[name="RadioPayment"]:checked`).val();
+    if (typeof (order_header_data.payment) == "undefined" || (!((order_header_data.payment >= 16 && order_header_data.payment <= 23) || order_header_data.payment === 27))) {
+        order_header_data.payment = $(`.form-check:not("d-none") input[name="RadioPayment"]:checked`).val();
     }
 
     order_header_data.state = 1;
@@ -2428,7 +2427,7 @@ async function OrderHeaderAdd() {
     var ids = getSelectedCartIds();
     var data = shopping_cart_data.filter(e => ids.includes(e.Id));
 
-    if (($("#RadioPayment > .form-check").length > 1 && $("#radio_payment_ECPay").length > 0 && $("#radio_payment_ECPay").prop("checked")) || ($(".ecpay_loading").is(":hidden") && $("#ECPayPayment").length > 0)) {
+    if (order_header_data.payment != 28 && (($("#RadioPayment > .form-check").length > 1 && $("#radio_payment_ECPay").length > 0 && $("#radio_payment_ECPay").prop("checked")) || ($(".ecpay_loading").is(":hidden") && $("#ECPayPayment").length > 0))) {
         GetECPayType();
 
         if (order_header_data.payment != 27) {

@@ -100,4 +100,21 @@
         $("#short-rule").css("display", "block");
         $("#rule").css("display", "none");
     });
+
+    $(document).on("click", ".toggle-password", function (e) {
+        e.preventDefault();
+
+        const $icon = $(this);
+        const targetSelector = $icon.data("target");
+        const $input = $(targetSelector);
+
+        if (!$input.length) return;
+
+        const isPassword = $input.attr("type") === "password";
+
+        $input.attr("type", isPassword ? "text" : "password");
+
+        $icon.toggleClass("fa-eye", isPassword);
+        $icon.toggleClass("fa-eye-slash", !isPassword);
+    });
 };

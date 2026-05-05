@@ -1,6 +1,7 @@
-﻿function ShareBlockInit() {
-    $('.shareBlock').each((idx, $share) => {
-        $this = $($share);
+﻿function ShareBlockInit(root) {
+    const $root = root ? $(root) : $(document);
+    $root.find('.shareBlock').not('.templatecontent .shareBlock').each((idx, share) => {
+        const $this = $(share);
         if (typeof ($this.data("init")) == "undefined" || !$this.data("init")) {
             var href = "";
             if (typeof ($this.data("href")) == "string") {

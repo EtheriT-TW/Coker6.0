@@ -196,3 +196,7 @@ if (!Storage.prototype.isNullOrEmpty) {
         return value === null || value === "";
     };
 }
+
+if (window.jQuery && typeof jqueryExtend === "function") {
+    jqueryExtend();
+}

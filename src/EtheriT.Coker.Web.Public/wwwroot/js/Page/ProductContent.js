@@ -864,19 +864,12 @@
         }
 
         resolveProductId() {
-            if (this.options.productId != null) return this.options.productId;
-            if (typeof window.PageId !== 'undefined' && window.PageId != null && !Number.isNaN(window.PageId)) {
-                return window.PageId;
+            if (this.options.productId != null && this.options.productId !== '') {
+                return this.options.productId;
             }
 
-            let pid = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);
-            if (Number.isNaN(Number(pid)) && /\/[\d]+\//.test(location.pathname)) {
-                const parts = location.pathname.match(/\/[\d]+\//g);
-                if (parts && parts.length > 0) {
-                    pid = parts[parts.length - 1].replace(/\//g, '');
-                }
-            }
-            return pid;
+            console.warn('ProductContent: productId is missing.');
+            return null;
         }
 
         init() {
@@ -1134,9 +1127,19 @@
 
         renderStatus() {
             const result = this.state.product;
-            this.$root.find('.status').remove();
+
+            const $status = this.$root
+                .find(this.options.selectors.imageRoot)
+                .first()
+                .find('.status');
+
             if (normalizeNullableInt(result.status) !== 0) {
-                this.$root.find('.image').append(`<span class="status status${result.status}">${result.statusName}</span>`);
+                $status
+                    .removeClass('d-none')
+                    .attr('class', `status status${result.status}`)
+                    .text(result.statusName);
+            } else {
+                $status.addClass('d-none').text('');
             }
         }
 
@@ -1749,6 +1752,7 @@
 
     window.PageReady = function () {
         window.productContentPage = createProductContent({
+            productId: window.PageId,
             canShop: $('.btn_addToCar').length > 0,
             totalBonus: typeof totalBonus !== 'undefined' ? totalBonus : 0,
             orderPrice: typeof orderPrice !== 'undefined' ? orderPrice : false,

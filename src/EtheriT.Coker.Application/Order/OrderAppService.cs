@@ -1115,7 +1115,7 @@ namespace EtheriT.Coker.Application.Order
                     if (logistics != null)
                     {
                         temp_output.AllPayLogisticsID = logistics.AllPayLogisticsID;
-                        if (logistics.LogisticsType == "CVS") temp_output.Shipping += $"　{logistics.CVSStoreName}({logistics.CVSAddress})";
+                        if (logistics.LogisticsType == "CVS" && !string.IsNullOrEmpty(logistics.CVSStoreName) && !string.IsNullOrEmpty(logistics.CVSAddress)) temp_output.Shipping += $"　{logistics.CVSStoreName}({logistics.CVSAddress})";
                     }
 
                     temp_output.LogisticsType = ((int)shipping?.LogisticsType);
@@ -2002,7 +2002,7 @@ namespace EtheriT.Coker.Application.Order
 
                     var CVSName = "";
                     var Logistics = await db.Order_Logistics.Where(e => e.FK_OhId == order_header.Id).FirstOrDefaultAsync();
-                    if (Logistics != null) CVSName = $"　({Logistics.CVSStoreName})";
+                    if (Logistics != null && !string.IsNullOrEmpty(Logistics.CVSStoreName)) CVSName = $"　({Logistics.CVSStoreName})";
 
                     var ThirdParty = await (from tpk in db.ThirdPartyKeypairs
                                             join tpkv in db.ThirdPartyKeypairValues on tpk.Id equals tpkv.FK_ThirdPartyKeypairId

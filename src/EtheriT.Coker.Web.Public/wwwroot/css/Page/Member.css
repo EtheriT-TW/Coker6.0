@@ -66,22 +66,23 @@
         #profile-tab-pane .content .payment span {
             white-space: nowrap;
         }
-    #profile-tab-pane .order_extra_info {
+
+    #profile-tab-pane .order_extra_info, #profile-tab-pane .recipient_info {
         padding-top: 0.75rem;
     }
 
-    #profile-tab-pane .order_extra_item {
+    #profile-tab-pane .order_extra_item, #profile-tab-pane .recipient_info_item {
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
     }
 
-    #profile-tab-pane .order_extra_label {
+    #profile-tab-pane .order_extra_label, #profile-tab-pane .recipient_info_label {
         font-size: 0.8rem;
         color: #888;
     }
 
-    #profile-tab-pane .order_extra_value {
+    #profile-tab-pane .order_extra_value, #profile-tab-pane .recipient_info_value {
         font-size: 1rem;
         font-weight: 500;
         color: #212529;
@@ -135,11 +136,13 @@
     .price-negative:before {
         content: "-";
     }
+
 .subtotalBlock {
     margin-top: 0.5rem;
     padding-top: 0.5rem;
     border-top: #ccc solid 1px;
 }
+
 .header_total {
     color: var(--red-number);
     font-size: 1.2rem;
@@ -724,11 +727,11 @@
         justify-content: end;
     }
 
-    #profile-tab-pane .order_extra_item {
+    #profile-tab-pane .order_extra_item, #profile-tab-pane .recipient_info_item {
         justify-content: flex-start;
     }
 
-    #profile-tab-pane .order_extra_label {
+    #profile-tab-pane .order_extra_label, #profile-tab-pane .recipient_info_label {
         min-width: 5rem;
     }
 

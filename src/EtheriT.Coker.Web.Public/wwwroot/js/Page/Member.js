@@ -755,6 +755,10 @@ function HistoryTemplateDataInsert(Datas) {
         frame.find(".collapse .header_remark").text(order_header.remark || "無");
         frame.find(".collapse .header_systemMemo").text(order_header.systemMemo || "無");
 
+        frame.find(".collapse .header_recipient").text(order_header.recipient);
+        frame.find(".collapse .header_recipientCellPhone").text(order_header.recipientCellPhone);
+        frame.find(".collapse .header_recipientAddress").text(order_header.recipientAddress);
+
         if (Coker.util.string.isNullOrEmpty(order_header.carrier)) {
             frame.find(".collapse #carrier").addClass("d-none");
         } else {

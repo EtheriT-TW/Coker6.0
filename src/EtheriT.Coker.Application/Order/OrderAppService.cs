@@ -450,6 +450,26 @@ namespace EtheriT.Coker.Application.Order
             }
             else
             {
+                ShippingTypeEnum? LogisticsSubType = await db.LogisticsSettings.Where(e => e.Id == dto.Shipping).Select(e => (ShippingTypeEnum?)e.LogisticsType).FirstOrDefaultAsync();
+                var cvsTypes = new HashSet<ShippingTypeEnum>
+                                            {
+                                                ShippingTypeEnum.OK取貨,
+                                                ShippingTypeEnum.全家取貨,
+                                                ShippingTypeEnum.Seven取貨,
+                                                ShippingTypeEnum.萊爾富取貨,
+                                                ShippingTypeEnum.綠界_大宗寄倉_全家,
+                                                ShippingTypeEnum.綠界_大宗寄倉_711超商,
+                                                ShippingTypeEnum.綠界_大宗寄倉_711冷凍店取,
+                                                ShippingTypeEnum.綠界_大宗寄倉_萊爾富,
+                                                ShippingTypeEnum.綠界_門市寄取_全家,
+                                                ShippingTypeEnum.綠界_門市寄取_711超商,
+                                                ShippingTypeEnum.綠界_門市寄取_萊爾富,
+                                                ShippingTypeEnum.綠界_門市寄取_OK超商
+                                            };
+
+                var IsCVSStore = LogisticsSubType != null && cvsTypes.Contains(LogisticsSubType.Value);
+                if (IsCVSStore) dto.RecipientAddress = $"{GetCVSType((ShippingTypeEnum)LogisticsSubType)} {dto.CVSStoreName}({dto.CVSAddress})";
+
                 oh = mapper.Map<Order_Header>(dto);
 
                 oh.FK_WebsiteId = websiteId;
@@ -461,33 +481,29 @@ namespace EtheriT.Coker.Application.Order
                 db.Order_Headers.Add(oh);
                 await db.SaveChangesAsync();
 
-                if (detailResult != null)
+                if (LogisticsSubType != null && (LogisticsSubType == ShippingTypeEnum.綠界_中華郵政 || LogisticsSubType == ShippingTypeEnum.綠界_黑貓 || IsCVSStore))
                 {
-                    var LogisticsSubType = detailResult.ShoppingCarts[0].LogisticsSubType;
-                    if (LogisticsSubType != null)
-                    {
-                        var temp_shoppingcart = detailResult.ShoppingCarts[0];
+                    var temp_shoppingcart = detailResult.ShoppingCarts[0];
 
-                        Order_Logistics ohlo = new Order_Logistics();
+                    Order_Logistics ohlo = new Order_Logistics();
 
-                        ohlo.FK_OhId = oh.Id;
-                        ohlo.LogisticsSubType = LogisticsSubType;
+                    ohlo.FK_OhId = oh.Id;
+                    ohlo.LogisticsSubType = GetLogisticsSubType((ShippingTypeEnum)LogisticsSubType);
 
-                        if (LogisticsSubType == "TCAT" || LogisticsSubType == "POST") ohlo.LogisticsType = "HOME";
-                        else ohlo.LogisticsType = "CVS";
+                    if (IsCVSStore) ohlo.LogisticsType = "CVS";
+                    else ohlo.LogisticsType = "HOME";
 
-                        ohlo.CreatorUserId = userId ?? 0;
-                        ohlo.CreationTime = now;
+                    ohlo.CreatorUserId = userId ?? 0;
+                    ohlo.CreationTime = now;
 
-                        ohlo.CVSStoreID = dto.CVSStoreID;
-                        ohlo.CVSStoreName = dto.CVSStoreName;
-                        ohlo.CVSAddress = dto.CVSAddress;
-                        ohlo.CVSTelephone = dto.CVSTelephone;
-                        ohlo.CVSOutSide = dto.CVSOutSide;
+                    ohlo.CVSStoreID = dto.CVSStoreID;
+                    ohlo.CVSStoreName = dto.CVSStoreName;
+                    ohlo.CVSAddress = dto.CVSAddress;
+                    ohlo.CVSTelephone = dto.CVSTelephone;
+                    ohlo.CVSOutSide = dto.CVSOutSide;
 
-                        db.Order_Logistics.Add(ohlo);
-                        await db.SaveChangesAsync();
-                    }
+                    db.Order_Logistics.Add(ohlo);
+                    await db.SaveChangesAsync();
                 }
 
                 if (!isTemp && detailResult != null)
@@ -543,6 +559,54 @@ namespace EtheriT.Coker.Application.Order
             }
 
             return oh;
+        }
+        private string GetCVSType(ShippingTypeEnum type)
+        {
+            switch (type)
+            {
+                case ShippingTypeEnum.OK取貨:
+                case ShippingTypeEnum.綠界_門市寄取_OK超商:
+                    return "OK超商";
+                case ShippingTypeEnum.全家取貨:
+                case ShippingTypeEnum.綠界_大宗寄倉_全家:
+                case ShippingTypeEnum.綠界_門市寄取_全家:
+                    return "全家";
+                case ShippingTypeEnum.Seven取貨:
+                case ShippingTypeEnum.綠界_大宗寄倉_711超商:
+                case ShippingTypeEnum.綠界_大宗寄倉_711冷凍店取:
+                case ShippingTypeEnum.綠界_門市寄取_711超商:
+                    return "7-Eleven";
+                case ShippingTypeEnum.萊爾富取貨:
+                case ShippingTypeEnum.綠界_大宗寄倉_萊爾富:
+                case ShippingTypeEnum.綠界_門市寄取_萊爾富:
+                    return "萊爾富";
+                default:
+                    return "";
+            }
+        }
+        private string GetLogisticsSubType(ShippingTypeEnum type)
+        {
+            switch (type)
+            {
+                case ShippingTypeEnum.綠界_大宗寄倉_全家:
+                    return "FAMI";
+                case ShippingTypeEnum.綠界_大宗寄倉_711超商:
+                    return "UNIMART";
+                case ShippingTypeEnum.綠界_大宗寄倉_711冷凍店取:
+                    return "UNIMARTFREEZE";
+                case ShippingTypeEnum.綠界_大宗寄倉_萊爾富:
+                    return "HILIFE";
+                case ShippingTypeEnum.綠界_門市寄取_全家:
+                    return "FAMIC2C";
+                case ShippingTypeEnum.綠界_門市寄取_711超商:
+                    return "UNIMARTC2C";
+                case ShippingTypeEnum.綠界_門市寄取_萊爾富:
+                    return "HILIFEC2C";
+                case ShippingTypeEnum.綠界_門市寄取_OK超商:
+                    return "OKMARTC2C";
+                default:
+                    return "";
+            }
         }
         private async Task<FreightCalcResult> CalculateFreightAsync(long shippingId, List<Coker.Core.Models.ShoppingCart> carts, decimal subtotal)
         {
@@ -1051,7 +1115,7 @@ namespace EtheriT.Coker.Application.Order
                     if (logistics != null)
                     {
                         temp_output.AllPayLogisticsID = logistics.AllPayLogisticsID;
-                        if (logistics.LogisticsType == "CVS") temp_output.Shipping += $"　{logistics.CVSStoreName}({logistics.CVSAddress})";
+                        if (logistics.LogisticsType == "CVS" && !string.IsNullOrEmpty(logistics.CVSStoreName) && !string.IsNullOrEmpty(logistics.CVSAddress)) temp_output.Shipping += $"　{logistics.CVSStoreName}({logistics.CVSAddress})";
                     }
 
                     temp_output.LogisticsType = ((int)shipping?.LogisticsType);
@@ -1495,7 +1559,7 @@ namespace EtheriT.Coker.Application.Order
 
                 foreach (var item in newOrderDetails)
                 {
-                    var key = BuildReorderKey(item.PSId, item.PPId??0);
+                    var key = BuildReorderKey(item.PSId, item.PPId ?? 0);
 
                     if (!oldMap.TryGetValue(key, out var queue) || queue.Count == 0)
                         continue;
@@ -1938,7 +2002,7 @@ namespace EtheriT.Coker.Application.Order
 
                     var CVSName = "";
                     var Logistics = await db.Order_Logistics.Where(e => e.FK_OhId == order_header.Id).FirstOrDefaultAsync();
-                    if (Logistics != null) CVSName = $"　({Logistics.CVSStoreName})";
+                    if (Logistics != null && !string.IsNullOrEmpty(Logistics.CVSStoreName)) CVSName = $"　({Logistics.CVSStoreName})";
 
                     var ThirdParty = await (from tpk in db.ThirdPartyKeypairs
                                             join tpkv in db.ThirdPartyKeypairValues on tpk.Id equals tpkv.FK_ThirdPartyKeypairId

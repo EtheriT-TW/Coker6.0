@@ -2061,6 +2061,74 @@ function ECPaymentChange() {
         }
     }
 }
+function RefreshECPayPaymentBeforeSubmit() {
+    return new Promise((resolve) => {
+        if (!HasECPay || SupportCashOnDelivery || order_header_data.payment == 28) {
+            resolve(true);
+            return;
+        }
+
+        $(".ecpay_loading").removeClass("d-none").text("");
+        $("#RadioPayment > .form-check").addClass("d-none");
+        $("#ECPayPayment").empty();
+
+        ECPayReady = false;
+        ConfigurePaymentOptions(null);
+
+        var timeout = 0;
+        var checkInterval = setInterval(function () {
+            if (ECPayInit === true) {
+                clearInterval(checkInterval);
+
+                Coker.ThirdParty.ECPayGetToken(order_header_data).done(function (result) {
+                    if (!result.success) {
+                        $(".ecpay_loading").text("串接綠界發生錯誤，請稍後嘗試");
+                        console.log(result.message);
+                        resolve(false);
+                        return;
+                    }
+
+                    var message = result.message.split(",");
+                    order_header_data.orderId = message[0];
+
+                    ECPay.createPayment(message[1], ECPay.Language.zhTW, function (errMsg) {
+                        if (errMsg != null) {
+                            $(".ecpay_loading").text(`串接綠界發生錯誤(${errMsg})`);
+                            resolve(false);
+                            return;
+                        }
+
+                        ECPayReady = true;
+                        ConfigurePaymentOptions(16);
+
+                        var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
+                        $ECPayList.first().next("li").addClass("first");
+                        $ECPayList.last().addClass("last");
+
+                        var checkPayExist = setInterval(function () {
+                            if (typeof window.Pay !== "undefined") {
+                                clearInterval(checkPayExist);
+                                $(".ecpay_loading").addClass("d-none");
+                                buy_step_swiper.update();
+                                resolve(true);
+                            }
+                        }, 300);
+                    }, "V2");
+                }).fail(function () {
+                    $(".ecpay_loading").text("串接綠界發生錯誤，請稍後嘗試");
+                    resolve(false);
+                });
+            } else {
+                timeout += 100;
+                if (timeout >= 10000) {
+                    clearInterval(checkInterval);
+                    $(".ecpay_loading").text("串接綠界發生錯誤(初始化失敗-逾時)");
+                    resolve(false);
+                }
+            }
+        }, 100);
+    });
+}
 function GetECPayType() {
     var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
     var $activeLi = $ECPayList.filter('.ecpay-pl-act');
@@ -2424,205 +2492,259 @@ function getSelectedCartIds() {
     return ids;
 }
 async function OrderHeaderAdd() {
-    var checksuccess = true;
     var paymentInfo = null;
+
+    TotalCount();
+
     var ids = getSelectedCartIds();
     var data = shopping_cart_data.filter(e => ids.includes(e.Id));
 
-    if (order_header_data.payment != 28 && (($("#RadioPayment > .form-check").length > 1 && $("#radio_payment_ECPay").length > 0 && $("#radio_payment_ECPay").prop("checked")) || ($(".ecpay_loading").is(":hidden") && $("#ECPayPayment").length > 0))) {
-        GetECPayType();
-
-        if (order_header_data.payment != 27) {
-            co.sweet.loading();
-
-            var validate = await ValidateECPayPayment();
-            var validate_success = false
-            var validate_result = "";
-            if (validate.length > 1) {
-                validate_success = validate.substring(0, 1) == 1 ? true : false;
-                validate_result = validate.substring(1);
-            }
-
-            if (validate_success) {
-                Swal.close();
-                paymentInfo = JSON.parse(validate_result);
-            } else checksuccess = false;
-        }
+    if (ids.length === 0) {
+        Coker.sweet.warning("請注意", "請先勾選要結帳的商品。", null);
+        return;
     }
 
-    if (typeof (order_header_data.payment) == "undefined") order_header_data.payment = $(`[name="RadioPayment"]:checked`).val();
+    if (!AllDataGet(true)) {
+        return;
+    }
 
-    Coker.Order.CheckStock(data).done(function (result) {
-        if (result.success) {
-            var checksuccess = AllDataGet(true)
+    if (typeof (order_header_data.payment) == "undefined") {
+        order_header_data.payment = $(`[name="RadioPayment"]:checked`).val();
+    }
 
-            var shipping_radio = $(`[name="RadioShipping"]:checked`);
-            order_header_data.shipping = shipping_radio.val();
-            order_header_data.CVSStoreID = shipping_radio.attr("data-cvsstoreid") ?? null;
-
-            var shipping_radio = $(`[name="RadioShipping"][value="${order_header_data.shipping}"]`);
-            var hasBtnGetMap = shipping_radio.siblings('.btn_getmap').length > 0;
-            if (hasBtnGetMap && order_header_data.CVSStoreID == null) {
-                checksuccess = false;
-                Coker.sweet.warning("請注意", "請選擇取貨門市！", null);
-            }
-
-            if (checksuccess) {
-                var memberUpdateFailMessage = "";
-                if ($(".memberUpdate").length > 0 ? $("#MemberUpdate").is(":checked") : false) {
-                    Coker.Order.FrontUserUpdate(order_header_data).done(function (result) {
-                        if (!result.success) {
-                            memberUpdateFailMessage = `<br/>${result.message}`;
-                        }
-                    });
-                }
-                order_header_data.OrderDetails = order_header_data.OrderDetails.filter(e => ids.includes(e.Id));
-                order_header_data.remark = $remark.val();
-                if (typeof (order_header_data.remark) == "undefined" || order_header_data.remark == "") {
-                    order_header_data.remark = "無";
-                }
-                Coker.sweet.loading();
-                Coker.Order.AddHeader(order_header_data).done(function (result) {
-                    if (result.success) {
-                        Coker.sweet.success(`謝謝您的訂購！${memberUpdateFailMessage}<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！`, function () {
-                            OrderSuccess(result);
-                            setTimeout(function () {
-                                isCheckout = true;
-                                var paymenttype = result.message.split(",")[0];
-                                switch (paymenttype) {
-                                    case "LinePay":
-                                    case "PCHomePay":
-                                        Coker.sweet.loading();
-                                        Coker.ThirdParty.Request(result.message.split(",")[1], paymenttype, null).done(function (result) {
-                                            Swal.close();
-                                            if (result.success) {
-                                                localStorage.setItem("lastSaveTime", new Date().toISOString())
-                                                localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
-                                                $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，即將進入付款流程。");
-                                                setTimeout(function () {
-                                                    buy_step_swiper.slideNext();
-                                                    buy_step_swiper.update();
-                                                    buy_step_swiper.disable();
-                                                }, 300);
-                                                $("#Step4 > .card-body .thirdpay_link a").attr("href", result.message);
-                                                $("#Step4 > .card-body .thirdpay_link").removeClass("d-none");
-                                                window.open(result.message, "_blank");
-                                            } else {
-                                                $("#Step4 > .card-body > .pruchase_content > .status_alert").text("付款流程發生未知錯誤，請稍後重新嘗試，或直接聯繫客服人員。");
-                                                setTimeout(function () {
-                                                    buy_step_swiper.slideNext();
-                                                    buy_step_swiper.update();
-                                                    buy_step_swiper.disable();
-                                                }, 300);
-                                            }
-                                        });
-                                        break;
-                                    case "ECPay":
-                                        co.sweet.loading();
-                                        if (paymentInfo != null) {
-                                            co.ThirdParty.ECPayCreatePayment(paymentInfo).done(function (result) {
-                                                if (result.success) {
-                                                    var result_obj = JSON.parse(result.message);
-                                                    var SwalClose = false;
-                                                    switch (result_obj.OrderInfo.PaymentType) {
-                                                        case null:
-                                                        case "Credit":
-                                                        case "UnionPay":
-                                                            localStorage.setItem("lastSaveTime", new Date().toISOString())
-                                                            localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
-                                                            var VerifyURL = result_obj.ThreeDInfo?.ThreeDURL ?? result_obj.UnionPayInfo?.UnionPayURL;
-                                                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，即將進入驗證流程。");
-                                                            $("#Step4 > .card-body .thirdpay_link a").attr({
-                                                                href: VerifyURL,
-                                                                title: "連結至：驗證頁面(開新視窗)",
-                                                            });
-                                                            $("#Step4 > .card-body .thirdpay_link").removeClass("d-none");
-                                                            SwalClose = true;
-                                                            window.open(VerifyURL, "_blank");
-                                                            break;
-                                                        case "ATM":
-                                                            var ATMInfo = result_obj.ATMInfo;
-                                                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${ATMInfo.ExpireDate}前完成付款。`);
-                                                            co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費銀行代碼：${ATMInfo.BankCode}<br>繳費虛擬帳號：${ATMInfo.vAccount}<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${ATMInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", null);
-                                                            break;
-                                                        case "CVS":
-                                                            var CVSInfo = result_obj.CVSInfo;
-                                                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${CVSInfo.ExpireDate}前完成付款。`);
-                                                            co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費代碼：${CVSInfo.PaymentNo}<br>或點此<a class="fw-bold text-primary px-1" href="${CVSInfo.PaymentURL}" target="_blank" title="連結至：繳費條碼(開新分頁)">連結</a>取得繳費條碼<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${CVSInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", null);
-                                                            break;
-                                                        case "BARCODE":
-                                                            var BarcodeInfo = result_obj.BarcodeInfo;
-                                                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${BarcodeInfo.ExpireDate}前完成付款。`);
-                                                            co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="barcode_svg w-100"></svg><svg id="barcode2" class="barcode_svg w-100"></svg><svg id="barcode3" class="barcode_svg w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", null);
-                                                            $.getScript("https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js", function () {
-                                                                JsBarcode("#barcode1", BarcodeInfo.Barcode1, { format: "CODE39", displayValue: true });
-                                                                JsBarcode("#barcode2", BarcodeInfo.Barcode2, { format: "CODE39", displayValue: true });
-                                                                JsBarcode("#barcode3", BarcodeInfo.Barcode3, { format: "CODE39", displayValue: true });
-                                                            });
-                                                            break;
-                                                        default:
-                                                            co.sweet.confirm(`回傳的PaymentType：${result_obj.OrderInfo.PaymentType}`, "此為測試訊息", "確認", "", null)
-                                                            break;
-                                                    }
-                                                    setTimeout(function () {
-                                                        buy_step_swiper.slideNext();
-                                                        buy_step_swiper.update();
-                                                        buy_step_swiper.disable();
-                                                        if (SwalClose) Swal.close();
-                                                    }, 300);
-                                                } else {
-                                                    $("#Step4 > .card-body > .pruchase_content > .status_alert").html(`<div>付款流程發生錯誤，${result.message + '<br>'}請稍後重新嘗試，或直接聯繫客服人員。</div>`);
-                                                    setTimeout(function () {
-                                                        buy_step_swiper.slideNext();
-                                                        buy_step_swiper.update();
-                                                        buy_step_swiper.disable();
-                                                        Swal.close();
-                                                    }, 300);
-                                                }
-                                            })
-                                        } else if (order_header_data.payment == 27) {
-                                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，謝謝您的訂購！。`);
-                                            setTimeout(function () {
-                                                buy_step_swiper.slideNext();
-                                                buy_step_swiper.update();
-                                                buy_step_swiper.disable();
-                                                Swal.close();
-                                            }, 300);
-                                        } else {
-                                            $("#Step4 > .card-body > .pruchase_content > .status_alert").html(`<div>付款流程發生錯誤，請稍後重新嘗試，或直接聯繫客服人員。</div>`);
-                                            setTimeout(function () {
-                                                buy_step_swiper.slideNext();
-                                                buy_step_swiper.update();
-                                                buy_step_swiper.disable();
-                                                Swal.close();
-                                            }, 300);
-                                        }
-                                        break;
-                                    case "Default":
-                                        setTimeout(function () {
-                                            buy_step_swiper.slideNext();
-                                            buy_step_swiper.update();
-                                            buy_step_swiper.disable();
-                                        }, 300);
-                                        break;
-                                }
-                            }, 300);
-                        })
-                    } else {
-                        console.log(result);
-                        Coker.sweet.error("錯誤", result.error, null, true);
-                    }
-                }).fail(function (result) {
-                    console.log(result);
-                    Coker.sweet.error("錯誤", result.error, null, true);
-                });
-            }
-        } else {
+    Coker.Order.CheckStock(data).done(async function (result) {
+        if (!result.success) {
             Coker.sweet.error("錯誤", result.message, null, false);
             $("#Step1 > .card-body > .purchase_list > li").remove();
             CardDataGet();
             buy_step_swiper.slideTo(0);
+            return;
         }
+
+        TotalCount();
+
+        var checksuccess = AllDataGet(true);
+
+        var shipping_radio = $(`[name="RadioShipping"]:checked`);
+        order_header_data.shipping = shipping_radio.val();
+        order_header_data.CVSStoreID = shipping_radio.attr("data-cvsstoreid") ?? null;
+
+        var hasBtnGetMap = shipping_radio.siblings(".btn_getmap").length > 0;
+        if (hasBtnGetMap && order_header_data.CVSStoreID == null) {
+            Coker.sweet.warning("請注意", "請選擇取貨門市！", null);
+            return;
+        }
+
+        if (!checksuccess) {
+            return;
+        }
+
+        order_header_data.OrderDetails = order_header_data.OrderDetails.filter(e => ids.includes(e.Id));
+        order_header_data.remark = $remark.val();
+
+        if (typeof (order_header_data.remark) == "undefined" || order_header_data.remark == "") {
+            order_header_data.remark = "無";
+        }
+
+        if (
+            order_header_data.payment != 28 &&
+            HasECPay &&
+            (
+                ($("#RadioPayment > .form-check").length > 1 &&
+                    $("#radio_payment_ECPay").length > 0 &&
+                    $("#radio_payment_ECPay").prop("checked")) ||
+                ($("#ECPayPayment").length > 0)
+            )
+        ) {
+            GetECPayType();
+
+            var refreshOk = await RefreshECPayPaymentBeforeSubmit();
+            if (!refreshOk) {
+                Coker.sweet.warning("綠界付款資料更新失敗", "請重新確認付款方式後再送出訂單。", null);
+                return;
+            }
+
+            if (order_header_data.payment != 27) {
+                co.sweet.loading();
+
+                var validate = await ValidateECPayPayment();
+                var validate_success = false;
+                var validate_result = "";
+
+                if (validate.length > 1) {
+                    validate_success = validate.substring(0, 1) == 1;
+                    validate_result = validate.substring(1);
+                }
+
+                if (validate_success) {
+                    Swal.close();
+                    paymentInfo = JSON.parse(validate_result);
+                } else {
+                    Swal.close();
+                    return;
+                }
+            }
+        }
+
+        var memberUpdateFailMessage = "";
+
+        if ($(".memberUpdate").length > 0 ? $("#MemberUpdate").is(":checked") : false) {
+            Coker.Order.FrontUserUpdate(order_header_data).done(function (result) {
+                if (!result.success) {
+                    memberUpdateFailMessage = `<br/>${result.message}`;
+                }
+            });
+        }
+
+        Coker.sweet.loading();
+
+        Coker.Order.AddHeader(order_header_data).done(function (result) {
+            if (result.success) {
+                Coker.sweet.success(
+                    `謝謝您的訂購！${memberUpdateFailMessage}<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！`,
+                    function () {
+                        OrderSuccess(result);
+
+                        setTimeout(function () {
+                            isCheckout = true;
+                            var paymenttype = result.message.split(",")[0];
+
+                            switch (paymenttype) {
+                                case "LinePay":
+                                case "PCHomePay":
+                                    Coker.sweet.loading();
+                                    Coker.ThirdParty.Request(result.message.split(",")[1], paymenttype, null).done(function (result) {
+                                        Swal.close();
+
+                                        if (result.success) {
+                                            localStorage.setItem("lastSaveTime", new Date().toISOString());
+                                            localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
+
+                                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，即將進入付款流程。");
+
+                                            setTimeout(function () {
+                                                buy_step_swiper.slideNext();
+                                                buy_step_swiper.update();
+                                                buy_step_swiper.disable();
+                                            }, 300);
+
+                                            $("#Step4 > .card-body .thirdpay_link a").attr("href", result.message);
+                                            $("#Step4 > .card-body .thirdpay_link").removeClass("d-none");
+                                            window.open(result.message, "_blank");
+                                        } else {
+                                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text("付款流程發生未知錯誤，請稍後重新嘗試，或直接聯繫客服人員。");
+
+                                            setTimeout(function () {
+                                                buy_step_swiper.slideNext();
+                                                buy_step_swiper.update();
+                                                buy_step_swiper.disable();
+                                            }, 300);
+                                        }
+                                    });
+                                    break;
+
+                                case "ECPay":
+                                    co.sweet.loading();
+
+                                    if (paymentInfo != null) {
+                                        co.ThirdParty.ECPayCreatePayment(paymentInfo).done(function (result) {
+                                            Swal.close();
+
+                                            if (result.success) {
+                                                var result_obj = JSON.parse(result.message);
+                                                var SwalClose = false;
+
+                                                switch (result_obj.OrderInfo.PaymentType) {
+                                                    case null:
+                                                    case "Credit":
+                                                    case "UnionPay":
+                                                        localStorage.setItem("lastSaveTime", new Date().toISOString());
+                                                        localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
+
+                                                        var VerifyURL = result_obj.ThreeDInfo?.ThreeDURL ?? result_obj.UnionPayInfo?.UnionPayURL;
+
+                                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，即將進入驗證流程。");
+                                                        $("#Step4 > .card-body .thirdpay_link a").attr({
+                                                            href: VerifyURL,
+                                                            title: "連結至：驗證頁面(開新視窗)"
+                                                        });
+                                                        $("#Step4 > .card-body .thirdpay_link").removeClass("d-none");
+
+                                                        SwalClose = true;
+                                                        window.open(VerifyURL, "_blank");
+                                                        break;
+
+                                                    case "ATM":
+                                                        var ATMInfo = result_obj.ATMInfo;
+                                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${ATMInfo.ExpireDate}前完成付款。`);
+                                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費銀行代碼：${ATMInfo.BankCode}<br>繳費虛擬帳號：${ATMInfo.vAccount}<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${ATMInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", null);
+                                                        break;
+
+                                                    case "CVS":
+                                                        var CVSInfo = result_obj.CVSInfo;
+                                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${CVSInfo.ExpireDate}前完成付款。`);
+                                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費代碼：${CVSInfo.PaymentNo}<br>或點此<a class="fw-bold text-primary px-1" href="${CVSInfo.PaymentURL}" target="_blank" title="連結至：繳費條碼(開新分頁)">連結</a>取得繳費條碼<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${CVSInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", null);
+                                                        break;
+
+                                                    case "BARCODE":
+                                                        var BarcodeInfo = result_obj.BarcodeInfo;
+                                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text(`訂單已成立，請於${BarcodeInfo.ExpireDate}前完成付款。`);
+                                                        co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="barcode_svg w-100"></svg><svg id="barcode2" class="barcode_svg w-100"></svg><svg id="barcode3" class="barcode_svg w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成付款，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", null);
+
+                                                        $.getScript("https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js", function () {
+                                                            JsBarcode("#barcode1", BarcodeInfo.Barcode1, { format: "CODE39", displayValue: true });
+                                                            JsBarcode("#barcode2", BarcodeInfo.Barcode2, { format: "CODE39", displayValue: true });
+                                                            JsBarcode("#barcode3", BarcodeInfo.Barcode3, { format: "CODE39", displayValue: true });
+                                                        });
+                                                        break;
+
+                                                    default:
+                                                        co.sweet.confirm(`回傳的PaymentType：${result_obj.OrderInfo.PaymentType}`, "此為測試訊息", "確認", "", null);
+                                                        break;
+                                                }
+
+                                                setTimeout(function () {
+                                                    buy_step_swiper.slideNext();
+                                                    buy_step_swiper.update();
+                                                    buy_step_swiper.disable();
+                                                    if (SwalClose) Swal.close();
+                                                }, 300);
+                                            } else {
+                                                $("#Step4 > .card-body > .pruchase_content > .status_alert").html(`<div>付款流程發生錯誤，${result.message + "<br>"}請稍後重新嘗試，或直接聯繫客服人員。</div>`);
+
+                                                setTimeout(function () {
+                                                    buy_step_swiper.slideNext();
+                                                    buy_step_swiper.update();
+                                                    buy_step_swiper.disable();
+                                                    Swal.close();
+                                                }, 300);
+                                            }
+                                        });
+                                    } else {
+                                        Swal.close();
+                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").html(`<div>付款流程發生錯誤，請稍後重新嘗試，或直接聯繫客服人員。</div>`);
+                                    }
+                                    break;
+
+                                case "Default":
+                                    setTimeout(function () {
+                                        buy_step_swiper.slideNext();
+                                        buy_step_swiper.update();
+                                        buy_step_swiper.disable();
+                                    }, 300);
+                                    break;
+                            }
+                        }, 300);
+                    }
+                );
+            } else {
+                console.log(result);
+                Coker.sweet.error("錯誤", result.error, null, true);
+            }
+        }).fail(function (result) {
+            console.log(result);
+            Coker.sweet.error("錯誤", result.error, null, true);
+        });
     });
 }
 function ValidateECPayPayment() {

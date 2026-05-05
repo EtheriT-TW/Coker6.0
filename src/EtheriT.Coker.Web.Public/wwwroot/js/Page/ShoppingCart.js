@@ -205,7 +205,7 @@ function PageReady() {
                         $("#radio_recipient_order").trigger("change");
                         $("#radio_bill_orderer").trigger("change");
                     }
-                    console.log("商品數量變更這邊沒有動到 先移除")
+                    //商品數量變更這邊沒有動到 先移除
                     //if (datachange && HasECPay) {
                     if (HasECPay) {
                         var this_SupportCashOnDelivery = $("[name='RadioShipping']:checked").attr("data-support-cash-on-delivery").toLowerCase() == "true";

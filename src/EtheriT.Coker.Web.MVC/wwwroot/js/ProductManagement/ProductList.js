@@ -5,6 +5,8 @@ var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal
 var $price_modal, priceModal
 var total_files = [];
 let importProdPopup = null;
+var elementReady = false;
+var pendingHashEdit = false;
 
 function ImportProd() {
     var formData = new FormData($(`[name="fileUploadForm"]`)[0]);
@@ -41,6 +43,13 @@ function toolbarPreparing(e) {
 
 async function PageReady() {
     ElementInit();
+    elementReady = true;
+
+    if (pendingHashEdit) {
+        pendingHashEdit = false;
+        HashDataEdit();
+    }
+
     TechCertListModalInit();
     TagListModalInit();
     try {
@@ -395,6 +404,12 @@ function FormDataClear() {
 }
 function contentReady(e) {
     product_list = e;
+
+    if (!elementReady) {
+        pendingHashEdit = true;
+        return;
+    }
+
     HashDataEdit();
 }
 function hashChange(e) {
@@ -534,6 +549,31 @@ function deleteButtonClicked(e) {
         });
     });
 }
+function IsGuestRoleId(roleId) {
+    var id = parseInt(roleId || 0, 10);
+    return id === 0 || id === 1;
+}
+
+function ApplyGuestBonusControl($priceRow) {
+    var $role = $priceRow.find(".select_role");
+    var $bonus = $priceRow.find(".input_bonus");
+
+    var isGuest = IsGuestRoleId($role.val());
+
+    // 不清空欄位，只禁止編輯。
+    // 真正回存時才把非會員紅利歸 0。
+    $bonus
+        .prop("disabled", isGuest)
+        .toggleClass("bg-light text-muted", isGuest);
+}
+function GetFormattedNumberValue($input) {
+    var value = co.Form.normalizeElementValue($input, $input.val());
+    return value == null || value === "" || isNaN(value) ? 0 : Number(value);
+}
+function SetFormattedNumberValue($input, value) {
+    co.Form.bindNumberFormatter($input);
+    $input.val(co.Form.formatElementValue($input, value));
+}
 function SpecPriceAdd(result) {
     spec_price_num += 1;
 
@@ -545,11 +585,23 @@ function SpecPriceAdd(result) {
 
     item.data("ppid", result == null ? 0 : result.Id);
     item.data("tempid", result == null ? -1 : result.Tempid);
+    co.Form.bindNumberFormatter(item_cash);
+    co.Form.bindNumberFormatter(item_bonus);
+
     if (result != null) {
         item_role.val(result.FK_RId);
-        item_cash.val(result.Price);
-        item_bonus.val(result.Bonus);
+        SetFormattedNumberValue(item_cash, result.Price);
+        SetFormattedNumberValue(item_bonus, result.Bonus);
+    } else {
+        SetFormattedNumberValue(item_cash, item_cash.val());
+        SetFormattedNumberValue(item_bonus, item_bonus.val());
     }
+
+    ApplyGuestBonusControl(item);
+
+    item_role.on("change", function () {
+        ApplyGuestBonusControl(item);
+    });
 
     item_btn_delete.on("click", function () {
         var $self_p = $(this).parents(".modal_price").first();
@@ -591,7 +643,8 @@ function SpecPriceSave() {
     } else {
         index = suggest_price_list.findIndex(item => item["TempPSid"] == temppsid)
     }
-    suggest_price_list[index]["Price"] = $("#PriceModal .suggest_price input").val();
+    var $suggestPriceInput = $("#PriceModal .suggest_price input");
+    suggest_price_list[index]["Price"] = GetFormattedNumberValue($suggestPriceInput);
     $(".spec_list").each(function () {
         if ($(this).data("psid") == psid || $(this).data("temppsid") == temppsid)
             $(this).data("timeprice", $("#TimePrice").prop("checked"));
@@ -599,16 +652,20 @@ function SpecPriceSave() {
     if (!$("#TimePrice").prop("checked")) {
         $price_modal.children(".frame").each(function () {
             $self = $(this);
+            const $cashInput = $self.find(".input_cash");
+            const $bonusInput = $self.find(".input_bonus");
             var obj = {};
             obj["Id"] = $self.data("ppid");
             obj["Tempid"] = price_tid;
             obj["FK_PSId"] = psid;
             obj["TempPSid"] = temppsid;
             obj["FK_RId"] = $self.find(".select_role").val();
-            obj["Price"] = $self.find(".input_cash").val();
-            obj["Bonus"] = $self.find(".input_bonus").val();
+            obj["Price"] = GetFormattedNumberValue($cashInput);
+            obj["Bonus"] = IsGuestRoleId(obj["FK_RId"])
+                ? 0
+                : GetFormattedNumberValue($bonusInput);
             obj["IsDelete"] = false;
-            if (obj["Price"] == 0 && obj["Bonus"] == 0) {
+            if (parseInt(obj["Price"] || 0, 10) === 0 && parseInt(obj["Bonus"] || 0, 10) === 0) {
                 co.sweet.error("商品現金與紅利不可同時為空", null, true)
                 $(".alert_text").text("商品現金與紅利不可同時為空")
                 $(".alert_text").removeClass("d-none");
@@ -627,9 +684,9 @@ function SpecPriceSave() {
                         price_tid += 1;
                     } else {
                         var index = modal_price_list.findIndex(item => item["Tempid"] == $self.data("tempid"))
-                        modal_price_list[index]["FK_RId"] = $self.find(".select_role").val();
-                        modal_price_list[index]["Price"] = $self.find(".input_cash").val();
-                        modal_price_list[index]["Bonus"] = $self.find(".input_bonus").val();
+                        modal_price_list[index]["FK_RId"] = obj["FK_RId"];
+                        modal_price_list[index]["Price"] = obj["Price"];
+                        modal_price_list[index]["Bonus"] = obj["Bonus"];
                     }
                 }
             }
@@ -813,12 +870,15 @@ function SpecAdd(result) {
         $price_modal.parents(".modal-body").first().data("temppsid", temppsid != null ? temppsid : "")
         $("#TimePrice").prop("checked", timePrice);
         $("#TimePrice").trigger("change");
+        var $suggestPriceInput = $("#PriceModal .suggest_price input");
+        co.Form.bindNumberFormatter($suggestPriceInput);
+
         if (!!psid) {
-            var index = suggest_price_list.findIndex(item => item["FK_PSId"] == psid)
-            $("#PriceModal .suggest_price input").val(suggest_price_list[index]["Price"]);
+            var index = suggest_price_list.findIndex(item => item["FK_PSId"] == psid);
+            SetFormattedNumberValue($suggestPriceInput, suggest_price_list[index]["Price"]);
         } else {
-            var index = suggest_price_list.findIndex(item => item["TempPSid"] == temppsid)
-            $("#PriceModal .suggest_price input").val(suggest_price_list[index]["Price"]);
+            var index = suggest_price_list.findIndex(item => item["TempPSid"] == temppsid);
+            SetFormattedNumberValue($suggestPriceInput, suggest_price_list[index]["Price"]);
         }
 
         modal_price_list.forEach(function (item) {

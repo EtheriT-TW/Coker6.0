@@ -21,6 +21,8 @@ using Microsoft.Extensions.Hosting;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using DevExpress.CodeParser;
+using EtheriT.Coker.Application.Common;
+using Microsoft.AspNetCore.Http;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -33,6 +35,7 @@ namespace EtheriT.Coker.Application.ThirdParty
         private readonly IOrderAppService orderAppService;
         private readonly IShoppingCartAppService shoppingCartAppService;
         private readonly IMapper mapper;
+        private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IWebHostEnvironment _env;
         public ECPayAppService(
             IHttpClientFactory httpClientFactory,
@@ -42,6 +45,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             IOrderAppService orderAppService,
             IShoppingCartAppService shoppingCartAppService,
             IMapper mapper,
+            IHttpContextAccessor httpContextAccessor,
             IWebHostEnvironment env
         )
         {
@@ -52,6 +56,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             this.orderAppService = orderAppService;
             this.shoppingCartAppService = shoppingCartAppService;
             this.mapper = mapper;
+            this.httpContextAccessor = httpContextAccessor;
             this._env = env;
         }
         public async Task<ResponseMessageDto> ECPayGetPaymentInfo(long ohid)
@@ -419,6 +424,7 @@ namespace EtheriT.Coker.Application.ThirdParty
         }
         public async Task<String> ECPayReturn(ECPayReturnResponseDto ResultResponseData)
         {
+            Console.WriteLine("in ECPayReturn");
             try
             {
                 var ThirdPartyData = await ECPayGetThirdPartyData() ?? throw new Exception("商家未確實設置綠界支付資料");
@@ -544,43 +550,111 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
+        public async Task<ResponseMessageDto> ECPayGetRepayTokenById(long ohid, bool support)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+
+            try
+            {
+                var orderHeader = await db.Order_Headers
+                    .FirstOrDefaultAsync(e => e.Id == ohid && !e.IsDeleted && !e.IsTemp);
+
+                if (orderHeader == null)
+                    throw new Exception("查無訂單資訊");
+
+                var payment = await db.PaymentTypes
+                    .FirstOrDefaultAsync(e => e.Id == orderHeader.Payment && !e.IsDeleted);
+
+                if (payment == null)
+                    throw new Exception("查無訂單付款方式");
+
+                if (payment.FK_ThirdPartyId != 4)
+                    throw new Exception("此訂單不是綠界付款方式");
+
+                var thirdPartyData = await ECPayGetThirdPartyData();
+
+                if (thirdPartyData == null)
+                    throw new Exception("商家未確實設置綠界支付資料");
+
+                var dto = mapper.Map<OrderHeaderAddDto>(orderHeader);
+                dto.OrderId = ohid;
+                dto.SupportApplePay = support;
+
+                var requestBody = await ECPayRequestBody(thirdPartyData, dto);
+
+                if (requestBody == null)
+                    throw new Exception("建立綠界付款資料失敗");
+
+                var tokenResponse = await ECPaySendRequest(
+                    "ECPayGetRepayToken",
+                    "/Merchant/GetTokenbyTrade",
+                    requestBody
+                );
+
+                if (!tokenResponse.Success)
+                    throw new Exception(tokenResponse.Message);
+
+                response.Success = true;
+                response.Message = $"{ohid},{tokenResponse.Token}";
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = $"Other failed: {ex.Message}";
+            }
+
+            return response;
+        }
         public async Task<ResponseMessageDto> ECPayGetToken(OrderHeaderAddDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
+
             try
             {
                 var ThirdPartyData = await ECPayGetThirdPartyData();
 
-                if (ThirdPartyData != null)
-                {
-                    var RequestUri = "/Merchant/GetTokenbyTrade";
+                if (ThirdPartyData == null)
+                    throw new Exception("商家未確實設置綠界支付資料");
 
-                    if (dto.OrderId == null)
-                    {
-                        dto.IsTemp = true;
-                        dto.Payment = 16;
-                        await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayAddOrder", JsonConvert.SerializeObject(dto));
-                        var orderMessage = await orderAppService.AddHeader(dto);
-                        if (!orderMessage.Success) throw new Exception($"建立訂單發生錯誤：{orderMessage.Error}, {orderMessage.Message}");
-                        dto.OrderId = long.Parse(orderMessage.Message.Split(",")[1]);
-                    }
+                var RequestUri = "/Merchant/GetTokenbyTrade";
 
-                    var RequestBody = await ECPayRequestBody(ThirdPartyData, dto);
+                // 內嵌式綠界每次重建 token，都要同步一次暫存訂單
+                // 第一次：dto.OrderId == null → AddHeader 建立暫存單
+                // 後續：dto.OrderId != null → AddHeader 更新同一筆暫存單
+                dto.IsTemp = true;
+                dto.Payment = 16;
 
-                    if (RequestBody != null)
-                    {
-                        var tokenResponse = await ECPaySendRequest("ECPayGetToken", RequestUri, RequestBody);
+                await loginUserData.SetLogs(
+                    0,
+                    configuration.GetValue<long>("WebConfig:SiteId"),
+                    "ECPaySyncTempOrder",
+                    JsonConvert.SerializeObject(dto)
+                );
 
-                        if (tokenResponse.Success)
-                        {
-                            response.Success = true;
-                            response.Message = $"{dto.OrderId},{tokenResponse.Token}";
-                        }
-                        else throw new Exception(tokenResponse.Message);
-                    }
-                    else throw new Exception("查詢訂單資訊發生錯誤");
-                }
-                else throw new Exception("商家未確實設置綠界支付資料");
+                var orderMessage = await orderAppService.AddHeader(dto);
+
+                if (!orderMessage.Success)
+                    throw new Exception($"建立或更新暫存訂單發生錯誤：{orderMessage.Error}, {orderMessage.Message}");
+
+                var messageParts = (orderMessage.Message ?? "").Split(",");
+
+                if (messageParts.Length < 2 || !long.TryParse(messageParts[1], out var tempOrderId))
+                    throw new Exception($"暫存訂單回傳格式錯誤：{orderMessage.Message}");
+
+                dto.OrderId = tempOrderId;
+
+                var RequestBody = await ECPayRequestBody(ThirdPartyData, dto);
+
+                if (RequestBody == null)
+                    throw new Exception("查詢訂單資訊發生錯誤");
+
+                var tokenResponse = await ECPaySendRequest("ECPayGetToken", RequestUri, RequestBody);
+
+                if (!tokenResponse.Success)
+                    throw new Exception(tokenResponse.Message);
+
+                response.Success = true;
+                response.Message = $"{dto.OrderId},{tokenResponse.Token}";
             }
             catch (HttpRequestException ex)
             {
@@ -590,6 +664,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 response.Message = $"Other failed: {ex.Message}";
             }
+
             return response;
         }
         private async Task<ECPayResponseDataDto> ECPaySendRequest(string RequestName, string RequestUri, ECPayRequestDto RequestBody)
@@ -680,18 +755,22 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                         if (paytypes.Any())
                         {
+                            var orderResultUrl = UrlResolver.ResolveUrl(
+                                httpContextAccessor,
+                                _env,
+                                "/api/ThirdParty/ECPayOrderResult",
+                                Website.DefaultUrl
+                            );
 
-                            if (_env.IsProduction())
-                            {
-                                CardInfo.OrderResultURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayOrderResult";
-                                UnionPayInfo.OrderResultURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayOrderResult";
-                            }
-                            else
-                            {
-                                CardInfo.OrderResultURL = "https://lcb.develop.coker.ezsale.tw/api/ThirdParty/ECPayOrderResult";
-                                UnionPayInfo.OrderResultURL = "https://lcb.develop.coker.ezsale.tw/api/ThirdParty/ECPayOrderResult";
-                            }
+                            var returnUrl = UrlResolver.ResolveUrl(
+                                httpContextAccessor,
+                                _env,
+                                "/api/ThirdParty/ECPayReturn",
+                                Website.DefaultUrl
+                            );
 
+                            CardInfo.OrderResultURL = orderResultUrl;
+                            UnionPayInfo.OrderResultURL = orderResultUrl;
                             foreach (var paytype in paytypes)
                             {
                                 var temp_paytype = paytype.Code.Substring("ECPay".Length);
@@ -737,20 +816,35 @@ namespace EtheriT.Coker.Application.ThirdParty
                             ECPayOrderInfoDto OrderInfo = new ECPayOrderInfoDto();
                             OrderInfo.MerchantTradeDate = DateTimeNow.ToString("yyyy/MM/dd HH:mm:ss");
                             var oid = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
-                            if (ohdata.TransactionId == null) OrderInfo.MerchantTradeNo = $"{DateTimeNow.ToString("yyyyMMdd")}{oid}";
-                            else
+                            if (ohdata.IsTemp)
                             {
-                                if (ohdata.RepayTimes == null) ohdata.RepayTimes = 1;
-                                else ohdata.RepayTimes += 1;
-                                db.SaveChanges();
-                                OrderInfo.MerchantTradeNo = $"{DateTimeNow.ToString("yyyyMMdd")}{oid}R{ohdata.RepayTimes}";
+                                // 暫存單每次重建 token 都可以覆寫交易編號
+                                // 但不能累加 RepayTimes，否則 ECPayGetToken 反覆呼叫會污染重付次數
+                                OrderInfo.MerchantTradeNo = $"{DateTimeNow:yyyyMMdd}{oid}{DateTimeNow:fff}";
+                                ohdata.TransactionId = OrderInfo.MerchantTradeNo;
                                 ohdata.RepayDate = DateTimeNow;
                             }
+                            else
+                            {
+                                if (ohdata.TransactionId == null)
+                                {
+                                    OrderInfo.MerchantTradeNo = $"{DateTimeNow:yyyyMMdd}{oid}";
+                                }
+                                else
+                                {
+                                    if (ohdata.RepayTimes == null) ohdata.RepayTimes = 1;
+                                    else ohdata.RepayTimes += 1;
 
-                            ohdata.TransactionId = OrderInfo.MerchantTradeNo;
-                            db.SaveChanges();
+                                    OrderInfo.MerchantTradeNo = $"{DateTimeNow:yyyyMMdd}{oid}R{ohdata.RepayTimes}";
+                                    ohdata.RepayDate = DateTimeNow;
+                                }
 
-                            var paymentResult = await orderAppService.GetForPaymentAsync(ohdata.Id, isTemp: true);
+                                ohdata.TransactionId = OrderInfo.MerchantTradeNo;
+                            }
+
+                            await db.SaveChangesAsync();
+
+                            var paymentResult = await orderAppService.GetForPaymentAsync(ohdata.Id, isTemp: ohdata.IsTemp);
                             if (!paymentResult.Success)
                                 throw new Exception(paymentResult.Message ?? "取得付款資料失敗");
 
@@ -759,9 +853,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 throw new Exception("付款資料格式錯誤");
 
                             OrderInfo.TotalAmount = payData.PayableAmount;
-
-                            if (_env.IsProduction()) OrderInfo.ReturnURL = $"{Website.DefaultUrl}/api/ThirdParty/ECPayReturn";
-                            else OrderInfo.ReturnURL = "https://lcb.develop.coker.ezsale.tw/api/ThirdParty/ECPayReturn";
+                            OrderInfo.ReturnURL = returnUrl;
 
                             OrderInfo.TradeDesc = $"{Website.Title}-商品購買交易";
 

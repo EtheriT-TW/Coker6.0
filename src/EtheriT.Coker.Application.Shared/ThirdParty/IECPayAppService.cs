@@ -14,6 +14,7 @@ namespace EtheriT.Coker.Application.Shared.ThirdParty
         public Task<String> ECPayReturn(ECPayReturnResponseDto ResultResponseData);
         public Task<ResponseMessageDto> ECPayCreatePayment(ECPayPaymentInfoDto PaymentInfo);
         public Task<ResponseMessageDto> ECPayGetTokenById(long ohid, bool Support);
+        public Task<ResponseMessageDto> ECPayGetRepayTokenById(long ohid, bool support);
         public Task<ResponseMessageDto> ECPayGetToken(OrderHeaderAddDto dto);
     }
 }

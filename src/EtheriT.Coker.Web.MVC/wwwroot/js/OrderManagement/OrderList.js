@@ -24,15 +24,11 @@ function PageReady() {
             });
         });
     });
+
     $btn_save.on("click", function () {
-        const status = $(".status_select > option:selected").text();
-        var newstate = parseInt($(".status_select > option:selected").val());
-        var oristatte_str = $(`.status_select > option[value=${oristate}]`).text();
-        if (newstate != oristate && payment != "ATM") {
-            if ((newstate == 3 || newstate == 7) && (oristate == 1 || oristate == 6) && !isCashOnDelivery) co.sweet.error("訂單狀態錯誤", `非貨到付款訂單${oristatte_str}不可直接變更為【${status}】`);
-            else updateOrder();
-        } else updateOrder();
+        updateOrder();
     });
+
     co.Order.GetOrderStatusLookup().done(function (result) {
         $(result).each(function () {
             $order_status.append(`<option value="${this.id}">${this.name}</option>`);
@@ -492,8 +488,18 @@ function HeaderDataSet(result) {
     if (result.bonus == 0) $(".bonusLine").addClass("d-none");
     else $(".bonusLine").removeClass("d-none");
 
+    if (result.getBonus == 0) $("#GetBonus").addClass("d-none");
+    else {
+        $("#GetBonus").removeClass("d-none");
+        $(".order_setBonus").text(result.getBonus);
+    }
+
     $order_notes.text(result.remark)
-    $order_systemMemos.text(result.systemMemo)
+    if (result.systemMemo == "無" || result.systemMemo == "") $("#SystemMemo").addClass("d-none");
+    else {
+        $("#SystemMemo").removeClass("d-none");
+        $order_systemMemos.text(result.systemMemo)
+    }
     $recipient_name.text(result.recipient)
     $recipient_cellphone.text(result.recipientCellPhone)
     var re_telIndex = result.recipientTelePhone.indexOf("-", 5)

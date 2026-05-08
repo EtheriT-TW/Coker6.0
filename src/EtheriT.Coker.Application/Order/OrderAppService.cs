@@ -192,11 +192,8 @@ namespace EtheriT.Coker.Application.Order
                         throw new Exception("紅利點數不足，請重新確認後再送出訂單。");
                 }
 
-                // 正式訂單才需要檢查購物車 / 庫存 / 計算金額
-                if (!isTemp)
-                {
-                    detailResult = await BuildDetailSectionAsync(dto, userId, uuid, now);
-                }
+                //  暫存訂單也要重算金額，但不能扣庫存 / 不能把購物車標成已下單 / 不能扣紅利
+                detailResult = await BuildDetailSectionAsync(dto, userId, uuid, now, previewOnly: isTemp);
 
                 Order_Header header = null!;
                 var strategy = db.Database.CreateExecutionStrategy();
@@ -225,7 +222,7 @@ namespace EtheriT.Coker.Application.Order
 
             return output;
         }
-        private async Task<DetailBuildResult> BuildDetailSectionAsync(OrderHeaderAddDto dto, long? userId, Guid uuid, DateTime now)
+        private async Task<DetailBuildResult> BuildDetailSectionAsync(OrderHeaderAddDto dto, long? userId, Guid uuid, DateTime now, bool previewOnly = false)
         {
             if (dto.OrderDetails == null || dto.OrderDetails.Count == 0)
                 throw new Exception("沒有任何購買項目，無法建立訂單。");
@@ -304,25 +301,32 @@ namespace EtheriT.Coker.Application.Order
                 subtotal += unitPrice * qty;
                 totalBonus += unitBonus * qty;
 
-                sc.Price = unitPrice;
-                sc.Bonus = bonusEnabled ? unitBonus : 0;
-                sc.IsOrder = true;
-                sc.LastModifierUserId = userId;
-                sc.LastModificationTime = now;
+                // 正式訂單才回寫購物車狀態
+                if (!previewOnly)
+                {
+                    sc.Price = unitPrice;
+                    sc.Bonus = bonusEnabled ? unitBonus : 0;
+                    sc.IsOrder = true;
+                    sc.LastModifierUserId = userId;
+                    sc.LastModificationTime = now;
+                }
             }
 
-            foreach (var item in qtyByStockId)
+            if (!previewOnly)
             {
-                var stock = stockDict[item.Key];
+                foreach (var item in qtyByStockId)
+                {
+                    var stock = stockDict[item.Key];
 
-                stock.Stock = (stock.Stock ?? 0) - item.Value;
-                stock.LastModifierUserId = userId;
-                stock.LastModificationTime = now;
+                    stock.Stock = (stock.Stock ?? 0) - item.Value;
+                    stock.LastModifierUserId = userId;
+                    stock.LastModificationTime = now;
+                }
             }
 
             var productSubtotalBeforeBonusRedeem = subtotal;
 
-            if (bonusEnabled && bonusSetting != null && bonusSetting.MaxRedemptionPercent > 0)
+            if (bonusEnabled && bonusSetting != null)
             {
                 var userBonus = (await bonusManagementAppService
                     .GetQueryFrontUsersTotalAvaliableBonus(new List<Guid> { uuid }))
@@ -337,7 +341,14 @@ namespace EtheriT.Coker.Application.Order
 
                     int redeemBonus = 0;
 
-                    if (remainingBonus > 0)
+                    var canRedeem =
+                        bonusSetting.MaxRedemptionPercent != null &&
+                        bonusSetting.MaxRedemptionPercent > 0 &&
+                        bonusSetting.MinOrderForRedemption != null &&
+                        bonusSetting.MinOrderForRedemption > 0 &&
+                        subtotal >= bonusSetting.MinOrderForRedemption.Value;
+
+                    if (canRedeem && remainingBonus > 0)
                     {
                         var bonusDiscount = Math.Floor(subtotal * bonusSetting.MaxRedemptionPercent.Value / 100);
 
@@ -396,16 +407,15 @@ namespace EtheriT.Coker.Application.Order
                 oh.Fk_UserId = userId;
                 oh.CreationTime = now;
 
-                if (!isTemp && detailResult != null)
-                {
-                    oh.Subtotal = detailResult.Subtotal;
-                    oh.Bonus = detailResult.TotalBonus;
-                    oh.Freight = detailResult.Freight;
+                ApplyDetailResultToHeader(oh, detailResult);
 
+                if (detailResult != null)
+                {
                     var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
                     var bonusEnabled = bonusSetting?.BonusEnabled == true;
 
-                    if (bonusEnabled && detailResult.TotalBonus > 0)
+                    // 只有正式訂單才扣紅利
+                    if (!isTemp && bonusEnabled && detailResult.TotalBonus > 0)
                     {
                         var bonusResult = await bonusManagementAppService.SaveTransaction(new CreateUserTransactionDto
                         {
@@ -423,52 +433,54 @@ namespace EtheriT.Coker.Application.Order
                             throw new Exception(bonusResult.Message ?? "紅利點數扣除失敗，無法建立訂單。");
                     }
 
-                    if (bonusEnabled && bonusSetting != null && bonusSetting.RewardRatePercent != null && bonusSetting.RewardRatePercent > 0)
+                    // 只有正式訂單才計算本次回饋紅利
+                    if (!isTemp && bonusEnabled && bonusSetting != null && bonusSetting.RewardRatePercent != null && bonusSetting.RewardRatePercent > 0)
                     {
                         var earnPoints = (int)Math.Floor(detailResult.Subtotal * bonusSetting.RewardRatePercent.Value / 100);
                         oh.GetBonus = earnPoints > 0 ? earnPoints : 0;
                     }
-                    else
+                    else if (!isTemp)
                     {
                         oh.GetBonus = 0;
                     }
-
-                    if (detailResult.BoxUsages != null && detailResult.BoxUsages.Any())
-                    {
-                        var boxMemo = string.Join("、", detailResult.BoxUsages
-                            .Select(x => $"{x.Name} × {x.Count}"));
-
-                        oh.SystemMemo = $"配箱資訊：{boxMemo}";
-                    }
                     else
                     {
-                        oh.SystemMemo = null;
+                        // 暫存單不應該有回饋紅利
+                        oh.GetBonus = 0;
                     }
+
+                    ApplyBoxMemoToHeader(oh, detailResult);
                 }
 
                 await loginUserData.SaveChanges(oh);
             }
             else
             {
-                ShippingTypeEnum? LogisticsSubType = await db.LogisticsSettings.Where(e => e.Id == dto.Shipping).Select(e => (ShippingTypeEnum?)e.LogisticsType).FirstOrDefaultAsync();
+                ShippingTypeEnum? LogisticsSubType = await db.LogisticsSettings
+                    .Where(e => e.Id == dto.Shipping)
+                    .Select(e => (ShippingTypeEnum?)e.LogisticsType)
+                    .FirstOrDefaultAsync();
+
                 var cvsTypes = new HashSet<ShippingTypeEnum>
-                                            {
-                                                ShippingTypeEnum.OK取貨,
-                                                ShippingTypeEnum.全家取貨,
-                                                ShippingTypeEnum.Seven取貨,
-                                                ShippingTypeEnum.萊爾富取貨,
-                                                ShippingTypeEnum.綠界_大宗寄倉_全家,
-                                                ShippingTypeEnum.綠界_大宗寄倉_711超商,
-                                                ShippingTypeEnum.綠界_大宗寄倉_711冷凍店取,
-                                                ShippingTypeEnum.綠界_大宗寄倉_萊爾富,
-                                                ShippingTypeEnum.綠界_門市寄取_全家,
-                                                ShippingTypeEnum.綠界_門市寄取_711超商,
-                                                ShippingTypeEnum.綠界_門市寄取_萊爾富,
-                                                ShippingTypeEnum.綠界_門市寄取_OK超商
-                                            };
+                {
+                    ShippingTypeEnum.OK取貨,
+                    ShippingTypeEnum.全家取貨,
+                    ShippingTypeEnum.Seven取貨,
+                    ShippingTypeEnum.萊爾富取貨,
+                    ShippingTypeEnum.綠界_大宗寄倉_全家,
+                    ShippingTypeEnum.綠界_大宗寄倉_711超商,
+                    ShippingTypeEnum.綠界_大宗寄倉_711冷凍店取,
+                    ShippingTypeEnum.綠界_大宗寄倉_萊爾富,
+                    ShippingTypeEnum.綠界_門市寄取_全家,
+                    ShippingTypeEnum.綠界_門市寄取_711超商,
+                    ShippingTypeEnum.綠界_門市寄取_萊爾富,
+                    ShippingTypeEnum.綠界_門市寄取_OK超商
+                };
 
                 var IsCVSStore = LogisticsSubType != null && cvsTypes.Contains(LogisticsSubType.Value);
-                if (IsCVSStore) dto.RecipientAddress = $"{GetCVSType((ShippingTypeEnum)LogisticsSubType)} {dto.CVSStoreName}({dto.CVSAddress})";
+
+                if (IsCVSStore)
+                    dto.RecipientAddress = $"{GetCVSType((ShippingTypeEnum)LogisticsSubType)} {dto.CVSStoreName}({dto.CVSAddress})";
 
                 oh = mapper.Map<Order_Header>(dto);
 
@@ -481,10 +493,11 @@ namespace EtheriT.Coker.Application.Order
                 db.Order_Headers.Add(oh);
                 await db.SaveChangesAsync();
 
-                if (LogisticsSubType != null && (LogisticsSubType == ShippingTypeEnum.綠界_中華郵政 || LogisticsSubType == ShippingTypeEnum.綠界_黑貓 || IsCVSStore))
+                if (LogisticsSubType != null &&
+                    (LogisticsSubType == ShippingTypeEnum.綠界_中華郵政 ||
+                     LogisticsSubType == ShippingTypeEnum.綠界_黑貓 ||
+                     IsCVSStore))
                 {
-                    var temp_shoppingcart = detailResult.ShoppingCarts[0];
-
                     Order_Logistics ohlo = new Order_Logistics();
 
                     ohlo.FK_OhId = oh.Id;
@@ -506,16 +519,15 @@ namespace EtheriT.Coker.Application.Order
                     await db.SaveChangesAsync();
                 }
 
-                if (!isTemp && detailResult != null)
+                if (detailResult != null)
                 {
-                    oh.Subtotal = detailResult.Subtotal;
-                    oh.Bonus = detailResult.TotalBonus;
-                    oh.Freight = detailResult.Freight;
+                    ApplyDetailResultToHeader(oh, detailResult);
 
                     var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
                     var bonusEnabled = bonusSetting?.BonusEnabled == true;
 
-                    if (bonusEnabled && detailResult.TotalBonus > 0)
+                    // 只有正式訂單才扣紅利
+                    if (!isTemp && bonusEnabled && detailResult.TotalBonus > 0)
                     {
                         var bonusResult = await bonusManagementAppService.SaveTransaction(new CreateUserTransactionDto
                         {
@@ -525,34 +537,31 @@ namespace EtheriT.Coker.Application.Order
                             TransactionPoint = detailResult.TotalBonus,
                             TransactionReason = $"購物使用紅利點數-訂單編號[{oh.Id:D9}]",
                             RefKey = oh.Id,
-                            Type = BonusLogTypeEnum.Redeem
+                            Type = BonusLogTypeEnum.Redeem,
+                            EnableIdempotencyByRefKey = true
                         });
 
                         if (!bonusResult.Success)
                             throw new Exception(bonusResult.Message ?? "紅利點數扣除失敗，無法建立訂單。");
                     }
 
-                    if (bonusEnabled && bonusSetting != null && bonusSetting.RewardRatePercent != null && bonusSetting.RewardRatePercent > 0)
+                    // 只有正式訂單才計算本次回饋紅利
+                    if (!isTemp && bonusEnabled && bonusSetting != null && bonusSetting.RewardRatePercent != null && bonusSetting.RewardRatePercent > 0)
                     {
                         var earnPoints = (int)Math.Floor(detailResult.Subtotal * bonusSetting.RewardRatePercent.Value / 100);
                         oh.GetBonus = earnPoints > 0 ? earnPoints : 0;
                     }
-                    else
+                    else if (!isTemp)
                     {
                         oh.GetBonus = 0;
                     }
-
-                    if (detailResult.BoxUsages != null && detailResult.BoxUsages.Any())
-                    {
-                        var boxMemo = string.Join("、", detailResult.BoxUsages
-                            .Select(x => $"{x.Name} × {x.Count}"));
-
-                        oh.SystemMemo = $"配箱資訊：{boxMemo}（總點數：{detailResult.PackingPointTotal}，運費：{detailResult.Freight}）";
-                    }
                     else
                     {
-                        oh.SystemMemo = null;
+                        // 暫存單不應該有回饋紅利
+                        oh.GetBonus = 0;
                     }
+
+                    ApplyBoxMemoToHeader(oh, detailResult);
 
                     await db.SaveChangesAsync();
                 }
@@ -560,6 +569,36 @@ namespace EtheriT.Coker.Application.Order
 
             return oh;
         }
+        private static void ApplyBoxMemoToHeader(Order_Header oh, DetailBuildResult? detailResult)
+        {
+            if (detailResult == null)
+            {
+                oh.SystemMemo = null;
+                return;
+            }
+
+            if (detailResult.BoxUsages != null && detailResult.BoxUsages.Any())
+            {
+                var boxMemo = string.Join("、", detailResult.BoxUsages
+                    .Select(x => $"{x.Name} × {x.Count}"));
+
+                oh.SystemMemo = $"配箱資訊：{boxMemo}（運費：{detailResult.Freight}）";
+            }
+            else
+            {
+                oh.SystemMemo = null;
+            }
+        }
+        private static void ApplyDetailResultToHeader(Order_Header oh, DetailBuildResult? detailResult)
+        {
+            if (detailResult == null) return;
+
+            // 暫存單與正式單都要覆寫金額
+            oh.Subtotal = detailResult.Subtotal;
+            oh.Bonus = detailResult.TotalBonus;
+            oh.Freight = detailResult.Freight;
+        }
+
         private string GetCVSType(ShippingTypeEnum type)
         {
             switch (type)
@@ -983,6 +1022,7 @@ namespace EtheriT.Coker.Application.Order
                         Total = result.Subtotal + result.Freight,
                         Discount = result.Discount,
                         Bonus = result.Bonus,
+                        GetBonus = result.GetBonus,
                         CouponId = result.CouponId,
                         Freight = result.Freight,
                         Service_Charge = result.Service_Charge,
@@ -1074,6 +1114,7 @@ namespace EtheriT.Coker.Application.Order
                     temp_output.Subtotal = order_header.Subtotal.ToString("#,##0");
                     temp_output.Discount = (order_header.Discount ?? 0).ToString("#,##0");
                     temp_output.Bonus = (order_header.Bonus ?? 0).ToString("#,##0");
+                    temp_output.GetBonus = (order_header.GetBonus ?? 0).ToString("#,##0");
                     temp_output.CouponId = order_header.CouponId?.ToString() ?? "";
                     temp_output.Freight = order_header.Freight.ToString("#,##0");
                     temp_output.Total = (order_header.Subtotal + order_header.Freight).ToString("#,##0");
@@ -1317,187 +1358,184 @@ namespace EtheriT.Coker.Application.Order
 
             try
             {
+                var order = await db.Order_Headers
+                    .FirstOrDefaultAsync(e => e.Id == ohid && !e.IsTemp);
+
+                if (order == null)
+                    throw new Exception("查無訂單資訊");
+
+                var payment = await db.PaymentTypes
+                    .FirstOrDefaultAsync(e => e.Id == order.Payment);
+
+                if (!CanRepay(order, payment, DateTime.Now))
+                    throw new Exception($"訂單狀態為{order.State}，不可重新付款");
+
                 var ohdata = await GetHeaderDisplay(new List<long> { ohid }, false);
-                if (ohdata.Any())
+
+                if (!ohdata.Any())
+                    throw new Exception("查無訂單資訊");
+
+                output.OrderHeader = ohdata[0];
+
+                var scids = await db.Order_Details
+                    .Where(e => e.FK_OId == ohid)
+                    .Select(e => e.FK_SCId)
+                    .ToListAsync();
+
+                if (!scids.Any())
+                    throw new Exception("查無詳細訂單資訊");
+
+                var change_details = await shoppingCartAppService.CheckStockPrice(scids);
+
+                if (!change_details.Any())
+                    throw new Exception("查無詳細訂單資訊");
+
+                var oldsubtotal = int.Parse(ohdata[0].Subtotal.Replace(",", ""));
+                ohdata[0].OldSubtotal = oldsubtotal;
+
+                var subtotal = oldsubtotal;
+                var dis_details = new List<OrderDetailDisplayDto>();
+
+                foreach (var change_detail in change_details)
                 {
-                    if (ohdata[0].State == (int)OrderStatusEnum.付款失敗)
+                    OrderDetailDisplayDto temp_detail = mapper.Map<OrderDetailDisplayDto>(change_detail);
+
+                    var tag = await (
+                        from tags in db.Tags
+                        join ta in db.Tag_Associates on tags.Id equals ta.FK_TId
+                        where tags.FK_WebsiteId == WebsiteId
+                        where tags.Title == "售完"
+                        where ta.FK_AId == temp_detail.ProdId
+                        where ta.Type == TagAssociateTypeEnum.商品
+                        select tags
+                    ).FirstOrDefaultAsync();
+
+                    if (tag != null)
                     {
-                        output.OrderHeader = ohdata[0];
-                        var scids = await db.Order_Details.Where(e => e.FK_OId == ohid).Select(e => e.FK_SCId).ToListAsync();
-                        if (scids.Any())
-                        {
-                            var change_details = await shoppingCartAppService.CheckStockPrice(scids);
-                            if (change_details.Any())
-                            {
-                                var oldsubtotal = int.Parse(ohdata[0].Subtotal.Replace(",", ""));
-                                ohdata[0].OldSubtotal = oldsubtotal;
-                                var subtotal = oldsubtotal;
-                                List<OrderDetailDisplayDto> dis_details = new List<OrderDetailDisplayDto>();
-                                foreach (var change_detail in change_details)
-                                {
-                                    OrderDetailDisplayDto temp_detail = mapper.Map<OrderDetailDisplayDto>(change_detail);
-                                    var tag = await (from tags in db.Tags
-                                                     join ta in db.Tag_Associates on tags.Id equals ta.FK_TId
-                                                     where tags.FK_WebsiteId == WebsiteId
-                                                     where tags.Title == "售完" && ta.FK_AId == temp_detail.ProdId && ta.Type == TagAssociateTypeEnum.商品
-                                                     select tags).FirstOrDefaultAsync();
-                                    // 前台不會顯示Describe 此處借來放置狀態
-                                    if (tag != null)
-                                    {
-                                        temp_detail.Describe = "商品已下架";
-                                        var price = temp_detail.Price;
-                                        var quantity = temp_detail.Quantity;
-                                        subtotal -= price * quantity;
-                                        ohdata[0].Subtotal = subtotal.ToString("#,##0");
-                                        dis_details.Add(temp_detail);
-                                    }
-                                    else
-                                    {
-                                        var change = false;
-                                        ohdata[0].OldSubtotal = oldsubtotal;
-                                        var old_price = temp_detail.Price;
-                                        var old_quantity = temp_detail.Quantity;
-                                        var new_price = old_price;
-                                        var new_quantity = old_quantity;
-                                        var stock = await db.Prod_Stocks.Where(e => e.Id == temp_detail.ProdStockId).FirstOrDefaultAsync();
-                                        if (stock != null)
-                                        {
-                                            if (stock.Stock == 0)
-                                            {
-                                                temp_detail.OldQuantity = temp_detail.Quantity;
-                                                temp_detail.Quantity = 0;
-                                                new_quantity = 0;
-                                                temp_detail.Describe = "商品規格庫存為0";
-                                                change = true;
-                                            }
-                                            else if (stock.Stock < temp_detail.Quantity)
-                                            {
-                                                temp_detail.OldQuantity = temp_detail.Quantity;
-                                                temp_detail.Quantity = stock.Stock ?? 0;
-                                                new_quantity = stock.Stock ?? 0;
-                                                temp_detail.Describe = "商品規格庫存不足";
-                                                change = true;
-                                            }
-                                            if (temp_detail.OldPrice > 0 && temp_detail.OldPrice != temp_detail.Price)
-                                            {
-                                                old_price = temp_detail.OldPrice;
-                                                new_price = temp_detail.Price;
-                                                temp_detail.Describe = "商品規格價格更動";
-                                                change = true;
-                                            }
-                                            if (change)
-                                            {
-                                                subtotal += (new_price * new_quantity) - (old_price * old_quantity);
-                                                ohdata[0].Subtotal = subtotal.ToString("#,##0");
-                                                dis_details.Add(temp_detail);
-                                            }
-                                        }
-                                        else throw new Exception("查無商品庫存資訊");
-                                    }
-                                }
-                                if (dis_details.Any())
-                                {
-                                    output.OrderDetails = dis_details;
-                                    output.Message = "Change";
-                                }
-                                else output.Message = "NoChange";
-                                output.Success = true;
-                            }
-                            else throw new Exception("查無詳細訂單資訊");
-                        }
-                        else throw new Exception("查無詳細訂單資訊");
+                        temp_detail.Describe = "商品已下架";
+
+                        var price = temp_detail.Price;
+                        var quantity = temp_detail.Quantity;
+
+                        subtotal -= price * quantity;
+                        ohdata[0].Subtotal = subtotal.ToString("#,##0");
+
+                        dis_details.Add(temp_detail);
+                        continue;
                     }
-                    else throw new Exception($"訂單狀態為{(OrderStatusEnum)ohdata[0].State}，不可重新付款");
+
+                    var change = false;
+                    var old_price = temp_detail.Price;
+                    var old_quantity = temp_detail.Quantity;
+                    var new_price = old_price;
+                    var new_quantity = old_quantity;
+
+                    var stock = await db.Prod_Stocks
+                        .FirstOrDefaultAsync(e => e.Id == temp_detail.ProdStockId);
+
+                    if (stock == null)
+                        throw new Exception("查無商品庫存資訊");
+
+                    if (stock.Stock == 0)
+                    {
+                        temp_detail.OldQuantity = temp_detail.Quantity;
+                        temp_detail.Quantity = 0;
+                        new_quantity = 0;
+                        temp_detail.Describe = "商品規格庫存為0";
+                        change = true;
+                    }
+                    else if (stock.Stock < temp_detail.Quantity)
+                    {
+                        temp_detail.OldQuantity = temp_detail.Quantity;
+                        temp_detail.Quantity = stock.Stock ?? 0;
+                        new_quantity = stock.Stock ?? 0;
+                        temp_detail.Describe = "商品規格庫存不足";
+                        change = true;
+                    }
+
+                    if (temp_detail.OldPrice > 0 && temp_detail.OldPrice != temp_detail.Price)
+                    {
+                        old_price = temp_detail.OldPrice;
+                        new_price = temp_detail.Price;
+                        temp_detail.Describe = "商品規格價格更動";
+                        change = true;
+                    }
+
+                    if (change)
+                    {
+                        subtotal += (new_price * new_quantity) - (old_price * old_quantity);
+                        ohdata[0].Subtotal = subtotal.ToString("#,##0");
+                        dis_details.Add(temp_detail);
+                    }
                 }
-                else throw new Exception("查無訂單資訊");
+
+                if (dis_details.Any())
+                {
+                    output.OrderDetails = dis_details;
+                    output.Message = "Change";
+                }
+                else
+                {
+                    output.Message = "NoChange";
+                }
+
+                output.Success = true;
             }
             catch (Exception ex)
             {
                 output.Error = "Error";
                 output.Message = ex.Message;
             }
+
             return output;
         }
         public async Task<ResponseMessageDto> OrderRepay(OrderRepaySetDto dto)
         {
-            ResponseMessageDto response = new ResponseMessageDto();
+            var response = new ResponseMessageDto();
+
             try
             {
-                Guid UUID = await tokenAppService.GetUUID();
-                var userid = await db.FrontUsers.Where(e => e.UUID == UUID).Select(e => e.FK_User).FirstOrDefaultAsync();
-                var ohdata = await db.Order_Headers.Where(e => e.Id == dto.ohid).FirstOrDefaultAsync();
-                if (ohdata != null)
-                {
-                    var shoppingcarts = await (from sc in db.ShoppingCarts
-                                               join od in db.Order_Details on sc.Id equals od.FK_SCId
-                                               where od.FK_OId == dto.ohid
-                                               select sc).ToListAsync();
-                    if (shoppingcarts.Any())
-                    {
-                        var stockids = shoppingcarts.Select(e => e.FK_PSid).ToList();
-                        var stocks = await db.Prod_Stocks.Where(e => stockids.Contains(e.Id)).ToListAsync();
-                        if (stocks.Any())
-                        {
-                            foreach (var oddata in dto.Details)
-                            {
-                                var scdata = shoppingcarts.Find(e => e.Id == oddata.scid);
-                                var stock = stocks.Find(e => e.Id == oddata.psid);
-                                if (scdata != null && stock != null)
-                                {
-                                    scdata.Quantity = oddata.Quantity;
-                                    scdata.Price = oddata.Price;
-                                    scdata.LastModifierUserId = userid;
-                                    scdata.LastModificationTime = DateTime.Now;
-                                    if (scdata.Quantity <= 0)
-                                    {
-                                        scdata.IsDeleted = true;
-                                        scdata.DeletionTime = DateTime.Now;
-                                        scdata.DeleterUserId = scdata.CreatorUserId;
-                                    }
-                                }
-                                else throw new Exception("訂單詳細有誤");
-                            }
-                            decimal subtotal = 0;
-                            foreach (var scdata in shoppingcarts)
-                            {
-                                var stock = stocks.Find(e => e.Id == scdata.FK_PSid);
-                                if (stock != null)
-                                {
-                                    stock.Stock -= scdata.Quantity;
-                                    stock.LastModifierUserId = userid;
-                                    stock.LastModificationTime = DateTime.Now;
-                                    subtotal += scdata.Price * scdata.Quantity;
-                                }
-                                else throw new Exception("查無庫存資料");
-                            }
-                            subtotal = subtotal - (ohdata.Discount ?? 0) - (ohdata.Bonus ?? 0);
-                            if (subtotal == dto.Subtotal)
-                            {
-                                ohdata.Subtotal = (int)Math.Round(subtotal, MidpointRounding.AwayFromZero);
-                                ohdata.State = OrderStatusEnum.待確認;
-                                ohdata.LastModifierUserId = userid;
-                                ohdata.LastModificationTime = DateTime.Now;
-                                db.SaveChanges();
-                                response.Success = true;
-                            }
-                            else
-                            {
-                                Console.WriteLine($"-------------錯誤訊息查看-------------");
-                                Console.WriteLine($"Order=>OrderRepay：計算金額與前端傳入金額不符，計算金額：{subtotal}，前端傳入金額：{dto.Subtotal}");
-                                throw new Exception("變更訂單發生錯誤");
-                            }
-                        }
-                        else throw new Exception("查無庫存資料");
-                    }
-                    else throw new Exception("查無訂單詳細資訊");
-                }
-                else throw new Exception("查無訂單資訊");
+                if (dto == null || dto.ohid <= 0)
+                    throw new Exception("訂單編號錯誤");
+
+                var uuid = await tokenAppService.GetUUID();
+
+                var uuids = await db.MappingOldNewUUID
+                    .Where(e => e.UserUUID == uuid && e.TempUUID != Guid.Empty)
+                    .Select(e => e.TempUUID)
+                    .ToListAsync();
+
+                uuids.Add(uuid);
+
+                var order = await db.Order_Headers
+                    .FirstOrDefaultAsync(e =>
+                        e.Id == dto.ohid &&
+                        uuids.Contains(e.FK_UUID) &&
+                        !e.IsTemp &&
+                        !e.IsDeleted);
+
+                if (order == null)
+                    throw new Exception("查無訂單資訊");
+
+                var payment = await db.PaymentTypes
+                    .FirstOrDefaultAsync(e => e.Id == order.Payment && !e.IsDeleted);
+
+                if (payment == null)
+                    throw new Exception("查無訂單付款方式");
+
+                if (!CanRepay(order, payment, DateTime.Now))
+                    throw new Exception($"訂單狀態為{order.State}，目前不可重新付款");
+
+                response.Success = true;
+                response.Message = "OK";
             }
             catch (Exception ex)
             {
-                response.Message = ex.Message;
+                response.Success = false;
                 response.Error = "Error";
+                response.Message = ex.Message;
             }
+
             return response;
         }
         public async Task<ResponseMessageDto> Reorder(long ohid)
@@ -1620,12 +1658,38 @@ namespace EtheriT.Coker.Application.Order
                         else if (order_header.CompletedDate != null && order_header.CompletedDate >= past24Hours) isintime = true;
                         else if (order_header.CreationTime >= past24Hours) isintime = true;
 
-                        var canRefund = paymentList.Where(p => p.Id == order_header.Payment).FirstOrDefault().CanRefund;
+                        var payment = paymentList.FirstOrDefault(p => p.Id == order_header.Payment);
+                        var canRefund = payment?.CanRefund == true;
+                        var canRepay = CanRepay(order_header, payment, DateTime.Now);
 
-                        if (isintime && new List<int>() { (int)OrderStatusEnum.待確認, (int)OrderStatusEnum.待付款 }.Contains((int)order_header.State)) temp_OrderHeader.Action = "Cancel";
-                        else if (isintime && (int)OrderStatusEnum.已付款 == (int)order_header.State && canRefund) temp_OrderHeader.Action = "Cancel";
-                        else if (canRefund && order_header.State == OrderStatusEnum.付款失敗) temp_OrderHeader.Action = "Repay";
-                        else temp_OrderHeader.Action = "";
+                        var canCancel =
+                            isintime &&
+                            (
+                                new List<int>
+                                {
+                                    (int)OrderStatusEnum.待確認,
+                                    (int)OrderStatusEnum.待付款
+                                }.Contains((int)order_header.State)
+                                ||
+                                (order_header.State == OrderStatusEnum.已付款 && canRefund)
+                            );
+
+                        if (canRepay && canCancel)
+                        {
+                            temp_OrderHeader.Action = "RepayCancel";
+                        }
+                        else if (canRepay)
+                        {
+                            temp_OrderHeader.Action = "Repay";
+                        }
+                        else if (canCancel)
+                        {
+                            temp_OrderHeader.Action = "Cancel";
+                        }
+                        else
+                        {
+                            temp_OrderHeader.Action = "";
+                        }
 
                         var temp_OrderDetails = new List<ShoppingCartDisplayDto>();
                         var order_details = await db.Order_Details.Where(e => e.FK_OId == order_header.Id).ToListAsync();
@@ -1654,6 +1718,25 @@ namespace EtheriT.Coker.Application.Order
                 response.Message = ex.Message;
             }
             return response;
+        }
+        private static bool CanRepay(Order_Header order, PaymentType? payment, DateTime now)
+        {
+            // 明確付款失敗，一律允許重新付款
+            if (order.State == OrderStatusEnum.付款失敗)
+                return true;
+
+            // 只有待付款才有「等待一段時間後重新付款」的問題
+            if (order.State != OrderStatusEnum.待付款)
+                return false;
+
+            // 付款方式沒有設定 RepayAfterMinutes，就不允許待付款逾時補刷
+            if (payment?.RepayAfterMinutes == null || payment.RepayAfterMinutes <= 0)
+                return false;
+
+            // 如果曾經重新付款過，應該從最近一次重新付款時間開始算
+            var baseTime = order.RepayDate ?? order.CreationTime;
+
+            return now >= baseTime.AddMinutes(payment.RepayAfterMinutes.Value);
         }
         private async Task<List<OrderDetailDisplayDto>> GetOrderDetailSnapshotDisplayAsync(long ohid)
         {

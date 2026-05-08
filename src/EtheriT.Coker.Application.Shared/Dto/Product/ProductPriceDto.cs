@@ -10,6 +10,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public decimal? OriPrice { get; set; }
         public decimal? SuggestPrice { get; set; }
         public int Bonus { get; set; }
+        public string? RoleName { get; set; }
+        public string? BaseRoleName { get; set; }
         public bool IsDelete { get; set; }
     }
 }

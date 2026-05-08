@@ -23,6 +23,8 @@ namespace EtheriT.Coker.Core.Models
         // 退款所需時間(日)
         public int RefundWorkDay { get; set; }
         public long FK_ThirdPartyId { get; set; }
+        //超過多久可以重新付款
+        public int? RepayAfterMinutes { get; set; }
         public ThirdParty? ThirdParty { get; set; }
         public List<LogisticsPaymentRestriction>? LogisticsType_Payments { get; set; }
         public List<PaymentTypesValue>? paymentTypesValues { get; set; }

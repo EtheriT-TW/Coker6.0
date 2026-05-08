@@ -543,87 +543,67 @@ function HistoryTemplateDataInsert(Datas) {
             frame.find(".payment").text(order_header.payment);
         }
 
+        const appendCancelButton = function () {
+            frame.find(".state").append(`<button class="btn_cancelOrder bg-transparent border-0 text-decoration-underline ms-1" title="取消此筆訂單">取消訂單</button>`);
+            frame.find(".state .btn_cancelOrder").data("ohid", order_header.id);
+            frame.find(".state .btn_cancelOrder").on("click", function () {
+                var $this = $(this);
+                var $orderFrame = $this.closest(".order_frame");
+                var confirm_text = "?";
+
+                if ([2, 6].includes(order_header.state)) {
+                    if (order_header.thirdParties === 1 ||
+                        (order_header.thirdParties === 4 && [21, 22, 23].includes(order_header.paymentCode))
+                    ) {
+                        confirm_text += "<br><br><span class='fw-bold text-danger'>※退款事宜請聯繫客服處理※</span>";
+                    } else {
+                        confirm_text += "<br><br><span class='fw-bold'>※若已付款將退回款項※</span>";
+                    }
+                }
+
+                Coker.sweet.confirm("取消訂單", `<div>確定要取消這筆訂單${confirm_text}</div>`, "確定", "取消", function () {
+                    Coker.sweet.loading();
+                    Coker.Member.CancelOrder($this.data("ohid"), order_header.thirdParties).done(function (result) {
+                        if (result.success) {
+                            $this.parent(".state").addClass("text-danger fw-bold");
+                            $this.parent(".state").text("已取消");
+                            if ($orderFrame.find(".btn_buyInfo").length > 0) $orderFrame.find(".btn_buyInfo").addClass("d-none");
+                            Coker.sweet.success(result.message, null, false);
+                        } else {
+                            Coker.sweet.error("取消訂單失敗", "取消訂單時發生錯誤，請聯繫客服協助處理。");
+                        }
+                    });
+                });
+            });
+        };
+
+        const appendRepayButton = function () {
+            frame.find(".state").append(`<button class="btn_payAgain text-danger bg-transparent border-0 text-decoration-underline ms-1" title="重新付款">重新付款</button>`);
+            frame.find(".state .btn_payAgain").on("click", function () {
+                Coker.sweet.confirm("確定要重新付款？", "", "確定", "取消", function () {
+                    Coker.sweet.loading();
+                    OrderRepay({ orderHeader: order_header });
+                });
+            });
+        };
+
+        frame.find(".state").prepend(`<span>${order_header.stateStr}</span>`);
+
         switch (order_header.action) {
             case "Cancel":
-                frame.find(".state").prepend(`<span>${order_header.stateStr}</span><button class="btn_cancelOrder bg-transparent border-0 text-decoration-underline" title="取消此筆訂單">取消訂單</button>`);
-                frame.find(".state button").data("ohid", order_header.id);
-                frame.find(".state .btn_cancelOrder").on("click", function () {
-                    var $this = $(this);
-                    var $orderFrame = $this.closest(".order_frame");
-                    var confirm_text = "?";
-                    if ([2, 6].includes(order_header.state)) {
-                        if (order_header.thirdParties === 1 ||
-                            (order_header.thirdParties === 4 && [21, 22, 23].includes(order_header.paymentCode))
-                        ) {
-                            confirm_text += "<br><br><span class='fw-bold text-danger'>※退款事宜請聯繫客服處理※</span>";
-                        } else {
-                            confirm_text += "<br><br><span class='fw-bold'>※若已付款將退回款項※</span>";
-                        }
-                    }
-                    Coker.sweet.confirm("取消訂單", `<div>確定要取消這筆訂單${confirm_text}</div>`, "確定", "取消", function () {
-                        Coker.sweet.loading();
-                        Coker.Member.CancelOrder($this.data("ohid"), order_header.thirdParties).done(function (result) {
-                            if (result.success) {
-                                $this.parent(".state").addClass("text-danger fw-bold");
-                                $this.parent(".state").text("已取消");
-                                if ($orderFrame.find(".btn_buyInfo").length > 0) $orderFrame.find(".btn_buyInfo").addClass("d-none");
-                                Coker.sweet.success(result.message, null, false);
-                            } else {
-                                Coker.sweet.error("取消訂單失敗", "取消訂單時發生錯誤，請聯繫客服協助處理。");
-                            }
-                        });
-                    });
-                });
+                appendCancelButton();
                 break;
+
             case "Repay":
-                frame.find(".state").prepend(`<span>${order_header.stateStr}</span><button class="btn_payAgain text-danger bg-transparent border-0 text-decoration-underline text-danger" title="取消此筆訂單">重新付款</button>`);
-                frame.find(".state .btn_payAgain").on("click", function () {
-                    var $this = $(this);
-                    Coker.sweet.confirm("確定要重新付款？", "", "確定", "取消", function () {
-                        Coker.sweet.loading();
-                        Coker.Member.CheckOrder(order_header.id).done(function (result) {
-                            if (result.success) {
-                                if (result.message == "NoChange") {
-                                    OrderRepay(result);
-                                } else {
-                                    Swal.close();
-                                    reOrderAlertModal.show();
-                                    var $frame = $("#ReOrderAlertModal .orderlist");
-                                    var old_subtotal = parseInt(result.orderHeader.oldSubtotal);
-                                    var freight = parseInt(result.orderHeader.freight.replaceAll(",", ""));
-                                    var new_subtotal = parseInt(result.orderHeader.subtotal.replaceAll(",", ""));
-
-                                    $frame.find(".oh_subtotal_old").text(old_subtotal.toLocaleString());
-                                    $frame.find(".oh_subtotal_new").text(new_subtotal.toLocaleString());
-                                    $frame.find(".oh_freight").text(freight.toLocaleString());
-                                    $frame.find(".oh_total").text((new_subtotal + freight).toLocaleString());
-
-                                    MemberTemplateDataInsert($("#ReOrderAlertModal .orderlist ul"), $("#RePayOrderListTemplate"), result.orderDetails);
-
-                                    if (new_subtotal == 0) {
-                                        freight = 0;
-                                        $(".btn_repay").addClass("d-none");
-                                    } else {
-                                        $(".btn_repay").data("ohid", order_header.id);
-                                        $(".btn_repay").data("thirdParties", order_header.thirdParties);
-                                        $(".btn_repay").data("new_price", (new_subtotal + freight));
-                                    }
-                                    $("#ReOrderAlertModal .btn_repay").off("click");
-                                    $("#ReOrderAlertModal .btn_repay").on("click", function () {
-                                        Coker.sweet.loading();
-                                        reOrderAlertModal.hide();
-                                        OrderRepay(result);
-                                    });
-                                }
-                            } else {
-                                Coker.sweet.error("重新付款發生錯誤", result.message);
-                            }
-                        });
-                    });
-                });
+                appendRepayButton();
                 break;
+
+            case "RepayCancel":
+                appendRepayButton();
+                appendCancelButton();
+                break;
+
             default:
-                frame.find(".state").append(`<span>${order_header.stateStr}</span>`);
                 break;
         }
 
@@ -786,6 +766,157 @@ function HistoryTemplateDataInsert(Datas) {
         }
 
         $("#profile-tab-pane .content").append(frame);
+    });
+}
+
+function OrderRepay(datas) {
+    var data = {
+        ohid: datas.orderHeader.id
+    };
+
+    Coker.Member.OrderRepay(data).done(function (checkResult) {
+        if (!checkResult.success) {
+            Coker.sweet.error("重新付款發生錯誤", checkResult.message);
+            return;
+        }
+
+        var requestPayment = function (support) {
+            Coker.ThirdParty.Request(datas.orderHeader.id, datas.orderHeader.thirdParties, support).done(function (payResult) {
+                if (!payResult.success) {
+                    Coker.sweet.error("重新付款發生錯誤", payResult.message, null, false);
+                    return;
+                }
+
+                if (datas.orderHeader.thirdParties != 4) {
+                    localStorage.setItem("lastSaveTime", new Date().toISOString());
+                    window.location.replace(payResult.message);
+                    return;
+                }
+
+                ECPayModal = $("#ECPayModal").length > 0 ? new bootstrap.Modal($("#ECPayModal")) : null;
+
+                if (ECPayModal == null) {
+                    Coker.sweet.error("重新付款發生錯誤", "找不到綠界付款視窗");
+                    return;
+                }
+
+                console.log("ServerType", $("#ECPayModal").data("server-type"));
+
+                ECPay.initialize($("#ECPayModal").data("server-type"), 1, function (errMsg) {
+                    if (errMsg == null) {
+                        ECPay.createPayment(payResult.message.split(",")[1], ECPay.Language.zhTW, function (errMsg) {
+                            if (errMsg != null) {
+                                console.log(`Create Payment errMsg : ${errMsg}`);
+                                co.sweet.error("串接綠界發生錯誤");
+                            }
+                        }, "V2");
+                    } else {
+                        console.log(`Initialize errMsg : ${errMsg}`);
+                        co.sweet.error("串接綠界發生錯誤");
+                    }
+                });
+
+                ECPayModal.show();
+                Swal.close();
+
+                $("#ECPayModal .btn_pay").off("click").on("click", function () {
+                    if (typeof window.Pay === "undefined") {
+                        co.sweet.warning("付款模組尚未載入完成，請稍候再試。", "", null);
+                        return;
+                    }
+
+                    ECPay.getPayToken(function (paymentInfo, errMsg) {
+                        if (errMsg != null) {
+                            co.sweet.warning("請確實填寫資料", errMsg, null);
+                            return;
+                        }
+
+                        ECPayModal.hide();
+                        co.sweet.loading();
+
+                        co.ThirdParty.ECPayCreatePayment(paymentInfo).done(function (createResult) {
+                            if (!createResult.success) {
+                                co.sweet.confirm("付款發生未知錯誤。");
+                                return;
+                            }
+
+                            var result_obj = JSON.parse(createResult.message);
+
+                            switch (result_obj.OrderInfo.PaymentType) {
+                                case null:
+                                    localStorage.setItem("lastSaveTime", new Date().toISOString());
+                                    localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
+
+                                    var VerifyURL = result_obj.ThreeDInfo?.ThreeDURL ?? result_obj.UnionPayInfo?.UnionPayURL;
+
+                                    window.open(VerifyURL, "_blank");
+
+                                    co.sweet.confirm("即將進入驗證流程", `<div class="text-start">如未自動跳轉，請點此<a class="fw-bold text-primary px-1" href="${VerifyURL}" target="_blank" title="連結至：驗證頁面(開新視窗)">連結</a>進行跳轉</div>`, "確定", "", function () {
+                                        location.reload();
+                                    });
+                                    break;
+
+                                case "ATM":
+                                    var ATMInfo = result_obj.ATMInfo;
+                                    co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費銀行代碼：${ATMInfo.BankCode}<br>繳費虛擬帳號：${ATMInfo.vAccount}<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${ATMInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", function () {
+                                        location.reload();
+                                    });
+                                    break;
+
+                                case "CVS":
+                                    var CVSInfo = result_obj.CVSInfo;
+                                    co.sweet.confirm("訂單付款資訊", `<div class="text-start">繳費代碼：${CVSInfo.PaymentNo}<br>或點此<a class="fw-bold text-primary px-1" href="${CVSInfo.PaymentURL}" target="_blank" title="連結至：繳費條碼(開新分頁)">連結</a>取得繳費條碼<br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${CVSInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。</div>`, "確定", "", function () {
+                                        location.reload();
+                                    });
+                                    break;
+
+                                case "BARCODE":
+                                    var BarcodeInfo = result_obj.BarcodeInfo;
+                                    co.sweet.confirm("訂單付款資訊", `<div class="text-start"><svg id="barcode1" class="w-100"></svg><svg id="barcode2" class="w-100"></svg><svg id="barcode3" class="w-100"></svg><br><br>請將此付款資訊截圖保存，並於繳費期限<span class="text-danger fw-bold">${BarcodeInfo.ExpireDate}</span>前完成繳費，感謝您的訂購。<br><br>條碼載入需要一段時間，請耐心等候</div>`, "確定", "", function () {
+                                        location.reload();
+                                    });
+
+                                    $.getScript("https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js", function () {
+                                        JsBarcode("#barcode1", BarcodeInfo.Barcode1, { format: "CODE39", displayValue: true });
+                                        JsBarcode("#barcode2", BarcodeInfo.Barcode2, { format: "CODE39", displayValue: true });
+                                        JsBarcode("#barcode3", BarcodeInfo.Barcode3, { format: "CODE39", displayValue: true });
+                                    });
+                                    break;
+
+                                case "ApplePay":
+                                    co.sweet.confirm("訂單已成立，謝謝您的訂購！", "", "確定", "", function () {
+                                        location.reload();
+                                    });
+                                    break;
+                            }
+                        });
+                    });
+                });
+
+                $("#ECPayModal .btn_cancel").off("click").on("click", function () {
+                    co.sweet.custom("warning", "取消付款", "是否確認取消本筆訂單之付款？", "是", function () {
+                        co.Member.CancelOrder(datas.orderHeader.id, 4).done(function (result) {
+                            if (result.success) {
+                                ECPayModal.hide();
+                                co.sweet.confirm("訂單已取消", "", "確定", "", function () {
+                                    location.reload();
+                                });
+                            }
+                        });
+                    }, "否", null);
+                });
+            });
+        };
+
+        if (window.ApplePaySession && typeof ApplePaySession.canMakePayments === "function") {
+            ApplePaySession.canMakePayments().then(function (canPay) {
+                requestPayment(!!canPay);
+            }).catch(function () {
+                requestPayment(false);
+            });
+        } else {
+            requestPayment(false);
+        }
     });
 }
 

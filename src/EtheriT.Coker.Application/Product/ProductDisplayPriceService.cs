@@ -191,9 +191,9 @@ namespace EtheriT.Coker.Application.Product
             return map.TryGetValue(productId, out var result) ? result : null;
         }
         public async Task<List<ProductPriceDto>> GetDisplayPricesByStockAsync(
-    List<long> stockIds,
-    FrontRoleContextDto roleContext
-)
+            List<long> stockIds,
+            FrontRoleContextDto roleContext
+        )
         {
             var output = new List<ProductPriceDto>();
 
@@ -212,6 +212,34 @@ namespace EtheriT.Coker.Application.Product
                 var visibleRoleIds = roleContext.VisibleRoleIds;
                 var roleIndex = roleContext.RoleIndex;
 
+                string GetRoleName(long roleId)
+                {
+                    if (roleId == 1 || roleId == 0)
+                        return "非會員";
+
+                    return roleLevels
+                        .Where(e => e.Id == roleId)
+                        .Select(e => e.Name)
+                        .FirstOrDefault() ?? "";
+                }
+
+                var baseRoleName = GetRoleName(1);
+
+                ProductPriceDto ToPriceDto(Prod_Price entity, decimal? oriPrice)
+                {
+                    return new ProductPriceDto
+                    {
+                        Id = entity.Id,
+                        FK_PSId = entity.FK_PSId,
+                        FK_RId = entity.FK_RId,
+                        Price = entity.Price,
+                        Bonus = entity.Bonus ?? 0,
+                        OriPrice = oriPrice,
+                        RoleName = GetRoleName(entity.FK_RId),
+                        BaseRoleName = baseRoleName
+                    };
+                }
+
                 var allPrices = await db.Prod_Prices
                     .Where(e => stockIds.Contains(e.FK_PSId) && !e.IsDeleted)
                     .ToListAsync();
@@ -225,9 +253,6 @@ namespace EtheriT.Coker.Application.Product
                     if (!pricesByStock.TryGetValue(stockId, out var stockPrices) || !stockPrices.Any())
                         continue;
 
-                    ProductPriceDto? selectedCash = null;
-                    ProductPriceDto? guestCash = null;
-
                     var guestCashEntity = stockPrices
                         .Where(e => (e.Bonus ?? 0) == 0 && (e.FK_RId == 1 || e.FK_RId == 0))
                         .OrderBy(e => e.FK_RId == 1 ? 0 : 1)
@@ -235,100 +260,136 @@ namespace EtheriT.Coker.Application.Product
                         .ThenBy(e => e.Id)
                         .FirstOrDefault();
 
-                    if (guestCashEntity != null)
+                    var guestOriPrice = guestCashEntity?.Price;
+
+                    void AddIfNotExists(Prod_Price entity, decimal? oriPrice)
                     {
-                        guestCash = new ProductPriceDto
-                        {
-                            Id = guestCashEntity.Id,
-                            FK_PSId = guestCashEntity.FK_PSId,
-                            FK_RId = guestCashEntity.FK_RId,
-                            Price = guestCashEntity.Price,
-                            Bonus = guestCashEntity.Bonus ?? 0,
-                            OriPrice = guestCashEntity.Price
-                        };
+                        var exists = output.Any(e =>
+                            e.FK_PSId == entity.FK_PSId &&
+                            e.Id == entity.Id);
+
+                        if (exists)
+                            return;
+
+                        output.Add(ToPriceDto(entity, oriPrice));
                     }
 
-                    for (int index = roleIndex; index >= 0; index--)
+                    bool IsSamePlanKind(Prod_Price a, Prod_Price b)
                     {
-                        var currentRole = roleLevels[index];
+                        var aBonus = a.Bonus ?? 0;
+                        var bBonus = b.Bonus ?? 0;
 
-                        var cashEntity = stockPrices
-                            .Where(e => (e.Bonus ?? 0) == 0 && e.FK_RId == currentRole.Id)
-                            .OrderBy(e => e.Price ?? 0)
-                            .ThenBy(e => e.Id)
-                            .FirstOrDefault();
+                        if (aBonus == 0 && bBonus == 0)
+                            return true;
 
-                        if (cashEntity != null)
-                        {
-                            selectedCash = new ProductPriceDto
-                            {
-                                Id = cashEntity.Id,
-                                FK_PSId = cashEntity.FK_PSId,
-                                FK_RId = cashEntity.FK_RId,
-                                Price = cashEntity.Price,
-                                Bonus = cashEntity.Bonus ?? 0,
-                                OriPrice = guestCash?.OriPrice ?? guestCashEntity?.Price ?? cashEntity.Price
-                            };
-                            break;
-                        }
+                        if (aBonus > 0 && bBonus > 0)
+                            return true;
+
+                        return false;
                     }
 
-                    if (selectedCash == null)
+                    bool CanReplace(Prod_Price currentPlan, Prod_Price lowerPlan)
                     {
-                        var fallbackCashEntity = stockPrices
-                            .Where(e => (e.Bonus ?? 0) == 0)
-                            .OrderBy(e => (e.FK_RId == 1 || e.FK_RId == 0) ? 0 : 1)
-                            .ThenBy(e => e.FK_RId)
-                            .ThenBy(e => e.Price ?? 0)
-                            .ThenBy(e => e.Id)
-                            .FirstOrDefault();
+                        if (!IsSamePlanKind(currentPlan, lowerPlan))
+                            return false;
 
-                        if (fallbackCashEntity != null)
-                        {
-                            selectedCash = new ProductPriceDto
-                            {
-                                Id = fallbackCashEntity.Id,
-                                FK_PSId = fallbackCashEntity.FK_PSId,
-                                FK_RId = fallbackCashEntity.FK_RId,
-                                Price = fallbackCashEntity.Price,
-                                Bonus = fallbackCashEntity.Bonus ?? 0,
-                                OriPrice = guestCash?.OriPrice ?? guestCashEntity?.Price ?? fallbackCashEntity.Price
-                            };
-                        }
+                        var currentPrice = currentPlan.Price ?? 0;
+                        var currentBonus = currentPlan.Bonus ?? 0;
+                        var lowerPrice = lowerPlan.Price ?? 0;
+                        var lowerBonus = lowerPlan.Bonus ?? 0;
+
+                        return currentPrice <= lowerPrice && currentBonus <= lowerBonus;
                     }
 
-                    if (selectedCash != null)
+                    // roleIndex 是目前角色在 roleLevels 的位置。
+                    // 例如：
+                    // 非會員 index = 0
+                    // 一般會員 index = 1
+                    // 更高會員 index = 2...
+                    var safeRoleIndex = roleIndex;
+
+                    if (safeRoleIndex < 0 || safeRoleIndex >= roleLevels.Count)
                     {
-                        output.Add(selectedCash);
+                        safeRoleIndex = roleLevels.FindIndex(e => e.Id == 1 || e.Id == 0);
+                        if (safeRoleIndex < 0)
+                            safeRoleIndex = 0;
                     }
 
-                    if (!bonusEnabled)
-                        continue;
+                    var currentRole = roleLevels[safeRoleIndex];
 
-                    var bonusEntity = stockPrices
-                        .Where(e => (e.Bonus ?? 0) > 0 && visibleRoleIds.Contains(e.FK_RId))
-                        .OrderBy(e => e.Price ?? 0)
-                        .ThenBy(e => e.Bonus ?? 0)
+                    // 目前角色自己的方案全部顯示。
+                    // 這裡不再替客戶判斷「紅利價現金部分比較高就隱藏」。
+                    var currentRolePlans = stockPrices
+                        .Where(e => e.FK_RId == currentRole.Id)
+                        .Where(e => bonusEnabled || (e.Bonus ?? 0) == 0)
+                        .OrderBy(e => e.Bonus ?? 0)
+                        .ThenBy(e => e.Price ?? 0)
                         .ThenBy(e => e.Id)
-                        .FirstOrDefault();
+                        .ToList();
 
-                    if (bonusEntity != null)
+                    foreach (var plan in currentRolePlans)
                     {
-                        var cashPrice = output
-                            .Where(e => e.FK_PSId == stockId && e.Bonus == 0)
-                            .FirstOrDefault();
+                        AddIfNotExists(
+                            plan,
+                            guestOriPrice ?? plan.Price
+                        );
+                    }
 
-                        if (cashPrice == null || (cashPrice.Price ?? 0) > (bonusEntity.Price ?? 0))
+                    // 低階角色方案只在「目前角色沒有完整平替」時才補。
+                    // 平替判斷：現金與紅利兩個維度都 <= 低階方案，才視為可取代。
+                    var lowerRoleIds = roleLevels
+                        .Take(safeRoleIndex)
+                        .Select(e => e.Id)
+                        .ToList();
+
+                    var lowerRolePlans = stockPrices
+                        .Where(e => lowerRoleIds.Contains(e.FK_RId))
+                        .Where(e => bonusEnabled || (e.Bonus ?? 0) == 0)
+                        .OrderBy(e => e.FK_RId == 1 || e.FK_RId == 0 ? 0 : 1)
+                        .ThenBy(e => e.Bonus ?? 0)
+                        .ThenBy(e => e.Price ?? 0)
+                        .ThenBy(e => e.Id)
+                        .ToList();
+
+                    foreach (var lowerPlan in lowerRolePlans)
+                    {
+                        var hasReplacement = currentRolePlans.Any(currentPlan =>
+                            CanReplace(currentPlan, lowerPlan));
+
+                        if (hasReplacement)
+                            continue;
+
+                        AddIfNotExists(
+                            lowerPlan,
+                            guestOriPrice ?? lowerPlan.Price
+                        );
+                    }
+
+                    // 非會員情境：
+                    // 非會員自己的價格通常只有現金價。
+                    // 但商品內頁價格列表需要展示一筆會員紅利價，讓前端顯示，但不能買由前端/加入購物車流程判斷。
+                    if (bonusEnabled && (currentRole.Id == 1 || currentRole.Id == 0))
+                    {
+                        var alreadyHasBonus = output.Any(e =>
+                            e.FK_PSId == stockId && e.Bonus > 0);
+
+                        if (!alreadyHasBonus)
                         {
-                            output.Add(new ProductPriceDto
+                            var displayBonus = stockPrices
+                                .Where(e => (e.Bonus ?? 0) > 0)
+                                .OrderBy(e => e.FK_RId == 1 || e.FK_RId == 0 ? 1 : 0)
+                                .ThenBy(e => e.Price ?? 0)
+                                .ThenBy(e => e.Bonus ?? 0)
+                                .ThenBy(e => e.Id)
+                                .FirstOrDefault();
+
+                            if (displayBonus != null)
                             {
-                                Id = bonusEntity.Id,
-                                FK_PSId = bonusEntity.FK_PSId,
-                                FK_RId = bonusEntity.FK_RId,
-                                Price = bonusEntity.Price,
-                                Bonus = bonusEntity.Bonus ?? 0,
-                                OriPrice = guestCash?.OriPrice ?? guestCashEntity?.Price
-                            });
+                                AddIfNotExists(
+                                    displayBonus,
+                                    guestOriPrice ?? displayBonus.Price
+                                );
+                            }
                         }
                     }
                 }

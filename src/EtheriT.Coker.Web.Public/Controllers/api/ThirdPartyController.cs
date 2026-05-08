@@ -56,7 +56,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                     return await linePayAppService.LinePayRequest(ohid);
                 case "4":
                 case "ECPay":
-                    return await ecPayAppService.ECPayGetTokenById(ohid, support ?? false);
+                    return await ecPayAppService.ECPayGetRepayTokenById(ohid, support ?? false);
             }
             response.Success = false;
             response.Message = "支付方式不存在";

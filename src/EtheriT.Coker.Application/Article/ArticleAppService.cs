@@ -733,71 +733,26 @@ namespace EtheriT.Coker.Application.Article
                     var isLogin = checktokenresponse.IsLogin;
                     var Files = await fileUploadAppService.getArticleFiles(AId);
 
-                    var doc = htmlProcessor.LoadHtml(stringHandler.HtmlDecode(article.SaveHtml));
-                    var EditData = htmlProcessor.Find(doc, "[data-edit-type]");
-                    var FileInsertNode = EditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "File" || d.GetAttributeValue("data-edit-type", "") == "Files").ToList();
+                    var SaveDoc = htmlProcessor.LoadHtml(stringHandler.HtmlDecode(article.SaveHtml));
+                    var SaveEditData = htmlProcessor.Find(SaveDoc, "[data-edit-type]");
+                    var SaveeNode = SaveEditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "File" || d.GetAttributeValue("data-edit-type", "") == "Files").ToList();
 
-                    if (FileInsertNode.Any() && Files.Any())
+                    var html = stringHandler.HtmlDecode(article.Html ?? "");
+                    var Doc = htmlProcessor.LoadHtml(html);
+                    var EditData = htmlProcessor.Find(Doc, "[data-edit-type]");
+                    var Node = EditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "File" || d.GetAttributeValue("data-edit-type", "") == "Files").ToList();
+
+                    if (SaveeNode.Any() && Files.Any())
                     {
-                        foreach (var node in FileInsertNode)
+                        FileInsertNode(SaveeNode, SaveDoc, Files, isLogin);
+                        article.SaveHtml = SaveDoc.DocumentNode.OuterHtml;
+
+                        if (Node.Any())
                         {
-                            var nodeType = node.GetAttributeValue("data-edit-type", "");
-                            var areaKey = node.GetAttributeValue("data-edit-key", "");
-                            var isSingle = nodeType.Equals("File", StringComparison.OrdinalIgnoreCase);
-
-                            var templateName = node.GetAttributeValue("data-edit-template", "");
-                            var templateNode = !string.IsNullOrWhiteSpace(templateName) ? htmlProcessor.Find(doc, $"#{templateName}")?.FirstOrDefault() : null;
-
-                            if (templateNode == null)
-                            {
-                                var format = isSingle ? "{value}" : "{index}. {value}";
-                                var idAttr = !string.IsNullOrWhiteSpace(templateName) ? $@" id=""{templateName}""" : "";
-                                var html = @$"<a{idAttr} class=""download-item link_with_icon do_not_rename d-flex text-decoration-none edit_lock align-items-center d-none"">
-                                                                    <div class=""icon pe-2""></div>
-                                                                    <span data-edit-label=""檔案名稱"" data-edit-type=""string"" data-edit-format=""{format}"" class=""file-name name""></span>
-                                                                    <span class=""download-btn"">
-                                                                        <i class=""fas fa-lock""></i>
-                                                                        <span class=""download-text"">下載</span>
-                                                                        <i class=""fas fa-lock-open""></i>
-                                                                    </span>
-                                                                  </a>";
-
-                                templateNode = HtmlNode.CreateNode(html);
-                                node.PrependChild(templateNode);
-                            }
-
-                            node.SelectNodes(".//a[contains(@class,'download-item') and not(contains(@class,'d-none'))]")?.ToList().ForEach(n => n.Remove());
-
-                            node.SelectSingleNode(".//div[contains(@class,'no-files-msg')]")?.Remove();
-
-                            var candidates = Files.Where(f => f.isVisible && f.areakey.Equals(areaKey, StringComparison.OrdinalIgnoreCase));
-
-                            if (isSingle) candidates = candidates.Take(1);
-
-                            var list = candidates.ToList();
-
-                            if (list.Count > 0)
-                            {
-                                var actualIndex = 1;
-                                foreach (var file in list)
-                                {
-                                    var child = templateNode.CloneNode(true);
-                                    child.Attributes.Remove("id");
-                                    child.SetAttributeValue("class", string.Join(" ", child.GetAttributeValue("class", "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Where(c => c != "d-none")));
-
-                                    FileHtmlNodeSet(child, file, actualIndex.ToString(), isLogin);
-                                    actualIndex++;
-
-                                    node.AppendChild(child);
-                                }
-                            }
-                            else
-                            {
-                                node.AppendChild(HtmlNode.CreateNode("<div class=\"no-files-msg\">無相關檔案可顯示</div>"));
-                            }
+                            FileInsertNode(Node, Doc, Files, isLogin);
+                            article.Html = Doc.DocumentNode.OuterHtml;
                         }
 
-                        article.SaveHtml = doc.DocumentNode.OuterHtml;
                         await loginUserData.SaveChanges(article);
                         response.Success = true;
                     }
@@ -808,6 +763,66 @@ namespace EtheriT.Coker.Application.Article
                 response.Message = ex.Message;
             }
             return response;
+        }
+        void FileInsertNode(List<HtmlNode> FileInsertNode, HtmlDocument Doc, List<FileGetArticleDisplayDto> Files, bool isLogin)
+        {
+            foreach (var node in FileInsertNode)
+            {
+                var nodeType = node.GetAttributeValue("data-edit-type", "");
+                var areaKey = node.GetAttributeValue("data-edit-key", "");
+                var isSingle = nodeType.Equals("File", StringComparison.OrdinalIgnoreCase);
+
+                var templateName = node.GetAttributeValue("data-edit-template", "");
+                var templateNode = !string.IsNullOrWhiteSpace(templateName) ? htmlProcessor.Find(Doc, $"#{templateName}")?.FirstOrDefault() : null;
+
+                if (templateNode == null)
+                {
+                    var format = isSingle ? "{value}" : "{index}. {value}";
+                    var idAttr = !string.IsNullOrWhiteSpace(templateName) ? $@" id=""{templateName}""" : "";
+                    var html = @$"<a{idAttr} class=""download-item link_with_icon do_not_rename d-flex text-decoration-none edit_lock align-items-center d-none"">
+                                                                    <div class=""icon pe-2""></div>
+                                                                    <span data-edit-label=""檔案名稱"" data-edit-type=""string"" data-edit-format=""{format}"" class=""file-name name""></span>
+                                                                    <span class=""download-btn"">
+                                                                        <i class=""fas fa-lock""></i>
+                                                                        <span class=""download-text"">下載</span>
+                                                                        <i class=""fas fa-lock-open""></i>
+                                                                    </span>
+                                                                  </a>";
+
+                    templateNode = HtmlNode.CreateNode(html);
+                    node.PrependChild(templateNode);
+                }
+
+                node.SelectNodes(".//a[contains(@class,'download-item') and not(contains(@class,'d-none'))]")?.ToList().ForEach(n => n.Remove());
+
+                node.SelectSingleNode(".//div[contains(@class,'no-files-msg')]")?.Remove();
+
+                var candidates = Files.Where(f => f.isVisible && f.areakey.Equals(areaKey, StringComparison.OrdinalIgnoreCase));
+
+                if (isSingle) candidates = candidates.Take(1);
+
+                var list = candidates.ToList();
+
+                if (list.Count > 0)
+                {
+                    var actualIndex = 1;
+                    foreach (var file in list)
+                    {
+                        var child = templateNode.CloneNode(true);
+                        child.Attributes.Remove("id");
+                        child.SetAttributeValue("class", string.Join(" ", child.GetAttributeValue("class", "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Where(c => c != "d-none")));
+
+                        FileHtmlNodeSet(child, file, actualIndex.ToString(), isLogin);
+                        actualIndex++;
+
+                        node.AppendChild(child);
+                    }
+                }
+                else
+                {
+                    node.AppendChild(HtmlNode.CreateNode("<div class=\"no-files-msg\">無相關檔案可顯示</div>"));
+                }
+            }
         }
         // 將之前前台才載入檔案的先全部Run一遍
         // 2026/05/14 21:15 正式站Run過一次

@@ -60,10 +60,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await articleAppService.RebuildContentWithFiles(AId);
         }
         // 2026/05/14 21:15 正式站Run過一次 先隱藏
-        //[HttpGet]
-        //public async Task<ResponseMessageDto> RebuildAllContentWithFiles()
-        //{
-        //    return await articleAppService.RebuildAllContentWithFiles();
-        //}
+        // 2026/05/14 21:54 需重新Run 先開啟
+        [HttpGet]
+        public async Task<ResponseMessageDto> RebuildAllContentWithFiles()
+        {
+            return await articleAppService.RebuildAllContentWithFiles();
+        }
     }
 }

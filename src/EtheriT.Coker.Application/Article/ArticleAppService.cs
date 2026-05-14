@@ -733,7 +733,7 @@ namespace EtheriT.Coker.Application.Article
                     var isLogin = checktokenresponse.IsLogin;
                     var Files = await fileUploadAppService.getArticleFiles(AId);
 
-                    var doc = htmlProcessor.LoadHtml(stringHandler.HtmlDecode(article.Html));
+                    var doc = htmlProcessor.LoadHtml(stringHandler.HtmlDecode(article.SaveHtml));
                     var EditData = htmlProcessor.Find(doc, "[data-edit-type]");
                     var FileInsertNode = EditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "File" || d.GetAttributeValue("data-edit-type", "") == "Files").ToList();
 
@@ -797,7 +797,7 @@ namespace EtheriT.Coker.Application.Article
                             }
                         }
 
-                        article.Html = doc.DocumentNode.OuterHtml;
+                        article.SaveHtml = doc.DocumentNode.OuterHtml;
                         await loginUserData.SaveChanges(article);
                         response.Success = true;
                     }

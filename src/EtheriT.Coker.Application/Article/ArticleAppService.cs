@@ -810,6 +810,7 @@ namespace EtheriT.Coker.Application.Article
             return response;
         }
         // 將之前前台才載入檔案的先全部Run一遍
+        // 2026/05/14 21:15 正式站Run過一次
         public async Task<ResponseMessageDto> RebuildAllContentWithFiles()
         {
             ResponseMessageDto response = new ResponseMessageDto();

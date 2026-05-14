@@ -206,7 +206,7 @@ function PageReady() {
                     InvoiceFilled = FormCheck(InvoiceForms);
                     if (!OrdererFilled) {
                         if (OrdererOpen) $("#OrdererForm>form").removeClass('was-validated')
-                        OrdererEdit(true,true);
+                        OrdererEdit(true, true);
                         $("#radio_recipient_order").trigger("change");
                         $("#radio_bill_orderer").trigger("change");
                     }

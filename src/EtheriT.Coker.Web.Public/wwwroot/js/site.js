@@ -675,6 +675,17 @@ function ready() {
             }
         });
     }
+
+    var $GetDay = $(".get-day");
+    if ($GetDay.length > 0) {
+        const today = new Date().getDay();
+        $GetDay.data('day', today);
+        var $changetext = $GetDay.find('[data-getdaytext="true"]');
+        if ($changetext.length > 0) {
+            var html = $GetDay.find(`.day${today}`).html();
+            $changetext.html(html);
+        }
+    }
 }
 
 function SiteElementInit() {

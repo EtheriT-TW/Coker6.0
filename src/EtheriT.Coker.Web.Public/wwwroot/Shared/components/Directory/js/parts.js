@@ -94,6 +94,146 @@
     };
 
     // =========================
+    // Marketing Labels（商品行銷標籤）
+    // =========================
+    function hasMarketingDisplayNumber(value) {
+        if (isNullOrEmpty(value)) return false;
+
+        if (
+            w.DirectoryPrice &&
+            isFn(w.DirectoryPrice.hasDisplayValue)
+        ) {
+            return w.DirectoryPrice.hasDisplayValue(value);
+        }
+
+        const num = Number(String(value).replace(/,/g, "").trim());
+        return !isNaN(num) && num > 0;
+    }
+
+    function normalizeMarketingLabels(data) {
+        const labels = [];
+
+        /*
+         * 後端未來可直接回傳：
+         *
+         * marketingLabels: ["紅利", "加價購"]
+         *
+         * 或：
+         *
+         * marketingLabels: [
+         *     { text: "紅利", type: "bonus" },
+         *     { text: "加價購", type: "addon" }
+         * ]
+         *
+         * 也支援 marketingTags，避免後端命名還沒統一時卡住。
+         */
+        const source = Array.isArray(data.marketingLabels)
+            ? data.marketingLabels
+            : (Array.isArray(data.marketingTags) ? data.marketingTags : []);
+
+        source.forEach(function (item) {
+            if (isNullOrEmpty(item)) return;
+
+            if (typeof item === "string") {
+                labels.push({
+                    text: item,
+                    type: "custom"
+                });
+                return;
+            }
+
+            const text = item.text || item.name || item.title || item.label || item.tag_Name;
+            if (isNullOrEmpty(text)) return;
+
+            labels.push({
+                text: text,
+                type: item.type || item.code || item.key || "custom"
+            });
+        });
+
+        /*
+         * 目前後端只有 bonus 時，先自動補「紅利」標籤。
+         * 注意：這只是行銷標籤，價格顯示仍由 DirectoryPrice.apply 處理。
+         */
+        const hasBonusLabel = labels.some(function (item) {
+            return String(item.type).toLowerCase() === "bonus" || item.text === "紅利";
+        });
+
+        if (!hasBonusLabel && hasMarketingDisplayNumber(data.bonus)) {
+            labels.unshift({
+                text: "紅利",
+                type: "bonus"
+            });
+        }
+
+        return labels;
+    }
+
+    function getMarketingLabelContainer($content) {
+        let $container = $content.find(".marketing-labels, [data-slot='marketing-labels']").first();
+        if ($container.length > 0) return $container;
+
+        $container = $('<div class="marketing-labels d-flex flex-wrap gap-1 mb-1"></div>');
+
+        const $titleBlock = $content.find(".item-title").first();
+        if ($titleBlock.length > 0) {
+            $titleBlock.after($container);
+            return $container;
+        }
+
+        const $priceBlock = $content.find(".price-grid, .normal-price, .price").first();
+        if ($priceBlock.length > 0) {
+            $priceBlock.before($container);
+            return $container;
+        }
+
+        const $caption = $content.find("figcaption").first();
+        if ($caption.length > 0) {
+            $caption.prepend($container);
+            return $container;
+        }
+
+        $content.find("a").first().append($container);
+        return $container;
+    }
+
+    DirectoryParts.applyMarketingLabels = function (content, data) {
+        const $content = $(content);
+
+        if (!data || data.type != 1) {
+            $content.find(".marketing-labels, [data-slot='marketing-labels']")
+                .empty()
+                .addClass("d-none");
+            return;
+        }
+
+        const labels = normalizeMarketingLabels(data);
+        const $container = getMarketingLabelContainer($content);
+
+        $container.empty();
+
+        if (labels.length === 0) {
+            $container.addClass("d-none");
+            return;
+        }
+
+        labels.forEach(function (label) {
+            const type = String(label.type || "custom")
+                .toLowerCase()
+                .replace(/[^a-z0-9_-]/g, "");
+
+            const $badge = $('<span class="marketing-label badge rounded-pill fw-normal"></span>');
+
+            $badge.addClass(`marketing-label-${type || "custom"}`);
+            $badge.text(label.text);
+
+            $container.append($badge);
+        });
+
+        $container.removeClass("d-none");
+    };
+
+    // =========================
     // Tags（加入 fallback）
     // =========================
     DirectoryParts.applyTags = function ($item, content, data) {

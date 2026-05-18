@@ -288,6 +288,9 @@
             if (isFn(w.DirectoryParts.applyTags)) {
                 w.DirectoryParts.applyTags($item, content, data);
             }
+            if (isFn(w.DirectoryParts.applyMarketingLabels)) {
+                w.DirectoryParts.applyMarketingLabels(content, data);
+            }
             if (isFn(w.DirectoryParts.applyShare)) {
                 w.DirectoryParts.applyShare(content, linkData.path);
             }
@@ -573,6 +576,9 @@
                     }
                     if (isFn(w.DirectoryParts.applyTags)) {
                         w.DirectoryParts.applyTags($item, content, data);
+                    }
+                    if (isFn(w.DirectoryParts.applyMarketingLabels)) {
+                        w.DirectoryParts.applyMarketingLabels(content, data);
                     }
                     if (isFn(w.DirectoryParts.applyShare)) {
                         w.DirectoryParts.applyShare(content, linkData.path);

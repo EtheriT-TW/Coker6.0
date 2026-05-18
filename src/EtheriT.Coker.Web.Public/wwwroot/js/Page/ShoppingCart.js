@@ -685,7 +685,6 @@ function hashChange(e) {
     }
 }
 function GetOrderPage() {
-    console.log("GetOrderPage", window.location.search);
     if ($.isNumeric(window.location.search.substring(1))) {
         isCheckout = true;
         var ohid = parseInt(window.location.search.substring(1));

@@ -89,6 +89,31 @@
         cursor: default;
     }
 
+/* ===== marketing labels =====*/
+.marketing-labels {
+    line-height: 1.4;
+}
+
+.marketing-label {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.marketing-label-bonus {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.marketing-label-addon {
+    background-color: #e7f1ff;
+    color: #084298;
+}
+
+.marketing-label-custom {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+
 /* ===== Menu Directory ===== */
 .menu_directory .active {
     background-color: #f8f9fa;

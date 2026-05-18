@@ -387,7 +387,7 @@ upload/**/*.*
 **/package-lock.json
 *.lock
 *.bak
-db/*.*
+db/**/*.*
 .sonarqube/**/*.*
 
 # Thumbnail image

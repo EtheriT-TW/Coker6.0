@@ -22,6 +22,7 @@ using System;
 using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 using DevExpress.CodeParser;
 using System.Security.Cryptography;
+using EtheriT.Coker.Application.Shared.Dto.Order;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -413,7 +414,15 @@ namespace EtheriT.Coker.Application.ThirdParty
                 {
                     var ohidstr = ohdata.TransactionId;
                     var ohid_str = "000000000" + ohid.ToString();
-                    var RefundBody = new { order_id = ohidstr, refund_id = $"{ohidstr}-Refund", trade_amount = refund == null ? ohdata.Subtotal + ohdata.Freight : refund };
+                    var paymentResult = await orderAppService.GetForPaymentAsync(ohdata.Id);
+                    if (!paymentResult.Success)
+                        throw new Exception(paymentResult.Message ?? "取得付款資料失敗");
+
+                    var payData = paymentResult.Object as PayOrderData;
+                    if (payData == null)
+                        throw new Exception("付款資料格式錯誤");
+
+                    var RefundBody = new { order_id = ohidstr, refund_id = $"{ohidstr}-Refund", trade_amount = refund == null ? payData.PayableAmount : refund };
 
                     if (RefundBody != null)
                     {
@@ -760,7 +769,15 @@ namespace EtheriT.Coker.Application.ThirdParty
                     }
                     else throw new Exception("付款方式錯誤");
 
-                    PaymentBody.amount = Convert.ToInt32(Math.Round(ohdata.Subtotal + ohdata.Freight));
+                    var paymentResult = await orderAppService.GetForPaymentAsync(ohdata.Id);
+                    if (!paymentResult.Success)
+                        throw new Exception(paymentResult.Message ?? "取得付款資料失敗");
+
+                    var payData = paymentResult.Object as PayOrderData;
+                    if (payData == null)
+                        throw new Exception("付款資料格式錯誤");
+
+                    PaymentBody.amount = payData.PayableAmount;
 
                     var items = new List<PChomePayItemsDto>();
                     var items_length = 0;

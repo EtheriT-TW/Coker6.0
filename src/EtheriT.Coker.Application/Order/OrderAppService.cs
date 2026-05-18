@@ -390,6 +390,31 @@ namespace EtheriT.Coker.Application.Order
             DetailBuildResult? detailResult)
         {
             Order_Header? oh;
+            ShippingTypeEnum? LogisticsSubType = await db.LogisticsSettings
+                    .Where(e => e.Id == dto.Shipping)
+                    .Select(e => (ShippingTypeEnum?)e.LogisticsType)
+                    .FirstOrDefaultAsync();
+
+            var cvsTypes = new HashSet<ShippingTypeEnum>
+                {
+                    ShippingTypeEnum.OK取貨,
+                    ShippingTypeEnum.全家取貨,
+                    ShippingTypeEnum.Seven取貨,
+                    ShippingTypeEnum.萊爾富取貨,
+                    ShippingTypeEnum.綠界_大宗寄倉_全家,
+                    ShippingTypeEnum.綠界_大宗寄倉_711超商,
+                    ShippingTypeEnum.綠界_大宗寄倉_711冷凍店取,
+                    ShippingTypeEnum.綠界_大宗寄倉_萊爾富,
+                    ShippingTypeEnum.綠界_門市寄取_全家,
+                    ShippingTypeEnum.綠界_門市寄取_711超商,
+                    ShippingTypeEnum.綠界_門市寄取_萊爾富,
+                    ShippingTypeEnum.綠界_門市寄取_OK超商
+                };
+
+            var IsCVSStore = LogisticsSubType != null && cvsTypes.Contains(LogisticsSubType.Value);
+
+            if (IsCVSStore)
+                dto.RecipientAddress = $"{GetCVSType((ShippingTypeEnum)LogisticsSubType)}-{dto.CVSStoreName}({dto.CVSAddress})";
 
             if (dto.OrderId != null)
             {
@@ -456,32 +481,6 @@ namespace EtheriT.Coker.Application.Order
             }
             else
             {
-                ShippingTypeEnum? LogisticsSubType = await db.LogisticsSettings
-                    .Where(e => e.Id == dto.Shipping)
-                    .Select(e => (ShippingTypeEnum?)e.LogisticsType)
-                    .FirstOrDefaultAsync();
-
-                var cvsTypes = new HashSet<ShippingTypeEnum>
-                {
-                    ShippingTypeEnum.OK取貨,
-                    ShippingTypeEnum.全家取貨,
-                    ShippingTypeEnum.Seven取貨,
-                    ShippingTypeEnum.萊爾富取貨,
-                    ShippingTypeEnum.綠界_大宗寄倉_全家,
-                    ShippingTypeEnum.綠界_大宗寄倉_711超商,
-                    ShippingTypeEnum.綠界_大宗寄倉_711冷凍店取,
-                    ShippingTypeEnum.綠界_大宗寄倉_萊爾富,
-                    ShippingTypeEnum.綠界_門市寄取_全家,
-                    ShippingTypeEnum.綠界_門市寄取_711超商,
-                    ShippingTypeEnum.綠界_門市寄取_萊爾富,
-                    ShippingTypeEnum.綠界_門市寄取_OK超商
-                };
-
-                var IsCVSStore = LogisticsSubType != null && cvsTypes.Contains(LogisticsSubType.Value);
-
-                if (IsCVSStore)
-                    dto.RecipientAddress = $"{GetCVSType((ShippingTypeEnum)LogisticsSubType)} {dto.CVSStoreName}({dto.CVSAddress})";
-
                 oh = mapper.Map<Order_Header>(dto);
 
                 oh.FK_WebsiteId = websiteId;

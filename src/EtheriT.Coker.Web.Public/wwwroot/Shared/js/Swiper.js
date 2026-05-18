@@ -61,7 +61,7 @@ function SwiperInit(obj) {
         swiperBindEven: function (swiper, canNext) {
 
             const checkSlides = function () {
-                if (Array.isArray(swiper)) swiper = swiper[swiper.length-1];
+                if (Array.isArray(swiper)) swiper = swiper[swiper.length - 1];
                 if (swiper == null) return;
                 const totalSlides = swiper.slides.length;
                 const slidesPerView = swiper.params.slidesPerView;
@@ -191,7 +191,7 @@ function SwiperInit(obj) {
                             var $iframe = $(this);
                             if ($iframe.attr('src')) {
                                 let src = $iframe.attr('src');
-                                if ($iframe.data("start_time") && src.includes("youtube") && src.includes("autoplay") && !src.includes("start=")) 
+                                if ($iframe.data("start_time") && src.includes("youtube") && src.includes("autoplay") && !src.includes("start="))
                                     src += `&start=${$iframe.data("start_time")}`; //如果有設定開始時間，則加上參數
                                 $iframe.data('src', src);
                                 $iframe.attr('src', '');
@@ -707,7 +707,7 @@ function SwiperInit(obj) {
                     keep_time = keep_time * 1000;
                     obj['src'] = $(this).attr("src");
                     obj['alt'] = typeof ($(this).attr("alt")) == "undefined" ? "" : $(this).attr("alt");
-                    
+
                     let item = null;
                     if (link.startsWith("https://www.youtube.com") || link.startsWith("https://www.facebook.com")) item = { type: "iframe", src: link, ratio: ratio, startTime: start_time, keepTime: keep_time };
                     else if (isVideoFile(link)) item = { type: "video", src: link, ratio: ratio, startTime: start_time, keepTime: keep_time };
@@ -788,7 +788,7 @@ function SwiperInit(obj) {
                         });
                         $('#pictureSwiper').swiperBindEven(pictureSwiper);
                     }
-                    pictureSwiper.slideToLoop(index, 0,false);
+                    pictureSwiper.slideToLoop(index, 0, false);
                     pictureSwiperThumbs.slideTo(index, 0, false);
                     restoreActivePictureSwiperMedia(index);
                 });
@@ -930,6 +930,142 @@ function SwiperInit(obj) {
             swiper.slideTo(0);
             swiper.loopCreate();
             swiper.update();
+        }
+    });
+
+    // 新增一個共用的 尚待調整
+    $(".swiper_components").each(function () {
+        var $self = $(this);
+        const index = $self.index(this);
+        $self.find(".swiper_thumbs_components > .swiper-wrapper").empty();
+
+        if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
+            var Id = "#" + $self.attr("id") + " .swiper";
+            var totalSlide = $self.find('.swiper-slide').length;
+            const canNext = totalSlide >= 2;
+            var effect = $self.data("effect");
+            var speed = $self.data("effect-speed");
+
+            var swiperNumber = Number($self.data("swiperset-shownumber")) || 1;
+            var autoplay = canNext && String($self.data("swiperset-autoplay")).toLowerCase() === "true";
+            var autoplayDelay = Number($self.data("swiperset-autoplaydelay")) || 5000;
+
+            var $thumbs = $self.find(".swiper_thumbs_components");
+            var hasThumbs = $thumbs.length > 0;
+            var swiperThumbs = null;
+
+            if (hasThumbs) {
+                var thumbsShowNumber_desktop = Number($thumbs.data("swiperset-thumbsshownum-desktop")) || 1;
+                var thumbsShowNumber_tablet = Number($thumbs.data("swiperset-thumbsshownum-tablet")) || 1;
+                var thumbsShowNumber_mobile = Number($thumbs.data("swiperset-thumbsshownum-mobile")) || 1;
+
+                var thumbsSpaceBetween = Number($thumbs.data("swiperset-thumbs-spacebetween")) || 10;
+
+                var thumbsRowNumber = Number($thumbs.data("swiperset-thumbs-rownumber")) || Math.ceil(totalSlide / thumbsShowNumber_desktop);
+
+                swiperThumbs = new Swiper(`#${$self.attr("id")}  .swiper_thumbs_components`, {
+                    breakpoints: {
+                        0: {            // 手機
+                            slidesPerView: thumbsShowNumber_mobile,
+                            grid: {
+                                rows: Math.min(3, Math.ceil(totalSlide / thumbsShowNumber_mobile)),
+                                fill: 'row'
+                            },
+                            scrollbar: {
+                                el: ".swiper-scrollbar",
+                                hide: !(totalSlide > thumbsShowNumber_mobile),
+                            }
+                        },
+                        768: {          // 平板
+                            slidesPerView: thumbsShowNumber_tablet,
+                            grid: {
+                                rows: Math.min(3, Math.ceil(totalSlide / thumbsShowNumber_tablet)),
+                                fill: 'row'
+                            },
+                            scrollbar: {
+                                el: ".swiper-scrollbar",
+                                hide: !(totalSlide > thumbsShowNumber_tablet),
+                            }
+                        },
+                        1024: {         // 桌機
+                            slidesPerView: thumbsShowNumber_desktop,
+                            grid: {
+                                rows: thumbsRowNumber,
+                                fill: 'row'
+                            },
+                            scrollbar: {
+                                el: `#${$self.attr("id")} .swiper-scrollbar`,
+                                hide: !(totalSlide > thumbsShowNumber_desktop * thumbsRowNumber),
+                            }
+                        }
+                    },
+                    spaceBetween: thumbsSpaceBetween,
+                    pagination: {
+                        el: ".swiper-pagination",
+                        clickable: true,
+                    },
+                });
+            }
+            
+            if (typeof effect === 'undefined' || effect === false) effect = "slide";
+            if (typeof speed === 'undefined' || speed === false) speed = 300;
+            else speed = parseInt(speed);
+            var selfConfig = Object.assign({}, config, {
+                slidesPerView: swiperNumber,
+                pagination: {
+                    el: "#" + $self.attr("id") + " .swiper_pagination",
+                    clickable: true,
+                },
+                navigation: {
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
+                },
+                effect: effect,
+                speed: speed
+            }, hasThumbs ? {
+                thumbs: {
+                    swiper: swiperThumbs,
+                }
+            } : {}, autoplay ? {
+                autoplay: {
+                    delay: autoplayDelay,
+                    disableOnInteraction: false,
+                },
+                loop: true
+            } : {});
+
+            if (!canNext) {
+                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").remove();
+            }
+
+            if (!$self.find(".swiper").hasClass("selfThumbs")) { //如果沒有swiper class的元素
+                const $images = [];
+                const $alts = [];
+                const $class = [];
+                $self.find(".swiper-slide img").each(function () { //遍歷所有thumnbs-image底下的img
+                    $images.push($(this).attr("src")); //儲存到$images變數
+                    $alts.push($(this).attr("alt"));
+                    if ($(this).closest('.swiper-slide').hasClass('backstageType')) {
+                        $class.push('backstageType');
+                    } else {
+                        $class.push("");
+                    }
+                });
+                if ($images.length > 1) {
+                    for (let i = 0; i < $images.length; i++) { //生成Thumbs
+                        const newSlide = `<div class="swiper-slide ${$class[i]}"><img src="${$images[i]}" alt="${$alts[i]}" /></div>`;
+                        swiperThumbs.appendSlide(newSlide); //放入siwperThumbs
+                    }
+                }
+            }
+            swiperThumbs.slideTo(index, 0);
+            var swiper = new Swiper(Id, selfConfig);
+            $self.data("isInit", true)
+            if (autoplay && swiper.slides.length - 2 > 1) {
+                $self.swiperBindEven(swiper);
+            }
+            if (autoplay) PauseOnMouseEnter(swiper, $self.find(".swiper"))
         }
     });
 

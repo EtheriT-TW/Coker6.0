@@ -306,6 +306,7 @@ var grapesInit = function (options) {
                         $(obj.classes).each(function () {
                             var s = this.toString();
                             switch (s) {
+                                case "swiper_components":
                                 case "one_swiper":
                                 case "one_swiper_thumbs":
                                 case "two_swiper":

@@ -91,7 +91,7 @@
                 test: function ($root) {
                     return has(
                         $root,
-                        ".one_swiper,.one_swiper_thumbs,.two_swiper,.three_swiper,.four_swiper,.five_swiper,.six_swiper,.picture-category,.three_two_grid_swiper,.vertical_swiper_thumbs"
+                        ".swiper_components,.one_swiper,.one_swiper_thumbs,.two_swiper,.three_swiper,.four_swiper,.five_swiper,.six_swiper,.picture-category,.three_two_grid_swiper,.vertical_swiper_thumbs"
                     );
                 },
                 run: function ($root) {

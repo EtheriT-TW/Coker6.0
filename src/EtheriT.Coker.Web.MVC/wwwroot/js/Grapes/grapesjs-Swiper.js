@@ -7,7 +7,7 @@ grapesjs.plugins.add('grapesjs-Swiper', (editor, options) => {
     };
     //輪播
     editor.DomComponents.addType('輪播', {
-        isComponent: el => el.classList?.contains('one_swiper') || el.classList?.contains('one_swiper_thumbs') || el.classList?.contains('two_swiper') || el.classList?.contains('three_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper') || el.classList?.contains('three_two_grid_swiper') || el.classList?.contains('vertical_swiper_thumbs'),
+        isComponent: el => el.classList?.contains('swiper_components') || el.classList?.contains('one_swiper') || el.classList?.contains('one_swiper_thumbs') || el.classList?.contains('two_swiper') || el.classList?.contains('three_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper') || el.classList?.contains('three_two_grid_swiper') || el.classList?.contains('vertical_swiper_thumbs'),
         model: {
             defaults: {
                 tagName: 'div',
@@ -455,7 +455,7 @@ grapesjs.plugins.add('grapesjs-Swiper', (editor, options) => {
                 }
                 setTimeout(timmer, 100);
             }
-        } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1 || classList.indexOf("three_two_grid_swiper") > -1 || classList.indexOf("vertical_swiper_thumbs") > -1) {
+        } else if (classList.indexOf("swiper_components") > -1 || > -1 || classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1 || classList.indexOf("three_two_grid_swiper") > -1 || classList.indexOf("vertical_swiper_thumbs") > -1) {
             var cont = iframe.document.getElementsByClassName("swiper").length;
             const timmer = function () {
                 if (iframe.document.getElementsByClassName("swiper").length != cont) iframe.SwiperInit({ autoplay: false });
@@ -486,7 +486,7 @@ grapesjs.plugins.add('grapesjs-Swiper', (editor, options) => {
         if (classList.indexOf("swiper-slide") > -1) {
             var swiper = obj.target.parent().parent().getEl().swiper;
             swiper.update();
-        } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1 || classList.indexOf("three_two_grid_swiper") > -1 || classList.indexOf("vertical_swiper_thumbs") > -1) iframe.SwiperInit({ autoplay: false });
+        } else if (classList.indexOf("swiper_components") > -1 || classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1 || classList.indexOf("three_two_grid_swiper") > -1 || classList.indexOf("vertical_swiper_thumbs") > -1) iframe.SwiperInit({ autoplay: false });
     });
     editor.DomComponents.addType('外嵌影片放大檢視', {
         isComponent: el => el.classList?.contains('YTmodal_frame'),

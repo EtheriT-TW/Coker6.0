@@ -42,7 +42,7 @@
     height: 3.75rem;
 }
 
-.six_swiper .swiper {
+.six_swiper .swiper, .swiper_thumbs_components {
     min-height: 5rem;
 }
 

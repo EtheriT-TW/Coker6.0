@@ -27,7 +27,7 @@ var ECPayRefreshTimer = null;
 var ECPayChanging = false;
 
 var RecipientsList_dxData;
-
+const ECPAY_THIRD_PARTY_ID = 4;
 function PageReady() {
     $('#RadioPayment .payment_display').on("click", function () {
         updatePaymentRadioUI($(this).closest('.form-check'));
@@ -75,30 +75,37 @@ function PageReady() {
         ECPayMonitor = true;
         ECPay.initialize($("#ECPayPayment").data("server-type"), 1, function (errMsg) {
             if (errMsg != null) {
-                $("#radio_payment_ECPay").addClass("d-none");
+                GetECPayEntryRadio().closest(".form-check").addClass("d-none");
                 console.log(`Initialize errMsg : ${errMsg}`)
                 co.sweet.error("串接綠界發生錯誤");
             } else {
                 ECPayInit = true;
 
-                $("#radio_payment_ECPay").prop("checked", true);
-                $("#radio_payment_ECPay").closest('.form-check').prevAll('.form-check').first().find('.payment_display').addClass('last');
+                var $ecpayRadio = GetECPayEntryRadio();
+
+                if ($ecpayRadio.length) {
+                    $ecpayRadio.prop("checked", true);
+                    $ecpayRadio.closest('.form-check').prevAll('.form-check').first().find('.payment_display').addClass('last');
+                }
 
                 $('#RadioPayment .payment_display').on("click", function () {
                     var $this_radio = $(this);
                     var $parentFormCheck = $this_radio.closest('.form-check');
-                    var $nextPayment = $parentFormCheck.nextAll('.form-check').first().find('.payment_display');
+                    var $nextPaymentRadio = $parentFormCheck
+                        .nextAll(".form-check")
+                        .first()
+                        .find('input[name="RadioPayment"]');
+
                     var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
 
-                    $ECPayList.each(function () {
-                        $(this).removeClass("first");
-                    })
+                    $ECPayList.removeClass("first");
 
-                    if ($nextPayment.attr("id") == "payment_ECPay") $ECPayList.first().addClass("first");
+                    if ($nextPaymentRadio.length && IsPaymentRadioECPay($nextPaymentRadio)) {
+                        $ECPayList.first().addClass("first");
+                    }
 
-                    $ECPayList.each(function () {
-                        $(this).removeClass("ecpay-pl-act");
-                    })
+                    $ECPayList.removeClass("ecpay-pl-act");
+
                     buy_step_swiper.update();
                 });
             }
@@ -439,9 +446,11 @@ function PageReady() {
         } else if (!payMethodsChosen && !HasECPay) {
             Coker.sweet.warning("請注意", "請選擇付款方式！", null);
         } else {
-            if ($(`[name="RadioPayment"]:checked`).val() == null && HasECPay && (typeof window.Pay === "undefined" || $("#ECPayPayment").children().length == 0)) {
+            var isECPaySelected = IsECPaySelected();
+
+            if ($(`[name="RadioPayment"]:checked`).val() == null && isECPaySelected && (typeof window.Pay === "undefined" || $("#ECPayPayment").children().length == 0)) {
                 co.sweet.warning("付款模組尚未載入完成，請稍候再試。", "", null);
-            } else if (HasECPay && !SupportCashOnDelivery && !ECPayReady) {
+            } else if (isECPaySelected && !ECPayReady) {
                 ECPaymentChange();
 
                 co.sweet.warning(
@@ -1560,18 +1569,31 @@ function TotalCount() {
 
     const earnEnabled = (MinOrderForEarnPoints > 0 && RewardRatePercent > 0);
 
+    function buildBonusEarnRuleText() {
+        return `商品滿 $${Number(MinOrderForEarnPoints || 0).toLocaleString()}，` +
+            `依商品金額 ${Number(RewardRatePercent || 0).toLocaleString()}% 回饋，運費不計。`;
+    }
+
     if (!earnEnabled) {
         $rewardRow.addClass("d-none");
         $earnText.text("");
     } else if (subtotal < MinOrderForEarnPoints) {
         const diff = MinOrderForEarnPoints - subtotal;
+
         $rewardRow.removeClass("d-none");
-        $earnText.text(`再消費 $${diff.toLocaleString()} 可獲得紅利回饋`);
+        $earnText.html(
+            `<span class="bonus-earn-main">再消費 $${diff.toLocaleString()} 可獲得紅利回饋</span>` +
+            `<span class="bonus-earn-rule d-block">${buildBonusEarnRuleText()}</span>`
+        );
     } else {
         const earnPoints = Math.floor(subtotal * RewardRatePercent / 100);
+
         if (earnPoints > 0) {
             $rewardRow.removeClass("d-none");
-            $earnText.text(`本單預計獲得紅利 ${earnPoints.toLocaleString()} 點`);
+            $earnText.html(
+                `<span class="bonus-earn-main">本單預計獲得 ${earnPoints.toLocaleString()} 點紅利</span>` +
+                `<span class="bonus-earn-rule d-block">${buildBonusEarnRuleText()}</span>`
+            );
         } else {
             $rewardRow.addClass("d-none");
             $earnText.text("");
@@ -1867,19 +1889,21 @@ function RadioShipping() {
     MarkECPayDirty();
 }
 // 付款方式顯示的項目調整
+// 付款方式顯示的項目調整
 function ConfigurePaymentOptions(val) {
     var $CheckedShipping = $('input[name="RadioShipping"]:checked');
     if ($CheckedShipping.length == 0) return;
 
-    var canCashOnDelivery = $CheckedShipping.attr("data-support-cash-on-delivery").toLowerCase() === "true";
+    var canCashOnDelivery =
+        $CheckedShipping.attr("data-support-cash-on-delivery").toLowerCase() === "true";
 
     $("#RadioPayment > .form-check").addClass("d-none");
     $(".noPaymentWarning").addClass("d-none");
     $(".ecpayWarning").removeClass("d-none");
     $("#RadioPayment input:radio").prop("checked", false);
+    $("#RadioPayment > .form-check > .payment_display").removeClass("checked first last");
 
     if (canCashOnDelivery) {
-        $("#RadioPayment > .form-check > .payment_display").removeClass("checked");
         $(".ecpayWarning").addClass("d-none");
 
         var $codPayment = $("#RadioPayment input[value='28']");
@@ -1889,7 +1913,7 @@ function ConfigurePaymentOptions(val) {
 
             var $formCheck = $codPayment.closest(".form-check");
             $formCheck.removeClass("d-none");
-            $formCheck.find(".payment_display").addClass("checked");
+            $formCheck.find(".payment_display").addClass("checked first last");
         } else {
             var $warning = $(".noPaymentWarning");
 
@@ -1902,29 +1926,89 @@ function ConfigurePaymentOptions(val) {
 
             $warning.removeClass("d-none");
         }
+
+        $(".ecpay_loading").addClass("d-none");
+        return;
+    }
+
+    var showpayment = false;
+
+    if (!HasECPay || ECPayReady) {
+        showpayment = true;
+    }
+
+    if (!showpayment) {
+        $("#RadioPayment .form-check input[value='28']").closest(".form-check").addClass("d-none");
+        return;
+    }
+
+    var $list = $("#RadioPayment > .form-check");
+
+    // 先顯示所有付款方式
+    $list.removeClass("d-none");
+
+    // 非貨到付款情境，不顯示貨到付款
+    $list.has("input[value='28']").addClass("d-none");
+
+    // 綠界付款項目由 #ECPayPayment SDK 顯示，不應該在 RadioPayment 清單中顯示
+    $list
+        .has('input[name="RadioPayment"][data-third-party-id="' + ECPAY_THIRD_PARTY_ID + '"]')
+        .addClass("d-none");
+
+    $(".ecpayWarning").addClass("d-none");
+
+    var $targetInput = $();
+
+    if (val != null && val !== "") {
+        $targetInput = $('#RadioPayment input[name="RadioPayment"][value="' + val + '"]');
+    }
+
+    var $targetFormCheck = $targetInput.closest(".form-check");
+
+    // 如果 val 是綠界付款，允許它維持 checked，但它本身仍然隱藏。
+    // 真正顯示的是 #ECPayPayment 的 SDK UI。
+    if ($targetInput.length && IsPaymentRadioECPay($targetInput)) {
+        updatePaymentRadioUI($targetFormCheck);
     } else {
-        var showpayment = false;
+        // 一般付款方式：如果 val 不存在，或 val 對應到隱藏項，就改選第一個可見付款方式
+        if (!$targetFormCheck.length || $targetFormCheck.hasClass("d-none")) {
+            $targetFormCheck = $("#RadioPayment > .form-check:not(.d-none)").first();
+        }
 
-        if (!HasECPay || ECPayReady) showpayment = true;
-
-        if (showpayment) {
-            var $list = $("#RadioPayment > .form-check");
-
-            $list.removeClass("d-none");
-            $list.has("input[value='28']").addClass("d-none");
-            $list.has("input[value='16']").addClass("d-none");
-
-            $(".ecpayWarning").addClass("d-none");
-
-            var $targetFormCheck = $(`#RadioPayment input[value="${val}"]`).closest(".form-check");
-            if (!$targetFormCheck.length) $targetFormCheck = $list.first();
-
+        if ($targetFormCheck.length) {
             updatePaymentRadioUI($targetFormCheck);
-        } else {
-            $("#RadioPayment .form-check input[value='28']").closest(".form-check").addClass("d-none");
         }
     }
+
     $(".ecpay_loading").addClass("d-none");
+}
+function GetCheckedPaymentRadio() {
+    return $('#RadioPayment input[name="RadioPayment"]:checked');
+}
+
+function GetCheckedPaymentValue() {
+    return GetCheckedPaymentRadio().val();
+}
+
+function IsPaymentRadioECPay($radio) {
+    return Number($radio.attr("data-third-party-id") || 0) === ECPAY_THIRD_PARTY_ID;
+}
+
+function IsECPaySelected() {
+    var $checked = GetCheckedPaymentRadio();
+
+    return HasECPay &&
+        $checked.length > 0 &&
+        IsPaymentRadioECPay($checked);
+}
+
+function GetECPayEntryRadio() {
+    return $('#RadioPayment input[name="RadioPayment"][data-third-party-id="' + ECPAY_THIRD_PARTY_ID + '"]').first();
+}
+
+function GetECPayEntryValue() {
+    var $radio = GetECPayEntryRadio();
+    return $radio.length ? $radio.val() : null;
 }
 // 付款方式顯示的class調整
 function updatePaymentRadioUI($target) {
@@ -2008,6 +2092,11 @@ function BuildECPayOrderSnapshot() {
 function ECPaymentChange() {
     if (!ECPayMonitor || !HasECPay) return;
 
+    var selectedPaymentBeforeSync = GetCheckedPaymentValue();
+    var restorePaymentAfterSync = IsECPaySelected()
+        ? GetECPayEntryValue()
+        : selectedPaymentBeforeSync;
+
     TotalCount();
 
     var dataReady = AllDataGet(false);
@@ -2081,7 +2170,7 @@ function ECPaymentChange() {
                     ECPayChanging = false;
                     ECPayOrderSnapshot = nextSnapshot;
 
-                    ConfigurePaymentOptions(16);
+                    ConfigurePaymentOptions(restorePaymentAfterSync || GetECPayEntryValue());
 
                     var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
                     $ECPayList.removeClass("first last");
@@ -2092,14 +2181,17 @@ function ECPaymentChange() {
                         const trusted = e.originalEvent?.isTrusted;
                         if (trusted !== true) return;
 
-                        ConfigurePaymentOptions(16);
+                        var $this_radio = GetECPayEntryRadio();
+                        if ($this_radio.length === 0) return;
 
-                        var $this_radio = $("#radio_payment_ECPay");
+                        ConfigurePaymentOptions($this_radio.val());
+
                         var $parentFormCheck = $this_radio.closest(".form-check");
                         var $prevPayment = $parentFormCheck.prevAll(".form-check").first().find(".payment_display");
 
                         $("#RadioPayment .payment_display").removeClass("checked first last");
                         $this_radio.prop("checked", true);
+                        $parentFormCheck.find(".payment_display").addClass("checked");
                         $("#RadioPayment .payment_display").first().addClass("first");
                         $prevPayment.addClass("last");
 
@@ -2362,8 +2454,18 @@ function OrderDataGet() {
     order_header_data.CVSTelephone = shipping_radio.attr("data-cvstelephone") ?? null;
     order_header_data.CVSOutSide = shipping_radio.attr("data-cvsoutside") ?? null;
 
-    if (typeof (order_header_data.payment) == "undefined" || (!((order_header_data.payment >= 16 && order_header_data.payment <= 23) || order_header_data.payment === 27))) {
-        order_header_data.payment = $(`.form-check:not("d-none") input[name="RadioPayment"]:checked`).val();
+    var checkedPaymentValue = GetCheckedPaymentValue();
+
+    if (IsECPaySelected()) {
+        // 選綠界時，允許保留 GetECPayType() 已解析出的綠界細項 payment
+        // 例如信用卡、ATM、超商代碼、條碼、ApplePay。
+        if (order_header_data.payment == null || order_header_data.payment === "") {
+            order_header_data.payment = checkedPaymentValue || GetECPayEntryValue();
+        }
+    } else {
+        // 不是綠界時，一律以目前畫面 checked 的 RadioPayment 為準。
+        // 這是排除綠界細項 payment 殘留的關鍵。
+        order_header_data.payment = checkedPaymentValue;
     }
 
     order_header_data.state = 1;
@@ -2571,15 +2673,7 @@ async function OrderHeaderAdd() {
             order_header_data.remark = "無";
         }
 
-        var isECPayCheckout =
-            order_header_data.payment != 28 &&
-            HasECPay &&
-            (
-                ($("#RadioPayment > .form-check").length > 1 &&
-                    $("#radio_payment_ECPay").length > 0 &&
-                    $("#radio_payment_ECPay").prop("checked")) ||
-                ($(".ecpay_loading").is(":hidden") && $("#ECPayPayment").length > 0)
-            );
+        var isECPayCheckout = IsECPaySelected();
 
         if (isECPayCheckout) {
             GetECPayType();

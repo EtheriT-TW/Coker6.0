@@ -272,6 +272,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                         Code = pt.Code,
                                         Icon = pt.Icons != "" ? $"/images/paymenticon/{pt.Icons}" : "",
                                         Used = true,
+                                        FK_ThirdPartyId = pt.FK_ThirdPartyId,
                                         MaxAmount = pt.MaxAmount,
                                         MinAmount = pt.MinAmount,
                                     }).ToListAsync();
@@ -302,11 +303,13 @@ namespace EtheriT.Coker.Application.ThirdParty
                             .DefaultIfEmpty(defaultMin)
                             .Min();
 
+                        var ecpayEntry = ecpayItems.First();
                         nonEcpayItems.Add(new PaymentTypeItemOutputDto
                         {
-                            Id = ecpayItems.First().Id,
+                            Id = ecpayEntry.Id,
                             Title = "其他支付方式",
                             Code = "ECPay",
+                            FK_ThirdPartyId = ecpayEntry.FK_ThirdPartyId,
                             Icon = "",
                             Used = true,
                             MaxAmount = maxAmount,

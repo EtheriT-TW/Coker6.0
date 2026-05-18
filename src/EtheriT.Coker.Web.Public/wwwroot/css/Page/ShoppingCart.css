@@ -367,6 +367,7 @@ input[type="number"] {
         color: #9a6a00;
         font-size: 0.92rem;
         line-height: 1.2;
+        text-align:left;
     }
 
     .priceline .summary-reward-icon {
@@ -384,6 +385,16 @@ input[type="number"] {
         display: inline-block;
         margin-right: 0.5rem;
     }
+.bonusEarnHintText .bonus-earn-main {
+    display: block;
+    line-height: 1.4;
+}
+
+.bonusEarnHintText .bonus-earn-rule {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    opacity: 0.75;
+}
 
 .price-negative {
     color: #2e7d32;

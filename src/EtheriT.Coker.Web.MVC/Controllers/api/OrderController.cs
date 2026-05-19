@@ -84,6 +84,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         [HttpPost]
         public async Task<ResponseMessageDto> UpdateStatus(OrderUpdateStatusDto dto)
         {
+            dto.ForceCancel = true;
             return await orderAppService.UpdateStatus(dto);
         }
         [HttpGet]

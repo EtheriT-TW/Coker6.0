@@ -1148,6 +1148,7 @@ namespace EtheriT.Coker.Application.Product
                         data.PriceDisplayText = null;
                         data.BaseRoleName = null;
                         data.CurrentRoleName = null;
+                        data.HasBonusPrice = false;
                     }
 
                     // 時價時，沿用你原本的顯示邏輯
@@ -1160,6 +1161,9 @@ namespace EtheriT.Coker.Application.Product
                         data.CurrentRoleName = null;
                     }
 
+                    // 商品行銷標籤：一定要放在價格 mapping 後面
+                    data.MarketingLabels = BuildMarketingLabels(data);
+
                     // 如果你仍想保留「訪客且非會員價時才顯示 SuggestPrice」的舊規則，
                     // 就把這段改回條件判斷；目前這版以 GetDirectoryPriceMapAsync 的結果為準。
                 }
@@ -1170,6 +1174,86 @@ namespace EtheriT.Coker.Application.Product
             {
                 return null;
             }
+        }
+        private static bool HasDisplayNumber(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+
+            var text = value.Replace(",", "").Trim();
+
+            return decimal.TryParse(text, out var number) && number > 0;
+        }
+
+        private static ProductMarketingLabelDto CreateMarketingLabel(ProductMarketingLabelTypeEnum type)
+        {
+            return type switch
+            {
+                ProductMarketingLabelTypeEnum.紅利 => new ProductMarketingLabelDto
+                {
+                    Type = ProductMarketingLabelTypeEnum.紅利,
+                    Text = "紅利",
+                    CssClass = "marketing-label-bonus"
+                },
+
+                ProductMarketingLabelTypeEnum.加價購 => new ProductMarketingLabelDto
+                {
+                    Type = ProductMarketingLabelTypeEnum.加價購,
+                    Text = "加價購",
+                    CssClass = "marketing-label-addon"
+                },
+
+                ProductMarketingLabelTypeEnum.滿額贈 => new ProductMarketingLabelDto
+                {
+                    Type = ProductMarketingLabelTypeEnum.滿額贈,
+                    Text = "滿額贈",
+                    CssClass = "marketing-label-gift"
+                },
+
+                ProductMarketingLabelTypeEnum.限時優惠 => new ProductMarketingLabelDto
+                {
+                    Type = ProductMarketingLabelTypeEnum.限時優惠,
+                    Text = "限時優惠",
+                    CssClass = "marketing-label-limited"
+                },
+
+                _ => new ProductMarketingLabelDto
+                {
+                    Type = ProductMarketingLabelTypeEnum.自訂,
+                    Text = "優惠",
+                    CssClass = "marketing-label-custom"
+                }
+            };
+        }
+
+        private static List<ProductMarketingLabelDto> BuildMarketingLabels(DirectoryReleInfoDto data)
+        {
+            var labels = new List<ProductMarketingLabelDto>();
+
+            if (data == null)
+                return labels;
+
+            /*
+             * 目前第一階段只有紅利：
+             * 只要最後實際目錄價格有 Bonus，就顯示「紅利」行銷標籤。
+             * 是否啟用紅利、是否可見，已由 ProductDisplayPriceService 決定。
+             */
+            if (data.HasBonusPrice)
+            {
+                labels.Add(CreateMarketingLabel(ProductMarketingLabelTypeEnum.紅利));
+            }
+
+            /*
+             * 未來加價購、滿額贈、限時優惠可以在這裡追加：
+             *
+             * if (data.HasAddOnPurchase)
+             *     labels.Add(CreateMarketingLabel(ProductMarketingLabelTypeEnum.加價購));
+             *
+             * if (data.HasGiftCampaign)
+             *     labels.Add(CreateMarketingLabel(ProductMarketingLabelTypeEnum.滿額贈));
+             */
+
+            return labels;
         }
         /* Delete */
         public async Task<ResponseMessageDto> ProdDelete(long Id)

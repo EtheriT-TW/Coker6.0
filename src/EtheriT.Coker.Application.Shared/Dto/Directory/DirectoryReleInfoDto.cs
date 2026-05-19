@@ -1,5 +1,6 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
+using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Directory
@@ -34,6 +35,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public string? CurrentRoleName { get; set; }      // 當前角色名稱
         public bool IsMemberPrice { get; set; }
         public bool IsTimePrice { get; set; }
+        public bool HasBonusPrice { get; set; }
         public string? ItemNo { get; set; }
         public int? ClickTimes { get; set; }
         public int? ExposureTimes { get; set; }
@@ -41,6 +43,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public string StatusName { get; set; } = string.Empty;
         public bool Visible { get; set; }
         public bool Available { get; set; }
+        public List<ProductMarketingLabelDto> MarketingLabels { get; set; } = new();
         public List<TagGetSelectedDto>? tags { get; set; }
 
     }

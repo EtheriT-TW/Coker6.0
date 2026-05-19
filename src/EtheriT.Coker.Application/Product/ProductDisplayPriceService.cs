@@ -69,6 +69,15 @@ namespace EtheriT.Coker.Application.Product
                     if (!stocksByProduct.TryGetValue(productId, out var productStocks) || !productStocks.Any())
                         continue;
 
+                    var productStockIds = productStocks.Select(e => e.Id).ToList();
+
+                    var hasBonusPrice =
+                        bonusEnabled &&
+                        prices.Any(e =>
+                            productStockIds.Contains(e.FK_PSId) &&
+                            (e.Bonus ?? 0) > 0 &&
+                            e.FK_RId > 1);
+
                     var candidates = new List<(
                         Prod_Stock Stock,
                         Prod_Price Price,
@@ -146,7 +155,8 @@ namespace EtheriT.Coker.Application.Product
                             IsMemberPrice = chosen.IsMemberPrice,
                             PriceDisplayText = null,
                             BaseRoleName = chosen.BaseRoleName,
-                            CurrentRoleName = chosen.CurrentRoleName
+                            CurrentRoleName = chosen.CurrentRoleName,
+                            HasBonusPrice = hasBonusPrice
                         };
 
                         continue;
@@ -164,7 +174,8 @@ namespace EtheriT.Coker.Application.Product
                             SuggestPrice = null,
                             IsTimePrice = true,
                             IsMemberPrice = false,
-                            PriceDisplayText = L.get("MarketPrice")
+                            PriceDisplayText = L.get("MarketPrice"),
+                            HasBonusPrice = hasBonusPrice
                         };
                     }
                 }

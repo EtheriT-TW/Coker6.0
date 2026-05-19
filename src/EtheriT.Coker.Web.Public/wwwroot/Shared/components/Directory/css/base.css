@@ -89,29 +89,85 @@
         cursor: default;
     }
 
-/* ===== marketing labels =====*/
+/* ===== Marketing Labels ===== */
 .marketing-labels {
-    line-height: 1.4;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    line-height: 1.2;
+    min-height: 1.35rem;
+    margin-top: 0;
+    margin-bottom: 0;
 }
+
+    .marketing-labels.d-none {
+        display: none !important;
+    }
 
 .marketing-label {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 3rem;
+    max-width: 5.5rem;
+    font-size: 0.72rem;
+    font-weight: 400;
+    line-height: 1.2;
+    padding: 0.16rem 0.5rem;
+    border-radius: 0.15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.marketing-label-bonus {
-    background-color: #fff3cd;
-    color: #856404;
-}
-
-.marketing-label-addon {
-    background-color: #e7f1ff;
-    color: #084298;
-}
-
+.marketing-label-bonus,
+.marketing-label-addon,
+.marketing-label-gift,
+.marketing-label-limited,
 .marketing-label-custom {
-    background-color: #f8f9fa;
-    color: #6c757d;
+    background-color: #ef4b7a;
+    color: #fff;
+}
+
+/* type4 商品卡片：行銷標籤放在 bottom-row 下方 */
+.type_change_frame .catalog.type4 .marketing-labels {
+    flex: 0 0 auto;
+    width: 100%;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.type_change_frame .catalog.type4 .marketing-label {
+    flex: 0 0 auto;
+}
+
+/* bottom-row 後方接行銷標籤 */
+.type_change_frame .catalog.type4 .bottom-row + .marketing-labels {
+    margin-top: 0.35rem;
+}
+
+/* type5 橫式卡片：避免行銷標籤擠到右側購買區 */
+.type_change_frame .catalog.type1 .col.type5 figure figcaption .marketing-labels {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+/* 手機版：標籤稍微縮小 */
+@media (max-width: 576px) {
+    .marketing-labels {
+        gap: 0.25rem;
+        min-height: 1.3rem;
+        margin-top: 0.3rem;
+        margin-bottom: 0;
+    }
+
+    .marketing-label {
+        min-width: 2.75rem;
+        max-width: 5rem;
+        font-size: 0.7rem;
+        padding: 0.16rem 0.45rem;
+    }
 }
 
 /* ===== Menu Directory ===== */
@@ -560,7 +616,7 @@
 .type_change_frame .catalog.type4 .normal-price,
 .type_change_frame .catalog.type4 .price {
     margin-top: 0.3rem !important;
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.5rem;
     min-height: auto !important;
 }
 
@@ -583,6 +639,7 @@
     margin-top: auto;
     align-items: center;
     gap: 0.35rem;
+    min-height: 1.5rem;
 }
 
     .type_change_frame .catalog.type4 .bottom-row .tags {
@@ -600,6 +657,18 @@
 
     .type_change_frame .catalog.type4 .bottom-row .purchase {
         margin-left: auto;
+    }
+    /* 有 marketing labels 時，底部 tags 與行銷標籤視為同一個 footer 區 */
+    .type_change_frame .catalog.type4 .bottom-row:has(+ .marketing-labels:not(.d-none)) {
+        margin-bottom: 0.35rem;
+    }
+
+    /* 行銷標籤本身不要再影響上方價格區 */
+    .type_change_frame .catalog.type4 .bottom-row + .marketing-labels {
+        margin-top: 0;
+        margin-bottom: 0;
+        min-height: 1.4rem;
+        flex: 0 0 auto;
     }
 
 /* JS equalizer marker */

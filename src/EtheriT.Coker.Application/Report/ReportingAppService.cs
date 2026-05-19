@@ -75,7 +75,7 @@ namespace EtheriT.Coker.Application.Report
                                     ? $"紅利：{(x.ShoppingCart.Bonus ?? 0)}"
                                     : (
                                         x.ShoppingCart.Price.ToString("$#,##0")
-                                        + (((x.ShoppingCart.Bonus ?? 0) > 0) ? $"  紅利：{(x.ShoppingCart.Bonus ?? 0)}" : "")
+                                        + (((x.ShoppingCart.Bonus ?? 0) > 0) ? $"\n紅利：{(x.ShoppingCart.Bonus ?? 0)}" : "")
                                     )
                                 ),
                                 商品紅利 = x.ShoppingCart.Bonus ?? 0,
@@ -86,7 +86,7 @@ namespace EtheriT.Coker.Application.Report
                                         ? $"紅利：{((x.ShoppingCart.Bonus ?? 0) * x.ShoppingCart.Quantity)}"
                                         : (
                                             (x.ShoppingCart.Price * x.ShoppingCart.Quantity).ToString("$#,##0")
-                                            + (((x.ShoppingCart.Bonus ?? 0) > 0) ? $"  紅利：{((x.ShoppingCart.Bonus ?? 0) * x.ShoppingCart.Quantity)}" : "")
+                                            + (((x.ShoppingCart.Bonus ?? 0) > 0) ? $"\n紅利：{((x.ShoppingCart.Bonus ?? 0) * x.ShoppingCart.Quantity)}" : "")
                                         )
                                 ),
                                 商品折扣 = 0,

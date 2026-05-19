@@ -283,6 +283,54 @@
         };
     }
 
+    function buildPriceBaseViewModel(stock, priceOptions, controller, product) {
+        stock = stock || {};
+        const safePrices = Array.isArray(priceOptions) ? priceOptions : [];
+
+        const suggestPrice = normalizeNullableInt(stock.suggestPrice);
+        const baseRoleName =
+            product?.baseRoleName ||
+            safePrices.map(x => x.baseRoleName).find(x => !!x) ||
+            '非會員';
+
+        const originalPrice = safePrices
+            .map(x => normalizeNullableInt(x.oriPrice))
+            .find(x => x > 0) || 0;
+
+        const currentPrices = safePrices.map(x => normalizeNullableInt(x.price));
+        const currentBonuses = safePrices.map(x => normalizeNullableInt(x.bonus));
+
+        const hasSameSuggestPrice = currentPrices.some(x => x === suggestPrice);
+        const hasSameOriginalPrice = currentPrices.some((price, index) =>
+            price === originalPrice && currentBonuses[index] === 0
+        );
+
+        const showSuggestPrice =
+            !stock.timePrice &&
+            suggestPrice > 0 &&
+            !hasSameSuggestPrice;
+
+        const showOriginalPrice =
+            !stock.timePrice &&
+            originalPrice > 0 &&
+            !hasSameOriginalPrice &&
+            originalPrice !== suggestPrice;
+
+        return {
+            showSuggestPrice,
+            suggestPriceLabel: controller.t('suggestedPrice'),
+            suggestPriceValue: showSuggestPrice
+                ? `$${formatNumber(suggestPrice)}`
+                : '',
+
+            showOriginalPrice,
+            originalPriceLabel: `${baseRoleName}價`,
+            originalPriceValue: showOriginalPrice
+                ? `$${formatNumber(originalPrice)}`
+                : ''
+        };
+    }
+
     class ProductSelectionEngine {
         constructor(product, options) {
             this.product = product || { stocks: [] };
@@ -1326,15 +1374,69 @@
             }
         }
 
+        renderPriceBaseMeta(priceOptions) {
+            const $baseMeta = this.$root.find('.price-base-meta');
+            const $suggestPrice = $baseMeta.find('.suggest-price');
+            const $originalPrice = $baseMeta.find('.original-price');
+
+            if (!$baseMeta.length) return;
+
+            const stock = this.state.selection.getActiveStock();
+            const vm = buildPriceBaseViewModel(stock, priceOptions, this, this.state.product);
+
+            let hasMeta = false;
+
+            if (vm.showSuggestPrice) {
+                $suggestPrice
+                    .removeClass('d-none')
+                    .empty()
+                    .append($('<span/>', {
+                        class: 'price-meta-label',
+                        text: vm.suggestPriceLabel
+                    }))
+                    .append($('<span/>', {
+                        class: 'price-meta-value',
+                        text: vm.suggestPriceValue
+                    }));
+
+                hasMeta = true;
+            } else {
+                $suggestPrice.addClass('d-none').empty();
+            }
+
+            if (vm.showOriginalPrice) {
+                $originalPrice
+                    .removeClass('d-none')
+                    .empty()
+                    .append($('<span/>', {
+                        class: 'price-meta-label',
+                        text: vm.originalPriceLabel
+                    }))
+                    .append($('<span/>', {
+                        class: 'price-meta-value',
+                        text: vm.originalPriceValue
+                    }));
+
+                hasMeta = true;
+            } else {
+                $originalPrice.addClass('d-none').empty();
+            }
+
+            $baseMeta.toggleClass('d-none', !hasMeta);
+        }
+
         renderPrices() {
             const $priceFrame = this.$root.find(this.options.selectors.priceFrame).empty();
             const priceOptions = this.state.selection.getPriceOptions();
             const hasMultiplePrice = priceOptions.length > 1;
 
+            this.renderPriceBaseMeta(priceOptions);
+
             if (!priceOptions.length) {
                 this.$addToCartButton.addClass('d-none');
                 $priceFrame.addClass('d-none');
                 this.$root.find('.options').addClass('d-none');
+                this.$root.find('.price-base-meta').addClass('d-none');
                 return;
             }
 
@@ -1348,9 +1450,6 @@
                 const $label = $price.find('.price-option-label');
                 const $roleBadge = $price.find('.price-role-badge');
                 const $roleName = $price.find('.price-role-name');
-                const $meta = $price.find('.price-option-meta');
-                const $suggestPrice = $price.find('.suggest-price');
-                const $originalPrice = $price.find('.original-price');
                 const $saleRoleName = $price.find('.sale-role-name');
                 const $salePrice = $price.find('.sale-price');
                 const $sub = $price.find('.price-option-sub');
@@ -1361,7 +1460,15 @@
                 const stock = item.stock;
                 const vm = buildPriceViewModel(item, stock, this, this.state.product);
 
-                const isSelectable = hasMultiplePrice && this.state.selection.canAddToCart();
+                const stockAvailable =
+                    stock &&
+                    !stock.timePrice &&
+                    normalizeNullableInt(stock.stock) >= normalizeNullableInt(stock.minQty, 1);
+
+                const isSelectable =
+                    hasMultiplePrice &&
+                    stockAvailable &&
+                    this.state.selection.canAddToCart();
 
                 $price.toggleClass('is-multi-price', hasMultiplePrice);
                 $price.toggleClass('is-single-price', !hasMultiplePrice);
@@ -1377,7 +1484,7 @@
 
                 $label.attr('for', id);
 
-                // multi: badge 顯示
+                // multi: 多價格一律使用 price-role-badge 顯示角色名稱
                 if (hasMultiplePrice && vm.showRoleName) {
                     $roleBadge.removeClass('d-none');
                     $roleName.text(vm.roleName);
@@ -1388,39 +1495,17 @@
                     $price.removeClass('has-role-badge');
                 }
 
-                // single: 角色名稱直接放在金額前
+                // single: 只有單價才把角色名稱放在金額前
                 if (!hasMultiplePrice && vm.showRoleName) {
                     $saleRoleName.removeClass('d-none').text(`${vm.roleName} `);
                 } else {
                     $saleRoleName.addClass('d-none').text('');
                 }
 
-                // 下方價格區塊永遠顯示目前選中規格的價格
+                // 每一筆價格方案只顯示自己的實際售價
                 $salePrice
                     .text(vm.saleText)
                     .removeClass('bonus_lack');
-
-                let hasMeta = false;
-
-                if (vm.showSuggestPrice) {
-                    $suggestPrice.removeClass('d-none').text(vm.suggestPriceText);
-                    hasMeta = true;
-                } else {
-                    $suggestPrice.addClass('d-none').text('');
-                }
-
-                if (vm.showOriginalPrice) {
-                    $originalPrice.removeClass('d-none').text(vm.originalPriceText);
-                    hasMeta = true;
-                } else {
-                    $originalPrice.addClass('d-none').text('');
-                }
-
-                if (hasMeta) {
-                    $meta.removeClass('d-none');
-                } else {
-                    $meta.addClass('d-none');
-                }
 
                 let hasSub = false;
 

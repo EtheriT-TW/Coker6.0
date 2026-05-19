@@ -1657,9 +1657,17 @@ namespace EtheriT.Coker.Application.Order
                         else if (order_header.CompletedDate != null && order_header.CompletedDate >= past24Hours) isintime = true;
                         else if (order_header.CreationTime >= past24Hours) isintime = true;
 
+                        var now = DateTime.Now;
+
                         var payment = paymentList.FirstOrDefault(p => p.Id == order_header.Payment);
                         var canRefund = payment?.CanRefund == true;
-                        var canRepay = CanRepay(order_header, payment, DateTime.Now);
+
+                        var repayInfo = GetRepayInfo(order_header, payment, now);
+                        var canRepay = repayInfo.CanRepay;
+
+                        temp_OrderHeader.RepayAvailableAt = repayInfo.AvailableAt;
+                        temp_OrderHeader.RepayRemainingSeconds = repayInfo.RemainingSeconds;
+                        temp_OrderHeader.RepayWaitingMessage = repayInfo.WaitingMessage;
 
                         var canCancel =
                             isintime &&
@@ -1717,6 +1725,59 @@ namespace EtheriT.Coker.Application.Order
                 response.Message = ex.Message;
             }
             return response;
+        }
+
+        private static RepayInfoDto GetRepayInfo(Order_Header order, PaymentType? payment, DateTime now)
+        {
+            var result = new RepayInfoDto
+            {
+                CanRepay = false,
+                AvailableAt = null,
+                RemainingSeconds = 0,
+                WaitingMessage = ""
+            };
+
+            // 明確付款失敗，一律允許重新付款
+            if (order.State == OrderStatusEnum.付款失敗)
+            {
+                result.CanRepay = true;
+                return result;
+            }
+
+            // 只有待付款才有等待重新付款的問題
+            if (order.State != OrderStatusEnum.待付款)
+                return result;
+
+            if (payment?.RepayAfterMinutes == null || payment.RepayAfterMinutes <= 0)
+                return result;
+
+            var baseTime = order.RepayDate ?? order.CreationTime;
+            var availableAt = baseTime.AddMinutes(payment.RepayAfterMinutes.Value);
+
+            result.AvailableAt = availableAt;
+
+            if (now >= availableAt)
+            {
+                result.CanRepay = true;
+                result.RemainingSeconds = 0;
+                return result;
+            }
+
+            var remainingSeconds = (int)Math.Ceiling((availableAt - now).TotalSeconds);
+
+            result.CanRepay = false;
+            result.RemainingSeconds = Math.Max(0, remainingSeconds);
+            result.WaitingMessage = $"約 {Math.Ceiling(remainingSeconds / 60m)} 分鐘後可重新付款";
+
+            return result;
+        }
+
+        private class RepayInfoDto
+        {
+            public bool CanRepay { get; set; }
+            public DateTime? AvailableAt { get; set; }
+            public int RemainingSeconds { get; set; }
+            public string WaitingMessage { get; set; } = "";
         }
         private static bool CanRepay(Order_Header order, PaymentType? payment, DateTime now)
         {
@@ -2376,6 +2437,8 @@ namespace EtheriT.Coker.Application.Order
                 var oldStatus = order.State;
                 var newStatus = dto.Status;
 
+                ValidateCancelStatusChange(order, oldStatus, newStatus, dto.ForceCancel);
+
                 // 狀態相同，只更新備註
                 if (oldStatus == newStatus)
                 {
@@ -2439,6 +2502,51 @@ namespace EtheriT.Coker.Application.Order
             }
 
             return response;
+        }
+        private void ValidateCancelStatusChange(
+            Order_Header order,
+            OrderStatusEnum oldStatus,
+            OrderStatusEnum newStatus,
+            bool forceCancel)
+        {
+            if (oldStatus == newStatus)
+                return;
+
+            if (newStatus != OrderStatusEnum.已取消)
+                return;
+
+            if (oldStatus == OrderStatusEnum.已取消)
+                throw new Exception("該筆訂單已取消。");
+
+            switch (oldStatus)
+            {
+                case OrderStatusEnum.待確認:
+                case OrderStatusEnum.待付款:
+                case OrderStatusEnum.付款失敗:
+                case OrderStatusEnum.已付款:
+                    return;
+
+                case OrderStatusEnum.已出貨:
+                    if (!forceCancel)
+                        throw new Exception("訂單已出貨，無法由前台取消，請聯繫客服處理。");
+
+                    return;
+
+                case OrderStatusEnum.已完成:
+                    if (!forceCancel)
+                        throw new Exception("訂單已完成，無法由前台取消，請聯繫客服處理。");
+
+                    if (order.CompletedDate == null)
+                        throw new Exception("訂單缺少完成時間，無法判斷是否可取消。");
+
+                    if (DateTime.Now > order.CompletedDate.Value.AddDays(7))
+                        throw new Exception("訂單已完成超過 7 天，不允許取消或退刷。");
+
+                    return;
+
+                default:
+                    throw new Exception("目前訂單狀態不可取消。");
+            }
         }
         private async Task HandleOrderBonusStateChangeAsync(
             Order_Header order,
@@ -2525,21 +2633,42 @@ namespace EtheriT.Coker.Application.Order
 
             try
             {
-                output = await (from oh in db.Order_Headers
-                                join pt in db.PaymentTypes on oh.Payment equals pt.Id
-                                where oh.FK_UUID == UUID && !oh.IsTemp
-                                select new MemberOrderDto()
-                                {
-                                    Id = oh.Id,
-                                    OrderDate = oh.CreationTime.ToString("g"),
-                                    Payment = pt.Title == null ? "" : pt.Title,
-                                    OrderTotal = oh.Subtotal.ToString("N0"),
-                                    Status = ((OrderStatusEnum)oh.State).ToString(),
-                                }).Take(3).ToListAsync();
+                output = await db.Order_Headers
+                    .Where(oh => oh.FK_UUID == UUID && !oh.IsTemp)
+                    .OrderByDescending(oh => oh.CreationTime)
+                    .Select(oh => new
+                    {
+                        oh.Id,
+                        oh.CreationTime,
+                        Payment = oh.PaymentType.Title,
+                        oh.Subtotal,
+                        oh.State,
+                        OrderBonus = oh.Bonus ?? 0,
+                        ProductBonus = oh.Order_Details
+                            .Where(od => od.ShoppingCart != null)
+                            .Sum(od => (od.ShoppingCart.Bonus ?? 0) * od.ShoppingCart.Quantity)
+                    })
+                    .Take(3)
+                    .Select(x => new MemberOrderDto()
+                    {
+                        Id = x.Id,
+                        OrderDate = x.CreationTime.ToString("g"),
+                        Payment = x.Payment ?? "",
+                        OrderTotal = (
+                            x.Subtotal > 0 && (x.OrderBonus + x.ProductBonus) > 0
+                                ? $"{x.Subtotal.ToString("N0")}\n紅利：{(x.OrderBonus + x.ProductBonus).ToString("N0")}"
+                                : x.Subtotal > 0
+                                    ? x.Subtotal.ToString("N0")
+                                    : (x.OrderBonus + x.ProductBonus) > 0
+                                        ? $"紅利：{(x.OrderBonus + x.ProductBonus).ToString("N0")}"
+                                        : "0"
+                        ),
+                        Status = x.State.ToString(),
+                    })
+                    .ToListAsync();
             }
             catch (Exception e)
             {
-
             }
 
             return output;

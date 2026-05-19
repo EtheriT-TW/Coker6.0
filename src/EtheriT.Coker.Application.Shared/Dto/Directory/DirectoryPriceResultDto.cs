@@ -15,6 +15,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public string? SuggestPrice { get; set; }
         public bool IsTimePrice { get; set; }
         public bool IsMemberPrice { get; set; }
+        public bool HasBonusPrice { get; set; }
         public string? PriceDisplayText { get; set; }
         public string? BaseRoleName { get; set; }
         public string? CurrentRoleName { get; set; }

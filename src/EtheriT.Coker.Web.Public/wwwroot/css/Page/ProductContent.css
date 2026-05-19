@@ -302,7 +302,7 @@ i.fa-chevron-right {
 #Product > .content > .priceframe {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.35rem;
 }
 
 .price-option-card {
@@ -323,23 +323,48 @@ i.fa-chevron-right {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 0.22rem;
-    padding: 0.85rem 0.95rem;
+    gap: 0.12rem;
+    padding: 0.72rem 0.9rem;
     background-color: transparent;
     border: 1px solid transparent;
 }
 
 /* 只有可選卡才有外框 */
 .price-option-card.is-selectable .price-option-body {
-    border-color: var(--gray-light);
-    transition: border-color .18s ease, box-shadow .18s ease;
+    border-color: transparent;
+    border-bottom-color: #e5e5e5;
+    transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
 }
 
 .price-option-card.is-selectable .price-option-input:not(.d-none):checked + .price-option-label .price-option-body {
     border-color: var(--red-main);
     box-shadow: 0 0 0 1px rgba(192, 58, 34, 0.12);
+    background-color: #fff;
 }
 
+/* 多價格但不可選：庫存不足 / 售完 / 時價 */
+.price-option-card.is-multi-price:not(.is-selectable) .price-option-body {
+    border-color: transparent;
+    border-bottom-color: #e5e5e5;
+    background-color: transparent;
+}
+
+/* 可選狀態最後一筆：避免與下方既有分隔線重疊 */
+.price-option-card.is-selectable:last-child .price-option-body {
+    border-bottom-color: transparent;
+}
+
+/* 不可選多價格最後一筆：避免與下方既有分隔線重疊 */
+.price-option-card.is-multi-price:not(.is-selectable):last-child .price-option-body {
+    border-bottom-color: transparent;
+}
+
+.price-option-card.is-multi-price:not(.is-selectable) .price-option-sub {
+    margin-top: 0.1rem;
+    padding-left: 0;
+    font-size: 0.82rem;
+    color: #666;
+}
 /* ===== 多價：badge 掛在框上 ===== */
 
 .price-option-card.is-multi-price.has-role-badge {
@@ -352,17 +377,17 @@ i.fa-chevron-right {
 
 .price-role-badge {
     position: absolute;
-    top: -0.65rem;
-    left: -0.85rem;
+    top: -0.58rem;
+    left: -0.72rem;
     z-index: 2;
     display: inline-flex;
     align-items: center;
-    height: 1.5rem;
-    padding: 0 0.65rem;
+    height: 1.35rem;
+    padding: 0 0.58rem;
     border-radius: 999px;
     background-color: #f3f3f3;
     color: var(--gray-text);
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: 600;
     line-height: 1;
     white-space: nowrap;
@@ -401,22 +426,46 @@ i.fa-chevron-right {
     display: none !important;
 }
 
-/* ===== 比較資訊 ===== */
+/* ===== 基準價格資訊：建議售價 / 非會員價，只顯示一次 ===== */
 
-.price-option-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 0.08rem;
-    margin-bottom: 0.08rem;
+.price-base-meta {
+    display: block;
+    margin: 0 0 0.55rem 0;
+    padding: 1rem 0 1rem 0.5rem;
+    border-bottom: 1px solid #e6e6e6;
 }
 
-.suggest-price,
-.original-price {
-    font-size: 0.88rem;
-    color: #8a8a8a;
-    line-height: 1.35;
-    text-decoration: line-through;
-    text-decoration-thickness: 1px;
+    .price-base-meta .suggest-price,
+    .price-base-meta .original-price {
+        display: block;
+        font-size: 0.88rem;
+        color: #8a8a8a;
+        line-height: 1.35;
+        text-decoration: none;
+    }
+
+        .price-base-meta .suggest-price + .original-price {
+            margin-top: 0.05rem;
+        }
+
+    .price-base-meta .price-meta-label {
+        display: inline;
+        color: #777;
+        font-size: 0.88rem;
+        margin-right: 0.5rem;
+        text-decoration: none;
+    }
+
+    .price-base-meta .price-meta-value {
+        display: inline;
+        color: #8a8a8a;
+        text-decoration: line-through;
+        text-decoration-thickness: 1px;
+    }
+
+/* 保留舊 class 防呆：若舊模板或快取還有 price-option-meta，不讓它撐版 */
+.price-option-meta {
+    display: none !important;
 }
 
 /* ===== 主價格 ===== */
@@ -436,19 +485,14 @@ i.fa-chevron-right {
 
 /* 多價時主價縮小，避免卡片太高 */
 .price-option-card.is-multi-price .price-option-body {
-    padding-bottom: 0.68rem;
-    gap: 0.18rem;
+    padding-top: 0.78rem;
+    padding-bottom: 0.7rem;
+    gap: 0.12rem;
 }
 
 .price-option-card.is-multi-price .sale-price {
-    font-size: 1.05rem;
+    font-size: 1.28rem;
     line-height: 1.2;
-}
-
-.price-option-card.is-multi-price .suggest-price,
-.price-option-card.is-multi-price .original-price {
-    font-size: 0.82rem;
-    line-height: 1.25;
 }
 
 .price-option-card.is-multi-price .price-option-sub {
@@ -465,7 +509,7 @@ i.fa-chevron-right {
 
 /* 紅利不足 */
 .sale-price.bonus_lack {
-    text-decoration: line-through;
+    text-decoration: none;
     opacity: 0.7;
 }
 
@@ -797,8 +841,10 @@ input:disabled + .btn_radio {
         font-size: 1.4rem;
     }
 
-    .suggest-price,
-    .original-price,
+    .price-base-meta .suggest-price,
+    .price-base-meta .original-price,
+    .price-base-meta .price-meta-label,
+    .price-base-meta .price-meta-value,
     .price-option-sub {
         font-size: 0.85rem;
     }

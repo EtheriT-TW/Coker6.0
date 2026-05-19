@@ -455,7 +455,7 @@ grapesjs.plugins.add('grapesjs-Swiper', (editor, options) => {
                 }
                 setTimeout(timmer, 100);
             }
-        } else if (classList.indexOf("swiper_components") > -1 || > -1 || classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1 || classList.indexOf("three_two_grid_swiper") > -1 || classList.indexOf("vertical_swiper_thumbs") > -1) {
+        } else if (classList.indexOf("swiper_components") > -1 || classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1 || classList.indexOf("three_two_grid_swiper") > -1 || classList.indexOf("vertical_swiper_thumbs") > -1) {
             var cont = iframe.document.getElementsByClassName("swiper").length;
             const timmer = function () {
                 if (iframe.document.getElementsByClassName("swiper").length != cont) iframe.SwiperInit({ autoplay: false });

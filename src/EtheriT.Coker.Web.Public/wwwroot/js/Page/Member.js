@@ -587,6 +587,51 @@ function HistoryTemplateDataInsert(Datas) {
             });
         };
 
+        const appendRepayCountdown = function () {
+            var seconds = parseInt(order_header.repayRemainingSeconds || 0, 10);
+
+            if (seconds <= 0) return;
+
+            var $countdown = $(`
+                <span class="repay-countdown text-muted small ms-1">
+                    重新付款倒數 <span class="repay-countdown-time"></span>
+                </span>
+            `);
+
+            frame.find(".state").append($countdown);
+
+            var $time = $countdown.find(".repay-countdown-time");
+
+            var render = function () {
+                if (seconds <= 0) {
+                    $countdown.remove();
+
+                    // 到時間後，直接補上重新付款按鈕
+                    appendRepayButton();
+
+                    return false;
+                }
+
+                var minutes = Math.floor(seconds / 60);
+                var remainSeconds = seconds % 60;
+
+                $time.text(`${minutes}:${String(remainSeconds).padStart(2, "0")}`);
+
+                seconds -= 1;
+                return true;
+            };
+
+            render();
+
+            var timer = setInterval(function () {
+                var keepGoing = render();
+
+                if (!keepGoing) {
+                    clearInterval(timer);
+                }
+            }, 1000);
+        };
+
         frame.find(".state").prepend(`<span>${order_header.stateStr}</span>`);
 
         switch (order_header.action) {
@@ -604,6 +649,7 @@ function HistoryTemplateDataInsert(Datas) {
                 break;
 
             default:
+                appendRepayCountdown();
                 break;
         }
 

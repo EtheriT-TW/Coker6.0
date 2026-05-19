@@ -93,23 +93,6 @@
         }
     };
 
-    // =========================
-    // Marketing Labels（商品行銷標籤）
-    // =========================
-    function hasMarketingDisplayNumber(value) {
-        if (isNullOrEmpty(value)) return false;
-
-        if (
-            w.DirectoryPrice &&
-            isFn(w.DirectoryPrice.hasDisplayValue)
-        ) {
-            return w.DirectoryPrice.hasDisplayValue(value);
-        }
-
-        const num = Number(String(value).replace(/,/g, "").trim());
-        return !isNaN(num) && num > 0;
-    }
-
     function normalizeMarketingLabels(data) {
         const labels = [];
 
@@ -137,7 +120,8 @@
             if (typeof item === "string") {
                 labels.push({
                     text: item,
-                    type: "custom"
+                    type: "custom",
+                    cssClass: "marketing-label-custom"
                 });
                 return;
             }
@@ -147,37 +131,23 @@
 
             labels.push({
                 text: text,
-                type: item.type || item.code || item.key || "custom"
+                type: item.type || item.code || item.key || "custom",
+                cssClass: item.cssClass || item.className || "marketing-label-custom"
             });
         });
-
-        /*
-         * 目前後端只有 bonus 時，先自動補「紅利」標籤。
-         * 注意：這只是行銷標籤，價格顯示仍由 DirectoryPrice.apply 處理。
-         */
-        const hasBonusLabel = labels.some(function (item) {
-            return String(item.type).toLowerCase() === "bonus" || item.text === "紅利";
-        });
-
-        if (!hasBonusLabel && hasMarketingDisplayNumber(data.bonus)) {
-            labels.unshift({
-                text: "紅利",
-                type: "bonus"
-            });
-        }
 
         return labels;
     }
 
     function getMarketingLabelContainer($content) {
         let $container = $content.find(".marketing-labels, [data-slot='marketing-labels']").first();
-        if ($container.length > 0) return $container;
+        if ($container.length === 0) {
+            $container = $('<div class="marketing-labels"></div>');
+        }
 
-        $container = $('<div class="marketing-labels d-flex flex-wrap gap-1 mb-1"></div>');
-
-        const $titleBlock = $content.find(".item-title").first();
-        if ($titleBlock.length > 0) {
-            $titleBlock.after($container);
+        const $bottomRow = $content.find(".bottom-row").first();
+        if ($bottomRow.length > 0) {
+            $bottomRow.after($container);
             return $container;
         }
 
@@ -218,13 +188,10 @@
         }
 
         labels.forEach(function (label) {
-            const type = String(label.type || "custom")
-                .toLowerCase()
-                .replace(/[^a-z0-9_-]/g, "");
-
+            const cssClass = label.cssClass || "marketing-label-custom";
             const $badge = $('<span class="marketing-label badge rounded-pill fw-normal"></span>');
 
-            $badge.addClass(`marketing-label-${type || "custom"}`);
+            $badge.addClass(cssClass);
             $badge.text(label.text);
 
             $container.append($badge);

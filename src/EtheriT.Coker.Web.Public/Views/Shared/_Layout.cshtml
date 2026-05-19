@@ -101,12 +101,14 @@
         const orderPrice = @ViewBag.priceOrder.ToString().ToLower();
         const totalBonus = @Json.Serialize(ViewBag.UserBonus ?? 0);
         const parsedPageId = Number.parseInt(PageId, 10);
+        const OrgName = "@ViewData["OrgName"]";
         window.__LOGIN_STATE__ = @(ViewBag.isLogin == true ? "true" : "false");
         window.SiteId = SiteId;
         window.PageId = Number.isNaN(parsedPageId) ? null : parsedPageId;
         window.CI360 = { notInitOnLoad: true }
         window.totalBonus = totalBonus;
         window.orderPrice = orderPrice;
+        window.OrgName = OrgName;
         window.onload = function () {
             ready();
         }

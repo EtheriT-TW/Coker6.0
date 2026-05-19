@@ -561,40 +561,74 @@ namespace EtheriT.Coker.Application.ThirdParty
         public async Task<ResponseMessageDto> PChomePayCancelOrder(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();
+
             try
             {
-                ResponseMessageDto statusresponse = await PChomePayCheckPaymentStatus(ohid);
+                var ohdata = await db.Order_Headers
+                    .Where(e => e.Id == ohid)
+                    .FirstOrDefaultAsync();
 
-                if (statusresponse.Success != true) throw new Exception($"查詢訂單狀態發生錯誤：{statusresponse.Message}");
-
-                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
                 var ohid_str = "000000000" + ohid.ToString();
 
-                if (ohdata == null) throw new Exception("查無訂單資訊");
+                if (ohdata == null)
+                    throw new Exception("查無訂單資訊");
 
-                if (ohdata.TransactionId != null)
+                // 只有已建立 PChome 外部交易，且目前仍是待付款/待確認時，才先同步一次狀態
+                if (!string.IsNullOrWhiteSpace(ohdata.TransactionId) &&
+                    (ohdata.State == OrderStatusEnum.待付款 || ohdata.State == OrderStatusEnum.待確認))
                 {
-                    switch (ohdata.State)
+                    var statusResponse = await PChomePayCheckPaymentStatus(ohid);
+
+                    // 查詢成功時重新撈一次，因為 PChomePayCheckPaymentStatus 可能已改變 ohdata.State
+                    if (statusResponse.Success)
                     {
-                        case OrderStatusEnum.已付款:
-                        case OrderStatusEnum.已出貨:
-                        case OrderStatusEnum.已完成:
-                            response = await PChomePayRefund(ohdata.Id, null);
-                            if (response.Success) response.Message = "訂單已取消並送出退款申請。";
-                            break;
-                        default:
-                            response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
-                            if (response.Success) response.Message = "訂單已取消。";
-                            break;
+                        ohdata = await db.Order_Headers
+                            .Where(e => e.Id == ohid)
+                            .FirstOrDefaultAsync();
+
+                        if (ohdata == null)
+                            throw new Exception("查無訂單資訊");
+                    }
+                    else
+                    {
+                        // 不要因為查詢失敗就阻止本地取消
+                        // 否則 PChome 狀態查詢失敗時，會員會永遠無法取消待付款訂單
+                        Console.WriteLine($"PChomePayCancelOrder 查詢付款狀態失敗：{statusResponse.Message}");
                     }
                 }
-                else
+
+                switch (ohdata.State)
                 {
-                    response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
-                    if (response.Success) response.Message = "訂單已取消。";
+                    case OrderStatusEnum.已付款:
+                    case OrderStatusEnum.已出貨:
+                    case OrderStatusEnum.已完成:
+                        response = await PChomePayRefund(ohdata.Id, null);
+
+                        if (response.Success)
+                            response.Message = "訂單已取消並送出退款申請。";
+
+                        break;
+
+                    default:
+                        response = await orderAppService.UpdateStatus(new OrderUpdateStatusDto
+                        {
+                            Id = ohid,
+                            Status = OrderStatusEnum.已取消,
+                            Memo = null
+                        });
+
+                        if (response.Success)
+                            response.Message = "訂單已取消。";
+
+                        break;
                 }
 
-                await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"訂單編號：{ohid_str.Substring(ohid_str.Length - 9)}", JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(
+                    0,
+                    configuration.GetValue<long>("WebConfig:SiteId"),
+                    $"訂單編號：{ohid_str.Substring(ohid_str.Length - 9)}",
+                    JsonConvert.SerializeObject(response)
+                );
             }
             catch (HttpRequestException ex)
             {
@@ -604,6 +638,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 response.Message = $"CancelOrder Other failed: {ex.Message}";
             }
+
             return response;
         }
         public async Task<ResponseMessageDto> PChomePayDeliveryNote(long ohid)

@@ -47,5 +47,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string TransactionId { get; set; }
         public string RefundTransactionId { get; set; }
         public bool CanRefund { get; set; }
+        public DateTime? RepayAvailableAt { get; set; }
+        public int RepayRemainingSeconds { get; set; }
+        public string RepayWaitingMessage { get; set; } = "";
     }
 }

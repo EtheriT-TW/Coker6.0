@@ -1,4 +1,4 @@
-﻿var OrgName = "Page", LayoutType = 0, IsFaPage = true, loginModal, otherLoginModal, registerModal, forgetModal, resetModal, privacyStatementModal, IsLogin;
+﻿var LayoutType = 0, IsFaPage = true, loginModal, otherLoginModal, registerModal, forgetModal, resetModal, privacyStatementModal, IsLogin;
 
 function ready() {
     const $conten = $("#main");
@@ -20,9 +20,6 @@ function ready() {
 
     $("link").each(function () {
         var $self = $(this);
-        if ($self.data("orgname") != undefined) {
-            OrgName = $self.data("orgname");
-        }
         if ($self.data("layouttype") != undefined) {
             LayoutType = $self.data("layouttype");
         }
@@ -30,6 +27,7 @@ function ready() {
             IsFaPage = $self.data("isfapage");
         }
     });
+    window.OrgName = OrgName;
     if (typeof (IsFaPage) == "string") IsFaPage = IsFaPage.toLowerCase() == "true";
     else IsFaPage = false;
     const menuMouseover = function () {

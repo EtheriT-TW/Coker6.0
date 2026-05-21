@@ -1104,10 +1104,10 @@ namespace EtheriT.Coker.Application.Order
                 {
                     var temp_output = mapper.Map<OrderHeaderDisplayDto>(order_header);
                     var userdata = await db.FrontUsers.Where(e => e.UUID == order_header.FK_UUID).FirstOrDefaultAsync();
+
                     if (userdata != null)
                     {
-                        if (order_header.OrdererTelePhone == null) order_header.OrdererTelePhone = "";
-                        if (userdata.Name == order_header.Orderer && userdata.Sex == order_header.OrdererSex && userdata.Email == order_header.OrdererEmail && userdata.TelPhone == order_header.OrdererTelePhone && userdata.CellPhone == order_header.OrdererCellPhone && userdata.Address == order_header.OrdererAddress) temp_output.OrdererId = userdata.Id;
+                        temp_output.OrdererId = userdata.Id;
                     }
 
                     temp_output.Subtotal = order_header.Subtotal.ToString("#,##0");
@@ -2666,6 +2666,7 @@ namespace EtheriT.Coker.Application.Order
                         Status = x.State.ToString(),
                     })
                     .ToListAsync();
+                output = output.OrderBy(e => e.Id).ToList();
             }
             catch (Exception e)
             {

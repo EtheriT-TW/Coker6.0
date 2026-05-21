@@ -72,19 +72,20 @@ var PreLoader;
 
     // 防止表單重複提交
     document.addEventListener("submit", function (event) {
-        const form = event.target;  // 取得觸發的表單
+        const form = event.target;
 
-        // 如果該表單正在提交，阻止再次提交
-        if (form.dataset.submitting === "true") {
-            event.preventDefault();  // 阻止表單提交
-            event.stopImmediatePropagation(); // 阻止後續事件處理
+        if (form.dataset.formInit === "true") {
             return;
         }
 
-        // 標記為提交中
+        if (form.dataset.submitting === "true") {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+        }
+
         form.dataset.submitting = "true";
 
-        // 模擬表單提交延遲，2 秒後取消標記
         setTimeout(() => {
             form.dataset.submitting = "false";
         }, 2000);

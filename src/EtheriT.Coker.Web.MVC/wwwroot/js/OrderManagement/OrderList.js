@@ -130,7 +130,6 @@ function PageReady() {
                 OrderId: keyId,
                 ThirdParties: payment,
             }).done(function (result) {
-                console.log("result", result)
                 if (result.success) {
                     $(".btn_refund").addClass("d-none");
                     $order_status.val(4);
@@ -442,13 +441,21 @@ function HeaderDataInsert(data) {
 
     ToggleOrderBonusLines(data);
 
-    if (data.ordererId != null) {
-        $("#OrdererData .btn_orderer_data").css('display', 'flex');
-        $("#OrdererData .btn_orderer_data").attr({
+    const $ordererBtn = $("#OrdererData .btn_orderer_data");
+
+    if (data.ordererId != null && data.ordererId > 0) {
+        $ordererBtn.css('display', 'flex');
+        $ordererBtn.attr({
             href: `/MemberManagement/MemberList#${data.ordererId}`,
             title: `連結至：訂購人(${data.orderer})`
-        })
-        $("#OrdererData .btn_orderer_data").text((`000000000${data.ordererId}`).substring(data.ordererId.toString().length));
+        });
+        $ordererBtn.text((`000000000${data.ordererId}`).substring(data.ordererId.toString().length));
+    } else {
+        $ordererBtn
+            .hide()
+            .removeAttr("href")
+            .removeAttr("title")
+            .text("");
     }
 
     //if (data.allPayLogisticsID) $btn_printShippingLabel.removeClass("d-none");

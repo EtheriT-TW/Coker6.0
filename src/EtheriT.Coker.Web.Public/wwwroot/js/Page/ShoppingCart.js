@@ -639,7 +639,7 @@ function PageReady() {
         $radio.prop('checked', true);
 
         var $form = $("form#ecpayLogisticsForm");
-        var scids = JSON.stringify(shopping_cart_data.map(c => c.Id));
+        var scids = JSON.stringify(getSelectedCartIds());
 
         $form.find('input[name="LogisticsSubType"]').val($btn.data('subtype'));
         $form.find('input[name="SCIds"]').val(scids);
@@ -652,16 +652,53 @@ function PageReady() {
 // 同步 header 的勾選/半選狀態與「已選件數」
 function syncHeaderCheckbox($group) {
     const $checks = $group.find('input[name="buyItems"]');
-    const total = $checks.length;
-    const selected = $checks.filter(':checked').length;
+    const $validChecks = $checks.filter(':enabled');
+
+    const total = $validChecks.length;
+    const selected = $validChecks.filter(':checked').length;
     const $header = $group.find('.js-group-check');
 
     $header.prop('indeterminate', false);
-    if (selected === 0) $header.prop('checked', false);
-    else if (selected === total) $header.prop('checked', true);
-    else $header.prop({ checked: false, indeterminate: true });
+
+    if (total === 0) {
+        $header.prop({
+            checked: false,
+            indeterminate: false,
+            disabled: true
+        });
+    } else if (selected === 0) {
+        $header.prop({
+            checked: false,
+            indeterminate: false,
+            disabled: false
+        });
+    } else if (selected === total) {
+        $header.prop({
+            checked: true,
+            indeterminate: false,
+            disabled: false
+        });
+    } else {
+        $header.prop({
+            checked: false,
+            indeterminate: true,
+            disabled: false
+        });
+    }
 
     $group.find('.js-selected-count').text(selected);
+}
+function refreshAllCartGroupSubtotal() {
+    $('.purchase_group').each(function () {
+        updateGroupSelectedSubtotal($(this));
+    });
+
+    TotalCount();
+    updateNextStepByBonus();
+
+    if (typeof buy_step_swiper !== "undefined" && buy_step_swiper) {
+        buy_step_swiper.update();
+    }
 }
 // 計算本組「已選」的小計 → 更新 footer
 function updateGroupSelectedSubtotal($group) {
@@ -2475,7 +2512,7 @@ function OrderDataGet() {
     order_header_data.couponId = 0;
     order_header_data.freight = freight == "" ? 0 : freight;
     order_header_data.Service_Charge = 0;
-    order_header_data.OrderDetails = shopping_cart_data;
+    order_header_data.OrderDetails = getSelectedCartItems();
 
     if (HasECPay) {
         if (window.ApplePaySession && typeof ApplePaySession.canMakePayments == "function") {
@@ -3394,7 +3431,7 @@ function ValidateCartOnInit() {
             $content.append($msgDiv);
         });
 
-        TotalCount();
+        refreshAllCartGroupSubtotal();
     }).fail(function () {
         // 驗證失敗就當沒發生，不影響使用者操作
     });
@@ -3639,12 +3676,18 @@ function calculateBoxFreightByTotalCapacity(totalPackingPoint, fees) {
 }
 function calculateFreight(productSubtotal) {
     var shippingMeta = getSelectedShippingMeta();
-    var shortage = 0;
+
     var lowConValue = Number(shippingMeta.lowCon || 0);
+    var shortage = 0;
 
     if (lowConValue > 0 && productSubtotal < lowConValue) {
         shortage = lowConValue - productSubtotal;
     }
+
+    var canApplyDiscount =
+        lowConValue > 0 &&
+        productSubtotal >= lowConValue &&
+        shippingMeta.discountFreightType != null;
 
     switch (shippingMeta.freightType) {
         case 1: // 免運費
@@ -3661,21 +3704,19 @@ function calculateFreight(productSubtotal) {
             var totalPackingPoint = getSelectedPackingPoint();
             var boxResult = calculateBoxFreightByTotalCapacity(totalPackingPoint, shippingMeta.boxFees);
 
-            // 箱型原始運費必須用實際配箱結果，不可用 radio data-freight
             var boxOriginFreight = Number(boxResult.freight || 0);
 
-            // targetFreight 一律代表「達門檻後的最終運費」
-            var targetFreight = calculateDiscountTargetFreight(boxOriginFreight, shippingMeta);
-
-            var finalFreight = shortage > 0 ? boxOriginFreight : targetFreight;
+            var boxTargetFreight = canApplyDiscount
+                ? calculateDiscountTargetFreight(boxOriginFreight, shippingMeta)
+                : boxOriginFreight;
 
             return {
-                freight: Number(finalFreight || 0),
+                freight: Number(boxTargetFreight || 0),
                 mode: 3,
                 shortage: shortage,
                 boxResult: boxResult,
                 originFreight: boxOriginFreight,
-                targetFreight: targetFreight
+                targetFreight: boxTargetFreight
             };
         }
 
@@ -3683,13 +3724,12 @@ function calculateFreight(productSubtotal) {
         default: {
             var originFreight = Number(shippingMeta.freight || 0);
 
-            // targetFreight 一律代表「達門檻後的最終運費」
-            var targetFreight = calculateDiscountTargetFreight(originFreight, shippingMeta);
-
-            var finalFreight = shortage > 0 ? originFreight : targetFreight;
+            var targetFreight = canApplyDiscount
+                ? calculateDiscountTargetFreight(originFreight, shippingMeta)
+                : originFreight;
 
             return {
-                freight: Number(finalFreight || 0),
+                freight: Number(targetFreight || 0),
                 mode: 2,
                 shortage: shortage,
                 boxResult: null,

@@ -155,7 +155,7 @@
 }
 
     #TabContent .content.type_grid figure > figcaption {
-        margin-top: auto;
+        margin-top: 0;
         padding-bottom: 10px;
     }
 
@@ -371,169 +371,72 @@
         font-weight: 700;
     }
 
-#TabContent .content img {
-    height: auto;
+/* ===== Member Directory Minimal Overrides ===== */
+
+/* 收藏 / 瀏覽紀錄使用公版 catalog，這裡只做會員頁背景微調 */
+#favorite-tab-pane .type_change_frame.catalog_frame,
+#history-tab-pane .type_change_frame.catalog_frame {
+    padding-bottom: 1rem;
 }
 
-#TabContent .content figure figcaption {
-    display: flex;
-    flex-direction: column;
+#favorite-tab-pane .catalog,
+#history-tab-pane .catalog {
+    background-color: transparent !important;
 }
 
-#TabContent .content .type_change_frame div[data-key='price'] {
-    flex-grow: 1;
-    align-content: flex-end;
-    word-break: keep-all;
-    white-space: nowrap;
-    overflow-wrap: break-word;
-}
-
-#TabContent .content.type_grid figure figcaption {
-    padding-top: 0.5rem;
-    height: 100%;
-    justify-content: space-between
-}
-
-#TabContent .content.type_grid .type_change_frame {
-    margin: 0rem;
-    flex: 0 0 auto;
-    width: 25%;
-}
-
-#TabContent .content.type_list > .type_change_frame figure {
-    padding-top: 1rem;
-}
-
-#TabContent .content.type_grid > .type_change_frame figure {
-    padding-top: 0.5rem;
-}
-
-    #TabContent .content.type_grid > .type_change_frame figure .image_frame {
-        padding: 0.25rem;
+    /* 會員頁卡片底色 */
+    #favorite-tab-pane .catalog .template > .col,
+    #history-tab-pane .catalog .template > .col {
+        background-color: #eeeeee !important;
     }
 
-        #TabContent .content.type_grid > .type_change_frame figure .image_frame > div {
-            position: relative;
-            height: 0;
-            width: 100%;
-            overflow: hidden;
-            padding-bottom: 100%;
-        }
-
-            #TabContent .content.type_grid > .type_change_frame figure .image_frame > div > img {
-                margin-top: 0rem;
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                height: 100%;
-                width: 100%;
-                transform: translate(-50%, -50%);
-                object-fit: cover;
-                object-position: center;
-            }
-
-#TabContent .content .type_change_frame div[data-key='itemNo'] {
-    font-weight: bold;
-}
-
-#TabContent .content .type_change_frame div[data-key='title'] {
-    font-weight: bold;
-}
-
-#TabContent .content.type_grid .type_change_frame div[data-key='itemNo'] {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-#TabContent .content.type_grid .type_change_frame div[data-key='title'] {
-    margin-top: 0.25rem;
-    height: 3rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-}
-
-#TabContent .content.type_grid .type_change_frame div[data-key='description'] {
-    display: none;
-}
-
-#TabContent .content.type_grid .type_change_frame .price_group {
-    margin-top: 1rem;
-    text-align: start;
-}
-
-#TabContent .content.type_list .type_change_frame .price_group {
-    margin-top: 1rem;
-    text-align: end;
-}
-
-#TabContent .content.type_list figure {
-    display: flex;
-}
-
-    #TabContent .content.type_list figure figcaption {
-        padding-top: 1rem;
-        padding-left: 1rem;
+    /* 不顯示購買區 */
+    #favorite-tab-pane .catalog .purchase,
+    #history-tab-pane .catalog .purchase {
+        display: none !important;
     }
 
-#TabContent .content.type_list .type_change_frame div[data-key='description'] {
-    display: flex;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    padding-right: 2rem;
-}
-
-/* Button Share */
-.shareBlock {
-    margin-right: 0.5rem;
-    right: 0rem;
-}
-
-    .shareBlock > a {
-        position: absolute;
-        left: 0% !important;
-        top: 0% !important;
-        transform: translate(-50%, -50%) scaleX(0) !important;
-        transition: all 1s;
+    /* 會員頁行銷標籤配色微調 */
+    #favorite-tab-pane .catalog .marketing-label-bonus,
+    #favorite-tab-pane .catalog .marketing-label-addon,
+    #favorite-tab-pane .catalog .marketing-label-gift,
+    #favorite-tab-pane .catalog .marketing-label-limited,
+    #favorite-tab-pane .catalog .marketing-label-custom,
+    #history-tab-pane .catalog .marketing-label-bonus,
+    #history-tab-pane .catalog .marketing-label-addon,
+    #history-tab-pane .catalog .marketing-label-gift,
+    #history-tab-pane .catalog .marketing-label-limited,
+    #history-tab-pane .catalog .marketing-label-custom {
+        background-color: #ef4b7a;
+        color: #fff;
     }
 
-    .shareBlock > button {
-        padding: 0;
-        height: 24px;
-        width: 24px;
+    /* 收藏 / 瀏覽紀錄頁中，分享按鈕不要吃到 Member.css 舊的全域位移 */
+    #favorite-tab-pane .catalog .shareBlock,
+    #history-tab-pane .catalog .shareBlock {
+        margin-right: 0;
     }
 
-    .shareBlock.show > a {
-        top: -2rem !important;
-        left: 0% !important;
-        transition: all 1s;
+    /* grid / list 的寬度交給 row-cols 與公版 type 控制，不再用 member-product-card */
+    #favorite-tab-pane .catalog .template,
+    #history-tab-pane .catalog .template {
+        flex: 0 0 auto;
     }
 
-        .shareBlock.show > a:nth-child(2) {
-            transform: translateX(-450%) scaleX(1) !important;
-        }
+    #favorite-tab-pane .catalog .tags .badge,
+    #history-tab-pane .catalog .tags .badge {
+        color: #6c757d !important;
+        background-color: #f8f9fa !important;
+        border: 1px solid #d9d9d9 !important;
+        font-weight: 400;
+    }
 
-        .shareBlock.show > a:nth-child(3) {
-            transform: translateX(-350%) scaleX(1) !important;
-        }
-
-        .shareBlock.show > a:nth-child(4) {
-            transform: translateX(-250%) scaleX(1) !important;
-        }
-
-        .shareBlock.show > a:nth-child(5) {
-            transform: translateX(-150%) scaleX(1) !important;
-        }
-
-        .shareBlock.show > a:nth-child(6) {
-            transform: translateX(-50%) scaleX(1) !important;
-        }
+    #favorite-tab-pane .catalog .marketing-label,
+    #history-tab-pane .catalog .marketing-label {
+        background-color: #ef4b7a;
+        color: #fff;
+        border: 0;
+    }
 
 #remarkLine {
     display: flex;
@@ -544,83 +447,35 @@
         text-align-last: left;
     }
 
-#favorite-tab-pane .favorite-directory .btn_fav.type5 {
-    width: auto;
-    right: 1.3em;
-    top: 3.5em;
-}
-/* Favorites：共用 Directory renderer 後補的樣式 */
-/* Favorites / Browsing：共用 Directory renderer 後補的樣式
-   僅作用於會員頁目錄商品卡，避免影響購物車、訂單、其他 tab */
-#TabContent .content > .type_change_frame .tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.375rem;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-    min-height: 1.75rem;
+/* Button Favorites*/
+/* ===== Member Product Card Favorite Button ===== */
+#TabContent .content.type_grid > .member-product-card .btn_fav {
+    position: absolute;
+    top: 2.4rem;
+    right: 0.75rem;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+    z-index: 3;
+    line-height: 1;
 }
 
-    #TabContent .content > .type_change_frame .tags .badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.2rem 0.45rem;
-        font-size: 0.75rem;
+    #TabContent .content.type_grid > .member-product-card .btn_fav::after {
+        display: block;
+        color: #b30b00;
+        font-family: 'Font Awesome 6 Free';
         font-weight: 400;
-        color: #666;
-        background-color: #f1f1f1;
-        border: 1px solid #ddd;
-        border-radius: 999px;
-        line-height: 1.2;
+        content: "\f004";
+        font-size: 1.25rem;
+        line-height: 30px;
+        text-align: center;
     }
 
-#TabContent .content > .type_change_frame .price_group {
-    margin-top: 1rem;
-    text-align: start;
-}
-
-#TabContent .content.type_list > .type_change_frame .price_group {
-    text-align: end;
-}
-
-#TabContent .content > .type_change_frame .price-grid .origin-price {
-    color: #888;
-    font-size: 0.95rem;
-    text-decoration: line-through;
-    margin-bottom: 0.15rem;
-}
-
-#TabContent .content > .type_change_frame .price-grid .sale-price {
-    color: #dc3545;
-    font-weight: 700;
-    font-size: 1rem;
-    line-height: 1.4;
-}
-
-#TabContent .content > .type_change_frame .price-grid .combo-price {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-#TabContent .content > .type_change_frame .price-grid .cash-price,
-#TabContent .content > .type_change_frame .price-grid .bonus-price {
-    display: inline-block;
-}
-
-#TabContent .content > .type_change_frame .price-grid .plus-sign {
-    color: #dc3545;
-    font-weight: 700;
-}
-
-
-/* Button Favorites*/
-.btn_fav {
-    width: auto;
-    top: 2.5rem;
-    right: 0.2rem;
-}
+    #TabContent .content.type_grid > .member-product-card .btn_fav.check::after {
+        font-weight: 900;
+    }
 
 #UserBonus {
     position: absolute;

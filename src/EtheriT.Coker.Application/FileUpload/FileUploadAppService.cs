@@ -688,7 +688,7 @@ namespace EtheriT.Coker.Application
                             output.Add(new FileGetProdDisplayDto
                             {
                                 Id = fu.Id,
-                                Name = fb.Name,
+                                Name = string.IsNullOrEmpty(fb.Name)? fu.OriginalFileName : fb.Name,
                                 FileType = 5,
                                 Link = new List<string> { MediaLink },
                                 SerNo = fb.SerNo,
@@ -1371,7 +1371,7 @@ namespace EtheriT.Coker.Application
                     FileBind fb = new FileBind
                     {
                         Guid = Guid.NewGuid(),
-                        Name = filename ?? e.Name,
+                        Name = string.IsNullOrWhiteSpace(filename) ? e.Name: filename,
                         type = asotype,
                         Sid = sid,
                         num = 1,

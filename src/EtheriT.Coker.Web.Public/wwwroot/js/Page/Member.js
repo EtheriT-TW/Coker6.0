@@ -222,38 +222,6 @@ function Member(data) {
         }
     });
 
-    $(".btn_switchViewType button").on("click", function () {
-        var $this = $(this);
-        var $thisbro = $this.siblings("button");
-        if (!$this.hasClass("focus")) $this.addClass("focus");
-        if ($thisbro.hasClass("focus")) $thisbro.removeClass("focus");
-
-        var $content = $this.parents(".tab-pane").find(".content");
-        switch ($this.data("type")) {
-            case "grid":
-                localStorage.setItem(`switchViewType-Member${$content.data("storagename")}`, "grid");
-                if (!$content.hasClass("type_grid")) $content.addClass("type_grid");
-                if ($content.hasClass("type_list")) $content.removeClass("type_list");
-                break;
-            case "list":
-                localStorage.setItem(`switchViewType-Member${$content.data("storagename")}`, "list");
-                if (!$content.hasClass("type_list")) $content.addClass("type_list");
-                if ($content.hasClass("type_grid")) $content.removeClass("type_grid");
-                break;
-        }
-    });
-
-    if (typeof (localStorage["switchViewType-MemberFavorite"]) != "undefined") {
-        if (localStorage["switchViewType-MemberFavorite"] == "list") {
-            $("#favorite-tab-pane .btn_switchViewType button[data-type='list']").click();
-        }
-    }
-    if (typeof (localStorage["switchViewType-MemberBrowsing"]) != "undefined") {
-        if (localStorage["switchViewType-MemberBrowsing"] == "list") {
-            $("#history-tab-pane .btn_switchViewType button[data-type='list']").click();
-        }
-    }
-
     $("#ToolList > li button").on("click", function () {
         switch ($(this).attr("id")) {
             case "bonus-tab":
@@ -516,7 +484,6 @@ function SetHistoryOrderPage(number) {
                 }
                 ContentPageChage($("#profile-tab-pane .page_btn"), number, result.page_Total);
             }
-            if ($("#profile-tab-pane .btn_switchViewType").hasClass("d-none")) $("#profile-tab-pane .btn_switchViewType").removeClass("d-none");
             HistoryTemplateDataInsert(result.orderData);
         } else if (number != 1) {
             window.location.hash = "#order-1";
@@ -969,9 +936,10 @@ function OrderRepay(datas) {
 function SetFavoritesPage(number) {
     const $pane = $("#favorite-tab-pane");
     const $content = $pane.find(".content");
+    const $directory = $pane.find(".type_change_frame.catalog_frame").first();
     const $pageBtn = $pane.find(".page_btn");
     const $noData = $pane.find(".nodata");
-    const $switch = $pane.find(".btn_switchViewType");
+    const $switch = $pane.find(".switch_control");
     const templateHtml = $("#FavoriteTemplate").html();
 
     Coker.Favorites.GetDisplay(number).done(function (result) {
@@ -992,17 +960,18 @@ function SetFavoritesPage(number) {
 
             $switch.removeClass("d-none");
 
-            if (window.DirectoryRenderer && typeof window.DirectoryRenderer.renderItemsByExternalTemplate === "function") {
-                DirectoryRenderer.renderItemsByExternalTemplate(
-                    $pane,
-                    $content,
-                    templateHtml,
-                    datas
-                );
-            } else {
-                // fallback：保留舊 render 方式，避免 renderer 尚未更新時整個壞掉
-                MemberTemplateDataInsert($content, $("#FavoriteTemplate"), datas);
+            if (!window.DirectoryRenderer || typeof window.DirectoryRenderer.renderItemsByExternalTemplate !== "function") {
+                console.error("DirectoryRenderer.renderItemsByExternalTemplate 尚未載入");
+                $content.empty();
+                return;
             }
+
+            DirectoryRenderer.renderItemsByExternalTemplate(
+                $directory,
+                $content,
+                templateHtml,
+                datas
+            );
         } else if (number != 1) {
             window.location.hash = "#favorites-1";
         } else {
@@ -1017,9 +986,10 @@ function SetFavoritesPage(number) {
 function SetBrowsingHistoryPage(number) {
     const $pane = $("#history-tab-pane");
     const $content = $pane.find(".content");
+    const $directory = $pane.find(".type_change_frame.catalog_frame").first();
     const $pageBtn = $pane.find(".page_btn");
     const $noData = $pane.find(".nodata");
-    const $switch = $pane.find(".btn_switchViewType");
+    const $switch = $pane.find(".switch_control");
     const templateHtml = $("#FavoriteTemplate").html();
 
     Product.GetAll.History(number).done(function (result) {
@@ -1040,19 +1010,18 @@ function SetBrowsingHistoryPage(number) {
 
             $switch.removeClass("d-none");
 
-            if (window.DirectoryRenderer && typeof window.DirectoryRenderer.renderItemsByExternalTemplate === "function") {
-                DirectoryRenderer.renderItemsByExternalTemplate(
-                    $pane,
-                    $content,
-                    templateHtml,
-                    datas
-                );
-
-                BrowsingFavoriteButtonInit($content);
-            } else {
-                MemberTemplateDataInsert($content, $("#FavoriteTemplate"), datas);
-                BrowsingFavoriteButtonInit($content);
+            if (!window.DirectoryRenderer || typeof window.DirectoryRenderer.renderItemsByExternalTemplate !== "function") {
+                console.error("DirectoryRenderer.renderItemsByExternalTemplate 尚未載入");
+                $content.empty();
+                return;
             }
+
+            DirectoryRenderer.renderItemsByExternalTemplate(
+                $directory,
+                $content,
+                templateHtml,
+                datas
+            );
         } else if (number != 1) {
             window.location.hash = "#browsing-1";
         } else {
@@ -1172,179 +1141,6 @@ function ContentPageChage($self, page, page_total) {
     }
 }
 
-function MemberTemplateDataInsert($content, $frame, datas) {
-    $content.empty();
-    $.each(datas, function (index, data) {
-        var frame = $($frame.html()).clone();
-        frame = MemberDataInsert(frame, data);
-        if (frame.find(".btn_favorite").length > 0) FavoritesButtonInit(frame);
-        if (frame.find(".shareBlock").length > 0) ShareButtonInit(frame.find(".shareBlock"));
-        $content.append(frame);
-    });
-}
-
-function MemberDataInsert(frame, data) {
-    frame.data("Pid", data.pId);
-    if (frame.find(".btn_favorite").length > 0 && typeof (data.fId) != "undefined") frame.find(".btn_favorite").data("Fid", data.fId);
-    frame.find("*").each(function () {
-        var $self = $(this);
-        if (typeof ($self.data("key")) != "undefined") {
-            var key = $self.data("key");
-            switch (key) {
-                case "link":
-                    $self.attr("href", `/${OrgName}/Member${data[key]}`);
-                    $self.attr("title", `連結至：${data['title']}`);
-                    break;
-                case "image":
-                case "imagePath":
-                    data[key] = data[key].replaceAll(`/${OrgName}/`, `/`);
-                    $self.attr("src", data[key]);
-                    $self.attr("alt", `${data['title']}的主要照片`);
-                    break;
-                case "price":
-                    switch (typeof (data[key])) {
-                        case "object":
-                            var prices = data[key];
-                            if (prices == null) {
-                                $self.text("");
-                            } else {
-                                if (prices.length > 1 && prices[0] != prices[prices.length - 1]) $self.html(`$${prices[0].toLocaleString()}<wbr>~<wbr>$${[prices[prices.length - 1].toLocaleString()]}`);
-                                else $self.text(`$${prices[0].toLocaleString()}`);
-                            }
-                            break;
-                        default:
-                            $self.text(data[key].toLocaleString());
-                            break;
-                    }
-                    break;
-                case "describe":
-                    if (data[key] == "商品已下架") {
-                        $self.removeClass("d-none");
-                        $self.siblings().addClass("d-none");
-                    }
-                    $self.text(data[key]);
-                    break;
-                case "s1Title":
-                case "s2Title":
-                    if (data[key] != "") $self.removeClass("d-none");
-                    $self.text(data[key]);
-                    break;
-                case "oldPrice":
-                    if (data[key] != 0 && data[key] != data['price']) {
-                        $self.removeClass("d-none");
-                        $self.text(data[key].toLocaleString());
-                        $self.siblings().addClass("red_text");
-                    }
-                    break;
-                case "oldQuantity":
-                    if (data[key] != 0 && data[key] != data['quantity']) {
-                        $self.removeClass("d-none");
-                        $self.text(data[key]);
-                        $self.siblings().addClass("red_text");
-                    }
-                    break;
-                case "subtotal_old":
-                    var price = data['oldPrice'] != 0 ? data['oldPrice'] : data['price'];
-                    var quantity = data['oldQuantity'] != 0 ? data['oldQuantity'] : data['quantity'];
-                    $self.text((price * quantity).toLocaleString());
-                    break;
-                case "subtotal_new":
-                    var sbutotal = data['price'] * data['quantity'];
-                    $self.text(sbutotal.toLocaleString());
-                    break;
-                default:
-                    $self.text(data[key]);
-                    break;
-            }
-        }
-    });
-    return frame;
-}
-
-function ShareButtonInit($ShareBlock) {
-    $ShareBlock.hover(function () {
-        $(this).addClass("show");
-    }, function () {
-        $(this).removeClass("show");
-    });
-
-    $ShareBlock.cShare({
-        description: 'jQuery plugin - C Share buttons',
-        showButtons: ['fb', 'line', 'plurk', 'twitter', 'email']
-    });
-}
-
-function FavoritesButtonInit(frame) {
-    var $btn_favorites = frame.find(".btn_favorite");
-    if (typeof ($btn_favorites.data("Fid")) == "undefined") {
-        Coker.Favorites.Check(frame.data("Pid")).done(function (check) {
-            if (check.success) {
-                $btn_favorites.data("Fid", check.message);
-                $btn_favorites.find("i").addClass("fa-solid");
-                $btn_favorites.find("i").removeClass("fa-regular");
-                $btn_favorites.attr("title", "移除收藏");
-            }
-        });
-    }
-    $btn_favorites.on("click", function () {
-        $self = $(this).find("i");
-        if ($self.hasClass("fa-regular")) {
-            Coker.Favorites.Add(frame.data("Pid")).done(function (result) {
-                if (result.success) {
-                    $btn_favorites.data("Fid", result.message);
-                    $self.addClass("fa-solid");
-                    $self.removeClass("fa-regular");
-                    $btn_favorites.attr("title", "移除收藏");
-                    Coker.sweet.success("成功將商品加入收藏", null, true);
-                } else {
-                    console.log(result.message);
-                }
-            });
-        } else {
-            if (typeof ($btn_favorites.data("Fid")) != "undefined" && typeof ($btn_favorites.data("Fid")) != "") {
-                Coker.Favorites.Delete($btn_favorites.data("Fid")).done(function (result) {
-                    if (result.success) {
-                        $btn_favorites.data("Fid", "");
-                        $self.addClass("fa-regular");
-                        $self.removeClass("fa-solid");
-                        $btn_favorites.attr("title", "加入收藏");
-                        Coker.sweet.success("已將商品從收藏中移除", function () {
-                            var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
-                            if (!isNaN(Number(pagenumber))) SetFavoritesPage(pagenumber);
-                        }, false);
-                    } else {
-                        console.log(result.message);
-                    }
-                });
-            }
-        }
-    });
-}
-function BrowsingFavoriteButtonInit($content) {
-    $content.find(".type_change_frame").each(function () {
-        const $frame = $(this);
-        const $btnFavorite = $frame.find(".btn_favorite");
-        const $icon = $btnFavorite.find("i");
-
-        if ($btnFavorite.length <= 0 || $icon.length <= 0) return;
-
-        const pid =
-            $frame.data("Pid") ||
-            $frame.data("pid") ||
-            $btnFavorite.data("Pid") ||
-            $btnFavorite.data("pid");
-
-        if (!pid) return;
-
-        $frame.data("Pid", pid);
-
-        $btnFavorite.data("Fid", "");
-        $btnFavorite.attr("title", "加入收藏");
-        $icon.removeClass("fa-solid").addClass("fa-regular");
-
-        FavoritesButtonInit($frame);
-    });
-}
 function ResetmailAction(data) {
     var input_data = co.Form.getJson($("#ResetEmailForm").attr("id"));
     if (input_data.email == old_email) {

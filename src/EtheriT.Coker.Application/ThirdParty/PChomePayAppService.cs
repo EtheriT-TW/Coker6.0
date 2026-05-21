@@ -10,7 +10,6 @@ using EtheriT.Coker.Application.Token;
 using Newtonsoft.Json;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
 using EtheriT.Coker.Core.Models;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
@@ -23,6 +22,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 using DevExpress.CodeParser;
 using System.Security.Cryptography;
 using EtheriT.Coker.Application.Shared.Dto.Order;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {

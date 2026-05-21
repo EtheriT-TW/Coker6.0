@@ -133,9 +133,23 @@ const display_configurations = {
     }],
 }
 
-function ViewTypeChangeInit() {
-    $(".type_change_frame").each(function () {
-        var $self = $(this)
+function ViewTypeChangeInit(root) {
+    const $root = root
+        ? (root.jquery ? root : $(root))
+        : $(document);
+
+    const $frames = $root.is(".type_change_frame")
+        ? $root
+        : $root.find(".type_change_frame");
+
+    $frames.each(function () {
+        var $self = $(this);
+
+        if (!!$self.data("isInit")) {
+            ViewTypeChangeRefresh($self);
+            return;
+        }
+
         if (!!!$self.data("isInit")) {
             const $btn_grid = $self.find(".btn_grid");
             const $btn_list = $self.find(".btn_list");
@@ -178,7 +192,7 @@ function ViewTypeChangeInit() {
                     var count = $self.find(".switch_control > button:not(.d-none)").length;
                     if (count > 1) {
                         var btnclass = localStorage[`switchViewType-${pathname}`];
-                        $(`button.${btnclass}`).trigger("click");
+                        $self.find(`button.${btnclass}`).trigger("click");
                     } else {
                         localStorage.removeItem(`switchViewType-${pathname}`);
                         $self.find(".switch_control > button:not(.d-none)").trigger("click");
@@ -238,7 +252,78 @@ function typeChange($self, $btns, $content, type) {
     $self.removeClass("text-black-50");
 
     $content.each(function () {
-        var $self = $(this)
-        updateStyle($self, display_configurations[type])
-    })
+        var $contentItem = $(this);
+        updateStyle($contentItem, display_configurations[type]);
+
+        var $frame = $contentItem.closest(".type_change_frame");
+        $frame.trigger("viewtype:changed", [{
+            type: type,
+            content: $contentItem
+        }]);
+    });
 }
+function getViewTypeButtons($self) {
+    return {
+        [list_type.grid]: $self.find(".btn_grid"),
+        [list_type.list]: $self.find(".btn_list"),
+        [list_type.text]: $self.find(".btn_text"),
+        [list_type.product_grid]: $self.find(".btn_prod_grid"),
+        [list_type.product_list]: $self.find(".btn_prod_list"),
+    };
+}
+
+function getActiveViewType($btns) {
+    for (const [config, $btn] of Object.entries($btns)) {
+        if ($btn.length > 0 && $btn.data("activate")) {
+            return config;
+        }
+    }
+
+    if ($btns[list_type.product_grid].length > 0 && !$btns[list_type.product_grid].hasClass("d-none")) {
+        return list_type.product_grid;
+    }
+
+    if ($btns[list_type.product_list].length > 0 && !$btns[list_type.product_list].hasClass("d-none")) {
+        return list_type.product_list;
+    }
+
+    if ($btns[list_type.grid].length > 0 && !$btns[list_type.grid].hasClass("d-none")) {
+        return list_type.grid;
+    }
+
+    if ($btns[list_type.list].length > 0 && !$btns[list_type.list].hasClass("d-none")) {
+        return list_type.list;
+    }
+
+    if ($btns[list_type.text].length > 0 && !$btns[list_type.text].hasClass("d-none")) {
+        return list_type.text;
+    }
+
+    return null;
+}
+
+function ViewTypeChangeRefresh(root) {
+    const $root = root
+        ? (root.jquery ? root : $(root))
+        : $(document);
+
+    const $frames = $root.is(".type_change_frame")
+        ? $root
+        : $root.find(".type_change_frame");
+
+    $frames.each(function () {
+        const $self = $(this);
+        const $content = $self.find(".content").first();
+
+        if ($content.length <= 0) return;
+
+        const $btns = getViewTypeButtons($self);
+        const activeType = getActiveViewType($btns);
+
+        if (!activeType || !display_configurations[activeType]) return;
+
+        updateStyle($content, display_configurations[activeType]);
+    });
+}
+
+window.ViewTypeChangeRefresh = ViewTypeChangeRefresh;

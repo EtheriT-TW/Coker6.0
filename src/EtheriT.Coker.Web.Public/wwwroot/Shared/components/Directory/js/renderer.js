@@ -48,9 +48,41 @@
         return imglink;
     }
 
+    function normalizePathSegment(value) {
+        return String(value || "")
+            .trim()
+            .replace(/^\/+/, "")
+            .replace(/\/+$/, "");
+    }
+
+    function buildDirectoryBasePath(orgName, dirPath) {
+        const org = normalizePathSegment(orgName).toLowerCase();
+        const dir = normalizePathSegment(dirPath);
+
+        if (dir === "") {
+            return org === "" ? "" : `/${org}`;
+        }
+
+        const dirLower = dir.toLowerCase();
+
+        // dirPath 已經包含 orgName，例如 mjmw/product，不再補 /mjmw
+        if (org !== "" && (dirLower === org || dirLower.startsWith(`${org}/`))) {
+            return `/${dir}`;
+        }
+
+        // dirPath 不含 orgName，例如 product，才補 /orgName
+        if (org !== "") {
+            return `/${org}/${dir}`;
+        }
+
+        return `/${dir}`;
+    }
+
     function buildLinkPath($item, data) {
         const isSearch = $item.data("type") == "search";
-        const dirPath = typeof $item.data("dirpath") === "undefined" ? "" : String($item.data("dirpath")).toLowerCase();
+        const dirPath = typeof $item.data("dirpath") === "undefined"
+            ? ""
+            : normalizePathSegment($item.data("dirpath")).toLowerCase();
 
         let path;
         let target;
@@ -86,17 +118,33 @@
                 data.mainImage = "https://img.youtube.com/vi/" + key + "/mqdefault.jpg";
             }
         } else {
-            path =
-                w.location.pathname.indexOf(data.orgName) > 0 &&
-                    w.location.pathname.toLowerCase().indexOf("home") < 0 &&
-                    w.location.pathname.toLowerCase().indexOf(dirPath) >= 0
-                    ? w.location.pathname
-                    : `${data.orgName == null ? "" : `/${data.orgName}`}${dirPath == ""
-                        ? data.orgName == null
-                            ? w.location.pathname
-                            : w.location.pathname.toLowerCase().replace(`${String(data.orgName).toLowerCase()}`, "")
-                        : `/${dirPath}`
-                    }`;
+            const orgName = normalizePathSegment(data.orgName);
+            const currentPathRaw = w.location.pathname;
+            const currentPath = currentPathRaw.toLowerCase();
+            const orgLower = orgName.toLowerCase();
+
+            if (
+                orgName !== "" &&
+                dirPath !== "" &&
+                currentPath.indexOf(orgLower) > 0 &&
+                currentPath.indexOf("home") < 0 &&
+                currentPath.indexOf(dirPath) >= 0
+            ) {
+                path = currentPathRaw;
+            } else if (dirPath !== "") {
+                path = buildDirectoryBasePath(orgName, dirPath);
+            } else if (orgName !== "") {
+                const currentClean = normalizePathSegment(currentPathRaw);
+                const currentCleanLower = currentClean.toLowerCase();
+
+                if (currentCleanLower === orgLower || currentCleanLower.startsWith(`${orgLower}/`)) {
+                    path = `/${currentClean}`;
+                } else {
+                    path = `/${orgName}${currentClean === "" ? "" : `/${currentClean}`}`;
+                }
+            } else {
+                path = currentPathRaw;
+            }
 
             if (typeof $item.data("pageto") !== "undefined" && $item.data("pageto") !== "") {
                 const index = path.substring(1).indexOf("/") + 1;
@@ -526,6 +574,28 @@
         });
     }
 
+    function bindViewTypeChangeEqualizer($item) {
+        $item.off("viewtype:changed.captionEqualizer")
+            .on("viewtype:changed.captionEqualizer", function () {
+                refreshType4CaptionEqualizer($item);
+            });
+    }
+
+    function refreshViewTypeIfNeeded($item) {
+        if (isFn(w.ViewTypeChangeRefresh)) {
+            w.ViewTypeChangeRefresh($item);
+        }
+    }
+
+    function afterCatalogRendered($item, reason) {
+        refreshViewTypeIfNeeded($item);
+        handleSwiperAfterRender($item);
+        bindImageLoadEqualizer($item);
+        bindViewTypeChangeEqualizer($item);
+        refreshType4CaptionEqualizer($item);
+        $item.trigger("catalog:rendered", [{ reason: reason }]);
+    }
+
     DirectoryRenderer.renderItemsOnly = function ($item, releInfos) {
         if (!$item || !$item.length) return;
 
@@ -534,10 +604,7 @@
 
         applyLoginSensitiveUi($item, releInfos).done(function () {
             renderCatalogItems($item, releInfos || []);
-            handleSwiperAfterRender($item);
-            bindImageLoadEqualizer($item);
-            refreshType4CaptionEqualizer($item);
-            $item.trigger("catalog:rendered", [{ reason: "DirectoryRenderer.renderItemsOnly" }]);
+            afterCatalogRendered($item, "DirectoryRenderer.renderItemsOnly");
         });
     };
 
@@ -591,6 +658,7 @@
                     }
                 }
 
+                $(content).attr({ "data-id": data.id });
                 $container.append(content);
             });
 
@@ -598,10 +666,7 @@
                 w.DirectoryParts.afterRender($item, dataList);
             }
 
-            handleSwiperAfterRender($item);
-            bindImageLoadEqualizer($item);
-            refreshType4CaptionEqualizer($item);
-            $item.trigger("catalog:rendered", [{ reason: "DirectoryRenderer.renderItemsByExternalTemplate" }]);
+            afterCatalogRendered($item, "DirectoryRenderer.renderItemsByExternalTemplate");
         });
     };
 
@@ -624,10 +689,7 @@
                 directoryType: result.directoryType
             }).trigger("load");
 
-            handleSwiperAfterRender($item);
-            bindImageLoadEqualizer($item);
-            refreshType4CaptionEqualizer($item);
-            $item.trigger("catalog:rendered", [{ reason: "DirectoryRenderer.renderCatalogResult" }]);
+            afterCatalogRendered($item, "DirectoryRenderer.renderCatalogResult");
         });
     };
 

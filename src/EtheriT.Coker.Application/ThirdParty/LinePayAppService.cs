@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
 using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto;

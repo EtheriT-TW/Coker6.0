@@ -585,6 +585,40 @@
             formData.append("files", $(`#${id} .img_input`).data("file").File);
             formData.append("type", type);
             return formData;
+        }, confirmSubmit: function (options) {
+            const defer = $.Deferred();
+
+            co.sweet.confirm(
+                options.title || "確認送出",
+                options.text || "是否確定送出？",
+                options.confirmButtonText || "確定",
+                options.cancelButtonText || "取消",
+                function () {
+                    try {
+                        const result = options.onConfirm && options.onConfirm();
+
+                        if (result && typeof result.always === "function") {
+                            result.always(function () {
+                                defer.resolve();
+                            });
+                        } else if (result && typeof result.finally === "function") {
+                            result.finally(function () {
+                                defer.resolve();
+                            });
+                        } else {
+                            defer.resolve();
+                        }
+                    } catch (ex) {
+                        defer.reject(ex);
+                        throw ex;
+                    }
+                },
+                function () {
+                    defer.resolve();
+                }
+            );
+
+            return defer.promise();
         }
     }
 });

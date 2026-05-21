@@ -7,6 +7,7 @@ using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Common;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;

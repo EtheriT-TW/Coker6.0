@@ -55,54 +55,44 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 			try
 			{
 				var asoid = dto.Id;
-				if (dto.Id == 0)
+				Core.Models.TechnicalCertificate? tc;
+
+                if (dto.Id == 0)
 				{
-					var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
-					if (db_t != null)
+					long WebsiteID = await loginUserData.GetWebsiteId();
+					tc = new Core.Models.TechnicalCertificate
 					{
-						long WebsiteID = await loginUserData.GetWebsiteId();
-						Core.Models.TechnicalCertificate tc = new Core.Models.TechnicalCertificate
-						{
-							FK_WebsiteId = WebsiteID,
-							Disp_opt = dto.Disp_opt,
-							Img = dto.Img,
-							Title = dto.Title,
-							Description = dto.Description,
-							Ser_no = dto.Ser_no,
-							StartDate = dto.StartDate,
-							EndDate = dto.EndDate,
-							Permanent = dto.Permanent,
-							CreatorUserId = (long)db_t.UserID
-						};
-						db.TechnicalCertificates.Add(tc);
-						db.SaveChanges();
-						asoid = tc.Id;
-					}
-					else throw new Exception("查無資料");
+						FK_WebsiteId = WebsiteID,
+						Disp_opt = dto.Disp_opt,
+						Img = dto.Img,
+						Title = dto.Title,
+						Description = dto.Description,
+						Ser_no = dto.Ser_no,
+						StartDate = dto.StartDate,
+						EndDate = dto.EndDate,
+						Permanent = dto.Permanent
+					};
+					db.TechnicalCertificates.Add(tc);
 				}
 				else
 				{
-					var db_tc = db.TechnicalCertificates.Where(e => e.Id == dto.Id).FirstOrDefault();
-					var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
-					if (db_tc != null && db_t != null)
+					tc = db.TechnicalCertificates.Where(e => e.Id == dto.Id).FirstOrDefault();
+					if (tc != null)
 					{
-						db_tc.Disp_opt = dto.Disp_opt;
-						db_tc.Img = dto.Img;
-						db_tc.Title = dto.Title;
-						db_tc.Description = dto.Description;
-						db_tc.Ser_no = dto.Ser_no;
-						db_tc.StartDate = dto.StartDate;
-						db_tc.EndDate = dto.EndDate;
-						db_tc.Permanent = dto.Permanent;
-						db_tc.CreatorUserId = (long)db_t.UserID;
-
-						db_tc.LastModificationTime = DateTime.Now;
-						db_tc.LastModifierUserId = db_t.UserID;
-						db.SaveChanges();
+                        tc.Disp_opt = dto.Disp_opt;
+						tc.Img = dto.Img;
+						tc.Title = dto.Title;
+						tc.Description = dto.Description;
+						tc.Ser_no = dto.Ser_no;
+						tc.StartDate = dto.StartDate;
+						tc.EndDate = dto.EndDate;
+                        tc.Permanent = dto.Permanent;
 					}
 					else throw new Exception("查無資料");
-				}
-				output.Success = true;
+                }
+				await loginUserData.SaveChanges(tc);
+                asoid = tc.Id;
+                output.Success = true;
 				output.Message = asoid.ToString();
 			}
 			catch (Exception e)

@@ -1,6 +1,4 @@
-﻿
-using EtheriT.Coker.Application.Shared.Dto.enumType;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Order
 {

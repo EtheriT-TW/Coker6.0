@@ -1,19 +1,25 @@
-﻿using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using Newtonsoft.Json;
-using EtheriT.Coker.Application.Dto;
-using Microsoft.EntityFrameworkCore;
-using AutoMapper;
-using EtheriT.Coker.Application.Shared.Dto.Tag;
-using EtheriT.Coker.Application.Shared.Tag;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
-using EtheriT.Coker.Application.Shared.Dto.Files;
-using EtheriT.Coker.Application.Shared.Advertise;
-using EtheriT.Coker.Application.Shared.Dto.Advertise;
+﻿using AutoMapper;
+using DevExpress.ReportServer.ServiceModel.DataContracts;
 using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Serialization;
+using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Processor;
+using EtheriT.Coker.Application.Shared.Advertise;
+using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Advertise;
+using EtheriT.Coker.Application.Shared.Dto.Article;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Files;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
+using EtheriT.Coker.Application.Shared.Processor;
+using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace EtheriT.Coker.Application.Advertise
 {
@@ -25,14 +31,17 @@ namespace EtheriT.Coker.Application.Advertise
         private readonly ITagAppService tagAppService;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly ITokenAppService tokenAppService;
-        private readonly string ApplicationName;
+        private readonly StringHandler stringHandler;
+        private readonly IHtmlProcessor htmlProcessor;
         public AdvertiseAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IMapper mapper,
             ITagAppService tagAppService,
             IFileUploadAppService fileUploadAppService,
-            ITokenAppService tokenAppService
+            ITokenAppService tokenAppService,
+            IHtmlProcessor htmlProcessor,
+            StringHandler stringHandler
         )
         {
             this.db = db;
@@ -41,7 +50,8 @@ namespace EtheriT.Coker.Application.Advertise
             this.tagAppService = tagAppService;
             this.fileUploadAppService = fileUploadAppService;
             this.tokenAppService = tokenAppService;
-            this.ApplicationName = "Advertise";
+            this.stringHandler = stringHandler;
+            this.htmlProcessor = htmlProcessor;
         }
         public async Task<ResponseMessageDto> AddUp(AdvertiseDto dto)
         {
@@ -129,6 +139,7 @@ namespace EtheriT.Coker.Application.Advertise
                                     EndTime = a.EndDate,
                                     SerNO = a.SerNO,
                                     Visible = a.Visible,
+                                    ActionType = a.ActionType
                                 };
                 var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
 
@@ -182,6 +193,7 @@ namespace EtheriT.Coker.Application.Advertise
                                             StartTime = e.StartDate,
                                             EndTime = e.EndDate,
                                             permanent = e.Permanent,
+                                            ActionType = e.ActionType,
                                         }).FirstOrDefaultAsync();
 
                     if (output != null)
@@ -350,6 +362,100 @@ namespace EtheriT.Coker.Application.Advertise
             }
             catch (Exception e) { }
             return new JsonResult(new List<AdvertiseDisplayDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+
+        public async Task<ResponseMessageDto> GetConten(SearchIDDto dto) {
+            ResponseMessageDto results = new ResponseMessageDto();
+            try
+            {
+                long siteId = await loginUserData.GetWebsiteId();
+                var output = await db.Advertise.FirstOrDefaultAsync(e => e.FK_WebsiteId == siteId && e.Id == dto.Id);
+                if (output != null) {
+                    results.Object = new HtmlOutputDto
+                    {
+                        Title = output.Title,
+                        SaveCss = output.SaveCss,
+                        SaveHtml = output.SaveHtml
+                    };
+                    results.Success = true;
+                }
+                else throw new Exception("查無資料");
+            }
+            catch (Exception ex)
+            {
+                results.Success = false;
+                results.Error = ex.Message;
+            }
+            return results;
+        }
+        public async Task<ResponseMessageDto> ImportConten(ArticleSaveContenDto dto) {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var userId = await loginUserData.GetUserId();
+
+                dto.SaveHtml = stringHandler.HtmlEncode(dto.SaveHtml);
+                ArticleContenDto importDto = new ArticleContenDto
+                {
+                    Id = dto.Id,
+                    Html = dto.SaveHtml,
+                    Css = dto.SaveCss
+                };
+                var s = await SaveConten(dto);
+                var user = await loginUserData.GetUser();
+                var advertise = await db.Advertise.FirstOrDefaultAsync(e => e.Id == dto.Id);
+                if (advertise != null)
+                {
+                    string Orgname = await loginUserData.GetWebsiteOrgName();
+                    importDto.Html = stringHandler.HtmlDecode(importDto.Html);
+                    importDto.Html = htmlProcessor.RemoveNode(importDto.Html ?? "", ".backstageType");
+                    importDto.Html = htmlProcessor.SetAttr(importDto.Html ?? "", "[target='_blank'] ", "rel", "noopener noreferrer");
+
+                    importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
+                    importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
+
+                    advertise.Css = importDto.Css;
+                    advertise.Html = stringHandler.HtmlEncode(importDto.Html);
+
+                    await loginUserData.SaveChanges(advertise);
+                    response.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            finally
+            {
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> SaveConten(ArticleSaveContenDto dto) {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                dto.SaveHtml = stringHandler.HtmlEncode(dto.SaveHtml);
+                var advertise = await db.Advertise.FirstOrDefaultAsync(e => e.Id == dto.Id);
+                if (advertise != null) {
+                    string Orgname = await loginUserData.GetWebsiteOrgName();
+                    advertise.SaveHtml = dto.SaveHtml;
+                    advertise.SaveCss = dto.SaveCss;
+                    await loginUserData.SaveChanges(advertise);
+                    response.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            finally
+            {
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            }
+            return response;
         }
     }
 }

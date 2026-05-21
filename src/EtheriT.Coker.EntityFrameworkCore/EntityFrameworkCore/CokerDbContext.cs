@@ -18,6 +18,7 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Directory = EtheriT.Coker.Core.Models.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Advertise;
 
 namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 {
@@ -475,6 +476,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Advertise>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.Advertise).HasForeignKey(f => f.FK_WebsiteId);
+                o.Property(a => a.ActionType).HasDefaultValue(AdvertiseActionType.Link);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<Advertise_Log>(o =>

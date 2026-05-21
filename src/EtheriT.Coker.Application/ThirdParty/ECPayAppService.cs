@@ -12,7 +12,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using static EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto.ECPayRequestDto;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
 using AutoMapper;
@@ -23,6 +22,7 @@ using EtheriT.Coker.Application.Shared.ShoppingCart;
 using DevExpress.CodeParser;
 using EtheriT.Coker.Application.Common;
 using Microsoft.AspNetCore.Http;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {

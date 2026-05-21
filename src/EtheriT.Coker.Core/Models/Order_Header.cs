@@ -1,5 +1,4 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
 using EtheriT.Coker.Core.Entity;
 using System.ComponentModel.DataAnnotations;
 

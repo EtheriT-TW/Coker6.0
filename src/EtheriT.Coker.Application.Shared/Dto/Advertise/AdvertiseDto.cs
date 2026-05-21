@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.Tag;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Advertise;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Advertise
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public bool permanent { get; set; } = false;
+        public AdvertiseActionType ActionType { get; set; } = AdvertiseActionType.Link;
         public List<TagSelectedDto>? TagSelected { get; set; }
     }
 }

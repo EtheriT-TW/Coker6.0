@@ -12,12 +12,38 @@
     }
 
     function getDirIds($el) {
-        const dirid = $el.data("dirid");
-        if (typeof dirid === "undefined") return 0;
-        if (typeof dirid === "string") return dirid.split(",");
-        return [dirid];
-    }
+        const raw = $el.attr("data-dirid");
 
+        if (typeof raw === "undefined") return [];
+
+        const value = String(raw).trim();
+
+        if (value === "") return [];
+
+        return value
+            .split(",")
+            .map(function (x) {
+                return x.trim();
+            })
+            .filter(function (x) {
+                return x !== "" && x !== "0";
+            });
+    }
+    function canAutoLoadCatalog($el) {
+        if (!$el || !$el.length) return false;
+
+        const dirIds = getDirIds($el);
+
+        if (dirIds.length > 0) return true;
+
+        const type = ($el.attr("data-type") || "").toString().trim().toLowerCase();
+        const searchText = ($el.attr("data-search-text") || "").toString().trim();
+
+        // 若你的搜尋元件允許沒有 dirid，但需要 searchText，才開這段
+        if (type === "search" && searchText !== "") return true;
+
+        return false;
+    }
     function getHashPage() {
         return location.hash.replace("#", "");
     }
@@ -58,6 +84,8 @@
     }
 
     function initSingleCatalog($self, page) {
+        if (!canAutoLoadCatalog($self)) return;
+
         const dirid = getDirIds($self);
         const hashPage = !!page ? page.toString() : getHashPage();
 
@@ -67,11 +95,9 @@
 
         page = normalizePage(hashPage);
 
-        if (dirid.length === 1 && dirid[0] === "") return;
-
         const option = buildCatalogOption($self, page);
 
-        $self.data("prevdirid", dirid);
+        $self.data("prevdirid", dirid.join(","));
         $self.find(".catalog>.template").remove();
 
         if (w.DirectoryService && typeof w.DirectoryService.getCatalogData === "function") {
@@ -91,6 +117,8 @@
         $root.find(".menu_directory").each(function () {
             const $self = $(this);
             const dirid = getDirIds($self);
+            if (!dirid.length) return;
+
             const showUnvisible = typeof $self.attr("data-show-unvisible") !== "undefined"
                 ? $self.attr("data-show-unvisible").toLowerCase() === "true"
                 : false;
@@ -121,6 +149,7 @@
         $root.find(".advertise_directory").each(function () {
             const $self = $(this);
             const dirid = getDirIds($self);
+            if (!dirid.length) return;
 
             if (w.DirectoryService && typeof w.DirectoryService.getAdvertiseData === "function") {
                 w.DirectoryService.getAdvertiseData({
@@ -137,7 +166,10 @@
     }
 
     function bindHashChangeIfNeeded($root) {
-        const dirLength = $root.find(".catalog_frame").length;
+        const dirLength = $root.find(".catalog_frame").filter(function () {
+            return canAutoLoadCatalog($(this));
+        }).length;
+
         if (dirLength !== 1) return;
 
         if ("onhashchange" in window) {
@@ -149,13 +181,15 @@
 
     function DirectoryGetDataInit(root) {
         const $root = to$root(root);
-        const $catalogs = $root.find(".catalog_frame");
+        const $catalogs = $root.find(".catalog_frame").filter(function () {
+            return canAutoLoadCatalog($(this));
+        });
 
         $catalogs.each(function () {
             const $self = $(this);
-            const dirid = getDirIds($self);
+            const dirid = getDirIds($self).join(",");
 
-            if (typeof $self.data("prevdirid") === "undefined" || dirid != $self.data("prevdirid")) {
+            if (typeof $self.data("prevdirid") === "undefined" || dirid !== $self.data("prevdirid")) {
                 initElemntAndLoadDir($self);
             }
         });
@@ -166,9 +200,14 @@
     }
 
     function initElemntAndLoadDir($dir, page) {
-        const $self = $dir || $(".catalog_frame").first();
+        const $self = $dir && $dir.length
+            ? $dir
+            : $(".catalog_frame").filter(function () {
+                return canAutoLoadCatalog($(this));
+            }).first();
 
         if (!$self || !$self.length) return;
+        if (!canAutoLoadCatalog($self)) return;
 
         const tempSiblings = $self.find(".templatecontent").siblings();
         if (tempSiblings.length > 0) {

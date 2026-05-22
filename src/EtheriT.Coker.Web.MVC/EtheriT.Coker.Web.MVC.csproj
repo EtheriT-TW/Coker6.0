@@ -193,6 +193,10 @@
 		<Content Update="appsettings.json">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Content>
+		<Content Update="Resources\ContactExportTemplates\**\*.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
 	</ItemGroup>
 	<ProjectExtensions>
 		<VisualStudio>

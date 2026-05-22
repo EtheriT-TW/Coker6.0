@@ -1,0 +1,24 @@
+{
+  "formTypeId": 10803,
+  "name": "公教人員健診",
+  "columns": [    
+    { "columnKey": "Gender", "columnTitle": "稱謂", "visible": true, "format": "text" },
+    { "columnKey": "email", "columnTitle": "Email", "visible": true, "format": "text" },
+    { "columnKey": "telPhone", "columnTitle": "行動電話", "visible": true, "format": "text" },
+    { "columnKey": "InputCompany", "columnTitle": "服務單位", "visible": true, "format": "text" },
+    { "columnKey": "RadioForm", "columnTitle": "是否需要提供附表一般體格表(勞檢表)", "visible": true, "format": "text" },
+
+    { "columnKey": "RadioFood", "columnTitle": "餐點", "visible": true, "format": "text" },
+    { "columnKey": "ContactUsType form-select", "columnTitle": "健診方案", "visible": true, "format": "text" },
+    { "columnKey": "checkDate", "columnTitle": "希望預約日期", "visible": true, "format": "text" },
+    { "columnKey": "InputPackageAddr", "columnTitle": "資料袋寄送地址", "visible": true, "format": "text" },
+    { "columnKey": "InputFamilyNmae", "columnTitle": "攜帶眷屬姓名", "visible": true, "format": "text" },
+    { "columnKey": "staff", "columnTitle": "攜帶眷屬身分證", "visible": true, "format": "text" },
+    { "columnKey": "checkDate1", "columnTitle": "攜帶眷屬出生日期", "visible": true, "format": "text" },
+    { "columnKey": "InputFamilyCheck", "columnTitle": "攜帶眷屬健診專案", "visible": true, "format": "text" },
+    { "columnKey": "name", "columnTitle": "姓名", "visible": true, "format": "text" },
+    { "columnKey": "passport", "columnTitle": "身份證字號", "visible": true, "format": "text" },
+    { "columnKey": "birthday", "columnTitle": "出生年月日", "visible": true, "format": "text" },
+    { "columnKey": "description", "columnTitle": "其他說明事項", "visible": true, "format": "text" }
+  ]
+}

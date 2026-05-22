@@ -48,6 +48,7 @@ namespace EtheriT.Coker.Application.Contact
         private readonly AppConfiguration configuration;
         private readonly IMapper mapper;
         private readonly ILogger<ContactAppService> logger;
+        private readonly ExportTemplateResolver exportTemplateResolver;
         public ContactAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -55,7 +56,8 @@ namespace EtheriT.Coker.Application.Contact
             MailAppService mailAppService,
             AppConfiguration configuration,
             IMapper mapper,
-            ILogger<ContactAppService> logger
+            ILogger<ContactAppService> logger,
+            ExportTemplateResolver exportTemplateResolver
         )
         {
             this.db = db;
@@ -65,6 +67,7 @@ namespace EtheriT.Coker.Application.Contact
             this.configuration = configuration;
             this.loginUserData = loginUserData;
             this.logger = logger;
+            this.exportTemplateResolver = exportTemplateResolver;
 
         }
         public async Task<ResponseMessageDto> submit(FormSubmitDto dto)
@@ -367,14 +370,14 @@ namespace EtheriT.Coker.Application.Contact
                     return response;
                 }
 
-                // FromDate 解析出動態欄位；若未來有模板欄位，則以模板排序與顯示設定為準。
+                // FromDate 解析出動態欄位；若該表單存在 JSON 範本，則以範本排序與顯示設定為準。
                 var parser = new FromDateParser(logger);
                 var parsed = parser.Parse(contacts.Select(e => (e.Id, e.FromDate)));
-                var templateColumns = await new ExportTemplateResolver().GetTemplateColumnsAsync(dto.FormTypeId);
-                var dynamicColumns = templateColumns.Any()
-                    ? templateColumns
+                var template = await exportTemplateResolver.GetTemplateAsync(dto.FormTypeId);
+                var dynamicColumns = template.HasTemplate
+                    ? template.Columns
                         .Where(e => e.Visible && !string.Equals(FromDateParser.NormalizeKey(e.ColumnKey), "captcha", StringComparison.OrdinalIgnoreCase))
-                        .OrderBy(e => e.SortOrder)
+                        // 範本順序由 JSON columns 陣列決定；維護人員調整陣列位置即可改變輸出欄位順序。
                         .Select(e => new FromDateColumn
                         {
                             NormalizedKey = FromDateParser.NormalizeKey(e.ColumnKey),
@@ -383,6 +386,11 @@ namespace EtheriT.Coker.Application.Contact
                         })
                         .ToList()
                     : parsed.Columns;
+
+                if (template.HasTemplate)
+                {
+                    LogTemplateColumnsWithoutMapping(dto.FormTypeId, dynamicColumns, parsed);
+                }
 
                 var rows = BuildExportRows(contacts, menu.Title, dynamicColumns, parsed);
                 var stream = new MemoryStream();
@@ -408,8 +416,24 @@ namespace EtheriT.Coker.Application.Contact
             catch (Exception ex)
             {
                 logger.LogError(ex, "Contact export failed.");
-                response = CreateExportFailure(HttpStatusCode.InternalServerError, "E003", "匯出失敗：系統發生意外錯誤，請稍後再試或聯繫系統管理員。", ErrorCodeEnum.ServerError, exportMaxRows);
-                auditResult = new { response.HttpStatusCode, response.ErrorCodeKey, response.Error };
+                var isTemplateError = ex is InvalidOperationException
+                    && ex.Message.StartsWith("聯絡表單匯出範本", StringComparison.Ordinal);
+                var statusCode = isTemplateError ? HttpStatusCode.BadRequest : HttpStatusCode.InternalServerError;
+                var errorCodeKey = isTemplateError ? "E004" : "E003";
+                var errorCode = isTemplateError ? ErrorCodeEnum.ValidationError : ErrorCodeEnum.ServerError;
+                var message = isTemplateError
+                    ? $"匯出範本設定錯誤：{ex.Message}"
+                    : "匯出失敗：系統發生意外錯誤，請稍後再試或聯繫系統管理員。";
+
+                response = CreateExportFailure(statusCode, errorCodeKey, message, errorCode, exportMaxRows);
+                auditResult = new
+                {
+                    response.HttpStatusCode,
+                    response.ErrorCodeKey,
+                    response.Error,
+                    ExceptionType = ex.GetType().Name,
+                    ExceptionMessage = ex.Message
+                };
                 return response;
             }
             finally
@@ -609,6 +633,25 @@ namespace EtheriT.Coker.Application.Contact
             }
 
             return sheetName.Length > 31 ? sheetName.Substring(0, 31) : sheetName;
+        }
+
+        /// <summary>
+        /// 範本欄位若本次資料完全找不到對應 key，仍輸出空白欄並記錄警告，方便後續修正範本。
+        /// </summary>
+        private void LogTemplateColumnsWithoutMapping(long formTypeId, List<FromDateColumn> templateColumns, FromDateParseResult parsed)
+        {
+            var parsedKeys = parsed.Columns
+                .Select(e => e.NormalizedKey)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var column in templateColumns.Where(e => !parsedKeys.Contains(e.NormalizedKey)))
+            {
+                logger.LogWarning(
+                    "Contact export template column did not match any FromDate key. FormTypeId: {FormTypeId}, ColumnKey: {ColumnKey}, ColumnTitle: {ColumnTitle}",
+                    formTypeId,
+                    column.OriginalKey,
+                    column.Title);
+            }
         }
 
         /// <summary>

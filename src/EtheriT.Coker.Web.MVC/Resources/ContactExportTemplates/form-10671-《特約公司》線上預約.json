@@ -1,0 +1,24 @@
+{
+  "formTypeId": 10671,
+  "name": "《特約公司》線上預約",
+  "columns": [
+    { "columnKey": "name", "columnTitle": "姓名", "visible": true, "format": "text" },
+    { "columnKey": "Gender", "columnTitle": "稱謂", "visible": true, "format": "text" },
+    { "columnKey": "email", "columnTitle": "Email", "visible": true, "format": "text" },
+    { "columnKey": "telPhone", "columnTitle": "行動電話", "visible": true, "format": "text" },
+    { "columnKey": "company", "columnTitle": "公司名稱", "visible": true, "format": "text" },
+    { "columnKey": "staff", "columnTitle": "員工編號", "visible": true, "format": "text" },
+    { "columnKey": "job", "columnTitle": "職稱", "visible": true, "format": "text" },
+    { "columnKey": "passport", "columnTitle": "身份證字號", "visible": true, "format": "text" },
+    { "columnKey": "birthday", "columnTitle": "生日", "visible": true, "format": "text" },
+    { "columnKey": "checkDate", "columnTitle": "希望預約日期", "visible": true, "format": "text" },
+    { "columnKey": "address", "columnTitle": "資料袋寄送地址", "visible": true, "format": "text" },
+    { "columnKey": "food", "columnTitle": "餐點", "visible": true, "format": "text" },
+    { "columnKey": "project", "columnTitle": "健診專案及選項", "visible": true, "format": "text" },
+    { "columnKey": "description", "columnTitle": "其他説明事項", "visible": true, "format": "text" },
+    { "columnKey": "familyMessage", "columnTitle": "攜帶眷屬資料", "visible": true, "format": "text" },
+    { "columnKey": "slowSick", "columnTitle": "慢性疾病", "visible": true, "format": "text" },
+    { "columnKey": "OperationHistory", "columnTitle": "手術史", "visible": true, "format": "text" },
+    { "columnKey": "MedicineHistory", "columnTitle": "用藥史", "visible": true, "format": "text" }
+  ]
+}

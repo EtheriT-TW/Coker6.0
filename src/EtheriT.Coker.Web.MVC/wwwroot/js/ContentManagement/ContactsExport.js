@@ -242,6 +242,8 @@
                         "Content-Type": "application/json; charset=utf-8"
                     },
                     body: JSON.stringify(payload),
+                    // 防偽權杖驗證需同時帶 header token 與同源 cookie，明確宣告避免環境差異造成 400。
+                    credentials: "same-origin",
                     signal: abortController.signal
                 });
 
@@ -404,14 +406,14 @@
                 const data = await response.json();
                 const maxRows = data.maxRows ?? data.MaxRows;
                 this.setMaxRows(maxRows);
-                return this.mapExportError(data, data.message || data.Message || data.error || data.Error);
+                return this.mapExportError(data, data.message || data.Message || data.error || data.Error, response.status);
             }
 
-            return this.mapExportError(null, await response.text());
+            return this.mapExportError(null, await response.text(), response.status);
         },
 
         // 依規格錯誤代碼輸出 popup 文案；超過限制時使用後端回傳的實際上限筆數。
-        mapExportError: function (data, fallbackMessage) {
+        mapExportError: function (data, fallbackMessage, httpStatus) {
             const errorCode = String(data?.errorCode || data?.ErrorCode || data?.errorCodeKey || data?.ErrorCodeKey || "");
             const maxRows = Number(data?.maxRows ?? data?.MaxRows ?? this.maxRows);
 
@@ -432,11 +434,37 @@
                 };
             }
 
+            if (errorCode === "E004") {
+                const message = fallbackMessage || "匯出條件或範本設定不正確，請確認後再試。";
+                return {
+                    type: "system",
+                    title: message.indexOf("範本") >= 0 ? "範本設定錯誤" : "匯出條件錯誤",
+                    message: message.replace(/^匯出失敗[:：]\s*/, "")
+                };
+            }
+
+            if (errorCode === "E005" || httpStatus === 403) {
+                return {
+                    type: "system",
+                    title: "權限不足",
+                    message: fallbackMessage || "目前帳號無權限執行匯出。"
+                };
+            }
+
             if (errorCode === "E003") {
                 return {
                     type: "system",
                     title: "匯出失敗",
-                    message: "系統發生錯誤，請稍後再試或聯繫系統管理員。"
+                    message: fallbackMessage || "系統發生錯誤，請稍後再試或聯繫系統管理員。"
+                };
+            }
+
+            if (httpStatus === 400 && !data) {
+                // ValidateAntiForgeryToken 失敗時 ASP.NET Core 會先擋下請求並回傳非 JSON 400。
+                return {
+                    type: "system",
+                    title: "頁面驗證逾時",
+                    message: "請重新整理頁面後再執行匯出。"
                 };
             }
 

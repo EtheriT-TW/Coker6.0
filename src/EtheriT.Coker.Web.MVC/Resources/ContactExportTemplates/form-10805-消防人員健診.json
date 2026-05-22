@@ -1,0 +1,20 @@
+{
+  "formTypeId": 10805,
+  "name": "消防人員健診",
+  "columns": [
+    { "columnKey": "name", "columnTitle": "姓名", "visible": true, "format": "text" },
+    { "columnKey": "Gender", "columnTitle": "稱謂", "visible": true, "format": "text" },
+    { "columnKey": "email", "columnTitle": "Email", "visible": true, "format": "text" },
+    { "columnKey": "telPhone", "columnTitle": "行動電話", "visible": true, "format": "text" },
+    { "columnKey": "InputCompany", "columnTitle": "服務單位", "visible": true, "format": "text" },
+    { "columnKey": "passport", "columnTitle": "身份證字號", "visible": true, "format": "text" },
+    { "columnKey": "RadioFood", "columnTitle": "餐點", "visible": true, "format": "text" },
+    { "columnKey": "birthday", "columnTitle": "出生年月日", "visible": true, "format": "text" },
+    { "columnKey": "ContactUsType form-select", "columnTitle": "健診專案", "visible": true, "format": "text" },
+    { "columnKey": "checkDate", "columnTitle": "希望健診日期", "visible": true, "format": "text" },
+    { "columnKey": "InputFamilyNmae", "columnTitle": "資料袋寄送地址", "visible": true, "format": "text" },
+    { "columnKey": "staff", "columnTitle": "服藥史", "visible": true, "format": "text" },
+    { "columnKey": "InputOpertaion", "columnTitle": "手術史", "visible": true, "format": "text" },
+    { "columnKey": "description", "columnTitle": "其他說明事項", "visible": true, "format": "text" }
+  ]
+}

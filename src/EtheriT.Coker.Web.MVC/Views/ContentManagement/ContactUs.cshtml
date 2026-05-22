@@ -7,11 +7,22 @@
     ViewData["Title"] = "ContactUs";
 }
 <link rel="stylesheet" href="~/css/ContentManagement/ContactUsReply.min.css" asp-append-version="true" />
+@* 匯出 modal 專用樣式，避免影響原本聯絡表單列表與回覆頁。 *@
+<link rel="stylesheet" href="~/css/ContentManagement/ContactsExport.css" asp-append-version="true" />
 <script src="~/js/ContentManagement/ContactUsReply.min.js" asp-append-version="true"></script>
+@* 匯出互動邏輯另拆檔案，並在 JS 中串接既有 PageReady。 *@
+<script src="~/js/ContentManagement/ContactsExport.js" asp-append-version="true"></script>
 
 <div class="">
+    @* 匯出 POST 需要防偽權杖，前端會讀取 AntiforgeryField 放入 x-xsrf-token header。 *@
+    @Html.AntiForgeryToken()
     <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
         <div class="title fw-bold fs-3">聯絡我們</div>
+        @* 匯出按鈕只在列表頁顯示，進入明細 hash 頁時由 JS 隱藏。 *@
+        <button id="ContactExportOpen" type="button" class="btn btn-primary d-flex align-items-center gap-1 px-3">
+            <span class="material-symbols-outlined">download</span>
+            <span>匯出資料</span>
+        </button>
     </div>
     <div class="pageList">
         <div id="ArticleList" class="card py-2 border-0 page show">
@@ -116,6 +127,80 @@
                     </div>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+@* 聯絡表單匯出條件視窗；欄位 id 與 ContactsExport.js 綁定。 *@
+<div class="modal fade" id="ContactExportModal" tabindex="-1" aria-labelledby="ContactExportModalTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered contact-export-dialog">
+        <div class="modal-content contact-export-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ContactExportModalTitle">匯出資料</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+            </div>
+            <div class="modal-body">
+                @* 表單類別由 API 載入目前站台可匯出的 WebMenu。 *@
+                <div class="mb-3">
+                    <label class="form-label required" for="ContactExportFormType">表單類別</label>
+                    <select id="ContactExportFormType" class="form-select">
+                        <option value="">請選擇</option>
+                    </select>
+                    <div class="invalid-feedback d-block" data-export-error="formType"></div>
+                </div>
+
+                @* 快捷時間按鈕會自動帶入開始與結束時間，自訂區間則保留使用者輸入。 *@
+                <div class="mb-3">
+                    <label class="form-label">時間區間</label>
+                    <div class="contact-export-ranges" role="group" aria-label="時間區間快速選擇">
+                        <button type="button" class="btn btn-outline-secondary" data-export-range="today">今天</button>
+                        <button type="button" class="btn btn-outline-secondary" data-export-range="yesterday">昨天</button>
+                        <button type="button" class="btn btn-outline-secondary" data-export-range="last7">最近 7 天</button>
+                        <button type="button" class="btn btn-outline-secondary" data-export-range="thisMonth">本月</button>
+                        <button type="button" class="btn btn-outline-secondary" data-export-range="lastMonth">上個月</button>
+                        <button type="button" class="btn btn-outline-secondary" data-export-range="custom">自訂區間</button>
+                    </div>
+                    <div id="ContactExportRangeHint" class="contact-export-range-hint mt-2"></div>
+                </div>
+
+                @* datetime-local 使用秒級精度，讓今天/昨天等區間可送出 23:59:59。 *@
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label required" for="ContactExportStartTime">開始時間</label>
+                        <input id="ContactExportStartTime" type="datetime-local" class="form-control" step="1" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label required" for="ContactExportEndTime">結束時間</label>
+                        <input id="ContactExportEndTime" type="datetime-local" class="form-control" step="1" />
+                    </div>
+                    <div class="col-12">
+                        <div class="invalid-feedback d-block" data-export-error="time"></div>
+                        <div class="form-text" id="ContactExportSpanHint"></div>
+                    </div>
+                </div>
+
+                @* 狀態篩選目前依規格只開放未處理與已完成；未勾選代表不限制狀態。 *@
+                <div class="mb-3">
+                    <label class="form-label">處理狀態</label>
+                    <div class="d-flex flex-wrap gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="0" id="ContactExportStatus0">
+                            <label class="form-check-label" for="ContactExportStatus0">未處理</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="3" id="ContactExportStatus3">
+                            <label class="form-check-label" for="ContactExportStatus3">已完成</label>
+                        </div>
+                    </div>
+                </div>
+
+                @* 筆數上限由 API 回傳後填入，避免頁面提示與後端設定不一致。 *@
+                <div id="ContactExportLimit" class="contact-export-limit" data-export-limit-template="⚠️ 單次匯出最多 {0} 筆資料，請縮小時間區間">⚠️ 正在載入單次匯出筆數上限…</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button id="ContactExportSubmit" type="button" class="btn btn-primary" disabled>確認匯出</button>
+            </div>
         </div>
     </div>
 </div>

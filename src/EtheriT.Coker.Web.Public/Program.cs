@@ -6,6 +6,7 @@ using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.BonusManagement;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Contact;
+using EtheriT.Coker.Application.Contact.Export;
 using EtheriT.Coker.Application.Directory;
 using EtheriT.Coker.Application.Favorites;
 using EtheriT.Coker.Application.Freight;
@@ -228,6 +229,8 @@ builder.Services.AddScoped<IStoreSetAppService, StoreSetAppService>();
 builder.Services.AddScoped<ICustSearchAppService, CustSearchAppService>();
 builder.Services.AddScoped<ICaptchaAppService, CaptchaAppService>();
 builder.Services.AddScoped<IContactAppService, ContactAppService>();
+// ContactAppService 建構子需要匯出範本解析器；前台送出聯絡表單也會解析此服務，因此前台 DI 也必須註冊。
+builder.Services.AddScoped<ExportTemplateResolver>();
 builder.Services.AddScoped<IRemoteAppService, RemoteAppService>();
 builder.Services.AddScoped<IPermissionsAppService, PermissionsAppService>();
 builder.Services.AddScoped<IBonusManagementAppService, BonusManagementAppService>();

@@ -1,0 +1,25 @@
+{
+  "formTypeId": 10670,
+  "name": "《個人健診》線上預約",
+  "columns": [
+    { "columnKey": "name", "columnTitle": "姓名", "visible": true, "format": "text" },
+    { "columnKey": "Gender", "columnTitle": "稱謂", "visible": true, "format": "text" },
+    { "columnKey": "email", "columnTitle": "Email", "visible": true, "format": "text" },
+    { "columnKey": "telPhone", "columnTitle": "聯絡電話", "visible": true, "format": "text" },
+    { "columnKey": "address", "columnTitle": "聯絡地址", "visible": true, "format": "text" },
+    { "columnKey": "passport", "columnTitle": "身份證字號", "visible": true, "format": "text" },
+    { "columnKey": "birthday", "columnTitle": "生日", "visible": true, "format": "text" },
+    { "columnKey": "checkDate", "columnTitle": "希望預約日期", "visible": true, "format": "text" },
+    { "columnKey": "bodycheck", "columnTitle": "健檢原因", "visible": true, "format": "text" },
+    { "columnKey": "ContactUsType form-select", "columnTitle": "健診方案", "visible": true, "format": "text" },
+    { "columnKey": "sick1", "columnTitle": "1️⃣過去病史", "visible": true, "format": "text" },
+    { "columnKey": "sick12", "columnTitle": "2️⃣用藥紀錄", "visible": true, "format": "text" },
+    { "columnKey": "sick123", "columnTitle": "3️⃣手術史", "visible": true, "format": "text" },
+    { "columnKey": "sick1234", "columnTitle": "4️⃣住院史", "visible": true, "format": "text" },
+    { "columnKey": "sick12345", "columnTitle": "5️⃣藥物過敏", "visible": true, "format": "text" },
+    { "columnKey": "height", "columnTitle": "7️⃣身高", "visible": true, "format": "text" },
+    { "columnKey": "weight", "columnTitle": "8️⃣體重", "visible": true, "format": "text" },
+    { "columnKey": "sick61", "columnTitle": "9️⃣飲食習慣", "visible": true, "format": "text" },
+    { "columnKey": "description", "columnTitle": "其他說明事項", "visible": true, "format": "text" }
+  ]
+}

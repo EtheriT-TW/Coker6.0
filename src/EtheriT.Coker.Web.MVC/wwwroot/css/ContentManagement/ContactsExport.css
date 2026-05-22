@@ -1,0 +1,57 @@
+/* 匯出視窗固定在 560px，讓表單欄位在桌機上維持易讀寬度。 */
+.contact-export-dialog {
+    max-width: 560px;
+}
+
+/* 與後台 Bootstrap modal 視覺一致，僅補上匯出視窗需要的陰影與圓角。 */
+.contact-export-modal {
+    border: 0;
+    border-radius: 8px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.24);
+}
+
+/* 快捷日期按鈕使用固定 grid，避免按鈕文字長短造成跳動。 */
+.contact-export-ranges {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.contact-export-ranges .btn {
+    min-height: 38px;
+    white-space: nowrap;
+}
+
+/* 目前選取的快捷區間以 primary 色標示，與確認匯出按鈕保持一致。 */
+.contact-export-ranges .btn.active {
+    color: #fff;
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+.contact-export-range-hint {
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+/* 匯出上限由後端設定提供，因此提示框只負責顯示目前生效的限制。 */
+.contact-export-limit {
+    color: #b45309;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 0.92rem;
+}
+
+/* 手機寬度改為兩欄，避免快捷日期按鈕擠壓文字。 */
+@media (max-width: 576px) {
+    .contact-export-ranges {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #ContactExportOpen {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}

@@ -96,6 +96,45 @@
     line-height: 1;
 }
 
+/* 錯誤 popup 依情境使用不同圖示，讓超過限制、查無資料與系統錯誤可以一眼分辨。 */
+.contact-export-popup-error-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    margin: 0 0 18px;
+}
+
+.contact-export-popup-error-icon .material-symbols-outlined {
+    font-size: 46px;
+    line-height: 1;
+}
+
+.contact-export-popup-error-icon--limit {
+    color: #dc2626;
+}
+
+.contact-export-popup-error-icon--no-data {
+    color: #ea580c;
+    border: 3px solid #f97316;
+    border-radius: 50%;
+}
+
+.contact-export-popup-error-icon--no-data .material-symbols-outlined {
+    font-size: 34px;
+}
+
+.contact-export-popup-error-icon--system {
+    color: #dc2626;
+    border: 3px solid #ef4444;
+    border-radius: 50%;
+}
+
+.contact-export-popup-error-icon--system .material-symbols-outlined {
+    font-size: 34px;
+}
+
 .contact-export-popup-title {
     color: #111827;
     font-size: 1.05rem;
@@ -122,6 +161,31 @@
 .contact-export-popup-confirm {
     min-width: 96px;
     padding: 8px 18px;
+}
+
+/* 失敗與查無資料按鈕參考需求簡報右下角色彩，不套用 Bootstrap 預設漸層。 */
+.contact-export-popup-confirm--danger {
+    color: #fff;
+    background-color: #dc2626;
+    border-color: #dc2626;
+}
+
+.contact-export-popup-confirm--danger:hover {
+    color: #fff;
+    background-color: #b91c1c;
+    border-color: #b91c1c;
+}
+
+.contact-export-popup-confirm--warning {
+    color: #fff;
+    background-color: #ea580c;
+    border-color: #ea580c;
+}
+
+.contact-export-popup-confirm--warning:hover {
+    color: #fff;
+    background-color: #c2410c;
+    border-color: #c2410c;
 }
 
 @keyframes contact-export-spin {

@@ -215,6 +215,7 @@
             if (!this.validate() || this.isSubmitting) return;
 
             this.setLoading(true);
+            const abortController = new AbortController();
 
             // 未勾選狀態代表不套用狀態條件；後端會再次驗證合法狀態值。
             const payload = {
@@ -227,13 +228,16 @@
             };
 
             try {
+                // 按下確認匯出後立即顯示處理中 popup，讓使用者知道後端正在產生檔案。
+                this.showProcessingPopup(abortController);
                 const response = await fetch("/api/Contact/ExportContacts", {
                     method: "POST",
                     headers: {
                         ...this.getHeaders(),
                         "Content-Type": "application/json; charset=utf-8"
                     },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
+                    signal: abortController.signal
                 });
 
                 // 登入逾期時導回登入頁，不嘗試解析檔案回應。
@@ -247,15 +251,82 @@
                 }
 
                 const blob = await response.blob();
+                const fileName = this.getFileName(response);
 
-                // 檔名由後端 Content-Disposition 決定，避免前端自行組出不一致的檔名。
-                this.downloadBlob(blob, this.getFileName(response));
+                // 檔名由後端 Content-Disposition 決定，成功 popup 與下載檔名都使用同一個值。
+                this.showSuccessPopup(fileName);
+                this.downloadBlob(blob, fileName);
                 this.modal.hide();
-                Coker.sweet.success("匯出成功，檔案已開始下載", null, true);
             } catch (error) {
+                if (error.name === "AbortError") {
+                    this.closeExportPopup();
+                    return;
+                }
+
                 Coker.sweet.error("匯出失敗", error.message || "匯出失敗：系統發生意外錯誤，請稍後再試或聯繫系統管理員。");
             } finally {
                 this.setLoading(false);
+            }
+        },
+
+        // 顯示匯出處理中的 popup；若使用者按取消，會中止前端下載請求。
+        showProcessingPopup: function (abortController) {
+            Swal.fire({
+                html: [
+                    "<div class='contact-export-popup-content'>",
+                    "  <div class='contact-export-popup-spinner' aria-hidden='true'></div>",
+                    "  <div class='contact-export-popup-title'>匯出處理中，請稍候...</div>",
+                    "  <div class='contact-export-popup-note'>資料整理中，請勿關閉視窗或離開頁面</div>",
+                    "</div>"
+                ].join(""),
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: "取消",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                buttonsStyling: false,
+                customClass: {
+                    popup: "contact-export-status-popup",
+                    htmlContainer: "contact-export-popup-html",
+                    cancelButton: "btn btn-outline-secondary contact-export-popup-cancel"
+                }
+            }).then(result => {
+                // 只有使用者主動按取消才中止請求；成功或錯誤狀態切換 popup 時不影響流程。
+                if (result.dismiss === Swal.DismissReason.cancel) {
+                    abortController.abort();
+                }
+            });
+        },
+
+        // 匯出成功後在同一個 popup 顯示檔名，並由 submit 流程立即觸發下載。
+        showSuccessPopup: function (fileName) {
+            Swal.fire({
+                html: [
+                    "<div class='contact-export-popup-content'>",
+                    "  <div class='contact-export-popup-success-icon' aria-hidden='true'>",
+                    "    <span class='material-symbols-outlined'>check</span>",
+                    "  </div>",
+                    "  <div class='contact-export-popup-title'>匯出成功</div>",
+                    "  <div class='contact-export-popup-note'>檔案已開始下載</div>",
+                    `  <div class='contact-export-popup-file'>${this.escapeHtml(fileName)}</div>`,
+                    "</div>"
+                ].join(""),
+                showConfirmButton: true,
+                confirmButtonText: "關閉",
+                showCancelButton: false,
+                buttonsStyling: false,
+                customClass: {
+                    popup: "contact-export-status-popup",
+                    htmlContainer: "contact-export-popup-html",
+                    confirmButton: "btn btn-success contact-export-popup-confirm"
+                }
+            });
+        },
+
+        // 關閉匯出專用 popup；取消下載時避免留下處理中畫面。
+        closeExportPopup: function () {
+            if (typeof Swal !== "undefined" && Swal.isVisible()) {
+                Swal.close();
             }
         },
 
@@ -313,6 +384,17 @@
             link.click();
             link.remove();
             URL.revokeObjectURL(url);
+        },
+
+        // 後端檔名會放進 popup HTML，先做跳脫以避免特殊字元破壞畫面。
+        escapeHtml: function (value) {
+            return String(value).replace(/[&<>"']/g, char => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                "\"": "&quot;",
+                "'": "&#39;"
+            }[char]));
         },
 
         // 聯絡我們明細頁以 hash 切換，匯出按鈕只應出現在列表頁。

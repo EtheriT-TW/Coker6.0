@@ -44,6 +44,92 @@
     font-size: 0.92rem;
 }
 
+/* 匯出處理中與成功 popup 參考需求簡報的流程卡片，採用置中內容與明確狀態圖示。 */
+.contact-export-status-popup {
+    width: 320px;
+    border-radius: 8px;
+    padding: 28px 28px 24px;
+}
+
+.contact-export-status-popup .swal2-actions {
+    margin-top: 22px;
+}
+
+.contact-export-popup-html {
+    margin: 0;
+    padding: 0;
+}
+
+.contact-export-popup-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 168px;
+    text-align: center;
+}
+
+/* spinner 代表後端正在整理資料，避免使用者誤以為畫面停住。 */
+.contact-export-popup-spinner {
+    width: 46px;
+    height: 46px;
+    margin: 4px 0 22px;
+    border: 5px solid #dbeafe;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: contact-export-spin 0.9s linear infinite;
+}
+
+.contact-export-popup-success-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    margin: 0 0 18px;
+    color: #16a34a;
+    border: 3px solid #22c55e;
+    border-radius: 50%;
+}
+
+.contact-export-popup-success-icon .material-symbols-outlined {
+    font-size: 36px;
+    line-height: 1;
+}
+
+.contact-export-popup-title {
+    color: #111827;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.contact-export-popup-note {
+    margin-top: 10px;
+    color: #4b5563;
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.contact-export-popup-file {
+    width: 100%;
+    margin-top: 16px;
+    color: #374151;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.contact-export-popup-cancel,
+.contact-export-popup-confirm {
+    min-width: 96px;
+    padding: 8px 18px;
+}
+
+@keyframes contact-export-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* 手機寬度改為兩欄，避免快捷日期按鈕擠壓文字。 */
 @media (max-width: 576px) {
     .contact-export-ranges {

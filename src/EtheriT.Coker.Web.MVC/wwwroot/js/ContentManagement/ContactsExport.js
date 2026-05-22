@@ -91,7 +91,12 @@
                 });
                 this.formTypesLoaded = true;
             } catch (error) {
-                Coker.sweet.error("匯出失敗", error.message || "表單類別載入失敗，請稍後再試。");
+                // 表單類別載入失敗也使用匯出專用 popup，讓本功能的錯誤提示樣式一致。
+                this.showErrorPopup({
+                    type: "system",
+                    title: "匯出失敗",
+                    message: error.message || "表單類別載入失敗，請稍後再試。"
+                });
             }
         },
 
@@ -247,7 +252,9 @@
                 }
 
                 if (!response.ok) {
-                    throw new Error(await this.getErrorMessage(response));
+                    // 後端會用錯誤代碼標示超過限制、查無資料與系統錯誤，前端依代碼切換 popup 樣式。
+                    this.showErrorPopup(await this.getExportError(response));
+                    return;
                 }
 
                 const blob = await response.blob();
@@ -263,7 +270,11 @@
                     return;
                 }
 
-                Coker.sweet.error("匯出失敗", error.message || "匯出失敗：系統發生意外錯誤，請稍後再試或聯繫系統管理員。");
+                this.showErrorPopup({
+                    type: "system",
+                    title: "匯出失敗",
+                    message: error.message || "系統發生錯誤，請稍後再試或聯繫系統管理員。"
+                });
             } finally {
                 this.setLoading(false);
             }
@@ -272,6 +283,7 @@
         // 顯示匯出處理中的 popup；若使用者按取消，會中止前端下載請求。
         showProcessingPopup: function (abortController) {
             Swal.fire({
+                width: 320,
                 html: [
                     "<div class='contact-export-popup-content'>",
                     "  <div class='contact-export-popup-spinner' aria-hidden='true'></div>",
@@ -301,6 +313,7 @@
         // 匯出成功後在同一個 popup 顯示檔名，並由 submit 流程立即觸發下載。
         showSuccessPopup: function (fileName) {
             Swal.fire({
+                width: 320,
                 html: [
                     "<div class='contact-export-popup-content'>",
                     "  <div class='contact-export-popup-success-icon' aria-hidden='true'>",
@@ -319,6 +332,38 @@
                     popup: "contact-export-status-popup",
                     htmlContainer: "contact-export-popup-html",
                     confirmButton: "btn btn-success contact-export-popup-confirm"
+                }
+            });
+        },
+
+        // 匯出失敗 popup 依錯誤類型切換圖示與按鈕色，對應需求簡報右下角三種狀態。
+        showErrorPopup: function (state) {
+            const type = state?.type || "system";
+            const iconName = type === "no-data" ? "info" : (type === "system" ? "close" : "warning");
+            const iconClass = `contact-export-popup-error-icon--${type}`;
+            const confirmClass = type === "no-data"
+                ? "contact-export-popup-confirm--warning"
+                : "contact-export-popup-confirm--danger";
+
+            Swal.fire({
+                width: 320,
+                html: [
+                    "<div class='contact-export-popup-content'>",
+                    `  <div class='contact-export-popup-error-icon ${iconClass}' aria-hidden='true'>`,
+                    `    <span class='material-symbols-outlined'>${iconName}</span>`,
+                    "  </div>",
+                    `  <div class='contact-export-popup-title'>${this.escapeHtml(state?.title || "匯出失敗")}</div>`,
+                    `  <div class='contact-export-popup-note'>${this.escapeHtml(state?.message || "系統發生錯誤，請稍後再試或聯繫系統管理員。")}</div>`,
+                    "</div>"
+                ].join(""),
+                showConfirmButton: true,
+                confirmButtonText: "確定",
+                showCancelButton: false,
+                buttonsStyling: false,
+                customClass: {
+                    popup: "contact-export-status-popup",
+                    htmlContainer: "contact-export-popup-html",
+                    confirmButton: `btn contact-export-popup-confirm ${confirmClass}`
                 }
             });
         },
@@ -352,16 +397,55 @@
             return headers;
         },
 
-        // 後端錯誤可能是 JSON 或純文字，這裡統一轉成顯示用訊息。
-        getErrorMessage: async function (response) {
+        // 後端錯誤可能是 JSON 或純文字，這裡統一轉成匯出 popup 需要的顯示狀態。
+        getExportError: async function (response) {
             const contentType = response.headers.get("content-type") || "";
             if (contentType.indexOf("application/json") >= 0) {
                 const data = await response.json();
-                this.setMaxRows(data.maxRows ?? data.MaxRows);
-                return data.error || data.message || "匯出失敗";
+                const maxRows = data.maxRows ?? data.MaxRows;
+                this.setMaxRows(maxRows);
+                return this.mapExportError(data, data.message || data.Message || data.error || data.Error);
             }
 
-            return await response.text() || "匯出失敗";
+            return this.mapExportError(null, await response.text());
+        },
+
+        // 依規格錯誤代碼輸出 popup 文案；超過限制時使用後端回傳的實際上限筆數。
+        mapExportError: function (data, fallbackMessage) {
+            const errorCode = String(data?.errorCode || data?.ErrorCode || data?.errorCodeKey || data?.ErrorCodeKey || "");
+            const maxRows = Number(data?.maxRows ?? data?.MaxRows ?? this.maxRows);
+
+            if (errorCode === "E001") {
+                const limitText = Number.isFinite(maxRows) && maxRows > 0 ? maxRows : this.maxRows;
+                return {
+                    type: "limit",
+                    title: "匯出失敗",
+                    message: `單次最多匯出 ${limitText} 筆資料，請縮小時間區間後再試。`
+                };
+            }
+
+            if (errorCode === "E002") {
+                return {
+                    type: "no-data",
+                    title: "查無資料",
+                    message: "此條件區間內沒有資料，請重新設定條件。"
+                };
+            }
+
+            if (errorCode === "E003") {
+                return {
+                    type: "system",
+                    title: "匯出失敗",
+                    message: "系統發生錯誤，請稍後再試或聯繫系統管理員。"
+                };
+            }
+
+            const message = fallbackMessage || "系統發生錯誤，請稍後再試或聯繫系統管理員。";
+            return {
+                type: message.indexOf("查無資料") >= 0 ? "no-data" : "system",
+                title: message.indexOf("查無資料") >= 0 ? "查無資料" : "匯出失敗",
+                message: message.replace(/^匯出失敗[:：]\s*/, "").replace(/^查無資料[:：]\s*/, "")
+            };
         },
 
         // 從 Content-Disposition 解析檔名，支援 UTF-8 filename* 格式。

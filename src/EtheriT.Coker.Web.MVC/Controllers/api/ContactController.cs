@@ -5,6 +5,7 @@ using EtheriT.Coker.Application.Dto;
 using Microsoft.AspNetCore.Mvc;
 using DevExtreme.AspNet.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http;
 using EtheriT.Coker.Web.MVC.Startup;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
@@ -20,11 +21,13 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         private readonly IContactAppService contactAppService;
         private readonly NavigationProvider navigation;
         private readonly LoginUserData loginUserData;
-        public ContactController(IContactAppService contactAppService, NavigationProvider navigation, LoginUserData loginUserData)
+        private readonly IAntiforgery antiforgery;
+        public ContactController(IContactAppService contactAppService, NavigationProvider navigation, LoginUserData loginUserData, IAntiforgery antiforgery)
         {
             this.contactAppService = contactAppService;
             this.navigation = navigation;
             this.loginUserData = loginUserData;
+            this.antiforgery = antiforgery;
         }
         [HttpGet]
         public async Task<JsonResult> GetContactListAll(DataSourceLoadOptions loadOptions)
@@ -60,6 +63,33 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             }
 
             return Ok(await contactAppService.GetContactExportFormTypesAsync());
+        }
+
+        /// <summary>
+        /// 取得匯出 POST 使用的最新防偽權杖；避免頁面停留或其他 AJAX 更新 cookie 後使用到舊 token。
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetContactExportAntiforgeryToken()
+        {
+            if (!await CanAccessContactUsAsync())
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    success = false,
+                    error = "權限不足，無法執行匯出。",
+                    message = "權限不足，無法執行匯出。",
+                    errorCode = "E005"
+                });
+            }
+
+            // GetAndStoreTokens 會同步寫入防偽 cookie，回傳的 RequestToken 需立即放進下一次匯出 POST header。
+            var tokenSet = antiforgery.GetAndStoreTokens(HttpContext);
+            return Ok(new
+            {
+                success = true,
+                token = tokenSet.RequestToken,
+                headerName = tokenSet.HeaderName
+            });
         }
 
         /// <summary>

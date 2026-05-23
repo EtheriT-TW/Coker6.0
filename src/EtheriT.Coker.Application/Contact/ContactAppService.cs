@@ -521,6 +521,12 @@ namespace EtheriT.Coker.Application.Contact
             }
 
             var statuses = dto.Statuses?.Distinct().ToList() ?? new List<int>();
+            if (!statuses.Any())
+            {
+                // 處理狀態是匯出必填條件，避免未篩狀態時一次匯出過大的資料範圍。
+                return CreateExportFailure(HttpStatusCode.BadRequest, "E004", "請至少選擇一個處理狀態", ErrorCodeEnum.ValidationError, exportMaxRows);
+            }
+
             if (statuses.Any(e => e != (int)ContactStatusEnum.未處理 && e != (int)ContactStatusEnum.已完成))
             {
                 return CreateExportFailure(HttpStatusCode.BadRequest, "E004", "狀態值不合法", ErrorCodeEnum.ValidationError, exportMaxRows);

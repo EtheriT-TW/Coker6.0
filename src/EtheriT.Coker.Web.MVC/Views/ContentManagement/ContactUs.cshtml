@@ -179,9 +179,9 @@
                     </div>
                 </div>
 
-                @* 狀態篩選目前依規格只開放未處理與已完成；未勾選代表不限制狀態。 *@
+                @* 狀態篩選目前依規格只開放未處理與已完成，且至少需勾選一個狀態才可匯出。 *@
                 <div class="mb-3">
-                    <label class="form-label">處理狀態</label>
+                    <label class="form-label required">處理狀態</label>
                     <div class="d-flex flex-wrap gap-3">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" value="0" id="ContactExportStatus0">
@@ -192,6 +192,7 @@
                             <label class="form-check-label" for="ContactExportStatus3">已完成</label>
                         </div>
                     </div>
+                    <div class="invalid-feedback d-block" data-export-error="status"></div>
                 </div>
 
                 @* 筆數上限由 API 回傳後填入，避免頁面提示與後端設定不一致。 *@

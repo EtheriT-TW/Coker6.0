@@ -27,6 +27,7 @@
 
             $("#ContactExportOpen").on("click", () => this.open());
             $("#ContactExportFormType").on("change", () => this.validate());
+            $("#ContactExportModal input[type='checkbox']").on("change", () => this.validate());
             $("#ContactExportStartTime,#ContactExportEndTime").on("input", () => {
                 this.setActiveRange("");
                 this.updateRangeHint();
@@ -159,6 +160,7 @@
             const formTypeId = $("#ContactExportFormType").val();
             const startValue = $("#ContactExportStartTime").val();
             const endValue = $("#ContactExportEndTime").val();
+            const selectedStatusCount = $("#ContactExportModal input[type='checkbox']:checked").length;
             const start = startValue ? new Date(startValue) : null;
             const end = endValue ? new Date(endValue) : null;
 
@@ -170,6 +172,10 @@
                 errors.time = "請設定時間區間";
             } else if (end < start) {
                 errors.time = "結束時間不可早於開始時間";
+            }
+
+            if (selectedStatusCount === 0) {
+                errors.status = "請至少選擇一個處理狀態";
             }
 
             if (start && end && end >= start) {
@@ -189,6 +195,7 @@
         setErrors: function (errors) {
             $("[data-export-error='formType']").text(errors.formType || "");
             $("[data-export-error='time']").text(errors.time || "");
+            $("[data-export-error='status']").text(errors.status || "");
         },
 
         // 將後端回傳的上限寫入狀態；無效值忽略，避免把提示改成錯誤數字。
@@ -222,7 +229,7 @@
             this.setLoading(true);
             const abortController = new AbortController();
 
-            // 未勾選狀態代表不套用狀態條件；後端會再次驗證合法狀態值。
+            // 處理狀態為必填條件；後端會再次驗證至少選一個且狀態值合法。
             const payload = {
                 formTypeId: Number($("#ContactExportFormType").val()),
                 startTime: $("#ContactExportStartTime").val(),
@@ -235,10 +242,11 @@
             try {
                 // 按下確認匯出後立即顯示處理中 popup，讓使用者知道後端正在產生檔案。
                 this.showProcessingPopup(abortController);
+                const exportHeaders = await this.getExportHeaders();
                 const response = await fetch("/api/Contact/ExportContacts", {
                     method: "POST",
                     headers: {
-                        ...this.getHeaders(),
+                        ...exportHeaders,
                         "Content-Type": "application/json; charset=utf-8"
                     },
                     body: JSON.stringify(payload),
@@ -396,6 +404,43 @@
                 });
             }
             if (token) headers["x-xsrf-token"] = token;
+            return headers;
+        },
+
+        // 匯出前先向後端取得最新防偽權杖，避免頁面停留或其他 AJAX 更新 cookie 後送出舊 token。
+        getExportHeaders: async function () {
+            const headers = this.getHeaders();
+            const response = await fetch("/api/Contact/GetContactExportAntiforgeryToken", {
+                method: "GET",
+                headers,
+                credentials: "same-origin",
+                // 防偽權杖必須取最新值，不使用瀏覽器快取避免拿到已失效 token。
+                cache: "no-store"
+            });
+
+            if (response.status === 401) {
+                window.location.href = "/Account/Index";
+                const error = new Error("請重新登入。");
+                error.name = "AbortError";
+                throw error;
+            }
+
+            if (!response.ok) {
+                throw new Error("頁面驗證初始化失敗，請重新整理頁面後再執行匯出。");
+            }
+
+            const data = await response.json();
+            const token = data.token || data.Token;
+            const headerName = data.headerName || data.HeaderName || "x-xsrf-token";
+            if (!token) {
+                throw new Error("頁面驗證初始化失敗，請重新整理頁面後再執行匯出。");
+            }
+
+            // 同步更新頁面上的 hidden token，讓後續共用 header 的程式也能使用最新值。
+            $("input[name='AntiforgeryField']").val(token);
+            headers[headerName] = token;
+            headers["x-xsrf-token"] = token;
+
             return headers;
         },
 

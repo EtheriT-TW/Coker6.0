@@ -1,4 +1,10 @@
 {
+  // 使用方式：
+  // 1. formTypeId 必須與檔名 form-{id}-... 及 WebMenus.Id 一致。
+  // 2. columns 陣列順序就是 Excel 欄位順序；調整順序請直接移動欄位物件，不需 sortOrder。
+  // 3. columnKey 對應 Contacts.FromDate JSON 欄位 key；columnTitle 是匯出 Excel 標題。
+  // 4. visible=false 可暫時停用欄位；captcha 即使加入也會由系統排除不匯出。
+  // 5. 若沒有此範本檔，系統會依 FromDate JSON 值動態產生欄位。
   "formTypeId": 10804,
   "name": "警務人員健診",
   "columns": [

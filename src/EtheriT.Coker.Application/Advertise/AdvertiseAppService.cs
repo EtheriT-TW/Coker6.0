@@ -10,7 +10,10 @@ using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Advertise;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
 using EtheriT.Coker.Application.Shared.Dto.Files;
+using EtheriT.Coker.Application.Shared.Dto.Processor;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Tag;
@@ -33,6 +36,7 @@ namespace EtheriT.Coker.Application.Advertise
         private readonly ITokenAppService tokenAppService;
         private readonly StringHandler stringHandler;
         private readonly IHtmlProcessor htmlProcessor;
+        private readonly IHtmlSanitizeService htmlSanitizeService;
         public AdvertiseAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -41,6 +45,7 @@ namespace EtheriT.Coker.Application.Advertise
             IFileUploadAppService fileUploadAppService,
             ITokenAppService tokenAppService,
             IHtmlProcessor htmlProcessor,
+            IHtmlSanitizeService htmlSanitizeService,
             StringHandler stringHandler
         )
         {
@@ -52,6 +57,7 @@ namespace EtheriT.Coker.Application.Advertise
             this.tokenAppService = tokenAppService;
             this.stringHandler = stringHandler;
             this.htmlProcessor = htmlProcessor;
+            this.htmlSanitizeService = htmlSanitizeService;
         }
         public async Task<ResponseMessageDto> AddUp(AdvertiseDto dto)
         {
@@ -324,44 +330,128 @@ namespace EtheriT.Coker.Application.Advertise
             {
                 var result = db.Advertise;
 
-                if (result != null)
+                if (result == null)
                 {
-                    var output = await (from e in result
-                                        where !e.IsDeleted && e.Visible && e.Type == type && e.FK_WebsiteId == webid
-                                        where e.Permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartDate) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndDate) < 0)
-                                        orderby e.SerNO
-                                        select new AdvertiseDisplayDto
-                                        {
-                                            Id = e.Id,
-                                            Title = e.Title,
-                                            Link = e.Link,
-                                            Target = e.Target,
-                                        }).Take(number).ToListAsync();
-
-                    if (output != null)
-                    {
-                        switch (type)
-                        {
-                            case (int)AdvertiseTypeEnum.右側浮動廣告:
-                                for (var i = 0; i < output.Count; i++)
-                                {
-                                    output[i].FileLink = await fileUploadAppService.getAdvertiseFiles(output[i].Id, (int)FileBindTypeEnum.右側浮動廣告);
-                                }
-                                break;
-                            case (int)AdvertiseTypeEnum.進入廣告:
-                                for (var i = 0; i < output.Count; i++)
-                                {
-                                    output[0].FileLink = await fileUploadAppService.getAdvertiseFiles(output[i].Id, (int)FileBindTypeEnum.進入廣告);
-                                }
-                                break;
-                        }
-                    }
-                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                    throw new Exception("查無資料");
                 }
-                else throw new Exception("查無資料");
+
+                var output = await (from e in result
+                                    where !e.IsDeleted &&
+                                          e.Visible &&
+                                          e.Type == type &&
+                                          e.FK_WebsiteId == webid
+                                    where e.Permanent ||
+                                          (
+                                              DateTime.Compare(DateTime.Now, (DateTime)e.StartDate) > 0 &&
+                                              DateTime.Compare(DateTime.Now, (DateTime)e.EndDate) < 0
+                                          )
+                                    orderby e.SerNO
+                                    select new AdvertiseDisplayDto
+                                    {
+                                        Id = e.Id,
+                                        Title = e.Title,
+                                        Link = e.Link,
+                                        Target = e.Target,
+                                        ActionType = e.ActionType,
+                                        Html = e.Html,
+                                        Css = e.Css
+                                    })
+                                    .Take(number)
+                                    .ToListAsync();
+
+                if (output != null)
+                {
+                    switch (type)
+                    {
+                        case (int)AdvertiseTypeEnum.右側浮動廣告:
+                            for (var i = 0; i < output.Count; i++)
+                            {
+                                output[i].FileLink = await fileUploadAppService.getAdvertiseFiles(
+                                    output[i].Id,
+                                    (int)FileBindTypeEnum.右側浮動廣告
+                                );
+
+                                var html = stringHandler.HtmlDecode(output[i].Html ?? "");
+                                var css = output[i].Css ?? "";
+
+                                if (output[i].ActionType == AdvertiseActionType.ExpandHtml &&
+                                    (!string.IsNullOrWhiteSpace(html) || !string.IsNullOrWhiteSpace(css)))
+                                {
+                                    try
+                                    {
+                                        var sanitized = await EnsureAdvertiseDisplayContentSanitizedAsync(
+                                            webid,
+                                            output[i].Id,
+                                            html,
+                                            css
+                                        );
+
+                                        html = sanitized.Html;
+                                        css = sanitized.Css;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        await loginUserData.SetLogs(
+                                            JsonConvert.SerializeObject(new
+                                            {
+                                                Action = "AutoRepairHtmlSanitizeOnReadFailed",
+                                                SourceType = HtmlSanitizeSourceType.廣告,
+                                                SourceId = output[i].Id,
+                                                WebsiteId = webid
+                                            }),
+                                            JsonConvert.SerializeObject(new
+                                            {
+                                                Success = false,
+                                                Error = ex.Message
+                                            })
+                                        );
+                                    }
+                                }
+
+                                output[i].Html = html;
+                                output[i].Css = css;
+                            }
+                            break;
+
+                        case (int)AdvertiseTypeEnum.進入廣告:
+                            for (var i = 0; i < output.Count; i++)
+                            {
+                                output[i].FileLink = await fileUploadAppService.getAdvertiseFiles(
+                                    output[i].Id,
+                                    (int)FileBindTypeEnum.進入廣告
+                                );
+                            }
+                            break;
+                    }
+                }
+
+                return new JsonResult(
+                    output,
+                    new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() }
+                );
             }
-            catch (Exception e) { }
-            return new JsonResult(new List<AdvertiseDisplayDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            catch (Exception e)
+            {
+                await loginUserData.SetLogs(
+                    JsonConvert.SerializeObject(new
+                    {
+                        Action = "GetDisplay",
+                        WebsiteId = webid,
+                        Type = type,
+                        Number = number
+                    }),
+                    JsonConvert.SerializeObject(new
+                    {
+                        Success = false,
+                        Error = e.Message
+                    })
+                );
+            }
+
+            return new JsonResult(
+                new List<AdvertiseDisplayDto>(),
+                new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() }
+            );
         }
 
         public async Task<ResponseMessageDto> GetConten(SearchIDDto dto) {
@@ -388,48 +478,70 @@ namespace EtheriT.Coker.Application.Advertise
             }
             return results;
         }
-        public async Task<ResponseMessageDto> ImportConten(ArticleSaveContenDto dto) {
+        public async Task<ResponseMessageDto> ImportConten(ArticleSaveContenDto dto)
+        {
             ResponseMessageDto response = new ResponseMessageDto();
+
             try
             {
-                var userId = await loginUserData.GetUserId();
-
                 dto.SaveHtml = stringHandler.HtmlEncode(dto.SaveHtml);
+
                 ArticleContenDto importDto = new ArticleContenDto
                 {
                     Id = dto.Id,
                     Html = dto.SaveHtml,
                     Css = dto.SaveCss
                 };
-                var s = await SaveConten(dto);
-                var user = await loginUserData.GetUser();
-                var advertise = await db.Advertise.FirstOrDefaultAsync(e => e.Id == dto.Id);
-                if (advertise != null)
+
+                var saveResponse = await SaveConten(dto);
+
+                if (!saveResponse.Success)
                 {
-                    string Orgname = await loginUserData.GetWebsiteOrgName();
-                    importDto.Html = stringHandler.HtmlDecode(importDto.Html);
-                    importDto.Html = htmlProcessor.RemoveNode(importDto.Html ?? "", ".backstageType");
-                    importDto.Html = htmlProcessor.SetAttr(importDto.Html ?? "", "[target='_blank'] ", "rel", "noopener noreferrer");
-
-                    importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
-                    importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
-
-                    advertise.Css = importDto.Css;
-                    advertise.Html = stringHandler.HtmlEncode(importDto.Html);
-
-                    await loginUserData.SaveChanges(advertise);
-                    response.Success = true;
+                    throw new Exception(saveResponse.Error ?? saveResponse.Message ?? "儲存草稿失敗");
                 }
-                else throw new Exception("資料不存在");
+
+                var advertise = await db.Advertise.FirstOrDefaultAsync(e => e.Id == dto.Id);
+
+                if (advertise == null)
+                {
+                    throw new Exception("資料不存在");
+                }
+
+                string Orgname = await loginUserData.GetWebsiteOrgName();
+
+                importDto.Html = stringHandler.HtmlDecode(importDto.Html ?? "");
+
+                importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
+                importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
+
+                var sanitizeResult = await htmlSanitizeService.EnsurePublicContentAsync(new HtmlSanitizeInput
+                {
+                    WebsiteId = advertise.FK_WebsiteId,
+                    SourceType = HtmlSanitizeSourceType.廣告,
+                    SourceId = advertise.Id,
+                    ContentKey = "Published",
+                    SanitizePolicy = "PublicHtml",
+                    Html = importDto.Html ?? "",
+                    Css = importDto.Css ?? "",
+                    Force = true
+                });
+
+                advertise.Css = sanitizeResult.Css;
+                advertise.Html = stringHandler.HtmlEncode(sanitizeResult.Html);
+
+                await loginUserData.SaveChanges(advertise);
+                response.Success = true;
             }
             catch (Exception ex)
             {
+                response.Success = false;
                 response.Error = ex.Message;
             }
             finally
             {
                 await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
+
             return response;
         }
         public async Task<ResponseMessageDto> SaveConten(ArticleSaveContenDto dto) {
@@ -456,6 +568,74 @@ namespace EtheriT.Coker.Application.Advertise
                 await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
+        }
+        private async Task<(string Html, string Css)> EnsureAdvertiseDisplayContentSanitizedAsync(
+            long websiteId,
+            long advertiseId,
+            string html,
+            string css)
+        {
+            var sanitizeResult = await htmlSanitizeService.EnsurePublicContentAsync(new HtmlSanitizeInput
+            {
+                WebsiteId = websiteId,
+                SourceType = HtmlSanitizeSourceType.廣告,
+                SourceId = advertiseId,
+                ContentKey = "Published",
+                SanitizePolicy = "PublicHtml",
+                Html = html ?? "",
+                Css = css ?? "",
+                Force = false
+            });
+
+            if (!sanitizeResult.WasSanitized)
+            {
+                return (html ?? "", css ?? "");
+            }
+
+            var advertise = await db.Advertise.FirstOrDefaultAsync(e =>
+                e.Id == advertiseId &&
+                e.FK_WebsiteId == websiteId &&
+                !e.IsDeleted
+            );
+
+            if (advertise == null)
+            {
+                return (sanitizeResult.Html, sanitizeResult.Css);
+            }
+
+            var before = new
+            {
+                Html = stringHandler.HtmlDecode(advertise.Html ?? ""),
+                Css = advertise.Css ?? ""
+            };
+
+            advertise.Html = stringHandler.HtmlEncode(sanitizeResult.Html);
+            advertise.Css = sanitizeResult.Css;
+
+            await loginUserData.SaveChanges(advertise);
+
+            await loginUserData.SetLogs(
+                JsonConvert.SerializeObject(new
+                {
+                    Action = "AutoRepairHtmlSanitizeOnRead",
+                    SourceType = HtmlSanitizeSourceType.廣告,
+                    SourceId = advertise.Id,
+                    WebsiteId = advertise.FK_WebsiteId,
+                    ContentKey = "Published",
+                    SanitizePolicy = "PublicHtml",
+                    Before = before
+                }),
+                JsonConvert.SerializeObject(new
+                {
+                    Html = sanitizeResult.Html,
+                    Css = sanitizeResult.Css,
+                    Hash = sanitizeResult.ContentHash,
+                    Version = sanitizeResult.SanitizeVersion,
+                    WasSanitized = sanitizeResult.WasSanitized
+                })
+            );
+
+            return (sanitizeResult.Html, sanitizeResult.Css);
         }
     }
 }

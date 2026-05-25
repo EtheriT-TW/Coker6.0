@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260525041339_Added_Table_HtmlSanitizeState")]
+    partial class Added_Table_HtmlSanitizeState
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -635,9 +638,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
 
-                    b.Property<long?>("FK_SourceId")
-                        .HasColumnType("bigint");
-
                     b.Property<long>("FK_WebMenuId")
                         .HasColumnType("bigint");
 
@@ -670,9 +670,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<DateTime?>("ReplyTime")
                         .HasColumnType("datetime2");
-
-                    b.Property<int?>("SourceType")
-                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");

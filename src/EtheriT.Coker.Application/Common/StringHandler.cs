@@ -234,5 +234,17 @@ namespace EtheriT.Coker.Application.Common
                 if (long.TryParse(token.Trim(), out var id)) list.Add(id);
             return list;
         }
+        public string ResolveUploadPath(string value, string orgName)
+        {
+            if (string.IsNullOrWhiteSpace(value) || string.IsNullOrWhiteSpace(orgName))
+                return value ?? "";
+
+            return value
+                .Replace("\"/upload/", $"\"/upload/{orgName}/")
+                .Replace("'/upload/", $"'/upload/{orgName}/")
+                .Replace("url(/upload/", $"url(/upload/{orgName}/")
+                .Replace("url('/upload/", $"url('/upload/{orgName}/")
+                .Replace("url(\"/upload/", $"url(\"/upload/{orgName}/");
+        }
     }
 }

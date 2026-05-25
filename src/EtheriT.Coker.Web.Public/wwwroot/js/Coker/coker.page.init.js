@@ -204,11 +204,14 @@
                 name: "contactForm",
                 key: "coker_inited_contactForm",
                 test: function ($root) {
-                    return has($root, ".ContactForm");
+                    return has($root, ".ContactForm, .DynamicForm");
                 },
                 run: function ($root) {
-                    // your code looked like setContact(); // From 表單驗證碼
-                    if (isFn(w.setContact)) w.setContact($root);
+                    if (!w.Coker.DynamicForm || typeof w.Coker.DynamicForm.init !== "function") {
+                        throw new Error("[coker.page.init] Coker.DynamicForm.init is required for contactForm feature.");
+                    }
+
+                    w.Coker.DynamicForm.init($root);
                 }
             },
             {
@@ -262,6 +265,20 @@
                 run: function () {
                     // Keep original behavior: $("#lanBar").before($("#layout4 #NavbarContent"))
                     $("#lanBar").before($("#layout4 #NavbarContent"));
+                }
+            },
+            {
+                name: "sideFloating",
+                key: "coker_inited_sideFloating",
+                test: function ($root) {
+                    return has($root, "#Floating_Center, .side-floating-item");
+                },
+                run: function ($root) {
+                    if (!w.SideFloating || typeof w.SideFloating.init !== "function") {
+                        throw new Error("[coker.page.init] SideFloating.init is required.");
+                    }
+
+                    w.SideFloating.init($root);
                 }
             }
         ];

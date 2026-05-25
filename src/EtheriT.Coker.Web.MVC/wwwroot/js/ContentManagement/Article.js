@@ -94,28 +94,18 @@ function PageReady() {
     $(".btn_to_canvas").on("click", function (event) {
         event.preventDefault()
 
-        Swal.fire({
-            icon: 'info',
-            title: "前往文章編輯頁",
-            html: "是否保存資料?",
-            showCancelButton: true,
-            showDenyButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#888888',
-            denyButtonColor: '#d33',
-            confirmButtonText: "　是　",
-            denyButtonText: "　否　",
-            cancelButtonText: "　取消　",
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
+        co.sweet.confirmSave(
+            "前往文章編輯頁",
+            "是否保存資料?",
+            function () {
                 AddUp("資料已儲存", "儲存發生未知錯誤", "canvas");
-            } else if (result.isDenied) {
+            },
+            function () {
                 var hash = window.location.hash.replace("#", "") + "-1";
                 window.location.hash = hash;
                 MoveToCanvas();
             }
-        })
+        );
     });
 
     $btn_display.on("click", function () {
@@ -234,6 +224,7 @@ function HashDataEdit() {
                         } else {
                             MoveToContent();
                             FormDataSet(result);
+                            $(".linkToFront").removeClass("d-none").attr("href", `${defaultUrl}/${OrgName}/search/article/${result.id}`);
                         }
                     } else {
                         window.location.hash = ""
@@ -453,6 +444,7 @@ function BackToList() {
     $("#ArticleCanvas").addClass("d-none");
     $("body").removeClass("grapesEdit");
     $("#TopLine .title").text("文章管理");
+    $(".linkToFront").addClass("d-none");
     window.location.hash = ""
 }
 

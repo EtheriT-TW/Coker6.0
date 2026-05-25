@@ -169,10 +169,7 @@
 
         function initForm() {
             co.Form.init(dom.$form.attr("id"), function () {
-                markValidated();
-
-                if (!hasUploadImage()) {
-                    co.sweet.error("資料有誤", "圖示不可為空", null, false);
+                if (!validateBeforeSave()) {
                     return resolvedDeferred();
                 }
 
@@ -277,6 +274,18 @@
         }
 
         function goCanvasFromButton() {
+            co.sweet.confirmSave(
+                "前往頁右廣告編輯頁",
+                "是否保存資料?",
+                function () {
+                    saveAndGoCanvas();
+                },
+                function () {
+                    goCanvasWithoutSave();
+                }
+            );
+        }
+        function goCanvasWithoutSave() {
             const id = state.keyId || parseInt(dom.$form.find("input[name='id']").val(), 10);
 
             if (!id || id <= 0) {
@@ -286,7 +295,25 @@
 
             window.location.hash = `${id}${opt.canvasHashSuffix}`;
         }
+        function saveAndGoCanvas() {
+            if (!validateBeforeSave()) {
+                return resolvedDeferred();
+            }
 
+            return save("資料已儲存", "儲存發生未知錯誤", {
+                afterSuccess: function (context) {
+                    co.sweet.success(context.successText, null, true);
+
+                    setTimeout(function () {
+                        window.location.hash = `${context.sid}${opt.canvasHashSuffix}`;
+
+                        if (state.gridEvent && state.gridEvent.component) {
+                            state.gridEvent.component.refresh();
+                        }
+                    }, 1000);
+                }
+            });
+        }
         function handleCanvasHashChange() {
             const id = getCanvasIdFromHash(window.location.hash);
 
@@ -732,7 +759,30 @@
             $checkbox.val($checkbox.prop("checked") === true);
         }
 
-        function save(successText, errorText) {
+        function validateBeforeSave() {
+            markValidated();
+
+            const form = dom.$form.get(0);
+
+            if (form && !form.checkValidity()) {
+                dom.$form.addClass("was-validated");
+                return false;
+            }
+
+            if (!hasUploadImage()) {
+                co.sweet.error("資料有誤", "圖示不可為空", null, false);
+                return false;
+            }
+
+            return true;
+        }
+        function save(successText, errorText, options) {
+            const saveOptions = $.extend({
+                afterSuccess: function (context) {
+                    saveSuccess(context.successText);
+                }
+            }, options || {});
+
             const data = co.Form.getJson(dom.$form.attr("id"));
 
             data.type = opt.adType;
@@ -745,9 +795,26 @@
                     return $.Deferred().reject({ handled: true, result: result }).promise();
                 }
 
-                return uploadImageIfNeeded(result.message)
-                    .done(function () {
-                        saveSuccess(successText);
+                const sid = result.message;
+                const id = parseInt(sid, 10);
+
+                if (id && id > 0) {
+                    state.keyId = id;
+                    dom.$form.find("input[name='id']").val(id);
+                }
+
+                return uploadImageIfNeeded(sid)
+                    .done(function (uploadResult) {
+                        if (typeof saveOptions.afterSuccess === "function") {
+                            saveOptions.afterSuccess({
+                                result: result,
+                                uploadResult: uploadResult,
+                                sid: sid,
+                                id: id,
+                                successText: successText,
+                                errorText: errorText
+                            });
+                        }
                     });
             }).fail(function (error) {
                 if (error && error.handled) {

@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
 using EtheriT.Coker.Core.Entity;
 using System;
 using System.Collections.Generic;
@@ -25,6 +26,8 @@ namespace EtheriT.Coker.Core.Models
         public DateTime? ReplyTime {  get; set; }
         public ContactStatusEnum Status {  get; set; } = ContactStatusEnum.未處理;
         public string? FromDate { get; set; }
+        public HtmlSanitizeSourceType? SourceType { get; set; }
+        public long? FK_SourceId { get; set; }
         public WebMenu WebMenu { get; set; }
     }
 }

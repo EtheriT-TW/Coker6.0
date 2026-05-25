@@ -1,57 +1,121 @@
-﻿    // 側邊歷史紀錄已移除
-    // var $CollapseHistory
+﻿(function (window, $, co) {
+    "use strict";
 
-function SideFloatingInit() {
-    // 側邊歷史紀錄已移除
-    //Coker.Product = {
-    //    GetHistoryDis: function (id) {
-    //        return $.ajax({
-    //            url: "/api/Product/GetHistoryDisplay",
-    //            type: "GET",
-    //            contentType: 'application/json; charset=utf-8',
-    //            data: { TId: id },
-    //        });
-    //    }
-    //};
+    const MODULE_NAME = "SideFloating";
 
-    // 側邊歷史紀錄已移除
-    // $CollapseHistory = $("#CollapseHistory")
-    // ProdHistorySet();
+    const SELECTORS = {
+        root: "#Floating_Center",
+        item: ".side-floating-item",
+        expandTrigger: ".side-floating-expand-trigger",
+        panel: "[data-side-floating-panel]",
+        close: ".side-floating-close"
+    };
 
-    $("#btn_chat").on("click", function () {
-        $("#Chatbot_Frame").toggleClass("show");
-    });
+    function init(root) {
+        const $scope = root ? $(root) : $(document);
 
-    $("#btn_gotop").on("click", function () {
-        $('html, body').animate({ scrollTop: 0 }, 0);
-    });
+        let $root = $scope.is(SELECTORS.root)
+            ? $scope
+            : $scope.find(SELECTORS.root).first();
 
-    var adid = $("#Floating_Center > div").data("aid");
-    if (adid != "undefined") {
-        co.Activity.Exposure(adid).done(function (result) {
-            //console.log(result)
-        })
-        $("#Floating_Center > div").on("click", function () {
-            co.Activity.Click(adid).done(function (result) {
-                //console.log(result)
-            })
+        if (!$root.length && !root) {
+            $root = $(SELECTORS.root);
+        }
+
+        if (!$root.length) {
+            return;
+        }
+
+        if ($root.data("side-floating-init") === true) {
+            return;
+        }
+
+        $root.data("side-floating-init", true);
+
+        bindEvents($root);
+    }
+
+    function bindEvents($root) {
+        $root
+            .off("click.sideFloatingExpand", SELECTORS.expandTrigger)
+            .on("click.sideFloatingExpand", SELECTORS.expandTrigger, function (event) {
+                event.preventDefault();
+                const $trigger = $(this);
+                const $item = $trigger.closest(SELECTORS.item);
+                const $panel = $item.find(SELECTORS.panel).first();
+
+                if (!$panel.length) {
+                    return;
+                }
+
+                togglePanel($root, $trigger, $panel);
+            });
+
+        $root
+            .off("click.sideFloatingClose", SELECTORS.close)
+            .on("click.sideFloatingClose", SELECTORS.close, function (event) {
+                event.preventDefault();
+
+                const $panel = $(this).closest(SELECTORS.panel);
+                closePanel($panel);
+            });
+    }
+
+    function togglePanel($root, $trigger, $panel) {
+        const isOpen = !$panel.hasClass("d-none");
+
+        closeAllPanels($root);
+
+        if (isOpen) {
+            return;
+        }
+
+        openPanel($trigger, $panel);
+    }
+
+    function openPanel($trigger, $panel) {
+        $panel.removeClass("d-none");
+        $trigger.attr("aria-expanded", "true");
+
+        initPanelContent($panel);
+    }
+
+    function closePanel($panel) {
+        if (!$panel || !$panel.length) {
+            return;
+        }
+
+        const id = $panel.attr("id");
+
+        $panel.addClass("d-none");
+
+        if (id) {
+            $(`[aria-controls="${id}"]`).attr("aria-expanded", "false");
+        }
+    }
+
+    function closeAllPanels($root) {
+        $root.find(SELECTORS.panel).each(function () {
+            closePanel($(this));
         });
     }
-}
 
-// 側邊歷史紀錄已移除
-//function ProdHistorySet() {
-//    $CollapseHistory.addClass("d-none");
-//    $CollapseHistory.children(".history_list").children(".history_prod").remove();
-//    if ($.cookie('Token') != null) {
-//        Coker.Product.GetHistoryDis($.cookie('Token')).done(function (result) {
-//            if (result.length > 0) {
-//                $CollapseHistory.removeClass("d-none");
-//                result.forEach(function (item) {
-//                    var history_prod = `<li class='history_prod mb-1 border bg-white' data-pid='${item.id}'><a class='pro_link' href='${OrgName}/Toilet/${item.id}'><img class='img-fluid' src='/upload/product/pro_0${item.id}.png' alt='' /></a></li>`;
-//                    $CollapseHistory.children(".history_list").append(history_prod);
-//                })
-//            }
-//        })
-//    }
-//}
+    function initPanelContent($panel) {
+        if ($panel.data("side-floating-inited") === true) {
+            return;
+        }
+
+        if (co && co.page && typeof co.page.init === "function") {
+            co.page.init($panel, {
+                force: true
+            });
+        }
+
+        $panel.data("side-floating-inited", true);
+    }
+
+    window.SideFloating = {
+        init: init
+    };
+
+})(window, jQuery, window.co || window.Coker);

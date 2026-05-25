@@ -608,7 +608,7 @@ function MoveToItemList() {
         DirectoryId = parseInt(para[1]);
         DirectoryType = para[0];
         $("body").removeClass("grapesEdit");
-        $(".linkToFront").addClass("d-none")
+        $(".linkToFront").addClass("d-none");
         switch (DirectoryType) {
             case "Articles":
                 directoryDatailList.component.refresh();

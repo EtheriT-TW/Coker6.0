@@ -88,6 +88,30 @@
                 );
             });
         },
+        confirmSave: function (title, text, saveAction, skipAction, cancelAction) {
+            Swal.fire({
+                icon: 'info',
+                title: title,
+                html: text,
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#888888',
+                denyButtonColor: '#d33',
+                confirmButtonText: "是",
+                denyButtonText: "否",
+                cancelButtonText: "取消",
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    typeof (saveAction) === "function" && saveAction();
+                } else if (result.isDenied) {
+                    typeof (skipAction) === "function" && skipAction();
+                } else {
+                    typeof (cancelAction) === "function" && cancelAction();
+                }
+            });
+        },
         warn: function (title, text, action) {
             Swal.fire({
                 icon: 'warning',

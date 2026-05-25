@@ -374,6 +374,8 @@ builder.Services.AddSingleton<IThumbnailGeneratorService, ThumbnailGeneratorServ
 builder.Services.AddScoped<IMailTemplateAppService, MailTemplateAppService>();
 builder.Services.AddScoped<ICookieManagerAppService, CookieManagerAppService>();
 builder.Services.AddScoped<IWebsiteCacheStateAppService, WebsiteCacheStateAppService>();
+builder.Services.AddScoped<IHtmlSanitizeService, HtmlSanitizeService>();
+builder.Services.AddScoped<IHtmlSanitizer, HtmlSanitizer>();
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

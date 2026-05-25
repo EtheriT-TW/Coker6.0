@@ -172,7 +172,6 @@ function ready() {
     typeof (PageReady) === "function" && PageReady();
     typeof (HeaderInit) === "function" && HeaderInit();
     typeof (FooterInit) === "function" && FooterInit();
-    SideFloatingInit();
 
     CreateToken();
     let idleTimeout;

@@ -58,7 +58,6 @@
 		<Content Remove="wwwroot\Shared\js\BGCanvas.js" />
 		<Content Remove="wwwroot\Shared\js\Contact.js" />
 		<Content Remove="wwwroot\Shared\js\CShare.js" />
-		<Content Remove="wwwroot\Shared\js\DirectoryGetData.js" />
 		<Content Remove="wwwroot\Shared\js\FlipBook.js" />
 		<Content Remove="wwwroot\Shared\js\Flipdown.js" />
 		<Content Remove="wwwroot\Shared\js\Frame.js" />
@@ -164,8 +163,8 @@
 		<None Include="wwwroot\Shared\css\Activity.less" />
 		<None Include="wwwroot\Shared\css\AnchorPoint.css" />
 		<None Include="wwwroot\Shared\css\BGCanvas.css" />
-		<None Include="wwwroot\Shared\css\Contact.css" />
-		<None Include="wwwroot\Shared\css\Contact.en.css" />
+		<None Include="wwwroot\Shared\components\Form\css\DynamicForm.css" />
+		<None Include="wwwroot\Shared\components\Form\css\DynamicForm.en.css" />
 		<None Include="wwwroot\Shared\css\Directory.css" />
 		<None Include="wwwroot\Shared\css\FlipBook.css" />
 		<None Include="wwwroot\Shared\css\Flipdown.css" />
@@ -178,7 +177,6 @@
 		<None Include="wwwroot\Shared\js\BGCanvas.js" />
 		<None Include="wwwroot\Shared\js\Contact.js" />
 		<None Include="wwwroot\Shared\js\CShare.js" />
-		<None Include="wwwroot\Shared\js\DirectoryGetData.js" />
 		<None Include="wwwroot\Shared\js\FlipBook.js" />
 		<None Include="wwwroot\Shared\js\Flipdown.js" />
 		<None Include="wwwroot\Shared\js\Frame.js" />

@@ -62,5 +62,8 @@ namespace EtheriT.Coker.Core.Models
         public List<FlowSize> flowSizes { get; set; }
         public ICollection<LogisticsBox> logisticsBoxes { get; set; }
         public ICollection<WebsiteCacheState> websiteCacheStates { get; set; }
+        public ICollection<HtmlSanitizeState> htmlSanitizeStates { get; set; }
+
+        
     }
 }

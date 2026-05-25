@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.Files;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Advertise;
+using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using System;
@@ -19,6 +20,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Advertise
         public int Exposure { get; set; }
         public int Clicks { get; set; }
         public int SerNO { get; set; }
+        public string? Html { get; set; }
+        public string? Css { get; set; }
+        public AdvertiseActionType ActionType { get; set; }
         public List<FileGetDisplayDto> FileLink { get; set; }
         public List<TagGetAllDataDto> TagDatas { get; set; }
     }

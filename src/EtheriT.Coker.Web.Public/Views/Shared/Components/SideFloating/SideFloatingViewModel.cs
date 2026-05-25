@@ -7,5 +7,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.SideFloating
     {
         public List<AdvertiseDisplayDto>? rightSideAd { get; set; }
         public bool Chatbot {get; set; }=false;
+        public string Nonce { get; set; } = "";
+        public long WebsiteId { get; set; }
     }
 }

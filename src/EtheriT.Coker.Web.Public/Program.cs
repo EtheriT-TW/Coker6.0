@@ -240,6 +240,8 @@ builder.Services.AddScoped<IMailTemplateAppService, MailTemplateAppService>();
 builder.Services.AddScoped<IWebsiteCacheStateAppService, WebsiteCacheStateAppService>();
 builder.Services.AddScoped<IFrontRoleContextService, FrontRoleContextService>();
 builder.Services.AddScoped<IProductDisplayPriceService, ProductDisplayPriceService>();
+builder.Services.AddScoped<IHtmlSanitizeService, HtmlSanitizeService>();
+builder.Services.AddScoped<IHtmlSanitizer, HtmlSanitizer>();
 builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<CustomDtoMapper>();});
 
 builder.Services.AddSingleton<JumpRedirectCache>();

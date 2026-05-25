@@ -1,4 +1,5 @@
-﻿(function (global) {
+﻿//# sourceURL=Gallery3DShowcase/page.js
+(function (global) {
     "use strict";
 
     /* -------------------- load-once helpers -------------------- */

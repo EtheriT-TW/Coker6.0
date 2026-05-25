@@ -1,7 +1,7 @@
 ﻿"use strict";
 const setBGCanvas = function () {
     const offset = {
-        "1500": [1,1.1,1.8],
+        "1500": [1, 1.1, 1.8],
         "1200": [0.8, 1.1, 2.2],
         "768": [0.9, 1.1, 2],
         "else": [1, 1.1, 1.5]
@@ -111,4 +111,4 @@ const setBGCanvas = function () {
     });
     //if (!co.isMobileDevice()) $(".BGCanvas").BGCanvas();
     $(".BGCanvas").BGCanvas();
-}
+};

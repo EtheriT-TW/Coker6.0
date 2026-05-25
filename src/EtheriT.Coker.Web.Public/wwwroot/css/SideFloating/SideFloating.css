@@ -1,57 +1,103 @@
-﻿#Floating_Center {
+﻿/* Side Floating */
+#Floating_Center {
     display: block;
     position: fixed;
-    right: 0rem;
-    z-index: 1001;
+    right: 0;
     bottom: 100px;
+    z-index: 1001;
     opacity: 0;
-    transition: all 0.25s ease-in-out;
+    transition: opacity 0.25s ease-in-out;
 }
 
     #Floating_Center.show {
         opacity: 1;
     }
 
-    #Floating_Center > div img {
+    #Floating_Center img {
+        display: block;
         width: 6rem;
         height: auto;
     }
 
-/* Hsitory */
-#History {
-    max-width: 80px;
-    margin-right: 1rem;
+/* Floating item */
+.side-floating-item {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.25rem;
 }
 
-    #History > button {
-        width: 2rem;
-        font-size: 0.8rem;
-        background-color: var(--gray-middle);
+.side-floating-trigger {
+    display: block;
+    cursor: pointer;
+}
+
+button.side-floating-trigger {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    line-height: 0;
+}
+
+    button.side-floating-trigger:focus-visible {
+        outline: 2px solid var(--bs-primary, #0d6efd);
+        outline-offset: 2px;
     }
 
-#CollapseHistory > .title {
-    background-color: var(--gray-middle);
-    font-size: 0.8rem;
+/* Expand panel */
+.side-floating-panel {
+    position: absolute;
+    bottom: 0;
+    right: 100%;
+    width: min(420px, calc(100vw - 120px));
+    max-height: 500px;
+    margin-right: 0.75rem;
+    overflow: auto;
+    background: #fff;
+    color: inherit;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.22);
+    border-radius: 0.5rem;
+    z-index: 1040;
 }
 
-#CollapseHistory > .collect {
-    background-color: var(--gray-middle);
-    font-size: 0.8rem;
+.side-floating-panel-inner {
+    position: relative;
+    padding: 1rem;
 }
 
-#CollapseHistory > .checkout {
-    background-color: var(--red-main);
-    font-size: 0.8rem;
+.side-floating-close {
+    position: sticky;
+    top: 0;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    color: #333;
+    font-size: 1.5rem;
+    line-height: 1;
+    z-index: 1;
 }
 
-#CollapseHistory > .collect > .amount::before {
-    content: '(';
+    .side-floating-close:hover {
+        background: #f1f1f1;
+    }
+
+.side-floating-content {
+    min-width: 0;
 }
 
-#CollapseHistory > .collect > .amount::after {
-    content: ')';
-}
+    .side-floating-content img {
+        max-width: 100%;
+        height: auto;
+    }
 
+/* Bottom floating buttons */
 #Floating_Bottom {
     z-index: 2;
     will-change: transform;
@@ -60,7 +106,7 @@
 #btn_gotop {
     display: block;
     opacity: 0;
-    transition: all 0.25s ease-in-out;
+    transition: opacity 0.25s ease-in-out;
 }
 
     #btn_gotop.show {
@@ -73,28 +119,76 @@
 }
 
 #Chatbot_Frame {
-    transform: scale(0,0);
+    transform: scale(0, 0);
     transform-origin: right bottom;
     width: 250px;
     right: 100px;
     bottom: 0;
-    transition: ease-in-out all 0.25s;
+    transition: transform 0.25s ease-in-out;
 }
 
     #Chatbot_Frame.show {
         transform-origin: right top;
-        transform: scale(1,1);
-        transition: ease-in-out all 0.25s;
+        transform: scale(1, 1);
     }
 
-    #Chatbot_Frame > .card-header, #Chatbot_Frame > .card-body > a > .btn_gochat {
+    #Chatbot_Frame > .card-header,
+    #Chatbot_Frame > .card-body > a > .btn_gochat {
         color: white;
         background-color: var(--green-LINE);
     }
 
-/*RWD*/
+/* RWD */
+/* Tablet / Mobile */
 @media only screen and (max-width: 992px) {
     #Floating_Center {
-        display: none;
+        display: block;
+        right: 0;
+        bottom: 90px;
+        z-index: 1030;
+    }
+
+        #Floating_Center img {
+            width: 4.5rem;
+        }
+
+    .side-floating-panel {
+        position: fixed;
+        right: 0.75rem;
+        left: 0.75rem;
+        bottom: 0.75rem;
+        top: auto;
+        width: auto;
+        max-height: min(520px, calc(100svh - 1rem));
+        margin-right: 0;
+        border-radius: 0.75rem;
+        z-index: 1040;
+    }
+
+    .side-floating-panel-inner {
+        padding: 0.875rem;
+    }
+}
+
+/* Small mobile */
+@media only screen and (max-width: 576px) {
+    #Floating_Center {
+        bottom: 80px;
+    }
+
+        #Floating_Center img {
+            width: 4rem;
+        }
+
+    .side-floating-panel {
+        right: 0.5rem;
+        left: 0.5rem;
+        bottom: 0.5rem;
+        max-height: calc(100dvh - 1rem);
+        border-radius: 0.75rem;
+    }
+
+    .side-floating-panel-inner {
+        padding: 0.75rem;
     }
 }

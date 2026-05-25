@@ -1,28 +1,90 @@
 ﻿@using EtheriT.Coker.Application.Shared.Dto.Advertise;
 @using EtheriT.Coker.Application.Shared.Dto.HtmlContent
+@using EtheriT.Coker.Application.Shared.Dto.enumType.Processor
 @using EtheriT.Coker.Application.Shared.i18n;
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.SideFloating
 @model SideFloatingViewModel
-
+@{
+    var nonce = ViewContext.HttpContext.Items["CSPNonce"] as string;
+    ViewBag.Nonce = nonce;
+}
 <link rel="stylesheet" href="~/css/SideFloating/SideFloating.min.css" asp-append-version="true" />
 <script src="~/js/SideFloating/SideFloating.min.js" asp-append-version="true"></script>
 
 <div id="Floating_Center" class="position-fixed flex-column align-items-center">
 	@if (Model.rightSideAd.Count > 0)
 	{
-		@foreach (var rightSideAd in Model.rightSideAd ?? new List<AdvertiseDisplayDto>())
-		{
-			@if (rightSideAd.Link != "")
-			{
-				var target = rightSideAd.Target == true ? "_blank" : "_self";
-				var title = rightSideAd.Target == true ? L.get("LinkToAndBlank", rightSideAd.Title) : L.get("LinkTo", rightSideAd.Title);
-				<div data-aid="@rightSideAd.Id"><a href="@rightSideAd.Link" target="@target" rel="@(rightSideAd.Target == true ? $"noopener noreferrer" : "")" title="@title"><img class="my-1 shadow" src="@rightSideAd.FileLink[0].Link" alt="@rightSideAd.Title"></a></div>
-			}
-			else
-			{
-				<div data-aid="@rightSideAd.Id"><img class="my-1 shadow" src="@rightSideAd.FileLink[0].Link" alt="@rightSideAd.Title"></div>
-			}
-		}
+        @foreach (var rightSideAd in Model.rightSideAd ?? new List<AdvertiseDisplayDto>())
+        {
+            var image = rightSideAd.FileLink?.FirstOrDefault()?.Link ?? "";
+            var actionType = (int)rightSideAd.ActionType;
+            var target = rightSideAd.Target == true ? "_blank" : "_self";
+            var rel = rightSideAd.Target == true ? "noopener noreferrer" : "";
+            var title = rightSideAd.Target == true
+            ? L.get("LinkToAndBlank", rightSideAd.Title)
+            : L.get("LinkTo", rightSideAd.Title);
+
+            if (string.IsNullOrWhiteSpace(image))
+            {
+                continue;
+            }
+
+            <div class="side-floating-item"
+                 data-aid="@rightSideAd.Id"
+                 data-action-type="@actionType">
+
+                @if (actionType == 1 && !string.IsNullOrWhiteSpace(rightSideAd.Link))
+                {
+                    <a href="@rightSideAd.Link"
+                       target="@target"
+                       rel="@rel"
+                       title="@title"
+                       class="side-floating-trigger">
+                        <img class="my-1 shadow" src="@image" alt="@rightSideAd.Title">
+                    </a>
+                }
+                else if (actionType == 2)
+                {
+                    <button type="button"
+                            class="side-floating-trigger side-floating-expand-trigger bg-transparent border-0 p-0"
+                            aria-expanded="false"
+                            aria-controls="SideFloatingPanel_@rightSideAd.Id">
+                        <img class="my-1 shadow" src="@image" alt="@rightSideAd.Title">
+                    </button>
+
+                    <div id="SideFloatingPanel_@rightSideAd.Id"
+                         class="side-floating-panel d-none"
+                         data-side-floating-panel>
+                        <button type="button"
+                                class="side-floating-close"
+                                aria-label="關閉">
+                            ×
+                        </button>
+
+                        @if (!string.IsNullOrWhiteSpace(rightSideAd.Css))
+                        {
+                            <style nonce="@Model.Nonce">
+                                @Html.Raw(rightSideAd.Css)
+                            </style>
+                        }
+
+                        <div class="side-floating-content js-form-source" data-form-title="@rightSideAd.Title" data-source-type="@HtmlSanitizeSourceType.廣告" data-source-id="@rightSideAd.Id">
+                            <coker-safe-html content="@rightSideAd.Html"
+                                             website-id="@Model.WebsiteId"
+                                             source-type="@HtmlSanitizeSourceType.廣告"
+                                             source-id="@rightSideAd.Id"
+                                             content-key="Published"
+                                             sanitize-policy="PublicHtml">
+                            </coker-safe-html>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <img class="my-1 shadow" src="@image" alt="@rightSideAd.Title">
+                }
+            </div>
+        }
 	}
 	@if (false)
 	{

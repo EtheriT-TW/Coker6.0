@@ -52,7 +52,6 @@
         "wwwroot/Shared/js/AnchorPoint.js",
         "wwwroot/Shared/js/Activity.js",
         "wwwroot/Shared/js/BGCanvas.js",
-        "wwwroot/Shared/js/Contact.js",
         "wwwroot/Shared/js/DefineModule.js",
         "wwwroot/Shared/js/DirectoryFacet.js",
         "wwwroot/Shared/components/Directory/js/service.js",
@@ -61,6 +60,11 @@
         "wwwroot/Shared/components/Directory/js/renderer.js",
         "wwwroot/Shared/components/Directory/js/blocks.js",
         "wwwroot/Shared/components/Directory/js/boot.js",
+        "wwwroot/Shared/components/Form/js/DynamicForm.validation.js",
+        "wwwroot/Shared/components/Form/js/DynamicForm.behavior.js",
+        "wwwroot/Shared/components/Form/js/DynamicForm.captcha.js",
+        "wwwroot/Shared/components/Form/js/DynamicForm.submit.js",
+        "wwwroot/Shared/components/Form/js/DynamicForm.core.js",
         "wwwroot/Shared/js/Frame.js",
         "wwwroot/Shared/js/FlipBook.js",
         "wwwroot/Shared/js/Flipdown.js",
@@ -102,6 +106,7 @@
         "wwwroot/js/Coker/coker.api.user.js",
         "wwwroot/js/Coker/coker.api.thirdparty.js",
         "wwwroot/js/Coker/coker.api.favorites.js",
+        "wwwroot/js/Coker/coker.api.dynamicForm.js",
         "wwwroot/js/Coker/coker.api.order.js",
         "wwwroot/js/Coker/coker.api.payment.js",
         "wwwroot/js/Coker/coker.api.directory.js",
@@ -155,9 +160,9 @@
         "wwwroot/Shared/css/Activity.less",
         "wwwroot/Shared/css/AnchorPoint.css",
         "wwwroot/Shared/css/BGCanvas.css",
-        "wwwroot/Shared/css/Contact.css",
         "wwwroot/Shared/components/Directory/css/base.css",
         "wwwroot/Shared/components/Directory/css/price.css",
+        "wwwroot/Shared/components/Form/css/DynamicForm.css",
         "wwwroot/Shared/css/FlipBook.css",
         "wwwroot/Shared/css/Flipdown.css",
         "wwwroot/Shared/css/Frame.css",
@@ -169,7 +174,7 @@
     {
       "output": "Shared/shared.en.min.css",
       "input": [
-        "wwwroot/Shared/css/Contact.en.css"
+        "wwwroot/Shared/components/Form/css/DynamicForm.en.css"
       ]
     },
     {

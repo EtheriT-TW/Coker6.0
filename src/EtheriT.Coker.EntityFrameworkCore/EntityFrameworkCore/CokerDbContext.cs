@@ -104,6 +104,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<BonusLiability> BonusLiabilities { get; set; }
         public DbSet<BonusLogDetail> bonusLogDetails { get; set; }
         public DbSet<WebsiteCacheState> WebsiteCacheStates { get; set; }
+        public DbSet<HtmlSanitizeState> HtmlSanitizeStates { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -610,7 +611,25 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
 
-			new SeedHelper(modelBuilder).SeedHost();
+            modelBuilder.Entity<HtmlSanitizeState>(o =>
+            {
+                o.HasIndex(e => new
+                {
+                    e.FK_WebsiteId,
+                    e.SourceType,
+                    e.FK_Bid,
+                    e.ContentKey,
+                    e.SanitizePolicy
+                }).IsUnique();
+
+                o.HasOne(f => f.Website).WithMany(w => w.htmlSanitizeStates).HasForeignKey(e => e.FK_WebsiteId);
+
+                o.Property(e => e.ContentKey).HasDefaultValue("Default");
+
+                o.Property(e => e.SanitizePolicy).HasDefaultValue("PublicHtml");
+            });
+
+            new SeedHelper(modelBuilder).SeedHost();
         }
     }
 }

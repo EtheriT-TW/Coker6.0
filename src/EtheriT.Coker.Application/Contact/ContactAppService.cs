@@ -5,6 +5,7 @@ using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.Contact;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Contact;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
@@ -71,6 +72,9 @@ namespace EtheriT.Coker.Application.Contact
                     if (menu == null) throw new Exception(L.get("UnknownSource"));
                     MailUserDataDto recipient = new MailUserDataDto();
 
+                    var formTitle = NormalizeFormTitle(dto.FormTitle, menu.Title);
+                    var source = ResolveContactSource(dto, menu.Id);
+
                     string html = "";
                     switch ((EmailNotificationTypeEnum)EmailNotificationType)
                     {
@@ -114,7 +118,7 @@ namespace EtheriT.Coker.Application.Contact
                             else title = $"{name[0]}○{name[^1]} {gender}";
 
                             html = $@"<div>{title} 您好</div>
-                                                    <p>感謝您透過【{site.Title}】提交 {menu.Title} 表單，我們已經成功收到您的資料。<br>
+                                                    <p>感謝您透過【{site.Title}】提交 {formTitle} 表單，我們已經成功收到您的資料。<br>
                                                     我們將盡快進行後續處理，並於需要時與您聯繫。<br><br>
                                                     謝謝您的耐心與支持。</p>";
                             break;
@@ -147,9 +151,15 @@ namespace EtheriT.Coker.Application.Contact
                     };
                     Core.Models.Contact contact = new Core.Models.Contact
                     {
+                        // 使用者送出表單時所在頁面
                         FK_WebMenuId = menu.Id,
+
+                        // 表單內容來源。舊表單或未帶參數時 fallback 成目前頁面選單。
+                        SourceType = source.SourceType,
+                        FK_SourceId = source.SourceId,
+
                         Email = recipient.Email,
-                        Name = menu.Title ?? "",
+                        Name = formTitle,
                         TargetEmail = $"{dto.Sender.Name}({dto.Sender.Email})",
                         Html = html,
                         FromDate = result,
@@ -166,6 +176,19 @@ namespace EtheriT.Coker.Application.Contact
                 response.Error = ex.Message;
             }
             return response;
+        }
+        private static (HtmlSanitizeSourceType SourceType, long SourceId) ResolveContactSource(
+            FormSubmitDto dto,
+            long menuId)
+        {
+            if (dto.SourceType.HasValue &&
+                dto.SourceId.HasValue &&
+                dto.SourceId.Value > 0)
+            {
+                return (dto.SourceType.Value, dto.SourceId.Value);
+            }
+
+            return (HtmlSanitizeSourceType.選單, menuId);
         }
         public async Task<JsonResult> GetContactListAll(DataSourceLoadOptions loadOptions)
         {
@@ -235,6 +258,22 @@ namespace EtheriT.Coker.Application.Contact
             await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
 
             return response;
+        }
+        private static string NormalizeFormTitle(string? formTitle, string? fallback)
+        {
+            var title = string.IsNullOrWhiteSpace(formTitle)
+                ? fallback ?? ""
+                : formTitle.Trim();
+
+            title = System.Text.RegularExpressions.Regex.Replace(title, "<.*?>", "");
+            title = title.Replace("\r", "").Replace("\n", "").Trim();
+
+            if (title.Length > 100)
+            {
+                title = title.Substring(0, 100);
+            }
+
+            return string.IsNullOrWhiteSpace(title) ? fallback ?? "" : title;
         }
     }
 }

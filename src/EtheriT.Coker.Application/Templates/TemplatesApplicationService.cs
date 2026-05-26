@@ -14,6 +14,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
+using EtheriT.Coker.Application.Shared.Dto.Processor;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -34,10 +36,11 @@ namespace EtheriT.Coker.Application.Templates
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly IHtmlProcessor htmlProcessor;
+        private readonly IHtmlSanitizeService htmlSanitizeService;
         public TemplatesApplicationService(
             CokerDbContext db, LoginUserData loginUserData, StringHandler stringHandler,
             IMapper mapper, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IHtmlProcessor htmlProcessor,
-            IFileUploadAppService fileUploadAppService
+            IFileUploadAppService fileUploadAppService, IHtmlSanitizeService htmlSanitizeService
         )
         {
             this.db = db;
@@ -48,6 +51,7 @@ namespace EtheriT.Coker.Application.Templates
             this.httpContextAccessor = httpContextAccessor;
             this.htmlProcessor = htmlProcessor;
             this.fileUploadAppService = fileUploadAppService;
+            this.htmlSanitizeService = htmlSanitizeService;
         }
         public async Task<TemplatesDto?> GetDefaultTemplatesAsync()
         {
@@ -83,10 +87,47 @@ namespace EtheriT.Coker.Application.Templates
                         if (footerEntity != null)
                         {
                             footerSection.footerTemplateDto = mapper.Map<FooterTemplateDto>(footerEntity);
+
                             if (isFront)
                             {
-                                footerSection.footerTemplateDto.html = footerEntity.html;
-                                footerSection.footerTemplateDto.css = footerEntity.css;
+                                var html = stringHandler.HtmlDecode(footerEntity.html ?? "");
+                                var css = footerEntity.css ?? "";
+
+                                if (!string.IsNullOrWhiteSpace(html) || !string.IsNullOrWhiteSpace(css))
+                                {
+                                    try
+                                    {
+                                        var sanitized = await EnsureFooterDisplayContentSanitizedAsync(
+                                            WebsiteID,
+                                            footerEntity.Id,
+                                            html,
+                                            css
+                                        );
+
+                                        html = sanitized.Html;
+                                        css = sanitized.Css;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        await loginUserData.SetLogs(
+                                            JsonConvert.SerializeObject(new
+                                            {
+                                                Action = "AutoRepairHtmlSanitizeOnReadFailed",
+                                                SourceType = HtmlSanitizeSourceType.頁尾,
+                                                SourceId = footerEntity.Id,
+                                                WebsiteId = WebsiteID
+                                            }),
+                                            JsonConvert.SerializeObject(new
+                                            {
+                                                Success = false,
+                                                Error = ex.Message
+                                            })
+                                        );
+                                    }
+                                }
+
+                                footerSection.footerTemplateDto.html = stringHandler.HtmlEncode(html);
+                                footerSection.footerTemplateDto.css = css;
                             }
                         }
                     }
@@ -218,11 +259,26 @@ namespace EtheriT.Coker.Application.Templates
                         css = dto.SaveCss
                     };
                     string Orgname = await loginUserData.GetWebsiteOrgName();
-                    importDto.html = stringHandler.HtmlDecode(importDto.html);
-                    importDto.html = htmlProcessor.RemoveNode(importDto.html ?? "", ".backstageType");
+
+                    importDto.html = stringHandler.HtmlDecode(importDto.html ?? "");
                     importDto.html = (importDto.html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
-                    foot.css = (importDto.css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
-                    foot.html = stringHandler.HtmlEncode(importDto.html);
+                    importDto.css = (importDto.css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
+
+                    var sanitizeResult = await htmlSanitizeService.EnsurePublicContentAsync(new HtmlSanitizeInput
+                    {
+                        WebsiteId = websiteId,
+                        SourceType = HtmlSanitizeSourceType.頁尾,
+                        SourceId = foot.Id,
+                        ContentKey = "Published",
+                        SanitizePolicy = "PublicHtml",
+                        Html = importDto.html ?? "",
+                        Css = importDto.css ?? "",
+                        Force = true
+                    });
+
+                    foot.css = sanitizeResult.Css;
+                    foot.html = stringHandler.HtmlEncode(sanitizeResult.Html);
+
                     await loginUserData.SaveChanges(foot);
                     response.Success = true;
                 }
@@ -360,6 +416,76 @@ namespace EtheriT.Coker.Application.Templates
                 throw new Exception(e.Message, e);
             }
             return response;
+        }
+        private async Task<(string Html, string Css)> EnsureFooterDisplayContentSanitizedAsync(
+    long websiteId,
+    long footerTemplateId,
+    string html,
+    string css)
+        {
+            var sanitizeResult = await htmlSanitizeService.EnsurePublicContentAsync(new HtmlSanitizeInput
+            {
+                WebsiteId = websiteId,
+                SourceType = HtmlSanitizeSourceType.頁尾,
+                SourceId = footerTemplateId,
+                ContentKey = "Published",
+                SanitizePolicy = "PublicHtml",
+                Html = html ?? "",
+                Css = css ?? "",
+                Force = false
+            });
+
+            if (!sanitizeResult.WasSanitized)
+            {
+                return (html ?? "", css ?? "");
+            }
+
+            var footer = await db.FooterTemplates
+                .Include(x => x.templateSections)
+                .ThenInclude(x => x.template)
+                .FirstOrDefaultAsync(x =>
+                    x.Id == footerTemplateId &&
+                    x.templateSections.template.FK_WebsiteID == websiteId
+                );
+
+            if (footer == null)
+            {
+                return (sanitizeResult.Html, sanitizeResult.Css);
+            }
+
+            var before = new
+            {
+                Html = stringHandler.HtmlDecode(footer.html ?? ""),
+                Css = footer.css ?? ""
+            };
+
+            footer.html = stringHandler.HtmlEncode(sanitizeResult.Html);
+            footer.css = sanitizeResult.Css;
+
+            await loginUserData.SaveChanges(footer);
+
+            await loginUserData.SetLogs(
+                JsonConvert.SerializeObject(new
+                {
+                    Action = "AutoRepairHtmlSanitizeOnRead",
+                    SourceType = HtmlSanitizeSourceType.頁尾,
+                    SourceId = footer.Id,
+                    WebsiteId = websiteId,
+                    ContentKey = "Published",
+                    SanitizePolicy = "PublicHtml",
+                    Before = before
+                }),
+                JsonConvert.SerializeObject(new
+                {
+                    Html = sanitizeResult.Html,
+                    Css = sanitizeResult.Css,
+                    Hash = sanitizeResult.ContentHash,
+                    Version = sanitizeResult.SanitizeVersion,
+                    WasSanitized = sanitizeResult.WasSanitized
+                })
+            );
+
+            return (sanitizeResult.Html, sanitizeResult.Css);
         }
     }
 }

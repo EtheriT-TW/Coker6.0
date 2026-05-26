@@ -7,7 +7,6 @@
 @using System.Web
 @model PageViewModel
 <script nonce="@ViewBag.Nonce">
-    const PageKey = "@Model.option";
     const MinOrderForRedemption = @Json.Serialize(ViewBag.MinOrderForRedemption ?? 0);
     const MaxRedemptionPercent = @Json.Serialize(ViewBag.MaxRedemptionPercent ?? 0);
     const MinOrderForEarnPoints = @Json.Serialize(ViewBag.MinOrderForEarnPoints ?? 0);

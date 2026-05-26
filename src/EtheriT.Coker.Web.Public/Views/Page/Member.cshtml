@@ -6,9 +6,6 @@
 @model PageViewModel
 <link rel="stylesheet" href="~/css//Page/Member.min.css" asp-append-version="true" />
 <script src="/js/Page/Member.min.js" asp-append-version="true"></script>
-<script nonce="@ViewBag.Nonce">
-    const PageKey = "Member";
-</script>
 @Html.AntiForgeryToken()
 <!-- Modal -->
 <div class="modal fade" id="ECPayModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ECPayModal" aria-hidden="true" data-server-type="@(ViewBag.IsProduction ? "Prod" : "Stage")">

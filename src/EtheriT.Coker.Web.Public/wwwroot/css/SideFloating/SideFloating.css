@@ -1,9 +1,12 @@
 ﻿/* Side Floating */
+#SideFloating {
+    --sideFloat-width:4.5rem;
+}
 #Floating_Center {
     display: block;
     position: fixed;
     right: 0;
-    bottom: 100px;
+    bottom: calc(60px + 0.5rem + 0.25rem);
     z-index: 1001;
     opacity: 0;
     transition: opacity 0.25s ease-in-out;
@@ -13,9 +16,9 @@
         opacity: 1;
     }
 
-    #Floating_Center img {
+    #Floating_Center .side-floating-trigger-image{
         display: block;
-        width: 6rem;
+        width: var(--sideFloat-width);
         height: auto;
     }
 
@@ -28,7 +31,10 @@
 }
 
 .side-floating-trigger {
+    position: relative;
     display: block;
+    width: var(--sideFloat-width);
+    min-height: var(--sideFloat-width);
     cursor: pointer;
 }
 
@@ -45,15 +51,44 @@ button.side-floating-trigger {
         outline-offset: 2px;
     }
 
+.side-floating-trigger-image {
+    display: block;
+    width: var(--sideFloat-width);
+    height: auto;
+}
+
+.side-floating-trigger-close {
+    display: none;
+    width: var(--sideFloat-width);
+    height: var(--sideFloat-width);
+    align-items: center;
+    justify-content: center;
+    background: rgba(33, 33, 33, 0.92);
+    color: #fff;
+    font-size: 2rem;
+    line-height: 1;
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.22);
+}
+
+#Floating_Center .side-floating-item.is-open .side-floating-trigger-image,
+#Floating_Center .side-floating-expand-trigger[aria-expanded="true"] .side-floating-trigger-image {
+    display: none;
+}
+
+#Floating_Center .side-floating-item.is-open .side-floating-trigger-close,
+#Floating_Center .side-floating-expand-trigger[aria-expanded="true"] .side-floating-trigger-close {
+    display: flex;
+}
+
 /* Expand panel */
 .side-floating-panel {
     position: absolute;
-    bottom: 0;
-    right: 100%;
-    width: min(420px, calc(100vw - 120px));
-    max-height: 500px;
-    margin-right: 0.75rem;
-    overflow: auto;
+    right: 0;
+    bottom: 100%;
+    width: min(420px, calc(100vw - 1rem));
+    max-height: var(--side-floating-panel-max-height, min(720px, calc(100vh - 7rem)));
+    margin-bottom: 0.75rem;
+    overflow: hidden;
     background: #fff;
     color: inherit;
     box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.22);
@@ -61,35 +96,11 @@ button.side-floating-trigger {
     z-index: 1040;
 }
 
-.side-floating-panel-inner {
-    position: relative;
-    padding: 1rem;
-}
-
-.side-floating-close {
-    position: sticky;
-    top: 0;
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.92);
-    color: #333;
-    font-size: 1.5rem;
-    line-height: 1;
-    z-index: 1;
-}
-
-    .side-floating-close:hover {
-        background: #f1f1f1;
-    }
-
 .side-floating-content {
     min-width: 0;
+    max-height: inherit;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
     .side-floating-content img {
@@ -111,11 +122,12 @@ button.side-floating-trigger {
 
     #btn_gotop.show {
         opacity: 1;
+        width: var(--sideFloat-width);
     }
 
 /* Button Chat */
 #btn_chat {
-    width: 4.5rem;
+    width: var(--sideFloat-width);
 }
 
 #Chatbot_Frame {
@@ -144,51 +156,42 @@ button.side-floating-trigger {
     #Floating_Center {
         display: block;
         right: 0;
-        bottom: 90px;
         z-index: 1030;
     }
 
-        #Floating_Center img {
-            width: 4.5rem;
-        }
-
     .side-floating-panel {
-        position: fixed;
-        right: 0.75rem;
-        left: 0.75rem;
-        bottom: 0.75rem;
-        top: auto;
-        width: auto;
-        max-height: min(520px, calc(100svh - 1rem));
-        margin-right: 0;
+        position: absolute;
+        right: 0;
+        bottom: 100%;
+        width: min(420px, calc(100vw - 1rem));
+        max-height: var(--side-floating-panel-max-height, min(720px, calc(100svh - 7rem)));
+        margin-bottom: 0.75rem;
         border-radius: 0.75rem;
         z-index: 1040;
-    }
-
-    .side-floating-panel-inner {
-        padding: 0.875rem;
     }
 }
 
 /* Small mobile */
 @media only screen and (max-width: 576px) {
-    #Floating_Center {
-        bottom: 80px;
+    #Floating_Center .side-floating-trigger-image {
+        width: 4rem;
     }
 
-        #Floating_Center img {
-            width: 4rem;
-        }
+    .side-floating-trigger {
+        width: 4rem;
+        min-height: 4rem;
+    }
+
+    .side-floating-trigger-close {
+        width: 4rem;
+        height: 4rem;
+    }
 
     .side-floating-panel {
-        right: 0.5rem;
-        left: 0.5rem;
-        bottom: 0.5rem;
-        max-height: calc(100dvh - 1rem);
-        border-radius: 0.75rem;
-    }
-
-    .side-floating-panel-inner {
-        padding: 0.75rem;
+        right: 0;
+        bottom: 100%;
+        width: calc(100vw - 1rem);
+        max-height: var(--side-floating-panel-max-height, calc(100dvh - 6.5rem));
+        margin-bottom: 0.5rem;
     }
 }

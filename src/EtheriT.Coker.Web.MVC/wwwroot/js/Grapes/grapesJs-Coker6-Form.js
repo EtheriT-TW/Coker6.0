@@ -13,29 +13,44 @@
 
     function normalizeOptionItem(item) {
         if (item == null) {
-            return { value: '', displayText: '' };
+            return {
+                value: '',
+                displayText: '',
+                attributes: {}
+            };
         }
 
-        // 舊格式：["A", "B"]
         if (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean') {
             const s = toStr(item);
             return {
                 value: s,
-                displayText: s
+                displayText: s,
+                attributes: { value: s }
             };
         }
 
-        // 新格式：{ value, displayText }
-        const value = item.value != null ? toStr(item.value) : '';
-        let displayText = item.displayText != null ? toStr(item.displayText) : '';
+        const attributes = Object.assign({}, item.attributes || {});
+
+        const value = item.value != null
+            ? toStr(item.value)
+            : attributes.value != null
+                ? toStr(attributes.value)
+                : '';
+
+        let displayText = item.displayText != null
+            ? toStr(item.displayText)
+            : '';
 
         if (!displayText && value) {
             displayText = value;
         }
 
+        attributes.value = value;
+
         return {
             value,
-            displayText
+            displayText,
+            attributes
         };
     }
 
@@ -46,7 +61,7 @@
             .filter(opt => trimStr(opt.displayText) !== '');
     }
 
-    // 將 options 同步成 <option value="...">displayText</option>
+    // 將 options 同步成 <option>，並保留原本 attributes
     const syncOptionsToChildren = (component) => {
         const opts = normalizeOptions(component.get('options') || []);
 
@@ -54,16 +69,22 @@
         const children = component.components();
 
         opts.forEach(opt => {
+            const attrs = Object.assign({}, opt.attributes || {});
+
+            attrs.value = toStr(opt.value);
+
             let optComp = children.add({
                 tagName: 'option',
-                attributes: { value: toStr(opt.value) }
+                attributes: attrs
             });
+
             optComp = Array.isArray(optComp) ? optComp[0] : optComp;
 
             let textNode = optComp.components().add({
                 type: 'textnode',
                 content: toStr(opt.displayText)
             });
+
             textNode = Array.isArray(textNode) ? textNode[0] : textNode;
         });
     };
@@ -72,16 +93,31 @@
     const extractOptionsFromChildren = (component) => {
         const res = [];
         const children = component.components && component.components();
-        if (!children || !children.length) return res;
+
+        if (!children || !children.length) {
+            return res;
+        }
 
         children.each(ch => {
             const tag = (ch.get && ch.get('tagName')) || '';
-            if ((tag || '').toLowerCase() !== 'option') return;
 
-            const attrs = (ch.getAttributes && ch.getAttributes()) || ch.get('attributes') || {};
-            const value = attrs && attrs.value != null ? toStr(attrs.value) : '';
+            if ((tag || '').toLowerCase() !== 'option') {
+                return;
+            }
+
+            const rawAttrs =
+                (ch.getAttributes && ch.getAttributes()) ||
+                ch.get('attributes') ||
+                {};
+
+            const attributes = Object.assign({}, rawAttrs);
+
+            const value = attributes.value != null
+                ? toStr(attributes.value)
+                : '';
 
             let displayText = '';
+
             const tnode = ch.components && ch.components().models.find(m => {
                 const t = m.get && (m.get('type') || m.get('tagName'));
                 return t === 'textnode';
@@ -96,9 +132,12 @@
             }
 
             if (trimStr(displayText) !== '') {
+                attributes.value = value;
+
                 res.push({
                     value,
-                    displayText
+                    displayText,
+                    attributes
                 });
             }
         });
@@ -108,9 +147,11 @@
 
     function makeOptionDraft(opt) {
         const normalized = normalizeOptionItem(opt);
+
         return {
             value: normalized.value,
-            displayText: normalized.displayText
+            displayText: normalized.displayText,
+            attributes: Object.assign({}, normalized.attributes || {})
         };
     }
 
@@ -186,11 +227,13 @@
             }
         };
 
-        const makeRow = (item = { value: '', displayText: '' }) => {
+        const makeRow = (item = { value: '', displayText: '', attributes: {} }) => {
             const rowData = makeOptionDraft(item);
 
             const row = document.createElement('div');
             row.className = 'ds-row';
+
+            row._optionAttributes = Object.assign({}, rowData.attributes || {});
 
             const handle = document.createElement('span');
             handle.className = 'ds-handle';
@@ -410,9 +453,14 @@
                 valueInput.classList.remove('is-invalid');
                 textInput.classList.remove('is-invalid');
 
+                const attributes = Object.assign({}, row._optionAttributes || {});
+
+                attributes.value = value;
+
                 values.push({
                     value,
-                    displayText
+                    displayText,
+                    attributes
                 });
             });
 

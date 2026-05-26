@@ -1014,18 +1014,34 @@ function ResetAction(forgetid) {
     })
 }
 function NewCaptcha($self, $input, name = "") {
-    if (!!!$self.data("id")) {
-        $self.data("id", Math.floor(Math.random() * 10000));
-        const $form = $self.parents("form")
-        let captchaId = $form.find("[name='captchaId']");
-        if (captchaId.length == 0) {
-            captchaId = $(`<input type="hidden" name="captchaId" />`)
-            $form.append(captchaId);
-        }
-        captchaId.val(name + $self.data("id"));
+    if (!$self.data("id")) {
+        $self.data("id", createCaptchaId(name));
     }
-    $self.attr('src', `/api/Captcha/index?id=${name}${$self.data("id")}&v=${Math.floor(Math.random() * 10000)}`);
+
+    const captchaKey = $self.data("id");
+    const $form = $self.closest("form");
+
+    let $captchaId = $form.find("[name='captchaId']").first();
+
+    if (!$captchaId.length) {
+        $captchaId = $('<input type="hidden" name="captchaId" />');
+        $form.append($captchaId);
+    }
+
+    $captchaId.val(captchaKey);
+
+    $self.attr("src", `/api/Captcha/index?id=${encodeURIComponent(captchaKey)}&v=${Date.now()}`);
     $input.val("");
+}
+
+function createCaptchaId(name) {
+    const prefix = name || "Captcha";
+
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return `${prefix}_${window.crypto.randomUUID()}`;
+    }
+
+    return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
 function FormClear(form, $input) {
     form.removeClass('was-validated')

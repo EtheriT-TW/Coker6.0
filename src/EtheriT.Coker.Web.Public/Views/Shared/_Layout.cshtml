@@ -102,6 +102,7 @@
         const totalBonus = @Json.Serialize(ViewBag.UserBonus ?? 0);
         const parsedPageId = Number.parseInt(PageId, 10);
         const OrgName = "@ViewData["OrgName"]";
+        const PageKey = "@ViewBag.RouterName";
         window.__LOGIN_STATE__ = @(ViewBag.isLogin == true ? "true" : "false");
         window.SiteId = SiteId;
         window.PageId = Number.isNaN(parsedPageId) ? null : parsedPageId;
@@ -109,6 +110,7 @@
         window.totalBonus = totalBonus;
         window.orderPrice = orderPrice;
         window.OrgName = OrgName;
+        window.PageKey = PageKey;
         window.onload = function () {
             ready();
         }
@@ -626,7 +628,7 @@
             </div>
         </div>
     </div>
-    <div>
+    <div id="SideFloating">
         @await Component.InvokeAsync(nameof(SideFloating))
     </div>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

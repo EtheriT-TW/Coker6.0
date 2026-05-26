@@ -48,18 +48,19 @@
                     <button type="button"
                             class="side-floating-trigger side-floating-expand-trigger bg-transparent border-0 p-0"
                             aria-expanded="false"
-                            aria-controls="SideFloatingPanel_@rightSideAd.Id">
-                        <img class="my-1 shadow" src="@image" alt="@rightSideAd.Title">
+                            aria-controls="SideFloatingPanel_@rightSideAd.Id"
+                            aria-label="@rightSideAd.Title">
+                        <img class="side-floating-trigger-image my-1 shadow"
+                             src="@image"
+                             alt="@rightSideAd.Title">
+
+                        <span class="side-floating-trigger-close"
+                              aria-hidden="true">×</span>
                     </button>
 
                     <div id="SideFloatingPanel_@rightSideAd.Id"
                          class="side-floating-panel d-none"
                          data-side-floating-panel>
-                        <button type="button"
-                                class="side-floating-close"
-                                aria-label="關閉">
-                            ×
-                        </button>
 
                         @if (!string.IsNullOrWhiteSpace(rightSideAd.Css))
                         {
@@ -68,7 +69,7 @@
                             </style>
                         }
 
-                        <div class="side-floating-content js-form-source" data-form-title="@rightSideAd.Title" data-source-type="@HtmlSanitizeSourceType.廣告" data-source-id="@rightSideAd.Id">
+                        <div class="side-floating-content js-form-source" data-form-title="@rightSideAd.Title" data-source-type="@((int)HtmlSanitizeSourceType.廣告)" data-source-id="@rightSideAd.Id">
                             <coker-safe-html content="@rightSideAd.Html"
                                              website-id="@Model.WebsiteId"
                                              source-type="@HtmlSanitizeSourceType.廣告"
@@ -109,7 +110,7 @@
 	}
 </div>
 
-<div id="Floating_Bottom" class="position-fixed d-flex flex-column align-items-center bottom-0 end-0 p-2">
+<div id="Floating_Bottom" class="position-fixed d-flex flex-column align-items-center bottom-0 end-0 pb-2">
 	@if (Model.Chatbot)
 	{
 		<button id="btn_chat" class="bg-transparent border-0 rounded-circle">
@@ -129,7 +130,7 @@
 			</div>
 		</div>
 	}
-	<button id="btn_gotop" class="bg-black border-0 mt-3 px-3 rounded-3 text-white">
+	<button id="btn_gotop" class="bg-black border-0 text-white">
 		<i class="fa-solid fa-chevron-up"></i>
 		<div>Top</div>
 	</button>

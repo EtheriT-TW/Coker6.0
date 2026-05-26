@@ -14,9 +14,6 @@
             break;
     }
 }
-<script nonce="@ViewBag.Nonce">
-    const PageKey = PageType;
-</script>
 @Html.AntiForgeryToken()
 
 @if (ViewBag.ShowPagePath){

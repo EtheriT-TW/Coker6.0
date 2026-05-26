@@ -256,6 +256,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             }
             model.option = key;
             ViewBag.option = model.option.ToLower();
+            ViewBag.RouterName = ViewBag.option;
             ViewBag.membershipTerms = model.storeSet.membershipTerms;
             Console.WriteLine($"hasMembershipTerms：{(membershipTerms != null && membershipTerms.value != null)}");
             GetFrontContenOutputDto? PageData =  null;
@@ -326,6 +327,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                                 remoteInputDto.FK_ProdId = model.PageData.Id;
                                 model.ParentData = PageData;
                                 model.PageData.PageView = "Product";
+                                ViewBag.RouterName = "Product";
                                 model.PageData.LayoutType = defaultData.Layout_Type;
                                 model.PageData.holdPage = HoldPageNameEnum.Article;
                                 ViewBag.option = option.ToLower();
@@ -418,6 +420,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             if (model.SearchPalameter.Class.Exists(e => e.Id == 3) && model.SearchPalameter.SearchId == 0 && string.IsNullOrEmpty(option))
                                 model.SearchPalameter.SearchId = 3;
                             view = "CustSearch";
+
+                            ViewBag.RouterName = "Search";
                             int c;
                             int.TryParse(model.layout.Replace("layout", ""), out c);
                             if (c != 0) model.PageData.LayoutType = c;
@@ -435,6 +439,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             model.PageData = PageData;
                             model.PageData.CurrentUrl = "/Member";
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
+                            ViewBag.RouterName = "Member";
                             view = "Member";
                         }
                         else if (key.ToLower() == "demosearch")

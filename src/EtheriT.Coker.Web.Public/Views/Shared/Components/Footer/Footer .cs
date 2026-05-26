@@ -446,47 +446,6 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 								}
 							};
 							break;
-						case 8:
-							footerViewModel = new FooterViewModel
-							{
-								Title = "",
-								footerViewModels = new List<FooterViewModel> {
-									new FooterViewModel { Title = "關於基金會", Link = "", footerViewModels = new List<FooterViewModel> {
-											new FooterViewModel { Title = "宗旨", Link = "/unitedtw/purpose" },
-											new FooterViewModel { Title = "組織章程", Link = "/unitedtw/regulations" },
-										}
-									},
-									new FooterViewModel { Title = "活動訊息", Link = "", footerViewModels = new List<FooterViewModel> {
-											new FooterViewModel { Title = "社區活動", Link = "/unitedtw/activity" },
-											new FooterViewModel { Title = "影片連結", Link = "/unitedtw/video" },
-										}
-									},
-									new FooterViewModel { Title = "公開資訊", Link = "", footerViewModels = new List<FooterViewModel> {
-											new FooterViewModel { Title = "年度預算及工作計畫", Link = "/unitedtw/plan" },
-											new FooterViewModel { Title = "年度財務報表", Link = "/unitedtw/financial" },
-											new FooterViewModel { Title = "年度工作報告書", Link = "/unitedtw/report" },
-											new FooterViewModel { Title = "捐款名錄", Link = "/unitedtw/Donationer" },
-										}
-									},
-									new FooterViewModel { Title = "聯絡我們", Link = "", footerViewModels = new List<FooterViewModel> {
-											new FooterViewModel { Title = "位置諮詢", Link = "/unitedtw/address" },
-											new FooterViewModel { Title = "Mail聯繫", Link = "/unitedtw/mail" },
-										}
-									},
-									new FooterViewModel { Title = "相關連結", Link = "/unitedtw/other", footerViewModels = new List<FooterViewModel> {
-										}
-									}
-								},
-								Content = new List<string>
-								{
-                                    "<span><i class=\"fa-solid fa-phone\"></i></span><a href=\"tel:03-3179599\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"撥打電話至:07-3737909(另開新視窗)\" class=\"tel\">03-3179599</a><br>" +
-                                    "<span><i class=\"fa-solid fa-at\"></i></span>電子郵件：<a href=\"mailto:unitedte168@gmail.com\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"發送電子郵件至:unitedte168@gmail.com(另開新視窗)\">unitedte168@gmail.com</a><br>" +
-                                    "<span><i class=\"fa-solid fa-house\"></i></span>地址：<a href=\"https://goo.gl/maps/eoGMYGKvxetaReKX8\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"連結至:google地圖(另開新視窗)\">330桃園市桃園區經國路168號</a><br>" +
-                                    "<div id=\"qrcode\"><a href=\"/unitedtw/home\"><img src=\"/upload/footer_qrcode.png\" asp-append-version=\"true\" ></a></div>"
-                                },
-								Copyright = "Copyright © 2020 UNITED MEDICAL FOUNDATION TAIWAN. All Rights Reserved"
-							};
-							break;
 						default:
 							footerViewModel = new FooterViewModel
 							{
@@ -680,12 +639,14 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                 {
                     var footerSection = template.templateSections.Find(e => e.sectionType == SectionTypeEnum.頁尾);
                     if (footerSection != null &&
-                        footerSection.footerTemplateDto != null &&
+                        footerSection.footerTemplateDto != null && footerSection.footerTemplateDto.id!= null &&
                         !string.IsNullOrEmpty(htmlProcessor.text(stringHandler.HtmlDecode(footerSection.footerTemplateDto.html)))
                     )
                     {
                         footerViewModel.html = stringHandler.HtmlDecode(footerSection.footerTemplateDto.html) ?? "";
                         footerViewModel.css = footerSection.footerTemplateDto.css ?? "";
+                        footerViewModel.HtmlSanitizeWebsiteId = defaultData.Id;
+                        footerViewModel.HtmlSanitizeSourceId = footerSection.footerTemplateDto.id.Value;
                         defaultData.View = "CustFooter";
                     }
                 }

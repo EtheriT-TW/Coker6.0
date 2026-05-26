@@ -1044,6 +1044,16 @@ namespace EtheriT.Coker.Application.Product
                     key = "priceOrder",
                     SiteId = websiteId
                 });
+                var storeBuyState = await storeSetAppService.getValues(new Shared.Dto.StoreSet.StoreSetGetValueInput
+                {
+                    key = "storeBuyState",
+                    SiteId = websiteId
+                });
+                var showProductPrice = false;
+
+                if (storeBuyState.Success && storeBuyState.detailItem != null && storeBuyState.detailItem.value != null){
+                    showProductPrice = !storeBuyState.detailItem.value.Contains("noPayNoShow");
+                }
 
                 var orderLowToHigh =
                     priceOrder.Success &&
@@ -1115,11 +1125,17 @@ namespace EtheriT.Coker.Application.Product
                           }).ToList();
 
                 // 一次取得所有商品的目錄價格
-                var roleContext = await frontRoleContextService.GetCurrentContextAsync(orgName);
-                var priceMap = await productDisplayPriceService.GetDirectoryPriceMapAsync(
-                    output.Select(e => e.Id).ToList(),
-                    roleContext,
-                    orderLowToHigh);
+                Dictionary<long, DirectoryPriceResultDto> priceMap = new();
+
+                if (showProductPrice)
+                {
+                    var roleContext = await frontRoleContextService.GetCurrentContextAsync(orgName);
+
+                    priceMap = await productDisplayPriceService.GetDirectoryPriceMapAsync(
+                        output.Select(e => e.Id).ToList(),
+                        roleContext,
+                        orderLowToHigh);
+                }
 
                 for (int i = 0; i < output.Count; i++)
                 {
@@ -1133,6 +1149,12 @@ namespace EtheriT.Coker.Application.Product
 
                     if (favorite != null)
                         data.FId = favorite.Id;
+
+                    if (!showProductPrice)
+                    {
+                        data.MarketingLabels = new List<ProductMarketingLabelDto>();
+                        continue;
+                    }
 
                     if (priceMap.TryGetValue(data.Id, out var priceInfo))
                     {

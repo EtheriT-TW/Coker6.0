@@ -60,6 +60,8 @@
 
         $form.data("dynamic-form-inited", true);
 
+        normalizeFormControlIds(targetForm);
+
         initFormJson($form);
 
         if (Coker.DynamicForm.validation && typeof Coker.DynamicForm.validation.init === "function") {
@@ -118,6 +120,137 @@
         if (typeof $form.getFormJson === "function") {
             $form.getFormJson();
         }
+    }
+
+    function normalizeFormControlIds(form) {
+        if (!form) {
+            return;
+        }
+
+        const formUid = getOrCreateFormUid(form);
+        const controls = Array.prototype.slice.call(
+            form.querySelectorAll("input[id], select[id], textarea[id], button[id], img[id]")
+        );
+
+        controls.forEach(function (control, index) {
+            const oldId = control.getAttribute("id");
+
+            if (!oldId) {
+                return;
+            }
+
+            if (!shouldRenameId(control, oldId, form)) {
+                return;
+            }
+
+            const newId = buildScopedId(oldId, formUid, index);
+
+            control.setAttribute("id", newId);
+            updateIdReferences(form, oldId, newId, control);
+        });
+    }
+
+    function getOrCreateFormUid(form) {
+        let uid = form.getAttribute("data-dynamic-form-uid");
+
+        if (uid) {
+            return uid;
+        }
+
+        uid = "df_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+        form.setAttribute("data-dynamic-form-uid", uid);
+
+        return uid;
+    }
+
+    function shouldRenameId(control, oldId, form) {
+        const sameIdElements = document.querySelectorAll("#" + cssEscape(oldId));
+
+        if (sameIdElements.length <= 1) {
+            return false;
+        }
+
+        // 如果重複 id 都在同一個 form 內，也要修。
+        // 如果其他 form 或頁面上也有相同 id，也要修。
+        return true;
+    }
+
+    function buildScopedId(oldId, formUid, index) {
+        return oldId + "_" + formUid + "_" + index;
+    }
+
+    function updateIdReferences(form, oldId, newId, ownerControl) {
+        updateForReferences(form, oldId, newId, ownerControl);
+        updateDataForReferences(form, oldId, newId, ownerControl);
+        updateAriaIdReferences(form, oldId, newId);
+    }
+
+    function updateForReferences(form, oldId, newId, ownerControl) {
+        const labels = Array.prototype.slice.call(
+            form.querySelectorAll('label[for="' + cssEscape(oldId) + '"]')
+        );
+
+        if (!labels.length) {
+            return;
+        }
+
+        // 優先處理同一個 form-floating / form-check / call 容器內的 label。
+        const ownerContainer = ownerControl.closest(".form-floating, .form-check, .call, .checkbox_input_text");
+
+        labels.forEach(function (label) {
+            if (!ownerContainer || ownerContainer.contains(label)) {
+                label.setAttribute("for", newId);
+            }
+        });
+    }
+
+    function updateDataForReferences(form, oldId, newId, ownerControl) {
+        const fields = Array.prototype.slice.call(
+            form.querySelectorAll('[data-for="' + cssEscape(oldId) + '"]')
+        );
+
+        if (!fields.length) {
+            return;
+        }
+
+        const ownerContainer = ownerControl.closest(".form-floating, .form-check, .call, .checkbox_input_text");
+
+        fields.forEach(function (field) {
+            if (!ownerContainer || ownerContainer.contains(field)) {
+                field.setAttribute("data-for", newId);
+            }
+        });
+    }
+
+    function updateAriaIdReferences(form, oldId, newId) {
+        [
+            "aria-describedby",
+            "aria-labelledby",
+            "aria-controls",
+            "aria-owns"
+        ].forEach(function (attrName) {
+            form.querySelectorAll("[" + attrName + "]").forEach(function (element) {
+                const value = element.getAttribute(attrName);
+
+                if (!value) {
+                    return;
+                }
+
+                const parts = value.split(/\s+/).map(function (id) {
+                    return id === oldId ? newId : id;
+                });
+
+                element.setAttribute(attrName, parts.join(" "));
+            });
+        });
+    }
+
+    function cssEscape(value) {
+        if (window.CSS && typeof window.CSS.escape === "function") {
+            return window.CSS.escape(value);
+        }
+
+        return String(value).replace(/["\\]/g, "\\$&");
     }
 
     $.fn.dynamicFormInit = function (options) {

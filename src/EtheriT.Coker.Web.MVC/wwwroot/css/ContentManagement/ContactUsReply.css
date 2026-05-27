@@ -1,9 +1,11 @@
-﻿.pageList>.page{
-    display:none;
+﻿.pageList > .page {
+    display: none;
 }
+
     .pageList > .page.show {
-        display:block;
+        display: block;
     }
+
 #Form .card-header {
     background-color: var(--color-gray-bg-dark);
 }
@@ -27,10 +29,12 @@
 #Form .card-body > div > form > div {
     right: 0px;
 }
+
 #Form input {
     width: calc(100% - 6rem);
-    padding:0.5rem;
+    padding: 0.5rem;
 }
+
 .html td.title, .html th {
     width: 8rem;
     white-space: nowrap;
@@ -70,3 +74,34 @@
     color: #424242; /* 深灰字 */
     font-weight: 600;
 }
+
+/* 回覆區塊 */
+.reply-zone label {
+    padding-left: 15px;
+    color: #006FAE;
+    position: relative;
+}
+
+    .reply-zone label::before {
+        position: absolute;
+        left: 0;
+        content: '';
+        width: 5px;
+        height: 100%;
+        background-color: #006FAE;
+    }
+
+.reply-zone textarea {
+    height: 10rem;
+}
+
+.reply-zone button {
+    color: white;
+    background-color: #006FAE;
+}
+
+    .reply-zone button[disabled] {
+        color: gray;
+        background-color: var(--bs-secondary-bg);
+        opacity: 1;
+    }

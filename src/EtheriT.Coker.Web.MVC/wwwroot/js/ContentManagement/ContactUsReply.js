@@ -4,7 +4,7 @@ function contentReady(e) {
 }
 function onRowPrepared(e) {
     if (e.rowType === "data") {
-        const $row = $(e.rowElement); 
+        const $row = $(e.rowElement);
         switch (e.data.Status) {
             case "未處理":
                 $row.addClass("status-pending");
@@ -33,12 +33,13 @@ function PageReady() {
     (() => {
         Array.from(forms).forEach(form => {
             form.addEventListener('submit', event => {
+                var $this = $(event.submitter);
                 if (!form.checkValidity()) {
                     event.preventDefault()
                     event.stopPropagation()
                 } else {
                     event.preventDefault();
-                    Reply();
+                    Reply($this);
                 }
                 form.classList.add('was-validated')
             }, false)
@@ -57,6 +58,11 @@ function PageReady() {
             });
         }*/
     })
+
+    $("textarea#InputReply").on("input", function () {
+        const length = $(this).val().length;
+        $(".textarea-meta").text(`${length} / 2000`);
+    });
 
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
@@ -157,16 +163,37 @@ function FormDataSet(result) {
     $(".page").removeClass("show");
     $("#Form").addClass("show");
     $("#Status").find(`option[value="${result.object.status}"]`).prop("selected", true);
-    if (result.object.status == 3 || result.object.status == 9) {
-        $("#Form .btn_done,#Status,#InputReply").prop("disabled", true);
+
+    var status = result.object.status;
+    var disableReply = [2, 3, 9].includes(status);
+    var disableDone = [3, 9].includes(status);
+
+    if (result.object.replyTime.startsWith("0001-01-01")) {
+        $(".reply-zone .textarea-meta").text("0 / 2000");
     } else {
-        $("#Form .btn_done,#Status,#InputReply").prop("disabled", false);
+        var date = new Date(result.object.replyTime);
+        var formatted = date.toLocaleString("zh-TW", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: true
+        });
+        $(".reply-zone .textarea-meta").text(formatted);
     }
+
+    $("#InputReply, .reply-zone .btn_send_reply").prop("disabled", disableReply);
+    $(".reply-zone .btn_send_reply").text(disableReply ? "已送出，無法修改" : "送出回覆");
+    $("#Form .btn_done, #Status").prop("disabled", disableDone);
 }
 
-function Reply() {
+function Reply($btn) {
     Coker.sweet.confirm("直接回覆", "回覆後不可取消", "確定", "取消", function () {
+        Coker.sweet.loading();
         const data = co.Form.getJson("ReplyForm");
+        if ($btn.hasClass('btn_send_reply')) data.Status = 2;
         co.Contact.Replay(data).done(function (result) {
             if (result.success) {
                 Coker.sweet.success("已成功回覆", null, true);

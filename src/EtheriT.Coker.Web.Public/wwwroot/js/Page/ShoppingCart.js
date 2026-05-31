@@ -335,6 +335,17 @@ function PageReady() {
 
     ElementInit();
 
+    if (HasECPay) {
+        $(":input").on("blur change", function () {
+            var $self = $(this);
+            if ($self.is(':radio')) {
+                if ($self.attr("name")?.includes("Sex")) ECPaymentChange();
+            } else {
+                ECPaymentChange();
+            }
+        });
+    }
+
     $(".btn_call_login").on("click", function (event) {
         loginModal.show();
     })

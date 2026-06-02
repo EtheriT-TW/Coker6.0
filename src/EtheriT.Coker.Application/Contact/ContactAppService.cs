@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Contact
@@ -245,6 +246,33 @@ namespace EtheriT.Coker.Application.Contact
                     {
                         contact.Reply = dto.Reply;
                         contact.ReplyTime = DateTime.Now;
+
+                        var site = await db.Websites.Where(e => !e.IsDeleted).Where(e => e.Id == websiteId).FirstOrDefaultAsync();
+                        MailUserDataDto recipient = new MailUserDataDto()
+                        {
+                            Email = contact.Email,
+                            Name = Regex.Replace(contact.UserName, "(先生|小姐)$", "").Trim(),
+                        };
+
+                        string html = "";
+
+                        html = $@"{dto.Reply.Replace("\n", "<br>")}
+                                              <br>
+                                              <br>
+                                              <hr>
+                                              <p class='text-danger'>提醒您：此封信件為系統發出，請勿直接回覆。<br>
+                                              客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。<br>
+                                              若有上述情形，請立即撥打165防詐騙專線查詢。</p>";
+
+                        SenderDto senderDto = new SenderDto
+                        {
+                            Recipients = new List<MailUserDataDto> { recipient },
+                            Subject = $"【{site.Title}】客服信回覆",
+                            Body = html,
+                            Css = ".text-danger{color:#b71c1c;}"
+                        };
+                        senderDto.Sender.Name = string.IsNullOrEmpty(site.Contact) ? site.Title ?? "" : site.Contact;
+                        await mailAppService.sendMail(senderDto);
                     }
                     await loginUserData.SaveChanges(contact);
                     response.Success = true;

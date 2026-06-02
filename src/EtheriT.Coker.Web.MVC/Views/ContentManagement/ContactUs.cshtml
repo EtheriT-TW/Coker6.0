@@ -68,7 +68,7 @@
                         editing.AllowUpdating(true);
                         editing.UseIcons(true);
                     })
-                    .OnRowPrepared("onRowPrepared") 
+                    .OnRowPrepared("onRowPrepared")
                     .OnContentReady("contentReady")
                     )
             </div>
@@ -100,19 +100,27 @@
                             <select id="Status" name="Status" class="form-select" aria-label="Status Select">
                                 @foreach (var item in Model)
                                 {
-                                    <option value="@item.Id">@item.Name.Replace("_","/")</option>
+                                    <option value="@item.Id">@item.Name.Replace("_", "/")</option>
                                 }
                             </select>
                         </div>
                     </div>
-                    <div class="col-12 mb-3 d-none">
-                        <label class="required" for="InputReply">回覆</label>
-                        <textarea id="InputReply" name="Reply" class="website_description form-control col" type="text" placeholder="回覆"></textarea>
-                        <div class="invalid-tooltip">尚未填寫回覆</div>
-                    </div>
-                    <div class="col-12 d-flex flex-column m-3">
+                    <div class="col-12 d-flex flex-column p-3">
                         <div class="title pe-3 mb-3">詢問資料</div>
                         <div class="html" name="html" data-form-type="html"></div>
+                    </div>
+                    <div class="col-12 p-3 border rounded mx-3 reply-zone">
+                        <label class="required fw-bold" for="InputReply">回覆內容</label>
+                        <textarea id="InputReply" name="Reply" class="website_description form-control col mt-3" type="text" placeholder="請輸入回覆內容..." maxlength="2000"></textarea>
+                        <div class="textarea-meta text-end pe-3 pt-1 mb-3 text-secondary">0 / 2000</div>
+                        <div class="invalid-tooltip">尚未填寫回覆</div>
+                        <div></div>
+                        <ul class="list-unstyled text-danger">
+                            <li>*若不回覆，請保留空白。</li>
+                            <li>*此回覆内容已送出，無法再進行修改。</li>
+                            <li>*如需補充，請改用其他 Email 平台進行</li>
+                        </ul>
+                        <button class="btn_send_reply rounded border-0 py-2 px-4" type="submit">送出回覆</button>
                     </div>
                 </div>
             </form>

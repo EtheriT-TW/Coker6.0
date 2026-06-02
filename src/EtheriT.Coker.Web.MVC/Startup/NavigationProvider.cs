@@ -309,7 +309,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                             }
                         }
                     },
-                    new JobMenu{ 
+                    new JobMenu{
                         PageName="Bonus",
                         Title="紅利管理",
                         Icon="redeem",
@@ -498,203 +498,125 @@ namespace EtheriT.Coker.Web.MVC.Startup
                     }
                 }
             };
+            site.PageTitleMap = BuildPageTitleMap(site.Jobs);
             return site;
         }
         public async Task SetPower(Site site)
         {
             WebsiteLevelEnum level = await loginUserData.GetWebsiteLevel();
-            List<JobMenu> seting = new List<JobMenu>();
-            switch (level)
-            {
-                case WebsiteLevelEnum.簡約:
-                    seting.AddRange(new List<JobMenu>
-                    {
-                        new JobMenu{
-                            PageName="NewsletterManagement",
-                            Enable=false,
-                        },new JobMenu
-                        {
-                            PageName="ProductManagement",
-                            Enable=false
-                        },new JobMenu{
-                            PageName="OrderManagement",
-                            Enable=false,
-                        },new JobMenu{
-                                PageName="OrderList",
-                                Enable=false,
-                        },new JobMenu{
-                            PageName="ManagerList",
-                            Enable=false
-                        },new JobMenu
-                        {
-                            PageName="MemberData",
-                            Enable=false
-                        }, new JobMenu
-                        {
-                            PageName="StoreSettings",
-                            Enable=false,
-                        },new JobMenu{
-                            PageName="CustSearch",
-                            Enable=false,
-                        },
-                        new JobMenu{
-                            PageName="TypographyTheme",
-                            Enable=false
-                        },
-                        new JobMenu{
-                            PageName="MemberSet",
-                            Enable=false
-                        },new JobMenu
-                        {
-                            PageName = "Report",
-                            Enable = false
-                        },new JobMenu
-                        {
-                            PageName = "Bonus",
-                            Enable = false
-                        },new JobMenu
-                        {
-                            PageName = "SaleQuantityStaging",
-                            Enable = false
-                        },new JobMenu
-                        {
-                            PageName = "LogisticsSettings",
-                            Enable = false
-                        },new JobMenu
-                        {
-                            PageName = "LogisticsBox",
-                            Enable = false
-                        }
-                    });
-                    break;
-                case WebsiteLevelEnum.形象:
-                    seting.AddRange(new List<JobMenu> {
-                        new JobMenu{
-                            PageName="OrderManagement",
-                            Enable=false,
-                        },new JobMenu{
-                                PageName="OrderList",
-                                Enable=false,
-                        },new JobMenu{
-                            PageName="ManagerList",
-                            Enable=false
-                        },new JobMenu
-                        {
-                            PageName="MemberData",
-                            Enable=false
-                        }, new JobMenu
-                        {
-                            PageName="FreightSettings",
-                            Enable=false,
-                        }, new JobMenu
-                        {
-                            PageName="PaymentSettings",
-                            Enable=false,
-                        }, new JobMenu
-                        {
-                            PageName="BonusSettings",
-                            Enable=false,
-                        }, new JobMenu
-                        {
-                            PageName="MarketingSettings",
-                            Enable=false,
-                        },new JobMenu{
-                            PageName="CustSearch",
-                            Enable=false,
-                        },
-                        new JobMenu{
-                            PageName="TypographyTheme",
-                            Enable=false
-                        },
-                        new JobMenu{
-                            PageName="MemberSet",
-                            Enable=false
-                        },new JobMenu
-                        {
-                            PageName = "Report",
-                            Enable = false
-                        },new JobMenu
-                        {
-                            PageName = "Bonus",
-                            Enable = false
-                        },new JobMenu
-                        {
-                            PageName = "SaleQuantityStaging",
-                            Enable = false
-                        },new JobMenu
-                        {
-                            PageName = "LogisticsSettings",
-                            Enable = false
-                        },new JobMenu
-                        {
-                            PageName = "LogisticsBox",
-                            Enable = false
-                        }
-                    });
-                    break;
-                case WebsiteLevelEnum.會員:
-                    seting.AddRange(new List<JobMenu> {
-                        new JobMenu
-                        {
-                            PageName="OrderManagement",
-                            Enable=false
-                        },new JobMenu{
-                                PageName="OrderList",
-                                Enable=false,
-                        },new JobMenu{
-                            PageName="ManagerList",
-                            Enable=false
-                        },new JobMenu
-                        {
-                            PageName="StoreSettings",
-                            Enable=false
-                        },new JobMenu{
-                            PageName="CustSearch",
-                            Enable=false,
-                        },
-                        new JobMenu{
-                            PageName="TypographyTheme",
-                            Enable=false
-                        },new JobMenu
-                        {
-                            PageName = "Report",
-                            Enable = false
-                        },new JobMenu
-                        {
-                            PageName = "Bonus",
-                            Enable = false
-                        },new JobMenu
-                        {
-                            PageName = "SaleQuantityStaging",
-                            Enable = false
-                        },new JobMenu
-                        {
-                            PageName = "LogisticsSettings",
-                            Enable = false
-                        },new JobMenu
-                        {
-                            PageName = "LogisticsBox",
-                            Enable = false
-                        }
-                    });
-                    break;
-                case WebsiteLevelEnum.購物:
-                    seting.AddRange(new List<JobMenu> {
-                        new JobMenu
-                        {
-                            PageName = "TypographyTheme",
-                            Enable = false
-                        }
-                    });
-                    break;
-            }
-            SetJobs(site.Jobs, seting);
+
+            var disabledPageNames = GetDisabledPageNamesByWebsiteLevel(level);
+
+            if (disabledPageNames.Count == 0)
+                return;
+
+            var settings = disabledPageNames
+                .Distinct()
+                .Select(pageName => new JobMenu
+                {
+                    PageName = pageName,
+                    Enable = false,
+                    CanVisble = false,
+                    CanUpdate = false,
+                    CanRemove = false,
+                    CanCreate = false
+                })
+                .ToList();
+
+            SetJobs(site.Jobs, settings, allowOverwriteEnable: true);
         }
-        public async Task SetWebsite(Site site) {
+        private static List<string> GetDisabledPageNamesByWebsiteLevel(WebsiteLevelEnum level)
+        {
+            var disabled = new HashSet<string>();
+
+            AddGlobalDisabled(disabled);
+
+            AddLowerLevelDisabled(disabled, level);
+
+            AddHigherLevelDisabled(disabled, level);
+
+            return disabled.ToList();
+        }
+        private static void AddGlobalDisabled(HashSet<string> disabled)
+        {
+            disabled.Add("TypographyTheme");
+        }
+        private static void AddLowerLevelDisabled(HashSet<string> disabled, WebsiteLevelEnum level)
+        {
+            DisableBelow(disabled, level, WebsiteLevelEnum.購物, new[]
+            {
+                "OrderManagement",
+                "OrderList",
+                "ManagerList",
+                "StoreSettings",
+                "CustSearch",
+                "Report",
+                "Bonus",
+                "SaleQuantityStaging",
+                "LogisticsSettings",
+                "LogisticsBox"
+            });
+
+            DisableBelow(disabled, level, WebsiteLevelEnum.會員, new[]
+            {
+                "FreightSettings",
+                "PaymentSettings",
+                "BonusSettings",
+                "MarketingSettings",
+                "MemberSet"
+            });
+
+            DisableBelow(disabled, level, WebsiteLevelEnum.形象, new[]
+            {
+                "NewsletterManagement",
+                "ProductManagement",
+                "MemberData"
+            });
+        }
+        private static void DisableBelow(
+            HashSet<string> disabled,
+            WebsiteLevelEnum currentLevel,
+            WebsiteLevelEnum requiredLevel,
+            IEnumerable<string> pageNames)
+        {
+            if (currentLevel >= requiredLevel)
+                return;
+
+            foreach (var pageName in pageNames)
+                disabled.Add(pageName);
+        }
+        // 特例，低階版本有此功能，高階的沒有
+        private static void AddHigherLevelDisabled(HashSet<string> disabled, WebsiteLevelEnum level)
+        {
+            // 高於「形象」等級就關閉的功能。
+            // 例如：只允許簡約、形象使用，會員、購物不開放。
+            DisableAbove(disabled, level, WebsiteLevelEnum.形象, Array.Empty<string>());
+            // 高於「會員」等級就關閉的功能。
+            // 例如：只允許簡約、形象、會員使用，購物不開放。
+            DisableAbove(disabled, level, WebsiteLevelEnum.會員, Array.Empty<string>());
+        }
+        private static void DisableAbove(
+            HashSet<string> disabled,
+            WebsiteLevelEnum currentLevel,
+            WebsiteLevelEnum maxAllowedLevel,
+            IEnumerable<string> pageNames)
+        {
+            if (currentLevel <= maxAllowedLevel)
+                return;
+
+            foreach (var pageName in pageNames)
+            {
+                if (!string.IsNullOrWhiteSpace(pageName)) disabled.Add(pageName);
+            }
+        }
+        public async Task SetWebsite(Site site)
+        {
             var data = await permissionsAppService.GetWebsitePermissions();
-            if (data != null) {
+            if (data != null)
+            {
                 List<JobMenu> jobs = new List<JobMenu>();
-                data.ForEach(x => {
+                data.ForEach(x =>
+                {
                     string name = x.Name;
                     JobMenu? job = jobs.Find(e => e.PageName == name);
                     if (job == null)
@@ -707,7 +629,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         jobs.Add(job);
                     }
                 });
-                SetJobs(site.Jobs, jobs);
+                SetJobs(site.Jobs, jobs, allowOverwriteEnable: true);
             }
         }
         public async Task setUserJob(Site site)
@@ -763,8 +685,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         {
                             job = new JobMenu
                             {
-                                PageName = name,
-                                Enable = true,
+                                PageName = name
                             };
                             jobs.Add(job);
                         }
@@ -801,7 +722,8 @@ namespace EtheriT.Coker.Web.MVC.Startup
                     bonusPermission.CanExe = Bonus.Enable;
                     bonusPermission.CanEdit = Bonus.CanUpdate;
                 }
-                else {
+                else
+                {
                     bonusPermission.CanExe = false;
                     bonusPermission.CanEdit = false;
                 }
@@ -833,10 +755,10 @@ namespace EtheriT.Coker.Web.MVC.Startup
             }
             ThePermission.Initable = true;
 
-            permissionStateStore.Set(websiteId,userId, ThePermission);
+            permissionStateStore.Set(websiteId, userId, ThePermission);
             permissionStateStore.Set(websiteId, userId, bonusPermission);
             var ctx = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException("PermissionStateStore requires an active HttpContext.");
-                ctx.Items[CokerContextKeys.HasManySystem] = await websiteApplication.hasManySystem();
+            ctx.Items[CokerContextKeys.HasManySystem] = await websiteApplication.hasManySystem();
         }
         public JobMenu? FindJob(List<JobMenu> jobs, string Controller, string Action)
         {
@@ -853,27 +775,66 @@ namespace EtheriT.Coker.Web.MVC.Startup
             });
             return m;
         }
-        private void SetJobs(List<JobMenu> jobs, List<JobMenu> seting)
+        private void SetJobs(List<JobMenu> jobs, List<JobMenu> settings, bool allowOverwriteEnable = false)
         {
-            if (seting.Count() == 0) return;
+            if (settings.Count == 0) return;
+
             jobs.ForEach(job =>
             {
-                JobMenu? menu = seting.Find(e => e.PageName == job.PageName);
+                JobMenu? menu = settings.Find(e => e.PageName == job.PageName);
+
                 if (menu != null)
                 {
-                    if (job.Enable || menu.Enable)
+                    if (job.Enable || allowOverwriteEnable)
                     {
                         job.Enable = menu.Enable;
-                        job.CanVisble = menu.CanVisble;
-                        job.CanUpdate = menu.CanUpdate;
-                        job.CanRemove = menu.CanRemove;
-                        job.CanCreate = menu.CanCreate;
+
+                        if (job.Enable)
+                        {
+                            job.CanVisble = menu.CanVisble;
+                            job.CanUpdate = menu.CanUpdate;
+                            job.CanRemove = menu.CanRemove;
+                            job.CanCreate = menu.CanCreate;
+                        }
+                        else
+                        {
+                            job.CanVisble = false;
+                            job.CanUpdate = false;
+                            job.CanRemove = false;
+                            job.CanCreate = false;
+                        }
                     }
-                    seting.Remove(menu);
+
+                    settings.Remove(menu);
                 }
-                if (job.jobItemModels != null && job.jobItemModels.Count() > 0)
-                    SetJobs(job.jobItemModels, seting);
+
+                if (job.jobItemModels != null && job.jobItemModels.Count > 0)
+                    SetJobs(job.jobItemModels, settings, allowOverwriteEnable);
             });
+        }
+        private static Dictionary<string, string> BuildPageTitleMap(List<JobMenu> jobs)
+        {
+            var map = new Dictionary<string, string>();
+
+            AddPageTitleMap(map, jobs);
+
+            return map;
+        }
+
+        private static void AddPageTitleMap(Dictionary<string, string> map, List<JobMenu> jobs)
+        {
+            foreach (var job in jobs)
+            {
+                if (!string.IsNullOrWhiteSpace(job.PageName) &&
+                    !string.IsNullOrWhiteSpace(job.Title) &&
+                    !map.ContainsKey(job.PageName))
+                {
+                    map.Add(job.PageName, job.Title);
+                }
+
+                if (job.jobItemModels != null && job.jobItemModels.Count > 0)
+                    AddPageTitleMap(map, job.jobItemModels);
+            }
         }
     }
 }

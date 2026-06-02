@@ -120,22 +120,45 @@ namespace EtheriT.Coker.Application.Permissions
         }
         public async Task<List<SavePermissionsItem>> GetLoginUserPermissions()
         {
-            long SiteId = await loginUserData.GetWebsiteId();
-            long UserId = await loginUserData.GetUserId();
-            var UserItems = await (from p in db.Permissions
-                                   join u in db.Users on p.FK_UserId equals u.Id
-                                   where p.FK_WebsiteId == SiteId && u.Id == UserId
-                                   select p).ToListAsync();
-            var RoleItems = await (from p in db.Permissions
-                                   join r in db.Roles on p.FK_RoleId equals r.Id
-                                   join m in db.MappingUserAndRoles on r.Id equals m.RoleId
-                                   join u in db.Users on m.UserId equals u.Id
-                                   where p.FK_WebsiteId == SiteId && u.Id == UserId
-                                   select p).ToListAsync();
-            List<Core.Models.Permissions> Items = new List<Core.Models.Permissions>();
-            if (UserItems.Any() && !RoleItems.Any()) Items.AddRange(UserItems);
-            if (!UserItems.Any() && RoleItems.Any()) Items.AddRange(RoleItems);
-            return mapper.Map<List<SavePermissionsItem>>(Items);
+            long siteId = await loginUserData.GetWebsiteId();
+            long userId = await loginUserData.GetUserId();
+
+            var permissions = await db.Permissions
+                .AsNoTracking()
+                .Where(p =>
+                    p.FK_WebsiteId == siteId
+                    && !string.IsNullOrWhiteSpace(p.Name)
+                    &&
+                    (
+                        p.FK_UserId == userId
+                        ||
+                        (
+                            p.FK_RoleId != null &&
+                            db.MappingUserAndRoles.Any(m =>
+                                m.UserId == userId &&
+                                m.RoleId == p.FK_RoleId
+                            )
+                        )
+                    )
+                )
+                .ToListAsync();
+
+            var mergedItems = permissions
+                .GroupBy(p => p.Name)
+                .Select(g =>
+                {
+                    var item = g
+                        .OrderByDescending(x => x.IsGranted)
+                        .ThenByDescending(x => x.FK_UserId == userId)
+                        .First();
+
+                    item.IsGranted = g.Any(x => x.IsGranted);
+
+                    return item;
+                })
+                .ToList();
+
+            return mapper.Map<List<SavePermissionsItem>>(mergedItems);
         }
         public async Task<List<SavePermissionsItem>> GetWebsitePermissions() {
             long SiteId = await loginUserData.GetWebsiteId();

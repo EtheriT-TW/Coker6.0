@@ -1,7 +1,9 @@
 ﻿using DevExpress.ClipboardSource.SpreadsheetML;
 using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
+using EtheriT.Coker.Application.Shared.Dto.enumType.WebMenu;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Application.Shared.Dto.Webs;
@@ -34,6 +36,25 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
             this.webMenuApplication = webMenuApplication;
             this.Configuration = Configuration;
             this.templatesApplicationService = templatesApplicationService;
+        }
+        private static string BuildMenuLink(MenuItemDto item, string orgName)
+        {
+            if (item.PageType == PageTypeEnum.結構頁面)
+            {
+                return "#";
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.LinkUrl))
+            {
+                return item.LinkUrl;
+            }
+
+            if (item.hasContan && !string.IsNullOrWhiteSpace(item.RouterName))
+            {
+                return $"/{orgName}/{item.RouterName}";
+            }
+
+            return "#";
         }
         public async Task<IViewComponentResult> InvokeAsync()
         {
@@ -247,7 +268,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                         thirditemModels.Add(new MenuItem.MenuItemModel
                                         {
                                             Title = data_t.Title,
-                                            Link = data_t.RouterName != "" ? $"/{website_data[0].OrgName}/{data_t.RouterName}" : data_t.LinkUrl != "" ? data_t.LinkUrl : "",
+                                            Link = BuildMenuLink(data_t, website_data[0].OrgName),
                                             Target = data_t.Target,
                                             Icon = data_t.icon != "empty" ? data_t.icon.StartsWith("IconId", true, null) ? "" : data_t.icon.Split(' ')[1] : "",
                                             IconClass = data_t.icon != "empty" ? data_t.icon.StartsWith("IconId", true, null) ? "" : data_t.icon.Split(' ')[0] : "",
@@ -257,7 +278,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     secitemModels.Add(new MenuItem.MenuItemModel
                                     {
                                         Title = data_s.Title,
-                                        Link = data_s.RouterName != "" ? $"/{website_data[0].OrgName}/{data_s.RouterName}" : data_s.LinkUrl != "" ? data_s.LinkUrl : "",
+                                        Link = BuildMenuLink(data_s, website_data[0].OrgName),
                                         Target = data_s.Target,
                                         Icon = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[1] : "",
                                         IconClass = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[0] : "",
@@ -272,7 +293,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     secitemModels.Add(new MenuItem.MenuItemModel
                                     {
                                         Title = data_s.Title,
-                                        Link = data_s.RouterName != "" ? $"/{website_data[0].OrgName}/{data_s.RouterName}" : data_s.LinkUrl != "" ? data_s.LinkUrl : "",
+                                        Link = BuildMenuLink(data_s, website_data[0].OrgName),
                                         Target = data_s.Target,
                                         Icon = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[1] : "",
                                         IconClass = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[0] : "",
@@ -287,9 +308,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                 Id = data_f.Id,
                                 Title = data_f.Title,
                                 SubTitle = data_f.SubTitle,
-                                Link = data_f.hasContan ?
-                                    data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "" :
-                                    "javascript:void(0)",
+                                Link = BuildMenuLink(data_f, website_data[0].OrgName),
                                 menuItemModels = secitemModels,
                                 RouteName = data_f.RouterName,
                                 Length = length,
@@ -305,7 +324,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                 {
                                     Title = data_f.Title,
                                     Target = data_f.Target,
-                                    Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "",
+                                    Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "#",
                                     imageUrl = (data_f.ImgUrl ?? ""),
                                     hoverImageUrl = (data_f.OverImgUrl ?? ""),
                                 });
@@ -319,7 +338,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     SubTitle = data_f.SubTitle,
                                     RouteName = data_f.RouterName,
                                     Target = data_f.Target,
-                                    Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "",
+                                    Link = BuildMenuLink(data_f, website_data[0].OrgName),
                                     imageUrl = (data_f.ImgUrl ?? ""),
                                     hoverImageUrl = (data_f.OverImgUrl ?? ""),
                                 });

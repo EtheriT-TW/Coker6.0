@@ -1,5 +1,69 @@
 ﻿function PageReady() {
     var menuEditor;
+    var pageTypes = [];
+
+    function toBool(value) {
+        return value === true || value === 1 || value === "true";
+    }
+
+    function getPageTypeOption(value) {
+        const pageType = parseInt(value ?? $("#pageType").val(), 10);
+
+        return pageTypes.find(function (item) {
+            return parseInt(item.value, 10) === pageType;
+        }) || null;
+    }
+
+    function getLinkUrlBlock() {
+        const $input = $("#linkUrl");
+
+        if ($("#LinkUrlBlock").length > 0) {
+            return $("#LinkUrlBlock");
+        }
+
+        return $input.closest(".form-group, .mb-3, .col, .row").first();
+    }
+
+    function updatePageTypeUi() {
+        const option = getPageTypeOption();
+        if (!option) return;
+
+        const showRouterName = toBool(option.showRouterName);
+        const showLinkUrl = toBool(option.showLinkUrl);
+
+        const $routerNameBlock = $("#RouterNameBlock");
+        const $routerNameInput = $routerNameBlock.find("input");
+
+        const $linkUrlInput = $("#linkUrl");
+        const $linkUrlBlock = getLinkUrlBlock();
+
+        const $description = $("#PageTypeDescription");
+
+        if ($description.length > 0) {
+            $description.text(option.description || "");
+            $description.toggleClass("d-none", !option.description);
+        }
+
+        $routerNameBlock.toggleClass("d-none", !showRouterName);
+        $linkUrlBlock.toggleClass("d-none", !showLinkUrl);
+
+        if (!showRouterName) {
+            $routerNameInput.val(option.routerName || "");
+        } else {
+            const currentRouterName = ($routerNameInput.val() || "").trim();
+            const isSystemRouterName = pageTypes.some(function (item) {
+                return item.routerName && item.routerName === currentRouterName;
+            });
+
+            if (isSystemRouterName) {
+                $routerNameInput.val("");
+            }
+        }
+
+        if (!showLinkUrl) {
+            $linkUrlInput.val("");
+        }
+    }
     const myOffcanvas = new bootstrap.Offcanvas('#offcanvasSite');
     var editor = grapesInit({
         save: function (html, css) {
@@ -54,27 +118,24 @@
         on: {
             ready: function () {
                 co.WebMesnus.GetPageTypeList().done(function (result) {
-                    if (result.success) {
-                        const $s = $("#pageType");
-                        const PageTypes = result.type
-                        $(PageTypes).each(function () {
-                            $s.append(`<option value="${this.value}">${this.key}</option>`);
-                        });
-                        $s.on("change", function () {
-                            const $self = $(this);
-                            const $RouterNameBlock = $("#RouterNameBlock");
-                            const $RouterNameInput = $RouterNameBlock.find("input");
-                            $RouterNameBlock.addClass("d-none")
-                            let o = { key: $self.find(":selected").text(), value: parseInt($self.val()) };
-                            o = PageTypes[co.Array.Search(PageTypes, o)];
-                            if ([1, 6].includes(o.value)) {
-                                if (co.Array.Search(PageTypes, { enName: $RouterNameInput.val() }) > 0) $RouterNameInput.val("");
-                                $RouterNameBlock.removeClass("d-none");
-                            } else {
-                                $RouterNameInput.val(o.enName);
-                            }
-                        })
+                    if (!result.success) {
+                        co.sweet.error(result.error);
+                        return;
                     }
+
+                    const $s = $("#pageType");
+                    pageTypes = result.type || [];
+                    $s.empty();
+
+                    $(pageTypes).each(function () {
+                        $s.append(`<option value="${this.value}">${this.key}</option>`);
+                    });
+
+                    $s.off("change.pageType").on("change.pageType", function () {
+                        updatePageTypeUi();
+                    });
+
+                    updatePageTypeUi();
                 });
                 $("#IconImageUpload").ImageUploadModalClear();
                 $("#ImageUpload").ImageUploadModalClear();
@@ -89,7 +150,8 @@
                 $("#ImageUpload").ImageUploadModalClear();
                 ImageUploadModalDataInsert($("#ImageUpload"), $("#ImageUpload").siblings("#imgId").val(), $("#ImageUpload").siblings("#imgUrl").val(), $("#ImageUpload").siblings("#imgName").val())
                 $("#OverImageUpload").ImageUploadModalClear();
-                ImageUploadModalDataInsert($("#OverImageUpload"), $("#OverImageUpload").siblings("#overImgId").val(), $("#OverImageUpload").siblings("#overImgUrl").val(), $("#OverImageUpload").siblings("#overImgName").val())
+                ImageUploadModalDataInsert($("#OverImageUpload"), $("#OverImageUpload").siblings("#overImgId").val(), $("#OverImageUpload").siblings("#overImgUrl").val(), $("#OverImageUpload").siblings("#overImgName").val());
+                updatePageTypeUi();
             },
             del: function (data) {
                 if ($("#myEditor>li").length == 0) {
@@ -102,11 +164,34 @@
                 });
             },
             validate: async function (data) {
+                const option = getPageTypeOption(data.pageType);
+
+                if (!option) {
+                    co.sweet.error("資料錯誤", "無法取得頁面類型設定，請重新整理後再試。");
+                    return false;
+                }
+
+                const showRouterName = toBool(option.showRouterName);
+                const showLinkUrl = toBool(option.showLinkUrl);
+
+                if (!showRouterName) {
+                    data.routerName = option.routerName || "";
+                }
+
+                if (!showLinkUrl) {
+                    data.linkUrl = "";
+                }
+
+                if (!showRouterName && !showLinkUrl) {
+                    return true;
+                }
+
                 if (!data.linkUrl && !data.routerName) {
                     let msg = "【路徑名稱】與【連結】<span class='text-danger font-weight-bold'>必須</span>填寫其中之一";
                     co.sweet.error("資料錯誤", msg);
                     return false;
                 }
+
                 if (data.linkUrl && data.routerName) {
                     let msg = "您同時輸入【路徑名稱】與【連結】。" +
                         "<br/>儲存後此選單將無法顯示頁面內容，只會直接<span class='text-danger font-weight-bold'>跳轉</span>到指定的連結。<br/>" +
@@ -120,7 +205,6 @@
                     );
 
                     if (!ok) {
-                        // 使用者按取消 → 不繼續儲存
                         return false;
                     }
                 }

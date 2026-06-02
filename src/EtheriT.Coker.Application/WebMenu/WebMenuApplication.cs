@@ -9,6 +9,7 @@ using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.WebMenu;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.JsonObject;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
@@ -276,7 +277,7 @@ namespace EtheriT.Coker.Application
                 if (!getDirectoryMenuData) dataQuery = dataQuery.Where(e => e.Visible);
                 if (ShowToMenu)
                 {
-                    dataQuery = dataQuery.Where(e => e.ShowToMenu).Where(e => e.PageType == PageTypeEnum.一般頁面);
+                    dataQuery = dataQuery.Where(e => e.ShowToMenu).Where(e => e.PageType == PageTypeEnum.一般頁面 || e.PageType == PageTypeEnum.結構頁面);
                 }
                 var menus = await dataQuery
                             .OrderBy(m => m.SerNO)
@@ -813,21 +814,107 @@ namespace EtheriT.Coker.Application
         public PageTypeDto GetPageTypeList()
         {
             PageTypeDto response = new PageTypeDto { Success = true };
-            List<string> enNames = new List<string> { "", "Home", "ShoppingCar", "Member", "Search", "" };
+
             try
             {
                 response.Type = Enum.GetValues(typeof(PageTypeEnum))
-                .Cast<PageTypeEnum>().Select((e, index) =>
-                {
-                    return new EnumDictionaryDto { Key = e.ToString(), Value = (int)e, EnName = enNames[index] };
-                }).ToList();
+                    .Cast<PageTypeEnum>()
+                    .Select(GetPageTypeOption)
+                    .ToList();
             }
             catch (Exception e)
             {
                 response.Success = false;
                 response.Error = e.Message;
             }
+
             return response;
+        }
+
+        private static PageTypeOptionDto GetPageTypeOption(PageTypeEnum type)
+        {
+            return type switch
+            {
+                PageTypeEnum.一般頁面 => new PageTypeOptionDto
+                {
+                    Key = type.ToString(),
+                    Value = (int)type,
+                    Description = "一般內容頁",
+                    RouterName = "",
+                    ShowRouterName = true,
+                    ShowLinkUrl = true
+                },
+
+                PageTypeEnum.首頁 => new PageTypeOptionDto
+                {
+                    Key = type.ToString(),
+                    Value = (int)type,
+                    Description = "網站首頁",
+                    RouterName = "Home",
+                    ShowRouterName = false,
+                    ShowLinkUrl = true
+                },
+
+                PageTypeEnum.購物車 => new PageTypeOptionDto
+                {
+                    Key = type.ToString(),
+                    Value = (int)type,
+                    Description = "購物車功能頁",
+                    RouterName = "ShoppingCar",
+                    ShowRouterName = false,
+                    ShowLinkUrl = true
+                },
+
+                PageTypeEnum.會員 => new PageTypeOptionDto
+                {
+                    Key = type.ToString(),
+                    Value = (int)type,
+                    Description = "會員功能頁",
+                    RouterName = "Member",
+                    ShowRouterName = false,
+                    ShowLinkUrl = true
+                },
+
+                PageTypeEnum.搜尋 => new PageTypeOptionDto
+                {
+                    Key = type.ToString(),
+                    Value = (int)type,
+                    Description = "搜尋功能頁",
+                    RouterName = "Search",
+                    ShowRouterName = false,
+                    ShowLinkUrl = true
+                },
+
+                PageTypeEnum.跳頁 => new PageTypeOptionDto
+                {
+                    Key = type.ToString(),
+                    Value = (int)type,
+                    Description = "設定連結或建立路徑轉址",
+                    RouterName = "",
+                    ShowRouterName = true,
+                    ShowLinkUrl = true
+                },
+
+                PageTypeEnum.結構頁面 => new PageTypeOptionDto
+                {
+                    Key = type.ToString(),
+                    Value = (int)type,
+                    Description = "分類或繼承用途",
+                    RouterName = "",
+                    ShowRouterName = false,
+                    ShowLinkUrl = false
+                },
+
+                _ => new PageTypeOptionDto
+                {
+                    Key = type.ToString(),
+                    Value = (int)type,
+                    Description = null,
+                    RouterName = "",
+                    ShowRouterName = false,
+                    ShowLinkUrl = true
+                }
+            };
         }
         public async Task insertMenus(List<SelectDto> menus)
         {

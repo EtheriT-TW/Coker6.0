@@ -121,6 +121,11 @@
             background-color: var(--gray-bg-dark);
         }
 
+a.is-no-link {
+    cursor: default;
+    text-decoration: none;
+}
+
 @media (min-width: 992px) {
     .navbar-expand-lg .offcanvas.w-100 {
         width: 100% !important;

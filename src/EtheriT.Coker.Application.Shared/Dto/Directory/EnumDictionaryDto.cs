@@ -10,6 +10,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
 	{
 		public string Key { get; set; }
 		public long Value { get; set; }
-		public string? EnName { get; set; }
-	}
+        public string? Description { get; set; } = "";
+    }
 }

@@ -1,4 +1,4 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.WebMenu;
 using EtheriT.Coker.Core.Entity;
 using System;
 using System.Collections.Generic;

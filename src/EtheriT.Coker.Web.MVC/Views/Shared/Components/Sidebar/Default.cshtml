@@ -22,6 +22,7 @@
 					if (item.CanVisble && item.IsView)
 					{
 						string myClass = item.PageName == ViewData["Title"].ToString() ? "active" : "";
+						ViewBag.PageTitle = item.Title;
 						<li class="@myClass">
 								<a title="@item.Title" asp-controller="@item.Controller" asp-action="@item.Action">
 								<span class="nav-icon material-symbols-outlined">@item.Icon</span>@item.Title

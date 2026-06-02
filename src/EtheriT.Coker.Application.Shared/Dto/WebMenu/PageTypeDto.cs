@@ -1,5 +1,6 @@
 ﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,6 @@ namespace EtheriT.Coker.Application.Dto
 {
     public class PageTypeDto: ResponseMessageDto
     {
-        public List<EnumDictionaryDto>? Type { get; set; }
+        public List<PageTypeOptionDto> Type { get; set; } = new();
     }
 }

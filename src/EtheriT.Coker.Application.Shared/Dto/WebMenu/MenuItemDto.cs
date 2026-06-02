@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType.WebMenu;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace EtheriT.Coker.Application.Dto
         public string? SubTitle { get; set; }
         public string? text { get { return Title; } }
         public string RouterName { get; set; }
-        public int PageType { get; set; }
+        public PageTypeEnum PageType { get; set; }
         public string? Description { get; set; }
         public string? icon { get; set; }
         public string? IconId { get; set; }

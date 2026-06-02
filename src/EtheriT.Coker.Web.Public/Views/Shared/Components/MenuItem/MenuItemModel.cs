@@ -16,5 +16,6 @@
         public string? ImageIcon { get; set; }
         public int Length { get; set; } = 0;
         public List<MenuItemModel>? menuItemModels { get; set; }
+        public MenuLinkState LinkState => new MenuLinkState(Link, menuItemModels);
     }
 }

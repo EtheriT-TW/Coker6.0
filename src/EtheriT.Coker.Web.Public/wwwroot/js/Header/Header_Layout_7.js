@@ -19,7 +19,7 @@ function HeaderInit() {
             }
         });
     });
-     observer.observe(Mega_Menu, { attributes: true }); 
+    observer.observe(Mega_Menu, { attributes: true }); 
 
     /* ThreeSwiper */
     var threeSwiper = new Swiper(".threeSwiper", {

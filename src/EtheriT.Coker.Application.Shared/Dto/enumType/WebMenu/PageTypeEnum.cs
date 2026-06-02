@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EtheriT.Coker.Application.Shared.Dto.enumType
+namespace EtheriT.Coker.Application.Shared.Dto.enumType.WebMenu
 {
     public enum PageTypeEnum
     {
@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         購物車 = 3,
         會員 = 4,
         搜尋 = 5,
-        跳頁 = 6
+        跳頁 = 6,
+        結構頁面 = 7
     }
 }

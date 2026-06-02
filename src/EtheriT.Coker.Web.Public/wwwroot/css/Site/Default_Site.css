@@ -51,6 +51,12 @@ label::after {
         -webkit-user-drag: none;
     }
 
+/*僅顯示用*/
+.is-disabled-link {
+    pointer-events: none;
+    cursor: default;
+}
+
 /* Universal */
 a {
     text-decoration: none;

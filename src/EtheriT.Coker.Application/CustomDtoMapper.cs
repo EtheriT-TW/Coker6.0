@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using DevExpress.CodeParser;
 using EtheriT.Coker.Application.Authorizaion.Dto;
+using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Company;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.AuditLog;
@@ -15,7 +16,9 @@ using EtheriT.Coker.Application.Shared.Dto.Contact;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
+using EtheriT.Coker.Application.Shared.Dto.enumType.WebMenu;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
@@ -46,8 +49,6 @@ using EtheriT.Coker.Web.Core.Models;
 using Newtonsoft.Json;
 using System.Net;
 using System.Text.RegularExpressions;
-using EtheriT.Coker.Application.Common;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 
 namespace EtheriT.Coker.Application
 {
@@ -89,6 +90,8 @@ namespace EtheriT.Coker.Application
         }
         public static bool HasContent(WebMenu s)
         {
+            if (s.PageType == PageTypeEnum.結構頁面)
+                return false;
             // 文字有值
             if (!string.IsNullOrWhiteSpace(s.PageText))
                 return true;

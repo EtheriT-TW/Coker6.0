@@ -102,6 +102,8 @@
         "wwwroot/js/Coker/coker.page.init.js",
         "wwwroot/js/Coker/coker.loader.js",
 
+        "wwwroot/js/Coker/coker.global.events.js",
+
         "wwwroot/js/Coker/coker.api.activity.js",
         "wwwroot/js/Coker/coker.api.user.js",
         "wwwroot/js/Coker/coker.api.thirdparty.js",

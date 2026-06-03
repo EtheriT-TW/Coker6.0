@@ -256,7 +256,8 @@ namespace EtheriT.Coker.Application.Contact
 
                         string html = "";
 
-                        html = $@"{dto.Reply.Replace("\n", "<br>")}
+                        html = $@"<br>
+                                              {dto.Reply.Replace("\n", "<br>")}
                                               <br>
                                               <br>
                                               <hr>

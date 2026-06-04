@@ -1,0 +1,67 @@
+/* Member modals / payment information */
+
+.barcode_svg {
+    max-height: 7.5rem;
+}
+
+.barcode_svg > g > rect {
+        height: 5rem;
+    }
+
+#ReOrderAlertModal .orderlist img {
+    height: 5rem;
+}
+
+#ReOrderAlertModal .orderlist .quantity::before {
+    content: '\00d7';
+}
+
+#ReOrderAlertModal .orderlist .spec {
+    color: var(--gray-text);
+}
+
+#ResetEmailModal > .modal-dialog > .modal-content {
+    max-width: 80vw;
+    width: 375px;
+}
+
+#ResetEmailModal > .modal-dialog > .modal-content > .modal-body > div > div > div {
+        z-index: 5;
+    }
+
+#ResetEmailModal > .modal-dialog > .modal-content > .modal-body > div > div > [class*=input_bg] {
+        background-color: var(--gray-bg-dark);
+    }
+
+#ResetEmailModal > .modal-dialog > .modal-content > .modal-body > div > div > input:nth-child(2n) {
+        padding-left: 3.5rem;
+    }
+
+#ResetEmailModal > .modal-dialog > .modal-content > .modal-body > button {
+        background-color: var(--black-text);
+        font-size: 0.8rem;
+    }
+
+#ResetEmailModal > .modal-dialog > .modal-content > .modal-footer > div {
+        font-size: 0.8rem;
+    }
+
+#ResetEmailForm > div > div {
+    z-index: 5;
+}
+
+#ResetEmailForm [class*=input_bg] {
+    background-color: var(--gray-bg-dark);
+}
+
+#ResetEmailForm > div > input:nth-child(2n) {
+    padding-left: 3.5rem;
+}
+
+#ResetEmailForm > .btn_refresh {
+    font-size: 0.8rem;
+}
+
+#ResetEmailForm > div > input.pass {
+    padding-right: 3.5rem;
+}

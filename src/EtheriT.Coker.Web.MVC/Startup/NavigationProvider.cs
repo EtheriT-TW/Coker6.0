@@ -214,19 +214,22 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         Title="電子報管理",
                         Icon="mail",
                         CollapseId="#NewsletterManagement",
+                        Enable = false,
                         jobItemModels= new List<JobMenu>{
                             new JobMenu{
                                 PageName="Recipient",
                                 Title="收件人設定",
                                 Controller="Newsletter",
                                 Action="Recipient",
-                                Icon=""
+                                Icon="",
+                                Enable=false
                             },new JobMenu{
                                 PageName="Newsletter",
                                 Title="電子報內容設定",
                                 Controller="Newsletter",
                                 Action="Index",
-                                Icon=""
+                                Icon="",
+                                Enable=false
                             }
                         }
                     },

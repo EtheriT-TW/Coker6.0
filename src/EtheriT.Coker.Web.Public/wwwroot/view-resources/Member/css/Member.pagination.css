@@ -1,0 +1,13 @@
+/* Member pagination */
+
+.btn_page button {
+    padding: .375rem .75rem;
+    margin-left: -1px;
+    color: black;
+    border: 1px solid #dee2e6;
+    background-color: white;
+}
+
+.btn_page button.focus {
+        background-color: #e9ecef;
+    }

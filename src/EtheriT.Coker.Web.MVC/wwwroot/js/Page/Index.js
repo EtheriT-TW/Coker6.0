@@ -526,10 +526,24 @@
             // 2) 後台權限設定：排序群後面、編輯前面
             {
                 key: 'setPower',
-                position: 'action', // ← 會插在 .btnEdit 前
+                position: 'action',
                 render: function (ctx) {
-                    return $('<a class="btn btn-warning btn-sm" title="後台權限設定">')
-                        .append('<i class="fa-solid fa-user-shield"></i>');
+                    const hasPermission = ctx.data.hasBackstagePermission === true
+                        || ctx.data.hasBackstagePermission === 1
+                        || ctx.data.hasBackstagePermission === "true";
+
+                    return $('<a class="btn btn-warning btn-sm permission-state-btn backstage-permission-btn">')
+                        .toggleClass("has-permission", hasPermission)
+                        .attr({
+                            title: hasPermission ? "後台權限設定：已設定" : "後台權限設定：未設定",
+                            "aria-label": hasPermission ? "後台權限設定，已設定" : "後台權限設定，未設定"
+                        })
+                        .append(`
+                            <span class="permission-icon-wrap" aria-hidden="true">
+                                <i class="fa-solid fa-user-shield permission-main-icon"></i>
+                                <i class="fa-solid fa-circle-check permission-check-icon"></i>
+                            </span>
+                        `);
                 },
                 click: function (ctx) {
                     const data = ctx.data;
@@ -543,8 +557,22 @@
                 position: 'action',
                 permission: hasRole,
                 render: function (ctx) {
-                    return $('<a class="btn btn-info btn-sm" title="前台瀏覽權限">')
-                        .append('<i class="fa-solid fa-user-group"></i>');
+                    const hasPermission = ctx.data.hasFrontPermission === true
+                        || ctx.data.hasFrontPermission === 1
+                        || ctx.data.hasFrontPermission === "true";
+
+                    return $('<a class="btn btn-info btn-sm permission-state-btn front-permission-btn">')
+                        .toggleClass("has-permission", hasPermission)
+                        .attr({
+                            title: hasPermission ? "前台瀏覽權限：已設定" : "前台瀏覽權限：未設定",
+                            "aria-label": hasPermission ? "前台瀏覽權限，已設定" : "前台瀏覽權限，未設定"
+                        })
+                        .append(`
+                            <span class="permission-icon-wrap" aria-hidden="true">
+                                <i class="fa-solid fa-user-group permission-main-icon"></i>
+                                <i class="fa-solid fa-circle-check permission-check-icon"></i>
+                            </span>
+                        `);
                 },
                 click: function (ctx) {
                     const data = ctx.data;
@@ -556,6 +584,13 @@
     co.PowerManagement.GetPermission().done(function (permission) {
         if (!permission.superManager) delete editorStting.on.setPower;
         menuEditor = new MenuEditor('myEditor', editorStting);
+        $("#PermissionDetailsModal, #RolesDetailsModal")
+            .off("hidden.bs.modal.permissionStateReload")
+            .on("hidden.bs.modal.permissionStateReload", function () {
+                if (menuEditor) {
+                    menuReload(menuEditor, myOffcanvas);
+                }
+            });
         $('#offcanvasSite').on('show.bs.offcanvas', function () {
             closeEdit();
         });

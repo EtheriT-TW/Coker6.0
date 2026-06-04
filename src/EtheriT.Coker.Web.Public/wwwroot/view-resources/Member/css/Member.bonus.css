@@ -1,0 +1,87 @@
+/* Member bonus tab */
+
+#UserBonus {
+    position: absolute;
+    margin-right: -0.5rem;
+    right: 0;
+}
+
+.bonus_frame {
+    background: #fff;
+    border: 1px solid #dee2e6 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    padding: 1rem !important;
+}
+
+.bonus_note {
+    font-size: 1rem;
+    color: #212529;
+}
+
+.bonus_summary .text-muted,
+.bonus_status_wrap .text-muted,
+.bonus_note_wrap .text-muted {
+    font-size: 0.85rem;
+}
+
+.bonus_note_wrap {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.bonus_summary .fw-semibold,
+.bonus_summary .fw-bold,
+.bonus_status_wrap .fs-5 {
+    font-size: 1.05rem;
+}
+
+.btn_bonus_collapse {
+    border-radius: 0.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.bonus-log-type-badge {
+    display: inline-block;
+    margin-right: 0.35rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+    .bonus-log-type-badge.is-refund {
+        color: #198754;
+        background-color: #e8f5ee;
+    }
+
+    .bonus-log-type-badge.is-redeem {
+        color: #dc3545;
+        background-color: #fdecee;
+    }
+
+.bonus-point-refund {
+    color: #198754 !important;
+    font-weight: 600;
+}
+
+.bonus-point-redeem {
+    color: #dc3545 !important;
+    font-weight: 600;
+}
+
+.bonus_note .bonus-note-main,
+.bonus_note .bonus-note-separator,
+.bonus_note .bonus-note-order-no {
+    display: inline;
+    vertical-align: baseline;
+}
+
+.bonus_note .bonus-note-order-no {
+    font-size: inherit;
+}

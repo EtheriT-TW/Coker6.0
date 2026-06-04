@@ -206,8 +206,30 @@ namespace EtheriT.Coker.Application
                             .ThenBy(m => m.Id)
                             .ToListAsync();
                 List<MenuItemDto> result = mapper.Map<List<MenuItemDto>>(menus);
+                var menuIds = result.Select(x => x.Id).ToList();
+
+                var backstagePermissionMenuIds = await db.PermissionDetail
+                    .Where(x => x.FK_WebsiteId == WebsiteID)
+                    .Where(x => x.FK_TargetId!=null && menuIds.Contains(x.FK_TargetId.Value))
+                    .Where(x => x.Type == (int)PermissionDetailsTypeEnum.選單)
+                    .Where(x => x.IsGranted)
+                    .Select(x => x.FK_TargetId)
+                    .Distinct()
+                    .ToListAsync();
+
+                var frontPermissionMenuIds = await db.PermissionDetail
+                    .Where(x => x.FK_WebsiteId == WebsiteID)
+                    .Where(x => x.FK_TargetId != null && menuIds.Contains(x.FK_TargetId.Value))
+                    .Where(x => x.Type == (int)PermissionDetailsTypeEnum.選單會員) // 對應你前端 RolesDetailsModal 傳入的 type: 4
+                    .Where(x => x.IsGranted)
+                    .Select(x => x.FK_TargetId)
+                    .Distinct()
+                    .ToListAsync();
+
                 foreach (var m in result)
                 {
+                    m.HasBackstagePermission = backstagePermissionMenuIds.Contains(m.Id);
+                    m.HasFrontPermission = frontPermissionMenuIds.Contains(m.Id);
                     m.Children = await GetChild(m.Id);
                     if (m.ImgId != null)
                     {

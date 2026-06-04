@@ -1,0 +1,67 @@
+/* Member layout / tab shell */
+
+#main {
+    --bs-nav-pills-border-radius: 0.375rem;
+    --bs-nav-pills-link-active-color: #0d6efd;
+    --bs-nav-pills-link-active-bg: #fff;
+}
+
+#main > .container {
+        margin: 0.5rem auto;
+        background-color: #eee;
+        border-radius: 1rem;
+        padding: 0.5rem;
+    }
+
+.red_text {
+    color: var(--red-number);
+}
+
+.smailWrap {
+    display: none;
+}
+
+#main > .container > .tab-content > .tab-pane {
+    padding: 3rem;
+}
+
+.isHide, .isWrap {
+    display: none;
+}
+
+#ToolList {
+    display: flex;
+    width: 10rem;
+    padding: 1rem 0;
+}
+
+#ToolList .nav-link {
+        width: 100%;
+        border: none;
+        border-bottom: #FFF solid 1px;
+        color: var(--bs-nav-link-disabled-color);
+    }
+
+#ToolList .nav-link.active {
+            color: var(--bs-nav-pills-link-active-color);
+            background-color: var(--bs-nav-pills-link-active-bg);
+        }
+
+#ToolList > li .material-symbols-outlined {
+        font-size: 20px !important;
+        vertical-align: text-bottom;
+    }
+
+#TabContent {
+    display: block;
+    width: calc(100% - 10rem);
+}
+
+#TabContent > .tab-pane {
+        width: 100%;
+        min-height: 40rem;
+        padding: 1rem;
+        overflow: auto;
+        background: var(--bs-nav-pills-link-active-bg);
+        border-radius: 0.8rem;
+    }

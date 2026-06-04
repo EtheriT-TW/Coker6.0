@@ -201,10 +201,10 @@
 
 
                     <template id="Template_Cart_Details">
-                        <li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative" data-scid="">
+                        <li class="purchase_item row border-bottom py-2 align-items-lg-center position-relative" data-scid="">
                             <div class="image col-lg-6 col-sm-2 col-4 row gx-0">
-                                <div class="d-flex align-content-center pro_link col-lg-2 col-12 me-3">
-                                    <input type="checkbox" name="buyItems" class="me-2" />
+                                <div class="cart-product-media d-flex align-content-center pro_link col-lg-2 col-12 me-3">
+                                    <input type="checkbox" name="buyItems" class="form-check-input me-2" />
                                     <label>
                                         <img data-key="imagePath" class="pro_image img-fluid" alt="商品" src="">
                                     </label>
@@ -237,7 +237,7 @@
                                     </div>
                                 </a>
 
-                                <div class="col-12 col-lg-4 my-3 my-lg-0 fw-bold align-self-center text-start text-lg-center">
+                                <div class="cart-item-price col-12 col-lg-4 fw-bold align-self-center text-start text-lg-center">
                                     <div data-key="oldPrice" data-type="price" class="pro_old_unit fw-light text-decoration-line-through d-none"></div>
                                     <div data-key="price" data-type="price" class="pro_unit cart-price-block">
                                         <div class="cart-price-main"></div>
@@ -272,7 +272,7 @@
                                     @if (ViewBag.isLogin)
                                     {
                                         <span class="d-inline-block favorites" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="加入/移除收藏">
-                                            <button class="btn_move_to_favorites bg-transparent border-0">
+                                            <button class="btn_move_to_favorites bg-transparent border-0" type="button">
                                                 <i class="fa-regular fa-heart text-danger"></i>
                                                 <span class="d-none">加入/移除收藏</span>
                                             </button>
@@ -280,8 +280,8 @@
                                     }
                                 }
                                 <span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移除商品">
-                                    <button class="btn_remove_pro bg-transparent border-0">
-                                        <i class="fa-solid fa-xmark"></i>
+                                    <button class="btn_remove_pro bg-transparent border-0" type="button">
+                                        <i class="fa-regular fa-trash-can"></i>
                                         <span class="d-none">移除商品</span>
                                     </button>
                                 </span>
@@ -289,47 +289,48 @@
                         </li>
                     </template>
                     <ul class="purchase_list ps-4 pe-5"></ul>
-
-                    <div class="priceline priceline-step1 pe-sm-5 col-12 col-md-7 offset-md-5">
-                        <div class="summary-main-row">
-                            <div class="summary-label">商品金額</div>
-                            <div class="summary-amount dual-price">
-                                <span class="bonus-part"><span class="bonus"></span>點</span>
-                                <span class="plus-sign">+</span>
-                                <span class="cash-part subtotal price"></span>
-                            </div>
-                        </div>
-
-                        <div class="summary-main-row bonusDiscionLine d-none">
-                            <div class="summary-label">紅利折抵</div>
-                            <div class="summary-amount bonusDiscion price-negative"></div>
-                        </div>
-
-                        <div class="summary-note-row bonusRuleLine d-none">
-                            <div class="summary-note-value bonusRedeemRuleText"></div>
-                            <div class="summary-note-label"></div>
-                        </div>
-
-                        <div class="summary-panel">
-                            <div class="summary-main-row bonusUseTotalLine d-none">
-                                <div class="summary-label">使用總紅利</div>
-                                <div class="summary-amount bonusUseTotalValue"></div>
+                    <div class="cart-summary-section">
+                        <div class="cart-summary-gap" aria-hidden="true"></div>
+                        <div class="priceline priceline-step1 pe-sm-5 col-12 col-md-7 offset-md-5">
+                            <div class="summary-main-row">
+                                <div class="summary-label">商品金額</div>
+                                <div class="summary-amount dual-price">
+                                    <span class="bonus-part"><span class="bonus"></span>點</span>
+                                    <span class="plus-sign">+</span>
+                                    <span class="cash-part subtotal price"></span>
+                                </div>
                             </div>
 
-                            <div class="summary-total-row">
-                                <div class="summary-label">小計</div>
-                                <div data-key="payableSubtotal" class="summary-amount payable_subtotal price fs-5 fw-bold red_text"></div>
+                            <div class="summary-main-row bonusDiscionLine d-none">
+                                <div class="summary-label">紅利折抵</div>
+                                <div class="summary-amount bonusDiscion price-negative"></div>
                             </div>
 
-                            <div class="summary-reward-row bonusRedeemHintLine d-none">
-                                <div class="summary-reward-box">
-                                    <i class="fa-solid fa-gift summary-reward-icon"></i>
-                                    <span class="bonusEarnHintText"></span>
+                            <div class="summary-note-row bonusRuleLine d-none">
+                                <div class="summary-note-value bonusRedeemRuleText"></div>
+                                <div class="summary-note-label"></div>
+                            </div>
+
+                            <div class="summary-panel">
+                                <div class="summary-main-row bonusUseTotalLine d-none">
+                                    <div class="summary-label">使用總紅利</div>
+                                    <div class="summary-amount bonusUseTotalValue"></div>
+                                </div>
+
+                                <div class="summary-total-row">
+                                    <div class="summary-label">小計</div>
+                                    <div data-key="payableSubtotal" class="summary-amount payable_subtotal price fs-5 fw-bold red_text"></div>
+                                </div>
+
+                                <div class="summary-reward-row bonusRedeemHintLine d-none">
+                                    <div class="summary-reward-box">
+                                        <i class="fa-solid fa-gift summary-reward-icon"></i>
+                                        <span class="bonusEarnHintText"></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                     <div class="js-bonus-nextstep-hint text-danger small mb-2 d-none text-center">
                         <i class="fa-solid fa-triangle-exclamation me-1"></i>
                         <span class="js-bonus-nextstep-text"></span>

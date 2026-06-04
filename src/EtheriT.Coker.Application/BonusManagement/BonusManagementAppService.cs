@@ -1052,20 +1052,22 @@ namespace EtheriT.Coker.Application.BonusManagement
 
                 var bonusIds = bonusList.Select(x => x.Id).ToList();
 
-                // 抓這批 Bonus 被使用的明細
-                // 只抓扣點紀錄，避免 Refund / Earn 等正向紀錄混入「使用紀錄」
                 var useLogRaw = await (
                     from detail in db.bonusLogDetails
                     join log in db.BonusLog on detail.FK_BonusLogsId equals log.Id
                     where bonusIds.Contains(detail.FK_BonusId)
-                          && log.Amount < 0
+                          && (
+                              log.Type == BonusLogTypeEnum.Redeem ||
+                              log.Type == BonusLogTypeEnum.Refund
+                          )
                     orderby log.ExecutionTime descending, log.Id descending
                     select new
                     {
                         detail.FK_BonusId,
                         log.ExecutionTime,
                         log.Note,
-                        detail.UsedAmount
+                        detail.UsedAmount,
+                        log.Type
                     }
                 ).ToListAsync();
 
@@ -1083,9 +1085,12 @@ namespace EtheriT.Coker.Application.BonusManagement
                         {
                             CreationTime = x.ExecutionTime,
                             Reason = x.Note ?? string.Empty,
-                            UseBonus = (int)x.UsedAmount
-                        })
-                        .ToList()
+                            UseBonus = x.Type == BonusLogTypeEnum.Refund
+                                ? (int)x.UsedAmount
+                                : -(int)x.UsedAmount,
+
+                            Type = x.Type
+                        }).ToList()
                 }).ToList();
 
                 result.Page_Total = (int)Math.Ceiling(totalCount / (double)pageSize);

@@ -1,0 +1,34 @@
+/* Member profile tab */
+
+#info-tab-pane .btn_area > div:nth-of-type(2) {
+    padding: 0rem 1rem;
+}
+
+#info-tab-pane .btn_area button {
+    width: 12.5rem;
+}
+
+#info-tab-pane .btn_area .btn_logout {
+    background-color: var(--red-main);
+}
+
+#info-tab-pane .btn_area .btn_logout:after {
+        padding-left: 1rem;
+        content: "\f08b";
+        font-weight: 900;
+        font-family: 'Font Awesome 6 Free';
+    }
+
+#info-tab-pane .btn_area .btn_modifi, #info-tab-pane .btn_area .btn_resetPassword {
+    margin-right: 1rem;
+}
+
+#info-tab-pane .btn_area .btn_resetPassword {
+    margin-right: 1rem;
+    border: none;
+    background-color: #B8B8B8;
+}
+
+#TWzipcode > .county label::before, #TWzipcode > .county label::after, #TWzipcode > .district label::before, #TWzipcode > .district label::after {
+    content: '';
+}

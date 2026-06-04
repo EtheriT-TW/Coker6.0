@@ -1,0 +1,160 @@
+/* Member favorite / browsing product list */
+
+.type_grid > .type_change_frame > a {
+    background-color: #eeeeee;
+}
+
+.type_grid > .type_change_frame > a img {
+        border-radius: .5rem;
+    }
+
+.type_list > .type_change_frame {
+    padding: 0 0.5rem;
+}
+
+.type_list > .type_change_frame > a {
+        background-color: #eeeeee;
+    }
+
+.type_list > .type_change_frame > a img {
+            border-radius: .5rem;
+        }
+
+#TabContent .content.type_grid figure {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#TabContent .content.type_grid figure > figcaption {
+        margin-top: 0;
+        padding-bottom: 10px;
+    }
+
+#history-tab-pane .type_list img {
+    width: 180px;
+}
+
+#favorite-tab-pane .type_list img {
+    width: 180px;
+}
+
+#history-tab-pane img {
+    height: 180px;
+}
+
+#history-tab-pane .description {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    height: 6.5rem;
+    -webkit-line-clamp: 2;
+}
+
+.btn_switchViewType button {
+    color: gray;
+}
+
+.btn_switchViewType button.focus {
+        color: black;
+        font-weight: 700;
+    }
+
+/* ===== Member Directory Minimal Overrides ===== */
+
+/* 收藏 / 瀏覽紀錄使用公版 catalog，這裡只做會員頁背景微調 */
+#favorite-tab-pane .type_change_frame.catalog_frame,
+#history-tab-pane .type_change_frame.catalog_frame {
+    padding-bottom: 1rem;
+}
+
+#favorite-tab-pane .catalog,
+#history-tab-pane .catalog {
+    background-color: transparent !important;
+}
+
+/* 會員頁卡片底色 */
+    #favorite-tab-pane .catalog .template > .col,
+    #history-tab-pane .catalog .template > .col {
+        background-color: #eeeeee !important;
+    }
+
+/* 不顯示購買區 */
+    #favorite-tab-pane .catalog .purchase,
+    #history-tab-pane .catalog .purchase {
+        display: none !important;
+    }
+
+/* 會員頁行銷標籤配色微調 */
+    #favorite-tab-pane .catalog .marketing-label-bonus,
+    #favorite-tab-pane .catalog .marketing-label-addon,
+    #favorite-tab-pane .catalog .marketing-label-gift,
+    #favorite-tab-pane .catalog .marketing-label-limited,
+    #favorite-tab-pane .catalog .marketing-label-custom,
+    #history-tab-pane .catalog .marketing-label-bonus,
+    #history-tab-pane .catalog .marketing-label-addon,
+    #history-tab-pane .catalog .marketing-label-gift,
+    #history-tab-pane .catalog .marketing-label-limited,
+    #history-tab-pane .catalog .marketing-label-custom {
+        background-color: #ef4b7a;
+        color: #fff;
+    }
+
+/* 收藏 / 瀏覽紀錄頁中，分享按鈕不要吃到 Member.css 舊的全域位移 */
+    #favorite-tab-pane .catalog .shareBlock,
+    #history-tab-pane .catalog .shareBlock {
+        margin-right: 0;
+    }
+
+/* grid / list 的寬度交給 row-cols 與公版 type 控制，不再用 member-product-card */
+    #favorite-tab-pane .catalog .template,
+    #history-tab-pane .catalog .template {
+        flex: 0 0 auto;
+    }
+
+#favorite-tab-pane .catalog .tags .badge,
+    #history-tab-pane .catalog .tags .badge {
+        color: #6c757d !important;
+        background-color: #f8f9fa !important;
+        border: 1px solid #d9d9d9 !important;
+        font-weight: 400;
+    }
+
+#favorite-tab-pane .catalog .marketing-label,
+    #history-tab-pane .catalog .marketing-label {
+        background-color: #ef4b7a;
+        color: #fff;
+        border: 0;
+    }
+
+/* Button Favorites*/
+
+/* ===== Member Product Card Favorite Button ===== */
+#TabContent .content.type_grid > .member-product-card .btn_fav {
+    position: absolute;
+    top: 2.4rem;
+    right: 0.75rem;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+    z-index: 3;
+    line-height: 1;
+}
+
+#TabContent .content.type_grid > .member-product-card .btn_fav::after {
+        display: block;
+        color: #b30b00;
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 400;
+        content: "\f004";
+        font-size: 1.25rem;
+        line-height: 30px;
+        text-align: center;
+    }
+
+#TabContent .content.type_grid > .member-product-card .btn_fav.check::after {
+        font-weight: 900;
+    }

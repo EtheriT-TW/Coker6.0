@@ -27,7 +27,13 @@
             /** 取得綠界地圖 */
             LogisticsGetMap: function (data) {
                 return Coker.api.post("/api/ThirdParty/ECPayLogisticsGetMap", data);
-            }
+            },
+            /** 取得綠界嵌入式付款資訊 */
+            GetECPayPaymentInfo: function (ohid) {
+                return Coker.api.get("/api/ThirdParty/GetECPayPaymentInfo", {
+                    ohid: ohid
+                });
+            },
         }
     });
 

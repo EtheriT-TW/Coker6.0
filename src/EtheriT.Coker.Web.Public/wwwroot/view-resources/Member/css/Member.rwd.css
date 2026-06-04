@@ -1,0 +1,1006 @@
+/* Member responsive overrides */
+
+@media (max-width:1200px) {
+    #TabContent .content.type_grid .type_change_frame {
+        width: 33.33% !important;
+    }
+
+    #profile-tab-pane .content .payment {
+        flex-wrap: wrap;
+    }
+
+        #profile-tab-pane .content .payment span {
+            white-space: normal;
+        }
+}
+
+@media (max-width:992px) {
+    #TabContent {
+        width: 100%;
+    }
+
+    #main > .container {
+        flex-direction: column !important;
+    }
+
+        #main > .container > #ToolList {
+            width: 100%;
+            min-height: unset;
+            flex-direction: row !important;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            padding: 0.5rem 0;
+        }
+
+            #main > .container > #ToolList > li {
+                flex: 0 0 auto;
+                width: auto;
+                min-width: 6.25rem;
+                text-align: center;
+            }
+
+            #main > .container > #ToolList .nav-link {
+                min-height: 4.5rem;
+                padding-right: 0.75rem;
+                padding-left: 0.75rem;
+            }
+
+    #TabContent .content.type_grid .type_change_frame {
+        width: 50% !important;
+    }
+
+    #history-tab-pane .description {
+        display: none;
+    }
+
+    #favorite-tab-pane .description {
+        display: none;
+    }
+
+    #profile-tab-pane .description {
+        display: none;
+    }
+}
+
+@media (max-width:1024px) {
+    #info-tab-pane .btn_area button {
+        width: calc(100% / 3);
+    }
+}
+
+@media (max-width:768px) {
+    #profile-tab-pane .content .payment {
+        justify-content: end;
+    }
+
+    #profile-tab-pane > .content .collapse {
+        width: 100%;
+    }
+
+    /* Orders */
+    #profile-tab-pane > .content > .order_frame {
+        display: flex;
+        flex-wrap: wrap;
+        line-height: 1.7rem;
+        border: 0 !important;
+        border-bottom: 1px solid #dee2e6 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background-color: transparent;
+        padding: 1rem 0;
+        margin-bottom: 0;
+    }
+
+        #profile-tab-pane > .content > .order_frame > div:not(.collapse) {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            margin-top: 0 !important;
+        }
+
+        #profile-tab-pane > .content > .order_frame > .collapse.show {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            margin-top: 0 !important;
+        }
+
+        #profile-tab-pane > .content > .order_frame > div:first-child > div {
+            width: auto;
+            text-align-last: left;
+            font-weight: 600;
+            color: #666;
+        }
+
+        #profile-tab-pane > .content > .order_frame > div:nth-child(2) > div {
+            width: auto;
+            text-align-last: right !important;
+            font-weight: 700;
+            color: #212529;
+        }
+
+        /* Orders - summary emphasis */
+        #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .amount {
+            color: var(--red-number) !important;
+            font-weight: 800;
+        }
+
+        #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .payment {
+            font-weight: 800;
+        }
+
+        /* Orders - state badge */
+        #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 4.5rem;
+            min-height: 1.75rem;
+            padding: 0.2rem 0.75rem;
+            border-radius: 0.25rem;
+            line-height: 1.2;
+            font-weight: 700;
+        }
+
+            /* 沒有狀態色的狀態，例如已取消，給中性 badge */
+            #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state span:not(.bg-warning):not(.bg-danger):not(.bg-success) {
+                background-color: #e9ecef;
+                color: #495057;
+            }
+
+            /* 保留 JS 原本套上的 Bootstrap 狀態色 */
+            #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state span.bg-warning {
+                background-color: var(--bs-warning) !important;
+                color: #000 !important;
+            }
+
+            #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state span.bg-danger {
+                background-color: var(--bs-danger) !important;
+                color: #fff !important;
+            }
+
+            #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state span.bg-success {
+                background-color: var(--bs-success) !important;
+                color: #fff !important;
+            }
+
+    .collapse > .card-body > .list-group > li:not(first-child) > a > div > div:nth-child(2) {
+        width: auto;
+    }
+
+    .quantity {
+        width: auto;
+    }
+
+    .isHide, .isWrap {
+        display: unset;
+    }
+
+        .isHide:not(.hideTotal) {
+            width: 45%;
+            text-align-last: end;
+        }
+
+    .hideTotal {
+        flex: 1 1 auto;
+        text-align-last: end;
+        width: auto;
+    }
+
+    /* Orders - extra / recipient information */
+    #profile-tab-pane .order_extra_info,
+    #profile-tab-pane .recipient_info {
+        width: 100%;
+        padding-top: 0.75rem;
+        margin-top: 0.75rem;
+        border-top: 1px solid #e5e5e5;
+    }
+
+        /* 手機版由原本三欄改成一欄一列 */
+        #profile-tab-pane .order_extra_info .row,
+        #profile-tab-pane .recipient_info .row {
+            display: block;
+            margin-right: 0;
+            margin-left: 0;
+        }
+
+            #profile-tab-pane .order_extra_info .row > [class*="col-"],
+            #profile-tab-pane .recipient_info .row > [class*="col-"] {
+                width: 100% !important;
+                max-width: none !important;
+                flex: 0 0 100% !important;
+                padding-right: 0;
+                padding-left: 0;
+            }
+
+    /* 預設短欄位：左右排列 */
+    #profile-tab-pane .order_extra_item,
+    #profile-tab-pane .recipient_info_item {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        width: 100%;
+        padding: 0.45rem 0;
+    }
+
+    #profile-tab-pane .order_extra_label,
+    #profile-tab-pane .recipient_info_label {
+        flex: 0 0 auto;
+        min-width: 5.5rem;
+        color: #666;
+        font-size: 0.95rem;
+        font-weight: 600;
+        line-height: 1.45;
+        white-space: nowrap;
+        text-align: left;
+        text-align-last: left;
+    }
+
+    #profile-tab-pane .order_extra_value,
+    #profile-tab-pane .recipient_info_value {
+        flex: 1 1 auto;
+        min-width: 0;
+        color: #212529;
+        font-size: 0.95rem;
+        font-weight: 700;
+        line-height: 1.45;
+        text-align: right;
+        text-align-last: right;
+        word-break: break-word;
+    }
+
+    /* 系統備註：維持左右排列 */
+    #profile-tab-pane .order_extra_info .row > [class*="col-"]:nth-child(3) .order_extra_item {
+        flex-direction: row;
+    }
+
+    #profile-tab-pane .order_extra_info .row > [class*="col-"]:nth-child(3) .order_extra_value {
+        text-align: right;
+        text-align-last: right;
+    }
+
+    /* 收件地址：長文字，固定上下排列 */
+    #profile-tab-pane .recipient_address_item {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+        #profile-tab-pane .recipient_address_item .recipient_info_label {
+            width: 100%;
+            min-width: 0;
+        }
+
+        #profile-tab-pane .recipient_address_item .recipient_info_value {
+            width: 100%;
+            text-align: left;
+            text-align-last: left;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+    /* Orders - amount summary */
+    #profile-tab-pane .collapse > .card-body > .row.d-lg-flex {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        margin-right: 0;
+        margin-left: 0;
+        padding: 0.25rem 0;
+    }
+
+        #profile-tab-pane .collapse > .card-body > .row.d-lg-flex > div:first-child {
+            flex: 0 0 auto;
+            width: auto !important;
+            min-width: 5rem;
+            padding: 0 !important;
+            color: #555;
+            font-weight: 600;
+            text-align: left !important;
+            text-align-last: left !important;
+        }
+
+        #profile-tab-pane .collapse > .card-body > .row.d-lg-flex > div:last-child {
+            flex: 1 1 auto;
+            width: auto !important;
+            min-width: 0;
+            padding: 0 !important;
+            text-align: right !important;
+            text-align-last: right !important;
+        }
+
+    #profile-tab-pane .header_subtotal,
+    #profile-tab-pane .header_freight,
+    #profile-tab-pane .header_total,
+    #profile-tab-pane .header_productBonus,
+    #profile-tab-pane .header_redeemBonus,
+    #profile-tab-pane .header_totalBonus {
+        width: auto !important;
+        padding: 0 !important;
+        white-space: nowrap;
+        text-align: right !important;
+        text-align-last: right !important;
+    }
+
+    #profile-tab-pane .header_total {
+        color: var(--red-number);
+        font-weight: 800;
+    }
+
+    /* Orders - detail product list */
+    #profile-tab-pane .collapse > .card-body > .list-group {
+        margin-top: 0.75rem;
+    }
+
+        #profile-tab-pane .collapse > .card-body > .list-group > li:first-child {
+            display: none;
+        }
+
+        #profile-tab-pane .collapse > .card-body > .list-group > li {
+            padding: 0.85rem 0;
+            border-right: 0;
+            border-left: 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+            #profile-tab-pane .collapse > .card-body > .list-group > li:last-child {
+                border-bottom: 0;
+            }
+
+            #profile-tab-pane .collapse > .card-body > .list-group > li > a {
+                display: block;
+                color: inherit;
+                text-decoration: none;
+            }
+
+                /*
+                    實際結構：
+                    1. 圖片 div
+                    2. 商品名稱 + 規格 div
+                    3. 單價 label span
+                    4. 單價 value div
+                    5. isWrap p
+                    6. 數量 label span
+                    7. 數量 value div
+                    8. 小計 label span
+                    9. 小計 value div
+
+                    欄位配置：
+                    第 1 欄：商品圖
+                    第 2 欄：label
+                    第 3 欄：value
+                    第 4 欄：保留彈性空間，不讓 value 被推到最右
+                */
+                #profile-tab-pane .collapse > .card-body > .list-group > li > a > div {
+                    display: grid !important;
+                    grid-template-columns: 5.5rem 3.5rem 5rem minmax(0, 1fr);
+                    column-gap: 0.5rem;
+                    row-gap: 0.15rem;
+                    align-items: start;
+                }
+
+                    /* 商品圖：固定正方形，尺寸放大 */
+                    #profile-tab-pane .collapse > .card-body > .list-group > li > a > div > div:first-child {
+                        grid-column: 1;
+                        grid-row: 1 / span 5;
+                        width: 5.5rem !important;
+                        max-width: 5.5rem !important;
+                        padding-bottom: 0 !important;
+                    }
+
+        #profile-tab-pane .collapse > .card-body > .list-group img {
+            width: 5.5rem !important;
+            height: 5.5rem !important;
+            object-fit: cover;
+            border-radius: 0.25rem;
+        }
+
+        /* 商品名稱 + 規格外層，這個才是實際 grid item */
+        #profile-tab-pane .collapse > .card-body > .list-group > li > a > div > div:nth-child(2) {
+            grid-column: 2 / 5;
+            width: auto !important;
+            max-width: none !important;
+            min-width: 0;
+            padding: 0 !important;
+            display: block !important;
+            text-align: left !important;
+            text-align-last: left !important;
+        }
+
+        /* 商品名稱 */
+        #profile-tab-pane .collapse > .card-body > .list-group .title {
+            width: auto !important;
+            max-width: none !important;
+            min-width: 0;
+            padding: 0 !important;
+            font-weight: 700;
+            line-height: 1.35;
+            white-space: normal;
+            word-break: keep-all;
+            overflow-wrap: anywhere;
+            text-align: left !important;
+            text-align-last: left !important;
+        }
+
+        /* 規格 */
+        #profile-tab-pane .collapse > .card-body > .list-group .spec {
+            width: auto !important;
+            max-width: none !important;
+            min-width: 0;
+            margin: 0 !important;
+            padding: 0 !important;
+            color: var(--gray-text);
+            line-height: 1.4;
+            text-align: left !important;
+            text-align-last: left !important;
+        }
+
+        /* 不需要舊版換行輔助 */
+        #profile-tab-pane .collapse > .card-body > .list-group .isWrap {
+            display: none !important;
+        }
+
+        /* 單價 / 數量 / 小計：文字在左 */
+        #profile-tab-pane .collapse > .card-body > .list-group .isHide,
+        #profile-tab-pane .collapse > .card-body > .list-group .hideTotal {
+            grid-column: 2;
+            display: block !important;
+            width: auto !important;
+            max-width: none !important;
+            min-width: 0;
+            margin: 0 !important;
+            padding: 0 !important;
+            color: #555;
+            font-weight: 600;
+            line-height: 1.45;
+            text-align: left !important;
+            text-align-last: left !important;
+        }
+
+        /* 單價 / 數量 / 小計：數值在 label 右側，不推到整列最右 */
+        #profile-tab-pane .collapse > .card-body > .list-group .price,
+        #profile-tab-pane .collapse > .card-body > .list-group .quantity,
+        #profile-tab-pane .collapse > .card-body > .list-group .subtotal {
+            grid-column: 3;
+            display: block !important;
+            width: auto !important;
+            max-width: none !important;
+            min-width: 0;
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 1.45;
+            font-weight: 600;
+            text-align: left !important;
+            text-align-last: left !important;
+        }
+
+            /* 數量維持 ×1 顯示 */
+            #profile-tab-pane .collapse > .card-body > .list-group .quantity::before {
+                content: '\00d7';
+            }
+
+    #favorite-tab-pane {
+        padding-right: 12px !important;
+        padding-left: 12px !important;
+    }
+
+    #history-tab-pane {
+        padding-right: 12px !important;
+        padding-left: 12px !important;
+    }
+
+    /* Bonus */
+    #bonus-tab-pane {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+    }
+
+        #bonus-tab-pane .content {
+            padding-right: 0;
+            padding-left: 0;
+        }
+
+        /* 每筆紅利：手機版減少外框與內距，釋放橫向空間 */
+        #bonus-tab-pane .bonus_frame {
+            padding: 0.75rem 0.5rem !important;
+            margin-bottom: 0.75rem !important;
+            border-right: 0 !important;
+            border-left: 0 !important;
+            border-radius: 0 !important;
+        }
+
+        #bonus-tab-pane .bonus_note_wrap {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            align-items: start;
+            column-gap: 0.5rem;
+            width: 100%;
+            padding-bottom: 0.5rem;
+        }
+
+        #bonus-tab-pane .bonus_frame > .d-flex {
+            margin-bottom: 0.65rem !important;
+            gap: 0 !important;
+        }
+
+        #bonus-tab-pane .bonus_note_wrap .text-muted.small {
+            display: block;
+            margin: -2px;
+            font-size: 0.85rem;
+            line-height: 1.35;
+            white-space: nowrap;
+        }
+
+        #bonus-tab-pane .bonus_note {
+            display: block;
+            min-width: 0;
+            font-size: 0.95rem;
+            line-height: 1.35;
+            font-weight: 700;
+            word-break: break-word;
+            text-align: left;
+        }
+
+        /* 紅利摘要：手機版仍維持 4 欄同一排 */
+        #bonus-tab-pane .bonus_summary {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 0 !important;
+            margin-right: 0;
+            margin-left: 0;
+            margin-bottom: 0.75rem !important;
+        }
+
+            #bonus-tab-pane .bonus_summary > div {
+                flex: 0 0 25%;
+                max-width: 25%;
+                min-width: 0;
+                padding-right: 0.1rem;
+                padding-left: 0.1rem;
+            }
+
+                #bonus-tab-pane .bonus_summary > div:not(:last-child) {
+                    border-right: 1px solid #ececec;
+                }
+
+            #bonus-tab-pane .bonus_summary .text-muted.small {
+                font-size: 0.75rem;
+                line-height: 1.25;
+                margin-bottom: 0.15rem;
+                white-space: nowrap;
+            }
+
+        #bonus-tab-pane .bonus_start,
+        #bonus-tab-pane .bonus_end,
+        #bonus-tab-pane .bonus_add,
+        #bonus-tab-pane .bonus_remain {
+            font-size: 0.9rem;
+            line-height: 1.3;
+            white-space: nowrap;
+            letter-spacing: -0.02em;
+        }
+
+        /* 使用紀錄展開區 */
+        #bonus-tab-pane .bonus_logs {
+            margin-top: 0.5rem;
+        }
+
+            #bonus-tab-pane .bonus_logs .card {
+                margin-top: 0 !important;
+                border-radius: 0.35rem !important;
+            }
+
+            #bonus-tab-pane .bonus_logs .card-body {
+                padding: 0.65rem !important;
+            }
+
+            #bonus-tab-pane .bonus_logs .row.fw-bold {
+                padding-bottom: 0.45rem !important;
+                margin-bottom: 0.45rem !important;
+                font-size: 0.9rem;
+            }
+
+        #bonus-tab-pane .bonus_log_item {
+            padding-top: 0.45rem !important;
+            padding-bottom: 0.45rem !important;
+            font-size: 0.9rem;
+        }
+
+        #bonus-tab-pane .btn_bonus_collapse {
+            margin-top: 0.65rem !important;
+            padding-top: 0.65rem;
+            padding-bottom: 0.65rem;
+            border-radius: 0.35rem !important;
+        }
+
+        #bonus-tab-pane .bonus_log_empty {
+            padding-top: 0.45rem;
+            padding-bottom: 0.25rem;
+        }
+
+    #ToolList > li > button .material-symbols-outlined {
+        font-size: 24px !important;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    #main > .container > #TabContent {
+        width: unset;
+    }
+
+        #main > .container > #TabContent > #info-tab-pane {
+            padding: 1rem;
+        }
+
+            #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child {
+                width: 30%;
+            }
+
+            #main > .container > #TabContent > #info-tab-pane > div {
+                justify-content: center;
+                flex-direction: row !important;
+                box-sizing: border-box;
+            }
+    /* Orders - system memo: short field, keep horizontal */
+    #profile-tab-pane #systemMemoLine {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        width: 100%;
+        margin-right: 0;
+        margin-left: 0;
+        padding: 0.45rem 0;
+        border-top: 1px solid #e5e5e5;
+    }
+
+        #profile-tab-pane #systemMemoLine > div:first-child {
+            flex: 0 0 auto;
+            width: auto !important;
+            min-width: 5.5rem;
+            color: #666;
+            font-weight: 600;
+            text-align: left !important;
+            text-align-last: left !important;
+            white-space: nowrap;
+        }
+
+        #profile-tab-pane #systemMemoLine > div:last-child {
+            flex: 1 1 auto;
+            width: auto !important;
+            min-width: 0;
+            font-weight: 700;
+            text-align: right !important;
+            text-align-last: right !important;
+            word-break: break-word;
+        }
+
+    /* Orders - remark: long text, use vertical layout */
+    #profile-tab-pane #remarkLine {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        width: 100%;
+        margin-right: 0;
+        margin-left: 0;
+        padding: 0.75rem 0;
+        border-top: 1px solid #e5e5e5;
+    }
+
+        #profile-tab-pane #remarkLine > div:first-child {
+            width: auto !important;
+            color: #666;
+            font-weight: 600;
+            text-align: left !important;
+            text-align-last: left !important;
+            white-space: nowrap;
+        }
+
+        #profile-tab-pane #remarkLine > div:last-child {
+            width: auto !important;
+            min-width: 0;
+            font-weight: 700;
+            text-align: left !important;
+            text-align-last: left !important;
+            word-break: break-word;
+        }
+}
+
+@media (max-width:576px) {
+    #main > .container {
+        padding-right: 0rem;
+        padding-left: 0rem;
+        padding-bottom: 0rem;
+        border-radius: unset;
+    }
+
+    #TabContent > .tab-pane {
+        border-radius: unset;
+    }
+
+    #TabContent .content .type_change_frame div[data-key='itemNo'] {
+        font-weight: normal;
+    }
+
+    #TabContent .content .type_change_frame div[data-key='title'] {
+        font-weight: normal;
+    }
+
+    #info-tab-pane .btn_area button {
+        width: 100%;
+    }
+
+    #info-tab-pane .btn_area > div:nth-of-type(2) {
+        padding: 0rem;
+    }
+
+    #info-tab-pane .btn_area .btn_modifi, #info-tab-pane .btn_area .btn_resetPassword {
+        margin-right: 0rem;
+        margin-bottom: 1rem;
+    }
+
+    #favorite-tab-pane .type_grid .row:nth-of-type(odd) {
+        padding-right: calc(var(--bs-gutter-x)* .5 / 2);
+    }
+
+    #favorite-tab-pane .type_grid .row:nth-of-type(even) {
+        padding-left: calc(var(--bs-gutter-x)* .5 / 2);
+    }
+
+    #main > .container > .tab-content > #history-tab-pane {
+        padding-top: 2rem;
+    }
+
+    #history-tab-pane .type_grid .row:nth-of-type(odd) {
+        padding-right: calc(var(--bs-gutter-x)* .5 / 2);
+    }
+
+    #history-tab-pane .type_grid .row:nth-of-type(even) {
+        padding-left: calc(var(--bs-gutter-x)* .5 / 2);
+    }
+
+    #history-tab-pane .type_list img {
+        width: 100%;
+    }
+
+    #favorite-tab-pane .type_list img {
+        width: 100%;
+    }
+
+    #history-tab-pane .type_list {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+        justify-content: center;
+    }
+
+    #favorite-tab-pane .type_list {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+        justify-content: center;
+    }
+
+    #history-tab-pane .type_grid {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+    }
+
+    #favorite-tab-pane .type_grid {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+    }
+
+    #ToolList > li > button {
+        padding: 8px;
+    }
+
+    #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:nth-child(2) {
+        margin-left: 0;
+        width: 40%;
+    }
+
+    #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:nth-child(3) {
+        padding-left: 0;
+        width: 25%;
+    }
+
+    #main > .container > #TabContent > #info-tab-pane > div > div {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    #history-tab-pane figure > figcaption > div > div:first-child {
+        flex-direction: column;
+    }
+
+    #favorite-tab-pane figure > figcaption > div > div:first-child {
+        flex-direction: column;
+    }
+
+    #TabContent .content.type_grid > .type_change_frame figure {
+        padding-top: 0rem;
+    }
+
+    #TabContent .content.type_list > .type_change_frame figure {
+        padding-top: 0rem;
+    }
+
+    #TabContent .content.type_list figure figcaption {
+        padding-top: 0rem;
+    }
+
+    #TabContent .content.type_grid > .type_change_frame > a {
+        padding: 0px;
+    }
+
+    #TabContent .content.type_grid > .type_change_frame figure .image_frame > div > img {
+        margin-top: 0rem;
+    }
+
+    #TabContent .content.type_grid > .type_change_frame figcaption {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        margin-top: 0rem;
+    }
+
+    .type_list > .type_change_frame {
+        padding-left: 0rem;
+        padding-right: 0rem;
+    }
+
+        .type_list > .type_change_frame > a {
+            background-color: transparent;
+            padding-left: 0rem;
+            padding-right: 0rem;
+        }
+
+        .type_list > .type_change_frame figure {
+            border-bottom: 1px #C6C6C6 solid;
+            padding-bottom: 1rem;
+            margin-bottom: 0rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .type_list > .type_change_frame .image_frame {
+            width: 50%;
+        }
+
+    #TabContent .content.type_list .type_change_frame .price_group {
+        margin-top: 0.5rem;
+        text-align: start;
+    }
+
+    #TabContent .content.type_list .type_change_frame div[data-key='description'] {
+        display: none !important;
+    }
+
+    #TabContent .content.type_list .type_change_frame .shareBlock {
+        top: auto;
+        bottom: 0.25rem;
+        right: 1rem;
+        margin-right: 0rem;
+    }
+
+    #TabContent .content.type_list .type_change_frame .favbtn {
+        top: auto;
+        bottom: calc(1px + 0.25rem);
+        right: 2.5rem;
+    }
+
+    #profile-tab-pane {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+    }
+        #profile-tab-pane > .content > .order_frame {
+            padding-right: 0.75rem;
+            padding-left: 0.75rem;
+        }
+
+            #profile-tab-pane > .content > .order_frame:last-child {
+                border-bottom: 0 !important;
+            }
+
+    #bonus-tab-pane .bonus_note {
+        line-height: 0.95;
+    }
+
+    .bonus_note .bonus-note-separator {
+        display: none;
+    }
+
+    .bonus_note .bonus-note-order-no {
+        display: block;
+        margin-top: 0.15rem;
+        font-size: 0.875em;
+        color: #6c757d;
+        font-weight: 400;
+    }
+}
+
+@media (max-width:440px) {
+    #favorite-tab-pane .isHide:not(.hideTotal),
+    #history-tab-pane .isHide:not(.hideTotal) {
+        width: 50%;
+    }
+
+    #favorite-tab-pane .hideTotal,
+    #history-tab-pane .hideTotal {
+        width: 50%;
+        text-align-last: end;
+    }
+
+    .smailWrap {
+        display: unset;
+    }
+
+    #profile-tab-pane .collapse > .card-body > div {
+        justify-content: initial;
+    }
+
+    #profile-tab-pane .collapse > .card-body > div {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+    }
+
+    #favorite-tab-pane .hideTotal,
+    #history-tab-pane .hideTotal {
+        padding-left: 0;
+    }
+
+    #TabContent .content.type_grid .type_change_frame {
+        flex: 0 0 auto;
+    }
+
+    #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child {
+        width: 33%;
+    }
+
+        #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child > label {
+            padding-right: 0 !important;
+        }
+}
+
+@media (max-width:400px) {
+    #favorite-tab-pane .hideTotal,
+    #history-tab-pane .hideTotal {
+        flex: unset;
+        width: 55%;
+    }
+
+    #favorite-tab-pane .isHide:not(.hideTotal),
+    #history-tab-pane .isHide:not(.hideTotal) {
+        width: 55%;
+    }
+
+    .btn_buyAgain {
+        width: 100%;
+    }
+    #bonus-tab-pane .bonus_frame {
+        padding-right: 0.35rem !important;
+        padding-left: 0.35rem !important;
+    }
+
+    #bonus-tab-pane .bonus_summary > div {
+        padding-right: 0.05rem;
+        padding-left: 0.05rem;
+    }
+
+    #bonus-tab-pane .bonus_summary .text-muted.small {
+        font-size: 0.7rem;
+    }
+
+    #bonus-tab-pane .bonus_start,
+    #bonus-tab-pane .bonus_end,
+    #bonus-tab-pane .bonus_add,
+    #bonus-tab-pane .bonus_remain {
+        font-size: 0.82rem;
+        letter-spacing: -0.04em;
+    }
+}

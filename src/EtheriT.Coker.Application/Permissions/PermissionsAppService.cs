@@ -179,65 +179,113 @@ namespace EtheriT.Coker.Application.Permissions
             return p != null;
 		}
 
-		public async Task<ResponseMessageDto> SavePermissions(SavePermissionsDto dto)
+        public async Task<ResponseMessageDto> SavePermissions(SavePermissionsDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
+
             try
             {
-                long SiteId = await loginUserData.GetWebsiteId();
-                var Names = dto.Items.Select(x => x.Name).ToList() ?? new List<string>();
-                var uadateItems = await db.Permissions
-                            .Where(e => e.FK_UserId == dto.FK_UserId)
-                            .Where(e => e.FK_RoleId == dto.FK_RoleId)
-                            .Where(e => e.FK_WebsiteId == SiteId)
-                            .Where(e => Names.Contains(e.Name))
-                            .Select(e => new SavePermissionsItem { Name = e.Name, IsGranted = e.IsGranted }).ToListAsync();
-                var updateName = uadateItems.Select(x => x.Name).ToList() ?? new List<string>();
-                var addItems = dto.Items.FindAll(e => !updateName.Contains(e.Name));
-                if (uadateItems.Any())
-                    await UpdatePermissions(new SavePermissionsDto { FK_UserId = dto.FK_UserId, FK_RoleId = dto.FK_RoleId, SiteId = SiteId, Items = uadateItems });
-                if (addItems.Any())
-                    await AddPermissions(new SavePermissionsDto { FK_UserId = dto.FK_UserId, FK_RoleId = dto.FK_RoleId, SiteId = SiteId, Items = addItems });
+                long siteId = await loginUserData.GetWebsiteId();
+                long operatorUserId = await loginUserData.GetUserId();
+
+                var items = NormalizePermissionItems(dto.Items);
+
+                if (!items.Any())
+                {
+                    response.Success = true;
+                    return response;
+                }
+
+                var names = items.Select(x => x.Name).ToList();
+
+                var existingItems = await db.Permissions
+                    .Where(e => e.FK_WebsiteId == siteId)
+                    .Where(e => e.FK_UserId == dto.FK_UserId)
+                    .Where(e => e.FK_RoleId == dto.FK_RoleId)
+                    .Where(e => names.Contains(e.Name))
+                    .ToListAsync();
+
+                RemovePermissions(existingItems, items);
+
+                AddPermissions(dto, siteId, operatorUserId, existingItems, items);
+
+                await db.SaveChangesAsync();
+
                 response.Success = true;
             }
             catch (Exception ex)
             {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+
+            await loginUserData.SetLogs(
+                JsonConvert.SerializeObject(dto),
+                JsonConvert.SerializeObject(response)
+            );
+
             return response;
         }
-        private async Task AddPermissions(SavePermissionsDto dto)
+        private List<SavePermissionsItem> NormalizePermissionItems(List<SavePermissionsItem> items)
         {
-            long userId = await loginUserData.GetUserId();
-            List<Core.Models.Permissions> permissions = new List<Core.Models.Permissions>();
-            dto.Items.ForEach(e =>
-            {
-                permissions.Add(new Core.Models.Permissions
+            return items?
+                .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                .GroupBy(x => x.Name)
+                .Select(g => g.Last())
+                .ToList() ?? new List<SavePermissionsItem>();
+        }
+        private void AddPermissions(
+            SavePermissionsDto dto,
+            long siteId,
+            long operatorUserId,
+            List<Core.Models.Permissions> existingItems,
+            List<SavePermissionsItem> items)
+        {
+            var existingNames = existingItems
+                .Select(x => x.Name)
+                .ToHashSet();
+
+            var addItems = items
+                .Where(x => x.IsGranted)
+                .Where(x => !existingNames.Contains(x.Name))
+                .Select(x => new Core.Models.Permissions
                 {
-                    Name = e.Name,
-                    IsGranted = e.IsGranted,
+                    Name = x.Name,
+                    IsGranted = true,
                     FK_UserId = dto.FK_UserId,
                     FK_RoleId = dto.FK_RoleId,
-                    FK_WebsiteId = dto.SiteId ?? 0,
+                    FK_WebsiteId = siteId,
                     CreationTime = DateTime.Now,
-                    CreatorUserId = userId
-                });
-            });
-            db.Permissions.AddRange(permissions);
-            await db.SaveChangesAsync();
+                    CreatorUserId = operatorUserId
+                })
+                .ToList();
+
+            if (addItems.Any())
+            {
+                db.Permissions.AddRange(addItems);
+            }
         }
-        private async Task UpdatePermissions(SavePermissionsDto dto)
+        private void RemovePermissions(
+            List<Core.Models.Permissions> existingItems,
+            List<SavePermissionsItem> items)
         {
-            long userId = await loginUserData.GetUserId();
-            List<string> Names = dto.Items.Select(e => e.Name).ToList();
-            var date = db.Permissions
-                        .Where(e => e.FK_UserId == dto.FK_UserId)
-                        .Where(e => e.FK_RoleId == dto.FK_RoleId)
-                        .Where(e => Names.Contains(e.Name))
-                        .Where(e => e.FK_WebsiteId == dto.SiteId);
-            db.Permissions.RemoveRange(date);
-            await db.SaveChangesAsync();
+            var removeNames = items
+                .Where(x => !x.IsGranted)
+                .Select(x => x.Name)
+                .ToHashSet();
+
+            if (!removeNames.Any())
+            {
+                return;
+            }
+
+            var removeItems = existingItems
+                .Where(x => removeNames.Contains(x.Name))
+                .ToList();
+
+            if (removeItems.Any())
+            {
+                db.Permissions.RemoveRange(removeItems);
+            }
         }
         public async Task<ResponseMessageDto> RemoveMappingUserAndWebsite(DataDelectDto dto)
         {

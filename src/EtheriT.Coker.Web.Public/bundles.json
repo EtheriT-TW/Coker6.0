@@ -105,16 +105,33 @@
         "wwwroot/js/Coker/coker.global.events.js",
 
         "wwwroot/js/Coker/coker.api.activity.js",
+        "wwwroot/js/Coker/coker.api.bonus.js",
         "wwwroot/js/Coker/coker.api.user.js",
         "wwwroot/js/Coker/coker.api.thirdparty.js",
         "wwwroot/js/Coker/coker.api.favorites.js",
         "wwwroot/js/Coker/coker.api.dynamicForm.js",
         "wwwroot/js/Coker/coker.api.order.js",
         "wwwroot/js/Coker/coker.api.payment.js",
+        "wwwroot/js/Coker/coker.api.product.js",
         "wwwroot/js/Coker/coker.api.directory.js",
         "wwwroot/js/Coker/coker.api.file.js",
         "wwwroot/js/Coker/coker.api.token.js",
         "wwwroot/js/Coker/coker.api.tags.js"
+      ]
+    },
+    {
+      "output": "js/Page/Member.min.js",
+      "input": [
+        "wwwroot/view-resources/Member/js/Member.Core.js",
+        "wwwroot/view-resources/Member/js/Member.Pagination.js",
+        "wwwroot/view-resources/Member/js/Member.Modals.js",
+        "wwwroot/view-resources/Member/js/Member.Profile.js",
+        "wwwroot/view-resources/Member/js/Member.Bonus.js",
+        "wwwroot/view-resources/Member/js/Member.Products.js",
+        "wwwroot/view-resources/Member/js/Member.OrderPayment.js",
+        "wwwroot/view-resources/Member/js/Member.Orders.js",
+        "wwwroot/view-resources/Member/js/Member.Router.js",
+        "wwwroot/view-resources/Member/js/Member.Init.js"
       ]
     },
     {
@@ -177,6 +194,19 @@
       "output": "Shared/shared.en.min.css",
       "input": [
         "wwwroot/Shared/components/Form/css/DynamicForm.en.css"
+      ]
+    },
+    {
+      "output": "css/Page/Member.min.css",
+      "input": [
+        "wwwroot/view-resources/Member/css/Member.layout.css",
+        "wwwroot/view-resources/Member/css/Member.pagination.css",
+        "wwwroot/view-resources/Member/css/Member.modals.css",
+        "wwwroot/view-resources/Member/css/Member.profile.css",
+        "wwwroot/view-resources/Member/css/Member.orders.css",
+        "wwwroot/view-resources/Member/css/Member.products.css",
+        "wwwroot/view-resources/Member/css/Member.bonus.css",
+        "wwwroot/view-resources/Member/css/Member.rwd.css"
       ]
     },
     {

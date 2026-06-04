@@ -52,6 +52,13 @@ input[type="number"] {
         border-radius: 0;
     }
 
+#Step1 .purchase_item .pro_unit,
+#Step1 .purchase_item .pro_subtotal,
+#Step1 .js-group-subtotal,
+#Step1 .summary-amount,
+#Step1 .payable_subtotal {
+    font-weight: 700;
+}
 
 /* Required Sign */
 .required_front::before {
@@ -220,7 +227,7 @@ input[type="number"] {
 
 /* Step1 */
 #Step1 > .card-body > .list_title {
-    padding-right: 3rem;
+    padding: 0 6rem 1rem 2.5rem;
 }
 
 #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item {
@@ -367,7 +374,7 @@ input[type="number"] {
         color: #9a6a00;
         font-size: 0.92rem;
         line-height: 1.2;
-        text-align:left;
+        text-align: left;
     }
 
     .priceline .summary-reward-icon {
@@ -385,6 +392,7 @@ input[type="number"] {
         display: inline-block;
         margin-right: 0.5rem;
     }
+
 .bonusEarnHintText .bonus-earn-main {
     display: block;
     line-height: 1.4;
@@ -748,6 +756,11 @@ body > .popover.bs-popover-auto.fade {
     line-height: 1.25;
 }
 
+.purchase_item .cart-item-price {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
 .purchase_item .cart-price-main {
     white-space: nowrap;
 }
@@ -783,19 +796,114 @@ body > .popover.bs-popover-auto.fade {
     font-size: 0.9rem;
 }
 
+/* Cart - checkbox color */
+#Step1 input[type="checkbox"] {
+    accent-color: var(--red-main);
+}
+
+#Step1 .form-check-input:checked {
+    background-color: var(--red-main);
+    border-color: var(--red-main);
+}
+
+#Step1 .form-check-input:focus {
+    border-color: var(--red-main);
+    box-shadow: 0 0 0 .15rem rgba(197, 49, 49, .18);
+}
+
+/* Cart - group header */
+#Step1 .purchase_group > .group_header {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .35rem 0 .75rem;
+    border-bottom: 1px solid #eeeeee;
+}
+
+    #Step1 .purchase_group > .group_header .form-check {
+        min-height: auto;
+        margin-bottom: 0;
+    }
+
+        #Step1 .purchase_group > .group_header .form-check .form-check-input {
+            margin-left: -1.2em;
+        }
+
+    #Step1 .purchase_group > .group_header .group_title {
+        color: var(--black-text);
+        font-size: 1.05rem;
+    }
+
+    #Step1 .purchase_group > .group_header .badge {
+        background-color: #eeeeee !important;
+        color: #333;
+        font-weight: 600;
+        border-radius: .35rem;
+        padding: .35rem .65rem;
+    }
+
+/* Cart - item icon buttons */
+#Step1 .purchase_item .btn_side_icon {
+    width: 2.5rem;
+    gap: .35rem;
+}
+
+    #Step1 .purchase_item .btn_side_icon button {
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        color: #555;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        #Step1 .purchase_item .btn_side_icon button:hover,
+        #Step1 .purchase_item .btn_side_icon button:focus {
+            color: var(--red-main);
+        }
+
+#Step1 .purchase_item .btn_move_to_favorites i {
+    color: var(--red-main);
+}
+
+#Step1 .purchase_item .btn_remove_pro i {
+    color: #555;
+}
+
+#Step1 .cart-summary-section {
+    display: contents;
+}
+
+/* Step1 - bottom buttons */
+#Step1 .swiper_button .btn_backshop {
+    background-color: #ffffff !important;
+    color: var(--gray-text) !important;
+    border: 1px solid #cfcfcf !important;
+}
+
+#Step1 .swiper_button .btn_swiper_next_buystep {
+    background-color: var(--red-main) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--red-main) !important;
+    font-weight: 700;
+}
+
 @media (max-width: 1366px) {
 }
 
 @media only screen and (max-width: 1072px) {
 }
 
-@media only screen and (max-width: 992px) {
-    #Step1 > .card-body > .purchase_list > li > .btn_side_icon {
-        top: 0;
-        transform: translate(0, 0);
+@media only screen and (min-width: 577px) and (max-width: 992px) {
+    #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item > .btn_side_icon {
+        top: .75rem;
+        right: .25rem;
+        transform: none !important;
+        padding: 0 !important;
     }
 
-    .purchase_item > .content > .js-stock-error {
+    #Step1 .purchase_item > .content > .js-stock-error {
         display: block;
     }
 }
@@ -868,11 +976,338 @@ body > .popover.bs-popover-auto.fade {
     #Form_Orderer > div:nth-child(5) > div:nth-child(3) {
         width: 100%;
     }
+
+    #Step1 .purchase_item .pro_name {
+        font-size: 1rem;
+        line-height: 1.35;
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    #Step1 .purchase_item .pro_unit {
+        color: var(--red-number);
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.25;
+    }
+
+    #Step1 .purchase_item .cart-item-price {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    #Step1 .purchase_item .counter_input button,
+    #Step1 .purchase_item .counter_input input {
+        height: 2.25rem;
+    }
+
+    #Step1 .purchase_item .counter_input button {
+        width: 2.25rem;
+        border-color: #dddddd;
+        color: #333;
+    }
+
+    #Step1 .purchase_item .counter_input input {
+        width: 4.5rem;
+        border-color: #dddddd;
+    }
+
+    #Step1 .purchase_item .btn_side_icon {
+        width: 2rem;
+    }
+
+        #Step1 .purchase_item .btn_side_icon button {
+            width: 2rem;
+            height: 2rem;
+        }
+
+    /* Step1 mobile - clean layout */
+    #Step1 > .card-body {
+        padding-left: .75rem;
+        padding-right: .75rem;
+    }
+
+        #Step1 > .card-body > .purchase_list {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+            #Step1 > .card-body > .purchase_list > .purchase_group {
+                margin-bottom: 1.25rem;
+                padding-top: .75rem !important;
+                border-top-color: #eeeeee !important;
+            }
+
+    /* 群組標題 */
+    #Step1 .purchase_group > .group_header {
+        display: grid !important;
+        grid-template-columns: 1.15rem auto auto;
+        column-gap: .6rem;
+        align-items: center !important;
+        padding: 0 0 .7rem;
+        margin-bottom: 0 !important;
+        border-bottom: 1px solid #eeeeee;
+    }
+
+        #Step1 .purchase_group > .group_header .form-check {
+            display: contents !important;
+        }
+
+        #Step1 .purchase_group > .group_header .form-check-input {
+            grid-column: 1;
+            margin: 0 !important;
+            align-self: center;
+            justify-self: start;
+        }
+
+        #Step1 .purchase_group > .group_header .group_title {
+            grid-column: 2;
+            margin: 0 !important;
+            line-height: 1.25;
+        }
+
+        #Step1 .purchase_group > .group_header .badge {
+            grid-column: 3;
+            margin-left: 0 !important;
+        }
+
+    /* 商品列：checkbox / 圖片 / 內容 / icon */
+    #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item {
+        display: grid !important;
+        grid-template-columns: 1.15rem 100px minmax(0, 1fr) 2rem;
+        column-gap: .6rem;
+        align-items: center !important;
+        padding: .75rem 0 !important;
+        margin: 0 !important;
+    }
+
+    /* 清掉 Bootstrap row / col 在手機板造成的寬度干擾 */
+    #Step1 .purchase_item > .image,
+    #Step1 .purchase_item > .content,
+    #Step1 .purchase_item > .btn_side_icon {
+        width: auto !important;
+        max-width: none !important;
+        flex: none !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    /* image 外層只作為結構，不再自行排版 */
+    #Step1 .purchase_item > .image {
+        display: contents !important;
+    }
+
+        #Step1 .purchase_item > .image > .cart-product-media {
+            display: contents !important;
+        }
+
+    /* 商品 checkbox */
+    #Step1 .purchase_item input[name="buyItems"] {
+        grid-column: 1;
+        margin: 0 !important;
+        align-self: center;
+        justify-self: start;
+    }
+
+    /* 商品圖片 */
+    #Step1 .purchase_item > .image label {
+        grid-column: 2;
+        width: 100px;
+        height: 100px;
+        display: block;
+        margin: 0;
+        overflow: hidden;
+        align-self: center;
+        background-color: #f5f5f5;
+    }
+
+    #Step1 .purchase_item .pro_image {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        max-height: none !important;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+    }
+
+    /* 手機版不顯示 image 裡面的桌機文字連結 */
+    #Step1 .purchase_item > .image > a.pro_link {
+        display: none !important;
+    }
+
+    /* 商品內容 */
+    #Step1 .purchase_item > .content {
+        grid-column: 3;
+        min-width: 0;
+        max-width: 100%;
+        display: flex !important;
+        flex-direction: column;
+        justify-content: center;
+        row-gap: .3rem;
+        overflow: hidden !important;
+    }
+
+    #Step1 .purchase_item .pro_name {
+        font-size: 1rem;
+        line-height: 1.25;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        margin: 0;
+        max-width: 100%;
+    }
+
+    #Step1 .purchase_item .pro_detail {
+        line-height: 1.2;
+        margin: 0;
+    }
+
+    #Step1 .purchase_item .pro_unit {
+        color: var(--red-number);
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.25;
+    }
+
+    /* 數量控制 */
+    #Step1 .purchase_item .counter_input {
+        justify-content: flex-start !important;
+        margin-top: 0;
+    }
+
+        #Step1 .purchase_item .counter_input button,
+        #Step1 .purchase_item .counter_input input {
+            height: 2.15rem;
+        }
+
+        #Step1 .purchase_item .counter_input button {
+            width: 2.15rem;
+            border-color: #cfcfcf;
+            color: #333;
+        }
+
+        #Step1 .purchase_item .counter_input input {
+            width: 4.25rem;
+            border-color: #cfcfcf;
+        }
+
+    /* 右側 icon */
+    #Step1 .purchase_item > .btn_side_icon {
+        grid-column: 4;
+        position: static !important;
+        transform: none !important;
+        align-self: center;
+        justify-self: center;
+        display: flex !important;
+        flex-direction: column;
+        justify-content: center;
+        gap: .35rem;
+        padding: 0 !important;
+    }
+
+    #Step1 .purchase_item .btn_side_icon button {
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+    }
+
+    /* 已選件數 / 小計 */
+    #Step1 .purchase_group > .group_footer {
+        padding: .8rem 0 0;
+        border-top: 1px solid #eeeeee;
+        align-items: center !important;
+    }
+
+    /* 商品金額 / 小計：段落分隔，不讓整個金額區變灰 */
+    #Step1 .cart-summary-section {
+        display: block;
+        margin: 1rem -.75rem 0;
+        padding: 0;
+        background: transparent;
+    }
+
+    #Step1 .cart-summary-gap {
+        height: 14px;
+        background-color: var(--cart-summary-gap-bg, var(--gray-bg-light));
+    }
+
+    #Step1 .cart-summary-section .priceline {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: .95rem .75rem 0 !important;
+        background: transparent;
+        border-top: none !important;
+    }
+
+    #Step1 .cart-summary-section .summary-main-row,
+    #Step1 .cart-summary-section .summary-total-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        column-gap: 1rem;
+        align-items: center;
+        margin-bottom: 0;
+    }
+
+    #Step1 .cart-summary-section .summary-label,
+    #Step1 .cart-summary-section .summary-note-label {
+        text-align: center;
+    }
+
+    #Step1 .cart-summary-section .summary-amount,
+    #Step1 .cart-summary-section .summary-note-value {
+        text-align: right;
+    }
+
+    #Step1 .cart-summary-section .summary-main-row {
+        padding: .2rem 0 .85rem;
+    }
+
+    #Step1 .cart-summary-section .summary-panel {
+        margin-top: 0;
+        padding-top: .85rem;
+        background: transparent;
+        border-top: 1px solid #e0e0e0 !important;
+        border-radius: 0;
+    }
+
+    #Step1 .cart-summary-section .summary-total-row {
+        padding: .75rem 0 .15rem;
+    }
+
+        #Step1 .cart-summary-section .summary-total-row .summary-label,
+        #Step1 .cart-summary-section .summary-total-row .summary-amount {
+            font-weight: 700;
+        }
+
+        #Step1 .cart-summary-section .summary-total-row .summary-amount {
+            color: var(--red-number);
+            font-size: 1.15rem;
+        }
 }
 
 @media only screen and (max-width: 400px) {
     #Step1 > .card-body > .purchase_list > .purchase_group > .group_items > .purchase_item {
-        padding-right: 1rem;
+        grid-template-columns: 1.15rem 88px minmax(0, 1fr) 2rem;
+        column-gap: .5rem;
+        padding-right: 0 !important;
+    }
+
+    #Step1 .purchase_item > .image label {
+        width: 88px;
+        height: 88px;
+    }
+
+    #Step1 .purchase_item .counter_input input {
+        width: 3.75rem;
     }
 
     #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button > [class*=btn_swiper_] {

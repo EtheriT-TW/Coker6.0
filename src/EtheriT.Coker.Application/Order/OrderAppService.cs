@@ -448,7 +448,7 @@ namespace EtheriT.Coker.Application.Order
                             TransactionOperation = "-",
                             MemberUUID = new List<Guid> { uuid },
                             TransactionPoint = detailResult.TotalBonus,
-                            TransactionReason = $"購物使用紅利點數-訂單編號[{oh.Id:D9}]",
+                            TransactionReason = $"購物使用紅利點數-訂單編號：{oh.Id:D9}",
                             RefKey = oh.Id,
                             Type = BonusLogTypeEnum.Redeem,
                             EnableIdempotencyByRefKey = true
@@ -534,7 +534,7 @@ namespace EtheriT.Coker.Application.Order
                             TransactionOperation = "-",
                             MemberUUID = new List<Guid> { uuid },
                             TransactionPoint = detailResult.TotalBonus,
-                            TransactionReason = $"購物使用紅利點數-訂單編號[{oh.Id:D9}]",
+                            TransactionReason = $"購物使用紅利點數-訂單編號：{oh.Id:D9}",
                             RefKey = oh.Id,
                             Type = BonusLogTypeEnum.Redeem,
                             EnableIdempotencyByRefKey = true

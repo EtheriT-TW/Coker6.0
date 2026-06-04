@@ -49,16 +49,6 @@
                 type: "GET",
                 data: { Tid: Tid }
             });
-        },
-        History: function (page) {
-            return $.ajax({
-                url: "/api/Product/GetHistoryDisplay/",
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("token")
-                },
-                type: "GET",
-                data: { page: page }
-            });
         }
     },
     GetOne: {

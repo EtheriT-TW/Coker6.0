@@ -45,6 +45,8 @@ namespace EtheriT.Coker.Application.Dto
         public bool ShowToMenu { get; set; }
         public DateTime? LastModificationTime { get; set; }
         public DateTime CreationTime { get; set; }
+        public bool HasBackstagePermission { get; set; }
+        public bool HasFrontPermission { get; set; }
         public List<MenuItemDto>? Children { get; set; }
     }
 }

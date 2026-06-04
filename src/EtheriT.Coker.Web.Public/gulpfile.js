@@ -185,7 +185,7 @@ function createStyleBundle(style) {
 
 	return stream
 		.pipe(concat(bundleName))
-		.pipe(sourcemaps.write('.'))
+		.pipe(gulpIf(!production, sourcemaps.write('.')))
 		.pipe(gulp.dest('wwwroot/' + bundlePath));
 }
 function findMatchingElements(path, array) {

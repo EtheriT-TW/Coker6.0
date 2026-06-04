@@ -1548,7 +1548,7 @@ function MenuEditor(idSelector, options) {
         var $li = $('<li>').addClass('list-group-item pr-0');
         $li.data(itemObject);
 
-        var $div = $('<div>').css('overflow', 'auto');
+        var $div = $('<div>');
 
         var $i = $('<i>').addClass(itemObject.icon);
         if ($i.hasClass("material-symbols-outlined")) {

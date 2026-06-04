@@ -33,6 +33,12 @@
                     check: check
                 });
             },
+            /** 取得會員歷史訂單 */
+            GetHistoryOrder: function (page) {
+                return Coker.api.get("/api/Order/GetHistoryOrder/", {
+                    page: page
+                });
+            },
 
             /** 取得重新下單顯示資料 */
             GetReorder: function (ohid) {
@@ -65,7 +71,7 @@
                     ohid: ohid,
                     payment: payment
                 });
-            }
+            },
         }
     });
 

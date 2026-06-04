@@ -61,7 +61,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 }
                 if (_env.IsProduction())
                 {
-                    connectSrc = $"'self' {backstageHost} *.google.com *.google-analytics.com *.googleapis.com *.googleadservices.com https://ad.doubleclick.net https://stats.g.doubleclick.net https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://remotejs.com";
+                    connectSrc = $"'self' {backstageHost} *.google.com *.google-analytics.com *.googleapis.com *.googleadservices.com https://ad.doubleclick.net https://stats.g.doubleclick.net https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://remotejs.com wss://remotejs.com";
                 }
 
                 // 將 nonce 存入 HttpContext.Items

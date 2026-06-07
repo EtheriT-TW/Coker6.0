@@ -410,6 +410,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 var token = await tokenAppService.CheckToken(null);
                 if (token == null) throw new Exception("取得Token發生錯誤");
+                else if (token.Success == false) throw new Exception(token.Error);
                 dto.Token = token.Token;
                 response = await CallFrontApi("HandleThirdPartyPayment", dto);
             }
@@ -424,7 +425,6 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                var websiteId = await loginUserData.GetWebsiteId();
                 var token = await tokenAppService.CheckToken(null);
                 if (token == null) throw new Exception("取得Token發生錯誤");
                 else if (token.Success == false) throw new Exception(token.Error);

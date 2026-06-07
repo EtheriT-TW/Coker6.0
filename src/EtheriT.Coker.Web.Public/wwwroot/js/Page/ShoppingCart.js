@@ -2523,11 +2523,12 @@ function OrderDataGet() {
     order_header_data.Service_Charge = 0;
     order_header_data.OrderDetails = getSelectedCartItems();
 
-    if (HasECPay) {
-        if (window.ApplePaySession && typeof ApplePaySession.canMakePayments == "function") {
-            order_header_data.SupportApplePay = true;
-        }
-    }
+    order_header_data.SupportApplePay = true;
+    // if (HasECPay) {
+    //     if (window.ApplePaySession && typeof ApplePaySession.canMakePayments == "function") {
+    //         order_header_data.SupportApplePay = true;
+    //     }
+    // }
 }
 function OrdererDataGet() {
     order_data = co.Form.getJson($("#Form_Orderer").attr("id"));

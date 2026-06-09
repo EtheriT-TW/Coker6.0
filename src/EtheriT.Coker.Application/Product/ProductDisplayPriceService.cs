@@ -555,12 +555,14 @@ namespace EtheriT.Coker.Application.Product
 
             return orderLowToHigh
                 ? candidates
-                    .OrderBy(e => e.SortValue)
+                    .OrderBy(e => (e.Price?.Bonus ?? 0) > 0)
+                    .ThenBy(e => e.SortValue)
                     .ThenBy(e => e.Price?.Bonus ?? 0)
                     .ThenBy(e => e.Rank)
                     .First()
                 : candidates
-                    .OrderByDescending(e => e.SortValue)
+                    .OrderBy(e => (e.Price?.Bonus ?? 0) > 0)
+                    .ThenByDescending(e => e.SortValue)
                     .ThenBy(e => e.Price?.Bonus ?? 0)
                     .ThenBy(e => e.Rank)
                     .First();

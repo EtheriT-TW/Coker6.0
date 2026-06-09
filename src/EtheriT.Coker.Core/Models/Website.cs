@@ -33,7 +33,6 @@ namespace EtheriT.Coker.Core.Models
         public WebsiteLevelEnum Level { get; set; }
         public List<MappingUserAndWebsite> Users { get; set; }
         public List<MappingFrontUserAndWebsite> FrontUsers { get; set; }
-        public List<Marketing> Marketing { get; set; }
         public List<Marquee> Marquees { get; set; }
         public List<WebMenu> WebMenus { get; set; }
         public List<Prod> Prods { get; set; }
@@ -63,7 +62,6 @@ namespace EtheriT.Coker.Core.Models
         public ICollection<LogisticsBox> logisticsBoxes { get; set; }
         public ICollection<WebsiteCacheState> websiteCacheStates { get; set; }
         public ICollection<HtmlSanitizeState> htmlSanitizeStates { get; set; }
-
-        
+        public virtual ICollection<MarketingCampaign> MarketingCampaigns { get; set; } = new List<MarketingCampaign>();
     }
 }

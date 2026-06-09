@@ -1,8 +1,11 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Bonus;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Marketing;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Core.Entity;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.Configurations;
@@ -17,8 +20,6 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Directory = EtheriT.Coker.Core.Models.Directory;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Advertise;
 
 namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 {
@@ -34,7 +35,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<MappingLogisticsSettingAndProd> MappingLogisticsSettingAndProd { get; set; }
         public DbSet<Token> Tokens { get; set; }
         public DbSet<Prod> Prods { get; set; }
-        public DbSet<Marketing> Marketing { get; set; }
         public DbSet<Marquee> Marquees { get; set; }
         public DbSet<WebMenu> WebMenus { get; set; }
         public DbSet<Order_Header> Order_Headers { get; set; }
@@ -105,6 +105,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<BonusLogDetail> bonusLogDetails { get; set; }
         public DbSet<WebsiteCacheState> WebsiteCacheStates { get; set; }
         public DbSet<HtmlSanitizeState> HtmlSanitizeStates { get; set; }
+        public DbSet<MarketingCampaign> MarketingCampaigns { get; set; }
+        public DbSet<MarketingRule> MarketingRules { get; set; }
+        public DbSet<MarketingCondition> MarketingConditions { get; set; }
+        public DbSet<MarketingReward> MarketingRewards { get; set; }
+        public DbSet<MarketingScopeItem> MarketingScopeItems { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -200,11 +205,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasKey(m => new { m.FK_LogisticsSettingId, m.FK_ProdId });
                 o.HasOne(u => u.LogisticsSetting).WithMany(u => u.MappingLogisticsSettingAndProds).HasForeignKey(e => e.FK_LogisticsSettingId);
                 o.HasOne(u => u.Prod).WithMany(u => u.MappingLogisticsSettingAndProds).HasForeignKey(f => f.FK_ProdId);
-            });
-            modelBuilder.Entity<Marketing>(o =>
-            {
-                o.HasOne(u => u.Website).WithMany(u => u.Marketing).HasForeignKey(f => f.FK_WebsiteId);
-                o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<Marquee>(o =>
             {
@@ -627,6 +627,133 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(e => e.ContentKey).HasDefaultValue("Default");
 
                 o.Property(e => e.SanitizePolicy).HasDefaultValue("PublicHtml");
+            });
+
+            modelBuilder.Entity<MarketingCampaign>(o =>
+            {
+                o.HasOne(x => x.Website)
+                    .WithMany(w => w.MarketingCampaigns)
+                    .HasForeignKey(x => x.FK_WebsiteId);
+
+                o.Property(x => x.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                o.Property(x => x.Description)
+                    .HasMaxLength(500);
+
+                o.Property(x => x.Status)
+                    .HasDefaultValue(MarketingDisplayStatusEnum.草稿);
+
+                o.Property(x => x.CampaignType)
+                    .HasDefaultValue(MarketingCampaignTypeEnum.滿額優惠);
+
+                o.Property(x => x.Priority)
+                    .HasDefaultValue(0);
+
+                o.Property(x => x.CanStack)
+                    .HasDefaultValue(false);
+
+                o.Property(x => x.Repeatable)
+                    .HasDefaultValue(false);
+
+                o.Property(x => x.NeverEnd)
+                    .HasDefaultValue(false);
+
+                o.HasIndex(x => new { x.FK_WebsiteId, x.Status });
+                o.HasIndex(x => new { x.FK_WebsiteId, x.StartTime, x.EndTime });
+
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+
+            modelBuilder.Entity<MarketingRule>(o =>
+            {
+                o.HasOne(x => x.MarketingCampaign)
+                    .WithMany(x => x.Rules)
+                    .HasForeignKey(x => x.FK_MarketingCampaignId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                o.Property(x => x.ScopeType)
+                    .HasDefaultValue(MarketingScopeTypeEnum.AllOrder);
+
+                o.Property(x => x.Enabled)
+                    .HasDefaultValue(true);
+
+                o.Property(x => x.SortOrder)
+                    .HasDefaultValue(0);
+
+                o.HasIndex(x => new { x.FK_MarketingCampaignId, x.Enabled });
+
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+
+            modelBuilder.Entity<MarketingCondition>(o =>
+            {
+                o.HasOne(x => x.MarketingRule)
+                    .WithOne(x => x.Condition)
+                    .HasForeignKey<MarketingCondition>(x => x.FK_MarketingRuleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                o.Property(x => x.MinAmount)
+                    .HasColumnType("decimal(18,2)");
+
+                o.Property(x => x.ConditionType)
+                    .HasDefaultValue(MarketingConditionTypeEnum.OrderAmount);
+
+                o.Property(x => x.OnlyScopeItems)
+                    .HasDefaultValue(false);
+
+                o.Property(x => x.ExcludeDiscountedItems)
+                    .HasDefaultValue(false);
+
+                o.HasIndex(x => x.FK_MarketingRuleId)
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0");
+
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+
+            modelBuilder.Entity<MarketingReward>(o =>
+            {
+                o.HasOne(x => x.MarketingRule)
+                    .WithOne(x => x.Reward)
+                    .HasForeignKey<MarketingReward>(x => x.FK_MarketingRuleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                o.Property(x => x.DeliveryType)
+                    .HasDefaultValue(MarketingRewardDeliveryTypeEnum.ApplyImmediately);
+
+                o.Property(x => x.DiscountAmount)
+                    .HasColumnType("decimal(18,2)");
+
+                o.Property(x => x.DiscountPercent)
+                    .HasColumnType("decimal(5,2)");
+
+                o.Property(x => x.MaxDiscountAmount)
+                    .HasColumnType("decimal(18,2)");
+
+                o.HasIndex(x => x.FK_MarketingRuleId)
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0");
+
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+
+            modelBuilder.Entity<MarketingScopeItem>(o =>
+            {
+                o.HasOne(x => x.MarketingRule)
+                    .WithMany(x => x.ScopeItems)
+                    .HasForeignKey(x => x.FK_MarketingRuleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                o.HasIndex(x => new
+                {
+                    x.FK_MarketingRuleId,
+                    x.TargetType,
+                    x.TargetId
+                });
+
+                o.HasQueryFilter(e => !e.IsDeleted);
             });
 
             new SeedHelper(modelBuilder).SeedHost();

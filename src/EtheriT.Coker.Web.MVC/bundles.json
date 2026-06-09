@@ -26,6 +26,7 @@
         "wwwroot/js/CokerCore/HtmlContent.js",
         "wwwroot/js/CokerCore/ListFile.js",
         "wwwroot/js/CokerCore/Member.js",
+        "wwwroot/js/CokerCore/Marketing.js",
         "wwwroot/js/CokerCore/ObjectType.js",
         "wwwroot/js/CokerCore/Order.js",
         "wwwroot/js/CokerCore/Others.js",

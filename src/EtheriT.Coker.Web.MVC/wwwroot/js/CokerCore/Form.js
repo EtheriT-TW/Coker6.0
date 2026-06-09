@@ -139,7 +139,35 @@
                             window[setterName](value, $e, sourceObj);
                         }
                         break;
+                    case "boolean":
+                        if (($e.attr("type") || "").toLowerCase() === "checkbox") {
+                            if ($e.length > 1) {
+                                $e.prop("checked", false);
 
+                                if (Array.isArray(value)) {
+                                    value.forEach(function (item) {
+                                        $e.filter(`[value="${item}"]`).prop("checked", true);
+                                    });
+                                } else {
+                                    $e.first().prop("checked",
+                                        value === true ||
+                                        String(value).toLowerCase() === "true" ||
+                                        String(value) === "1" ||
+                                        String(value).toLowerCase() === "on"
+                                    );
+                                }
+                            } else {
+                                $e.prop("checked",
+                                    value === true ||
+                                    String(value).toLowerCase() === "true" ||
+                                    String(value) === "1" ||
+                                    String(value).toLowerCase() === "on"
+                                );
+                            }
+                        } else {
+                            $e.val(_c.Form.formatElementValue($e, value));
+                        }
+                        break;
                     default:
                         $e.val(_c.Form.formatElementValue($e, value));
                         break;
@@ -396,37 +424,21 @@
 
                 const formType = String($items.first().attr("data-form-type") || "").toLowerCase();
 
-                // 已有值時，也要統一型態
-                if (typeof formDataObject[name] !== "undefined") {
-                    if (formType === "boolean" || $items.length === 1) {
-                        const val = formDataObject[name];
-
-                        if (Array.isArray(val)) {
-                            formDataObject[name] = val.length > 0
-                                ? _c.Form.normalizeElementValue($items.first(), val[0])
-                                : false;
-                        } else {
-                            formDataObject[name] = _c.Form.normalizeElementValue($items.first(), val);
-                        }
-                    } else {
-                        if (!Array.isArray(formDataObject[name])) {
-                            formDataObject[name] = [formDataObject[name]];
-                        }
-
-                        formDataObject[name] = formDataObject[name].map(v =>
-                            _c.Form.normalizeElementValue($items.first(), v)
-                        );
-                    }
-
+                // boolean checkbox 或單一 checkbox：
+                // 不依賴 FormData 的 value，直接以 checked 狀態為準。
+                if (formType === "boolean" || $items.length === 1) {
+                    formDataObject[name] = $items.first().prop("checked") === true;
                     return;
                 }
 
-                // 未勾選時補預設值
-                if (formType === "boolean" || $items.length === 1) {
-                    formDataObject[name] = false;
-                } else {
-                    formDataObject[name] = [];
-                }
+                // 多選 checkbox：
+                // 回傳所有已勾選的 value。
+                formDataObject[name] = $items
+                    .filter(":checked")
+                    .map(function () {
+                        return _c.Form.normalizeElementValue($items.first(), this.value);
+                    })
+                    .get();
             });
 
             return formDataObject;

@@ -1,0 +1,241 @@
+@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Marketing
+@{
+    ViewData["Title"] = "MarketingSettings";
+}
+
+<link rel="stylesheet" href="~/css/StoreSettings/MarketingSettings.min.css" asp-append-version="true" />
+<script src="~/js/StoreSettings/MarketingSettings.min.js" asp-append-version="true"></script>
+
+<div>
+    <div id="TopLine" class="d-flex justify-content-between mb-4">
+        <div class="d-flex">
+            <div class="title fw-bold fs-3">行銷活動設定</div>
+        </div>
+    </div>
+
+    <div id="MarketingPageRoot" class="py-2">
+        <div id="MarketingList" data-hash-page="List" class="card border-0">
+            <div class="card-body position-relative pb-5">
+                <button type="button" class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+
+                @(
+                    Html.DevExtreme().DataGrid<MarketingCampaignListDto>()
+                    .DataSource(d => d.RemoteController().Key("Id")
+                        .LoadUrl("/api/Marketing/GetAllList")
+                        .LoadMethod("Get")
+                    )
+                    .RemoteOperations(true)
+                    .ColumnHidingEnabled(true)
+                    .ShowBorders(true)
+                    .HeaderFilter(e => e.Visible(true))
+                    .FilterRow(filterRow => filterRow
+                        .Visible(true)
+                        .ApplyFilter(GridApplyFilterMode.Auto)
+                    )
+                    .SearchPanel(searchPanel => searchPanel
+                        .Visible(true)
+                        .Width(480)
+                        .Placeholder("請輸入要搜尋的活動")
+                    )
+                    .ShowRowLines(true)
+                    .Columns(c =>
+                    {
+                        c.AddFor(e => e.Id).Caption("編號").Width(70).AllowHeaderFiltering(false);
+                        c.AddFor(e => e.Name).Caption("活動名稱").AllowHeaderFiltering(false);
+                        c.AddFor(e => e.CampaignType).Caption("活動類型").Width(120);
+
+                        c.Add().Name("RuleSummary")
+                            .Caption("優惠內容")
+                            .CalculateCellValue("marketingRuleSummaryCellValue")
+                            .AllowHeaderFiltering(false)
+                            .AllowFiltering(false)
+                            .AllowSorting(false);
+                        c.AddFor(e => e.Status).Caption("狀態").Width(100);
+                        c.AddFor(e => e.StartTime).Caption("開始時間").DataType(GridColumnDataType.DateTime).Format("yyyy/MM/dd HH:mm").Width(160).AllowHeaderFiltering(false);
+                        c.AddFor(e => e.EndTime).Caption("結束時間").DataType(GridColumnDataType.DateTime).Format("yyyy/MM/dd HH:mm").Width(160).AllowHeaderFiltering(false);
+                        c.Add()
+                            .Type(GridCommandColumnType.Buttons)
+                            .Buttons(b =>
+                            {
+                                b.Add().Name("edit").OnClick("marketingEditButtonClicked");
+                                b.Add().Name("delete").OnClick("marketingDeleteButtonClicked");
+                            });
+                    })
+                    .ColumnAutoWidth(true)
+                    .Paging(paging => paging.PageSize(30))
+                    .Pager(pager =>
+                    {
+                        pager.Visible(true);
+                        pager.ShowPageSizeSelector(true);
+                        pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                        pager.ShowInfo(true);
+                    })
+                    .Editing(editing =>
+                    {
+                        editing.AllowDeleting(true);
+                        editing.AllowUpdating(true);
+                        editing.UseIcons(true);
+                    })
+                    .OnContentReady("marketingContentReady")
+                )
+            </div>
+        </div>
+
+        <div id="MarketingContent" data-hash-page="Content" class="card border-0 d-none">
+            <div class="card-header d-flex justify-content-between">
+                <div class="fw-bold fs-5 d-flex align-items-center">
+                    <button type="button" class="btn_back d-flex bg-transparent border-0 align-items-center">
+                        <span class="material-symbols-outlined">keyboard_backspace</span>
+                    </button>
+                    <div class="lh-lg" data-hash-title>行銷活動設定</div>
+                </div>
+                <button class="btn_done btn-primary border-0 px-3 py-1 text-white" form="MarketingForm">　儲存　</button>
+            </div>
+
+            <form id="MarketingForm" class="card-body needs-validation">
+                <input type="hidden" name="Id" value="0" />
+                <input type="hidden" name="CampaignType" value="0" />
+
+                <div class="marketing-rule-note" role="note">
+                    <div class="marketing-rule-note-title">活動套用規則</div>
+                    <ul class="marketing-rule-note-list">
+                        <li>現階段同一筆訂單同時間只會套用一個行銷活動。</li>
+                        <li>若多個活動同時符合，系統會依優先權套用活動；優先權數字越小越優先。</li>
+                        <li>若優先權相同，會優先套用建立時間較新的活動。</li>
+                    </ul>
+                </div>
+
+                <div class="marketing-section">
+                    <div class="marketing-section-title">基本資料</div>
+
+                    <div class="row align-items-start">
+                        <div class="col-12 col-lg-6 mb-3">
+                            <label class="form-label required_sign" for="InputName">活動名稱</label>
+                            <input id="InputName" class="form-control" name="Name" type="text" autocomplete="off" maxlength="100" required>
+                        </div>
+
+                        <div class="col-12 col-lg-3 mb-3">
+                            <label class="form-label required_sign" for="SelectStatus">活動狀態</label>
+                            <select id="SelectStatus" class="form-select" name="Status" required data-option-key="editableStatuses"></select>
+                        </div>
+
+                        <div class="col-12 col-lg-3 mb-3">
+                            <label class="form-label" for="InputPriority">優先權</label>
+                            <input id="InputPriority" class="form-control" name="Priority" type="number" value="0" min="0" data-form-type="number">
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <label class="form-label" for="InputDescription">活動說明</label>
+                            <textarea id="InputDescription" class="form-control" name="Description" rows="3" maxlength="500"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="marketing-section">
+                    <div class="marketing-section-title">優惠規則</div>
+
+                    <div class="mb-3">
+                        <label class="form-label required_sign">優惠類型</label>
+
+                        <div class="d-flex flex-wrap gap-3">
+                            <div class="form-check marketing-rule-card">
+                                <input id="RuleAmountDiscount" class="form-check-input" type="radio" name="RuleType" value="1" required>
+                                <label class="form-check-label" for="RuleAmountDiscount">
+                                    <span class="fw-bold">滿額折抵</span>
+                                    <small class="d-block text-muted">例如：滿 1000 折 100</small>
+                                </label>
+                            </div>
+
+                            <div class="form-check marketing-rule-card">
+                                <input id="RulePercentDiscount" class="form-check-input" type="radio" name="RuleType" value="2" required>
+                                <label class="form-check-label" for="RulePercentDiscount">
+                                    <span class="fw-bold">滿額打折</span>
+                                    <small class="d-block text-muted">例如：滿 2000 打 9 折</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row align-items-start">
+                        <div class="col-12 col-md-4 mb-3">
+                            <label class="form-label required_sign" for="InputMinAmount">滿額門檻</label>
+                            <div class="input-group">
+                                <span class="input-group-text">NT$</span>
+                                <input id="InputMinAmount" class="form-control" name="MinAmount" type="number" min="1" required data-form-type="number">
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-4 mb-3 rewardAmountSection d-none">
+                            <label class="form-label required_sign" for="InputDiscountAmount">折抵金額</label>
+                            <div class="input-group">
+                                <span class="input-group-text">NT$</span>
+                                <input id="InputDiscountAmount" class="form-control" name="DiscountAmount" type="number" min="1" data-form-type="number">
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-4 mb-3 rewardPercentSection d-none">
+                            <label class="form-label required_sign" for="InputDiscountPercent">折扣百分比</label>
+                            <div class="input-group">
+                                <input id="InputDiscountPercent" class="form-control" name="DiscountPercent" type="number" min="0.01" max="99.99" step="0.01" data-form-type="number">
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <div class="form-text">90 表示九折，85 表示八五折。</div>
+                        </div>
+
+                        <div class="col-12 col-md-4 mb-3 rewardPercentSection d-none">
+                            <label class="form-label" for="InputMaxDiscountAmount">最高折抵</label>
+                            <div class="input-group">
+                                <span class="input-group-text">NT$</span>
+                                <input id="InputMaxDiscountAmount" class="form-control" name="MaxDiscountAmount" type="number" min="0" data-form-type="number">
+                            </div>
+                            <div class="form-text">可留空，表示不限制。</div>
+                        </div>
+                    </div>
+
+                    <div class="row align-items-center">
+                        <div class="col-12 col-md-4 mb-3">
+                            <div class="form-check marketing-check">
+                                <input id="CheckCanStack" class="form-check-input" name="CanStack" type="checkbox" value="true" data-form-type="boolean">
+                                <label class="form-check-label" for="CheckCanStack">允許與其他優惠併用</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-4 mb-3">
+                            <div class="form-check marketing-check">
+                                <input id="CheckRepeatable" class="form-check-input" name="Repeatable" type="checkbox" value="true" data-form-type="boolean">
+                                <label class="form-check-label" for="CheckRepeatable">允許重複觸發</label>
+                            </div>
+                            <div class="form-text ps-4">例如滿 1000 折 100，消費 2000 是否折 200。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="marketing-section">
+                    <div class="marketing-section-title">活動期間</div>
+
+                    <div class="row align-items-end">
+                        <div class="col-12 col-md-4 mb-3">
+                            <label class="form-label required_sign" for="InputStartTime">開始時間</label>
+                            <input id="InputStartTime" class="form-control" name="StartTime" type="datetime-local" required>
+                        </div>
+
+                        <div class="col-12 col-md-4 mb-3 endTimeSection">
+                            <label class="form-label" for="InputEndTime">結束時間</label>
+                            <input id="InputEndTime" class="form-control" name="EndTime" type="datetime-local">
+                        </div>
+
+                        <div class="col-12 col-md-4 mb-3">
+                            <div class="form-check marketing-check">
+                                <input id="CheckNeverEnd" class="form-check-input" name="NeverEnd" type="checkbox" value="true" data-form-type="boolean">
+                                <label class="form-check-label" for="CheckNeverEnd">不設定結束時間</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

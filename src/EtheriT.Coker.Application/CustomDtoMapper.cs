@@ -23,6 +23,7 @@ using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
+using EtheriT.Coker.Application.Shared.Dto.Marketing;
 using EtheriT.Coker.Application.Shared.Dto.Member;
 using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Order;
@@ -497,6 +498,20 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.Dis_Freight, option => option.MapFrom(c => c.Dis_Freight ?? 0))
                 .ForMember(e => e.logisticsBoxFees, option => option.Ignore())
                 .ForMember(e => e.MappingLogisticsSettingAndProds, option => option.Ignore());
+
+            //Marketing
+            CreateMap<MarketingCampaign, MarketingCampaignEditDto>()
+                .ReverseMap()
+                .ForMember(e => e.FK_WebsiteId, option => option.Ignore())
+                .ForMember(e => e.Website, option => option.Ignore())
+                .ForMember(e => e.Rules, option => option.Ignore())
+                .ForMember(e => e.CreationTime, option => option.Ignore())
+                .ForMember(e => e.CreatorUserId, option => option.Ignore())
+                .ForMember(e => e.LastModificationTime, option => option.Ignore())
+                .ForMember(e => e.LastModifierUserId, option => option.Ignore())
+                .ForMember(e => e.DeletionTime, option => option.Ignore())
+                .ForMember(e => e.DeleterUserId, option => option.Ignore())
+                .ForMember(e => e.IsDeleted, option => option.Ignore());
 
             CreateMap<LogisticsSetting, FreightDto>()
                 .ForMember(e => e.ProdIds, option => option.MapFrom(c =>

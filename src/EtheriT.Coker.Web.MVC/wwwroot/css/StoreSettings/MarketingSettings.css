@@ -1,0 +1,144 @@
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.z-index-up {
+    z-index: 10;
+}
+
+/* Marketing List */
+.btn_back {
+    color: #4E565A;
+}
+
+.btn_add {
+    z-index: 1;
+}
+
+/* Marketing Content */
+#MarketingContent > .card-header {
+    background-color: var(--color-gray-bg-dark);
+}
+
+/* Marketing Form */
+#MarketingForm .form-label {
+    font-weight: 600;
+    color: #4E565A;
+}
+
+.marketing-section {
+    border: 1px solid #dee2e6;
+    border-radius: .75rem;
+    background: #fff;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.marketing-section-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #2f3a40;
+}
+
+.marketing-rule-card {
+    min-width: 220px;
+    border: 1px solid #dee2e6;
+    border-radius: .75rem;
+    padding: .85rem 1rem .85rem 2.5rem;
+    background: #fff;
+}
+
+.marketing-rule-card:has(input:checked) {
+    border-color: var(--bs-primary);
+    background: #F0F7FF;
+}
+
+.marketing-check {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+}
+
+.endTimeSection.is-disabled {
+    opacity: .55;
+}
+
+#MarketingForm .input-group-text {
+    min-width: 48px;
+    justify-content: center;
+}
+
+#MarketingForm .form-text {
+    font-size: .8rem;
+}
+
+.marketing-rule-note {
+    border: 1px solid #b6d4fe;
+    border-left: 4px solid var(--bs-primary);
+    border-radius: .75rem;
+    background: #f6faff;
+    padding: .85rem 1rem;
+    margin-bottom: 1rem;
+    color: #2f3a40;
+}
+
+.marketing-rule-note-title {
+    font-size: .95rem;
+    font-weight: 700;
+    margin-bottom: .35rem;
+    color: #214b73;
+}
+
+.marketing-rule-note-list {
+    margin: 0;
+    padding-left: 1.15rem;
+    font-size: .875rem;
+    line-height: 1.65;
+}
+
+    .marketing-rule-note-list > li + li {
+        margin-top: .2rem;
+    }
+
+@media (max-width: 575.98px) {
+    .marketing-section {
+        padding: 1rem;
+    }
+
+    .marketing-rule-card {
+        width: 100%;
+    }
+    .marketing-rule-note {
+        border: 1px solid #b6d4fe;
+        border-left: 4px solid var(--bs-primary);
+        border-radius: .75rem;
+        background: #f6faff;
+        padding: .85rem 1rem;
+        margin-bottom: 1rem;
+        color: #2f3a40;
+    }
+
+    .marketing-rule-note-title {
+        font-size: .95rem;
+        font-weight: 700;
+        margin-bottom: .35rem;
+        color: #214b73;
+    }
+
+    .marketing-rule-note-list {
+        margin: 0;
+        padding-left: 1.15rem;
+        font-size: .875rem;
+        line-height: 1.65;
+    }
+
+        .marketing-rule-note-list > li + li {
+            margin-top: .2rem;
+        }
+}

@@ -233,7 +233,9 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         FK_Uid = userid,
                         UUID = UUID,
                         Ser_No = 500,
-                        ProdName = string.IsNullOrWhiteSpace(dto.ProdName) ? dto.ProdName: prod.Title,
+                        FK_S1id = proStock.FK_S1id,
+                        FK_S2id = proStock.FK_S2id,
+                        ProdName = !string.IsNullOrWhiteSpace(dto.ProdName) ? dto.ProdName: prod.Title,
                         CreatorUserId = userid,
                         CreationTime = date
                     };
@@ -257,6 +259,17 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     sc.FK_PriceId = dto.FK_PriceId;
                     sc.LastModificationTime = DateTime.Now;
                     sc.LastModifierUserId = userid;
+
+                    if (sc.FK_S1id == null && sc.FK_S2id == null)
+                    {
+                        sc.FK_S1id = proStock.FK_S1id;
+                        sc.FK_S2id = proStock.FK_S2id;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(sc.ProdName))
+                    {
+                        sc.ProdName = prod.Title;
+                    }
 
                     LogCartEventAsync(proStock.FK_Pid, userid, UUID, LogActionEnum.加入購物車, oQuantity, newTotal);
 
@@ -366,6 +379,18 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         itemResult.Success = false;
                         itemResult.Error = "StockNotFound";
                         itemResult.Message = "查無商品庫存";
+                        itemResult.OldQuantity = sc.Quantity;
+                        itemResult.NewQuantity = sc.Quantity;
+                        response.Success = false;
+                        continue;
+                    }
+
+                    var specCheck = ApplyCartSpecValidation(sc, pro_stock);
+                    if (!specCheck.Success)
+                    {
+                        itemResult.Success = false;
+                        itemResult.Error = specCheck.Error;
+                        itemResult.Message = specCheck.Message;
                         itemResult.OldQuantity = sc.Quantity;
                         itemResult.NewQuantity = sc.Quantity;
                         response.Success = false;
@@ -695,7 +720,17 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     temp_output.Bonus = currentBonus;
                     temp_output.PackingPoint = prod_stocks.PackingPoint;
 
-                    if (!temp_output.Available) temp_output.Quantity = 0;
+                    var specCheck = ApplyCartSpecValidation(shoppingCart, prod_stocks);
+
+                    if (!specCheck.Success)
+                    {
+                        temp_output.Available = false;
+                        temp_output.Quantity = 0;
+                        temp_output.Describe = specCheck.Message;
+                    }
+
+                    if (!temp_output.Available)
+                        temp_output.Quantity = 0;
 
                     temp_output.Subtotal = temp_output.Price * temp_output.Quantity;
                     temp_output.SubtotalBonus = temp_output.Bonus * temp_output.Quantity;
@@ -715,6 +750,40 @@ namespace EtheriT.Coker.Application.ShoppingCart
             }
 
             return output;
+        }
+
+        private ResponseMessageDto ApplyCartSpecValidation(
+            Core.Models.ShoppingCart shoppingCart,
+            Prod_Stock? stock = null)
+        {
+            var response = new ResponseMessageDto
+            {
+                Success = true
+            };
+
+            stock ??= shoppingCart.Prod_Stock;
+
+            if (stock == null)
+            {
+                response.Success = false;
+                response.Error = "StockNotFound";
+                response.Message = "此商品目前無法購買，請移除後重新選購。";
+                return response;
+            }
+
+            var specChanged =
+                (shoppingCart.FK_S1id ?? -1) != (stock.FK_S1id ?? -1) ||
+                (shoppingCart.FK_S2id ?? -1) != (stock.FK_S2id ?? -1);
+
+            if (specChanged)
+            {
+                response.Success = false;
+                response.Error = "SpecChanged";
+                response.Message = "此商品規格已異動，請移除後重新選購。";
+                return response;
+            }
+
+            return response;
         }
         public async Task<ResponseMessageDto> Reorder(List<long> scids)
         {

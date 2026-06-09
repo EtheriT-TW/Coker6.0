@@ -30,6 +30,7 @@ using EtheriT.Coker.Application.Product;
 using EtheriT.Coker.Application.Remote;
 using EtheriT.Coker.Application.Report;
 using EtheriT.Coker.Application.Search;
+using EtheriT.Coker.Application.Marketing;
 using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Authorization;
@@ -56,6 +57,7 @@ using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Templates;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.Shared.UserHabits;
+using EtheriT.Coker.Application.Shared.Marketing;
 using EtheriT.Coker.Application.ShoppingCart;
 using EtheriT.Coker.Application.Specification;
 using EtheriT.Coker.Application.StoreSet;
@@ -376,6 +378,7 @@ builder.Services.AddScoped<ICookieManagerAppService, CookieManagerAppService>();
 builder.Services.AddScoped<IWebsiteCacheStateAppService, WebsiteCacheStateAppService>();
 builder.Services.AddScoped<IHtmlSanitizeService, HtmlSanitizeService>();
 builder.Services.AddScoped<IHtmlSanitizer, HtmlSanitizer>();
+builder.Services.AddScoped<IMarketingAppService, MarketingAppService>();
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

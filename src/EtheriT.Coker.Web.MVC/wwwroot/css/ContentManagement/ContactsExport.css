@@ -1,0 +1,207 @@
+/* 匯出視窗固定在 560px，讓表單欄位在桌機上維持易讀寬度。 */
+.contact-export-dialog {
+    max-width: 560px;
+}
+
+/* 與後台 Bootstrap modal 視覺一致，僅補上匯出視窗需要的陰影與圓角。 */
+.contact-export-modal {
+    border: 0;
+    border-radius: 8px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.24);
+}
+
+/* 快捷日期按鈕使用固定 grid，避免按鈕文字長短造成跳動。 */
+.contact-export-ranges {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.contact-export-ranges .btn {
+    min-height: 38px;
+    white-space: nowrap;
+}
+
+/* 目前選取的快捷區間以 primary 色標示，與確認匯出按鈕保持一致。 */
+.contact-export-ranges .btn.active {
+    color: #fff;
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+.contact-export-range-hint {
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+/* 匯出上限由後端設定提供，因此提示框只負責顯示目前生效的限制。 */
+.contact-export-limit {
+    color: #b45309;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 0.92rem;
+}
+
+/* 匯出處理中與成功 popup 參考需求簡報的流程卡片，採用置中內容與明確狀態圖示。 */
+.contact-export-status-popup {
+    width: 320px;
+    border-radius: 8px;
+    padding: 28px 28px 24px;
+}
+
+.contact-export-status-popup .swal2-actions {
+    margin-top: 22px;
+}
+
+.contact-export-popup-html {
+    margin: 0;
+    padding: 0;
+}
+
+.contact-export-popup-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 168px;
+    text-align: center;
+}
+
+/* spinner 代表後端正在整理資料，避免使用者誤以為畫面停住。 */
+.contact-export-popup-spinner {
+    width: 46px;
+    height: 46px;
+    margin: 4px 0 22px;
+    border: 5px solid #dbeafe;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: contact-export-spin 0.9s linear infinite;
+}
+
+.contact-export-popup-success-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    margin: 0 0 18px;
+    color: #16a34a;
+    border: 3px solid #22c55e;
+    border-radius: 50%;
+}
+
+.contact-export-popup-success-icon .material-symbols-outlined {
+    font-size: 36px;
+    line-height: 1;
+}
+
+/* 錯誤 popup 依情境使用不同圖示，讓超過限制、查無資料與系統錯誤可以一眼分辨。 */
+.contact-export-popup-error-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    margin: 0 0 18px;
+}
+
+.contact-export-popup-error-icon .material-symbols-outlined {
+    font-size: 46px;
+    line-height: 1;
+}
+
+.contact-export-popup-error-icon--limit {
+    color: #dc2626;
+}
+
+.contact-export-popup-error-icon--no-data {
+    color: #ea580c;
+    border: 3px solid #f97316;
+    border-radius: 50%;
+}
+
+.contact-export-popup-error-icon--no-data .material-symbols-outlined {
+    font-size: 34px;
+}
+
+.contact-export-popup-error-icon--system {
+    color: #dc2626;
+    border: 3px solid #ef4444;
+    border-radius: 50%;
+}
+
+.contact-export-popup-error-icon--system .material-symbols-outlined {
+    font-size: 34px;
+}
+
+.contact-export-popup-title {
+    color: #111827;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.contact-export-popup-note {
+    margin-top: 10px;
+    color: #4b5563;
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.contact-export-popup-file {
+    width: 100%;
+    margin-top: 16px;
+    color: #374151;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.contact-export-popup-cancel,
+.contact-export-popup-confirm {
+    min-width: 96px;
+    padding: 8px 18px;
+}
+
+/* 失敗與查無資料按鈕參考需求簡報右下角色彩，不套用 Bootstrap 預設漸層。 */
+.contact-export-popup-confirm--danger {
+    color: #fff;
+    background-color: #dc2626;
+    border-color: #dc2626;
+}
+
+.contact-export-popup-confirm--danger:hover {
+    color: #fff;
+    background-color: #b91c1c;
+    border-color: #b91c1c;
+}
+
+.contact-export-popup-confirm--warning {
+    color: #fff;
+    background-color: #ea580c;
+    border-color: #ea580c;
+}
+
+.contact-export-popup-confirm--warning:hover {
+    color: #fff;
+    background-color: #c2410c;
+    border-color: #c2410c;
+}
+
+@keyframes contact-export-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 手機寬度改為兩欄，避免快捷日期按鈕擠壓文字。 */
+@media (max-width: 576px) {
+    .contact-export-ranges {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #ContactExportOpen {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}

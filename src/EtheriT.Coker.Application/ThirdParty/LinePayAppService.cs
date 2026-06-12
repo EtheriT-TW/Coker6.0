@@ -119,10 +119,18 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (ohdata != null)
                 {
                     ohidstr = $"000000000{ohdata.Id}".Substring(ohdata.Id.ToString().Length);
+                    var paymentResult = await orderAppService.GetForPaymentAsync(ohdata.Id);
+                    if (!paymentResult.Success)
+                        throw new Exception(paymentResult.Message ?? "取得付款資料失敗");
+
+                    var payData = paymentResult.Object as PayOrderData;
+                    if (payData == null)
+                        throw new Exception("付款資料格式錯誤");
+
                     var RequestUri = $"/v3/payments/{transactionId}/confirm";
                     LinePayConfirmRequestDto RequestBody = new LinePayConfirmRequestDto()
                     {
-                        amount = (ohdata.Subtotal + ohdata.Freight).ToString(),
+                        amount = payData.PayableAmount.ToString(),
                         currency = "TWD",
                     };
                     RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
@@ -179,10 +187,18 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (ohdata != null)
                 {
+                    var paymentResult = await orderAppService.GetForPaymentAsync(ohdata.Id);
+                    if (!paymentResult.Success)
+                        throw new Exception(paymentResult.Message ?? "取得付款資料失敗");
+
+                    var payData = paymentResult.Object as PayOrderData;
+                    if (payData == null)
+                        throw new Exception("付款資料格式錯誤");
+
                     var RequestUri = $"/v3/payments/{ohdata.TransactionId}/confirm";
                     LinePayConfirmRequestDto RequestBody = new LinePayConfirmRequestDto()
                     {
-                        amount = (ohdata.Subtotal + ohdata.Freight).ToString(),
+                        amount = payData.PayableAmount.ToString(),
                         currency = "TWD",
                     };
                     RequestBodyStr = JsonConvert.SerializeObject(RequestBody);

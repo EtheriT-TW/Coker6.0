@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using DevExpress.CodeParser;
 using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Data.ResponseModel;
 using DevExtreme.AspNet.Mvc;
@@ -132,16 +133,13 @@ namespace EtheriT.Coker.Application.Marketing
 
         public async Task<ResponseMessageDto> AddUp(MarketingCampaignEditDto input)
         {
+            ResponseMessageDto response = new ResponseMessageDto();
             try
             {
                 var validateMessage = ValidateInput(input);
                 if (!string.IsNullOrWhiteSpace(validateMessage))
                 {
-                    return new ResponseMessageDto
-                    {
-                        Success = false,
-                        Message = validateMessage
-                    };
+                    throw new Exception(validateMessage);
                 }
 
                 var websiteId = await loginUserData.GetWebsiteId();
@@ -159,11 +157,7 @@ namespace EtheriT.Coker.Application.Marketing
 
                     if (campaign == null)
                     {
-                        return new ResponseMessageDto
-                        {
-                            Success = false,
-                            Message = "找不到行銷活動資料，或您沒有權限編輯此活動。"
-                        };
+                        throw new Exception("找不到行銷活動資料，或您沒有權限編輯此活動。");
                     }
 
                     mapper.Map(input, campaign);
@@ -239,26 +233,28 @@ namespace EtheriT.Coker.Application.Marketing
 
                 await db.SaveChangesAsync();
 
-                return new ResponseMessageDto
-                {
-                    Success = true,
-                    Message = "儲存成功。",
-                    Object = campaign.Id
-                };
+                response.Success = true;
+                response.Object = campaign.Id;
+                response.Message = "儲存成功。";
             }
             catch (Exception ex)
             {
-                return new ResponseMessageDto
-                {
-                    Success = false,
-                    Message = "儲存失敗。",
-                    Error = ex.Message
-                };
+                response.Message = "儲存失敗。";
+                response.Error = ex.Message;
             }
+            finally
+            {
+                await loginUserData.SetLogs(
+                    JsonConvert.SerializeObject(input),
+                    JsonConvert.SerializeObject(response)
+                );
+            }
+            return response;
         }
 
         public async Task<ResponseMessageDto> Delete(long id)
         {
+            ResponseMessageDto response = new ResponseMessageDto();
             try
             {
                 var websiteId = await loginUserData.GetWebsiteId();
@@ -274,11 +270,7 @@ namespace EtheriT.Coker.Application.Marketing
 
                 if (campaign == null)
                 {
-                    return new ResponseMessageDto
-                    {
-                        Success = false,
-                        Message = "找不到行銷活動資料，或您沒有權限刪除此活動。"
-                    };
+                    throw new Exception("找不到行銷活動資料，或您沒有權限刪除此活動。");
                 }
 
                 campaign.IsDeleted = true;
@@ -309,22 +301,23 @@ namespace EtheriT.Coker.Application.Marketing
                 }
 
                 await db.SaveChangesAsync();
-
-                return new ResponseMessageDto
-                {
-                    Success = true,
-                    Message = "刪除成功。"
-                };
+                response.Success = true;
+                response.Message = "刪除成功。";
             }
             catch (Exception ex)
             {
-                return new ResponseMessageDto
-                {
-                    Success = false,
-                    Message = "刪除失敗。",
-                    Error = ex.Message
-                };
+                response.Success = false;
+                response.Message = "刪除失敗。";
+                response.Error = ex.Message;
             }
+            finally
+            {
+                await loginUserData.SetLogs(
+                    JsonConvert.SerializeObject(new {id}),
+                    JsonConvert.SerializeObject(response)
+                );
+            }
+            return response;
         }
 
         public Task<ResponseMessageDto> GetOptions()
@@ -370,6 +363,90 @@ namespace EtheriT.Coker.Application.Marketing
                 Success = true,
                 Object = options
             });
+        }
+
+        public async Task<ResponseMessageDto> GetCartMarketingCampaigns()
+        {
+            try
+            {
+                var websiteId = await loginUserData.GetCommonWebsiteId();
+                var now = DateTime.Now;
+
+                var campaigns = await db.MarketingCampaigns
+                    .AsNoTracking()
+                    .Include(x => x.Rules)
+                        .ThenInclude(x => x.Condition)
+                    .Include(x => x.Rules)
+                        .ThenInclude(x => x.Reward)
+                    .Where(x => !x.IsDeleted)
+                    .Where(x => x.FK_WebsiteId == websiteId)
+                    .Where(x => x.CampaignType == MarketingCampaignTypeEnum.滿額優惠)
+                    .Where(x => x.Status == MarketingDisplayStatusEnum.活動中)
+                    .Where(x => x.StartTime <= now)
+                    .Where(x => x.NeverEnd || (x.EndTime.HasValue && x.EndTime.Value >= now))
+                    .OrderBy(x => x.Priority)
+                    .ThenByDescending(x => x.CreationTime)
+                    .ThenByDescending(x => x.Id)
+                    .ToListAsync();
+
+                var output = new CartMarketingCampaignsDto();
+
+                foreach (var campaign in campaigns)
+                {
+                    var rules = campaign.Rules
+                        .Where(r => !r.IsDeleted)
+                        .Where(r => r.Enabled)
+                        .Where(r => r.ScopeType == MarketingScopeTypeEnum.AllOrder)
+                        .Where(r => r.Condition != null && !r.Condition.IsDeleted)
+                        .Where(r => r.Condition.ConditionType == MarketingConditionTypeEnum.OrderAmount)
+                        .Where(r => r.Reward != null && !r.Reward.IsDeleted)
+                        .Where(r => r.Reward.DeliveryType == MarketingRewardDeliveryTypeEnum.ApplyImmediately)
+                        .Where(r =>
+                            r.RuleType == MarketingRuleTypeEnum.AmountDiscount ||
+                            r.RuleType == MarketingRuleTypeEnum.PercentDiscount)
+                        .OrderBy(r => r.SortOrder)
+                        .Select(r => new CartMarketingRuleDto
+                        {
+                            Id = r.Id,
+                            RuleType = r.RuleType,
+                            ScopeType = r.ScopeType,
+                            MinAmount = r.Condition.MinAmount,
+                            DiscountAmount = r.Reward.DiscountAmount,
+                            DiscountPercent = r.Reward.DiscountPercent,
+                            MaxDiscountAmount = r.Reward.MaxDiscountAmount
+                        })
+                        .ToList();
+
+                    if (!rules.Any())
+                        continue;
+
+                    output.OrderDiscounts.Add(new CartMarketingCampaignDto
+                    {
+                        Id = campaign.Id,
+                        Name = campaign.Name,
+                        CampaignType = campaign.CampaignType,
+                        Priority = campaign.Priority,
+                        CanStack = campaign.CanStack,
+                        Repeatable = campaign.Repeatable,
+                        Rules = rules
+                    });
+                }
+
+                return new ResponseMessageDto
+                {
+                    Success = true,
+                    Object = output
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseMessageDto
+                {
+                    Success = false,
+                    Message = "取得購物車行銷活動發生錯誤。",
+                    Error = ex.Message
+                };
+            }
         }
 
         private static string? ValidateInput(MarketingCampaignEditDto input)

@@ -16,6 +16,8 @@ namespace EtheriT.Coker.Application.Order.Dto
         public int TotalBonus { get; set; }            // 總紅利
         public int Freight { get; set; }
         public int PackingPointTotal { get; set; }
+        public int Discount { get; set; }
+        public string? DiscountMemo { get; set; }
         public List<BoxUsageResult> BoxUsages { get; set; } = new();
     }
 }

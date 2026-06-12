@@ -113,7 +113,7 @@
             </Item2>
             <Item3 Ref="64" ControlType="XRTableRow" Name="tableRow15" Weight="1">
               <Cells>
-                <Item1 Ref="65" ControlType="XRTableCell" Name="tableCell47" Weight="1.1099993896484375" Multiline="true" Text="訂單折抵：" Padding="2,2,5,5,100">
+                <Item1 Ref="65" ControlType="XRTableCell" Name="tableCell47" Weight="1.1099993896484375" Multiline="true" Text="活動折抵：" Padding="2,2,5,5,100">
                   <StylePriority Ref="66" UsePadding="false" />
                 </Item1>
                 <Item2 Ref="67" ControlType="XRTableCell" Name="tableCell48" Weight="1.1100006103515625" TextFormatString="${0:N0}" Multiline="true" Text="tableCell48" TextAlignment="TopRight" Padding="2,2,5,5,100">

@@ -50,10 +50,18 @@
     content: "$";
 }
 
+.price-negative::before {
+    content: "-$";
+    margin-right: 2px;
+}
+
 .pro_quantity::before {
     content: "\00d7";
 }
-
+.order_redeemBonus:before {
+    content: "-";
+    margin-right: 2px;
+}
 /* Order Data */
 #OrderData {
     max-width: 95vw;
@@ -66,6 +74,11 @@
 
     #OrderData > .card-body > .row > .col > div > div:first-child {
         width: 5rem;
+    }
+
+    #OrderData #SystemMemo > .order_systemMemos {
+        margin-top:0.5rem;
+        width: 100%;
     }
 
 /* ManagementData */

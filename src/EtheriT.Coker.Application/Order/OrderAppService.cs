@@ -26,6 +26,8 @@ using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Application.Shared.Marketing;
+using EtheriT.Coker.Application.Shared.Dto.Marketing;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Core.Models;
@@ -56,6 +58,7 @@ namespace EtheriT.Coker.Application.Order
         private readonly IConfiguration configuration;
         private readonly IBonusManagementAppService bonusManagementAppService;
         private readonly IFileUploadAppService fileUploadAppService;
+        private readonly ICheckoutDiscountService checkoutDiscountService;
         private readonly IMapper mapper;
         public OrderAppService(
             CokerDbContext db,
@@ -68,6 +71,7 @@ namespace EtheriT.Coker.Application.Order
             MailAppService mailAppService,
             IConfiguration configuration,
             IFileUploadAppService fileUploadAppService,
+            ICheckoutDiscountService checkoutDiscountService,
             IMapper mapper
         )
         {
@@ -81,6 +85,7 @@ namespace EtheriT.Coker.Application.Order
             this.configuration = configuration;
             this.bonusManagementAppService = bonusManagementAppService;
             this.fileUploadAppService = fileUploadAppService;
+            this.checkoutDiscountService = checkoutDiscountService;
             this.mapper = mapper;
 
         }
@@ -272,6 +277,7 @@ namespace EtheriT.Coker.Application.Order
             decimal subtotal = 0;
             decimal totalBonus = 0;
 
+            var discountItems = new List<CheckoutDiscountItemDto>();
             var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
             var bonusEnabled = bonusSetting?.BonusEnabled == true;
 
@@ -301,6 +307,15 @@ namespace EtheriT.Coker.Application.Order
                 subtotal += unitPrice * qty;
                 totalBonus += unitBonus * qty;
 
+                discountItems.Add(new CheckoutDiscountItemDto
+                {
+                    ShoppingCartId = sc.Id,
+                    ProductId = sc.Prod_Stock?.FK_Pid ?? 0,
+                    ProductStockId = sc.FK_PSid,
+                    ProductPriceId = sc.FK_PriceId,
+                    UnitPrice = unitPrice,
+                    Quantity = qty
+                });
                 // 正式訂單才回寫購物車狀態
                 if (!previewOnly)
                 {
@@ -324,7 +339,34 @@ namespace EtheriT.Coker.Application.Order
                 }
             }
 
-            var productSubtotalBeforeBonusRedeem = subtotal;
+            var productSubtotalBeforeDiscount = subtotal;
+
+            var discountResult = await checkoutDiscountService.CalculateAsync(
+                new CheckoutDiscountInputDto
+                {
+                    ProductSubtotal = productSubtotalBeforeDiscount,
+                    Items = discountItems,
+                    CouponId = dto.CouponId,
+                    ShippingId = dto.Shipping,
+                    PaymentId = dto.Payment,
+                    PreviewOnly = previewOnly
+                }
+            );
+
+            var checkoutDiscount = (int)Math.Round(
+                discountResult.TotalDiscountAmount,
+                MidpointRounding.AwayFromZero
+            );
+
+            checkoutDiscount = Math.Max(
+                0,
+                Math.Min(
+                    checkoutDiscount,
+                    (int)Math.Round(productSubtotalBeforeDiscount, MidpointRounding.AwayFromZero)
+                )
+            );
+
+            subtotal = Math.Max(0, subtotal - checkoutDiscount);
 
             if (bonusEnabled && bonusSetting != null)
             {
@@ -366,13 +408,16 @@ namespace EtheriT.Coker.Application.Order
                 }
             }
 
-            var freightResult = await CalculateFreightAsync(dto.Shipping, carts, productSubtotalBeforeBonusRedeem);
+            // 運費門檻使用所有折抵完成後的商品小計
+            var freightResult = await CalculateFreightAsync(dto.Shipping, carts, subtotal);
 
             return new DetailBuildResult
             {
                 ShoppingCarts = carts,
                 StockDict = stockDict,
                 Subtotal = (int)Math.Round(subtotal, MidpointRounding.AwayFromZero),
+                Discount = checkoutDiscount,
+                DiscountMemo = discountResult.Memo,
                 TotalBonus = (int)Math.Round(totalBonus, MidpointRounding.AwayFromZero),
                 Freight = freightResult.Freight,
                 PackingPointTotal = freightResult.PackingPointTotal,
@@ -576,17 +621,24 @@ namespace EtheriT.Coker.Application.Order
                 return;
             }
 
+            var memoParts = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(detailResult.DiscountMemo))
+            {
+                memoParts.Add(detailResult.DiscountMemo);
+            }
+
             if (detailResult.BoxUsages != null && detailResult.BoxUsages.Any())
             {
                 var boxMemo = string.Join("、", detailResult.BoxUsages
                     .Select(x => $"{x.Name} × {x.Count}"));
 
-                oh.SystemMemo = $"配箱資訊：{boxMemo}（運費：{detailResult.Freight}）";
+                memoParts.Add($"配箱資訊：{boxMemo}（運費：{detailResult.Freight}）");
             }
-            else
-            {
-                oh.SystemMemo = null;
-            }
+
+            oh.SystemMemo = memoParts.Any()
+                ? string.Join("；", memoParts)
+                : null;
         }
         private static void ApplyDetailResultToHeader(Order_Header oh, DetailBuildResult? detailResult)
         {
@@ -594,6 +646,7 @@ namespace EtheriT.Coker.Application.Order
 
             // 暫存單與正式單都要覆寫金額
             oh.Subtotal = detailResult.Subtotal;
+            oh.Discount = detailResult.Discount;
             oh.Bonus = detailResult.TotalBonus;
             oh.Freight = detailResult.Freight;
         }
@@ -2252,6 +2305,7 @@ namespace EtheriT.Coker.Application.Order
 
                     var totalBonus = order_header.Bonus ?? 0;
                     var redeemBonus = Math.Max(totalBonus - productBonus, 0);
+                    var discountAmount = order_header.Discount ?? 0;
 
                     var OrdererEmailSecret = (order_header.OrdererEmail.Length > 5 ? order_header.OrdererEmail.Substring(0, 4) : order_header.OrdererEmail.Substring(0, 1)) + "**********";
                     order_header.OrdererCellPhone = (order_header.OrdererCellPhone.Length > 4 ? order_header.OrdererCellPhone.Substring(0, 4) : order_header.OrdererCellPhone.Substring(0, 1)) + "******";
@@ -2329,6 +2383,13 @@ namespace EtheriT.Coker.Application.Order
                  <tr>
                     <td colspan='6' class='text-end text-bold'>商品金額<span class='ms-1 text-size1_25'>{productAmount.ToString("$#,##0")}</span></td>
                 </tr>
+                {(
+                    discountAmount > 0 ?
+                    $@"<tr>
+                        <td colspan='6' class='text-end text-bold'>活動折扣<span class='text-red ms-1 text-size1_25'>-{discountAmount.ToString("$#,##0")}</span></td>
+                    </tr>" :
+                    ""
+                )}
                 {(
                     redeemBonus > 0 ?
                     $@"<tr>
@@ -3263,6 +3324,18 @@ namespace EtheriT.Coker.Application.Order
 
                 payData.Items = NormalizePayItems(payData.Items);
                 payData.PayableAmount = payData.Items.Sum(x => x.PayLineAmount);
+
+                var expectedPayableAmount = (int)Math.Round(
+                    order.ProductAmount + order.ShippingFee,
+                    MidpointRounding.AwayFromZero
+                );
+
+                if (payData.PayableAmount != expectedPayableAmount)
+                {
+                    throw new Exception(
+                        $"付款金額不一致，訂單應付金額：{expectedPayableAmount}，付款明細金額：{payData.PayableAmount}"
+                    );
+                }
 
                 response.Object = payData;
                 response.Success = true;

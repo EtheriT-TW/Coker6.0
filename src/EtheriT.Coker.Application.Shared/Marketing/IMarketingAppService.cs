@@ -16,5 +16,6 @@ namespace EtheriT.Coker.Application.Shared.Marketing
 
         public Task<ResponseMessageDto> Delete(long id); 
         public Task<ResponseMessageDto> GetOptions();
+        public Task<ResponseMessageDto> GetCartMarketingCampaigns();
     }
 }

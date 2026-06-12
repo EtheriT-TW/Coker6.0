@@ -379,6 +379,7 @@ builder.Services.AddScoped<IWebsiteCacheStateAppService, WebsiteCacheStateAppSer
 builder.Services.AddScoped<IHtmlSanitizeService, HtmlSanitizeService>();
 builder.Services.AddScoped<IHtmlSanitizer, HtmlSanitizer>();
 builder.Services.AddScoped<IMarketingAppService, MarketingAppService>();
+builder.Services.AddScoped<ICheckoutDiscountService, CheckoutDiscountService>();
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

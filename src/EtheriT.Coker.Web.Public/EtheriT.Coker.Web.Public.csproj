@@ -29,7 +29,6 @@
 		<Content Remove="wwwroot\js\Page\OrderManagement.min.js" />
 		<Content Remove="wwwroot\js\Page\ProductContent.js" />
 		<Content Remove="wwwroot\js\Page\Search.js" />
-		<Content Remove="wwwroot\js\Page\ShoppingCart.js" />
 		<Content Remove="wwwroot\lib\pdf-viewer\external\pdfjs-4.5.136-dist\LICENSE" />
 		<Content Remove="wwwroot\lib\pdf-viewer\LICENSE" />
 		<Content Remove="wwwroot\lib\pdf-viewer\README.md" />
@@ -108,7 +107,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="wwwroot\js\ShoppingCart\" />
 		<Folder Include="wwwroot\lib\bootstrap\" />
 	</ItemGroup>
 
@@ -151,7 +149,6 @@
 		<None Include="wwwroot\js\Page\Index.js" />
 		<None Include="wwwroot\js\Page\ProductContent.js" />
 		<None Include="wwwroot\js\Page\Search.js" />
-		<None Include="wwwroot\js\Page\ShoppingCart.js" />
 		<None Include="wwwroot\lib\pdf-viewer\external\pdfjs-4.5.136-dist\LICENSE" />
 		<None Include="wwwroot\lib\pdf-viewer\LICENSE" />
 		<None Include="wwwroot\lib\pdf-viewer\README.md" />

@@ -264,10 +264,12 @@ function ToggleOrderBonusLines(data) {
     const productBonus = Number(String(data.productBonus || "0").replaceAll(",", ""));
     const redeemBonus = Number(String(data.redeemBonus || "0").replaceAll(",", ""));
     const totalBonus = Number(String(data.bonus || "0").replaceAll(",", ""));
+    const discount = Number(String(data.discount || "0").replaceAll(",", ""));
 
     $(".productBonusLine").toggleClass("d-none", productBonus <= 0);
     $(".bonusDiscionLine").toggleClass("d-none", redeemBonus <= 0);
     $(".bonusUseTotalLine").toggleClass("d-none", totalBonus <= 0);
+    $(".discountLine").toggleClass("d-none", discount <= 0);
 }
 function updateOrder() {
     co.Order.UpdateStatus({ Id: keyId, Status: $order_status.val(), Memo: $memo_block.val() }).done(function (result) {

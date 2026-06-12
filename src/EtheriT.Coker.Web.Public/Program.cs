@@ -12,6 +12,7 @@ using EtheriT.Coker.Application.Freight;
 using EtheriT.Coker.Application.HtmlContent;
 using EtheriT.Coker.Application.Import;
 using EtheriT.Coker.Application.JsonObject;
+using EtheriT.Coker.Application.Marketing;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Member;
 using EtheriT.Coker.Application.Newsletter;
@@ -33,6 +34,7 @@ using EtheriT.Coker.Application.Shared.Favorites;
 using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.JsonObject;
+using EtheriT.Coker.Application.Shared.Marketing;
 using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Shared.Member;
 using EtheriT.Coker.Application.Shared.Order;
@@ -243,6 +245,8 @@ builder.Services.AddScoped<IProductDisplayPriceService, ProductDisplayPriceServi
 builder.Services.AddScoped<IHtmlSanitizeService, HtmlSanitizeService>();
 builder.Services.AddScoped<IHtmlSanitizer, HtmlSanitizer>();
 builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<CustomDtoMapper>();});
+builder.Services.AddScoped<IMarketingAppService, MarketingAppService>();
+builder.Services.AddScoped<ICheckoutDiscountService, CheckoutDiscountService>();
 
 builder.Services.AddSingleton<JumpRedirectCache>();
 

@@ -277,10 +277,17 @@
 
                 var totalBonus = parseInt(orderHeader.bonus || 0, 10);
                 var redeemBonus = Math.max(totalBonus - productBonus, 0);
+                var discount = parseInt(orderHeader.discount || 0, 10);
 
                 frame.find(".collapse .header_subtotal").text(C.util.string.thousandSign(productAmount));
                 frame.find(".collapse .header_freight").text(C.util.string.thousandSign(orderHeader.freight));
                 frame.find(".collapse .header_total").text(C.util.string.thousandSign(orderHeader.total));
+
+                if (discount > 0) {
+                    frame.find(".collapse .header_discount").text(C.util.string.thousandSign(discount));
+                } else {
+                    frame.find(".collapse .discount_summary_row").remove();
+                }
 
                 frame.find(".collapse .header_invoiceTypeTitle").text(orderHeader.invoiceTypeTitle || "未提供");
                 frame.find(".collapse .header_shipping").text(orderHeader.shipping || "未提供");

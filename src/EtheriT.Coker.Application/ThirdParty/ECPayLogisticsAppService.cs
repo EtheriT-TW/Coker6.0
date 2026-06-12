@@ -16,6 +16,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using EtheriT.Coker.Application.Shared.Dto.Order;
 using System.Web;
 
 namespace EtheriT.Coker.Application.ThirdParty
@@ -285,7 +286,15 @@ namespace EtheriT.Coker.Application.ThirdParty
                         RequestBody.LogisticsSubType = "POST";
                         break;
                 }
-                RequestBody.GoodsAmount = (int)(ohdata.Subtotal + ohdata.Freight);
+                var paymentResult = await orderAppService.GetForPaymentAsync(ohdata.Id);
+                if (!paymentResult.Success)
+                    throw new Exception(paymentResult.Message ?? "取得付款資料失敗");
+
+                var payData = paymentResult.Object as PayOrderData;
+                if (payData == null)
+                    throw new Exception("付款資料格式錯誤");
+
+                RequestBody.GoodsAmount = payData.PayableAmount;
 
                 var itemlist = "";
                 var prod_titles = (await orderAppService.GetOrderDetails(ohdata.Id)).Select(e => e.Title);

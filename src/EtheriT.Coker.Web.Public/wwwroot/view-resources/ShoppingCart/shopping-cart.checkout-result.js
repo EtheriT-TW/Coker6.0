@@ -183,6 +183,8 @@
         }
     }
     function OrderSuccess(result) {
+        var noticeDeferred = $.Deferred();
+
         var message = result.message.split(",");
         var order_header_id = message[1];
         S.step4PaidDateHtml = message.length > 3 ? (message[3] || "") : "";
@@ -226,26 +228,40 @@
             })
             .always(function () {
                 Coker.sweet.close();
-                cart.CheckoutResult.ShowOrderSuccessNotice(result);
+
+                cart.CheckoutResult.ShowOrderSuccessNotice(result, function () {
+                    noticeDeferred.resolve();
+                });
             });
+
+        return noticeDeferred.promise();
     }
-    function ShowOrderSuccessNotice(result) {
+    function ShowOrderSuccessNotice(result, callback) {
         var storeMemoText = $.trim($(".storememo").text() || "");
 
+        function done() {
+            if (typeof callback === "function") {
+                callback();
+            }
+        }
+
         function showMailErrorIfNeed() {
-            if (result.error == null) return;
+            if (result.error == null) {
+                done();
+                return;
+            }
 
             if (!S.islogin) {
                 Coker.sweet.warning(
                     "信件發送失敗",
                     "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。",
-                    null
+                    done
                 );
             } else {
                 Coker.sweet.warning(
                     "信件發送失敗",
                     "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。",
-                    null
+                    done
                 );
             }
         }

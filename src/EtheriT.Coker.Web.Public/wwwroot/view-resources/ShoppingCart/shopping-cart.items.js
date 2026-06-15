@@ -645,7 +645,7 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
             updateSubtotalAndDisplay(quantity);
             syncGroupAndTotal();
             CartDropReset(scid, quantity);
-            cart.Payment.ECPay.MarkECPayDirty();
+            cart.Payment.Core.onAmountChanged();
             return;
         }
 
@@ -669,7 +669,7 @@ function CartDelete(self, id, success, error) {
         CartDropReset(id, 0)
         cart.Pricing.TotalCount();
         cart.Pricing.updateNextStepByBonus();
-        cart.Payment.ECPay.MarkECPayDirty();
+        cart.Payment.Core.onAmountChanged();
         if (parseInt($("#Car_Badge").text()) == 0) {
             cart.Forms.DetailsClear();
         }

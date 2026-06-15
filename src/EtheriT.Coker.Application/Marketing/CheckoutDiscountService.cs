@@ -168,9 +168,7 @@ namespace EtheriT.Coker.Application.Marketing
             if (discount <= 0)
                 return null;
 
-            var displayText = appliedTimes > 1
-                ? $"行銷活動：{campaign.Name}，折抵 {discount:#,##0} 元，套用 {appliedTimes} 次"
-                : $"行銷活動：{campaign.Name}，折抵 {discount:#,##0} 元";
+            var displayText = $"行銷優惠：{campaign.Name}，本次折抵 {discount:#,##0} 元";
 
             return new CheckoutDiscountAppliedDto
             {

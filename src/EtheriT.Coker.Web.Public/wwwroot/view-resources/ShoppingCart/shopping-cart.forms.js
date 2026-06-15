@@ -100,7 +100,10 @@
             }
         }
 
-        if (S.HasECPay && suppressECPayChange !== true) cart.Payment.ECPay.ECPaymentChange();
+        if (suppressECPayChange !== true) {
+            cart.Payment.Core.onAmountChanged();
+            cart.Payment.Core.reloadActiveEmbeddedProvider();
+        }
 
         S.buy_step_swiper.update();
     }
@@ -126,7 +129,8 @@
             S.RecipientOpen = false;
             S.RecipientFilled = true;
         }
-        if (S.HasECPay) cart.Payment.ECPay.ECPaymentChange();
+        cart.Payment.Core.onAmountChanged();
+        cart.Payment.Core.reloadActiveEmbeddedProvider();
         S.buy_step_swiper.update();
     }
     function RecipientFormClear() {
@@ -167,7 +171,8 @@
                 S.InvoiceFilled = true;
                 break;
         }
-        if (S.HasECPay) cart.Payment.ECPay.ECPaymentChange();
+        cart.Payment.Core.onAmountChanged();
+        cart.Payment.Core.reloadActiveEmbeddedProvider();
         S.buy_step_swiper.update();
     }
     function PersonalInvoiceMode() {
@@ -245,18 +250,12 @@
         S.order_header_data.CVSTelephone = shipping_radio.attr("data-cvstelephone") ?? null;
         S.order_header_data.CVSOutSide = shipping_radio.attr("data-cvsoutside") ?? null;
 
-        var checkedPaymentValue = cart.Payment.Core.GetCheckedPaymentValue();
+        var paymentValue = cart.Payment.Core.getActivePaymentValue();
 
-        if (cart.Payment.Core.IsECPaySelected()) {
-            // 選綠界時，允許保留 cart.Payment.ECPay.GetECPayType() 已解析出的綠界細項 payment
-            // 例如信用卡、ATM、超商代碼、條碼、ApplePay。
-            if (S.order_header_data.payment == null || S.order_header_data.payment === "") {
-                S.order_header_data.payment = checkedPaymentValue || cart.Payment.Core.GetECPayEntryValue();
-            }
+        if (paymentValue == null || paymentValue === "") {
+            delete S.order_header_data.payment;
         } else {
-            // 不是綠界時，一律以目前畫面 checked 的 RadioPayment 為準。
-            // 這是排除綠界細項 payment 殘留的關鍵。
-            S.order_header_data.payment = checkedPaymentValue;
+            S.order_header_data.payment = Number(paymentValue);
         }
 
         S.order_header_data.state = 1;
@@ -269,11 +268,6 @@
         S.order_header_data.OrderDetails = cart.Items.getSelectedCartItems();
 
         S.order_header_data.SupportApplePay = true;
-        // if (HasECPay) {
-        //     if (window.ApplePaySession && typeof ApplePaySession.canMakePayments == "function") {
-        //         order_header_data.SupportApplePay = true;
-        //     }
-        // }
     }
     function OrdererDataGet() {
         S.order_data = co.Form.getJson($("#Form_Orderer").attr("id"));

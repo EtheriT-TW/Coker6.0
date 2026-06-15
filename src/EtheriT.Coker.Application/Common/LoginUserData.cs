@@ -334,7 +334,7 @@ namespace EtheriT.Coker.Application
             else return WebsiteLevelEnum.形象;
         }
         public async Task<WebsiteLevelEnum> GetWebsiteLevel() {
-            long id = await GetWebsiteId();
+            long id = await GetCommonWebsiteId();
             if (id != 0) return await GetWebsiteLevel(id);
             else return WebsiteLevelEnum.形象;
         }

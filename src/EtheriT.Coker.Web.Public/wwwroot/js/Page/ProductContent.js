@@ -570,12 +570,76 @@
             this.$video = $('#Pro_Video');
             this.$youtube = $('#Pro_Youtube');
             this.$view360 = $('#Pro_360View');
+            this.$dots = this.$modal.find('.pro-display-dots');
             this.items = [];
+            this.renderToken = 0;
+            this.swipeStartX = 0;
+            this.swipeStartY = 0;
+            this.swipeStartTime = 0;
+            this.hasSeenSwipeHint = sessionStorage.getItem('ProductMediaSwipeHintSeen') === '1';
             this.bindModalEvents();
         }
 
         setItems(items) {
             this.items = Array.isArray(items) ? items : [];
+            this.renderDots();
+        }
+
+        renderDots() {
+            this.refreshMediaElements();
+
+            const hasMultipleMedia = this.items.length > 1;
+
+            this.$modal.toggleClass('has-multiple-media', hasMultipleMedia);
+            this.$modal.toggleClass('swipe-hint-seen', this.hasSeenSwipeHint);
+
+            if (!this.$dots.length) return;
+
+            this.$dots.empty();
+            this.$dots.toggleClass('d-none', !hasMultipleMedia);
+
+            if (!hasMultipleMedia) return;
+
+            this.items.forEach((item, index) => {
+                this.$dots.append(
+                    $('<button/>', {
+                        type: 'button',
+                        class: 'pro-display-dot',
+                        'aria-label': `切換至第 ${index + 1} 張`,
+                        'data-index': index
+                    })
+                );
+            });
+        }
+
+        syncDots(index) {
+            this.refreshMediaElements();
+
+            if (!this.$dots.length) return;
+
+            this.$dots
+                .find('.pro-display-dot')
+                .removeClass('active')
+                .attr('aria-current', 'false');
+
+            this.$dots
+                .find(`.pro-display-dot[data-index="${index}"]`)
+                .addClass('active')
+                .attr('aria-current', 'true');
+        }
+
+        markSwipeHintSeen() {
+            this.hasSeenSwipeHint = true;
+            sessionStorage.setItem('ProductMediaSwipeHintSeen', '1');
+            this.$modal.addClass('swipe-hint-seen');
+        }
+
+        refreshMediaElements() {
+            this.$image = $('#Pro_Image');
+            this.$video = $('#Pro_Video');
+            this.$youtube = $('#Pro_Youtube');
+            this.$view360 = $('#Pro_360View');
+            this.$dots = this.$modal.find('.pro-display-dots');
         }
 
         bindModalEvents() {
@@ -584,10 +648,23 @@
 
             modalElement.addEventListener('hidden.bs.modal', () => {
                 if (window.CI360) window.CI360.destroy();
+
+                this.refreshMediaElements();
+
                 this.$video.attr('src', '').addClass('d-none');
                 this.$youtube.attr('src', '').addClass('d-none');
-                this.$image.addClass('d-none').empty();
-                this.$view360.addClass('d-none').empty();
+
+                this.$image
+                    .addClass('d-none')
+                    .removeClass('cloudimage-360 initialized')
+                    .empty()
+                    .removeAttr('data-folder data-filename-x data-amount-x');
+
+                this.$view360
+                    .addClass('d-none')
+                    .removeClass('cloudimage-360 initialized')
+                    .empty()
+                    .removeAttr('data-folder data-filename-x data-amount-x');
             });
 
             this.$modal.find('.btn-tool.prev-btn').off('click').on('click', (e) => {
@@ -599,22 +676,92 @@
                 e.preventDefault();
                 this.move(1);
             });
+
+            this.$modal
+                .off('click.productMediaDots', '.pro-display-dot')
+                .on('click.productMediaDots', '.pro-display-dot', (e) => {
+                    e.preventDefault();
+
+                    const index = normalizeNullableInt($(e.currentTarget).attr('data-index'), -1);
+                    if (index < 0) return;
+
+                    this.showByIndex(index);
+                });
+
+            this.$modal
+                .off('touchstart.productMediaSwipe', '.modal-body')
+                .on('touchstart.productMediaSwipe', '.modal-body', (e) => {
+                    const touch = e.originalEvent.touches?.[0];
+                    if (!touch) return;
+
+                    this.swipeStartX = touch.clientX;
+                    this.swipeStartY = touch.clientY;
+                    this.swipeStartTime = Date.now();
+                });
+
+            this.$modal
+                .off('touchend.productMediaSwipe', '.modal-body')
+                .on('touchend.productMediaSwipe', '.modal-body', (e) => {
+                    const touch = e.originalEvent.changedTouches?.[0];
+                    if (!touch) return;
+
+                    const diffX = touch.clientX - this.swipeStartX;
+                    const diffY = touch.clientY - this.swipeStartY;
+                    const elapsed = Date.now() - this.swipeStartTime;
+
+                    const isHorizontalSwipe =
+                        Math.abs(diffX) >= 60 &&
+                        Math.abs(diffX) > Math.abs(diffY) * 1.5 &&
+                        elapsed <= 800;
+
+                    if (!isHorizontalSwipe) return;
+
+                    e.preventDefault();
+
+                    this.markSwipeHintSeen();
+                    if (diffX < 0) {
+                        this.move(1);
+                    } else {
+                        this.move(-1);
+                    }
+                });
         }
 
         move(step) {
             if (!this.items.length) return;
-            const currentId = normalizeNullableInt(this.$modal.data('id'));
-            let index = this.items.findIndex(x => normalizeNullableInt(x.id) === currentId);
-            if (index < 0) index = 0;
+
+            let index = normalizeNullableInt(this.$modal.data('index'), 0);
+
+            if (index < 0 || index >= this.items.length) {
+                index = 0;
+            }
+
             index = (index + step + this.items.length) % this.items.length;
-            this.showById(this.items[index].id);
+
+            this.showByIndex(index);
         }
 
         showById(id) {
-            const item = this.items.find(x => normalizeNullableInt(x.id) === normalizeNullableInt(id));
+            const index = this.items.findIndex(x =>
+                normalizeNullableInt(x.id) === normalizeNullableInt(id)
+            );
+
+            if (index < 0) return;
+
+            this.showByIndex(index);
+        }
+
+        showByIndex(index) {
+            index = normalizeNullableInt(index, -1);
+
+            if (index < 0 || index >= this.items.length) return;
+
+            const item = this.items[index];
             if (!item) return;
 
             this.$modal.data('id', item.id);
+            this.$modal.data('index', index);
+            this.syncDots(index);
 
             const type = item.fileType === 3
                 ? 'video'
@@ -628,11 +775,26 @@
         }
 
         render(item, type) {
+            const renderToken = ++this.renderToken;
+
             if (window.CI360) window.CI360.destroy();
-            this.$image.addClass('d-none').empty();
+
+            this.refreshMediaElements();
+
+            this.$image
+                .addClass('d-none')
+                .removeClass('cloudimage-360 initialized')
+                .empty()
+                .removeAttr('data-folder data-filename-x data-amount-x');
+
             this.$video.addClass('d-none').attr('src', '');
             this.$youtube.addClass('d-none').attr('src', '');
-            this.$view360.addClass('d-none').empty();
+
+            this.$view360
+                .addClass('d-none')
+                .removeClass('cloudimage-360 initialized')
+                .empty()
+                .removeAttr('data-folder data-filename-x data-amount-x');
 
             if (type === 'video') {
                 this.resetModalSize();
@@ -745,37 +907,57 @@
                 return;
             }
 
-            const src = item.link[0];
+            const src = item.link?.[0] || '';
+
+            if (!src) return;
+
             const folder = src.substring(0, src.lastIndexOf('/') + 1);
             const filename = src.substring(src.lastIndexOf('/') + 1);
 
+            this.refreshMediaElements();
+
             this.$image
-                .removeClass('d-none')
+                .removeClass('d-none cloudimage-360 initialized')
                 .empty()
-                .removeClass('cloudimage-360')
+                .removeAttr('data-folder data-filename-x data-amount-x')
                 .attr({
                     'data-folder': folder,
                     'data-filename-x': filename,
                     'data-amount-x': 1
                 })
-                .css('position', 'relative');
+                .css({
+                    position: 'relative',
+                    width: '100%',
+                    height: '100%'
+                });
 
             this.fitModalByImage(src, () => {
-                this.$image.addClass('cloudimage-360');
+                if (renderToken !== this.renderToken) return;
+
+                this.refreshMediaElements();
+
+                this.$image
+                    .removeClass('initialized')
+                    .addClass('cloudimage-360');
+
+                if (window.CI360) {
+                    window.CI360._viewers = [];
+                    window.CI360.add('Pro_Image');
+                }
 
                 setTimeout(() => {
-                    window.CI360._viewers = window.CI360._viewers || [];
-                    window.CI360.add('Pro_Image');
+                    if (renderToken !== this.renderToken) return;
 
-                    setTimeout(() => {
-                        const canvasHeight = this.$image.find('canvas').outerHeight();
-                        if (canvasHeight > 0) {
-                            this.$modal.find('.modal-body').css({
-                                height: canvasHeight + 'px'
-                            });
-                        }
-                    }, 80);
-                }, 300);
+                    this.refreshMediaElements();
+
+                    const canvasHeight = this.$image.find('canvas').outerHeight();
+
+                    if (canvasHeight > 0) {
+                        this.$modal.find('.modal-body').css({
+                            height: canvasHeight + 'px'
+                        });
+                    }
+                }, 180);
             });
         }
 
@@ -968,8 +1150,27 @@
             });
 
             this.$pageRoot.off('click.productContent', '.pro_display').on('click.productContent', '.pro_display', (e) => {
+                const index = normalizeNullableInt($(e.currentTarget).data('index'), -1);
+
+                if (index >= 0) {
+                    this.mediaViewer.showByIndex(index);
+                    return;
+                }
+
                 const id = $(e.currentTarget).data('id');
                 this.mediaViewer.showById(id);
+            });
+
+            this.$pageRoot.off('click.productContent', '.PreviewSwiper img').on('click.productContent', '.PreviewSwiper img', (e) => {
+                const index = normalizeNullableInt($(e.currentTarget).data('index'), -1);
+
+                if (index < 0 || !this.state.productSwiper) return;
+
+                if (typeof this.state.productSwiper.slideToLoop === 'function') {
+                    this.state.productSwiper.slideToLoop(index);
+                } else {
+                    this.state.productSwiper.slideTo(index);
+                }
             });
 
             this.$pageRoot.off('click.productContent', '.btn_tc').on('click.productContent', '.btn_tc', (e) => {
@@ -1201,7 +1402,7 @@
             const small = Array.isArray(result.img_Small) ? result.img_Small : [];
             const original = Array.isArray(result.img_Original) ? result.img_Original : [];
 
-            medium.forEach(img => {
+            medium.forEach((img, index) => {
                 let $slide;
 
                 if (img.fileType === 3) {
@@ -1210,6 +1411,7 @@
                         src: img.link[0],
                         alt: img.name,
                         'data-id': img.id,
+                        'data-index': index,
                         'data-display-protype': 'video'
                     });
                 } else if (img.fileType === 4) {
@@ -1219,6 +1421,7 @@
                         src: `https://img.youtube.com/vi/${videoid}/hqdefault.jpg`,
                         alt: img.name,
                         'data-id': img.id,
+                        'data-index': index,
                         'data-youtube-link': img.name,
                         'data-display-protype': 'youtube'
                     });
@@ -1228,6 +1431,7 @@
                         src: img.link?.[0] || '',
                         alt: img.name,
                         'data-id': img.id,
+                        'data-index': index,
                         'data-display-protype': '360view',
                         'data-filename-x': img.filenameX || '{index}.jpg',
                         'data-amount-x': img.amountX || 15
@@ -1238,6 +1442,7 @@
                         src: img.link[0],
                         alt: img.name,
                         'data-id': img.id,
+                        'data-index': index,
                         'data-display-protype': 'image'
                     });
                 }
@@ -1246,7 +1451,7 @@
                 $productWrapper.append($slide);
             });
 
-            small.forEach(img => {
+            small.forEach((img, index) => {
                 const $slide = cloneTemplate(templates.previewSlide);
                 const $img = $slide.find('img');
                 let src = img.link?.[0] || '';
@@ -1257,7 +1462,12 @@
                     src = `https://img.youtube.com/vi/${videoid}/hqdefault.jpg`;
                 }
 
-                $img.attr({ src, alt: img.name }).data('id', img.id);
+                $img.attr({
+                    src,
+                    alt: img.name,
+                    'data-id': img.id,
+                    'data-index': index
+                });
                 $img.imgCheck?.();
                 $previewWrapper.append($slide);
             });
@@ -1267,22 +1477,41 @@
         }
 
         initSwipers(smallCount) {
-            if (this.state.previewSwiper && this.state.previewSwiper.destroy) this.state.previewSwiper.destroy(true, true);
-            if (this.state.productSwiper && this.state.productSwiper.destroy) this.state.productSwiper.destroy(true, true);
+            if (this.state.previewSwiper && this.state.previewSwiper.destroy) {
+                this.state.previewSwiper.destroy(true, true);
+            }
+
+            if (this.state.productSwiper && this.state.productSwiper.destroy) {
+                this.state.productSwiper.destroy(true, true);
+            }
+
+            const previewEl = this.$root.find('.PreviewSwiper').get(0);
+            const productEl = this.$root.find('.ProductSwiper').get(0);
+            const prevBtnEl = this.$root.find('.btn_swiper_prev_product').get(0);
+            const nextBtnEl = this.$root.find('.btn_swiper_next_product').get(0);
+            const scrollbarEl = this.$root.find('.swiper-scrollbar').get(0);
+
+            if (!previewEl || !productEl) return;
+
+            const shouldHidePreview = smallCount <= 1;
+
+            this.$root
+                .find('.PreviewSwiper,.btn_swiper_prev_product,.btn_swiper_next_product')
+                .toggleClass('d-none', shouldHidePreview);
 
             if (smallCount <= 1) {
-                $('.PreviewSwiper,.btn_swiper_prev_product,.btn_swiper_next_product').toggleClass('d-none', smallCount <= 1);
                 return;
             }
 
-            this.state.previewSwiper = new Swiper('.PreviewSwiper', {
+            this.state.previewSwiper = new Swiper(previewEl, {
                 a11y: true,
                 slidesPerView: 4,
                 loop: false,
                 spaceBetween: 10,
                 freeMode: true,
                 watchSlidesProgress: true,
-                scrollbar: { el: '.swiper-scrollbar' },
+                slideToClickedSlide: true,
+                scrollbar: scrollbarEl ? { el: scrollbarEl } : undefined,
                 breakpoints: {
                     576: { slidesPerView: 4 },
                     768: { slidesPerView: 6 },
@@ -1290,19 +1519,21 @@
                 }
             });
 
-            this.state.productSwiper = new Swiper('.ProductSwiper', {
+            this.state.productSwiper = new Swiper(productEl, {
                 a11y: true,
                 spaceBetween: 15,
                 loop: true,
                 navigation: {
-                    nextEl: '.btn_swiper_next_product',
-                    prevEl: '.btn_swiper_prev_product'
+                    nextEl: nextBtnEl,
+                    prevEl: prevBtnEl
                 },
                 breakpoints: {
                     768: { allowTouchMove: true },
                     992: { allowTouchMove: false }
                 },
-                thumbs: { swiper: this.state.previewSwiper }
+                thumbs: {
+                    swiper: this.state.previewSwiper
+                }
             });
         }
 

@@ -49,12 +49,16 @@ function RadioShipping() {
     var isSupportCashOnDeliveryChanged = S.SupportCashOnDelivery != this_SupportCashOnDelivery;
     S.SupportCashOnDelivery = this_SupportCashOnDelivery;
 
-    if (!this_SupportCashOnDelivery && (isAmountChanged || isSupportCashOnDeliveryChanged) && S.HasECPay) cart.Payment.ECPay.ECPaymentChange();
-    else if (isSupportCashOnDeliveryChanged) {
-        $("#ECPayPayment").empty();
+    if (isAmountChanged || isSupportCashOnDeliveryChanged) {
+        cart.Payment.Core.onAmountChanged();
+    }
+
+    if (!this_SupportCashOnDelivery && (isAmountChanged || isSupportCashOnDeliveryChanged)) {
+        cart.Payment.Core.reloadActiveEmbeddedProvider();
+    } else if (isSupportCashOnDeliveryChanged) {
+        cart.Payment.Core.clearProvidersByType("embedded");
         cart.Shipping.ConfigurePaymentOptions(null);
     }
-    cart.Payment.ECPay.MarkECPayDirty();
 }
 function ConfigurePaymentOptions(val) {
     var $CheckedShipping = $('input[name="RadioShipping"]:checked');
@@ -99,7 +103,10 @@ function ConfigurePaymentOptions(val) {
 
     var showpayment = false;
 
-    if (!S.HasECPay || S.ECPayReady) {
+    if (
+        !cart.Payment.Core.hasProvidersByType("embedded") ||
+        cart.Payment.Core.areProvidersByTypeReady("embedded")
+    ) {
         showpayment = true;
     }
 
@@ -116,10 +123,14 @@ function ConfigurePaymentOptions(val) {
     // 非貨到付款情境，不顯示貨到付款
     $list.has("input[value='28']").addClass("d-none");
 
-    // 綠界付款項目由 #ECPayPayment SDK 顯示，不應該在 RadioPayment 清單中顯示
-    $list
-        .has('input[name="RadioPayment"][data-third-party-id="' + S.ECPAY_THIRD_PARTY_ID + '"]')
-        .addClass("d-none");
+    $list.each(function () {
+        var $formCheck = $(this);
+        var $input = $formCheck.find('input[name="RadioPayment"]').first();
+
+        if (cart.Payment.Core.isEmbeddedPaymentRadio($input)) {
+            $formCheck.addClass("d-none");
+        }
+    });
 
     $(".ecpayWarning").addClass("d-none");
 
@@ -131,9 +142,9 @@ function ConfigurePaymentOptions(val) {
 
     var $targetFormCheck = $targetInput.closest(".form-check");
 
-    // 如果 val 是綠界付款，允許它維持 checked，但它本身仍然隱藏。
-    // 真正顯示的是 #ECPayPayment 的 SDK UI。
-    if ($targetInput.length && cart.Payment.Core.IsPaymentRadioECPay($targetInput)) {
+    // 如果 val 是 embedded 付款，允許它維持 checked，但 radio 本身仍然隱藏。
+    // 真正顯示的是 provider 自己的付款 UI。
+    if ($targetInput.length && cart.Payment.Core.isEmbeddedPaymentRadio($targetInput)) {
         cart.Payment.Core.updatePaymentRadioUI($targetFormCheck);
     } else {
         // 一般付款方式：如果 val 不存在，或 val 對應到隱藏項，就改選第一個可見付款方式

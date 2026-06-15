@@ -172,7 +172,7 @@ namespace EtheriT.Coker.Application.Contact.Export
         }
 
         /// <summary>
-        /// 清理範本欄位並排除 captcha；欄位順序保留 JSON 陣列順序，重複 key 保留範本中第一筆。
+        /// 清理範本欄位；欄位（含驗證碼）由範本決定，順序保留 JSON 陣列順序，重複 key 保留範本中第一筆。
         /// </summary>
         private IReadOnlyList<ExportColumnMetadata> NormalizeColumns(long formTypeId, List<ExportColumnMetadata> columns)
         {
@@ -185,11 +185,6 @@ namespace EtheriT.Coker.Application.Contact.Export
                 if (string.IsNullOrWhiteSpace(normalizedKey))
                 {
                     throw new InvalidOperationException($"聯絡表單匯出範本欄位缺少 columnKey：FormTypeId={formTypeId}");
-                }
-
-                if (string.Equals(normalizedKey, "captcha", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
                 }
 
                 if (!knownKeys.Add(normalizedKey))

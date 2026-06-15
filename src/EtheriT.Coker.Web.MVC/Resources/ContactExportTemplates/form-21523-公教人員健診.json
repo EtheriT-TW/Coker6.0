@@ -5,9 +5,12 @@
   // 3. columnKey 對應 Contacts.FromDate JSON 欄位 key；columnTitle 是匯出 Excel 標題。
   // 4. visible=false 可暫時停用欄位；captcha 即使加入也會由系統排除不匯出。
   // 5. 若沒有此範本檔，系統會依 FromDate JSON 值動態產生欄位。
-  // 6. 2026/06/15 依「20260615最新匯出的json資料」與「vip匯出的資料表0610_v1.xlsx」調整：
-  //    欄位順序依 Excel 工作表；JSON 有收集但 Excel 未列出的欄位附加在最後（標示 // JSON-only）。
-  "formTypeId": 10803,
+  // 6. 2026/06/15 v2 依「20260615最新匯出的json資料」與「vip匯出的資料表0610_v1.xlsx」重建：
+  //    formTypeId 改為最新 WebMenus.Id；欄位 key 依最新 JSON；欄位順序依 Excel 工作表；
+  //    JSON 有收集但 Excel 未列出的欄位附加在最後（標示 // JSON-only）。
+  //    ★ 注意：formTypeId=21523 由需求方提供確認。本表單在 20260615 匯出樣本中無資料，
+  //       欄位 key 係比照「警務/消防」表單推估；日後若取得公教 FromDate JSON，請再核對 key。
+  "formTypeId": 21523,
   "name": "公教人員健診",
   "columns": [
     { "columnKey": "name", "columnTitle": "姓名", "visible": true, "format": "text" },
@@ -25,7 +28,15 @@
     { "columnKey": "staff", "columnTitle": "攜帶眷屬身分證", "visible": true, "format": "text" },
     { "columnKey": "checkDate1", "columnTitle": "攜帶眷屬出生日期", "visible": true, "format": "text" },
     { "columnKey": "InputFamilyCheck", "columnTitle": "攜帶眷屬健診專案", "visible": true, "format": "text" },
-    { "columnKey": "description", "columnTitle": "其他說明事項", "visible": true, "format": "text" },
-    { "columnKey": "RadioFood", "columnTitle": "餐點", "visible": true, "format": "text" }  // JSON-only：表單有收集，Excel 未列出
+    { "columnKey": "sick1", "columnTitle": "1️⃣過去病史", "visible": true, "format": "text" },
+    { "columnKey": "sick12", "columnTitle": "2️⃣用藥紀錄", "visible": true, "format": "text" },
+    { "columnKey": "sick123", "columnTitle": "3️⃣手術史", "visible": true, "format": "text" },
+    { "columnKey": "sick1234", "columnTitle": "4️⃣住院史", "visible": true, "format": "text" },
+    { "columnKey": "sick12345", "columnTitle": "5️⃣藥物過敏", "visible": true, "format": "text" },
+    { "columnKey": "sick61", "columnTitle": "6️⃣食物過敏", "visible": true, "format": "text" },
+    { "columnKey": "height", "columnTitle": "7️⃣身高(cm)", "visible": true, "format": "text" },
+    { "columnKey": "weight", "columnTitle": "8️⃣體重(kg)", "visible": true, "format": "text" },
+    { "columnKey": "sick62", "columnTitle": "9️⃣飲食習慣", "visible": true, "format": "text" },
+    { "columnKey": "description", "columnTitle": "其他說明事項", "visible": true, "format": "text" }
   ]
 }

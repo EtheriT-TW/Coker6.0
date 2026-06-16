@@ -210,141 +210,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         }
                     },
                     new JobMenu{
-                        PageName="NewsletterManagement",
-                        Title="電子報管理",
-                        Icon="mail",
-                        CollapseId="#NewsletterManagement",
-                        Enable = false,
-                        jobItemModels= new List<JobMenu>{
-                            new JobMenu{
-                                PageName="Recipient",
-                                Title="收件人設定",
-                                Controller="Newsletter",
-                                Action="Recipient",
-                                Icon="",
-                                Enable=false
-                            },new JobMenu{
-                                PageName="Newsletter",
-                                Title="電子報內容設定",
-                                Controller="Newsletter",
-                                Action="Index",
-                                Icon="",
-                                Enable=false
-                            }
-                        }
-                    },
-                    new JobMenu{
-                        PageName="MemberManagement",
-                        Title="管理者管理",
-                        Icon="people_alt",
-                        CollapseId="#MemberManagement",
-                        jobItemModels= new List<JobMenu> {
-                            new JobMenu{
-                                PageName="ManagerList",
-                                Title="管理者名單",
-                                Controller="MemberManagement",
-                                Action="ManagerList",
-                                Icon=""
-                            },new JobMenu{
-                                PageName="UserData",
-                                Title="個人資料修改",
-                                Controller="MemberManagement",
-                                Action="SelfData",
-                                Icon="",
-                            },
-                            new JobMenu{
-                                PageName="PowerCtrl",
-                                Title="權限控制",
-                                Controller="PowerManagement",
-                                Action="Index",
-                                Icon=""
-                            }
-                        }
-                    },
-                    new JobMenu{
-                        PageName="StoreSettings",
-                        Title="商店管理",
-                        Icon="store",
-                        CollapseId="#StoreSettings",
-                        jobItemModels= new List<JobMenu> {
-                            new JobMenu{
-                                PageName="StoreSet",
-                                Title="商店設定",
-                                Controller="StoreSettings",
-                                Action="Index",
-                                Icon="shopping_cart",
-                            },
-                            new JobMenu{
-                                PageName="FreightSettings",
-                                Title="運費設定",
-                                Controller="StoreSettings",
-                                Action="FreightSettings",
-                                Icon="local_shipping",
-                            },
-                            new JobMenu{
-                                PageName="PaymentSettings",
-                                Title="付款設定",
-                                Controller="StoreSettings",
-                                Action="PaymentSettings",
-                                Icon="credit_card",
-                            },
-                            new JobMenu{
-                                PageName="MarketingSettings",
-                                Title="行銷活動",
-                                Controller="StoreSettings",
-                                Action="MarketingSettings",
-                                Icon="confirmation_number",
-                                Enable=false
-                            },
-                            new JobMenu{
-                                PageName="LogisticsSettings",
-                                Title="物流設定",
-                                Controller="StoreSettings",
-                                Action="LogisticsSettings",
-                                Icon="hand_package",
-                            },
-                            new JobMenu{
-                                PageName="LogisticsBox",
-                                Title="箱型設定",
-                                Controller="StoreSettings",
-                                Action="LogisticsBox",
-                                Icon="box_edit"
-                            }
-                        }
-                    },
-                    new JobMenu{
-                        PageName="Bonus",
-                        Title="紅利管理",
-                        Icon="redeem",
-                        CollapseId="#BonusManagement",
-                        Enable=false,
-                        jobItemModels= new List<JobMenu> {
-                            new JobMenu{
-                                PageName="BonusSettings",
-                                Title="紅利設定",
-                                Controller="BonusManagement",
-                                Action="Settings",
-                                Icon="savings",
-                                Enable=false
-                            },
-                            new JobMenu{
-                                PageName="BonusTransaction",
-                                Title="紅利異動",
-                                Controller="BonusManagement",
-                                Action="Transaction",
-                                Icon="savings",
-                                Enable=false
-                            },new JobMenu{
-                                PageName="BonusRecord",
-                                Title="歷史紅利查詢",
-                                Controller="BonusManagement",
-                                Action="Record",
-                                Icon="savings",
-                                Enable=false
-                            }
-                        }
-                    },
-                    new JobMenu{
                         PageName="MemberData",
                         Title="會員管理",
                         Icon="diversity_1",
@@ -382,13 +247,95 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         }
                     },
                     new JobMenu{
+                        PageName="Bonus",
+                        Title="紅利管理",
+                        Icon="redeem",
+                        CollapseId="#BonusManagement",
+                        Enable=false,
+                        jobItemModels= new List<JobMenu> {
+                            new JobMenu{
+                                PageName="BonusSettings",
+                                Title="紅利設定",
+                                Controller="BonusManagement",
+                                Action="Settings",
+                                Icon="savings",
+                                Enable=false
+                            },
+                            new JobMenu{
+                                PageName="BonusTransaction",
+                                Title="紅利異動",
+                                Controller="BonusManagement",
+                                Action="Transaction",
+                                Icon="savings",
+                                Enable=false
+                            },new JobMenu{
+                                PageName="BonusRecord",
+                                Title="歷史紅利查詢",
+                                Controller="BonusManagement",
+                                Action="Record",
+                                Icon="savings",
+                                Enable=false
+                            }
+                        }
+                    },
+                    new JobMenu{
+                        PageName="StoreSettings",
+                        Title="商店管理",
+                        Icon="store",
+                        CollapseId="#StoreSettings",
+                        jobItemModels= new List<JobMenu> {
+                            new JobMenu{
+                                PageName="StoreSet",
+                                Title="商店設定",
+                                Controller="StoreSettings",
+                                Action="Index",
+                                Icon="shopping_cart",
+                            },
+                            new JobMenu{
+                                PageName="FreightSettings",
+                                Title="運費設定",
+                                Controller="StoreSettings",
+                                Action="FreightSettings",
+                                Icon="local_shipping",
+                            },
+                            new JobMenu{
+                                PageName="PaymentSettings",
+                                Title="金流設定",
+                                Controller="StoreSettings",
+                                Action="PaymentSettings",
+                                Icon="credit_card",
+                            },
+                            new JobMenu{
+                                PageName="MarketingSettings",
+                                Title="行銷活動",
+                                Controller="StoreSettings",
+                                Action="MarketingSettings",
+                                Icon="confirmation_number",
+                                Enable=false
+                            },
+                            new JobMenu{
+                                PageName="LogisticsSettings",
+                                Title="物流設定",
+                                Controller="StoreSettings",
+                                Action="LogisticsSettings",
+                                Icon="hand_package",
+                            },
+                            new JobMenu{
+                                PageName="LogisticsBox",
+                                Title="箱型設定",
+                                Controller="StoreSettings",
+                                Action="LogisticsBox",
+                                Icon="box_edit"
+                            }
+                        }
+                    },
+                    new JobMenu{
                         PageName="CustSearch",
                         Title="搜尋設定",
                         Controller="SearchManagement",
                         Action="CustSearch",
                         Icon="search"
                     },
-
                     new JobMenu{
                         PageName="Layout",
                         Title="版型設定",
@@ -412,12 +359,32 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         }
                     },
                     new JobMenu{
-                        PageName="TypographyTheme",
-                        Title="版型主題",
-                        Controller="Dashboard",
-                        Action="Index",
-                        Icon="palette",
-                        CollapseId="",
+                        PageName="MemberManagement",
+                        Title="管理者管理",
+                        Icon="people_alt",
+                        CollapseId="#MemberManagement",
+                        jobItemModels= new List<JobMenu> {
+                            new JobMenu{
+                                PageName="ManagerList",
+                                Title="管理者名單",
+                                Controller="MemberManagement",
+                                Action="ManagerList",
+                                Icon=""
+                            },new JobMenu{
+                                PageName="UserData",
+                                Title="個人資料修改",
+                                Controller="MemberManagement",
+                                Action="SelfData",
+                                Icon="",
+                            },
+                            new JobMenu{
+                                PageName="PowerCtrl",
+                                Title="權限控制",
+                                Controller="PowerManagement",
+                                Action="Index",
+                                Icon=""
+                            }
+                        }
                     },
                     new JobMenu{
                         PageName="SystemManagement",
@@ -461,7 +428,8 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Icon="forward_to_inbox"
                             }
                         }
-                    },new JobMenu{
+                    },
+                    new JobMenu{
                         PageName="RemoteManagement",
                         Title="網站瀏覽報告",
                         Icon="manage_search",
@@ -498,6 +466,38 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         Action="Index",
                         Icon="public",
                         CollapseId=""
+                    },
+                    new JobMenu{
+                        PageName="NewsletterManagement",
+                        Title="電子報管理",
+                        Icon="mail",
+                        CollapseId="#NewsletterManagement",
+                        Enable = false,
+                        jobItemModels= new List<JobMenu>{
+                            new JobMenu{
+                                PageName="Recipient",
+                                Title="收件人設定",
+                                Controller="Newsletter",
+                                Action="Recipient",
+                                Icon="",
+                                Enable=false
+                            },new JobMenu{
+                                PageName="Newsletter",
+                                Title="電子報內容設定",
+                                Controller="Newsletter",
+                                Action="Index",
+                                Icon="",
+                                Enable=false
+                            }
+                        }
+                    },
+                    new JobMenu{
+                        PageName="TypographyTheme",
+                        Title="版型主題",
+                        Controller="Dashboard",
+                        Action="Index",
+                        Icon="palette",
+                        CollapseId="",
                     }
                 }
             };

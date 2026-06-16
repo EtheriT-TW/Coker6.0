@@ -163,9 +163,9 @@ i.fa-chevron-right {
 
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .pro_display {
         cursor: pointer;
-        object-fit: contain;
-        max-width: 100%;
-        max-height: 100%;
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
     }
 
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_360view {
@@ -208,6 +208,24 @@ i.fa-chevron-right {
 
 .PreviewSwiper > .swiper-scrollbar {
     height: calc(5px * 2 / 3);
+}
+
+.PreviewSwiper .swiper-slide {
+    flex-shrink: 0;
+    width: 100%;
+    aspect-ratio: 1 / 1; /* 新增：強制 1:1 比例 */
+    height: auto; /* 改為 auto，讓 aspect-ratio 接管高度 */
+    position: relative;
+    transition-property: transform;
+    display: block;
+    overflow: hidden; /* 新增：防止圖片溢出 */
+}
+
+.PreviewSwiper .swiper-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 填滿並裁切，保持比例不變形 */
+    display: block;
 }
 
 [class*=btn_swiper_] {
@@ -824,6 +842,7 @@ input:disabled + .btn_radio {
 }
 
 @media only screen and (max-width: 576px) {
+
     [class*=btn_swiper_] {
         height: 35px !important;
         width: 35px !important;

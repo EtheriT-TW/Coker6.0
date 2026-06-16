@@ -31,7 +31,7 @@
             cart.Items.updateGroupSelectedSubtotal($group);
             cart.Pricing.TotalCount();
             cart.Pricing.updateNextStepByBonus();
-            cart.Payment.ECPay.MarkECPayDirty();
+            cart.Payment.Core.onAmountChanged();
         });
 
         // 單一品項
@@ -43,52 +43,10 @@
             cart.Items.updateGroupSelectedSubtotal($group);
             cart.Pricing.TotalCount();
             cart.Pricing.updateNextStepByBonus();
-            cart.Payment.ECPay.MarkECPayDirty();
+            cart.Payment.Core.onAmountChanged();
         });
 
-
-        if ($("#ECPayPayment").length > 0) {
-            S.HasECPay = true;
-            S.ECPayMonitor = true;
-            ECPay.initialize($("#ECPayPayment").data("server-type"), 1, function (errMsg) {
-                if (errMsg != null) {
-                    cart.Payment.Core.GetECPayEntryRadio().closest(".form-check").addClass("d-none");
-                    console.log(`Initialize errMsg : ${errMsg}`)
-                    co.sweet.error("串接綠界發生錯誤");
-                } else {
-                    S.ECPayInit = true;
-
-                    var $ecpayRadio = cart.Payment.Core.GetECPayEntryRadio();
-
-                    if ($ecpayRadio.length) {
-                        $ecpayRadio.prop("checked", true);
-                        $ecpayRadio.closest('.form-check').prevAll('.form-check').first().find('.payment_display').addClass('last');
-                    }
-
-                    $('#RadioPayment .payment_display').on("click", function () {
-                        var $this_radio = $(this);
-                        var $parentFormCheck = $this_radio.closest('.form-check');
-                        var $nextPaymentRadio = $parentFormCheck
-                            .nextAll(".form-check")
-                            .first()
-                            .find('input[name="RadioPayment"]');
-
-                        var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
-
-                        $ECPayList.removeClass("first");
-
-                        if ($nextPaymentRadio.length && cart.Payment.Core.IsPaymentRadioECPay($nextPaymentRadio)) {
-                            $ECPayList.first().addClass("first");
-                        }
-
-                        $ECPayList.removeClass("ecpay-pl-act");
-
-                        S.buy_step_swiper.update();
-                    });
-                }
-            });
-            $("#RadioPayment div.form-check").addClass("d-none");
-        }
+        cart.Payment.Core.initAll();
 
         $("#btn_car_dropdown").addClass("d-none")
 
@@ -195,13 +153,14 @@
                             $("#radio_bill_orderer").trigger("change");
                         }
                         //商品數量變更這邊沒有動到 先移除
-                        //if (datachange && HasECPay) {
-                        if (S.HasECPay) {
-                            var this_SupportCashOnDelivery = $("[name='RadioShipping']:checked").attr("data-support-cash-on-delivery").toLowerCase() == "true";
+                        var $checkedShipping = $("[name='RadioShipping']:checked");
+
+                        if ($checkedShipping.length > 0) {
+                            var this_SupportCashOnDelivery = String($checkedShipping.attr("data-support-cash-on-delivery")).toLowerCase() == "true";
                             S.SupportCashOnDelivery = this_SupportCashOnDelivery;
+
                             if (!S.SupportCashOnDelivery) {
-                                cart.Payment.ECPay.ECPaymentChange();
-                                //datachange = false;
+                                cart.Payment.Core.reloadActiveEmbeddedProvider();
                             }
                         }
                     }
@@ -312,16 +271,17 @@
 
         cart.Forms.ElementInit();
 
-        if (S.HasECPay) {
-            $(":input").on("blur change", function () {
-                var $self = $(this);
-                if ($self.is(':radio')) {
-                    if ($self.attr("name")?.includes("Sex")) cart.Payment.ECPay.ECPaymentChange();
-                } else {
-                    cart.Payment.ECPay.ECPaymentChange();
-                }
+        $("#OrdererForm :input, #RecipientForm :input, #InvoiceForm :input, #Form_Invoice :input, #Form_InvoicePersonalType :input")
+            .not("[name='RadioShipping']")
+            .not("[name='RadioPayment']")
+            .not("[name='RecipientRadio']")
+            .not("[name='InvoiceRadio']")
+            .not("[name='InvoiceType']")
+            .not("[name='PersonalInvoiceMode']")
+            .on("change", function () {
+                cart.Payment.Core.onAmountChanged();
+                cart.Payment.Core.reloadActiveEmbeddedProvider();
             });
-        }
 
         $(".btn_call_login").on("click", function (event) {
             loginModal.show();
@@ -420,7 +380,7 @@
         }
 
         $(".btn_checkout").on("click", function () {
-            S.ECPayMonitor = false;
+            cart.Payment.Core.setProvidersMonitorByType("embedded", false);
             cart.Payment.Core.Step3Monitor();
             if (!S.OrdererFilled) {
                 if (!S.OrdererOpen) cart.Forms.OrdererEdit(true);
@@ -431,27 +391,27 @@
                 Coker.sweet.warning("請注意", "請確實填寫發票寄送資料！", null);
             } else if (!S.shipMethodsChosen) {
                 Coker.sweet.warning("請注意", "請選擇運送方式！", null);
-            } else if (!S.payMethodsChosen && !S.HasECPay) {
+            } else if (!S.payMethodsChosen && !cart.Payment.Core.hasProvidersByType("embedded")) {
                 Coker.sweet.warning("請注意", "請選擇付款方式！", null);
             } else {
-                var isECPaySelected = cart.Payment.Core.IsECPaySelected();
+                var isEmbeddedPayment = cart.Payment.Core.isActiveEmbeddedPayment();
 
-                if ($(`[name="RadioPayment"]:checked`).val() == null && isECPaySelected && (typeof window.Pay === "undefined" || $("#ECPayPayment").children().length == 0)) {
+                if (isEmbeddedPayment && !cart.Payment.Core.isActiveEmbeddedLoaded()) {
                     co.sweet.warning("付款模組尚未載入完成，請稍候再試。", "", null);
-                } else if (isECPaySelected && !S.ECPayReady) {
-                    cart.Payment.ECPay.ECPaymentChange();
+                } else if (isEmbeddedPayment && !cart.Payment.Core.isActiveEmbeddedReady()) {
+                    cart.Payment.Core.reloadActiveEmbeddedProvider();
 
                     co.sweet.warning(
                         "付款資訊已更新",
-                        "正在重新同步綠界付款資訊，請稍候再點選確認付款。",
+                        "正在重新同步付款資訊，請稍候再點選確認付款。",
                         null
                     );
                 } else {
                     Coker.sweet.custom("info", "是否確定結帳？", "點選確認進入付款流程", "是，開始付款", function () {
                         cart.Order.OrderHeaderAdd();
                     }, "否", function () {
-                        S.ECPayMonitor = true;
-                        console.log("ECPayMonitor Change", S.ECPayMonitor);
+                        cart.Payment.Core.setProvidersMonitorByType("embedded", true);
+                        console.log("Embedded payment monitor enabled");
                     });
                 }
             }
@@ -516,7 +476,8 @@
                     addr: S.user_data.address
                 });
             }
-            if (S.HasECPay) cart.Payment.ECPay.ECPaymentChange();
+            cart.Payment.Core.onAmountChanged();
+            cart.Payment.Core.reloadActiveEmbeddedProvider();
         })
 
         if (cart.Logistics && cart.Logistics.ECPay) {

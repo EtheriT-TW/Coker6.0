@@ -6,6 +6,29 @@
     cart.Payment = cart.Payment || {};
     cart.Payment.ECPay = cart.Payment.ECPay || {};
 
+    function GetECPayEntryRadio() {
+        return $('#RadioPayment input[name="RadioPayment"][data-third-party-id="' + S.ECPAY_THIRD_PARTY_ID + '"]').first();
+    }
+
+    function GetECPayEntryValue() {
+        var $radio = GetECPayEntryRadio();
+        return $radio.length ? $radio.val() : null;
+    }
+
+    function IsPaymentRadioECPay($radio) {
+        return $radio &&
+            $radio.length > 0 &&
+            Number($radio.attr("data-third-party-id") || 0) === S.ECPAY_THIRD_PARTY_ID;
+    }
+
+    function IsECPaySelected() {
+        var $checked = cart.Payment.Core.GetCheckedPaymentRadio();
+
+        return S.HasECPay && (
+            IsPaymentRadioECPay($checked) ||
+            $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li.ecpay-pl-act").length > 0
+        );
+    }
     function BuildECPayOrderSnapshot() {
         var ids = cart.Items.getSelectedCartIds();
 
@@ -32,8 +55,8 @@
         if (!S.ECPayMonitor || !S.HasECPay) return;
 
         var selectedPaymentBeforeSync = cart.Payment.Core.GetCheckedPaymentValue();
-        var restorePaymentAfterSync = cart.Payment.Core.IsECPaySelected()
-            ? cart.Payment.Core.GetECPayEntryValue()
+        var restorePaymentAfterSync = IsECPaySelected()
+            ? GetECPayEntryValue()
             : selectedPaymentBeforeSync;
 
         cart.Pricing.TotalCount();
@@ -50,7 +73,7 @@
             return;
         }
 
-        var nextSnapshot = cart.Payment.ECPay.BuildECPayOrderSnapshot();
+        var nextSnapshot = BuildECPayOrderSnapshot();
 
         if (S.ECPayChanging) {
             console.log("ECPaymentChange skipped: syncing");
@@ -109,7 +132,7 @@
                         S.ECPayChanging = false;
                         S.ECPayOrderSnapshot = nextSnapshot;
 
-                        cart.Shipping.ConfigurePaymentOptions(restorePaymentAfterSync || cart.Payment.Core.GetECPayEntryValue());
+                        cart.Shipping.ConfigurePaymentOptions(restorePaymentAfterSync || GetECPayEntryValue());
 
                         var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
                         $ECPayList.removeClass("first last");
@@ -120,7 +143,7 @@
                             const trusted = e.originalEvent?.isTrusted;
                             if (trusted !== true) return;
 
-                            var $this_radio = cart.Payment.Core.GetECPayEntryRadio();
+                            var $this_radio = GetECPayEntryRadio();
                             if ($this_radio.length === 0) return;
 
                             cart.Shipping.ConfigurePaymentOptions($this_radio.val());
@@ -358,6 +381,144 @@
     cart.Payment.Core.register({
         code: "ECPay",
         type: "embedded",
+        thirdPartyId: S.ECPAY_THIRD_PARTY_ID,
+        init: function () {
+            if ($("#ECPayPayment").length === 0) return;
+
+            S.HasECPay = true;
+            S.ECPayMonitor = true;
+
+            ECPay.initialize($("#ECPayPayment").data("server-type"), 1, function (errMsg) {
+                if (errMsg != null) {
+                    GetECPayEntryRadio().closest(".form-check").addClass("d-none");
+                    console.log(`Initialize errMsg : ${errMsg}`);
+                    co.sweet.error("串接綠界發生錯誤");
+                    return;
+                }
+
+                S.ECPayInit = true;
+
+                var $ecpayRadio = GetECPayEntryRadio();
+
+                if ($ecpayRadio.length) {
+                    $ecpayRadio.prop("checked", true);
+                    $ecpayRadio.closest(".form-check").prevAll(".form-check").first().find(".payment_display").addClass("last");
+                }
+
+                $("#RadioPayment .payment_display").on("click.ecpayInit", function () {
+                    var $thisRadioDisplay = $(this);
+                    var $parentFormCheck = $thisRadioDisplay.closest(".form-check");
+                    var $nextPaymentRadio = $parentFormCheck
+                        .nextAll(".form-check")
+                        .first()
+                        .find('input[name="RadioPayment"]');
+
+                    var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
+
+                    $ECPayList.removeClass("first");
+
+                    if ($nextPaymentRadio.length && IsPaymentRadioECPay($nextPaymentRadio)) {
+                        $ECPayList.first().addClass("first");
+                    }
+
+                    $ECPayList.removeClass("ecpay-pl-act");
+
+                    if (S.buy_step_swiper) {
+                        S.buy_step_swiper.update();
+                    }
+                });
+            });
+
+            $("#RadioPayment div.form-check").addClass("d-none");
+        },
+
+        getEntryRadio: function () {
+            return GetECPayEntryRadio();
+        },
+
+        getEntryValue: function () {
+            return GetECPayEntryValue();
+        },
+
+        isMatchRadio: function ($radio) {
+            return IsPaymentRadioECPay($radio);
+        },
+
+        isSelected: function () {
+            var $checked = cart.Payment.Core.GetCheckedPaymentRadio();
+
+            return S.HasECPay && (
+                this.isMatchRadio($checked) ||
+                $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li.ecpay-pl-act").length > 0
+            );
+        },
+
+        isReady: function () {
+            return S.ECPayReady === true;
+        },
+
+        isLoaded: function () {
+            return typeof window.Pay !== "undefined" && $("#ECPayPayment").children().length > 0;
+        },
+
+        getPaymentValue: function () {
+            var $checked = cart.Payment.Core.GetCheckedPaymentRadio();
+
+            if (this.isMatchRadio($checked)) {
+                var checkedValue = $checked.val();
+                if (checkedValue != null && checkedValue !== "") {
+                    return checkedValue;
+                }
+            }
+
+            return this.getEntryValue();
+        },
+
+        reload: function () {
+            return ECPaymentChange();
+        },
+
+        markDirty: function () {
+            MarkECPayDirty();
+        },
+
+        clear: function () {
+            $("#ECPayPayment").empty();
+        },
+
+        setMonitor: function (enabled) {
+            S.ECPayMonitor = enabled === true;
+        },
+
+        validatePayment: function (callback) {
+            return ValidateECPayPayment(callback);
+        },
+
+        submitPayment: function (callback) {
+            GetECPayType();
+
+            cart.Pricing.TotalCount();
+            cart.Forms.AllDataGet(false);
+
+            var currentSnapshot = BuildECPayOrderSnapshot();
+
+            if (!S.ECPayReady || !S.ECPayOrderSnapshot || currentSnapshot !== S.ECPayOrderSnapshot) {
+                S.ECPayMonitor = true;
+                ECPaymentChange();
+
+                Coker.sweet.warning(
+                    "付款資料已更新",
+                    "訂單金額、運費或付款資料已有變更，已重新更新綠界付款模組，請重新確認付款資料後再送出訂單。",
+                    null
+                );
+
+                callback(false, { handled: true });
+                return;
+            }
+
+            ValidateECPayPayment(callback);
+        },
+
         afterOrderCreated: afterOrderCreated
     });
 })(window.ShoppingCart, window.jQuery);

@@ -15,11 +15,11 @@
     }
 
     function openMap() {
-        saveOrderFormBeforeRedirect();
-
         var $btn = $(this);
         var $radio = $btn.prev('input[name="RadioShipping"]');
         $radio.prop('checked', true);
+
+        saveOrderFormBeforeRedirect();
 
         var $form = $("form#ecpayLogisticsForm");
         var selectedCartIds = cart.Items.getSelectedCartIds();
@@ -36,8 +36,12 @@
     function saveOrderFormBeforeRedirect() {
         cart.Forms.AllDataGet(false);
 
-        if (typeof (S.order_header_data.payment) == "undefined") {
-            S.order_header_data.payment = $('[name="RadioPayment"]:checked').val();
+        var paymentValue = cart.Payment.Core.getActivePaymentValue();
+
+        if (paymentValue == null || paymentValue === "") {
+            delete S.order_header_data.payment;
+        } else {
+            S.order_header_data.payment = Number(paymentValue);
         }
 
         var dataToSave = {

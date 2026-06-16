@@ -24,10 +24,6 @@
             return;
         }
 
-        if (typeof (S.order_header_data.payment) == "undefined" && $(`[name="RadioPayment"]`).length > 0) {
-            S.order_header_data.payment = $(`[name="RadioPayment"]:checked`).val();
-        }
-
         Coker.Order.CheckStock(data).done(async function (result) {
             if (!result.success) {
                 Coker.sweet.error("錯誤", result.message, null, false);
@@ -62,41 +58,22 @@
                 S.order_header_data.remark = "無";
             }
 
-            var isECPayCheckout = cart.Payment.Core.IsECPaySelected();
-            if (isECPayCheckout) {
-                cart.Payment.ECPay.GetECPayType();
-
-                cart.Pricing.TotalCount();
-                cart.Forms.AllDataGet(false);
-
-                var currentSnapshot = cart.Payment.ECPay.BuildECPayOrderSnapshot();
-
-                if (!S.ECPayReady || !S.ECPayOrderSnapshot || currentSnapshot !== S.ECPayOrderSnapshot) {
-                    S.ECPayMonitor = true;
-                    cart.Payment.ECPay.ECPaymentChange();
+            cart.Payment.Core.submitActiveEmbeddedPayment(function (success, result) {
+                if (!success) {
+                    if (result && result.handled === true) {
+                        return;
+                    }
 
                     Coker.sweet.warning(
-                        "付款資料已更新",
-                        "訂單金額、運費或付款資料已有變更，已重新更新綠界付款模組，請重新確認付款資料後再送出訂單。",
+                        "付款資訊取得失敗",
+                        result || "目前無法取得付款資訊，請重新操作一次；若問題持續發生，請聯絡客服協助。",
                         null
                     );
                     return;
                 }
 
-                cart.Payment.ECPay.ValidateECPayPayment(function (success, result) {
-                    if (success) {
-                        cart.Order.AddHeader(result);
-                    } else {
-                        Coker.sweet.warning(
-                            "付款資訊取得失敗",
-                            "目前無法取得付款資訊，請重新操作一次；若問題持續發生，請聯絡客服協助。",
-                            null
-                        );
-                    }
-                });
-            } else {
-                cart.Order.AddHeader(paymentInfo);
-            }
+                cart.Order.AddHeader(result || null);
+            });
         });
     }
     function AddHeader(paymentInfo) {

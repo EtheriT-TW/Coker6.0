@@ -7,6 +7,7 @@
 
         hashPage: null,
         marketingListGridEvent: null,
+        isGridLookupApplied: false,
         keyId: 0,
         isInitialized: false,
         options: null,
@@ -22,6 +23,8 @@
         $discountPercent: null,
         $maxDiscountAmount: null,
         $minAmount: null,
+        $repeatable: null,
+        $repeatableSection: null,
 
         init: function () {
             if (this.isInitialized) return;
@@ -46,6 +49,8 @@
             this.$discountPercent = $("#InputDiscountPercent");
             this.$maxDiscountAmount = $("#InputMaxDiscountAmount");
             this.$minAmount = $("#InputMinAmount");
+            this.$repeatable = $("#CheckRepeatable");
+            this.$repeatableSection = $(".repeatableSection");
         },
 
         initCommonForm: function () {
@@ -109,6 +114,36 @@
             this.$neverEnd.off("change.marketing").on("change.marketing", function () {
                 self.applyNeverEndUI();
             });
+
+            this.$discountPercent.off("input.marketing").on("input.marketing", function () {
+                let value = $(this).val();
+
+                // 移除非數字，避免貼上小數點、負號、e 這類 number input 可能接受的字元
+                value = String(value).replace(/[^\d]/g, "");
+
+                // 最多兩位數
+                if (value.length > 2) {
+                    value = value.substring(0, 2);
+                }
+
+                $(this).val(value);
+            });
+
+            this.$discountPercent.off("blur.marketing").on("blur.marketing", function () {
+                const normalizedValue = self.normalizeDiscountRateForView($(this).val());
+
+                if (normalizedValue !== "") {
+                    $(this).val(normalizedValue);
+                }
+            });
+
+            this.$discountPercent.off("blur.marketing").on("blur.marketing", function () {
+                const normalizedValue = self.normalizeDiscountRateForView($(this).val());
+
+                if (normalizedValue !== "") {
+                    $(this).val(normalizedValue);
+                }
+            });
         },
 
         loadOptions: function () {
@@ -159,29 +194,42 @@
         },
 
         applyGridLookups: function () {
+            if (this.isGridLookupApplied) {
+                return;
+            }
+
             if (!this.marketingListGridEvent || !this.marketingListGridEvent.component || !this.options) {
                 return;
             }
 
             const grid = this.marketingListGridEvent.component;
 
-            grid.columnOption("CampaignType", "lookup", {
-                dataSource: this.normalizeLookupItems(this.options.campaignTypes),
-                valueExpr: "value",
-                displayExpr: "text"
-            });
+            grid.beginUpdate();
 
-            grid.columnOption("RuleType", "lookup", {
-                dataSource: this.normalizeLookupItems(this.options.ruleTypes),
-                valueExpr: "value",
-                displayExpr: "text"
-            });
+            try {
+                grid.columnOption("CampaignType", "lookup", {
+                    dataSource: this.normalizeLookupItems(this.options.campaignTypes),
+                    valueExpr: "value",
+                    displayExpr: "text"
+                });
 
-            grid.columnOption("Status", "lookup", {
-                dataSource: this.normalizeLookupItems(this.options.displayStatuses),
-                valueExpr: "value",
-                displayExpr: "text"
-            });
+                grid.columnOption("RuleType", "lookup", {
+                    dataSource: this.normalizeLookupItems(this.options.ruleTypes),
+                    valueExpr: "value",
+                    displayExpr: "text"
+                });
+
+                grid.columnOption("Status", "lookup", {
+                    dataSource: this.normalizeLookupItems(this.options.displayStatuses),
+                    valueExpr: "value",
+                    displayExpr: "text"
+                });
+
+                this.isGridLookupApplied = true;
+            }
+            finally {
+                grid.endUpdate();
+            }
         },
 
         onEnterList: function () {
@@ -273,7 +321,7 @@
                 RuleType: result.ruleType ?? result.RuleType ?? 1,
                 MinAmount: result.minAmount ?? result.MinAmount ?? "",
                 DiscountAmount: result.discountAmount ?? result.DiscountAmount ?? "",
-                DiscountPercent: result.discountPercent ?? result.DiscountPercent ?? "",
+                DiscountPercent: this.normalizeDiscountRateForView(result.discountPercent ?? result.DiscountPercent),
                 MaxDiscountAmount: result.maxDiscountAmount ?? result.MaxDiscountAmount ?? ""
             };
         },
@@ -293,6 +341,48 @@
                 + pad(date.getDate()) + "T"
                 + pad(date.getHours()) + ":"
                 + pad(date.getMinutes());
+        },
+
+        normalizeDiscountRateForView: function (value) {
+            if (value === null || value === undefined || value === "") return "";
+
+            const percent = Number(value);
+
+            if (!Number.isFinite(percent) || percent <= 0) return "";
+
+            const intPercent = Math.floor(percent);
+
+            // 10、20、30...90 顯示成 1、2、3...9
+            // 85、95 這類八五折、九五折維持兩位數顯示
+            if (intPercent >= 10 && intPercent <= 90 && intPercent % 10 === 0) {
+                return intPercent / 10;
+            }
+
+            return intPercent;
+        },
+
+        normalizeDiscountPercentForSave: function (value) {
+            if (value === null || value === undefined || value === "") return null;
+
+            const rate = Number(value);
+
+            if (!Number.isFinite(rate)) return null;
+
+            const intRate = Math.floor(rate);
+
+            // 1 ~ 9：使用者輸入幾折，轉成後端目前使用的百分比格式
+            // 例如 9 => 90
+            if (intRate >= 1 && intRate <= 9) {
+                return intRate * 10;
+            }
+
+            // 10 ~ 99：視為後端格式，直接送出
+            // 例如 90 => 90，85 => 85
+            if (intRate >= 10 && intRate <= 99) {
+                return intRate;
+            }
+
+            return null;
         },
 
         getCurrentRuleType: function () {
@@ -321,6 +411,9 @@
             this.$discountAmount.removeAttr("required");
             this.$discountPercent.removeAttr("required");
 
+            // 預設顯示，固定金額折抵才有重複觸發的意義
+            this.$repeatableSection.removeClass("d-none");
+
             if (clearValue) {
                 this.$discountAmount.val("");
                 this.$discountPercent.val("");
@@ -336,6 +429,10 @@
             if (ruleType === 2) {
                 this.$rewardPercentSection.removeClass("d-none");
                 this.$discountPercent.attr("required", "required");
+
+                // 百分比折扣沒有重複觸發的概念，避免送出 true 造成誤解
+                this.$repeatable.prop("checked", false);
+                this.$repeatableSection.addClass("d-none");
             }
         },
 
@@ -356,12 +453,12 @@
                 NeverEnd: neverEnd,
                 Priority: parseInt(form.Priority || 0, 10),
                 CanStack: form.CanStack === true,
-                Repeatable: form.Repeatable === true,
+                Repeatable: ruleType === 1 && form.Repeatable === true,
 
                 RuleType: ruleType,
                 MinAmount: Number(form.MinAmount || 0),
                 DiscountAmount: ruleType === 1 ? Number(form.DiscountAmount || 0) : null,
-                DiscountPercent: ruleType === 2 ? Number(form.DiscountPercent || 0) : null,
+                DiscountPercent: ruleType === 2 ? this.normalizeDiscountPercentForSave(form.DiscountPercent) : null,
                 MaxDiscountAmount: ruleType === 2 && form.MaxDiscountAmount !== "" && form.MaxDiscountAmount != null
                     ? Number(form.MaxDiscountAmount || 0)
                     : null
@@ -394,8 +491,16 @@
             }
 
             if (payload.RuleType === 2) {
+                const inputValue = this.$discountPercent.val();
+                const inputRate = Number(inputValue);
+
+                if (!Number.isInteger(inputRate) || inputRate < 1 || inputRate > 99) {
+                    Coker.sweet.error("錯誤", "折扣折數請輸入 1 到 99 的整數，例如 9 或 90 表示九折，85 表示八五折。", null, true);
+                    return false;
+                }
+
                 if (!payload.DiscountPercent || payload.DiscountPercent <= 0 || payload.DiscountPercent >= 100) {
-                    Coker.sweet.error("錯誤", "折扣百分比必須大於 0 且小於 100。", null, true);
+                    Coker.sweet.error("錯誤", "折扣折數格式錯誤。", null, true);
                     return false;
                 }
 
@@ -420,6 +525,22 @@
             Coker.sweet.error("錯誤", message, null, true);
         },
 
+        reloadGrid: function () {
+            if (!this.marketingListGridEvent || !this.marketingListGridEvent.component) {
+                return;
+            }
+
+            const grid = this.marketingListGridEvent.component;
+            const dataSource = grid.getDataSource();
+
+            if (dataSource) {
+                dataSource.reload();
+                return;
+            }
+
+            grid.refresh();
+        },
+
         submitForm: function () {
             const payload = this.buildPayload();
 
@@ -434,11 +555,11 @@
                     Coker.sweet.success((res && (res.message || res.Message)) || "行銷活動儲存成功", null, true);
 
                     setTimeout(function () {
-                        if (self.hashPage) self.hashPage.goList();
-
-                        if (self.marketingListGridEvent && self.marketingListGridEvent.component) {
-                            self.marketingListGridEvent.component.refresh();
+                        if (self.hashPage) {
+                            self.hashPage.goList();
                         }
+
+                        self.reloadGrid();
                     }, 300);
                 })
                 .catch(function (err) {
@@ -462,7 +583,7 @@
                 co.Marketing.Delete(e.row.key)
                     .then(function (res) {
                         Coker.sweet.success((res && (res.message || res.Message)) || "刪除成功", null, true);
-                        e.component.refresh();
+                        self.reloadGrid();
                     })
                     .catch(function (err) {
                         self.handleRequestError(err, "刪除行銷活動失敗");

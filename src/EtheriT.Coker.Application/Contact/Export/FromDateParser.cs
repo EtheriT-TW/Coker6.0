@@ -64,7 +64,8 @@ namespace EtheriT.Coker.Application.Contact.Export
     /// </summary>
     public class FromDateParser
     {
-        // captcha 為驗證碼欄位，依規格固定排除，不輸出到 Excel。
+        // captcha（驗證碼）不納入「動態欄位聯集」，避免沒有範本的表單自動多出此欄；
+        // 但其「值」仍會保留，供有明確列出驗證碼的範本（依 Excel 格式）匯出使用。
         private static readonly HashSet<string> ExcludedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "captcha"
@@ -108,7 +109,7 @@ namespace EtheriT.Coker.Application.Contact.Export
                     {
                         // 欄位 key 用正規化結果去重，避免同一欄位產生多個 Excel 欄。
                         var normalizedKey = NormalizeKey(property.Name);
-                        if (string.IsNullOrWhiteSpace(normalizedKey) || ExcludedKeys.Contains(normalizedKey))
+                        if (string.IsNullOrWhiteSpace(normalizedKey))
                         {
                             continue;
                         }
@@ -116,8 +117,9 @@ namespace EtheriT.Coker.Application.Contact.Export
                         var title = GetPropertyText(property.Value, "title");
                         var value = GetPropertyText(property.Value, "value");
 
-                        // 動態欄位順序以查詢結果中首次出現的順序為準。
-                        if (!knownColumns.Contains(normalizedKey))
+                        // 動態欄位順序以查詢結果中首次出現的順序為準；
+                        // 排除欄位（如 captcha）不進動態聯集，但其值仍會保留供範本指定匯出。
+                        if (!ExcludedKeys.Contains(normalizedKey) && !knownColumns.Contains(normalizedKey))
                         {
                             result.Columns.Add(new FromDateColumn
                             {

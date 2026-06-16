@@ -1,0 +1,41 @@
+{
+  // 使用方式：
+  // 1. formTypeId 必須與檔名 form-{id}-... 及 WebMenus.Id 一致。
+  // 2. columns 陣列順序就是 Excel 欄位順序；調整順序請直接移動欄位物件，不需 sortOrder。
+  // 3. columnKey 對應 Contacts.FromDate JSON 欄位 key；columnTitle 是匯出 Excel 標題。
+  // 4. 2026/06/15 v2 變更：驗證碼(captcha)依客戶 Excel 格式改為「匯出」，列為最後一欄。
+  //    visible=false 可暫時停用欄位。
+  // 5. 若沒有此範本檔，系統會依 FromDate JSON 值動態產生欄位（動態模式不含驗證碼）。
+  // 6. 欄位＝該 Excel 工作表欄位「完全一比一」（含驗證碼）。
+  //    Excel 未列、僅 JSON 有的欄位（依客戶指示）不匯出，故不列入本範本。
+  "formTypeId": 21525,
+  "name": "警務人員健診",
+  "columns": [
+    { "columnKey": "name", "columnTitle": "姓名", "visible": true, "format": "text" },
+    { "columnKey": "Gender", "columnTitle": "稱謂", "visible": true, "format": "text" },
+    { "columnKey": "email", "columnTitle": "Email", "visible": true, "format": "text" },
+    { "columnKey": "telPhone", "columnTitle": "行動電話", "visible": true, "format": "text" },
+    { "columnKey": "InputCompany", "columnTitle": "服務單位", "visible": true, "format": "text" },
+    { "columnKey": "passport", "columnTitle": "身份證字號", "visible": true, "format": "text" },
+    { "columnKey": "birthday", "columnTitle": "出生年月日", "visible": true, "format": "text" },
+    { "columnKey": "ContactUsType", "columnTitle": "健診方案", "visible": true, "format": "text" },
+    { "columnKey": "checkDate", "columnTitle": "希望預約日期", "visible": true, "format": "text" },
+    { "columnKey": "InputECG", "columnTitle": "是否加購運動心電圖", "visible": true, "format": "text" },
+    { "columnKey": "InputPackageAddr", "columnTitle": "資料袋寄送地址", "visible": true, "format": "text" },
+    { "columnKey": "InputFamilyNmae", "columnTitle": "攜帶眷屬姓名", "visible": true, "format": "text" },
+    { "columnKey": "staff", "columnTitle": "攜帶眷屬身分證", "visible": true, "format": "text" },
+    { "columnKey": "checkDate1", "columnTitle": "攜帶眷屬出生日期", "visible": true, "format": "text" },
+    { "columnKey": "InputFamilyCheck", "columnTitle": "攜帶眷屬健診專案", "visible": true, "format": "text" },
+    { "columnKey": "sick1", "columnTitle": "1️⃣過去病史", "visible": true, "format": "text" },
+    { "columnKey": "sick12", "columnTitle": "2️⃣用藥紀錄", "visible": true, "format": "text" },
+    { "columnKey": "sick123", "columnTitle": "3️⃣手術史", "visible": true, "format": "text" },
+    { "columnKey": "sick1234", "columnTitle": "4️⃣住院史", "visible": true, "format": "text" },
+    { "columnKey": "sick12345", "columnTitle": "5️⃣藥物過敏", "visible": true, "format": "text" },
+    { "columnKey": "sick61", "columnTitle": "6️⃣食物過敏", "visible": true, "format": "text" },
+    { "columnKey": "height", "columnTitle": "7️⃣身高(cm)", "visible": true, "format": "text" },
+    { "columnKey": "weight", "columnTitle": "8️⃣體重(kg)", "visible": true, "format": "text" },
+    { "columnKey": "sick62", "columnTitle": "9️⃣飲食習慣", "visible": true, "format": "text" },
+    { "columnKey": "description", "columnTitle": "其他說明事項", "visible": true, "format": "text" },
+    { "columnKey": "captcha", "columnTitle": "驗證碼", "visible": true, "format": "text" }
+  ]
+}

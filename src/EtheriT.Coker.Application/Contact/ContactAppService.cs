@@ -400,8 +400,9 @@ namespace EtheriT.Coker.Application.Contact
                 var template = await exportTemplateResolver.GetTemplateAsync(dto.FormTypeId);
                 var dynamicColumns = template.HasTemplate
                     ? template.Columns
-                        .Where(e => e.Visible && !string.Equals(FromDateParser.NormalizeKey(e.ColumnKey), "captcha", StringComparison.OrdinalIgnoreCase))
+                        .Where(e => e.Visible)
                         // 範本順序由 JSON columns 陣列決定；維護人員調整陣列位置即可改變輸出欄位順序。
+                        // 欄位（含驗證碼）完全依範本；Excel 未列、僅 JSON 有的欄位不放入範本即不會匯出。
                         .Select(e => new FromDateColumn
                         {
                             NormalizedKey = FromDateParser.NormalizeKey(e.ColumnKey),

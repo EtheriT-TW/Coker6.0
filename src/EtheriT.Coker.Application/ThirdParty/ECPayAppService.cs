@@ -675,6 +675,10 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var ThirdPartyData = await ECPayGetThirdPartyData();
                 if (ThirdPartyData != null)
                 {
+                    Console.WriteLine("=== ECPay Request ===");
+                    Console.WriteLine($"Time: {DateTime.UtcNow}");
+                    Console.WriteLine($"Request Name: {RequestName}");
+                    Console.WriteLine(JsonConvert.SerializeObject(RequestBody));
                     var content = new StringContent(JsonConvert.SerializeObject(RequestBody), Encoding.UTF8, "application/json");
                     var PostResponse = await ThirdPartyClient_ECPay.PostAsync(RequestUri, content);
                     PostResponse.EnsureSuccessStatusCode();

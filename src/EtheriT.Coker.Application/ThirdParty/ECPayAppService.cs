@@ -811,8 +811,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                         PaymentBody.ChoosePaymentList += "6";
                                         break;
                                     case "ApplePay":
-                                        if (dto.SupportApplePay == true) PaymentBody.ChoosePaymentList += "7";
-                                        else PaymentBody.ChoosePaymentList = PaymentBody.ChoosePaymentList.TrimEnd(',');
+                                        PaymentBody.ChoosePaymentList += "7";
                                         break;
                                 }
                             }

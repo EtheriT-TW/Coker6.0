@@ -162,7 +162,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Title="聯絡我們",
                                 Controller="ContentManagement",
                                 Action="ContactUs",
-                                Icon="",
+                                Icon=""
                             },
                             new JobMenu{
                                 PageName="SettingCSS",
@@ -177,6 +177,13 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Controller="FileManagement",
                                 Action="Index",
                                 Icon="",
+                            },
+                            new JobMenu{
+                                PageName="ContactUsExported",
+                                Title = "表單匯出",
+                                IsView = false,
+                                Enable = false,
+                                PermissionMode = PermissionMode.Execute
                             }
                         }
                     },
@@ -650,20 +657,34 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 {
                     if (x.Enable)
                     {
-                        x.CanRemove = true;
-                        x.CanUpdate = true;
-                        x.CanVisble = true;
-                        x.CanCreate = true;
+                        if (x.PermissionMode == PermissionMode.Execute)
+                        {
+                            x.CanExecute = true;
+                        } 
+                        else
+                        {
+                            x.CanRemove = true;
+                            x.CanUpdate = true;
+                            x.CanVisble = true;
+                            x.CanCreate = true;
+                        }
                         if (x.jobItemModels != null)
                         {
                             x.jobItemModels.ForEach(s =>
                             {
                                 if (s.Enable)
                                 {
-                                    s.CanRemove = true;
-                                    s.CanUpdate = true;
-                                    s.CanVisble = true;
-                                    s.CanCreate = true;
+                                    if (s.PermissionMode == PermissionMode.Execute)
+                                    {
+                                        s.CanExecute = true;
+                                    }
+                                    else
+                                    {
+                                        s.CanRemove = true;
+                                        s.CanUpdate = true;
+                                        s.CanVisble = true;
+                                        s.CanCreate = true;
+                                    }
                                 }
                             });
                         }
@@ -694,6 +715,9 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         }
                         switch (type)
                         {
+                            case "Execute":
+                                job.CanExecute = x.IsGranted;
+                                break;
                             case "View":
                                 job.CanVisble = x.IsGranted;
                                 break;
@@ -761,6 +785,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
             permissionStateStore.Set(websiteId, userId, ThePermission);
             permissionStateStore.Set(websiteId, userId, bonusPermission);
             var ctx = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException("PermissionStateStore requires an active HttpContext.");
+            SetExecutePermissions(ctx, site.Jobs);
             ctx.Items[CokerContextKeys.HasManySystem] = await websiteApplication.hasManySystem();
         }
         public JobMenu? FindJob(List<JobMenu> jobs, string Controller, string Action)
@@ -794,6 +819,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
 
                         if (job.Enable)
                         {
+                            job.CanExecute = menu.CanExecute;
                             job.CanVisble = menu.CanVisble;
                             job.CanUpdate = menu.CanUpdate;
                             job.CanRemove = menu.CanRemove;
@@ -801,6 +827,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         }
                         else
                         {
+                            job.CanExecute = false;
                             job.CanVisble = false;
                             job.CanUpdate = false;
                             job.CanRemove = false;
@@ -837,6 +864,32 @@ namespace EtheriT.Coker.Web.MVC.Startup
 
                 if (job.jobItemModels != null && job.jobItemModels.Count > 0)
                     AddPageTitleMap(map, job.jobItemModels);
+            }
+        }
+
+        private static void SetExecutePermissions(HttpContext httpContext, IEnumerable<JobMenu> jobs)
+        {
+            foreach (var job in jobs)
+            {
+                if (job.PermissionMode == PermissionMode.Execute)
+                {
+                    httpContext.Items[job.PageName] =
+                        job.Enable &&
+                        job.CanExecute;
+                }
+
+                if (job.jobItemModels == null)
+                    continue;
+
+                foreach (var child in job.jobItemModels)
+                {
+                    if (child.PermissionMode != PermissionMode.Execute)
+                        continue;
+
+                    httpContext.Items[child.PageName] =
+                        child.Enable &&
+                        child.CanExecute;
+                }
             }
         }
     }

@@ -30,8 +30,9 @@ namespace EtheriT.Coker.Web.MVC.Extensions
             => ctx.GetItemOrDefault(CokerContextKeys.Permission, ThePermission.DenyAll);
         public static BonusPermission GetBonusPermission(this HttpContext ctx)
             => ctx.GetItemOrDefault(CokerContextKeys.BonusPermission, BonusPermission.DenyAll);
+        public static bool HasPermission(this HttpContext ctx,string key)
+            => ctx.GetItemOrDefault(key, false);
         public static bool CheckHasManySystem(this HttpContext ctx)
             => ctx.GetItemOrDefault(CokerContextKeys.HasManySystem, false);
-
     }
 }

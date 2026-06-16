@@ -242,38 +242,106 @@
         <template id="PowerData">
             <div class="item mb-3 border-bottom">
                 <div class="title"></div>
-                <div class="row align-items-center  justify-content-center">
-                    <div class="col">
-                        <input id="new" type="checkbox" name="new" class="d-none selectedItem" value="true">
-                        <label for="new" class="bg-transparent border-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="新增" data-bs-original-title="" title="">
+
+                <div class="row align-items-center justify-content-center permission-items">
+                    <div class="col permission-create">
+                        <input id="new"
+                               type="checkbox"
+                               name="new"
+                               class="d-none selectedItem"
+                               value="true">
+
+                        <label for="new"
+                               class="bg-transparent border-0 text-primary d-flex align-self-center noselect"
+                               form="none"
+                               data-bs-toggle="tooltip"
+                               data-bs-placement="left"
+                               data-bs-title="新增">
                             <span class="material-symbols-outlined fs-2">check</span>
                             <span class="material-symbols-outlined fs-2">block</span>
                         </label>
+
                         <div>新增</div>
                     </div>
-                    <div class="col">
-                        <input id="del" type="checkbox" name="del" class="d-none selectedItem" value="true">
-                        <label for="del" class="bg-transparent border-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="刪除" data-bs-original-title="" title="">
+
+                    <div class="col permission-delete">
+                        <input id="del"
+                               type="checkbox"
+                               name="del"
+                               class="d-none selectedItem"
+                               value="true">
+
+                        <label for="del"
+                               class="bg-transparent border-0 text-primary d-flex align-self-center noselect"
+                               form="none"
+                               data-bs-toggle="tooltip"
+                               data-bs-placement="left"
+                               data-bs-title="刪除">
                             <span class="material-symbols-outlined fs-2">check</span>
                             <span class="material-symbols-outlined fs-2">block</span>
                         </label>
+
                         <div>刪除</div>
                     </div>
-                    <div class="col">
-                        <input id="edit" type="checkbox" name="edit" class="d-none selectedItem" value="true">
-                        <label for="edit" class="bg-transparent border-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="修改" data-bs-original-title="" title="">
+
+                    <div class="col permission-edit">
+                        <input id="edit"
+                               type="checkbox"
+                               name="edit"
+                               class="d-none selectedItem"
+                               value="true">
+
+                        <label for="edit"
+                               class="bg-transparent border-0 text-primary d-flex align-self-center noselect"
+                               form="none"
+                               data-bs-toggle="tooltip"
+                               data-bs-placement="left"
+                               data-bs-title="修改">
                             <span class="material-symbols-outlined fs-2">check</span>
                             <span class="material-symbols-outlined fs-2">block</span>
                         </label>
+
                         <div>修改</div>
                     </div>
-                    <div class="col">
-                        <input id="view" type="checkbox" name="view" class="d-none selectedItem" value="true">
-                        <label for="view" class="bg-transparent border-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="檢視" data-bs-original-title="" title="">
+
+                    <div class="col permission-view">
+                        <input id="view"
+                               type="checkbox"
+                               name="view"
+                               class="d-none selectedItem"
+                               value="true">
+
+                        <label for="view"
+                               class="bg-transparent border-0 text-primary d-flex align-self-center noselect"
+                               form="none"
+                               data-bs-toggle="tooltip"
+                               data-bs-placement="left"
+                               data-bs-title="檢視">
                             <span class="material-symbols-outlined fs-2">check</span>
                             <span class="material-symbols-outlined fs-2">block</span>
                         </label>
+
                         <div>檢視</div>
+                    </div>
+
+                    <div class="col permission-execute d-none">
+                        <input id="execute"
+                               type="checkbox"
+                               name="execute"
+                               class="d-none selectedItem"
+                               value="true">
+
+                        <label for="execute"
+                               class="bg-transparent border-0 text-primary d-flex align-self-center noselect"
+                               form="none"
+                               data-bs-toggle="tooltip"
+                               data-bs-placement="left"
+                               data-bs-title="執行">
+                            <span class="material-symbols-outlined fs-2">check</span>
+                            <span class="material-symbols-outlined fs-2">block</span>
+                        </label>
+
+                        <div>執行</div>
                     </div>
                 </div>
             </div>

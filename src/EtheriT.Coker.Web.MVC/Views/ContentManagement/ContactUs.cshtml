@@ -2,9 +2,12 @@
 @using EtheriT.Coker.Application.Shared.Dto
 @using EtheriT.Coker.Application.Shared.Dto.Contact
 @using DevExpress.Data
+@using EtheriT.Coker.Web.MVC.Common
+@using EtheriT.Coker.Web.MVC.Extensions
 @model List<SelectDto>;
 @{
     ViewData["Title"] = "ContactUs";
+    var canExport = Context.HasPermission(CokerContextKeys.ContactUsExported);
 }
 <link rel="stylesheet" href="~/css/ContentManagement/ContactUsReply.min.css" asp-append-version="true" />
 @* 匯出 modal 專用樣式，避免影響原本聯絡表單列表與回覆頁。 *@
@@ -19,10 +22,13 @@
     <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
         <div class="title fw-bold fs-3">聯絡我們</div>
         @* 匯出按鈕只在列表頁顯示，進入明細 hash 頁時由 JS 隱藏。 *@
-        <button id="ContactExportOpen" type="button" class="btn btn-primary d-flex align-items-center gap-1 px-3">
-            <span class="material-symbols-outlined">download</span>
-            <span>匯出資料</span>
-        </button>
+        @if (canExport)
+        {
+            <button id="ContactExportOpen" type="button" class="btn btn-primary d-flex align-items-center gap-1 px-3">
+                <span class="material-symbols-outlined">download</span>
+                <span>匯出資料</span>
+            </button>
+        }
     </div>
     <div class="pageList">
         <div id="ArticleList" class="card py-2 border-0 page show">

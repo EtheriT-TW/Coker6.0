@@ -1,5 +1,10 @@
 ﻿namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
 {
+    public enum PermissionMode
+    {
+        Crud,
+        Execute
+    }
     public class JobMenu
     {
         public string? Icon { get; set; }
@@ -10,6 +15,8 @@
         public string? CollapseId { get; set; }
         public bool Enable { get; set; } = true;
         public bool IsView { get; set; } = true;
+        public PermissionMode PermissionMode { get; set; } = PermissionMode.Crud;
+        public bool CanExecute { get; set; }
         public bool CanCreate { get; set; }
         public bool CanRemove { get; set; }
         public bool CanUpdate { get; set; }

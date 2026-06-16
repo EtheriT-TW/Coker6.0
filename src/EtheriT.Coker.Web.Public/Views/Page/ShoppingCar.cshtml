@@ -816,35 +816,48 @@
                         <input type="hidden" name="authentiity_token" value="@Model.token" />
                         @if (Model.paymentModels.Count > 0)
                         {
-                            var has_invalid = false;
-                            @if (Model.paymentModels.Count == 1 && Model.paymentModels.Find(e => e.Code == "ECPay") != null)
+                            @foreach (var payment in Model.paymentModels ?? new List<PaymentTypeItemOutputDto>())
                             {
-                                <div class="ecpay_loading text-start col-12 col-sm-3 my-2 py-2 d-none">支付方式載入中......</div>
-                                <div id="ECPayPayment" data-server-type="@(ViewBag.IsProduction ? "Prod" : "Stage")"></div>
-                            }
-                            else
-                            {
-                                @foreach (var payment in Model.paymentModels ?? new List<PaymentTypeItemOutputDto>())
-                                {
-                                    <div class="form-check text-start m-0 p-0">
-                                        <input id="radio_payment_@payment.Code" class="form-check-input d-none" type="radio" name="RadioPayment" data-maxamount="@payment.MaxAmount" data-minamount="@payment.MinAmount" value="@payment.Id" data-third-party-id="@payment.FK_ThirdPartyId" required data-title="@payment.Title">
-                                        <div id="payment_@payment.Code" class="payment_display d-flex justify-content-between" data-radioid="radio_payment_@payment.Code">
-                                            <div class="d-flex align-items-center">
-                                                <span class="paymentradio d-block"></span>
-                                                <div class="paymenttitle">@payment.Title</div>
-                                            </div>
-                                            @if (payment.Icon != "")
-                                            {
-                                                <img class="paymenticon px-1" src="@payment.Icon" alt="@payment.Title">
-                                            }
+                                var isECPay = payment.Code == "ECPay";
+
+                                <div class="form-check text-start m-0 p-0 @(isECPay ? "d-none" : "")">
+                                    <input id="radio_payment_@payment.Code"
+                                           class="form-check-input d-none"
+                                           type="radio"
+                                           name="RadioPayment"
+                                           data-maxamount="@payment.MaxAmount"
+                                           data-minamount="@payment.MinAmount"
+                                           value="@payment.Id"
+                                           data-third-party-id="@payment.FK_ThirdPartyId"
+                                           required
+                                           data-title="@payment.Title">
+
+                                    <div id="payment_@payment.Code"
+                                         class="payment_display d-flex justify-content-between"
+                                         data-radioid="radio_payment_@payment.Code">
+                                        <div class="d-flex align-items-center">
+                                            <span class="paymentradio d-block"></span>
+                                            <div class="paymenttitle">@payment.Title</div>
                                         </div>
+
+                                        @if (!string.IsNullOrWhiteSpace(payment.Icon))
+                                        {
+                                            <img class="paymenticon px-1"
+                                                 src="@payment.Icon"
+                                                 alt="@payment.Title">
+                                        }
                                     </div>
-                                }
-                                @if (Model.paymentModels.Find(e => e.Code == "ECPay") != null)
-                                {
-                                    <div class="ecpay_loading text-start col-12 col-sm-3 my-2 py-2 d-none">其餘支付方式載入中......</div>
-                                    <div id="ECPayPayment" data-server-type="@(ViewBag.IsProduction ? "Prod" : "Stage")"></div>
-                                }
+                                </div>
+                            }
+
+                            @if (Model.paymentModels.Any(e => e.Code == "ECPay"))
+                            {
+                                <div class="ecpay_loading text-start col-12 col-sm-3 my-2 py-2 d-none">
+                                    支付方式載入中......
+                                </div>
+
+                                <div id="ECPayPayment"
+                                     data-server-type="@(ViewBag.IsProduction ? "Prod" : "Stage")"></div>
                             }
                         }
                         else

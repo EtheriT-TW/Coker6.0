@@ -429,7 +429,9 @@
                 });
             });
 
-            $("#RadioPayment div.form-check").addClass("d-none");
+            GetECPayEntryRadio()
+                .closest(".form-check")
+                .addClass("d-none");
         },
 
         getEntryRadio: function () {

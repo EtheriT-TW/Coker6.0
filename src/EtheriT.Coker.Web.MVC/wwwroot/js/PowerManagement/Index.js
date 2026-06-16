@@ -118,31 +118,136 @@
             } else {
                 if (self.enable) {
                     const $item = $(powerHtml);
+
                     $item.find(".title").text(self.title);
-                    const newItem = $item.find("#new");
-                    $item.find("#new+label").attr({ for: `${self.pageName}_new` });
-                    newItem.attr({ id: `${self.pageName}_new`, name: `${self.pageName}_new` }).data({ "name": `${self.pageName}.Create` }).prop("checked", self.canCreate)
 
-                    const delItem = $item.find("#del");
-                    $item.find("#del+label").attr({ for: `${self.pageName}_del` });
-                    delItem.attr({ id: `${self.pageName}_del`, name: `${self.pageName}_del` }).data({ "name": `${self.pageName}.Delete` }).prop("checked", self.canRemove)
+                    // PermissionMode.Execute = 1
+                    const isExecuteMode = self.permissionMode === 1;
 
-                    const editItem = $item.find("#edit");
-                    $item.find("#edit+label").attr({ for: `${self.pageName}_edit` });
-                    editItem.attr({ id: `${self.pageName}_edit`, name: `${self.pageName}_edit` }).data({ "name": `${self.pageName}.Edit` }).prop("checked", self.canUpdate)
+                    if (isExecuteMode) {
+                        $item.find(
+                            ".permission-create, " +
+                            ".permission-delete, " +
+                            ".permission-edit, " +
+                            ".permission-view"
+                        ).addClass("d-none");
 
-                    const viewItem = $item.find("#view");
-                    $item.find("#view+label").attr({ for: `${self.pageName}_view` });
-                    viewItem.attr({ id: `${self.pageName}_view`, name: `${self.pageName}_view` }).data({ "name": `${self.pageName}.View` }).prop("checked", self.canVisble);
-                    viewItem.on("change", function () {
-                        if (!$(this).prop("checked")) {
-                            editItem.prop("checked") && editItem.prop("checked", false).trigger('change');
-                            delItem.prop("checked") && delItem.prop("checked", false).trigger('change');
-                            newItem.prop("checked") && newItem.prop("checked", false).trigger('change');
-                        }
-                    });
+                        const executeItem = $item.find("#execute");
+
+                        $item.find("#execute + label")
+                            .attr("for", `${self.pageName}_execute`);
+
+                        executeItem
+                            .attr({
+                                id: `${self.pageName}_execute`,
+                                name: `${self.pageName}_execute`
+                            })
+                            .data({
+                                name: `${self.pageName}.Execute`
+                            })
+                            .prop("checked", self.canExecute);
+
+                        $item.find(".permission-execute")
+                            .removeClass("d-none");
+                    } else {
+                        $item.find(".permission-execute")
+                            .remove();
+
+                        const newItem = $item.find("#new");
+
+                        $item.find("#new + label")
+                            .attr("for", `${self.pageName}_new`);
+
+                        newItem
+                            .attr({
+                                id: `${self.pageName}_new`,
+                                name: `${self.pageName}_new`
+                            })
+                            .data({
+                                name: `${self.pageName}.Create`
+                            })
+                            .prop("checked", self.canCreate);
+
+                        const delItem = $item.find("#del");
+
+                        $item.find("#del + label")
+                            .attr("for", `${self.pageName}_del`);
+
+                        delItem
+                            .attr({
+                                id: `${self.pageName}_del`,
+                                name: `${self.pageName}_del`
+                            })
+                            .data({
+                                name: `${self.pageName}.Delete`
+                            })
+                            .prop("checked", self.canRemove);
+
+                        const editItem = $item.find("#edit");
+
+                        $item.find("#edit + label")
+                            .attr("for", `${self.pageName}_edit`);
+
+                        editItem
+                            .attr({
+                                id: `${self.pageName}_edit`,
+                                name: `${self.pageName}_edit`
+                            })
+                            .data({
+                                name: `${self.pageName}.Edit`
+                            })
+                            .prop("checked", self.canUpdate);
+
+                        const viewItem = $item.find("#view");
+
+                        $item.find("#view + label")
+                            .attr("for", `${self.pageName}_view`);
+
+                        viewItem
+                            .attr({
+                                id: `${self.pageName}_view`,
+                                name: `${self.pageName}_view`
+                            })
+                            .data({
+                                name: `${self.pageName}.View`
+                            })
+                            .prop("checked", self.canVisble);
+
+                        viewItem.on("change", function () {
+                            if ($(this).prop("checked"))
+                                return;
+
+                            if (editItem.prop("checked")) {
+                                editItem
+                                    .prop("checked", false)
+                                    .trigger("change");
+                            }
+
+                            if (delItem.prop("checked")) {
+                                delItem
+                                    .prop("checked", false)
+                                    .trigger("change");
+                            }
+
+                            if (newItem.prop("checked")) {
+                                newItem
+                                    .prop("checked", false)
+                                    .trigger("change");
+                            }
+                        });
+                    }
+
                     $item.appendTo($body);
-                    if (self.jobItemModels != null && self.jobItemModels.length > 0) insetMenu($item, self.jobItemModels);
+
+                    if (
+                        self.jobItemModels != null &&
+                        self.jobItemModels.length > 0
+                    ) {
+                        insetMenu(
+                            $item,
+                            self.jobItemModels
+                        );
+                    }
                 }
             }
         });
@@ -159,27 +264,54 @@
         $(data).each(function () {
             const self = this;
             const items = self.name.split(".");
+
             switch (items[1]) {
+                case "Execute":
+                    $(`[name="${items[0]}_execute"]`)
+                        .prop("checked", self.isGranted);
+                    break;
+
                 case "Edit":
-                    $(`[name="${items[0]}_edit"]`).prop("checked", self.isGranted);
+                    $(`[name="${items[0]}_edit"]`)
+                        .prop("checked", self.isGranted);
                     break;
+
                 case "Delete":
-                    $(`[name="${items[0]}_del"]`).prop("checked", self.isGranted);
+                    $(`[name="${items[0]}_del"]`)
+                        .prop("checked", self.isGranted);
                     break;
+
                 case "Create":
-                    $(`[name="${items[0]}_new"]`).prop("checked", self.isGranted);
+                    $(`[name="${items[0]}_new"]`)
+                        .prop("checked", self.isGranted);
                     break;
+
                 case "View":
-                    $(`[name="${items[0]}_view"]`).prop("checked", self.isGranted);
+                    $(`[name="${items[0]}_view"]`)
+                        .prop("checked", self.isGranted);
                     break;
             }
         });
     }
     const setMenuItemPermissions = function (self) {
-        $(`[name="${self.pageName}_new"]`).prop("checked", self.canCreate);
-        $(`[name="${self.pageName}_del"]`).prop("checked", self.canRemove);
-        $(`[name="${self.pageName}_edit"]`).prop("checked", self.canUpdate);
-        $(`[name="${self.pageName}_view"]`).prop("checked", self.canVisble);
+        if (self.permissionMode === 1) {
+            $(`[name="${self.pageName}_execute"]`)
+                .prop("checked", self.canExecute);
+
+            return;
+        }
+
+        $(`[name="${self.pageName}_new"]`)
+            .prop("checked", self.canCreate);
+
+        $(`[name="${self.pageName}_del"]`)
+            .prop("checked", self.canRemove);
+
+        $(`[name="${self.pageName}_edit"]`)
+            .prop("checked", self.canUpdate);
+
+        $(`[name="${self.pageName}_view"]`)
+            .prop("checked", self.canVisble);
     }
     const setMember = function () {
         const $self = $(this);

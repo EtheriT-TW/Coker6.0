@@ -13,13 +13,15 @@ var PreLoader;
     const continueLoginState = function () {
         co.sweet.confirm("即將登出", "登入時間超過二十分鐘，是否保持狀態?", "是", "登出", function () {
             co.User.Check().done(function (resule) {
-                if (!resule.success) {
+                if (!result || !result.success) {
                     co.sweet.error("連線失敗", "延遲時間過久，您的登入狀態已被登出，請重新登入。", function () {
-                        location.href = "/";
+                        location.reload();
                     }, false);
+                    return;
                 }
+
+                setTimeout(continueLoginState, co.Data.Time.ReCheckTime - 1000);
             });
-            setTimeout(continueLoginState, co.Data.Time.ReCheckTime - 1000);
         }, function () {
             co.User.Logout();
         });
@@ -90,16 +92,25 @@ var PreLoader;
             form.dataset.submitting = "false";
         }, 2000);
     });
-    if (!!co.Cookie.Get("isLogin")) setTimeout(continueLoginState, co.Data.Time.ReCheckTime - 1000);
-    if (!co.Cookie.Get("isLogin")) {
-        if (location.pathname != "/" && !/^\/Account/.test(location.pathname)) location.href = "/";
-        else co.Page.Ready();
-    } else if (edt > (now.getTime() + co.Data.Time.ReCheckTime)) {
+    const isAccountPage =
+        location.pathname === "/" ||
+        /^\/Account/i.test(location.pathname);
+
+    if (isAccountPage) {
         co.Page.Ready();
     } else {
         co.User.Check().done(function (result) {
-            if (!result.success && location.pathname != "/" && !/^\/Account/.test(location.pathname)) location.href = "/";
-            else co.Page.Ready();
+            if (!result || !result.success) {
+                location.reload();
+                return;
+            }
+
+            setTimeout(
+                continueLoginState,
+                co.Data.Time.ReCheckTime - 1000
+            );
+
+            co.Page.Ready();
         });
     }
     $(".loader-wrapper").not(".incomponent").fadeOut(1000, function () { PreLoader = $(this).detach() })

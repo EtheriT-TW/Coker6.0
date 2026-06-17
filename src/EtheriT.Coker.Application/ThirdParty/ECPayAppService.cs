@@ -259,43 +259,54 @@ namespace EtheriT.Coker.Application.ThirdParty
                             switch (CreditDetailGetResponse.Status)
                             {
                                 case "Canceled":
-                                case "Operation canceled":
-                                    await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
-                                    await orderAppService.CancelOrderMailSend(ohdata.Id, DateTimeNow);
+                                    await orderAppService.OrderStateChange(ohdata.Id,(int)OrderStatusEnum.已取消);
+                                    await orderAppService.CancelOrderMailSend(ohdata.Id,DateTimeNow);
+
+                                    response.Message = "該筆交易已由綠界取消";
                                     response.Success = true;
-                                    break;
+                                    return response;
+
                                 case "Unauthorized":
-                                    DateTime tradeDate = DateTime.ParseExact(CreditDetailGetResponse.AuthTime, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
-                                    if (DateTimeNow > tradeDate.AddMinutes(30))
-                                    {
-                                        await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
-                                        await orderAppService.CancelOrderMailSend(ohdata.Id, DateTimeNow);
-                                        response.Message = "訂單已取消成功";
-                                        response.Success = true;
-                                    }
-                                    break;
+                                    await orderAppService.OrderStateChange(ohdata.Id,(int)OrderStatusEnum.已取消);
+                                    await orderAppService.CancelOrderMailSend(ohdata.Id,DateTimeNow);
+
+                                    response.Message = "該筆交易未完成授權，訂單已取消";
+                                    response.Success = true;
+                                    return response;
+
                                 case "Authorized":
+                                case "Operation canceled":
+                                    // 尚未關帳，放棄交易並釋放信用卡額度
                                     refundRequestData.Action = "N";
                                     break;
+
                                 case "To be captured":
+                                    // 先取消關帳，再執行放棄
                                     refundRequestData.Action = "E";
                                     break;
+
                                 case "Captured":
+                                    // 已完成關帳，執行退刷
                                     refundRequestData.Action = "R";
                                     break;
+
+                                default:
+                                    throw new Exception(
+                                        $"無法處理綠界信用卡交易狀態：{CreditDetailGetResponse.Status}"
+                                    );
                             }
                             refundRequestData.TotalAmount = CreditDetailGetResponse.Amount;
 
                             RequestBody.Data = Encrypt(refundRequestData, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
 
-                            var refundResponse = await ECPaySendRequest("ECPayGetQueryTrade", RequestUri, RequestBody);
+                            var refundResponse = await ECPaySendRequest("ECPayRefund", RequestUri, RequestBody);
                             if (!refundResponse.Success) throw new Exception(refundResponse.Message);
 
                             if (refundRequestData.Action == "E")
                             {
                                 refundRequestData.Action = "N";
                                 RequestBody.Data = Encrypt(refundRequestData, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
-                                refundResponse = await ECPaySendRequest("ECPayGetQueryTrade", RequestUri, RequestBody);
+                                refundResponse = await ECPaySendRequest("ECPayRefund", RequestUri, RequestBody);
 
                                 if (!refundResponse.Success) throw new Exception(refundResponse.Message);
                             }
@@ -344,7 +355,7 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 var queryTradeResponse = await ECPaySendRequest("ECPayGetQueryTrade", RequestUri, RequestBody);
                 if (!queryTradeResponse.Success) throw new Exception(queryTradeResponse.Message);
-                RequestUri = "/1.0.0/CreditDetail/QueryTrade";
+                RequestUri = ThirdPartyClient_ECPay.BaseAddress?.ToString().Replace("ecpg", "ecpayment") + "/1.0.0/CreditDetail/QueryTrade";
 
                 ECPayCreditDetailDataDto creditDetailRequestData = new ECPayCreditDetailDataDto();
                 creditDetailRequestData = mapper.Map<ECPayCreditDetailDataDto>(requestData);

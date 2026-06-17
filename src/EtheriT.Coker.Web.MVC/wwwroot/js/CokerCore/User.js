@@ -65,7 +65,7 @@
             }).fail(function () {
                 _c.Cookie.DelAll();
                 co.sweet.error("連線失敗", "延遲時間過久，您的登入狀態已被登出，請重新登入。", function () {
-                    location.href = "/";
+                    location.reload();
                 }, false);
                 _dfr.resolve();
             });

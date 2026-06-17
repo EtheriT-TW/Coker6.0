@@ -37,14 +37,12 @@
 
     const returnUrl = getSafeReturnUrl();
 
-    if (!!co.Cookie.Get("isLogin")) {
-        co.User.Check().done(function (result) {
-            if (result.success) {
-                location.href = returnUrl;
-                return;
-            }
-        });
-    }
+    co.User.Check().done(function (result) {
+        if (result.success) {
+            location.href = returnUrl;
+            return;
+        }
+    });
 
     $("#loginBtn").on("click", function (e) {
         e.preventDefault();

@@ -70,7 +70,6 @@
 		<Content Remove="wwwroot\js\CokerCore\**" />
 	</ItemGroup>
 	<ItemGroup>
-		<Folder Include="Resources\" />
 		<Folder Include="wwwroot\css\Dashboard\" />
 		<Folder Include="wwwroot\lib\fortawesome\css\" />
 		<Folder Include="wwwroot\lib\jquery-menu-editor\" />

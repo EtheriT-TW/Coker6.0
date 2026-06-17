@@ -1,6 +1,11 @@
 ﻿function PageReady() {
-    let nItem = null,RoleID=0;
-    let data,setMenu=[],type;
+    let nItem = null;
+    let RoleID = 0;
+    let data;
+    let type;
+
+    let userPermissionChanges = [];
+    let websitePermissionChanges = [];
     let html = $("#MemberData").html();
     let roleHtml = $("#RoleData").html();
     const powerHtml = $("#PowerData").html();
@@ -42,27 +47,54 @@
             insetMenu($body, result.jobs,true);
             if (permission.CanUpdate) {
                 $("#offcanvasByWebsite .selectedItem").off("change.save").on("change.save", function () {
-                    const $self = $(this)
-                    const data = {
-                        name: $self.data("name"),
-                        IsGranted: $(this).prop("checked")
-                    };
-                    if (co.Array.Search(setMenu, { name: data.name }) > -1) co.Array.Delete(setMenu, { name: data.name });
-                    else setMenu.push(data);
-                });
-                $("#offcanvasByWebsite .save").off("click").on("click", function () {
-                    const obj = {
-                        Items: setMenu
-                    }
-                    obj[type] = $(nItem).data("id");
-                    co.PowerManagement.SavePermissions(obj).done(function (result) {
-                        if (result.success) {
-                            co.sweet.success("儲存成功");
-                        } else {
-                            co.sweet.error("儲存失敗", result.error);
+                        const $self = $(this);
+
+                        const permissionItem = {
+                            name: $self.data("name"),
+                            IsGranted: $self.prop("checked")
+                        };
+
+                        const index = co.Array.Search(
+                            websitePermissionChanges,
+                            { name: permissionItem.name }
+                        );
+
+                        if (index > -1) {
+                            co.Array.Delete(
+                                websitePermissionChanges,
+                                { name: permissionItem.name }
+                            );
                         }
+
+                        websitePermissionChanges.push(permissionItem);
                     });
-                });
+                $("#offcanvasByWebsite .save")
+                    .off("click")
+                    .on("click", function () {
+                        if (websitePermissionChanges.length === 0) {
+                            co.sweet.success("目前沒有任何權限異動");
+                            return;
+                        }
+
+                        const obj = {
+                            Items: websitePermissionChanges,
+                            FK_UserId: null,
+                            FK_RoleId: null
+                        };
+
+                        co.PowerManagement.SavePermissions(obj)
+                            .done(function (result) {
+                                if (result.success) {
+                                    websitePermissionChanges.length = 0;
+                                    co.sweet.success("儲存成功");
+                                } else {
+                                    co.sweet.error(
+                                        "儲存失敗",
+                                        result.error
+                                    );
+                                }
+                            });
+                    });
             } else {
                 $("#offcanvasByWebsite .selectedItem + label").addClass("pointer-event-none");
                 $("#offcanvasByWebsite .save").remove();
@@ -77,28 +109,77 @@
             $view.find(".siteName").text(result.title);
             insetMenu($body, result.jobs);
             if (permission.CanUpdate) {
-                $("#offcanvas1 .selectedItem").off("change.save").on("change.save", function () {
-                    const $self = $(this)
-                    const data = {
-                        name: $self.data("name"),
-                        IsGranted: $(this).prop("checked")
-                    };
-                    if (co.Array.Search(setMenu, { name: data.name }) > -1) co.Array.Delete(setMenu, { name: data.name });
-                    else setMenu.push(data);
-                });
-                $("#offcanvas1 .save").off("click").on("click", function () {
-                    const obj = {
-                        Items: setMenu
-                    }
-                    obj[type] = $(nItem).data("id");
-                    co.PowerManagement.SavePermissions(obj).done(function (result) {
-                        if (result.success) {
-                            co.sweet.success("儲存成功");
-                        } else {
-                            co.sweet.error("儲存失敗", result.error);
+                $("#offcanvas1 .selectedItem")
+                    .off("change.save")
+                    .on("change.save", function () {
+                        const $self = $(this);
+
+                        const permissionItem = {
+                            name: $self.data("name"),
+                            IsGranted: $self.prop("checked")
+                        };
+
+                        const index = co.Array.Search(
+                            userPermissionChanges,
+                            { name: permissionItem.name }
+                        );
+
+                        if (index > -1) {
+                            co.Array.Delete(
+                                userPermissionChanges,
+                                { name: permissionItem.name }
+                            );
                         }
+
+                        userPermissionChanges.push(permissionItem);
                     });
-                });
+                $("#offcanvas1 .save")
+                    .off("click")
+                    .on("click", function () {
+                        if (!type || !nItem) {
+                            co.sweet.error(
+                                "儲存失敗",
+                                "找不到權限設定對象"
+                            );
+                            return;
+                        }
+
+                        const targetId = $(nItem).data("id");
+
+                        if (targetId == null) {
+                            co.sweet.error(
+                                "儲存失敗",
+                                "找不到角色或使用者編號"
+                            );
+                            return;
+                        }
+
+                        if (userPermissionChanges.length === 0) {
+                            co.sweet.success("目前沒有任何權限異動");
+                            return;
+                        }
+
+                        const obj = {
+                            Items: userPermissionChanges,
+                            FK_UserId: null,
+                            FK_RoleId: null
+                        };
+
+                        obj[type] = targetId;
+
+                        co.PowerManagement.SavePermissions(obj)
+                            .done(function (result) {
+                                if (result.success) {
+                                    userPermissionChanges.length = 0;
+                                    co.sweet.success("儲存成功");
+                                } else {
+                                    co.sweet.error(
+                                        "儲存失敗",
+                                        result.error
+                                    );
+                                }
+                            });
+                    });
             } else {
                 $("#offcanvas1 .selectedItem + label").addClass("pointer-event-none");
                 $("#offcanvas1 .save").remove();
@@ -579,17 +660,58 @@
         }
     });
     $("#offcanvas1").on("shown.bs.offcanvas", function () {
-        setMenu.length = 0;
-        setMenuInitPermissions($("#offcanvas1").data("init"));
-        const obj = {};
-        obj[type] = $(nItem).data("id");
-        $("#offcanvas1 .data>.type").text(type.indexOf("Role") > 0 ? "角色" : "使用者");
-        $("#offcanvas1 .data>.name").text($(nItem).data("name"));
-        co.PowerManagement.GetPermissions(obj).done(function (result) {
-            if (result.success) {
-                setMenuUserPermissions(result.items)
-            } else co.sweet.error("權限抓取失敗", result.error);
-        });
+        userPermissionChanges.length = 0;
+
+        setMenuInitPermissions(
+            $("#offcanvas1").data("init")
+        );
+
+        if (!type || !nItem) {
+            co.sweet.error(
+                "權限讀取失敗",
+                "找不到權限設定對象"
+            );
+            return;
+        }
+
+        const targetId = $(nItem).data("id");
+
+        if (targetId == null) {
+            co.sweet.error(
+                "權限讀取失敗",
+                "找不到角色或使用者編號"
+            );
+            return;
+        }
+
+        const obj = {
+            FK_UserId: null,
+            FK_RoleId: null
+        };
+
+        obj[type] = targetId;
+
+        $("#offcanvas1 .data > .type")
+            .text(
+                type === "FK_RoleId"
+                    ? "角色"
+                    : "使用者"
+            );
+
+        $("#offcanvas1 .data > .name")
+            .text($(nItem).data("name"));
+
+        co.PowerManagement.GetPermissions(obj)
+            .done(function (result) {
+                if (result.success) {
+                    setMenuUserPermissions(result.items);
+                } else {
+                    co.sweet.error(
+                        "權限抓取失敗",
+                        result.error
+                    );
+                }
+            });
     });
     $("#offcanvastopByNewMember").on("show.bs.offcanvas", function () {
         $("#offcanvastopByNewMember form").get(0).reset();
@@ -598,4 +720,9 @@
     $("#addUser").on("click", () => {
         RoleID = 0;
     });
+
+    $("#offcanvasByWebsite")
+        .on("show.bs.offcanvas", function () {
+            websitePermissionChanges.length = 0;
+        });
 }

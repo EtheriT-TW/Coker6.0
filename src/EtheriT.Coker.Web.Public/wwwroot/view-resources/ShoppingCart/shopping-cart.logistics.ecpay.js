@@ -110,6 +110,8 @@
             cart.Pricing.TotalCount();
             cart.Pricing.updateNextStepByBonus();
 
+            S.isRestoringECPayLogistics = true;
+
             S.buy_step_swiper.enable();
             S.buy_step_swiper.slideTo(1);
 
@@ -126,6 +128,23 @@
             }
 
             cart.Shipping.ConfigurePaymentOptions(formData.payment);
+
+            // 從綠界超商地圖返回後，這裡才是表單、物流、付款狀態都恢復完成的位置。
+            // CVSStoreID / CVSStoreName / CVSAddress 會影響綠界付款 snapshot，
+            // 所以必須在這裡明確重載嵌入式金流，而不是交給 RadioShipping 猜。
+            cart.Shipping.RadioShipping();
+            cart.Payment.Core.RadioPayment();
+            cart.Payment.Core.onAmountChanged();
+
+            var reloadPayment = cart.Payment.Core.reloadActiveEmbeddedProvider();
+
+            if (reloadPayment && typeof reloadPayment.always === "function") {
+                reloadPayment.always(function () {
+                    S.isRestoringECPayLogistics = false;
+                });
+            } else {
+                S.isRestoringECPayLogistics = false;
+            }
 
             sessionStorage.removeItem("orderForm");
         }, 50);

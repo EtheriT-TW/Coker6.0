@@ -5,6 +5,8 @@
     var S = cart.State;
     cart.Payment = cart.Payment || {};
     cart.Payment.ECPay = cart.Payment.ECPay || {};
+    var ecpaySelectionObserver = null;
+    var isClearingECPaySelection = false;
 
     function GetECPayEntryRadio() {
         return $('#RadioPayment input[name="RadioPayment"][data-third-party-id="' + S.ECPAY_THIRD_PARTY_ID + '"]').first();
@@ -24,10 +26,17 @@
     function IsECPaySelected() {
         var $checked = cart.Payment.Core.GetCheckedPaymentRadio();
 
-        return S.HasECPay && (
-            IsPaymentRadioECPay($checked) ||
-            $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li.ecpay-pl-act").length > 0
-        );
+        // 如果目前已經有明確選中的 RadioPayment，
+        // 就以 RadioPayment 為準。
+        // 避免綠界 SDK 自動加上的 .ecpay-pl-act 反過來搶走付款狀態。
+        if ($checked.length > 0) {
+            return S.HasECPay && IsPaymentRadioECPay($checked);
+        }
+
+        // 只有在沒有任何 RadioPayment 被選取時，
+        // 才允許用綠界內部 active 狀態判斷。
+        return S.HasECPay &&
+            $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li.ecpay-pl-act").length > 0;
     }
     function BuildECPayOrderSnapshot() {
         var ids = cart.Items.getSelectedCartIds();
@@ -132,7 +141,21 @@
                         S.ECPayChanging = false;
                         S.ECPayOrderSnapshot = nextSnapshot;
 
-                        cart.Shipping.ConfigurePaymentOptions(restorePaymentAfterSync || GetECPayEntryValue());
+                        var currentPaymentValue = cart.Payment.Core.GetCheckedPaymentValue();
+                        var ecpayEntryValue = GetECPayEntryValue();
+
+                        var paymentValueToRestore =
+                            currentPaymentValue && currentPaymentValue !== ecpayEntryValue
+                                ? currentPaymentValue
+                                : (restorePaymentAfterSync || ecpayEntryValue);
+
+                        cart.Shipping.ConfigurePaymentOptions(paymentValueToRestore);
+                        cart.Payment.Core.RadioPayment();
+
+                        // 綠界 SDK 可能在 createPayment 後自動選取第一個付款項目。
+                        // 先立刻清一次，再啟動 DOM 監聽，避免 SDK 稍後又補上 active。
+                        ClearECPaySelectionIfNotActive();
+                        WatchECPaySelectionAutoActive();
 
                         var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
                         $ECPayList.removeClass("first last");
@@ -156,6 +179,7 @@
                             $parentFormCheck.find(".payment_display").addClass("checked");
                             $("#RadioPayment .payment_display").first().addClass("first");
                             $prevPayment.addClass("last");
+                            cart.Payment.Core.RadioPayment();
 
                             if ($(".ecpay_loading").hasClass("d-none")) {
                                 $ECPayList.removeClass("first last");
@@ -181,10 +205,14 @@
                         var checkPayExist = setInterval(function () {
                             if (typeof window.Pay !== "undefined") {
                                 clearInterval(checkPayExist);
+
                                 $(".ecpay_loading").addClass("d-none");
-                                S.buy_step_swiper.update();
+
+                                if (S.buy_step_swiper) {
+                                    S.buy_step_swiper.update();
+                                }
                             }
-                        }, 1000);
+                        }, 100);
                     }, "V2");
                 })
                 .fail(function () {
@@ -204,6 +232,73 @@
             clearTimeout(S.ECPayRefreshTimer);
             S.ECPayRefreshTimer = null;
         }
+    }
+    function IsCurrentPaymentECPay() {
+        return IsPaymentRadioECPay(cart.Payment.Core.GetCheckedPaymentRadio());
+    }
+
+    function ClearECPaySelectionIfNotActive() {
+        if (isClearingECPaySelection) return;
+
+        // 目前外部 RadioPayment 是綠界時，不可以清掉綠界內部選取。
+        if (IsCurrentPaymentECPay()) return;
+
+        // 沒有綠界 active 時，不要重複整理 first / last，
+        // 避免 MutationObserver 因為 class 變動被自己反覆觸發。
+        var hasActive = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li.ecpay-pl-act").length > 0;
+        if (!hasActive) return;
+
+        ClearECPaySelection();
+    }
+    function ClearECPaySelection() {
+        if (isClearingECPaySelection) return;
+
+        isClearingECPaySelection = true;
+
+        try {
+            var $items = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
+
+            // 沒有 active 時，不需要再改 class。
+            if ($items.filter(".ecpay-pl-act").length === 0) {
+                return;
+            }
+
+            $items.removeClass("ecpay-pl-act first last");
+
+            $items.first().addClass("first");
+            $items.last().addClass("last");
+
+            if (S.buy_step_swiper) {
+                S.buy_step_swiper.update();
+            }
+        } finally {
+            isClearingECPaySelection = false;
+        }
+    }
+    function WatchECPaySelectionAutoActive() {
+        var target = document.getElementById("ECPayPayment");
+
+        if (!target) return;
+
+        if (ecpaySelectionObserver) {
+            ecpaySelectionObserver.disconnect();
+            ecpaySelectionObserver = null;
+        }
+
+        ecpaySelectionObserver = new MutationObserver(function () {
+            if (isClearingECPaySelection) return;
+
+            window.requestAnimationFrame(function () {
+                ClearECPaySelectionIfNotActive();
+            });
+        });
+
+        ecpaySelectionObserver.observe(target, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["class"]
+        });
     }
     function GetECPayType() {
         var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
@@ -447,12 +542,7 @@
         },
 
         isSelected: function () {
-            var $checked = cart.Payment.Core.GetCheckedPaymentRadio();
-
-            return S.HasECPay && (
-                this.isMatchRadio($checked) ||
-                $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li.ecpay-pl-act").length > 0
-            );
+            return IsECPaySelected();
         },
 
         isReady: function () {
@@ -521,6 +611,7 @@
             ValidateECPayPayment(callback);
         },
 
-        afterOrderCreated: afterOrderCreated
+        afterOrderCreated: afterOrderCreated,
+        clearSelection: ClearECPaySelection,
     });
 })(window.ShoppingCart, window.jQuery);

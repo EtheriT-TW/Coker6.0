@@ -49,11 +49,15 @@
         var isSupportCashOnDeliveryChanged = S.SupportCashOnDelivery != this_SupportCashOnDelivery;
         S.SupportCashOnDelivery = this_SupportCashOnDelivery;
 
-        if (isAmountChanged || isSupportCashOnDeliveryChanged) {
+        var shouldRefreshEmbeddedPayment =
+            isAmountChanged ||
+            isSupportCashOnDeliveryChanged;
+
+        if (shouldRefreshEmbeddedPayment) {
             cart.Payment.Core.onAmountChanged();
         }
 
-        if (!this_SupportCashOnDelivery && (isAmountChanged || isSupportCashOnDeliveryChanged)) {
+        if (!this_SupportCashOnDelivery && shouldRefreshEmbeddedPayment) {
             cart.Payment.Core.reloadActiveEmbeddedProvider();
         } else if (isSupportCashOnDeliveryChanged) {
             cart.Payment.Core.clearProvidersByType("embedded");

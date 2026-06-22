@@ -28,20 +28,41 @@
         $target.prevAll(".form-check:not(.d-none)").first().find(".payment_display").addClass("last");
         $target.nextAll(".form-check:not(.d-none)").first().find(".payment_display").addClass("first");
     }
+    function clearOtherProviderSelections(activeProvider) {
+        getProviders().forEach(function (provider) {
+            if (!provider || provider === activeProvider) return;
+
+            if (typeof provider.clearSelection === "function") {
+                provider.clearSelection();
+            }
+        });
+    }
     function RadioPayment() {
         var $pay_text = $(".payment_method");
         $pay_text.addClass("fs-2 fw-bold px-3");
+
         var $checked = S.$pay_method.filter(':checked');
+        var activeProvider = null;
+
         if ($checked.length) {
+            activeProvider = getProviderByRadio($checked);
+
             var val = $checked.val();
+
             if (val == 1) {
                 $('.pay_info').removeClass('d-none');
             } else {
                 $('.pay_info').addClass('d-none');
             }
+
             $pay_text.text($checked.data('title'));
         }
-        S.buy_step_swiper.update();
+
+        clearOtherProviderSelections(activeProvider);
+
+        if (S.buy_step_swiper) {
+            S.buy_step_swiper.update();
+        }
     }
     function Step3Monitor() {
         S.OrdererFilled = cart.Forms.FormCheck(S.OrdererForms)

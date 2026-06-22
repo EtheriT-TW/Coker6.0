@@ -95,6 +95,7 @@
         ECPayOrderSnapshot: "",
         ECPayRefreshTimer: null,
         ECPayChanging: false,
+        isRestoringECPayLogistics: false,
         RecipientsList_dxData: undefined,
         ECPAY_THIRD_PARTY_ID: 4,
         top_position: undefined

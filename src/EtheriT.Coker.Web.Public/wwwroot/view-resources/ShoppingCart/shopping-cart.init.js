@@ -8,6 +8,7 @@
     function PageReady() {
         $('#RadioPayment .payment_display').on("click", function () {
             cart.Payment.Core.updatePaymentRadioUI($(this).closest('.form-check'));
+            cart.Payment.Core.RadioPayment();
         });
 
         // 群組全選（Header）
@@ -159,7 +160,8 @@
                             var this_SupportCashOnDelivery = String($checkedShipping.attr("data-support-cash-on-delivery")).toLowerCase() == "true";
                             S.SupportCashOnDelivery = this_SupportCashOnDelivery;
 
-                            if (!S.SupportCashOnDelivery) {
+                            // 從綠界超商地圖返回時，restoreOrderForm() 會負責在資料恢復完成後重載金流。
+                            if (!S.SupportCashOnDelivery && !S.isRestoringECPayLogistics) {
                                 cart.Payment.Core.reloadActiveEmbeddedProvider();
                             }
                         }

@@ -12,6 +12,12 @@
   "name": "消防人員健診",
   "columns": [
     {
+      "columnKey": "sick62",
+      "columnTitle": "9️⃣飲食習慣",
+      "visible": true,
+      "format": "text"
+    },
+    {
       "columnKey": "name",
       "columnTitle": "姓名",
       "visible": true,
@@ -140,12 +146,6 @@
     {
       "columnKey": "weight",
       "columnTitle": "8️⃣體重(kg)",
-      "visible": true,
-      "format": "text"
-    },
-    {
-      "columnKey": "sick62",
-      "columnTitle": "9️⃣飲食習慣",
       "visible": true,
       "format": "text"
     },

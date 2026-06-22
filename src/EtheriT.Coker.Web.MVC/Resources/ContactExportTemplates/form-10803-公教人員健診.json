@@ -14,6 +14,12 @@
   "name": "公教人員健診",
   "columns": [
     {
+      "columnKey": "sick62",
+      "columnTitle": "9️⃣飲食習慣",
+      "visible": true,
+      "format": "text"
+    },
+    {
       "columnKey": "name",
       "columnTitle": "姓名",
       "visible": true,
@@ -40,12 +46,6 @@
     {
       "columnKey": "InputCompany",
       "columnTitle": "服務單位",
-      "visible": true,
-      "format": "text"
-    },
-    {
-      "columnKey": "RadioForm",
-      "columnTitle": "是否需要提供附表一般體格表(勞檢表)",
       "visible": true,
       "format": "text"
     },
@@ -152,14 +152,14 @@
       "format": "text"
     },
     {
-      "columnKey": "sick62",
-      "columnTitle": "9️⃣飲食習慣",
+      "columnKey": "description",
+      "columnTitle": "其他說明事項",
       "visible": true,
       "format": "text"
     },
     {
-      "columnKey": "description",
-      "columnTitle": "其他說明事項",
+      "columnKey": "RadioForm",
+      "columnTitle": "是否需要提供附表一般體格表(勞檢表)",
       "visible": true,
       "format": "text"
     },

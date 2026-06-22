@@ -369,6 +369,8 @@ namespace EtheriT.Coker.Application.Contact
                     .Select(e => new ContactExportSource
                     {
                         Id = e.Id,
+                        // Name 即後台列表「位置」欄位值，匯出檔名的表單中文名稱以此為準。
+                        Name = e.Name,
                         UserName = e.UserName,
                         Email = e.Email,
                         TargetEmail = e.TargetEmail,
@@ -415,9 +417,18 @@ namespace EtheriT.Coker.Application.Contact
                 if (template.HasTemplate)
                 {
                     LogTemplateColumnsWithoutMapping(dto.FormTypeId, dynamicColumns, parsed);
+
+                    // 套用範本時欄位「完全一比一」依範本輸出；若範本沒有任何可輸出欄位則無法產生 Excel。
+                    if (dynamicColumns.Count == 0)
+                    {
+                        response = CreateExportFailure(HttpStatusCode.BadRequest, "E004", "匯出範本未設定任何可輸出欄位，請確認範本設定。", ErrorCodeEnum.ValidationError, exportMaxRows);
+                        auditResult = new { response.HttpStatusCode, response.ErrorCodeKey, response.Error };
+                        return response;
+                    }
                 }
 
-                var rows = BuildExportRows(contacts, menu.Title, dynamicColumns, parsed);
+                // 有套用 JSON 範本時，僅輸出範本內欄位；固定欄位（含編號等非範本欄位）一律不匯出。
+                var rows = BuildExportRows(contacts, menu.Title, dynamicColumns, parsed, includeFixedColumns: !template.HasTemplate);
                 var stream = new MemoryStream();
 
                 // MiniExcel 使用 Dictionary key 作為表頭，rows 內欄位順序即 Excel 欄位順序。
@@ -427,7 +438,18 @@ namespace EtheriT.Coker.Application.Contact
                 response.MaxRows = exportMaxRows;
                 response.ExportedCount = contacts.Count;
                 response.FileContents = stream.ToArray();
-                response.FileName = $"form_export_{dto.FormTypeId}_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+                // 檔名格式：{表單中文名稱}_{日期 yyyyMMdd}_{時間 HHmm}.xlsx，例：《特約公司》線上預約_20260622_1755.xlsx
+                // 表單中文名稱取後台列表「位置」欄位（Contacts.Name）；同表單可能存在少數差異值，取最常見者，全空時退回選單標題。
+                var formDisplayName = contacts
+                    .Select(e => e.Name)
+                    .Where(name => !string.IsNullOrWhiteSpace(name))
+                    .GroupBy(name => name!.Trim())
+                    .OrderByDescending(g => g.Count())
+                    .Select(g => g.Key)
+                    .FirstOrDefault();
+                response.FileName = BuildExportFileName(
+                    string.IsNullOrWhiteSpace(formDisplayName) ? menu.Title : formDisplayName,
+                    DateTime.Now);
                 response.HttpStatusCode = (int)HttpStatusCode.OK;
 
                 auditResult = new
@@ -642,22 +664,26 @@ namespace EtheriT.Coker.Application.Contact
             List<ContactExportSource> contacts,
             string formTitle,
             List<FromDateColumn> dynamicColumns,
-            FromDateParseResult parsed)
+            FromDateParseResult parsed,
+            bool includeFixedColumns)
         {
             var rows = new List<Dictionary<string, object?>>();
 
             foreach (var contact in contacts)
             {
-                var row = new Dictionary<string, object?>
+                var row = new Dictionary<string, object?>();
+
+                // 沒有套用 JSON 範本時才補上固定欄位；套用範本時欄位完全依範本，不輸出編號等非範本欄位。
+                if (includeFixedColumns)
                 {
-                    ["編號"] = contact.Id,
-                    ["表單類別"] = formTitle,
-                    ["送出時間"] = contact.CreationTime.ToString("yyyy/MM/dd HH:mm"),
-                    ["用戶姓名"] = contact.UserName ?? string.Empty,
-                    ["用戶信箱"] = contact.Email ?? string.Empty,
-                    ["處理信箱"] = contact.TargetEmail ?? string.Empty,
-                    ["處理狀態"] = contact.Status.ToString().Replace("_", "/")
-                };
+                    row["編號"] = contact.Id;
+                    row["表單類別"] = formTitle;
+                    row["送出時間"] = contact.CreationTime.ToString("yyyy/MM/dd HH:mm");
+                    row["用戶姓名"] = contact.UserName ?? string.Empty;
+                    row["用戶信箱"] = contact.Email ?? string.Empty;
+                    row["處理信箱"] = contact.TargetEmail ?? string.Empty;
+                    row["處理狀態"] = contact.Status.ToString().Replace("_", "/");
+                }
 
                 parsed.Records.TryGetValue(contact.Id, out var parsedRecord);
 
@@ -694,6 +720,28 @@ namespace EtheriT.Coker.Application.Contact
             }
 
             return $"{header} ({index})";
+        }
+
+        /// <summary>
+        /// 組出下載檔名：{表單中文名稱}_{日期 yyyyMMdd}_{時間 HHmm}.xlsx。
+        /// 表單名稱會移除檔名不允許的字元，避免 Content-Disposition 產生非法檔名。
+        /// </summary>
+        private static string BuildExportFileName(string formTitle, DateTime timestamp)
+        {
+            var safeTitle = string.IsNullOrWhiteSpace(formTitle) ? "匯出資料" : formTitle.Trim();
+
+            // 跨平台一致地過濾檔名不允許／易破壞 HTTP 標頭的字元。
+            foreach (var invalidChar in new[] { '\\', '/', ':', '*', '?', '"', '<', '>', '|', '\r', '\n', '\t' })
+            {
+                safeTitle = safeTitle.Replace(invalidChar, '_');
+            }
+
+            if (string.IsNullOrWhiteSpace(safeTitle))
+            {
+                safeTitle = "匯出資料";
+            }
+
+            return $"{safeTitle}_{timestamp:yyyyMMdd}_{timestamp:HHmm}.xlsx";
         }
 
         /// <summary>
@@ -756,6 +804,8 @@ namespace EtheriT.Coker.Application.Contact
         private class ContactExportSource
         {
             public long Id { get; set; }
+            // 後台列表「位置」欄位（Contacts.Name），即送出時的表單中文名稱。
+            public string? Name { get; set; }
             public string? UserName { get; set; }
             public string? Email { get; set; }
             public string? TargetEmail { get; set; }

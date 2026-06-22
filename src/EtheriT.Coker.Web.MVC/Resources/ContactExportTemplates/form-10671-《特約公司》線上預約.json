@@ -12,6 +12,12 @@
   "name": "《特約公司》線上預約",
   "columns": [
     {
+      "columnKey": "sick62",
+      "columnTitle": "9️⃣飲食習慣",
+      "visible": true,
+      "format": "text"
+    },
+    {
       "columnKey": "name",
       "columnTitle": "姓名",
       "visible": true,
@@ -38,18 +44,6 @@
     {
       "columnKey": "InputCompany",
       "columnTitle": "公司名稱",
-      "visible": true,
-      "format": "text"
-    },
-    {
-      "columnKey": "employeeId",
-      "columnTitle": "員工編號",
-      "visible": true,
-      "format": "text"
-    },
-    {
-      "columnKey": "jobTitle",
-      "columnTitle": "職稱",
       "visible": true,
       "format": "text"
     },
@@ -156,14 +150,20 @@
       "format": "text"
     },
     {
-      "columnKey": "sick62",
-      "columnTitle": "9️⃣飲食習慣",
+      "columnKey": "description",
+      "columnTitle": "其他說明事項",
       "visible": true,
       "format": "text"
     },
     {
-      "columnKey": "description",
-      "columnTitle": "其他說明事項",
+      "columnKey": "employeeId",
+      "columnTitle": "員工編號",
+      "visible": true,
+      "format": "text"
+    },
+    {
+      "columnKey": "jobTitle",
+      "columnTitle": "職稱",
       "visible": true,
       "format": "text"
     },

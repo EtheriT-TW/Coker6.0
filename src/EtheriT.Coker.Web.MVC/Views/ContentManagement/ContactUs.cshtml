@@ -55,6 +55,11 @@
                     .Placeholder("請輸入要搜尋的資料")
                     )
                     .ShowRowLines(true)
+                    .Selection(s => s
+                        .Mode(SelectionMode.Multiple)
+                        .ShowCheckBoxesMode(GridSelectionShowCheckBoxesMode.Always)
+                        .SelectAllMode(SelectAllMode.Page)
+                    )
                     .Columns(c =>
                     {
                         c.AddFor(e => e.Id).SortOrder(SortOrder.Desc).Caption("編號").Width(90);
@@ -87,7 +92,10 @@
                     })
                     .OnRowPrepared("onRowPrepared")
                     .OnContentReady("contentReady")
-                    )
+                    .OnToolbarPreparing("contactToolbarPreparing")
+                    .OnSelectionChanged("contactSelectionChanged")
+                    .OnRowClick("contactRowClick")
+                )
             </div>
         </div>
         <div id="Form" class="card border-0 page">

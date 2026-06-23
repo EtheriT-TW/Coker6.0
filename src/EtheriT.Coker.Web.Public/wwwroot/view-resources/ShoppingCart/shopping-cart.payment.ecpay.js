@@ -302,45 +302,69 @@
     }
     function GetECPayType() {
         var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
-        var $activeLi = $ECPayList.filter('.ecpay-pl-act');
+        var $activeLi = $ECPayList.filter(".ecpay-pl-act");
+
         $("#Step4 .payment_method").text($activeLi.find(".ecpay-pl-intro .ecpay-pl-type").text());
+
+        var payment = null;
+
         switch ($activeLi.attr("id")) {
             case "CreditCard":
-                S.order_header_data.payment = 16;
+                payment = 16;
                 break;
+
             case "CreditInstallment":
-                var stage = $activeLi.find("select.ecpay-Installment").val();
+                var stage = String($activeLi.find("select.ecpay-Installment").val() || "");
+
                 switch (stage) {
-                    case 3:
-                        S.order_header_data.payment = 18;
+                    case "3":
+                        payment = 18;
                         $("#Step4 .payment_method").text("信用卡付款 (3期)");
                         break;
-                    case 6:
-                        S.order_header_data.payment = 19;
+
+                    case "6":
+                        payment = 19;
                         $("#Step4 .payment_method").text("信用卡付款 (6期)");
                         break;
-                    case 12:
-                        S.order_header_data.payment = 20;
+
+                    case "12":
+                        payment = 20;
                         $("#Step4 .payment_method").text("信用卡付款 (12期)");
+                        break;
+
+                    default:
+                        payment = 16;
                         break;
                 }
                 break;
+
             case "UnionPay":
-                S.order_header_data.payment = 17;
+                payment = 17;
                 break;
+
             case "ATM":
-                S.order_header_data.payment = 21;
+                payment = 21;
                 break;
+
             case "CVS":
-                S.order_header_data.payment = 23;
+                payment = 23;
                 break;
+
             case "Barcode":
-                S.order_header_data.payment = 22;
+                payment = 22;
                 break;
+
             case "ApplePay":
-                S.order_header_data.payment = 27;
+                payment = 27;
+                $("#Step4 .payment_method").text("Apple Pay");
                 break;
         }
+
+        if (payment != null) {
+            S.order_header_data.payment = payment;
+        }
+
+        return payment;
     }
     function GetActiveECPayType() {
         return $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li.ecpay-pl-act").attr("id") || "";
@@ -356,11 +380,36 @@
     function IsApplePayResultSuccess(resultData) {
         if (resultData == null) return false;
 
-        var rtnCode = String(resultData.RtnCode ?? resultData.rtnCode ?? "");
+        var rtnCode = String(
+            resultData.RtnCode ??
+            resultData.rtnCode ??
+            resultData.RtnValue?.RtnCode ??
+            resultData.rtnValue?.rtnCode ??
+            ""
+        );
+
+        var rtnMsg = String(
+            resultData.RtnMsg ??
+            resultData.rtnMsg ??
+            resultData.RtnValue?.RtnMsg ??
+            resultData.rtnValue?.rtnMsg ??
+            ""
+        );
+
         var orderInfo = resultData.OrderInfo || resultData.orderInfo || {};
         var tradeStatus = String(orderInfo.TradeStatus ?? orderInfo.tradeStatus ?? "");
 
-        return rtnCode === "1" && tradeStatus === "1";
+        // 有 TradeStatus 時，兩個都成立最安全
+        if (rtnCode === "1" && tradeStatus === "1") return true;
+
+        // 沒有 TradeStatus 時，只要 RtnCode = 1，先視為 ApplePay 前端流程成功
+        // 最終付款狀態仍以後端 ReturnURL / QueryTrade 為準
+        if (rtnCode === "1" && tradeStatus === "") return true;
+
+        // 保留文字成功的容錯
+        if (rtnMsg.toLowerCase().indexOf("success") >= 0) return true;
+
+        return false;
     }
 
     function GetApplePayErrorMessage(resultData, errMsg) {
@@ -380,14 +429,26 @@
         console.log("resultData:", resultData);
         console.groupEnd();
 
-        // Apple Pay 在站內付不會回 PayToken；
-        // 成功結果由 getApplePayResultData 回來後，直接接回既有建單流程。
-        // 後續 afterOrderCreated 會因 payment = 27，不再呼叫 ECPayCreatePayment。
+        // ApplePay 成功後一定要保險校正。
+        S.order_header_data.payment = 27;
+        $("#Step4 .payment_method").text("Apple Pay");
+
         cart.Order.AddHeader({
+            IsApplePay: true,
             PaymentType: "ApplePay",
             ApplePayResultData: resultData,
-            MerchantTradeNo: resultData?.OrderInfo?.MerchantTradeNo || resultData?.orderInfo?.merchantTradeNo || null,
-            TradeNo: resultData?.OrderInfo?.TradeNo || resultData?.orderInfo?.tradeNo || null
+            MerchantTradeNo:
+                resultData?.OrderInfo?.MerchantTradeNo ||
+                resultData?.orderInfo?.merchantTradeNo ||
+                resultData?.MerchantTradeNo ||
+                resultData?.merchantTradeNo ||
+                null,
+            TradeNo:
+                resultData?.OrderInfo?.TradeNo ||
+                resultData?.orderInfo?.tradeNo ||
+                resultData?.TradeNo ||
+                resultData?.tradeNo ||
+                null
         });
     }
 
@@ -515,7 +576,12 @@
         var paymentInfo = context ? context.paymentInfo : null;
         co.sweet.loading();
 
-        if (S.order_header_data.payment != 27 && paymentInfo != null) {
+        var isApplePay =
+            S.order_header_data.payment == 27 ||
+            (paymentInfo && paymentInfo.IsApplePay === true) ||
+            (paymentInfo && paymentInfo.PaymentType === "ApplePay");
+
+        if (!isApplePay && paymentInfo != null) {
             co.ThirdParty.ECPayCreatePayment(paymentInfo).done(function (result) {
                 Swal.close();
 
@@ -564,6 +630,7 @@
                             break;
 
                         case "BARCODE":
+                        case "Barcode":
                             var BarcodeInfo = result_obj.BarcodeInfo;
                             cart.CheckoutResult.setStatus(`訂單已成立，請於${BarcodeInfo.ExpireDate}前完成付款。`);
                             co.sweet.confirm(
@@ -598,17 +665,25 @@
                     }, 300);
                 }
             });
-        } else {
-            Swal.close();
 
-            if (S.order_header_data.payment != 27) {
-                cart.CheckoutResult.setStatus("<div>付款資料驗證失敗，請返回上一頁重新確認付款資料。</div>");
-            }
-
-            setTimeout(function () {
-                cart.CheckoutResult.goToResultPage();
-            }, 300);
+            return;
         }
+
+        Swal.close();
+
+        if (isApplePay) {
+            cart.CheckoutResult.setStatus(
+                "<div>Apple Pay 付款已完成，訂單付款狀態處理中。若畫面尚未更新，請稍後至會員中心查詢訂單狀態。</div>"
+            );
+        } else {
+            cart.CheckoutResult.setStatus(
+                "<div>付款資料驗證失敗，請返回上一頁重新確認付款資料。</div>"
+            );
+        }
+
+        setTimeout(function () {
+            cart.CheckoutResult.goToResultPage();
+        }, 300);
     }
 
 
@@ -703,12 +778,11 @@
         },
 
         getPaymentValue: function () {
-            var $checked = cart.Payment.Core.GetCheckedPaymentRadio();
+            if (this.isSelected()) {
+                var payment = GetECPayType();
 
-            if (this.isMatchRadio($checked)) {
-                var checkedValue = $checked.val();
-                if (checkedValue != null && checkedValue !== "") {
-                    return checkedValue;
+                if (payment != null && payment !== "") {
+                    return payment;
                 }
             }
 
@@ -736,10 +810,15 @@
         },
 
         submitPayment: function (callback) {
-            GetECPayType();
-
             cart.Pricing.TotalCount();
+
+            // 先同步共用訂單資料。
+            // AllDataGet 會透過 Payment.Core.getActivePaymentValue()
+            // 呼叫 ECPay provider.getPaymentValue()，因此會取得綠界內部實際付款方式。
             cart.Forms.AllDataGet(false);
+
+            // 再校正一次 Step4 顯示文字與 S.order_header_data.payment。
+            GetECPayType();
 
             var currentSnapshot = BuildECPayOrderSnapshot();
 

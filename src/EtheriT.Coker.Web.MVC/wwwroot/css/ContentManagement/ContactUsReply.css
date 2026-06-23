@@ -75,6 +75,28 @@
     font-weight: 600;
 }
 
+/* DevExtreme 已選擇列：使用淡紫色，避免與已回覆藍色、作廢灰色混淆 */
+.dx-datagrid-rowsview .dx-row.dx-selection > td {
+    background-color: #f3e8ff !important;
+    color: #581c87 !important;
+}
+
+/* 已選擇列 hover / alternate row：維持紫色系但加深 */
+.dx-datagrid-rowsview .dx-row.dx-selection.dx-row-alt > td,
+.dx-datagrid-rowsview .dx-row.dx-selection:hover > td {
+    background-color: #e9d5ff !important;
+    color: #581c87 !important;
+}
+
+/* 不可批次修改的列：已完成、作廢/忽略 */
+.status-locked {
+    opacity: 0.72;
+}
+
+    .status-locked td {
+        cursor: not-allowed;
+    }
+
 /* 回覆區塊 */
 .reply-zone label {
     padding-left: 15px;

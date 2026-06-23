@@ -17,6 +17,7 @@ namespace EtheriT.Coker.Application.Contact
         public Task<JsonResult> GetContactListAll(DataSourceLoadOptions loadOptions);
         public Task<ResponseMessageDto> GetDataOne(long id);
         public Task<ResponseMessageDto> ReplyContact(ContactReplyDto dto);
+        public Task<ResponseMessageDto> BatchUpdateStatus(ContactBatchUpdateStatusDto dto);
 
         /// <summary>
         /// 取得目前站台可匯出的聯絡表單類別清單。

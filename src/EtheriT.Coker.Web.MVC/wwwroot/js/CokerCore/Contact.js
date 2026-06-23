@@ -19,6 +19,9 @@
                 data: JSON.stringify(data),
                 dataType: "json"
             });
+        },
+        BatchUpdateStatus: function (data) {
+            return _c.request.post("/api/Contact/BatchUpdateStatus", data);
         }
     }
 });

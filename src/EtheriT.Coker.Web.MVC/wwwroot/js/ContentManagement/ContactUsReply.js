@@ -1,10 +1,48 @@
-﻿let ContactList, keyId;
+﻿let ContactList, keyId, batchStatusSelectBox;
+const lockedContactStatuses = ["已完成", "作廢/忽略"];
 function contentReady(e) {
     ContactList = e;
+}
+function isLockedContactStatus(status) {
+    return lockedContactStatuses.includes(status);
+}
+function contactToolbarPreparing(e) {
+    e.toolbarOptions.items.unshift(
+        {
+            location: "after",
+            widget: "dxSelectBox",
+            options: {
+                width: 180,
+                dataSource: getContactStatusOptions(),
+                valueExpr: "id",
+                displayExpr: "name",
+                placeholder: "批次修改狀態",
+                showClearButton: true,
+                elementAttr: {
+                    id: "BatchContactStatus"
+                },
+                onInitialized: function (args) {
+                    batchStatusSelectBox = args.component;
+                }
+            }
+        },
+        {
+            location: "after",
+            widget: "dxButton",
+            options: {
+                text: "批次儲存",
+                icon: "save",
+                type: "default",
+                stylingMode: "contained",
+                onClick: batchSaveContactStatus
+            }
+        }
+    );
 }
 function onRowPrepared(e) {
     if (e.rowType === "data") {
         const $row = $(e.rowElement);
+
         switch (e.data.Status) {
             case "未處理":
                 $row.addClass("status-pending");
@@ -22,6 +60,60 @@ function onRowPrepared(e) {
                 $row.addClass("status-ignored");
                 break;
         }
+
+        if (isLockedContactStatus(e.data.Status)) {
+            $row.addClass("status-locked");
+            $row.attr("title", "此資料已完成或作廢，不可再修改狀態");
+        }
+    }
+}
+function contactSelectionChanged(e) {
+    const lockedRows = (e.selectedRowsData || [])
+        .filter(function (row) {
+            return isLockedContactStatus(row.Status);
+        });
+
+    if (lockedRows.length === 0) {
+        return;
+    }
+
+    const lockedKeys = lockedRows.map(function (row) {
+        return row.Id;
+    });
+
+    e.component.deselectRows(lockedKeys);
+
+    Coker.sweet.error("已完成、作廢/忽略的資料不可再修改狀態");
+}
+function contactRowClick(e) {
+    if (e.rowType !== "data") {
+        return;
+    }
+
+    if (!e.data || e.key === null || e.key === undefined) {
+        return;
+    }
+
+    const $target = $(e.event.target);
+
+    // checkbox 欄位、編輯按鈕、連結、button 由原本元件自己處理，不要再觸發 row click 選取
+    if ($target.closest(".dx-command-select, .dx-command-edit, .dx-link, .dx-button, button, a").length > 0) {
+        return;
+    }
+
+    if (isLockedContactStatus(e.data.Status)) {
+        Coker.sweet.error("已完成、作廢/忽略的資料不可再修改狀態");
+        return;
+    }
+
+    const grid = e.component;
+    const selectedKeys = grid.getSelectedRowKeys();
+    const isSelected = selectedKeys.includes(e.key);
+
+    if (isSelected) {
+        grid.deselectRows([e.key]);
+    } else {
+        grid.selectRows([e.key], true);
     }
 }
 function editButtonClicked(e) {
@@ -80,7 +172,102 @@ function hashChange(e) {
         console.log("HashChange錯誤")
     }
 }
+function getContactStatusOptions() {
+    return $("#Status option")
+        .map(function () {
+            const value = $(this).val();
+            const text = $(this).text();
 
+            if (value === undefined || value === null || value === "") {
+                return null;
+            }
+
+            const statusId = parseInt(value, 10);
+
+            if (Number.isNaN(statusId)) {
+                return null;
+            }
+
+            return {
+                id: statusId,
+                name: text
+            };
+        })
+        .get()
+        .filter(function (item) {
+            return item !== null;
+        });
+}
+function batchSaveContactStatus() {
+    if (!ContactList || !ContactList.component) {
+        Coker.sweet.error("列表尚未完成載入");
+        return;
+    }
+
+    const grid = ContactList.component;
+    const selectedRowsData = grid.getSelectedRowsData();
+    const selectedKeys = grid.getSelectedRowKeys();
+
+    if (!selectedKeys || selectedKeys.length === 0) {
+        Coker.sweet.error("請先勾選要批次修改的資料");
+        return;
+    }
+
+    const lockedRows = (selectedRowsData || []).filter(function (row) {
+        return isLockedContactStatus(row.Status);
+    });
+
+    if (lockedRows.length > 0) {
+        const lockedKeys = lockedRows.map(function (row) {
+            return row.Id;
+        });
+
+        grid.deselectRows(lockedKeys);
+        Coker.sweet.error("已完成、作廢/忽略的資料不可再修改狀態");
+        return;
+    }
+
+    const status = batchStatusSelectBox ? batchStatusSelectBox.option("value") : null;
+    const statusText = batchStatusSelectBox ? batchStatusSelectBox.option("text") : "";
+
+    if (status === null || status === undefined || status === "") {
+        Coker.sweet.error("請選擇要批次修改的狀態");
+        return;
+    }
+
+    const data = {
+        ids: selectedKeys,
+        status: status
+    };
+
+    Coker.sweet.confirm(
+        "批次修改處理狀態",
+        `確定要將 ${selectedKeys.length} 筆資料修改為「${statusText}」？`,
+        "確定",
+        "取消",
+        function () {
+            Coker.sweet.loading();
+            co.Contact.BatchUpdateStatus(data)
+                .then(function (result) {
+                    Coker.sweet.success(
+                        result?.message || "狀態已批次儲存",
+                        null,
+                        true
+                    );
+
+                    grid.clearSelection();
+                    grid.refresh();
+
+                    if (batchStatusSelectBox) {
+                        batchStatusSelectBox.reset();
+                    }
+                })
+                .catch(function (error) {
+                    Coker.sweet.error(error.message || "批次儲存失敗");
+                });
+        }
+    );
+}
 function HashDataEdit() {
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {

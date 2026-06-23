@@ -446,17 +446,101 @@ namespace EtheriT.Coker.Application.ThirdParty
                 await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayReturn", JsonConvert.SerializeObject(ResponseData));
                 if (ResponseData.RtnCode != 1) throw new Exception($"取得ECPayReturn發生錯誤，{JsonConvert.SerializeObject(ResponseData, Formatting.Indented)}");
 
-                var ohdata = await db.Order_Headers.Where(e => e.TransactionId == ResponseData.OrderInfo.MerchantTradeNo).FirstOrDefaultAsync();
+                var ohdata = await db.Order_Headers
+                    .Where(e => e.TransactionId == ResponseData.OrderInfo.MerchantTradeNo)
+                    .FirstOrDefaultAsync();
 
-                if (ResponseData.RtnCode == 1 && ohdata.State == OrderStatusEnum.待付款 && ResponseData.OrderInfo.TradeStatus == "1")
+                if (ohdata == null)
                 {
-                    ohdata.State = OrderStatusEnum.已付款;
-                    ohdata.CompletedDate = DateTime.ParseExact(ResponseData.OrderInfo.TradeDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
-                    var send_mail = await orderAppService.PaySuccessMailSend(ohdata.Id, DateTime.ParseExact(ResponseData.OrderInfo.TradeDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture));
+                    await loginUserData.SetLogs(
+                        0,
+                        configuration.GetValue<long>("WebConfig:SiteId"),
+                        "ECPayReturnOrderNotFound",
+                        JsonConvert.SerializeObject(ResponseData)
+                    );
+
+                    throw new Exception($"查無訂單資訊，MerchantTradeNo：{ResponseData.OrderInfo?.MerchantTradeNo}");
+                }
+
+                var isECPayPaid =
+                        ResponseData.RtnCode == 1 &&
+                        ResponseData.OrderInfo != null &&
+                        ResponseData.OrderInfo.TradeStatus == "1";
+
+                if (isECPayPaid)
+                {
+                    if (ohdata.State == OrderStatusEnum.已付款)
+                    {
+                        // 綠界可能重送 ReturnURL，已付款視為冪等成功。
+                        return "1|OK";
+                    }
+
+                    if (ohdata.State == OrderStatusEnum.待確認 ||
+                        ohdata.State == OrderStatusEnum.待付款 ||
+                        ohdata.State == OrderStatusEnum.付款失敗)
+                    {
+                        var payTimeText = !string.IsNullOrWhiteSpace(ResponseData.OrderInfo.PaymentDate)
+                            ? ResponseData.OrderInfo.PaymentDate
+                            : ResponseData.OrderInfo.TradeDate;
+
+                        if (!DateTime.TryParseExact(
+                                payTimeText,
+                                "yyyy/MM/dd HH:mm:ss",
+                                CultureInfo.InvariantCulture,
+                                DateTimeStyles.None,
+                                out var payTime))
+                        {
+                            payTime = DateTime.Now;
+                        }
+
+                        ohdata.State = OrderStatusEnum.已付款;
+                        ohdata.CompletedDate = payTime;
+                        ohdata.LastModificationTime = DateTime.Now;
+
+                        await orderAppService.PaySuccessMailSend(ohdata.Id, payTime);
+                    }
+                    else
+                    {
+                        await loginUserData.SetLogs(
+                            0,
+                            configuration.GetValue<long>("WebConfig:SiteId"),
+                            "ECPayReturnPaidButStateLocked",
+                            JsonConvert.SerializeObject(new
+                            {
+                                OrderId = ohdata.Id,
+                                State = ohdata.State,
+                                StateValue = (int)ohdata.State,
+                                TransactionId = ohdata.TransactionId,
+                                RtnCode = ResponseData.RtnCode,
+                                TradeStatus = ResponseData.OrderInfo.TradeStatus,
+                                PaymentType = ResponseData.OrderInfo.PaymentType,
+                                MerchantTradeNo = ResponseData.OrderInfo.MerchantTradeNo
+                            })
+                        );
+                    }
                 }
                 else
                 {
                     ohdata.LastModificationTime = DateTime.Now;
+
+                    await loginUserData.SetLogs(
+                        0,
+                        configuration.GetValue<long>("WebConfig:SiteId"),
+                        "ECPayReturnNotPaid",
+                        JsonConvert.SerializeObject(new
+                        {
+                            OrderId = ohdata.Id,
+                            State = ohdata.State,
+                            StateValue = (int)ohdata.State,
+                            TransactionId = ohdata.TransactionId,
+                            RtnCode = ResponseData?.RtnCode,
+                            TradeStatus = ResponseData?.OrderInfo?.TradeStatus,
+                            PaymentType = ResponseData?.OrderInfo?.PaymentType,
+                            MerchantTradeNo = ResponseData?.OrderInfo?.MerchantTradeNo
+                        })
+                    );
+
+                    // 只有綠界沒有回成功付款時才標付款失敗。
                     ohdata.State = OrderStatusEnum.付款失敗;
                 }
 

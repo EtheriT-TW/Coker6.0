@@ -70,6 +70,8 @@
 
 /**
  * @typedef {Object} CokerPage
+ * @property {()=>string[]} getPendingModuleInitFunctions
+ * @property {(timeoutMs?:number, intervalMs?:number)=>Promise<void>} waitForModuleInitFunctions
  * @property {()=>void} Ready
  */
 
@@ -105,6 +107,32 @@
  */
 
 /* ---------------------------------------------------------
+ * request / fetch wrapper
+ * --------------------------------------------------------- */
+
+/**
+ * @typedef {Object} CokerRequestOptions
+ * @property {string=} method
+ * @property {AnyObject=} params
+ * @property {any=} data
+ * @property {AnyObject=} headers
+ * @property {RequestCredentials=} credentials
+ */
+
+/**
+ * @typedef {Object} CokerRequestApi
+ * @property {(params?:AnyObject)=>string} buildQueryString
+ * @property {(headers?:AnyObject)=>AnyObject} mergeHeaders
+ * @property {(response:Response)=>Promise<any>} tryParseResponse
+ * @property {(result:any)=>any} unwrapResult
+ * @property {(url:string, options?:CokerRequestOptions)=>Promise<any>} send
+ * @property {(url:string, params?:AnyObject|null, options?:AnyObject)=>Promise<any>} get
+ * @property {(url:string, data?:any|null, options?:AnyObject)=>Promise<any>} post
+ * @property {(url:string, data?:any|null, options?:AnyObject)=>Promise<any>} put
+ * @property {(url:string, params?:AnyObject|null, options?:AnyObject)=>Promise<any>} delete
+ */
+
+/* ---------------------------------------------------------
  * Advertise / Articles / Company / Contact / Directory
  * --------------------------------------------------------- */
 
@@ -123,6 +151,7 @@
  * @property {(dto:any)=>AjaxPromise<any>} GetConten
  * @property {(dto:any)=>AjaxPromise<any>} SaveConten
  * @property {(dto:any)=>AjaxPromise<any>} ImportConten
+ * @property {(articleId:number|string)=>AjaxPromise<any>} RebuildContentWithFiles
  */
 
 /**
@@ -137,10 +166,18 @@
  */
 
 /**
+ * Contact batch API is currently mounted on root Coker object, not under Contact.
+ * @typedef {Object} CokerContactBatchApi
+ * @property {(dto:any)=>Promise<any>} BatchUpdateStatus
+ */
+
+/**
  * @typedef {Object} CokerDirectoryApi
  * @property {(dto:any)=>AjaxPromise<any>} AddUp
  * @property {(id:number)=>AjaxPromise<any>} Get
  * @property {(id:number)=>AjaxPromise<any>} Delete
+ * @property {(directoryId:number)=>AjaxPromise<any>} GetDirectoryFacetConfig
+ * @property {(dto:any)=>AjaxPromise<any>} SaveDirectoryFacetConfig
  */
 
 /* ---------------------------------------------------------
@@ -156,6 +193,7 @@
  * @property {(dto:any)=>AjaxPromise<any>} getImgFile
  * @property {(aid:number, type:any)=>AjaxPromise<any>} getAdFile
  * @property {(dto:any)=>AjaxPromise<any>} fileSortChange
+ * @property {(dto:any)=>AjaxPromise<any>} fileDataChange
  * @property {(key:any)=>AjaxPromise<any>} Delete
  * @property {(dto:any)=>AjaxPromise<any>} DeleteFileById
  *
@@ -177,17 +215,71 @@
 
 /**
  * @typedef {Object} CokerFormApi
- * @property {(formId:string, onValid:Function)=>void} set
+ * @property {(name:string)=>string} _normalizeFieldName
+ * @property {(scope:any)=>any} _resolveScope
+ * @property {(scope:any)=>AnyObject} _buildFieldMap
  * @property {(obj:any, formSelectorOrJq?:any)=>void} insertData
+ * @property {(elementOrJq:any, value:any)=>any} normalizeElementValue
+ * @property {(elementOrJq:any, value:any)=>any} formatElementValue
+ * @property {(elementOrJq:any)=>void} bindNumberFormatter
+ * @property {(scope?:any)=>void} initNumberFormatter
  * @property {(formId:string, isArrayType?:boolean)=>AnyObject} getJson
  * @property {(fieldsetId:string, isArrayType?:boolean)=>AnyObject} getJsonByFieldset
  * @property {(formId:string, fn?:Function)=>void} init
  * @property {(formId:string)=>void} clear
  * @property {(formId:string, type?:number)=>FormData} getFileForm
+ * @property {(options:{title?:string,text?:string,confirmButtonText?:string,cancelButtonText?:string,onConfirm?:Function})=>JQuery.Promise<any>} confirmSubmit
  */
 
 /* ---------------------------------------------------------
- * Freight / HtmlContent / Member / ObjectType
+ * HashPage
+ * --------------------------------------------------------- */
+
+/**
+ * @typedef {Object} CokerHashPageState
+ * @property {string} raw
+ * @property {string} mode
+ * @property {number|null} id
+ * @property {string} pageKey
+ * @property {string} title
+ */
+
+/**
+ * @typedef {Object} CokerHashPageInstance
+ * @property {()=>string} getHash
+ * @property {(hash:string)=>CokerHashPageState} parseHash
+ * @property {(hash:string, skipPush?:boolean)=>void} setHash
+ * @property {()=>void} goList
+ * @property {()=>void} goNew
+ * @property {(id:number|string)=>void} goId
+ * @property {()=>void} back
+ * @property {()=>void} refresh
+ */
+
+/**
+ * @typedef {Object} CokerHashPageOptions
+ * @property {any} root
+ * @property {string=} defaultHash
+ * @property {string=} listHash
+ * @property {string=} newHash
+ * @property {string=} contentPageKey
+ * @property {string=} listPageKey
+ * @property {string=} titleSelector
+ * @property {string|null=} scrollTarget
+ * @property {boolean=} useStack
+ * @property {(state:CokerHashPageState)=>void=} onList
+ * @property {(state:CokerHashPageState)=>void=} onNew
+ * @property {(state:CokerHashPageState)=>void=} onEdit
+ * @property {(state:CokerHashPageState)=>void=} onChange
+ */
+
+/**
+ * @typedef {Object} CokerHashPageApi
+ * @property {(options:CokerHashPageOptions)=>CokerHashPageInstance|null} create
+ */
+
+/* ---------------------------------------------------------
+ * Freight / LogisticsBox / HtmlContent / Member / Marketing
  * --------------------------------------------------------- */
 
 /**
@@ -195,6 +287,14 @@
  * @property {(dto:any)=>AjaxPromise<any>} AddUp
  * @property {(id:number)=>AjaxPromise<any>} Get
  * @property {(id:number)=>AjaxPromise<any>} Delete
+ */
+
+/**
+ * @typedef {Object} CokerLogisticsBoxApi
+ * @property {(id:number)=>Promise<any>} Get
+ * @property {(dto:any)=>Promise<any>} AddUp
+ * @property {(id:number)=>Promise<any>} Delete
+ * @property {()=>Promise<any>} Requires
  */
 
 /**
@@ -219,6 +319,14 @@
  * @property {(uuid:any)=>AjaxPromise<any>} GetHistoryOrder
  * @property {(userId:any)=>AjaxPromise<any>} ResendFrontUserCreateNoticeMail
  * @property {(password:string)=>boolean} isValidPassword
+ */
+
+/**
+ * @typedef {Object} CokerMarketingApi
+ * @property {(dto:any)=>Promise<any>} AddUp
+ * @property {(id:number)=>Promise<any>} Get
+ * @property {(id:number)=>Promise<any>} Delete
+ * @property {()=>Promise<any>} GetOptions
  */
 
 /**
@@ -248,6 +356,7 @@
  * @property {()=>AjaxPromise<any>} GetPreserveTypeEnum
  * @property {()=>AjaxPromise<any>} GetShippingTypeEnum
  * @property {()=>AjaxPromise<any>} GetFreightStatusTypeEnum
+ * @property {()=>AjaxPromise<any>} GetDiscountFreightTypeEnum
  */
 
 /**
@@ -282,6 +391,11 @@
  * @property {(id:any)=>AjaxPromise<any>} CheckRelatProd
  * @property {(id:any)=>AjaxPromise<any>} SpecDelect
  * @property {()=>AjaxPromise<any>} GetPickSpecList
+ */
+
+/**
+ * @typedef {Object} CokerStockApi
+ * @property {(dto:any)=>AjaxPromise<any>} BatchSet
  */
 
 /* ---------------------------------------------------------
@@ -430,12 +544,20 @@
  */
 
 /**
+ * @typedef {Object} CokerThirdPartyLineApi
+ * @property {(ohid:any)=>AjaxPromise<any>} Confirm
+ * @property {(ohid:any)=>AjaxPromise<any>} PayVoid
+ */
+
+/**
  * @typedef {Object} CokerThirdPartyApi
  * @property {(dto:any)=>AjaxPromise<any>} HandleThirdPartyPayment
  * @property {(payment:any, ohid:any, refund:any)=>AjaxPromise<any>} PayRefund
  * @property {(payment:any, transactionId:any)=>AjaxPromise<any>} CheckRefund
  * @property {(ohid:any, thirdparty:any)=>AjaxPromise<any>} CheckPaymentStatus
- * @property {{ Confirm:(ohid:any)=>AjaxPromise<any>, PayVoid:(ohid:any)=>AjaxPromise<any> }} Line
+ * @property {(ohid:any)=>AjaxPromise<any>} CreateLogistics
+ * @property {(dto:any)=>AjaxPromise<any>} HandleThirdPartyLogistics
+ * @property {CokerThirdPartyLineApi} Line
  */
 
 /**
@@ -517,17 +639,22 @@
  * @property {CokerStringUtil} String
  * @property {CokerObjectUtil} Object
  * @property {CokerArrayUtil} Array
+ * @property {CokerRequestApi} request
  *
  * @property {CokerAdvertiseApi} Advertise
  * @property {CokerArticlesApi} Articles
  * @property {CokerCompanyApi} Company
  * @property {CokerContactApi} Contact
+ * @property {(dto:any)=>Promise<any>} BatchUpdateStatus
  * @property {CokerDirectoryApi} Directory
  * @property {CokerFileApi} File
  * @property {CokerFormApi} Form
  * @property {CokerFreightApi} Freight
+ * @property {CokerLogisticsBoxApi} LogisticsBox
+ * @property {CokerHashPageApi} HashPage
  * @property {CokerHtmlContentApi} HtmlContent
  * @property {CokerMemberApi} Member
+ * @property {CokerMarketingApi} Marketing
  * @property {CokerObjectTypeApi} ObjectType
  * @property {CokerOrderApi} Order
  * @property {CokerRecipientApi} Recipient
@@ -535,6 +662,7 @@
  * @property {CokerPickerApi} Picker
  * @property {CokerTagApi} Tag
  * @property {CokerSpecApi} Spec
+ * @property {CokerStockApi} Stock
  * @property {CokerZipcodeApi} Zipcode
  * @property {CokerGrapesApi} Grapes
  * @property {CokerDateApi} Date

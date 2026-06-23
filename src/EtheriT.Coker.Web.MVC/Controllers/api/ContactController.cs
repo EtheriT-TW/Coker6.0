@@ -44,6 +44,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await contactAppService.ReplyContact(dto);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> BatchUpdateStatus(ContactBatchUpdateStatusDto dto) {
+            return await contactAppService.BatchUpdateStatus(dto);
+        }
 
         /// <summary>
         /// 取得可匯出的表單類別；需先確認使用者可進入聯絡我們管理頁。

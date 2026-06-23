@@ -516,7 +516,13 @@ namespace EtheriT.Coker.Application.Contact
                 var contact = await db.Contacts.Include(e => e.WebMenu).Where(e => e.WebMenu != null && e.WebMenu.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
                 if (contact != null)
                 {
+                    if (contact.Status == ContactStatusEnum.已完成 || contact.Status == ContactStatusEnum.作廢_忽略)
+                    {
+                        throw new Exception("已完成、作廢/忽略的資料不可再修改狀態");
+                    }
+
                     contact.Status = dto.Status;
+
                     if (!string.IsNullOrWhiteSpace(dto.Reply))
                     {
                         contact.Reply = dto.Reply;
@@ -560,6 +566,95 @@ namespace EtheriT.Coker.Application.Contact
                 response.Error = ex.Message;
             }
             await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+
+            return response;
+        }
+
+        public async Task<ResponseMessageDto> BatchUpdateStatus(ContactBatchUpdateStatusDto dto)
+        {
+            var response = new ResponseMessageDto();
+
+            try
+            {
+                if (dto == null)
+                {
+                    throw new Exception("請提供批次更新資料");
+                }
+
+                var ids = dto.Ids?
+                    .Where(e => e > 0)
+                    .Distinct()
+                    .ToList() ?? new List<long>();
+
+                if (!ids.Any())
+                {
+                    throw new Exception("請至少選擇一筆資料");
+                }
+
+                if (!Enum.IsDefined(typeof(ContactStatusEnum), dto.Status))
+                {
+                    throw new Exception("狀態值不合法");
+                }
+
+                var websiteId = await loginUserData.GetWebsiteId();
+
+                if (websiteId <= 0)
+                {
+                    throw new Exception("請重新登入");
+                }
+
+                var contacts = await db.Contacts
+                    .Include(e => e.WebMenu)
+                    .Where(e => !e.IsDeleted)
+                    .Where(e => ids.Contains(e.Id))
+                    .Where(e => e.WebMenu != null && e.WebMenu.FK_WebsiteId == websiteId)
+                    .ToListAsync();
+
+                if (!contacts.Any())
+                {
+                    throw new Exception("查無可更新的資料");
+                }
+
+                if (contacts.Count != ids.Count)
+                {
+                    throw new Exception("部分資料不存在或不屬於目前網站，請重新整理後再試");
+                }
+
+                var lockedContacts = contacts
+                    .Where(e => e.Status == ContactStatusEnum.已完成 || e.Status == ContactStatusEnum.作廢_忽略)
+                    .ToList();
+
+                if (lockedContacts.Any())
+                {
+                    throw new Exception("已完成、作廢/忽略的資料不可再修改狀態，請重新整理後再試");
+                }
+
+                foreach (var contact in contacts)
+                {
+                    contact.Status = dto.Status;
+                }
+
+                await db.SaveChangesAsync();
+
+                response.Success = true;
+                response.Message = $"已批次更新 {contacts.Count} 筆資料";
+                response.Object = new
+                {
+                    count = contacts.Count,
+                    status = dto.Status,
+                    statusName = dto.Status.ToString().Replace("_", "/")
+                };
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+                response.Message = ex.Message;
+            }
+
+            await loginUserData.SetLogs(
+                JsonConvert.SerializeObject(dto),
+                JsonConvert.SerializeObject(response)
+            );
 
             return response;
         }

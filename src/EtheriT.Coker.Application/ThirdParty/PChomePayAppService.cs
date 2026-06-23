@@ -1,28 +1,29 @@
-﻿using EtheriT.Coker.Application.Shared.ThirdParty;
-using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using EtheriT.Coker.Application.Shared.Order;
-using EtheriT.Coker.Application.Dto;
-using Microsoft.Extensions.Configuration;
-using EtheriT.Coker.Application.Shared.Dto;
-using Microsoft.EntityFrameworkCore;
-using System.Text;
-using EtheriT.Coker.Application.Token;
-using Newtonsoft.Json;
-using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
-using EtheriT.Coker.Core.Models;
-using Newtonsoft.Json.Linq;
-using Microsoft.AspNetCore.Mvc;
-using System.Globalization;
-using Microsoft.AspNetCore.Http;
-using AutoMapper.Configuration.Conventions;
-using MailKit.Search;
-using System.Text.Json;
-using System;
-using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
+﻿using AutoMapper.Configuration.Conventions;
 using DevExpress.CodeParser;
-using System.Security.Cryptography;
-using EtheriT.Coker.Application.Shared.Dto.Order;
+using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
+using EtheriT.Coker.Application.Shared.Dto.Order;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
+using EtheriT.Coker.Application.Shared.Order;
+using EtheriT.Coker.Application.Shared.ThirdParty;
+using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using MailKit.Search;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using static EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto.LinePayRefundCheckResponseDto.InfoDto;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -403,7 +404,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
-        public async Task<ResponseMessageDto> PChomePayRefund(long ohid, decimal? refund)
+        public async Task<ResponseMessageDto> PChomePayRefund(long ohid, int? refund)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
@@ -414,15 +415,15 @@ namespace EtheriT.Coker.Application.ThirdParty
                 {
                     var ohidstr = ohdata.TransactionId;
                     var ohid_str = "000000000" + ohid.ToString();
-                    var paymentResult = await orderAppService.GetForPaymentAsync(ohdata.Id);
+                    var paymentResult = await orderAppService.GetForRefundAsync(ohdata.Id);
                     if (!paymentResult.Success)
                         throw new Exception(paymentResult.Message ?? "取得付款資料失敗");
 
-                    var payData = paymentResult.Object as PayOrderData;
-                    if (payData == null)
+                    var refundData = paymentResult.Object as RefundOrderData;
+                    if (refundData == null)
                         throw new Exception("付款資料格式錯誤");
 
-                    var RefundBody = new { order_id = ohidstr, refund_id = $"{ohidstr}-Refund", trade_amount = refund == null ? payData.PayableAmount : refund };
+                    var RefundBody = new { order_id = ohidstr, refund_id = $"{ohidstr}-Refund", trade_amount = refund ?? refundData.RefundAmount };
 
                     if (RefundBody != null)
                     {

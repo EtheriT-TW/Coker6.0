@@ -36,5 +36,6 @@ namespace EtheriT.Coker.Application.Shared.Order
         public Task<ResponseMessageDto> PayFailMailSend(long ohid, DateTime date);
         public Task<ResponseMessageDto> CancelOrderMailSend(long ohid, DateTime date);
         public Task<ResponseMessageDto> GetForPaymentAsync(long ohid, bool isTemp = false);
+        public Task<ResponseMessageDto> GetForRefundAsync(long ohid);
     }
 }

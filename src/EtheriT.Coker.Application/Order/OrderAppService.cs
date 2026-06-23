@@ -3142,8 +3142,8 @@ namespace EtheriT.Coker.Application.Order
                         Quantity = 1,
                         OriginalUnitPrice = amount,
                         OriginalLineAmount = amount,
-                        PayUnitPrice = (int)Math.Round(amount, MidpointRounding.AwayFromZero),
-                        PayLineAmount = (int)Math.Round(amount, MidpointRounding.AwayFromZero),
+                        PayUnitPrice = ToPaymentAmount(amount),
+                        PayLineAmount = ToPaymentAmount(amount),
                         IsShipping = false
                     });
 
@@ -3224,8 +3224,8 @@ namespace EtheriT.Coker.Application.Order
                         Quantity = detail.Quantity,
                         OriginalUnitPrice = detail.UnitPrice,
                         OriginalLineAmount = originalLineAmount,
-                        PayUnitPrice = (int)Math.Round(detail.UnitPrice, MidpointRounding.AwayFromZero),
-                        PayLineAmount = (int)Math.Round(originalLineAmount, MidpointRounding.AwayFromZero),
+                        PayUnitPrice = ToPaymentAmount(detail.UnitPrice),
+                        PayLineAmount = ToPaymentAmount(originalLineAmount),
                         ImageUrl = imgUrl,
                         IsShipping = false
                     });
@@ -3241,8 +3241,8 @@ namespace EtheriT.Coker.Application.Order
                         Quantity = 1,
                         OriginalUnitPrice = shippingFee,
                         OriginalLineAmount = shippingFee,
-                        PayUnitPrice = (int)Math.Round(shippingFee, MidpointRounding.AwayFromZero),
-                        PayLineAmount = (int)Math.Round(shippingFee, MidpointRounding.AwayFromZero),
+                        PayUnitPrice = ToPaymentAmount(shippingFee),
+                        PayLineAmount = ToPaymentAmount(shippingFee),
                         IsShipping = true
                     });
                 }
@@ -3346,6 +3346,74 @@ namespace EtheriT.Coker.Application.Order
             }
 
             return response;
+        }
+        public async Task<ResponseMessageDto> GetForRefundAsync(long ohid)
+        {
+            var response = new ResponseMessageDto();
+
+            try
+            {
+                var websiteId = await loginUserData.GetCommonWebsiteId();
+
+                var canRefundStates = new List<OrderStatusEnum>
+                {
+                    OrderStatusEnum.已付款,
+                    OrderStatusEnum.已出貨,
+                    OrderStatusEnum.已完成
+                };
+
+                var order = await db.Order_Headers
+                    .AsNoTracking()
+                    .Where(o =>
+                        o.Id == ohid &&
+                        o.FK_WebsiteId == websiteId &&
+                        !o.IsTemp &&
+                        canRefundStates.Contains(o.State))
+                    .Select(o => new
+                    {
+                        o.Id,
+                        OrderNo = o.Id.ToString("D9"),
+                        o.TransactionId,
+                        o.Subtotal,
+                        o.Freight,
+                        o.refundTransactionId
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (order == null)
+                    throw new Exception("查無可退款訂單資料或訂單狀態不允許退款");
+
+                if (string.IsNullOrWhiteSpace(order.TransactionId))
+                    throw new Exception("訂單缺少交易編號，無法退刷");
+
+                if (!string.IsNullOrWhiteSpace(order.refundTransactionId))
+                    throw new Exception("該筆訂單已有退款紀錄，請勿重複退刷");
+
+                var refundAmount = ToPaymentAmount(order.Subtotal + order.Freight);
+
+                if (refundAmount <= 0)
+                    throw new Exception("退款金額不可小於等於 0");
+
+                response.Object = new RefundOrderData
+                {
+                    OrderId = order.Id,
+                    OrderNo = order.OrderNo,
+                    TransactionId = order.TransactionId,
+                    RefundAmount = refundAmount
+                };
+
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
+        private static int ToPaymentAmount(decimal amount)
+        {
+            return (int)Math.Round(amount, MidpointRounding.AwayFromZero);
         }
         private List<PayOrderItem> NormalizePayItems(List<PayOrderItem> items)
         {

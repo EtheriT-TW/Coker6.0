@@ -342,25 +342,174 @@
                 break;
         }
     }
+    function GetActiveECPayType() {
+        return $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li.ecpay-pl-act").attr("id") || "";
+    }
+
+    function ClearApplePayWatch() {
+        if (S.ECPayApplePayTimer) {
+            clearTimeout(S.ECPayApplePayTimer);
+            S.ECPayApplePayTimer = null;
+        }
+    }
+
+    function IsApplePayResultSuccess(resultData) {
+        if (resultData == null) return false;
+
+        var rtnCode = String(resultData.RtnCode ?? resultData.rtnCode ?? "");
+        var orderInfo = resultData.OrderInfo || resultData.orderInfo || {};
+        var tradeStatus = String(orderInfo.TradeStatus ?? orderInfo.tradeStatus ?? "");
+
+        return rtnCode === "1" && tradeStatus === "1";
+    }
+
+    function GetApplePayErrorMessage(resultData, errMsg) {
+        if (errMsg) return errMsg;
+        if (resultData && (resultData.RtnMsg || resultData.rtnMsg)) return resultData.RtnMsg || resultData.rtnMsg;
+        return "Apple Pay 付款未完成，請重新操作。";
+    }
+
+    function CompleteApplePayOrder(resultData) {
+        if (S.ECPayApplePayCompleted) return;
+
+        S.ECPayApplePayCompleted = true;
+        S.ECPayApplePayWaitingResult = false;
+        ClearApplePayWatch();
+
+        console.group("ECPay ApplePay success result");
+        console.log("resultData:", resultData);
+        console.groupEnd();
+
+        // Apple Pay 在站內付不會回 PayToken；
+        // 成功結果由 getApplePayResultData 回來後，直接接回既有建單流程。
+        // 後續 afterOrderCreated 會因 payment = 27，不再呼叫 ECPayCreatePayment。
+        cart.Order.AddHeader({
+            PaymentType: "ApplePay",
+            ApplePayResultData: resultData,
+            MerchantTradeNo: resultData?.OrderInfo?.MerchantTradeNo || resultData?.orderInfo?.merchantTradeNo || null,
+            TradeNo: resultData?.OrderInfo?.TradeNo || resultData?.orderInfo?.tradeNo || null
+        });
+    }
+
+    function FailApplePayOrder(message, rawData) {
+        if (S.ECPayApplePayCompleted) return;
+
+        S.ECPayApplePayCompleted = true;
+        S.ECPayApplePayWaitingResult = false;
+        ClearApplePayWatch();
+        Swal.close();
+
+        console.group("ECPay ApplePay failed result");
+        console.log("message:", message);
+        console.log("rawData:", rawData);
+        console.groupEnd();
+
+        Coker.sweet.warning("Apple Pay 付款失敗", message || "付款未完成，請重新操作。", null);
+    }
+
     function ValidateECPayPayment(callback) {
         if (!S.ECPayReady || S.ECPayChanging || typeof window.Pay === "undefined" || $("#ECPayPayment").children().length === 0) {
             callback(false, "綠界付款模組尚未載入完成，請稍候再試。");
             return;
         }
 
-        ECPay.getPayToken(function (paymentInfo, errMsg) {
-            if (errMsg != null) {
-                co.sweet.warning("請確實填寫付款資料", errMsg, null);
-                callback(false, errMsg);
+        var activePayment = GetActiveECPayType();
+        var isApplePay = activePayment === "ApplePay";
+
+        if (isApplePay) {
+            S.ECPayApplePayCompleted = false;
+            S.ECPayApplePayWaitingResult = true;
+
+            ClearApplePayWatch();
+            S.ECPayApplePayTimer = setTimeout(function () {
+                if (!S.ECPayApplePayWaitingResult || S.ECPayApplePayCompleted) return;
+
+                S.ECPayApplePayWaitingResult = false;
+                Swal.close();
+
+                console.error("ECPay ApplePay timeout: getApplePayResultData was not called.", {
+                    activePayment: activePayment,
+                    ECPayReady: S.ECPayReady,
+                    ECPayChanging: S.ECPayChanging,
+                    PayType: typeof window.Pay,
+                    children: $("#ECPayPayment").children().length
+                });
+
+                callback(false, {
+                    handled: true,
+                    message: "Apple Pay 付款流程逾時，系統未收到綠界付款結果。若裝置已顯示付款成功，請先勿重複付款，請聯絡客服確認交易狀態。"
+                });
+
+                Coker.sweet.warning(
+                    "Apple Pay 付款流程逾時",
+                    "系統未收到綠界 Apple Pay 付款結果。若裝置已顯示付款成功，請先勿重複付款，請聯絡客服確認交易狀態。",
+                    null
+                );
+            }, 60000);
+        }
+
+        try {
+            ECPay.getPayToken(function (paymentInfo, errMsg) {
+                console.group("ECPay getPayToken callback");
+                console.log("activePayment:", activePayment);
+                console.log("paymentInfo:", paymentInfo);
+                console.log("errMsg:", errMsg);
+                console.groupEnd();
+
+                if (errMsg != null) {
+                    if (isApplePay) {
+                        FailApplePayOrder(errMsg, paymentInfo);
+                        callback(false, { handled: true, message: errMsg });
+                        return;
+                    }
+
+                    co.sweet.warning("請確實填寫付款資料", errMsg, null);
+                    callback(false, errMsg);
+                    return;
+                }
+
+                // 綠界文件說 Apple Pay 不會回 PayToken，
+                // 付款結果會從 getApplePayResultData 回來。
+                // 因此 Apple Pay 不在這裡 callback(true)，避免還沒取得 Apple Pay 結果就建單。
+                if (isApplePay) return;
+
+                callback(true, paymentInfo);
+            });
+        } catch (ex) {
+            console.error("ECPay.getPayToken exception:", ex);
+
+            if (isApplePay) {
+                FailApplePayOrder("Apple Pay 付款流程發生例外，請重新操作。", ex);
+                callback(false, { handled: true, message: ex.message || String(ex) });
                 return;
             }
-            callback(true, paymentInfo);
-        });
+
+            callback(false, "綠界付款流程發生例外，請重新操作。");
+        }
     }
+
     function getApplePayResultData(resultData, errMsg) {
-        if (resultData != null) co.sweet.confirm(`getApplePayResultData回傳的Result：${JSON.stringify(resultData)}`, "此為測試訊息", "確認", "", null);
-        else Coker.sweet.warning("Apple Pay 付款失敗", errMsg || "付款未完成，請重新操作。", null);
+        console.group("ECPay getApplePayResultData");
+        console.log("resultData:", resultData);
+        console.log("errMsg:", errMsg);
+        console.groupEnd();
+
+        if (errMsg != null) {
+            FailApplePayOrder(errMsg, resultData);
+            return;
+        }
+
+        if (!IsApplePayResultSuccess(resultData)) {
+            FailApplePayOrder(GetApplePayErrorMessage(resultData, errMsg), resultData);
+            return;
+        }
+
+        CompleteApplePayOrder(resultData);
     }
+
+    // 綠界 SDK 會呼叫全域 getApplePayResultData；只掛在 cart.Payment.ECPay 可能接不到。
+    window.getApplePayResultData = getApplePayResultData;
+    window.GetApplePayResultData = getApplePayResultData;
 
     function afterOrderCreated(orderResult, context) {
         var paymentInfo = context ? context.paymentInfo : null;

@@ -371,8 +371,6 @@ namespace EtheriT.Coker.Application.Contact
                         Id = e.Id,
                         // Name 即後台列表「位置」欄位值，匯出檔名的表單中文名稱以此為準。
                         Name = e.Name,
-                        UserName = e.UserName,
-                        Email = e.Email,
                         TargetEmail = e.TargetEmail,
                         Status = e.Status,
                         CreationTime = e.CreationTime,
@@ -427,8 +425,9 @@ namespace EtheriT.Coker.Application.Contact
                     }
                 }
 
-                // 有套用 JSON 範本時，僅輸出範本內欄位；固定欄位（含編號等非範本欄位）一律不匯出。
-                var rows = BuildExportRows(contacts, menu.Title, dynamicColumns, parsed, includeFixedColumns: !template.HasTemplate);
+                // 固定欄位一律置於範本／動態欄位前：套用 JSON 範本時為「表單類別、送出時間、處理狀態」，
+                // 完全動態（無範本）時為「編號、表單類別、送出時間、處理信箱、處理狀態」。
+                var rows = BuildExportRows(contacts, menu.Title, dynamicColumns, parsed, hasTemplate: template.HasTemplate);
                 var stream = new MemoryStream();
 
                 // MiniExcel 使用 Dictionary key 作為表頭，rows 內欄位順序即 Excel 欄位順序。
@@ -659,13 +658,16 @@ namespace EtheriT.Coker.Application.Contact
 
         /// <summary>
         /// 組出 Excel rows；前段為固定欄位，後段依 FromDate 或模板欄位補上動態欄位。
+        /// 固定欄位依是否套用 JSON 範本而不同：
+        /// 有範本時為「表單類別、送出時間、處理狀態」；
+        /// 無範本（完全動態）時為「編號、表單類別、送出時間、處理信箱、處理狀態」。
         /// </summary>
         private static List<Dictionary<string, object?>> BuildExportRows(
             List<ContactExportSource> contacts,
             string formTitle,
             List<FromDateColumn> dynamicColumns,
             FromDateParseResult parsed,
-            bool includeFixedColumns)
+            bool hasTemplate)
         {
             var rows = new List<Dictionary<string, object?>>();
 
@@ -673,14 +675,20 @@ namespace EtheriT.Coker.Application.Contact
             {
                 var row = new Dictionary<string, object?>();
 
-                // 沒有套用 JSON 範本時才補上固定欄位；套用範本時欄位完全依範本，不輸出編號等非範本欄位。
-                if (includeFixedColumns)
+                // 固定欄位一律放在範本／動態欄位之前；兩種情境輸出的固定欄位不同。
+                if (hasTemplate)
                 {
+                    // 有套用 JSON 範本：僅在範本欄位前面補上這三個固定欄位。
+                    row["表單類別"] = formTitle;
+                    row["送出時間"] = contact.CreationTime.ToString("yyyy/MM/dd HH:mm");
+                    row["處理狀態"] = contact.Status.ToString().Replace("_", "/");
+                }
+                else
+                {
+                    // 完全動態匯出（無範本）：補上固定欄位；不再輸出「用戶姓名」與「用戶信箱」。
                     row["編號"] = contact.Id;
                     row["表單類別"] = formTitle;
                     row["送出時間"] = contact.CreationTime.ToString("yyyy/MM/dd HH:mm");
-                    row["用戶姓名"] = contact.UserName ?? string.Empty;
-                    row["用戶信箱"] = contact.Email ?? string.Empty;
                     row["處理信箱"] = contact.TargetEmail ?? string.Empty;
                     row["處理狀態"] = contact.Status.ToString().Replace("_", "/");
                 }
@@ -806,8 +814,6 @@ namespace EtheriT.Coker.Application.Contact
             public long Id { get; set; }
             // 後台列表「位置」欄位（Contacts.Name），即送出時的表單中文名稱。
             public string? Name { get; set; }
-            public string? UserName { get; set; }
-            public string? Email { get; set; }
             public string? TargetEmail { get; set; }
             public ContactStatusEnum Status { get; set; }
             public DateTime CreationTime { get; set; }

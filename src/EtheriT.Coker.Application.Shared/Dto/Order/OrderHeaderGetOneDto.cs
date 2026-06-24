@@ -48,5 +48,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public DateTime? RepayAvailableAt { get; set; }
         public int RepayRemainingSeconds { get; set; }
         public string RepayWaitingMessage { get; set; } = "";
+        public string TrackingNumber { get; set; }
     }
 }

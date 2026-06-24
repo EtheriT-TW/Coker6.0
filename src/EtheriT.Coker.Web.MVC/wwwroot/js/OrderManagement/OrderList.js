@@ -272,7 +272,7 @@ function ToggleOrderBonusLines(data) {
     $(".discountLine").toggleClass("d-none", discount <= 0);
 }
 function updateOrder() {
-    co.Order.UpdateStatus({ Id: keyId, Status: $order_status.val(), Memo: $memo_block.val() }).done(function (result) {
+    co.Order.UpdateStatus({ Id: keyId, Status: $order_status.val(), Memo: $memo_block.val(), TrackingNumber: $tracking_number.val()}).done(function (result) {
         if (result.success) {
             co.sweet.success("儲存成功");
             switch (parseInt($order_status.val())) {
@@ -294,6 +294,7 @@ function updateOrder() {
 function ElementInit() {
     /* Header */
     $order_status = $(".status_select")
+    $tracking_number = $(".tracking_number")
     $order_notes = $(".order_notes")
     $order_systemMemos = $(".order_systemMemos")
     $memo_block = $(".memo_block");
@@ -524,6 +525,7 @@ function HeaderDataSet(result) {
     $orderer_email.text(result.ordererEmail)
 
     $memo_block.val(result.memo);
+    $tracking_number.val(result.trackingNumber);
 
     if (result.invoiceType != 3) {
         $("#InvoiceData,#InvoiceType").removeClass("d-none");

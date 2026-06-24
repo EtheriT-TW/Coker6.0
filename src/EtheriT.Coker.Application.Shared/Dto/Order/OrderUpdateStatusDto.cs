@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
 		public long Id { get; set; }
 		public OrderStatusEnum Status { get; set; }
 		public string? Memo {  get; set; } = string.Empty;
+		public string? TrackingNumber { get; set; } = string.Empty;
         public bool ForceCancel { get; set; } = false;
     }
 }

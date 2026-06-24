@@ -59,6 +59,8 @@ namespace EtheriT.Coker.Core.Models
         public string? Memo { get; set; }
         [StringLength(1000)]
         public string? SystemMemo { get; set; }
+        [StringLength(20)]
+        public string? TrackingNumber { get; set; }
         public string? TransactionId { get; set; }
         public string? refundTransactionId { get; set; }
         public DateTime? refundTransactionDate { get; set; }

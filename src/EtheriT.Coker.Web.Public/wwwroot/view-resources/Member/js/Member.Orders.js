@@ -315,6 +315,34 @@
                     if (productBonus <= 0) frame.find(".collapse .header_productBonus").closest(".row").remove();
                     if (redeemBonus <= 0) frame.find(".collapse .header_redeemBonus").closest(".row").remove();
                 }
+
+                if (C.util.string.isNullOrEmpty(orderHeader.trackingNumber)) {
+                    frame.find(".logistics_info").addClass("d-none");
+                } else {
+                    frame.find(".logistics_info").removeClass("d-none");
+                    frame.find(".logistics_info .logistics_number").text(orderHeader.trackingNumber);
+                    MemberPage.Orders.bindCopyTracking(frame);
+                }
+            },
+
+            bindCopyTracking: function (frame) {
+                var $btn = frame.find(".logistics_info .copy-btn");
+                var $number = frame.find(".logistics_info .logistics_number");
+
+                $btn.on("click.memberOrders", function () {
+                    var text = $number.text();
+                    if (C.util.string.isNullOrEmpty(text)) return;
+
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(text).then(function () {
+                            C.sweet.success("已複製物流編號", null, true);
+                        }).catch(function () {
+                            C.sweet.warning("複製失敗", "請手動複製", null);
+                        });
+                    } else {
+                        C.sweet.warning("複製失敗", "瀏覽器不支援自動複製", null);
+                    }
+                });
             }
         };
     }

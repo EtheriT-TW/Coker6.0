@@ -1081,7 +1081,8 @@ namespace EtheriT.Coker.Application.Order
                         CreationTime = result.CreationTime.ToString("yyyy-MM-dd HH:mm:ss"),
                         TransactionId = result.TransactionId,
                         RefundTransactionId = result.refundTransactionId,
-                        Memo = result.Memo ?? ""
+                        Memo = result.Memo ?? "",
+                        TrackingNumber = result.TrackingNumber ?? "",
                     };
                     if (output.Payment != "")
                     {
@@ -2506,6 +2507,7 @@ namespace EtheriT.Coker.Application.Order
                     if (dto.Memo != null)
                     {
                         order.Memo = dto.Memo;
+                        order.TrackingNumber =  dto.TrackingNumber;
                         await loginUserData.SaveChanges(order);
                     }
 
@@ -2541,9 +2543,13 @@ namespace EtheriT.Coker.Application.Order
                     if (dto.Memo != null)
                         order.Memo = dto.Memo;
 
+                    //4.更新物流編號
+                    if (dto.TrackingNumber != null)
+                        order.TrackingNumber = dto.TrackingNumber;
+
                     await loginUserData.SaveChanges(order);
 
-                    // 4. 紅利狀態事件
+                    // 5. 紅利狀態事件
                     await HandleOrderBonusStateChangeAsync(order, oldStatus, newStatus);
 
                     await db.SaveChangesAsync();

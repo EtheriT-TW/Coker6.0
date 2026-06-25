@@ -109,16 +109,77 @@ function namecontrol(id) {
     
 }
 
-function ArticleTagsInit() {
-    co.Tag.GetArticleDataAll(PageId).done(function (res) {
-        let template = $(".tags-template").html();
-        if (template == "" || typeof template === "undefined") template = "<a></a>";
-        const htmlContent = res.map(item => {
-            const $el = $(template).text(item.title);
-            const $l = $el[0].tagName.toLowerCase() === "a" ? $el : $el.find("a").first();
-            $l.attr({ href: `/${OrgName}/Search/Get/0/${item.title}`, title: `連結至：搜尋${item.title}頁面(另開新視窗)`, target: "_blank", rel: "noopener noreferrer" });
-            return $el[0].outerHTML;
-        }).join('');
-        $(".article-tags").append(htmlContent);
-    });
+function ArticleTagsInit(options) {
+    options = options || {};
+
+    const pageId = Number(
+        options.pageId ||
+        (typeof PageId === "undefined" ? 0 : PageId)
+    );
+
+    if (!pageId || pageId <= 0) {
+        return;
+    }
+
+    if (typeof co === "undefined" || !co.Tag || typeof co.Tag.GetArticleDataAll !== "function") {
+        return;
+    }
+
+    const $targets = $(".article-tags");
+
+    if ($targets.length === 0) {
+        return;
+    }
+
+    const requestKey = `article-tags-${pageId}`;
+
+    if (window.__ArticleTagsInitState === requestKey) {
+        return;
+    }
+
+    if ($targets.filter(function () {
+        return $(this).data("article-tags-page-id") == pageId;
+    }).length === $targets.length) {
+        return;
+    }
+
+    window.__ArticleTagsInitState = requestKey;
+
+    co.Tag.GetArticleDataAll(pageId)
+        .done(function (res) {
+            let template = $(".tags-template").html();
+
+            if (template == "" || typeof template === "undefined") {
+                template = "<a></a>";
+            }
+
+            const htmlContent = res.map(item => {
+                const $el = $(template).text(item.title);
+                const $l = $el[0].tagName.toLowerCase() === "a" ? $el : $el.find("a").first();
+
+                $l.attr({
+                    href: `/${OrgName}/Search/Get/0/${item.title}`,
+                    title: `連結至：搜尋${item.title}頁面(另開新視窗)`,
+                    target: "_blank",
+                    rel: "noopener noreferrer"
+                });
+
+                return $el[0].outerHTML;
+            }).join('');
+
+            $(".article-tags").each(function () {
+                const $target = $(this);
+
+                if ($target.data("article-tags-page-id") == pageId) {
+                    return;
+                }
+
+                $target.empty().append(htmlContent);
+                $target.data("article-tags-page-id", pageId);
+            });
+        })
+        .fail(function () {
+            // API 尚未補上時，不要無限重複打。
+            // 之後補完 API、重新進頁面或重新整理即可再呼叫。
+        });
 }

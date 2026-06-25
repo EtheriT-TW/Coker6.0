@@ -26,6 +26,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Net;
 using System.Text.RegularExpressions;
+using EtheriT.Coker.Application.Permissions;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -39,8 +40,8 @@ namespace EtheriT.Coker.Application.Article
         private readonly ITagAppService tagAppService;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly ITokenAppService tokenAppService;
-        private readonly string ServiceName;
         private readonly IHtmlProcessor htmlProcessor;
+        private readonly IPermissionsAppService permissionsAppService;
         public ArticleAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -50,7 +51,8 @@ namespace EtheriT.Coker.Application.Article
             ITagAppService tagAppService,
             IFileUploadAppService fileUploadAppService,
             ITokenAppService tokenAppService,
-            IHtmlProcessor htmlProcessor
+            IHtmlProcessor htmlProcessor,
+            IPermissionsAppService permissionsAppService
         )
         {
             this.db = db;
@@ -62,7 +64,7 @@ namespace EtheriT.Coker.Application.Article
             this.tokenAppService = tokenAppService;
             this.stringHandler = stringHandler;
             this.htmlProcessor = htmlProcessor;
-            ServiceName = "Article";
+            this.permissionsAppService = permissionsAppService;
         }
         public async Task<ResponseMessageDto> AddUp(ArticleDto dto)
         {
@@ -74,6 +76,11 @@ namespace EtheriT.Coker.Application.Article
                 long WebsiteID = await loginUserData.GetWebsiteId();
                 long usetId = await loginUserData.GetUserId();
                 var asoid = dto.Id;
+
+                if (dto.Id != null && dto.Id > 0 && !await CanSaveArticleAsync(dto.Id.Value))
+                {
+                    throw new Exception("此目錄已設定權限，您目前僅能檢視，不能儲存修改。");
+                }
 
                 if (dto.Id == null || dto.Id == 0)
                 {
@@ -244,6 +251,78 @@ namespace EtheriT.Coker.Application.Article
 
             return new JsonResult(new List<ArticleListGetDto>() { new ArticleListGetDto { Title = msg } }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
+
+        private async Task<bool> CanSaveArticleAsync(long articleId)
+        {
+            var websiteId = await loginUserData.GetWebsiteId();
+            var userId = await loginUserData.GetUserId();
+
+            if (await permissionsAppService.IsPowerUserPermissions())
+            {
+                return true;
+            }
+
+            var article = await db.Article
+                .AsNoTracking()
+                .Where(x => x.Id == articleId)
+                .Where(x => x.FK_WebsiteId == websiteId)
+                .Where(x => !x.IsDeleted)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.CreatorUserId
+                })
+                .FirstOrDefaultAsync();
+
+            if (article == null)
+            {
+                return false;
+            }
+
+            if (article.CreatorUserId == userId)
+            {
+                return true;
+            }
+
+            var articleTagIds = await db.Tag_Associates
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted)
+                .Where(x => x.Type == TagAssociateTypeEnum.文章)
+                .Where(x => x.FK_AId == articleId)
+                .Select(x => x.FK_TId)
+                .Distinct()
+                .ToListAsync();
+
+            if (!articleTagIds.Any())
+            {
+                return true;
+            }
+
+            var relatedDirectoryIds = await db.Tag_Associates
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted)
+                .Where(x => x.Type == TagAssociateTypeEnum.目錄)
+                .Where(x => articleTagIds.Contains(x.FK_TId))
+                .Select(x => x.FK_AId)
+                .Distinct()
+                .ToListAsync();
+
+            if (!relatedDirectoryIds.Any())
+            {
+                return true;
+            }
+
+            var hasPermissionDirectory = await db.PermissionDetail
+                .AsNoTracking()
+                .AnyAsync(x =>
+                    x.FK_WebsiteId == websiteId &&
+                    x.Type == (int)PermissionDetailsTypeEnum.目錄 &&
+                    x.IsGranted &&
+                    relatedDirectoryIds.Contains(x.FK_TargetId??0)
+                );
+
+            return !hasPermissionDirectory;
+        }
         public async Task<ArticleGetDataDto> GetDataOne(long Id)
         {
             try
@@ -270,6 +349,7 @@ namespace EtheriT.Coker.Application.Article
                         RemovedFromShelves = !result.RemovedFromShelves,
                         permanent = result.permanent,
                         DataJson = string.IsNullOrEmpty(result.DataJson) ? null : JsonConvert.DeserializeObject<NewsletterFrameDto>(result.DataJson),
+                        CanSave = await CanSaveArticleAsync(result.Id),
                         FileAreas = null,
                         Files = new List<FileGetArticleDisplayDto>()
                     };
@@ -464,6 +544,12 @@ namespace EtheriT.Coker.Application.Article
             try
             {
                 long usetId = await loginUserData.GetUserId();
+
+                if (!await CanSaveArticleAsync(Id))
+                {
+                    throw new Exception("此目錄已設定權限，您目前僅能檢視，不能刪除文章。");
+                }
+
                 var result = db.Article.Where(e => e.Id == Id).FirstOrDefault();
 
                 if (result != null)
@@ -520,6 +606,7 @@ namespace EtheriT.Coker.Application.Article
                 if (article != null)
                 {
                     results.Title = article.Title;
+                    results.CanSave = await CanSaveArticleAsync(article.Id);
                     results.Conten = new ArticleSaveContenDto
                     {
                         SaveHtml = article.SaveHtml,
@@ -543,6 +630,11 @@ namespace EtheriT.Coker.Application.Article
             try
             {
                 var userId = await loginUserData.GetUserId();
+
+                if (!await CanSaveArticleAsync(dto.Id))
+                {
+                    throw new Exception("此目錄已設定權限，您目前僅能檢視，不能匯入修改。");
+                }
 
                 dto.SaveHtml = stringHandler.HtmlEncode(dto.SaveHtml);
                 ArticleContenDto importDto = new ArticleContenDto
@@ -590,6 +682,11 @@ namespace EtheriT.Coker.Application.Article
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
+                if (!await CanSaveArticleAsync(dto.Id))
+                {
+                    throw new Exception("此目錄已設定權限，您目前僅能檢視，不能儲存修改。");
+                }
+
                 dto.SaveHtml = stringHandler.HtmlEncode(dto.SaveHtml);
                 var article = await db.Article.FirstOrDefaultAsync(e => e.Id == dto.Id);
 

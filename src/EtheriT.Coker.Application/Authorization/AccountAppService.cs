@@ -509,80 +509,141 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 Success = false
             };
-            ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
-            string name = user.Identity?.Name;
-            string? secret = cookieManager.Get("BackstageRefreshToken");
+
             try
             {
-                if (!string.IsNullOrEmpty(name))
+                ClaimsPrincipal? user = httpContextAccessor.HttpContext?.User;
+                string? name = user?.Identity?.Name;
+                string? secret = cookieManager.Get("BackstageRefreshToken");
+
+                if (string.IsNullOrWhiteSpace(name))
+                    throw new Exception("登入已過期");
+
+                // 重點：沒有 RefreshToken 就不能視為已登入
+                if (string.IsNullOrWhiteSpace(secret))
+                    throw new Exception("登入已過期");
+
+                if (!Guid.TryParse(secret, out Guid refreshTokenId))
+                    throw new Exception("登入已過期");
+
+                var t = await db.Tokens
+                    .Where(e => e.id == refreshTokenId)
+                    .FirstOrDefaultAsync();
+
+                if (t == null)
+                    throw new Exception("登入已過期");
+
+                if (t.EndTime == null || t.EndTime < DateTime.Now)
+                    throw new Exception("登入已過期");
+
+                var users = await db.Users
+                    .Where(e => e.Id == t.UserID)
+                    .Where(e => !e.IsDeleted)
+                    .FirstOrDefaultAsync();
+
+                if (users == null)
+                    throw new Exception("登入已過期");
+
+                // 建議加：避免 Cookie 身分與 DB Token 對不到
+                if (!string.Equals(users.Account, name, StringComparison.OrdinalIgnoreCase))
+                    throw new Exception("登入狀態異常");
+
+                if (t.EndTime < DateTime.Now.AddMinutes(15))
                 {
-                    if (string.IsNullOrEmpty(secret))
-                    {
-                        response.Success = true;
-                    }
-                    else
-                    {
-                        var t = await db.Tokens.Where(e => e.id == Guid.Parse(secret ?? "")).FirstOrDefaultAsync();
-                        if (t != null)
-                        {
-                            var users = await db.Users.Where(e => e.Id == t.UserID).FirstOrDefaultAsync();
-                            if (t.EndTime < DateTime.Now.AddMinutes(15))
-                            {
-                                t.EndTime = DateTime.Now.AddMinutes(30);
-                                db.SaveChanges();
-                            }
-                            response.Success = true;
-                            response.Token = await tokenAppService.CreateToken(users.Account, t.id, CookiePurposeEnum.BackstageAuthToken, "Backstage");
-                            response.Secret = t.id;
-                            response.EndDateTime = t.EndTime.Value;
-                        }
-                        else throw new Exception("登入已過期");
-                    }
+                    t.EndTime = DateTime.Now.AddMinutes(30);
+                    await db.SaveChangesAsync();
                 }
-                else throw new Exception("登入已過期");
+
+                response.Success = true;
+                response.Token = await tokenAppService.CreateToken(
+                    users.Account,
+                    t.id,
+                    CookiePurposeEnum.BackstageAuthToken,
+                    "Backstage"
+                );
+                response.Secret = t.id;
+                response.EndDateTime = t.EndTime.Value;
             }
             catch (Exception e)
             {
                 response.Success = false;
                 response.Error = e.Message;
+
+                // Check 失敗時，順便清掉殘留的 HttpOnly Cookie
+                try
+                {
+                    await tokenAppService.DelToken();
+                }
+                catch { }
+
+                try
+                {
+                    cookieManager.Clear();
+                }
+                catch { }
             }
+
             try
             {
                 var removeToken = db.Tokens.Where(e => e.EndTime < DateTime.Now);
                 db.Tokens.RemoveRange(removeToken);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
-            catch (Exception e) { }
+            catch { }
+
             return response;
         }
         public async Task<ResponseMessageDto> Logout()
         {
-            ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
-            string name = user.Identity?.Name;
             string? secret = cookieManager.Get("BackstageRefreshToken");
-            if (!string.IsNullOrEmpty(secret))
+
+            try
             {
-                var t = await db.Tokens.Where(e => e.id == Guid.Parse(secret ?? "")).FirstOrDefaultAsync();
-                if (t != null)
+                if (!string.IsNullOrWhiteSpace(secret) && Guid.TryParse(secret, out Guid refreshTokenId))
                 {
-                    Account_Log account_Log = new Account_Log()
+                    var t = await db.Tokens
+                        .Where(e => e.id == refreshTokenId)
+                        .FirstOrDefaultAsync();
+
+                    if (t != null)
                     {
-                        UUID = t.UUID,
-                        WebsiteId = configuration.GetValue<long>("WebConfig:SiteId"),
-                        Status = (int)AccountStatusEnum.登出,
-                        CreatorUserId = (long)t.UserID,
-                        LastLoginTime = DateTime.Now,
-                        CreationTime = DateTime.Now,
-                    };
-                    db.Account_Logs.Add(account_Log);
-                    db.Tokens.Remove(t);
-                    db.SaveChanges();
-                    cookieManager.Clear();
+                        Account_Log account_Log = new Account_Log()
+                        {
+                            UUID = t.UUID,
+                            WebsiteId = configuration.GetValue<long>("WebConfig:SiteId"),
+                            Status = (int)AccountStatusEnum.登出,
+                            CreatorUserId = (long)t.UserID,
+                            LastLoginTime = DateTime.Now,
+                            CreationTime = DateTime.Now,
+                        };
+
+                        db.Account_Logs.Add(account_Log);
+                        db.Tokens.Remove(t);
+                        await db.SaveChangesAsync();
+                    }
                 }
             }
+            catch
+            {
+                // 登出不應因為紀錄失敗或 Token 查詢失敗而中斷
+            }
+
+            // 重點：不管 DB Token 有沒有找到，都要清 HttpOnly Cookie
+            try
+            {
+                await tokenAppService.DelToken();
+            }
+            catch { }
+
+            try
+            {
+                cookieManager.Clear();
+            }
+            catch { }
+
             return new ResponseMessageDto
             {
-                Success = await tokenAppService.DelToken()
+                Success = true
             };
         }
         public async Task<LoginOutputDto> FrontLogout()

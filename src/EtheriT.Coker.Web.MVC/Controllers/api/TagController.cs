@@ -77,5 +77,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await tagAppService.TagGroupDelete(Id);
         }
+        [HttpGet]
+        public async Task<List<TagGetAllDataDto>> GetArticleDataAll(long AId)
+        {
+            return await tagAppService.GetArticleDataAll(AId);
+        }
     }
 }

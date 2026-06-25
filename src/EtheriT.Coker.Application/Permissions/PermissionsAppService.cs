@@ -572,6 +572,12 @@ namespace EtheriT.Coker.Application.Permissions
             try {
                 var websiteId = await loginUserData.GetWebsiteId();
                 var userId = await loginUserData.GetUserId();
+
+                dto.Users = dto.Users ?? new List<long>();
+                dto.Roles = dto.Roles ?? new List<long>();
+
+                var permissionName = GetPermissionDetailName(dto.Type);
+
                 List<PermissionDetail> pagePermissions = new List<PermissionDetail>();
                 List<PermissionDetail> EditPagePermissions = new List<PermissionDetail>();
                 var n = await db.PermissionDetail
@@ -589,54 +595,23 @@ namespace EtheriT.Coker.Application.Permissions
                 }
 
                 dto.Users.ForEach(id => {
-                    string key = string.Empty;
-                    switch (dto.Type)
+                    if (!EditPagePermissions.Exists(item => item.FK_UserId == id))
                     {
-                        case PermissionDetailsTypeEnum.選單:
-                            key = "Menu";
-                            break;
-                        case PermissionDetailsTypeEnum.目錄:
-                            key = "Directory";
-                            break;
-                        case PermissionDetailsTypeEnum.產品:
-                            key = "Product";
-                            break;
-                        case PermissionDetailsTypeEnum.文章:
-                            key = "Article";
-                            break;
-                    }
-                    if (!EditPagePermissions.Exists(item => item.FK_UserId == id)) {
                         pagePermissions.Add(new PermissionDetail
                         {
                             FK_UserId = id,
                             FK_WebsiteId = websiteId,
-                            FK_TargetId= dto.PageId,
+                            FK_TargetId = dto.PageId,
                             CreationTime = DateTime.Now,
                             CreatorUserId = userId,
                             Type = (int)dto.Type,
-                            Name = $"{key}.Edit",
+                            Name = permissionName,
                             IsGranted = true
                         });
                     }
                 });
 
                 dto.Roles.ForEach(id => {
-                    string key = string.Empty;
-                    switch (dto.Type)
-                    {
-                        case PermissionDetailsTypeEnum.選單:
-                            key = "Menu";
-                            break;
-                        case PermissionDetailsTypeEnum.目錄:
-                            key = "Directory";
-                            break;
-                        case PermissionDetailsTypeEnum.產品:
-                            key = "Product";
-                            break;
-                        case PermissionDetailsTypeEnum.文章:
-                            key = "Article";
-                            break;
-                    }
                     if (!EditPagePermissions.Exists(item => item.FK_RoleId == id))
                     {
                         pagePermissions.Add(new PermissionDetail
@@ -647,7 +622,7 @@ namespace EtheriT.Coker.Application.Permissions
                             CreationTime = DateTime.Now,
                             CreatorUserId = userId,
                             Type = (int)dto.Type,
-                            Name = $"{key}.Edit",
+                            Name = permissionName,
                             IsGranted = true
                         });
                     }
@@ -663,6 +638,39 @@ namespace EtheriT.Coker.Application.Permissions
                 await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
+        }
+        private static string GetPermissionDetailName(PermissionDetailsTypeEnum type)
+        {
+            var key = type switch
+            {
+                PermissionDetailsTypeEnum.選單 => "Menu",
+                PermissionDetailsTypeEnum.選單會員 => "Menu",
+
+                PermissionDetailsTypeEnum.目錄 => "Directory",
+                PermissionDetailsTypeEnum.目錄會員 => "Directory",
+
+                PermissionDetailsTypeEnum.產品 => "Product",
+                PermissionDetailsTypeEnum.產品會員 => "Product",
+
+                PermissionDetailsTypeEnum.文章 => "Article",
+                PermissionDetailsTypeEnum.文章會員 => "Article",
+
+                _ => string.Empty
+            };
+
+            var option = type switch
+            {
+                PermissionDetailsTypeEnum.選單會員 => "View",
+                PermissionDetailsTypeEnum.文章會員 => "View",
+                PermissionDetailsTypeEnum.產品會員 => "View",
+                PermissionDetailsTypeEnum.目錄會員 => "View",
+
+                _ => "Edit"
+            };
+
+            return string.IsNullOrWhiteSpace(key)
+                ? $".{option}"
+                : $"{key}.{option}";
         }
     }
 }

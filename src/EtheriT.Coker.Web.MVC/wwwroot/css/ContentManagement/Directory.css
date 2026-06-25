@@ -21,6 +21,20 @@ input[type="number"] {
     z-index: 1;
 }
 
+#DirectoryItemps .article-readonly-row > td {
+    background-color: #fff7e6 !important;
+    color: #8a5a00;
+}
+
+#DirectoryItemps .article-readonly-row:hover > td {
+    background-color: #ffefc2 !important;
+}
+
+#DirectoryItemps .article-readonly-row .dx-link-delete,
+#DirectoryItemps .article-readonly-row .dx-icon-trash {
+    opacity: 0.35;
+}
+
 /* Directory Content */
 #DirectoryContent > .card-header {
     background-color: var(--color-gray-bg-dark);

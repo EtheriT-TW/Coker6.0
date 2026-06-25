@@ -16,7 +16,7 @@
                         const $item = $($temp.html());
                         $item.find(".name").text(element.name);
                         $item.find("#chooiceInput + label").attr({ for: `Roles${element.id}` });
-                        $item.find("#chooiceInput").attr({ id: `Roles${element.id}`, name: "Roles" }).prop("checked", element.isChecked).val(element.id);
+                        $item.find("#chooiceInput").attr({ id: `Roles${element.id}`, name: "Roles", "data-form-type": "checkbox-list" }).prop("checked", element.isChecked).val(element.id);
                         $Roles.append($item);
                     });
                 } else {
@@ -25,10 +25,6 @@
             });
             $self.find(".btn_save").off("click").on("click", function () {
                 const json = co.Object.merge(o, co.Form.getJson("RolesDetailsForm"));
-                json.PageId = json.id;
-                if (typeof (json.Users) == "string") json.Users = [json.Users];
-                if (typeof (json.Roles) == "string") json.Roles = [json.Roles];
-                delete json.id;
                 co.PowerManagement.SavePagePermission(json).done(function (result) {
                     if (result.success) {
                         co.sweet.success("成功", "已成功設定");

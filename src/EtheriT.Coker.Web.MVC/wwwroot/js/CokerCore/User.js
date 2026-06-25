@@ -21,22 +21,26 @@
         },
         Logout: function () {
             var _dfr = $.Deferred();
+
             $.ajax({
                 url: "/api/User/Logout",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 dataType: "json"
-            }).done(function (result) {
-                if (result.success) {
-                    _c.Cookie.DelAll();
-                    location.href = "/";
-                    _dfr.resolve();
-                }
-            }).fail(function () {
+            }).always(function () {
+                // 注意：這只能清 JS 可操作的輔助 cookie，HttpOnly 仍由後端清
                 _c.Cookie.DelAll();
+
+                if (_c.Data && _c.Data.Header) {
+                    delete _c.Data.Header.Authorization;
+                    delete _c.Data.Header.Secret;
+                }
+
                 location.href = "/";
+                _dfr.resolve();
             });
+
             return _dfr.promise();
         },
         Check: function () {

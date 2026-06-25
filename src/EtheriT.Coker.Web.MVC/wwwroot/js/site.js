@@ -12,7 +12,7 @@ var PreLoader;
     var edt = !!co.Cookie.Get("endDateTime") ? parseInt(co.Cookie.Get("endDateTime")) : 0;
     const continueLoginState = function () {
         co.sweet.confirm("即將登出", "登入時間超過二十分鐘，是否保持狀態?", "是", "登出", function () {
-            co.User.Check().done(function (resule) {
+            co.User.Check().done(function (result) {
                 if (!result || !result.success) {
                     co.sweet.error("連線失敗", "延遲時間過久，您的登入狀態已被登出，請重新登入。", function () {
                         location.reload();

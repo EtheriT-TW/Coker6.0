@@ -275,7 +275,26 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     case "article":
                         remoteInputDto.FK_WebmenuId = PageData.Id;
                         model.MenuBread = await webMenuApplication.GetMenuBread(PageData.Id);
-                        model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto { siteId = defaultData.Id, articleId = id });
+                        model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto
+                        {
+                            siteId = defaultData.Id,
+                            articleId = id
+                        });
+
+                        if (model.PageData.Id == 0 || string.IsNullOrEmpty(model.PageData.Html))
+                        {
+                            Response.StatusCode = 404;
+                            view = "../Error/NotFound";
+                            break;
+                        }
+
+                        if (await IsFrontRoleDeniedAsync(model.PageData.Id, PermissionDetailsTypeEnum.文章會員))
+                        {
+                            Response.StatusCode = 401;
+                            view = "../Error/Denied";
+                            break;
+                        }
+
                         remoteInputDto.FK_ArticleId = model.PageData.Id;
                         model.ParentData = PageData;
                         model.PageData.PageView = "Article";
@@ -541,37 +560,12 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         ViewBag.MinOrderForEarnPoints = bonusSetting.MinOrderForEarnPoints; // 消費買額可獲得紅利
                         ViewBag.RewardRatePercent = bonusSetting.RewardRatePercent; // 回饋比例
                     }
-                    if (PageData != null)
+                    if (PageData != null && view.IndexOf("Error/") < 0)
                     {
-                        var userInfo = await accountAppService.GetFrontUserData();
-                        var perm = await permissionsAppService.GetPagePermission(new GetPagePermissionInputDto
+                        if (await IsFrontRoleDeniedAsync(PageData.Id, PermissionDetailsTypeEnum.選單會員))
                         {
-                            isFront = true,
-                            PageId = PageData!.Id,
-                            Type = PermissionDetailsTypeEnum.選單會員
-                        });
-                        if (perm.Success && perm.Object != null) {
-                            var permission = ((PagePermissionOutputDto)perm.Object).Roles.FindAll(e => e.IsChecked);
-                            var isDenied = false;
-                            if (permission.Any()) {
-                                if (!userInfo.Success)
-                                {
-                                    isDenied = true;
-                                }
-                                else {
-                                    var roles = permission.Find(e => e.Id == userInfo.data.FK_RoleId);
-                                    if (roles != null && !roles.IsChecked)
-                                    {
-                                        isDenied = true;
-                                    }
-                                }
-
-                                if (isDenied)
-                                {
-                                    Response.StatusCode = 401;
-                                    view = "../Error/Denied";
-                                }
-                            }
+                            Response.StatusCode = 401;
+                            view = "../Error/Denied";
                         }
                     }
                 }
@@ -653,7 +647,44 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     return View(view, model);
             }
         }
+        private async Task<bool> IsFrontRoleDeniedAsync(long targetId, PermissionDetailsTypeEnum type)
+        {
+            var userInfo = await accountAppService.GetFrontUserData();
 
+            var perm = await permissionsAppService.GetPagePermission(new GetPagePermissionInputDto
+            {
+                isFront = true,
+                PageId = targetId,
+                Type = type
+            });
+
+            if (!perm.Success || perm.Object == null)
+            {
+                return false;
+            }
+
+            var permissionOutput = (PagePermissionOutputDto)perm.Object;
+
+            var allowedRoleIds = permissionOutput.Roles
+                .Where(e => e.IsChecked)
+                .Select(e => e.Id)
+                .ToList();
+
+            // 沒有設定任何角色限制，代表公開
+            if (!allowedRoleIds.Any())
+            {
+                return false;
+            }
+
+            // 有設定限制，但會員未登入，拒絕
+            if (!userInfo.Success || userInfo.data == null)
+            {
+                return true;
+            }
+
+            // 有設定限制，但目前會員角色不在允許清單，拒絕
+            return !allowedRoleIds.Contains(userInfo.data.FK_RoleId);
+        }
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

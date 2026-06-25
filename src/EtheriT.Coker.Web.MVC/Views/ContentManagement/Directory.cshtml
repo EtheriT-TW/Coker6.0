@@ -177,6 +177,7 @@
                                         })
                                         )
                                         .OnContentReady("DirectoryDatailListReady")
+                                        .OnRowPrepared("articleRowPrepared")
                                         .HeaderFilter(headerFilter => headerFilter.Visible(true))
                                         .RemoteOperations(true)
                                         .ColumnHidingEnabled(true)
@@ -208,7 +209,10 @@
                                             {
                                                 b.Add().Name("edit").Visible(perm.CanUpdate).OnClick("editArticlesButtonClicked");
                                                 b.Add().Icon("palette").Visible(perm.CanUpdate).Name("edit").OnClick("paletteArticlesButtonClicked");
-                                                b.Add().Name("delete").Visible(perm.CanRemove).OnClick("deleteArticlesButtonClicked");
+                                                b.Add()
+                                                    .Name("delete")
+                                                    .Visible(new JS("function(e) { return " + perm.CanRemove.ToString().ToLower() + " && e.row && e.row.data && e.row.data.CanSave === true; }"))
+                                                    .OnClick("deleteArticlesButtonClicked");
                                             });
                                         })
                                         .ColumnAutoWidth(true)

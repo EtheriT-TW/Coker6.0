@@ -22,6 +22,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
         public DateTime? EndTime { get; set; }
         public bool permanent { get; set; }
         public bool RemovedFromShelves { get; set; }
+        public bool CanSave { get; set; } = true;
         public NewsletterFrameDto? DataJson { get; set; }
         public List<TagGetSelectedDto> TagDatas { get; set; }
         public List<FileTypeAreaDto> FileAreas { get; set; }

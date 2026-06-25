@@ -424,19 +424,32 @@
 
                 const formType = String($items.first().attr("data-form-type") || "").toLowerCase();
 
-                // boolean checkbox 或單一 checkbox：
-                // 不依賴 FormData 的 value，直接以 checked 狀態為準。
+                // 明確指定為 checkbox-list / array 的欄位：
+                // 不論目前只有一個或多個 checkbox，都回傳已勾選的 value 陣列。
+                if (formType === "checkbox-list" || formType === "array") {
+                    formDataObject[name] = $items
+                        .filter(":checked")
+                        .map(function () {
+                            return _c.Form.normalizeElementValue($(this), this.value);
+                        })
+                        .get();
+
+                    return;
+                }
+
+                // 明確指定 boolean，或未指定型別但只有一個 checkbox：
+                // 維持舊版行為，回傳 true / false。
                 if (formType === "boolean" || $items.length === 1) {
                     formDataObject[name] = $items.first().prop("checked") === true;
                     return;
                 }
 
-                // 多選 checkbox：
-                // 回傳所有已勾選的 value。
+                // 多個同 name checkbox：
+                // 預設視為多選 value list。
                 formDataObject[name] = $items
                     .filter(":checked")
                     .map(function () {
-                        return _c.Form.normalizeElementValue($items.first(), this.value);
+                        return _c.Form.normalizeElementValue($(this), this.value);
                     })
                     .get();
             });
@@ -584,6 +597,7 @@
             });
 
             form.reset();
+            $form.find('[data-form-type="disabled"]').trigger("change");
             $form.removeClass('was-validated');
             $form.find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
             if ($form.find("[name='id']").length > 0) {

@@ -24,6 +24,7 @@ using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
@@ -51,6 +52,7 @@ namespace EtheriT.Coker.Application.Directory
         private readonly IPermissionsAppService permissionsAppService;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly ICustSearchAppService custSearchAppService;
+        private readonly IAccountAppService accountAppService;
         private readonly StringHandler stringHandler;
         private readonly IConfiguration configuration;
         private readonly IHtmlProcessor htmlProcessor;
@@ -66,6 +68,7 @@ namespace EtheriT.Coker.Application.Directory
             IPermissionsAppService permissionsAppService,
             IFileUploadAppService fileUploadAppService,
             ICustSearchAppService custSearchAppService,
+            IAccountAppService accountAppService,
             ITokenAppService tokenAppService,
             IConfiguration configuration,
             IHtmlProcessor htmlProcessor
@@ -85,6 +88,7 @@ namespace EtheriT.Coker.Application.Directory
             this.tokenAppService = tokenAppService;
             this.configuration = configuration;
             this.htmlProcessor = htmlProcessor;
+            this.accountAppService = accountAppService;
         }
         public async Task<ResponseMessageDto> AddUp(DirectoryAddUpDto dto)
         {
@@ -257,10 +261,15 @@ namespace EtheriT.Coker.Application.Directory
                 .Where(e => !e.IsDeleted && !e.Prod.IsDeleted && !e.TechnicalCertificate.IsDeleted)
                 .Where(e => e.FK_TCId == SearchId).Select(e => e.FK_PId);
 
+            var currentFrontRoleId = await GetCurrentFrontRoleIdAsync(WebsiteID);
+
             IQueryable<Prod>? prods = db.Prods.Include(e => e.Website)
-                .Where(e => !e.IsDeleted).Where(e => !e.RemovedFromShelves)
+                .Where(e => !e.IsDeleted)
+                .Where(e => !e.RemovedFromShelves)
                 .Where(e => e.FK_WebsiteId == WebsiteID)
                 .Where(e => dataQuery.Contains(e.Id));
+
+            prods = ApplyFrontProductViewPermission(prods, WebsiteID, currentFrontRoleId);
             output.TotalCount = prods.Count();
             output.TotalPage = (int)Math.Ceiling(output.TotalCount / (double)shownum);
             var dataMargin = prods
@@ -364,6 +373,7 @@ namespace EtheriT.Coker.Application.Directory
 
             // ---------- 取得使用者加權資料（可為空） ----------
             var userCtx = await GetUserSearchContextAsync();
+            var currentFrontRoleId = await GetCurrentFrontRoleIdAsync(websiteId);
 
             // ---------- 建立 Query（只建需要的） ----------
             IQueryable<WebMenu>? menuQ = null;
@@ -438,6 +448,21 @@ namespace EtheriT.Coker.Application.Directory
                     prodQ = prodQ.Where(p => p.StartTime.HasValue && p.StartTime.Value >= dto.StartDate.Value.Date);
                 if (dto.EndDate.HasValue)
                     prodQ = prodQ.Where(p => p.EndTime.HasValue && p.EndTime.Value <= dto.EndDate.Value.Date.AddDays(1).AddTicks(-1));
+            }
+
+            if (menuQ != null)
+            {
+                menuQ = ApplyFrontMenuViewPermission(menuQ, websiteId, currentFrontRoleId);
+            }
+
+            if (articleQ != null)
+            {
+                articleQ = ApplyFrontArticleViewPermission(articleQ, websiteId, currentFrontRoleId);
+            }
+
+            if (prodQ != null)
+            {
+                prodQ = ApplyFrontProductViewPermission(prodQ, websiteId, currentFrontRoleId);
             }
 
             // ---------- 先產生 Filters / DirectoryType（依類型） ----------
@@ -1617,6 +1642,7 @@ namespace EtheriT.Coker.Application.Directory
             if ((dto.Type ?? "").ToLower() == "techcert") return await TechCertReleInfo(dto);
             var DataIds = new List<long>();
             long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
+            var currentFrontRoleId = await GetCurrentFrontRoleIdAsync(WebsiteID);
             List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == WebsiteID).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
             siteIds.Add(WebsiteID);
             var output = new DirectoryReleInfoGetDto();
@@ -1702,18 +1728,24 @@ namespace EtheriT.Coker.Application.Directory
 
                             if (allIds.Any())
                             {
-                                DataIds = db.Prods
+                                var productQuery = db.Prods
                                     .Where(e => allIds.Contains(e.Id))
                                     .Where(e => e.Visible && !e.RemovedFromShelves)
                                     .Where(e => siteIds.Contains(e.FK_WebsiteId))
-                                    .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime))
+                                    .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime));
+
+                                productQuery = ApplyFrontProductViewPermission(productQuery, WebsiteID, currentFrontRoleId);
+
+                                DataIds = productQuery
                                     .OrderBy(e => e.Ser_No)
                                     .ThenByDescending(e => e.Status == ProdStatusEnum.新品)
                                     .ThenByDescending(e => e.Status != ProdStatusEnum.售完)
                                     .ThenByDescending(e => e.Status != ProdStatusEnum.停產)
                                     .ThenBy(e => e.ItemNo)
-                                    .ThenBy(e => e.Title).ThenByDescending(e => e.Id)
-                                    .Select(e => e.Id).ToList();
+                                    .ThenBy(e => e.Title)
+                                    .ThenByDescending(e => e.Id)
+                                    .Select(e => e.Id)
+                                    .ToList();
                             }
                             break;
                         case DirectoryTypeEnum.文章:
@@ -1762,6 +1794,7 @@ namespace EtheriT.Coker.Application.Directory
                                        .Where(e => e.Visible)
                                        .Where(e => siteIds.Contains(e.FK_WebsiteId))
                                        .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime));
+                            articleQuery = ApplyFrontArticleViewPermission(articleQuery, WebsiteID, currentFrontRoleId);
                             if (!string.IsNullOrEmpty(dto.Facet) && db_d != null && db_d.Any())
                             {
                                 var dir = db_d.First();
@@ -1903,16 +1936,60 @@ namespace EtheriT.Coker.Application.Directory
         }
         public async Task<MenuItemDto> GetReleMenu(DataIdWebsiteIdDto dto)
         {
-            var websiteid = dto.WebsiteId;
-            if (websiteid == 0) websiteid = await loginUserData.GetWebsiteId();
-            var output = await (from e in db.Directory where dto.Ids.Contains(e.Id) && !e.IsDeleted select e.FK_Mid).FirstOrDefaultAsync();
-            if (output != null) return await webMenuApplicationService.GetDisplayOne(new DataIdWebsiteIdDto()
+            var empty = new MenuItemDto
             {
-                Id = (long)output,
+                Children = new List<MenuItemDto>()
+            };
+
+            var websiteid = dto.WebsiteId;
+            if (websiteid == 0)
+            {
+                websiteid = await loginUserData.GetWebsiteId();
+            }
+
+            if (dto.Ids == null || !dto.Ids.Any())
+            {
+                return empty;
+            }
+
+            var menuId = await (
+                from e in db.Directory
+                where dto.Ids.Contains(e.Id)
+                   && !e.IsDeleted
+                   && e.FK_WebsiteId == websiteid
+                select e.FK_Mid
+            ).FirstOrDefaultAsync();
+
+            if (menuId == null || menuId <= 0)
+            {
+                return empty;
+            }
+
+            var currentFrontRoleId = await GetCurrentFrontRoleIdAsync(websiteid);
+
+            var menuQuery = db.WebMenus
+                .Where(e => e.Id == menuId.Value)
+                .Where(e => e.FK_WebsiteId == websiteid)
+                .Where(e => !e.IsDeleted)
+                .Where(e => !e.RemovedFromShelves);
+
+            menuQuery = ApplyFrontMenuViewPermission(menuQuery, websiteid, currentFrontRoleId);
+
+            var canViewMenu = await menuQuery.AnyAsync();
+
+            if (!canViewMenu)
+            {
+                return empty;
+            }
+
+            var menu = await webMenuApplicationService.GetDisplayOne(new DataIdWebsiteIdDto()
+            {
+                Id = menuId.Value,
                 WebsiteId = websiteid,
                 showUnvisible = dto.showUnvisible
             });
-            return null;
+
+            return menu ?? empty;
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
@@ -2080,13 +2157,26 @@ namespace EtheriT.Coker.Application.Directory
         public async Task<JsonResult> GetDirectoryArticlesList(long id, DataSourceLoadOptions loadOptions)
         {
             long WebsiteID = await loginUserData.GetWebsiteId();
+            long userId = await loginUserData.GetUserId();
+            bool isPowerUser = await permissionsAppService.IsPowerUserPermissions();
+
             string error = string.Empty;
             try
             {
-                var db_d = db.Directory.Where(e => e.Id == id && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).FirstOrDefault();
+                var db_d = db.Directory
+                    .Where(e => e.Id == id && e.FK_WebsiteId == WebsiteID && !e.IsDeleted)
+                    .FirstOrDefault();
                 var DataIds = new List<long>();
                 if (db_d != null)
                 {
+                    bool hasDirectoryPermission = await db.PermissionDetail
+                        .AsNoTracking()
+                        .AnyAsync(e =>
+                            e.FK_WebsiteId == WebsiteID &&
+                            e.FK_TargetId == id &&
+                            e.Type == (int)PermissionDetailsTypeEnum.目錄 &&
+                            e.IsGranted
+                        );
                     var d_tags = await db.Tag_Associates.Include(e => e.Tag)
                         .Where(e => e.FK_AId == id)
                         .Where(e => !e.IsDeleted)
@@ -2117,7 +2207,10 @@ namespace EtheriT.Coker.Application.Directory
                                             Description = a.Description,
                                             SerNo = a.SerNO,
                                             NodeDate = a.NodeDate,
-                                            LastModificationTime = a.LastModificationTime ?? a.CreationTime
+                                            LastModificationTime = a.LastModificationTime ?? a.CreationTime,
+                                            CanEdit = !hasDirectoryPermission ||
+                                              isPowerUser ||
+                                              a.CreatorUserId == userId
                                         };
                         var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                         return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
@@ -2884,6 +2977,165 @@ namespace EtheriT.Coker.Application.Directory
                 return res;
             }
         }
+        #region ===== FrontRole =====
+        private async Task<long?> GetCurrentFrontRoleIdAsync(long websiteId)
+        {
+            try
+            {
+                var uuid = await tokenAppService.GetUUID();
+
+                if (uuid != Guid.Empty)
+                {
+                    var roleId = await db.MappingUserAndRoles
+                        .AsNoTracking()
+                        .Include(e => e.Role)
+                        .Where(e => !e.IsDeleted)
+                        .Where(e => e.UUID == uuid)
+                        .Where(e => e.Role != null)
+                        .Where(e => e.Role!.FK_WebsiteId == websiteId)
+                        .Where(e => e.Role!.Type == RoleTypeEnum.前台)
+                        .Where(e => !e.Role!.IsDeleted)
+                        .Select(e => (long?)e.RoleId)
+                        .FirstOrDefaultAsync();
+
+                    if (roleId != null && roleId > 0)
+                    {
+                        return roleId;
+                    }
+
+                    var frontUserLevel = await db.FrontUsers
+                        .AsNoTracking()
+                        .Include(e => e.Websites)
+                        .Where(e => e.UUID == uuid)
+                        .Where(e => e.Websites.Any(w => w.FK_WebsiteId == websiteId && !w.IsDeleted))
+                        .Select(e => e.Level)
+                        .FirstOrDefaultAsync();
+
+                    if (frontUserLevel != null && frontUserLevel > 0)
+                    {
+                        return frontUserLevel;
+                    }
+                }
+            }
+            catch
+            {
+                // token 不存在、訪客、或前台登入資料異常時，視為未登入
+            }
+
+            return null;
+        }
+
+        private IQueryable<WebMenu> ApplyFrontMenuViewPermission(
+            IQueryable<WebMenu> query,
+            long websiteId,
+            long? roleId)
+        {
+            var type = (int)PermissionDetailsTypeEnum.選單會員;
+
+            var restrictedIds = db.PermissionDetail
+                .AsNoTracking()
+                .Where(p => p.FK_WebsiteId == websiteId)
+                .Where(p => p.Type == type)
+                .Where(p => p.IsGranted)
+                .Where(p => p.FK_TargetId != null)
+                .Select(p => p.FK_TargetId!.Value)
+                .Distinct();
+
+            if (roleId == null || roleId <= 0)
+            {
+                return query.Where(x => !restrictedIds.Contains(x.Id));
+            }
+
+            var allowedIds = db.PermissionDetail
+                .AsNoTracking()
+                .Where(p => p.FK_WebsiteId == websiteId)
+                .Where(p => p.Type == type)
+                .Where(p => p.IsGranted)
+                .Where(p => p.FK_TargetId != null)
+                .Where(p => p.FK_RoleId == roleId)
+                .Select(p => p.FK_TargetId!.Value)
+                .Distinct();
+
+            return query.Where(x =>
+                !restrictedIds.Contains(x.Id) ||
+                allowedIds.Contains(x.Id)
+            );
+        }
+
+        private IQueryable<Core.Models.Article> ApplyFrontArticleViewPermission(
+            IQueryable<Core.Models.Article> query,
+            long websiteId,
+            long? roleId)
+        {
+            var type = (int)PermissionDetailsTypeEnum.文章會員;
+
+            var restrictedIds = db.PermissionDetail
+                .AsNoTracking()
+                .Where(p => p.FK_WebsiteId == websiteId)
+                .Where(p => p.Type == type)
+                .Where(p => p.IsGranted)
+                .Where(p => p.FK_TargetId != null)
+                .Select(p => p.FK_TargetId!.Value)
+                .Distinct();
+
+            if (roleId == null || roleId <= 0)
+            {
+                return query.Where(x => !restrictedIds.Contains(x.Id));
+            }
+
+            var allowedIds = db.PermissionDetail
+                .AsNoTracking()
+                .Where(p => p.FK_WebsiteId == websiteId)
+                .Where(p => p.Type == type)
+                .Where(p => p.IsGranted)
+                .Where(p => p.FK_TargetId != null)
+                .Where(p => p.FK_RoleId == roleId)
+                .Select(p => p.FK_TargetId!.Value)
+                .Distinct();
+
+            return query.Where(x =>
+                !restrictedIds.Contains(x.Id) ||
+                allowedIds.Contains(x.Id)
+            );
+        }
+
+        private IQueryable<Prod> ApplyFrontProductViewPermission(
+            IQueryable<Prod> query,
+            long websiteId,
+            long? roleId)
+        {
+            var type = (int)PermissionDetailsTypeEnum.產品會員;
+
+            var restrictedIds = db.PermissionDetail
+                .AsNoTracking()
+                .Where(p => p.FK_WebsiteId == websiteId)
+                .Where(p => p.Type == type)
+                .Where(p => p.IsGranted)
+                .Where(p => p.FK_TargetId != null)
+                .Select(p => p.FK_TargetId!.Value)
+                .Distinct();
+
+            if (roleId == null || roleId <= 0)
+            {
+                return query.Where(x => !restrictedIds.Contains(x.Id));
+            }
+
+            var allowedIds = db.PermissionDetail
+                .AsNoTracking()
+                .Where(p => p.FK_WebsiteId == websiteId)
+                .Where(p => p.Type == type)
+                .Where(p => p.IsGranted)
+                .Where(p => p.FK_TargetId != null)
+                .Where(p => p.FK_RoleId == roleId)
+                .Select(p => p.FK_TargetId!.Value)
+                .Distinct();
+
+            return query.Where(x =>
+                !restrictedIds.Contains(x.Id) ||
+                allowedIds.Contains(x.Id)
+            );
+        }
+        #endregion
 
         #region ===== Tag facet =====
 

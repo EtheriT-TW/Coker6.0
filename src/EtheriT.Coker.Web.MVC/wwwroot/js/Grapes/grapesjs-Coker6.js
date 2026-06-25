@@ -1004,12 +1004,20 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
 
 
     //畫布內容儲存及發布
-    if (settings.save != null) {
+    const addSaveButton = function () {
+        if (settings.save == null) return;
+        if (panelManager.getButton('options', 'panelSave')) return;
+
         panelManager.addButton('options', {
             id: 'panelSave',
             className: 'someClass',
             label: '<i title="儲存" class="fa fa-download"></i>',
             command: function (editor) {
+                if (typeof settings.canSave === "function" && settings.canSave() !== true) {
+                    if (typeof settings.readonlyMessage === "function") settings.readonlyMessage();
+                    return;
+                }
+
                 settings.save(editor.getHtml(), editor.getCss()).done(function () {
                     co.sweet.success("已儲存草稿");
                 });
@@ -1017,26 +1025,117 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
             attributes: { title: 'save' },
             active: false,
         });
-    }
+    };
 
-    if (settings.import != null) {
+    const addImportButton = function () {
+        if (settings.import == null) return;
+        if (panelManager.getButton('options', 'panelImport')) return;
+
         panelManager.addButton('options', {
             id: 'panelImport',
             className: 'someClass',
-            label: '<i title="發布" class="fa fa-cloud-arrow-up""></i>',
+            label: '<i title="發布" class="fa fa-cloud-arrow-up"></i>',
             command: function (editor) {
+                if (typeof settings.canSave === "function" && settings.canSave() !== true) {
+                    if (typeof settings.readonlyMessage === "function") settings.readonlyMessage();
+                    return;
+                }
+
                 let t = editor.getHtml();
                 const $html = $("<div>").append(t);
-                //$html.find(`[data-bs-target]`).attr("data-bs-toggle", "modal");
                 t = `<body>${$html.html()}</body>`;
+
                 settings.import(t, editor.getCss()).done(function () {
                     co.sweet.success("已儲存並發布");
                 });
             },
-            attributes: { title: 'save' },
+            attributes: { title: 'import' },
             active: false,
         });
+    };
+
+    editor.setSavePanelVisible = function (visible) {
+        if (visible === true) {
+            addSaveButton();
+            addImportButton();
+        } else {
+            if (panelManager.getButton('options', 'panelSave')) {
+                panelManager.removeButton('options', 'panelSave');
+            }
+
+            if (panelManager.getButton('options', 'panelImport')) {
+                panelManager.removeButton('options', 'panelImport');
+            }
+        }
+    };
+
+    editor.setSavePanelVisible(
+        typeof settings.canSave === "function"
+            ? settings.canSave() === true
+            : true
+    );
+    // 後台 canvas 元件新增後，補跑需要依 DOM 初始化的前台功能。
+    // 注意：不要用 component.find(".class")，避免進到 cash-dom 後產生 getElementsByClassName 錯誤。
+    let reInitCanvasComponentTimer = null;
+
+    function reInitCanvasComponent(retryCount) {
+        retryCount = retryCount || 0;
+
+        clearTimeout(reInitCanvasComponentTimer);
+
+        reInitCanvasComponentTimer = setTimeout(function () {
+            const iframeEl = document.getElementsByClassName("gjs-frame")[0];
+
+            if (!iframeEl || !iframeEl.contentWindow) {
+                if (retryCount < 10) reInitCanvasComponent(retryCount + 1);
+                return;
+            }
+
+            const iframe = iframeEl.contentWindow;
+            const iframeDoc = iframe.document;
+
+            if (!iframeDoc || iframeDoc.readyState === "loading") {
+                if (retryCount < 10) reInitCanvasComponent(retryCount + 1);
+                return;
+            }
+
+            const shareBlocks = iframeDoc.querySelectorAll(".shareBlock");
+            const hasShareBlock = Array.prototype.some.call(shareBlocks, function (el) {
+                return !el.closest(".templatecontent");
+            });
+
+            const hasArticleTags = iframeDoc.querySelector(".article-tags") != null;
+
+            const needShareInit =
+                hasShareBlock &&
+                typeof iframe.ShareBlockInit !== "function";
+
+            const needArticleTagsInit =
+                hasArticleTags &&
+                typeof iframe.ArticleTagsInit !== "function";
+
+            if ((needShareInit || needArticleTagsInit) && retryCount < 10) {
+                reInitCanvasComponent(retryCount + 1);
+                return;
+            }
+
+            if (hasShareBlock && typeof iframe.ShareBlockInit === "function") {
+                iframe.ShareBlockInit();
+            }
+
+            if (hasArticleTags && typeof iframe.ArticleTagsInit === "function") {
+                iframe.ArticleTagsInit({
+                    pageId: typeof settings.getPageId === "function"
+                        ? Number(settings.getPageId() || 0)
+                        : Number($("#gjs").data("id") || 0)
+                });
+            }
+        }, 300);
     }
+    // 新增元件事件監聽：拖拉 block 進 canvas 時會走這裡
+    editor.on('component:add', () => {
+        reInitCanvasComponent();
+    });
 
     // 複製事件監聽
     editor.on('component:clone', (obj) => {
@@ -1057,6 +1156,8 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                 "download": "未命名"
             });
         }
+
+        reInitCanvasComponent();
     });
 
     // 刪除事件監聽

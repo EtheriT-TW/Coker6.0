@@ -5,6 +5,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
     public class GetArticleContenDto : ResponseMessageDto
     {
         public string? Title { get; set; }
+        public bool CanSave { get; set; } = true;
         public ArticleSaveContenDto? Conten { get; set; }
     }
 }

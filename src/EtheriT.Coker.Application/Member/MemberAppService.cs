@@ -345,6 +345,7 @@ namespace EtheriT.Coker.Application.Member
                 if (bUser == null)
                 {
                     bUser = mapper.Map<User>(dto);
+                    // Users.UUID 保留舊設計：第一次建立 User 時，跟第一個 FrontUser.UUID 一致
                     bUser.UUID = newUser.UUID;
                     bUser.Password = newUser.Password;
                     await loginUserData.setOptionParameter(bUser);
@@ -393,40 +394,92 @@ namespace EtheriT.Coker.Application.Member
                 return output;
             }
         }
-
         public async Task<ResponseMessageDto> FrontAddUpdate(MemberUpdateDto dto)
         {
-            long usetId = await loginUserData.GetUserId();
+            long websiteId = await loginUserData.GetWebsiteId();
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
 
             try
             {
-                if (dto.Id == 0) return await FrontAdd(dto);
-                var result = db.FrontUsers.Where(e => e.Id == dto.Id).FirstOrDefault();
-
-                if (result != null)
+                if (dto.Id == 0)
                 {
-                    if (dto.Status == null) dto.Status = result.Status;
-                    if (dto.TelPhone == null) dto.TelPhone = result.TelPhone;
-                    mapper.Map(dto, result);
-                    await loginUserData.SaveChanges(result);
+                    return await FrontAdd(dto);
+                }
 
-                    var role = await db.MappingUserAndRoles.Where(e => e.UUID == result.UUID).FirstOrDefaultAsync();
-                    if (dto.RoleId != null && role != null && role.RoleId != dto.RoleId)
+                var result = await (
+                    from user in db.FrontUsers
+                    join map in db.MappingFrontUserAndWebsite on user.Id equals map.FK_UserId
+                    where user.Id == dto.Id
+                       && map.FK_WebsiteId == websiteId
+                       && !map.IsDeleted
+                    select user
+                ).FirstOrDefaultAsync();
+
+                if (result == null)
+                {
+                    throw new Exception("查無會員資料");
+                }
+
+                if (dto.Status == null) dto.Status = result.Status;
+                if (dto.TelPhone == null) dto.TelPhone = result.TelPhone;
+
+                mapper.Map(dto, result);
+
+                if (dto.RoleId != null && dto.RoleId != 0)
+                {
+                    var targetRole = await db.Roles
+                        .Where(e => e.FK_WebsiteId == websiteId)
+                        .Where(e => e.Type == RoleTypeEnum.前台)
+                        .Where(e => e.Id == dto.RoleId.Value)
+                        .Where(e => !e.IsDeleted)
+                        .FirstOrDefaultAsync();
+
+                    if (targetRole == null)
                     {
-                        role.RoleId = (long)dto.RoleId;
-                        result.Level = role.RoleId;
-                        await loginUserData.SaveChanges(role);
+                        throw new Exception("角色不存在");
                     }
 
-                    output.Success = true;
+                    var systemUser = await GetOrCreateSystemUserForFrontUserAsync(result);
+
+                    var roleMapping = await db.MappingUserAndRoles
+                        .Include(e => e.Role)
+                        .Where(e => e.UUID == result.UUID)
+                        .Where(e => e.UserId == systemUser.Id)
+                        .Where(e => e.Role != null)
+                        .Where(e => e.Role.FK_WebsiteId == websiteId)
+                        .Where(e => e.Role.Type == RoleTypeEnum.前台)
+                        .FirstOrDefaultAsync();
+
+                    if (roleMapping == null)
+                    {
+                        roleMapping = new MappingUserAndRole
+                        {
+                            UserId = systemUser.Id,
+                            UUID = result.UUID,
+                            RoleId = dto.RoleId.Value
+                        };
+
+                        db.MappingUserAndRoles.Add(roleMapping);
+                        await loginUserData.setOptionParameter(roleMapping);
+                    }
+                    else if (roleMapping.RoleId != dto.RoleId.Value)
+                    {
+                        roleMapping.RoleId = dto.RoleId.Value;
+                        await loginUserData.setOptionParameter(roleMapping);
+                    }
+
+                    result.Level = dto.RoleId.Value;
                 }
-                else throw new Exception("查無會員資料");
+
+                await loginUserData.setOptionParameter(result);
+                await db.SaveChangesAsync();
+
+                output.Success = true;
             }
             catch (Exception e)
             {
                 output.Success = false;
-                output.Error = e.Message;
+                output.Error = e.InnerException?.Message ?? e.Message;
             }
 
             return output;
@@ -641,7 +694,64 @@ namespace EtheriT.Coker.Application.Member
                 });
             }
         }
+        private async Task<User> GetOrCreateSystemUserForFrontUserAsync(FrontUser frontUser)
+        {
+            User? user = null;
 
+            // 1. 優先使用 FrontUsers.FK_User 對應 Users.Id
+            if (frontUser.FK_User != null && frontUser.FK_User > 0)
+            {
+                user = await db.Users
+                    .FirstOrDefaultAsync(e => e.Id == frontUser.FK_User.Value);
+            }
+
+            // 2. 舊資料若沒有 FK_User，先用 Email 找 Users
+            if (user == null && !string.IsNullOrWhiteSpace(frontUser.Email))
+            {
+                user = await db.Users
+                    .FirstOrDefaultAsync(e => e.Email == frontUser.Email);
+            }
+
+            // 3. 再用 UUID 補救舊資料
+            //    因為舊資料 Users.UUID 可能等於第一個 FrontUser.UUID
+            if (user == null && frontUser.UUID != Guid.Empty)
+            {
+                user = await db.Users
+                    .FirstOrDefaultAsync(e => e.UUID == frontUser.UUID);
+            }
+
+            // 4. 如果真的沒有 Users，補建 Users 總表資料
+            if (user == null)
+            {
+                user = mapper.Map<User>(frontUser);
+
+                // 延續舊資料設計：
+                // Users.UUID 使用建立這筆 User 時的第一個 FrontUser.UUID
+                user.UUID = frontUser.UUID;
+
+                user.Email = frontUser.Email;
+                user.Name = frontUser.Name;
+                user.CellPhone = frontUser.CellPhone;
+                user.TelPhone = frontUser.TelPhone;
+                user.Address = frontUser.Address;
+                user.Password = frontUser.Password;
+
+                await loginUserData.setOptionParameter(user);
+                db.Users.Add(user);
+
+                // 先存 Users，取得 user.Id，後面 MappingUserAndRoles.UserId 才不會 FK 衝突
+                await db.SaveChangesAsync();
+            }
+
+            // 5. 回補 FrontUsers.FK_User，避免下次又靠 Email / UUID 找
+            if (frontUser.FK_User == null || frontUser.FK_User == 0)
+            {
+                frontUser.FK_User = user.Id;
+                await loginUserData.setOptionParameter(frontUser);
+            }
+
+            return user;
+        }
     }
 }
 

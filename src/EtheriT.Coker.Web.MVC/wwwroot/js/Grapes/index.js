@@ -3,6 +3,16 @@
  * obj.import 內容發布
  ****************************************/
 var grapesInit = function (options) {
+    options = options || {};
+
+    const getCurrentPageId = function () {
+        if (typeof options.getPageId === "function") {
+            return Number(options.getPageId() || 0);
+        }
+
+        return Number($("#gjs").data("id") || 0);
+    };
+
     const insertData = {
         css: [
             '/lib/bootstrap/dist/css/bootstrap.min.css',
@@ -297,6 +307,7 @@ var grapesInit = function (options) {
                             { key: "AnchorPointInit", state: false, run: true, class: [], parameter: {} },
                             { key: "ShareBlockInit", state: false, run: true, class: [], parameter: {} },
                             { key: "GetLatLng", state: false, run: true, class: [], parameter: {} },
+                            { key: "ArticleTagsInit", state: false, run: true, class: [], parameter: {} },
                         ];
                         const setConfig = function (index, str) {
                             checkClass[index].state = true;
@@ -351,6 +362,9 @@ var grapesInit = function (options) {
                                 case "getlatlng":
                                     setConfig(9, s);
                                     break;
+                                case "article-tags":
+                                    setConfig(10, s);
+                                    break;
                             }
                         });
                         const checkEle = function () {
@@ -364,8 +378,18 @@ var grapesInit = function (options) {
                                         if (iframe.$(str).length == 0) c = false;
                                     });
                                     if (c) {
-                                        iframe[item.key](item.parameter);
-                                        item.run = true;
+                                        if (item.key === "ArticleTagsInit") {
+                                            item.parameter = {
+                                                pageId: getCurrentPageId()
+                                            };
+                                        }
+
+                                        if (typeof iframe[item.key] === "function") {
+                                            iframe[item.key](item.parameter);
+                                            item.run = true;
+                                        } else {
+                                            item.run = false;
+                                        }
                                     }
                                 }
                                 runAll = runAll && this.run

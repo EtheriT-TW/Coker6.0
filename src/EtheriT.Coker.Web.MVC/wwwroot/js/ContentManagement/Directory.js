@@ -5,6 +5,7 @@ let DirectorytForms, $DirectorytTags;
 let ArticletForms, $ArticletTags, ArticletId;
 var total_files = [];
 let plan = "";
+let articleCanSave = true;
 
 function PageReady() {
     DirectorytForms = $('#DirectorytForm');
@@ -20,6 +21,15 @@ function PageReady() {
     $ArticletTags = $(ArticletForms).find(".InputTag").TagListModalInit();
 
     editor = grapesInit({
+        getPageId: function () {
+            return Number($("#gjs").data("id") || 0);
+        },
+        canSave: function () {
+            return articleCanSave === true;
+        },
+        readonlyMessage: function () {
+            showArticleReadonlyMessage();
+        },
         save: function (html, css) {
             var _dfr = $.Deferred();
             co.Articles.SaveConten({
@@ -72,7 +82,13 @@ function PageReady() {
     (() => {
         Array.from(ArticletForms).forEach(form => {
             form.addEventListener('submit', event => {
-                console.log("submit")
+                if (!articleCanSave) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    showArticleReadonlyMessage();
+                    return;
+                }
+
                 if (event.submitter && event.submitter.classList.contains('btn_to_canvas')) {
                     plan = "canvas";
                 }
@@ -239,11 +255,57 @@ function contentReady(e) {
 function DirectoryDatailListReady(e) {
     directoryDatailList = e;
 }
+function articleRowPrepared(e) {
+    if (e.rowType !== "data") return;
+    if (!e.data) return;
 
+    const canEdit =
+        e.data.CanEdit === true ||
+        e.data.CanSave === true;
+
+    if (!canEdit) {
+        $(e.rowElement)
+            .addClass("article-readonly-row")
+            .attr("title", "此文章目前僅能檢視，不能儲存或刪除");
+    }
+}
 function editButtonClicked(e) {
     MoveToContent();
     keyId = e.row.key;
     window.location.hash = keyId;
+}
+
+function setArticleSaveMode(canSave) {
+    articleCanSave = canSave === true;
+
+    const $articleContent = $("#ArticleContent");
+
+    $articleContent.attr("data-can-save", articleCanSave ? "true" : "false");
+
+    // 可以進入頁面檢視，但不可儲存時，隱藏儲存相關操作。
+    $articleContent.find(".btn_done").toggleClass("d-none", !articleCanSave);
+    $articleContent.find(".btn_to_canvas").toggleClass("d-none", !articleCanSave);
+
+    // 瀏覽權限設定也是異動行為，唯讀時不應該操作。
+    $articleContent.find(".btn_permission_details").toggleClass("d-none", !articleCanSave);
+
+    $articleContent.find(".readonly-hint").remove();
+
+    if (!articleCanSave) {
+        $articleContent.find(".card-body").first().prepend(`
+            <div class="readonly-hint alert alert-warning py-2 mb-3">
+                此目錄已設定權限，您目前僅能檢視，不能儲存修改。
+            </div>
+        `);
+    }
+
+    if (editor && typeof editor.setSavePanelVisible === "function") {
+        editor.setSavePanelVisible(articleCanSave);
+    }
+}
+
+function showArticleReadonlyMessage() {
+    co.sweet.warn("無法儲存", "此目錄已設定權限，您目前僅能檢視，不能儲存修改。");
 }
 
 function reladataButtonClicked(e) {
@@ -367,25 +429,31 @@ function AddUpArticlet(success_text, error_text) {
             co.sweet.loading();
             var requests = [];
 
-            if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").id == 0) {
-                console.log($("#ImageUpload .img_input").data("file").File)
+            const imageFileData = $("#ImageUpload .img_input").data("file");
+
+            if (
+                imageFileData != null &&
+                imageFileData.File != null &&
+                imageFileData.id == 0
+            ) {
                 var formData = new FormData();
-                formData.append("files", $("#ImageUpload .img_input").data("file").File);
+                formData.append("files", imageFileData.File);
                 formData.append("type", 6);
                 formData.append("sid", result.message);
                 formData.append("serno", 500);
+
                 requests.push(
                     wrapRequest(
                         co.File.Upload(formData),
                         {
                             action: "圖片上傳",
                             areaKey: "ImageUpload",
-                            fileName: $self.find("input[name='name']").val() || "未命名檔案",
+                            fileName: imageFileData.name || imageFileData.File.name || "未命名圖片",
                             fileId: null,
                             tempId: null,
                         }
                     )
-                )
+                );
             }
 
             var isFileUploaded = false, isFileUpdated = false, isFileDeleted = false;
@@ -624,7 +692,11 @@ function MoveToItemList() {
 function MoveToItemArticle() {
     const para = window.location.hash.replace("#", "").split("_");
     $("#pages>.card,#TopLine").addClass("d-none");
-    $ArticletTags.TagDataClear();
+
+    if ($ArticletTags && typeof $ArticletTags.TagDataClear === "function") {
+        $ArticletTags.TagDataClear();
+    }
+
     if (para.length > 2 && !isNaN(para[1]) && !isNaN(para[2])) {
         const id = parseInt(para[2]);
         DirectoryId = parseInt(para[1]);
@@ -640,6 +712,9 @@ function MoveToItemArticle() {
                     co.Articles.GetDataOne(id).done(function (result) {
                         if (result != null) {
                             ArticletId = result.id;
+
+                            setArticleSaveMode(result.canSave === true || result.CanSave === true);
+
                             result.startEndDate = 0;
                             result.sortCheckbox = 1;
                             result.ImageUpload = 1;
@@ -674,6 +749,8 @@ function MoveToItemArticle() {
                         } else BackToList();
                     })
                 } else {
+                    setArticleSaveMode(true);
+
                     _dfr.promise().done(function () {
                         $ArticletTags.TagDataSet($("#DirectoryItemps").data("dir").tagDatas);
                     });
@@ -692,16 +769,53 @@ function MoveToItemArticle() {
 
     }
 }
+function waitGrapesEditorReady(callback, retryCount) {
+    retryCount = retryCount || 0;
+
+    if (
+        editor &&
+        editor.DomComponents &&
+        typeof co !== "undefined" &&
+        co.Grapes &&
+        typeof co.Grapes.setEditor === "function"
+    ) {
+        callback(editor);
+        return;
+    }
+
+    if (retryCount >= 30) {
+        co.sweet.error("錯誤", "編輯器尚未初始化完成，請重新進入編輯畫面。");
+        return;
+    }
+
+    setTimeout(function () {
+        waitGrapesEditorReady(callback, retryCount + 1);
+    }, 100);
+}
 //設定html資料
 setPage = function (id) {
     $("body").addClass("grapesEdit");
+
+    // 目前畫布正在編輯的文章 Id。
+    $("#gjs").data("id", id);
+
     co.Articles.GetConten({ Id: id }).done(function (result) {
         if (result.success) {
+            setArticleSaveMode(result.canSave === true || result.CanSave === true);
+
+            if (editor && typeof editor.setSavePanelVisible === "function") {
+                editor.setSavePanelVisible(articleCanSave);
+            }
+
             var html = co.Data.HtmlDecode(result.conten.saveHtml);
-            co.Grapes.setEditor(editor, html, result.conten.saveCss);
-            co.Grapes.setFile(editor, id, 2);
-            $("#TopLine a").attr("href", `#Articles_${DirectoryId}`);
-            if (!!result.title) $("#TopLine .title").text(result.title);
+
+            waitGrapesEditorReady(function (readyEditor) {
+                co.Grapes.setEditor(readyEditor, html, result.conten.saveCss);
+                co.Grapes.setFile(readyEditor, id, 2);
+
+                $("#TopLine a").attr("href", `#Articles_${DirectoryId}`);
+                if (!!result.title) $("#TopLine .title").text(result.title);
+            });
         } else {
             co.sweet.error(result.error);
         }
@@ -717,10 +831,26 @@ function groupArticlesButtonClicked(e) {
     $("#PermissionDetailsModal").setData({ pageId: e.row.key, title: e.row.data.Title, type: 3 }).modal("show");
 }
 function deleteArticlesButtonClicked(e) {
+    const canDelete =
+        e &&
+        e.row &&
+        e.row.data &&
+        (
+            e.row.data.CanEdit === true ||
+            e.row.data.CanSave === true
+        );
+
+    if (!canDelete) {
+        co.sweet.warn("無法刪除", "此目錄已設定權限，您目前僅能檢視，不能刪除文章。");
+        return;
+    }
+
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
         co.Articles.Delete(e.row.key).done(function (result) {
             if (result.success) {
                 e.component.refresh();
+            } else {
+                co.sweet.error(result.error || "文章刪除失敗");
             }
         });
     });

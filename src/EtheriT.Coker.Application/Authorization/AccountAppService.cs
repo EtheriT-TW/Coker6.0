@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using DevExpress.CodeParser;
+using DevExpress.Internal;
 using DevExpress.XtraRichEdit.Import.Html;
 using EtheriT.Coker.Application.Authorizaion.Dto;
 using EtheriT.Coker.Application.Common;
@@ -988,6 +989,34 @@ namespace EtheriT.Coker.Application.Authorization
             }
             return UserData;
         }
+
+        public async Task<string> GetFrontUserLevelName()
+        {
+            try
+            {
+                var websiteid = configuration.GetValue<long>("WebConfig:SiteId");
+                Guid UUID = await tokenAppService.GetUUID();
+                var token = await tokenAppService.CheckToken(null);
+
+                if (token == null || !token.IsLogin) return "";
+
+                var levelName = await (from user in db.FrontUsers
+                                       join mapuserweb in db.MappingFrontUserAndWebsite
+                                           on user.Id equals mapuserweb.FK_UserId
+                                       join role in db.Roles
+                                           on user.Level equals role.Id
+                                       where user.UUID == UUID
+                                          && mapuserweb.FK_WebsiteId == websiteid
+                                       select role.Name).FirstOrDefaultAsync();
+
+                return levelName ?? "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
         public async Task<ResponseMessageDto> AccountOpening(Guid OpenId)
         {
             ResponseMessageDto response = new ResponseMessageDto();

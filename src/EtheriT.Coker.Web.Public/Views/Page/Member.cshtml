@@ -194,29 +194,43 @@
                             <label class="required required_all" for="name">@L.get("Name")</label>
                             <div class="invalid-feedback">@L.get("ErrorNameRequired")!</div>
                         </div>
-                        <fieldset class="row mb-3 col-12 col-sm-6 ">
-                            <legend class="col-form-label col-sm-2 pt-0 align-content-center">@L.get("Gender")</legend>
-                            <div class="col-sm-10 align-content-center position-relative">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="sex" id="inputSex1" value="1">
-                                    <label class="form-check-label" for="inputSex1">@L.get("GenderMale")</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="sex" id="inputSex2" value="2">
-                                    <label class="form-check-label" for="inputSex2">@L.get("GenderFemale")</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="sex" id="inputSex" value="3">
-                                    <label class="form-check-label" for="inputSex">@L.get("GenderOther")</label>
-                                </div>
-                                @if (ViewBag.BonusEnabled)
-                                {
-                                    <div id="UserBonus" class="form-check-inline">
-                                        使用者剩餘紅利：@((Convert.ToDecimal(ViewBag.UserBonus)).ToString("N0"))
+                        <div class="col-12 col-sm-6">
+                            <div class="row mb-1">
+                                <div class="col-12 d-flex flex-wrap gap-4">
+                                    @{
+                                        var levelName = string.IsNullOrEmpty(ViewBag.UserLevel as string) ? "一般會員" : ViewBag.UserLevel;
+                                        var isNormalLevel = levelName == "一般會員";
+                                    }
+                                    <div id="UserLevle">
+                                        會員等級：
+                                        <span class="level-badge @(isNormalLevel ? "level-normal" : "level-notnormal")">@levelName</span>
                                     </div>
-                                }
+                                    @if (ViewBag.BonusEnabled)
+                                    {
+                                        <div id="UserBonus">
+                                            使用者剩餘紅利：@((Convert.ToDecimal(ViewBag.UserBonus)).ToString("N0"))
+                                        </div>
+                                    }
+                                </div>
                             </div>
-                        </fieldset>
+                            <fieldset class="row">
+                                <legend class="col-form-label col-sm-2 pt-0 align-content-center pb-0">@L.get("Gender")</legend>
+                                <div class="col-sm-10 align-content-center">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="sex" id="inputSex1" value="1">
+                                        <label class="form-check-label" for="inputSex1">@L.get("GenderMale")</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="sex" id="inputSex2" value="2">
+                                        <label class="form-check-label" for="inputSex2">@L.get("GenderFemale")</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="sex" id="inputSex" value="3">
+                                        <label class="form-check-label" for="inputSex">@L.get("GenderOther")</label>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
                     </div>
                     <div class="form-floating mb-3">
                         <input id="Birthday" name="birthday" class="customer_info form-control bg-white" type="date">
@@ -467,7 +481,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="recipient_info line-top mt-3">
                                         <div class="row g-2">
                                             <div class="col recipient_info_item">
@@ -654,5 +668,5 @@
 </Content>
 
 <script src="@(ViewBag.IsProduction
-    ? "https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"
-    : "https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116")"></script>
+                    ? "https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"
+                    : "https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116")"></script>

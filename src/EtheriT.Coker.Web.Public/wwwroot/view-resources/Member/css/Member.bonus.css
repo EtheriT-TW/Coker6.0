@@ -1,11 +1,5 @@
 /* Member bonus tab */
 
-#UserBonus {
-    position: absolute;
-    margin-right: -0.5rem;
-    right: 0;
-}
-
 .bonus_frame {
     background: #fff;
     border: 1px solid #dee2e6 !important;

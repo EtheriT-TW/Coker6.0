@@ -554,7 +554,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         var UUID = tokenAppService.GetUUID(tokenUUID);
                         var bonus = (await bonusManagementAppService.GetQueryFrontUsersTotalAvaliableBonus(new List<Guid> { UUID })).FirstOrDefault();
                         ViewBag.UserBonus = bonus != null ? bonus.TotalAvaliableBonus : 0;
-                        
+                        ViewBag.UserLevel = await accountAppService.GetFrontUserLevelName();
+
                         ViewBag.MinOrderForRedemption = bonusSetting.MinOrderForRedemption; // 消費滿額開始紅利折抵
                         ViewBag.MaxRedemptionPercent = bonusSetting.MaxRedemptionPercent; // 折抵比例(%)
                         ViewBag.MinOrderForEarnPoints = bonusSetting.MinOrderForEarnPoints; // 消費買額可獲得紅利

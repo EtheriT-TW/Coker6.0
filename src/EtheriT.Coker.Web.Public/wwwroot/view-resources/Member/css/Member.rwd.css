@@ -898,6 +898,7 @@
         padding-right: 0 !important;
         padding-left: 0 !important;
     }
+
         #profile-tab-pane > .content > .order_frame {
             padding-right: 0.75rem;
             padding-left: 0.75rem;
@@ -921,6 +922,37 @@
         font-size: 0.875em;
         color: #6c757d;
         font-weight: 400;
+    }
+
+    #UserDataForm > .row:first-of-type > div:nth-child(2) {
+        display: contents;
+    }
+
+    #UserDataForm > .row:first-of-type > div:nth-child(1) {
+        order: 2;
+    }
+
+    #UserDataForm > .row:first-of-type > div:nth-child(2) > .row.mb-1 {
+        order: 1;
+    }
+
+    #UserDataForm > .row:first-of-type > div:nth-child(2) > fieldset {
+        order: 3;
+    }
+
+        #UserDataForm > .row:first-of-type > div:nth-child(2) > .row.mb-1,
+        #UserDataForm > .row:first-of-type > div:nth-child(2) > fieldset.row {
+            margin-right: 0;
+            margin-left: 0;
+        }
+
+    #UserDataForm .row.mb-1 > .d-flex.gap-4 {
+        gap: 0.5rem !important;
+        margin-bottom: 1rem;
+    }
+
+    #UserDataForm fieldset.row > .col-sm-10 {
+        margin-bottom: 1rem;
     }
 }
 
@@ -982,6 +1014,7 @@
     .btn_buyAgain {
         width: 100%;
     }
+
     #bonus-tab-pane .bonus_frame {
         padding-right: 0.35rem !important;
         padding-left: 0.35rem !important;

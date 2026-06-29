@@ -231,7 +231,8 @@
         "wwwroot/view-resources/Member/css/Member.orders.css",
         "wwwroot/view-resources/Member/css/Member.products.css",
         "wwwroot/view-resources/Member/css/Member.bonus.css",
-        "wwwroot/view-resources/Member/css/Member.rwd.css"
+        "wwwroot/view-resources/Member/css/Member.rwd.css",
+        "wwwroot/view-resources/Member/css/Member.level.css"
       ]
     },
     {

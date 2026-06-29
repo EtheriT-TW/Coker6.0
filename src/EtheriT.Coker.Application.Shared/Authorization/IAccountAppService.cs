@@ -15,6 +15,7 @@ namespace EtheriT.Coker.Application.Authorization
         public Task<LoginOutputDto> FrontLogout();
         public Task<ResponseMessageDto> FrontUserEdit(FrontEditUserDto dto);
         public Task<ResponseUserEditDto> GetFrontUserData();
+        public Task<string> GetFrontUserLevelName();
         public Task<ResponseMessageDto> AccountOpening(Guid OpenId);
         public Task<ResponseMessageDto> ReSendOpening(SendOpeningDto dto);
         public Task<ResponseMessageDto> SendForget(SendForgetDto dto);

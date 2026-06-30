@@ -1000,7 +1000,7 @@
                 const winWidth = window.innerWidth;
                 const winHeight = window.innerHeight;
 
-                let maxWidthRatio = 0.8;
+                let maxWidthRatio = 1;
                 if (imgRatio > 1.2) maxWidthRatio = 0.9;
 
                 const maxWidth = winWidth * maxWidthRatio;
@@ -1526,6 +1526,10 @@
                 navigation: {
                     nextEl: nextBtnEl,
                     prevEl: prevBtnEl
+                },
+                pagination: {
+                    el: this.$root.find('.ProductSwiperPagination').get(0),
+                    type: 'fraction'
                 },
                 breakpoints: {
                     768: { allowTouchMove: true },

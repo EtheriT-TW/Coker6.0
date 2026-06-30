@@ -2477,6 +2477,109 @@ namespace EtheriT.Coker.Application.Order
             }
             return response;
         }
+        public async Task<ResponseMessageDto> SendNotificationMail(long ohid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId") == 0
+                    ? await loginUserData.GetWebsiteId()
+                    : configuration.GetValue<long>("WebConfig:SiteId");
+                var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
+                var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                var order_details = await GetOrderDetails(ohid);
+
+                if (order_header != null && order_details != null)
+                {
+                    var shipDate = DateTime.Now;
+
+                    static string MaskName(string value) =>
+                        string.IsNullOrEmpty(value) ? "" : value.Substring(0, 1) + "*****";
+                    static string MaskCellPhone(string value) =>
+                        string.IsNullOrEmpty(value) ? "" : (value.Length > 4 ? value.Substring(0, 4) : value.Substring(0, 1)) + "******";
+                    static string MaskTelePhone(string value) =>
+                        string.IsNullOrEmpty(value) ? "" : (value.Length > 3 ? value.Substring(0, 3) : value.Substring(0, 1)) + "******";
+                    static string MaskAddress(string value)
+                    {
+                        if (string.IsNullOrEmpty(value)) return "";
+                        var trimmed = value.Replace(" ", "");
+                        var head = trimmed.Length > 6 ? trimmed.Substring(0, 6) : trimmed;
+                        return head + "**********";
+                    }
+
+                    var OrdererSex = order_header.OrdererSex == 1 ? "先生" : order_header.OrdererSex == 2 ? "小姐" : "先生/小姐";
+                    var RecipientSex = order_header.RecipientSex == 1 ? "先生" : order_header.RecipientSex == 2 ? "小姐" : "先生/小姐";
+                    var orderNo = ("000000000" + order_header.Id).Substring(order_header.Id.ToString().Length);
+                    var freight = order_header.Freight.ToString("$#,##0");
+                    var totalAmount = (order_header.Freight + order_header.Subtotal).ToString("$#,##0");
+                    var contactMail = !string.IsNullOrEmpty(Website?.ContactMail) ? Website.ContactMail : "";
+
+                    var DetailsList = "";
+                    foreach (var data in order_details)
+                    {
+                        DetailsList += $@"<div class='row'><span class='prod-name'>{data.Title}</span><span class='prod-qty'>{data.Quantity}</span></div>";
+                    }
+
+                    var mailhtml = $@"<div class='text-size1'>
+                <h2>親愛的 <span class='text-orange'>{MaskName(order_header.Orderer)}</span> {OrdererSex}您好：</h2>
+                <div>您於【{Website?.Title ?? ""}】訂單已成立，商品於 <span class='text-orange'>{shipDate.ToString("yyyy/MM/dd")}</span> 寄出，請留意近期收貨。感謝您的支持！</div>
+
+                <div class='info-box'>
+                <div class='section-title'>訂單資訊</div>
+                <div class='row'><span class='label'>訂單編號：</span>{orderNo}</div>
+                <div class='row'><span class='label'>運費：</span>{freight}</div>
+                <div class='row'><span class='label'>金額(含運費)：</span>{totalAmount}</div>
+
+                <div class='section-title'>收件人資訊</div>
+                <div class='row'><span class='label'>姓名：</span>{MaskName(order_header.Recipient)} {RecipientSex}</div>
+                <div class='row'><span class='label'>電話：</span>{MaskTelePhone(order_header.RecipientTelePhone)}</div>
+                <div class='row'><span class='label'>手機：</span>{MaskCellPhone(order_header.RecipientCellPhone)}</div>
+                <div class='row'><span class='label'>地址：</span>{MaskAddress(order_header.RecipientAddress)}</div>
+                <div class='row'><span class='label'>備註：</span>{order_header.Remark}</div>
+
+                <div class='section-title'>訂購商品</div>
+                <div class='row'><span class='prod-name text-bold'>商品名稱</span><span class='prod-qty text-bold'>數量</span></div>
+                {DetailsList}
+                </div>
+
+                <br/>
+                <div>如有任何問題請來函 <span class='text-bold'>{contactMail}</span>，我們會盡速為您處理。</div>
+                <br/>
+                <div class='text-bold text-red'>＊＊＊此為系統自動發出訊息，請勿直接回覆此信，以避免您的寶貴意見無法確實傳達！</div>
+                <div class='text-bold'>【{Website?.Title ?? ""}】敬上</div>
+            </div>";
+
+                    var mailcss = "*{ font-family: sans-serif; } .text-size1{ font-size: 1rem; line-height: 1.8; } .text-bold { font-weight: bold; } .text-red { color: red; } .text-orange { color: #CC5500; } .info-box{ border: 2px solid #CC5500; border-radius: 6px; padding: 8px 16px 16px; margin: 1rem 0; max-width: 600px; } .section-title{ display: inline-block; font-weight: bold; font-size: 1.05rem; color: #fff; background-color: #CC5500; padding: 6px 12px; margin: 14px 0 10px; } .row{ margin: 4px 0; padding-left: 12px; } .label{ display: inline-block; width: 7.5em; text-align: justify; text-align-last: justify; vertical-align: top; font-weight: bold; color: #555; margin-right: 6px; } .prod-name{ display: inline-block; width: 280px; vertical-align: top; word-break: break-all; } .prod-qty{ display: inline-block; width: 4em; text-align: right; vertical-align: top; }";
+
+                    var sendResult = await mailAppService.sendMail(new SenderDto
+                    {
+                        Recipients = new List<MailUserDataDto>(){
+                    new MailUserDataDto()
+                    {
+                        Name = order_header.Orderer,
+                        Email = order_header.OrdererEmail,
+                    }
+                },
+                        Subject = $"【{Website.Title}】出貨通知(訂單編號：{orderNo})",
+                        Body = mailhtml,
+                        Css = mailcss,
+                    }, Website.Contact);
+
+                    response = sendResult;
+
+                    if (sendResult.Success) {
+                        order_header.State = OrderStatusEnum.已出貨;
+                        await loginUserData.SaveChanges(order_header);
+                    }
+                }
+                else throw new Exception("查無訂購資料");
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
         public List<SelectDto> getOrderStatusLookup()
         {
             return EnumHelper.EnumToKeyValueList<OrderStatusEnum>();
@@ -2507,7 +2610,7 @@ namespace EtheriT.Coker.Application.Order
                     if (dto.Memo != null)
                     {
                         order.Memo = dto.Memo;
-                        order.TrackingNumber =  dto.TrackingNumber;
+                        order.TrackingNumber = dto.TrackingNumber;
                         await loginUserData.SaveChanges(order);
                     }
 
@@ -2561,6 +2664,44 @@ namespace EtheriT.Coker.Application.Order
                     JsonConvert.SerializeObject(dto),
                     JsonConvert.SerializeObject(response)
                 );
+            }
+            catch (Exception e)
+            {
+                response.Success = false;
+                response.Error = e.Message;
+            }
+
+            return response;
+        }
+
+        public async Task<ResponseMessageDto> UpdateLogistics(OrderUpdateLogisticsDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+
+            try
+            {
+                var webSiteId = await loginUserData.GetCommonWebsiteId();
+                if (webSiteId == 0) throw new Exception("網站不存在");
+                var order = await db.Order_Headers
+                    .Where(e => e.Id == dto.Id && e.FK_WebsiteId == webSiteId)
+                    .FirstOrDefaultAsync();
+
+                if (order == null)
+                    throw new Exception("訂單不存在");
+
+                //4.更新物流編號
+                if (dto.TrackingNumber != null)
+                    order.TrackingNumber = dto.TrackingNumber;
+
+                await loginUserData.SaveChanges(order);
+
+                response.Success = true;
+                await loginUserData.SetLogs(
+                    JsonConvert.SerializeObject(dto),
+                    JsonConvert.SerializeObject(response)
+                );
+
+                await db.SaveChangesAsync();
             }
             catch (Exception e)
             {

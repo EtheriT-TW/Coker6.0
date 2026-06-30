@@ -29,8 +29,10 @@ namespace EtheriT.Coker.Application.Shared.Order
         public List<SelectDto> GetDiscountFreightTypeEnum();
         public Task<ResponseMessageDto> OrderStateChange(long ohid, int state);
         public Task<ResponseMessageDto> SendMail(long ohid);
+        public Task<ResponseMessageDto> SendNotificationMail(long ohid);
         public List<SelectDto> getOrderStatusLookup();
         public Task<ResponseMessageDto> UpdateStatus(OrderUpdateStatusDto dto);
+        Task<ResponseMessageDto> UpdateLogistics(OrderUpdateLogisticsDto dto);
         public Task<List<MemberOrderDto>> GetMemberOrder(Guid UUID);
         public Task<ResponseMessageDto> PaySuccessMailSend(long ohid, DateTime date);
         public Task<ResponseMessageDto> PayFailMailSend(long ohid, DateTime date);

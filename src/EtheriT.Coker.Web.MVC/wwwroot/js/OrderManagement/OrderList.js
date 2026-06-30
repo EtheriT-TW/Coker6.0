@@ -1,6 +1,6 @@
 ﻿var keyId
 var order_list
-let $btn_reSend, $btn_save, $btn_createLogistics, $btn_printShippingLabel;
+let $btn_reSend, $btn_save, $btn_createLogistics, $btn_printShippingLabel, $btn_logistics_save, $btn_send_notification
 var oristate = 0, payment = "", isCashOnDelivery = false, transactionId = "", thirdparty = 0, ECPayLogisticsTypeStr = "", ECPayLogisticsSubTypeStr = "";
 function PageReady() {
     OrderDataCollapse();
@@ -25,8 +25,30 @@ function PageReady() {
         });
     });
 
+    $btn_send_notification.on("click", function () {
+        co.sweet.confirm("發送出貨通知信", "是否確認發送出貨通知信?", "確定", "取消", function () {
+            co.Order.SendNotificationMail(keyId).done(function (result) {
+                if (result.success) {
+                    co.sweet.success("出貨通知信已發送", function () { }, false);
+
+                    $btn_send_notification
+                        .prop("disabled", true)
+                        .removeClass("btn-success")
+                        .addClass("btn-secondary");
+
+                    $order_status.val(3);
+                    oristate = 3;
+                }
+            });
+        })
+    });
+
     $btn_save.on("click", function () {
         updateOrder();
+    });
+
+    $btn_logistics_save.on("click", function () {
+        updateLogistics();
     });
 
     co.Order.GetOrderStatusLookup().done(function (result) {
@@ -291,6 +313,32 @@ function updateOrder() {
         else co.sweet.error("儲存失敗", result.error);
     });
 }
+
+function updateLogistics() {
+    const trackingNumber = $tracking_number.val();
+    $btn_logistics_save
+        .text("送出")
+        .removeClass("btn-primary")
+        .addClass("btn-secondary")
+        .prop("disabled", true);
+
+    co.Order.UpdateLogistics({ Id: keyId, TrackingNumber: $tracking_number.val() }).done(function (result) {
+        const trackingNumber = $tracking_number.val();
+        if (result.success) {
+            co.sweet.success(`已將物流編號修改為 ${trackingNumber}`);
+        }
+        else co.sweet.error("儲存失敗", result.error);
+    }).always(function () {
+        setTimeout(function () {
+            $btn_logistics_save
+                .text("儲存")
+                .removeClass("btn-secondary")
+                .addClass("btn-primary")
+                .prop("disabled", false);
+        }, 5000);
+    });
+}
+
 function ElementInit() {
     /* Header */
     $order_status = $(".status_select")
@@ -317,8 +365,10 @@ function ElementInit() {
     /*bottom*/
     $btn_reSend = $(".btn_reSend");
     $btn_save = $(".btn_save");
+    $btn_logistics_save = $(".btn_logistics_save");
     $btn_createLogistics = $(".btn_createLogistics");
     $btn_printShippingLabel = $(".btn_printShippingLabel");
+    $btn_send_notification = $(".btn_send_notification");
 }
 function FormDataClear() {
     keyId = 0;
@@ -331,6 +381,11 @@ function FormDataClear() {
     $(".confirm").addClass("d-none");
     $(".btn_recheck").addClass("d-none");
     $(".btn_refund").addClass("d-none");
+    $(".btn_send_notification")
+        .addClass("d-none")
+        .prop("disabled", false)
+        .removeClass("btn-secondary")
+        .addClass("btn-success");;
     $(".btn_checkrefund").addClass("d-none");
     $(".btn_failReason").addClass("d-none");
     $("#InvoiceType").addClass("d-none");
@@ -494,6 +549,15 @@ function HeaderDataSet(result) {
     if (result.refundTransactionId != null) $(".btn_checkrefund").removeClass("d-none");
     else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock && result.canRefund) $(".btn_refund").removeClass("d-none");
     else OrderStateChange(oristate)
+
+    if ([1, 3].includes(oristate))
+        $(".btn_send_notification").removeClass("d-none");
+    if (oristate == 3) {
+        $btn_send_notification
+            .prop("disabled", true)
+            .removeClass("btn-success")
+            .addClass("btn-secondary");
+    }
 
     if (result.bonus == 0) $(".bonusLine").addClass("d-none");
     else $(".bonusLine").removeClass("d-none");

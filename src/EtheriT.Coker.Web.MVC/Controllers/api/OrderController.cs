@@ -77,6 +77,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await orderAppService.SendMail(Id);
         }
         [HttpGet]
+        public async Task<ResponseMessageDto> SendNotificationMail(long Id)
+        {
+            return await orderAppService.SendNotificationMail(Id);
+        }
+        [HttpGet]
         public List<SelectDto> getOrderStatusLookup()
         {
             return orderAppService.getOrderStatusLookup();
@@ -86,6 +91,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             dto.ForceCancel = true;
             return await orderAppService.UpdateStatus(dto);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> UpdateLogistics(OrderUpdateLogisticsDto dto)
+        {
+            return await orderAppService.UpdateLogistics(dto);
         }
         [HttpGet]
         public async Task<List<MemberOrderDto>> GetMemberOrder(Guid UUID)

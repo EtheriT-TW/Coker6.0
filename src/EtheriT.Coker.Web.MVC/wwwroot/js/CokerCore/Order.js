@@ -35,6 +35,15 @@ const orderModel = {
             data: { Id: id },
         });
     },
+    SendNotificationMail: function (id) {
+        return $.ajax({
+            url: "/api/Order/SendNotificationMail/",
+            type: "GET",
+            contentType: 'application/json; charset=utf-8',
+            headers: _c.Data.Header,
+            data: { Id: id },
+        });
+    },
     UpdateStatus: function (data) {
         return $.ajax({
             url: "/api/Order/UpdateStatus",
@@ -44,6 +53,16 @@ const orderModel = {
             data: JSON.stringify(data),
             dataType: "json"
         });
+    },
+    UpdateLogistics: function (data) {
+        return $.ajax({
+            url: "/api/Order/UpdateLogistics",
+            type: "POST",
+            contentType: 'application/json; charset=utf-8',
+            headers: _c.Data.Header,
+            data: JSON.stringify(data),
+            dataType: "json"
+        })
     },
     GetOrderStatusLookup: function () {
         return $.ajax({

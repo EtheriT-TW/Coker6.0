@@ -21,6 +21,10 @@
     z-index: 1;
 }
 
+.tracking_number:disabled{
+    background-color: var(--bs-secondary-bg-subtle);
+    color: var(--bs-secondary-text);
+}
 /* Order Details */
 #OrderDetails {
     height: fit-content;

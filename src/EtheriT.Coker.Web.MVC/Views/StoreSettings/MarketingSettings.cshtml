@@ -160,7 +160,7 @@
                     </div>
 
                     <div class="row align-items-start">
-                        <div class="col-12 col-md-4 mb-3">
+                        <div class="col-12 col-md-4">
                             <label class="form-label required_sign" for="InputMinAmount">滿額門檻</label>
                             <div class="input-group">
                                 <span class="input-group-text">NT$</span>
@@ -168,7 +168,7 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-md-4 mb-3 rewardAmountSection d-none">
+                        <div class="col-12 col-md-4 rewardAmountSection d-none">
                             <label class="form-label required_sign" for="InputDiscountAmount">折抵金額</label>
                             <div class="input-group">
                                 <span class="input-group-text">NT$</span>
@@ -176,7 +176,7 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-md-4 mb-3 rewardPercentSection d-none">
+                        <div class="col-12 col-md-4 rewardPercentSection d-none">
                             <label class="form-label required_sign" for="InputDiscountPercent">折扣折數</label>
                             <div class="input-group">
                                 <input id="InputDiscountPercent"
@@ -194,7 +194,7 @@
                             <div class="form-text">例如：9 或 90 都表示九折，85 表示八五折，最低 1 折。</div>
                         </div>
 
-                        <div class="col-12 col-md-4 mb-3 rewardPercentSection d-none">
+                        <div class="col-12 col-md-4 rewardPercentSection d-none">
                             <label class="form-label" for="InputMaxDiscountAmount">最高折抵</label>
                             <div class="input-group">
                                 <span class="input-group-text">NT$</span>
@@ -204,22 +204,22 @@
                         </div>
                     </div>
 
-                    <div class="row align-items-center">
+                    <div class="row align-items-start">
                         <div class="col-12 col-md-4 mb-3">
-                            <div class="form-check marketing-check">
+                            <div class="form-check marketing-check align-items-start">
                                 <input id="CheckCanStack" class="form-check-input" name="CanStack" type="checkbox" value="true" data-form-type="boolean">
                                 <label class="form-check-label" for="CheckCanStack">允許與其他優惠併用</label>
                             </div>
                         </div>
 
                         <div class="col-12 col-md-4 mb-3 repeatableSection">
-                            <div class="form-check marketing-check">
+                            <div class="form-check marketing-check align-items-start">
                                 <input id="CheckRepeatable" class="form-check-input" name="Repeatable" type="checkbox" value="true" data-form-type="boolean">
-                                <label class="form-check-label" for="CheckRepeatable">允許重複觸發</label>
+                                <label class="form-check-label" for="CheckRepeatable">允許滿額折抵可累計</label>
                             </div>
                             <div class="form-text ps-4">例如滿 1000 折 100，消費 2000 是否折 200。</div>
                         </div>
-                    </div>
+                    </div> 
                 </div>
 
                 <div class="marketing-section">

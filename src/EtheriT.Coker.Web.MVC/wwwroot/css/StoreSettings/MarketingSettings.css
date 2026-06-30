@@ -11,6 +11,18 @@ input[type="number"] {
     z-index: 10;
 }
 
+.card-body {
+    padding: 16px 150px;
+}
+
+.text-muted {
+    font-weight: var(--bs-body-font-weight);
+}
+
+.small, small {
+    font-size: unset;
+}
+
 /* Marketing List */
 .btn_back {
     color: #4E565A;
@@ -73,9 +85,22 @@ input[type="number"] {
     min-width: 48px;
     justify-content: center;
 }
+.form-text {
+    font-size: unset;
+    font-weight: 400;
+    margin: unset;
+}
 
-#MarketingForm .form-text {
-    font-size: .8rem;
+.form-check-label {
+    font-weight: 400;
+}
+
+.form-check {
+    margin:unset;
+}
+
+.repeatableSection .form-text {
+    margin-top: -.75rem; /* 想更上就 -.5rem */
 }
 
 .marketing-rule-note {
@@ -98,13 +123,25 @@ input[type="number"] {
 .marketing-rule-note-list {
     margin: 0;
     padding-left: 1.15rem;
-    font-size: .875rem;
     line-height: 1.65;
+    font-weight:var(--bs-body-font-weight);
 }
 
-    .marketing-rule-note-list > li + li {
-        margin-top: .2rem;
-    }
+.marketing-rule-note-list > li + li {
+    margin-top: .2rem;
+}
+
+.rewardAmountSection,
+.rewardPercentSection {
+    min-height: 94px; /* 取「含說明文字」那格的高度 */
+}
+
+#InputMinAmount,
+#InputDiscountAmount,
+#InputDiscountPercent,
+#InputMaxDiscountAmount {
+    font-weight: 700;
+}
 
 @media (max-width: 575.98px) {
     .marketing-section {

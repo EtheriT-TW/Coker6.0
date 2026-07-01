@@ -304,9 +304,26 @@ function ToggleOrderBonusLines(data) {
     $(".discountLine").toggleClass("d-none", discount <= 0);
 }
 function updateOrder() {
-    co.Order.UpdateStatus({ Id: keyId, Status: $order_status.val(), Memo: $memo_block.val(), TrackingNumber: $tracking_number.val()}).done(function (result) {
+    co.Order.UpdateStatus({ Id: keyId, Status: $order_status.val(), Memo: $memo_block.val(), TrackingNumber: $tracking_number.val() }).done(function (result) {
         if (result.success) {
-            co.sweet.success("儲存成功");
+            var msg = "儲存成功";
+            if (parseInt($order_status.val()) == 4) {
+                const usedBonus = Number(($(".order_bonus").text() || "0").replaceAll(",", "")) || 0;
+                const earnedBonus = Number(($(".order_setBonus").text() || "0").replaceAll(",", "")) || 0;
+
+                var parts = [];
+                if (usedBonus > 0) {
+                    parts.push(`，將歸還已抵的紅利 ${usedBonus} 點`);
+                }
+                if (oristate == 7 && earnedBonus > 0) {
+                    parts.push(`，將收回已獲得的紅利 ${earnedBonus} 點`);
+                }
+
+                if (parts.length > 0) {
+                    msg = `本筆訂單取消後${parts.join("")}`;
+                }
+            }
+            co.sweet.success(msg);
             switch (parseInt($order_status.val())) {
                 case 4:
                 case 5:

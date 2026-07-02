@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using MimeKit;
 
 namespace EtheriT.Coker.Application.Common
 {
@@ -245,6 +246,39 @@ namespace EtheriT.Coker.Application.Common
                 .Replace("url(/upload/", $"url(/upload/{orgName}/")
                 .Replace("url('/upload/", $"url('/upload/{orgName}/")
                 .Replace("url(\"/upload/", $"url(\"/upload/{orgName}/");
+        }
+        public string ResolveFrontUploadPath(string value, string orgName)
+        {
+            if (string.IsNullOrWhiteSpace(value) || string.IsNullOrWhiteSpace(orgName))
+            {
+                return value ?? "";
+            }
+
+            return value.Replace($"/upload/{orgName}/", "/upload/");
+        }
+
+        public bool TryNormalizeEmail(string? email, out string normalizedEmail)
+        {
+            normalizedEmail = "";
+
+            if (string.IsNullOrWhiteSpace(email))
+                return false;
+
+            email = email.Trim();
+
+            if (!MailboxAddress.TryParse(email, out var mailbox))
+                return false;
+
+            if (string.IsNullOrWhiteSpace(mailbox.Address))
+                return false;
+
+            normalizedEmail = mailbox.Address.Trim();
+            return true;
+        }
+
+        public bool IsValidEmail(string? email)
+        {
+            return TryNormalizeEmail(email, out _);
         }
     }
 }

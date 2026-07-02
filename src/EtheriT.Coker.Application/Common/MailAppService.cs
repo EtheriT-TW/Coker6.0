@@ -45,13 +45,11 @@ namespace EtheriT.Coker.Application.Common
         public async Task<ResponseMessageDto> sendMail(SenderDto dto)
         {
             var webSiteName = string.IsNullOrEmpty(dto.Sender.Name) ? await loginUserData.GetWebsiteName() : dto.Sender.Name;
-            dto.SMTP = await SetSMTP();
             return await sendMail(dto, webSiteName);
         }
         public async Task<ResponseMessageDto> sendMail(SenderDto dto, long siteId)
         {
             var webSiteName = await loginUserData.GetWebsiteOrgName(siteId);
-            dto.SMTP = await SetSMTP(siteId);
             return await sendMail(dto, webSiteName);
         }
 
@@ -102,39 +100,78 @@ namespace EtheriT.Coker.Application.Common
             long websiteId = await loginUserData.GetCommonWebsiteId();
             var website = db.Websites.FirstOrDefault(e => e.Id == websiteId);
             if (website == null) throw new Exception("找不到網站");
+            dto.SMTP = await SetSMTP(websiteId);
             string webUrl = website.DefaultUrl ?? string.Empty;
             string OrgName = website.OrgName;
             // 建立郵件
             var message = new MimeMessage();
-            // 添加寄件者
-            if (!string.IsNullOrWhiteSpace(dto.SMTP.UserName) && MailboxAddress.TryParse(dto.SMTP.UserName, out _))
+
+            var invalidRecipients = new List<string>();
+            void AddMailbox(
+                InternetAddressList list,
+                string? name, string? email, string fieldName)
             {
-                dto.Sender.Email = dto.SMTP.UserName;
-            } else if (!string.IsNullOrWhiteSpace(dto.SMTP.UserName)) {
-                
-                if (website != null && !string.IsNullOrWhiteSpace(website.ContactMail) &&
-                    MailboxAddress.TryParse(website.ContactMail, out _))
+                if (string.IsNullOrWhiteSpace(email))
+                    return;
+
+                if (!stringHandler.TryNormalizeEmail(email, out var normalizedEmail))
                 {
-                    dto.Sender.Email = website.ContactMail;
+                    invalidRecipients.Add($"{fieldName}信箱格式錯誤：{name ?? ""} <{email}>");
+                    return;
                 }
+
+                list.Add(new MailboxAddress(name ?? string.Empty, normalizedEmail));
             }
 
-                message.From.Add(new MailboxAddress(webSiteName, dto.Sender.Email));
+            // 添加寄件者
+            if (!string.IsNullOrWhiteSpace(dto.SMTP.UserName) &&
+                stringHandler.TryNormalizeEmail(dto.SMTP.UserName, out var smtpEmail))
+            {
+                dto.Sender.Email = smtpEmail;
+            }
+            else if (!string.IsNullOrWhiteSpace(website.ContactMail) &&
+                     stringHandler.TryNormalizeEmail(website.ContactMail, out var contactEmail))
+            {
+                dto.Sender.Email = contactEmail;
+            }
+
+            if (!stringHandler.TryNormalizeEmail(dto.Sender.Email, out var senderEmail))
+            {
+                response.Success = false;
+                response.Message = "寄件人信箱格式錯誤";
+                response.Error = $"Sender.Email={dto.Sender.Email}, SMTP.UserName={dto.SMTP.UserName}, ContactMail={website.ContactMail}";
+                return response;
+            }
+
+            message.From.Add(new MailboxAddress(webSiteName ?? OrgName, senderEmail));
+            message.Sender = new MailboxAddress(webSiteName ?? OrgName, senderEmail);
 
             // 添加收件者
-            foreach (var item in dto.Recipients)
+            foreach (var item in dto.Recipients ?? new())
             {
-                message.To.Add(new MailboxAddress(item.Name, item.Email));
+                AddMailbox(message.To, item.Name, item.Email, "收件人");
             }
+
             // 副本
-            foreach (var item in dto.CC)
+            foreach (var item in dto.CC ?? new())
             {
-                message.Cc.Add(new MailboxAddress(item.Name, item.Email));
+                AddMailbox(message.Cc, item.Name, item.Email, "副本");
             }
+
             // 密件副本
-            foreach (var item in dto.Bcc)
+            foreach (var item in dto.Bcc ?? new())
             {
-                message.Bcc.Add(new MailboxAddress($"{webSiteName}-{item.Name}", item.Email));
+                AddMailbox(message.Bcc, $"{webSiteName}-{item.Name}", item.Email, "密件副本");
+            }
+
+            if (!message.To.Any() && !message.Cc.Any() && !message.Bcc.Any())
+            {
+                response.Success = false;
+                response.Message = "沒有有效的收件人";
+                response.Error = invalidRecipients.Any()
+                    ? string.Join("；", invalidRecipients)
+                    : null;
+                return response;
             }
 
             // 設定郵件標題
@@ -182,8 +219,19 @@ namespace EtheriT.Coker.Application.Common
                     </html>";
             }
             // 設定附件
-            foreach (var file in dto.FilePath)
+            foreach (var file in dto.FilePath ?? new())
             {
+                if (string.IsNullOrWhiteSpace(file))
+                    continue;
+
+                if (!File.Exists(file))
+                {
+                    response.Success = false;
+                    response.Message = "附件檔案不存在";
+                    response.Error = file;
+                    return response;
+                }
+
                 bodyBuilder.Attachments.Add(file);
             }
             // 設定郵件內容
@@ -196,7 +244,7 @@ namespace EtheriT.Coker.Application.Common
                 StreamWriter? writer = null;
                 void Step(string msg)
                 {
-                    if(writer != null)
+                    if (writer != null)
                         writer.WriteLine($"[{DateTime.Now:HH:mm:ss}] [APP_STEP] {msg}");
                 }
                 if (enableLog)
@@ -270,8 +318,8 @@ namespace EtheriT.Coker.Application.Common
                         }
                         catch (NotSupportedException ex)
                         {
-                            // 個別攔截，寫清楚再繼續（不要 return）
-                            Step($"AUTH NotSupported -> fallback unauthenticated. {ex.Message}");
+                            Step($"AUTH NotSupported: {ex.Message}");
+                            throw new InvalidOperationException("SMTP Server 不支援目前的驗證方式，無法完成 SMTP 認證。", ex);
                         }
                         catch (MailKit.Security.AuthenticationException ex)
                         {
@@ -282,7 +330,7 @@ namespace EtheriT.Coker.Application.Common
                     }
                     else if (hasUser && !canAuth)
                     {
-                        Step("Server did not advertise AUTH -> skip Authenticate");
+                        throw new InvalidOperationException("SMTP Server 未提供 AUTH 能力，無法使用帳號密碼登入。");
                     }
                     else
                     {
@@ -296,6 +344,11 @@ namespace EtheriT.Coker.Application.Common
                     client.Disconnect(true);
                     Step("set Disconnect");
                     response.Success = true;
+                    if (invalidRecipients.Any())
+                    {
+                        response.Message = "信件已寄出，但部分收件人格式錯誤已略過。";
+                        response.Error = string.Join("；", invalidRecipients);
+                    }
                 }
             }
             catch (SmtpCommandException ex)
@@ -303,21 +356,23 @@ namespace EtheriT.Coker.Application.Common
                 switch (ex.ErrorCode)
                 {
                     case SmtpErrorCode.RecipientNotAccepted:
-                        /***
-                         * 可能錯誤原因
-                         * 收件人地址格式錯誤。
-                         * 收件人地址的網域無法解析。
-                         * 收件人地址被伺服器封鎖。
-                         * **/
-                        if (ex.ErrorCode == SmtpErrorCode.RecipientNotAccepted &&
-                            ex.Message.Contains("Domain not found", StringComparison.OrdinalIgnoreCase)
-                        )
+                        response.Error = ex.Message;
+
+                        if (ex.Message.Contains("Domain not found", StringComparison.OrdinalIgnoreCase))
                         {
                             response.Message = "網域錯誤：無法找到指定的網域";
                         }
+                        else if (
+                            ex.Message.Contains("Relaying mail", StringComparison.OrdinalIgnoreCase) ||
+                            ex.Message.Contains("relay", StringComparison.OrdinalIgnoreCase) ||
+                            ex.Message.Contains("not allowed", StringComparison.OrdinalIgnoreCase)
+                        )
+                        {
+                            response.Message = "SMTP Relay 被拒絕，請確認 SMTP 帳密是否已成功驗證，以及 MailEnable Relay 設定。";
+                        }
                         else
                         {
-                            response.Message = "收件人錯誤，可能是因為信箱網域或格式有問題";
+                            response.Message = "收件人被 SMTP 伺服器拒絕，請查看詳細錯誤。";
                         }
                         break;
                     case SmtpErrorCode.SenderNotAccepted:
@@ -345,6 +400,7 @@ namespace EtheriT.Coker.Application.Common
                         response.Message = $"信件發送失敗[{ex.ErrorCode}:{ex.Message}]";
                         break;
                 }
+                response.Error = $"[{ex.ErrorCode}] StatusCode={ex.StatusCode}, Message={ex.Message}";
             }
             catch (MailKit.Security.AuthenticationException ex)
             {

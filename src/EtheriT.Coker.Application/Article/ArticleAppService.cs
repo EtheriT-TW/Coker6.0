@@ -648,13 +648,14 @@ namespace EtheriT.Coker.Application.Article
                 var article = await db.Article.FirstOrDefaultAsync(e => e.Id == dto.Id);
                 if (article != null)
                 {
-                    string Orgname = await loginUserData.GetWebsiteOrgName();
+                    string orgName = await loginUserData.GetWebsiteOrgName();
+
                     importDto.Html = stringHandler.HtmlDecode(importDto.Html);
                     importDto.Html = htmlProcessor.RemoveNode(importDto.Html ?? "", ".backstageType");
                     importDto.Html = htmlProcessor.SetAttr(importDto.Html ?? "", "[target='_blank'] ", "rel", "noopener noreferrer");
 
-                    importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
-                    importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
+                    importDto.Html = stringHandler.ResolveFrontUploadPath(importDto.Html ?? "", orgName);
+                    importDto.Css = stringHandler.ResolveFrontUploadPath(importDto.Css ?? "", orgName);
 
                     article.Css = importDto.Css;
                     article.PageText = htmlProcessor.text(importDto.Html);
@@ -817,6 +818,7 @@ namespace EtheriT.Coker.Application.Article
             { }
             return result;
         }
+
         public async Task<ResponseMessageDto> RebuildContentWithFiles(long AId)
         {
             ResponseMessageDto response = new ResponseMessageDto();
@@ -828,26 +830,40 @@ namespace EtheriT.Coker.Application.Article
                 {
                     var checktokenresponse = await tokenAppService.CheckToken(null);
                     var isLogin = checktokenresponse.IsLogin;
+                    var orgName = await loginUserData.GetWebsiteOrgName();
+
                     var Files = await fileUploadAppService.getArticleFiles(AId);
 
                     var SaveDoc = htmlProcessor.LoadHtml(stringHandler.HtmlDecode(article.SaveHtml));
                     var SaveEditData = htmlProcessor.Find(SaveDoc, "[data-edit-type]");
-                    var SaveeNode = SaveEditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "File" || d.GetAttributeValue("data-edit-type", "") == "Files").ToList();
+                    var SaveeNode = SaveEditData
+                        .Where(d => d.GetAttributeValue("data-edit-type", "") == "File" || d.GetAttributeValue("data-edit-type", "") == "Files")
+                        .ToList();
 
                     var html = stringHandler.HtmlDecode(article.Html ?? "");
                     var Doc = htmlProcessor.LoadHtml(html);
                     var EditData = htmlProcessor.Find(Doc, "[data-edit-type]");
-                    var Node = EditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "File" || d.GetAttributeValue("data-edit-type", "") == "Files").ToList();
+                    var Node = EditData
+                        .Where(d => d.GetAttributeValue("data-edit-type", "") == "File" || d.GetAttributeValue("data-edit-type", "") == "Files")
+                        .ToList();
 
                     if (SaveeNode.Any() && Files.Any())
                     {
+                        // 後台編輯用 SaveHtml：
+                        // 保留 /upload/{OrgName}/，因為後台是在同一套管理站讀取實體網站檔案。
                         FileInsertNode(SaveeNode, SaveDoc, Files, isLogin);
                         article.SaveHtml = SaveDoc.DocumentNode.OuterHtml;
 
                         if (Node.Any())
                         {
+                            // 前台發佈用 Html：
+                            // 先插入檔案，再移除網站代碼，保持前台路徑為 /upload/。
                             FileInsertNode(Node, Doc, Files, isLogin);
-                            article.Html = Doc.DocumentNode.OuterHtml;
+
+                            var frontHtml = Doc.DocumentNode.OuterHtml;
+                            frontHtml = stringHandler.ResolveFrontUploadPath(frontHtml, orgName);
+
+                            article.Html = stringHandler.HtmlEncode(frontHtml);
                         }
 
                         await loginUserData.SaveChanges(article);
@@ -857,8 +873,11 @@ namespace EtheriT.Coker.Application.Article
             }
             catch (Exception ex)
             {
+                response.Success = false;
                 response.Message = ex.Message;
+                response.Error = ex.Message;
             }
+
             return response;
         }
         void FileInsertNode(List<HtmlNode> FileInsertNode, HtmlDocument Doc, List<FileGetArticleDisplayDto> Files, bool isLogin)

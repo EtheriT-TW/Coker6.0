@@ -167,7 +167,7 @@
                         </button>
                     </div>
                     @(
-                                        Html.DevExtreme().DataGrid<DirectoryReleInfoDto>()
+                                    Html.DevExtreme().DataGrid<DirectoryReleInfoDto>()
                                         .DataSource(d => d.RemoteController().Key("Id")
                                         .LoadUrl("/api/Directory/GetDirectoryDetailList").LoadMethod("Get")
                                         .LoadParams(new
@@ -211,7 +211,7 @@
                                                 b.Add().Icon("palette").Visible(perm.CanUpdate).Name("edit").OnClick("paletteArticlesButtonClicked");
                                                 b.Add()
                                                     .Name("delete")
-                                                    .Visible(new JS("function(e) { return " + perm.CanRemove.ToString().ToLower() + " && e.row && e.row.data && e.row.data.CanSave === true; }"))
+                                                    .Visible(new JS("function(e) { return " + perm.CanRemove.ToString().ToLower() + " && e.row && e.row.data && e.row.data.CanEdit === true; }"))
                                                     .OnClick("deleteArticlesButtonClicked");
                                             });
                                         })
@@ -230,7 +230,7 @@
                                             editing.AllowUpdating(true);
                                             editing.UseIcons(true);
                                         })
-                                        )
+                                    )
                 </div>
             </div>
             <div class="products d-none"></div>

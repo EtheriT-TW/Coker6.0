@@ -13,7 +13,7 @@ namespace EtheriT.Coker.Core.Models
     {
         public long FK_WebsiteId { get; set; }
         public string placement { get; set; }
-        [StringLength(60)]
+        [StringLength(120)]
         public string title { get; set; }
         public bool disp_opt { get; set; }
         public int ser_no { get; set; }

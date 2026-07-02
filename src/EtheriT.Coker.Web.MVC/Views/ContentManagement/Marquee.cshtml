@@ -41,7 +41,7 @@
 					.Columns(c =>
 					{
 						c.AddFor(e => e.Id).Caption("編號").Width(50);
-						c.AddFor(e => e.title).Caption("內文");
+						c.AddFor(e => e.title).Caption("內文").Width(200);
 						c.AddFor(e => e.disp_opt).Caption("是否顯示").Width(90);
 						c.AddFor(e => e.placement).Caption("顯示位置").Width(90);
 						c.AddFor(e => e.ser_no).Caption("排序").Width(50);
@@ -112,7 +112,7 @@
 						<span class="input-group-text bg-transparent border-0 p-0 required_all">跑馬燈訊息</span>
 						<div class="title_count">0</div>
 					</div>
-					<textarea id="InputTitle" class="form-control border-0" aria-label="With textarea" maxlength="60" placeholder="輸入跑馬燈內文" required></textarea>
+					<textarea id="InputTitle" class="form-control border-0" aria-label="With textarea" maxlength="120" placeholder="輸入跑馬燈內文" required></textarea>
 				</div>
 
 				<div class="sort input-group mb-3">

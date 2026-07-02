@@ -216,6 +216,11 @@ i.fa-chevron-right {
     cursor: pointer;
 }
 
+/* 電腦板不顯示 ProductSwiper 分頁，手機板由下方 media query 覆蓋顯示 */
+.ProductSwiperPagination.swiper-pagination-fraction {
+    display: none;
+}
+
 .PreviewSwiper > .swiper-scrollbar {
     height: calc(5px * 2 / 3);
 }

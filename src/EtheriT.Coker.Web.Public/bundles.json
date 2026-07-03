@@ -164,6 +164,14 @@
       "input": [
         "wwwroot/Shared/js/CShare.js"
       ]
+    },
+    {
+      "output": "js/vendor.min.js",
+      "input": [
+        "wwwroot/js/devextreme/dx.all.js",
+        "wwwroot/js/devextreme/aspnet/dx.aspnet.mvc.js",
+        "wwwroot/js/devextreme/aspnet/dx.aspnet.data.js"
+      ]
     }
   ],
   "styles": [
@@ -241,6 +249,14 @@
         "wwwroot/css/Footer/Default_Footer.css",
         "wwwroot/css/Footer/Footer_Layout_3.css",
         "wwwroot/css/Header/Header_Layout_3.css"
+      ]
+    },
+    {
+      "output": "css/vendor.min.css",
+      "input": [
+        "wwwroot/css/devextreme/Charset.css",
+        "wwwroot/css/devextreme/dx.common.css",
+        "wwwroot/css/devextreme/dx.light.css"
       ]
     }
   ],

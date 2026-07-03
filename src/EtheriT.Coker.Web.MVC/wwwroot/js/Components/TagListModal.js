@@ -206,8 +206,19 @@ function TagDataClear() {
     tag_list = [];
     tag_check_list = [];
     tag_text = "";
-    $tag.val("")
-    getTagListDataGridInstance().clearSelection();
+
+    if (!$tag || !$tag.length) {
+        TagListModalElementInit();
+    }
+
+    if ($tag && $tag.length) {
+        $tag.val("");
+    }
+
+    var grid = getTagListDataGridInstance();
+    if (grid) {
+        grid.clearSelection();
+    }
 }
 function TagDataSet(datas) {
     var text = ""

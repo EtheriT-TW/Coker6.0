@@ -1,4 +1,4 @@
-﻿using DevExpress.CodeParser;
+using DevExpress.CodeParser;
 using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Advertise;
 using EtheriT.Coker.Application.Article;

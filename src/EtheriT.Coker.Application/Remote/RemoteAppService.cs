@@ -26,8 +26,6 @@ using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Core.Models;
 using Microsoft.Extensions.Caching.Memory;
 using EtheriT.Coker.Application.Shared.Dto.UserHabits;
-using static Azure.Core.HttpHeader;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace EtheriT.Coker.Application.Remote
 {

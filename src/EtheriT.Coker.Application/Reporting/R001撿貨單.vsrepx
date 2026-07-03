@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<XtraReportsLayoutSerializer SerializerVersion="24.2.6.0" Ref="1" ControlType="DevExpress.XtraReports.UI.XtraReport, DevExpress.XtraReports.v24.2, Version=24.2.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" Name="R001檢貨單" Margins="25, 25, 25, 25" PaperKind="A4" PageWidth="827" PageHeight="1169" Version="24.2" DataSource="#Ref-0" Font="微軟正黑體, 12pt, charSet=0">
+<XtraReportsLayoutSerializer SerializerVersion="25.2.8.0" Ref="1" ControlType="DevExpress.XtraReports.UI.XtraReport, DevExpress.XtraReports.v25.2, Version=25.2.8.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" Name="R001檢貨單" Margins="25, 25, 25, 25" PaperKind="A4" PageWidthF="826.771667" PageHeightF="1169.29138" Version="25.2" DataSource="#Ref-0" Font="微軟正黑體, 12pt, charSet=0">
   <Extensions>
     <Item1 Ref="2" Key="VSReportExtInfo" Value=".vsrepx" />
   </Extensions>
@@ -29,7 +29,7 @@
     <Item2 Ref="25" ControlType="BottomMarginBand" Name="BottomMargin" HeightF="25" />
     <Item3 Ref="26" ControlType="DetailBand" Name="Detail" HeightF="25">
       <Controls>
-        <Item1 Ref="27" ControlType="XRTable" Name="table2" SizeF="777,25" LocationFloat="0,0" Padding="2,2,0,0,96" Borders="Left, Right, Bottom">
+        <Item1 Ref="27" ControlType="XRTable" Name="table2" SizeF="776.771667,25" LocationFloat="0,0" Padding="2,2,0,0,96" Borders="Left, Right, Bottom">
           <Rows>
             <Item1 Ref="28" ControlType="XRTableRow" Name="tableRow4" Weight="1">
               <Cells>
@@ -68,7 +68,7 @@
                   </ExpressionBindings>
                   <StylePriority Ref="45" UseTextAlignment="false" />
                 </Item6>
-                <Item7 Ref="46" ControlType="XRTableCell" Name="tableCell22" Weight="1" Multiline="true" Text="tableCell22" TextAlignment="TopRight">
+                <Item7 Ref="46" ControlType="XRTableCell" Name="tableCell22" Weight="0.9979429502744932" Multiline="true" Text="tableCell22" TextAlignment="TopRight">
                   <ExpressionBindings>
                     <Item1 Ref="47" EventName="BeforePrint" PropertyName="Text" Expression="[商品小計]" />
                   </ExpressionBindings>
@@ -197,10 +197,10 @@
     </Item4>
     <Item5 Ref="102" ControlType="PageHeaderBand" Name="PageHeader" HeightF="119.791664">
       <Controls>
-        <Item1 Ref="103" ControlType="XRLabel" Name="label3" Multiline="true" Text="出貨明細" TextAlignment="MiddleCenter" SizeF="777,39.5000153" LocationFloat="2.38418579E-05,22.9999866" Font="微軟正黑體, 21.75pt, style=Bold, charSet=0" Padding="2,2,0,0,100">
+        <Item1 Ref="103" ControlType="XRLabel" Name="label3" Multiline="true" Text="出貨明細" TextAlignment="MiddleCenter" SizeF="776.771667,39.5000153" LocationFloat="2.38418579E-05,22.9999866" Font="微軟正黑體, 21.75pt, style=Bold, charSet=0" Padding="2,2,0,0,100">
           <StylePriority Ref="104" UseFont="false" UseTextAlignment="false" />
         </Item1>
-        <Item2 Ref="105" ControlType="XRLabel" Name="label1" TextFormatString="{0}" Multiline="true" Text="網站名稱" TextAlignment="MiddleCenter" SizeF="777,37.5" LocationFloat="1.58945713E-05,62.5" Font="微軟正黑體, 15.75pt, charSet=136" Padding="2,2,0,0,100">
+        <Item2 Ref="105" ControlType="XRLabel" Name="label1" TextFormatString="{0}" Multiline="true" Text="網站名稱" TextAlignment="MiddleCenter" SizeF="776.771667,37.5" LocationFloat="1.58945713E-05,62.5" Font="微軟正黑體, 15.75pt, charSet=136" Padding="2,2,0,0,100">
           <ExpressionBindings>
             <Item1 Ref="106" EventName="BeforePrint" PropertyName="Text" Expression="?網站名稱" />
           </ExpressionBindings>
@@ -216,7 +216,7 @@
     </Item5>
     <Item6 Ref="111" ControlType="GroupHeaderBand" Name="GroupHeader1" Level="1" HeightF="225">
       <Controls>
-        <Item1 Ref="112" ControlType="XRTable" Name="table1" TextAlignment="MiddleJustify" SizeF="777,225" LocationFloat="1.58945713E-05,0" Padding="2,2,0,0,96">
+        <Item1 Ref="112" ControlType="XRTable" Name="table1" TextAlignment="MiddleJustify" SizeF="776.771667,225" LocationFloat="1.58945713E-05,0" Padding="2,2,0,0,96">
           <Rows>
             <Item1 Ref="113" ControlType="XRTableRow" Name="tableRow1" Weight="1">
               <Cells>
@@ -339,7 +339,7 @@
     </Item6>
     <Item7 Ref="170" ControlType="GroupHeaderBand" Name="GroupHeader2" RepeatEveryPage="true" HeightF="25">
       <Controls>
-        <Item1 Ref="171" ControlType="XRTable" Name="table4" SizeF="777,25" LocationFloat="0,0" Padding="2,2,0,0,96" Borders="All">
+        <Item1 Ref="171" ControlType="XRTable" Name="table4" SizeF="776.771667,25" LocationFloat="0,0" Padding="2,2,0,0,96" Borders="All">
           <Rows>
             <Item1 Ref="172" ControlType="XRTableRow" Name="tableRow16" Weight="1">
               <Cells>
@@ -373,9 +373,9 @@
     </Item7>
   </Bands>
   <ComponentStorage>
-    <Item1 Ref="0" ObjectType="DevExpress.DataAccess.ObjectBinding.ObjectDataSource,DevExpress.DataAccess.v24.2" Name="訂單明細" Base64="PE9iamVjdERhdGFTb3VyY2UgTmFtZT0i6KiC5Zau5piO57SwIiAvPg==" />
+    <Item1 Ref="0" ObjectType="DevExpress.DataAccess.ObjectBinding.ObjectDataSource,DevExpress.DataAccess.v25.2" Name="訂單明細" Base64="PE9iamVjdERhdGFTb3VyY2UgTmFtZT0i6KiC5Zau5piO57SwIiAvPg==" />
   </ComponentStorage>
   <ObjectStorage>
-    <Item1 ObjectType="DevExpress.XtraReports.Serialization.ObjectStorageInfo, DevExpress.XtraReports.v24.2" Ref="15" Content="System.Int32" Type="System.Type" />
+    <Item1 ObjectType="DevExpress.XtraReports.Serialization.ObjectStorageInfo, DevExpress.XtraReports.v25.2" Ref="15" Content="System.Int32" Type="System.Type" />
   </ObjectStorage>
 </XtraReportsLayoutSerializer>

@@ -43,15 +43,16 @@ function toolbarPreparing(e) {
 
 async function PageReady() {
     ElementInit();
+
+    TechCertListModalInit();
+    TagListModalInit();
+
     elementReady = true;
 
     if (pendingHashEdit) {
         pendingHashEdit = false;
         HashDataEdit();
     }
-
-    TechCertListModalInit();
-    TagListModalInit();
     try {
         const LogisticsBoxRequires = await co.LogisticsBox.Requires();
         if (!LogisticsBoxRequires.object) throw new Error("不需要物流箱");

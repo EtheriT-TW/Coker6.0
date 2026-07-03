@@ -91,7 +91,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using MiniExcelLibs;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -408,7 +408,12 @@ builder.Services.AddDbContext<CokerDbContext>(options =>
 
 builder.Services.AddSwaggerGen(option =>
 {
-    option.SwaggerDoc("EtheriT.Coker.Web.MVC", new OpenApiInfo { Title = "EtheriT.Coker.Web.MVC API", Version = "v1" });
+    option.SwaggerDoc("EtheriT.Coker.Web.MVC", new OpenApiInfo
+    {
+        Title = "EtheriT.Coker.Web.MVC API",
+        Version = "v1"
+    });
+
     option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
@@ -418,18 +423,12 @@ builder.Services.AddSwaggerGen(option =>
         BearerFormat = "JWT",
         Scheme = "Bearer"
     });
-    option.AddSecurityRequirement(new OpenApiSecurityRequirement
+
+    option.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
         {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type=ReferenceType.SecurityScheme,
-                    Id="Bearer"
-                }
-            },
-            new string[]{}
+            new OpenApiSecuritySchemeReference("Bearer", document),
+            new List<string>()
         }
     });
 });

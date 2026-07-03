@@ -23,12 +23,14 @@ var scriptEntries = {};
 var viewScripts = globby.sync([
 	'./wwwroot/js/**/*.js',
 	'!./wwwroot/js/**/*.min.js',
-	'!./wwwroot/js/Coker/*.js'
+	'!./wwwroot/js/Coker/*.js',
+	'!./wwwroot/js/devextreme/**/*.js',
 ]);
 
 var viewStyles = globby.sync([
 	'./wwwroot/css/**/*.css',
-	'!./wwwroot/css/**/*.min.css'
+	'!./wwwroot/css/**/*.min.css',
+	'!./wwwroot/css/devextreme/**/*.css',
 ]);
 
 function processInputDefinition(input) {

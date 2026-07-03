@@ -23,6 +23,7 @@
 		<Content Remove="wwwroot\css\Page\OrderManagement.css" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.min.css" />
 		<Content Remove="wwwroot\js\Coker\*.js" />
+		<Content Remove="wwwroot\js\devextreme\**\*.debug.js" />
 		<Content Remove="wwwroot\view-resources\**\*.*" />
 		<Content Remove="wwwroot\js\Page\Index.js" />
 		<Content Remove="wwwroot\js\Page\OrderManagement.js" />
@@ -144,6 +145,7 @@
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Include="wwwroot\js\Coker\*.js" />
+		<None Include="wwwroot\js\devextreme\*.debug.js" />
 		<None Include="wwwroot\view-resources\**\*.*" />
 		<None Include="wwwroot\Shared\components\Directory\**\*.*" />
 		<None Include="wwwroot\js\Page\Index.js" />

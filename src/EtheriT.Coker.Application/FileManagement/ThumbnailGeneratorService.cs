@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Drawing;
-using System.Linq;
-using Microsoft.AspNetCore.Mvc.Routing;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using DevExtreme.AspNet.Mvc.FileManagement;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Http;
 using ImageMagick;
 
 namespace EtheriT.Coker.Application.FileManagement
@@ -23,9 +17,7 @@ namespace EtheriT.Coker.Application.FileManagement
         private const int ThumbnailWidth = 100;
         private const int ThumbnailHeight = 100;
         private const string ThumbnailsDirectoryPath = "thumb";
-
-        private IUrlHelperFactory UrlHelperFactory { get; }
-        private IActionContextAccessor ActionContextAccessor { get; }
+        private IHttpContextAccessor HttpContextAccessor { get; }
         private DirectoryInfo ThumbnailsDirectory { get; }
 
         private SHA1 CryptoProvider { get; }
@@ -36,10 +28,12 @@ namespace EtheriT.Coker.Application.FileManagement
             ".png", ".gif", ".jpg", ".jpeg", ".ico", ".bmp", ".avif", ".webp", ".svg"
         };
 
-        public ThumbnailGeneratorService(IWebHostEnvironment environment, IUrlHelperFactory urlHelperFactory, IActionContextAccessor actionContextAccessor)
+        public ThumbnailGeneratorService(
+            IWebHostEnvironment environment,
+            IHttpContextAccessor httpContextAccessor
+        )
         {
-            UrlHelperFactory = urlHelperFactory ?? throw new ArgumentNullException(nameof(urlHelperFactory));
-            ActionContextAccessor = actionContextAccessor ?? throw new ArgumentNullException(nameof(actionContextAccessor));
+            HttpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
             var fullThumbnailsDirectoryPath = Path.Combine(environment.WebRootPath, ThumbnailsDirectoryPath);
             ThumbnailsDirectory = new DirectoryInfo(fullThumbnailsDirectoryPath);
@@ -55,15 +49,19 @@ namespace EtheriT.Coker.Application.FileManagement
             if (!(fileSystemInfo is FileInfo fileInfo))
                 return;
 
-            if (ActionContextAccessor?.ActionContext != null)
+            var httpContext = HttpContextAccessor.HttpContext;
+            if (httpContext == null)
+                return;
+
+            var thumbnail = GetThumbnail(fileInfo);
+            if (thumbnail != null && thumbnail.Directory != null)
             {
-                var helper = UrlHelperFactory.GetUrlHelper(ActionContextAccessor.ActionContext);
-                var thumbnail = GetThumbnail(fileInfo);
-                if (thumbnail != null && thumbnail.Directory != null)
-                {
-                    var relativeThumbnailPath = Path.Combine(ThumbnailsDirectory.Name, thumbnail.Directory.Name, thumbnail.Name);
-                    clientItem.CustomFields["thumbnailUrl"] = helper.Content(relativeThumbnailPath);
-                }
+                var relativeThumbnailPath = Path
+                    .Combine(ThumbnailsDirectory.Name, thumbnail.Directory.Name, thumbnail.Name)
+                    .Replace("\\", "/");
+
+                var pathBase = httpContext.Request.PathBase.Value ?? "";
+                clientItem.CustomFields["thumbnailUrl"] = $"{pathBase}/{relativeThumbnailPath}".Replace("//", "/");
             }
         }
 

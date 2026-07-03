@@ -220,6 +220,7 @@ builder.Services.AddScoped<ITagAppService, TagAppService>();
 builder.Services.AddScoped<IWebMenuApplication, WebMenuApplication>();
 builder.Services.AddScoped<IWebsiteApplication, WebsiteApplication>();
 builder.Services.AddScoped<IFileUploadAppService, FileUploadAppService>();
+builder.Services.AddScoped<IUploadPathResolver, UploadPathResolver>();
 builder.Services.AddScoped<IAdvertiseAppService, AdvertiseAppService>();
 builder.Services.AddScoped<IArticleAppService, ArticleAppService>();
 builder.Services.AddScoped<ITechnicalCertificateAppService, TechnicalCertificateAppService>();

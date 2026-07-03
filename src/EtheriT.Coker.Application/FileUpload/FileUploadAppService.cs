@@ -1,5 +1,6 @@
 ﻿using DevExpress.CodeParser;
 using EtheriT.Coker.Application.Configuration;
+using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
@@ -32,25 +33,24 @@ namespace EtheriT.Coker.Application
         private readonly CokerDbContext db;
         public readonly FileAllow fileAllow;
         private readonly LoginUserData loginUserData;
-        private readonly string _folder;
-        private readonly string AppName;
         private readonly IConfiguration configuration;
         private readonly ITokenAppService tokenAppService;
+        private readonly IUploadPathResolver uploadPathResolver;
         public FileUploadAppService(
             IOptions<VirtualDirectory> fileAllow,
             LoginUserData loginUserData,
             CokerDbContext db,
             IConfiguration configuration,
-            ITokenAppService tokenAppService
+            ITokenAppService tokenAppService,
+            IUploadPathResolver uploadPathResolver
         )
         {
             this.fileAllow = fileAllow.Value.FileAllow;
             this.db = db;
             this.loginUserData = loginUserData;
-            _folder = fileAllow.Value.upload;
-            AppName = "FileUpload";
             this.configuration = configuration;
             this.tokenAppService = tokenAppService;
+            this.uploadPathResolver = uploadPathResolver;
         }
         public async Task<UploadFileOutputDto> uploadTempFiles(IList<IFormFile> files)
         {
@@ -688,7 +688,7 @@ namespace EtheriT.Coker.Application
                             output.Add(new FileGetProdDisplayDto
                             {
                                 Id = fu.Id,
-                                Name = string.IsNullOrEmpty(fb.Name)? fu.OriginalFileName : fb.Name,
+                                Name = string.IsNullOrEmpty(fb.Name) ? fu.OriginalFileName : fb.Name,
                                 FileType = 5,
                                 Link = new List<string> { MediaLink },
                                 SerNo = fb.SerNo,
@@ -1064,14 +1064,24 @@ namespace EtheriT.Coker.Application
             try
             {
                 string orgName = await loginUserData.GetWebsiteOrgName();
-                long websiteId = await loginUserData.GetWebsiteId();
-                string s = "";
-                var rootPath = $"{_folder}/{orgName}";
-                var files = await db.FileUploads.Where(e => e.GuidKey == key).Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+
+                var files = await db.FileUploads
+                    .Where(e => e.GuidKey == key)
+                    .Where(e => !e.IsDeleted)
+                    .FirstOrDefaultAsync();
+
                 if (files != null)
                 {
-                    s = files.DownloadFileName.Replace(@"\", "/").Replace("/upload", "");
-                    File.Delete($"{rootPath}{s}");
+                    var physicalPath = uploadPathResolver.GetPhysicalPathFromDownloadFileName(
+                        orgName,
+                        files.DownloadFileName ?? ""
+                    );
+
+                    if (File.Exists(physicalPath))
+                    {
+                        File.Delete(physicalPath);
+                    }
+
                     files.IsDeleted = true;
                     response.Success = true;
                     await loginUserData.SaveChanges(files);
@@ -1371,7 +1381,7 @@ namespace EtheriT.Coker.Application
                     FileBind fb = new FileBind
                     {
                         Guid = Guid.NewGuid(),
-                        Name = string.IsNullOrWhiteSpace(filename) ? e.Name: filename,
+                        Name = string.IsNullOrWhiteSpace(filename) ? e.Name : filename,
                         type = asotype,
                         Sid = sid,
                         num = 1,
@@ -1395,8 +1405,8 @@ namespace EtheriT.Coker.Application
             {
                 string orgName = await loginUserData.GetWebsiteOrgName();
                 Guid key = Guid.NewGuid();
-                var rootPath = $"{_folder}/{orgName}";
-                var directoryPath = $"{rootPath}/{directory}";
+                var rootPath = uploadPathResolver.GetRootPath(orgName);
+                var directoryPath = uploadPathResolver.GetDirectoryPath(orgName, directory);
 
                 if ((file != null && file.Length > 0))
                 {
@@ -1419,7 +1429,8 @@ namespace EtheriT.Coker.Application
                         }
                         else
                         {
-                            using (var fileStream = new FileStream($"{rootPath}{path}", FileMode.Create))
+                            var physicalPath = uploadPathResolver.GetPhysicalPath(orgName, path);
+                            using (var fileStream = new FileStream(physicalPath, FileMode.Create))
                             {
                                 if (isEncryption) await EncryptAndSaveAsync(fileStream, stream);
                                 else await file.CopyToAsync(fileStream);
@@ -1484,14 +1495,18 @@ namespace EtheriT.Coker.Application
                     string ext = sp[sp.Length - 1];
                     var path = $"/{directory}/{key}.{ext}";
 
-                    var RooyFilePath = Path.Combine(configuration.GetValue<string>("VirtualDirectory:upload"), orgName);
-                    string relativePath = fileUpload.DownloadFileName.Replace("/upload/", "").Replace("/", Path.DirectorySeparatorChar.ToString()).TrimStart(Path.DirectorySeparatorChar);
-                    string physicalPath = Path.Combine(RooyFilePath, relativePath);
+                    string physicalPath = uploadPathResolver.GetPhysicalPathFromDownloadFileName(
+                        orgName,
+                        fileUpload.DownloadFileName ?? ""
+                    );
 
                     if (!System.IO.File.Exists(physicalPath)) throw new Exception("查無檔案位置");
+
+                    var newPhysicalPath = uploadPathResolver.GetPhysicalPath(orgName, path);
+
                     long filelength;
                     using (var fileStream = new FileStream(physicalPath, FileMode.Open, FileAccess.Read))
-                    using (var fileStream_temp = new FileStream($"{rootPath}{path}", FileMode.Create, FileAccess.Write))
+                    using (var fileStream_temp = new FileStream(newPhysicalPath, FileMode.Create, FileAccess.Write))
                     {
                         filelength = fileStream.Length;
                         await EncryptAndSaveAsync(fileStream_temp, fileStream);
@@ -1563,14 +1578,14 @@ namespace EtheriT.Coker.Application
                         Guid key = Guid.NewGuid();
                         string[] sp = file.FileName.Split('.');
                         string ext = sp[sp.Length - 1];
-                        var rootPath = $"{_folder}/{orgName}";
-                        var directoryPath = $"{rootPath}/{directory}";
+                        var rootPath = uploadPathResolver.GetRootPath(orgName);
+                        var directoryPath = uploadPathResolver.GetDirectoryPath(orgName, directory);
                         var path = asotype == (int)FileBindTypeEnum.網站圖示 ? $"/favicon.ico" : $"/{directory}/{key}.{ext}";
                         if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
                         if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
                         else if (asotype == (int)FileBindTypeEnum.網站圖示)
                         {
-                            string fullPath = $"{rootPath}{path}";
+                            string fullPath = uploadPathResolver.GetPhysicalPath(orgName, path);
                             if (File.Exists(fullPath)) File.Delete(fullPath);
                         }
                         using (var stream = file.OpenReadStream())
@@ -1586,7 +1601,8 @@ namespace EtheriT.Coker.Application
                             }
                             else
                             {
-                                using (var fileStream = new FileStream($"{rootPath}{path}", FileMode.Create))
+                                var physicalPath = uploadPathResolver.GetPhysicalPath(orgName, path);
+                                using (var fileStream = new FileStream(physicalPath, FileMode.Create))
                                 {
                                     await file.CopyToAsync(fileStream);
                                 }
@@ -1879,10 +1895,13 @@ namespace EtheriT.Coker.Application
                 response.ContentType = fileUpload.ContentType;
                 response.FileName = fileUpload.OriginalFileName;
 
-                var RooyFilePath = configuration.GetValue<string>("VirtualDirectory:upload");
-                string relativePath = fileUpload.DownloadFileName.Replace("/upload/", "").Replace("/", Path.DirectorySeparatorChar.ToString()).TrimStart(Path.DirectorySeparatorChar);
-                string physicalPath = Path.Combine(RooyFilePath, relativePath);
-                if (!isFront) physicalPath = physicalPath.Replace("upload", $"upload\\{website.OrgName}");
+                if (website == null || string.IsNullOrWhiteSpace(website.OrgName))
+                    throw new Exception("查無網站 OrgName");
+
+                string physicalPath = uploadPathResolver.GetPhysicalPathFromDownloadFileName(
+                    website.OrgName,
+                    fileUpload.DownloadFileName ?? ""
+                );
 
                 if (!System.IO.File.Exists(physicalPath)) throw new Exception("查無檔案位置");
 

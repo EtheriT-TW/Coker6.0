@@ -8,7 +8,8 @@ namespace EtheriT.Coker.Application.Configuration
 {
     public class VirtualDirectory
     {
-        public string upload { get; set; }
-        public FileAllow FileAllow { get; set; }
+        public Dictionary<string, string> UploadRoots { get; set; } = new();
+
+        public FileAllow FileAllow { get; set; } = new();
     }
 }

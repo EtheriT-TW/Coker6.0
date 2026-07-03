@@ -1,5 +1,8 @@
 ﻿using DevExtreme.AspNet.Mvc.FileManagement;
+using EtheriT.Coker.Application.Configuration;
+using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Application.Shared.FileManagement;
+using Microsoft.Extensions.Options;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -19,24 +22,34 @@ namespace EtheriT.Coker.Application.FileManagement
         private readonly IConfiguration _configuration;
         private readonly LoginUserData _loginUserData;
         private readonly CokerDbContext _dbContext;
+        private readonly IUploadPathResolver _uploadPathResolver;
+        private readonly FileAllow _fileAllow;
         private IThumbnailGeneratorService _thumbnailGenerator { get; }
 
-        public FileManagementAppService(IConfiguration configuration, LoginUserData loginUserData, CokerDbContext dbContext, IThumbnailGeneratorService thumbnailGenerator)
+        public FileManagementAppService(
+            IConfiguration configuration,
+            LoginUserData loginUserData,
+            CokerDbContext dbContext,
+            IThumbnailGeneratorService thumbnailGenerator,
+            IUploadPathResolver uploadPathResolver,
+            IOptions<VirtualDirectory> virtualDirectory)
         {
             _configuration = configuration;
             _loginUserData = loginUserData;
             _dbContext = dbContext;
             _thumbnailGenerator = thumbnailGenerator;
+            _uploadPathResolver = uploadPathResolver;
+            _fileAllow = virtualDirectory.Value.FileAllow;
         }
 
         public object FileSystem(FileSystemCommand command, string arguments, HttpRequest request)
         {
             string orgName = _loginUserData.GetWebsiteOrgName().Result;
-            var filePath = $"{_configuration.GetValue<string>("VirtualDirectory:upload")}\\" + orgName + "";
+            var filePath = _uploadPathResolver.GetRootPath(orgName);
 
             // 取得目前登入使用者的 ID
             long userId = _loginUserData.GetUserId().Result;
-            var allowFileAllowMIME = _configuration.GetSection("VirtualDirectory:FileAllow:Ext").Get<List<string>>() ?? new List<string>();
+            var allowFileAllowMIME = _fileAllow.Ext ?? new List<string>();
 
             // 使用 FileExtensionContentTypeProvider 從 MIME 值反推取得副檔名
             var provider = new FileExtensionContentTypeProvider();
@@ -129,7 +142,8 @@ namespace EtheriT.Coker.Application.FileManagement
                 return hasBindings;
             }
             catch (Exception)
-            {                return false;
+            {
+                return false;
             }
         }
 
@@ -145,11 +159,11 @@ namespace EtheriT.Coker.Application.FileManagement
                 string orgName = await _loginUserData.GetWebsiteOrgName();
 
                 // 組合完整的檔案路徑
-                string fullPath = System.IO.Path.Combine(
-                    _configuration.GetValue<string>("VirtualDirectory:upload") ?? string.Empty,
-                    orgName,
+                var relativePath = System.IO.Path.Combine(
                     directoryPath.TrimStart('/').TrimStart('\\'),
                     fileName);
+
+                string fullPath = _uploadPathResolver.GetPhysicalPath(orgName, relativePath);
 
                 // 檢查檔案是否存在
                 return System.IO.File.Exists(fullPath);

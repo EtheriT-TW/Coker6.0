@@ -21,6 +21,7 @@ using EtheriT.Coker.Application.Freight;
 using EtheriT.Coker.Application.HtmlContent;
 using EtheriT.Coker.Application.Import;
 using EtheriT.Coker.Application.JsonObject;
+using EtheriT.Coker.Application.Marketing;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Member;
 using EtheriT.Coker.Application.Newsletter;
@@ -31,7 +32,7 @@ using EtheriT.Coker.Application.Product;
 using EtheriT.Coker.Application.Remote;
 using EtheriT.Coker.Application.Report;
 using EtheriT.Coker.Application.Search;
-using EtheriT.Coker.Application.Marketing;
+using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Authorization;
@@ -44,6 +45,7 @@ using EtheriT.Coker.Application.Shared.FlowSize;
 using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.JsonObject;
+using EtheriT.Coker.Application.Shared.Marketing;
 using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Shared.Member;
 using EtheriT.Coker.Application.Shared.Order;
@@ -58,7 +60,6 @@ using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Templates;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.Shared.UserHabits;
-using EtheriT.Coker.Application.Shared.Marketing;
 using EtheriT.Coker.Application.ShoppingCart;
 using EtheriT.Coker.Application.Specification;
 using EtheriT.Coker.Application.StoreSet;
@@ -68,6 +69,7 @@ using EtheriT.Coker.Application.Templates;
 using EtheriT.Coker.Application.ThirdParty;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Application.UserHabits;
+using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.MVC.Controllers.DevExpress;
 using EtheriT.Coker.Web.MVC.Extensions;
@@ -97,6 +99,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
+using IODirectory = System.IO.Directory;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -283,7 +286,7 @@ if (!string.IsNullOrEmpty(AppleConfig["ClientId"]) && !string.IsNullOrEmpty(Appl
         options.TeamId = AppleConfig["TeamId"] ?? "";
         options.CallbackPath = "/signin-apple";
         options.SignInScheme = "External";
-        var fileProvider = new PhysicalFileProvider(Directory.GetCurrentDirectory());
+        var fileProvider = new PhysicalFileProvider(IODirectory.GetCurrentDirectory());
         options.UsePrivateKey(fileName =>
         {
             return fileProvider.GetFileInfo(privateKeyPath);
@@ -320,7 +323,6 @@ builder.Services.AddScoped<NavigationProvider>();
 // 設定 CORS 策略
 builder.Services.AddScoped<ICorsPolicyProvider, DynamicCorsPolicyProvider>();
 
-builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IAccountAppService, AccountAppService>();
 builder.Services.AddScoped<ITokenAppService, TokenAppService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -343,6 +345,7 @@ builder.Services.AddScoped<PermissionStateStore>();
 builder.Services.AddScoped<ISpecificationAppService, SpecificationAppService>();
 builder.Services.AddScoped<ITagAppService, TagAppService>();
 builder.Services.AddScoped<IFileUploadAppService, FileUploadAppService>();
+builder.Services.AddScoped<IUploadPathResolver, UploadPathResolver>();
 builder.Services.AddScoped<IObjectTypeAppService, ObjectTypeAppService>();
 builder.Services.AddScoped<IArticleAppService, ArticleAppService>();
 builder.Services.AddScoped<IAdvertiseAppService, AdvertiseAppService>();
@@ -373,7 +376,6 @@ builder.Services.AddScoped<UserHabitsWorking>();
 builder.Services.AddScoped<IBonusManagementAppService, BonusManagementAppService>();
 builder.Services.AddScoped<IFileManagementAppService, FileManagementAppService>();
 builder.Services.Configure<AuthenticationSettings>(builder.Configuration.GetSection("Authentication"));
-builder.Services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 builder.Services.AddSingleton<IThumbnailGeneratorService, ThumbnailGeneratorService>();
 builder.Services.AddScoped<IMailTemplateAppService, MailTemplateAppService>();
 builder.Services.AddScoped<ICookieManagerAppService, CookieManagerAppService>();
@@ -549,15 +551,83 @@ app.Use((context, next) =>
 });*/
 
 //設定虛擬目錄
-app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
+// 設定 MIME 類型映射，包括 AVIF 檔案
+var fileProvider = new FileExtensionContentTypeProvider();
+fileProvider.Mappings[".avif"] = "image/avif";
+
+// 設定 UploadRoots 底下各網站的靜態目錄
+var uploadRoots = builder.Configuration
+    .GetSection("VirtualDirectory:UploadRoots")
+    .Get<Dictionary<string, string>>() ?? new Dictionary<string, string>();
+
+var registeredUploadSites = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+foreach (var uploadRoot in uploadRoots)
+{
+    var storageKey = uploadRoot.Key;
+    var rootPath = uploadRoot.Value;
+
+    if (string.IsNullOrWhiteSpace(rootPath))
+    {
+        app.Logger.LogWarning("UploadRoot 未設定：{StorageKey}", storageKey);
+        continue;
+    }
+
+    if (!IODirectory.Exists(rootPath))
+    {
+        app.Logger.LogWarning("UploadRoot 不存在或無法存取：{StorageKey} => {RootPath}", storageKey, rootPath);
+        continue;
+    }
+
+    string[] siteDirectories;
+
+    try
+    {
+        siteDirectories = IODirectory.GetDirectories(rootPath);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "掃描 UploadRoot 失敗：{StorageKey} => {RootPath}", storageKey, rootPath);
+        continue;
+    }
+
+    foreach (var siteDirectory in siteDirectories)
+    {
+        var siteName = Path.GetFileName(siteDirectory);
+
+        if (string.IsNullOrWhiteSpace(siteName))
+            continue;
+
+        if (!registeredUploadSites.Add(siteName))
+        {
+            app.Logger.LogWarning(
+                "Upload siteName 重複，已略過：{SiteName} => {SiteDirectory}",
+                siteName,
+                siteDirectory
+            );
+            continue;
+        }
+
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(siteDirectory),
+            RequestPath = $"/upload/{siteName}",
+            ContentTypeProvider = fileProvider
+        });
+
+        app.Logger.LogInformation(
+            "註冊 Upload 靜態目錄：/upload/{SiteName} => {SiteDirectory}",
+            siteName,
+            siteDirectory
+        );
+    }
+}
+
+// 其他固定虛擬目錄維持原本方式
 app.UseVirtualDirectory("shared", builder.Configuration.GetValue<string>("VirtualDirectory:Shared"));
 app.UseVirtualDirectory("layout", builder.Configuration.GetValue<string>("VirtualDirectory:Layout"));
 
 app.UseHttpsRedirection();
-
-// 設定 MIME 類型映射，包括 AVIF 檔案
-var fileProvider = new FileExtensionContentTypeProvider();
-fileProvider.Mappings[".avif"] = "image/avif";
 
 app.UseStaticFiles(new StaticFileOptions
 {

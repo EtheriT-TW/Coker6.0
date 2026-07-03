@@ -17,11 +17,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 	{
         private readonly LoginUserData loginUserData;
         private readonly IRemoteAppService remoteAppService;
-        private readonly IConfiguration configuration;
-        public RemoteController(LoginUserData loginUserData, IRemoteAppService remoteAppService, IConfiguration configuration) {
+        public RemoteController(LoginUserData loginUserData, IRemoteAppService remoteAppService) {
             this.loginUserData = loginUserData;
             this.remoteAppService = remoteAppService;
-            this.configuration = configuration;
         }
 		[HttpGet]
 		public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
@@ -38,9 +36,6 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             var startInTaipeiTime = dto.ConvertToTimeZone("Taipei Standard Time", dto.StartDate).Date;//上午00:00
             var endInTaipeiTime = dto.ConvertToTimeZone("Taipei Standard Time", dto.EndDate);
-            string orgName = await loginUserData.GetWebsiteOrgName();//獲取後台登入後選擇編輯哪個站點
-            long orgId = loginUserData.GetFrontWebsiteId();//獲取站台Id
-            string filePath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\{orgName}";
             var result = await remoteAppService.GetRemoteCount(dto);
             var remoteItem = new List<long>();
             var remoteMemCount = new List<long>();

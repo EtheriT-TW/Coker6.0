@@ -1,13 +1,12 @@
 ﻿using AutoMapper;
-using EtheriT.Coker.Application.Configuration;
 using EtheriT.Coker.Application.Dto.Files;
+using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Import;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
 using MiniExcelLibs;
 using System;
 using System.Collections;
@@ -22,68 +21,73 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Import
 {
-	public class ImportAppService
-	{
-		private readonly IFileUploadAppService fileUploadAppService;
-		private readonly string _folder;
-		private readonly IMapper mapper;
+    public class ImportAppService
+    {
+        private readonly IFileUploadAppService fileUploadAppService;
+        private readonly IUploadPathResolver uploadPathResolver;
+        private readonly LoginUserData loginUserData;
+        private readonly IMapper mapper;
         private readonly ConcurrentDictionary<(Type, string), PropertyInfo[]> _propCache = new();
         public ImportAppService(
-			IFileUploadAppService fileUploadAppService, 
-			IOptions<VirtualDirectory> VirtualDirectory,
-			IMapper mapper
-		){
-			this.fileUploadAppService = fileUploadAppService;
-			_folder = VirtualDirectory.Value.upload;
-			this.mapper = mapper;
-		}
-		public async Task<ProdImportAllDto> ProdReplace(IList<IFormFile> files)
-		{
-			ProdImportAllDto output = new ProdImportAllDto ();
-			UploadFileOutputDto upload = await fileUploadAppService.uploadTempFiles(files);
-			if (upload.Files != null)
-			{
-				for (int i = 0; i < upload.Files.Count; i++)
-				{
-					var file = upload.Files[i];
-					string path = $"{_folder.Replace("\\", "/")}{(file.Path??"").Replace("/upload", "")}";
-					output.Products.AddRange(readProdExcel(path));
-					output.Directories.AddRange(readDirectoryExcel(path));
-					await fileUploadAppService.deleteFile(path);
-				}
-			}
-			return output;
-		}
-		private List<ProductImportDto> readProdExcel(string path)
-		{
-			List<ProductImportDto> data = new List<ProductImportDto>();
-			var reg = MiniExcel.Query<ProductImportUpateRegDto>(path, sheetName: "商品",startCell: "A2").ToList();
-			var rows = mapper.Map<List<ProductImportDto>>(reg);
-            var Techs = MiniExcel.Query<TechCertImportDto>(path, sheetName: "技術證照", startCell: "A2").ToList(); 
-			try
-			{
-				for (int i = 0; i < rows.Count; i++)
-				{
-					if (rows[i] != null)
-					{
-						var t = Techs.FindAll(e => e.ProdName == rows[i].ProdName && e.ItemNo == rows[i].ItemNo);
-						rows[i].Techs = mapper.Map<List<TechCertDto>>(t);
+            IFileUploadAppService fileUploadAppService,
+            IUploadPathResolver uploadPathResolver,
+            LoginUserData loginUserData,
+            IMapper mapper
+        )
+        {
+            this.fileUploadAppService = fileUploadAppService;
+            this.uploadPathResolver = uploadPathResolver;
+            this.loginUserData = loginUserData;
+            this.mapper = mapper;
+        }
+        public async Task<ProdImportAllDto> ProdReplace(IList<IFormFile> files)
+        {
+            ProdImportAllDto output = new ProdImportAllDto();
+            UploadFileOutputDto upload = await fileUploadAppService.uploadTempFiles(files);
+            if (upload.Files != null)
+            {
+                for (int i = 0; i < upload.Files.Count; i++)
+                {
+                    var file = upload.Files[i];
+                    var orgName = await loginUserData.GetWebsiteOrgName();
+                    string path = uploadPathResolver.GetPhysicalPathFromDownloadFileName(orgName, file.Path ?? "");
+                    output.Products.AddRange(readProdExcel(path));
+                    output.Directories.AddRange(readDirectoryExcel(path));
+                    await fileUploadAppService.deleteFile(path);
+                }
+            }
+            return output;
+        }
+        private List<ProductImportDto> readProdExcel(string path)
+        {
+            List<ProductImportDto> data = new List<ProductImportDto>();
+            var reg = MiniExcel.Query<ProductImportUpateRegDto>(path, sheetName: "商品", startCell: "A2").ToList();
+            var rows = mapper.Map<List<ProductImportDto>>(reg);
+            var Techs = MiniExcel.Query<TechCertImportDto>(path, sheetName: "技術證照", startCell: "A2").ToList();
+            try
+            {
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    if (rows[i] != null)
+                    {
+                        var t = Techs.FindAll(e => e.ProdName == rows[i].ProdName && e.ItemNo == rows[i].ItemNo);
+                        rows[i].Techs = mapper.Map<List<TechCertDto>>(t);
                         pathReplace(rows[i], "Image", "Product");
                         pathReplace(rows[i], "File", "Product/File");
                         if (rows[i].Techs != null)
-						{
+                        {
                             rows[i].Techs.ForEach(e => {
                                 pathReplace(e, "Img", "TechnicalCertificate");
                             });
                         }
                         data.Add(rows[i]);
-					}
-				}
-			}
-			catch (Exception ex) { }
+                    }
+                }
+            }
+            catch (Exception ex) { }
 
-			return data;
-		}
+            return data;
+        }
         private PropertyInfo[] GetProps<T>(string keyPrefix) where T : class
         {
             var k = (typeof(T), keyPrefix.ToLowerInvariant());
@@ -95,21 +99,23 @@ namespace EtheriT.Coker.Application.Import
                          .ToArray()
             );
         }
-        private void pathReplace<T>(T dto,string key, string dir) where T : class
+        private void pathReplace<T>(T dto, string key, string dir) where T : class
         {
             var props = GetProps<T>(key);
-            foreach (var prop in props) { 
-				string? path = prop.GetValue(dto) as string;
-				if (!string.IsNullOrEmpty(path) && !path.StartsWith("http") && !path.StartsWith("/upload/"))
-				{
-					path = $"/upload/{dir}/{path}".Replace("//", "/");
-					prop.SetValue(dto, path);
+            foreach (var prop in props)
+            {
+                string? path = prop.GetValue(dto) as string;
+                if (!string.IsNullOrEmpty(path) && !path.StartsWith("http") && !path.StartsWith("/upload/"))
+                {
+                    path = $"/upload/{dir}/{path}".Replace("//", "/");
+                    prop.SetValue(dto, path);
                 }
             }
         }
-        public List<DirectoryImportDto> readDirectoryExcel(string path) {
-			var rows = MiniExcel.Query<DirectoryImportDto>(path, sheetName: "目錄分類", startCell: "A3").ToList();
-			return rows;
-		}
-	}
+        public List<DirectoryImportDto> readDirectoryExcel(string path)
+        {
+            var rows = MiniExcel.Query<DirectoryImportDto>(path, sheetName: "目錄分類", startCell: "A3").ToList();
+            return rows;
+        }
+    }
 }

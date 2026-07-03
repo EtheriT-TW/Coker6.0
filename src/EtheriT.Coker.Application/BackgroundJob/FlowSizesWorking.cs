@@ -1,20 +1,21 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+﻿using EtheriT.Coker.Application.Shared;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
+using Microsoft.Extensions.Configuration;
+using MiniExcelLibs;
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using MiniExcelLibs;
 
 namespace EtheriT.Coker.Application.BackgroundJob
 {
@@ -23,12 +24,12 @@ namespace EtheriT.Coker.Application.BackgroundJob
 	{
 		private readonly CokerDbContext db;
 		private readonly ITokenAppService tokenAppService;
-		private readonly Microsoft.Extensions.Configuration.IConfiguration Configuration;
-		public FlowSizesWorking(CokerDbContext db, ITokenAppService tokenAppService, Microsoft.Extensions.Configuration.IConfiguration Configuration)
+        private readonly IUploadPathResolver uploadPathResolver;
+        public FlowSizesWorking(CokerDbContext db, ITokenAppService tokenAppService, IUploadPathResolver uploadPathResolver)
 		{
 			this.db = db;
 			this.tokenAppService = tokenAppService;
-			this.Configuration = Configuration;
+			this.uploadPathResolver = uploadPathResolver;
 		}
 		public void FlowSizeCollection()
 		{
@@ -39,9 +40,21 @@ namespace EtheriT.Coker.Application.BackgroundJob
 
 			foreach (var id in siteId)
 			{
-				var orgName = db.Websites.Where(u => u.Id == id).Select(u => u.OrgName).FirstOrDefault();
-				var logFilePath = $"{Configuration.GetValue<string>("VirtualDirectory:upload")}\\" + orgName + "\\logs";
-				var dbDates = db.FlowSizes
+                var orgName = db.Websites.Where(u => u.Id == id).Select(u => u.OrgName).FirstOrDefault();
+                if (string.IsNullOrWhiteSpace(orgName))
+                    continue;
+
+                string logFilePath;
+
+                try
+                {
+                    logFilePath = Path.Combine(uploadPathResolver.GetRootPath(orgName), "logs");
+                }
+                catch
+                {
+                    continue;
+                }
+                var dbDates = db.FlowSizes
 					.Where(f=> f.FK_WebsiteId == id)
 					.Select(f => f.actionTime.Date)  // 提取日期部分
 					.ToList();  // 將結果加載到內存

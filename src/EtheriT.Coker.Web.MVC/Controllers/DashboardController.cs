@@ -1,22 +1,10 @@
-﻿using DevExtreme.AspNet.Data.ResponseModel;
-using DevExtreme.AspNet.Mvc;
-using DevExtreme.AspNet.Mvc.FileManagement;
-using EtheriT.Coker.Application;
-using EtheriT.Coker.Application.FlowSize;
+﻿using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Application.Shared.Dto.Remote;
 using EtheriT.Coker.Application.Shared.FlowSize;
 using EtheriT.Coker.Application.Shared.Remote;
-using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using EtheriT.Coker.EntityFrameworkCore.Migrations;
 using EtheriT.Coker.Web.MVC.Models.Dacshboard;
-using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.CSharp;
-using Newtonsoft.Json;
-using System;
-using System.Collections;
-using System.Globalization;
-using System.IO.Pipelines;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
@@ -25,20 +13,31 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         private readonly LoginUserData loginUserData;//獲取後台登入後選擇編輯哪個站點
 		private readonly IRemoteAppService remoteAppService;
         private readonly IFlowSizeAppService flowSizeAppService;
-        private readonly IConfiguration configuration;
+        private readonly IUploadPathResolver uploadPathResolver;
         private List<long> remoteList = new List<long>();
         private List<DateTime> dateList = new List<DateTime>();
-		public DashboardController(LoginUserData loginUserData, IRemoteAppService remoteAppService, IFlowSizeAppService flowSizeAppService, IConfiguration configuration) { 
+		public DashboardController(LoginUserData loginUserData, IRemoteAppService remoteAppService, IFlowSizeAppService flowSizeAppService, IUploadPathResolver uploadPathResolver) { 
             this.loginUserData = loginUserData;
             this.remoteAppService = remoteAppService;
             this.flowSizeAppService = flowSizeAppService;
-            this.configuration = configuration;
+            this.uploadPathResolver = uploadPathResolver;
         }
         //非同步 用Task的模式讀取
         public async Task<IActionResult> Index()
-        {			
-			string orgName = await loginUserData.GetWebsiteOrgName();//獲取後台登入後選擇編輯哪個站點
-            string filePath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\{orgName}";
+        {
+            string orgName = await loginUserData.GetWebsiteOrgName();//獲取後台登入後選擇編輯哪個站點
+
+            string filePath = "";
+            bool uploadDirectoryExists = true;
+
+            try
+            {
+                filePath = uploadPathResolver.GetRootPath(orgName);
+            }
+            catch
+            {
+                uploadDirectoryExists = false;
+            }
             var result = await remoteAppService.GetRemoteCount(new GetRemoteCountInputDto { 
                 StartDate = DateTime.Now.AddDays(-7),
                 EndDate = DateTime.Now

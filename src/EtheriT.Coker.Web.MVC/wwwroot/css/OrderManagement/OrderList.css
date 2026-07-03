@@ -21,7 +21,12 @@
     z-index: 1;
 }
 
-.tracking_number:disabled{
+.tracking_number {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.tracking_number:disabled {
     background-color: var(--bs-secondary-bg-subtle);
     color: var(--bs-secondary-text);
 }

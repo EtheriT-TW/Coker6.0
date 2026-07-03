@@ -44,6 +44,24 @@ const orderModel = {
             data: { Id: id },
         });
     },
+    ShipOrder: function (id) {
+        return $.ajax({
+            url: "/api/Order/ShipOrder/",
+            type: "GET",
+            contentType: 'application/json; charset=utf-8',
+            headers: _c.Data.Header,
+            data: { Id: id },
+        });
+    },
+    SendUpdateNotificationMail: function (id) {
+        return $.ajax({
+            url: "/api/Order/SendUpdateNotificationMail/",
+            type: "GET",
+            contentType: 'application/json; charset=utf-8',
+            headers: _c.Data.Header,
+            data: { Id: id },
+        });
+    },
     UpdateStatus: function (data) {
         return $.ajax({
             url: "/api/Order/UpdateStatus",

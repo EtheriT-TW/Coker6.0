@@ -30,6 +30,8 @@ namespace EtheriT.Coker.Application.Shared.Order
         public Task<ResponseMessageDto> OrderStateChange(long ohid, int state);
         public Task<ResponseMessageDto> SendMail(long ohid);
         public Task<ResponseMessageDto> SendNotificationMail(long ohid);
+        public Task<ResponseMessageDto> SendUpdateNotificationMail(long ohid);
+        public Task<ResponseMessageDto> ShipOrder(long ohid);
         public List<SelectDto> getOrderStatusLookup();
         public Task<ResponseMessageDto> UpdateStatus(OrderUpdateStatusDto dto);
         Task<ResponseMessageDto> UpdateLogistics(OrderUpdateLogisticsDto dto);

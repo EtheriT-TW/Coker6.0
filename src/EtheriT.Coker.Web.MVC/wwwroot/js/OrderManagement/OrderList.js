@@ -1,6 +1,6 @@
 ﻿var keyId
 var order_list
-let $btn_reSend, $btn_save, $btn_createLogistics, $btn_printShippingLabel, $btn_logistics_save, $btn_send_notification, btn_logistics_edit
+let $btn_reSend, $btn_save, $btn_createLogistics, $btn_printShippingLabel, $btn_logistics_save, $btn_send_notification, btn_logistics_edit, btn_logistics_update
 var oristate = 0, payment = "", isCashOnDelivery = false, transactionId = "", thirdparty = 0, ECPayLogisticsTypeStr = "", ECPayLogisticsSubTypeStr = "";
 function PageReady() {
     OrderDataCollapse();
@@ -43,6 +43,30 @@ function PageReady() {
         })
     });
 
+    $btn_logistics_update.on("click", function () {
+        const request = saveTrackingNumber();
+        if (!request) return;
+
+        $btn_logistics_update.prop("disabled", true);
+        request.done(function (result) {
+            if (!result.success) {
+                co.sweet.error("儲存失敗", result.error);
+                $btn_logistics_update.prop("disabled", false);
+                return;
+            }
+            co.Order.SendUpdateNotificationMail(keyId).done(function (mailResult) {
+                if (mailResult.success)
+                    co.sweet.success("已更新物流編號，並發送更新通知信", function () { }, false);
+                else
+                    co.sweet.error("物流編號已更新，但更新通知信發送失敗", mailResult.error);
+
+                $btn_logistics_update.addClass("d-none").prop("disabled", false);
+                $btn_logistics_save.removeClass("d-none");
+                lockLogistics();
+            });
+        });
+    });
+
     $btn_save.on("click", function () {
         updateOrder();
     });
@@ -53,10 +77,10 @@ function PageReady() {
 
     $btn_logistics_edit.on("click", function () {
         $btn_logistics_save
-            .text("更新")
-            .addClass("btn-primary")
-            .removeClass("btn-secondary")
-            .prop("disabled", false);
+            .addClass("d-none");
+
+        $btn_logistics_update
+            .removeClass("d-none");
 
         $tracking_number.prop("disabled", false);
     });
@@ -328,6 +352,7 @@ function updateOrder() {
                 case 4:
                 case 5:
                     $order_status.prop("disabled", true)
+                    $btn_logistics_save.prop("disabled", true);
                     break;
             }
             var newstate = $order_status.val();
@@ -342,7 +367,7 @@ function updateOrder() {
 }
 function lockLogistics() {
     $btn_logistics_save
-        .text("送出")
+        .text("已送出")
         .removeClass("btn-primary")
         .addClass("btn-secondary")
         .prop("disabled", true);
@@ -359,14 +384,44 @@ function updateLogistics() {
     $btn_logistics_save.prop("disabled", true);
 
     co.Order.UpdateLogistics({ Id: keyId, TrackingNumber: $tracking_number.val() }).done(function (result) {
-        const trackingNumber = $tracking_number.val();
+        const request = saveTrackingNumber();
+        if (!request) return;
+
+        $btn_logistics_save.prop("disabled", true);
         if (result.success) {
-            co.sweet.success(`已將物流編號修改為 ${trackingNumber}`);
-            lockLogistics();
+            co.Order.ShipOrder(keyId).done(function (shipResult) {
+                if (shipResult.success) {
+                    if (shipResult.message === "MailFailed")
+                        co.sweet.error("已變更訂單狀態:已出貨，但通知信發送失敗。", shipResult.error);
+                    else
+                        co.sweet.success("已變更訂單狀態:已出貨，並發送出貨通知信。");
+
+                    $btn_send_notification
+                        .prop("disabled", true)
+                        .removeClass("btn-success")
+                        .addClass("btn-secondary");
+                    $order_status.val(3);
+                    oristate = 3;
+                }
+                else {
+                    co.sweet.error("物流編號已儲存，但訂單狀態變更失敗", shipResult.error);
+                }
+                lockLogistics();
+            });
         }
-        else co.sweet.error("儲存失敗", result.error);
-        $btn_logistics_save.prop("disabled", false);
+        else {
+            co.sweet.error("儲存失敗", result.error);
+            $btn_logistics_save.prop("disabled", false);
+        }
     })
+}
+
+function saveTrackingNumber() {
+    if (!$tracking_number.val()) {
+        co.sweet.error("請輸入物流編號");
+        return null;
+    }
+    return co.Order.UpdateLogistics({ Id: keyId, TrackingNumber: $tracking_number.val() });
 }
 
 function ElementInit() {
@@ -400,6 +455,7 @@ function ElementInit() {
     $btn_printShippingLabel = $(".btn_printShippingLabel");
     $btn_send_notification = $(".btn_send_notification");
     $btn_logistics_edit = $(".btn_logistics_edit");
+    $btn_logistics_update = $(".btn_logistics_update");
 }
 function FormDataClear() {
     keyId = 0;
@@ -410,9 +466,14 @@ function FormDataClear() {
     $order_systemMemos.text("");
     $btn_logistics_save
         .prop("disabled", false)
-        .text("更新")
+        .text("送出")
         .addClass("btn-primary")
-        .removeClass("btn-secondary");
+        .removeClass("d-none");
+    $btn_logistics_update
+        .addClass("d-none");
+    $tracking_number
+        .prop("disabled", false)
+        .val("");
 
     $(".confirm").addClass("d-none");
     $(".btn_recheck").addClass("d-none");
@@ -571,12 +632,21 @@ function HeaderDataSet(result) {
     oristate = parseInt(result.state);
     var status_lock = false;
 
-    if ([4, 5].includes(oristate)) $order_status.prop("disabled", true)
+    if ([4, 5].includes(oristate)) {
+        $order_status.prop("disabled", true)
+        $btn_logistics_save
+            .prop("disabled", true)
+            .removeClass("btn-primary")
+            .addClass("btn-secondary");
+        $btn_logistics_edit.prop("disabled", true);
+        $tracking_number.prop("disabled", true);
+    } 
     else if (oristate == 7) {
         var sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         if (result.completedDate != null && new Date(result.completedDate) < sevenDaysAgo) {
             $order_status.prop("disabled", true);
+            $btn_logistics_save.prop("disabled", true);
             status_lock = true;
         }
     }

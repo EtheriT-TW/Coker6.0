@@ -27,17 +27,9 @@ function PageReady() {
 
     $btn_send_notification.on("click", function () {
         co.sweet.confirm("發送出貨通知信", "是否確認發送出貨通知信?", "確定", "取消", function () {
-            co.Order.SendNotificationMail(keyId).done(function (result) {
+            co.Order.ShipOrder(keyId).done(function (result) {
                 if (result.success) {
                     co.sweet.success("出貨通知信已發送", function () { }, false);
-
-                    $btn_send_notification
-                        .prop("disabled", true)
-                        .removeClass("btn-success")
-                        .addClass("btn-secondary");
-
-                    $order_status.val(3);
-                    oristate = 3;
                 }
             });
         })
@@ -68,7 +60,18 @@ function PageReady() {
     });
 
     $btn_save.on("click", function () {
-        updateOrder();
+        updateOrder(function (onSuccess) {
+            if (parseInt($order_status.val()) === 3) {
+                co.sweet.confirm("發送出貨通知信", "是否確認發送出貨通知信?", "確定", "取消", function () {
+                    co.Order.ShipOrder(keyId).done(function (result) {
+                        if (result.success)
+                            co.sweet.success("出貨通知信已發送", function () { }, false);
+                        else
+                            co.sweet.error("出貨通知信發送失敗", result.error);
+                    });
+                });
+            }
+        });
     });
 
     $btn_logistics_save.on("click", function () {
@@ -327,7 +330,7 @@ function ToggleOrderBonusLines(data) {
     $(".bonusUseTotalLine").toggleClass("d-none", totalBonus <= 0);
     $(".discountLine").toggleClass("d-none", discount <= 0);
 }
-function updateOrder() {
+function updateOrder(onSuccess) {
     co.Order.UpdateStatus({ Id: keyId, Status: $order_status.val(), Memo: $memo_block.val(), TrackingNumber: $tracking_number.val() }).done(function (result) {
         if (result.success) {
             var msg = "儲存成功";
@@ -347,7 +350,9 @@ function updateOrder() {
                     msg = `本筆訂單取消後${parts.join("")}`;
                 }
             }
-            co.sweet.success(msg);
+            co.sweet.success(msg, function () {
+                if (typeof onSuccess === "function") onSuccess();
+            }, false);
             switch (parseInt($order_status.val())) {
                 case 4:
                 case 5:
@@ -373,6 +378,8 @@ function lockLogistics() {
         .prop("disabled", true);
 
     $tracking_number.prop("disabled", true);
+
+    $btn_logistics_edit.removeClass("d-none");
 }
 
 function updateLogistics() {
@@ -394,12 +401,8 @@ function updateLogistics() {
                     if (shipResult.message === "MailFailed")
                         co.sweet.error("已變更訂單狀態:已出貨，但通知信發送失敗。", shipResult.error);
                     else
-                        co.sweet.success("已變更訂單狀態:已出貨，並發送出貨通知信。");
+                        co.sweet.success("物流編號已送出！！<br>並變更訂單狀態【已出貨】<br>及發送出貨通知信~");
 
-                    $btn_send_notification
-                        .prop("disabled", true)
-                        .removeClass("btn-success")
-                        .addClass("btn-secondary");
                     $order_status.val(3);
                     oristate = 3;
                 }
@@ -487,6 +490,7 @@ function FormDataClear() {
     $(".btn_failReason").addClass("d-none");
     $("#InvoiceType").addClass("d-none");
     $("#InvoiceData").addClass("d-none");
+    $(".btn_logistics_edit").addClass("d-none");
 
     $recipient_name.text("")
     $recipient_cellphone.text("")
@@ -657,12 +661,6 @@ function HeaderDataSet(result) {
 
     if ([1, 3].includes(oristate))
         $(".btn_send_notification").removeClass("d-none");
-    if (oristate == 3) {
-        $btn_send_notification
-            .prop("disabled", true)
-            .removeClass("btn-success")
-            .addClass("btn-secondary");
-    }
 
     if (result.bonus == 0) $(".bonusLine").addClass("d-none");
     else $(".bonusLine").removeClass("d-none");

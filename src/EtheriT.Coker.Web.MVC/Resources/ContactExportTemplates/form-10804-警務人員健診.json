@@ -37,7 +37,7 @@
     },
     {
       "columnKey": "telPhone",
-      "columnTitle": "行動電話",
+      "columnTitle": "聯絡電話",
       "visible": true,
       "format": "text"
     },
@@ -97,7 +97,7 @@
     },
     {
       "columnKey": "InputFamilyCheck",
-      "columnTitle": "攜帶眷屬健診專案",
+      "columnTitle": "攜帶眷屬健診方案",
       "visible": true,
       "format": "text"
     },
@@ -158,12 +158,6 @@
     {
       "columnKey": "InputECG",
       "columnTitle": "是否加購運動心電圖",
-      "visible": true,
-      "format": "text"
-    },
-    {
-      "columnKey": "captcha",
-      "columnTitle": "驗證碼",
       "visible": true,
       "format": "text"
     }

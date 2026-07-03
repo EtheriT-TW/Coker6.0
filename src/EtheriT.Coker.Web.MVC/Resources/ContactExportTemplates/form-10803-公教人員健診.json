@@ -39,7 +39,7 @@
     },
     {
       "columnKey": "telPhone",
-      "columnTitle": "行動電話",
+      "columnTitle": "聯絡電話",
       "visible": true,
       "format": "text"
     },
@@ -99,7 +99,7 @@
     },
     {
       "columnKey": "InputFamilyCheck",
-      "columnTitle": "攜帶眷屬健診專案",
+      "columnTitle": "攜帶眷屬健診方案",
       "visible": true,
       "format": "text"
     },
@@ -160,12 +160,6 @@
     {
       "columnKey": "RadioForm",
       "columnTitle": "是否需要提供附表一般體格表(勞檢表)",
-      "visible": true,
-      "format": "text"
-    },
-    {
-      "columnKey": "captcha",
-      "columnTitle": "驗證碼",
       "visible": true,
       "format": "text"
     }

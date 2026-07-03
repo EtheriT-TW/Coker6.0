@@ -42,12 +42,6 @@
       "format": "text"
     },
     {
-      "columnKey": "InputCompany",
-      "columnTitle": "聯絡地址",
-      "visible": true,
-      "format": "text"
-    },
-    {
       "columnKey": "idno",
       "columnTitle": "身分證字號",
       "visible": true,
@@ -60,20 +54,20 @@
       "format": "text"
     },
     {
+      "columnKey": "ContactUsType",
+      "columnTitle": "健診方案",
+      "visible": true,
+      "format": "text"
+    },
+    {
       "columnKey": "checkDate",
       "columnTitle": "希望預約日期",
       "visible": true,
       "format": "text"
     },
     {
-      "columnKey": "RadioForm",
-      "columnTitle": "健檢原因",
-      "visible": true,
-      "format": "text"
-    },
-    {
-      "columnKey": "ContactUsType",
-      "columnTitle": "健診方案",
+      "columnKey": "InputCompany",
+      "columnTitle": "資料袋寄送地址",
       "visible": true,
       "format": "text"
     },
@@ -132,8 +126,8 @@
       "format": "text"
     },
     {
-      "columnKey": "captcha",
-      "columnTitle": "驗證碼",
+      "columnKey": "RadioForm",
+      "columnTitle": "健檢原因",
       "visible": true,
       "format": "text"
     }

@@ -1,6 +1,9 @@
 ﻿var $display, $removedFromShelves, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count,
     $marks, $price, $subItemNo, $stock_number, $packingPoint_number, $alert_number, $min_number, $date, $picker, $permanent, $itemNo, $itemNo_count;
-var startDate, endDate, keyId, price_tid, temp_psid
+var startDate, endDate, keyId, price_tid, temp_psid;
+var productTagFilter = null;
+var productTagOptions = [];
+var productTagOptionsPromise = null;
 var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], spec_pick_list, suggest_price_list = []
 var $price_modal, priceModal
 var total_files = [];
@@ -30,20 +33,37 @@ function showImportProdPopup() {
 function toolbarPreparing(e) {
     var dataGrid = e.component;
 
-    e.toolbarOptions.items.unshift({
-        location: "after",
-        widget: "dxButton",
-        options: {
-            icon: "fa-solid fa-file-excel",
-            text: "商品匯入",
-            onClick: showImportProdPopup
+    e.toolbarOptions.items.unshift(
+        {
+            location: "before",
+            widget: "dxButton",
+            options: {
+                icon: "plus",
+                text: "新增商品",
+                type: "default",
+                stylingMode: "contained",
+                onClick: function () {
+                    window.location.hash = 0;
+                }
+            }
         },
-    });
+        {
+            location: "after",
+            widget: "dxButton",
+            options: {
+                icon: "fa-solid fa-file-excel",
+                text: "商品匯入",
+                stylingMode: "outlined",
+                onClick: showImportProdPopup
+            }
+        }
+    );
 }
 
 async function PageReady() {
     ElementInit();
 
+    ProductTagFilterInit();
     TechCertListModalInit();
     TagListModalInit();
 
@@ -186,9 +206,7 @@ async function PageReady() {
             BackToList(true);
         });
     })
-    $(".btn_add").on("click", function () {
-        window.location.hash = 0;
-    });
+  
     $(".btn_input_pic").on("click", function (event) {
         event.preventDefault();
         $(".input_pic").click();
@@ -296,6 +314,115 @@ async function PageReady() {
             }
         })
     })
+}
+function getProductTagFilterIds() {
+    if (productTagFilter == null) return "";
+
+    var values = productTagFilter.option("value") || [];
+    return values.join(",");
+}
+function LoadProductTagOptions() {
+    if (productTagOptions.length > 0) {
+        return Promise.resolve(productTagOptions);
+    }
+
+    if (productTagOptionsPromise != null) {
+        return productTagOptionsPromise;
+    }
+
+    productTagOptionsPromise = co.Product.Get.ProductListTags()
+        .then(function (data) {
+            productTagOptions = data || [];
+            return productTagOptions;
+        })
+        .catch(function (error) {
+            productTagOptionsPromise = null;
+            productTagOptions = [];
+
+            if (window.console) {
+                console.error("商品標籤載入失敗", error);
+            }
+
+            return [];
+        });
+
+    return productTagOptionsPromise;
+}
+function ProductTagFilterInit() {
+    var store = new DevExpress.data.CustomStore({
+        key: "fK_TId",
+        loadMode: "raw",
+        load: function () {
+            return LoadProductTagOptions();
+        }
+    });
+
+    $("#ProductTagFilter").dxTagBox({
+        dataSource: store,
+        valueExpr: "fK_TId",
+        displayExpr: "tag_Name",
+        placeholder: "選擇商品標籤，可多選",
+        showSelectionControls: true,
+        applyValueMode: "useButtons",
+        searchEnabled: true,
+        multiline: false,
+        maxDisplayedTags: 4,
+        showMultiTagOnly: false,
+
+        dropDownOptions: {
+            width: "auto",
+            minWidth: 520,
+            maxWidth: 760,
+            wrapperAttr: {
+                class: "product-tag-filter-dropdown"
+            }
+        },
+
+        itemTemplate: function (itemData) {
+            return $("<div>")
+                .addClass("product-tag-filter-item")
+                .text(itemData.tag_Name);
+        },
+
+        onValueChanged: function () {
+            if (product_list != null && product_list.component != null) {
+                product_list.component.refresh();
+            }
+        }
+    });
+
+    productTagFilter = $("#ProductTagFilter").dxTagBox("instance");
+    LoadProductTagOptions();
+
+    $("#ProductTagFilterClear").on("click", function () {
+        if (productTagFilter == null) return;
+
+        productTagFilter.option("value", []);
+    });
+
+    $(document).on("click", ".product-tag-badge", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        var tagName = ($(this).data("tag-name") || "").toString().trim();
+        if (tagName === "" || productTagFilter == null) return;
+
+        LoadProductTagOptions().then(function (tagOptions) {
+            var tagItem = tagOptions.find(function (item) {
+                return item.tag_Name === tagName;
+            });
+
+            if (tagItem == null) return;
+
+            var values = productTagFilter.option("value") || [];
+            var tagId = tagItem.fK_TId;
+
+            if (values.indexOf(tagId) === -1) {
+                values.push(tagId);
+                productTagFilter.option("value", values);
+            }
+        });
+    });
 }
 function ElementInit() {
     $name = $("#InputName");

@@ -128,13 +128,31 @@
     <div id="" class="py-2">
         <div id="ProductList" class="card border-0">
             <div class="card-body position-relative pb-5">
-                <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
-                    <span class="material-symbols-outlined">add</span>
-                </button>
+                <div class="product-list-filter-panel mb-3">
+                    <div class="product-list-filter-title">
+                        <span class="material-symbols-outlined">filter_alt</span>
+                        <span>標籤過濾</span>
+                    </div>
+
+                    <div class="product-tag-filter-control">
+                        <div id="ProductTagFilter"></div>
+                    </div>
+
+                    <button type="button"
+                            id="ProductTagFilterClear"
+                            class="product-tag-filter-clear">
+                        清除
+                    </button>
+                </div>
                 @(
                     Html.DevExtreme().DataGrid<ProductGetAllListDto>()
-                        .DataSource(d => d.RemoteController().Key("Id")
-                        .LoadUrl("/api/Product/GetAllList").LoadMethod("Get")
+                    .DataSource(d => d.RemoteController().Key("Id")
+                        .LoadUrl("/api/Product/GetAllList")
+                        .LoadMethod("Get")
+                        .LoadParams(new
+                        {
+                            tagIds = new JS("getProductTagFilterIds")
+                        })
                     )
                     .ID("devProdListGrid")
                     .HeaderFilter(headerFilter => headerFilter.Visible(true))
@@ -167,8 +185,35 @@
                                 </text>);
                         c.AddFor(e => e.Ser_No).Caption("排序").Width(75);
                         c.AddFor(e => e.Title).Caption("商品名稱");
+                        c.Add()
+                            .DataField("TagNames")
+                            .Caption("商品標籤")
+                            .Width(220)
+                            .HidingPriority(3)
+                            .AllowSearch(false)
+                            .AllowFiltering(false)
+                            .AllowSorting(false)
+                            .CellTemplate(@<text>
+                            <%
+                                var tagText = data.TagNames || "";
+                                var tags = tagText ? tagText.split("、") : [];
+                                if(tags.length === 0) {
+                            %>
+                                <span class="text-muted">-</span>
+                            <% } else { %>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <% tags.forEach(function(tag) { %>
+                                        <button type="button"
+                                                class="badge rounded-pill text-bg-secondary border-0 product-tag-badge"
+                                                data-tag-name="<%- tag %>">
+                                            <%- tag %>
+                                        </button>
+                                    <% }); %>
+                                </div>
+                            <% } %>
+                        </text>);
                         if(Model.HasAnyItemNo){
-                            c.AddFor(e => e.ItemNo).Caption("銷貨編號").Width(150).HidingPriority(3);
+                            c.AddFor(e => e.ItemNo).Caption("產品型號").Width(150).HidingPriority(3);
                         }
                         c.AddFor(e => e.Price).Caption("價格").AllowSearch(false).AllowFiltering(false).AllowSorting(false);
                         c.AddFor(e => e.EndTime) // 用 EndTime 當基底即可

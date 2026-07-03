@@ -1275,6 +1275,12 @@ namespace EtheriT.Coker.Application
             response.Success = true;
             return response;
         }
+        private class ProductListCompressedImageRow
+        {
+            public Guid GuidKey { get; set; }
+            public string? Path { get; set; }
+            public long? Size { get; set; }
+        }
         public async Task<Dictionary<long, string>> GetMinImageMapAsync(List<long> prodIds)
         {
             if (prodIds == null || prodIds.Count == 0)
@@ -1286,53 +1292,111 @@ namespace EtheriT.Coker.Application
             // 把「網站邊界」綁死在查詢裡，避免跨站撈圖
             var siteProdIds =
                 from p in db.Prods
-                where p.FK_WebsiteId == webid && !p.IsDeleted && prodIds.Contains(p.Id)
+                where p.FK_WebsiteId == webid
+                   && !p.IsDeleted
+                   && prodIds.Contains(p.Id)
                 select p.Id;
 
-            var originalsQ =
-                from fb in db.FileBinds
-                join f in db.FileUploads on fb.FK_FileUploadId equals f.Id
+            // 先抓「商品綁定的原始圖片」
+            // 重點：
+            // 1. 只取 FileUpload.ContentType 為 image/* 的資料
+            // 2. 排除 youtube、video/*、一般檔案
+            // 3. 依 FileBinds.SerNo / CreationTime / Id 排序
+            var imageBinds = await (
+                from fb in db.FileBinds.AsNoTracking()
+                join f in db.FileUploads.AsNoTracking() on fb.FK_FileUploadId equals f.Id
                 join pid in siteProdIds on fb.Sid equals pid
-                where fb.type == 1 && !f.IsDeleted && !fb.IsDeleted
-                select new { ProdId = fb.Sid, Size = f.Size, Path = f.DownloadFileName };
+                where fb.type == (int)FileBindTypeEnum.產品
+                   && !fb.IsDeleted
+                   && !f.IsDeleted
+                   && f.FK_WebsiteId == webid
+                   && f.ContentType != null
+                   && f.ContentType.StartsWith("image/")
+                orderby fb.Sid, fb.SerNo, fb.CreationTime, fb.Id
+                select new
+                {
+                    ProdId = fb.Sid,
+                    UploadId = f.Id,
+                    GuidKey = f.GuidKey,
+                    OriginalPath = f.DownloadFileName,
+                    SerNo = fb.SerNo,
+                    CreationTime = fb.CreationTime,
+                    BindId = fb.Id
+                }
+            ).ToListAsync();
 
-            var compressedQ =
-                from fb in db.FileBinds
-                join fo in db.FileUploads on fb.FK_FileUploadId equals fo.Id
-                join pid in siteProdIds on fb.Sid equals pid
-                where fb.type == 1 && !fo.IsDeleted && !fb.IsDeleted
-                join m in db.FileBindMores on fo.GuidKey equals m.FK_FileBindGuid
-                where m.type == 1
-                join fc in db.FileUploads on m.FK_FileUploadId equals fc.Id
-                where !fc.IsDeleted
-                select new { ProdId = fb.Sid, Size = fc.Size, Path = fc.DownloadFileName };
+            if (imageBinds.Count == 0)
+                return new Dictionary<long, string>();
 
-            var allImagesQ = originalsQ.Concat(compressedQ);
-
-            // 兩段式：先求每個商品最小 size，再對回那一筆
-            var minSizeQ =
-                from img in allImagesQ
-                where img.Size != null
-                group img by img.ProdId into g
-                select new { ProdId = g.Key, MinSize = g.Min(x => x.Size) };
-
-            var minImageQ =
-                from img in allImagesQ
-                join agg in minSizeQ on new { img.ProdId, img.Size } equals new { agg.ProdId, Size = agg.MinSize }
-                select new { img.ProdId, img.Path };
-
-            var minImageRows = await minImageQ.ToListAsync();
-
-            return minImageRows
+            // 每個商品只取排序後的第一張「圖片」
+            var firstImageMap = imageBinds
                 .GroupBy(x => x.ProdId)
                 .ToDictionary(
                     g => g.Key,
-                    g => BuildBackendUploadPath(
-                            g.Select(x => x.Path).FirstOrDefault(),
-                            orgName,
-                            "/images/noImg.jpg"
-                    )
+                    g => g
+                        .OrderBy(x => x.SerNo)
+                        .ThenBy(x => x.CreationTime)
+                        .ThenBy(x => x.BindId)
+                        .First()
                 );
+
+            // 若有壓縮圖，列表優先使用壓縮圖；但選哪一張商品圖仍以 FileBinds.SerNo 第一張為準
+            var guidKeys = firstImageMap.Values
+                .Where(x => x.GuidKey != Guid.Empty)
+                .Select(x => x.GuidKey)
+                .Distinct()
+                .ToList();
+
+            var compressedRows = new List<ProductListCompressedImageRow>();
+
+            if (guidKeys.Count > 0)
+            {
+                compressedRows = await (
+                    from m in db.FileBindMores.AsNoTracking()
+                    join fc in db.FileUploads.AsNoTracking() on m.FK_FileUploadId equals fc.Id
+                    where !m.IsDeleted
+                       && !fc.IsDeleted
+                       && m.type == (int)FileBindMoreEnum.壓縮圖片
+                       && guidKeys.Contains(m.FK_FileBindGuid)
+                       && fc.ContentType != null
+                       && fc.ContentType.StartsWith("image/")
+                    select new ProductListCompressedImageRow
+                    {
+                        GuidKey = m.FK_FileBindGuid,
+                        Path = fc.DownloadFileName,
+                        Size = fc.Size
+                    }
+                ).ToListAsync();
+            }
+
+            var compressedMap = compressedRows
+                .GroupBy(x => x.GuidKey)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g
+                        .OrderBy(x => x.Size ?? long.MaxValue)
+                        .Select(x => x.Path)
+                        .FirstOrDefault()
+                );
+
+            return firstImageMap.ToDictionary(
+                x => x.Key,
+                x =>
+                {
+                    var firstImage = x.Value;
+
+                    var path = firstImage.OriginalPath;
+
+                    if (firstImage.GuidKey != Guid.Empty &&
+                        compressedMap.TryGetValue(firstImage.GuidKey, out var compressedPath) &&
+                        !string.IsNullOrWhiteSpace(compressedPath))
+                    {
+                        path = compressedPath;
+                    }
+
+                    return BuildBackendUploadPath(path, orgName, "/images/noImg.jpg");
+                }
+            );
         }
         private string BuildBackendUploadPath(string? path, string orgName, string fallback = "/images/noImg.jpg")
         {

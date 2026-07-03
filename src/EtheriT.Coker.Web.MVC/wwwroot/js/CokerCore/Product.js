@@ -55,6 +55,9 @@
                     data: { id: id }
                 });
             },
+            ProductListTags: function () {
+                return co.request.get("/api/Product/GetProductListTags");
+            },
             ProdStock: function (id) {
                 return $.ajax({
                     url: "/api/Product/GetStockDataAll/",

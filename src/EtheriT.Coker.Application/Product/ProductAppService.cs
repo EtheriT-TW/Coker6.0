@@ -498,12 +498,13 @@ namespace EtheriT.Coker.Application.Product
             return response;
         }
         /* Get Data */
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? pids)
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? pids, string? tagIds)
         {
             try
             {
                 long webid = await loginUserData.GetWebsiteId();
                 var selectedIds = stringHandler.ParseCsvIds(pids);
+                var selectedTagIds = stringHandler.ParseCsvIds(tagIds);
                 // 只取必要欄位，避免撈太肥
                 var baseQuery = db.Prods
                     .Where(p => p.FK_WebsiteId == webid && !p.IsDeleted)
@@ -522,6 +523,20 @@ namespace EtheriT.Coker.Application.Product
                         CreationTime = p.CreationTime,
                         IsSelected = selectedIds.Contains(p.Id)
                     });
+
+                if (selectedTagIds.Count > 0)
+                {
+                    var matchedProductIds =
+                        from ta in db.Tag_Associates.AsNoTracking()
+                        where ta.Type == TagAssociateTypeEnum.商品
+                           && !ta.IsDeleted
+                           && selectedTagIds.Contains(ta.FK_TId)
+                        group ta by ta.FK_AId into g
+                        where g.Select(x => x.FK_TId).Distinct().Count() == selectedTagIds.Count
+                        select g.Key;
+
+                    baseQuery = baseQuery.Where(p => matchedProductIds.Contains(p.Id));
+                }
 
                 var baseResult = await DataSourceLoader.LoadAsync(baseQuery, loadOptions);
 
@@ -636,7 +651,30 @@ namespace EtheriT.Coker.Application.Product
                 ContractResolver = new DefaultContractResolver()
             });
         }
+        public async Task<List<TagGetSelectedDto>> GetProductListTags()
+        {
+            long webid = await loginUserData.GetWebsiteId();
 
+            var tags = await (
+                from ta in db.Tag_Associates.AsNoTracking()
+                join t in db.Tags.AsNoTracking() on ta.FK_TId equals t.Id
+                join p in db.Prods.AsNoTracking() on ta.FK_AId equals p.Id
+                where ta.Type == TagAssociateTypeEnum.商品
+                   && !ta.IsDeleted
+                   && !t.IsDeleted
+                   && !p.IsDeleted
+                   && p.FK_WebsiteId == webid
+                group t by new { t.Id, t.Title } into g
+                orderby g.Key.Title
+                select new TagGetSelectedDto
+                {
+                    FK_TId = g.Key.Id,
+                    Tag_Name = g.Key.Title
+                }
+            ).ToListAsync();
+
+            return tags;
+        }
         public async Task<ProdGetDataDto> GetProdDataOne(long Id)
         {
             try

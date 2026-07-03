@@ -1,14 +1,15 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Shared.Dto.Import;
+using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
+using EtheriT.Coker.Application.Shared.Dto.Import;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.Role;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using EtheriT.Coker.Application.Shared.Dto.Article;
-using EtheriT.Coker.Application.Shared.Dto.WebMenu;
-using EtheriT.Coker.Application.Shared.Dto;
-using EtheriT.Coker.Application.Shared.Dto.Role;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace EtheriT.Coker.Application.Shared.Product
@@ -19,7 +20,7 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ResponseMessageDto> StockAddUp(long Pid, List<ProductStockDto> dto);
         public Task<ResponseMessageDto> StockBatchSet(List<StockBatchSetDto> dto);
         public Task<ResponseMessageDto> PriceAddUp(List<ProductPriceDto> dto);
-        public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? pids);
+        public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? pids, string? tagIds);
         public Task<JsonResult> SaleQuantityStaging(DataSourceLoadOptions loadOptions);
         public Task<ProdGetDataDto> GetProdDataOne(long Id);
         public Task<List<ProductStockDto>> GetStockDataAll(long PId);
@@ -43,6 +44,7 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ResponseMessageDto> SaveConten(ProdSaveContenDto dto);
         public Task<ResponseMessageDto> HasAnyItemNo();
         public Task<GetFrontContenOutputDto> GetFrontConten(ProdGetFrontContenInputDto dto);
+        public Task<List<TagGetSelectedDto>> GetProductListTags();
 
     }
 }

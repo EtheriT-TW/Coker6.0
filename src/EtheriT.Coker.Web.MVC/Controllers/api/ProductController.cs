@@ -5,6 +5,7 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Product;
 using Microsoft.AspNetCore.Authorization;
@@ -36,9 +37,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await productAppService.PriceAddUp(dto);
         }
         [HttpGet]
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, [FromQuery] string? pids = null)
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, [FromQuery] string? pids = null, string? tagIds = null)
         {
-            return await productAppService.GetAllList(loadOptions, pids);
+            return await productAppService.GetAllList(loadOptions, pids, tagIds);
         }
         [HttpGet]
         public async Task<JsonResult> SaleQuantityStaging(DataSourceLoadOptions loadOptions)
@@ -98,6 +99,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         [HttpPost]
         public async Task<ResponseMessageDto> StockBatchSet(List<StockBatchSetDto> dto) {
             return await productAppService.StockBatchSet(dto);
+        }
+        [HttpGet]
+        public async Task<List<TagGetSelectedDto>> GetProductListTags() {
+            return await productAppService.GetProductListTags();
         }
     }
 }

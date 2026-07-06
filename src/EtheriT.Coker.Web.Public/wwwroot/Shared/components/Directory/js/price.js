@@ -60,7 +60,7 @@
     function buildOriginPriceLine(label, value, extraClass) {
         if (!hasDisplayValue(value)) return "";
         const safeClass = extraClass ? ` ${extraClass}` : "";
-        return `<div class="origin-price text-decoration-line-through${safeClass}">${label}：${formatMoney(value)}</div>`;
+        return `<div class="origin-price text-decoration-line-through${safeClass}">${formatMoney(value)}</div>`;
     }
 
     function buildLabeledPriceLine(label, value, className) {
@@ -192,14 +192,9 @@
         // 2. oriPrice 有值
         // 3. oriPrice 與 price 不同
         if (isMemberRole && hasOriPrice) {
-            if (baseRoleName) {
-                html += buildOriginPriceLine(baseRoleName, oriPrice);
-            } else {
-                html += buildOriginPriceLine("非會員", oriPrice);
-            }
 
             if (currentRoleName) {
-                html += `<div class="sale-price role-current-price">${currentRoleName}：${formatMoney(price)}</div>`;
+                html += `<div class="sale-price role-current-price">${formatMoney(price)}</div>`;
             } else {
                 html += buildSalePriceLine(price);
             }

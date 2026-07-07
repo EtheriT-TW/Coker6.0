@@ -301,16 +301,37 @@ namespace EtheriT.Coker.Application.Common
                         return false;
                     };
                     Step("set ServerCertificateValidationCallback");
-                    client.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13; ;
+                    client.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
                     // 連接 Mail Server (郵件伺服器網址, 連接埠, 是否使用 SSL)
                     client.Connect(dto.SMTP.Url, dto.SMTP.Port, dto.SMTP.UseSSL);
                     Step("set Connect");
                     // 如果需要的話，驗證一下
+                    // 有完整帳號與密碼時，才視為需要 SMTP AUTH
                     var hasUser = !string.IsNullOrWhiteSpace(dto.SMTP.UserName);
+                    var hasPassword = !string.IsNullOrWhiteSpace(dto.SMTP.Password);
+                    var requiresAuth = hasUser && hasPassword;
                     var canAuth = client.Capabilities.HasFlag(SmtpCapabilities.Authentication);
-                    if (hasUser && canAuth)
+
+                    Step(
+                        $"SMTP Auth check: " +
+                        $"HasUser={hasUser}, " +
+                        $"HasPassword={hasPassword}, " +
+                        $"RequiresAuth={requiresAuth}, " +
+                        $"CanAuth={canAuth}"
+                    );
+
+                    if (requiresAuth)
                     {
+                        // 後台已設定完整帳密，就必須進行 SMTP AUTH
+                        if (!canAuth)
+                        {
+                            throw new InvalidOperationException(
+                                "SMTP 已設定帳號與密碼，但伺服器未提供 AUTH 能力。"
+                            );
+                        }
+
                         Step($"AUTH before: {dto.SMTP.UserName}");
+
                         try
                         {
                             client.Authenticate(dto.SMTP.UserName, dto.SMTP.Password);
@@ -319,22 +340,26 @@ namespace EtheriT.Coker.Application.Common
                         catch (NotSupportedException ex)
                         {
                             Step($"AUTH NotSupported: {ex.Message}");
-                            throw new InvalidOperationException("SMTP Server 不支援目前的驗證方式，無法完成 SMTP 認證。", ex);
+
+                            throw new InvalidOperationException(
+                                "SMTP Server 不支援目前的驗證方式，無法完成 SMTP 認證。",
+                                ex
+                            );
                         }
                         catch (MailKit.Security.AuthenticationException ex)
                         {
-                            // 真的帳密錯誤才會進來（你原本外層也有抓，這裡多寫一步清楚）
                             Step($"AUTH AuthenticationException: {ex.Message}");
-                            throw; // 讓外層 catch 正常處理
+                            throw;
                         }
-                    }
-                    else if (hasUser && !canAuth)
-                    {
-                        throw new InvalidOperationException("SMTP Server 未提供 AUTH 能力，無法使用帳號密碼登入。");
                     }
                     else
                     {
-                        Step("No username -> skip Authenticate");
+                        // 沒有完整帳密，不進行 SMTP AUTH
+                        Step(
+                            $"Skip AUTH: " +
+                            $"HasUser={hasUser}, " +
+                            $"HasPassword={hasPassword}"
+                        );
                     }
 
                     // 寄出郵件

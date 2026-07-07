@@ -47,8 +47,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
         //console.log("asset:add");
     });
 
-    editor.on('run:open-assets', () => {
-        //console.log("run:open-assets");
+    editor.on('asset:open', () => {
         const modal = editor.Modal;
         const modalBody = modal.getContentEl();
         const uploader = modalBody.querySelector('.gjs-am-file-uploader');
@@ -70,7 +69,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                 else {
                     $(".gjs-am-asset-image").each(function () {
                         const $image = $(this);
-                        const imageName = $image.find(".gjs-am-dimensions").text();
+                        const imageName = $image.find(".gjs-am-name").text();
                         if (imageName.indexOf(search) < 0) $image.addClass("d-none");
                         else $image.removeClass("d-none");
                     });
@@ -82,6 +81,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
         AssetManager.onSelect((result) => {
             //console.log("result", result)
             var name = result.attributes.name;
+            console.log(result,name);
             $gjs_select.addAttributes({ alt: name.substring(0, name.lastIndexOf(".")) });
             $gjs_select = null;
         });

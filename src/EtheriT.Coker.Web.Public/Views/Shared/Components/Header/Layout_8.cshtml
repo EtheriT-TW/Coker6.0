@@ -43,6 +43,17 @@
                 <h5 class="offcanvas-title mx-auto fs-5 fw-bold" id="offcanvasLabel">@Model.Title</h5>
             </div>
 
+            @if (ViewBag.LoginEnable)
+			{
+				var showMenuUser = ViewBag.isLogin ? "" : "d-none";
+				<a id="MenuHiUser" class="d-lg-none @showMenuUser" href="/@ViewData["OrgName"]/Member" title="@L.get("GoToMemberCenter")">
+					<span class="material-symbols-outlined icon-logged-in">
+						person_check
+					</span>
+					<span class="name">@L.get("LoggedIn")</span>
+				</a>
+			}
+
             <!-- Menu Canvas Menu -->
             <ul class="navbar-nav offcanvas-body m-0 mx-3" id="accordion-menu">
                 <li class="">
@@ -323,18 +334,16 @@
             }
             @if (ViewBag.LoginEnable)
             {
-                @if (ViewBag.isLogin)
+                var show = ViewBag.isLogin ? "" : "d-none";
+                <a id="HiUser" class="d-flex px-1 align-items-center @show" href="/@ViewData["OrgName"]/Member" title="@L.get("GoToMemberCenter")">
+                    <span class="material-symbols-outlined icon-logged-in">
+                        person_check
+                    </span>
+                    <span class="name d-none d-lg-inline">@L.get("LoggedIn")</span>
+                </a>
+                @if (!ViewBag.isLogin)
                 {
-                    <a id="HiUser" class="d-flex px-1 align-items-center" href="/@ViewData["OrgName"]/Member" title="@L.get("GoToMemberCenter")">
-                        <span class="material-symbols-outlined">
-                            person
-                        </span>
-                        <span class="name">@L.get("LoggedIn")</span>
-                    </a>
-                }
-                else
-                {
-                    <button type="button" class="btn bg-transparent text-black border-0 d-flex" data-bs-toggle="modal" data-bs-target="#LoginModal">
+                    <button id="UserLogin" type="button" class="btn bg-transparent text-black border-0 d-flex" data-bs-toggle="modal" data-bs-target="#LoginModal">
                         <span class="material-symbols-outlined">person</span>
                     </button>
                 }

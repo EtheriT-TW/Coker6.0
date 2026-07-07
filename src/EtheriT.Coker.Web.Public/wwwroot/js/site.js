@@ -1,5 +1,18 @@
 ﻿var LayoutType = 0, IsFaPage = true, loginModal, otherLoginModal, registerModal, forgetModal, resetModal, privacyStatementModal, IsLogin;
 
+function truncateName(name, maxLength = 6) {
+    return name.length > maxLength ? name.substring(0, maxLength) + "..." : name;
+}
+
+function maskUserName(name) {
+    if (name.isNullOrEmpty) return "";
+    name = name.trim();
+    if (name.length === "") return "";
+    if (name.length === 1) return "○";
+    if (name.length === 2) return name.charAt(0) + "○";
+    return name.charAt(0) + "○" + name.charAt(name.length - 1);
+}
+
 function ready() {
     const $conten = $("#main");
     const $parentConten = $("#ParentNode");
@@ -747,7 +760,13 @@ function CheckToken() {
         if (result.success) {
             if (result.isLogin && result.name != "") {
                 IsLogin = true;
-                $("#HiUser > .name").text(local.GreetingUser.format(result.name));
+                var maskedName = maskUserName(result.name);
+                $("#HiUser > .name").text(local.GreetingUser.format(truncateName(result.name)));
+                $("#HiUser").attr("title", local.GreetingUser.format(result.name));
+                $("#MenuHiUser > .name").text(local.GreetingUser.format(maskedName));
+                $("#HiUser").removeClass("d-none");
+                $("#MenuHiUser").removeClass("d-none");
+                $("#userlogin").addClass("d-none");
             }
             if ($("#Cart_Dropdown_Parent").length > 0) {
                 CartDropInit();
@@ -765,8 +784,10 @@ function CheckToken() {
                                 if (result.success) {
                                     if (result.isLogin && result.name != "") {
                                         IsLogin = true;
-                                        $("#HiUser > .name").text(`${result.name} 您好!`);
+                                        $("#HiUser > .name").text(local.GreetingUser.format(truncateName(result.name)));
+                                        $("#MenuHiUser > .name").text(local.GreetingUser.format(result.name));
                                         $("#HiUser").removeClass("d-none");
+                                        $("#MenuHiUser").removeClass("d-none");
                                         $("#UserLogin").addClass("d-none");
                                         $("#memberLogin").addClass("d-none");
                                     }

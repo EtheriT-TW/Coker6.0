@@ -119,14 +119,14 @@
 					{
 						var show = ViewBag.isLogin ? "" : "d-none";
 						<a id="HiUser" class="d-flex px-1 align-items-center @show" href="/@ViewData["OrgName"]/Member" title="@L.get("GoToMemberCenter")">
-							<span class="material-symbols-outlined icon-logged-in fw-light">
-								person_check
+							<span class="material-symbols-outlined">
+								person
 							</span>
-							<span class="name d-none d-lg-inline">@L.get("LoggedIn")</span>
+							<span class="name">@L.get("LoggedIn")</span>
 						</a>
 						@if (!ViewBag.isLogin)
 						{
-							<button id="UserLogin" type="button" class="btn bg-transparent text-black border-0 d-flex login fw-light" data-bs-toggle="modal" data-bs-target="#LoginModal">
+							<button id="UserLogin" type="button" class="btn bg-transparent text-black border-0 d-flex login" data-bs-toggle="modal" data-bs-target="#LoginModal">
 								<span class="material-symbols-outlined">person</span>
 							</button>
 						}
@@ -170,16 +170,6 @@
 
 			<!-- Menu Canvas Menu -->
 			<a accesskey="U" href="#" class="hide accesskey" title="@L.get("accesskeyTop")">:::</a>
-			@if (ViewBag.LoginEnable)
-			{
-				var showMenuUser = ViewBag.isLogin ? "" : "d-none";
-				<a id="MenuHiUser" class="d-lg-none @showMenuUser" href="/@ViewData["OrgName"]/Member" title="@L.get("GoToMemberCenter")">
-					<span class="material-symbols-outlined icon-logged-in">
-						person_check
-					</span>
-					<span class="name">@L.get("LoggedIn")</span>
-				</a>
-			}
 			<ul class="navbar-nav offcanvas-body m-0 ">
 				@await Html.PartialAsync("~/Views/Shared/Components/Header/_MenuPartial.cshtml", MenuItems)
 				@foreach (var menu in Model.langMenuItemModels)

@@ -7,17 +7,14 @@ function HeaderInit() {
     var Mega_Menu = document.getElementById("Offcanvas_Mega_Menu");
     var observer = new MutationObserver(function (mutations) {
         var icon = document.getElementById("menuIcon");
-        var narTopBar = document.getElementById("narTopBar");
         mutations.forEach(function (mutation) {
             if (mutation.attributeName === 'class') {
                 if (Mega_Menu.classList.contains('show')) {
                     icon.classList.remove("fa-bars");
                     icon.classList.add("fa-times-square"); // 切換成叉叉
-                    if (narTopBar) narTopBar.classList.add("menu-open");
                 } else {
                     icon.classList.remove("fa-times-square");
                     icon.classList.add("fa-bars"); // 切換回漢堡
-                    if (narTopBar) narTopBar.classList.remove("menu-open");
                 }
             }
         });

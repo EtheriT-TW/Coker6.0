@@ -60,31 +60,6 @@ header {
         background-color: var(--header-menu-bg) !important;
     }
 
-.icon-logged-in {
-    font-variation-settings: 'FILL' 1;
-}
-
-#MenuHiUser {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-    width: 100%;
-    padding: 1rem 3.8em .75rem;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: inherit;
-    text-decoration: none;
-    border-bottom: 1px solid rgba(0, 0, 0, .15);
-}
-
-#HiUser .icon-logged-in, #UserLogin .material-symbols-outlined {
-    font-size: 1.8rem;
-}
-
-#MenuHiUser .material-symbols-outlined {
-    font-size: 1.8rem;
-}
-
 #footrow {
     text-align-last: start;
 }
@@ -187,7 +162,7 @@ header {
         top: 0;
     }
 
-    .navbar span.bg-secondary {
+    .navbar span {
         color: var(--header-nav-text-color) !important;
     }
 
@@ -296,9 +271,6 @@ header {
 
     #Mega_Menu > .logo img {
         padding: 5px 0;
-        height: clamp(40px, 4vw, 70px); /* 數值依實際 Logo 尺寸調 */
-        width: auto;
-        object-fit: contain;
     }
 
 #accordion-menu .title > .nav-link > img {
@@ -333,8 +305,8 @@ header {
 /* Mega Menu */
 #Mega_Menu {
     position: relative;
-    padding: 0 clamp(1rem, 3vw, 3rem);
-    padding-left: clamp(1.5rem, 6vw, 10rem);
+    padding: 0 3rem;
+    padding-left: 10rem;
     background-color: var(--header-menu-bg);
 }
 
@@ -482,14 +454,6 @@ header {
     #Mega_Menu {
         padding-left: 0;
     }
-
-    #HiUser .icon-logged-in, #UserLogin .material-symbols-outlined {
-        font-size: calc(1.275rem + 1vw) !important;
-    }
-
-    #MenuHiUser .material-symbols-outlined {
-        font-size: calc(1.275rem + 1vw) !important;
-    }
 }
 
 @media (min-width: 992px) {
@@ -519,7 +483,6 @@ header {
         width: 155px;
     }
 }
-
 
 @media only screen and (max-width: 992px) {
     .navbar-nav > .nav-item {
@@ -779,11 +742,10 @@ header {
     .subtitle > .subtitle_title > .material-symbols-outlined {
         padding-bottom: 0.5rem;
     }
-
 }
 
-@media (min-width: 993px) {
-    #Mega_Menu > .icon-block {
-        padding-right: 2.5rem;
+@media(max-width:400px) {
+    #HiUser > span.name {
+        display: none;
     }
 }

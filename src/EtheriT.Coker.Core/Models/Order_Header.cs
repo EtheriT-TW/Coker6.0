@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
 using EtheriT.Coker.Core.Entity;
 using System.ComponentModel.DataAnnotations;
 
@@ -12,7 +13,7 @@ namespace EtheriT.Coker.Core.Models
         public long FK_WebsiteId { get; set; }
         [StringLength(150)]
         public string Orderer { get; set; }
-        public int OrdererSex { get; set; }
+        public SexEnum? OrdererSex { get; set; }
         [StringLength(150)]
         public string OrdererEmail { get; set; }
         [StringLength(50)]
@@ -24,7 +25,7 @@ namespace EtheriT.Coker.Core.Models
         public string OrdererZipCode { get; set; }
         [StringLength(150)]
         public string Recipient { get; set; }
-        public int RecipientSex { get; set; }
+        public SexEnum? RecipientSex { get; set; }
         [StringLength(150)]
         public string RecipientEmail { get; set; }
         [StringLength(50)]

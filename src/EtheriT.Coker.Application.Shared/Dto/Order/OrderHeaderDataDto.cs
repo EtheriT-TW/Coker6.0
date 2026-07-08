@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Order
 {
@@ -14,13 +15,13 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public int? Total { get; set; }
         public OrderStatusEnum State { get; set; }
         public string Orderer { get; set; }
-        public int OrdererSex { get; set; }
+        public SexEnum? OrdererSex { get; set; }
         public string OrdererEmail { get; set; }
         public string OrdererCellPhone { get; set; }
         public string? OrdererTelePhone { get; set; }
         public string OrdererAddress { get; set; }
         public string Recipient { get; set; }
-        public int RecipientSex { get; set; }
+        public SexEnum? RecipientSex { get; set; }
         public string RecipientEmail { get; set; }
         public string RecipientCellPhone { get; set; }
         public string? RecipientTelePhone { get; set; }

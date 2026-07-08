@@ -1,4 +1,5 @@
 ﻿
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Order
@@ -9,7 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public long? OrderId { get; set; }
         public bool IsTemp { get; set; } = false;
         public string Orderer { get; set; }
-        public int OrdererSex { get; set; }
+        public SexEnum? OrdererSex { get; set; }
         public string OrdererEmail { get; set; }
         public string? OrdererTelePhone { get; set; }
         public string OrdererCellPhone { get; set; }
@@ -17,7 +18,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string OrdererZipCode { get; set; }
         public long? RecipientId { get; set; }
         public string Recipient { get; set; }
-        public int RecipientSex { get; set; }
+        public SexEnum? RecipientSex { get; set; }
         public string RecipientEmail { get; set; }
         public string? RecipientTelePhone { get; set; }
         public string RecipientCellPhone { get; set; }

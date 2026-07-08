@@ -1186,15 +1186,20 @@ namespace EtheriT.Coker.Application.Order
                         {
                             if (property.Name.EndsWith("Sex"))
                             {
-                                switch (int.Parse(value))
+                                if (!Enum.TryParse<SexEnum>(value, out var sex))
+                                    continue;
+
+                                switch (sex)
                                 {
-                                    case (int)(SexEnum.男):
+                                    case SexEnum.男:
                                         property.SetValue(temp_output, "先生");
                                         break;
-                                    case (int)(SexEnum.女):
+
+                                    case SexEnum.女:
                                         property.SetValue(temp_output, "小姐");
                                         break;
-                                    case (int)(SexEnum.其他):
+
+                                    case SexEnum.其他:
                                         property.SetValue(temp_output, "小姐/先生");
                                         break;
                                 }
@@ -2318,7 +2323,13 @@ namespace EtheriT.Coker.Application.Order
                         ? order_header.OrdererTelePhone.Substring(0, 3) + "******"
                         : order_header.OrdererTelePhone.Substring(0, 1) + "******"
                     : "";
-                    var OrdererSex = order_header.OrdererSex == 1 ? "先生" : order_header.OrdererSex == 2 ? "小姐" : "小姐/先生";
+                    var OrdererSex = order_header.OrdererSex switch
+                    {
+                        SexEnum.男 => "先生",
+                        SexEnum.女 => "小姐",
+                        SexEnum.其他 => "小姐/先生",
+                        _ => ""
+                    };
                     order_header.RecipientAddress = order_header.RecipientAddress.Replace(" ", "").Substring(0, 6) + "**********";
                     order_header.RecipientCellPhone = (order_header.RecipientCellPhone.Length > 4 ? order_header.RecipientCellPhone.Substring(0, 4) : order_header.RecipientCellPhone.Substring(0, 1)) + "******";
                     order_header.RecipientTelePhone = !string.IsNullOrEmpty(order_header.RecipientTelePhone)
@@ -2326,7 +2337,13 @@ namespace EtheriT.Coker.Application.Order
                          ? order_header.RecipientTelePhone.Substring(0, 3) + "******"
                          : order_header.RecipientTelePhone.Substring(0, 1) + "******"
                      : "";
-                    var RecipientSex = order_header.RecipientSex == 1 ? "先生" : order_header.RecipientSex == 2 ? "小姐" : "小姐/先生";
+                    var RecipientSex = order_header.RecipientSex switch
+                    {
+                        SexEnum.男 => "先生",
+                        SexEnum.女 => "小姐",
+                        SexEnum.其他 => "小姐/先生",
+                        _ => ""
+                    };
 
                     var mailhtml = @$"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>
                  <br/>
@@ -2496,8 +2513,20 @@ namespace EtheriT.Coker.Application.Order
                 {
                     var shipDate = DateTime.Now;
 
-                    var OrdererSex = order_header.OrdererSex == 1 ? "先生" : order_header.OrdererSex == 2 ? "小姐" : "先生/小姐";
-                    var RecipientSex = order_header.RecipientSex == 1 ? "先生" : order_header.RecipientSex == 2 ? "小姐" : "先生/小姐";
+                    var OrdererSex = order_header.OrdererSex switch
+                    {
+                        SexEnum.男 => "先生",
+                        SexEnum.女 => "小姐",
+                        SexEnum.其他 => "先生/小姐",
+                        _ => ""
+                    };
+                    var RecipientSex = order_header.RecipientSex switch
+                    {
+                        SexEnum.男 => "先生",
+                        SexEnum.女 => "小姐",
+                        SexEnum.其他 => "先生/小姐",
+                        _ => ""
+                    };
                     var orderNo = ("000000000" + order_header.Id).Substring(order_header.Id.ToString().Length);
                     var freight = order_header.Freight.ToString("$#,##0");
                     var totalAmount = (order_header.Freight + order_header.Subtotal).ToString("$#,##0");
@@ -2581,8 +2610,20 @@ namespace EtheriT.Coker.Application.Order
                 {
                     var shipDate = DateTime.Now;
 
-                    var OrdererSex = order_header.OrdererSex == 1 ? "先生" : order_header.OrdererSex == 2 ? "小姐" : "先生/小姐";
-                    var RecipientSex = order_header.RecipientSex == 1 ? "先生" : order_header.RecipientSex == 2 ? "小姐" : "先生/小姐";
+                    var OrdererSex = order_header.OrdererSex switch
+                    {
+                        SexEnum.男 => "先生",
+                        SexEnum.女 => "小姐",
+                        SexEnum.其他 => "先生/小姐",
+                        _ => ""
+                    };
+                    var RecipientSex = order_header.RecipientSex switch
+                    {
+                        SexEnum.男 => "先生",
+                        SexEnum.女 => "小姐",
+                        SexEnum.其他 => "先生/小姐",
+                        _ => ""
+                    };
                     var orderNo = ("000000000" + order_header.Id).Substring(order_header.Id.ToString().Length);
                     var freight = order_header.Freight.ToString("$#,##0");
                     var totalAmount = (order_header.Freight + order_header.Subtotal).ToString("$#,##0");

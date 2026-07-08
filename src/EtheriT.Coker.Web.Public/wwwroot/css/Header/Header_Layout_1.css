@@ -501,6 +501,19 @@ header .image-wh {
             width: unset;
             height: unset;
         }
+            #Mega_Menu {
+        flex-wrap: nowrap;
+    }
+
+    #Mega_Menu > .logo {
+        flex-shrink: 1;
+        min-width: 0;
+        text-align: center;
+    }
+
+    #Mega_Menu > .icon-block {
+        flex-shrink: 0;
+    }
 
     .subtitle > .subtitle_title {
         width: 100%;

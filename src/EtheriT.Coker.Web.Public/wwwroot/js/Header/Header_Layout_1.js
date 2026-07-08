@@ -133,6 +133,7 @@
     })
 }
 function moveHiUserToMenu() {
+    if (document.getElementById('MenuHiUser')) return;
     const hiUser = document.getElementById('HiUser');
     const login = document.querySelector('.login');
     const hamburgerMenu = document.querySelector('.offcanvas-header');

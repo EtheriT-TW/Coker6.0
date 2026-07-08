@@ -462,6 +462,29 @@ namespace EtheriT.Coker.Application.Product
 
                     break;
                 }
+
+                if (bonusEnabled)
+                {
+                    var bonusAtLevel = stockPrices
+                        .Where(e => (e.Bonus ?? 0) > 0 && e.FK_RId == currentRole.Id)
+                        .OrderBy(e => e.Price ?? 0)
+                        .ThenBy(e => e.Bonus ?? 0)
+                        .ThenBy(e => e.Id)
+                        .FirstOrDefault();
+                    if (bonusAtLevel != null)
+                    {
+                        candidates.Add(new DisplayPriceSelection
+                        {
+                            Price = bonusAtLevel,
+                            CurrentRoleName = currentRole.Name,
+                            IsMemberPrice = bonusAtLevel.FK_RId > 1,
+                            Rank = 1,
+                            SortValue = bonusAtLevel.Price ?? 0,
+                            IsBonusPrice = true
+                        });
+                        break;
+                    }
+                }
             }
 
             if (bonusEnabled)

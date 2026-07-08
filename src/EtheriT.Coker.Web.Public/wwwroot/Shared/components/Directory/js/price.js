@@ -129,11 +129,14 @@
 
     /**
      * 規則：
-     * 1. priceDisplayText 有值時，優先直接顯示
-     * 2. oriPrice / suggestPrice = 0 視為未設定，不顯示
-     * 3. oriPrice / suggestPrice 只有在有效且 != price 時才顯示
-     * 4. 不預設 price 是會員價，統一以「售價」概念處理
-     * 5. cash + bonus 顯示成同一組：$700元 + 50點
+     * 1. priceDisplayText 有值時（時價），優先直接顯示
+     * 2. 金額為 0 或空值視為未設定，不顯示
+     * 3. 登入前、或登入後沒有會員價（currentRoleName = 非會員）：
+     *    price 即非會員價；建議售價 > 非會員價時顯示「劃線建議售價 + 非會員價」
+     * 4. 登入後有會員價（currentRoleName 為會員角色）：
+     *    顯示「劃線建議售價 + 會員價」，非會員價不顯示；
+     *    沒設建議售價時，退用非會員價當劃線價
+     * 5. 有紅利時，售價行改為組合：$700元 + 50紅利點
      * 6. 只有 bonus 時，只顯示 bonus
      */
     function buildHtml(data) {
@@ -144,27 +147,14 @@
         const oriPrice = data.oriPrice;
         const suggestPrice = data.suggestPrice;
         const bonus = data.bonus;
-        const baseRoleName = normalizeText(data.baseRoleName);
         const currentRoleName = normalizeText(data.currentRoleName);
-
-        const hasCashPrice = hasDisplayValue(price);
-        const hasBonus = hasDisplayValue(bonus);
-
-        const hasSuggestPrice =
-            hasDisplayValue(suggestPrice) &&
-            !isSameMoney(suggestPrice, price);
-
-        const hasOriPrice =
-            hasDisplayValue(oriPrice) &&
-            !isSameMoney(oriPrice, price);
-
-        const isMemberRole =
-            !!currentRoleName &&
-            currentRoleName !== "非會員";
 
         if (priceDisplayText) {
             return `<div class="sale-price">${priceDisplayText}</div>`;
         }
+
+        const hasCashPrice = hasDisplayValue(price);
+        const hasBonus = hasDisplayValue(bonus);
 
         if (!hasCashPrice && !hasBonus) {
             return "";
@@ -174,36 +164,34 @@
             return buildBonusOnlyLine(bonus);
         }
 
+        // 會員價模式：後端選到的是會員層級的價格
+        const isMemberPrice =
+            !!currentRoleName &&
+            currentRoleName !== "非會員";
+
+        // 劃線參考價：建議售價 > 實際售價才顯示；
+        // 會員模式下沒有建議售價時，退用非會員價
+        let referencePrice = "";
+        if (hasDisplayValue(suggestPrice) && normalizeNumber(suggestPrice) > normalizeNumber(price)) {
+            referencePrice = suggestPrice;
+        } else if (isMemberPrice && hasDisplayValue(oriPrice) && normalizeNumber(oriPrice) > normalizeNumber(price)) {
+            referencePrice = oriPrice;
+        }
+
         let html = "";
 
-        // 第一行：建議售價
-        if (hasSuggestPrice) {
-            html += buildOriginPriceLine("建議售價", suggestPrice);
+        if (referencePrice) {
+            html += buildOriginPriceLine("", referencePrice);
         }
 
-        // bonus 場景先沿用舊邏輯
-        if (hasCashPrice && hasBonus) {
+        // 售價行：有紅利 → 現金 + 紅利組合；否則純現金
+        if (hasBonus) {
             html += buildComboPriceLine(price, bonus);
-            return html;
+        } else if (isMemberPrice) {
+            html += `<div class="sale-price role-current-price">${formatMoney(price)}</div>`;
+        } else {
+            html += buildSalePriceLine(price);
         }
-
-        // 會員三行模式：
-        // 1. 當前角色不是非會員
-        // 2. oriPrice 有值
-        // 3. oriPrice 與 price 不同
-        if (isMemberRole && hasOriPrice) {
-
-            if (currentRoleName) {
-                html += `<div class="sale-price role-current-price">${formatMoney(price)}</div>`;
-            } else {
-                html += buildSalePriceLine(price);
-            }
-
-            return html;
-        }
-
-        // 其餘情況：非會員 / 會員但比較價不存在或相同
-        html += buildSalePriceLine(price);
 
         return html;
     }

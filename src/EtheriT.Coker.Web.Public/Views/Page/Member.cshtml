@@ -198,10 +198,14 @@
                             <div class="row mb-1">
                                 <div class="col-12 d-flex flex-wrap gap-4">
                                     @{
-                                        var levelName = string.IsNullOrEmpty(ViewBag.UserLevel as string) ? "一般會員" : ViewBag.UserLevel;
+                                        var levelName = ViewBag.UserLevel as string;
+                                        if (string.IsNullOrWhiteSpace(levelName))
+                                        {
+                                            levelName = "一般會員";
+                                        }
                                         var isNormalLevel = levelName == "一般會員";
                                     }
-                                    <div id="UserLevle">
+                                    <div id="UserLevel">
                                         會員等級：
                                         <span class="level-badge @(isNormalLevel ? "level-normal" : "level-notnormal")">@levelName</span>
                                     </div>

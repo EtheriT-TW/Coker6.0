@@ -55,13 +55,7 @@
 
         if (shouldRefreshEmbeddedPayment) {
             cart.Payment.Core.onAmountChanged();
-        }
-
-        if (!this_SupportCashOnDelivery && shouldRefreshEmbeddedPayment) {
             cart.Payment.Core.reloadActiveEmbeddedProvider();
-        } else if (isSupportCashOnDeliveryChanged) {
-            cart.Payment.Core.clearProvidersByType("embedded");
-            cart.Shipping.ConfigurePaymentOptions(null);
         }
     }
     function ConfigurePaymentOptions(val) {
@@ -85,41 +79,20 @@
         $("#RadioPayment input:radio").prop("checked", false);
         $("#RadioPayment > .form-check > .payment_display").removeClass("checked first last");
 
-        if (canCashOnDelivery) {
-            $(".ecpayWarning").addClass("d-none");
-
-            var $codPayment = $("#RadioPayment input[value='28']");
-
-            if ($codPayment.length) {
-                $codPayment.prop("checked", true);
-
-                var $formCheck = $codPayment.closest(".form-check");
-                $formCheck.removeClass("d-none");
-                $formCheck.find(".payment_display").addClass("checked first last");
-            } else {
-                var $warning = $(".noPaymentWarning");
-
-                if (!$warning.length) {
-                    $warning = $("<div>", {
-                        class: "noPaymentWarning",
-                        text: "店家尚未設定對應的付款方式"
-                    }).appendTo("#RadioPayment");
-                }
-
-                $warning.removeClass("d-none");
-            }
-
-            $(".ecpay_loading").addClass("d-none");
-            return;
-        }
-
         var $list = $("#RadioPayment > .form-check");
 
         // 先顯示所有付款方式
         $list.removeClass("d-none");
 
         // 非貨到付款情境，不顯示貨到付款
-        $list.has("input[value='28']").addClass("d-none");
+        var $codPayment = $("#radio_payment_COD");
+        var $codFormCheck = $codPayment.closest(".form-check");
+
+        if (canCashOnDelivery) {
+            $codFormCheck.removeClass("d-none");
+        } else {
+            $codFormCheck.addClass("d-none");
+        }
 
         $list.each(function () {
             var $formCheck = $(this);
@@ -154,8 +127,6 @@
                 cart.Payment.Core.updatePaymentRadioUI($targetFormCheck);
             }
         }
-
-        $(".ecpay_loading").addClass("d-none");
     }
     function getSelectedShippingMeta() {
         var $selected = $("[name='RadioShipping']:checked");

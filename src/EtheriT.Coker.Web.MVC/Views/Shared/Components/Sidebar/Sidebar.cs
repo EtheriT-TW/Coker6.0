@@ -1,4 +1,4 @@
-﻿using EtheriT.Coker.Application;
+﻿using EtheriT.Coker.Web.MVC.Common;
 using EtheriT.Coker.Web.MVC.Startup;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,18 +6,29 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
 {
     public class Sidebar : ViewComponent
     {
-        private readonly NavigationProvider navigation;
-		public Sidebar(NavigationProvider navigation)
+        private readonly IHttpContextAccessor httpContextAccessor;
+
+        public Sidebar(IHttpContextAccessor httpContextAccessor)
         {
-            this.navigation = navigation;
+            this.httpContextAccessor = httpContextAccessor;
         }
-        public async Task<IViewComponentResult> InvokeAsync()
+
+        public IViewComponentResult Invoke()
         {
-            var site = await navigation.getMenus();
-            await navigation.SetPower(site);
-            await navigation.SetWebsite(site);
-            await navigation.setUserJob(site);
-			return View(site);
+            var context = httpContextAccessor.HttpContext
+                ?? throw new InvalidOperationException(
+                    "Sidebar requires an active HttpContext.");
+
+            if (!context.Items.TryGetValue(
+                    CokerContextKeys.NavigationSite,
+                    out var value) ||
+                value is not Site site)
+            {
+                throw new InvalidOperationException(
+                    "NavigationSite has not been initialized.");
+            }
+
+            return View(site);
         }
     }
 }

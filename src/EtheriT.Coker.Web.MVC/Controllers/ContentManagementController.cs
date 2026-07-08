@@ -17,9 +17,6 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         }
         public async Task<IActionResult> Directory()
         {
-            var site = await navigation.getMenus();
-            await navigation.SetPower(site);
-            await navigation.setUserJob(site);
             return View("Directory");
         }
         public IActionResult Article()

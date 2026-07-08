@@ -545,6 +545,11 @@ textarea.minHeight {
     align-items: center;
 }
 
+.product-tag-badge {
+    font-size:0.8rem;
+    font-weight:normal;
+}
+
 @media only screen and (min-width: 2000px) {
     #Spec_Frame .spec > select, #Spec_Frame .spec > input {
         max-width: 100%;

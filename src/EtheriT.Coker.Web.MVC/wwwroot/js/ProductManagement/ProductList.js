@@ -405,11 +405,12 @@ function ProductTagFilterInit() {
         event.stopPropagation();
 
         var tagName = ($(this).data("tag-name") || "").toString().trim();
+
         if (tagName === "" || productTagFilter == null) return;
 
         LoadProductTagOptions().then(function (tagOptions) {
             var tagItem = tagOptions.find(function (item) {
-                return item.tag_Name === tagName;
+                return (item.tag_Name || "").toString().trim() === tagName;
             });
 
             if (tagItem == null) return;

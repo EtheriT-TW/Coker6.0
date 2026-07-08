@@ -25,7 +25,7 @@ namespace EtheriT.Coker.Application.Common
         private readonly StringHandler stringHandler;
         private readonly IStoreSetAppService storeSetAppService;
         private readonly IConfiguration Configuration;
-        private readonly SMTPDto sMTPDto;
+
         public MailAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -306,45 +306,35 @@ namespace EtheriT.Coker.Application.Common
                     client.Connect(dto.SMTP.Url, dto.SMTP.Port, dto.SMTP.UseSSL);
                     Step("set Connect");
                     // 如果需要的話，驗證一下
-                    // 有完整帳號與密碼時，才視為需要 SMTP AUTH
                     var hasUser = !string.IsNullOrWhiteSpace(dto.SMTP.UserName);
                     var hasPassword = !string.IsNullOrWhiteSpace(dto.SMTP.Password);
-                    var requiresAuth = hasUser && hasPassword;
-                    var canAuth = client.Capabilities.HasFlag(SmtpCapabilities.Authentication);
+                    var hasCredentials = hasUser && hasPassword;
+
+                    var canAuth = client.Capabilities.HasFlag(
+                        SmtpCapabilities.Authentication
+                    );
 
                     Step(
                         $"SMTP Auth check: " +
                         $"HasUser={hasUser}, " +
                         $"HasPassword={hasPassword}, " +
-                        $"RequiresAuth={requiresAuth}, " +
-                        $"CanAuth={canAuth}"
+                        $"HasCredentials={hasCredentials}, " +
+                        $"CanAuth={canAuth}, " +
+                        $"Mechanisms={string.Join(",", client.AuthenticationMechanisms)}"
                     );
 
-                    if (requiresAuth)
+                    if (canAuth && hasCredentials)
                     {
-                        // 後台已設定完整帳密，就必須進行 SMTP AUTH
-                        if (!canAuth)
-                        {
-                            throw new InvalidOperationException(
-                                "SMTP 已設定帳號與密碼，但伺服器未提供 AUTH 能力。"
-                            );
-                        }
-
                         Step($"AUTH before: {dto.SMTP.UserName}");
 
                         try
                         {
-                            client.Authenticate(dto.SMTP.UserName, dto.SMTP.Password);
-                            Step("AUTH after (ok)");
-                        }
-                        catch (NotSupportedException ex)
-                        {
-                            Step($"AUTH NotSupported: {ex.Message}");
-
-                            throw new InvalidOperationException(
-                                "SMTP Server 不支援目前的驗證方式，無法完成 SMTP 認證。",
-                                ex
+                            client.Authenticate(
+                                dto.SMTP.UserName,
+                                dto.SMTP.Password
                             );
+
+                            Step("AUTH after (ok)");
                         }
                         catch (MailKit.Security.AuthenticationException ex)
                         {
@@ -354,11 +344,10 @@ namespace EtheriT.Coker.Application.Common
                     }
                     else
                     {
-                        // 沒有完整帳密，不進行 SMTP AUTH
                         Step(
                             $"Skip AUTH: " +
-                            $"HasUser={hasUser}, " +
-                            $"HasPassword={hasPassword}"
+                            $"HasCredentials={hasCredentials}, " +
+                            $"CanAuth={canAuth}"
                         );
                     }
 
@@ -393,7 +382,7 @@ namespace EtheriT.Coker.Application.Common
                             ex.Message.Contains("not allowed", StringComparison.OrdinalIgnoreCase)
                         )
                         {
-                            response.Message = "SMTP Relay 被拒絕，請確認 SMTP 帳密是否已成功驗證，以及 MailEnable Relay 設定。";
+                            response.Message = "SMTP Relay 被拒絕，請確認 SMTP 驗證方式、寄件來源 IP 與 Relay 權限設定。";
                         }
                         else
                         {

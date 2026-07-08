@@ -73,12 +73,17 @@
         var dataReady = cart.Forms.AllDataGet(false);
         cart.Payment.Core.Step3Monitor();
 
-        if (!dataReady || S.SupportCashOnDelivery) {
+        if (!dataReady) {
             if (S.ECPayReady) {
                 S.ECPayReady = false;
                 S.ECPayOrderSnapshot = "";
-                cart.Shipping.ConfigurePaymentOptions(null);
             }
+
+            $("#RadioPayment > .form-check").addClass("d-none");
+            $(".noPaymentWarning").addClass("d-none");
+            $(".ecpayWarning").removeClass("d-none");
+            $(".ecpay_loading").addClass("d-none");
+
             return;
         }
 
@@ -100,7 +105,6 @@
         $(".ecpay_loading").removeClass("d-none").text("付款模組載入中...");
         $("#RadioPayment > .form-check").addClass("d-none");
         $("#ECPayPayment").empty();
-        cart.Shipping.ConfigurePaymentOptions(null);
 
         var timeout = 0;
         var checkInterval = setInterval(function () {

@@ -1,5 +1,6 @@
 ﻿using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Web.MVC.Common;
 using EtheriT.Coker.Web.MVC.Startup;
 using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 using Microsoft.AspNetCore.Mvc;
@@ -69,33 +70,45 @@ namespace EtheriT.Coker.Web.MVC.Middleware
                 return;
             }
 
-            // Welcome 不做選單權限檢查
+            // 已登入：一律初始化本次 Request 的選單與權限
+            var navigation = scope.ServiceProvider.GetRequiredService<NavigationProvider>();
+
+            var site = await navigation.BuildAuthorizedSiteAsync();
+
+            // 供 Sidebar、Layout、View 共用
+            context.Items[CokerContextKeys.NavigationSite] = site;
+
+
+            // Welcome 有 Sidebar，但不需要檢查目前頁面的選單權限
             if (isWelcomeController)
             {
                 await _next(context);
                 return;
             }
 
-            // 已登入：檢查選單權限
-            if (!string.IsNullOrEmpty(controllerName) && !string.IsNullOrEmpty(actionName))
+
+            // 一般頁面才檢查目前頁面是否有 View 權限
+            if (!string.IsNullOrEmpty(controllerName) &&
+                !string.IsNullOrEmpty(actionName))
             {
-                var navigation = scope.ServiceProvider.GetRequiredService<NavigationProvider>();
-                var site = await navigation.getMenus();
-
-                await navigation.SetPower(site);
-                await navigation.SetWebsite(site);
-                await navigation.setUserJob(site);
-
-                var menu = navigation.FindJob(site.Jobs, controllerName, actionName);
+                var menu = navigation.FindJob(
+                    site.Jobs,
+                    controllerName,
+                    actionName);
 
                 if (menu == null || !menu.CanVisble)
                 {
                     var firstMenu = FindFirstVisibleMenu(site.Jobs);
 
                     if (firstMenu == null)
+                    {
                         context.Response.Redirect("/Welcome");
+                    }
                     else
-                        context.Response.Redirect($"/{firstMenu.Controller}/{firstMenu.Action}");
+                    {
+                        context.Response.Redirect(
+                            $"/{firstMenu.Controller}/{firstMenu.Action}");
+                    }
 
                     return;
                 }

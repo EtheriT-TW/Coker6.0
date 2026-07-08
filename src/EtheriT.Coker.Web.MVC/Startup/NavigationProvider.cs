@@ -184,6 +184,13 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 IsView = false,
                                 Enable = false,
                                 PermissionMode = PermissionMode.Execute
+                            },
+                            new JobMenu{
+                                PageName="DirectoryFacet",
+                                Title = "目錄再分類設定",
+                                IsView = false,
+                                Enable = false,
+                                PermissionMode = PermissionMode.Execute
                             }
                         }
                     },
@@ -511,6 +518,16 @@ namespace EtheriT.Coker.Web.MVC.Startup
             site.PageTitleMap = BuildPageTitleMap(site.Jobs);
             return site;
         }
+        public async Task<Site> BuildAuthorizedSiteAsync(bool writeHttpContextItems = true)
+        {
+            var site = await getMenus();
+
+            await SetPower(site);
+            await SetWebsite(site);
+            await setUserJob(site, writeHttpContextItems);
+
+            return site;
+        }
         public async Task SetPower(Site site)
         {
             WebsiteLevelEnum level = await loginUserData.GetWebsiteLevel();
@@ -642,7 +659,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 SetJobs(site.Jobs, jobs, allowOverwriteEnable: true);
             }
         }
-        public async Task setUserJob(Site site)
+        public async Task setUserJob(Site site, bool writeHttpContextItems = true)
         {
             var userId = await loginUserData.GetUserId();
             var websiteId = await loginUserData.GetWebsiteId();
@@ -784,9 +801,12 @@ namespace EtheriT.Coker.Web.MVC.Startup
 
             permissionStateStore.Set(websiteId, userId, ThePermission);
             permissionStateStore.Set(websiteId, userId, bonusPermission);
-            var ctx = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException("PermissionStateStore requires an active HttpContext.");
-            SetExecutePermissions(ctx, site.Jobs);
-            ctx.Items[CokerContextKeys.HasManySystem] = await websiteApplication.hasManySystem();
+
+            if (writeHttpContextItems) {
+                var ctx = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException("PermissionStateStore requires an active HttpContext.");
+                SetExecutePermissions(ctx, site.Jobs);
+                ctx.Items[CokerContextKeys.HasManySystem] = await websiteApplication.hasManySystem();
+            }
         }
         public JobMenu? FindJob(List<JobMenu> jobs, string Controller, string Action)
         {

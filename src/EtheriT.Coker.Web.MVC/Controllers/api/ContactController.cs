@@ -139,10 +139,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         /// </summary>
         private async Task<bool> CanAccessContactUsAsync()
         {
-            var site = await navigation.getMenus();
-            await navigation.SetPower(site);
-            await navigation.SetWebsite(site);
-            await navigation.setUserJob(site);
+            var site = await navigation.BuildAuthorizedSiteAsync(writeHttpContextItems: false);
             var menu = navigation.FindJob(site.Jobs, "ContentManagement", "ContactUs");
             return menu?.CanVisble == true;
         }

@@ -6,5 +6,7 @@
         public const string HasManySystem = "HasManySystem";
         public const string BonusPermission = "BonusPermission";
         public const string ContactUsExported = "ContactUsExported";
+        public const string DirectoryFacet = "DirectoryFacet";
+        public const string NavigationSite = "NavigationSite";
     }
 }

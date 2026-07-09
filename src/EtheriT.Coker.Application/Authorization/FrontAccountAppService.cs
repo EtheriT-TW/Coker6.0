@@ -24,6 +24,7 @@ namespace EtheriT.Coker.Application.Authorization
     public sealed class FrontAccountAppService : IFrontAccountAppService
     {
         private readonly AccountAppService core;
+        private readonly FrontRegistrationService registrationService;
         private readonly CokerDbContext db;
         private readonly ICookieManagerAppService cookieManager;
         private readonly IConfiguration configuration;
@@ -36,6 +37,7 @@ namespace EtheriT.Coker.Application.Authorization
 
         public FrontAccountAppService(
             AccountAppService core,
+            FrontRegistrationService registrationService,
             CokerDbContext db,
             ICookieManagerAppService cookieManager,
             IConfiguration configuration,
@@ -47,6 +49,7 @@ namespace EtheriT.Coker.Application.Authorization
             IHostEnvironment env)
         {
             this.core = core;
+            this.registrationService = registrationService;
             this.db = db;
             this.cookieManager = cookieManager;
             this.configuration = configuration;
@@ -201,7 +204,7 @@ namespace EtheriT.Coker.Application.Authorization
             if (user == null)
             {
                 var password = stringHandler.RandonCode(RandomStringType.數字加英文大小寫及符號, 16);
-                await core.AddFrontUser(new FrontAddUserDto
+                await registrationService.AddFrontUser(new FrontAddUserDto
                 {
                     Email = dto.Email,
                     Name = dto.Name,
@@ -296,12 +299,85 @@ namespace EtheriT.Coker.Application.Authorization
             }
             return output;
         }
-        public Task<ResponseMessageDto> AddFrontUser(FrontAddUserDto dto) => core.AddFrontUser(dto);
+        public Task<ResponseMessageDto> AddFrontUser(FrontAddUserDto dto) =>
+            registrationService.AddFrontUser(dto);
         public Task<ResponseMessageDto> FrontUserEdit(FrontEditUserDto dto) => core.FrontUserEdit(dto);
         public Task<ResponseUserEditDto> GetFrontUserData() => core.GetFrontUserData();
         public Task<string> GetFrontUserLevelName() => core.GetFrontUserLevelName();
-        public Task<ResponseMessageDto> AccountOpening(Guid openId) => core.AccountOpening(openId);
-        public Task<ResponseMessageDto> ReSendOpening(SendOpeningDto dto) => core.ReSendOpening(dto);
+        public async Task<ResponseMessageDto> AccountOpening(Guid openId)
+        {
+            var response = new ResponseMessageDto();
+            try
+            {
+                var frontUser = await db.FrontUsers.FirstOrDefaultAsync(e => e.OpenID == openId);
+                if (frontUser == null)
+                    throw new Exception(L.get("LinkExpired"));
+
+                if (frontUser.Status == (int)UserStatusEnum.開通)
+                    throw new Exception(L.get("AccountActivated"));
+
+                if (frontUser.Status != (int)UserStatusEnum.未開通)
+                    throw new Exception(L.get("LinkExpired"));
+
+                if (frontUser.OpenIDSendDate.AddDays(1) < DateTime.Now)
+                {
+                    response.Message = "ReSendOrNot";
+                    throw new Exception(L.get("ActivationLinkExpiredResend"));
+                }
+
+                var websiteId = await db.MappingFrontUserAndWebsite
+                    .Where(e => e.FK_UserId == frontUser.Id)
+                    .Select(e => e.FK_WebsiteId)
+                    .FirstOrDefaultAsync();
+                if (websiteId == 0)
+                    throw new Exception(L.get("LinkExpired"));
+
+                frontUser.Status = (int)UserStatusEnum.開通;
+                frontUser.OpenDate = DateTime.Now;
+                await loginUserData.SaveChanges(frontUser);
+
+                var loginResult = await NoPasswordLogin(frontUser, websiteId, null);
+                if (!loginResult.Success)
+                    throw new Exception(loginResult.Error);
+
+                response.Success = true;
+            }
+            catch (Exception e)
+            {
+                response.Error = e.Message;
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> ReSendOpening(SendOpeningDto dto)
+        {
+            var response = new ResponseMessageDto();
+            try
+            {
+                var frontUser = await (
+                    from user in db.FrontUsers
+                    join map in db.MappingFrontUserAndWebsite on user.Id equals map.FK_UserId
+                    where (dto.OpenId == null ? user.Email == dto.Email : user.OpenID == dto.OpenId)
+                       && map.FK_WebsiteId == dto.WebsiteId
+                    select user).FirstOrDefaultAsync();
+                if (frontUser == null)
+                    throw new Exception("發生未知錯誤");
+
+                frontUser.OpenID = Guid.NewGuid();
+                frontUser.OpenIDSendDate = DateTime.Now;
+                await loginUserData.SaveChanges(frontUser);
+
+                dto.Email = frontUser.Email;
+                dto.Name = frontUser.Name;
+                dto.OpenId = frontUser.OpenID;
+                dto.OpenIdSendDate = frontUser.OpenIDSendDate;
+                return await registrationService.SendOpening(dto);
+            }
+            catch (Exception e)
+            {
+                response.Error = e.Message;
+                return response;
+            }
+        }
         public Task<ResponseMessageDto> SendForget(SendForgetDto dto) => core.SendForget(dto);
         public Task<ResponseMessageDto> ForgetIdCheck(Guid forgetId) => core.ForgetIdCheck(forgetId);
         public Task<ResponseMessageDto> PasswordChage(PasswordChageDto dto) => core.PasswordChage(dto);

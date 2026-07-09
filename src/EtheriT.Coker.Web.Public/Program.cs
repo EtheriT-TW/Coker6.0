@@ -244,6 +244,7 @@ builder.Services.AddMvc(options =>
 });
 
 builder.Services.AddScoped<AccountAppService>();
+builder.Services.AddScoped<FrontRegistrationService>();
 builder.Services.AddScoped<IFrontAccountAppService, FrontAccountAppService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<MailAppService, MailAppService>();

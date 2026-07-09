@@ -43,6 +43,43 @@
     };
 
     // =========================
+    // Dirname（加入 slot 支援）
+    // =========================
+    DirectoryParts.applyDirname = function ($item, content, data) {
+        let showDirname = false;
+        if (typeof $item.data("showdirname") === "string") {
+            showDirname = $item.data("showdirname").toLowerCase() === "true";
+        } else {
+            showDirname = !!$item.data("showdirname");
+        }
+        if (!showDirname) return;
+        const $content = $(content);
+
+        if (isNullOrEmpty(data.dirname)) return;
+
+        // 模板已有 .dirname 元素時交給 applyBasicFields 填值，避免重複顯示
+        if ($content.find(".dirname").length) return;
+
+        const html = `<span class="dirname">${data.dirname}</span>`;
+
+        const $slot = $content.find(".dirname-slot");
+        if ($slot.length) {
+            $slot.append(html);
+            return;
+        }
+
+        // 卡片已有狀態標籤時，包進同一個容器並排：目錄在前、狀態在後
+        const $status = $content.find(".status").first();
+        if ($status.length) {
+            const $badges = $('<div class="top-badges"></div>');
+            $status.before($badges);
+            $badges.append(html).append($status);
+        } else {
+            $content.find("a").first().append(html);
+        }
+    };
+
+    // =========================
     // Buy Button（完全不動）
     // =========================
     DirectoryParts.applyBuyButton = function ($item, content, data, path) {

@@ -330,6 +330,9 @@
             if (isFn(w.DirectoryParts.applyStatus)) {
                 w.DirectoryParts.applyStatus(content, data);
             }
+            if (isFn(w.DirectoryParts.applyDirname)) {
+                w.DirectoryParts.applyDirname($item, content, data);
+            }
             if (isFn(w.DirectoryParts.applyItemNo)) {
                 w.DirectoryParts.applyItemNo(content, data);
             }
@@ -640,6 +643,9 @@
                     }
                     if (isFn(w.DirectoryParts.applyItemNo)) {
                         w.DirectoryParts.applyItemNo(content, data);
+                    }
+                    if (isFn(w.DirectoryParts.applyDirname)) {
+                        w.DirectoryParts.applyDirname($item, content, data);
                     }
                     if (isFn(w.DirectoryParts.applyTags)) {
                         w.DirectoryParts.applyTags($item, content, data);

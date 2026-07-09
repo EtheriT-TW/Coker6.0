@@ -245,13 +245,13 @@
                 }
             },
             {
-                name: "i18nGetLang",
-                key: "coker_inited_i18nGetLang",
+                name: "geolocation",
+                key: "coker_inited_geolocation",
                 test: function ($root) {
                     return has($root, ".getlatlng");
                 },
                 run: function ($root) {
-                    if (isFn(w.GetLang)) w.GetLatLng($root);
+                    if (isFn(w.GetLatLng)) w.GetLatLng($root);
                 }
             },
             {

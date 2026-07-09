@@ -1,12 +1,23 @@
-﻿function GetLatLng() {
+function GetLatLng(root) {
+    const $root = root ? (root.jquery ? root : $(root)) : $(document);
+    const $targets = $root.is(".getlatlng")
+        ? $root
+        : $root.find(".getlatlng");
+
+    if (!$targets.length) return;
+
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const latitude = position.coords.latitude;
                 const longitude = position.coords.longitude;
-                $(".getlatlng").data("longitude", longitude);
-                $(".getlatlng").data("latitude", latitude);
-                DirectoryGetDataInit();
+                $targets.data("longitude", longitude);
+                $targets.data("latitude", latitude);
+                $targets.removeData("page");
+                $targets.removeData("prevdirid");
+                $targets.each(function () {
+                    initElemntAndLoadDir($(this));
+                });
                 console.log(`Latitude: ${latitude}, Longitude: ${longitude}`)
             },
             (error) => {
@@ -30,6 +41,7 @@
         console.log("GetLatLngError: Geolocation is not supported by this browser")
     }
 }
+
 function cokerI18n(key, ...args) {
     let str = local[key];
     if (!str) return ""; // 沒找到 key 就回空字串

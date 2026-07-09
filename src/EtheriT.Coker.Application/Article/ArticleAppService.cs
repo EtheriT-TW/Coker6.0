@@ -431,12 +431,16 @@ namespace EtheriT.Coker.Application.Article
                                 .OrderBy(a => a.SerNO)
                                 .ThenByDescending(a => a.NodeDate)
                                 .ThenByDescending(e => e.Id);
-                if (dto.MaxLen != null && dto.MaxLen > 0) query = (IOrderedQueryable<Core.Models.Article>)query.Take((int)dto.MaxLen);
+                // 鄰近搜尋必須先以全部候選據點計算距離，不能在排序前先依 SerNO/日期截斷。
+                if (dto.FindNearest != true && dto.MaxLen != null && dto.MaxLen > 0)
+                    query = (IOrderedQueryable<Core.Models.Article>)query.Take((int)dto.MaxLen);
                 var result = new List<Core.Models.Article>();
                 int skip = ((dto.Page ?? 1) - 1) * dto.ShowNum ?? 12 - 1;
                 skip = skip < 0 ? 0 : skip;
-                if (dto.FindNearest == true)
+                if (dto.FindNearest == true && dto.Longitude.HasValue && dto.Latitude.HasValue)
                 {
+                    var nearestLimit = dto.MaxLen.GetValueOrDefault(dto.ShowNum ?? 12);
+                    if (nearestLimit <= 0) nearestLimit = dto.ShowNum ?? 12;
                     var distance = new List<DistanceTempDto>();
                     foreach (var data in query)
                     {
@@ -444,14 +448,15 @@ namespace EtheriT.Coker.Application.Article
                         {
                             var distemp = new DistanceTempDto();
                             distemp.Id = data.Id;
-                            distemp.distance = Math.Sqrt(Math.Pow((double)data.Longitude - (double)dto.Longitude, 2) + Math.Pow((double)data.Latitude - (double)dto.Latitude, 2));
+                            distemp.distance = Math.Sqrt(
+                                Math.Pow(data.Longitude.Value - dto.Longitude.Value, 2) +
+                                Math.Pow(data.Latitude.Value - dto.Latitude.Value, 2));
                             distance.Add(distemp);
                         }
                     }
                     distance.Sort((a, b) => a.distance < b.distance ? -1 : 1);
-                    distance.Take(dto.MaxLen.Value).ToList();
                     var newresult = new List<Core.Models.Article>();
-                    for (var i = 0; i < (dto.MaxLen.Value > distance.Count() ? distance.Count : dto.MaxLen.Value); i++)
+                    for (var i = 0; i < Math.Min(nearestLimit, distance.Count); i++)
                     {
                         newresult.Add(query.Where(e => e.Id == distance[i].Id).First());
                     }

@@ -331,8 +331,6 @@ namespace EtheriT.Coker.Application.Authorization
 
                 Guid Temp_UUID = await tokenAppService.GetUUID();
                 var oldtoken = await db.Tokens.Where(e => e.UUID == Temp_UUID).FirstOrDefaultAsync();
-                var tokenItem = await tokenAppService.CreateToken(frontuser.Email, token);
-
                 output = await NoPasswordLogin(frontuser, userInfo.WebsiteMap.FK_WebsiteId, new FrontLoginInputDto
                 {
                     WebsiteId = userInfo.WebsiteMap.FK_WebsiteId,
@@ -1604,27 +1602,31 @@ namespace EtheriT.Coker.Application.Authorization
                 DateTime TokenEndDateTime = dateTime.AddMinutes(15);
                 DateTime EndDateTime = dateTime.AddMinutes(30);
 
-                var token = await db.Tokens.Where(e => e.UUID == Temp_UUID && e.id == tokenItem.RefreshToken && e.websiteId == WebsiteId).FirstOrDefaultAsync();
+                var token = await db.Tokens
+                    .Where(e => e.id == tokenItem.RefreshToken && e.websiteId == WebsiteId)
+                    .FirstOrDefaultAsync();
 
-                if (token != null)
+                if (token == null)
                 {
+                    throw new InvalidOperationException(
+                        $"登入 Token 建立後無法取得（RefreshToken: {tokenItem.RefreshToken}, WebsiteId: {WebsiteId}）");
+                }
 
-                    if (frontuser.UUID == Guid.Empty)
+                if (frontuser.UUID == Guid.Empty)
+                {
+                    var other_user = await db.FrontUsers.Where(e => e.UUID == token.UUID).FirstOrDefaultAsync();
+                    if (other_user != null)
                     {
-                        var other_user = await db.FrontUsers.Where(e => e.UUID == token.UUID).FirstOrDefaultAsync();
-                        if (other_user != null)
-                        {
-                            frontuser.UUID = Guid.NewGuid();
-                        }
-                        else frontuser.UUID = token.UUID;
+                        frontuser.UUID = Guid.NewGuid();
                     }
+                    else frontuser.UUID = token.UUID;
+                }
 
-                    token.UUID = frontuser.UUID;
-                    token.UserID = frontuser.FK_User;
-                    if (frontuser != null && !string.IsNullOrEmpty(frontuser.Email))
-                    {
-                        output.Token = await tokenAppService.CreateToken(frontuser.Email, token.id, CookiePurposeEnum.FrontAuthToken);
-                    }
+                token.UUID = frontuser.UUID;
+                token.UserID = frontuser.FK_User;
+                if (!string.IsNullOrEmpty(frontuser.Email))
+                {
+                    output.Token = await tokenAppService.CreateToken(frontuser.Email, token.id, CookiePurposeEnum.FrontAuthToken);
                 }
                 db.SaveChanges();
                 output.Secret = token.id;

@@ -44,6 +44,15 @@
 
         return false;
     }
+
+    function hasNearestCoordinates($el) {
+        if (!$el.hasClass("getlatlng")) return true;
+
+        const longitude = Number($el.data("longitude"));
+        const latitude = Number($el.data("latitude"));
+
+        return Number.isFinite(longitude) && Number.isFinite(latitude);
+    }
     function getHashPage() {
         return location.hash.replace("#", "");
     }
@@ -69,7 +78,7 @@
             Filters: $self.data("filtered"),
             DirectoryType: $self.data("directoryTypeChecked") || 0,
             target: typeof $self.data("target") === "undefined" ? null : $self.data("target"),
-            FindNearest: $self.hasClass("getlatlng"),
+            FindNearest: $self.hasClass("getlatlng") && hasNearestCoordinates($self),
             Longitude: typeof $self.data("longitude") !== "undefined" ? $self.data("longitude") : null,
             Latitude: typeof $self.data("latitude") !== "undefined" ? $self.data("latitude") : null,
             Facet: typeof $self.attr("data-facet") === "undefined" ? null : ($self.attr("data-facet") || null)
@@ -85,6 +94,8 @@
 
     function initSingleCatalog($self, page) {
         if (!canAutoLoadCatalog($self)) return;
+        // 鄰近據點必須等瀏覽器定位完成，避免送出缺少座標的查詢。
+        if (!hasNearestCoordinates($self)) return;
 
         const dirid = getDirIds($self);
         const hashPage = !!page ? page.toString() : getHashPage();

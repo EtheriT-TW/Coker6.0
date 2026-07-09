@@ -213,6 +213,7 @@
         "wwwroot/Shared/css/AnchorPoint.css",
         "wwwroot/Shared/css/BGCanvas.css",
         "wwwroot/Shared/components/Directory/css/base.css",
+        "wwwroot/Shared/components/Directory/css/catalog-line.css",
         "wwwroot/Shared/components/Directory/css/price.css",
         "wwwroot/Shared/components/Form/css/DynamicForm.css",
         "wwwroot/Shared/css/FlipBook.css",

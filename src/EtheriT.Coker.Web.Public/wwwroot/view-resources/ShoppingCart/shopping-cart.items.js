@@ -259,17 +259,7 @@ function CartListAdd(data, $container) {
     $template.find(".btn_remove_pro").on("click", function () {
         var $self = $(this).parents("li").first();
         Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
-            const $group = $self.closest('li.purchase_group');
-            cart.Items.CartDelete($self, $self.data("scId"), "成功移除商品", "移除商品發生未知錯誤")
-
-            if ($group.length) {
-                if ($group.find('li.purchase_item').length === 0) {
-                    $group.remove();
-                } else {
-                    cart.Items.updateGroupSelectedSubtotal($group);
-                    cart.Pricing.TotalCount();
-                }
-            }
+            cart.Items.CartDelete($self, $self.data("scId"), "成功移除商品", "移除商品發生未知錯誤");
         });
     });
 
@@ -657,16 +647,35 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
     });
 }
 function CartDelete(self, id, success, error) {
-    self.remove();
-    //datachange = true;
-    Product.Delete.Cart(id).done(function () {
+    var $group = self.closest('li.purchase_group');
+
+    Product.Delete.Cart(id).done(function (result) {
+        if (!result || result.success !== true) {
+            Coker.sweet.error("錯誤", (result && result.error) || error, null, true);
+            return;
+        }
+
+        self.remove();
         Coker.sweet.success(success, null, true);
+
         var index = S.shopping_cart_data.findIndex(e => e.Id == id);
         if (index !== -1) {
             S.shopping_cart_data.splice(index, 1);
             cart.Items.refreshHasProds();
         }
-        CartDropReset(id, 0)
+
+        if ($group.length) {
+            var remainingCount = $group.find('li.purchase_item').length;
+
+            if (remainingCount === 0) {
+                $group.remove();
+            } else {
+                $group.find('[data-field="count"]').text(`${remainingCount} 件`);
+                cart.Items.updateGroupSelectedSubtotal($group);
+            }
+        }
+
+        CartDropReset(id, 0);
         cart.Pricing.TotalCount();
         cart.Pricing.updateNextStepByBonus();
         cart.Payment.Core.onAmountChanged();
@@ -675,7 +684,7 @@ function CartDelete(self, id, success, error) {
         }
     }).fail(function () {
         Coker.sweet.error("錯誤", error, null, true);
-    })
+    });
 }
 function getSelectedCartIds() {
     const ids = [];

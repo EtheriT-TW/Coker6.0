@@ -1,0 +1,152 @@
+/* ===== Catalog Line =====
+ * Compatibility styles migrated from Shared/css/Directory.css.
+ * Existing GrapesJS blocks rely on these structural rules.
+ */
+.catalog-line a {
+    display: flex;
+    text-decoration: none;
+    overflow: hidden;
+}
+
+.catalog-line a:nth-child(even) {
+    flex-direction: row-reverse;
+}
+
+.catalog-line a:nth-child(even) .content:before {
+    left: unset;
+    right: 0;
+}
+
+.catalog-line a:hover .content > div:not(.dirname) {
+    color: #fff;
+}
+
+.catalog-line a:hover .content > div:not(.dirname):before {
+    border-color: #fff;
+}
+
+.catalog-line a:hover .content > div:not(.dirname) > span {
+    background-color: #948b84;
+}
+
+.catalog-line a:hover .content:before {
+    border-radius: 20%;
+    width: 250%;
+    height: 200%;
+    left: -55%;
+    bottom: -50%;
+}
+
+.catalog-line a:nth-child(even):hover .content:before {
+    right: -55%;
+    left: unset;
+}
+
+.catalog-line img {
+    object-fit: cover;
+    width: 100%;
+    height: 25em;
+}
+
+.catalog-line a .content {
+    position: relative;
+    -webkit-writing-mode: vertical-lr;
+    writing-mode: vertical-lr;
+    display: flex;
+    align-items: center;
+    background-color: #f2f2f2;
+}
+
+.catalog-line a .content > div:not(.dirname) {
+    color: #000;
+    transition: all ease-in-out 0.01s 0.4s;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    margin: 4rem 0;
+    position: relative;
+}
+
+.catalog-line a .content:before {
+    position: absolute;
+    content: "";
+    display: block;
+    width: 1rem;
+    height: 50%;
+    left: 0;
+    bottom: 10%;
+    background-color: #948b84;
+    transition: all ease-in-out 1s;
+}
+
+.catalog-line a .content > div:not(.dirname):before {
+    content: "";
+    position: absolute;
+    border: #aaa solid 1px;
+    height: 100%;
+    width: 0;
+    top: 0;
+    left: 0.6rem;
+    z-index: 0;
+    transition: all ease-in-out 0.01s 0.4s;
+}
+
+.catalog-line a .content > div:not(.dirname) > h5 {
+    font-size: 2rem;
+    margin: 0 1rem;
+    margin-top: 0;
+    height: 100%;
+    text-align-last: justify;
+}
+
+.catalog-line a .content > div:not(.dirname) > span {
+    font-size: 1rem;
+    background-color: #f2f2f2;
+    z-index: 1;
+    padding-top: 1.5rem;
+    transition: background-color 0.01s 0.3s linear;
+}
+
+/*
+ * base.css gives generic directory badges left: 3px.
+ * Catalog-line blocks position dirname from their own odd/even rules.
+ */
+.catalog-line .dirname {
+    left: auto;
+}
+
+.catalog-line div {
+    overflow: hidden;
+}
+
+@media only screen and (max-width: 992px) {
+    .catalog-line img {
+        object-fit: cover;
+        width: 100%;
+        height: 15em;
+    }
+
+    .catalog-line a .content > div:not(.dirname) {
+        margin: 2rem 0;
+    }
+
+    .catalog-line a .content > div:not(.dirname) > h5 {
+        margin-top: 0;
+    }
+}
+
+@media only screen and (max-width: 520px) {
+    .catalog-line a:nth-child(even),
+    .catalog-line a {
+        flex-direction: column;
+    }
+
+    .catalog-line a .content {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+
+    .catalog-line a .content > div:not(.dirname):before {
+        height: 70%;
+    }
+}

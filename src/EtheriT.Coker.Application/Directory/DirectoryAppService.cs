@@ -1704,7 +1704,6 @@ namespace EtheriT.Coker.Application.Directory
                     {
                         case DirectoryTypeEnum.商品:
                             var pd_notId = await (db.Tag_Associates.Where(e => notTagIds.Contains(e.FK_TId) && e.Type == TagAssociateTypeEnum.商品)).Select(e => e.FK_AId).ToListAsync();
-                            var tempProdCorr = new List<CorrDTAID>();
 
                             foreach (var site in tags)
                             {
@@ -1715,21 +1714,6 @@ namespace EtheriT.Coker.Application.Directory
                                     .Where(e => siteId == e.Tag.FK_WebsiteId)
                                     .Select(e => new { e.FK_AId, e.FK_TId })
                                     .ToListAsync();
-
-                                foreach (var a in allProducts)
-                                {
-                                    var cindex = corr.FindIndex(c => c.TagId == a.FK_TId);
-                                    if (cindex != -1)
-                                    {
-                                        tempProdCorr.Add(new CorrDTAID
-                                        {
-                                            DirectoryId = corr[cindex].DirectoryId,
-                                            DirectoryName = corr[cindex].DirectoryName,
-                                            TagId = corr[cindex].TagId,
-                                            ArticleId = a.FK_AId,   // 借用此欄位存商品 Id（文章分支同樣做法）
-                                        });
-                                    }
-                                }
                                 // 按商品 ID 分群
                                 var groupedProducts = allProducts
                                     .GroupBy(e => e.FK_AId)
@@ -1740,8 +1724,6 @@ namespace EtheriT.Coker.Application.Directory
                                         .ToList()
                                 );
                             }
-
-                            corr = tempProdCorr;
                             //var allProducts = await db.Tag_Associates.Where(e => FKTIds.Contains(e.FK_TId) && !pd_notId.Contains(e.FK_AId) && e.Type == TagAssociateTypeEnum.商品).Select(e => new { e.FK_AId, e.FK_TId }).ToListAsync();
 
                             if (allIds.Any())
@@ -1878,11 +1860,6 @@ namespace EtheriT.Coker.Application.Directory
 
                                 foreach (var item in tempproddata)
                                 {
-                                    var dindex = corr.FindIndex(c => c.ArticleId == item.Id);
-                                    if (dindex != -1)
-                                    {
-                                        item.Dirname = corr[dindex].DirectoryName;
-                                    }
                                     item.Link += $"?dirid={dirid}";
                                 }
 

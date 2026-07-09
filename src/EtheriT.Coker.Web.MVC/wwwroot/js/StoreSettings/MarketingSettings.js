@@ -25,6 +25,8 @@
         $minAmount: null,
         $repeatable: null,
         $repeatableSection: null,
+        ruleValueCache: {},
+        lastRuleType:0,
 
         init: function () {
             if (this.isInitialized) return;
@@ -108,7 +110,7 @@
             });
 
             this.$ruleType.off("change.marketing").on("change.marketing", function () {
-                self.applyRuleTypeUI(true);
+                self.onRuleTypeChanged(true);
             });
 
             this.$neverEnd.off("change.marketing").on("change.marketing", function () {
@@ -249,6 +251,7 @@
 
             this.applyNeverEndUI();
             this.applyRuleTypeUI(false);
+            this.resetRuleValueCache();
         },
 
         onEnterEdit: function (id) {
@@ -292,6 +295,7 @@
 
             this.applyNeverEndUI();
             this.applyRuleTypeUI(false);
+            this.resetRuleValueCache();
         },
 
         fillForm: function (result) {
@@ -302,6 +306,7 @@
 
             this.applyNeverEndUI();
             this.applyRuleTypeUI(false);
+            this.resetRuleValueCache();
         },
 
         flattenCampaign: function (result) {
@@ -434,6 +439,50 @@
                 this.$repeatable.prop("checked", false);
                 this.$repeatableSection.addClass("d-none");
             }
+        },
+
+        onRuleTypeChanged: function () {
+            // 切換前，先把目前類型已填入的值暫存起來
+            this.stashRuleValues(this.lastRuleType);
+
+            // 切換 UI 顯示（不清空，改由暫存/還原機制控制欄位值）
+            this.applyRuleTypeUI(false);
+
+            // 還原切換後類型先前填過的值
+            const ruleType = this.getCurrentRuleType();
+            this.restoreRuleValues(ruleType);
+
+            this.lastRuleType = ruleType;
+        },
+
+        stashRuleValues: function (ruleType) {
+            if (ruleType === 1) {
+                this.ruleValueCache[1] = {
+                    discountAmount: this.$discountAmount.val()
+                };
+            } else if (ruleType === 2) {
+                this.ruleValueCache[2] = {
+                    discountPercent: this.$discountPercent.val(),
+                    maxDiscountAmount: this.$maxDiscountAmount.val()
+                };
+            }
+        },
+
+        restoreRuleValues: function (ruleType) {
+            const cache = this.ruleValueCache[ruleType];
+
+            if (ruleType === 1) {
+                this.$discountAmount.val(cache ? (cache.discountAmount ?? "") : "");
+            } else if (ruleType === 2) {
+                this.$discountPercent.val(cache ? (cache.discountPercent ?? "") : "");
+                this.$maxDiscountAmount.val(cache ? (cache.maxDiscountAmount ?? "") : "");
+            }
+        },
+
+        resetRuleValueCache: function () {
+            // 進入新增/編輯/列表時重置暫存，避免沿用上一筆的殘留值
+            this.ruleValueCache = {};
+            this.lastRuleType = this.getCurrentRuleType();
         },
 
         buildPayload: function () {

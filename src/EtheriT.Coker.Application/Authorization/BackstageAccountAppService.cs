@@ -1,6 +1,8 @@
+using AutoMapper;
 using EtheriT.Coker.Application.Authorizaion.Dto;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Authorization;
+using EtheriT.Coker.Application.Shared.Common;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Dto.User;
@@ -16,6 +18,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -29,6 +32,8 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly ICookieManagerAppService cookieManager;
         private readonly IConfiguration configuration;
+        private readonly IMapper mapper;
+        private readonly IFileUploadAppService fileUploadAppService;
 
         public BackstageAccountAppService(
             AccountAppService core,
@@ -38,7 +43,9 @@ namespace EtheriT.Coker.Application.Authorization
             LoginUserData loginUserData,
             IHttpContextAccessor httpContextAccessor,
             ICookieManagerAppService cookieManager,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IMapper mapper,
+            IFileUploadAppService fileUploadAppService)
         {
             this.core = core;
             this.db = db;
@@ -48,6 +55,8 @@ namespace EtheriT.Coker.Application.Authorization
             this.httpContextAccessor = httpContextAccessor;
             this.cookieManager = cookieManager;
             this.configuration = configuration;
+            this.mapper = mapper;
+            this.fileUploadAppService = fileUploadAppService;
         }
 
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
@@ -122,7 +131,41 @@ namespace EtheriT.Coker.Application.Authorization
             return output;
         }
 
-        public Task<UserDto> GetCurrentUser() => core.GetCurrentUser();
+        public async Task<UserDto> GetCurrentUser()
+        {
+            var output = new UserDto();
+            try
+            {
+                var name = httpContextAccessor.HttpContext?.User.Identity?.Name;
+                var user = await db.Users.FirstOrDefaultAsync(e => e.Account == name && !e.IsDeleted);
+                if (user == null) return output;
+
+                output.Account = user.Account;
+                output.UserName = user.Name;
+                var profileImages = await fileUploadAppService.getImgFiles(new Shared.Dto.Files.FileGetImgInputDto
+                {
+                    Sid = user.Id,
+                    Size = 3,
+                    Type = (int)FileBindTypeEnum.大頭貼
+                });
+                output.ProfileImage = profileImages.FirstOrDefault()?.Link ?? "/images/user.png";
+                output.Webs = await (
+                    from website in db.Websites
+                    join mapping in db.MappingUserAndWebsites on website.Id equals mapping.WebsiteId
+                    where mapping.UserId == user.Id
+                    select new Webs.Dto.WebsDto
+                    {
+                        Id = website.Id,
+                        Name = website.Title,
+                        DefaultUrl = website.DefaultUrl ?? string.Empty
+                    }).ToListAsync();
+            }
+            catch
+            {
+                output.Account = string.Empty;
+            }
+            return output;
+        }
 
         public async Task<LoginOutputDto> Chech()
         {
@@ -215,16 +258,101 @@ namespace EtheriT.Coker.Application.Authorization
             return new ResponseMessageDto { Success = true };
         }
 
-        public Task<ResponseMessageDto> UpdatePassword(UpdatePasswordDto dto) => core.UpdatePassword(dto);
-        public Task<ResponseUserEditDto> GetEditUser(DataDelectDto dto) => core.GetEditUser(dto);
-        public Task<ResponseMessageDto> AddUser(AddUser dto) => core.AddUser(dto);
-        public Task<ResponseMessageDto> SendForget(long userId) => core.SendForget(userId);
+        public async Task<ResponseMessageDto> UpdatePassword(UpdatePasswordDto dto)
+        {
+            var output = new ResponseMessageDto();
+            var userId = await loginUserData.GetUserId();
+            var user = await db.Users.FirstOrDefaultAsync(e => e.Id == userId && !e.IsDeleted && e.Status != 0);
+            if (user == null) output.Message = "使用者已被登出";
+            else if (!passwordHasher.VerifyHashedPassword(user.Password, dto.Password)) output.Message = "原始密碼錯誤";
+            else
+            {
+                var passwordError = CheckPassword(dto.NewPassword);
+                if (!string.IsNullOrEmpty(passwordError)) output.Message = passwordError;
+                else
+                {
+                    user.Password = passwordHasher.HashPassword(dto.NewPassword);
+                    await loginUserData.SaveChanges(user);
+                    output.Success = true;
+                }
+            }
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            return output;
+        }
+
+        public async Task<ResponseUserEditDto> GetEditUser(DataDelectDto dto)
+        {
+            var output = new ResponseUserEditDto();
+            try
+            {
+                var siteId = await loginUserData.GetWebsiteId();
+                var user = await db.Users.Include(e => e.Webs)
+                    .FirstOrDefaultAsync(e => e.Id == dto.Id && !e.IsDeleted);
+                if (user == null) throw new Exception("使用者不存在");
+                if (!user.Webs.Any(e => e.WebsiteId == siteId))
+                    throw new Exception("該使用者並未授權管理該網站");
+                mapper.Map(user, output.data);
+                output.Success = true;
+            }
+            catch (Exception ex)
+            {
+                output.Error = ex.Message;
+            }
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            return output;
+        }
+
+        public async Task<ResponseMessageDto> AddUser(AddUser dto)
+        {
+            var response = new ResponseMessageDto();
+            try
+            {
+                var existingUser = await db.Users.FirstOrDefaultAsync(e =>
+                    !e.IsDeleted &&
+                    (e.Account == dto.Account || (!string.IsNullOrEmpty(e.Email) && e.Email == dto.Email)));
+                var passwordError = CheckPassword(dto.Password);
+                if (existingUser != null) throw new Exception("該使用者的帳號或信箱已存在");
+                if (dto.Password != dto.PasswordConfirm) throw new Exception("輸入的密碼不相符");
+                if (!string.IsNullOrEmpty(passwordError)) throw new Exception(passwordError);
+
+                var user = mapper.Map<User>(dto);
+                user.Password = passwordHasher.HashPassword(dto.Password);
+                db.Users.Add(user);
+                await loginUserData.SaveChanges(user);
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            dto.Password = "*********";
+            dto.PasswordConfirm = "*********";
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            return response;
+        }
+
+        public async Task<ResponseMessageDto> SendForget(long userId)
+        {
+            return await core.SendForget(userId);
+        }
 
         private void ClearBackstageCookies()
         {
             cookieManager.Delete("BackstageToken");
             cookieManager.Delete("BackstageRefreshToken");
             cookieManager.Delete(".Coker6.Back.Auth");
+        }
+
+        private static string CheckPassword(string password)
+        {
+            if (password.Length < 8 || password.Length > 32)
+                return Shared.i18n.L.get("PasswordRuleLength");
+            var matchCount = 0;
+            if (Regex.IsMatch(password, @"^(?=.*\d).{8,32}$")) matchCount++;
+            if (Regex.IsMatch(password, @"^(?=.*[a-z]).{8,32}$")) matchCount++;
+            if (Regex.IsMatch(password, @"^(?=.*[A-Z]).{8,32}$")) matchCount++;
+            if (Regex.IsMatch(password, @"^(?=.*\W).{8,32}$")) matchCount++;
+            return matchCount < 3 ? Shared.i18n.L.get("PasswordRuleComposition") : string.Empty;
         }
     }
 }

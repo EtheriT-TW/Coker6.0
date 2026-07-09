@@ -1,10 +1,14 @@
+﻿using AutoMapper;
 using EtheriT.Coker.Application.Authorizaion.Dto;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Authorization;
+using EtheriT.Coker.Application.Shared.Common;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.OAuth;
+using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.Application.Token;
@@ -34,6 +38,9 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly StringHandler stringHandler;
         private readonly IShoppingCartAppService shoppingCartAppService;
         private readonly IHostEnvironment env;
+        private readonly IMapper mapper;
+        private readonly MailAppService mailAppService;
+        private readonly IMailTemplateAppService mailTemplateAppService;
 
         public FrontAccountAppService(
             AccountAppService core,
@@ -46,7 +53,10 @@ namespace EtheriT.Coker.Application.Authorization
             LoginUserData loginUserData,
             StringHandler stringHandler,
             IShoppingCartAppService shoppingCartAppService,
-            IHostEnvironment env)
+            IHostEnvironment env,
+            IMapper mapper,
+            MailAppService mailAppService,
+            IMailTemplateAppService mailTemplateAppService)
         {
             this.core = core;
             this.registrationService = registrationService;
@@ -59,6 +69,9 @@ namespace EtheriT.Coker.Application.Authorization
             this.stringHandler = stringHandler;
             this.shoppingCartAppService = shoppingCartAppService;
             this.env = env;
+            this.mapper = mapper;
+            this.mailAppService = mailAppService;
+            this.mailTemplateAppService = mailTemplateAppService;
         }
 
         public async Task<LoginOutputDto> FrontLogin(FrontLoginInputDto dto)
@@ -301,9 +314,6 @@ namespace EtheriT.Coker.Application.Authorization
         }
         public Task<ResponseMessageDto> AddFrontUser(FrontAddUserDto dto) =>
             registrationService.AddFrontUser(dto);
-        public Task<ResponseMessageDto> FrontUserEdit(FrontEditUserDto dto) => core.FrontUserEdit(dto);
-        public Task<ResponseUserEditDto> GetFrontUserData() => core.GetFrontUserData();
-        public Task<string> GetFrontUserLevelName() => core.GetFrontUserLevelName();
         public async Task<ResponseMessageDto> AccountOpening(Guid openId)
         {
             var response = new ResponseMessageDto();
@@ -378,10 +388,371 @@ namespace EtheriT.Coker.Application.Authorization
                 return response;
             }
         }
+        public async Task<ResponseMessageDto> FrontUserEdit(FrontEditUserDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                Guid UUID = await tokenAppService.GetUUID();
+                long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
+
+                var frontUser = await (from user in db.FrontUsers
+                                       join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+                                       where user.UUID == UUID && mapuserweb.FK_WebsiteId == WebsiteID
+                                       select user).FirstOrDefaultAsync();
+                if (frontUser != null)
+                {
+                    if (dto.Email != null) { }
+                    else dto.Email = frontUser.Email;
+
+                    mapper.Map(dto, frontUser);
+                    await loginUserData.SaveChanges(frontUser);
+
+                    response.Success = true;
+                }
+                else throw new Exception("用戶不存在。");
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<ResponseUserEditDto> GetFrontUserData()
+        {
+            ResponseUserEditDto UserData = new ResponseUserEditDto();
+            try
+            {
+                var websiteid = configuration.GetValue<long>("WebConfig:SiteId");
+                Guid UUID = await tokenAppService.GetUUID();
+                var token = await tokenAppService.CheckToken(null);
+
+                if (token != null && token.IsLogin)
+                {
+                    var userdata = await (from user in db.FrontUsers
+                                          join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+                                          where user.UUID == UUID && mapuserweb.FK_WebsiteId == websiteid
+                                          select user).FirstOrDefaultAsync();
+                    if (userdata != null)
+                    {
+                        EditUserDto data = mapper.Map<EditUserDto>(userdata);
+                        data.Birthday = userdata.Birthday == null ? "" : ((DateTime)userdata.Birthday).ToString("yyyy-MM-dd");
+                        UserData.data = data;
+                        UserData.Success = true;
+                    }
+                    else throw new Exception("會員不存在");
+                }
+                else throw new Exception("Token不存在");
+            }
+            catch (Exception ex)
+            {
+                UserData.Error = ex.Message;
+            }
+            return UserData;
+        }
+
+        public async Task<string> GetFrontUserLevelName()
+        {
+            try
+            {
+                var websiteid = configuration.GetValue<long>("WebConfig:SiteId");
+                Guid UUID = await tokenAppService.GetUUID();
+                var token = await tokenAppService.CheckToken(null);
+
+                if (token == null || !token.IsLogin) return "";
+
+                var levelName = await (from user in db.FrontUsers
+                                       join mapuserweb in db.MappingFrontUserAndWebsite
+                                           on user.Id equals mapuserweb.FK_UserId
+                                       join role in db.Roles
+                                           on user.Level equals role.Id
+                                       where user.UUID == UUID
+                                          && mapuserweb.FK_WebsiteId == websiteid
+                                       select role.Name).FirstOrDefaultAsync();
+
+                return levelName ?? "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+
         public Task<ResponseMessageDto> SendForget(SendForgetDto dto) => core.SendForget(dto);
-        public Task<ResponseMessageDto> ForgetIdCheck(Guid forgetId) => core.ForgetIdCheck(forgetId);
-        public Task<ResponseMessageDto> PasswordChage(PasswordChageDto dto) => core.PasswordChage(dto);
-        public Task<ResponseMessageDto> EmailChage(EmailChangeDto dto) => core.EmailChage(dto);
+        public async Task<ResponseMessageDto> ForgetIdCheck(Guid ForgetId)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+
+            try
+            {
+                var frontUser = await db.FrontUsers.Where(e => e.ForgetID == ForgetId).FirstOrDefaultAsync();
+
+                if (frontUser != null && frontUser.ForgeIDSendDate != null && frontUser.ForgeIDSendDate.Value.Date.AddDays(1).CompareTo(DateTime.Now) > 0)
+                {
+                    response.Success = true;
+                }
+                else throw new Exception(L.get("LinkExpired"));
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<ResponseMessageDto> PasswordChage(PasswordChageDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+
+            try
+            {
+                Guid UUID = await tokenAppService.GetUUID();
+
+                FrontUser? frontUser = new FrontUser();
+
+                if (UUID != null)
+                {
+                    if (dto.ForgetID != null)
+                    {
+                        frontUser = await (from user in db.FrontUsers
+                                           join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+                                           where user.ForgetID == dto.ForgetID && mapuserweb.FK_WebsiteId == dto.WebsiteId
+                                           select user).FirstOrDefaultAsync();
+                    }
+                    else if (dto.OldPassword != null)
+                    {
+                        frontUser = await (from user in db.FrontUsers
+                                           join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+                                           where user.UUID == UUID && mapuserweb.FK_WebsiteId == dto.WebsiteId
+                                           select user).FirstOrDefaultAsync();
+                        if (frontUser != null)
+                        {
+                            if (frontUser.Status == (int)UserStatusEnum.鎖定 && frontUser.LockTime != null && ((DateTime)frontUser.LockTime).AddMinutes(15).CompareTo(DateTime.Now) > 0)
+                            {
+                                throw new Exception(L.get("AccountLocked", ((DateTime)frontUser.LockTime).AddMinutes(15)));
+                            }
+                            if (!passwordHasher.VerifyHashedPassword(frontUser.Password, dto.OldPassword))
+                            {
+                                frontUser.ErrorTimes += 1;
+                                Account_Log account_Log = new Account_Log()
+                                {
+                                    UUID = frontUser.UUID,
+                                    WebsiteId = dto.WebsiteId,
+                                    ErrorTimes = frontUser.ErrorTimes
+                                };
+                                if (frontUser.ErrorTimes >= 3)
+                                {
+                                    frontUser.LockTime = DateTime.Now;
+                                    account_Log.LockTime = frontUser.LockTime;
+
+                                    frontUser.Status = (int)UserStatusEnum.鎖定;
+                                    account_Log.Status = (int)AccountStatusEnum.鎖定;
+
+                                    await loginUserData.SaveChanges(frontUser);
+
+                                    account_Log.CreatorUserId = frontUser.Id;
+                                    account_Log.CreationTime = DateTime.Now;
+
+                                    db.Account_Logs.Add(account_Log);
+                                    db.SaveChanges();
+
+                                    response.Message = L.get("PasswordIncorrect");
+                                    throw new Exception(L.get("PasswordErrorTooMany"));
+                                }
+                                await loginUserData.SaveChanges(frontUser);
+                                response.Message = L.get("PasswordIncorrect");
+                                throw new Exception(L.get("OldPasswordIncorrect"));
+                            }
+                        }
+                    }
+
+                    if (frontUser != null)
+                    {
+                        frontUser.Password = passwordHasher.HashPassword(dto.Password);
+                        frontUser.LastModifierUserId = frontUser.Id;
+                        frontUser.LastModificationTime = DateTime.Now;
+                        frontUser.ForgetID = null;
+                        frontUser.ForgeIDSendDate = null;
+                        frontUser.ErrorTimes = 0;
+                        frontUser.LockTime = null;
+                        frontUser.Status = (int)UserStatusEnum.開通;
+                        await loginUserData.SaveChanges(frontUser);
+
+                        Account_Log account_Log = new Account_Log()
+                        {
+                            UUID = UUID,
+                            WebsiteId = dto.WebsiteId,
+                            Status = (int)AccountStatusEnum.密碼重置,
+                            CreatorUserId = frontUser.Id,
+                            CreationTime = DateTime.Now,
+                        };
+                        db.Account_Logs.Add(account_Log);
+                        db.SaveChanges();
+
+                        response.Success = true;
+                    }
+                    else throw new Exception("會員不存在");
+                }
+                else throw new Exception("Token錯誤");
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+
+            return response;
+        }
+
+        public async Task<ResponseMessageDto> EmailChage(EmailChangeDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+
+            try
+            {
+                Guid UUID = await tokenAppService.GetUUID();
+                long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
+
+                var frontuser = await db.FrontUsers.Where(e => e.UUID == UUID).FirstOrDefaultAsync();
+                var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
+                if (frontuser != null && Website != null)
+                {
+                    if (passwordHasher.VerifyHashedPassword(frontuser.Password, dto.Password))
+                    {
+                        var other_frontuser = await (from user in db.FrontUsers
+                                                     join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+                                                     where user.Email == dto.Email
+                                                     where mapuserweb.FK_WebsiteId == WebsiteID
+                                                     select user.Id).ToListAsync();
+
+                        if (other_frontuser != null && other_frontuser.Count > 0)
+                        {
+                            response.Error = L.get("EmailAlreadyExistsTitle");
+                            response.Message = L.get("EmailAlreadyUsed");
+                        }
+                        else
+                        {
+                            var account_Log = new Account_Log()
+                            {
+                                UUID = frontuser.UUID,
+                                WebsiteId = WebsiteID,
+                                CreatorUserId = frontuser.Id,
+                                CreationTime = DateTime.Now,
+                                Status = (int)AccountStatusEnum.Email重置,
+                            };
+
+                            var hidden_mail = dto.Email.Substring(0, 1) + "******" + dto.Email.Substring(dto.Email.IndexOf('@') - 1, 1) + dto.Email.Substring(dto.Email.IndexOf('@'));
+
+                            ChangeEmailMailTemplateDto resultDto = new ChangeEmailMailTemplateDto
+                            {
+                                Email = hidden_mail,
+                                CreationTime = account_Log.CreationTime,
+                                Name = frontuser.Name,
+                                Title = Website.Title,
+                                Url = $"{Website.DefaultUrl}/{Website.OrgName}/Member"
+                            };
+
+                            var mailTemp = await mailTemplateAppService.GetTemplateRenderAsync(MailTemplateTypeEnum.變更電子信箱, new List<MailTemplateInputDto> { new MailTemplateInputDto {
+                                Key = frontuser.UUID.ToString(),
+                                Model = resultDto
+                            } });
+
+
+                            if (mailTemp?.Any() == true)
+                            {
+                                var content = mailTemp.First();
+
+                                var sedResult = await mailAppService.sendMail(new SenderDto
+                                {
+                                    Recipients = new List<MailUserDataDto>(){
+                                    new MailUserDataDto()
+                                    {
+                                        Name = frontuser.Name,
+                                        Email = frontuser.Email,
+                                    }
+                                },
+                                    Subject = $"【{Website.Title}】{L.get("MailNotifyEmailChanged")}",
+                                    Body = content.Body ?? string.Empty,
+                                    Css = content.Style ?? string.Empty,
+                                }, Website.Contact);
+
+                                response.Success = sedResult.Success;
+                                response.Message = sedResult.Message;
+                                response.Error = sedResult.Error;
+                            }
+
+                            if (response.Success)
+                            {
+                                frontuser.Email = dto.Email;
+                                var user = await db.Users.Where(e => e.Email == frontuser.Email).FirstOrDefaultAsync();
+                                if (user == null)
+                                {
+                                    user = mapper.Map<User>(frontuser);
+                                    user.Id = 0;
+                                    user.Password = frontuser.Password;
+                                    db.Users.Add(user);
+                                    await loginUserData.SaveChanges(user);
+                                }
+                                frontuser.FK_User = user.Id;
+                                db.Account_Logs.Add(account_Log);
+                                await loginUserData.SaveChanges(frontuser);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        frontuser.ErrorTimes += 1;
+                        var account_Log = new Account_Log()
+                        {
+                            UUID = frontuser.UUID,
+                            WebsiteId = WebsiteID,
+                            ErrorTimes = frontuser.ErrorTimes
+                        };
+                        if (frontuser.ErrorTimes >= 3)
+                        {
+                            frontuser.LockTime = DateTime.Now;
+                            account_Log.LockTime = frontuser.LockTime;
+
+                            frontuser.Status = (int)UserStatusEnum.鎖定;
+                            account_Log.Status = (int)AccountStatusEnum.鎖定;
+
+                            await loginUserData.SaveChanges(frontuser);
+
+                            account_Log.CreatorUserId = frontuser.Id;
+                            account_Log.CreationTime = DateTime.Now;
+
+                            db.Account_Logs.Add(account_Log);
+                            db.SaveChanges();
+
+                            response.Error = L.get("PasswordErrorThreeTimesTitle");
+                            response.Message = L.get("PasswordErrorTooMany");
+                        }
+                        else
+                        {
+                            account_Log.Status = (int)AccountStatusEnum.登入失敗;
+
+                            account_Log.CreatorUserId = frontuser.Id;
+                            account_Log.CreationTime = DateTime.Now;
+                            db.Account_Logs.Add(account_Log);
+                            db.SaveChanges();
+
+                            response.Error = L.get("PasswordIncorrect");
+                            response.Message = L.get("PasswordIncorrectRetry");
+                        }
+                    }
+                }
+                else if (frontuser == null) throw new Exception(L.get("MemberNotFound"));
+                else if (Website == null) throw new Exception(L.get("WebsiteDataError"));
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+
+            return response;
+        }
+
         public CheckRedirectUrlOutputDto checkRedirectUrl(string? redirectUrl)
         {
             var output = new CheckRedirectUrlOutputDto();

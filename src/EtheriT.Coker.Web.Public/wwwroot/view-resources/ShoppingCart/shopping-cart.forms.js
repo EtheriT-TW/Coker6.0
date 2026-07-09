@@ -271,6 +271,9 @@
     }
     function OrdererDataGet() {
         S.order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
+        S.order_data.ordererSex = S.order_data.ordererSex
+            ? Number(S.order_data.ordererSex)
+            : null;
 
         var country = S.order_data.county ? `${S.order_data.county} ` : "";
         var district = S.order_data.district ? `${S.order_data.district} ` : "";
@@ -303,6 +306,9 @@
                 break;
             case "edit":
                 S.recipient_data = co.Form.getJson($("#Form_Recipient").attr("id"));
+                S.recipient_data.recipientSex = S.recipient_data.recipientSex
+                    ? Number(S.recipient_data.recipientSex)
+                    : null;
                 var country = S.recipient_data.county ? `${S.recipient_data.county} ` : "";
                 var district = S.recipient_data.district ? `${S.recipient_data.district} ` : "";
                 S.recipient_data.recipientZipCode = S.recipient_data.zipcode ? `${S.recipient_data.zipcode}` : "";

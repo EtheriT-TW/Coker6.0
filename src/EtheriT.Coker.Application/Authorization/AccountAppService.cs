@@ -1608,8 +1608,7 @@ namespace EtheriT.Coker.Application.Authorization
 
                 if (token == null)
                 {
-                    throw new InvalidOperationException(
-                        $"登入 Token 建立後無法取得（RefreshToken: {tokenItem.RefreshToken}, WebsiteId: {WebsiteId}）");
+                    throw new InvalidOperationException("登入狀態與目前網站不符，請重新登入");
                 }
 
                 if (frontuser.UUID == Guid.Empty)

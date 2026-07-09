@@ -34,7 +34,7 @@ namespace EtheriT.Coker.Web.MVC.Middleware
 
             using var scope = _scopeFactory.CreateScope();
 
-            var accountAppService = scope.ServiceProvider.GetRequiredService<IAccountAppService>();
+            var accountAppService = scope.ServiceProvider.GetRequiredService<IBackstageAccountAppService>();
             var isAuthenticated = await accountAppService.Chech();
 
             var controllerName = context.GetRouteData()?.Values["controller"]?.ToString();

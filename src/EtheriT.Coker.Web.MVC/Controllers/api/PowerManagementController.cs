@@ -25,10 +25,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 	{
 		private readonly NavigationProvider navigation;
 		private readonly IPermissionsAppService permissionsAppService;
-		private readonly IAccountAppService accountAppService;
+        private readonly IBackstageAccountAppService accountAppService;
         private readonly PermissionStateStore permissionStateStore;
         private readonly LoginUserData loginUserData;
-        public PowerManagementController(NavigationProvider navigation, IPermissionsAppService permissionsAppService, IAccountAppService accountAppService, PermissionStateStore permissionStateStore, LoginUserData loginUserData)
+        public PowerManagementController(NavigationProvider navigation, IPermissionsAppService permissionsAppService, IBackstageAccountAppService accountAppService, PermissionStateStore permissionStateStore, LoginUserData loginUserData)
 		{
 			this.navigation = navigation;
 			this.permissionsAppService = permissionsAppService;

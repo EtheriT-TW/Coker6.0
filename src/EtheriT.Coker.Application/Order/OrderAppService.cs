@@ -52,7 +52,7 @@ namespace EtheriT.Coker.Application.Order
         private readonly LoginUserData loginUserData;
         private readonly ITokenAppService tokenAppService;
         private readonly IShoppingCartAppService shoppingCartAppService;
-        private readonly IAccountAppService accountAppService;
+        private readonly IFrontAccountAppService accountAppService;
         private readonly IStoreSetAppService storeSetAppService;
         private readonly MailAppService mailAppService;
         private readonly IConfiguration configuration;
@@ -66,7 +66,7 @@ namespace EtheriT.Coker.Application.Order
             LoginUserData loginUserData,
             ITokenAppService tokenAppService,
             IShoppingCartAppService shoppingCartAppService,
-            IAccountAppService accountAppService,
+            IFrontAccountAppService accountAppService,
             IStoreSetAppService storeSetAppService,
             IBonusManagementAppService bonusManagementAppService,
             MailAppService mailAppService,

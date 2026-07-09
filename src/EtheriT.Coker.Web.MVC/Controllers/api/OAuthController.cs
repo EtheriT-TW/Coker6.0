@@ -21,14 +21,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
     {
         private readonly AuthenticationSettings _authSettings;
         private readonly StringHandler _stringHandler;
-        private readonly IAccountAppService _accountAppService;
+        private readonly IFrontAccountAppService _accountAppService;
         private readonly IAuthenticationSchemeProvider _schemeProvider;
         private readonly ILogger<OAuthController> _logger;
         private readonly string DefaultDomain;
 
         public OAuthController(
             IOptions<AuthenticationSettings> authSettings, StringHandler StringHandler, 
-            IAccountAppService accountAppService, IAuthenticationSchemeProvider schemeProvider, ILogger<OAuthController> logger)
+            IFrontAccountAppService accountAppService, IAuthenticationSchemeProvider schemeProvider, ILogger<OAuthController> logger)
         {
             _authSettings = authSettings.Value;
             _stringHandler = StringHandler;

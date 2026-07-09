@@ -12,10 +12,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
     public class UserController : Controller
     {
         private readonly ILogger<UserController> _logger;
-        private readonly IAccountAppService accountAppService;
+        private readonly IBackstageAccountAppService accountAppService;
         public UserController(
             ILogger<UserController> logger, 
-            IAccountAppService accountAppService)
+            IBackstageAccountAppService accountAppService)
         {
             _logger = logger;
             this.accountAppService = accountAppService;

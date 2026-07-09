@@ -7,9 +7,9 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Header
 {
     public class Header : ViewComponent
     {
-        private readonly IAccountAppService accountAppService;
+        private readonly IBackstageAccountAppService accountAppService;
         private readonly LoginUserData loginUserData;
-        public Header(IAccountAppService accountAppService, LoginUserData loginUserData) {
+        public Header(IBackstageAccountAppService accountAppService, LoginUserData loginUserData) {
             this.accountAppService = accountAppService;
             this.loginUserData = loginUserData;
         }

@@ -57,7 +57,7 @@ using System.Xml.Linq;
 
 namespace EtheriT.Coker.Application.Authorization
 {
-    public class AccountAppService : IAccountAppService
+    public class AccountAppService
     {
         private readonly CokerDbContext db;
         private readonly IPasswordHasher passwordHasher;

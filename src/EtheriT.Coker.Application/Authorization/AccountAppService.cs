@@ -577,7 +577,7 @@ namespace EtheriT.Coker.Application.Authorization
 
                 try
                 {
-                    cookieManager.Clear();
+                    ClearBackstageCookies();
                 }
                 catch { }
             }
@@ -636,7 +636,7 @@ namespace EtheriT.Coker.Application.Authorization
 
             try
             {
-                cookieManager.Clear();
+                ClearBackstageCookies();
             }
             catch { }
 
@@ -645,41 +645,67 @@ namespace EtheriT.Coker.Application.Authorization
                 Success = true
             };
         }
+
+        private void ClearBackstageCookies()
+        {
+            cookieManager.Delete("BackstageToken");
+            cookieManager.Delete("BackstageRefreshToken");
+            cookieManager.Delete(".Coker6.Back.Auth");
+        }
+
         public async Task<LoginOutputDto> FrontLogout()
         {
             LoginOutputDto output = new LoginOutputDto();
-            var tokenItem = await tokenAppService.CreateToken();
+            var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            var refreshToken = cookieManager.Get("RefreshToken");
             try
             {
-                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
-                httpContextAccessor.HttpContext?.Response.Cookies.Delete("Token");
-                httpContextAccessor.HttpContext?.Response.Cookies.Delete("RefreshToken");
-                var token = await db.Tokens.Where(e => e.id == tokenItem.RefreshToken).FirstOrDefaultAsync();
-                if (token != null && token.UserID != null)
+                if (Guid.TryParse(refreshToken, out var refreshTokenId))
                 {
-                    Account_Log account_Log = new Account_Log()
+                    var token = await db.Tokens
+                        .FirstOrDefaultAsync(e =>
+                            e.id == refreshTokenId &&
+                            e.websiteId == websiteId);
+
+                    if (token != null && token.UserID != null)
                     {
-                        UUID = token.UUID,
-                        WebsiteId = websiteId,
-                        Status = (int)AccountStatusEnum.登出,
-                        CreatorUserId = token.UserID.Value,
-                        CreationTime = DateTime.Now,
-                    };
-                    db.Account_Logs.Add(account_Log);
-                    db.SaveChanges();
-                    token.UserID = null;
-                    db.SaveChanges();
-                    output.Success = true;
-                    httpContextAccessor.HttpContext.Response.Cookies.Delete("sessionId");
-                    httpContextAccessor.HttpContext.Response.Cookies.Delete("sessionRemember");
+                        var accountLog = new Account_Log
+                        {
+                            UUID = token.UUID,
+                            WebsiteId = websiteId,
+                            Status = (int)AccountStatusEnum.登出,
+                            CreatorUserId = token.UserID.Value,
+                            CreationTime = DateTime.Now,
+                        };
+                        db.Account_Logs.Add(accountLog);
+                        token.UserID = null;
+                        await db.SaveChangesAsync();
+                    }
                 }
+
+                output.Success = true;
             }
             catch (Exception e)
             {
-                tokenItem.Error = e.Message;
+                output.Error = e.Message;
+            }
+            finally
+            {
+                ClearFrontCookies(websiteId);
             }
             return output;
         }
+
+        private void ClearFrontCookies(long websiteId)
+        {
+            cookieManager.Delete("Token");
+            cookieManager.Delete("RefreshToken");
+            cookieManager.Delete("RememberMe");
+            cookieManager.Delete("sessionId");
+            cookieManager.Delete("sessionRemember");
+            cookieManager.Delete($".Coker6.Front.Auth.{websiteId}");
+        }
+
         public async Task<ResponseMessageDto> UpdatePassword(UpdatePasswordDto dto)
         {
             LoginOutputDto output = new LoginOutputDto() { Success = false };

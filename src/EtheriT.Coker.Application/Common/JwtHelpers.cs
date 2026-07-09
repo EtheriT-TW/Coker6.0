@@ -62,6 +62,8 @@ namespace EtheriT.Coker.Web.MVC.Resources
 
             claims.Add(new Claim(ClaimTypes.Sid, secret.ToString()));
             claims.Add(new Claim("secret", secret.ToString()));
+            var websiteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            claims.Add(new Claim("websiteId", websiteId.ToString()));
             //claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Account));
             if (custClaims != null) {
                 custClaims.ForEach(e => {
@@ -105,6 +107,8 @@ namespace EtheriT.Coker.Web.MVC.Resources
             var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);
             //identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Account));
             identity.AddClaim(new Claim(ClaimTypes.Name, Account));
+            identity.AddClaim(new Claim(ClaimTypes.Sid, secret.ToString()));
+            identity.AddClaim(new Claim("websiteId", websiteId.ToString()));
             var principal = new ClaimsPrincipal(identity);
             await httpContextAccessor.HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,

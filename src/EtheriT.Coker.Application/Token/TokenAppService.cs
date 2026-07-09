@@ -219,65 +219,79 @@ namespace EtheriT.Coker.Application.Token
                 if (string.IsNullOrEmpty(token)) token = httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
                 if (string.IsNullOrEmpty(token)) httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Token", out token);
                 if (string.IsNullOrEmpty(token)) token = httpContextAccessor.HttpContext?.Items["Token"]?.ToString();
-                if (!string.IsNullOrEmpty(token))
+                if (string.IsNullOrEmpty(token))
+                    throw new SecurityTokenException("Token取得錯誤");
+
+                var signKey = configuration.GetValue<string>("JwtSettings:SignKey");
+                if (string.IsNullOrWhiteSpace(signKey))
+                    throw new SecurityTokenException("Token簽章設定錯誤");
+
+                var handler = new JwtSecurityTokenHandler();
+                var tokenValidationParameters = new TokenValidationParameters
                 {
-                    var handler = new JwtSecurityTokenHandler();
-                    var tokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>("JwtSettings:SignKey"))),
-                        ValidateIssuer = false,
-                        ValidateAudience = false
-                    };
-                    handler.ValidateToken(token, tokenValidationParameters, out var validatedToken);
-                    var jwtToken = validatedToken as JwtSecurityToken;
-                    output.Success = true;
-                    output.Token = token;
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signKey)),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromMinutes(1)
+                };
+                handler.ValidateToken(token, tokenValidationParameters, out var validatedToken);
+                var jwtToken = validatedToken as JwtSecurityToken
+                    ?? throw new SecurityTokenException("Token格式錯誤");
 
-                    if (Guid.TryParse(jwtToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value, out var Sid)) output.RefreshToken = Sid;
+                if (!Guid.TryParse(jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value, out var sid))
+                    throw new SecurityTokenException("Token識別碼錯誤");
 
-                    if (Guid.TryParse(jwtToken?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value, out var Sub)) output.IsLogin = false;
-                    else
-                    {
-                        output.IsLogin = true;
-                        output.name = jwtToken?.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
-                    }
+                var now = DateTime.Now;
+                var websiteId = loginUserData.GetFrontWebsiteId();
+                var dbToken = await db.Tokens.FirstOrDefaultAsync(e =>
+                    e.id == sid &&
+                    e.websiteId == websiteId &&
+                    e.StartTime <= now &&
+                    e.EndTime != null &&
+                    e.EndTime > now);
 
-                    var db_token = await db.Tokens.Where(e => e.id == Sid).FirstOrDefaultAsync();
-                    if (db_token != null)
-                    {
-                        if (output.IsLogin)
-                        {
-                            var frontUser = await db.FrontUsers.Where(e => e.UUID == db_token.UUID).FirstOrDefaultAsync();
-                            if (frontUser != null && frontUser.Status == (int)UserStatusEnum.開通)
-                            {
-                                if (frontUser.PrivacyAgreeTime != null)
-                                {
-                                    var agreetime = frontUser.PrivacyAgreeTime.Value;
-                                    if (agreetime.AddYears(1) > DateTime.Now) output.AgreePrivacy = true;
-                                }
-                            }
-                            else output.IsLogin = false;
-                        }
-                        else
-                        {
-                            if (db_token.PrivacyAgreeTime != null)
-                            {
-                                var agreetime = db_token.PrivacyAgreeTime.Value;
-                                if (agreetime.AddYears(1) > DateTime.Now) output.AgreePrivacy = true;
-                            }
-                        }
-                    }
+                if (dbToken == null)
+                    throw new SecurityTokenException("Token不屬於目前網站或已失效");
+
+                output.Token = token;
+                output.RefreshToken = sid;
+                output.IsLogin = dbToken.UserID != null;
+
+                if (output.IsLogin)
+                {
+                    var userUuid = await db.MappingOldNewUUID
+                        .Where(e => e.TempUUID == dbToken.UUID)
+                        .Select(e => e.UserUUID)
+                        .FirstOrDefaultAsync();
+                    if (userUuid == Guid.Empty) userUuid = dbToken.UUID;
+
+                    var frontUser = await db.FrontUsers
+                        .Include(e => e.Websites)
+                        .FirstOrDefaultAsync(e =>
+                            e.UUID == userUuid &&
+                            e.Status == (int)UserStatusEnum.開通 &&
+                            e.Websites.Any(w => w.FK_WebsiteId == websiteId));
+
+                    if (frontUser == null)
+                        throw new SecurityTokenException("使用者不屬於目前網站");
+
+                    output.name = frontUser.Name;
+                    output.AgreePrivacy = frontUser.PrivacyAgreeTime?.AddYears(1) > now;
                 }
-                else throw new Exception("Token取得錯誤");
+                else
+                {
+                    output.AgreePrivacy = dbToken.PrivacyAgreeTime?.AddYears(1) > now;
+                }
+
+                output.Success = true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 output.Success = false;
-                output.Error = e.Message;
-            }
-            finally { 
-                
+                output.IsLogin = false;
+                output.Error = "登入狀態已失效，請重新登入";
             }
             return output;
         }

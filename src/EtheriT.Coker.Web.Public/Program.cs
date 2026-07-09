@@ -72,6 +72,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using Microsoft.Net.Http.Headers;
 using Serilog;
 using System.Net;
@@ -96,6 +97,22 @@ builder.Services.AddAuthentication(options =>
     {
         options.LoginPath = "/";
         options.ExpireTimeSpan = TimeSpan.FromDays(1);
+        options.Cookie.Name = $".Coker6.Front.Auth.{builder.Configuration.GetValue<long>("WebConfig:SiteId")}";
+        options.Events.OnValidatePrincipal = context =>
+        {
+            var configuredWebsiteId = context.HttpContext.RequestServices
+                .GetRequiredService<IConfiguration>()
+                .GetValue<long>("WebConfig:SiteId");
+            var claimWebsiteId = context.Principal?.FindFirst("websiteId")?.Value;
+
+            if (!long.TryParse(claimWebsiteId, out var tokenWebsiteId) ||
+                tokenWebsiteId != configuredWebsiteId)
+            {
+                context.RejectPrincipal();
+            }
+
+            return Task.CompletedTask;
+        };
     }).AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -108,6 +125,37 @@ builder.Services.AddAuthentication(options =>
             ValidAudience = builder.Configuration.GetValue<string>("JwtSettings:Audience"), // JWT 接收者
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetValue<string>("JwtSettings:SignKey"))), // 密鑰
             ClockSkew = TimeSpan.FromMinutes(1) // Token 時間允許的偏移量
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var websiteId = context.HttpContext.RequestServices
+                    .GetRequiredService<IConfiguration>()
+                    .GetValue<long>("WebConfig:SiteId");
+                var websiteClaim = context.Principal?.FindFirst("websiteId")?.Value;
+                var sidClaim = context.Principal?.FindFirst(ClaimTypes.Sid)?.Value;
+
+                if (!long.TryParse(websiteClaim, out var tokenWebsiteId) ||
+                    tokenWebsiteId != websiteId ||
+                    !Guid.TryParse(sidClaim, out var sid))
+                {
+                    context.Fail("Token 不屬於目前網站");
+                    return;
+                }
+
+                var db = context.HttpContext.RequestServices.GetRequiredService<CokerDbContext>();
+                var now = DateTime.Now;
+                var tokenExists = await db.Tokens.AnyAsync(t =>
+                    t.id == sid &&
+                    t.websiteId == websiteId &&
+                    t.StartTime <= now &&
+                    t.EndTime != null &&
+                    t.EndTime > now);
+
+                if (!tokenExists)
+                    context.Fail("Token 不存在或已失效");
+            }
         };
     }).AddPolicyScheme("JWT_OR_COOKIE", "JWT_OR_COOKIE", options =>
     {

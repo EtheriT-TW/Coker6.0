@@ -182,11 +182,11 @@ function ready() {
         }
     });
 
-    typeof (PageReady) === "function" && PageReady();
-    typeof (HeaderInit) === "function" && HeaderInit();
-    typeof (FooterInit) === "function" && FooterInit();
-
-    CreateToken();
+    CreateToken().always(function () {
+        typeof (PageReady) === "function" && PageReady();
+        typeof (HeaderInit) === "function" && HeaderInit();
+        typeof (FooterInit) === "function" && FooterInit();
+    });
     let idleTimeout;
     sessionStorage.setItem('pageLoadTime', Date.now());
     //監測使用者是否離開畫面
@@ -750,10 +750,16 @@ function cookie_reject() {
     $("#Cookie").removeClass("show")
 }
 function CreateToken() {
-    Coker.Token.GetToken().done(function (result) {
-        localStorage.setItem("token", result.token);
-        CheckToken();
-    }, null, { auth: false });
+    return Coker.Token.GetToken().done(function (result) {
+        if (result && result.success && result.token) {
+            localStorage.setItem("token", result.token);
+            CheckToken();
+        } else if (Coker.api && typeof Coker.api.clearAuth === "function") {
+            Coker.api.clearAuth();
+        }
+    }).fail(function () {
+        if (Coker.api && typeof Coker.api.clearAuth === "function") Coker.api.clearAuth();
+    });
 }
 function CheckToken() {
     Coker.Token.CheckToken().done(function (result) {

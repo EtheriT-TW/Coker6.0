@@ -1,9 +1,9 @@
 ﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Authorization;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.ThirdParty;
-using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
@@ -26,14 +26,14 @@ namespace EtheriT.Coker.Application.ThirdParty
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
         private readonly IConfiguration configuration;
-        private readonly ITokenAppService tokenAppService;
+        private readonly ICookieManagerAppService cookieManager;
         private readonly HttpClient ThirdPartyClient_Front;
         private readonly IWebHostEnvironment _env;
         public ThirdPartyAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IConfiguration configuration,
-            ITokenAppService tokenAppService,
+            ICookieManagerAppService cookieManager,
             IHttpClientFactory httpClientFactory,
             IWebHostEnvironment env
         )
@@ -41,7 +41,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             this.db = db;
             this.loginUserData = loginUserData;
             this.configuration = configuration;
-            this.tokenAppService = tokenAppService;
+            this.cookieManager = cookieManager;
             this._env = env;
             ThirdPartyClient_Front = httpClientFactory.CreateClient("ThirdPartyClient_Front");
         }
@@ -408,10 +408,10 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                var token = await tokenAppService.CheckToken(null);
-                if (token == null) throw new Exception("取得Token發生錯誤");
-                else if (token.Success == false) throw new Exception(token.Error);
-                dto.Token = token.Token;
+                var token = cookieManager.Get("BackstageToken");
+                if (string.IsNullOrWhiteSpace(token))
+                    throw new Exception("登入狀態已失效，請重新登入");
+                dto.Token = token;
                 response = await CallFrontApi("HandleThirdPartyPayment", dto);
             }
             catch (Exception ex)
@@ -425,10 +425,10 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                var token = await tokenAppService.CheckToken(null);
-                if (token == null) throw new Exception("取得Token發生錯誤");
-                else if (token.Success == false) throw new Exception(token.Error);
-                dto.Token = token.Token;
+                var token = cookieManager.Get("BackstageToken");
+                if (string.IsNullOrWhiteSpace(token))
+                    throw new Exception("登入狀態已失效，請重新登入");
+                dto.Token = token;
                 response = await CallFrontApi("HandleThirdPartyLogistics", dto);
             }
             catch (Exception ex)

@@ -1015,8 +1015,9 @@ function ResetAction(forgetid) {
     co.User.PasswordChange(data).done((result) => {
         if (result.success) {
             Coker.sweet.success(local.PasswordResetSuccess, function () {
+                if (co.api && typeof co.api.clearAuth === "function") co.api.clearAuth();
                 resetModal.hide();
-                loginModal.show();
+                window.location.href = "/";
             }, false);
         } else {
             switch (result.message) {

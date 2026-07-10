@@ -131,7 +131,8 @@
                 C.User.EmailChange(inputData).done(function (result) {
                     if (result.success) {
                         C.sweet.success(local.ResultEmailChangeSuccess, function () {
-                            location.reload();
+                            if (C.api && typeof C.api.clearAuth === "function") C.api.clearAuth();
+                            w.location.href = "/";
                         }, false);
                         return;
                     }

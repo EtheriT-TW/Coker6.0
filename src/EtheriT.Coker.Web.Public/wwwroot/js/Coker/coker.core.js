@@ -136,6 +136,13 @@
         return token ? { Authorization: "Bearer " + token } : {};
     };
 
+    Coker.api.clearAuth = Coker.api.clearAuth || function () {
+        if (!w.localStorage) return;
+        w.localStorage.removeItem("token");
+        w.localStorage.removeItem("lastSaveToken");
+        w.localStorage.removeItem("lastSaveTime");
+    };
+
     /**
      * GET wrapper
      * options:

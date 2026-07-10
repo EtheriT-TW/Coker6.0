@@ -18,6 +18,7 @@
                 $(".btn_logout").off("click.memberProfile").on("click.memberProfile", function () {
                     C.User.Logout().done(function (result) {
                         if (result.success) {
+                            if (C.api && typeof C.api.clearAuth === "function") C.api.clearAuth();
                             C.sweet.success("登出成功");
                             setTimeout(function () {
                                 w.location.href = "/";

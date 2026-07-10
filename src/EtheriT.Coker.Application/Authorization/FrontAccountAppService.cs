@@ -508,6 +508,7 @@ namespace EtheriT.Coker.Application.Authorization
 
             try
             {
+                var tokenCheck = await tokenAppService.CheckToken(null);
                 Guid UUID = await tokenAppService.GetUUID();
 
                 FrontUser? frontUser = new FrontUser();
@@ -592,6 +593,7 @@ namespace EtheriT.Coker.Application.Authorization
                         db.SaveChanges();
 
                         response.Success = true;
+                        await ClearFrontLoginState(tokenCheck.RefreshToken, dto.WebsiteId);
                     }
                     else throw new Exception("會員不存在");
                 }
@@ -611,6 +613,7 @@ namespace EtheriT.Coker.Application.Authorization
 
             try
             {
+                var tokenCheck = await tokenAppService.CheckToken(null);
                 Guid UUID = await tokenAppService.GetUUID();
                 long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
 
@@ -697,6 +700,8 @@ namespace EtheriT.Coker.Application.Authorization
                                 frontuser.FK_User = user.Id;
                                 db.Account_Logs.Add(account_Log);
                                 await loginUserData.SaveChanges(frontuser);
+
+                                await ClearFrontLoginState(tokenCheck.RefreshToken, WebsiteID);
                             }
                         }
                     }
@@ -895,6 +900,23 @@ namespace EtheriT.Coker.Application.Authorization
             cookieManager.Delete("sessionId");
             cookieManager.Delete("sessionRemember");
             cookieManager.Delete($".Coker6.Front.Auth.{websiteId}");
+        }
+
+        private async Task ClearFrontLoginState(Guid? refreshTokenId, long websiteId)
+        {
+            if (refreshTokenId.HasValue)
+            {
+                var token = await db.Tokens.FirstOrDefaultAsync(e =>
+                    e.id == refreshTokenId.Value &&
+                    e.websiteId == websiteId);
+                if (token != null)
+                {
+                    token.UserID = null;
+                    await db.SaveChangesAsync();
+                }
+            }
+
+            ClearFrontCookies(websiteId);
         }
     }
 }

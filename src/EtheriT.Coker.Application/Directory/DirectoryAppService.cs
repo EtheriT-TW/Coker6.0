@@ -52,7 +52,6 @@ namespace EtheriT.Coker.Application.Directory
         private readonly IPermissionsAppService permissionsAppService;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly ICustSearchAppService custSearchAppService;
-        private readonly IAccountAppService accountAppService;
         private readonly StringHandler stringHandler;
         private readonly IConfiguration configuration;
         private readonly IHtmlProcessor htmlProcessor;
@@ -68,7 +67,6 @@ namespace EtheriT.Coker.Application.Directory
             IPermissionsAppService permissionsAppService,
             IFileUploadAppService fileUploadAppService,
             ICustSearchAppService custSearchAppService,
-            IAccountAppService accountAppService,
             ITokenAppService tokenAppService,
             IConfiguration configuration,
             IHtmlProcessor htmlProcessor
@@ -88,7 +86,6 @@ namespace EtheriT.Coker.Application.Directory
             this.tokenAppService = tokenAppService;
             this.configuration = configuration;
             this.htmlProcessor = htmlProcessor;
-            this.accountAppService = accountAppService;
         }
         public async Task<ResponseMessageDto> AddUp(DirectoryAddUpDto dto)
         {

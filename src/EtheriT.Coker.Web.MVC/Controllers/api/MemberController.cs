@@ -16,10 +16,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
     public class MemberController : Controller
     {
         private readonly IMemberAppService memberAppService;
-        private readonly IAccountAppService accountAppService;
+        private readonly IBackstageAccountAppService accountAppService;
         public MemberController(
             IMemberAppService memberAppService,
-            IAccountAppService accountAppService
+            IBackstageAccountAppService accountAppService
         )
         {
             this.memberAppService = memberAppService;

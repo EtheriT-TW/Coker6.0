@@ -12,9 +12,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     [Authorize]
     public class UserController : Controller
     {
-        private readonly IAccountAppService accountAppService;
+        private readonly IFrontAccountAppService accountAppService;
         public UserController(
-            IAccountAppService accountAppService)
+            IFrontAccountAppService accountAppService)
         {
             this.accountAppService = accountAppService;
         }

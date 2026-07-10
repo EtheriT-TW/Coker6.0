@@ -70,7 +70,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IAdvertiseAppService advertiseAppService;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly ITemplatesApplicationService templatesApplicationService;
-        private readonly IAccountAppService accountAppService;
+        private readonly IFrontAccountAppService accountAppService;
         private readonly IPermissionsAppService permissionsAppService;
         private readonly IBonusManagementAppService bonusManagementAppService;
         private readonly StringHandler stringHandler;
@@ -97,7 +97,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IBonusManagementAppService bonusManagementAppService,
             IFileUploadAppService fileUploadAppService,
             ITemplatesApplicationService templatesApplicationService,
-            IAccountAppService accountAppService,
+            IFrontAccountAppService accountAppService,
             IPermissionsAppService permissionsAppService,
             StringHandler stringHandler,
             LoginUserData loginUserData,

@@ -9,8 +9,8 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     [ApiController]
     public class OAuthController : Controller
     {
-        private readonly IAccountAppService _accountAppService;
-        public OAuthController(IAccountAppService accountAppService)
+        private readonly IFrontAccountAppService _accountAppService;
+        public OAuthController(IFrontAccountAppService accountAppService)
         {
             _accountAppService = accountAppService;
         }

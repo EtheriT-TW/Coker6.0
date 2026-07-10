@@ -243,7 +243,9 @@ builder.Services.AddMvc(options =>
     options.OutputFormatters.Add(new XmlSerializerOutputFormatter());
 });
 
-builder.Services.AddScoped<IAccountAppService, AccountAppService>();
+builder.Services.AddScoped<AccountAppService>();
+builder.Services.AddScoped<FrontRegistrationService>();
+builder.Services.AddScoped<IFrontAccountAppService, FrontAccountAppService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<MailAppService, MailAppService>();
 builder.Services.AddScoped<INewsletterAppService, NewsletterAppService>();

@@ -323,7 +323,10 @@ builder.Services.AddScoped<NavigationProvider>();
 // 設定 CORS 策略
 builder.Services.AddScoped<ICorsPolicyProvider, DynamicCorsPolicyProvider>();
 
-builder.Services.AddScoped<IAccountAppService, AccountAppService>();
+builder.Services.AddScoped<AccountAppService>();
+builder.Services.AddScoped<FrontRegistrationService>();
+builder.Services.AddScoped<IFrontAccountAppService, FrontAccountAppService>();
+builder.Services.AddScoped<IBackstageAccountAppService, BackstageAccountAppService>();
 builder.Services.AddScoped<ITokenAppService, TokenAppService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IWebsiteApplication, WebsiteApplication>();

@@ -11,6 +11,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public long? FId { get; set; }
         public DirectoryTypeEnum type { get; set; }
         public string? MainImage { get; set; }
+        /// <summary>廣告媒體類型：1 圖片、2 影片、3 YouTube。</summary>
+        public int? MediaType { get; set; }
         public string? Link { get; set; }
         public DateTime? NodeDate { get; set; }
         public DateTime? StartTime { get; set; }

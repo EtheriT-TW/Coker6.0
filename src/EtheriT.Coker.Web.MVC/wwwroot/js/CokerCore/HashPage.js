@@ -17,7 +17,8 @@
                     onList: null,
                     onNew: null,
                     onEdit: null,
-                    onChange: null
+                    onChange: null,
+                    parseState: null
                 }, options || {});
 
                 const $root = $(settings.root);
@@ -53,6 +54,24 @@
 
                 function parseHash(hash) {
                     const val = normalizeHash(hash);
+
+                    if (typeof settings.parseState === "function") {
+                        const customState = settings.parseState(val, {
+                            listHash: settings.listHash,
+                            newHash: settings.newHash,
+                            listPageKey: settings.listPageKey,
+                            contentPageKey: settings.contentPageKey
+                        });
+
+                        if (customState && customState.pageKey) {
+                            return $.extend({
+                                raw: val,
+                                mode: "custom",
+                                id: null,
+                                title: ""
+                            }, customState);
+                        }
+                    }
 
                     if (isListHash(val)) {
                         return {

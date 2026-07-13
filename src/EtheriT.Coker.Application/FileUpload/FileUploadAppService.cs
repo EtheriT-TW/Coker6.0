@@ -234,8 +234,10 @@ namespace EtheriT.Coker.Application
                     var db_fu = db.FileUploads.Where(e => e.Id == dto.Id).FirstOrDefault();
                     if (db_fu != null)
                     {
+                        db_fu.ContentType = "youtube";
                         db_fu.OriginalFileName = dto.File;
                         db_fu.DownloadFileName = $"https://www.youtube.com/watch?v={dto.File}";
+                        db_fu.Size = 0;
                         db_fu.LastModificationTime = DateTime.Now;
                         db_fu.LastModifierUserId = userId;
 
@@ -801,60 +803,88 @@ namespace EtheriT.Coker.Application
         }
         public async Task<List<FileGetDisplayDto>> getAdvertiseFiles(long Aid, int type)
         {
-            var output = new List<FileGetDisplayDto>();
-            string orgName = await loginUserData.GetWebsiteOrgName();
-            try
-            {
-                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
-                if (websiteId == 0)
-                {
-                    websiteId = await loginUserData.GetWebsiteId();
-                }
+            var filesByAdvertise = await GetAdvertiseFilesBatchAsync(new[] { Aid }, type);
+            return filesByAdvertise.GetValueOrDefault(Aid) ?? new List<FileGetDisplayDto>();
+        }
 
-                var fbs = await (db.FileBinds.Where(e => e.Sid == Aid && e.type == type).Where(e => !e.IsDeleted).OrderBy(e => e.SerNo)).ToListAsync();
-                if (fbs != null)
-                {
-                    for (int i = 0; i < fbs.Count; i++)
-                    {
-                        var fb = fbs[i]; ;
-                        var fu = await (db.FileUploads.Where(e => e.Id == fb.FK_FileUploadId)).FirstOrDefaultAsync();
-                        if (fu != null)
-                        {
-                            string MediaLink = fb.MediaLink == "" ? fu.DownloadFileName : fb.MediaLink;
-                            if (orgName != "")
-                            {
-                                MediaLink = MediaLink.Replace("upload", $"upload/{orgName}");
-                            }
-                            var filetype = 0;
-                            var temp_index = fu.ContentType.IndexOf("/");
-                            var obj = new FileGetDisplayDto();
-                            if (temp_index == -1 && fu.ContentType == "youtube")
-                            {
-                                filetype = 3;
-                            }
-                            else if (fu.ContentType.Substring(0, temp_index) == "image")
-                            {
-                                filetype = 1;
-                            }
-                            else if (fu.ContentType.Substring(0, temp_index) == "video")
-                            {
-                                filetype = 2;
-                                obj.Video_Type = fu.ContentType;
-                            }
-                            obj.Id = fu.Id;
-                            obj.Link = MediaLink;
-                            obj.Name = fb.Name;
-                            obj.FileType = filetype;
-                            output.Add(obj);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
+        public async Task<Dictionary<long, List<FileGetDisplayDto>>> GetAdvertiseFilesBatchAsync(
+            IReadOnlyCollection<long> advertiseIds,
+            int type)
+        {
+            var ids = advertiseIds?.Where(id => id > 0).Distinct().ToList() ?? new List<long>();
+            var output = ids.ToDictionary(id => id, _ => new List<FileGetDisplayDto>());
+            if (!ids.Any()) return output;
 
+            var orgName = await loginUserData.GetWebsiteOrgName();
+            var fileRows = await (
+                from bind in db.FileBinds.AsNoTracking()
+                join upload in db.FileUploads.AsNoTracking()
+                    on bind.FK_FileUploadId equals (long?)upload.Id
+                where ids.Contains(bind.Sid)
+                    && bind.type == type
+                    && !bind.IsDeleted
+                    && !upload.IsDeleted
+                orderby bind.Sid, bind.SerNo, bind.Id
+                select new
+                {
+                    AdvertiseId = bind.Sid,
+                    FileId = upload.Id,
+                    bind.Name,
+                    bind.MediaLink,
+                    upload.DownloadFileName,
+                    upload.ContentType
+                }).ToListAsync();
+
+            foreach (var fileRow in fileRows)
+            {
+                var mediaLink = string.IsNullOrWhiteSpace(fileRow.MediaLink)
+                    ? fileRow.DownloadFileName ?? string.Empty
+                    : fileRow.MediaLink;
+                var contentType = fileRow.ContentType ?? string.Empty;
+                var fileType = contentType.Equals("youtube", StringComparison.OrdinalIgnoreCase) ||
+                    IsYoutubeMediaLink(mediaLink)
+                    ? 3
+                    : contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+                        ? 1
+                        : contentType.StartsWith("video/", StringComparison.OrdinalIgnoreCase)
+                            ? 2
+                            : 0;
+
+                output[fileRow.AdvertiseId].Add(new FileGetDisplayDto
+                {
+                    Id = fileRow.FileId,
+                    Link = ApplyAdvertiseMediaPath(mediaLink, orgName),
+                    Name = fileRow.Name,
+                    FileType = fileType,
+                    Video_Type = fileType == 2 ? contentType : null
+                });
             }
+
             return output;
+        }
+
+        private static bool IsYoutubeMediaLink(string mediaLink)
+        {
+            if (!Uri.TryCreate(mediaLink, UriKind.Absolute, out var uri)) return false;
+
+            var host = uri.Host;
+            return host.Equals("youtu.be", StringComparison.OrdinalIgnoreCase) ||
+                host.Equals("youtube.com", StringComparison.OrdinalIgnoreCase) ||
+                host.EndsWith(".youtube.com", StringComparison.OrdinalIgnoreCase) ||
+                host.Equals("youtube-nocookie.com", StringComparison.OrdinalIgnoreCase) ||
+                host.EndsWith(".youtube-nocookie.com", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string ApplyAdvertiseMediaPath(string mediaLink, string orgName)
+        {
+            if (string.IsNullOrWhiteSpace(orgName) ||
+                !mediaLink.StartsWith("/upload/", StringComparison.OrdinalIgnoreCase) ||
+                mediaLink.StartsWith($"/upload/{orgName}/", StringComparison.OrdinalIgnoreCase))
+            {
+                return mediaLink;
+            }
+
+            return $"/upload/{orgName}/{mediaLink.Substring("/upload/".Length)}";
         }
         public async Task<List<FileGetProdDisplayDto>> getProdMultimedia(long Pid, int size)
         {

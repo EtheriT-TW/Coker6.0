@@ -2307,6 +2307,39 @@ namespace EtheriT.Coker.Application.Directory
                                             LastModificationTime = a.LastModificationTime ?? a.CreationTime
                                         };
                         var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                        if (output?.data != null)
+                        {
+                            var rows = output.data.Cast<object>().ToList();
+                            var advertiseIds = rows
+                                .Select(row => row.GetType().GetProperty("Id")?.GetValue(row))
+                                .Where(value => value != null)
+                                .Select(value => Convert.ToInt64(value))
+                                .Distinct()
+                                .ToList();
+
+                            if (advertiseIds.Any())
+                            {
+                                var mediaByAdvertise = await fileUploadAppService.GetAdvertiseFilesBatchAsync(
+                                    advertiseIds,
+                                    (int)FileBindTypeEnum.自訂廣告);
+
+                                foreach (var row in rows)
+                                {
+                                    var idValue = row.GetType().GetProperty("Id")?.GetValue(row);
+                                    if (idValue == null ||
+                                        !mediaByAdvertise.TryGetValue(Convert.ToInt64(idValue), out var mediaFiles))
+                                    {
+                                        continue;
+                                    }
+
+                                    var media = mediaFiles.FirstOrDefault();
+                                    if (media == null) continue;
+
+                                    row.GetType().GetProperty("MainImage")?.SetValue(row, media.Link);
+                                    row.GetType().GetProperty("MediaType")?.SetValue(row, (int?)media.FileType);
+                                }
+                            }
+                        }
                         return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                     }
                     else new Exception("無綁定標籤");
@@ -2666,58 +2699,17 @@ namespace EtheriT.Coker.Application.Directory
 
             if (selectedAdvertiseIds.Any())
             {
-                // 與原本 getAdvertiseFiles 的行為一致：後台編輯時補上 orgName，
-                // 前台請求的 GetWebsiteOrgName() 會回傳空字串，因此保留 /upload/...。
-                var requestOrgName = await loginUserData.GetWebsiteOrgName();
-                var fileRows = await (
-                    from bind in db.FileBinds.AsNoTracking()
-                    join upload in db.FileUploads.AsNoTracking()
-                        on bind.FK_FileUploadId equals (long?)upload.Id
-                    where selectedAdvertiseIds.Contains(bind.Sid)
-                        && bind.type == (int)FileBindTypeEnum.自訂廣告
-                        && !bind.IsDeleted
-                        && !upload.IsDeleted
-                    orderby bind.Sid, bind.SerNo
-                    select new
-                    {
-                        AdvertiseId = bind.Sid,
-                        FileId = upload.Id,
-                        bind.Name,
-                        bind.MediaLink,
-                        upload.DownloadFileName,
-                        upload.ContentType,
-                    }).ToListAsync();
+                var filesByAdvertise = await fileUploadAppService.GetAdvertiseFilesBatchAsync(
+                    selectedAdvertiseIds,
+                    (int)FileBindTypeEnum.自訂廣告);
 
-                foreach (var fileRow in fileRows)
+                foreach (var advertiseId in selectedAdvertiseIds)
                 {
-                    if (!advertisementById.TryGetValue(fileRow.AdvertiseId, out var advertisement)) continue;
-
-                    var mediaLink = string.IsNullOrEmpty(fileRow.MediaLink)
-                        ? fileRow.DownloadFileName ?? string.Empty
-                        : fileRow.MediaLink;
-
-                    if (!string.IsNullOrEmpty(requestOrgName))
+                    if (advertisementById.TryGetValue(advertiseId, out var advertisement) &&
+                        filesByAdvertise.TryGetValue(advertiseId, out var files))
                     {
-                        mediaLink = mediaLink.Replace("upload", $"upload/{requestOrgName}");
+                        advertisement.FileLink = files;
                     }
-
-                    var contentType = fileRow.ContentType ?? string.Empty;
-                    var fileType = contentType == "youtube"
-                        ? 3
-                        : contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
-                            ? 1
-                            : contentType.StartsWith("video/", StringComparison.OrdinalIgnoreCase)
-                                ? 2
-                                : 0;
-
-                    advertisement.FileLink.Add(new FileGetDisplayDto
-                    {
-                        Id = fileRow.FileId,
-                        Link = mediaLink,
-                        Name = fileRow.Name,
-                        FileType = fileType,
-                        Video_Type = fileType == 2 ? contentType : null,
-                    });
                 }
 
                 var tagRows = await (

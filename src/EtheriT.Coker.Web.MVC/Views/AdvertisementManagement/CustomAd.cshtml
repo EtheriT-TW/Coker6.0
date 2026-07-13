@@ -12,21 +12,17 @@
 }
 
 <link rel="stylesheet" href="~/css/AdvertisementManagement/CustomAd.min.css" asp-append-version="true" />
-@{
-    await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
-}
 <script src="~/js/AdvertisementManagement/CustomAd.min.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()
-<div class="">
+<div id="CustomAdPageRoot">
     <div id="TopLine" class="py-2 px-4">
         <div class="d-flex">
             <div class="title fw-bold fs-3">目錄管理</div>
-            <a class="btn btn-primary text-decoration-none align-self-center" href="#" role="button">返回選單</a>
         </div>
     </div>
     @await Component.InvokeAsync(nameof(Modal), new { dispaly = "TagSelectModal" })
     <div id="pages">
-        <div id="DirectoryList" class="card border-0">
+        <div id="DirectoryList" data-hash-page="DirectoryList" class="card border-0">
             @await Component.InvokeAsync(nameof(Modal), new { dispaly = "PermissionDetailsModal" })
             <div class="card-body position-relative">
                 <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
@@ -87,7 +83,7 @@
                     )
             </div>
         </div>
-        <div id="DirectoryContent" class="card border-0 d-none">
+        <div id="DirectoryContent" data-hash-page="DirectoryContent" class="card border-0 d-none">
             <div class="card-header d-flex justify-content-between">
                 <div class="fw-bold fs-5 d-flex align-items-center">
                     <button class="btn_back d-flex bg-transparent border-0 align-items-center">
@@ -95,7 +91,7 @@
                             keyboard_backspace
                         </span>
                     </button>
-                    <div class="lh-lg">編輯目錄</div>
+                    <div class="lh-lg" data-hash-title>編輯目錄</div>
                 </div>
                 <div class="d-flex">
                     <button class="btn_done btn-primary border-0 px-3 py-1 text-white me-3 " form="DirectoryForm">儲　存</button>
@@ -143,12 +139,8 @@
             </form>
         </div>
 
-        <div id="DirectoryCanvas" class="card border-0 d-none">
-            <div id="gjs"></div>
-        </div>
-
-        <div id="DirectoryItemps" class="card border-0 d-none">
-            <div class="advertise d-none">
+        <div id="DirectoryItemps" data-hash-page="AdvertiseList" class="card border-0 d-none">
+            <div class="advertise">
                 <div class="card-body position-relative">
                     <div class="d-flex position-absolute z-index-up">
                         <button class="btn_back border btn-outline-light text-black d-flex p-1 rounded text-decoration-none">
@@ -186,6 +178,32 @@
                         .Columns(c =>
                         {
                             c.AddFor(e => e.Id).Caption("編號").Width(90);
+                            c.AddFor(e => e.MainImage)
+                                .Caption("廣告圖片")
+                                .Width(100)
+                                .AllowFiltering(false)
+                                .AllowSorting(false)
+                                .CellTemplate(
+                            @<text>
+                                <% if (data.MediaType && value) { %>
+                                    <button type="button"
+                                            class="advertise-media-cell advertise-media-trigger"
+                                            data-advertise-id="<%- data.Id %>"
+                                            data-media-type="<%- data.MediaType %>"
+                                            data-media-src="<%- value %>"
+                                            data-media-title="<%- data.Title || '廣告預覽' %>"
+                                            aria-label="預覽 <%- data.Title || '廣告媒體' %>">
+                                        <% if (data.MediaType === 1) { %>
+                                            <img src="<%- value %>" alt="<%- data.Title || '廣告圖片' %>" loading="lazy" />
+                                        <% } else if (data.MediaType === 2) { %>
+                                            <span class="material-symbols-outlined" title="影片">movie</span>
+                                        <% } else if (data.MediaType === 3) { %>
+                                            <span class="material-symbols-outlined advertise-media-youtube" title="YouTube 影片">smart_display</span>
+                                        <% } %>
+                                    </button>
+                                    <% } %>
+                            </text>
+                                );
                             c.AddFor(e => e.Title).Caption("標題");
                                 c.AddFor(e => e.ExposureTimes).Caption("曝光次數").Width(90).CellTemplate(
                                 @<text>
@@ -230,7 +248,7 @@
             </div>
         </div>
 
-        <div id="AdvertiseContent" class="card border-0 d-none">
+        <div id="AdvertiseContent" data-hash-page="AdvertiseContent" class="card border-0 d-none">
             <div class="card-header d-flex justify-content-between">
                 <div class="fw-bold fs-5 d-flex align-items-center">
                     <button class="btn_back d-flex bg-transparent border-0 align-items-center">
@@ -238,7 +256,7 @@
                             keyboard_backspace
                         </span>
                     </button>
-                    <div class="lh-lg">返回廣告目錄</div>
+                    <div class="lh-lg" data-advertise-header>返回廣告目錄</div>
                 </div>
                 <div class="d-flex">
                     <button class="btn_done btn-primary border-0 px-3 py-1 text-white me-3 " form="AdvertiseForm">儲　存</button>
@@ -338,6 +356,38 @@
                     </div>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="AdvertiseMediaPreviewModal" tabindex="-1" aria-labelledby="AdvertiseMediaPreviewTitle" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="AdvertiseMediaPreviewTitle">廣告預覽</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="關閉"></button>
+                </div>
+                <div class="modal-body advertise-media-preview-body">
+                    <img class="advertise-media-preview-image d-none" data-media-preview alt="" />
+                    <video class="advertise-media-preview-video d-none" data-media-preview controls playsinline></video>
+                    <iframe class="advertise-media-preview-youtube d-none"
+                            data-media-preview
+                            title="YouTube 廣告影片"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin"
+                            allowfullscreen></iframe>
+                </div>
+                <div class="modal-footer advertise-media-preview-navigation border-secondary justify-content-between">
+                    <button type="button" class="btn btn-outline-light" data-media-preview-previous disabled>
+                        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+                        上一個
+                    </button>
+                    <button type="button" class="btn btn-outline-light" data-media-preview-next disabled>
+                        下一個
+                        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

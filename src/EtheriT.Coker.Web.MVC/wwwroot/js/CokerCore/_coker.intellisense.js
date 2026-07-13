@@ -271,6 +271,7 @@
  * @property {(state:CokerHashPageState)=>void=} onNew
  * @property {(state:CokerHashPageState)=>void=} onEdit
  * @property {(state:CokerHashPageState)=>void=} onChange
+ * @property {(hash:string,defaults:Object)=>CokerHashPageState|null=} parseState
  */
 
 /**

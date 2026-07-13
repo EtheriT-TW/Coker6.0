@@ -1,515 +1,1013 @@
-﻿var $btn_display, title, $title_text, $description, $description_text, $ad_type
-var keyId, disp_opt = true, DirectoryId = 0, DirectoryType = "n";
-let directory_list, editor, permissionDetailsModal;
-let DirectoryForms, $DirectoryTags;
-let AdvertiseForms, $AdvertiseTags;
+(function (window, $, co) {
+    "use strict";
 
-function PageReady() {
-    DirectoryForms = $('#DirectoryForm');
-    AdvertiseForms = $('#AdvertiseForm');
-    permissionDetailsModal = new bootstrap.Modal(document.getElementById("PermissionDetailsModal"));
-    co.PowerManagement.GetPermission().done(function (permission) {
-        if (!permission.CanCreate) $(".btn_add").remove();
-    });
+    const CustomAdPage = {
+        rootSelector: "#CustomAdPageRoot",
+        directoryFormId: "DirectoryForm",
+        advertiseFormId: "AdvertiseForm",
 
-    ElementInit();
-    $(".btn_input_pic").on("click", function (even) {
-        even.preventDefault();
-        $(".input_pic").click();
-    });
-    $(".btn_input_video").on("click", function (even) {
-        even.preventDefault();
-        $(".input_video").click();
-    });
+        initialized: false,
+        hashPage: null,
+        directoryGridEvent: null,
+        advertiseGridEvent: null,
+        directoryTags: null,
+        advertiseTags: null,
 
-    $(".input_pic").on("change", function (e) {
-        var file = e.target.files[0];
-        var reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = function (e) {
-            var obj = {};
-            obj["id"] = 0;
-            obj["File"] = file;
-            obj["name"] = file.name;
-            obj["link"] = e.target.result
-            $(".img_preview").attr("src", e.target.result);
-            $(".btn_input_pic > span").addClass("d-none");
-            $(".img_preview").removeClass("d-none");
-            $ad_type.data("file", obj);
-        };
-    })
-    $(".input_video").on("change", function (e) {
-        var file = e.target.files[0];
-        var reader = new FileReader();
+        route: {
+            version: 0,
+            mode: "directory-list",
+            directoryId: 0,
+            advertiseId: 0
+        },
 
-        reader.readAsDataURL(file);
-        reader.onload = function (e) {
-            var obj = {};
-            obj["id"] = 0;
-            obj["File"] = file;
-            obj["name"] = file.name;
-            obj["link"] = e.target.result
-            $(".video_preview").attr("type", obj["File"].type);
-            $(".video_preview").attr("src", obj["link"]);
-            $ad_type.data("file", obj);
-        };
-    });
+        directoryVisible: true,
+        directoryData: null,
+        selectedFile: null,
+        advertiseFileId: 0,
+        mediaPreviewAdvertiseId: 0,
+        mediaPreviewNavigationBusy: false,
+        mediaPreviewBoundaryDirection: 0,
 
-    $DirectoryTags = $(DirectoryForms).find(".InputTag").TagListModalInit();
-    $AdvertiseTags = $(AdvertiseForms).find(".InputTag").TagListModalInit();
-
-    (() => {
-        Array.from(AdvertiseForms).forEach(form => {
-            form.addEventListener('submit', event => {
-                if (!form.checkValidity()) {
-                    event.preventDefault()
-                    event.stopPropagation()
-                } else {
-                    event.preventDefault();
-                    Coker.sweet.confirm("即將儲存", "儲存後將顯示於廣告列表", "儲存", "取消", function () {
-                        AddUpAdvertise("已成功儲存", "儲存發生未知錯誤");
-                    });
-                }
-                form.classList.add('was-validated')
-            }, false)
-        })
-    })();
-
-    (() => {
-        Array.from(DirectoryForms).forEach(form => {
-            form.addEventListener('submit', event => {
-                if (!form.checkValidity()) {
-                    event.preventDefault()
-                    event.stopPropagation()
-                } else {
-                    event.preventDefault();
-                    if ($("#InputTag").val() == "" || $("#InputTag").val() == "無") {
-                        Coker.sweet.error("錯誤", "標籤不可為空", null, false);
-                    } else {
-                        Coker.sweet.confirm("即將儲存", "儲存後將顯示於安排的位置", "儲存", "取消", function () {
-                            AddUp("已成功儲存", "儲存發生未知錯誤");
-                        });
-                    }
-                }
-                form.classList.add('was-validated')
-            }, false)
-        })
-    })();
-
-    $("#DirectoryContent .btn_back").on("click", function () {
-        Coker.sweet.confirm("返回目錄列表", "資料將不被保存", "確定", "取消", function () {
-            directory_list.component.refresh();
-            BackToList();
-        });
-    });
-    $("#AdvertiseContent .btn_back").on("click", function () {
-        const dir = $("#DirectoryItemps").data("dir");
-        Coker.sweet.confirm(`返回${dir.title}廣告列表`, "資料將不被保存", "確定", "取消", function () {
-            directoryDatailList.component.refresh();
-            $ad_type.data("fileid", 0);
-            $ad_type.val(null);
-            $ad_type.change();
-            location.hash = `Advertise_${dir.id}`
-        });
-    })
-
-    $("#DirectoryList .btn_add").on("click", function () {
-        FormDataClear();
-        window.location.hash = 0;
-        HashDataEdit();
-    });
-    $("#DirectoryItemps .btn_add").on("click", function () {
-        window.location.hash = `AdvertiseEditor_${DirectoryId}_0`;
-    });
-    $("#DirectoryItemps .btn_back").off("click").on("click", function () {
-        BackToList();
-    });
-
-    $(".btn_preview").off("click").on("click", function () {
-        $(".ad_preview > div").each(function (i) {
-            $(this).addClass("d-none");
-        });
-        $(".ad_preview > .youtube").removeClass("d-none");
-        var ytlink = $(".btn_preview").prev().val();
-        var file = ytlink.substr(ytlink.indexOf("v=") + 2);
-        if (file.indexOf("&") > 0) file = file.substring(0, file.indexOf("&"));
-        $ad_type.data("file", file);
-        var videostring = "https://www.youtube-nocookie.com/embed/" + file;
-        $(".ad_preview > .youtube > iframe").attr("src", videostring);
-    });
-
-    $btn_display.on("click", function () {
-        if (disp_opt) {
-            $btn_display.children("span").text("visibility_off");
-            disp_opt = !disp_opt;
-        } else {
-            $btn_display.children("span").text("visibility");
-            disp_opt = !disp_opt;
-        }
-    })
-
-    $title_text.on('keyup', function () {
-        var $self = $(this);
-        $title.children("div").children(".count").text($self.val().length)
-    });
-
-    $description_text.on('keyup', function () {
-        var $self = $(this);
-        $description.children("div").children(".count").text($self.val().length)
-    });
-    $ad_type.on("change", function () {
-        FileTypeInit();
-        switch (parseInt($ad_type.val())) {
-            case 1:
-                ImageTypeInit();
-                break;
-            case 2:
-                VideoTypeInit();
-                break;
-            case 3:
-                YoutubeTypeInit()
-                break;
-        }
-    });
-
-    if ("onhashchange" in window) {
-        window.onhashchange = hashChange;
-    } else {
-        setInterval(hashChange, 1000);
-    }
-}
-function ElementInit() {
-    $ad_type = $("#AdType");
-    $btn_display = $(".btn_display");
-    $title = $(".title");
-    $title_text = $title.children("textarea");
-    $description = $(".description");
-    $description_text = $description.children("textarea");
-}
-function hashChange(e) {
-    if (!!e) {
-        HashDataEdit();
-        e.preventDefault();
-    } else {
-        console.log("HashChange錯誤")
-    }
-}
-function HashDataEdit() {
-    if (window.location.hash != "") {
-        if (window.currentHash != window.location.hash) {
-            var hash = window.location.hash.replace("#", "");
-            if (!!hash && isNaN(hash)) {
-                if (hash.indexOf("Editor") > -1) MoveToItemAdvertise();
-                else {
-                    let t = null;
-                    const f = function () {
-                        clearTimeout(t);
-                        if (directoryDatailList != null) {
-                            MoveToItemList();
-                        } else t = setTimeout(f, 100);
-                    }
-                    f();
-                }
-            } else if (parseInt(hash) == 0) {
-                window.location.hash = 0;
-                keyId = 0;
-                FormDataClear();
-                MoveToContent();
-            } else {
-                MoveToContent();
-                co.Directory.Get(parseInt(hash)).done(function (result) {
-                    if (result != null) {
-                        MoveToContent();
-                        FormDataSet(result);
-                    } else {
-                        window.location.hash = ""
-                        keyId = "";
-                    }
-                })
+        init: function () {
+            if (this.initialized) {
+                if (this.hashPage) this.hashPage.refresh();
+                return;
             }
-        }
-    } else {
-        BackToList();
-    }
-}
-function contentReady(e) {
-    directory_list = e;
-    HashDataEdit();
-}
-function DirectoryDatailListReady(e) {
-    directoryDatailList = e;
-}
-function editButtonClicked(e) {
-    MoveToContent();
-    keyId = e.row.key;
-    window.location.hash = keyId;
-}
-function reladataButtonClicked(e) {
-    keyId = `Advertise_${e.row.key}`;
-    window.location.hash = keyId;
-}
-function GetDirectoryId() {
-    return DirectoryId;
-}
-function GetDirectoryType() {
-    return DirectoryType;
-}
-function deleteButtonClicked(e) {
-    Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-        co.Directory.Delete(e.row.key).done(function (result) {
-            if (result.success) {
-                e.component.refresh();
+
+            this.cacheElements();
+            if (!this.$root.length) {
+                console.warn("CustomAdPage: root not found");
+                return;
             }
-        });
-        e.component.refresh();
-    });
-}
 
-function FormDataClear() {
-    $DirectoryTags.TagDataClear();
-    keyId = 0;
-    $btn_display.children("span").text("visibility");
-    $title_text.val("");
-    $description_text.val("");
-    $("#SortBy").val(0);
-}
+            this.initTags();
+            this.initForms();
+            this.bindEvents();
+            this.initHashPage();
+            this.applyPermission();
+            this.initialized = true;
+        },
 
-function FormDataSet(result) {
-    FormDataClear();
-    keyId = result.id;
-    disp_opt = result.visible;
-    $("#SortBy").val(result.sortBy)
-    if (disp_opt) {
-        $btn_display.children("span").text("visibility");
-    } else {
-        $btn_display.children("span").text("visibility_off");
-    }
-    $DirectoryTags.TagDataSet(result.tagDatas);
-    $title_text.val(result.title);
-    $description_text.val(result.description);
-}
-function AddUp(success_text, error_text) {
-    co.Directory.AddUp({
-        Id: keyId,
-        Title: $title_text.val(),
-        Description: $description_text.val(),
-        Type: 4,
-        Visible: disp_opt,
-        TagSelected: $DirectoryTags.data("tagList"),
-        SortBy: $("#SortBy").val()
-    }).done(function () {
-        Coker.sweet.success(success_text, null, true);
-        directory_list.component.refresh();
-        BackToList();
-    }).fail(function () {
-        Coker.sweet.error("錯誤", error_text, null, true);
-    });
-}
-function AddUpAdvertise(success_text, error_text) {
-    const data = co.Form.getJson($(AdvertiseForms).attr("id"));
-    co.Advertise.AddUp(data).done((result) => {
-        const success = function () {
-            Coker.sweet.success(success_text, null, true);
-            directoryDatailList.component.refresh();
-            location.hash = `Advertise_${DirectoryId}`;
-        }
-        if (typeof ($ad_type.data("file").File) != "undefined" || $ad_type.val() == 3) {
-            switch (parseInt($ad_type.val())) {
-                case 1:
-                    var formData = new FormData();
-                    formData.append("files", $ad_type.data("file").File);
-                    formData.append("type", 10);
-                    formData.append("sid", result.message);
-                    formData.append("serno", 500);
-                    co.File.Upload(formData).done(function () {
-                        success();
-                    });
-                    break;
-                case 2:
-                    var formData = new FormData();
-                    formData.append("files", $ad_type.data("file").File);
-                    formData.append("type", 10);
-                    formData.append("sid", result.message);
-                    formData.append("serno", 500);
-                    co.File.Upload(formData).done(function () {
-                        success();
-                    });
-                    break;
-                case 3:
-                    var ytlink = $(".btn_preview").prev().val();
-                    var file = ytlink.substr(ytlink.indexOf("v=") + 2);
-                    if (file.indexOf("&") > 0) file = file.substring(0, file.indexOf("&"));
-                    $ad_type.data("file", file);
-                    if (typeof (result.message) != "undefined") {
-                        co.File.UploadYTLink({
-                            Id: typeof ($ad_type.data("fileid")) == "undefined" ? 0 : $ad_type.data("fileid"),
-                            SId: result.message,
-                            File: $ad_type.data("file"),
-                            Type: 10,
-                            SerNo: 500,
-                        }).done(function () {
-                            success();
-                        })
+        cacheElements: function () {
+            this.$root = $(this.rootSelector);
+            this.$topLine = this.$root.find("#TopLine");
+            this.$directoryForm = this.$root.find("#" + this.directoryFormId);
+            this.$advertiseForm = this.$root.find("#" + this.advertiseFormId);
+
+            this.$directoryVisible = this.$root.find(".btn_display");
+            this.$directoryTitle = this.$directoryForm.find(".title textarea");
+            this.$directoryDescription = this.$directoryForm.find(".description textarea");
+            this.$sortBy = this.$directoryForm.find("#SortBy");
+
+            this.$adType = this.$advertiseForm.find("#AdType");
+            this.$adPreview = this.$advertiseForm.find(".ad_preview");
+            this.$adLinkGroup = this.$advertiseForm.find(".ad_link");
+            this.$adLink = this.$adLinkGroup.find("input[name='Link']");
+            this.$imageInput = this.$advertiseForm.find(".input_pic");
+            this.$videoInput = this.$advertiseForm.find(".input_video");
+            this.$imagePreview = this.$advertiseForm.find(".img_preview");
+            this.$videoPreview = this.$advertiseForm.find(".video_preview");
+            this.$youtubePreview = this.$advertiseForm.find(".youtube iframe");
+            this.$advertiseHeader = this.$root.find("[data-advertise-header]");
+            this.$mediaPreviewModal = this.$root.find("#AdvertiseMediaPreviewModal");
+            this.$mediaPreviewTitle = this.$mediaPreviewModal.find(".modal-title");
+            this.$mediaPreviewImage = this.$mediaPreviewModal.find(".advertise-media-preview-image");
+            this.$mediaPreviewVideo = this.$mediaPreviewModal.find(".advertise-media-preview-video");
+            this.$mediaPreviewYoutube = this.$mediaPreviewModal.find(".advertise-media-preview-youtube");
+            this.$mediaPreviewPrevious = this.$mediaPreviewModal.find("[data-media-preview-previous]");
+            this.$mediaPreviewNext = this.$mediaPreviewModal.find("[data-media-preview-next]");
+        },
+
+        initTags: function () {
+            this.directoryTags = this.$directoryForm.find(".InputTag").TagListModalInit();
+            this.advertiseTags = this.$advertiseForm.find(".InputTag").TagListModalInit();
+        },
+
+        initForms: function () {
+            const self = this;
+
+            co.Form.init(this.directoryFormId, function () {
+                if (!self.hasDirectoryTags()) {
+                    Coker.sweet.error("錯誤", "標籤不可為空", null, false);
+                    return $.Deferred().reject().promise();
+                }
+
+                return co.Form.confirmSubmit({
+                    title: "即將儲存",
+                    text: "儲存後將顯示於安排的位置",
+                    confirmButtonText: "儲存",
+                    cancelButtonText: "取消",
+                    onConfirm: function () {
+                        return self.saveDirectory();
                     }
+                });
+            });
+
+            co.Form.init(this.advertiseFormId, function () {
+                return co.Form.confirmSubmit({
+                    title: "即將儲存",
+                    text: "儲存後將顯示於廣告列表",
+                    confirmButtonText: "儲存",
+                    cancelButtonText: "取消",
+                    onConfirm: function () {
+                        return self.saveAdvertise();
+                    }
+                });
+            });
+        },
+
+        initHashPage: function () {
+            const self = this;
+
+            this.hashPage = Coker.HashPage.create({
+                root: this.rootSelector,
+                defaultHash: "List",
+                listHash: "List",
+                newHash: "new",
+                listPageKey: "DirectoryList",
+                contentPageKey: "DirectoryContent",
+                titleSelector: "[data-hash-title]",
+                useStack: true,
+                parseState: function (hash) {
+                    return self.parseRoute(hash);
+                },
+                onChange: function (route) {
+                    self.enterRoute(route);
+                }
+            });
+        },
+
+        parseRoute: function (hash) {
+            const value = String(hash || "").trim();
+            let match = null;
+
+            if (!value || value.toLowerCase() === "list") {
+                return {
+                    raw: "List",
+                    mode: "directory-list",
+                    pageKey: "DirectoryList",
+                    title: "目錄管理",
+                    directoryId: 0,
+                    advertiseId: 0
+                };
+            }
+
+            if (value.toLowerCase() === "new" || value === "0") {
+                return {
+                    raw: value,
+                    mode: "directory-new",
+                    pageKey: "DirectoryContent",
+                    title: "新增目錄",
+                    directoryId: 0,
+                    advertiseId: 0
+                };
+            }
+
+            if (/^\d+$/.test(value)) {
+                return {
+                    raw: value,
+                    mode: "directory-edit",
+                    pageKey: "DirectoryContent",
+                    title: "編輯目錄",
+                    directoryId: parseInt(value, 10),
+                    advertiseId: 0
+                };
+            }
+
+            match = /^Advertise_(\d+)$/i.exec(value);
+            if (match) {
+                return {
+                    raw: value,
+                    mode: "advertise-list",
+                    pageKey: "AdvertiseList",
+                    title: "廣告列表",
+                    directoryId: parseInt(match[1], 10),
+                    advertiseId: 0
+                };
+            }
+
+            match = /^AdvertiseEditor_(\d+)_(\d+)$/i.exec(value);
+            if (match) {
+                const advertiseId = parseInt(match[2], 10);
+                return {
+                    raw: value,
+                    mode: advertiseId > 0 ? "advertise-edit" : "advertise-new",
+                    pageKey: "AdvertiseContent",
+                    title: advertiseId > 0 ? "編輯廣告" : "新增廣告",
+                    directoryId: parseInt(match[1], 10),
+                    advertiseId: advertiseId
+                };
+            }
+
+            return {
+                raw: "List",
+                mode: "directory-list",
+                pageKey: "DirectoryList",
+                title: "目錄管理",
+                directoryId: 0,
+                advertiseId: 0
+            };
+        },
+
+        enterRoute: function (route) {
+            this.route = {
+                version: this.route.version + 1,
+                mode: route.mode,
+                directoryId: Number(route.directoryId || 0),
+                advertiseId: Number(route.advertiseId || 0)
+            };
+
+            this.$topLine.toggleClass("d-none", route.mode !== "directory-list");
+
+            switch (route.mode) {
+                case "directory-list":
+                    this.enterDirectoryList();
+                    break;
+                case "directory-new":
+                    this.enterDirectoryNew();
+                    break;
+                case "directory-edit":
+                    this.enterDirectoryEdit(this.route.directoryId);
+                    break;
+                case "advertise-list":
+                    this.enterAdvertiseList(this.route.directoryId);
+                    break;
+                case "advertise-new":
+                    this.enterAdvertiseEditor(this.route.directoryId, 0);
+                    break;
+                case "advertise-edit":
+                    this.enterAdvertiseEditor(this.route.directoryId, this.route.advertiseId);
                     break;
                 default:
-                    success();
+                    this.hashPage.goList();
                     break;
             }
-        } else {
-            success();
-        }
-    });
-}
-function MoveToContent() {
-    $(DirectoryForms).removeClass("was-validated");
-    $("#pages>.card,#TopLine").addClass("d-none");
-    $("#DirectoryContent").removeClass("d-none");
-}
-function BackToList() {
-    $("#pages>.card,#TopLine").addClass("d-none");
-    $("#DirectoryList").removeClass("d-none");
-    DirectoryId = 0;
-    DirectoryType = "n";
-    window.location.hash = ""
-}
-function MoveToItemList() {
-    const para = window.location.hash.replace("#", "").split("_");
-    $("#pages>.card,#TopLine").addClass("d-none");
-    $("#DirectoryItemps").removeClass("d-none");
-    const items = $(`#DirectoryItemps>.${para[0].toLowerCase()}`).removeClass("d-none");
-    if (items.length == 0) BackToList();
-    else if (para.length > 1 && !isNaN(para[1])) {
-        DirectoryId = parseInt(para[1]);
-        DirectoryType = para[0];
-        switch (DirectoryType) {
-            case "Advertise":
-                $(AdvertiseForms).removeClass("was-validated");
-                $("#InputDate").val("");
-                $("#InputDate").attr("disabled", "disabled");
-                directoryDatailList.component.refresh();
-                break
-            default:
-                BackToList();
-                break
-        }
-    }
-}
-function MoveToItemAdvertise() {
-    const para = window.location.hash.replace("#", "").split("_");
-    $("#pages>.card,#TopLine").addClass("d-none");
-    $AdvertiseTags.TagDataClear();
-    FileTypeInit();
-    $ad_type.data("fileid", 0);
-    $ad_type.data("file", "");
-    if (para.length > 2 && !isNaN(para[1]) && !isNaN(para[2])) {
-        const id = parseInt(para[2]);
-        DirectoryId = parseInt(para[1]);
-        switch (para[0]) {
-            case "AdvertiseEditor":
-                const _dfr = $.Deferred();
-                co.Directory.Get(DirectoryId).done((result) => {
-                    $("#DirectoryItemps").data("dir", result);
-                    _dfr.resolve();
+        },
+
+        isCurrentRoute: function (version, mode, directoryId, advertiseId) {
+            return this.route.version === version &&
+                this.route.mode === mode &&
+                this.route.directoryId === Number(directoryId || 0) &&
+                this.route.advertiseId === Number(advertiseId || 0);
+        },
+
+        bindEvents: function () {
+            const self = this;
+
+            this.$root.find("#DirectoryList .btn_add")
+                .off("click.customAd")
+                .on("click.customAd", function (event) {
+                    event.preventDefault();
+                    self.hashPage.goNew();
                 });
-                if (id > 0) {
-                    co.Advertise.GetDataOne(id).done(function (result) {
-                        if (result != null) {
-                            result.startEndDate = 0;
-                            result.sortCheckbox = 1;
-                            result.ImageUpload = 1;
-                            co.File.getAdFile(result.id, 10).done(function (Fresult) {
-                                Fresult = Fresult[0];
-                                $ad_type.val(Fresult.fileType);
-                                $ad_type.trigger("change");
-                                co.Form.insertData(result, "#AdvertiseForm");
-                                $ad_type.data("fileid", Fresult.id);
-                                switch (parseInt($ad_type.val())) {
-                                    case 1:
-                                        $(".btn_input_pic > span").addClass("d-none");
-                                        $(".img_preview").attr("src", Fresult.link);
-                                        $(".img_preview").attr("alt", Fresult.name);
-                                        $(".img_preview").removeClass("d-none");
-                                        $(".ad_link > input").val(result.link);
-                                        break;
-                                    case 2:
-                                        $(".video_preview").attr("type", Fresult.video_Type);
-                                        $(".video_preview").attr("src", Fresult.link);
-                                        break;
-                                    case 3:
-                                        $(".ad_link > input").val(Fresult.link);
-                                        $(".btn_preview").trigger("click");
-                                        break;
-                                }
-                                $AdvertiseTags.TagDataSet(result.tagDatas);
-                                $("#TargetCheck").prop("checked", result.target);
-                            });
-                        } else BackToList();
-                    })
-                } else {
-                    co.Form.clear("AdvertiseForm");
-                    $("#AdvertiseForm > input[name='id'").val("");
-                    $("#TargetCheck").prop("checked", false);
-                    _dfr.promise().done(function () {
-                        $AdvertiseTags.TagDataSet($("#DirectoryItemps").data("dir").tagDatas);
+
+            this.$root.find("#DirectoryContent .btn_back")
+                .off("click.customAd")
+                .on("click.customAd", function (event) {
+                    event.preventDefault();
+                    self.confirmLeave("返回目錄列表", function () {
+                        self.hashPage.goList();
                     });
+                });
+
+            this.$root.find("#DirectoryItemps .btn_add")
+                .off("click.customAd")
+                .on("click.customAd", function (event) {
+                    event.preventDefault();
+                    self.goAdvertiseEditor(0);
+                });
+
+            this.$root.find("#DirectoryItemps .btn_back")
+                .off("click.customAd")
+                .on("click.customAd", function (event) {
+                    event.preventDefault();
+                    self.hashPage.goList();
+                });
+
+            this.$root.find("#AdvertiseContent .btn_back")
+                .off("click.customAd")
+                .on("click.customAd", function (event) {
+                    event.preventDefault();
+                    self.confirmLeave(self.getAdvertiseBackTitle(), function () {
+                        self.goAdvertiseList(self.route.directoryId);
+                    });
+                });
+
+            this.$directoryVisible
+                .off("click.customAd")
+                .on("click.customAd", function (event) {
+                    event.preventDefault();
+                    self.setDirectoryVisible(!self.directoryVisible);
+                });
+
+            this.$directoryTitle
+                .off("input.customAd")
+                .on("input.customAd", function () {
+                    self.updateTextCount($(this));
+                });
+
+            this.$directoryDescription
+                .off("input.customAd")
+                .on("input.customAd", function () {
+                    self.updateTextCount($(this));
+                });
+
+            this.$advertiseForm.find("textarea[name='describe']")
+                .off("input.customAd")
+                .on("input.customAd", function () {
+                    self.updateTextCount($(this));
+                });
+
+            this.$adType
+                .off("change.customAd")
+                .on("change.customAd", function () {
+                    self.selectedFile = null;
+                    self.showAdvertiseType(Number($(this).val() || 0));
+                });
+
+            this.$advertiseForm.find(".btn_input_pic")
+                .off("click.customAd")
+                .on("click.customAd", function (event) {
+                    event.preventDefault();
+                    self.$imageInput.trigger("click");
+                });
+
+            this.$advertiseForm.find(".btn_input_video")
+                .off("click.customAd")
+                .on("click.customAd", function (event) {
+                    event.preventDefault();
+                    self.$videoInput.trigger("click");
+                });
+
+            this.$imageInput
+                .off("change.customAd")
+                .on("change.customAd", function (event) {
+                    self.readSelectedFile(event.target.files[0], "image");
+                });
+
+            this.$videoInput
+                .off("change.customAd")
+                .on("change.customAd", function (event) {
+                    self.readSelectedFile(event.target.files[0], "video");
+                });
+
+            this.$advertiseForm.find(".btn_preview")
+                .off("click.customAd")
+                .on("click.customAd", function (event) {
+                    event.preventDefault();
+                    self.previewYoutube();
+                });
+
+            this.$root
+                .off("click.customAdMedia", ".advertise-media-trigger")
+                .on("click.customAdMedia", ".advertise-media-trigger", function () {
+                    self.showMediaPreviewModal($(this));
+                });
+
+            this.$mediaPreviewModal
+                .off("hidden.bs.modal.customAd")
+                .on("hidden.bs.modal.customAd", function () {
+                    self.resetMediaPreviewModal();
+                });
+
+            this.$mediaPreviewPrevious
+                .off("click.customAd")
+                .on("click.customAd", function () {
+                    self.navigateMediaPreview(-1);
+                });
+
+            this.$mediaPreviewNext
+                .off("click.customAd")
+                .on("click.customAd", function () {
+                    self.navigateMediaPreview(1);
+                });
+        },
+
+        applyPermission: function () {
+            const self = this;
+
+            co.PowerManagement.GetPermission().done(function (permission) {
+                if (!permission || permission.CanCreate) return;
+                self.$root.find(".btn_add").remove();
+            });
+        },
+
+        confirmLeave: function (title, onConfirm) {
+            Coker.sweet.confirm(title, "資料將不被保存", "確定", "取消", onConfirm);
+        },
+
+        updateTextCount: function ($input) {
+            $input.closest(".title, .description, .describe")
+                .find(".count")
+                .text(String($input.val() || "").length);
+        },
+
+        enterDirectoryList: function () {
+            this.directoryData = null;
+            this.refreshGrid(this.directoryGridEvent);
+        },
+
+        enterDirectoryNew: function () {
+            this.clearDirectoryForm();
+        },
+
+        enterDirectoryEdit: function (directoryId) {
+            const self = this;
+            const version = this.route.version;
+
+            this.clearDirectoryForm();
+
+            co.Directory.Get(directoryId)
+                .done(function (result) {
+                    if (!self.isCurrentRoute(version, "directory-edit", directoryId, 0)) return;
+                    if (!result) {
+                        self.hashPage.goList();
+                        return;
+                    }
+
+                    self.fillDirectoryForm(result);
+                })
+                .fail(function () {
+                    if (self.isCurrentRoute(version, "directory-edit", directoryId, 0)) {
+                        Coker.sweet.error("錯誤", "讀取目錄資料失敗", null, false);
+                    }
+                });
+        },
+
+        enterAdvertiseList: function (directoryId) {
+            const self = this;
+            const version = this.route.version;
+
+            this.directoryData = null;
+            this.refreshGrid(this.advertiseGridEvent);
+
+            co.Directory.Get(directoryId).done(function (result) {
+                if (!self.isCurrentRoute(version, "advertise-list", directoryId, 0)) return;
+                if (!result) {
+                    self.hashPage.goList();
+                    return;
                 }
-                $("#AdvertiseContent").removeClass("d-none");
-                break
-            default:
-                BackToList();
-                break
-        }
-    }
-}
-function editAdvertiseButtonClicked(e) {
-    window.location.hash = `AdvertiseEditor_${DirectoryId}_${e.row.key}`;
-}
-function deleteAdvertiseButtonClicked(e) {
-    Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-        co.Advertise.Delete(e.row.key).done(function (result) {
-            if (result.success) {
-                e.component.refresh();
+
+                self.directoryData = result;
+            });
+        },
+
+        enterAdvertiseEditor: function (directoryId, advertiseId) {
+            const self = this;
+            const mode = advertiseId > 0 ? "advertise-edit" : "advertise-new";
+            const version = this.route.version;
+
+            this.clearAdvertiseForm(advertiseId);
+
+            const directoryRequest = co.Directory.Get(directoryId);
+            directoryRequest.done(function (result) {
+                if (!self.isCurrentRoute(version, mode, directoryId, advertiseId)) return;
+                if (!result) {
+                    self.hashPage.goList();
+                    return;
+                }
+
+                self.directoryData = result;
+                self.$advertiseHeader.text(`返回${result.title || ""}廣告列表`);
+
+                if (advertiseId === 0) {
+                    self.advertiseTags.TagDataSet(result.tagDatas || []);
+                }
+            });
+
+            if (advertiseId === 0) return;
+
+            $.when(
+                co.Advertise.GetDataOne(advertiseId),
+                co.File.getAdFile(advertiseId, 10)
+            ).done(function (advertiseResult, fileResult) {
+                if (!self.isCurrentRoute(version, mode, directoryId, advertiseId)) return;
+
+                // $.when 搭配多個 jqXHR 時，每個結果格式為 [data, textStatus, jqXHR]。
+                const advertiseData = Array.isArray(advertiseResult) && advertiseResult.length === 3
+                    ? advertiseResult[0]
+                    : advertiseResult;
+                const fileData = Array.isArray(fileResult) && fileResult.length === 3
+                    ? fileResult[0]
+                    : fileResult;
+
+                if (!advertiseData || Number(advertiseData.id) !== advertiseId) {
+                    self.goAdvertiseList(directoryId);
+                    return;
+                }
+
+                self.fillAdvertiseForm(advertiseData, fileData || [], advertiseId);
+            }).fail(function () {
+                if (self.isCurrentRoute(version, mode, directoryId, advertiseId)) {
+                    Coker.sweet.error("錯誤", "讀取廣告資料失敗", null, false);
+                }
+            });
+        },
+
+        clearDirectoryForm: function () {
+            co.Form.clear(this.directoryFormId);
+            this.directoryTags.TagDataClear();
+            this.setDirectoryVisible(true);
+            this.$sortBy.val(0);
+            this.$directoryTitle.val("");
+            this.$directoryDescription.val("");
+            this.updateTextCount(this.$directoryTitle);
+            this.updateTextCount(this.$directoryDescription);
+        },
+
+        fillDirectoryForm: function (result) {
+            this.setDirectoryVisible(!!result.visible);
+            this.$sortBy.val(result.sortBy);
+            this.$directoryTitle.val(result.title || "");
+            this.$directoryDescription.val(result.description || "");
+            this.directoryTags.TagDataSet(result.tagDatas || []);
+            this.updateTextCount(this.$directoryTitle);
+            this.updateTextCount(this.$directoryDescription);
+        },
+
+        setDirectoryVisible: function (visible) {
+            this.directoryVisible = !!visible;
+            this.$directoryVisible.children("span")
+                .text(this.directoryVisible ? "visibility" : "visibility_off");
+        },
+
+        hasDirectoryTags: function () {
+            const tags = this.directoryTags.data("tagList") || [];
+            return tags.length > 0;
+        },
+
+        saveDirectory: function () {
+            const self = this;
+            const version = this.route.version;
+            const directoryId = this.route.mode === "directory-edit" ? this.route.directoryId : 0;
+
+            return co.Directory.AddUp({
+                Id: directoryId,
+                Title: this.$directoryTitle.val(),
+                Description: this.$directoryDescription.val(),
+                Type: 4,
+                Visible: this.directoryVisible,
+                TagSelected: this.directoryTags.data("tagList") || [],
+                SortBy: this.$sortBy.val()
+            }).done(function () {
+                Coker.sweet.success("已成功儲存", null, true);
+                self.refreshGrid(self.directoryGridEvent);
+
+                if (self.route.version === version) {
+                    self.hashPage.goList();
+                }
+            }).fail(function () {
+                Coker.sweet.error("錯誤", "儲存發生未知錯誤", null, true);
+            });
+        },
+
+        clearAdvertiseForm: function (advertiseId) {
+            co.Form.clear(this.advertiseFormId);
+            this.advertiseTags.TagDataClear();
+            this.selectedFile = null;
+            this.advertiseFileId = 0;
+            this.$adType.val("");
+            this.resetAdvertisePreview();
+            this.$advertiseForm.find("input[name='id']").val(Number(advertiseId || 0));
+            this.$advertiseForm.find("#TargetCheck").prop("checked", false);
+            this.$advertiseForm.find("#AdvertiseFormVisible").prop("checked", true);
+            this.$advertiseForm.find("#PermanentCheck").prop("checked", true).trigger("change");
+            this.$advertiseForm.find("textarea[name='describe']").val("").trigger("input");
+        },
+
+        fillAdvertiseForm: function (result, files, expectedId) {
+            result.startEndDate = 0;
+            result.sortCheckbox = 1;
+
+            co.Form.insertData(result, "#" + this.advertiseFormId);
+
+            // 表單資料只能由目前 route 決定，不接受非同步結果改寫成其他 ID。
+            this.$advertiseForm.find("input[name='id']").val(expectedId);
+            this.$advertiseForm.find("#TargetCheck").prop("checked", !!result.target);
+            this.advertiseTags.TagDataSet(result.tagDatas || []);
+            this.$advertiseForm.find("textarea[name='describe']").trigger("input");
+
+            const file = Array.isArray(files) ? files[0] : null;
+            if (!file) {
+                this.$adType.val("");
+                this.resetAdvertisePreview();
+                return;
             }
-        });
-    });
-}
-function FileTypeInit() {
-    $(".ad_preview > div").each(function (i) {
-        $(this).addClass("d-none");
-    });
-    $(".ad_preview > .preview").removeClass("d-none");
 
-    $(".img_preview").attr("src", "");
-    $(".img_preview").addClass("d-none");
-    $(".btn_input_pic > span").removeClass("d-none");
-    $(".ad_preview > .youtube > iframe").attr("src", "");
-    $(".ad_link > input").val("");
-    $(".ad_link > input").removeAttr("required");
-    $(".ad_link").addClass("d-none");
-    $(".ad_link > .checkbox").addClass("d-none");
-    $(".ad_link > button").addClass("d-none");
+            this.advertiseFileId = Number(file.id || 0);
+            this.$adType.val(file.fileType);
+            this.showAdvertiseType(Number(file.fileType || 0));
 
-    $(".video_preview").attr("type", "");
-    $(".video_preview").attr("src", "");
-}
-function ImageTypeInit() {
-    $(".ad_preview > .preview").addClass("d-none");
-    $(".ad_preview > .image").removeClass("d-none");
-    $(".ad_link").removeClass("d-none");
-    $(".ad_link > input").attr("required", "required");
-    $(".ad_link > input").attr("placeholder", "輸入連結網址");
-    $(".ad_link > .checkbox").removeClass("d-none");
-}
-function VideoTypeInit() {
-    $(".ad_preview > .preview").addClass("d-none");
-    $(".ad_preview > .video").removeClass("d-none");
-}
-function YoutubeTypeInit() {
-    // 影片預覽才顯示iframe
-    $(".ad_preview > .preview").addClass("d-none");
-    $(".ad_link").removeClass("d-none");
-    $(".ad_link > input").attr("required", "required");
-    $(".ad_link > input").attr("placeholder", "https://www.youtube.com/watch?v=");
-    $(".ad_link > button").removeClass("d-none");
-}
+            if (Number(file.fileType) === 1) {
+                this.$imagePreview.attr({ src: file.link, alt: file.name || "" }).removeClass("d-none");
+                this.$advertiseForm.find(".btn_input_pic > span").addClass("d-none");
+                this.$adLink.val(result.link || "");
+            } else if (Number(file.fileType) === 2) {
+                this.$videoPreview.attr({ type: file.video_Type || "", src: file.link || "" });
+            } else if (Number(file.fileType) === 3) {
+                this.$adLink.val(file.link || result.link || "");
+                this.previewYoutube();
+            }
+        },
+
+        resetAdvertisePreview: function () {
+            this.$adPreview.children("div").addClass("d-none");
+            this.$adPreview.children(".preview").removeClass("d-none");
+            this.$imagePreview.attr({ src: "", alt: "" }).addClass("d-none");
+            this.$advertiseForm.find(".btn_input_pic > span").removeClass("d-none");
+            this.$videoPreview.attr({ type: "", src: "" });
+            this.$youtubePreview.attr("src", "");
+            this.$adLink.val("").removeAttr("required");
+            this.$adLinkGroup.addClass("d-none");
+            this.$adLinkGroup.find(".checkbox, .btn_preview").addClass("d-none");
+        },
+
+        showAdvertiseType: function (type) {
+            this.resetAdvertisePreview();
+
+            if (type === 1) {
+                this.$adPreview.children(".preview").addClass("d-none");
+                this.$adPreview.children(".image").removeClass("d-none");
+                this.$adLinkGroup.removeClass("d-none");
+                this.$adLink.attr({ required: "required", placeholder: "輸入連結網址" });
+                this.$adLinkGroup.find(".checkbox").removeClass("d-none");
+            } else if (type === 2) {
+                this.$adPreview.children(".preview").addClass("d-none");
+                this.$adPreview.children(".video").removeClass("d-none");
+            } else if (type === 3) {
+                this.$adPreview.children(".preview").addClass("d-none");
+                this.$adLinkGroup.removeClass("d-none");
+                this.$adLink.attr({ required: "required", placeholder: "https://www.youtube.com/watch?v=" });
+                this.$adLinkGroup.find(".btn_preview").removeClass("d-none");
+            }
+        },
+
+        readSelectedFile: function (file, type) {
+            if (!file) return;
+
+            const self = this;
+            const version = this.route.version;
+            const reader = new FileReader();
+
+            reader.onload = function (event) {
+                if (self.route.version !== version) return;
+
+                self.selectedFile = {
+                    id: 0,
+                    File: file,
+                    name: file.name,
+                    link: event.target.result
+                };
+
+                if (type === "image") {
+                    self.$imagePreview.attr({ src: event.target.result, alt: file.name }).removeClass("d-none");
+                    self.$advertiseForm.find(".btn_input_pic > span").addClass("d-none");
+                } else {
+                    self.$videoPreview.attr({ type: file.type, src: event.target.result });
+                }
+            };
+
+            reader.readAsDataURL(file);
+        },
+
+        getYoutubeId: function (value) {
+            const raw = String(value || "").trim();
+            if (!raw) return "";
+
+            try {
+                const url = new URL(raw);
+                if (url.hostname.indexOf("youtu.be") >= 0) {
+                    return url.pathname.replace(/^\//, "").split("/")[0];
+                }
+
+                const queryId = url.searchParams.get("v");
+                if (queryId) return queryId;
+
+                const match = /\/(?:embed|shorts)\/([^/?]+)/.exec(url.pathname);
+                if (match) return match[1];
+            } catch (error) {
+                if (/^[\w-]{6,}$/.test(raw)) return raw;
+            }
+
+            return "";
+        },
+
+        previewYoutube: function () {
+            const videoId = this.getYoutubeId(this.$adLink.val());
+            if (!videoId) return;
+
+            this.$adPreview.children("div").addClass("d-none");
+            this.$adPreview.children(".youtube").removeClass("d-none");
+            this.$youtubePreview.attr("src", "https://www.youtube-nocookie.com/embed/" + videoId);
+        },
+
+        showMediaPreviewModal: function ($trigger) {
+            const item = {
+                Id: Number($trigger.attr("data-advertise-id") || 0),
+                MediaType: Number($trigger.attr("data-media-type") || 0),
+                MainImage: String($trigger.attr("data-media-src") || ""),
+                Title: String($trigger.attr("data-media-title") || "廣告預覽")
+            };
+            if (!this.renderMediaPreview(item)) return;
+
+            bootstrap.Modal.getOrCreateInstance(this.$mediaPreviewModal[0]).show();
+        },
+
+        renderMediaPreview: function (item) {
+            const type = Number(item && item.MediaType || 0);
+            const source = String(item && item.MainImage || "");
+            const title = String(item && item.Title || "廣告預覽");
+            if (!item || !item.Id || !type || !source) return false;
+
+            this.clearMediaPreviewContent();
+            this.mediaPreviewAdvertiseId = Number(item.Id);
+            this.mediaPreviewBoundaryDirection = 0;
+            this.$mediaPreviewTitle.text(title);
+
+            if (type === 1) {
+                this.$mediaPreviewImage.attr({ src: source, alt: title }).removeClass("d-none");
+            } else if (type === 2) {
+                this.$mediaPreviewVideo.attr("src", source).removeClass("d-none");
+                if (this.$mediaPreviewVideo[0]) this.$mediaPreviewVideo[0].load();
+            } else if (type === 3) {
+                const videoId = this.getYoutubeId(source);
+                if (!videoId) return false;
+                this.$mediaPreviewYoutube
+                    .attr("src", "https://www.youtube-nocookie.com/embed/" + videoId)
+                    .removeClass("d-none");
+            } else {
+                return false;
+            }
+
+            this.updateMediaPreviewNavigation();
+            return true;
+        },
+
+        getAdvertiseGridComponent: function () {
+            return this.advertiseGridEvent && this.advertiseGridEvent.component
+                ? this.advertiseGridEvent.component
+                : null;
+        },
+
+        getPageMediaPreviewItems: function (component) {
+            if (!component) return [];
+
+            return component.getVisibleRows()
+                .filter(function (row) {
+                    return row.rowType === "data" && row.data && row.data.MediaType && row.data.MainImage;
+                })
+                .map(function (row) {
+                    return row.data;
+                });
+        },
+
+        updateMediaPreviewNavigation: function () {
+            const component = this.getAdvertiseGridComponent();
+            const items = this.getPageMediaPreviewItems(component);
+            const currentId = this.mediaPreviewAdvertiseId;
+            const currentIndex = items.findIndex(function (item) {
+                return Number(item.Id) === currentId;
+            });
+            const pageIndex = component ? component.pageIndex() : 0;
+            const pageCount = component ? component.pageCount() : 0;
+            const hasPrevious = this.mediaPreviewBoundaryDirection !== -1 &&
+                (currentIndex > 0 || (currentIndex >= 0 && pageIndex > 0));
+            const hasNext = currentIndex >= 0 &&
+                this.mediaPreviewBoundaryDirection !== 1 &&
+                (currentIndex < items.length - 1 || pageIndex < pageCount - 1);
+
+            this.$mediaPreviewPrevious.prop("disabled", this.mediaPreviewNavigationBusy || !hasPrevious);
+            this.$mediaPreviewNext.prop("disabled", this.mediaPreviewNavigationBusy || !hasNext);
+        },
+
+        navigateMediaPreview: function (direction) {
+            if (this.mediaPreviewNavigationBusy || (direction !== -1 && direction !== 1)) return;
+
+            const component = this.getAdvertiseGridComponent();
+            if (!component) return;
+
+            const items = this.getPageMediaPreviewItems(component);
+            const currentId = this.mediaPreviewAdvertiseId;
+            const currentIndex = items.findIndex(function (item) {
+                return Number(item.Id) === currentId;
+            });
+            const adjacentIndex = currentIndex + direction;
+
+            if (currentIndex >= 0 && adjacentIndex >= 0 && adjacentIndex < items.length) {
+                this.renderMediaPreview(items[adjacentIndex]);
+                return;
+            }
+
+            this.mediaPreviewNavigationBusy = true;
+            this.updateMediaPreviewNavigation();
+            const originPageIndex = component.pageIndex();
+            this.loadMediaPreviewPage(component, originPageIndex + direction, direction, originPageIndex);
+        },
+
+        loadMediaPreviewPage: function (component, pageIndex, direction, originPageIndex) {
+            const self = this;
+            const pageCount = component.pageCount();
+
+            if (pageIndex < 0 || pageIndex >= pageCount) {
+                $.when(component.pageIndex(originPageIndex)).always(function () {
+                    self.mediaPreviewNavigationBusy = false;
+                    self.mediaPreviewBoundaryDirection = direction;
+                    self.updateMediaPreviewNavigation();
+                });
+                return;
+            }
+
+            $.when(component.pageIndex(pageIndex))
+                .done(function () {
+                    const items = self.getPageMediaPreviewItems(component);
+                    if (!items.length) {
+                        self.loadMediaPreviewPage(component, pageIndex + direction, direction, originPageIndex);
+                        return;
+                    }
+
+                    const item = direction > 0 ? items[0] : items[items.length - 1];
+                    self.mediaPreviewNavigationBusy = false;
+                    self.renderMediaPreview(item);
+                })
+                .fail(function () {
+                    self.mediaPreviewNavigationBusy = false;
+                    self.updateMediaPreviewNavigation();
+                });
+        },
+
+        clearMediaPreviewContent: function () {
+            this.$mediaPreviewModal.find("[data-media-preview]").addClass("d-none");
+            this.$mediaPreviewImage.attr({ src: "", alt: "" });
+            this.$mediaPreviewYoutube.attr("src", "");
+
+            if (this.$mediaPreviewVideo[0]) {
+                this.$mediaPreviewVideo[0].pause();
+                this.$mediaPreviewVideo.removeAttr("src");
+                this.$mediaPreviewVideo[0].load();
+            }
+        },
+
+        resetMediaPreviewModal: function () {
+            this.clearMediaPreviewContent();
+            this.mediaPreviewAdvertiseId = 0;
+            this.mediaPreviewNavigationBusy = false;
+            this.mediaPreviewBoundaryDirection = 0;
+            this.updateMediaPreviewNavigation();
+        },
+
+        saveAdvertise: function () {
+            const self = this;
+            const snapshot = $.extend({}, this.route);
+            const payload = co.Form.getJson(this.advertiseFormId);
+            const deferred = $.Deferred();
+
+            if (snapshot.mode !== "advertise-edit" && snapshot.mode !== "advertise-new") {
+                Coker.sweet.error("錯誤", "目前頁面狀態無法儲存廣告", null, false);
+                return deferred.reject().promise();
+            }
+
+            // 關鍵保護：儲存 ID 只取自 Hash route，不採用可能被舊回應改寫的 hidden input。
+            delete payload.Id;
+            payload.id = snapshot.advertiseId;
+
+            co.Advertise.AddUp(payload)
+                .done(function (result) {
+                    if (!result || result.success === false || !result.message) {
+                        deferred.reject(result);
+                        return;
+                    }
+
+                    const savedId = Number(result.message);
+                    self.uploadAdvertiseFile(savedId)
+                        .done(function () {
+                            Coker.sweet.success("已成功儲存", null, true);
+                            self.refreshGrid(self.advertiseGridEvent);
+
+                            if (self.route.version === snapshot.version) {
+                                self.goAdvertiseList(snapshot.directoryId);
+                            }
+
+                            deferred.resolve(result);
+                        })
+                        .fail(function (error) {
+                            deferred.reject(error);
+                        });
+                })
+                .fail(function (error) {
+                    deferred.reject(error);
+                });
+
+            deferred.fail(function () {
+                Coker.sweet.error("錯誤", "儲存發生未知錯誤", null, true);
+            });
+
+            return deferred.promise();
+        },
+
+        uploadAdvertiseFile: function (advertiseId) {
+            const type = Number(this.$adType.val() || 0);
+
+            if ((type === 1 || type === 2) && this.selectedFile && this.selectedFile.File) {
+                const formData = new FormData();
+                formData.append("files", this.selectedFile.File);
+                formData.append("type", 10);
+                formData.append("sid", advertiseId);
+                formData.append("serno", 500);
+                return co.File.Upload(formData);
+            }
+
+            if (type === 3) {
+                const youtubeId = this.getYoutubeId(this.$adLink.val());
+                if (!youtubeId) return $.Deferred().reject().promise();
+
+                return co.File.UploadYTLink({
+                    Id: this.advertiseFileId || 0,
+                    SId: advertiseId,
+                    File: youtubeId,
+                    Type: 10,
+                    SerNo: 500
+                });
+            }
+
+            return $.Deferred().resolve().promise();
+        },
+
+        getAdvertiseBackTitle: function () {
+            const title = this.directoryData && this.directoryData.title
+                ? this.directoryData.title
+                : "";
+            return `返回${title}廣告列表`;
+        },
+
+        goAdvertiseList: function (directoryId) {
+            if (!directoryId) {
+                this.hashPage.goList();
+                return;
+            }
+            this.hashPage.setHash("Advertise_" + directoryId);
+        },
+
+        goAdvertiseEditor: function (advertiseId) {
+            if (!this.route.directoryId) return;
+            this.hashPage.setHash(`AdvertiseEditor_${this.route.directoryId}_${Number(advertiseId || 0)}`);
+        },
+
+        refreshGrid: function (gridEvent) {
+            if (gridEvent && gridEvent.component) gridEvent.component.refresh();
+        },
+
+        onDirectoryGridReady: function (event) {
+            this.directoryGridEvent = event;
+        },
+
+        onAdvertiseGridReady: function (event) {
+            this.advertiseGridEvent = event;
+            if (this.mediaPreviewAdvertiseId && !this.mediaPreviewNavigationBusy) {
+                this.updateMediaPreviewNavigation();
+            }
+        },
+
+        editDirectory: function (event) {
+            this.hashPage.goId(event.row.key);
+        },
+
+        openAdvertiseList: function (event) {
+            this.goAdvertiseList(event.row.key);
+        },
+
+        deleteDirectory: function (event) {
+            Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
+                co.Directory.Delete(event.row.key).done(function (result) {
+                    if (result && result.success) event.component.refresh();
+                });
+            });
+        },
+
+        editAdvertise: function (event) {
+            this.goAdvertiseEditor(event.row.key);
+        },
+
+        deleteAdvertise: function (event) {
+            Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
+                co.Advertise.Delete(event.row.key).done(function (result) {
+                    if (result && result.success) event.component.refresh();
+                });
+            });
+        }
+    };
+
+    window.CustomAdPage = CustomAdPage;
+    window.PageReady = function () { CustomAdPage.init(); };
+
+    // DevExtreme Razor callbacks 保留為薄介面，狀態與行為集中於 CustomAdPage。
+    window.contentReady = function (event) { CustomAdPage.onDirectoryGridReady(event); };
+    window.DirectoryDatailListReady = function (event) { CustomAdPage.onAdvertiseGridReady(event); };
+    window.editButtonClicked = function (event) { CustomAdPage.editDirectory(event); };
+    window.reladataButtonClicked = function (event) { CustomAdPage.openAdvertiseList(event); };
+    window.deleteButtonClicked = function (event) { CustomAdPage.deleteDirectory(event); };
+    window.editAdvertiseButtonClicked = function (event) { CustomAdPage.editAdvertise(event); };
+    window.deleteAdvertiseButtonClicked = function (event) { CustomAdPage.deleteAdvertise(event); };
+    window.GetDirectoryId = function () { return CustomAdPage.route.directoryId; };
+    window.GetDirectoryType = function () { return "Advertise"; };
+
+})(window, window.jQuery, window.co || window.Coker);

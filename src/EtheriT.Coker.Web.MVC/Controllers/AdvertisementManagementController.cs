@@ -5,16 +5,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 {
     public class AdvertisementManagementController : Controller
     {
-        private readonly NavigationProvider navigation;
-        public AdvertisementManagementController(NavigationProvider navigation) {
-            this.navigation = navigation;
-        }
-        public IActionResult CustomAd(int id)
-        {
-            if (!ModelState.IsValid)
-                return StatusCode(StatusCodes.Status400BadRequest);
-            return View("CustomAd");
-        }
+        public IActionResult CustomAd() => View();
         public IActionResult EnterAd(int id)
         {
             if (!ModelState.IsValid)

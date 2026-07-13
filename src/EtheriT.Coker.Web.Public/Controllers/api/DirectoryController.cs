@@ -39,6 +39,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
 
         [HttpPost]
+        public async Task<List<DirectoryAdvertiseBatchResultDto>> GetReleAdBatch(DirectoryAdvertiseBatchInputDto dto)
+        {
+            return await directoryAppService.GetReleAdBatch(dto);
+        }
+
+        [HttpPost]
         public async Task<List<KeyValueDto>> SwitchPage(DirectorySwitchPageDto dto)
         {
             return await directoryAppService.SwitchPage(dto);

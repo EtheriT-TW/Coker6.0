@@ -284,6 +284,10 @@ var grapesInit = function (options) {
                         cb(iframe);
                     };
                     waitIframeReady((iframe) => {
+                        // Shared page components also run inside the GrapesJS canvas.
+                        // Mark the canvas explicitly so preview rendering never records
+                        // front-site activity (for example advertisement exposure).
+                        iframe.CokerEditorMode = true;
                         if (typeof (iframe.local) == "undefined") {
                             iframe.local = {};
                             co.i18.getAll().done(function (result) {

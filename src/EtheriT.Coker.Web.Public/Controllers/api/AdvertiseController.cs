@@ -36,5 +36,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             };
             return await advertiseAppService.ActivityLog(dto);
         }
+
+        [HttpPost]
+        public async Task<ResponseMessageDto> ActivityExposureBatch(AdvertiseExposureBatchDto dto)
+        {
+            return await advertiseAppService.ActivityExposureBatch(dto);
+        }
     }
 }

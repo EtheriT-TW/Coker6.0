@@ -29,6 +29,51 @@
                 return x !== "" && x !== "0";
             });
     }
+
+    function showAdvertiseLoading($el) {
+        if (!$el || !$el.length || $el.children(".coker-ad-loading").length) return;
+
+        const lang = String(document.documentElement.lang || "").toLowerCase();
+        const loadingText = lang.indexOf("zh") === 0 ? "廣告載入中…" : "Loading advertisement…";
+
+        $el.addClass("coker-ad-is-loading").append(
+            `<div class="coker-ad-loading" role="status" aria-live="polite">
+                <span class="coker-ad-loading-spinner" aria-hidden="true"></span>
+                <span class="coker-ad-loading-text">${loadingText}</span>
+            </div>`
+        );
+    }
+
+    function hideAdvertiseLoading($el, revealContent) {
+        if (!$el || !$el.length) return;
+
+        $el.removeClass("coker-ad-is-loading");
+
+        const $loading = $el.children(".coker-ad-loading");
+
+        if (revealContent) {
+            $el.addClass("coker-ad-is-revealing");
+
+            const clearRevealState = function () {
+                $el.removeClass("coker-ad-is-revealing");
+            };
+
+            $el.children().not(".coker-ad-loading")
+                .one("animationend.cokerAdvertiseReveal", clearRevealState);
+            window.setTimeout(clearRevealState, 500);
+        }
+
+        if (!$loading.length) return;
+
+        $loading.addClass("coker-ad-loading-leave")
+            .one("animationend.cokerAdvertiseLoading", function () {
+                $(this).remove();
+            });
+        window.setTimeout(function () {
+            $loading.remove();
+        }, 350);
+    }
+
     function canAutoLoadCatalog($el) {
         if (!$el || !$el.length) return false;
 
@@ -157,22 +202,84 @@
     }
 
     function initAdvertiseDirectories($root) {
-        $root.find(".advertise_directory").each(function () {
+        const pendingItems = [];
+        const groups = [];
+        const seenGroups = {};
+        const $advertiseDirectories = $root
+            .filter(".advertise_directory")
+            .add($root.find(".advertise_directory"));
+
+        $advertiseDirectories.each(function () {
             const $self = $(this);
             const dirid = getDirIds($self);
             if (!dirid.length) return;
 
-            if (w.DirectoryService && typeof w.DirectoryService.getAdvertiseData === "function") {
-                w.DirectoryService.getAdvertiseData({
-                    Ids: dirid,
-                    WebsiteId: typeof w.SiteId !== "undefined" ? w.SiteId : 0,
-                    showUnvisible: true
-                }).done(function (result) {
-                    if (w.DirectoryBlocks && typeof w.DirectoryBlocks.renderAdvertise === "function") {
-                        w.DirectoryBlocks.renderAdvertise($self, result);
-                    }
-                });
+            const directoryKey = dirid.join(",");
+
+            if (
+                $self.data("advertiseLoadingKey") === directoryKey ||
+                $self.data("advertiseLoadedKey") === directoryKey
+            ) {
+                return;
             }
+
+            $self.data("advertiseLoadingKey", directoryKey);
+            showAdvertiseLoading($self);
+            pendingItems.push({
+                $element: $self,
+                directoryIds: dirid,
+                key: directoryKey
+            });
+
+            if (!seenGroups[directoryKey]) {
+                seenGroups[directoryKey] = true;
+                groups.push(dirid);
+            }
+        });
+
+        if (!pendingItems.length) return;
+        if (!w.DirectoryService || typeof w.DirectoryService.getAdvertiseBatchData !== "function") {
+            pendingItems.forEach(function (item) {
+                item.$element.removeData("advertiseLoadingKey");
+                hideAdvertiseLoading(item.$element);
+            });
+            return;
+        }
+
+        const request = w.DirectoryService.getAdvertiseBatchData(groups);
+
+        request.done(function (result) {
+            const resultByKey = {};
+
+            (result || []).forEach(function (groupResult) {
+                const key = groupResult.key || groupResult.Key || "";
+                resultByKey[key] = groupResult.advertisements || groupResult.Advertisements || [];
+            });
+
+            pendingItems.forEach(function (item) {
+                // Ignore a stale response when the editor changed the directory
+                // association while this batch request was in flight.
+                if (getDirIds(item.$element).join(",") !== item.key) {
+                    hideAdvertiseLoading(item.$element, false);
+                    return;
+                }
+
+                if (w.DirectoryBlocks && typeof w.DirectoryBlocks.renderAdvertise === "function") {
+                    w.DirectoryBlocks.renderAdvertise(item.$element, resultByKey[item.key] || []);
+                }
+
+                item.$element.data("advertiseLoadedKey", item.key);
+                hideAdvertiseLoading(item.$element, true);
+            });
+        }).fail(function () {
+            pendingItems.forEach(function (item) {
+                item.$element.removeData("advertiseLoadedKey");
+                hideAdvertiseLoading(item.$element, false);
+            });
+        }).always(function () {
+            pendingItems.forEach(function (item) {
+                item.$element.removeData("advertiseLoadingKey");
+            });
         });
     }
 

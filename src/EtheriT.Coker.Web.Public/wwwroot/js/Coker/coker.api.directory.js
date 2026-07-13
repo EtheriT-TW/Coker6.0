@@ -14,6 +14,9 @@
             getDirectoryAdvertiseData: function (data) {
                 return Coker.api.post("/api/Directory/GetReleAd", data);
             },
+            getDirectoryAdvertiseBatchData: function (data) {
+                return Coker.api.post("/api/Directory/GetReleAdBatch", data);
+            },
             SwitchPage: function (data) {
                 return Coker.api.post("/api/Directory/SwitchPage", data);
             },

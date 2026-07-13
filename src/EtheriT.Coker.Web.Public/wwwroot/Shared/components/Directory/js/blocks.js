@@ -4,6 +4,8 @@
     if (!$) return;
 
     const DirectoryBlocks = (w.DirectoryBlocks = w.DirectoryBlocks || {});
+    let pendingExposureIds = [];
+    let exposureFlushTimer = null;
 
     function isFn(fn) {
         return typeof fn === "function";
@@ -153,7 +155,9 @@
     };
 
     DirectoryBlocks.insertAdvertiseData = function ($frame, result) {
-        const isFront = typeof w.OrgName !== "undefined";
+        const isFront = w.CokerEditorMode !== true &&
+            typeof w.OrgName !== "undefined" &&
+            String(w.OrgName).trim() !== "";
         const resultFile = result && result.fileLink ? result.fileLink[0] : null;
 
         if (resultFile == null) return $frame;
@@ -289,12 +293,35 @@
     }
 
     function bindAdvertiseExposure($frame, result, isFront) {
-        if (!isFront) return;
-        if (!w.co || !co.Activity || !isFn(co.Activity.Exposure)) return;
+        if (!isFront || w.CokerEditorMode === true) return;
+        if (!w.co || !co.Activity) return;
 
-        co.Activity.Exposure(result.id).done(function () {
-            // keep silent
-        });
+        const advertisementId = Number(result.id);
+        if (!Number.isFinite(advertisementId) || advertisementId <= 0) return;
+        if ($frame.data("exposedAdvertiseId") === advertisementId) return;
+
+        $frame.data("exposedAdvertiseId", advertisementId);
+        pendingExposureIds.push(advertisementId);
+
+        if (exposureFlushTimer !== null) return;
+
+        exposureFlushTimer = w.setTimeout(function () {
+            const exposureIds = pendingExposureIds;
+            pendingExposureIds = [];
+            exposureFlushTimer = null;
+
+            if (isFn(co.Activity.ExposureBatch)) {
+                co.Activity.ExposureBatch(exposureIds).done(function () {
+                    // keep silent
+                });
+            } else if (isFn(co.Activity.Exposure)) {
+                exposureIds.forEach(function (id) {
+                    co.Activity.Exposure(id).done(function () {
+                        // legacy fallback
+                    });
+                });
+            }
+        }, 25);
     }
 
     function bindAdvertiseVideoTracking($frame, result) {

@@ -77,6 +77,95 @@
     content: "No Data Found";
 }
 
+/* ===== Advertisement Loading ===== */
+.advertise_directory {
+    position: relative;
+}
+
+.advertise_directory.coker-ad-is-loading {
+    min-height: 7.5rem;
+}
+
+.advertise_directory > .coker-ad-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 7.5rem;
+    color: #6c757d;
+    background: rgba(255, 255, 255, 0.82);
+    pointer-events: none;
+}
+
+.advertise_directory.coker-ad-is-loading > :not(.coker-ad-loading) {
+    opacity: 0;
+}
+
+.advertise_directory > .coker-ad-loading.coker-ad-loading-leave {
+    animation: coker-ad-loading-fade-out 0.25s ease-out forwards;
+}
+
+.advertise_directory.coker-ad-is-revealing > :not(.coker-ad-loading) {
+    animation: coker-ad-content-reveal 0.38s ease-out both;
+}
+
+.coker-ad-loading-spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 0.2rem solid rgba(108, 117, 125, 0.25);
+    border-top-color: #6c757d;
+    border-radius: 50%;
+    animation: coker-ad-loading-spin 0.75s linear infinite;
+}
+
+.coker-ad-loading-text {
+    font-size: 0.875rem;
+}
+
+@keyframes coker-ad-loading-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes coker-ad-loading-fade-out {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes coker-ad-content-reveal {
+    from {
+        opacity: 0;
+        transform: translateY(0.35rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .coker-ad-loading-spinner {
+        animation-duration: 1.5s;
+    }
+
+    .advertise_directory > .coker-ad-loading.coker-ad-loading-leave,
+    .advertise_directory.coker-ad-is-revealing > :not(.coker-ad-loading) {
+        transform: none;
+        animation-duration: 0.01ms;
+    }
+}
+
 /* ===== Tags ===== */
 .tags .badge {
     max-width: 5rem;

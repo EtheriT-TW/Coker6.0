@@ -2430,6 +2430,343 @@ namespace EtheriT.Coker.Application.Directory
             }
             return output;
         }
+
+        public async Task<List<DirectoryAdvertiseBatchResultDto>> GetReleAdBatch(DirectoryAdvertiseBatchInputDto dto)
+        {
+            var output = new List<DirectoryAdvertiseBatchResultDto>();
+            var groups = (dto?.Groups ?? new List<List<long>>())
+                .Select(group => (group ?? new List<long>()).Where(id => id > 0).Distinct().ToList())
+                .Where(group => group.Any())
+                .GroupBy(group => string.Join(",", group))
+                .Select(group => group.First())
+                .Take(100)
+                .ToList();
+
+            if (!groups.Any()) return output;
+
+            var requestedIds = groups.SelectMany(group => group).Distinct().ToList();
+            var directories = await db.Directory
+                .AsNoTracking()
+                .Where(e => requestedIds.Contains(e.Id) && !e.IsDeleted)
+                .Select(e => new { e.Id, e.FK_WebsiteId, e.SortBy })
+                .ToDictionaryAsync(e => e.Id);
+
+            if (!directories.Any()) return output;
+
+            var websiteIds = directories.Values.Select(e => e.FK_WebsiteId).Distinct().ToList();
+            var directoryTagRows = await (
+                from associate in db.Tag_Associates.AsNoTracking()
+                join tag in db.Tags.AsNoTracking() on associate.FK_TId equals tag.Id
+                where requestedIds.Contains(associate.FK_AId)
+                    && !associate.IsDeleted
+                    && associate.Type == TagAssociateTypeEnum.目錄
+                    && !tag.IsDeleted
+                select new
+                {
+                    DirectoryId = associate.FK_AId,
+                    TagId = associate.FK_TId,
+                    TagWebsiteId = tag.FK_WebsiteId,
+                }).ToListAsync();
+
+            var directoryTags = directoryTagRows
+                .Where(row =>
+                    directories.ContainsKey(row.DirectoryId) &&
+                    directories[row.DirectoryId].FK_WebsiteId == row.TagWebsiteId)
+                .GroupBy(row => row.DirectoryId)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Select(row => row.TagId).Distinct().ToList());
+
+            var requestedTagIds = directoryTags.Values.SelectMany(ids => ids).Distinct().ToList();
+            var advertiseTagRows = new List<(long AdvertiseId, long TagId)>();
+            if (requestedTagIds.Any())
+            {
+                var rows = await db.Tag_Associates
+                    .AsNoTracking()
+                    .Where(e =>
+                        requestedTagIds.Contains(e.FK_TId) &&
+                        !e.IsDeleted &&
+                        e.Type == TagAssociateTypeEnum.廣告)
+                    .Select(e => new { AdvertiseId = e.FK_AId, TagId = e.FK_TId })
+                    .ToListAsync();
+
+                advertiseTagRows = rows
+                    .Select(row => (row.AdvertiseId, row.TagId))
+                    .ToList();
+            }
+
+            var tagsByAdvertise = advertiseTagRows
+                .GroupBy(row => row.AdvertiseId)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Select(row => row.TagId).Distinct().ToHashSet());
+
+            var advertiseIdsByDirectory = new Dictionary<long, List<long>>();
+            foreach (var directory in directories.Values)
+            {
+                if (!directoryTags.TryGetValue(directory.Id, out var requiredTags) || !requiredTags.Any())
+                {
+                    advertiseIdsByDirectory[directory.Id] = new List<long>();
+                    continue;
+                }
+
+                advertiseIdsByDirectory[directory.Id] = tagsByAdvertise
+                    .Where(entry => requiredTags.All(entry.Value.Contains))
+                    .Select(entry => entry.Key)
+                    .ToList();
+            }
+
+            var candidateAdvertiseIds = advertiseIdsByDirectory.Values
+                .SelectMany(ids => ids)
+                .Distinct()
+                .ToList();
+
+            var now = DateTime.Now;
+            var advertisements = candidateAdvertiseIds.Any()
+                ? await db.Advertise
+                    .AsNoTracking()
+                    .Where(e =>
+                        candidateAdvertiseIds.Contains(e.Id) &&
+                        websiteIds.Contains(e.FK_WebsiteId) &&
+                        !e.IsDeleted &&
+                        e.Visible &&
+                        (e.Permanent || (e.StartDate < now && e.EndDate > now)))
+                    .Select(e => new AdvertiseDisplayDto
+                    {
+                        Id = e.Id,
+                        Title = e.Title,
+                        Describe = e.Describe,
+                        Link = e.Link,
+                        Target = e.Target,
+                        Clicks = e.Clicks,
+                        Exposure = e.Exposure,
+                        SerNO = e.SerNO,
+                        FileLink = new List<FileGetDisplayDto>(),
+                        TagDatas = new List<TagGetAllDataDto>(),
+                    })
+                    .ToListAsync()
+                : new List<AdvertiseDisplayDto>();
+
+            var advertisementById = advertisements.ToDictionary(e => e.Id);
+            var loadedAdvertiseIds = advertisementById.Keys.ToList();
+
+            var personalizedSortRequired = groups.Any(group =>
+                group.Any(id => directories.TryGetValue(id, out var directory) && directory.SortBy == 3));
+            var relevantTags = new List<long>();
+
+            if (personalizedSortRequired)
+            {
+                var UUID = await tokenAppService.GetUUID();
+                var groupingId = await db.UserGroupingDetails
+                    .AsNoTracking()
+                    .Where(e => e.UUID == UUID)
+                    .Select(e => (long?)e.FK_GropingId)
+                    .FirstOrDefaultAsync();
+
+                if (groupingId.HasValue)
+                {
+                    relevantTags = await db.Tag_Associates
+                        .AsNoTracking()
+                        .Where(e =>
+                            e.FK_AId == groupingId.Value &&
+                            !e.IsDeleted &&
+                            e.Type == TagAssociateTypeEnum.使用者分群)
+                        .Select(e => e.FK_TId)
+                        .ToListAsync();
+                }
+                else
+                {
+                    relevantTags = await db.UserTagStatistics
+                        .AsNoTracking()
+                        .Where(e => e.UUID == UUID)
+                        .OrderByDescending(e => e.Weight)
+                        .Take(5)
+                        .Select(e => e.FK_TagId)
+                        .ToListAsync();
+                }
+            }
+
+            var productTagsByAdvertise = personalizedSortRequired && loadedAdvertiseIds.Any()
+                ? await db.Tag_Associates
+                    .AsNoTracking()
+                    .Where(e =>
+                        loadedAdvertiseIds.Contains(e.FK_AId) &&
+                        relevantTags.Contains(e.FK_TId) &&
+                        !e.IsDeleted &&
+                        e.Type == TagAssociateTypeEnum.商品)
+                    .GroupBy(e => e.FK_AId)
+                    .Select(group => new { AdvertiseId = group.Key, Count = group.Count() })
+                    .ToDictionaryAsync(e => e.AdvertiseId, e => e.Count)
+                : new Dictionary<long, int>();
+
+            foreach (var group in groups)
+            {
+                var validIds = group.Where(id => directories.ContainsKey(id)).ToList();
+                var result = new DirectoryAdvertiseBatchResultDto
+                {
+                    Key = string.Join(",", group),
+                    DirectoryIds = group,
+                };
+
+                if (validIds.Any())
+                {
+                    var websiteId = directories[validIds[0]].FK_WebsiteId;
+                    validIds = validIds
+                        .Where(id => directories[id].FK_WebsiteId == websiteId)
+                        .ToList();
+
+                    var groupAdvertiseIds = validIds
+                        .SelectMany(id => advertiseIdsByDirectory.GetValueOrDefault(id) ?? new List<long>())
+                        .Distinct()
+                        .ToHashSet();
+
+                    var groupAdvertisements = advertisements
+                        .Where(e => groupAdvertiseIds.Contains(e.Id))
+                        .ToList();
+
+                    switch (directories[validIds[0]].SortBy)
+                    {
+                        case 0:
+                            groupAdvertisements = groupAdvertisements.OrderBy(e => e.SerNO).ToList();
+                            break;
+                        case 2:
+                            groupAdvertisements = groupAdvertisements
+                                .OrderByDescending(e => e.Exposure == 0
+                                    ? e.Clicks > 0 ? double.PositiveInfinity : 0
+                                    : (double)e.Clicks / e.Exposure)
+                                .ToList();
+                            break;
+                        case 3:
+                            groupAdvertisements = groupAdvertisements
+                                .OrderByDescending(e => productTagsByAdvertise.GetValueOrDefault(e.Id))
+                                .ThenBy(e => e.SerNO)
+                                .ThenByDescending(e => e.Id)
+                                .ToList();
+                            break;
+                        default:
+                            groupAdvertisements = groupAdvertisements.OrderBy(_ => Guid.NewGuid()).ToList();
+                            break;
+                    }
+
+                    var take = dto?.Take.GetValueOrDefault() ?? 0;
+                    if (take < 1) take = 1;
+                    take = Math.Min(take, 20);
+                    result.Advertisements = groupAdvertisements.Take(take).ToList();
+                }
+
+                output.Add(result);
+            }
+
+            // 排序與取樣完成後，只載入實際要回傳之廣告的檔案及標籤。
+            var selectedAdvertiseIds = output
+                .SelectMany(group => group.Advertisements)
+                .Select(advertisement => advertisement.Id)
+                .Distinct()
+                .ToList();
+
+            if (selectedAdvertiseIds.Any())
+            {
+                // 與原本 getAdvertiseFiles 的行為一致：後台編輯時補上 orgName，
+                // 前台請求的 GetWebsiteOrgName() 會回傳空字串，因此保留 /upload/...。
+                var requestOrgName = await loginUserData.GetWebsiteOrgName();
+                var fileRows = await (
+                    from bind in db.FileBinds.AsNoTracking()
+                    join upload in db.FileUploads.AsNoTracking()
+                        on bind.FK_FileUploadId equals (long?)upload.Id
+                    where selectedAdvertiseIds.Contains(bind.Sid)
+                        && bind.type == (int)FileBindTypeEnum.自訂廣告
+                        && !bind.IsDeleted
+                        && !upload.IsDeleted
+                    orderby bind.Sid, bind.SerNo
+                    select new
+                    {
+                        AdvertiseId = bind.Sid,
+                        FileId = upload.Id,
+                        bind.Name,
+                        bind.MediaLink,
+                        upload.DownloadFileName,
+                        upload.ContentType,
+                    }).ToListAsync();
+
+                foreach (var fileRow in fileRows)
+                {
+                    if (!advertisementById.TryGetValue(fileRow.AdvertiseId, out var advertisement)) continue;
+
+                    var mediaLink = string.IsNullOrEmpty(fileRow.MediaLink)
+                        ? fileRow.DownloadFileName ?? string.Empty
+                        : fileRow.MediaLink;
+
+                    if (!string.IsNullOrEmpty(requestOrgName))
+                    {
+                        mediaLink = mediaLink.Replace("upload", $"upload/{requestOrgName}");
+                    }
+
+                    var contentType = fileRow.ContentType ?? string.Empty;
+                    var fileType = contentType == "youtube"
+                        ? 3
+                        : contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+                            ? 1
+                            : contentType.StartsWith("video/", StringComparison.OrdinalIgnoreCase)
+                                ? 2
+                                : 0;
+
+                    advertisement.FileLink.Add(new FileGetDisplayDto
+                    {
+                        Id = fileRow.FileId,
+                        Link = mediaLink,
+                        Name = fileRow.Name,
+                        FileType = fileType,
+                        Video_Type = fileType == 2 ? contentType : null,
+                    });
+                }
+
+                var tagRows = await (
+                    from associate in db.Tag_Associates.AsNoTracking()
+                    join tag in db.Tags.AsNoTracking() on associate.FK_TId equals tag.Id
+                    where selectedAdvertiseIds.Contains(associate.FK_AId)
+                        && !associate.IsDeleted
+                        && associate.Type == TagAssociateTypeEnum.廣告
+                        && !tag.IsDeleted
+                        && websiteIds.Contains(tag.FK_WebsiteId)
+                    select new
+                    {
+                        AdvertiseId = associate.FK_AId,
+                        AssociateId = associate.Id,
+                        TagId = associate.FK_TId,
+                        tag.Title,
+                        SearchId =
+                            db.Tag_Associates.Any(e =>
+                                !e.IsDeleted &&
+                                e.FK_TId == associate.FK_TId &&
+                                e.Type == TagAssociateTypeEnum.商品) ||
+                            db.TechnicalCertificates.Any(e =>
+                                !e.IsDeleted &&
+                                e.FK_WebsiteId == tag.FK_WebsiteId &&
+                                e.Title == tag.Title) ||
+                            db.Prods.Any(e =>
+                                !e.IsDeleted &&
+                                e.FK_WebsiteId == tag.FK_WebsiteId &&
+                                (e.Title.Contains(tag.Title) || (e.Html ?? string.Empty).Contains(tag.Title)))
+                                ? 3L
+                                : 0L,
+                    }).ToListAsync();
+
+                foreach (var tagRow in tagRows)
+                {
+                    if (!advertisementById.TryGetValue(tagRow.AdvertiseId, out var advertisement)) continue;
+
+                    advertisement.TagDatas.Add(new TagGetAllDataDto
+                    {
+                        Id = tagRow.AssociateId,
+                        FK_TId = tagRow.TagId,
+                        Title = tagRow.Title,
+                        SearchId = tagRow.SearchId,
+                    });
+                }
+            }
+
+            return output;
+        }
         public async Task<List<long>> GetReleAdId(List<long> FK_Tid_List)
         {
             var adlist = new List<long>();

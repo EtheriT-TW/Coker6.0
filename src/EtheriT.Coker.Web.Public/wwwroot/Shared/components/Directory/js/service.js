@@ -68,6 +68,18 @@
         return co.Directory.getDirectoryAdvertiseData(option);
     };
 
+    DirectoryService.getAdvertiseBatchData = function (groups, take) {
+        if (!w.co || !co.Directory || !co.Directory.getDirectoryAdvertiseBatchData) {
+            console.error("co.Directory.getDirectoryAdvertiseBatchData not found");
+            return $.Deferred().reject().promise();
+        }
+
+        const request = { Groups: groups };
+        if (Number(take) > 0) request.Take = Number(take);
+
+        return co.Directory.getDirectoryAdvertiseBatchData(request);
+    };
+
     /**
      * （可選）統一錯誤處理
      */

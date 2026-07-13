@@ -79,6 +79,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await directoryAppService.GetReleAd(dto);
         }
+        [HttpPost]
+        public async Task<List<DirectoryAdvertiseBatchResultDto>> GetReleAdBatch(DirectoryAdvertiseBatchInputDto dto)
+        {
+            return await directoryAppService.GetReleAdBatch(dto);
+        }
         [HttpGet]
         public async Task<ResponseMessageDto> GetDirectoryFacetConfig(long Id)
         {

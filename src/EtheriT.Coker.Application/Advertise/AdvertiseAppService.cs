@@ -324,6 +324,67 @@ namespace EtheriT.Coker.Application.Advertise
             }
             return output;
         }
+
+        public async Task<ResponseMessageDto> ActivityExposureBatch(AdvertiseExposureBatchDto dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                var exposureIds = (dto?.FK_Aids ?? new List<long>())
+                    .Where(id => id > 0)
+                    .Take(500)
+                    .ToList();
+
+                if (!exposureIds.Any())
+                {
+                    output.Success = true;
+                    return output;
+                }
+
+                Guid UUID = await tokenAppService.GetUUID();
+                var userId = await db.FrontUsers
+                    .Where(e => e.UUID == UUID)
+                    .Select(e => e.FK_User)
+                    .FirstOrDefaultAsync();
+
+                var exposureCounts = exposureIds
+                    .GroupBy(id => id)
+                    .ToDictionary(group => group.Key, group => group.Count());
+
+                var advertiseIds = exposureCounts.Keys.ToList();
+                var advertisements = await db.Advertise
+                    .Where(e => advertiseIds.Contains(e.Id))
+                    .ToListAsync();
+
+                foreach (var advertisement in advertisements)
+                {
+                    var count = exposureCounts[advertisement.Id];
+                    advertisement.Exposure += count;
+
+                    for (var index = 0; index < count; index++)
+                    {
+                        db.Advertise_Logs.Add(new Core.Models.Advertise_Log
+                        {
+                            FK_Adid = advertisement.Id,
+                            FK_UserId = userId,
+                            UUID = UUID,
+                            Action = (int)LogActionEnum.顯示,
+                        });
+                    }
+                }
+
+                await db.SaveChangesAsync();
+                output.Success = true;
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
         public async Task<JsonResult> GetDisplay(long webid, int type, int number)
         {
             try

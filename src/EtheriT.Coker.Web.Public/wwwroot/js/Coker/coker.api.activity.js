@@ -10,6 +10,9 @@
             },
             Exposure: function (FK_Aid) {
                 return Coker.api.get("/api/Advertise/ActivityExposure/", { FK_Aid: FK_Aid }, { auth: false });
+            },
+            ExposureBatch: function (FK_Aids) {
+                return Coker.api.post("/api/Advertise/ActivityExposureBatch/", { FK_Aids: FK_Aids }, { auth: false });
             }
         }
     });

@@ -252,6 +252,11 @@ namespace EtheriT.Coker.Application.Order
 
             return string.Join(" | ", messages.Distinct());
         }
+        private static bool IsECPayApplePayPayment(PaymentType? payment)
+        {
+            return string.Equals(payment?.Code, "ECPayApplePay", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(payment?.Title, "ApplePay", StringComparison.OrdinalIgnoreCase);
+        }
         private async Task WriteAddHeaderCartDiagnosticsAsync(OrderHeaderAddDto dto, TokenResponseDto? token, Guid? uuid, bool isTemp, string error)
         {
             try
@@ -1089,8 +1094,32 @@ namespace EtheriT.Coker.Application.Order
 
             if (!mailoutput.Success)
             {
+                await WriteOrderMailFailureLogAsync("OrderCreatedMailFail", header.Id, mailoutput);
                 // 不 rollback 訂單，但把錯誤訊息回給前端
                 output.Error = mailoutput.Message;
+            }
+        }
+        private async Task WriteOrderMailFailureLogAsync(string eventName, long orderId, ResponseMessageDto? mailResult, Exception? ex = null)
+        {
+            try
+            {
+                await loginUserData.SetLogs(
+                    0,
+                    configuration.GetValue<long>("WebConfig:SiteId"),
+                    eventName,
+                    JsonConvert.SerializeObject(new
+                    {
+                        OrderId = orderId,
+                        Success = mailResult?.Success,
+                        Message = mailResult?.Message,
+                        Error = mailResult?.Error,
+                        Exception = ex == null ? null : GetFullExceptionMessage(ex)
+                    })
+                );
+            }
+            catch
+            {
+                // 寄信失敗 log 不應影響訂單流程。
             }
         }
         public async Task<ResponseMessageDto> FrontUserUpdate(OrderHeaderAddDto dto)
@@ -1201,7 +1230,7 @@ namespace EtheriT.Coker.Application.Order
                             }
                             output.ThirdParties = payment.FK_ThirdPartyId;
 
-                            output.CanRefund = payment.CanRefund;
+                            output.CanRefund = payment.CanRefund || IsECPayApplePayPayment(payment);
 
                             List<long> neediconpayment = new List<long> { 2, 7, 8, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20 };
                             if (neediconpayment.Contains(output.PaymentCode)) output.PaymentIcon = $"/images/paymenticon/{payment.Icons}";
@@ -1350,7 +1379,7 @@ namespace EtheriT.Coker.Application.Order
                     if (payment.Code.ToLower().StartsWith("pchome")) temp_output.Payment = "支付連-" + payment.Title?.ToString() ?? "";
                     else temp_output.Payment = payment.Title?.ToString() ?? "";
 
-                    temp_output.CanRefund = payment.CanRefund;
+                    temp_output.CanRefund = payment.CanRefund || IsECPayApplePayPayment(payment);
                     temp_output.ThirdParties = payment.FK_ThirdPartyId;
 
                     temp_output.CreationTime = order_header.CreationTime.ToString("yyyy-MM-dd HH:mm");
@@ -1806,7 +1835,7 @@ namespace EtheriT.Coker.Application.Order
                         var now = DateTime.Now;
 
                         var payment = paymentList.FirstOrDefault(p => p.Id == order_header.Payment);
-                        var canRefund = payment?.CanRefund == true;
+                        var canRefund = payment?.CanRefund == true || IsECPayApplePayPayment(payment);
 
                         var repayInfo = GetRepayInfo(order_header, payment, now);
                         var canRepay = repayInfo.CanRepay;
@@ -3186,12 +3215,15 @@ namespace EtheriT.Coker.Application.Order
                     }, Website.Contact);
 
                     response = sedResult;
+                    if (!response.Success)
+                        await WriteOrderMailFailureLogAsync("PaySuccessMailFail", ohid, response);
                 }
                 else throw new Exception("查無訂購資料");
             }
             catch (Exception ex)
             {
                 response.Error = ex.Message;
+                await WriteOrderMailFailureLogAsync("PaySuccessMailException", ohid, response, ex);
             }
             return response;
         }
@@ -3228,7 +3260,10 @@ namespace EtheriT.Coker.Application.Order
                                                                     </tr>";
                         AmountTitle = "退款金額";
                         Remind = "若欲詢問退貨退款相關問題，請您與原訂購商店/網站聯繫。";
-                        var RefundText = PaymentType.RefundWorkDay < 0 ? "如有貨款需退回，請您與原訂購商店/網站聯繫。" : PaymentType.RefundWorkDay == 0 ? $"貨款將即時退回，{Remind}" : $"貨款將在{PaymentType.RefundWorkDay}個工作天內退回，{Remind}";
+                        var refundWorkDay = IsECPayApplePayPayment(PaymentType) && PaymentType.RefundWorkDay < 0
+                            ? 21
+                            : PaymentType.RefundWorkDay;
+                        var RefundText = refundWorkDay < 0 ? "如有貨款需退回，請您與原訂購商店/網站聯繫。" : refundWorkDay == 0 ? $"貨款將即時退回，{Remind}" : $"貨款將在{refundWorkDay}個工作天內退回，{Remind}";
                         Remind = $"<div class='text-bold text-red'>貼心提醒：{RefundText}</div>";
                         MailTitle = "退款通知";
                     }
@@ -3323,12 +3358,15 @@ namespace EtheriT.Coker.Application.Order
                     }, Website.Contact);
 
                     response = sedResult;
+                    if (!response.Success)
+                        await WriteOrderMailFailureLogAsync("CancelOrderMailFail", ohid, response);
                 }
                 else throw new Exception("查無訂購資料");
             }
             catch (Exception ex)
             {
                 response.Error = ex.Message;
+                await WriteOrderMailFailureLogAsync("CancelOrderMailException", ohid, response, ex);
             }
             return response;
         }

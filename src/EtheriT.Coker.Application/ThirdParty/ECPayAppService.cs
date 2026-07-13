@@ -226,7 +226,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                     case OrderStatusEnum.已取消:
                         throw new Exception("該筆訂單已取消");
                     default:
-                        if (!payment.CanRefund)
+                        var canRefund = payment.CanRefund || IsECPayApplePayPayment(payment);
+
+                        if (!canRefund)
                         {
                             if (ohdata.State == OrderStatusEnum.待付款) response.Message = "訂單已取消成功，如有貨款需退回，請聯繫客服處理";
                             else if (ohdata.State == OrderStatusEnum.已付款) response.Message = "訂單已取消成功，退款事宜請聯繫客服處理";
@@ -396,6 +398,11 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
+        private static bool IsECPayApplePayPayment(PaymentType? payment)
+        {
+            return string.Equals(payment?.Code, "ECPayApplePay", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(payment?.Title, "ApplePay", StringComparison.OrdinalIgnoreCase);
+        }
         public async Task<IActionResult> ECPayOrderResult(string ResultData)
         {
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
@@ -493,8 +500,31 @@ namespace EtheriT.Coker.Application.ThirdParty
                         ohdata.State = OrderStatusEnum.已付款;
                         ohdata.CompletedDate = payTime;
                         ohdata.LastModificationTime = DateTime.Now;
+                        db.SaveChanges();
 
-                        await orderAppService.PaySuccessMailSend(ohdata.Id, payTime);
+                        var mailResult = await orderAppService.PaySuccessMailSend(ohdata.Id, payTime);
+                        if (!mailResult.Success)
+                        {
+                            try
+                            {
+                                await loginUserData.SetLogs(
+                                    0,
+                                    configuration.GetValue<long>("WebConfig:SiteId"),
+                                    "ECPayReturnPaySuccessMailFail",
+                                    JsonConvert.SerializeObject(new
+                                    {
+                                        OrderId = ohdata.Id,
+                                        TransactionId = ohdata.TransactionId,
+                                        MailMessage = mailResult.Message,
+                                        MailError = mailResult.Error
+                                    })
+                                );
+                            }
+                            catch
+                            {
+                                // 綠界回呼已完成付款狀態更新，寄信失敗 log 不應影響回傳結果。
+                            }
+                        }
                     }
                     else
                     {
@@ -539,9 +569,8 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                     // 只有綠界沒有回成功付款時才標付款失敗。
                     ohdata.State = OrderStatusEnum.付款失敗;
+                    db.SaveChanges();
                 }
-
-                db.SaveChanges();
 
                 return "1|OK";
             }

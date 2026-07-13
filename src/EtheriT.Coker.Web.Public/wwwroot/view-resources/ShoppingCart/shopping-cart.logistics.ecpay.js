@@ -62,7 +62,6 @@
         try {
             data = JSON.parse(raw);
         } catch (err) {
-            console.error("orderForm parse failed", err);
             sessionStorage.removeItem("orderForm");
             return;
         }

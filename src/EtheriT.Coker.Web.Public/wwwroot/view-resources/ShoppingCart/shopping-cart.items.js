@@ -202,6 +202,8 @@ function CartInit(result) {
         cart.Items.updateGroupSelectedSubtotal($firstGroup);
         cart.Pricing.TotalCount();
         cart.Pricing.updateNextStepByBonus();
+        cart.Payment.Core.onAmountChanged();
+        cart.Payment.Core.reloadActiveEmbeddedProvider();
     }
 }
 function CartListAdd(data, $container) {
@@ -291,7 +293,6 @@ function CartListAdd(data, $container) {
         const currentQty = Number($self_bro.val() || 0);
         const step = Number($self_bro.attr("step") || 1);
         const nextQty = currentQty - step;
-        console.log(currentQty, step);
         if (nextQty < step) {
             $template.find(".btn_remove_pro").trigger("click");
             return;

@@ -28,13 +28,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         private readonly IBackstageAccountAppService accountAppService;
         private readonly PermissionStateStore permissionStateStore;
         private readonly LoginUserData loginUserData;
-        public PowerManagementController(NavigationProvider navigation, IPermissionsAppService permissionsAppService, IBackstageAccountAppService accountAppService, PermissionStateStore permissionStateStore, LoginUserData loginUserData)
+        private readonly IHttpContextAccessor httpContextAccessor;
+        public PowerManagementController(NavigationProvider navigation, IPermissionsAppService permissionsAppService, IBackstageAccountAppService accountAppService, PermissionStateStore permissionStateStore, LoginUserData loginUserData, IHttpContextAccessor httpContextAccessor)
 		{
 			this.navigation = navigation;
 			this.permissionsAppService = permissionsAppService;
 			this.accountAppService = accountAppService;
             this.permissionStateStore = permissionStateStore;
             this.loginUserData = loginUserData;
+            this.httpContextAccessor = httpContextAccessor;
         }
 		[HttpGet]
 		public async Task<Site> AllMenus() {
@@ -110,6 +112,32 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 		}
         [HttpGet]
         public async Task<JsonResult> GetPermission() {
+            if (TryGetReferrerRoute(out var controllerName, out var actionName))
+            {
+                var site = await navigation.BuildAuthorizedSiteAsync(
+                    writeHttpContextItems: false,
+                    controllerName: controllerName,
+                    actionName: actionName);
+
+                var menu = navigation.FindJob(site.Jobs, controllerName, actionName);
+
+                if (menu != null)
+                {
+                    var routePermission = new ThePermission
+                    {
+                        Initable = true,
+                        systemManager = await loginUserData.isSystemUser(),
+                        superManager = await permissionsAppService.IsPowerUserPermissions(),
+                        CanVisble = menu.CanVisble,
+                        CanUpdate = menu.CanUpdate,
+                        CanRemove = menu.CanRemove,
+                        CanCreate = menu.CanCreate
+                    };
+
+                    return new JsonResult(routePermission, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                }
+            }
+
             var userId = await loginUserData.GetUserId();
             var websiteId = await loginUserData.GetWebsiteId();
             var permisssion = permissionStateStore.GetOrDefault(websiteId, userId, ThePermission.DenyAll);
@@ -119,5 +147,33 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             }
             return new JsonResult(new { success = false }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
 		}
+
+        private bool TryGetReferrerRoute(out string controllerName, out string actionName)
+        {
+            controllerName = "";
+            actionName = "";
+
+            var referer = httpContextAccessor.HttpContext?.Request.Headers.Referer.ToString();
+
+            if (string.IsNullOrWhiteSpace(referer) ||
+                !Uri.TryCreate(referer, UriKind.Absolute, out var uri))
+            {
+                return false;
+            }
+
+            var segments = uri.AbsolutePath
+                .Trim('/')
+                .Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+            if (segments.Length == 0)
+            {
+                return false;
+            }
+
+            controllerName = segments[0];
+            actionName = segments.Length > 1 ? segments[1] : "Index";
+
+            return true;
+        }
 	}
 }

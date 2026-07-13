@@ -440,6 +440,16 @@ namespace EtheriT.Coker.Application.Marketing
             }
             catch (Exception ex)
             {
+                if (ex.Message.Contains("Invalid object name 'MarketingCampaigns'", StringComparison.OrdinalIgnoreCase) ||
+                    ex.Message.Contains("無效的物件名稱 'MarketingCampaigns'", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new ResponseMessageDto
+                    {
+                        Success = true,
+                        Object = new CartMarketingCampaignsDto()
+                    };
+                }
+
                 return new ResponseMessageDto
                 {
                     Success = false,

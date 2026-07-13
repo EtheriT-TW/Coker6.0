@@ -518,13 +518,16 @@ namespace EtheriT.Coker.Web.MVC.Startup
             site.PageTitleMap = BuildPageTitleMap(site.Jobs);
             return site;
         }
-        public async Task<Site> BuildAuthorizedSiteAsync(bool writeHttpContextItems = true)
+        public async Task<Site> BuildAuthorizedSiteAsync(
+            bool writeHttpContextItems = true,
+            string? controllerName = null,
+            string? actionName = null)
         {
             var site = await getMenus();
 
             await SetPower(site);
             await SetWebsite(site);
-            await setUserJob(site, writeHttpContextItems);
+            await setUserJob(site, writeHttpContextItems, controllerName, actionName);
 
             return site;
         }
@@ -659,7 +662,11 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 SetJobs(site.Jobs, jobs, allowOverwriteEnable: true);
             }
         }
-        public async Task setUserJob(Site site, bool writeHttpContextItems = true)
+        public async Task setUserJob(
+            Site site,
+            bool writeHttpContextItems = true,
+            string? controllerName = null,
+            string? actionName = null)
         {
             var userId = await loginUserData.GetUserId();
             var websiteId = await loginUserData.GetWebsiteId();
@@ -755,10 +762,14 @@ namespace EtheriT.Coker.Web.MVC.Startup
                     SetJobs(site.Jobs, jobs);
                 }
             }
-            if (_httpContextAccessor.HttpContext != null && _httpContextAccessor.HttpContext.Request.RouteValues.ContainsKey("action"))
+            if (_httpContextAccessor.HttpContext != null)
             {
-                string ControllerName = (_httpContextAccessor.HttpContext.Request.RouteValues["controller"] ?? "").ToString();
-                string ActionName = (_httpContextAccessor.HttpContext.Request.RouteValues["action"] ?? "").ToString();
+                string ControllerName = controllerName
+                    ?? (_httpContextAccessor.HttpContext.Request.RouteValues["controller"] ?? "").ToString();
+
+                string ActionName = actionName
+                    ?? (_httpContextAccessor.HttpContext.Request.RouteValues["action"] ?? "").ToString();
+
                 JobMenu? item = null;
                 JobMenu? Bonus = FindJob(site.Jobs, "BonusManagement", "Settings");
                 if (Bonus != null)
@@ -799,10 +810,10 @@ namespace EtheriT.Coker.Web.MVC.Startup
             }
             ThePermission.Initable = true;
 
-            permissionStateStore.Set(websiteId, userId, ThePermission);
-            permissionStateStore.Set(websiteId, userId, bonusPermission);
-
             if (writeHttpContextItems) {
+                permissionStateStore.Set(websiteId, userId, ThePermission);
+                permissionStateStore.Set(websiteId, userId, bonusPermission);
+
                 var ctx = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException("PermissionStateStore requires an active HttpContext.");
                 SetExecutePermissions(ctx, site.Jobs);
                 ctx.Items[CokerContextKeys.HasManySystem] = await websiteApplication.hasManySystem();

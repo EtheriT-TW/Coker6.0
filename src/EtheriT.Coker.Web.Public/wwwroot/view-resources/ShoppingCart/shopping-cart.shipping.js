@@ -34,7 +34,6 @@
         try {
             S.boxFees = rawBoxFees ? JSON.parse(rawBoxFees) : [];
         } catch (err) {
-            console.error("RadioShipping data-boxfees parse failed", err, rawBoxFees);
             S.boxFees = [];
         }
 
@@ -149,7 +148,6 @@
             try {
                 parsedBoxFees = JSON.parse(rawBoxFees);
             } catch (err) {
-                console.error("data-boxfees parse failed", err, rawBoxFees);
                 parsedBoxFees = [];
             }
         }

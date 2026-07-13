@@ -213,14 +213,6 @@ namespace EtheriT.Coker.Application.Authorization
                 ClearBackstageCookies();
             }
 
-            try
-            {
-                var expiredTokens = db.Tokens.Where(e => e.EndTime < DateTime.Now);
-                db.Tokens.RemoveRange(expiredTokens);
-                await db.SaveChangesAsync();
-            }
-            catch { }
-
             return response;
         }
 

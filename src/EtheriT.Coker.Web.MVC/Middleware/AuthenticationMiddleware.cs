@@ -11,11 +11,9 @@ namespace EtheriT.Coker.Web.MVC.Middleware
     public class AuthenticationMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly IServiceScopeFactory _scopeFactory;
-        public AuthenticationMiddleware(RequestDelegate next, IServiceScopeFactory scopeFactory)
+        public AuthenticationMiddleware(RequestDelegate next)
         {
             _next = next;
-            _scopeFactory = scopeFactory;
         }
         public async Task InvokeAsync(HttpContext context)
         {
@@ -32,9 +30,7 @@ namespace EtheriT.Coker.Web.MVC.Middleware
                 return;
             }
 
-            using var scope = _scopeFactory.CreateScope();
-
-            var accountAppService = scope.ServiceProvider.GetRequiredService<IBackstageAccountAppService>();
+            var accountAppService = context.RequestServices.GetRequiredService<IBackstageAccountAppService>();
             var isAuthenticated = await accountAppService.Chech();
 
             var controllerName = context.GetRouteData()?.Values["controller"]?.ToString();
@@ -71,7 +67,7 @@ namespace EtheriT.Coker.Web.MVC.Middleware
             }
 
             // 已登入：一律初始化本次 Request 的選單與權限
-            var navigation = scope.ServiceProvider.GetRequiredService<NavigationProvider>();
+            var navigation = context.RequestServices.GetRequiredService<NavigationProvider>();
 
             var site = await navigation.BuildAuthorizedSiteAsync();
 

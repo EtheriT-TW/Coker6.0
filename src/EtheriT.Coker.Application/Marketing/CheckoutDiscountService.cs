@@ -25,47 +25,54 @@ namespace EtheriT.Coker.Application.Marketing
 
         public async Task<CheckoutDiscountResultDto> CalculateAsync(CheckoutDiscountInputDto input)
         {
-            var websiteId = await loginUserData.GetCommonWebsiteId();
-
-            var now = DateTime.Now;
-
-            var result = new CheckoutDiscountResultDto();
-
-            if (input == null || input.Items == null || !input.Items.Any())
-                return result;
-
-            var productSubtotal = input.Items.Sum(x => x.Subtotal);
-
-            if (productSubtotal <= 0)
-                return result;
-
-            var marketingDiscounts = await CalculateMarketingCampaignDiscountsAsync(
-                websiteId,
-                input,
-                productSubtotal,
-                now
-            );
-
-            foreach (var discount in marketingDiscounts)
+            try
             {
-                result.AppliedDiscounts.Add(discount);
-            }
+                var websiteId = await loginUserData.GetCommonWebsiteId();
 
-            // 第一階段先只支援不疊加：取第一筆
-            // 未來 CanStack 開始支援時，這裡改成套用策略。
-            if (result.AppliedDiscounts.Any())
+                var now = DateTime.Now;
+
+                var result = new CheckoutDiscountResultDto();
+
+                if (input == null || input.Items == null || !input.Items.Any())
+                    return result;
+
+                var productSubtotal = input.Items.Sum(x => x.Subtotal);
+
+                if (productSubtotal <= 0)
+                    return result;
+
+                var marketingDiscounts = await CalculateMarketingCampaignDiscountsAsync(
+                    websiteId,
+                    input,
+                    productSubtotal,
+                    now
+                );
+
+                foreach (var discount in marketingDiscounts)
+                {
+                    result.AppliedDiscounts.Add(discount);
+                }
+
+                // 第一階段先只支援不疊加：取第一筆
+                // 未來 CanStack 開始支援時，這裡改成套用策略。
+                if (result.AppliedDiscounts.Any())
+                {
+                    var selected = result.AppliedDiscounts.First();
+
+                    result.AppliedDiscounts = new List<CheckoutDiscountAppliedDto> { selected };
+                    result.TotalDiscountAmount = selected.DiscountAmount;
+                    result.Memo = selected.DisplayText;
+                }
+
+                result.TotalDiscountAmount = Math.Max(0, result.TotalDiscountAmount);
+                result.TotalDiscountAmount = Math.Min(result.TotalDiscountAmount, productSubtotal);
+
+                return result;
+            }
+            catch (Exception ex) when (IsMissingMarketingCampaignsTable(ex))
             {
-                var selected = result.AppliedDiscounts.First();
-
-                result.AppliedDiscounts = new List<CheckoutDiscountAppliedDto> { selected };
-                result.TotalDiscountAmount = selected.DiscountAmount;
-                result.Memo = selected.DisplayText;
+                return new CheckoutDiscountResultDto();
             }
-
-            result.TotalDiscountAmount = Math.Max(0, result.TotalDiscountAmount);
-            result.TotalDiscountAmount = Math.Min(result.TotalDiscountAmount, productSubtotal);
-
-            return result;
         }
 
         private async Task<List<CheckoutDiscountAppliedDto>> CalculateMarketingCampaignDiscountsAsync(
@@ -119,6 +126,12 @@ namespace EtheriT.Coker.Application.Marketing
             }
 
             return output;
+        }
+
+        private static bool IsMissingMarketingCampaignsTable(Exception ex)
+        {
+            return ex.Message.Contains("Invalid object name 'MarketingCampaigns'", StringComparison.OrdinalIgnoreCase) ||
+                ex.Message.Contains("無效的物件名稱 'MarketingCampaigns'", StringComparison.OrdinalIgnoreCase);
         }
 
         private static CheckoutDiscountAppliedDto? CalculateOrderAmountRule(

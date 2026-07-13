@@ -6,27 +6,34 @@
     Coker.extend({
         util: {
             device: {
+                isTablet: function () {
+                    var ua = navigator.userAgent || "";
+                    var platform = navigator.platform || "";
+                    var isIPadOS = platform === "MacIntel" && navigator.maxTouchPoints > 1;
+
+                    return isIPadOS ||
+                        /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk)/i.test(ua);
+                },
+                isPhone: function () {
+                    var ua = navigator.userAgent || "";
+
+                    return !this.isTablet() &&
+                        /iPhone|iPod|Android.*Mobile|Windows Phone|BlackBerry|IEMobile|Opera Mobi/i.test(ua);
+                },
+                isDesktop: function () {
+                    return !this.isPhone() && !this.isTablet();
+                },
                 isMobileDevice: function () {
-                    var mobileDevices = ["Android", "webOS", "iPhone", "iPad", "iPod", "BlackBerry", "Windows Phone"];
-                    for (var i = 0; i < mobileDevices.length; i++) {
-                        if (navigator.userAgent.match(mobileDevices[i])) return true;
-                    }
-                    return false;
+                    return this.isPhone() || this.isTablet();
                 },
                 getDeviceType: function () {
-                    var ua = navigator.userAgent;
-
-                    // 偵測是否為平板 (iPad 或 Android 且不含 Mobile 字樣通常是大螢幕平板)
-                    var isTablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk)/i.test(ua);
-
-                    // 偵測是否為手機
-                    var isMobile = /Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/i.test(ua);
+                    var ua = navigator.userAgent || "";
 
                     // 偵測特殊環境 (對你抓 LINE Bug 很有幫助)
                     var isLine = /Line/i.test(ua);
 
-                    if (isTablet) return "平板" + (isLine ? " (LINE)" : "");
-                    if (isMobile) return "手機" + (isLine ? " (LINE)" : "");
+                    if (this.isTablet()) return "平板" + (isLine ? " (LINE)" : "");
+                    if (this.isPhone()) return "手機" + (isLine ? " (LINE)" : "");
                     return "電腦";
                 },
                 getNetworkStatus: function () {

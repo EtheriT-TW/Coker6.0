@@ -151,6 +151,9 @@
 
 /**
  * @typedef {Object} CokerUtilDevice
+ * @property {()=>boolean} isTablet
+ * @property {()=>boolean} isPhone
+ * @property {()=>boolean} isDesktop
  * @property {()=>boolean} isMobileDevice
  */
 

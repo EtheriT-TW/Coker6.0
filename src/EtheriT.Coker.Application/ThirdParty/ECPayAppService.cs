@@ -428,14 +428,11 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"-------------錯誤訊息查看-------------");
-                Console.WriteLine($"ECPay=>ECPayOrderResult回傳資料：{ex.Message}");
                 return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?ECPayError");
             }
         }
         public async Task<String> ECPayReturn(ECPayReturnResponseDto ResultResponseData)
         {
-            Console.WriteLine("in ECPayReturn");
             try
             {
                 var ThirdPartyData = await ECPayGetThirdPartyData() ?? throw new Exception("商家未確實設置綠界支付資料");
@@ -550,8 +547,6 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"-------------錯誤訊息查看-------------");
-                Console.WriteLine($"ECPay=>ECPayReturn回傳資料：{ex.Message}");
                 await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayReturnFail", JsonConvert.SerializeObject($"ECPay=>ECPayReturn回傳資料：{ex.Message}"));
                 return "Fail";
             }
@@ -719,13 +714,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                 dto.IsTemp = true;
                 dto.Payment = 16;
 
-                await loginUserData.SetLogs(
-                    0,
-                    configuration.GetValue<long>("WebConfig:SiteId"),
-                    "ECPaySyncTempOrder",
-                    JsonConvert.SerializeObject(dto)
-                );
-
                 var orderMessage = await orderAppService.AddHeader(dto);
 
                 if (!orderMessage.Success)
@@ -754,13 +742,41 @@ namespace EtheriT.Coker.Application.ThirdParty
             catch (HttpRequestException ex)
             {
                 response.Message = $"Request failed: {ex.Message}";
+                await WriteECPayGetTokenFailureLogAsync(dto, response.Message);
             }
             catch (Exception ex)
             {
                 response.Message = $"Other failed: {ex.Message}";
+                await WriteECPayGetTokenFailureLogAsync(dto, response.Message);
             }
 
             return response;
+        }
+        private async Task WriteECPayGetTokenFailureLogAsync(OrderHeaderAddDto dto, string message)
+        {
+            try
+            {
+                await loginUserData.SetLogs(
+                    0,
+                    configuration.GetValue<long>("WebConfig:SiteId"),
+                    "ECPayGetTokenFail",
+                    JsonConvert.SerializeObject(new
+                    {
+                        Message = message,
+                        OrderId = dto?.OrderId,
+                        Payment = dto?.Payment,
+                        Shipping = dto?.Shipping,
+                        SupportApplePay = dto?.SupportApplePay,
+                        DetailCount = dto?.OrderDetails?.Count ?? 0,
+                        DetailIds = dto?.OrderDetails?.Select(e => e.Id).ToList() ?? new List<long>(),
+                        UserAgent = httpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString()
+                    })
+                );
+            }
+            catch
+            {
+                // 付款失敗診斷 log 不應影響前端回應。
+            }
         }
         private async Task<ECPayResponseDataDto> ECPaySendRequest(string RequestName, string RequestUri, ECPayRequestDto RequestBody)
         {
@@ -770,10 +786,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var ThirdPartyData = await ECPayGetThirdPartyData();
                 if (ThirdPartyData != null)
                 {
-                    Console.WriteLine("=== ECPay Request ===");
-                    Console.WriteLine($"Time: {DateTime.UtcNow}");
-                    Console.WriteLine($"Request Name: {RequestName}");
-                    Console.WriteLine(JsonConvert.SerializeObject(RequestBody));
                     var content = new StringContent(JsonConvert.SerializeObject(RequestBody), Encoding.UTF8, "application/json");
                     var PostResponse = await ThirdPartyClient_ECPay.PostAsync(RequestUri, content);
                     PostResponse.EnsureSuccessStatusCode();
@@ -1000,8 +1012,6 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"-------------錯誤訊息查看-------------");
-                Console.WriteLine($"ECPay=>ECPayRequestBody回傳資料：{ex.Message}");
             }
             return RequestBody;
         }
@@ -1036,8 +1046,6 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"-------------錯誤訊息查看-------------");
-                Console.WriteLine($"ECPay=>ECPayGetThirdPartyData回傳資料：{ex.Message}");
             }
             return ThirdPartyData;
         }

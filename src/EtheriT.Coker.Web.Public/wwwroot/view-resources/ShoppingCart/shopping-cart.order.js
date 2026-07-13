@@ -110,11 +110,9 @@
                     }
                 );
             } else {
-                console.log(result);
                 Coker.sweet.error("錯誤", result.error, null, true);
             }
         }).fail(function (result) {
-            console.log(result);
             Coker.sweet.error("錯誤", result.error, null, true);
         });
     }

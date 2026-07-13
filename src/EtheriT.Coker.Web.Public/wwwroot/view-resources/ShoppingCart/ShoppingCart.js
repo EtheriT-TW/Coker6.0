@@ -1,4 +1,4 @@
-﻿var buy_step_swiper, ECPayModal;
+var buy_step_swiper, ECPayModal;
 var gotop_switch = false, isCheckout = false;
 
 var subtotal, ori_freight, low_con, disfreight, freight, total;
@@ -76,7 +76,6 @@ function PageReady() {
         ECPay.initialize($("#ECPayPayment").data("server-type"), 1, function (errMsg) {
             if (errMsg != null) {
                 GetECPayEntryRadio().closest(".form-check").addClass("d-none");
-                console.log(`Initialize errMsg : ${errMsg}`)
                 co.sweet.error("串接綠界發生錯誤");
             } else {
                 ECPayInit = true;
@@ -474,7 +473,6 @@ function PageReady() {
                     OrderHeaderAdd();
                 }, "否", function () {
                     ECPayMonitor = true;
-                    console.log("ECPayMonitor Change", ECPayMonitor);
                 });
             }
         }
@@ -738,7 +736,6 @@ function hashChange(e) {
         e.preventDefault();
         GetOrderPage();
     } else {
-        console.log("HashChange錯誤")
     }
 }
 function GetOrderPage() {
@@ -813,9 +810,6 @@ function SuccessPageDataInsert(data) {
     var header = data.orderHeader || {};
     var details = data.orderDetails || [];
 
-    console.log(header);
-    console.log(details);
-
     ShoppingCartDataInsert(header, $("#Step4 .card-body"));
 
     toggleStep4EndlineDisplay(header);
@@ -887,7 +881,6 @@ function ElementInit() {
             try {
                 boxFees = rawBoxFees ? JSON.parse(rawBoxFees) : [];
             } catch (err) {
-                console.error("init data-boxfees parse failed", err, rawBoxFees);
                 boxFees = [];
             }
 
@@ -1127,7 +1120,6 @@ function CartListAdd(data, $container) {
         const currentQty = Number($self_bro.val() || 0);
         const step = Number($self_bro.attr("step") || 1);
         const nextQty = currentQty - step;
-        console.log(currentQty, step);
         if (nextQty < step) {
             $template.find(".btn_remove_pro").trigger("click");
             return;
@@ -1914,7 +1906,6 @@ function RadioShipping() {
     try {
         boxFees = rawBoxFees ? JSON.parse(rawBoxFees) : [];
     } catch (err) {
-        console.error("RadioShipping data-boxfees parse failed", err, rawBoxFees);
         boxFees = [];
     }
 
@@ -2160,12 +2151,10 @@ function ECPaymentChange() {
     var nextSnapshot = BuildECPayOrderSnapshot();
 
     if (ECPayChanging) {
-        console.log("ECPaymentChange skipped: syncing");
         return;
     }
 
     if (ECPayReady && ECPayOrderSnapshot === nextSnapshot && typeof window.Pay !== "undefined" && $("#ECPayPayment").children().length > 0) {
-        console.log("ECPaymentChange skipped: same snapshot");
         return;
     }
 
@@ -2197,7 +2186,6 @@ function ECPaymentChange() {
                     ECPayChanging = false;
                     ECPayReady = false;
                     $(".ecpay_loading").text("串接綠界發生錯誤，請稍後嘗試");
-                    console.log(result.message);
                     return;
                 }
 
@@ -2942,11 +2930,9 @@ function AddHeader(paymentInfo) {
                 }
             );
         } else {
-            console.log(result);
             Coker.sweet.error("錯誤", result.error, null, true);
         }
     }).fail(function (result) {
-        console.log(result);
         Coker.sweet.error("錯誤", result.error, null, true);
     });
 }
@@ -3349,12 +3335,9 @@ function TWZipCodeInit() {
 }
 function RecipientsList_ContentReady(e) {
     RecipientsList_dxData = $("#RecipientsList").dxDataGrid("instance");
-    console.log("RecipientsList_dxData", RecipientsList_dxData)
 }
 function RecipientsList_SelectChange(selectedItems) {
     var data = selectedItems.selectedRowsData;
-
-    console.log("Select", data)
 }
 function RecipientsList_DeleteButtonClicked(e) {
     co.sweet.confirm("刪除收件人", "確定刪除？資料刪除後不可復原", "確　定", "取　消", function () {
@@ -3447,7 +3430,6 @@ function getSelectedShippingMeta() {
         try {
             parsedBoxFees = JSON.parse(rawBoxFees);
         } catch (err) {
-            console.error("data-boxfees parse failed", err, rawBoxFees);
             parsedBoxFees = [];
         }
     }

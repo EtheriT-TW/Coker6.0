@@ -60,8 +60,16 @@
             details: details
         });
     }
+    function GetSelectedOrderDetails() {
+        return cart.Items.getSelectedCartItems()
+            .filter(function (item) {
+                return Number(item.Id || 0) > 0 && Number(item.Quantity || 0) > 0;
+            });
+    }
     function ECPaymentChange() {
-        if (!S.ECPayMonitor || !S.HasECPay) return;
+        if (!S.ECPayMonitor || !S.HasECPay) {
+            return;
+        }
 
         var selectedPaymentBeforeSync = cart.Payment.Core.GetCheckedPaymentValue();
         var restorePaymentAfterSync = IsECPaySelected()
@@ -72,8 +80,9 @@
 
         var dataReady = cart.Forms.AllDataGet(false);
         cart.Payment.Core.Step3Monitor();
+        var selectedOrderDetails = GetSelectedOrderDetails();
 
-        if (!dataReady) {
+        if (!dataReady || selectedOrderDetails.length === 0) {
             if (S.ECPayReady) {
                 S.ECPayReady = false;
                 S.ECPayOrderSnapshot = "";
@@ -87,15 +96,15 @@
             return;
         }
 
+        S.order_header_data.OrderDetails = selectedOrderDetails;
+
         var nextSnapshot = BuildECPayOrderSnapshot();
 
         if (S.ECPayChanging) {
-            console.log("ECPaymentChange skipped: syncing");
             return;
         }
 
         if (S.ECPayReady && S.ECPayOrderSnapshot === nextSnapshot && typeof window.Pay !== "undefined" && $("#ECPayPayment").children().length > 0) {
-            console.log("ECPaymentChange skipped: same snapshot");
             return;
         }
 
@@ -119,20 +128,17 @@
             }
 
             clearInterval(checkInterval);
-
             Coker.ThirdParty.ECPayGetToken(S.order_header_data)
                 .done(function (result) {
                     if (!result.success) {
                         S.ECPayChanging = false;
                         S.ECPayReady = false;
                         $(".ecpay_loading").text("串接綠界發生錯誤，請稍後嘗試");
-                        console.log(result.message);
                         return;
                     }
 
                     var message = result.message.split(",");
                     S.order_header_data.orderId = message[0];
-
                     ECPay.createPayment(message[1], ECPay.Language.zhTW, function (errMsg) {
                         if (errMsg != null) {
                             S.ECPayChanging = false;
@@ -373,6 +379,68 @@
     function GetActiveECPayType() {
         return $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li.ecpay-pl-act").attr("id") || "";
     }
+    function IsActiveApplePay() {
+        return GetActiveECPayType() === "ApplePay";
+    }
+    function CanUseApplePay() {
+        var coker = window.Coker || {};
+        var device = coker.util && coker.util.device;
+        var isPhone = false;
+
+        try {
+            isPhone = device && typeof device.isPhone === "function"
+                ? device.isPhone()
+                : /iPhone|iPod|Android.*Mobile|Windows Phone/i.test(navigator.userAgent || "");
+        } catch (ex) {
+            return true;
+        }
+
+        if (!isPhone) {
+            return true;
+        }
+
+        var applePaySession = window.ApplePaySession;
+
+        if (!applePaySession || typeof applePaySession.canMakePayments !== "function") {
+            return false;
+        }
+
+        try {
+            return applePaySession.canMakePayments() === true;
+        } catch (ex) {
+            return false;
+        }
+    }
+
+    function ConfirmApplePayThenValidate(callback) {
+        Swal.fire({
+            icon: "info",
+            title: "準備開啟 Apple Pay",
+            html: "請點選下方按鈕開啟 Apple Wallet 完成付款。",
+            showConfirmButton: true,
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "開啟 Apple Pay",
+            cancelButtonText: "取消",
+            allowOutsideClick: false,
+            didOpen: function () {
+                var confirmButton = Swal.getConfirmButton();
+                if (!confirmButton) return;
+
+                confirmButton.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    Swal.close();
+                    ValidateECPayPayment(callback);
+                }, { once: true, capture: true });
+            }
+        }).then(function (result) {
+            if (result.dismiss === Swal.DismissReason.cancel) {
+                callback(false, { handled: true });
+            }
+        });
+    }
 
     function ClearApplePayWatch() {
         if (S.ECPayApplePayTimer) {
@@ -428,11 +496,6 @@
         S.ECPayApplePayCompleted = true;
         S.ECPayApplePayWaitingResult = false;
         ClearApplePayWatch();
-
-        console.group("ECPay ApplePay success result");
-        console.log("resultData:", resultData);
-        console.groupEnd();
-
         // ApplePay 成功後一定要保險校正。
         S.order_header_data.payment = 27;
         $("#Step4 .payment_method").text("Apple Pay");
@@ -463,12 +526,6 @@
         S.ECPayApplePayWaitingResult = false;
         ClearApplePayWatch();
         Swal.close();
-
-        console.group("ECPay ApplePay failed result");
-        console.log("message:", message);
-        console.log("rawData:", rawData);
-        console.groupEnd();
-
         Coker.sweet.warning("Apple Pay 付款失敗", message || "付款未完成，請重新操作。", null);
     }
 
@@ -491,15 +548,6 @@
 
                 S.ECPayApplePayWaitingResult = false;
                 Swal.close();
-
-                console.error("ECPay ApplePay timeout: getApplePayResultData was not called.", {
-                    activePayment: activePayment,
-                    ECPayReady: S.ECPayReady,
-                    ECPayChanging: S.ECPayChanging,
-                    PayType: typeof window.Pay,
-                    children: $("#ECPayPayment").children().length
-                });
-
                 callback(false, {
                     handled: true,
                     message: "Apple Pay 付款流程逾時，系統未收到綠界付款結果。若裝置已顯示付款成功，請先勿重複付款，請聯絡客服確認交易狀態。"
@@ -515,12 +563,6 @@
 
         try {
             ECPay.getPayToken(function (paymentInfo, errMsg) {
-                console.group("ECPay getPayToken callback");
-                console.log("activePayment:", activePayment);
-                console.log("paymentInfo:", paymentInfo);
-                console.log("errMsg:", errMsg);
-                console.groupEnd();
-
                 if (errMsg != null) {
                     if (isApplePay) {
                         FailApplePayOrder(errMsg, paymentInfo);
@@ -541,8 +583,6 @@
                 callback(true, paymentInfo);
             });
         } catch (ex) {
-            console.error("ECPay.getPayToken exception:", ex);
-
             if (isApplePay) {
                 FailApplePayOrder("Apple Pay 付款流程發生例外，請重新操作。", ex);
                 callback(false, { handled: true, message: ex.message || String(ex) });
@@ -554,11 +594,6 @@
     }
 
     function getApplePayResultData(resultData, errMsg) {
-        console.group("ECPay getApplePayResultData");
-        console.log("resultData:", resultData);
-        console.log("errMsg:", errMsg);
-        console.groupEnd();
-
         if (errMsg != null) {
             FailApplePayOrder(errMsg, resultData);
             return;
@@ -696,6 +731,7 @@
         ECPaymentChange: ECPaymentChange,
         MarkECPayDirty: MarkECPayDirty,
         GetECPayType: GetECPayType,
+        CanUseApplePay: CanUseApplePay,
         ValidateECPayPayment: ValidateECPayPayment,
         getApplePayResultData: getApplePayResultData,
         afterOrderCreated: afterOrderCreated
@@ -706,15 +742,16 @@
         type: "embedded",
         thirdPartyId: S.ECPAY_THIRD_PARTY_ID,
         init: function () {
-            if ($("#ECPayPayment").length === 0) return;
+            if ($("#ECPayPayment").length === 0) {
+                return;
+            }
 
             S.HasECPay = true;
             S.ECPayMonitor = true;
-
+            S.SupportApplePay = CanUseApplePay();
             ECPay.initialize($("#ECPayPayment").data("server-type"), 1, function (errMsg) {
                 if (errMsg != null) {
                     GetECPayEntryRadio().closest(".form-check").addClass("d-none");
-                    console.log(`Initialize errMsg : ${errMsg}`);
                     co.sweet.error("串接綠界發生錯誤");
                     return;
                 }
@@ -727,6 +764,9 @@
                     $ecpayRadio.prop("checked", true);
                     $ecpayRadio.closest(".form-check").prevAll(".form-check").first().find(".payment_display").addClass("last");
                 }
+                setTimeout(function () {
+                    ECPaymentChange();
+                }, 0);
 
                 $("#RadioPayment .payment_display").on("click.ecpayInit", function () {
                     var $thisRadioDisplay = $(this);
@@ -837,6 +877,11 @@
                 );
 
                 callback(false, { handled: true });
+                return;
+            }
+
+            if (IsActiveApplePay()) {
+                ConfirmApplePayThenValidate(callback);
                 return;
             }
 

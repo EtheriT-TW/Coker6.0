@@ -10,7 +10,6 @@
             e.preventDefault();
             cart.CheckoutResult.GetOrderPage();
         } else {
-            console.log("HashChange錯誤")
         }
     }
     function GetOrderPage() {
@@ -84,9 +83,6 @@
     function SuccessPageDataInsert(data) {
         var header = data.orderHeader || {};
         var details = data.orderDetails || [];
-
-        console.log(header);
-        console.log(details);
 
         cart.Utils.ShoppingCartDataInsert(header, $("#Step4 .card-body"));
 

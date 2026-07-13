@@ -397,10 +397,12 @@
                 Coker.sweet.warning("請注意", "請選擇付款方式！", null);
             } else {
                 var isEmbeddedPayment = cart.Payment.Core.isActiveEmbeddedPayment();
-
                 if (isEmbeddedPayment && !cart.Payment.Core.isActiveEmbeddedLoaded()) {
+                    cart.Payment.Core.setProvidersMonitorByType("embedded", true);
+                    cart.Payment.Core.reloadActiveEmbeddedProvider();
                     co.sweet.warning("付款模組尚未載入完成，請稍候再試。", "", null);
                 } else if (isEmbeddedPayment && !cart.Payment.Core.isActiveEmbeddedReady()) {
+                    cart.Payment.Core.setProvidersMonitorByType("embedded", true);
                     cart.Payment.Core.reloadActiveEmbeddedProvider();
 
                     co.sweet.warning(
@@ -413,7 +415,6 @@
                         cart.Order.OrderHeaderAdd();
                     }, "否", function () {
                         cart.Payment.Core.setProvidersMonitorByType("embedded", true);
-                        console.log("Embedded payment monitor enabled");
                     });
                 }
             }

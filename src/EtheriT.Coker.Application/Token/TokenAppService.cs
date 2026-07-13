@@ -30,6 +30,9 @@ namespace EtheriT.Coker.Application.Token
 {
     public class TokenAppService : ITokenAppService
     {
+        private static readonly SemaphoreSlim CleanupLock = new(1, 1);
+        private static DateTime _nextCleanupAtUtc = DateTime.MinValue;
+        private static readonly TimeSpan CleanupInterval = TimeSpan.FromMinutes(10);
         private readonly JwtHelpers jwt;
         private readonly CokerDbContext db;
         private readonly IHttpContextAccessor httpContextAccessor;
@@ -115,7 +118,7 @@ namespace EtheriT.Coker.Application.Token
             finally {
                 try
                 {
-                    await CleanupExpiredTokensAsync(websiteId);
+                    await TryCleanupExpiredTokensAsync(websiteId);
                 }
                 catch
                 {
@@ -294,6 +297,26 @@ namespace EtheriT.Coker.Application.Token
                 output.Error = "登入狀態已失效，請重新登入";
             }
             return output;
+        }
+
+        private async Task TryCleanupExpiredTokensAsync(long websiteId)
+        {
+            if (DateTime.UtcNow < _nextCleanupAtUtc || !await CleanupLock.WaitAsync(0))
+                return;
+
+            try
+            {
+                if (DateTime.UtcNow < _nextCleanupAtUtc)
+                    return;
+
+                // Advance before running so a failed cleanup cannot create a request-time retry storm.
+                _nextCleanupAtUtc = DateTime.UtcNow.Add(CleanupInterval);
+                await CleanupExpiredTokensAsync(websiteId);
+            }
+            finally
+            {
+                CleanupLock.Release();
+            }
         }
         public async Task<ResponseMessageDto> AgreePrivacy()
         {

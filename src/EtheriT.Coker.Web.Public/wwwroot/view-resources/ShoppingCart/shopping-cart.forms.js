@@ -65,7 +65,6 @@
                 try {
                     S.boxFees = rawBoxFees ? JSON.parse(rawBoxFees) : [];
                 } catch (err) {
-                    console.error("init data-boxfees parse failed", err, rawBoxFees);
                     S.boxFees = [];
                 }
 
@@ -267,7 +266,7 @@
         S.order_header_data.Service_Charge = 0;
         S.order_header_data.OrderDetails = cart.Items.getSelectedCartItems();
 
-        S.order_header_data.SupportApplePay = true;
+        S.order_header_data.SupportApplePay = S.SupportApplePay === true;
     }
     function OrdererDataGet() {
         S.order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
@@ -505,12 +504,9 @@
     }
     function RecipientsList_ContentReady(e) {
         S.RecipientsList_dxData = $("#RecipientsList").dxDataGrid("instance");
-        console.log("RecipientsList_dxData", S.RecipientsList_dxData)
     }
     function RecipientsList_SelectChange(selectedItems) {
         var data = selectedItems.selectedRowsData;
-
-        console.log("Select", data)
     }
     function RecipientsList_DeleteButtonClicked(e) {
         co.sweet.confirm("刪除收件人", "確定刪除？資料刪除後不可復原", "確　定", "取　消", function () {

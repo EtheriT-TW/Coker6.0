@@ -22,6 +22,7 @@ using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
+using EtheriT.Coker.Application.Shared.Dto.Token;
 using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.StoreSet;
@@ -173,20 +174,25 @@ namespace EtheriT.Coker.Application.Order
         public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto)
         {
             var output = new ResponseMessageDto() { Success = false };
+            TokenResponseDto? token = null;
+            Guid? uuid = null;
+            var isTemp = dto?.IsTemp == true;
 
             try
             {
                 // === 共用 context ===
                 var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
-                var token = await tokenAppService.CheckToken(null) ?? throw new Exception("查無Token");
-                var uuid = await tokenAppService.GetUUID();
+                token = await tokenAppService.CheckToken(null) ?? throw new Exception("查無Token");
+                if (!token.Success)
+                    throw new Exception(token.Error ?? "登入狀態已失效，請重新整理後再嘗試。");
+
+                uuid = await tokenAppService.GetUUID();
+                var currentUuid = uuid.Value;
                 var now = DateTime.Now;
                 var userId = await db.Tokens
                         .Where(e => e.id == token.RefreshToken)
                         .Select(e => e.UserID)
                         .FirstOrDefaultAsync();
-
-                bool isTemp = dto.IsTemp;
 
                 var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
                 var bonusEnabled = bonusSetting?.BonusEnabled == true;
@@ -195,13 +201,13 @@ namespace EtheriT.Coker.Application.Order
 
                 if (bonusEnabled)
                 {
-                    var bonusOk = await shoppingCartAppService.checkBonusCanUse(uuid, dto.OrderDetails);
+                    var bonusOk = await shoppingCartAppService.checkBonusCanUse(currentUuid, dto.OrderDetails);
                     if (!bonusOk)
                         throw new Exception("紅利點數不足，請重新確認後再送出訂單。");
                 }
 
                 //  暫存訂單也要重算金額，但不能扣庫存 / 不能把購物車標成已下單 / 不能扣紅利
-                detailResult = await BuildDetailSectionAsync(dto, userId, uuid, now, previewOnly: isTemp);
+                detailResult = await BuildDetailSectionAsync(dto, userId, currentUuid, now, previewOnly: isTemp);
 
                 Order_Header header = null!;
                 var strategy = db.Database.CreateExecutionStrategy();
@@ -210,9 +216,9 @@ namespace EtheriT.Coker.Application.Order
                 {
                     await using var tx = await db.Database.BeginTransactionAsync();
 
-                    header = await BuildHeaderSectionAsync(dto, websiteId, uuid, token, userId, now, isTemp, detailResult);
+                    header = await BuildHeaderSectionAsync(dto, websiteId, currentUuid, token, userId, now, isTemp, detailResult);
 
-                    var logs = BuildLogSection(header, detailResult, uuid);
+                    var logs = BuildLogSection(header, detailResult, currentUuid);
 
                     await SaveOrderAsync(header, detailResult, logs, now, userId, isTemp);
 
@@ -225,10 +231,66 @@ namespace EtheriT.Coker.Application.Order
             }
             catch (Exception ex)
             {
-                output.Error = ex.Message;
+                output.Error = GetFullExceptionMessage(ex);
+                await WriteAddHeaderCartDiagnosticsAsync(dto, token, uuid, isTemp, output.Error);
             }
 
             return output;
+        }
+        private static string GetFullExceptionMessage(Exception ex)
+        {
+            var messages = new List<string>();
+            var current = ex;
+
+            while (current != null)
+            {
+                if (!string.IsNullOrWhiteSpace(current.Message))
+                    messages.Add(current.Message);
+
+                current = current.InnerException;
+            }
+
+            return string.Join(" | ", messages.Distinct());
+        }
+        private async Task WriteAddHeaderCartDiagnosticsAsync(OrderHeaderAddDto dto, TokenResponseDto? token, Guid? uuid, bool isTemp, string error)
+        {
+            try
+            {
+                var detailIds = dto.OrderDetails?
+                    .Where(e => e != null)
+                    .Select(e => e.Id)
+                    .ToList() ?? new List<long>();
+
+                var existingCartCount = detailIds.Count == 0
+                    ? 0
+                    : await db.ShoppingCarts.CountAsync(e => detailIds.Contains(e.Id) && !e.IsOrder);
+
+                var matchingUuidCartCount = detailIds.Count == 0 || !uuid.HasValue
+                    ? 0
+                    : await db.ShoppingCarts.CountAsync(e => detailIds.Contains(e.Id) && e.UUID == uuid.Value && !e.IsOrder);
+
+                await loginUserData.SetLogs(
+                    0,
+                    configuration.GetValue<long>("WebConfig:SiteId"),
+                    "OrderAddHeaderFail",
+                    JsonConvert.SerializeObject(new
+                    {
+                        IsTemp = isTemp,
+                        Error = error,
+                        TokenSuccess = token?.Success,
+                        TokenRefreshToken = token?.RefreshToken,
+                        UUID = uuid,
+                        DetailCount = detailIds.Count,
+                        DetailIds = detailIds,
+                        ExistingCartCount = existingCartCount,
+                        MatchingUuidCartCount = matchingUuidCartCount
+                    })
+                );
+            }
+            catch
+            {
+                // 診斷 log 不應影響下單流程。
+            }
         }
         private async Task<DetailBuildResult> BuildDetailSectionAsync(OrderHeaderAddDto dto, long? userId, Guid uuid, DateTime now, bool previewOnly = false)
         {
@@ -525,7 +587,14 @@ namespace EtheriT.Coker.Application.Order
                     ApplyBoxMemoToHeader(oh, detailResult);
                 }
 
-                await loginUserData.SaveChanges(oh);
+                try
+                {
+                    await loginUserData.SaveChanges(oh);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"更新暫存訂單主檔儲存失敗：{GetFullExceptionMessage(ex)}", ex);
+                }
             }
             else
             {
@@ -538,7 +607,14 @@ namespace EtheriT.Coker.Application.Order
                 oh.CreationTime = now;
 
                 db.Order_Headers.Add(oh);
-                await db.SaveChangesAsync();
+                try
+                {
+                    await db.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"新增訂單主檔儲存失敗：{GetFullExceptionMessage(ex)}", ex);
+                }
 
                 if (LogisticsSubType != null &&
                     (LogisticsSubType == ShippingTypeEnum.綠界_中華郵政 ||
@@ -563,7 +639,14 @@ namespace EtheriT.Coker.Application.Order
                     ohlo.CVSOutSide = dto.CVSOutSide;
 
                     db.Order_Logistics.Add(ohlo);
-                    await db.SaveChangesAsync();
+                    try
+                    {
+                        await db.SaveChangesAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"新增訂單物流儲存失敗：{GetFullExceptionMessage(ex)}", ex);
+                    }
                 }
 
                 if (detailResult != null)
@@ -610,7 +693,14 @@ namespace EtheriT.Coker.Application.Order
 
                     ApplyBoxMemoToHeader(oh, detailResult);
 
-                    await db.SaveChangesAsync();
+                    try
+                    {
+                        await db.SaveChangesAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"更新訂單金額儲存失敗：{GetFullExceptionMessage(ex)}", ex);
+                    }
                 }
             }
 
@@ -1269,8 +1359,6 @@ namespace EtheriT.Coker.Application.Order
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"-------------錯誤訊息查看-------------");
-                Console.WriteLine($"Order=>GetHeaderDisplay回傳資料：{ex.Message}");
             }
             return output;
         }
@@ -1355,8 +1443,6 @@ namespace EtheriT.Coker.Application.Order
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"-------------錯誤訊息查看-------------");
-                Console.WriteLine($"Order=>GetDetailsDisplay回傳資料：{ex.Message}");
                 return new List<OrderDetailDisplayDto>();
             }
         }
@@ -1406,8 +1492,6 @@ namespace EtheriT.Coker.Application.Order
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"-------------錯誤訊息查看-------------");
-                Console.WriteLine($"Order=>GetOrderDisplayOne：{ex.Message}");
             }
 
             return output;

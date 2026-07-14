@@ -318,6 +318,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthorization();
 builder.Services.AddSingleton<BackgroundJobService>();
 builder.Services.AddScoped<LoginUserData>();
+builder.Services.AddScoped<BackgroundOperationContext>();
 builder.Services.AddScoped<NavigationProvider>();
 
 // 設定 CORS 策略
@@ -336,6 +337,8 @@ builder.Services.AddScoped<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddScoped<IMemberAppService, MemberAppService>();
 builder.Services.AddScoped<IFreightAppService, FreightAppService>();
 builder.Services.AddScoped<IProductAppService, ProductAppService>();
+builder.Services.AddScoped<ProductExportBackgroundJob>();
+builder.Services.AddScoped<BackgroundTaskService>();
 builder.Services.AddScoped<IFrontRoleContextService, FrontRoleContextService>();
 builder.Services.AddScoped<IProductDisplayPriceService, ProductDisplayPriceService>();
 builder.Services.AddScoped<IHtmlContentAppService, HtmlContentAppService>();

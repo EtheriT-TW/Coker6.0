@@ -10,8 +10,11 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
 	public class DirectoryImportDto
 	{
 		public string Level1 { get; set; }
+		public string? Level1RouterName { get; set; }
 		public string? Level2 { get; set; }
+		public string? Level2RouterName { get; set; }
 		public string? Level3 { get; set; }
+		public string? Level3RouterName { get; set; }
 		public string Tag1 { get; set; }
 		public string? Tag2 { get; set; }
 		public string? Tag3 { get; set; }

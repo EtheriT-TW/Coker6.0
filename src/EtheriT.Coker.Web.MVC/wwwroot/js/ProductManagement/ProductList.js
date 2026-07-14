@@ -13,14 +13,23 @@ var pendingHashEdit = false;
 
 function ImportProd() {
     var formData = new FormData($(`[name="fileUploadForm"]`)[0]);
-    co.Product.AddUp.Import(formData).done(function (response) {
+    co.Product.AddUp.Import(formData).done(async function (response) {
         importProdPopup.hide();
-        co.sweet.success("檔案上傳成功");
-        if (product_list != null) product_list.component.refresh();
-    }).fail(function () {
-        co.sweet.error("檔案格式錯誤，無法解讀。");
+        try {
+            const status = await waitForProductTask(response.taskId, "\u5546\u54c1\u532f\u5165\u4e2d");
+            Swal.close();
+            co.sweet.success(status.message || "\u5546\u54c1\u532f\u5165\u6210\u529f\u3002");
+            if (product_list != null) product_list.component.refresh();
+        } catch (error) {
+            Swal.close();
+            co.sweet.error(error && error.message ? error.message : "\u5546\u54c1\u532f\u5165\u5931\u6557\u3002");
+        }
+    }).fail(function (xhr) {
+        var message = xhr.responseJSON && xhr.responseJSON.message
+            ? xhr.responseJSON.message
+            : "\u6a94\u6848\u683c\u5f0f\u932f\u8aa4\uff0c\u7121\u6cd5\u5efa\u7acb\u532f\u5165\u4efb\u52d9\u3002";
+        co.sweet.error(message);
     });
-
 }
 
 function showImportProdPopup() {
@@ -28,6 +37,85 @@ function showImportProdPopup() {
     importProdPopup.option("contentTemplate", $("#importProdPopup-template"));
     importProdPopup.option("title", "商品匯入");
     importProdPopup.show();
+}
+
+async function exportProd(e) {
+    if (exportProd.isProcessing) return;
+
+    exportProd.isProcessing = true;
+    const button = e && e.component ? e.component : null;
+    if (button) button.option("disabled", true);
+
+    try {
+        const startResponse = await fetch("/api/Product/StartProductExport", {
+            method: "POST",
+            headers: _c.Data.Header,
+            credentials: "same-origin"
+        });
+        if (!startResponse.ok) {
+            const errorResult = await startResponse.json().catch(function () { return {}; });
+            throw new Error(errorResult.message || "\u7121\u6cd5\u5efa\u7acb\u5546\u54c1\u532f\u51fa\u4efb\u52d9");
+        }
+
+        const startResult = await startResponse.json();
+        await waitForProductTask(startResult.taskId, "\u5546\u54c1\u6a94\u6848\u88fd\u4f5c\u4e2d");
+        window.location.href = "/api/Product/DownloadProductTask?taskId=" + encodeURIComponent(startResult.taskId);
+        Swal.close();
+    } catch (error) {
+        Swal.close();
+        co.sweet.error(error && error.message
+            ? error.message
+            : "\u5546\u54c1\u532f\u51fa\u5931\u6557\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66\u3002");
+    } finally {
+        exportProd.isProcessing = false;
+        if (button) button.option("disabled", false);
+    }
+}
+
+async function waitForProductTask(taskId, title) {
+    Swal.fire({
+        // 使用 Unicode escape，避免既有 Gulp 壓縮流程將中文字串轉成亂碼。
+        title: title,
+        html: [
+            '<div id="productTaskMessage" style="margin-bottom:12px;">\u7b49\u5f85\u4f3a\u670d\u5668\u958b\u59cb\u8655\u7406\u2026</div>',
+            '<div style="height:18px;background:#e9ecef;border-radius:9px;overflow:hidden;">',
+            '<div id="productTaskProgressBar" style="height:100%;width:0%;background:#337ab7;transition:width .3s ease;"></div>',
+            '</div>',
+            '<div id="productTaskProgressText" style="margin-top:6px;font-weight:600;">0%</div>',
+            '<div style="margin-top:10px;color:#777;font-size:13px;">\u95dc\u9589\u6b64\u8996\u7a97\u4e0d\u6703\u53d6\u6d88\u80cc\u666f\u4efb\u52d9\u3002</div>'
+        ].join(""),
+        allowOutsideClick: false,
+        allowEscapeKey: true,
+        showCloseButton: true,
+        showConfirmButton: false
+    });
+
+    while (true) {
+        await new Promise(function (resolve) { setTimeout(resolve, 1000); });
+        const statusResponse = await fetch(
+            "/api/Product/GetProductTaskStatus?taskId=" + encodeURIComponent(taskId),
+            {
+                method: "GET",
+                headers: _c.Data.Header,
+                credentials: "same-origin",
+                cache: "no-store"
+            });
+        if (!statusResponse.ok) throw new Error("\u7121\u6cd5\u53d6\u5f97\u80cc\u666f\u4efb\u52d9\u9032\u5ea6");
+
+        const status = await statusResponse.json();
+        const progress = Math.max(0, Math.min(100, Number(status.progress) || 0));
+        const progressBar = document.getElementById("productTaskProgressBar");
+        const progressText = document.getElementById("productTaskProgressText");
+        const message = document.getElementById("productTaskMessage");
+        if (progressBar) progressBar.style.width = progress + "%";
+        if (progressText) progressText.textContent = progress + "%";
+        if (message) message.textContent = status.message || "\u80cc\u666f\u4efb\u52d9\u8655\u7406\u4e2d\u2026";
+
+        if (status.status === "failed" || status.status === "expired")
+            throw new Error(status.error || status.message || "\u80cc\u666f\u4efb\u52d9\u5931\u6557");
+        if (status.status === "succeeded")
+            return status;
+    }
 }
 
 function toolbarPreparing(e) {
@@ -52,6 +140,16 @@ function toolbarPreparing(e) {
             widget: "dxButton",
             options: {
                 icon: "fa-solid fa-file-excel",
+                text: "商品匯出",
+                stylingMode: "outlined",
+                onClick: exportProd
+            }
+        },
+        {
+            location: "after",
+            widget: "dxButton",
+            options: {
+                icon: "fa-solid fa-file-arrow-up",
                 text: "商品匯入",
                 stylingMode: "outlined",
                 onClick: showImportProdPopup

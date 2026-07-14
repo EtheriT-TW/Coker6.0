@@ -38,18 +38,21 @@ namespace EtheriT.Coker.Application
         private readonly IConfiguration configuration;
         private readonly ICookieManagerAppService cookieManager;
         private readonly IMapper mapper;
+        private readonly BackgroundOperationContext backgroundOperationContext;
         public LoginUserData(
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
             ICookieManagerAppService cookieManager,
             IConfiguration configuration,
-            IMapper mapper
+            IMapper mapper,
+            BackgroundOperationContext backgroundOperationContext
         ) {
             this.db = db;
             this.httpContextAccessor = httpContextAccessor;
             this.configuration = configuration;
             this.cookieManager = cookieManager;
             this.mapper = mapper;
+            this.backgroundOperationContext = backgroundOperationContext;
         }
 
         public string? GetClientIP()
@@ -58,6 +61,9 @@ namespace EtheriT.Coker.Application
             return httpContextAccessor.HttpContext.Connection?.RemoteIpAddress?.ToString();
         }
         public async Task<long> GetUserId() {
+            if (backgroundOperationContext.UserId.HasValue)
+                return backgroundOperationContext.UserId.Value;
+
             long id;
             try {
                 if (httpContextAccessor.HttpContext == null) throw new Exception();
@@ -81,6 +87,9 @@ namespace EtheriT.Coker.Application
             return result;
         }
         public async Task<UserSimplifyDto> GetUser() {
+			if (backgroundOperationContext.UserId.HasValue)
+				return await GetUser(backgroundOperationContext.UserId.Value);
+
 			UserSimplifyDto user = new UserSimplifyDto { Id = 0 };
             try
             {
@@ -117,6 +126,9 @@ namespace EtheriT.Coker.Application
         }
         public async Task<long> GetWebsiteId()
         {
+            if (backgroundOperationContext.WebsiteId.HasValue)
+                return backgroundOperationContext.WebsiteId.Value;
+
             if (httpContextAccessor.HttpContext == null) return 0;
 
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;

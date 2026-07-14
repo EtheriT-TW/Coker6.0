@@ -18,11 +18,19 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 		public string? Html { get; set; }
 		public DateTime? StartTime { get; set; }
 		public DateTime? EndTime { get; set; }
+		public string? Visible { get; set; }
+		public string? OnShelf { get; set; }
 		public string? Spec1Name { get; set; }
 		public string? Spec1 { get; set; }
 		public string? Spec2Name { get; set; }
 		public string? Spec2 { get; set; }
 		public int Stock { get; set; } = 0;
+		public int? Min_Qty { get; set; } = 1;
+		public int? Alert_Qty { get; set; } = 0;
+		public decimal? SuggestPrice { get; set; } = 0;
+		public string? RoleName { get; set; }
+		public long RoleId { get; set; } = 1;
+		public int Bonus { get; set; } = 0;
 		public decimal Price { get; set; } = 0;
 		public string? Image1 { get; set; }
 		public string? Image2 { get; set; }

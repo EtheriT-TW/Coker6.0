@@ -182,6 +182,11 @@
 		<ProjectReference Include="..\EtheriT.Coker.EntityFrameworkCore\EtheriT.Coker.EntityFrameworkCore.csproj" />
 	</ItemGroup>
 	<ItemGroup>
+		<Content Include="..\EtheriT.Coker.Application\Resources\ProductExportTemplates\ProductData.xlsx"
+		         Link="Resources\ProductExportTemplates\ProductData.xlsx">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
 		<Content Update="appsettings.Local.json">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Content>

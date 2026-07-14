@@ -11,6 +11,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
 	{
 		public long Id { get; set; }
 		public string Name { get; set; }
+		public string? RouterName { get; set; }
 		public List<DirectoryArrangeImportDto> Child { get; set; } = new List<DirectoryArrangeImportDto>();
 		public List<TagGetSelectedDto>? Tags { get; set; }
 	}

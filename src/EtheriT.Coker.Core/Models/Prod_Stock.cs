@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Core.Entity;
+using System.ComponentModel.DataAnnotations;
 
 namespace EtheriT.Coker.Core.Models
 {
@@ -15,6 +16,9 @@ namespace EtheriT.Coker.Core.Models
         public int PackingPoint { get; set; }
         public bool IsTimePrice { get; set; }
         public string? SubItemNo { get; set; }
+
+        [StringLength(3000)]
+        public string? SpecDescription { get; set; }    // 規格描述
         public Prod? Prod { get; set; }
         public List<ShoppingCart> ShoppingCarts { get; set; }
         public List<Prod_Price> Prod_Prices { get; set; }

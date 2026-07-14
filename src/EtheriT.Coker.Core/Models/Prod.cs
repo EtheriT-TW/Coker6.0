@@ -22,6 +22,7 @@ namespace EtheriT.Coker.Core.Models
         public bool permanent { get; set; }
         public bool Visible { get; set; }
         public bool RemovedFromShelves { get; set; }
+        public bool NoStockManagement { get; set; }   // 無須設定庫存
         public ProdStatusEnum Status { get; set; }
         public ProdStatusEnum? oStatus { get; set; }
         public int? Clicks { get; set; }

@@ -110,6 +110,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<MarketingCondition> MarketingConditions { get; set; }
         public DbSet<MarketingReward> MarketingRewards { get; set; }
         public DbSet<MarketingScopeItem> MarketingScopeItems { get; set; }
+        public DbSet<BackgroundTaskRecord> BackgroundTasks { get; set; }
+        public DbSet<UserNotification> Notifications { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -147,6 +149,24 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.Property(e => e.CreateTime).HasDefaultValueSql("getdate()");
                 o.HasOne(e => e.Remote).WithMany(e => e.UserActivityTags).HasForeignKey(f => f.FK_RemoteId);
+            });
+            modelBuilder.Entity<BackgroundTaskRecord>(o =>
+            {
+                o.ToTable("BackgroundTasks");
+                o.HasIndex(x => x.ActiveKey)
+                    .IsUnique()
+                    .HasFilter("[ActiveKey] IS NOT NULL AND [IsDeleted] = 0");
+                o.HasIndex(x => x.StorageKey).IsUnique();
+                o.HasIndex(x => new { x.FK_WebsiteId, x.FK_UserId, x.Status });
+                o.HasIndex(x => x.ExpireTime);
+                o.HasQueryFilter(x => !x.IsDeleted);
+            });
+            modelBuilder.Entity<UserNotification>(o =>
+            {
+                o.ToTable("Notifications");
+                o.HasIndex(x => new { x.FK_WebsiteId, x.FK_UserId, x.IsRead });
+                o.HasIndex(x => x.FK_BackgroundTaskId);
+                o.HasQueryFilter(x => !x.IsDeleted);
             });
             modelBuilder.Entity<UserTagStatistic>(o =>
             {

@@ -402,3 +402,5 @@ src/EtheriT.Coker.Web.MVC/wwwroot/lib/bootstrap/LICENSE
 appsettings.bronson.json
 launchSettings.json
 
+# codex
+.codex-tools/

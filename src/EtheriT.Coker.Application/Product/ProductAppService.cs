@@ -36,6 +36,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using MiniExcel = MiniExcelLibs.MiniExcel;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
@@ -478,6 +479,331 @@ namespace EtheriT.Coker.Application.Product
 
             return output;
         }
+        public async Task<byte[]> ExportProductData()
+        {
+            var websiteId = await loginUserData.GetWebsiteId();
+            return await ExportProductData(websiteId, null);
+        }
+
+        public async Task<byte[]> ExportProductData(
+            long websiteId,
+            Action<int, string>? reportProgress)
+        {
+            reportProgress?.Invoke(5, "正在讀取商品資料");
+            var products = await db.Prods
+                .AsNoTracking()
+                .Where(e => e.FK_WebsiteId == websiteId && !e.IsDeleted)
+                .OrderBy(e => e.Ser_No)
+                .ThenBy(e => e.Id)
+                .ToListAsync();
+
+            reportProgress?.Invoke(12, "正在讀取庫存與規格");
+            var productIds = products.Select(e => e.Id).ToList();
+            var stocks = await db.Prod_Stocks
+                .AsNoTracking()
+                .Where(e => productIds.Contains(e.FK_Pid) && !e.IsDeleted)
+                .OrderBy(e => e.Ser_No)
+                .ThenBy(e => e.Id)
+                .ToListAsync();
+
+            var specIds = stocks
+                .SelectMany(e => new long?[] { e.FK_S1id, e.FK_S2id })
+                .Where(e => e.HasValue && e.Value != 0)
+                .Select(e => e!.Value)
+                .Distinct()
+                .ToList();
+            var specs = await db.Prod_Specs
+                .AsNoTracking()
+                .Where(e => specIds.Contains(e.Id) && !e.IsDeleted)
+                .ToDictionaryAsync(e => e.Id);
+            var specTypeIds = specs.Values.Select(e => e.FK_Tid).Distinct().ToList();
+            var specTypes = await db.Prod_Spec_Types
+                .AsNoTracking()
+                .Where(e => specTypeIds.Contains(e.Id) && !e.IsDeleted)
+                .ToDictionaryAsync(e => e.Id, e => e.Type);
+
+            var stockIds = stocks.Select(e => e.Id).ToList();
+            var allPrices = await db.Prod_Prices
+                .AsNoTracking()
+                .Where(e => stockIds.Contains(e.FK_PSId) && !e.IsDeleted)
+                .OrderBy(e => e.Id)
+                .ToListAsync();
+            var pricesByStock = allPrices
+                .GroupBy(e => e.FK_PSId)
+                .ToDictionary(e => e.Key, e => e.ToList());
+            var roleNameMap = await db.Roles
+                .AsNoTracking()
+                .Where(e => e.FK_WebsiteId == websiteId && e.Type == RoleTypeEnum.前台 && !e.IsDeleted)
+                .ToDictionaryAsync(e => e.Id, e => e.Name ?? "");
+
+            reportProgress?.Invoke(22, "正在讀取商品標籤");
+            var tagRows = await (
+                from associate in db.Tag_Associates.AsNoTracking()
+                join tag in db.Tags.AsNoTracking() on associate.FK_TId equals tag.Id
+                where associate.Type == TagAssociateTypeEnum.商品
+                    && !associate.IsDeleted
+                    && !tag.IsDeleted
+                    && tag.FK_WebsiteId == websiteId
+                    && productIds.Contains(associate.FK_AId)
+                orderby tag.Title
+                select new { ProductId = associate.FK_AId, tag.Title }
+            ).ToListAsync();
+            var productTagMap = tagRows
+                .GroupBy(e => e.ProductId)
+                .ToDictionary(e => e.Key, e => e.Select(x => x.Title).Distinct().Take(6).ToArray());
+
+            var productRows = new List<ProductExportRow>();
+            for (var productIndex = 0; productIndex < products.Count; productIndex++)
+            {
+                var product = products[productIndex];
+                var productProgress = products.Count == 0
+                    ? 78
+                    : 28 + (int)Math.Floor((productIndex + 1) * 50d / products.Count);
+                reportProgress?.Invoke(
+                    productProgress,
+                    $"正在整理商品資料（{productIndex + 1}/{products.Count}）");
+
+                var multimedia = (await fileUploadAppService.getProdMultimedia(product.Id, 1))
+                    .OrderBy(e => e.SerNo)
+                    .ThenBy(e => e.Id)
+                    .Take(7)
+                    .ToList();
+                var files = (await fileUploadAppService.getProdFiles(product.Id))
+                    .OrderBy(e => e.SerNo)
+                    .ThenBy(e => e.Id)
+                    .Take(7)
+                    .ToList();
+                productTagMap.TryGetValue(product.Id, out var tags);
+
+                var productStocks = stocks.Where(e => e.FK_Pid == product.Id).ToList();
+                if (productStocks.Count == 0)
+                    productStocks.Add(null!);
+
+                foreach (var stock in productStocks)
+                {
+                    Prod_Spec? spec1 = null;
+                    Prod_Spec? spec2 = null;
+                    if (stock?.FK_S1id is long spec1Id) specs.TryGetValue(spec1Id, out spec1);
+                    if (stock?.FK_S2id is long spec2Id) specs.TryGetValue(spec2Id, out spec2);
+
+                    var exportPrices = new List<Prod_Price?>();
+                    if (stock != null && !stock.IsTimePrice && pricesByStock.TryGetValue(stock.Id, out var stockPrices))
+                        exportPrices.AddRange(stockPrices);
+                    if (exportPrices.Count == 0)
+                        exportPrices.Add(null);
+
+                    foreach (var rolePrice in exportPrices)
+                    {
+                        productRows.Add(new ProductExportRow
+                        {
+                        ItemNo = product.ItemNo ?? "",
+                        SubItemNo = stock?.SubItemNo ?? "",
+                        ProdName = product.Title,
+                        Status = product.Status.ToString(),
+                        Introduction = product.Introduction ?? "",
+                        Description = product.Description ?? "",
+                        Html = product.Html ?? product.SaveHtml ?? "",
+                        Image1 = GetLink(multimedia, 0),
+                        Image2 = GetLink(multimedia, 1),
+                        Image3 = GetLink(multimedia, 2),
+                        Image4 = GetLink(multimedia, 3),
+                        Image5 = GetLink(multimedia, 4),
+                        Image6 = GetLink(multimedia, 5),
+                        Image7 = GetLink(multimedia, 6),
+                        FileName1 = GetName(files, 0),
+                        File1 = GetLink(files, 0),
+                        FileName2 = GetName(files, 1),
+                        File2 = GetLink(files, 1),
+                        FileName3 = GetName(files, 2),
+                        File3 = GetLink(files, 2),
+                        FileName4 = GetName(files, 3),
+                        File4 = GetLink(files, 3),
+                        FileName5 = GetName(files, 4),
+                        File5 = GetLink(files, 4),
+                        FileName6 = GetName(files, 5),
+                        File6 = GetLink(files, 5),
+                        FileName7 = GetName(files, 6),
+                        File7 = GetLink(files, 6),
+                        StartTime = product.permanent ? "" : product.StartTime?.ToString("yyyy-MM-dd") ?? "",
+                        EndTime = product.permanent ? "" : product.EndTime?.ToString("yyyy-MM-dd") ?? "",
+                        Visible = product.Visible ? "是" : "否",
+                        OnShelf = product.RemovedFromShelves ? "否" : "是",
+                        Spec1Name = spec1 != null && specTypes.TryGetValue(spec1.FK_Tid, out var spec1Name) ? spec1Name : "",
+                        Spec1 = spec1?.Title ?? "",
+                        Spec2Name = spec2 != null && specTypes.TryGetValue(spec2.FK_Tid, out var spec2Name) ? spec2Name : "",
+                        Spec2 = spec2?.Title ?? "",
+                        Stock = stock?.Stock ?? 0,
+                        Min_Qty = stock?.Min_Qty ?? 1,
+                        Alert_Qty = stock?.Alert_Qty ?? 0,
+                        SuggestPrice = stock?.Price ?? 0,
+                        RoleName = stock?.IsTimePrice == true
+                            ? ""
+                            : rolePrice == null || rolePrice.FK_RId is 0 or 1
+                                ? "非會員"
+                                : roleNameMap.GetValueOrDefault(rolePrice.FK_RId, $"角色ID:{rolePrice.FK_RId}"),
+                        Price = stock == null
+                            ? "0"
+                            : stock.IsTimePrice
+                                ? "時價"
+                                : (rolePrice?.Price ?? stock.Price).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        Bonus = rolePrice?.Bonus ?? 0,
+                        Tag1 = GetValue(tags, 0),
+                        Tag2 = GetValue(tags, 1),
+                        Tag3 = GetValue(tags, 2),
+                        Tag4 = GetValue(tags, 3),
+                        Tag5 = GetValue(tags, 4),
+                        Tag6 = GetValue(tags, 5),
+                        });
+                    }
+                }
+            }
+
+            reportProgress?.Invoke(82, "正在整理技術證照");
+            var techRows = await BuildTechCertExportRows(websiteId, products);
+            reportProgress?.Invoke(88, "正在整理目錄分類");
+            var directoryRows = await BuildDirectoryExportRows(websiteId);
+            var templatePath = Path.Combine(
+                AppContext.BaseDirectory,
+                "Resources",
+                "ProductExportTemplates",
+                "ProductData.xlsx"
+            );
+            if (!System.IO.File.Exists(templatePath))
+                throw new FileNotFoundException("找不到商品匯出範本。", templatePath);
+
+            reportProgress?.Invoke(94, "正在產生 Excel 檔案");
+            using var stream = new MemoryStream();
+            MiniExcel.SaveAsByTemplate(stream, templatePath, new
+            {
+                Products = productRows,
+                Directories = directoryRows,
+                TechCerts = techRows,
+            });
+            reportProgress?.Invoke(98, "Excel 檔案製作完成");
+            return stream.ToArray();
+        }
+
+        private async Task<List<TechCertExportRow>> BuildTechCertExportRows(long websiteId, List<Prod> products)
+        {
+            var productMap = products.ToDictionary(e => e.Id);
+            var productIds = productMap.Keys.ToList();
+            var associations = await (
+                from associate in db.Prod_TechCerts.AsNoTracking()
+                join tech in db.TechnicalCertificates.AsNoTracking() on associate.FK_TCId equals tech.Id
+                where productIds.Contains(associate.FK_PId)
+                    && !associate.IsDeleted
+                    && !tech.IsDeleted
+                    && tech.FK_WebsiteId == websiteId
+                orderby tech.Ser_no, tech.Id
+                select new { associate.FK_PId, Tech = tech }
+            ).ToListAsync();
+
+            var imageMap = new Dictionary<long, string>();
+            foreach (var techId in associations.Select(e => e.Tech.Id).Distinct())
+            {
+                var images = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                {
+                    Sid = techId,
+                    Type = (int)FileBindTypeEnum.技術證照,
+                    Size = 1,
+                });
+                imageMap[techId] = images.OrderBy(e => e.Id).FirstOrDefault()?.Link ?? "";
+            }
+
+            return associations.Select(e => new TechCertExportRow
+            {
+                ItemNo = productMap[e.FK_PId].ItemNo ?? "",
+                ProdName = productMap[e.FK_PId].Title,
+                Title = e.Tech.Title ?? "",
+                Image1 = imageMap.GetValueOrDefault(e.Tech.Id, e.Tech.Img ?? ""),
+                Description = e.Tech.Description ?? "",
+            }).ToList();
+        }
+
+        private async Task<List<DirectoryExportRow>> BuildDirectoryExportRows(long websiteId)
+        {
+            var directories = await db.Directory
+                .AsNoTracking()
+                .Where(e => e.FK_WebsiteId == websiteId && !e.IsDeleted && e.Type == (int)DirectoryTypeEnum.商品)
+                .OrderBy(e => e.Title)
+                .ToListAsync();
+            var menus = await db.WebMenus
+                .AsNoTracking()
+                .Where(e => e.FK_WebsiteId == websiteId && !e.IsDeleted)
+                .ToListAsync();
+            var menuById = menus.ToDictionary(e => e.Id);
+            var directoryIds = directories.Select(e => e.Id).ToList();
+            var tagRows = await (
+                from associate in db.Tag_Associates.AsNoTracking()
+                join tag in db.Tags.AsNoTracking() on associate.FK_TId equals tag.Id
+                where associate.Type == TagAssociateTypeEnum.目錄
+                    && !associate.IsDeleted
+                    && !tag.IsDeleted
+                    && tag.FK_WebsiteId == websiteId
+                    && directoryIds.Contains(associate.FK_AId)
+                orderby tag.Title
+                select new { DirectoryId = associate.FK_AId, tag.Title }
+            ).ToListAsync();
+            var tagMap = tagRows
+                .GroupBy(e => e.DirectoryId)
+                .ToDictionary(e => e.Key, e => e.Select(x => x.Title).Distinct().Take(3).ToArray());
+
+            var output = new List<DirectoryExportRow>();
+            foreach (var directory in directories)
+            {
+                var menu = menus.FirstOrDefault(e => e.Title == directory.Title)
+                    ?? menus.FirstOrDefault(e => MenuContainsDirectory(e, directory.Id));
+
+                // 沒有實際選單承載的孤立目錄不匯出，避免再次匯入時誤建網站選單。
+                if (menu == null)
+                    continue;
+
+                var levels = new List<WebMenu>();
+                var visited = new HashSet<long>();
+                while (menu != null && visited.Add(menu.Id) && levels.Count < 3)
+                {
+                    levels.Add(menu);
+                    menu = menu.FK_TopNodeId.HasValue && menuById.TryGetValue(menu.FK_TopNodeId.Value, out var parent)
+                        ? parent
+                        : null;
+                }
+                levels.Reverse();
+                tagMap.TryGetValue(directory.Id, out var tags);
+                output.Add(new DirectoryExportRow
+                {
+                    Level1 = levels[0].Title ?? "",
+                    Level1RouterName = levels[0].RouterName ?? "",
+                    Level2 = levels.Count > 1 ? levels[1].Title ?? "" : "",
+                    Level2RouterName = levels.Count > 1 ? levels[1].RouterName ?? "" : "",
+                    Level3 = levels.Count > 2 ? levels[2].Title ?? "" : "",
+                    Level3RouterName = levels.Count > 2 ? levels[2].RouterName ?? "" : "",
+                    Tag1 = GetValue(tags, 0),
+                    Tag2 = GetValue(tags, 1),
+                    Tag3 = GetValue(tags, 2),
+                });
+            }
+            return output;
+        }
+
+        private static bool MenuContainsDirectory(WebMenu menu, long directoryId)
+        {
+            var rawMarker = $"data-dirid=\"{directoryId}\"";
+            var encodedMarker = $"data-dirid=&quot;{directoryId}&quot;";
+            return (menu.Html?.Contains(rawMarker, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (menu.SaveHtml?.Contains(rawMarker, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (menu.Html?.Contains(encodedMarker, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (menu.SaveHtml?.Contains(encodedMarker, StringComparison.OrdinalIgnoreCase) ?? false);
+        }
+
+        private static string GetLink(IReadOnlyList<FileGetProdDisplayDto> files, int index)
+            => index < files.Count ? files[index].Link.FirstOrDefault() ?? "" : "";
+
+        private static string GetName(IReadOnlyList<FileGetProdDisplayDto> files, int index)
+            => index < files.Count ? files[index].Name ?? "" : "";
+
+        private static string GetValue(IReadOnlyList<string>? values, int index)
+            => values != null && index < values.Count ? values[index] ?? "" : "";
+
         public async Task<ResponseMessageDto> HasAnyItemNo()
         {
             ResponseMessageDto response = new ResponseMessageDto();
@@ -1866,12 +2192,67 @@ namespace EtheriT.Coker.Application.Product
         /* Product Import */
         public async Task<ImportOutputDto> ProdReplace(IList<IFormFile> files)
         {
-            ImportOutputDto response = new ImportOutputDto { ErrorList = new List<ImportMassageItem>() };
             ProdImportAllDto fileData = await importAppService.ProdReplace(files);
+            return await ImportProductData(fileData, null);
+        }
+
+        public async Task<ImportOutputDto> ProdReplace(
+            string filePath,
+            Action<int, string>? reportProgress)
+        {
+            reportProgress?.Invoke(5, "正在讀取商品匯入檔案");
+            var strategy = db.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await db.Database.BeginTransactionAsync();
+                var fileData = await importAppService.ProdReplace(filePath);
+                var response = await ImportProductData(fileData, reportProgress);
+                if (response.Success)
+                    await transaction.CommitAsync();
+                else
+                    await transaction.RollbackAsync();
+                return response;
+            });
+        }
+
+        private async Task<ImportOutputDto> ImportProductData(
+            ProdImportAllDto fileData,
+            Action<int, string>? reportProgress)
+        {
+            ImportOutputDto response = new ImportOutputDto { ErrorList = new List<ImportMassageItem>() };
             long WebsiteID = await loginUserData.GetWebsiteId();
+            reportProgress?.Invoke(15, "正在驗證商品與會員價格資料");
             if (fileData.Products.Any())
             {
                 List<ProductImportDto> allData = fileData.Products.FindAll(e => !string.IsNullOrEmpty(e.ProdName));
+                var frontRoleMap = await db.Roles
+                    .AsNoTracking()
+                    .Where(e => e.FK_WebsiteId == WebsiteID && e.Type == RoleTypeEnum.前台 && !e.IsDeleted)
+                    .GroupBy(e => Norm(e.Name))
+                    .ToDictionaryAsync(e => e.Key, e => e.Last().Id);
+
+                foreach (var row in allData)
+                {
+                    var roleName = (row.RoleName ?? "").Trim();
+                    if (string.IsNullOrEmpty(roleName) || roleName == "非會員")
+                    {
+                        row.RoleId = 1;
+                        row.Bonus = 0;
+                    }
+                    else if (frontRoleMap.TryGetValue(Norm(roleName), out var roleId))
+                    {
+                        row.RoleId = roleId;
+                    }
+                    else
+                    {
+                        row.RoleId = 0;
+                        response.ErrorList.Add(new ImportMassageItem
+                        {
+                            Name = row.ProdName,
+                            Description = $"找不到會員身分「{roleName}」，該列價格已略過。"
+                        });
+                    }
+                }
                 List<ProductImportDto> prods = new List<ProductImportDto>();
                 List<string> allTitles = allData.Select(p => p.ProdName).ToList();
                 List<string> allItemNos = allData.Select(p => p.ItemNo).ToList();
@@ -1897,7 +2278,8 @@ namespace EtheriT.Coker.Application.Product
                 }
                 try
                 {
-                    await importProds(prods, response.ErrorList);
+                    reportProgress?.Invoke(30, "正在匯入商品、規格與價格");
+                    await importProds(prods, response.ErrorList, reportProgress);
                     response.Success = true;
                 }
                 catch (Exception ex)
@@ -1905,15 +2287,28 @@ namespace EtheriT.Coker.Application.Product
                     response.ErrorList.Add(new ImportMassageItem { Name = "error", Description = ex.Message });
                 }
             }
-            if (fileData.Directories.Any()) await imporDirectories(fileData.Directories);
+            if (fileData.Directories.Any())
+            {
+                reportProgress?.Invoke(88, "正在匯入商品目錄與標籤");
+                await imporDirectories(fileData.Directories);
+                response.Success = true;
+            }
 
+            reportProgress?.Invoke(98, "商品匯入處理完成");
             return response;
         }
-        private async Task importProds(List<ProductImportDto> prods, List<ImportMassageItem> erroes)
+        private async Task importProds(
+            List<ProductImportDto> prods,
+            List<ImportMassageItem> erroes,
+            Action<int, string>? reportProgress)
         {
+            reportProgress?.Invoke(35, "正在寫入商品、規格與價格");
             await InsertOrUpdateProd(prods, erroes);
+            reportProgress?.Invoke(55, "正在整理商品圖片與附件");
             await ImportProdMediaLinks(prods, erroes);
+            reportProgress?.Invoke(68, "正在整理商品標籤");
             await ImportProdTags(prods, erroes);
+            reportProgress?.Invoke(78, "正在整理商品技術證照");
             await importTechs(prods, erroes);
         }
         private async Task imporDirectories(List<DirectoryImportDto> directories)
@@ -1931,12 +2326,50 @@ namespace EtheriT.Coker.Application.Product
                 tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag2)).Select(e => (e.Tag2 ?? "").Trim()).ToList());
                 tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag3)).Select(e => (e.Tag3 ?? "").Trim()).ToList());
 
-                await importMenus(WebsiteID, manuNames);
+                var menuRequests = new List<(string Title, string RouterName)>();
+                void AddMenuRequest(string? title, string? routerName)
+                {
+                    var normalizedTitle = (title ?? "").Trim();
+                    var normalizedRouter = (routerName ?? "").Trim();
+                    if (string.IsNullOrEmpty(normalizedTitle)) return;
+                    if (!menuRequests.Any(e =>
+                        (!string.IsNullOrEmpty(normalizedRouter) && Norm(e.RouterName) == Norm(normalizedRouter))
+                        || (string.IsNullOrEmpty(normalizedRouter) && Norm(e.Title) == Norm(normalizedTitle))))
+                    {
+                        menuRequests.Add((normalizedTitle, normalizedRouter));
+                    }
+                }
+
+                foreach (var directory in directories)
+                {
+                    AddMenuRequest(directory.Level1, directory.Level1RouterName);
+                    AddMenuRequest(directory.Level2, directory.Level2RouterName);
+                    AddMenuRequest(directory.Level3, directory.Level3RouterName);
+                }
+
+                var existingMenus = await db.WebMenus
+                    .Where(e => !e.IsDeleted && e.FK_WebsiteId == WebsiteID)
+                    .ToListAsync();
+                var missingMenuTitles = menuRequests
+                    .Where(e => FindMenuByRouterOrTitle(existingMenus, e.Title, e.RouterName) == null)
+                    .Select(e => e.Title)
+                    .ToList();
+
+                await importMenus(WebsiteID, missingMenuTitles);
                 await importTags(WebsiteID, tagNames);
 
-                var menus = await db.WebMenus.Where(e => !e.IsDeleted)
-                                .Where(e => !string.IsNullOrEmpty(e.Title) && manuNames.Contains(e.Title))
-                                .Where(e => e.FK_WebsiteId == WebsiteID).ToListAsync();
+                var menus = await db.WebMenus
+                    .Where(e => !e.IsDeleted && e.FK_WebsiteId == WebsiteID)
+                    .ToListAsync();
+
+                foreach (var request in menuRequests.Where(e => !string.IsNullOrEmpty(e.RouterName)))
+                {
+                    var menu = FindMenuByRouterOrTitle(menus, request.Title, request.RouterName);
+                    var routerIsUsed = menus.Any(e => e.Id != menu?.Id && Norm(e.RouterName) == Norm(request.RouterName));
+                    if (menu != null && !routerIsUsed)
+                        menu.RouterName = request.RouterName;
+                }
+                await db.SaveChangesAsync();
 
                 var Tags = await db.Tags.Where(e => !e.IsDeleted)
                                .Where(e => !string.IsNullOrEmpty(e.Title) && tagNames.Contains(e.Title))
@@ -1946,29 +2379,45 @@ namespace EtheriT.Coker.Application.Product
                 for (int i = 0; i < directories.Count; i++)
                 {
                     var directory = directories[i];
-                    DirectoryArrangeImportDto? item = menuMap.Find(e => e.Name == directory.Level1);
+                    DirectoryArrangeImportDto? item = menuMap.Find(e =>
+                        !string.IsNullOrEmpty(directory.Level1RouterName)
+                            ? Norm(e.RouterName) == Norm(directory.Level1RouterName)
+                            : Norm(e.Name) == Norm(directory.Level1));
                     if (string.IsNullOrEmpty(directory.Level1)) break;
 
-                    var menu = menus.Where(e => e.Title == directory.Level1).FirstOrDefault();
+                    var menu = FindMenuByRouterOrTitle(menus, directory.Level1, directory.Level1RouterName);
                     if (menu == null) break;
 
                     if (item == null)
                     {
-                        item = new DirectoryArrangeImportDto { Id = menu.Id, Name = directory.Level1 };
+                        item = new DirectoryArrangeImportDto
+                        {
+                            Id = menu.Id,
+                            Name = menu.Title ?? directory.Level1,
+                            RouterName = menu.RouterName
+                        };
                         menuMap.Add(item);
                     }
                     else item.Id = menu.Id;
 
                     if (string.IsNullOrEmpty(directory.Level2)) continue;
-                    var menu2 = menus.Where(e => e.Title == directory.Level2).FirstOrDefault();
+                    var menu2 = FindMenuByRouterOrTitle(menus, directory.Level2, directory.Level2RouterName);
                     if (menu2 != null)
                     {
                         menu2.FK_TopNodeId = menu.Id;
                         menu2.FK_RootNodeId = menu.Id;
-                        DirectoryArrangeImportDto? item2 = item.Child.Find(e => e.Name == directory.Level2);
+                        DirectoryArrangeImportDto? item2 = item.Child.Find(e =>
+                            !string.IsNullOrEmpty(directory.Level2RouterName)
+                                ? Norm(e.RouterName) == Norm(directory.Level2RouterName)
+                                : Norm(e.Name) == Norm(directory.Level2));
                         if (item2 == null)
                         {
-                            item2 = new DirectoryArrangeImportDto { Id = menu2.Id, Name = directory.Level2 };
+                            item2 = new DirectoryArrangeImportDto
+                            {
+                                Id = menu2.Id,
+                                Name = menu2.Title ?? directory.Level2,
+                                RouterName = menu2.RouterName
+                            };
                             item.Child.Add(item2);
 
                             if (string.IsNullOrEmpty(directory.Level3))
@@ -1977,15 +2426,23 @@ namespace EtheriT.Coker.Application.Product
                             }
                             else
                             {
-                                var menu3 = menus.Where(e => e.Title == directory.Level3).FirstOrDefault();
+                                var menu3 = FindMenuByRouterOrTitle(menus, directory.Level3, directory.Level3RouterName);
                                 if (menu3 != null)
                                 {
                                     menu3.FK_TopNodeId = menu2.Id;
                                     menu3.FK_RootNodeId = menu.Id;
-                                    DirectoryArrangeImportDto? item3 = item.Child.Find(e => e.Name == directory.Level3);
+                                    DirectoryArrangeImportDto? item3 = item2.Child.Find(e =>
+                                        !string.IsNullOrEmpty(directory.Level3RouterName)
+                                            ? Norm(e.RouterName) == Norm(directory.Level3RouterName)
+                                            : Norm(e.Name) == Norm(directory.Level3));
                                     if (item3 == null)
                                     {
-                                        item3 = new DirectoryArrangeImportDto { Id = menu3.Id, Name = directory.Level3 };
+                                        item3 = new DirectoryArrangeImportDto
+                                        {
+                                            Id = menu3.Id,
+                                            Name = menu3.Title ?? directory.Level3,
+                                            RouterName = menu3.RouterName
+                                        };
                                     }
                                     item2.Child.Add(item3);
                                     await addDirectoryToTags(directory, item3, Tags);
@@ -2000,15 +2457,23 @@ namespace EtheriT.Coker.Application.Product
                             }
                             else
                             {
-                                var menu3 = menus.Where(e => e.Title == directory.Level3).FirstOrDefault();
+                                var menu3 = FindMenuByRouterOrTitle(menus, directory.Level3, directory.Level3RouterName);
                                 if (menu3 != null)
                                 {
                                     menu3.FK_TopNodeId = menu2.Id;
                                     menu3.FK_RootNodeId = menu.Id;
-                                    DirectoryArrangeImportDto? item3 = item.Child.Find(e => e.Name == directory.Level3);
+                                    DirectoryArrangeImportDto? item3 = item2.Child.Find(e =>
+                                        !string.IsNullOrEmpty(directory.Level3RouterName)
+                                            ? Norm(e.RouterName) == Norm(directory.Level3RouterName)
+                                            : Norm(e.Name) == Norm(directory.Level3));
                                     if (item3 == null)
                                     {
-                                        item3 = new DirectoryArrangeImportDto { Id = menu3.Id, Name = directory.Level3 };
+                                        item3 = new DirectoryArrangeImportDto
+                                        {
+                                            Id = menu3.Id,
+                                            Name = menu3.Title ?? directory.Level3,
+                                            RouterName = menu3.RouterName
+                                        };
                                     }
                                     item2.Child.Add(item3);
                                     await addDirectoryToTags(directory, item3, Tags);
@@ -2261,6 +2726,25 @@ namespace EtheriT.Coker.Application.Product
             });
             await webMenuApplication.insertMenus(addMmenus);
         }
+
+        private static WebMenu? FindMenuByRouterOrTitle(
+            IReadOnlyList<WebMenu> menus,
+            string? title,
+            string? routerName)
+        {
+            var normalizedRouter = Norm(routerName);
+            if (!string.IsNullOrEmpty(normalizedRouter))
+            {
+                var byRouter = menus.FirstOrDefault(e => Norm(e.RouterName) == normalizedRouter);
+                if (byRouter != null) return byRouter;
+            }
+
+            var normalizedTitle = Norm(title);
+            return string.IsNullOrEmpty(normalizedTitle)
+                ? null
+                : menus.FirstOrDefault(e => Norm(e.Title) == normalizedTitle);
+        }
+
         private async Task importTags(long WebsiteID, List<string> tagNames)
         {
             long userId = await loginUserData.GetUserId();
@@ -2465,28 +2949,7 @@ namespace EtheriT.Coker.Application.Product
         }
         private async Task ImportProdDownloadFileLinks(List<ProductImportDto> prods, List<ImportMassageItem> errors)
         {
-            List<string?> FileStr = prods.Where(e => !string.IsNullOrEmpty(e.File1)).Select(e => e.File1).ToList();
-            List<string?> FileStr2 = prods.Where(e => !string.IsNullOrEmpty(e.File2)).Select(e => e.File2).ToList();
-            List<string?> FileStr3 = prods.Where(e => !string.IsNullOrEmpty(e.File3)).Select(e => e.File3).ToList();
-            List<string?> FileStr4 = prods.Where(e => !string.IsNullOrEmpty(e.File4)).Select(e => e.File4).ToList();
-            List<string?> FileStr5 = prods.Where(e => !string.IsNullOrEmpty(e.File5)).Select(e => e.File5).ToList();
-            List<string?> FileNameStr = prods.Where(e => !string.IsNullOrEmpty(e.FileName1)).Select(e => e.FileName1).ToList();
-            List<string?> FileNameStr2 = prods.Where(e => !string.IsNullOrEmpty(e.FileName2)).Select(e => e.FileName2).ToList();
-            List<string?> FileNameStr3 = prods.Where(e => !string.IsNullOrEmpty(e.FileName3)).Select(e => e.FileName3).ToList();
-            List<string?> FileNameStr4 = prods.Where(e => !string.IsNullOrEmpty(e.FileName4)).Select(e => e.FileName4).ToList();
-            List<string?> FileNameStr5 = prods.Where(e => !string.IsNullOrEmpty(e.FileName5)).Select(e => e.FileName5).ToList();
             List<string?> ProdStr = prods.Where(e => !string.IsNullOrEmpty(e.ProdName)).Select(e => e.ProdName).ToList();
-            FileStr.AddRange(FileStr2);
-            FileStr.AddRange(FileStr3);
-            FileStr.AddRange(FileStr4);
-            FileStr.AddRange(FileStr5);
-            FileStr = FileStr.Where(e => !string.IsNullOrEmpty(e)).GroupBy(e => e).Select(e => e.Key).ToList();
-
-            FileNameStr.AddRange(FileNameStr2);
-            FileNameStr.AddRange(FileNameStr3);
-            FileNameStr.AddRange(FileNameStr4);
-            FileNameStr.AddRange(FileNameStr5);
-            FileNameStr = FileNameStr.Where(e => !string.IsNullOrEmpty(e)).GroupBy(e => e).Select(e => e.Key).ToList();
             List<FileImageImportDto> importDtos = new List<FileImageImportDto>();
             var fileProds = db.Prods.Where(e => !e.IsDeleted).Where(e => ProdStr.Contains(e.Title)).ToList();
             foreach (var prod in prods)
@@ -2494,28 +2957,18 @@ namespace EtheriT.Coker.Application.Product
                 var myProd = fileProds.Where(e => e.Title == prod.ProdName && e.ItemNo == prod.ItemNo).FirstOrDefault();
                 if (myProd != null)
                 {
-                    List<string?> fileLink =
-                        FileStr.FindAll(e => e == prod.File1 || e == prod.File2 || e == prod.File3 || e == prod.File4 || e == prod.File5);
-                    List<string?> fileName =
-                        FileNameStr.FindAll(e => e == prod.FileName1 || e == prod.FileName2 || e == prod.FileName3 || e == prod.FileName4 || e == prod.FileName5);
-                    if (fileLink.Count() != fileName.Count())
+                    string?[] fileLinks = { prod.File1, prod.File2, prod.File3, prod.File4, prod.File5, prod.File6, prod.File7 };
+                    string?[] fileNames = { prod.FileName1, prod.FileName2, prod.FileName3, prod.FileName4, prod.FileName5, prod.FileName6, prod.FileName7 };
+                    for (int i = 0; i < fileLinks.Length; i++)
                     {
-                        int ll = fileLink.Count();
-                        int nl = fileName.Count();
-                        int all = ll + nl;
-                    }
-                    for (int i = 0; i < fileLink.Count; i++)
-                    {
-                        if (!string.IsNullOrEmpty(fileLink[i]))
+                        if (!string.IsNullOrEmpty(fileLinks[i]))
                         {
-                            string l = fileLink[i], n = "";
-                            if (i < fileName.Count()) n = fileName[i];
                             importDtos.Add(new FileImageImportDto
                             {
                                 SId = myProd.Id,
                                 Type = FileBindTypeEnum.產品檔案,
-                                Name = fileName[i] ?? "",
-                                mediaLink = fileLink[i] ?? "",
+                                Name = fileNames[i] ?? "",
+                                mediaLink = fileLinks[i] ?? "",
                                 SerNo = 500
                             });
                         }
@@ -2549,6 +3002,7 @@ namespace EtheriT.Coker.Application.Product
                     {
                         prod = mapper.Map<Prod>(dto);
                         prod.CreatorUserId = userId;
+                        // Excel 未填寫時，新商品預設為上架、顯示。
                         prod.RemovedFromShelves = false;
                         prod.Visible = true;
                         db.Prods.Add(prod);
@@ -2562,6 +3016,8 @@ namespace EtheriT.Coker.Application.Product
                     }
 
                     // Insert/Update 共用的邏輯
+                    ApplyProductDisplaySettings(dto, prod, errors);
+
                     if (!string.IsNullOrWhiteSpace(prod.Html))
                     {
                         prod.Html = NormalizeHtml(prod.Html);
@@ -2582,6 +3038,69 @@ namespace EtheriT.Coker.Application.Product
 
             return results;
         }
+
+        private static void ApplyProductDisplaySettings(
+            ProductImportDto dto,
+            Prod prod,
+            List<ImportMassageItem> errors)
+        {
+            // 上下架日期任一未填，視為永久顯示；兩者皆填才使用排程。
+            prod.permanent = !dto.StartTime.HasValue || !dto.EndTime.HasValue;
+            if (prod.permanent)
+            {
+                prod.StartTime = null;
+                prod.EndTime = null;
+            }
+
+            ApplyImportFlag(
+                dto.Visible,
+                value => prod.Visible = value,
+                dto.ProdName,
+                "顯示",
+                errors);
+
+            ApplyImportFlag(
+                dto.OnShelf,
+                value => prod.RemovedFromShelves = !value,
+                dto.ProdName,
+                "上架",
+                errors);
+        }
+
+        private static void ApplyImportFlag(
+            string? rawValue,
+            Action<bool> apply,
+            string productName,
+            string fieldName,
+            List<ImportMassageItem> errors)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+                return;
+
+            var value = ParseImportFlag(rawValue);
+            if (value.HasValue)
+            {
+                apply(value.Value);
+                return;
+            }
+
+            errors.Add(new ImportMassageItem
+            {
+                Name = productName,
+                Description = $"{fieldName}欄位請輸入「是」或「否」，目前值為：{rawValue}"
+            });
+        }
+
+        private static bool? ParseImportFlag(string? value)
+        {
+            return Norm(value) switch
+            {
+                "是" or "TRUE" or "1" or "YES" or "Y" or "顯示" or "上架" => true,
+                "否" or "FALSE" or "0" or "NO" or "N" or "隱藏" or "下架" => false,
+                _ => null
+            };
+        }
+
         private string NormalizeHtml(string? rawHtml)
         {
             if (string.IsNullOrWhiteSpace(rawHtml))
@@ -2835,6 +3354,8 @@ namespace EtheriT.Coker.Application.Product
                                 FK_S1id = s1,
                                 FK_S2id = s2,
                                 Stock = s.Stock,
+                                Min_Qty = s.Min_Qty,
+                                Alert_Qty = s.Alert_Qty,
                                 SubItemNo = s.SubItemNo,
                                 // ！關鍵：用導覽屬性關聯（新商品 Id==0 亦可）
                                 Prod = prod
@@ -2854,13 +3375,15 @@ namespace EtheriT.Coker.Application.Product
                         {
                             // 更新既有規格欄位
                             stockEntity.Stock = s.Stock;
+                            stockEntity.Min_Qty = s.Min_Qty;
+                            stockEntity.Alert_Qty = s.Alert_Qty;
                             stockEntity.SubItemNo = s.SubItemNo;
                         }
 
                         // 詢價（不刪舊價；只標記並把通用價歸零）
                         var isTimePrice = s.TimePrice || s.Price < 0;
                         stockEntity.IsTimePrice = isTimePrice;
-                        stockEntity.Price = 0;
+                        stockEntity.Price = s.SuggestPrice;
 
                         // 詢價就不處理角色價
                         if (isTimePrice) continue;
@@ -2871,6 +3394,9 @@ namespace EtheriT.Coker.Application.Product
                         {
                             foreach (var p in s.Prices)
                             {
+                                if (p.FK_RId <= 0)
+                                    continue;
+
                                 if (!TryGetBonusKey(p.Bonus, out var bonusKey))
                                 {
                                     errors.Add(new ImportMassageItem

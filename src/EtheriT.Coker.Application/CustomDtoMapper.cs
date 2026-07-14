@@ -63,6 +63,15 @@ namespace EtheriT.Coker.Application
             }
             return null;
         }
+        private double ParseProductImportPrice(string? value)
+        {
+            var normalized = (value ?? "").Trim();
+            if (normalized.Equals("時價", StringComparison.OrdinalIgnoreCase) || normalized == "-1")
+                return -1;
+
+            // 保留既有相容行為：無法解析的舊資料仍視為時價。
+            return ParseDouble(normalized) ?? -1;
+        }
         public static string Normalize(string? input)
         {
             if (string.IsNullOrWhiteSpace(input)) return string.Empty;
@@ -228,17 +237,19 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.Introduction, option => option.MapFrom(c => c.Introduction ?? ""))
                 .ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
                 .ForMember(e => e.Status, option => option.MapFrom(c => (int)Enum.Parse(typeof(ProdStatusEnum), c.Status)))
-                .ForMember(e => e.permanent, option => option.MapFrom(c => true))
+                .ForMember(e => e.permanent, option => option.Ignore())
+                .ForMember(e => e.Visible, option => option.Ignore())
+                .ForMember(e => e.RemovedFromShelves, option => option.Ignore())
                 .ReverseMap();
             CreateMap<ProductImportUpateDto, Prod>()
                 .ForMember(e => e.Title, option => option.MapFrom(c => c.ProdName))
                 .ForMember(e => e.Description, option => option.MapFrom(c => c.Description ?? ""))
                 .ForMember(e => e.Introduction, option => option.MapFrom(c => c.Introduction ?? ""))
                 .ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
-                .ForMember(e => e.permanent, option => option.MapFrom(c => true))
+                .ForMember(e => e.permanent, option => option.Ignore())
                 .ForMember(e => e.Status, option => option.MapFrom(c => 0))
-                .ForMember(e => e.Visible, option => option.MapFrom(c => true))
-                .ForMember(e => e.RemovedFromShelves, option => option.MapFrom(c => false))
+                .ForMember(e => e.Visible, option => option.Ignore())
+                .ForMember(e => e.RemovedFromShelves, option => option.Ignore())
                 .ReverseMap();
             CreateMap<ProdAddUpDto, Prod>()
                 .ForMember(e => e.permanent, option => option.MapFrom(c => c.Permanent))
@@ -262,7 +273,15 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.S1_Title, option => option.MapFrom(c => c.Spec1))
                 .ForMember(e => e.S2_Title, option => option.MapFrom(c => c.Spec2))
                 .ForMember(e => e.TimePrice, option => option.MapFrom(c => c.Price < 0))
-                .ForMember(e => e.Prices, option => option.MapFrom(c => new List<ProductPriceDto> { new ProductPriceDto { Price = c.Price < 0 ? 0 : c.Price, FK_RId = 1 } }));
+                .ForMember(e => e.Prices, option => option.MapFrom(c => new List<ProductPriceDto>
+                {
+                    new ProductPriceDto
+                    {
+                        Price = c.Price < 0 ? 0 : c.Price,
+                        FK_RId = c.RoleId,
+                        Bonus = c.Bonus
+                    }
+                }));
 
             CreateMap<Prod_Stock, ProductStockDto>()
                 .ReverseMap()
@@ -279,7 +298,7 @@ namespace EtheriT.Coker.Application
                 .ReverseMap();
             CreateMap<ProductImportUpateRegDto, ProductImportDto>()
                 .ForMember(e => e.ProdName, option => option.MapFrom(p => Normalize(p.ProdName)))
-                .ForMember(e => e.Price, option => option.MapFrom(p => ParseDouble(p.Price) ?? -1))
+                .ForMember(e => e.Price, option => option.MapFrom(p => ParseProductImportPrice(p.Price)))
                 .ReverseMap()
                 .ForMember(e => e.ProdName, option => option.MapFrom(p => Normalize(p.ProdName)));
 

@@ -51,12 +51,23 @@ namespace EtheriT.Coker.Application.Import
                     var file = upload.Files[i];
                     var orgName = await loginUserData.GetWebsiteOrgName();
                     string path = uploadPathResolver.GetPhysicalPathFromDownloadFileName(orgName, file.Path ?? "");
-                    output.Products.AddRange(readProdExcel(path));
-                    output.Directories.AddRange(readDirectoryExcel(path));
+                    var fileData = await ProdReplace(path);
+                    output.Products.AddRange(fileData.Products);
+                    output.Directories.AddRange(fileData.Directories);
                     await fileUploadAppService.deleteFile(path);
                 }
             }
             return output;
+        }
+        public Task<ProdImportAllDto> ProdReplace(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+                throw new FileNotFoundException("找不到商品匯入檔案。", path);
+
+            var output = new ProdImportAllDto();
+            output.Products.AddRange(readProdExcel(path));
+            output.Directories.AddRange(readDirectoryExcel(path));
+            return Task.FromResult(output);
         }
         private List<ProductImportDto> readProdExcel(string path)
         {

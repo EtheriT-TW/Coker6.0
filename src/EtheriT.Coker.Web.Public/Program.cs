@@ -264,6 +264,7 @@ builder.Services.AddScoped<IECPayAppService, ECPayAppService>();
 builder.Services.AddScoped<IECPayLogisticsAppService, ECPayLogisticsAppService>();
 builder.Services.AddScoped<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddScoped<LoginUserData>();
+builder.Services.AddScoped<BackgroundOperationContext>();
 builder.Services.AddScoped<StringHandler>();
 builder.Services.AddScoped<MailAppService>();
 builder.Services.AddScoped<ITagAppService, TagAppService>();

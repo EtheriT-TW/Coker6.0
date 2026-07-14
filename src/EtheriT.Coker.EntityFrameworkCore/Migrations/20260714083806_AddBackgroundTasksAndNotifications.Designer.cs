@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260714083806_AddBackgroundTasksAndNotifications")]
+    partial class AddBackgroundTasksAndNotifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4032,9 +4035,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<bool>("NoStockManagement")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("RemovedFromShelves")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -4091,7 +4091,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_WebsiteId = 2L,
                             Introduction = "從座圈到噴嘴給您雙重防護\n不用動手全自動科技最體貼\n雙漩洗技術為您實現真乾淨",
                             IsDeleted = false,
-                            NoStockManagement = false,
                             RemovedFromShelves = false,
                             Ser_No = 500,
                             Status = 0,
@@ -4108,7 +4107,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_WebsiteId = 2L,
                             Introduction = "商品二的第一行介紹\n商品二的第二行介紹",
                             IsDeleted = false,
-                            NoStockManagement = false,
                             RemovedFromShelves = false,
                             Ser_No = 500,
                             Status = 0,
@@ -4125,7 +4123,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_WebsiteId = 2L,
                             Introduction = "商品三的第一行介紹\n商品二的第二行介紹",
                             IsDeleted = false,
-                            NoStockManagement = false,
                             RemovedFromShelves = false,
                             Ser_No = 500,
                             Status = 0,
@@ -4142,7 +4139,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_WebsiteId = 2L,
                             Introduction = "最大容水量：11公升\n適用水壓：1~5kgf/㎝²",
                             IsDeleted = false,
-                            NoStockManagement = false,
                             RemovedFromShelves = false,
                             Ser_No = 500,
                             Status = 0,
@@ -4512,10 +4508,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<int>("Ser_No")
                         .HasColumnType("int");
-
-                    b.Property<string>("SpecDescription")
-                        .HasMaxLength(3000)
-                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<int?>("Stock")
                         .HasColumnType("int");
@@ -5567,21 +5559,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             name = "紅利功能啟用",
                             pattern = "",
                             type = 4
-                        },
-                        new
-                        {
-                            Id = 28L,
-                            CreationTime = new DateTime(2026, 7, 8, 10, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetGroupId = 6L,
-                            IsDeleted = false,
-                            jobID = "B001",
-                            key = "MaximumDiscount",
-                            maxlength = 8,
-                            memo = "單筆訂單紅利抵扣上限",
-                            name = "最高折抵上限",
-                            pattern = "",
-                            type = 8
                         });
                 });
 

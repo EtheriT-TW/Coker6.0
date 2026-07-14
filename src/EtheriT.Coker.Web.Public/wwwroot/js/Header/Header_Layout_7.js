@@ -131,4 +131,25 @@ function HeaderInit() {
             }
         });
     });
+
+    /* TopBar 捲動狀態:header 橫幅滑出畫面後在 body 加上 scrolled,供各站後台自訂 CSS 取用 */
+    var SCROLL_THRESHOLD = 40;
+    var scrollTarget = document.querySelector(".image-wh, .one_swiper");
+
+    if (scrollTarget && "IntersectionObserver" in window) {
+        new IntersectionObserver(function (entries) {
+            document.body.classList.toggle("scrolled", !entries[0].isIntersecting);
+        }, { rootMargin: "-168px 0px 0px 0px" }).observe(scrollTarget);
+    } else {
+        var isScrolled = false;
+        var updateScrolledState = function () {
+            var shouldScroll = window.scrollY > SCROLL_THRESHOLD;
+            if (shouldScroll !== isScrolled) {
+                isScrolled = shouldScroll;
+                document.body.classList.toggle("scrolled", isScrolled);
+            }
+        };
+        window.addEventListener("scroll", updateScrolledState, { passive: true });
+        updateScrolledState();
+    }
 }

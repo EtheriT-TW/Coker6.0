@@ -482,6 +482,20 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     jobID = "B001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2026, 7, 25, 19, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 28,
+                    key = "MaximumDiscount",
+                    name = "最高折抵上限",
+                    memo = "單筆訂單紅利抵扣上限",
+                    FK_StoreSetGroupId = 6,
+                    type = SeoSetDataTypeEnum.number,
+                    maxlength = 8,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "B001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 7, 08, 10, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(

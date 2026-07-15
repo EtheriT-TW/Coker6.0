@@ -490,6 +490,7 @@ namespace EtheriT.Coker.Application.Product
             Action<int, string>? reportProgress)
         {
             reportProgress?.Invoke(5, "正在讀取商品資料");
+            var orgName = await loginUserData.GetWebsiteOrgName();
             var products = await db.Prods
                 .AsNoTracking()
                 .Where(e => e.FK_WebsiteId == websiteId && !e.IsDeleted)
@@ -602,28 +603,29 @@ namespace EtheriT.Coker.Application.Product
                         Status = product.Status.ToString(),
                         Introduction = product.Introduction ?? "",
                         Description = product.Description ?? "",
-                        Html = product.Html ?? product.SaveHtml ?? "",
-                        Image1 = GetLink(multimedia, 0),
-                        Image2 = GetLink(multimedia, 1),
-                        Image3 = GetLink(multimedia, 2),
-                        Image4 = GetLink(multimedia, 3),
-                        Image5 = GetLink(multimedia, 4),
-                        Image6 = GetLink(multimedia, 5),
-                        Image7 = GetLink(multimedia, 6),
+                        SaveHtml = GetExportHtml(product.SaveHtml, product.Html, orgName),
+                        SaveCss = GetExportCss(product.SaveCss, product.Css, orgName),
+                        Image1 = GetExportLink(multimedia, 0, orgName),
+                        Image2 = GetExportLink(multimedia, 1, orgName),
+                        Image3 = GetExportLink(multimedia, 2, orgName),
+                        Image4 = GetExportLink(multimedia, 3, orgName),
+                        Image5 = GetExportLink(multimedia, 4, orgName),
+                        Image6 = GetExportLink(multimedia, 5, orgName),
+                        Image7 = GetExportLink(multimedia, 6, orgName),
                         FileName1 = GetName(files, 0),
-                        File1 = GetLink(files, 0),
+                        File1 = GetExportLink(files, 0, orgName),
                         FileName2 = GetName(files, 1),
-                        File2 = GetLink(files, 1),
+                        File2 = GetExportLink(files, 1, orgName),
                         FileName3 = GetName(files, 2),
-                        File3 = GetLink(files, 2),
+                        File3 = GetExportLink(files, 2, orgName),
                         FileName4 = GetName(files, 3),
-                        File4 = GetLink(files, 3),
+                        File4 = GetExportLink(files, 3, orgName),
                         FileName5 = GetName(files, 4),
-                        File5 = GetLink(files, 4),
+                        File5 = GetExportLink(files, 4, orgName),
                         FileName6 = GetName(files, 5),
-                        File6 = GetLink(files, 5),
+                        File6 = GetExportLink(files, 5, orgName),
                         FileName7 = GetName(files, 6),
-                        File7 = GetLink(files, 6),
+                        File7 = GetExportLink(files, 6, orgName),
                         StartTime = product.permanent ? "" : product.StartTime?.ToString("yyyy-MM-dd") ?? "",
                         EndTime = product.permanent ? "" : product.EndTime?.ToString("yyyy-MM-dd") ?? "",
                         Visible = product.Visible ? "是" : "否",
@@ -632,6 +634,7 @@ namespace EtheriT.Coker.Application.Product
                         Spec1 = spec1?.Title ?? "",
                         Spec2Name = spec2 != null && specTypes.TryGetValue(spec2.FK_Tid, out var spec2Name) ? spec2Name : "",
                         Spec2 = spec2?.Title ?? "",
+                        SpecDescription = stock?.SpecDescription ?? "",
                         Stock = stock?.Stock ?? 0,
                         Min_Qty = stock?.Min_Qty ?? 1,
                         Alert_Qty = stock?.Alert_Qty ?? 0,
@@ -797,6 +800,21 @@ namespace EtheriT.Coker.Application.Product
 
         private static string GetLink(IReadOnlyList<FileGetProdDisplayDto> files, int index)
             => index < files.Count ? files[index].Link.FirstOrDefault() ?? "" : "";
+
+        private string GetExportLink(IReadOnlyList<FileGetProdDisplayDto> files, int index, string orgName)
+            => stringHandler.ResolveFrontUploadPath(GetLink(files, index), orgName);
+
+        private string GetExportHtml(string? savedContent, string? publishedContent, string orgName)
+        {
+            var content = stringHandler.HtmlDecode(
+                string.IsNullOrWhiteSpace(savedContent) ? publishedContent ?? "" : savedContent);
+            return stringHandler.ResolveFrontUploadPath(content, orgName);
+        }
+
+        private string GetExportCss(string? savedContent, string? publishedContent, string orgName)
+            => stringHandler.ResolveFrontUploadPath(
+                string.IsNullOrWhiteSpace(savedContent) ? publishedContent ?? "" : savedContent,
+                orgName);
 
         private static string GetName(IReadOnlyList<FileGetProdDisplayDto> files, int index)
             => index < files.Count ? files[index].Name ?? "" : "";
@@ -2225,11 +2243,14 @@ namespace EtheriT.Coker.Application.Product
             if (fileData.Products.Any())
             {
                 List<ProductImportDto> allData = fileData.Products.FindAll(e => !string.IsNullOrEmpty(e.ProdName));
-                var frontRoleMap = await db.Roles
+                var frontRoles = await db.Roles
                     .AsNoTracking()
                     .Where(e => e.FK_WebsiteId == WebsiteID && e.Type == RoleTypeEnum.前台 && !e.IsDeleted)
+                    .Select(e => new { e.Id, e.Name })
+                    .ToListAsync();
+                var frontRoleMap = frontRoles
                     .GroupBy(e => Norm(e.Name))
-                    .ToDictionaryAsync(e => e.Key, e => e.Last().Id);
+                    .ToDictionary(e => e.Key, e => e.Last().Id);
 
                 foreach (var row in allData)
                 {
@@ -2991,6 +3012,7 @@ namespace EtheriT.Coker.Application.Product
         private async Task<List<Prod>> UpsertProducts(List<ProductImportDto> dtos, List<ImportMassageItem> errors)
         {
             long userId = await loginUserData.GetUserId();
+            string orgName = await loginUserData.GetWebsiteOrgName();
             var results = new List<Prod>();
 
             foreach (var dto in dtos)
@@ -3018,11 +3040,7 @@ namespace EtheriT.Coker.Application.Product
                     // Insert/Update 共用的邏輯
                     ApplyProductDisplaySettings(dto, prod, errors);
 
-                    if (!string.IsNullOrWhiteSpace(prod.Html))
-                    {
-                        prod.Html = NormalizeHtml(prod.Html);
-                        prod.SaveHtml = prod.Html;
-                    }
+                    ApplyImportedProductContent(dto, prod, orgName);
                     if (Enum.TryParse(dto.Status, out ProdStatusEnum statusType))
                         prod.Status = statusType;
                     else
@@ -3120,6 +3138,27 @@ namespace EtheriT.Coker.Application.Product
 
             // 外層補一個 container
             return $"<div class=\"container\">{html}</div>";
+        }
+
+        private void ApplyImportedProductContent(ProductImportDto dto, Prod prod, string orgName)
+        {
+            // SaveHtml 是新版欄位；Html 僅供舊版 Excel 相容。
+            var hasEditorHtml = !string.IsNullOrWhiteSpace(dto.SaveHtml);
+            var importedHtml = hasEditorHtml ? dto.SaveHtml! : dto.Html ?? "";
+            var frontHtml = stringHandler.ResolveFrontUploadPath(
+                stringHandler.HtmlDecode(importedHtml),
+                orgName);
+            if (!hasEditorHtml)
+                frontHtml = NormalizeHtml(frontHtml);
+
+            var frontCss = stringHandler.ResolveFrontUploadPath(dto.SaveCss ?? "", orgName);
+            var editorHtml = stringHandler.ResolveUploadPath(frontHtml, orgName);
+            var editorCss = stringHandler.ResolveUploadPath(frontCss, orgName);
+
+            prod.Html = stringHandler.HtmlEncode(frontHtml);
+            prod.Css = frontCss;
+            prod.SaveHtml = stringHandler.HtmlEncode(editorHtml);
+            prod.SaveCss = editorCss;
         }
 
         private async Task InsetProdSpecTypes(List<ProductImportDto> prods)
@@ -3357,6 +3396,7 @@ namespace EtheriT.Coker.Application.Product
                                 Min_Qty = s.Min_Qty,
                                 Alert_Qty = s.Alert_Qty,
                                 SubItemNo = s.SubItemNo,
+                                SpecDescription = s.SpecDescription,
                                 // ！關鍵：用導覽屬性關聯（新商品 Id==0 亦可）
                                 Prod = prod
                             };
@@ -3378,6 +3418,7 @@ namespace EtheriT.Coker.Application.Product
                             stockEntity.Min_Qty = s.Min_Qty;
                             stockEntity.Alert_Qty = s.Alert_Qty;
                             stockEntity.SubItemNo = s.SubItemNo;
+                            stockEntity.SpecDescription = s.SpecDescription;
                         }
 
                         // 詢價（不刪舊價；只標記並把通用價歸零）

@@ -16,18 +16,23 @@ function ImportProd() {
     co.Product.AddUp.Import(formData).done(async function (response) {
         importProdPopup.hide();
         try {
-            const status = await waitForProductTask(response.taskId, "\u5546\u54c1\u532f\u5165\u4e2d");
+            const status = await waitForProductTask(response.taskId, "商品匯入中");
             Swal.close();
-            co.sweet.success(status.message || "\u5546\u54c1\u532f\u5165\u6210\u529f\u3002");
+            const importErrors = getProductImportErrors(status.resultJson);
+            if (importErrors.length > 0) {
+                showProductImportErrors(importErrors);
+            } else {
+                co.sweet.success(status.message || "商品匯入成功。");
+            }
             if (product_list != null) product_list.component.refresh();
         } catch (error) {
             Swal.close();
-            co.sweet.error(error && error.message ? error.message : "\u5546\u54c1\u532f\u5165\u5931\u6557\u3002");
+            co.sweet.error(error && error.message ? error.message : "商品匯入失敗。");
         }
     }).fail(function (xhr) {
         var message = xhr.responseJSON && xhr.responseJSON.message
             ? xhr.responseJSON.message
-            : "\u6a94\u6848\u683c\u5f0f\u932f\u8aa4\uff0c\u7121\u6cd5\u5efa\u7acb\u532f\u5165\u4efb\u52d9\u3002";
+            : "檔案格式錯誤，無法建立匯入任務。";
         co.sweet.error(message);
     });
 }
@@ -37,6 +42,118 @@ function showImportProdPopup() {
     importProdPopup.option("contentTemplate", $("#importProdPopup-template"));
     importProdPopup.option("title", "商品匯入");
     importProdPopup.show();
+}
+
+function getProductImportErrors(resultJson) {
+    if (!resultJson) return [];
+
+    try {
+        const result = typeof resultJson === "string" ? JSON.parse(resultJson) : resultJson;
+        const errors = result.Errors || result.errors || [];
+        if (!Array.isArray(errors)) return [];
+
+        return errors.map(function (item, index) {
+            return {
+                sequence: index + 1,
+                name: item.Name || item.name || "-",
+                description: item.Description || item.description || "-"
+            };
+        });
+    } catch (error) {
+        console.error("Unable to parse product import result.", error);
+        return [];
+    }
+}
+
+function showProductImportErrors(errors) {
+    const popupElement = $("<div>").appendTo(document.body);
+    let popupInstance = null;
+
+    popupElement.dxPopup({
+        title: "商品匯入完成－需留意資料",
+        width: function () { return Math.min($(window).width() * 0.92, 960); },
+        height: function () { return Math.min($(window).height() * 0.88, 680); },
+        minWidth: 320,
+        minHeight: 360,
+        showTitle: true,
+        showCloseButton: true,
+        dragEnabled: true,
+        hideOnOutsideClick: false,
+        contentTemplate: function (contentElement) {
+            contentElement.css({
+                display: "flex",
+                flexDirection: "column",
+                height: "100%"
+            });
+
+            $("<div>")
+                .css({ marginBottom: "12px", color: "#856404" })
+                .text("匯入已完成，共有 " + errors.length + " 筆資料需要留意。請依下列原因檢查原 Excel 內容。")
+                .appendTo(contentElement);
+
+            const gridElement = $("<div>")
+                .css({ flex: "1 1 auto", minHeight: 0 })
+                .appendTo(contentElement);
+
+            gridElement.dxDataGrid({
+                dataSource: errors,
+                height: "100%",
+                showBorders: true,
+                rowAlternationEnabled: true,
+                wordWrapEnabled: true,
+                columnAutoWidth: false,
+                columns: [
+                    { dataField: "sequence", caption: "序號", width: 70, alignment: "center", allowFiltering: false },
+                    { dataField: "name", caption: "商品名稱", width: "32%" },
+                    { dataField: "description", caption: "需留意原因" }
+                ],
+                searchPanel: {
+                    visible: true,
+                    width: 240,
+                    placeholder: "搜尋商品或原因"
+                },
+                paging: { pageSize: 10 },
+                pager: {
+                    visible: true,
+                    showPageSizeSelector: true,
+                    allowedPageSizes: [10, 20, 50],
+                    showInfo: true,
+                    showNavigationButtons: true
+                },
+                export: {
+                    enabled: true,
+                    formats: ["xlsx"],
+                    allowExportSelectedData: false
+                },
+                onExporting: function (e) {
+                    CokerDxGridExport(e, {
+                        fileName: "ProductImportWarnings",
+                        worksheetName: "商品匯入注意清單"
+                    });
+                },
+                noDataText: "沒有需留意的資料"
+            });
+        },
+        toolbarItems: [
+            {
+                toolbar: "bottom",
+                location: "after",
+                widget: "dxButton",
+                options: {
+                    text: "關閉",
+                    type: "default",
+                    onClick: function () { popupInstance.hide(); }
+                }
+            }
+        ],
+        onHidden: function (e) {
+            e.component.dispose();
+            popupElement.remove();
+        }
+    });
+
+    popupInstance = popupElement.dxPopup("instance");
+    popupInstance.show();
 }
 
 async function exportProd(e) {
@@ -54,18 +171,18 @@ async function exportProd(e) {
         });
         if (!startResponse.ok) {
             const errorResult = await startResponse.json().catch(function () { return {}; });
-            throw new Error(errorResult.message || "\u7121\u6cd5\u5efa\u7acb\u5546\u54c1\u532f\u51fa\u4efb\u52d9");
+            throw new Error(errorResult.message || "無法建立商品匯出任務");
         }
 
         const startResult = await startResponse.json();
-        await waitForProductTask(startResult.taskId, "\u5546\u54c1\u6a94\u6848\u88fd\u4f5c\u4e2d");
+        await waitForProductTask(startResult.taskId, "商品檔案製作中");
         window.location.href = "/api/Product/DownloadProductTask?taskId=" + encodeURIComponent(startResult.taskId);
         Swal.close();
     } catch (error) {
         Swal.close();
         co.sweet.error(error && error.message
             ? error.message
-            : "\u5546\u54c1\u532f\u51fa\u5931\u6557\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66\u3002");
+            : "商品匯出失敗，請稍後再試。");
     } finally {
         exportProd.isProcessing = false;
         if (button) button.option("disabled", false);
@@ -74,15 +191,14 @@ async function exportProd(e) {
 
 async function waitForProductTask(taskId, title) {
     Swal.fire({
-        // 使用 Unicode escape，避免既有 Gulp 壓縮流程將中文字串轉成亂碼。
         title: title,
         html: [
-            '<div id="productTaskMessage" style="margin-bottom:12px;">\u7b49\u5f85\u4f3a\u670d\u5668\u958b\u59cb\u8655\u7406\u2026</div>',
+            '<div id="productTaskMessage" style="margin-bottom:12px;">等待伺服器開始處理…</div>',
             '<div style="height:18px;background:#e9ecef;border-radius:9px;overflow:hidden;">',
             '<div id="productTaskProgressBar" style="height:100%;width:0%;background:#337ab7;transition:width .3s ease;"></div>',
             '</div>',
             '<div id="productTaskProgressText" style="margin-top:6px;font-weight:600;">0%</div>',
-            '<div style="margin-top:10px;color:#777;font-size:13px;">\u95dc\u9589\u6b64\u8996\u7a97\u4e0d\u6703\u53d6\u6d88\u80cc\u666f\u4efb\u52d9\u3002</div>'
+            '<div style="margin-top:10px;color:#777;font-size:13px;">關閉此視窗不會取消背景任務。</div>'
         ].join(""),
         allowOutsideClick: false,
         allowEscapeKey: true,
@@ -100,7 +216,7 @@ async function waitForProductTask(taskId, title) {
                 credentials: "same-origin",
                 cache: "no-store"
             });
-        if (!statusResponse.ok) throw new Error("\u7121\u6cd5\u53d6\u5f97\u80cc\u666f\u4efb\u52d9\u9032\u5ea6");
+        if (!statusResponse.ok) throw new Error("無法取得背景任務進度");
 
         const status = await statusResponse.json();
         const progress = Math.max(0, Math.min(100, Number(status.progress) || 0));
@@ -109,10 +225,10 @@ async function waitForProductTask(taskId, title) {
         const message = document.getElementById("productTaskMessage");
         if (progressBar) progressBar.style.width = progress + "%";
         if (progressText) progressText.textContent = progress + "%";
-        if (message) message.textContent = status.message || "\u80cc\u666f\u4efb\u52d9\u8655\u7406\u4e2d\u2026";
+        if (message) message.textContent = status.message || "背景任務處理中…";
 
         if (status.status === "failed" || status.status === "expired")
-            throw new Error(status.error || status.message || "\u80cc\u666f\u4efb\u52d9\u5931\u6557");
+            throw new Error(status.error || status.message || "背景任務失敗");
         if (status.status === "succeeded")
             return status;
     }

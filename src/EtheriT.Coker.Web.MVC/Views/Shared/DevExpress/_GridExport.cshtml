@@ -1,0 +1,108 @@
+@{
+    const string gridExportAssetsKey = "__CokerGridExportAssetsRendered";
+    var renderGridExportAssets = !Context.Items.ContainsKey(gridExportAssetsKey);
+    if (renderGridExportAssets)
+    {
+        Context.Items[gridExportAssetsKey] = true;
+    }
+}
+@if (renderGridExportAssets)
+{
+    <script src="~/js/devextreme/dx-exceljs-fork.min.js" asp-append-version="true"></script>
+    <script src="~/js/devextreme/FileSaver.min.js" asp-append-version="true"></script>
+    <script src="~/js/devextreme/jspdf.umd.min.js" asp-append-version="true"></script>
+    <script src="~/js/devextreme/jspdf.plugin.autotable.min.js" asp-append-version="true"></script>
+    <script>
+    window.CokerDxGridExport = window.CokerDxGridExport || function (e, options) {
+        options = options || {};
+        const now = new Date();
+        const pad = function (value) { return String(value).padStart(2, "0"); };
+        const timestamp = now.getFullYear()
+            + pad(now.getMonth() + 1)
+            + pad(now.getDate())
+            + "_"
+            + pad(now.getHours())
+            + pad(now.getMinutes())
+            + pad(now.getSeconds());
+        const baseFileName = (options.fileName || "GridExport")
+            .replace(/[\\/:*?"<>|]/g, "_");
+        const format = String(e?.format || "xlsx").toLowerCase();
+
+        e.cancel = true;
+        if (format === "xlsx") {
+            return exportExcel();
+        }
+        if (format === "pdf") {
+            return exportPdf();
+        }
+
+        DevExpress.ui.notify("不支援此匯出格式：" + format, "error", 4000);
+        return Promise.resolve(false);
+
+        function exportExcel() {
+            if (!window.ExcelJS || !window.saveAs || !window.DevExpress?.excelExporter) {
+                return dependencyError("Excel");
+            }
+
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet(options.worksheetName || "Data");
+            return DevExpress.excelExporter.exportDataGrid({
+                component: e.component,
+                worksheet: worksheet,
+                autoFilterEnabled: options.autoFilterEnabled !== false
+            }).then(function () {
+                return workbook.xlsx.writeBuffer();
+            }).then(function (buffer) {
+                saveAs(
+                    new Blob([buffer], {
+                        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    }),
+                    baseFileName + "_" + timestamp + ".xlsx"
+                );
+                return true;
+            }).catch(function (error) {
+                return exportError("Excel", error);
+            });
+        }
+
+        function exportPdf() {
+            if (!window.jspdf?.jsPDF || !window.DevExpress?.pdfExporter) {
+                return dependencyError("PDF");
+            }
+
+            const documentOptions = {
+                orientation: options.pdfOrientation || "landscape",
+                unit: options.pdfUnit || "pt",
+                format: options.pdfPageFormat || "a4"
+            };
+            const pdfDocument = new window.jspdf.jsPDF(documentOptions);
+            if (typeof options.configurePdfDocument === "function") {
+                options.configurePdfDocument(pdfDocument);
+            }
+
+            return DevExpress.pdfExporter.exportDataGrid({
+                component: e.component,
+                jsPDFDocument: pdfDocument,
+                keepColumnWidths: options.keepPdfColumnWidths !== false,
+                autoTableOptions: options.autoTableOptions
+            }).then(function () {
+                pdfDocument.save(baseFileName + "_" + timestamp + ".pdf");
+                return true;
+            }).catch(function (error) {
+                return exportError("PDF", error);
+            });
+        }
+
+        function dependencyError(type) {
+            DevExpress.ui.notify(type + " 匯出元件載入失敗，請重新整理頁面後再試。", "error", 4000);
+            return Promise.resolve(false);
+        }
+
+        function exportError(type, error) {
+            console.error("DevExtreme Grid " + type + " export failed.", error);
+            DevExpress.ui.notify(type + " 匯出失敗，請稍後再試。", "error", 4000);
+            return false;
+        }
+    };
+    </script>
+}

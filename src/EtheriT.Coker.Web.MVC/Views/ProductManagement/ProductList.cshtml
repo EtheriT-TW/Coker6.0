@@ -20,7 +20,9 @@
 
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
-
+@{
+    await Html.RenderPartialAsync(@"DevExpress\_GridExport");
+}
 <script src="~/js/ProductManagement/ProductList.min.js" asp-append-version="true"></script>
 
 <div id="PriceModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="PriceModalLabel" aria-hidden="true" data_psid="">

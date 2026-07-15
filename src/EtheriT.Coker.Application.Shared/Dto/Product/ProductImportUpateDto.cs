@@ -13,9 +13,12 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 		public string Status {  get; set; } = "一般";
         public string ItemNo { get; set; } = string.Empty;
         public string SubItemNo { get; set; } = string.Empty;
-        public string? Description { get; set; }
+		public string? Description { get; set; }
 		public string? Introduction { get; set; }
+		// 保留 Html 以相容舊版 Excel；新版範本使用 SaveHtml / SaveCss。
 		public string? Html { get; set; }
+		public string? SaveHtml { get; set; }
+		public string? SaveCss { get; set; }
 		public DateTime? StartTime { get; set; }
 		public DateTime? EndTime { get; set; }
 		public string? Visible { get; set; }
@@ -24,6 +27,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 		public string? Spec1 { get; set; }
 		public string? Spec2Name { get; set; }
 		public string? Spec2 { get; set; }
+		public string? SpecDescription { get; set; }
 		public int Stock { get; set; } = 0;
 		public int? Min_Qty { get; set; } = 1;
 		public int? Alert_Qty { get; set; } = 0;

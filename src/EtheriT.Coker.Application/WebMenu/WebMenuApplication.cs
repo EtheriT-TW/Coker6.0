@@ -963,6 +963,7 @@ namespace EtheriT.Coker.Application
                     VisibleFooter = true,
                     VisibleHeader = true,
                     VisibleTitle = true,
+                    ShowToMenu = true,
                     RemovedFromShelves = false
                 };
                 newMenus.Add(menu);

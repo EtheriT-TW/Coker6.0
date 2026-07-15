@@ -707,7 +707,8 @@ namespace EtheriT.Coker.Application.Article
                     var EditData = htmlProcessor.Find(doc, "[data-edit-type]");
                     var FileInsertNode = EditData.Where(d => d.GetAttributeValue("data-edit-type", "") == "File" || d.GetAttributeValue("data-edit-type", "") == "Files").ToList();
 
-                    if (Files.Any() && FileInsertNode.Any())
+                    // 即使檔案已全部刪除，仍須清除 SaveHtml 內先前產生的檔案連結。
+                    if (FileInsertNode.Any())
                     {
                         foreach (var node in FileInsertNode)
                         {
@@ -736,9 +737,7 @@ namespace EtheriT.Coker.Application.Article
                                 node.PrependChild(templateNode);
                             }
 
-                            node.SelectNodes(".//a[contains(@class,'download-item') and not(contains(@class,'d-none'))]")?.ToList().ForEach(n => n.Remove());
-
-                            node.SelectSingleNode(".//div[contains(@class,'no-files-msg')]")?.Remove();
+                            ClearGeneratedFileNodes(node);
 
                             var candidates = Files.Where(f => f.isVisible && f.areakey.Equals(areaKey, StringComparison.OrdinalIgnoreCase));
 
@@ -852,7 +851,8 @@ namespace EtheriT.Coker.Application.Article
                         .Where(d => d.GetAttributeValue("data-edit-type", "") == "File" || d.GetAttributeValue("data-edit-type", "") == "Files")
                         .ToList();
 
-                    if (SaveeNode.Any() && Files.Any())
+                    // Files 為空代表最後一個檔案已刪除，仍須重建 SaveHtml 與前台 Html。
+                    if (SaveeNode.Any())
                     {
                         // 後台編輯用 SaveHtml：
                         // 保留 /upload/{OrgName}/，因為後台是在同一套管理站讀取實體網站檔案。
@@ -914,9 +914,7 @@ namespace EtheriT.Coker.Application.Article
                     node.PrependChild(templateNode);
                 }
 
-                node.SelectNodes(".//a[contains(@class,'download-item') and not(contains(@class,'d-none'))]")?.ToList().ForEach(n => n.Remove());
-
-                node.SelectSingleNode(".//div[contains(@class,'no-files-msg')]")?.Remove();
+                ClearGeneratedFileNodes(node);
 
                 var candidates = Files.Where(f => f.isVisible && f.areakey.Equals(areaKey, StringComparison.OrdinalIgnoreCase));
 
@@ -944,6 +942,21 @@ namespace EtheriT.Coker.Application.Article
                     node.AppendChild(HtmlNode.CreateNode("<div class=\"no-files-msg\">無相關檔案可顯示</div>"));
                 }
             }
+        }
+        void ClearGeneratedFileNodes(HtmlNode node)
+        {
+            // 自訂檔案樣板不一定是 a.download-item；實際產生的檔案節點都會帶 data-fid。
+            node.SelectNodes(".//*[@data-fid]")?.ToList().ForEach(n => n.Remove());
+
+            // 相容尚未帶 data-fid 的舊版預設檔案節點，但保留 d-none 隱藏樣板。
+            node.SelectNodes(".//a[contains(concat(' ', normalize-space(@class), ' '), ' download-item ') and not(contains(concat(' ', normalize-space(@class), ' '), ' d-none '))]")
+                ?.ToList()
+                .ForEach(n => n.Remove());
+
+            // 避免多次重建後累積「無檔案」訊息。
+            node.SelectNodes(".//*[contains(concat(' ', normalize-space(@class), ' '), ' no-files-msg ')]")
+                ?.ToList()
+                .ForEach(n => n.Remove());
         }
         // 將之前前台才載入檔案的先全部Run一遍
         // 2026/05/14 21:15 正式站Run過一次

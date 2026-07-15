@@ -437,6 +437,17 @@ namespace EtheriT.Coker.Application.Authorization
                     if (userdata != null)
                     {
                         EditUserDto data = mapper.Map<EditUserDto>(userdata);
+                        data.FK_RoleId = await db.MappingUserAndRoles
+                            .AsNoTracking()
+                            .Include(e => e.Role)
+                            .Where(e => !e.IsDeleted)
+                            .Where(e => e.UUID == userdata.UUID)
+                            .Where(e => e.Role != null)
+                            .Where(e => e.Role!.FK_WebsiteId == websiteid)
+                            .Where(e => e.Role!.Type == RoleTypeEnum.前台)
+                            .Where(e => !e.Role!.IsDeleted)
+                            .Select(e => e.RoleId)
+                            .FirstOrDefaultAsync();
                         data.Birthday = userdata.Birthday == null ? "" : ((DateTime)userdata.Birthday).ToString("yyyy-MM-dd");
                         UserData.data = data;
                         UserData.Success = true;
@@ -462,14 +473,17 @@ namespace EtheriT.Coker.Application.Authorization
 
                 if (token == null || !token.IsLogin) return "";
 
-                var levelName = await (from user in db.FrontUsers
-                                       join mapuserweb in db.MappingFrontUserAndWebsite
-                                           on user.Id equals mapuserweb.FK_UserId
-                                       join role in db.Roles
-                                           on user.Level equals role.Id
-                                       where user.UUID == UUID
-                                          && mapuserweb.FK_WebsiteId == websiteid
-                                       select role.Name).FirstOrDefaultAsync();
+                var levelName = await db.MappingUserAndRoles
+                    .AsNoTracking()
+                    .Include(e => e.Role)
+                    .Where(e => !e.IsDeleted)
+                    .Where(e => e.UUID == UUID)
+                    .Where(e => e.Role != null)
+                    .Where(e => e.Role!.FK_WebsiteId == websiteid)
+                    .Where(e => e.Role!.Type == RoleTypeEnum.前台)
+                    .Where(e => !e.Role!.IsDeleted)
+                    .Select(e => e.Role!.Name)
+                    .FirstOrDefaultAsync();
 
                 return levelName ?? "";
             }

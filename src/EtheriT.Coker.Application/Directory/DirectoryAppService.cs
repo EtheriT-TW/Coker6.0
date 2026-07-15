@@ -3328,19 +3328,6 @@ namespace EtheriT.Coker.Application.Directory
                     {
                         return roleId;
                     }
-
-                    var frontUserLevel = await db.FrontUsers
-                        .AsNoTracking()
-                        .Include(e => e.Websites)
-                        .Where(e => e.UUID == uuid)
-                        .Where(e => e.Websites.Any(w => w.FK_WebsiteId == websiteId && !w.IsDeleted))
-                        .Select(e => e.Level)
-                        .FirstOrDefaultAsync();
-
-                    if (frontUserLevel != null && frontUserLevel > 0)
-                    {
-                        return frontUserLevel;
-                    }
                 }
             }
             catch

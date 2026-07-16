@@ -2238,6 +2238,7 @@ namespace EtheriT.Coker.Application.Product
             Action<int, string>? reportProgress)
         {
             ImportOutputDto response = new ImportOutputDto { ErrorList = new List<ImportMassageItem>() };
+            bool productImportFailed = false;
             long WebsiteID = await loginUserData.GetWebsiteId();
             reportProgress?.Invoke(15, "正在驗證商品與會員價格資料");
             if (fileData.Products.Any())
@@ -2305,6 +2306,7 @@ namespace EtheriT.Coker.Application.Product
                 }
                 catch (Exception ex)
                 {
+                    productImportFailed = true;
                     response.ErrorList.Add(new ImportMassageItem { Name = "error", Description = ex.Message });
                 }
             }
@@ -2312,7 +2314,8 @@ namespace EtheriT.Coker.Application.Product
             {
                 reportProgress?.Invoke(88, "正在匯入商品目錄與標籤");
                 await imporDirectories(fileData.Directories);
-                response.Success = true;
+                if (!productImportFailed)
+                    response.Success = true;
             }
 
             reportProgress?.Invoke(98, "商品匯入處理完成");
@@ -3216,67 +3219,82 @@ namespace EtheriT.Coker.Application.Product
         private async Task InsetProdSpec(List<ProductImportDto> prods)
         {
             long userId = await loginUserData.GetUserId();
-            var ProdSpecTitleList = db.Prod_Specs
-                                    .Where(e => !e.IsDeleted)
-                                    .Select(e => e.Title).ToList();
-            List<Prod_Spec> news = new List<Prod_Spec>();
-            for (int i = 0; i < prods.Count; i++)
+            long websiteId = await loginUserData.GetWebsiteId();
+            var types = await db.Prod_Spec_Types
+                .Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId)
+                .OrderBy(e => e.Id)
+                .ToListAsync();
+            if (types.Count == 0) return;
+
+            var typeByName = types
+                .GroupBy(e => Norm(e.Type))
+                .ToDictionary(e => e.Key, e => e.Last());
+            var existingSpecs = await db.Prod_Specs
+                .Where(e => !e.IsDeleted
+                    && e.Prod_Spec_Type != null
+                    && e.Prod_Spec_Type.FK_WebsiteId == websiteId)
+                .Select(e => new { e.FK_Tid, e.Title, TypeName = e.Prod_Spec_Type!.Type })
+                .ToListAsync();
+            var existingKeys = existingSpecs
+                .Select(e => SpecKey(e.TypeName, e.Title))
+                .ToHashSet();
+
+            var requestedSpecs = new List<(string? TypeName, string? Title)>();
+            foreach (var product in prods)
             {
-                var items = prods[i];
-                if (items.stocks != null)
+                foreach (var stock in product.stocks ?? new List<ProductStockDto>())
                 {
-                    var Adds1 = items.stocks.FindAll(e => !ProdSpecTitleList.Contains(e.S1_Title ?? "")).Select(e => new { name = e.S1_Name, title = e.S1_Title }).ToList();
-                    var Adds2 = items.stocks.FindAll(e => !ProdSpecTitleList.Contains(e.S2_Title ?? "")).Select(e => new { name = e.S2_Name, title = e.S2_Title }).ToList();
-                    Adds1.AddRange(Adds2);
-
-                    var allAdds = Adds1
-                                .Where(e => e.title != "")
-                                .Where(e => e.title != null)
-                                .GroupBy(o => o.title).Select(o => o.Key).ToList();
-
-                    var nowTitle = news.Select(e => e.Title);
-                    var Adds = allAdds.FindAll(e => !nowTitle.Contains(e));
-
-                    var types = db.Prod_Spec_Types.Where(e => !e.IsDeleted).Select(e => new { e.Id, e.Type }).ToList();
-                    var specs = db.Prod_Specs.Where(e => !e.IsDeleted).Select(e => new { e.FK_Tid, e.Title }).ToList();
-
-                    for (int j = 0; j < Adds.Count; j++)
-                    {
-                        var item = Adds[j];
-                        if (!string.IsNullOrEmpty(item))
-                        {
-                            var Spec = Adds1.Find(e => e.title == item);
-                            string SpecTypeName = "";
-                            if (Spec != null) SpecTypeName = Spec.name ?? "";
-                            var SpecType = types.Find(o => o.Type == SpecTypeName);
-                            long SpecTypeId = types.Count == 0 ? 0 : types.FirstOrDefault().Id;
-                            if (SpecType == null)
-                            {
-                                var c = specs.Find(e => e.Title == item);
-                                if (c != null) SpecTypeId = c.FK_Tid;
-                            }
-                            else SpecTypeId = SpecType.Id;
-                            if (SpecTypeId != 0)
-                            {
-                                news.Add(new Prod_Spec
-                                {
-                                    Title = item,
-                                    FK_Tid = SpecTypeId,
-                                    CreationTime = DateTime.Now,
-                                    CreatorUserId = userId
-                                });
-                            }
-
-                        }
-                    }
+                    requestedSpecs.Add((stock.S1_Name, stock.S1_Title));
+                    requestedSpecs.Add((stock.S2_Name, stock.S2_Title));
                 }
             }
+
+            var news = new List<Prod_Spec>();
+            foreach (var requested in requestedSpecs
+                .Where(e => !string.IsNullOrWhiteSpace(e.Title))
+                .GroupBy(e => SpecKey(e.TypeName, e.Title))
+                .Select(e => e.First()))
+            {
+                var typeName = Norm(requested.TypeName);
+                Prod_Spec_Type? specType = null;
+                if (!string.IsNullOrEmpty(typeName))
+                    typeByName.TryGetValue(typeName, out specType);
+
+                // 舊版 Excel 可能沒有規格類型：標題只有一種既有類型時沿用，否則使用第一個類型。
+                if (specType == null)
+                {
+                    var existingTypeIds = existingSpecs
+                        .Where(e => Norm(e.Title) == Norm(requested.Title))
+                        .Select(e => e.FK_Tid)
+                        .Distinct()
+                        .ToList();
+                    specType = existingTypeIds.Count == 1
+                        ? types.FirstOrDefault(e => e.Id == existingTypeIds[0])
+                        : types[0];
+                }
+
+                var key = SpecKey(specType?.Type, requested.Title);
+                if (specType == null || existingKeys.Contains(key)) continue;
+
+                news.Add(new Prod_Spec
+                {
+                    Title = requested.Title!.Trim(),
+                    FK_Tid = specType.Id,
+                    CreationTime = DateTime.Now,
+                    CreatorUserId = userId
+                });
+                existingKeys.Add(key);
+            }
+
             db.Prod_Specs.AddRange(news);
             await db.SaveChangesAsync();
         }
         // 唯一鍵 helper
         private static string Norm(string? s)
      => (s ?? "").Trim().Replace('\u00A0', ' ').ToUpperInvariant();
+
+        private static (string TypeName, string Title) SpecKey(string? typeName, string? title)
+            => (Norm(typeName), Norm(title));
 
         private static bool TryGetBonusKey(double? bonus, out int key)
         {
@@ -3299,12 +3317,20 @@ namespace EtheriT.Coker.Application.Product
 
             long siteId = await loginUserData.GetWebsiteId();
 
-            // 規格標題 → Id
-            var specTitleDict = await db.Prod_Specs
+            // 規格必須以「類型＋標題」辨識；不同類型可以有相同標題。
+            var specRows = await db.Prod_Specs
                 .Include(e => e.Prod_Spec_Type)
                 .Where(e => e.Prod_Spec_Type != null && e.Prod_Spec_Type.FK_WebsiteId == siteId)
-                .Select(e => new { e.Id, e.Title })
-                .ToDictionaryAsync(e => e.Title, e => e.Id);
+                .Select(e => new { e.Id, e.Title, TypeName = e.Prod_Spec_Type!.Type })
+                .ToListAsync();
+            var specByTypeAndTitle = specRows
+                .GroupBy(e => SpecKey(e.TypeName, e.Title))
+                .ToDictionary(e => e.Key, e => e.OrderByDescending(x => x.Id).First().Id);
+            var specIdsByTitle = specRows
+                .GroupBy(e => Norm(e.Title))
+                .ToDictionary(
+                    e => e.Key,
+                    e => e.Select(x => x.Id).Distinct().ToList());
 
             // Excel 對照：ItemNo 優先，否則用 Title
             var dtoByItemNo = prods
@@ -3334,10 +3360,11 @@ namespace EtheriT.Coker.Application.Product
                 .Where(p => !p.IsDeleted && psIds.Contains(p.FK_PSId))
                 .ToListAsync();
 
-            var priceDict = dbPrices.ToDictionary(
-                p => (p.FK_PSId, p.FK_RId, (int)(p.Bonus ?? 0)),
-                p => p
-            );
+            var priceDict = dbPrices
+                .GroupBy(p => (p.FK_PSId, p.FK_RId, (int)(p.Bonus ?? 0)))
+                .ToDictionary(
+                    p => p.Key,
+                    p => p.OrderByDescending(x => x.Id).First());
 
             foreach (var prod in items)
             {
@@ -3353,13 +3380,13 @@ namespace EtheriT.Coker.Application.Product
                     if (dto == null || dto.stocks == null || dto.stocks.Count == 0)
                         continue;
 
-                    // 將 S1/S2 Title => Id（找不到則 0）
+                    // 將「規格類型＋標題」轉為 Id；舊版資料僅在標題唯一時相容。
                     foreach (var s in dto.stocks)
                     {
                         if (!string.IsNullOrWhiteSpace(s.S1_Title))
-                            s.FK_S1id = specTitleDict.TryGetValue(s.S1_Title, out var id1) ? id1 : 0;
+                            s.FK_S1id = ResolveSpecId(s.S1_Name, s.S1_Title);
                         if (!string.IsNullOrWhiteSpace(s.S2_Title))
-                            s.FK_S2id = specTitleDict.TryGetValue(s.S2_Title, out var id2) ? id2 : 0;
+                            s.FK_S2id = ResolveSpecId(s.S2_Name, s.S2_Title);
                     }
 
                     foreach (var s in dto.stocks)
@@ -3494,6 +3521,17 @@ namespace EtheriT.Coker.Application.Product
                 {
                     errors.Add(new ImportMassageItem { Name = prod.Title, Description = ex.Message });
                 }
+            }
+
+            long ResolveSpecId(string? typeName, string? title)
+            {
+                if (string.IsNullOrWhiteSpace(title)) return 0;
+                if (specByTypeAndTitle.TryGetValue(SpecKey(typeName, title), out var exactId))
+                    return exactId;
+
+                return specIdsByTitle.TryGetValue(Norm(title), out var ids) && ids.Count == 1
+                    ? ids[0]
+                    : 0;
             }
         }
     }

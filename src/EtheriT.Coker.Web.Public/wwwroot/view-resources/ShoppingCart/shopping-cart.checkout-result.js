@@ -67,15 +67,18 @@
         } else if (window.location.search.substring(1).startsWith("reorder")) {
             var ohid = parseInt(window.location.search.substring("reorder".length + 1));
             Coker.Order.GetReorder(ohid).done(function (result) {
-                if (result.success && result.object != null) {
+                var reorderItems = result.object || result.Object;
+                if (result.success && Array.isArray(reorderItems) && reorderItems.length > 0) {
                     $("#Step1 > .card-body").removeClass("d-none");
                     S.buy_step_swiper.enable();
                     $("#Purchase_Null").addClass("d-none");
-                    cart.Items.CartInit(result.object)
+                    cart.Items.CartInit(reorderItems)
                 } else {
-                    window.location.href = `/${OrgName}/ShoppingCar`;
+                    window.location.replace(`/${OrgName}/ShoppingCar`);
                 }
-            })
+            }).fail(function () {
+                window.location.replace(`/${OrgName}/ShoppingCar`);
+            });
         } else if (window.location.search.substring(1).startsWith("ECPayError")) {
             co.sweet.confirm("訂單付款發生錯誤", "", "確認", "", null);
         }
@@ -154,8 +157,18 @@
         header = header || {};
 
         var payment = String(cart.Utils.getValueIgnoreCase(header, "payment") || "");
+        var paymentCode = Number(cart.Utils.getValueIgnoreCase(header, "paymentCode") || 0);
         var total = String(cart.Utils.getValueIgnoreCase(header, "total") || "");
         var memo = String(cart.Utils.getValueIgnoreCase(header, "memo") || "");
+        var $payInfo = $("#PaymentData .pay_info");
+        var $paidDateRow = $payInfo.find(".paid_date_row");
+        var $transferInfo = $payInfo.find(".transfer_payment_info");
+        var $transferFields = $transferInfo.find(".transfer_payment_fields");
+
+        $payInfo.addClass("d-none");
+        $paidDateRow.addClass("d-none");
+        $transferInfo.addClass("d-none");
+        $transferFields.empty();
 
         if (payment !== "") {
             $("#PaymentData").removeClass("d-none");
@@ -172,10 +185,39 @@
 
         if (S.step4PaidDateHtml !== "") {
             $("#PaymentData .pay_info .paid_date").append(S.step4PaidDateHtml);
-            $("#PaymentData .pay_info").removeClass("d-none");
+            $paidDateRow.removeClass("d-none");
+            $payInfo.removeClass("d-none");
         } else if (memo !== "") {
             $("#PaymentData .pay_info .paid_date").html(memo);
-            $("#PaymentData .pay_info").removeClass("d-none");
+            $paidDateRow.removeClass("d-none");
+            $payInfo.removeClass("d-none");
+        }
+
+        if (paymentCode > 0 && Coker.Payment && typeof Coker.Payment.GetPaymentInfo === "function") {
+            Coker.Payment.GetPaymentInfo(paymentCode).done(function (items) {
+                if (!Array.isArray(items) || items.length === 0) return;
+
+                items.forEach(function (item) {
+                    var title = String(cart.Utils.getValueIgnoreCase(item, "title") || "");
+                    var value = String(cart.Utils.getValueIgnoreCase(item, "value") || "");
+                    if (title === "" || value === "") return;
+
+                    var $row = $('<div class="row mb-1"></div>');
+                    $row.append(
+                        $('<div class="col-auto col-sm-2 text-end ps-4"></div>').text(title + "：")
+                    );
+                    $row.append(
+                        $('<div class="col text-start ps-0 text-break"></div>').text(value)
+                    );
+                    $transferFields.append($row);
+                });
+
+                if ($transferFields.children().length > 0) {
+                    $transferInfo.removeClass("d-none");
+                    $payInfo.removeClass("d-none");
+                    S.buy_step_swiper.update();
+                }
+            });
         }
     }
     function OrderSuccess(result) {

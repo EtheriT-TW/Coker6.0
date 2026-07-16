@@ -24,7 +24,10 @@ namespace EtheriT.Coker.Core.Models
         // 是否已結帳
         public bool IsOrder { get; set; }
         // 結帳後才存入
+        public long? ProductId { get; set; }
         public string? ProdName { get; set; }
+        public string? S1Title { get; set; }
+        public string? S2Title { get; set; }
         public string? LogisticsSubType  { get; set; }
         public string? CVSStoreID { get; set; }
         public string? CVSStoreName { get; set; }

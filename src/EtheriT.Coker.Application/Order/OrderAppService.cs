@@ -330,6 +330,26 @@ namespace EtheriT.Coker.Application.Order
                 .GroupBy(sc => sc.FK_PSid)
                 .ToDictionary(g => g.Key, g => g.Sum(sc => sc.Quantity));
 
+            var specIds = carts
+                .SelectMany(sc => new[]
+                {
+                    sc.FK_S1id,
+                    sc.FK_S2id,
+                    sc.Prod_Stock?.FK_S1id,
+                    sc.Prod_Stock?.FK_S2id
+                })
+                .Where(id => id.HasValue && id.Value > 0)
+                .Select(id => id!.Value)
+                .Distinct()
+                .ToList();
+
+            var specTitles = specIds.Any()
+                ? await db.Prod_Specs
+                    .IgnoreQueryFilters()
+                    .Where(spec => specIds.Contains(spec.Id))
+                    .ToDictionaryAsync(spec => spec.Id, spec => spec.Title)
+                : new Dictionary<long, string>();
+
             foreach (var item in qtyByStockId)
             {
                 var stockId = item.Key;
@@ -353,6 +373,16 @@ namespace EtheriT.Coker.Application.Order
 
             foreach (var sc in carts)
             {
+                var stock = sc.Prod_Stock;
+                var currentS1Title = stock?.FK_S1id.HasValue == true && specTitles.TryGetValue(stock.FK_S1id.Value, out var checkoutS1Title)
+                    ? checkoutS1Title
+                    : null;
+                var currentS2Title = stock?.FK_S2id.HasValue == true && specTitles.TryGetValue(stock.FK_S2id.Value, out var checkoutS2Title)
+                    ? checkoutS2Title
+                    : null;
+                // Prod_Stock 仍存在且庫存足夠時，規格 ID／名稱異動由購物車畫面
+                // 提醒使用者確認；正式下單時將目前規格名稱寫入最終快照。
+
                 decimal unitPrice;
                 int unitBonus;
 
@@ -389,8 +419,26 @@ namespace EtheriT.Coker.Application.Order
                 // 正式訂單才回寫購物車狀態
                 if (!previewOnly)
                 {
+                    var productId = sc.Prod_Stock?.FK_Pid;
+                    var productName = sc.Prod_Stock?.Prod?.Title;
+
+                    // 商品名稱最早會在加入購物車時寫入；正式下單時再以
+                    // 當下商品資料確認一次，並保留舊購物車名稱作為 fallback。
+                    if (string.IsNullOrWhiteSpace(productName))
+                        productName = sc.ProdName;
+
+                    if (!productId.HasValue || productId.Value <= 0)
+                        throw new Exception($"找不到商品資料（ShoppingCartId={sc.Id}），無法建立訂單。");
+
+                    if (string.IsNullOrWhiteSpace(productName))
+                        throw new Exception($"商品名稱為空（ShoppingCartId={sc.Id}），無法建立訂單。");
+
                     sc.Price = unitPrice;
                     sc.Bonus = bonusEnabled ? unitBonus : 0;
+                    sc.ProductId = productId.Value;
+                    sc.ProdName = productName.Trim();
+                    sc.S1Title = currentS1Title;
+                    sc.S2Title = currentS2Title;
                     sc.IsOrder = true;
                     sc.LastModifierUserId = userId;
                     sc.LastModificationTime = now;
@@ -1393,75 +1441,23 @@ namespace EtheriT.Coker.Application.Order
         }
         public async Task<List<OrderDetailsGetAllDto>> GetOrderDetails(long id)
         {
-            List<OrderDetailsGetAllDto> output = new List<OrderDetailsGetAllDto>();
-            try
+            var details = await GetOrderDetailSnapshotDisplayAsync(id);
+
+            return details.Select(detail => new OrderDetailsGetAllDto
             {
-                Guid UUID = await tokenAppService.GetUUID();
-                var db_oh = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
-                var orgName = await loginUserData.GetWebsiteOrgName();
-                if (db_oh != null)
-                {
-                    output = await (from od in db.Order_Details
-                                    where od.FK_OId == db_oh.Id
-                                    from sc in db.ShoppingCarts
-                                    where sc.Id == od.FK_SCId
-                                    from ps in db.Prod_Stocks
-                                    where ps.Id == sc.FK_PSid
-                                    from pp in db.Prod_Prices
-                                    where pp.FK_PSId == ps.Id && pp.Id == sc.FK_PriceId
-                                    from p in db.Prods
-                                    where p.Id == ps.FK_Pid
-                                    where sc.Quantity > 0
-
-                                    let unitPrice = sc.Price == 0 ? (pp.Price ?? 0) : sc.Price
-                                    let unitBonus = sc.Bonus == null ? (pp.Bonus ?? 0) : sc.Bonus
-
-                                    select new OrderDetailsGetAllDto
-                                    {
-                                        PId = p.Id,
-                                        PSId = ps.Id,
-                                        Title = p.Title,
-                                        S1Title = ps.FK_S1id.ToString(),
-                                        S2Title = ps.FK_S2id.ToString(),
-                                        Description = p.Description,
-                                        Price = unitPrice,
-                                        BonusPrice = unitBonus,
-                                        SCPrice = sc.Price,
-                                        Quantity = sc.Quantity,
-                                        Subtotal = unitPrice * sc.Quantity,
-                                        ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                                        .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
-                                                        .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == p.FK_WebsiteId && e.fileUpload.ContentType.StartsWith("image"))
-                                                        .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
-                                                      select new DirectoryReleInfoDto
-                                                      {
-                                                          Link = (f.fileUpload != null ? (f.fileUpload.DownloadFileName ?? "/images/noImg.jpg") : "/images/noImg.jpg").Replace("upload", $"upload/{orgName}").Replace("//", "/")
-                                                      }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
-                                    }).ToListAsync();
-
-                    var token = await tokenAppService.CheckToken(null);
-                    long role = 0;
-                    if (token != null && token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
-
-                    var db_sp = db.Prod_Specs.ToList();
-                    foreach (var item in output)
-                    {
-                        if (item.SCPrice == 0 && role > 1)
-                        {
-                            var price = await db.Prod_Prices.Where(e => e.FK_RId == role && e.FK_PSId == item.PSId).Select(e => e.Price).FirstOrDefaultAsync();
-                            if (price != null && price != 0) item.Price = price ?? 0;
-                        }
-                        item.S1Title = int.Parse(item.S1Title ?? "0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S1Title!))?.Title;
-                        item.S2Title = int.Parse(item.S2Title ?? "0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S2Title!))?.Title;
-                    }
-                }
-                else throw new Exception("查無訂單資料");
-            }
-            catch (Exception e)
-            {
-
-            }
-            return output;
+                PId = detail.ProdId,
+                PSId = detail.ProdStockId,
+                Title = detail.Title,
+                Description = detail.Describe,
+                ImagePath = detail.ImagePath,
+                S1Title = detail.S1Title,
+                S2Title = detail.S2Title,
+                Price = detail.Price,
+                BonusPrice = detail.Bonus,
+                SCPrice = detail.Price,
+                Quantity = detail.Quantity,
+                Subtotal = detail.Subtotal
+            }).ToList();
         }
         // 改寫部分 後續會將舊程式碼移除
         private async Task<List<OrderDetailDisplayDto>> GetDetailsDisplay(long ohid)
@@ -1873,16 +1869,8 @@ namespace EtheriT.Coker.Application.Order
                             temp_OrderHeader.Action = "";
                         }
 
-                        var temp_OrderDetails = new List<ShoppingCartDisplayDto>();
-                        var order_details = await db.Order_Details.Where(e => e.FK_OId == order_header.Id).ToListAsync();
-                        foreach (var order_detail in order_details)
-                        {
-                            var shoppingCart = await db.ShoppingCarts.Where(e => e.Id == order_detail.FK_SCId && e.Quantity > 0 && (e.Price > 0 || e.Bonus > 0) && e.IsOrder).FirstOrDefaultAsync();
-                            if (shoppingCart != null)
-                            {
-                                temp_OrderDetails.Add(await shoppingCartAppService.GetDropOne(shoppingCart.Id, true));
-                            }
-                        }
+                        var snapshotDetails = await GetDetailsDisplay(order_header.Id);
+                        var temp_OrderDetails = mapper.Map<List<ShoppingCartDisplayDto>>(snapshotDetails);
                         output.Add(new OrderDataGetDto()
                         {
                             OrderHeader = temp_OrderHeader,
@@ -1976,27 +1964,28 @@ namespace EtheriT.Coker.Application.Order
         private async Task<List<OrderDetailDisplayDto>> GetOrderDetailSnapshotDisplayAsync(long ohid)
         {
             var orgName = await loginUserData.GetWebsiteOrgName();
+            var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
 
             var details = await (
                 from od in db.Order_Details
                 join sc in db.ShoppingCarts on od.FK_SCId equals sc.Id
-                join ps in db.Prod_Stocks on sc.FK_PSid equals ps.Id
-                join p in db.Prods on ps.FK_Pid equals p.Id
                 where od.FK_OId == ohid
                       && !od.IsDeleted
                       && sc.Quantity > 0
                       && sc.IsOrder
                 select new OrderDetailDisplayDto
                 {
-                    ProdId = p.Id,
-                    ProdStockId = ps.Id,
+                    PId = sc.ProductId ?? 0,
+                    ProdId = sc.ProductId ?? 0,
+                    SCId = sc.Id,
+                    ProdStockId = sc.FK_PSid,
                     ProdPriceId = sc.FK_PriceId ?? 0,
 
-                    Title = !string.IsNullOrWhiteSpace(sc.ProdName) ? sc.ProdName : p.Title,
-                    Describe = p.Description,
+                    Title = sc.ProdName ?? "",
+                    Describe = "",
 
-                    S1Title = ps.FK_S1id.ToString(),
-                    S2Title = ps.FK_S2id.ToString(),
+                    S1Title = sc.S1Title ?? "",
+                    S2Title = sc.S2Title ?? "",
 
                     Price = (int)Math.Round(sc.Price, MidpointRounding.AwayFromZero),
                     Bonus = sc.Bonus ?? 0,
@@ -2007,39 +1996,23 @@ namespace EtheriT.Coker.Application.Order
 
                     ImagePath = (
                         from f in db.FileBinds.Include(e => e.fileUpload)
-                        where f.Sid == p.Id
+                        where f.Sid == sc.ProductId
                               && f.type == (int)FileBindTypeEnum.產品
                               && f.fileUpload != null
-                              && f.fileUpload.FK_WebsiteId == p.FK_WebsiteId
+                              && (websiteId == 0 || f.fileUpload.FK_WebsiteId == websiteId)
                               && f.fileUpload.ContentType.StartsWith("image")
                         orderby f.SerNo, f.CreationTime
                         select f.fileUpload.DownloadFileName
-                    ).FirstOrDefault() ?? "/images/noImg.jpg"
+                    ).FirstOrDefault() ?? "/images/RemovedProd.png"
                 }
             ).ToListAsync();
 
-            var specIds = details
-                .SelectMany(x => new[] { x.S1Title, x.S2Title })
-                .Where(x => long.TryParse(x, out var id) && id > 0)
-                .Select(long.Parse)
-                .Distinct()
-                .ToList();
-
-            var specMap = specIds.Any()
-                ? await db.Prod_Specs
-                    .Where(x => specIds.Contains(x.Id))
-                    .ToDictionaryAsync(x => x.Id, x => x.Title)
-                : new Dictionary<long, string>();
-
             foreach (var item in details)
             {
-                item.S1Title = long.TryParse(item.S1Title, out var s1id) && specMap.TryGetValue(s1id, out var s1Title)
-                    ? s1Title
-                    : "";
-
-                item.S2Title = long.TryParse(item.S2Title, out var s2id) && specMap.TryGetValue(s2id, out var s2Title)
-                    ? s2Title
-                    : "";
+                if (string.IsNullOrWhiteSpace(item.ImagePath))
+                {
+                    item.ImagePath = "/images/RemovedProd.png";
+                }
 
                 if (!string.IsNullOrWhiteSpace(orgName) && !string.IsNullOrWhiteSpace(item.ImagePath))
                 {
@@ -3554,17 +3527,13 @@ namespace EtheriT.Coker.Application.Order
                     {
                         DetailId = x.Id,
                         CartId = x.ShoppingCart != null ? x.ShoppingCart.Id : 0,
-                        ProductId = x.ShoppingCart != null && x.ShoppingCart.Prod_Stock != null
-                            ? x.ShoppingCart.Prod_Stock.FK_Pid
+                        ProductId = x.ShoppingCart != null
+                            ? x.ShoppingCart.ProductId ?? 0
                             : 0,
                         ProductName =
                             x.ShoppingCart != null && !string.IsNullOrWhiteSpace(x.ShoppingCart.ProdName)
                                 ? x.ShoppingCart.ProdName
-                                : (x.ShoppingCart != null &&
-                                   x.ShoppingCart.Prod_Stock != null &&
-                                   x.ShoppingCart.Prod_Stock.Prod != null
-                                    ? x.ShoppingCart.Prod_Stock.Prod.Title
-                                    : null),
+                                : null,
                         Quantity = x.ShoppingCart != null ? x.ShoppingCart.Quantity : 0,
                         UnitPrice = x.ShoppingCart != null ? x.ShoppingCart.Price : 0m
                     })

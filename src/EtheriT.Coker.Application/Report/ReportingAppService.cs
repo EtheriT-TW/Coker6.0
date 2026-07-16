@@ -56,26 +56,14 @@ namespace EtheriT.Coker.Application.Report
                         送貨方式 = order.LogisticsSetting.Title,
                         訂單明細 = (from x in order.Order_Details
                                 where x.ShoppingCart != null
-                                join ps in db.Prod_Stocks on x.ShoppingCart.FK_PSid equals ps.Id into psGroup
-                                from ps in psGroup.DefaultIfEmpty()
-
-                                join p in db.Prods on ps.FK_Pid equals p.Id into prod4Group
-                                from p in prod4Group.DefaultIfEmpty()
-
-                                join s1 in db.Prod_Specs on ps.FK_S1id equals s1.Id into s1Group
-                                from s1 in s1Group.DefaultIfEmpty() // LEFT JOIN，當 FK_S1id 為 NULL 時，s1 會是 null
-
-                                join s2 in db.Prod_Specs on ps.FK_S2id equals s2.Id into s2Group
-                                from s2 in s2Group.DefaultIfEmpty() // LEFT JOIN，當 FK_S2id 為 NULL 時，s2 會是 null
-
                                 select new R001撿貨單Model.訂單明細Item
                                 {
-                                    商品名稱 = x.ShoppingCart?.ProdName ?? p.Title,
-                                    商品規格 = s1 == null && s2 == null
+                                    商品名稱 = x.ShoppingCart.ProdName ?? "",
+                                    商品規格 = string.IsNullOrWhiteSpace(x.ShoppingCart.S1Title) && string.IsNullOrWhiteSpace(x.ShoppingCart.S2Title)
                                     ? "無"
-                                    : s1 != null && s2 != null
-                                        ? $"{s1.Title} / {s2.Title}"
-                                        : s1?.Title ?? s2?.Title,
+                                    : !string.IsNullOrWhiteSpace(x.ShoppingCart.S1Title) && !string.IsNullOrWhiteSpace(x.ShoppingCart.S2Title)
+                                        ? $"{x.ShoppingCart.S1Title} / {x.ShoppingCart.S2Title}"
+                                        : x.ShoppingCart.S1Title ?? x.ShoppingCart.S2Title,
                                     商品單價 = (
                                     (x.ShoppingCart.Price == 0 && (x.ShoppingCart.Bonus ?? 0) > 0)
                                         ? $"紅利：{(x.ShoppingCart.Bonus ?? 0)}"

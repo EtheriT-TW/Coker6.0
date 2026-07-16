@@ -780,9 +780,11 @@ function DataInsert(data, frame) {
                     break;
                 case "imagePath":
                     $this.attr({
-                        src: data[key],
+                        src: data[key] || "/images/RemovedProd.png",
                         alt: `${data['title']}的圖片`
-                    })
+                    }).one("error", function () {
+                        $(this).attr("src", "/images/RemovedProd.png");
+                    });
                     break;
                 case "spec":
                     var spec = data['s1Title'] + (data['s2Title'] == "" ? "" : ` ${data['s2Title']}`)

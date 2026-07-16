@@ -337,32 +337,39 @@ namespace EtheriT.Coker.Application.ThirdParty
 
             try
             {
-                var TPid = await db.PaymentTypes.Where(e => e.Id == paytypeid).Select(e => e.FK_ThirdPartyId).FirstOrDefaultAsync();
-                if (TPid != null)
+                var payment = await db.PaymentTypes
+                    .FirstOrDefaultAsync(e => e.Id == paytypeid);
+
+                // 此 API 會由前台呼叫，只允許公開人工轉帳所需欄位。
+                // 第三方金流的 MerchantID、HashKey 等設定不可透過此 API 回傳。
+                if (payment == null
+                    || !string.Equals(payment.Code, "ATM", StringComparison.OrdinalIgnoreCase))
                 {
-                    var thirdpartykeypairs = await db.ThirdPartyKeypairs.Where(e => e.FK_TPid == TPid).ToListAsync();
-                    if (thirdpartykeypairs != null && thirdpartykeypairs.Count > 0)
-                    {
-                        foreach (var thirdpartykeypair in thirdpartykeypairs)
-                        {
-                            var value = await db.ThirdPartyKeypairValues.Where(e => e.FK_ThirdPartyKeypairId == thirdpartykeypair.Id && e.FK_WebsiteId == WebsiteId).FirstOrDefaultAsync();
-                            if (value != null)
-                            {
-                                output.Add(new ThirdPartyKeypairItemOutputDto()
-                                {
-                                    Id = thirdpartykeypair.Id,
-                                    Title = thirdpartykeypair.Title,
-                                    Value = value.Value,
-                                    Code = thirdpartykeypair.Code,
-                                    PromptText = thirdpartykeypair.PromptText,
-                                });
-                            }
-                        }
-                    }
+                    return output;
                 }
-                else throw new Exception("付款資訊有誤");
+
+                // 使用固定代碼而非可調整的顯示名稱，避免既有資料含空白或名稱異動時查不到。
+                var publicFieldCodes = new[] { "bankNo", "account", "shopID" };
+
+                output = await (
+                    from key in db.ThirdPartyKeypairs
+                    join value in db.ThirdPartyKeypairValues
+                        on key.Id equals value.FK_ThirdPartyKeypairId
+                    where key.FK_TPid == payment.FK_ThirdPartyId
+                          && value.FK_WebsiteId == WebsiteId
+                          && publicFieldCodes.Contains(key.Code ?? "")
+                    orderby key.Id
+                    select new ThirdPartyKeypairItemOutputDto
+                    {
+                        Id = key.Id,
+                        Title = key.Title ?? "",
+                        Value = value.Value,
+                        Code = key.Code ?? "",
+                        PromptText = ""
+                    }
+                ).ToListAsync();
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
             return output;

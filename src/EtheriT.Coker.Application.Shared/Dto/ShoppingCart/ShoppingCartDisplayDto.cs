@@ -38,6 +38,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public string? CVSAddress { get; set; }
         public string? CVSTelephone { get; set; }
         public string? CVSOutSide { get; set; }
+        public bool NoStockManagement { get; set; }
         public FreightGetAllListDto? Freight { get; set; }
     }
 }

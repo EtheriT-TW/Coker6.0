@@ -233,7 +233,9 @@ function CartListAdd(data, $container) {
         }
     }
 
-    var max_quantity = data.quantity + data.stock;
+    var max_quantity = data.noStockManagement === true
+        ? Infinity
+        : data.quantity + data.stock;
 
     var item_list_ul = $container || $("#Step1 > .card-body > .purchase_list");
     var $template = $($("#Template_Cart_Details").html()).clone();

@@ -687,6 +687,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         && !IsCantBuyProdState(prods)
                         && (prods.permanent || (date_now > prods.StartTime && date_now < prods.EndTime));
                     temp_output.Stock = prod_stocks?.Stock ?? 0;
+                    temp_output.NoStockManagement = prods?.NoStockManagement == true;
 
                     if (!shoppingCart.IsOrder)
                     {
@@ -695,7 +696,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                             temp_output.ValidationCode = "ProductUnavailable";
                             temp_output.Describe = "此商品目前已下架或無法購買，請移除該品項。";
                         }
-                        else if (temp_output.Stock <= 0)
+                        else if (temp_output.Stock <= 0 && prods?.NoStockManagement != true)
                         {
                             temp_output.Available = false;
                             temp_output.ValidationCode = "StockNotEnough";
@@ -935,14 +936,14 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     {
                         if (oldsc.Prod_Stock.Prod.Status != ProdStatusEnum.售完)
                         {
-                            if (!oldsc.Prod_Stock.Prod.RemovedFromShelves && oldsc.Prod_Stock.Stock > 0)
+                            var skipStock = oldsc.Prod_Stock.Prod.NoStockManagement;
+                            if (!oldsc.Prod_Stock.Prod.RemovedFromShelves && (skipStock || oldsc.Prod_Stock.Stock > 0))
                             {
                                 ShoppingCartAddUpDto newsc = new ShoppingCartAddUpDto();
                                 newsc = mapper.Map<ShoppingCartAddUpDto>(oldsc);
                                 newsc.Id = null;
-                                if (newsc.Quantity > oldsc.Prod_Stock.Stock) newsc.Quantity = (int)oldsc.Prod_Stock.Stock;
-                                else newsc.Quantity = oldsc.Quantity;
-                                // 再買一次需保留原訂單快照，購物車才能提示商品或規格已異動。
+                                if (!skipStock && newsc.Quantity > oldsc.Prod_Stock.Stock) newsc.Quantity = (int)oldsc.Prod_Stock.Stock;
+                                else newsc.Quantity = oldsc.Quantity;                                // 再買一次需保留原訂單快照，購物車才能提示商品或規格已異動。
                                 var temp_response = await AddUpInternal(newsc, oldsc);
                                 if (temp_response.Success) StockAllNull = false;
                                 else throw new Exception(temp_response.Message);

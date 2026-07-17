@@ -220,6 +220,7 @@ namespace EtheriT.Coker.Application.Product
                 output.Success = tag_response.Success && techcert_response.Success && stock_response.Success;
                 output.Error = stock_change ? "" : stock_response.Message == "庫存變動" ? stock_response.Message : "";
                 output.Message = asoid.ToString();
+                output.Object = stock_response.Object;
             }
             catch (Exception e)
             {

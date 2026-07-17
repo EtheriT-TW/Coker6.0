@@ -46,7 +46,10 @@ namespace EtheriT.Coker.Application.Report
                         網站名稱 = siteName,
                         訂單折抵 = order.Discount ?? 0,
                         紅利折抵 = order.Bonus ?? 0,
-                        訂單總金額 = order.Subtotal + order.Freight - (order.Discount ?? 0),
+                        // Subtotal 是下單時已套用行銷活動與紅利折抵後保存的商品應付金額。
+                        // 列印明細應與訂單明細、付款及退款流程一致，直接使用訂單保存的金額，
+                        // 不可再次扣除 Discount，否則行銷活動折抵會被重複計算。
+                        訂單總金額 = order.Subtotal + order.Freight,
                         發票資訊 = $"{(
                             string.IsNullOrEmpty(order.Carrier) ?
                                 string.IsNullOrEmpty(order.UniformId) ? "" : $"統一編號：{order.UniformId}\n公司抬頭：{order.InvoiceTitle}\n公司地址：{order.InvoiceAddress}" :

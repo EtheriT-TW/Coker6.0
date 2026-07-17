@@ -10,5 +10,6 @@ namespace EtheriT.Coker.Web.MVC.Models.ProductManagement
         public List<AddRoleDto>? Roles { get; set; }
         public List<ProdStatusEnum> ProdStatus { get; set; }
         public bool HasAnyItemNo { get; set; } = false;
-        }
+        public bool PriceOptional { get; set; } = false;
+    }
 }

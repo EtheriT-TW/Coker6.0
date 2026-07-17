@@ -886,7 +886,18 @@ namespace EtheriT.Coker.Application
 
             return $"/upload/{orgName}/{mediaLink.Substring("/upload/".Length)}";
         }
-        public async Task<List<FileGetProdDisplayDto>> getProdMultimedia(long Pid, int size)
+
+        public Task<List<FileGetProdDisplayDto>> getProdMultimedia(long Pid, int size)
+        {
+            return getBindMultimedia(Pid, size, FileBindTypeEnum.產品);
+        }
+
+        public Task<List<FileGetProdDisplayDto>> getSpecMultimedia(long Pid, int size)
+        {
+            return getBindMultimedia(Pid, size, FileBindTypeEnum.產品規格圖);
+        }
+
+        private async Task<List<FileGetProdDisplayDto>> getBindMultimedia(long Pid, int size, FileBindTypeEnum bindType)
         {
             var output = new List<FileGetProdDisplayDto>();
             string orgName = await loginUserData.GetWebsiteOrgName();
@@ -899,7 +910,7 @@ namespace EtheriT.Coker.Application
                     websiteId = await loginUserData.GetWebsiteId();
                 }
 
-                var fbs = await (db.FileBinds.Where(e => e.Sid == Pid && e.type == (int)FileBindTypeEnum.產品).Where(e => !e.IsDeleted)).ToListAsync();
+                var fbs = await (db.FileBinds.Where(e => e.Sid == Pid && e.type == (int)bindType).Where(e => !e.IsDeleted)).ToListAsync();
 
                 if (fbs != null)
                 {
@@ -1020,7 +1031,7 @@ namespace EtheriT.Coker.Application
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                var checkStatus = new List<int> { (int)FileBindTypeEnum.產品, (int)FileBindTypeEnum.產品檔案, (int)FileBindTypeEnum.文章檔案 };
+                var checkStatus = new List<int> { (int)FileBindTypeEnum.產品, (int)FileBindTypeEnum.產品規格圖, (int)FileBindTypeEnum.產品檔案, (int)FileBindTypeEnum.文章檔案 };
                 var userid = await loginUserData.GetUserId();
                 var db_fb = await db.FileBinds.Where(e => !e.IsDeleted && e.Sid == dto.sid && e.FK_FileUploadId == dto.id)
                     .Where(e => checkStatus.Contains(e.type))
@@ -1327,7 +1338,7 @@ namespace EtheriT.Coker.Application
                    && prodIds.Contains(p.Id)
                 select p.Id;
 
-            // 先抓「商品綁定的原始圖片」
+            // 先抓「商品綁定的原始圖片」(type=產品)
             // 重點：
             // 1. 只取 FileUpload.ContentType 為 image/* 的資料
             // 2. 排除 youtube、video/*、一般檔案
@@ -1346,7 +1357,6 @@ namespace EtheriT.Coker.Application
                 select new
                 {
                     ProdId = fb.Sid,
-                    UploadId = f.Id,
                     GuidKey = f.GuidKey,
                     OriginalPath = f.DownloadFileName,
                     SerNo = fb.SerNo,
@@ -1355,22 +1365,69 @@ namespace EtheriT.Coker.Application
                 }
             ).ToListAsync();
 
-            if (imageBinds.Count == 0)
-                return new Dictionary<long, string>();
+            // 每個商品挑一張「要顯示的圖」：優先商品圖，商品圖沒有時退規格圖
+            var firstImageMap = new Dictionary<long, (Guid GuidKey, string? OriginalPath)>();
 
-            // 每個商品只取排序後的第一張「圖片」
-            var firstImageMap = imageBinds
-                .GroupBy(x => x.ProdId)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g
-                        .OrderBy(x => x.SerNo)
+            foreach (var g in imageBinds.GroupBy(x => x.ProdId))
+            {
+                var first = g
+                    .OrderBy(x => x.SerNo)
+                    .ThenBy(x => x.CreationTime)
+                    .ThenBy(x => x.BindId)
+                    .First();
+                firstImageMap[g.Key] = (first.GuidKey, first.OriginalPath);
+            }
+
+            // 沒有商品圖的商品，退而使用其規格列(Prod_Stock)上的第一張規格圖(type=產品規格圖)
+            var missingProdIds = prodIds
+                .Where(id => !firstImageMap.ContainsKey(id))
+                .Distinct()
+                .ToList();
+
+            if (missingProdIds.Count > 0)
+            {
+                var specImageBinds = await (
+                    from s in db.Prod_Stocks.AsNoTracking()
+                    join pid in siteProdIds on s.FK_Pid equals pid
+                    join fb in db.FileBinds.AsNoTracking() on s.Id equals fb.Sid
+                    join f in db.FileUploads.AsNoTracking() on fb.FK_FileUploadId equals f.Id
+                    where !s.IsDeleted
+                       && missingProdIds.Contains(s.FK_Pid)
+                       && fb.type == (int)FileBindTypeEnum.產品規格圖
+                       && !fb.IsDeleted
+                       && !f.IsDeleted
+                       && f.FK_WebsiteId == webid
+                       && f.ContentType != null
+                       && f.ContentType.StartsWith("image/")
+                    select new
+                    {
+                        ProdId = s.FK_Pid,
+                        GuidKey = f.GuidKey,
+                        OriginalPath = f.DownloadFileName,
+                        StockSerNo = s.Ser_No,
+                        SerNo = fb.SerNo,
+                        CreationTime = fb.CreationTime,
+                        BindId = fb.Id
+                    }
+                ).ToListAsync();
+
+                // 先依規格列順序(Ser_No)，再依規格圖 SerNo，取整個商品的第一張規格圖
+                foreach (var g in specImageBinds.GroupBy(x => x.ProdId))
+                {
+                    var first = g
+                        .OrderBy(x => x.StockSerNo)
+                        .ThenBy(x => x.SerNo)
                         .ThenBy(x => x.CreationTime)
                         .ThenBy(x => x.BindId)
-                        .First()
-                );
+                        .First();
+                    firstImageMap[g.Key] = (first.GuidKey, first.OriginalPath);
+                }
+            }
 
-            // 若有壓縮圖，列表優先使用壓縮圖；但選哪一張商品圖仍以 FileBinds.SerNo 第一張為準
+            if (firstImageMap.Count == 0)
+                return new Dictionary<long, string>();
+
+            // 若有壓縮圖，列表優先使用壓縮圖；但選哪一張圖仍以上面挑出的第一張為準
             var guidKeys = firstImageMap.Values
                 .Where(x => x.GuidKey != Guid.Empty)
                 .Select(x => x.GuidKey)
@@ -1413,12 +1470,11 @@ namespace EtheriT.Coker.Application
                 x => x.Key,
                 x =>
                 {
-                    var firstImage = x.Value;
+                    var (guidKey, originalPath) = x.Value;
+                    var path = originalPath;
 
-                    var path = firstImage.OriginalPath;
-
-                    if (firstImage.GuidKey != Guid.Empty &&
-                        compressedMap.TryGetValue(firstImage.GuidKey, out var compressedPath) &&
+                    if (guidKey != Guid.Empty &&
+                        compressedMap.TryGetValue(guidKey, out var compressedPath) &&
                         !string.IsNullOrWhiteSpace(compressedPath))
                     {
                         path = compressedPath;

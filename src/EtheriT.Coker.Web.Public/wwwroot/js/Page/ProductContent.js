@@ -336,6 +336,7 @@
             this.product = product || { stocks: [] };
             this.options = options;
             this.canShop = !!options.canShop;
+            this.noStockManagement = !!(this.product && this.product.noStockManagement);
             this.stocks = Array.isArray(this.product.stocks) ? this.product.stocks.map(this.normalizeStock.bind(this)) : [];
             this.specMap = this.buildSpecMap();
             this.specMode = analyzeSpecStructure(this.stocks).mode;
@@ -396,7 +397,7 @@
         bootstrap() {
             if (this.stocks.length === 0) return;
 
-            const firstAvailable = this.stocks.find(x => !this.canShop || x.stock >= x.minQty) || this.stocks[0];
+            const firstAvailable = this.stocks.find(x => !this.canShop || this.noStockManagement || x.stock >= x.minQty) || this.stocks[0];
 
             if (this.specMode === 'none') {
                 this.current.s1 = 0;
@@ -431,7 +432,7 @@
                 .map(x => ({
                     id: x.s2id,
                     title: x.s2Title,
-                    enabled: !this.canShop || x.stock >= x.minQty
+                    enabled: !this.canShop || this.noStockManagement || x.stock >= x.minQty
                 }))
                 .filter(x => x.id > 0)
                 .filter((item, index, array) => array.findIndex(x => x.id === item.id) === index);
@@ -546,7 +547,7 @@
             if (!this.canShop) return false;
             if (!stock) return false;
             if (stock.timePrice) return false;
-            if (stock.stock < stock.minQty) return false;
+            if (stock.stock < stock.minQty && !this.noStockManagement) return false;
             if (!this.current.priceId) return false;
             return true;
         }
@@ -1770,11 +1771,18 @@
             const stock = this.state.selection.getActiveStock();
             if (!stock) return;
 
+            const noStock = this.state.selection.noStockManagement;
             const min = stock.minQty;
-            const max = stock.stock - (stock.stock % stock.minQty);
-            this.$quantityInput.attr({ min, max, step: stock.minQty }).val(this.state.selection.current.quantity);
 
-            if (stock.stock < stock.minQty) {
+            this.$quantityInput.attr({ min, step: stock.minQty }).val(this.state.selection.current.quantity);
+
+            if (noStock) {
+                this.$quantityInput.removeAttr('max');
+            } else {
+                this.$quantityInput.attr('max', stock.stock - (stock.stock % stock.minQty));
+            }
+
+            if (!noStock && stock.stock < stock.minQty) {
                 this.$quantityWrap.addClass('isEmpty');
             } else {
                 this.$quantityWrap.removeClass('isEmpty');

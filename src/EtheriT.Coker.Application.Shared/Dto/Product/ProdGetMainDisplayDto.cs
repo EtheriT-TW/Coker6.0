@@ -20,6 +20,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public string? OriPrice { get; set; }
         public string? SuggestPrice { get; set; }
         public bool IsTimePrice { get; set; }
+        public bool NoStockManagement { get; set; }
         public string? PriceDisplayText { get; set; }
         public string? BaseRoleName { get; set; }
         public string? CurrentRoleName { get; set; }

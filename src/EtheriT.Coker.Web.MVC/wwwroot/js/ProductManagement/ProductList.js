@@ -1,12 +1,15 @@
 ﻿var $display, $removedFromShelves, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count,
-    $marks, $price, $subItemNo, $stock_number, $packingPoint_number, $alert_number, $min_number, $date, $picker, $permanent, $itemNo, $itemNo_count;
+    $marks, $price, $subItemNo, $stock_number, $packingPoint_number, $alert_number, $min_number, $date, $picker, $permanent, $itemNo, $itemNo_count, $noStockManagement;
 var startDate, endDate, keyId, price_tid, temp_psid;
+var specDescModal, $spec_desc_input, $currentSpecDescRow = null;
 var productTagFilter = null;
 var productTagOptions = [];
 var productTagOptionsPromise = null;
 var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], spec_pick_list, suggest_price_list = []
 var $price_modal, priceModal
 var total_files = [];
+var spec_media_map = {};
+var specMediaModal;
 let importProdPopup = null;
 var elementReady = false;
 var pendingHashEdit = false;
@@ -177,7 +180,7 @@ async function PageReady() {
     } catch (error) {
         $("#Spec_Frame").addClass("no-logistics-box");
     }
-    
+
     // 啟動
     const editor = grapesInit({
         save: function (html, css) {
@@ -226,6 +229,24 @@ async function PageReady() {
             }
         });
     }
+
+    // 開啟規格描述 modal（.btn_spec_desc_edit 在樣板內，用 delegated）
+    $(document).on("click", ".btn_spec_desc_edit", function (e) {
+        e.preventDefault();
+        $currentSpecDescRow = $(this).closest(".spec_list");
+        $spec_desc_input.val($currentSpecDescRow.data("specdesc") || "");
+        $("#SpecDescCount").text($spec_desc_input.val().length);
+        specDescModal.show();
+    });
+    $spec_desc_input.on("input", function () {
+        $("#SpecDescCount").text($(this).val().length);
+    });
+    $(".btn_spec_desc_save").on("click", function () {
+        if ($currentSpecDescRow != null) {
+            $currentSpecDescRow.data("specdesc", $spec_desc_input.val());
+        }
+        specDescModal.hide();
+    });
 
     /* File Upload */
     co.File.ListFileInit();
@@ -281,7 +302,7 @@ async function PageReady() {
                                 return false;
                             }
                         })
-                        if (price_null) {
+                        if (price_null && window.priceOptional !== true) {
                             co.sweet.error("錯誤", "請確實填寫價格", function () {
                                 setTimeout(function () {
                                     $('html, body').animate({ scrollTop: $null_input.offset().top - ($("header").height() * 2) }, 0);
@@ -304,7 +325,7 @@ async function PageReady() {
             BackToList(true);
         });
     })
-  
+
     $(".btn_input_pic").on("click", function (event) {
         event.preventDefault();
         $(".input_pic").click();
@@ -322,7 +343,7 @@ async function PageReady() {
         SpecPriceAdd(null)
     });
     $(".btn_price_save").on("click", SpecPriceSave);
-    $("#TimePrice").on("change",function () {
+    $("#TimePrice").on("change", function () {
         if ($(this).prop("checked")) $(".priceSetting").addClass("d-none");
         else $(".priceSetting").removeClass("d-none");
     });
@@ -343,6 +364,7 @@ async function PageReady() {
             $date.attr("disabled", "disabled");
             startDate = null;
             endDate = null;
+            $removedFromShelves.prop("checked", true);
         } else {
             $date.removeAttr("disabled");
         }
@@ -387,7 +409,7 @@ async function PageReady() {
                                     return false;
                                 }
                             })
-                            if (price_null) {
+                            if (price_null && window.priceOptional !== true) {
                                 if ($removedFromShelves.is(":checked")) {
                                     $removedFromShelves.prop("checked", false);
                                     AddUp("已成功儲存，資料尚有缺漏或格式錯誤，未上架", "儲存發生未知錯誤", "Canvas");
@@ -544,14 +566,63 @@ function ElementInit() {
     $itemNo_count = $("#ProductForm .itemNo .itemNo_count");
     $display = $(`#ProductForm [name="Visible"]`);
     $removedFromShelves = $(`#ProductForm [name="RemovedFromShelves"]`);
+    $noStockManagement = $("#NoStockManagement");
 
-    priceModal = new bootstrap.Modal(document.getElementById('PriceModal'))
+    specDescModal = new bootstrap.Modal(document.getElementById('SpecDescModal'));
+    $spec_desc_input = $("#InputSpecDesc");
+
+    priceModal = new bootstrap.Modal(document.getElementById('PriceModal'));
+    specMediaModal = new bootstrap.Modal(document.getElementById('SpecMediaModal'));
+    document.getElementById('SpecMediaModal').addEventListener('hidden.bs.modal', function () {
+        var $block = $("#SpecMedia");
+        syncSpecMediaOrder($block);
+        $block.find("ul > li.upload_list").remove();
+        UploadPreviewFrameClear($block);
+        var $row = $block.data("spec-row");
+        if ($row && $row.length) refreshSpecThumb($row);
+    });
+
+    // 依畫面上的 li 順序，把 bucket 陣列「就地」重排（必須保留同一個陣列參照）
+    function syncSpecMediaOrder($block) {
+        var store = $block.data("files");
+        if (!store) return;
+
+        var ordered = [];
+        $block.find("ul > li.upload_list").each(function () {
+            var $li = $(this);
+            var f;
+            if (typeof $li.data("id") != "undefined") {
+                f = store.find(x => x.Id == $li.data("id"));
+            } else if (typeof $li.data("tempid") != "undefined") {
+                f = store.find(x => x.TempId == $li.data("tempid"));
+            }
+            if (f && ordered.indexOf(f) === -1) ordered.push(f);
+        });
+
+        // 補回沒出現在畫面上的項目（例如已標記刪除的），避免存檔時漏掉刪除
+        store.forEach(function (f) {
+            if (ordered.indexOf(f) === -1) ordered.push(f);
+        });
+
+        // 就地替換內容，維持同一個陣列參照（spec_media_map[key] 與 $block.data("files") 是同一個陣列）
+        store.length = 0;
+        Array.prototype.push.apply(store, ordered);
+    }
+
     $price_modal = $("#PriceModal >.modal-dialog > .modal-content > .modal-body > .priceSetting >.price_option");
     $("#SortCheck").on("change", function () {
         const $items = $(`[name="serNo"]`);
         if ($(this).prop("checked")) $items.removeAttr("disabled");
         else $items.attr({ disabled: "disabled" });
     });
+
+    $("#NoStockManagement").on("change", function () {
+        var disabled = $(this).prop("checked");
+        var $targets = $(".input_stock_number, .input_alert_number");
+        if (disabled) $targets.attr("disabled", "disabled");
+        else $targets.removeAttr("disabled");
+    });
+
     document.getElementById('PriceModal').addEventListener('hidden.bs.modal', function (event) {
         $price_modal.children(".frame").each(function () {
             $(this).remove();
@@ -613,6 +684,7 @@ function FormDataClear() {
     $alert_number.val("");
     $min_number.val(1);
     $permanent.prop("checked", false);
+    $noStockManagement.prop("checked", false);
     $date.val("");
     $date.removeAttr("disabled");
     startDate = null;
@@ -628,6 +700,8 @@ function FormDataClear() {
     });
     $(".data_upload > ul > .upload_list").remove();
     total_files = [];
+    spec_media_map = {};
+    $("#SpecMedia").data("files", null).data("spec-key", null);
 }
 function contentReady(e) {
     product_list = e;
@@ -740,8 +814,11 @@ function FormDataSet(result) {
     endDate = result.endTime;
     keyId = result.id;
     disp_opt = result.disp_Opt;
-    $removedFromShelves.prop("checked", !result.removedFromShelves)
+    $removedFromShelves.prop("checked", !result.removedFromShelves);
     $display.prop("checked", result.visible);
+    $noStockManagement.prop("checked", result.noStockManagement);
+    $noStockManagement.prop("checked", result.noStockManagement);
+    $noStockManagement.trigger("change");
     $name.val(result.title);
     $name_count.text($name.val().length);
     $itemNo.val(result.itemNo);
@@ -1045,7 +1122,16 @@ function SpecAdd(result) {
         suggest_price_obj["Price"] = 0;
         suggest_price_list.push(suggest_price_obj);
     }
-    
+
+    var _specKey = result != null ? ("P" + result.id) : ("T" + temp_psid);
+    spec_media_map[_specKey] = (result != null && result.multimedia)
+        ? result.multimedia.map(convertSpecMedia)
+        : [];
+    item.find(".btn_spec_img_edit").on("click", function () {
+        OpenSpecMediaModal(item);
+    });
+    refreshSpecThumb(item);
+
     if (item.data("timeprice")) {
         item_price.val("時價");
         item_price_count.addClass("d-none");
@@ -1068,7 +1154,8 @@ function SpecAdd(result) {
             item_price.val("");
         }
     }
-    
+
+    item.data("specdesc", result != null ? (result.specDescription || "") : "");
     item_subItemNo.val(result != null ? result.subItemNo : "");
     item_min.val(result != null ? result.min_Qty ?? 1 : 1);
     item_min.on("change", function () {
@@ -1138,17 +1225,13 @@ function SpecAdd(result) {
         e.preventDefault();
         var $self = $(this);
         var $self_p = $self.parents('.spec_list');
-        if (spec_num == 1) {
-            co.sweet.error("商品至少需有一種規格", null, false);
-        } else {
-            co.sweet.confirm("移除規格", "確定要移除此項規格嗎?", "　是　", "　否　", function () {
-                spec_remove_list.push($self_p.data("psid"));
-                spec_num -= 1;
-                if (item.data("serno") < $("#Spec_Frame").data("spec_num")) { SortChange($(".spec_list"), "bigger", item.data("serno"), $("#Spec_Frame").data("spec_num")); }
-                $self_p.remove();
-                $("#Spec_Frame").data("spec_num", spec_num)
-            })
-        }
+        co.sweet.confirm("移除規格", "確定要移除此項規格嗎?", "　是　", "　否　", function () {
+            spec_remove_list.push($self_p.data("psid"));
+            spec_num -= 1;
+            if (item.data("serno") < $("#Spec_Frame").data("spec_num")) { SortChange($(".spec_list"), "bigger", item.data("serno"), $("#Spec_Frame").data("spec_num")); }
+            $self_p.remove();
+            $("#Spec_Frame").data("spec_num", spec_num)
+        })
     })
 
     item.find(".spec_select").each(function () {
@@ -1201,6 +1284,11 @@ function SpecAdd(result) {
     $min_number = $(".input_min_number");
     $alert_number = $(".input_alert_number");
 
+    $alert_number = $(".input_alert_number");
+    if ($noStockManagement && $noStockManagement.is(":checked")) {
+        item.find(".input_stock_number, .input_alert_number").attr("disabled", "disabled");
+    }
+
     $("input[type='number']").on("input", function () {
         var $self = $(this);
         var value = $self.val();
@@ -1250,12 +1338,128 @@ function ISpecRepect() {
     })
     return isRepect;
 }
+
+function SpecRowKey($row) {
+    var psid = $row.data("psid");
+    if (psid != null && psid !== "" && typeof psid != "undefined") return "P" + psid;
+    return "T" + $row.data("temppsid");
+}
+
+function convertSpecMedia(m) {
+    var link = (m.link && m.link[0]) || "";
+    return {
+        Id: m.id,
+        Name: m.name,
+        File: m.fileType == 4 ? m.name : link,
+        Type: m.fileType,
+        Link: link,
+        SerNo: m.serNo,
+        IsDelete: false
+    };
+}
+
+function OpenSpecMediaModal($row) {
+    var key = SpecRowKey($row);
+    var $block = $("#SpecMedia");
+    var bucket = spec_media_map[key] || (spec_media_map[key] = []);
+
+    // 容器指向該列的 bucket（co.File 之後讀寫都會落到這裡）
+    $block.data("files", bucket);
+    $block.data("spec-key", key);
+    $block.data("file_num", 0);
+
+    // 重建清單
+    $block.find("ul > li.upload_list").remove();
+    UploadPreviewFrameClear($block);
+    bucket.filter(f => !f.IsDelete).forEach(function (f) {
+        SpecMediaRowRender(f, $block);
+    });
+
+    // 預設顯示預覽：有圖就顯示第一張，沒有則顯示預設框
+    var $default = $block.find(".preview_frame .default_frame");
+    $block.find(".preview_frame .default_frame").addClass("d-none");
+
+    var $items = $block.find("ul > li.upload_list");
+    if ($items.length) {
+        $items.first().trigger("click");                    // 有圖：顯示第一張，預設框保持隱藏
+    }
+
+
+    $block.data("spec-row", $row);
+    specMediaModal.show();
+}
+
+// 從內部 obj 渲染一列（不 push，資料已在 bucket）
+function SpecMediaRowRender(obj, $target) {
+    var item = $($("#TemplateUploadList").html()).clone();
+    var $ul = $target.children("ul");
+    var file_num = $ul.find("li.upload_list").length + 1;
+
+    item.data("uploadtype", obj.Type);
+    item.data("edit", false);
+    item.data("serno", file_num);
+    item.find(".ser_no").val(file_num);
+    if (typeof obj.Id != "undefined") item.data("id", obj.Id);
+    else item.data("tempid", obj.TempId);
+    item.find(".title").text(obj.Name || "");
+
+    var file = obj.File;
+    if (!!file) {
+        switch (obj.Type) {
+            case 2: item.find(".thumb_img").attr("src", "/images/defaultImage/360.jpg"); break;
+            case 3: item.find(".thumb_img").attr("src", "/images/defaultImage/video.jpg"); break;
+            case 4: item.find(".thumb_img").attr("src", `https://img.youtube.com/vi/${file}/hqdefault.jpg`); break;
+            default: item.find(".thumb_img").attr("src", obj.Link || file); break;
+        }
+        var href = obj.Type == 4 ? `https://www.youtube.com/watch?v=${file}` : (obj.Link || file);
+        item.find(".btn_link").removeClass("d-none").attr("href", href);
+    } else item.find(".btn_link").addClass("d-none");
+
+    item.on("click", function () { co.File.ListFile($(this)); });
+
+    item.find(".ser_no").on("blur", function () {
+        var $self = $(this);
+        var $uploadList = $target.find(".upload_list");
+        if ($self.val() < 1) $self.val(1);
+        else if ($self.val() > $uploadList.length) $self.val($uploadList.length);
+        if ($self.val() != item.data("serno")) {
+            if ($self.val() > item.data("serno")) {
+                SortChange($uploadList, "bigger", item.data("serno"), $self.val());
+                $ul.children("li").eq(parseInt($self.val()) - 1).after(item);
+            } else if ($self.val() < item.data("serno")) {
+                SortChange($uploadList, "smaller", $self.val(), item.data("serno"));
+                $ul.children("li").eq(parseInt($self.val()) - 1).before(item);
+            }
+        }
+        item.data("serno", $self.val());
+    });
+
+    item.find(".btn_remove").on("click", function (e) {
+        e.preventDefault();
+        var $self = $(this).parents("li").first();
+        var store = co.File.filesOf($target);
+        if (typeof ($self.data("id")) != "undefined") {
+            var s = store.find(f => f["Id"] == $self.data("id"));
+            if (s) s["IsDelete"] = true;
+        } else if (typeof ($self.data("tempid")) != "undefined") {
+            var idx = store.findIndex(f => f["TempId"] == $self.data("tempid"));
+            if (idx >= 0) store.splice(idx, 1);
+        }
+        UploadPreviewFrameClear($target);
+        $self.remove();
+    });
+
+    $ul.children(".btn_upload_add").before(item);
+    $target.data("file_num", file_num);
+}
+
 function UploadListAdd(result, $target) {
     var item = $($("#TemplateUploadList").html()).clone();
     var item_serno = item.find(".ser_no"),
         item_btn_remove = item.find(".btn_remove");
     var file_num = $target.find("ul > li").length - 1;
-    var tempId = total_files.length;
+    var store = co.File.filesOf($target);
+    var tempId = store.length;
     if (typeof (file_num) == "undefined") file_num = 0;
     if (result == null) {
         $target.find("ul > li").each(function () {
@@ -1332,7 +1536,7 @@ function UploadListAdd(result, $target) {
             }
             item.find(".btn_link").removeClass("d-none").attr("href", obj["File"]);
         } else item.find(".btn_link").addClass("d-none");
-        total_files.push(obj);
+        store.push(obj);
 
         item.on("click", function () {
             co.File.ListFile($(this));
@@ -1350,10 +1554,10 @@ function UploadListAdd(result, $target) {
         if ($self.val() != item.data("serno")) {
             if ($self.val() > item.data("serno")) {
                 SortChange($uploadList, "bigger", item.data("serno"), $self.val())
-                $("#ProductForm > .data_upload > ul").children("li").eq(parseInt($self.val()) - 1).after(item);
+                $target.children("ul").children("li").eq(parseInt($self.val()) - 1).after(item);
             } else if ($self.val() < item.data("serno")) {
                 SortChange($uploadList, "smaller", $self.val(), item.data("serno"))
-                $("#ProductForm > .data_upload > ul").children("li").eq(parseInt($self.val()) - 1).before(item);
+                $target.children("ul").children("li").eq(parseInt($self.val()) - 1).before(item);
             }
         }
         item.data("serno", $self.val());
@@ -1367,13 +1571,13 @@ function UploadListAdd(result, $target) {
             SortChange($uploadList, "bigger", item.data("serno"), $target.data("file_num"));
         }
         if (typeof ($self.data("id")) != "undefined") {
-            total_files.find(item => item["Id"] == $self.data("id"))["IsDelete"] = true;
+            store.find(item => item["Id"] == $self.data("id"))["IsDelete"] = true;
         } else if (typeof ($self.data("tempid")) != "undefined") {
             var tempid = $self.data("tempid");
-            var index = total_files.findIndex(item => item["TempId"] == tempid);
+            var index = store.findIndex(item => item["TempId"] == tempid);
             if (index >= 0) {
-                total_files.splice(index, 1);
-                total_files.forEach(file => {
+                store.splice(index, 1);
+                store.forEach(file => {
                     file["TempId"] = file["TempId"] > tempid ? file["TempId"] - 1 : file["TempId"];
                 })
             }
@@ -1415,6 +1619,25 @@ function SortChange($self, change, minindex, maxindex) {
         }
     })
 }
+
+function refreshSpecThumb($row) {
+    var key = SpecRowKey($row);
+    var bucket = spec_media_map[key] || [];
+    var first = bucket.find(f => !f.IsDelete);
+    var $thumb = $row.find(".spec_thumb");
+    var $icon = $row.find(".spec_img_icon");
+    if (first) {
+        var src = first.Type == 4 ? `https://img.youtube.com/vi/${first.File}/hqdefault.jpg`
+            : first.Type == 3 ? "/images/defaultImage/video.jpg"
+                : (first.Link || first.File);
+        $thumb.attr("src", src).removeClass("d-none");
+        $icon.addClass("d-none");
+    } else {
+        $thumb.addClass("d-none");
+        $icon.removeClass("d-none");
+    }
+}
+
 function AddUp(success_text, error_text, target) {
     var stock_addup_list = []
     var status = parseInt($(`[name="ProdStatus"] > option:selected`).val() || 0);
@@ -1452,7 +1675,9 @@ function AddUp(success_text, error_text, target) {
         obj["Min_Qty"] = $self.find(".input_min_number").val();
         obj["Ser_No"] = $self.find(".ser_no").val();
         obj['OldStock'] = $self.data("oldstock");
+        obj["TempPSid"] = $self.data("temppsid") || 0;
         obj['SubItemNo'] = $self.find(".input_subItemNo").val();
+        obj["SpecDescription"] = $self.data("specdesc") || "";
         updateStock = updateStock || parseInt(obj["Stock"] || 0) > parseInt(obj['OldStock'] || 0);
         var price_list = [];
         modal_price_list.forEach(function (item) {
@@ -1478,6 +1703,7 @@ function AddUp(success_text, error_text, target) {
             ItemNo: $itemNo.val(),
             Visible: $display.is(":checked"),
             RemovedFromShelves: !$removedFromShelves.is(":checked"),
+            NoStockManagement: $noStockManagement.is(":checked"),
             Ser_No: $("#SortCheck").is(":checked") ? $(`[name="serNo"]`).val() : 500,
             Introduction: $introduction.val(),
             Description: $illustrate.val(),
@@ -1682,6 +1908,76 @@ function AddUp(success_text, error_text, target) {
                             break;
                     }
                 }
+
+                // ===== 規格圖上傳/刪除 =====
+                var stockIdMap = {};
+                (result.object || []).forEach(function (m) {
+                    stockIdMap["T" + m.tempPSid] = m.id;   // 新規格：temppsid -> 真實 id
+                });
+                Object.keys(spec_media_map).forEach(function (key) {
+                    var stockId = key.charAt(0) === "P" ? parseInt(key.substring(1)) : stockIdMap[key];
+                    if (!stockId) return;
+                    var serno = 0;
+                    spec_media_map[key].forEach(function (f) {
+                        // 刪除既有
+                        if (f.IsDelete) {
+                            if (typeof f.Id != "undefined") {
+                                fileListSave.push(co.File.DeleteFileById({
+                                    Sid: stockId,
+                                    Type: 16,               // 產品規格圖
+                                    Fid: [f.Id]
+                                }));
+                            }
+                            return;
+                        }
+                        serno += 1;
+                        // 已存在（有 Id 且 File 是字串網址）→ 僅排序
+                        if (typeof f.Id != "undefined" && typeof f.File == "string") {
+                            fileListSave.push(co.File.fileSortChange({ Id: f.Id, Sid: stockId, SerNo: serno }));
+                            return;
+                        }
+                        // 新增
+                        switch (f.Type) {
+                            case 1: {   // 圖片（f.File 是 [原圖, 壓縮, 縮圖] 陣列）
+                                var fd = new FormData();
+                                fd.append("type", 16);
+                                fd.append("sid", stockId);
+                                fd.append("serno", serno);
+                                for (var i = 0; i < f.File.length; i++) fd.append("files", f.File[i]);
+                                fileListSave.push(co.File.Upload(fd).done(function (r) {
+                                    if (r.success) { f.Id = r.files[0].id; f.File = r.files[0].path; }
+                                }));
+                                break;
+                            }
+                            case 3: {   // 影片
+                                var fd = new FormData();
+                                fd.append("files", f.File);
+                                fd.append("type", 16);
+                                fd.append("sid", stockId);
+                                fd.append("serno", serno);
+                                fileListSave.push(co.File.Upload(fd).done(function (r) {
+                                    if (r.success) { f.Id = r.files[0].id; f.File = r.files[0].path; }
+                                }));
+                                break;
+                            }
+                            case 4: {   // Youtube
+                                fileListSave.push(co.File.UploadYTLink({
+                                    Id: typeof f.Id == "undefined" ? 0 : f.Id,
+                                    File: f.File + "",
+                                    SId: stockId,
+                                    Type: 16,
+                                    SerNo: serno
+                                }).done(function (r) {
+                                    if (r.success && typeof r.files != "undefined") f.Id = r.files[0].id;
+                                }));
+                                break;
+                            }
+                            // case 2 (360) 比照商品圖目前未實作，先略
+                        }
+                    });
+                });
+                // ===== 規格圖結束 =====
+
                 $.when.apply(null, fileListSave).done(function () {
                     HashDataEdit();
                 });

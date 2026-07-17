@@ -157,13 +157,15 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 if (proStock == null)
                     throw new Exception("查無商品規格");
 
-                var currentStock = proStock.Stock ?? 0;
-                if (currentStock <= 0)
-                    throw new Exception("目前無庫存");
-
                 var prod = await db.Prods.FirstOrDefaultAsync(e => e.Id == proStock.FK_Pid && !e.RemovedFromShelves);
                 if(prod == null) throw new Exception("商品已下架");
                 else if(IsCantBuyProdState(prod)) throw new Exception("商品已售完");
+
+                var skipStock = prod.NoStockManagement;
+
+                var currentStock = proStock.Stock ?? 0;
+                if (currentStock <= 0 && !skipStock)
+                    throw new Exception("目前無庫存");
 
                 Core.Models.ShoppingCart? sc = null;
                 if (dto.Id != null)
@@ -217,7 +219,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                 if (sc == null)
                 {
-                    if (wantQty > currentStock)
+                    if (wantQty > currentStock && !skipStock)
                         throw new Exception($"可購買上限 {currentStock} 件，無法再加入 {wantQty} 件");
 
                     var date = DateTime.Now;
@@ -250,7 +252,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     int newTotal = sc.Quantity + wantQty;
                     int oQuantity = sc.Quantity;
 
-                    if (newTotal > currentStock)
+                    if (newTotal > currentStock && !skipStock)
                         throw new Exception($"可購買上限 {currentStock} 件（購物車已有 {sc.Quantity} 件），無法再加入 {wantQty} 件");
 
                     sc.Quantity = newTotal;
@@ -350,6 +352,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                 var stockIds = carts.Select(c => c.FK_PSid).Distinct().ToList();
                 var stocks = await db.Prod_Stocks
+                    .Include(s => s.Prod)
                     .Where(s => stockIds.Contains(s.Id))
                     .ToListAsync();
 
@@ -398,6 +401,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     }
 
                     var stock = pro_stock.Stock ?? 0;
+                    var skipStock = pro_stock.Prod?.NoStockManagement == true;
                     var requested = dto.Quantity;
                     var original = sc.Quantity;
 
@@ -405,7 +409,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     itemResult.NewQuantity = original;
                     itemResult.Removed = false;
 
-                    if (stock <= 0)
+                    if (stock <= 0 && !skipStock)
                     {
                         itemResult.Success = false;
                         itemResult.Error = "StockNotEnough";
@@ -432,7 +436,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         continue;
                     }
 
-                    if (requested > stock)
+                    if (requested > stock && !skipStock)
                     {
                         itemResult.Success = false;
                         itemResult.Error = "StockNotEnough";

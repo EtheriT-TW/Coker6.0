@@ -38,6 +38,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             {
                 case FileBindTypeEnum.產品:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Product", convert);
+                case FileBindTypeEnum.產品規格圖:
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Product", convert);
                 case FileBindTypeEnum.產品檔案:
                     return await fileUploadAppService.uploadFiles(files, filename ?? "", areakey ?? "", type, id ?? 0, (long)sid, serno, "Product/File", isVisible, false);
                 case FileBindTypeEnum.選單圖:
@@ -89,6 +91,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             switch (s)
             {
                 case FileBindTypeEnum.產品:
+                case FileBindTypeEnum.產品規格圖:
                 case FileBindTypeEnum.自訂廣告:
                     return await fileUploadAppService.uploadYTLink(dto);
                 default:

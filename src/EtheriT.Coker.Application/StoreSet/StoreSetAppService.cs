@@ -251,8 +251,27 @@ namespace EtheriT.Coker.Application.StoreSet
                 .Where(e => keys.Contains(e.StoreSet.key))
                 .Where(e => e.FK_WebsiteId == websiteId)
                 .ToListAsync();
+
+            // 舊值必須在 mapper.Map 覆寫前取得
+            string? oldBuyState = updateItems
+                .FirstOrDefault(e => e.StoreSet.key == StoreBuyStateKey)?.value;
+            var buyStateInput = datas.Find(e => e.key == StoreBuyStateKey);
+            string? newBuyState = buyStateInput?.value != null
+                ? String.Join(", ", buyStateInput.value.ToArray())
+                : null;
+            bool leavingNoPayNoShow = IsNoPayNoShow(oldBuyState)
+                && newBuyState != null
+                && !IsNoPayNoShow(newBuyState);
+
             try
             {
+                // 先轉時價再存設定：若轉換失敗，設定仍維持 noPayNoShow（前台不顯示價格），
+                // 重存即可重跑；避免設定已切換但商品仍為 0 元且無法補救。
+                if (leavingNoPayNoShow)
+                {
+                    await ConvertPricelessStocksToTimePrice(websiteId, userId);
+                }
+
                 if (updateItems.Count != 0)
                 {
                     for (int i = 0; i < updateItems.Count; i++)
@@ -307,6 +326,38 @@ namespace EtheriT.Coker.Application.StoreSet
             }
             return output;
         }
+
+        private const string StoreBuyStateKey = "storeBuyState";
+        private const string NoPayNoShowValue = "noPayNoShow";
+
+        private static bool IsNoPayNoShow(string? value) =>
+            value != null && value.Contains(NoPayNoShowValue);
+
+        // 販售設定為「不開放購物且不顯示商品售價」時金額為非必填，
+        // 切換為其他選項後這些規格會顯示 0 元，故一律轉為時價。
+        private async Task ConvertPricelessStocksToTimePrice(long websiteId, long userId)
+        {
+            var pricelessStocks = await db.Prod_Stocks
+                .Where(e => !e.IsDeleted && !e.IsTimePrice)
+                .Where(e => db.Prods.Any(p => p.Id == e.FK_Pid
+                    && !p.IsDeleted
+                    && p.FK_WebsiteId == websiteId))
+                .Where(e => !db.Prod_Prices.Any(pp => pp.FK_PSId == e.Id
+                    && !pp.IsDeleted
+                    && ((pp.Price ?? 0) > 0 || (pp.Bonus ?? 0) > 0)))
+                .ToListAsync();
+
+            if (pricelessStocks.Count == 0) return;
+
+            foreach (var stock in pricelessStocks)
+            {
+                stock.IsTimePrice = true;
+                stock.LastModificationTime = DateTime.Now;
+                stock.LastModifierUserId = userId;
+            }
+            await db.SaveChangesAsync();
+        }
+
         // 依你的系統語意：
         // - 有 detail 且有值：用 detail
         // - 沒 detail / 無有效值：用 StoreSet.DefaultValue 或 storeSetItems.isDefault

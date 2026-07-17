@@ -25,6 +25,7 @@ namespace EtheriT.Coker.Application
         public Task<List<FileGetDisplayDto>> getAdvertiseFiles(long Aid, int type);
         public Task<Dictionary<long, List<FileGetDisplayDto>>> GetAdvertiseFilesBatchAsync(IReadOnlyCollection<long> advertiseIds, int type);
         public Task<List<FileGetProdDisplayDto>> getProdMultimedia(long Pid, int size);
+        public Task<List<FileGetProdDisplayDto>> getSpecMultimedia(long Pid, int size);
         public Task<ResponseMessageDto> fileSortChange(FileChangeSortDto dto);
         public Task<ResponseMessageDto> fileDataChange(FileDataChangeDto dto);
         public Task<ResponseMessageDto> deleteFile(Guid key);

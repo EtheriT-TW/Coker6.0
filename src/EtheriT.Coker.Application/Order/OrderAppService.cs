@@ -360,7 +360,7 @@ namespace EtheriT.Coker.Application.Order
 
                 var currentStock = stock.Stock ?? 0;
 
-                if (currentStock < totalQty)
+                if (currentStock < totalQty && stock.Prod?.NoStockManagement != true)
                     throw new Exception($"商品庫存不足（StockId={stockId}），剩餘 {currentStock}，欲購買 {totalQty}。");
             }
 
@@ -450,6 +450,9 @@ namespace EtheriT.Coker.Application.Order
                 foreach (var item in qtyByStockId)
                 {
                     var stock = stockDict[item.Key];
+
+                    if (stock.Prod?.NoStockManagement == true)
+                        continue;
 
                     stock.Stock = (stock.Stock ?? 0) - item.Value;
                     stock.LastModifierUserId = userId;
@@ -1081,7 +1084,7 @@ namespace EtheriT.Coker.Application.Order
                 // 如果庫存變成 0，要把商品狀態改成售完
                 var stock = detailResult.StockDict[sc.FK_PSid];
                 var prod = stock.Prod;
-                if (stock.Stock == 0 && prod != null && prod.Status != ProdStatusEnum.售完)
+                if (stock.Stock == 0 && prod != null && prod.Status != ProdStatusEnum.售完 && !prod.NoStockManagement)
                 {
                     prod.oStatus = prod.Status;
                     prod.Status = ProdStatusEnum.售完;
@@ -1601,12 +1604,13 @@ namespace EtheriT.Coker.Application.Order
                     var new_quantity = old_quantity;
 
                     var stock = await db.Prod_Stocks
+                        .Include(e => e.Prod)
                         .FirstOrDefaultAsync(e => e.Id == temp_detail.ProdStockId);
 
                     if (stock == null)
                         throw new Exception("查無商品庫存資訊");
 
-                    if (stock.Stock == 0)
+                    if (stock.Stock == 0 && stock.Prod?.NoStockManagement != true)
                     {
                         temp_detail.OldQuantity = temp_detail.Quantity;
                         temp_detail.Quantity = 0;
@@ -1614,7 +1618,7 @@ namespace EtheriT.Coker.Application.Order
                         temp_detail.Describe = "商品規格庫存為0";
                         change = true;
                     }
-                    else if (stock.Stock < temp_detail.Quantity)
+                    else if (stock.Stock < temp_detail.Quantity && stock.Prod?.NoStockManagement != true)
                     {
                         temp_detail.OldQuantity = temp_detail.Quantity;
                         temp_detail.Quantity = stock.Stock ?? 0;
@@ -2217,12 +2221,15 @@ namespace EtheriT.Coker.Application.Order
                 if (prodStock == null)
                     continue;
 
-                if (prodStock.Prod != null && prodStock.Prod.Status == ProdStatusEnum.售完)
+                if (prodStock.Prod?.NoStockManagement != true)
                 {
-                    prodStock.Prod.Status = prodStock.Prod.oStatus ?? ProdStatusEnum.一般;
-                }
+                    if (prodStock.Prod != null && prodStock.Prod.Status == ProdStatusEnum.售完)
+                    {
+                        prodStock.Prod.Status = prodStock.Prod.oStatus ?? ProdStatusEnum.一般;
+                    }
 
-                prodStock.Stock += sc.Quantity;
+                    prodStock.Stock += sc.Quantity;
+                }
             }
         }
         private bool IsClosedOrderStatusForBonus(OrderStatusEnum state)
@@ -2618,7 +2625,7 @@ namespace EtheriT.Coker.Application.Order
                     var totalAmount = (order_header.Freight + order_header.Subtotal).ToString("$#,##0");
                     var contactMail = !string.IsNullOrEmpty(Website?.ContactMail) ? Website.ContactMail : "";
                     var trackingNumber = order_header.TrackingNumber ?? "";
-                    var trackingNumberRow = string.IsNullOrEmpty(trackingNumber)? "" : $@"，物流編號：<b class='trackingNumber text-orange'>{trackingNumber}</b>";
+                    var trackingNumberRow = string.IsNullOrEmpty(trackingNumber) ? "" : $@"，物流編號：<b class='trackingNumber text-orange'>{trackingNumber}</b>";
 
                     var DetailsList = "";
                     foreach (var data in order_details)
@@ -2681,7 +2688,8 @@ namespace EtheriT.Coker.Application.Order
             }
             return response;
         }
-        public async Task<ResponseMessageDto> SendUpdateNotificationMail(long ohid) {
+        public async Task<ResponseMessageDto> SendUpdateNotificationMail(long ohid)
+        {
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {

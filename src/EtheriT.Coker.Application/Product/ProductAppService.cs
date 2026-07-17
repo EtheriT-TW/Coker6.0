@@ -143,7 +143,7 @@ namespace EtheriT.Coker.Application.Product
                         var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == db_p.Id).ToListAsync();
                         var stockids = stocks.Select(e => e.Id).ToList();
                         var scs = await db.ShoppingCarts.Where(e => stockids.Contains(e.FK_PSid) && !e.IsOrder).OrderByDescending(e => e.CreationTime).ToListAsync();
-                        if (dto.status != db_p.Status && dto.status == ProdStatusEnum.售完)
+                        if (dto.status != db_p.Status && dto.status == ProdStatusEnum.售完 && !dto.NoStockManagement)
                         {
                             foreach (var sc in scs)
                             {
@@ -155,7 +155,7 @@ namespace EtheriT.Coker.Application.Product
                                 stock_change = true;
                             }
                         }
-                        else if (dto.status != db_p.Status && db_p.Status == ProdStatusEnum.售完)
+                        else if (dto.status != db_p.Status && db_p.Status == ProdStatusEnum.售完 && !dto.NoStockManagement)
                         {
                             foreach (var sc in scs)
                             {
@@ -240,6 +240,11 @@ namespace EtheriT.Coker.Application.Product
             }
             try
             {
+                var idMappings = new List<StockIdMappingDto>();
+                var noStockManagement = await db.Prods
+                    .Where(e => e.Id == Pid)
+                    .Select(e => e.NoStockManagement)
+                    .FirstOrDefaultAsync();
                 long usetId = await loginUserData.GetUserId();
                 output.Message = "";
                 for (int i = 0; i < dto.Count; i++)
@@ -252,7 +257,7 @@ namespace EtheriT.Coker.Application.Product
                             FK_Pid = Pid,
                             FK_S1id = item.FK_S1id,
                             FK_S2id = item.FK_S2id,
-                            Stock = item.Stock,
+                            Stock = noStockManagement ? (int?) null : item.Stock,
                             PackingPoint = item.PackingPoint,
                             Min_Qty = item.Min_Qty,
                             Alert_Qty = item.Alert_Qty,
@@ -260,10 +265,16 @@ namespace EtheriT.Coker.Application.Product
                             Ser_No = item.Ser_No,
                             Price = item.Price,
                             SubItemNo = item.SubItemNo,
+                            SpecDescription = item.SpecDescription,
                             CreatorUserId = usetId,
                         };
                         db.Prod_Stocks.Add(ps);
                         await db.SaveChangesAsync();
+
+                        idMappings.Add(new StockIdMappingDto {
+                            TempPSid = item.TempPSid,
+                            Id = ps.Id
+                        });
 
                         foreach (var price in item.Prices)
                         {
@@ -280,7 +291,7 @@ namespace EtheriT.Coker.Application.Product
                                 if (db_ps.Prod.oStatus == null) db_ps.Prod.Status = ProdStatusEnum.一般;
                                 else db_ps.Prod.Status = db_ps.Prod.oStatus.Value;
                             }
-                            db_ps.Stock = item.Stock;
+                            db_ps.Stock = noStockManagement ? (int?) null : item.Stock;
                             db_ps.IsTimePrice = item.TimePrice;
                             db_ps.FK_S1id = item.FK_S1id;
                             db_ps.FK_S2id = item.FK_S2id;
@@ -288,6 +299,7 @@ namespace EtheriT.Coker.Application.Product
                             db_ps.Alert_Qty = item.Alert_Qty;
                             db_ps.Ser_No = item.Ser_No;
                             db_ps.SubItemNo = item.SubItemNo;
+                            db_ps.SpecDescription = item.SpecDescription;
                             db_ps.PackingPoint = item.PackingPoint;
                             db_ps.Price = item.Price;
                             db_ps.LastModificationTime = DateTime.Now;
@@ -300,6 +312,8 @@ namespace EtheriT.Coker.Application.Product
                 }
 
                 db.SaveChanges();
+
+                output.Object = idMappings;
 
                 output.Success = priceresponse.Success;
             }
@@ -378,6 +392,7 @@ namespace EtheriT.Coker.Application.Product
                       && p.Status != ProdStatusEnum.停產
                       && !p.RemovedFromShelves
                       && p.Visible
+                      && !p.NoStockManagement
                       && s.Alert_Qty != null
                       && s.Stock <= s.Alert_Qty
                 select new
@@ -1106,6 +1121,7 @@ namespace EtheriT.Coker.Application.Product
                                         PackingPoint = ps.PackingPoint,
                                         Alert_Qty = ps.Alert_Qty,
                                         SubItemNo = ps.SubItemNo ?? "",
+                                        SpecDescription = ps.SpecDescription,
                                         Ser_No = ps.Ser_No,
                                         SuggestPrice = ps.Price,
                                         Prices = new List<ProductPriceDto>(),
@@ -1114,16 +1130,18 @@ namespace EtheriT.Coker.Application.Product
 
                 var db_sp = await db.Prod_Specs.Where(e => !e.IsDeleted).ToListAsync();
 
-                if (db_sp.Count > 0)
+                foreach (var item in output)
                 {
-                    foreach (var item in output)
+                    if (db_sp.Count > 0)                // ← guard 縮小到只包「規格名稱查找」
                     {
-                        item.FK_ST1id = (int)item.FK_S1id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id).FK_Tid : 0;
-                        item.S1_Title = (int)item.FK_S1id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id).Title : "";
-                        item.FK_ST2id = (int)item.FK_S2id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S2id).FK_Tid : 0;
-                        item.S2_Title = (int)item.FK_S2id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S2id).Title : "";
-                        item.Prices = await this.GetPriceDataAll(item.Id);
+                        item.FK_ST1id = item.FK_S1id is > 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id)?.FK_Tid ?? 0 : 0;
+                        item.S1_Title = item.FK_S1id is > 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id)?.Title ?? "" : "";
+                        item.FK_ST2id = item.FK_S2id is > 0 ? db_sp.Find(spec => spec.Id == item.FK_S2id)?.FK_Tid ?? 0 : 0;
+                        item.S2_Title = item.FK_S2id is > 0 ? db_sp.Find(spec => spec.Id == item.FK_S2id)?.Title ?? "" : "";
                     }
+
+                    item.Prices = await this.GetPriceDataAll(item.Id);                       // ← 一定會執行
+                    item.Multimedia = await fileUploadAppService.getSpecMultimedia(item.Id, 1);  // ← A-4 新增的規格圖
                 }
 
                 return output;
@@ -1264,6 +1282,7 @@ namespace EtheriT.Coker.Application.Product
                         Html = db_p.Html ?? "",
                         ItemNo = db_p.ItemNo,
                         Status = (int)db_p.Status,
+                        NoStockManagement = db_p.NoStockManagement,
                         StatusName = db_p.Status.ToString(),
                         TagDatas = new List<TagGetSelectedDto>(),
                         TechCertDatas = new List<TechCertDisplayDto>(),
@@ -1797,6 +1816,12 @@ namespace EtheriT.Coker.Application.Product
                     item.DeleterUserId = usetId;
                     item.DeletionTime = DateTime.Now;
                 }
+
+                await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                {
+                    Sid = Id,
+                    Type = (int)FileBindTypeEnum.產品規格圖,
+                });
             }
             catch (Exception e)
             {
@@ -1922,12 +1947,15 @@ namespace EtheriT.Coker.Application.Product
                 var db_spt = db.Prod_Spec_Types.ToList();
                 var db_sp = db.Prod_Specs.ToList();
 
+                var s1Title = db_spt.ElementAtOrDefault(0)?.Type ?? "";
+                var s2Title = db_spt.ElementAtOrDefault(1)?.Type ?? "";
+
                 foreach (var item in output)
                 {
-                    item.S1_Title = db_spt[0].Type;
-                    item.S1_Name = item.FK_S1id == 0 ? "" : db_sp[(int)item.FK_S1id - 1].Title;
-                    item.S2_Title = db_spt[1].Type;
-                    item.S2_Name = item.FK_S2id == 0 ? "" : db_sp[(int)item.FK_S2id - 1].Title;
+                    item.S1_Title = s1Title;
+                    item.S1_Name = item.FK_S1id is > 0 ? db_sp.FirstOrDefault(s => s.Id == item.FK_S1id)?.Title ?? "" : "";
+                    item.S2_Title = s2Title;
+                    item.S2_Name = item.FK_S2id is > 0 ? db_sp.FirstOrDefault(s => s.Id == item.FK_S2id)?.Title ?? "" : "";
                 }
 
                 return output;

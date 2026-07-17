@@ -19,6 +19,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public virtual DateTime? StartTime { get; set; }
         public virtual DateTime? EndTime { get; set; }
         public bool Permanent { get; set; }
+        public bool NoStockManagement { get; set; }
         public List<TagSelectedDto> TagSelected { get; set; }
         public List<TechCertSelectedDto> TechCertSelected { get; set; }
         public List<ProductStockDto> Stocks { get; set; }

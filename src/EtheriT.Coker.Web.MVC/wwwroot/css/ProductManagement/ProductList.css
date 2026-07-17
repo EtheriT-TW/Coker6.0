@@ -45,9 +45,85 @@ input[type="number"] {
     padding-left: 3rem;
 }
 
+#ProductForm .stock {
+    font-weight: 500;
+}
 /* TopLine */
 #TopLine .btn_back {
     color: white;
+}
+
+/* 規格圖 modal 輪播，樣式比照商品圖 #ProdMedia */
+#SpecMedia > ul {
+    display: flex;
+    gap: 15px;
+    list-style: none;
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: center;
+    color: #888;
+}
+
+    #SpecMedia > ul > li {
+        position: relative;
+    }
+
+    #SpecMedia > ul:last-child {
+        width: 50px;
+        height: 50px;
+    }
+
+    #SpecMedia > ul > li button {
+        color: #888;
+    }
+
+    #SpecMedia > ul .btn_link, #SpecMedia > ul .title {
+        display: none !important;
+    }
+
+    #SpecMedia > ul .thumb_img {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+    }
+
+    #SpecMedia > ul .btn_remove {
+        position: absolute;
+        background: #FFF !important;
+        border-radius: 100%;
+        color: #888;
+        right: -5px;
+        top: -5px;
+    }
+
+        #SpecMedia > ul .btn_remove > .material-symbols-outlined {
+            font-size: 17px;
+        }
+
+    #SpecMedia > ul .serNoTool {
+        position: absolute;
+        z-index: 2;
+        top: -5px;
+        left: -5px;
+        display: flex;
+        justify-content: center;
+        background: #FFF;
+    }
+
+        #SpecMedia > ul .serNoTool > .material-symbols-outlined {
+            font-size: 17px;
+        }
+
+    #SpecMedia > ul .sortable-placeholder {
+        width: 100px;
+        height: 100px;
+    }
+
+.specImg .spec_thumb {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 4px;
 }
 
 /* Product List */
@@ -263,10 +339,17 @@ input[type="number"] {
             width: 200px;
         }
 
-        #Spec_Frame > .specList > .specHeader > div.del, #Spec_Frame > .specList > .ui-sortable-helper > div.del {
-            width: 75px;
+        #Spec_Frame > .specList > .specHeader > div.del,
+        #Spec_Frame > .specList > .ui-sortable-helper > div.del,
+        #Spec_Frame > .specList > .specHeader > div.specDesc,
+        #Spec_Frame > .specList > .ui-sortable-helper > div.specDesc {
+            width: 52px;
         }
 
+        #Spec_Frame > .specList > .specHeader > div.spec_img,
+        #Spec_Frame > .specList > .ui-sortable-helper > div.specImg {
+            width: 90px;
+        }
         #Spec_Frame > .specList > .ui-sortable-helper > .specs,
         #Spec_Frame > .specList > .ui-sortable-helper > .specs > div {
             width: 42rem;
@@ -294,6 +377,8 @@ input[type="number"] {
 
             #Spec_Frame > .specList > li > .upload_list > div {
                 display: flex;
+                justify-content: center;
+                align-items: center;
             }
 
             #Spec_Frame > .specList > li > .specs > div {
@@ -365,7 +450,7 @@ input[type="number"] {
         width: 20px;
         height: 20px;
         right: -5px;
-        top: -5px;
+        top: 10px;
     }
 
     #Spec_Frame input {
@@ -387,11 +472,17 @@ input[type="number"] {
         text-align: start;
     }
 
+    #Spec_Frame .btn_spec_img_edit,
+    #Spec_Frame .btn_spec_desc_edit,
     #Spec_Frame .btn_remove {
-        width: auto;
-        text-align: end;
-        margin: auto;
+        display: flex;
+        width: fit-content;
+        margin: 0 auto;
         text-align: center;
+    }
+
+    #Spec_Frame .btn_spec_desc_edit {
+        font-size: 1.2rem
     }
 
 #ProductForm .date > input {

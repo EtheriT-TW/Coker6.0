@@ -1,4 +1,6 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
+﻿using EtheriT.Coker.Application.StoreSet;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Application.Shared.Dto.Specification;
@@ -14,21 +16,27 @@ namespace EtheriT.Coker.Web.MVC.Controllers
     {
         private readonly IProductAppService productAppService;
         private readonly ISpecificationAppService specificationAppService;
-        public ProductManagementController(IProductAppService productAppService, ISpecificationAppService specificationAppService)
+        private readonly IStoreSetAppService storeSetAppService;
+        public ProductManagementController(IProductAppService productAppService, ISpecificationAppService specificationAppService, IStoreSetAppService storeSetAppService)
         {
             this.productAppService = productAppService;
             this.specificationAppService = specificationAppService;
+            this.storeSetAppService = storeSetAppService;
         }
         public async Task<IActionResult> ProductListAsync()
         {
             var spec_type = new List<SpecTypeListDto>(await specificationAppService.GetPickTypeList());
             var chackHasAnyItemNo = await productAppService.HasAnyItemNo();
+            var storeBuyStatus = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "storeBuyState" });
+            bool priceOptional = storeBuyStatus.Success && storeBuyStatus.detailItem?.value != null && storeBuyStatus.detailItem.value.Contains("noPayNoShow");
+
             ProductManagementModel model = new ProductManagementModel
             {
                 SpecType = spec_type,
                 ProdStatus = Enum.GetValues(typeof(ProdStatusEnum)).Cast<ProdStatusEnum>().ToList(),
                 Roles = JsonConvert.DeserializeObject<List<AddRoleDto>>(JsonConvert.SerializeObject((await productAppService.GetRolesAll()).Value)),
-                HasAnyItemNo = chackHasAnyItemNo.Success
+                HasAnyItemNo = chackHasAnyItemNo.Success,
+                PriceOptional = priceOptional
             };
             return View("ProductList", model);
         }

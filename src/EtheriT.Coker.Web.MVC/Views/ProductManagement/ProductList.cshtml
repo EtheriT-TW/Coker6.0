@@ -24,6 +24,7 @@
     await Html.RenderPartialAsync(@"DevExpress\_GridExport");
 }
 <script src="~/js/ProductManagement/ProductList.min.js" asp-append-version="true"></script>
+<script>window.priceOptional = @Model.PriceOptional.ToString().ToLower();</script>
 
 <div id="PriceModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="PriceModalLabel" aria-hidden="true" data_psid="">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
@@ -116,6 +117,80 @@
             <div class="modal-footer px-4">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取　消</button>
                 <button type="button" class="btn_price_save btn btn-primary">儲　存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="SpecDescModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="SpecDescModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header px-4">
+                <h5 class="modal-title" id="SpecDescModalLabel">規格描述</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <textarea id="InputSpecDesc" class="form-control" rows="8" maxlength="3000" placeholder="輸入規格描述（支援 Markdown 語法）"></textarea>
+                <div class="text-end text-muted mt-1"><span id="SpecDescCount">0</span>/3000</div>
+            </div>
+            <div class="modal-footer px-4">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取　消</button>
+                <button type="button" class="btn_spec_desc_save btn btn-primary">儲　存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="SpecMediaModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="SpecMediaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header px-4">
+                <h5 class="modal-title" id="SpecMediaModalLabel">規格圖片</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="SpecMedia" class="data_upload row mx-0 border rounded p-3 position-relative">
+                    <ul class="col-12 border p-2 overflow-auto mb-0">
+                        <li class="btn_upload_add border mb-1 p-1 shadow-sm">
+                            <button class="bg-transparent border-0 d-flex justify-content-center p-0 w-100" title="新增檔案">
+                                <span class="material-symbols-outlined">add</span>
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="preview_frame col-12 border p-2">
+                        <div class="default_frame h-100 d-flex d-none justify-content-center align-items-center"><span>點選 + 號新增檔案</span></div>
+                        <div class="select_frame flex-column d-none">
+                            <button class="bg-transparent border mb-1 py-1" data-uploadtype="1">圖片</button>
+                            @* <button class="bg-transparent border mb-1 py-1 " data-uploadtype="2">360</button>
+                            <button class="bg-transparent border mb-1 py-1" data-uploadtype="3">影片</button>
+                            <button class="bg-transparent border mb-1 py-1" data-uploadtype="4">Youtube</button> *@
+                        </div>
+                        <div class="upload_frame custom-file-container d-none" data-upload-id="SpecFileUpload"></div>
+                        <div class="media_frame d-none flex-column h-100">
+                            <div class="mb-2">檔案預覽</div>
+                            <div class="input-group mb-3 d-none">
+                                <input class="form-control lh-lg" type="text" value="Media Name" aria-label="Media Name" readonly="readonly">
+                            </div>
+                            <div class="media_preview flex-grow-1">
+                                <div class='align-items-center bg-black bg-opacity-25 d-flex fw-bold h-100 justify-content-center'></div>
+                            </div>
+                        </div>
+                        <div class="youtube_frame d-none flex-column h-100">
+                            <div class="mb-2">Youtube連結網址</div>
+                            <div class="input-group mb-3">
+                                <input class="form-control lh-lg" type="text" value="https://www.youtube.com/watch?v=" aria-label="Youtube link">
+                                <button class="btn btn-outline-secondary px-3" type="button">載入</button>
+                            </div>
+                            <div class="youtube_preview flex-grow-1">
+                                <div class='w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-25 fw-bold'>請輸入正確的Youtube連結</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="position-absolute upload_title bg-white">輪播</div>
+                </div>
+            </div>
+            <div class="modal-footer px-4">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關　閉</button>
             </div>
         </div>
     </div>
@@ -233,11 +308,12 @@
                                     }
                                 %>
                                 <%- showText %>
-                            </text>);
+                            </text>
+                                );
 
-                        c.AddFor(e => e.LastModificationTime).Caption("最後編輯日期").Visible(false).SortOrder(SortOrder.Desc).HidingPriority(1);
-                        c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90).HidingPriority(4);
-                        c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90).HidingPriority(4);
+                                        c.AddFor(e => e.LastModificationTime).Caption("最後編輯日期").Visible(false).SortOrder(SortOrder.Desc).HidingPriority(1);
+                                        c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90).HidingPriority(4) ;
+                                        c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90).HidingPriority(4);
                         c.Add().Type(GridCommandColumnType.Buttons).Width(100)
                         .Buttons(b =>
                         {
@@ -317,6 +393,18 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="col-3">
+                                <div class="stock input-group mb-3">
+                                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                                        可銷售量
+                                    </div>
+                                    <input class="form-control disableHidenValue rounded" type="text" tabindex="-1" readonly aria-hidden="true">
+                                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
+                                        <input class="form-check-input" id="NoStockManagement" name="NoStockManagement" type="checkbox" value="true">
+                                        <label class="form-check-label fs-6 pe-2" for="NoStockManagement">無須設定</label>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="col">
                                 <div class="d-flex flex-row-reverse my-1">
                                     <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
@@ -343,7 +431,7 @@
                             <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
                             <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
                                 <input id="PermanentCheck" class="form-check-input" type="checkbox" value="">
-                                <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
+                                <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久上架</label>
                             </div>
                         </div>
                         <div class="row">
@@ -467,6 +555,7 @@
                     <div id="Spec_Frame" class="data_upload mx-2 border rounded position-relative">
                         <ul class="px-1 specList mb-0 border-0">
                             <li class="specHeader">
+                                <div class="spec_img">規格圖片</div>
                                 <div class="serNo">排序</div>
                                 <div class="spec">規格</div>
                                 <div class="price">金額</div>
@@ -475,6 +564,7 @@
                                 <div>可銷售量</div>
                                 <div>最低購買量</div>
                                 <div>銷售警示量</div>
+                                <div class="specDesc"></div>
                                 <div class="del"></div>
                             </li>
                             <li class="btn_spec_add list-unstyled mt-3 p-1 d-flex justify-content-end">
@@ -503,6 +593,12 @@
 
                 <template id="TemplateSpecification">
                     <li class="spec_list p-1 py-3 mb-3 rounded">
+                        <div class="specImg">
+                            <button type="button" class="btn_spec_img_edit form-control border-0 px-1 bg-transparent" title="編輯規格圖片">
+                                <img class="spec_thumb d-none" src="/images/noImg.jpg" />
+                                <i class="fa-regular fa-image spec_img_icon"></i>
+                            </button>
+                        </div>
                         <div class="upload_list">
                             <div>
                                 <span class="chang_ser bg-transparent border-0 form-control fs-4 material-symbols-outlined px-1 py-0" title="變更順序">open_with</span>
@@ -525,9 +621,9 @@
 
                         <div class="price input-group">
                             <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-                                <span class="material-symbols-outlined me-1 required_sign">attach_money</span>
+                                <span class="material-symbols-outlined me-1 @(Model.PriceOptional ? "" : "required_sign")">attach_money</span>
                             </div>
-                            <textarea class="input_price form-control rounded text-start" type="button" aria-label="Input Price of Product" required></textarea>
+                            <textarea class="input_price form-control rounded text-start" type="button" aria-label="Input Price of Product" @(Model.PriceOptional ? "" : "required")></textarea>
                             <span class="count"></span>
                         </div>
                         <div class="SubItemNo input-group">
@@ -552,7 +648,12 @@
                             </div>
                             <input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product" step="1">
                         </div>
-                        <div>
+                        <div class="specDesc">
+                            <button type="button" class="btn_spec_desc_edit form-control border-0 px-1 bg-transparent" title="編輯規格描述">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
+                        </div>
+                        <div class="del">
                             <button class="btn_remove form-control border-0 px-1 bg-transparent" title="移除規格">
                                 <span class="material-symbols-outlined">delete</span>
                             </button>

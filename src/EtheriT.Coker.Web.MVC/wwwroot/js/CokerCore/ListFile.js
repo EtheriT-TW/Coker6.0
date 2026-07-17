@@ -1,4 +1,8 @@
 ﻿Coker.Object.merge(Coker.File, {
+    // 容器有自己的 data("files") 就用它，否則退回全域 total_files（維持既有頁面行為）
+    filesOf: function ($root) {
+        return ($root && $root.data("files")) || total_files;
+    },
     ListFileInit: function () {
         co.File.fileUploadWithPreview();
         $(".btn_upload_add > button").on("click", function (e) {
@@ -49,21 +53,21 @@
                 var obj = {
                     File: videofile,
                 };
-                if (typeof (total_files.find(item => typeof (item["Id"]) != "undefined" && item["Id"] == $self_list.data("id"))) != "undefined") {
-                    if (total_files.find(item => item["Id"] == $self_list.data("id"))["File"].split("?")[0] != videoId) {
-                        total_files.find(item => item["Id"] == $self_list.data("id"))["File"] = obj["File"]
+                var store = co.File.filesOf($self);
+                if (typeof (store.find(item => typeof (item["Id"]) != "undefined" && item["Id"] == $self_list.data("id"))) != "undefined") {
+                    if (store.find(item => item["Id"] == $self_list.data("id"))["File"].split("?")[0] != videoId) {
+                        store.find(item => item["Id"] == $self_list.data("id"))["File"] = obj["File"]
                     }
-                } else if (typeof (total_files.find(item => item["TempId"] == $self_list.data("tempid"))) != "undefined") {
-                    if (total_files.find(item => item["TempId"] == $self_list.data("tempid"))["File"].split("?")[0] != videoId) {
-                        total_files.find(item => item["TempId"] == $self_list.data("tempid"))["File"] = obj["File"]
+                } else if (typeof (store.find(item => item["TempId"] == $self_list.data("tempid"))) != "undefined") {
+                    if (store.find(item => item["TempId"] == $self_list.data("tempid"))["File"].split("?")[0] != videoId) {
+                        store.find(item => item["TempId"] == $self_list.data("tempid"))["File"] = obj["File"]
                     }
                 } else {
                     obj["TempId"] = $self_list.data("tempid");
                     obj["Type"] = $self_list.data("uploadtype");
                     obj["IsDelete"] = false;
-                    total_files.push(obj);
-                }
-                $self_list.find(".thumb_img").attr("src", `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`);
+                    store.push(obj);
+                }                $self_list.find(".thumb_img").attr("src", `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`);
             } else {
                 var error_html = "<div class='w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-25 fw-bold'>請輸入正確的Youtube連結</div>"
                 $self.find(".youtube_preview").append(error_html);
@@ -169,7 +173,7 @@
                                             obj["File"] = img_file;
                                             obj["IsDelete"] = false;
                                             obj["Name"] = result.origin.name;
-                                            total_files.push(obj);
+                                            co.File.filesOf($root).push(obj);
                                             UploadListAdd(obj, $root);
                                         }).catch(function (err) {
                                             UploadPreviewFrameClear($root);
@@ -215,7 +219,7 @@
                                         obj["Name"] = result.origin.name;
                                         obj["Type"] = $self.data("uploadtype");
                                         obj["IsDelete"] = false;
-                                        total_files.push(obj);
+                                        co.File.filesOf($root).push(obj);
                                     }).catch(function (err) {
                                         console.log($`發生錯誤：${err}`);
                                         UploadPreviewFrameClear($root);
@@ -252,7 +256,7 @@
                                 obj["Type"] = $self.data("uploadtype");
                                 obj["IsDelete"] = false;
                                 obj["Name"] = file.name;
-                                total_files.push(obj);
+                                co.File.filesOf($root).push(obj);
                                 temp_files.push(obj)
                             })
 
@@ -278,7 +282,7 @@
                                 obj["Type"] = $self.data("uploadtype");
                                 obj["IsDelete"] = false;
                                 obj["Name"] = file.name;
-                                total_files.push(obj);
+                                co.File.filesOf($root).push(obj);
                                 temp_files.push(obj)
                             })
                             file_num--;
@@ -323,17 +327,17 @@
                 let file_num = $root.data("file_num");
                 if ($self.data("edit")) {
                     if ($self.data("serno") < file_num) { SortChange($uploadList, "bigger", $self.data("serno"), file_num); }
+                    var store = co.File.filesOf($root);
                     if (typeof ($self.data("id")) != "undefined") {
-                        total_files.find(item => item["Id"] == $self.data("id"))["IsDelete"] = true;
+                        store.find(item => item["Id"] == $self.data("id"))["IsDelete"] = true;
                     } else if (typeof ($self.data("tempid")) != "undefined") {
                         var tempid = $self.data("tempid");
-                        var index = total_files.findIndex(item => item["TempId"] == tempid);
-                        total_files.splice(index, 1);
-                        total_files.forEach(file => {
+                        var index = store.findIndex(item => item["TempId"] == tempid);
+                        store.splice(index, 1);
+                        store.forEach(file => {
                             file["TempId"] = file["TempId"] > tempid ? file["TempId"] - 1 : file["TempId"];
                         })
-                    }
-                    UploadPreviewFrameClear($root);
+                    }                    UploadPreviewFrameClear($root);
                     $self.remove();
                     file_num -= 1;
                     $root.data("file_num", file_num);
@@ -353,6 +357,8 @@
         var $parent = $self.parents(".data_upload").first();
         const $previewFrame = $parent.find(".preview_frame");
         let file_num = $parent.data("file_num");
+        var uploadId = $parent.find(".upload_frame").data("upload-id") || "FileUpload";
+        var store = co.File.filesOf($parent);
         function previewFrameClear() {
             //$previewFrame.find(".default_frame").removeClass("d-none").addClass("d-flex");
             $previewFrame.find(".upload_frame").removeClass("d-flex").addClass("d-none");
@@ -403,18 +409,18 @@
                     break;
                 case 1:
                     if ($self.find(".title").text() == "") {
-                        upload_file = co.File.UploadImageInit("FileUpload");
+                        upload_file = co.File.UploadImageInit(uploadId);
                         $parent.find(".upload_frame").removeClass("d-none");
                     } else {
                         if (typeof ($self.data("id")) != "undefined") {
-                            var name = total_files.find(item => item["Id"] == $self.data("id"))["Name"];
-                            var file = total_files.find(item => item["Id"] == $self.data("id"))["File"];
+                            var name = store.find(item => item["Id"] == $self.data("id"))["Name"];
+                            var file = store.find(item => item["Id"] == $self.data("id"))["File"];
                             $parent.find(".media_frame").removeClass("d-none").addClass("d-flex");
                             $parent.find(".media_frame").find("input").val(name);
                             $parent.find(".media_preview > div").children().remove();
                             $parent.find(".media_preview > div").append(`<img src="${file}" class=""></img>`);
                         } else if (typeof ($self.data("tempid")) != "undefined") {
-                            var data = total_files.find(item => item["TempId"] == $self.data("tempid"));
+                            var data = store.find(item => item["TempId"] == $self.data("tempid"));
                             if (typeof (data) != "undefined") {
                                 $parent.find(".upload_frame").find("span").text(data["File"].name);
                                 $parent.find(".media_frame").find("input").val(data["Name"]);
@@ -430,7 +436,7 @@
                須重打，360顯示的部分
                ***************************/
                 case 2:
-                    upload_file = co.File.Upload360Init("FileUpload");
+                    upload_file = co.File.Upload360Init(uploadId);
                     if ($self.data("file")) {
                         upload_file.addFiles($self.data("file"));
                         //console.log(upload_file);
@@ -443,21 +449,21 @@
               ***************************/
                 case 3:
                     if ($self.find(".title").text() == "") {
-                        upload_file = co.File.UploadVideoInit("FileUpload");
+                        upload_file = co.File.UploadVideoInit(uploadId);
                         $parent.find(".upload_frame").removeClass("d-none");
                     } else {
                         if (typeof ($self.data("id")) != "undefined") {
-                            var name = total_files.find(item => item["Id"] == $self.data("id"))["Name"];
-                            var file = total_files.find(item => item["Id"] == $self.data("id"))["File"];
+                            var name = store.find(item => item["Id"] == $self.data("id"))["Name"];
+                            var file = store.find(item => item["Id"] == $self.data("id"))["File"];
                             $parent.find(".media_frame").removeClass("d-none").addClass("d-flex");
                             $parent.find(".media_frame").find("input").val(name);
                             $parent.find(".media_preview > div").children().remove();
                             $parent.find(".media_preview > div").append(`<video src="${file}" class="h-100 w-100" controls preload="metadata"></video>`);
                         } else if (typeof ($self.data("tempid")) != "undefined") {
-                            var data = total_files.find(item => item["TempId"] == $self.data("tempid"));
+                            var data = store.find(item => item["TempId"] == $self.data("tempid"));
                             var file;
                             if (typeof (data) != "undefined") {
-                                file = total_files.find(item => item["TempId"] == $self.data("tempid"))["File"];
+                                file = store.find(item => item["TempId"] == $self.data("tempid"))["File"];
                                 if (typeof (file) != "undefined") {
                                     const objectUrl = URL.createObjectURL(file);
                                     var video = $("<video>", {
@@ -470,28 +476,28 @@
                                     $parent.find(".media_preview > div").append(video);
                                 }
                                 $parent.find(".upload_frame").find("span").text(file.name);
-                                $parent.find(".media_frame").find("input").val(total_files.find(item => item["TempId"] == $self.data("tempid"))["Name"]);
+                                $parent.find(".media_frame").find("input").val(store.find(item => item["TempId"] == $self.data("tempid"))["Name"]);
                             }
                             $parent.find(".media_frame").removeClass("d-none").addClass("d-flex");
                         }
                     }
                     break;
                 case 4:
-                    if (typeof (total_files.find(item => typeof (item["Id"]) != "undefined" && item["Id"] == $self.data("id"))) != "undefined") {
-                        var file = total_files.find(item => item["Id"] == $self.data("id"))["File"];
+                    if (typeof (store.find(item => typeof (item["Id"]) != "undefined" && item["Id"] == $self.data("id"))) != "undefined") {
+                        var file = store.find(item => item["Id"] == $self.data("id"))["File"];
                         var url = "https://www.youtube.com/watch?v=" + file;
                         $parent.find(".youtube_frame").find("input").val(url);
-                        $("#BtnConnect").click();
-                    } else if (typeof (total_files.find(item => item["TempId"] == $self.data("tempid"))) != "undefined") {
-                        var file = total_files.find(item => item["TempId"] == $self.data("tempid"))["File"];
+                        $parent.find(".youtube_frame button").click();
+                    } else if (typeof (store.find(item => item["TempId"] == $self.data("tempid"))) != "undefined") {
+                        var file = store.find(item => item["TempId"] == $self.data("tempid"))["File"];
                         var url = "https://www.youtube.com/watch?v=" + file;
                         $parent.find(".youtube_frame").find("input").val(url);
-                        $("#BtnConnect").click();
+                        $parent.find(".youtube_frame button").click();
                     } else {
                         $parent.find(".youtube_frame").find("input").val("https://www.youtube.com/watch?v=");
                         var error_html = "<div class='w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-25 fw-bold'>請輸入正確的Youtube連結</div>"
-                        $(".youtube_preview").children("*").remove();
-                        $(".youtube_preview").append(error_html);
+                        $parent.find(".youtube_preview").children("*").remove();
+                        $parent.find(".youtube_preview").append(error_html);
                     }
                     $parent.find(".youtube_frame").removeClass("d-none").addClass("d-flex");
                     break;

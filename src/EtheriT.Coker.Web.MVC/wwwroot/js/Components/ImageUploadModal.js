@@ -47,7 +47,6 @@ function ImageClear($select) {
 
             var $img_preview = $select.find(".img_preview");
             $img_preview.addClass("d-none");
-            $img_preview.removeClass("d-none");
             $img_preview.siblings("span").removeClass("d-none");
             $img_preview.parents("button").first().removeClass("border-0");
             $img_preview.attr("src", "");

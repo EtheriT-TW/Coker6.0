@@ -748,7 +748,14 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
             let blockId = 'customBlockTemplate_' + this.id;
             let iconText = (this.icon || "").replace("material-symbols-outlined", "").trim();
             let media = "";
-            if (/^fa/.test(this.icon)) {
+            if (this.img) {
+                const image = document.createElement("img");
+                image.src = this.img;
+                image.alt = this.title || "";
+                image.loading = "lazy";
+                image.style.cssText = "display:block;width:48px;height:48px;margin:auto;object-fit:cover;border-radius:4px;";
+                media = image.outerHTML;
+            } else if (/^fa/.test(this.icon)) {
                 media = `<i class="${this.icon} fa-5x"></i>`;
             } else if (/material-symbols-outlined/.test(this.icon)) {
                 media = `<i class="material-symbols-outlined fa-5x">${iconText}</i>`;

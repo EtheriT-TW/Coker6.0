@@ -19,6 +19,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
             WebsiteSeed.Seed(modelBuilder);
             ProdSeed.Seed(modelBuilder);
             ObjectTypeSeed.Seed(modelBuilder);
+            ComponentPurposeSeed.Seed(modelBuilder);
             StoreSetSeed.Seed(modelBuilder);
             RoleSeed.Seed(modelBuilder);
             ThirdPartySeed.Seed(modelBuilder);

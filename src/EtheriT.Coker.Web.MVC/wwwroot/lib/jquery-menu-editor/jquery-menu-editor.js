@@ -1406,11 +1406,10 @@ function MenuEditor(idSelector, options) {
                 }).removeClass("d-none");
         }
         $form.find(".item-menu").first().focus();
-        if (data.hasOwnProperty('icon')) {
-            iconPicker.iconpicker('setIcon', data.icon);
-        } else{
-            iconPicker.iconpicker('setIcon', 'empty');
-        }
+        var selectedIcon = (typeof data.icon === 'string' && data.icon.trim() !== '')
+            ? data.icon
+            : 'empty';
+        iconPicker.iconpicker('setIcon', selectedIcon);
         $updateButton.removeAttr('disabled');
     }
 
@@ -1436,7 +1435,11 @@ function MenuEditor(idSelector, options) {
         return $("<a>").addClass(attr.classCss).addClass('clickable').attr("href", "#").html(attr.text);
     }
 
-    function TButtonGroup() {
+    function optionEnabled(value) {
+        return value !== false && value !== 0 && value !== "false";
+    }
+
+    function TButtonGroup(itemData) {
         var $divbtn = $('<div>').addClass('btn-group float-right');
         var $btnEdit = TButton({classCss: 'btn btn-primary btn-sm btnEdit', text: settings.labelEdit});
         var $btnRemv = TButton({classCss: 'btn btn-danger btn-sm btnRemove', text: settings.labelRemove});
@@ -1446,7 +1449,9 @@ function MenuEditor(idSelector, options) {
         var $btnIn = TButton({ classCss: 'btn btn-secondary btn-sm btnIn btnMove levelMove', text: '<i class="fas fa-level-up-alt clickable"></i>' });
         var $btnCont = TButton({ classCss: 'btn btn-success btn-sm btnPage', text: '<i class="fa fa-paint-roller clickable"></i>' });
         $divbtn.append($btnUp).append($btnDown).append($btnIn).append($btnOut);
-        $divbtn.append($btnEdit).append($btnRemv).append($btnCont);
+        if (optionEnabled(itemData.canEdit)) $divbtn.append($btnEdit);
+        if (optionEnabled(itemData.canDel)) $divbtn.append($btnRemv);
+        if (optionEnabled(itemData.canView)) $divbtn.append($btnCont);
         return $divbtn;
     }
     function renderExtraButtons($title, $btnGroup, itemData, $li) {
@@ -1563,7 +1568,7 @@ function MenuEditor(idSelector, options) {
         var $divTitle = $("<div class='d-flex align-items-center float-left' />");
         $divTitle.append($i).append("&nbsp;").append($span);
 
-        var $divbtn = TButtonGroup();
+        var $divbtn = TButtonGroup(itemObject);
 
         // ← 保留你現有的擴充按鈕（不做任何改動）
         renderExtraButtons($divTitle, $divbtn, itemObject, $li);

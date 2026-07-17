@@ -24,5 +24,6 @@ namespace EtheriT.Coker.Core.Models
         public Website? Website { get; set; }
         public ObjectType ObjectClassify { get; set; }
         public List<Directory> Directories { get; set; } = new List<Directory>();
+        public List<HtmlContentPurpose> HtmlContentPurposes { get; set; } = new();
         }
 }

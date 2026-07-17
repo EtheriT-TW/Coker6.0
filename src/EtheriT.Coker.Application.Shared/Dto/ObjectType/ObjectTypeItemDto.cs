@@ -15,6 +15,10 @@ namespace EtheriT.Coker.Application.Dto.ObjectType
         public long? FK_TopNodeId { get; set; }
         public int ser_no { set; get; } = 500;
         public bool Visible { get; set; } = true;
+        public long? ImgId { get; set; }
+        public string? ImgUrl { get; set; }
+        public string? ImgName { get; set; }
+        public List<long> PurposeIds { get; set; } = new();
         public List<ObjectTypeItemDto>? Children { get; set; }
     }
 }

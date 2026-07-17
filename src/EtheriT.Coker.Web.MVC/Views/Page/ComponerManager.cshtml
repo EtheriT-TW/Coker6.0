@@ -1,6 +1,7 @@
 ﻿@{
     ViewData["Title"] = "ComponerManager";
 }
+@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @{
     await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
 }
@@ -39,10 +40,10 @@
                     <span class="title">選單資料</span>
                 </div>
                 <div class="card-body">
-                    <form id="frmEdit" class="form-horizontal needs-validation" novalidate>
+                    <form id="frmEdit" class="form-horizontal needs-validation component-manager-form" novalidate>
                         <input type="hidden" class="item-menu" name="id" />
                         <input type="hidden" id="serNO" name="serNO" value="500" class="item-menu">
-                        <div class="row">
+                        <div class="row component-basic-row">
                             <div class="col form-group form-check">
                                 <label for="classType">分類</label>
                                 <select name="fK_TopNodeId" id="classType" class="form-select item-menu"></select>
@@ -60,17 +61,41 @@
                                 <div class="invalid-feedback">排序為必填</div>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col form-group form-check">
-                                <label for="Title">標題</label>
-                                <div class="input-group">
+                        <div class="component-title-editor">
+                            <div class="input-group component-title-input-group">
+                                <div class="form-floating flex-grow-1">
                                     <input type="text" class="form-control item-menu" id="title" name="title" placeholder="請輸入標題" required>
-                                    <div class="input-group-append">
-                                        <button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>
-                                    </div>
-                                    <div class="invalid-feedback">標題為必填</div>
+                                    <label for="title">標題（icon、圖片擇一）</label>
                                 </div>
-                                <input type="hidden" name="icon" class="item-menu">
+                                <div class="input-group-append">
+                                    <button type="button" id="myEditor_icon" class="btn btn-outline-secondary rounded-0"></button>
+                                </div>
+                                <div id="ComponentImageBlock" class="component-image-inline">
+                                    <div id="ComponentImageUpload"
+                                         class="d-flex justify-content-center image_upload"
+                                         data-issinge="true"
+                                         data-needcompress="false">
+                                        @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadModal" })
+                                    </div>
+                                </div>
+                                <div class="invalid-feedback">標題為必填</div>
+                            </div>
+                            <input type="hidden" name="icon" class="item-menu">
+                            <input type="hidden" class="item-menu" id="componentImgId" name="imgId">
+                            <input type="hidden" class="item-menu" id="componentImgUrl" name="imgUrl">
+                            <input type="hidden" class="item-menu" id="componentImgName" name="imgName">
+                            <div class="form-text">未選擇 icon 時，可使用右側按鈕上傳圖片。</div>
+                        </div>
+                        <div id="PurposeBlock" class="row">
+                            <div class="col-12 form-group form-check">
+                                <label class="form-label">元件用途</label>
+                                <div class="purpose-picker rounded p-3">
+                                    <div id="PurposeSummary" class="purpose-summary mb-2">尚未設定用途</div>
+                                    <button type="button" id="btnSelectPurpose" class="btn btn-outline-primary w-100">
+                                        <i class="fa-solid fa-list-check me-1"></i>選擇元件用途
+                                    </button>
+                                </div>
+                                <div class="form-text">用途可複選；自訂元件不設定用途。</div>
                             </div>
                         </div>
                     </form>
@@ -82,6 +107,24 @@
                         <i class="fa-sharp fa-solid fa-rotate-right"></i>清空
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="ComponentPurposeModal" class="modal fade" tabindex="-1" aria-labelledby="ComponentPurposeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ComponentPurposeModalLabel">選擇元件用途</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+            </div>
+            <div class="modal-body">
+                <div id="ComponentPurposeGrid"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" id="btnConfirmPurpose" class="btn btn-primary">確認選擇</button>
             </div>
         </div>
     </div>

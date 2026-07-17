@@ -71,6 +71,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<FileBind> FileBinds { get; set; }
         public DbSet<FileBindMore> FileBindMores { get; set; }
         public DbSet<ObjectType> ObjectTypes { get; set; }
+        public DbSet<ComponentPurpose> ComponentPurposes { get; set; }
+        public DbSet<HtmlContentPurpose> HtmlContentPurposes { get; set; }
         public DbSet<MappingWebsiteRelationship> MappingWebsiteRelationship { get; set; }
         public DbSet<Advertise> Advertise { get; set; }
         public DbSet<Advertise_Log> Advertise_Logs { get; set; }
@@ -426,6 +428,26 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(c => c.Website).WithMany(u => u.Html_Contents).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasOne(c => c.ObjectClassify).WithMany(o => o.html_Contents).HasForeignKey(c => c.Type);
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<ComponentPurpose>(o =>
+            {
+                o.HasIndex(e => e.Code).IsUnique();
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<HtmlContentPurpose>(o =>
+            {
+                o.HasOne(e => e.HtmlContent)
+                    .WithMany(e => e.HtmlContentPurposes)
+                    .HasForeignKey(e => e.FK_HtmlContentId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                o.HasOne(e => e.ComponentPurpose)
+                    .WithMany(e => e.HtmlContentPurposes)
+                    .HasForeignKey(e => e.FK_ComponentPurposeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                o.HasIndex(e => new { e.FK_HtmlContentId, e.FK_ComponentPurposeId })
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0");
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<TechnicalCertificate>(o =>

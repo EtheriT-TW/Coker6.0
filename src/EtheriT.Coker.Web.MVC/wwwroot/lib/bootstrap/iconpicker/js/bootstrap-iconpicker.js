@@ -94,7 +94,7 @@
             el.select($(this).val());
             if (op.inline === false) {
                 var popover = bootstrap.Popover.getInstance(el.$element);
-                popover.dispose();
+                if (popover) popover.hide();
             }
             else {
                 op.table.find("i[class$='" + $(this).val() + "']").parent().addClass(op.selectedClass);
@@ -102,6 +102,16 @@
         });
         op.table.find('.search-control').off('keyup').on('keyup', function () {
             el.changeList(1);
+        });
+        op.table.find('.btn-clear-icon').off('click').on('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if ($(this).prop('disabled')) return;
+            el.clear();
+            if (op.inline === false) {
+                var popover = bootstrap.Popover.getInstance(el.$element);
+                if (popover) popover.hide();
+            }
         });
     };
 
@@ -154,6 +164,10 @@
     Iconpicker.prototype.select = function (icon) {
         var op = this.options;
         var el = this.$element;
+        if (typeof icon !== 'string' || icon.trim() === '' || icon === 'empty' || icon === op.iconClassFix) {
+            this.clear();
+            return;
+        }
         op.selected = $.inArray(icon.replace(op.iconClassFix, ''), op.icons);
         if (op.selected === -1) {
             op.selected = 0;
@@ -177,6 +191,28 @@
             }
             op.table.find('button.' + op.selectedClass).removeClass(op.selectedClass);
         }
+        this.updateClearButton();
+    };
+
+    Iconpicker.prototype.clear = function () {
+        var op = this.options;
+        var el = this.$element;
+        op.icon = '';
+        op.selected = -1;
+        el.find('input').val('');
+        el.find('i').attr('class', '').text('');
+        op.table.find('.btn-icon.' + op.selectedClass).removeClass(op.selectedClass);
+        this.updateClearButton();
+        el.trigger({ type: 'change', icon: 'empty' });
+    };
+
+    Iconpicker.prototype.updateClearButton = function () {
+        var hasIcon = typeof this.options.icon === 'string'
+            && this.options.icon.trim() !== ''
+            && this.options.icon !== 'empty';
+        this.options.table.find('.btn-clear-icon')
+            .prop('disabled', !hasIcon)
+            .attr('aria-disabled', (!hasIcon).toString());
     };
 
     Iconpicker.prototype.switchPage = function (icon) {
@@ -246,7 +282,12 @@
                 var btn = $('<button class="btn ' + op.unselectedClass + ' btn-icon"></button>').hide();
                 if (pos < op.icons.length) {
                     var v = op.iconClassFix + op.icons[pos];
-                    if (op.iconset == "GoogleMaterialSymbolsOutlined") {
+                    if (op.icons[pos] === 'empty') {
+                        btn.val('empty')
+                            .attr('title', '不使用 icon')
+                            .append('<span class="iconpicker-empty-symbol" aria-hidden="true">無</span>')
+                            .show();
+                    } else if (op.iconset == "GoogleMaterialSymbolsOutlined") {
                         var s = v.replace("material-symbols-outlined", "").trim();
                         btn.val(v).attr('title', v).append(`<i class="${op.iconClass} ${v}">${s}</i>`).show();
                     } else {
@@ -331,7 +372,10 @@
         var search = [
             '<tr>',
             '   <td colspan="' + op.cols + '">',
-            '       <input type="text" class="form-control search-control" style="width: ' + op.cols * (($.fn.bsVersion() === '3.x') ? 39 : 41) + 'px;" placeholder="' + op.searchText + '">',
+            '       <div class="iconpicker-search-group d-flex align-items-center gap-2" style="width: 100%;">',
+            '           <input type="text" class="form-control search-control flex-grow-1" style="min-width: 0; margin: 0;" placeholder="' + op.searchText + '">',
+            '           <button type="button" class="btn btn-outline-danger btn-clear-icon flex-shrink-0" style="min-width: auto; margin: 0; padding: .375rem .625rem;" title="取消目前選擇的 icon" aria-label="取消目前選擇的 icon">&times; Icon</button>',
+            '       </div>',
             '   </td>',
             '</tr>'
         ];
@@ -343,6 +387,7 @@
             search.hide();
         }
         op.table.find('thead').append(search);
+        this.updateClearButton();
     };
 
     // ICONPICKER PUBLIC METHODS
@@ -392,6 +437,10 @@
     };
 
     Iconpicker.prototype.setIcon = function (value) {
+        if (typeof value !== 'string' || value.trim() === '' || value === 'empty') {
+            this.clear();
+            return;
+        }
         this.select(value);
     };
 
@@ -482,7 +531,7 @@
                     inline: false,
                     page: 1,
                     selected: -1,
-                    table: $('<table class="table-icons"><thead></thead><tbody></tbody><tfoot></tfoot></table>')
+                    table: $('<table class="table-icons" style="width: 100%;"><thead></thead><tbody></tbody><tfoot></tfoot></table>')
                 });
                 var name = (typeof $this.attr('name') !== 'undefined') ? 'name="' + $this.attr('name') + '"' : '';
 
@@ -493,6 +542,17 @@
                         .append('<span class="caret"></span>')
                         .addClass('iconpicker ' + (($.fn.bsVersion() === '3.x') ? '' : 'dropdown-toggle'));
                     data.setIconset(op.iconset);
+                    $this.off('shown.bs.popover.iconpicker').on('shown.bs.popover.iconpicker', function () {
+                        op.table.find('.search-control').val('');
+                        data.filterIcons();
+                        if (op.icon) {
+                            data.switchPage(op.icon);
+                        }
+                        else {
+                            data.changeList(1);
+                        }
+                        data.updateClearButton();
+                    });
                     $this.on('click', function (e) {
                         e.preventDefault();
                         let $parent = $this.parents(".offcanvas,.modal,body").first();
@@ -508,10 +568,6 @@
                                 placement: op.placement
                             });
                         }
-                        $this.on('shown.bs.popover', function () {
-                            data.switchPage(op.icon);
-                            data.bindEvents();
-                        });
                         popover.show();
                     });
                 }

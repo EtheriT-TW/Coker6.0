@@ -4,6 +4,7 @@ using EtheriT.Coker.Application.Dto.ObjectType;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
@@ -23,17 +24,20 @@ namespace EtheriT.Coker.Application
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
         private readonly IMapper mapper;
+        private readonly IFileUploadAppService fileUploadAppService;
         private readonly string ApplicationName;
         private long websiteId;
         public ObjectTypeAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
-            IMapper mapper
+            IMapper mapper,
+            IFileUploadAppService fileUploadAppService
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.mapper = mapper;
+            this.fileUploadAppService = fileUploadAppService;
             ApplicationName = "ObjectType";
         }
         public async Task<ObjectTypeGetAlldto> GetAll()
@@ -52,6 +56,41 @@ namespace EtheriT.Coker.Application
                 foreach (var e in response.List) {
                     e.Children = await GetChild(e.Id);
                 }
+                response.Purposes = await db.ComponentPurposes
+                    .AsNoTracking()
+                    .Where(e => e.Visible)
+                    .OrderBy(e => e.SerNo)
+                    .ThenBy(e => e.Id)
+                    .Select(e => new ComponentPurposeDto
+                    {
+                        Id = e.Id,
+                        Code = e.Code,
+                        Name = e.Name
+                    })
+                    .ToListAsync();
+
+                var components = response.List
+                    .SelectMany(e => e.Children ?? new List<ObjectTypeItemDto>())
+                    .ToList();
+                if (components.Count > 0)
+                {
+                    var images = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
+                    {
+                        Sid = components.Select(e => e.Id).ToList(),
+                        Type = (int)FileBindTypeEnum.元件圖片,
+                        Size = 1
+                    });
+                    var imageByComponentId = images
+                        .GroupBy(e => e.Sid)
+                        .ToDictionary(e => e.Key, e => e.First());
+                    foreach (var component in components)
+                    {
+                        if (!imageByComponentId.TryGetValue(component.Id, out var image)) continue;
+                        component.ImgId = image.Id;
+                        component.ImgUrl = image.Link;
+                        component.ImgName = image.Name;
+                    }
+                }
                 response.Success = true;
             }
             catch( Exception ex )
@@ -63,11 +102,22 @@ namespace EtheriT.Coker.Application
         }
         private async Task<List<ObjectTypeItemDto>> GetChild(long type) {
             bool isSystemUser = await loginUserData.isSystemUser();
-            var reg = db.Html_Contents
+            var reg = await db.Html_Contents
+                        .Include(e => e.HtmlContentPurposes)
                         .Where(e => e.Type == type)
                         .Where(e => isSystemUser || (e.Type == (int)ObjectTypeEnum.自訂 && e.FK_WebsiteId == websiteId))
-                        .OrderBy(e => e.Ser_no);
-            return mapper.Map<List<ObjectTypeItemDto>>(reg);
+                        .OrderBy(e => e.Ser_no)
+                        .ToListAsync();
+            var result = mapper.Map<List<ObjectTypeItemDto>>(reg);
+            foreach (var item in result)
+            {
+                item.PurposeIds = reg
+                    .First(e => e.Id == item.Id)
+                    .HtmlContentPurposes
+                    .Select(e => e.FK_ComponentPurposeId)
+                    .ToList();
+            }
+            return result;
         }
         public async Task<ResponseMessageDto> CreateOrEdit(ObjectTypeItemDto dto)
         {
@@ -114,6 +164,7 @@ namespace EtheriT.Coker.Application
             Html_Content HtmlContent = mapper.Map<Html_Content>(dto);
             db.Html_Contents.Add(HtmlContent);
             await loginUserData.SaveChanges(HtmlContent);
+            await SyncPurposes(HtmlContent, dto.PurposeIds);
             return HtmlContent.Id;
         }
         private async Task<long> UpdateHtmlContent(ObjectTypeItemDto dto)
@@ -123,6 +174,7 @@ namespace EtheriT.Coker.Application
             {
                 mapper.Map(dto, HtmlContent);
                 await loginUserData.SaveChanges(HtmlContent);
+                await SyncPurposes(HtmlContent, dto.PurposeIds);
                 return HtmlContent.Id;
             }
             else throw new Exception("資料不存在");
@@ -140,6 +192,17 @@ namespace EtheriT.Coker.Application
                 {
                     item.IsDeleted = true;
                     await loginUserData.SaveChanges(item);
+                    var purposes = await db.HtmlContentPurposes
+                        .Where(e => e.FK_HtmlContentId == item.Id)
+                        .ToListAsync();
+                    foreach (var purpose in purposes) purpose.IsDeleted = true;
+                    if (purposes.Count > 0) await loginUserData.SaveChanges(purposes);
+
+                    await fileUploadAppService.deleteFileById(new FileDeleteDto
+                    {
+                        Sid = item.Id,
+                        Type = (int)FileBindTypeEnum.元件圖片
+                    });
                 }
                 response.Success = true;
             }
@@ -151,6 +214,49 @@ namespace EtheriT.Coker.Application
                 await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
+        }
+
+        private async Task SyncPurposes(Html_Content htmlContent, IEnumerable<long>? requestedPurposeIds)
+        {
+            var desiredIds = htmlContent.Type == (int)ObjectTypeEnum.自訂
+                ? new HashSet<long>()
+                : (requestedPurposeIds ?? Enumerable.Empty<long>()).Where(e => e > 0).ToHashSet();
+
+            if (desiredIds.Count > 0)
+            {
+                var validIds = await db.ComponentPurposes
+                    .Where(e => e.Visible && desiredIds.Contains(e.Id))
+                    .Select(e => e.Id)
+                    .ToListAsync();
+                desiredIds.IntersectWith(validIds);
+            }
+
+            var existing = await db.HtmlContentPurposes
+                .IgnoreQueryFilters()
+                .Where(e => e.FK_HtmlContentId == htmlContent.Id)
+                .ToListAsync();
+            var changed = new List<object>();
+
+            foreach (var relation in existing)
+            {
+                var shouldExist = desiredIds.Remove(relation.FK_ComponentPurposeId);
+                if (relation.IsDeleted == !shouldExist) continue;
+                relation.IsDeleted = !shouldExist;
+                changed.Add(relation);
+            }
+
+            foreach (var purposeId in desiredIds)
+            {
+                var relation = new HtmlContentPurpose
+                {
+                    FK_HtmlContentId = htmlContent.Id,
+                    FK_ComponentPurposeId = purposeId
+                };
+                db.HtmlContentPurposes.Add(relation);
+                changed.Add(relation);
+            }
+
+            if (changed.Count > 0) await loginUserData.SaveChanges(changed);
         }
         public async Task<ResponseMessageDto> UpdateSerNo(UpdateSerNoListDto dto) {
             ResponseMessageDto response = new ResponseMessageDto { Success = true };

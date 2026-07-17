@@ -20,6 +20,7 @@ namespace EtheriT.Coker.Application.Dto
         大頭貼 = 14,
         文章檔案=15,
         產品規格圖 = 16,
+        元件圖片 = 17,
         資料暫存 = 99
 	}
 }

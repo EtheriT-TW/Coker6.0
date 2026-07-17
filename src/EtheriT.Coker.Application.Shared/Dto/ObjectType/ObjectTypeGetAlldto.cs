@@ -9,5 +9,6 @@ namespace EtheriT.Coker.Application.Dto.ObjectType
     public class ObjectTypeGetAlldto: ResponseMessageDto
     {
         public List<ObjectTypeItemDto> List { get; set; }
+        public List<ComponentPurposeDto> Purposes { get; set; } = new();
     }
 }

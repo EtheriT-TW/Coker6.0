@@ -228,6 +228,7 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.CanEdit, option => option.MapFrom(c => false))
                 .ForMember(e => e.CanDel, option => option.MapFrom(c => false))
                 .ForMember(e => e.CanAdd, option => option.MapFrom(c => false))
+                .ForMember(e => e.CanView, option => option.MapFrom(c => false))
                 .ForMember(e => e.MaxLevel, option => option.MapFrom(c => 0));
 
             //Product

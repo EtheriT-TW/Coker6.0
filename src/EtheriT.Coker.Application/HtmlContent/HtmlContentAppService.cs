@@ -100,6 +100,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                         .ThenBy(e => e.Ser_no)
                         .ToListAsync();
                 respose.List = mapper.Map<List<HtmlContentDto>>(result);
+                await PopulateComponentImages(respose.List);
                 respose.Success = true;
             }
             catch (Exception e)
@@ -116,6 +117,7 @@ namespace EtheriT.Coker.Application.HtmlContent
             {
                 var result = await db.Html_Contents.Include(e => e.ObjectClassify).Where(e => e.Type == type).ToListAsync();
                 respose.List = mapper.Map<List<HtmlContentDto>>(result);
+                await PopulateComponentImages(respose.List);
                 respose.Success = true;
             }
             catch (Exception e)
@@ -124,6 +126,30 @@ namespace EtheriT.Coker.Application.HtmlContent
             }
             return respose;
         }
+
+        private async Task PopulateComponentImages(List<HtmlContentDto>? components)
+        {
+            if (components == null || components.Count == 0) return;
+
+            var images = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
+            {
+                Sid = components.Select(e => e.Id).ToList(),
+                Type = (int)FileBindTypeEnum.元件圖片,
+                Size = 1
+            });
+            var imageByComponentId = images
+                .GroupBy(e => e.Sid)
+                .ToDictionary(e => e.Key, e => e.First());
+
+            foreach (var component in components)
+            {
+                if (imageByComponentId.TryGetValue(component.Id, out var image))
+                {
+                    component.Img = image.Link;
+                }
+            }
+        }
+
         public async Task<JsonResult> GetAllList(int type, DataSourceLoadOptions loadOptions)
         {
             try

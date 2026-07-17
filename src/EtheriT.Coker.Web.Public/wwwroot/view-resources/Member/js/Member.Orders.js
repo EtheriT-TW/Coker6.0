@@ -229,11 +229,14 @@
                         title: "連結至：" + detail.title
                     });
 
-                    detail.imagePath = detail.imagePath.replaceAll("/" + w.OrgName + "/", "/");
+                    detail.imagePath = (detail.imagePath || "/images/RemovedProd.png")
+                        .replaceAll("/" + w.OrgName + "/", "/");
 
                     listFrame.find("img").attr({
                         src: detail.imagePath,
                         alt: detail.title + "的主要圖片"
+                    }).one("error", function () {
+                        $(this).attr("src", "/images/RemovedProd.png");
                     });
 
                     listFrame.find(".title").text(detail.title);

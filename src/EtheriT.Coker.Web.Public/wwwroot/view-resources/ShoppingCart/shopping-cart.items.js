@@ -190,7 +190,8 @@ function CartInit(result) {
     if ($firstGroup.length) {
         const $validItems = $firstGroup
             .find('input[name="buyItems"]')
-            .not(':disabled');
+            .not(':disabled')
+            .not('[data-requires-confirmation="true"]');
 
         if ($validItems.length > 0) {
             $firstGroup.find('.js-group-check').prop('checked', true);
@@ -242,6 +243,8 @@ function CartListAdd(data, $container) {
     $template.attr('data-group-id', groupId);
     $template = cart.Items.CartListInsert($template, data);
 
+    var validationCode = data.validationCode || data.ValidationCode || '';
+
     if (Number(data.quantity || 0) <= 0 || data.available === false || data.available === "false") {
         $template.addClass("cart-item-error");
         $template.find('input[name="buyItems"]').prop({
@@ -250,12 +253,26 @@ function CartListAdd(data, $container) {
         });
 
         var msg = data.describe || "此商品目前無法購買，請調整或移除。";
-        var $content = $template.find(".content");
-        if (!$content.length) $content = $template;
+        var $messageContainers = $template.find(".js-cart-item-message");
+        if (!$messageContainers.length) $messageContainers = $template;
 
-        if ($template.find(".js-stock-error").length === 0) {
-            $content.append($('<div class="js-stock-error text-danger small mt-1"></div>').text(msg));
+        // 數量為 0 時，錯誤已顯示在右側不可購買區塊，不再於標題下方重複顯示。
+        if (Number(data.quantity || 0) > 0 && $template.find(".js-stock-error").length === 0) {
+            $messageContainers.append($('<div class="js-stock-error text-danger small mt-1"></div>').text(msg));
         }
+    } else if (["SpecTitleChanged", "ProductTitleChanged", "CartSnapshotChanged"].includes(validationCode)) {
+        $template.addClass("cart-item-warning");
+        $template.find('input[name="buyItems"]')
+            .prop('checked', false)
+            .attr('data-requires-confirmation', 'true');
+
+        var warningMessage = data.describe || "商品資訊已調整，請確認後再勾選結帳。";
+        var $warningContent = $template.find(".js-cart-item-message");
+        if (!$warningContent.length) $warningContent = $template;
+
+        $warningContent.append(
+            $('<div class="js-cart-change-warning text-warning-emphasis small mt-1"></div>').text(warningMessage)
+        );
     }
 
     $template.find(".btn_remove_pro").on("click", function () {
@@ -525,7 +542,10 @@ function CartListInsert($frame, data) {
             const checkItem = item.find(`[name="buyItems"]`).attr("id", `prod${data.scId}`).val(data.scId);
             checkItem.next("label").attr("for", `prod${data.scId}`);
             if (data['quantity'] == 0) {
-                $frame.find(".nostock").removeClass("d-none");
+                $frame.find(".nostock")
+                    .removeClass("d-none")
+                    .find(".js-unavailable-message")
+                    .text(data.describe || "此商品目前無法購買，請調整或移除。");
                 $frame.find(".content").addClass("d-none");
                 $frame.find(".btn_side_icon .favorites").addClass("d-none");
             }
@@ -579,7 +599,7 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
         // 3. 商品列紅字提示：不管有沒有鎖商品，都要顯示
         $li.find('.js-stock-error').remove();
 
-        var $content = $li.find('.content');
+        var $content = $li.find('.js-cart-item-message');
         if (!$content.length) $content = $li;
 
         var $msgDiv = $('<div class="js-stock-error text-danger small mt-1"></div>');
@@ -680,6 +700,14 @@ function CartDelete(self, id, success, error) {
         cart.Pricing.TotalCount();
         cart.Pricing.updateNextStepByBonus();
         cart.Payment.Core.onAmountChanged();
+
+        var isReorderPage = window.location.search.substring(1).startsWith("reorder");
+        var reorderItemsRemain = $("#Step1 .purchase_group li.purchase_item").length > 0;
+        if (isReorderPage && !reorderItemsRemain) {
+            window.location.replace(`/${OrgName}/ShoppingCar`);
+            return;
+        }
+
         if (parseInt($("#Car_Badge").text()) == 0) {
             cart.Forms.DetailsClear();
         }
@@ -753,7 +781,7 @@ function ValidateCartOnInit() {
                 $itemCheckbox.prop('disabled', true);
             }
 
-            var $content = $li.find('.content');
+            var $content = $li.find('.js-cart-item-message');
             if (!$content.length) $content = $li;
             var $msgDiv = $('<div class="js-stock-error text-danger small mt-1"></div>');
             $msgDiv.text(msg || '此商品目前無法購買，請調整或移除。');

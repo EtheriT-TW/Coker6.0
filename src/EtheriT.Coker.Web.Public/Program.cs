@@ -5,6 +5,7 @@ using EtheriT.Coker.Application.Article;
 using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.BonusManagement;
 using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Configuration;
 using EtheriT.Coker.Application.Contact;
 using EtheriT.Coker.Application.Contact.Export;
 using EtheriT.Coker.Application.Directory;
@@ -74,7 +75,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using Microsoft.Net.Http.Headers;
-using Serilog;
+// using Serilog; // 流量紀錄功能暫停使用；恢復下方設定時需一併啟用。
 using System.Net;
 using System.Text;
 
@@ -270,6 +271,7 @@ builder.Services.AddScoped<MailAppService>();
 builder.Services.AddScoped<ITagAppService, TagAppService>();
 builder.Services.AddScoped<IWebMenuApplication, WebMenuApplication>();
 builder.Services.AddScoped<IWebsiteApplication, WebsiteApplication>();
+builder.Services.Configure<VirtualDirectory>(builder.Configuration.GetSection("VirtualDirectory"));
 builder.Services.AddScoped<IFileUploadAppService, FileUploadAppService>();
 builder.Services.AddScoped<IUploadPathResolver, UploadPathResolver>();
 builder.Services.AddScoped<IAdvertiseAppService, AdvertiseAppService>();
@@ -338,6 +340,11 @@ builder.Services.AddResponseCompression(options =>
 
 
 // 配置 Serilog
+// 流量紀錄功能暫停使用。
+// 此設定即使沒有符合 Filter 的訊息，Serilog File Sink 仍會在前台啟動時
+// 於 VirtualDirectory:upload\logs 建立當日的 0 KB 檔案與缺少的父目錄。
+// 未來若恢復，建議改用 RollingInterval.Day 與 retainedFileCountLimit 控制保留天數。
+/*
 string logPath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\logs\\{DateTime.Now.Date.ToString("yyyy-MM-dd")}.txt";
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information() // 設定最低記錄層級
@@ -352,6 +359,7 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 builder.Host.UseSerilog();
+*/
 
 var app = builder.Build();
 

@@ -59,17 +59,18 @@ namespace EtheriT.Coker.Application.Import
             }
             return output;
         }
-        public Task<ProdImportAllDto> ProdReplace(string path)
+        public async Task<ProdImportAllDto> ProdReplace(string path)
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
                 throw new FileNotFoundException("找不到商品匯入檔案。", path);
 
+            var orgName = await loginUserData.GetWebsiteOrgName();
             var output = new ProdImportAllDto();
-            output.Products.AddRange(readProdExcel(path));
+            output.Products.AddRange(readProdExcel(path, orgName));
             output.Directories.AddRange(readDirectoryExcel(path));
-            return Task.FromResult(output);
+            return output;
         }
-        private List<ProductImportDto> readProdExcel(string path)
+        private List<ProductImportDto> readProdExcel(string path, string orgName)
         {
             List<ProductImportDto> data = new List<ProductImportDto>();
             var reg = MiniExcel.Query<ProductImportUpateRegDto>(path, sheetName: "商品", startCell: "A2").ToList();
@@ -83,12 +84,12 @@ namespace EtheriT.Coker.Application.Import
                     {
                         var t = Techs.FindAll(e => e.ProdName == rows[i].ProdName && e.ItemNo == rows[i].ItemNo);
                         rows[i].Techs = mapper.Map<List<TechCertDto>>(t);
-                        pathReplace(rows[i], "Image", "Product");
-                        pathReplace(rows[i], "File", "Product/File");
+                        pathReplace(rows[i], "Image", "Product", orgName);
+                        pathReplace(rows[i], "File", "Product/File", orgName);
                         if (rows[i].Techs != null)
                         {
                             rows[i].Techs.ForEach(e => {
-                                pathReplace(e, "Img", "TechnicalCertificate");
+                                pathReplace(e, "Img", "TechnicalCertificate", orgName);
                             });
                         }
                         data.Add(rows[i]);
@@ -110,17 +111,31 @@ namespace EtheriT.Coker.Application.Import
                          .ToArray()
             );
         }
-        private void pathReplace<T>(T dto, string key, string dir) where T : class
+        private void pathReplace<T>(T dto, string key, string dir, string orgName) where T : class
         {
             var props = GetProps<T>(key);
             foreach (var prop in props)
             {
                 string? path = prop.GetValue(dto) as string;
-                if (!string.IsNullOrEmpty(path) && !path.StartsWith("http") && !path.StartsWith("/upload/"))
+                if (string.IsNullOrWhiteSpace(path))
+                    continue;
+
+                path = path.Trim();
+                if (path.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var orgPrefix = $"/upload/{orgName}/";
+                if (!string.IsNullOrWhiteSpace(orgName) &&
+                    path.StartsWith(orgPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    path = $"/upload/{path.Substring(orgPrefix.Length)}";
+                }
+                else if (!path.StartsWith("/upload/", StringComparison.OrdinalIgnoreCase))
                 {
                     path = $"/upload/{dir}/{path}".Replace("//", "/");
-                    prop.SetValue(dto, path);
                 }
+
+                prop.SetValue(dto, path);
             }
         }
         public List<DirectoryImportDto> readDirectoryExcel(string path)

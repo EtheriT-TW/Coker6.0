@@ -122,7 +122,14 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
             return result;
         }
-        public async Task<ResponseMessageDto> AddUp(ShoppingCartAddUpDto dto)
+        public Task<ResponseMessageDto> AddUp(ShoppingCartAddUpDto dto)
+        {
+            return AddUpInternal(dto);
+        }
+
+        private async Task<ResponseMessageDto> AddUpInternal(
+            ShoppingCartAddUpDto dto,
+            Core.Models.ShoppingCart? sourceOrderSnapshot = null)
         {
             ResponseMessageDto response = new ResponseMessageDto() { Success = false };
 
@@ -166,6 +173,34 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 var currentStock = proStock.Stock ?? 0;
                 if (currentStock <= 0 && !skipStock)
                     throw new Exception("目前無庫存");
+
+                var specIds = new[] { proStock.FK_S1id, proStock.FK_S2id }
+                    .Where(id => id.HasValue && id.Value > 0)
+                    .Select(id => id!.Value)
+                    .Distinct()
+                    .ToList();
+                var specTitles = specIds.Any()
+                    ? await db.Prod_Specs
+                        .Where(spec => specIds.Contains(spec.Id))
+                        .ToDictionaryAsync(spec => spec.Id, spec => spec.Title)
+                    : new Dictionary<long, string>();
+                var s1SnapshotTitle = proStock.FK_S1id.HasValue && specTitles.TryGetValue(proStock.FK_S1id.Value, out var currentS1Title)
+                    ? currentS1Title
+                    : null;
+                var s2SnapshotTitle = proStock.FK_S2id.HasValue && specTitles.TryGetValue(proStock.FK_S2id.Value, out var currentS2Title)
+                    ? currentS2Title
+                    : null;
+                var preserveOrderSnapshot = sourceOrderSnapshot != null;
+                var cartS1Id = preserveOrderSnapshot ? sourceOrderSnapshot!.FK_S1id : proStock.FK_S1id;
+                var cartS2Id = preserveOrderSnapshot ? sourceOrderSnapshot!.FK_S2id : proStock.FK_S2id;
+                var cartS1Title = preserveOrderSnapshot ? sourceOrderSnapshot!.S1Title : s1SnapshotTitle;
+                var cartS2Title = preserveOrderSnapshot ? sourceOrderSnapshot!.S2Title : s2SnapshotTitle;
+                var cartProductId = preserveOrderSnapshot
+                    ? sourceOrderSnapshot!.ProductId ?? prod.Id
+                    : prod.Id;
+                var cartProdName = preserveOrderSnapshot && !string.IsNullOrWhiteSpace(sourceOrderSnapshot!.ProdName)
+                    ? sourceOrderSnapshot.ProdName
+                    : !string.IsNullOrWhiteSpace(dto.ProdName) ? dto.ProdName : prod.Title;
 
                 Core.Models.ShoppingCart? sc = null;
                 if (dto.Id != null)
@@ -235,9 +270,12 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         FK_Uid = userid,
                         UUID = UUID,
                         Ser_No = 500,
-                        FK_S1id = proStock.FK_S1id,
-                        FK_S2id = proStock.FK_S2id,
-                        ProdName = !string.IsNullOrWhiteSpace(dto.ProdName) ? dto.ProdName: prod.Title,
+                        FK_S1id = cartS1Id,
+                        FK_S2id = cartS2Id,
+                        ProductId = cartProductId,
+                        ProdName = cartProdName,
+                        S1Title = cartS1Title,
+                        S2Title = cartS2Title,
                         CreatorUserId = userid,
                         CreationTime = date
                     };
@@ -259,10 +297,19 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     sc.Price = unitPrice;
                     sc.Bonus = bonus;
                     sc.FK_PriceId = dto.FK_PriceId;
+                    sc.ProductId = cartProductId;
+                    sc.S1Title = cartS1Title;
+                    sc.S2Title = cartS2Title;
                     sc.LastModificationTime = DateTime.Now;
                     sc.LastModifierUserId = userid;
 
-                    if (sc.FK_S1id == null && sc.FK_S2id == null)
+                    if (preserveOrderSnapshot)
+                    {
+                        sc.FK_S1id = cartS1Id;
+                        sc.FK_S2id = cartS2Id;
+                        sc.ProdName = cartProdName;
+                    }
+                    else if (sc.FK_S1id == null && sc.FK_S2id == null)
                     {
                         sc.FK_S1id = proStock.FK_S1id;
                         sc.FK_S2id = proStock.FK_S2id;
@@ -355,6 +402,17 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     .Include(s => s.Prod)
                     .Where(s => stockIds.Contains(s.Id))
                     .ToListAsync();
+                var specIds = stocks
+                    .SelectMany(stock => new[] { stock.FK_S1id, stock.FK_S2id })
+                    .Where(id => id.HasValue && id.Value > 0)
+                    .Select(id => id!.Value)
+                    .Distinct()
+                    .ToList();
+                var specTitles = specIds.Any()
+                    ? await db.Prod_Specs
+                        .Where(spec => specIds.Contains(spec.Id))
+                        .ToDictionaryAsync(spec => spec.Id, spec => spec.Title)
+                    : new Dictionary<long, string>();
 
                 foreach (var dto in dtos)
                 {
@@ -388,8 +446,14 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         continue;
                     }
 
-                    var specCheck = ApplyCartSpecValidation(sc, pro_stock);
-                    if (!specCheck.Success)
+                    var currentS1Title = pro_stock.FK_S1id.HasValue && specTitles.TryGetValue(pro_stock.FK_S1id.Value, out var s1Title)
+                        ? s1Title
+                        : null;
+                    var currentS2Title = pro_stock.FK_S2id.HasValue && specTitles.TryGetValue(pro_stock.FK_S2id.Value, out var s2Title)
+                        ? s2Title
+                        : null;
+                    var specCheck = ApplyCartSpecValidation(sc, pro_stock, currentS1Title, currentS2Title);
+                    if (!specCheck.Success && specCheck.Error != "SpecTitleChanged")
                     {
                         itemResult.Success = false;
                         itemResult.Error = specCheck.Error;
@@ -619,8 +683,25 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     var temp_output = mapper.Map<ShoppingCartDisplayDto>(shoppingCart);
                     var date_now = DateTime.Now;
 
-                    temp_output.Available = prods.Visible && !prods.RemovedFromShelves && (prods.permanent || (date_now > prods.StartTime && date_now < prods.EndTime));
+                    temp_output.Available = prods.Visible
+                        && !IsCantBuyProdState(prods)
+                        && (prods.permanent || (date_now > prods.StartTime && date_now < prods.EndTime));
                     temp_output.Stock = prod_stocks?.Stock ?? 0;
+
+                    if (!shoppingCart.IsOrder)
+                    {
+                        if (!temp_output.Available)
+                        {
+                            temp_output.ValidationCode = "ProductUnavailable";
+                            temp_output.Describe = "此商品目前已下架或無法購買，請移除該品項。";
+                        }
+                        else if (temp_output.Stock <= 0)
+                        {
+                            temp_output.Available = false;
+                            temp_output.ValidationCode = "StockNotEnough";
+                            temp_output.Describe = "此商品目前已無庫存，請移除該品項或稍後再試。";
+                        }
+                    }
                     temp_output.OldPrice = shoppingCart.Price;
                     temp_output.DynamicPrice = prod_stocks?.Price ?? 0;
                     temp_output.OldBonus = shoppingCart.Bonus ?? 0;
@@ -662,12 +743,25 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     temp_output.ImagePath = imagepath?.ToString() ?? "/images/noImg.jpg";
                     if (temp_output.ImagePath != "") temp_output.ImagePath = $"{temp_output.ImagePath}";
 
-                    var db_sp = await db.Prod_Specs.ToListAsync();
-                    if (db_sp.Any())
-                    {
-                        temp_output.S1Title = shoppingCart.Prod_Stock.FK_S1id != null ? db_sp.Find(e => e.Id == shoppingCart.Prod_Stock.FK_S1id)?.Title ?? "" : "";
-                        temp_output.S2Title = shoppingCart.Prod_Stock.FK_S2id != null ? db_sp.Find(e => e.Id == shoppingCart.Prod_Stock.FK_S2id)?.Title ?? "" : "";
-                    }
+                    var currentSpecIds = new[] { prod_stocks.FK_S1id, prod_stocks.FK_S2id }
+                        .Where(id => id.HasValue && id.Value > 0)
+                        .Select(id => id!.Value)
+                        .Distinct()
+                        .ToList();
+                    var currentSpecTitles = currentSpecIds.Any()
+                        ? await db.Prod_Specs
+                            .Where(spec => currentSpecIds.Contains(spec.Id))
+                            .ToDictionaryAsync(spec => spec.Id, spec => spec.Title)
+                        : new Dictionary<long, string>();
+                    var currentS1Title = prod_stocks.FK_S1id.HasValue && currentSpecTitles.TryGetValue(prod_stocks.FK_S1id.Value, out var s1Title)
+                        ? s1Title
+                        : "";
+                    var currentS2Title = prod_stocks.FK_S2id.HasValue && currentSpecTitles.TryGetValue(prod_stocks.FK_S2id.Value, out var s2Title)
+                        ? s2Title
+                        : "";
+
+                    temp_output.S1Title = shoppingCart.IsOrder ? shoppingCart.S1Title ?? "" : currentS1Title;
+                    temp_output.S2Title = shoppingCart.IsOrder ? shoppingCart.S2Title ?? "" : currentS2Title;
 
                     var psid = prod_stocks?.Id;
                     var prices = new List<ProductPriceDto>();
@@ -724,13 +818,38 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     temp_output.Bonus = currentBonus;
                     temp_output.PackingPoint = prod_stocks.PackingPoint;
 
-                    var specCheck = ApplyCartSpecValidation(shoppingCart, prod_stocks);
+                    var specCheck = shoppingCart.IsOrder || !temp_output.Available
+                        ? new ResponseMessageDto { Success = true }
+                        : ApplyCartSpecValidation(shoppingCart, prod_stocks, currentS1Title, currentS2Title);
+                    var productTitleChanged = !shoppingCart.IsOrder
+                        && temp_output.Available
+                        && !string.IsNullOrWhiteSpace(shoppingCart.ProdName)
+                        && !string.Equals(shoppingCart.ProdName, prods.Title, StringComparison.Ordinal);
+                    var specTitleChanged = !specCheck.Success && specCheck.Error == "SpecTitleChanged";
 
-                    if (!specCheck.Success)
+                    if (productTitleChanged || specTitleChanged)
                     {
+                        var changeMessages = new List<string>();
+                        if (productTitleChanged)
+                        {
+                            changeMessages.Add($"商品名稱：由「{shoppingCart.ProdName}」調整為「{prods.Title}」");
+                        }
+                        if (specTitleChanged && !string.IsNullOrWhiteSpace(specCheck.Message))
+                        {
+                            changeMessages.Add(specCheck.Message);
+                        }
+
+                        temp_output.ValidationCode = productTitleChanged && specTitleChanged
+                            ? "CartSnapshotChanged"
+                            : productTitleChanged ? "ProductTitleChanged" : "SpecTitleChanged";
+                        temp_output.Describe = $"商品資訊已有異動：{string.Join("；", changeMessages)}。請確認後再勾選結帳。";
+                    }
+                    else if (!specCheck.Success)
+                    {
+                        temp_output.ValidationCode = specCheck.Error;
+                        temp_output.Describe = specCheck.Message;
                         temp_output.Available = false;
                         temp_output.Quantity = 0;
-                        temp_output.Describe = specCheck.Message;
                     }
 
                     if (!temp_output.Available)
@@ -758,7 +877,9 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
         private ResponseMessageDto ApplyCartSpecValidation(
             Core.Models.ShoppingCart shoppingCart,
-            Prod_Stock? stock = null)
+            Prod_Stock? stock = null,
+            string? currentS1Title = null,
+            string? currentS2Title = null)
         {
             var response = new ResponseMessageDto
             {
@@ -775,16 +896,26 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 return response;
             }
 
-            var specChanged =
-                (shoppingCart.FK_S1id ?? -1) != (stock.FK_S1id ?? -1) ||
-                (shoppingCart.FK_S2id ?? -1) != (stock.FK_S2id ?? -1);
+            var s1TitleChanged = !string.Equals(
+                shoppingCart.S1Title ?? "",
+                currentS1Title ?? "",
+                StringComparison.Ordinal);
+            var s2TitleChanged = !string.Equals(
+                shoppingCart.S2Title ?? "",
+                currentS2Title ?? "",
+                StringComparison.Ordinal);
 
-            if (specChanged)
+            // 購物車提示是給使用者確認畫面可見資訊；內部規格 ID 異動但名稱相同時不提示。
+            if (s1TitleChanged || s2TitleChanged)
             {
+                var oldSpec = string.Join(" / ", new[] { shoppingCart.S1Title, shoppingCart.S2Title }
+                    .Where(title => !string.IsNullOrWhiteSpace(title)));
+                var currentSpec = string.Join(" / ", new[] { currentS1Title, currentS2Title }
+                    .Where(title => !string.IsNullOrWhiteSpace(title)));
+
                 response.Success = false;
-                response.Error = "SpecChanged";
-                response.Message = "此商品規格已異動，請移除後重新選購。";
-                return response;
+                response.Error = "SpecTitleChanged";
+                response.Message = $"商品規格：由「{oldSpec}」調整為「{currentSpec}」";
             }
 
             return response;
@@ -811,7 +942,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                 newsc.Id = null;
                                 if (newsc.Quantity > oldsc.Prod_Stock.Stock) newsc.Quantity = (int)oldsc.Prod_Stock.Stock;
                                 else newsc.Quantity = oldsc.Quantity;
-                                var temp_response = await AddUp(newsc);
+                                // 再買一次需保留原訂單快照，購物車才能提示商品或規格已異動。
+                                var temp_response = await AddUpInternal(newsc, oldsc);
                                 if (temp_response.Success) StockAllNull = false;
                                 else throw new Exception(temp_response.Message);
                             }

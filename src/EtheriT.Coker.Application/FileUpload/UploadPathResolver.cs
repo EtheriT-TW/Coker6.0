@@ -19,6 +19,16 @@ namespace EtheriT.Coker.Application
             if (string.IsNullOrWhiteSpace(orgName))
                 throw new Exception("orgName 不可為空");
 
+            // 前台的 VirtualDirectory:upload 已直接指向單一網站目錄，
+            // 例如 ...\upload\research-tju，不應再次附加 OrgName。
+            if (!string.IsNullOrWhiteSpace(virtualDirectory.Upload))
+            {
+                var siteUploadPath = Path.GetFullPath(virtualDirectory.Upload);
+
+                if (IODirectory.Exists(siteUploadPath))
+                    return siteUploadPath;
+            }
+
             var uploadRoots = virtualDirectory.UploadRoots ?? new Dictionary<string, string>();
 
             foreach (var root in uploadRoots.Values)

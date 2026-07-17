@@ -549,51 +549,79 @@ function AddUpArticlet(success_text, error_text) {
             }
 
             $.when.apply($, requests).done(function () {
-                if (isFileUploaded || isFileUpdated || isFileDeleted) {
-                    co.Articles.RebuildContentWithFiles(parseInt(result.message));
-                }
-
                 var results = [];
 
                 if (requests.length === 1) results = [arguments[0]];
                 else for (let i = 0; i < arguments.length; i++)  results.push(arguments[i]);
 
-                var errortext = [];
+                function finishSave(allResults) {
+                    var errortext = [];
 
-                $.each(results, function (index, item) {
-                    if (!item) return;
-                    if (item.success) return;
+                    $.each(allResults, function (index, item) {
+                        if (!item) return;
+                        if (item.success) return;
 
-                    var name = item.meta?.fileName || `第 ${index + 1} 筆`;
-                    var actionfail = item.meta?.action ? item.meta.action + "失敗" : "";
+                        var name = item.meta?.fileName || `第 ${index + 1} 筆`;
+                        var actionfail = item.meta?.action ? item.meta.action + "失敗" : "";
 
-                    switch (item.httpStatus) {
-                        case 400:
-                            if ((item.responseText || "").includes("Request body too large")) errortext.push(`【${name}】檔案過大 ${actionfail}`);
-                            else errortext.push(`【${name}】資料格式錯誤 ${actionfail}`);
-                            break;
-                        case 413:
-                            errortext.push(`【${name}】檔案過大 ${actionfail}`);
-                            break;
-                        case 500:
-                            errortext.push(`【${name}】伺服器錯誤 ${actionfail}`);
-                            break;
-                        case 0:
-                            errortext.push(`【${name}】網路連線失敗 ${actionfail}`);
-                            break;
-                        default:
-                            errortext.push(`【${name}】錯誤 (${item.httpStatus}) ${actionfail}`);
-                            break;
-                    }
-                });
+                        if (item.errorMessage) {
+                            errortext.push(`【${name}】${item.errorMessage}`);
+                            return;
+                        }
 
-                if (errortext.length > 0) co.sweet.error("錯誤", errortext.join("<br>"));
-                else co.sweet.success(success_text, null, true);
+                        switch (item.httpStatus) {
+                            case 400:
+                                if ((item.responseText || "").includes("Request body too large")) errortext.push(`【${name}】檔案過大 ${actionfail}`);
+                                else errortext.push(`【${name}】資料格式錯誤 ${actionfail}`);
+                                break;
+                            case 413:
+                                errortext.push(`【${name}】檔案過大 ${actionfail}`);
+                                break;
+                            case 500:
+                                errortext.push(`【${name}】伺服器錯誤 ${actionfail}`);
+                                break;
+                            case 0:
+                                errortext.push(`【${name}】網路連線失敗 ${actionfail}`);
+                                break;
+                            default:
+                                errortext.push(`【${name}】錯誤 (${item.httpStatus}) ${actionfail}`);
+                                break;
+                        }
+                    });
 
-                directoryDatailList.component.refresh();
+                    if (errortext.length > 0) co.sweet.error("錯誤", errortext.join("<br>"));
+                    else co.sweet.success(success_text, null, true);
 
-                if (plan == "canvas") location.hash = `ArticlesEditorView_${DirectoryId}_${result.message}`;
-                else location.hash = `Articles_${DirectoryId}`;
+                    directoryDatailList.component.refresh();
+
+                    if (plan == "canvas") location.hash = `ArticlesEditorView_${DirectoryId}_${result.message}`;
+                    else location.hash = `Articles_${DirectoryId}`;
+                }
+
+                if (isFileUploaded || isFileUpdated || isFileDeleted) {
+                    co.Articles.RebuildContentWithFiles(parseInt(result.message))
+                        .done(function (rebuildResult) {
+                            if (!rebuildResult || rebuildResult.success !== true) {
+                                results.push({
+                                    success: false,
+                                    meta: { action: "內容重建", fileName: "文章檔案" },
+                                    errorMessage: rebuildResult?.error || rebuildResult?.message || "內容重建失敗"
+                                });
+                            }
+                            finishSave(results);
+                        })
+                        .fail(function (xhr) {
+                            results.push({
+                                success: false,
+                                meta: { action: "內容重建", fileName: "文章檔案" },
+                                httpStatus: xhr?.status || 0,
+                                responseText: xhr?.responseText || ""
+                            });
+                            finishSave(results);
+                        });
+                } else {
+                    finishSave(results);
+                }
             });
         })
         .fail(function () {

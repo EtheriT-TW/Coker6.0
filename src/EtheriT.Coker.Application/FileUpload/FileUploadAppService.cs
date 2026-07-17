@@ -2040,7 +2040,11 @@ namespace EtheriT.Coker.Application
 
                 if (!isLogin) throw new Exception("加密檔需登入後才可進行預覽或下載");
 
-                var fileUpload = await db.FileUploads.Where(f => f.Id == fid).FirstOrDefaultAsync();
+                var fileUpload = await db.FileUploads
+                    .Where(f => f.Id == fid)
+                    .Where(f => f.FK_WebsiteId == siteId)
+                    .Where(f => !f.IsDeleted)
+                    .FirstOrDefaultAsync();
                 if (fileUpload == null) throw new Exception("查無檔案");
                 response.ContentType = fileUpload.ContentType;
                 response.FileName = fileUpload.OriginalFileName;

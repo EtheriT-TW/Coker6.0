@@ -218,13 +218,14 @@
                                         <div data-key="freight" class="fixedFreight"></div>
                                     </div>
                                 </a>
+                                <div class="js-cart-item-message d-none d-lg-block col-lg-10 offset-lg-2 text-start"></div>
                             </div>
                             <div class="nostock text-start col-sm-6 col d-none">
                                 <div data-key="title" class="pro_name d-lg-none single_line fw-bold"></div>
                                 <div class="pro_detail d-lg-none d-flex flex-wrap">
                                     <div data-key="spec" class="pro_specification pe-3"></div>
                                 </div>
-                                <div class="h5 fw-bold red_text">商品規格已下架或庫存為0</div>
+                                <div class="js-unavailable-message h5 fw-bold red_text">此商品目前無法購買，請調整或移除。</div>
                             </div>
                             <div class="content col-sm-6 col row gx-0 overflow-hidden">
                                 <a data-key="link" class="pro_link" href="" title="連結至：商品" target="_blank" rel="noopener noreferrer">
@@ -236,6 +237,7 @@
                                         </div>
                                     </div>
                                 </a>
+                                <div class="js-cart-item-message d-lg-none col-12 text-start"></div>
 
                                 <div class="cart-item-price col-12 col-lg-4 fw-bold align-self-center text-start text-lg-center">
                                     <div data-key="oldPrice" data-type="price" class="pro_old_unit fw-light text-decoration-line-through d-none"></div>
@@ -1120,12 +1122,16 @@
 
                         <div class="pay_info px-4 d-none">
                             <p>繳費完成後，請利用Email主動與客服聯絡。告知您姓名、轉帳帳戶末五碼，或是相關匯款資訊，以利核對您的款項。</p>
+                            <div class="transfer_payment_info border rounded text-start p-3 my-3 d-none">
+                                <div class="fw-bold fs-5 mb-2">匯款資訊</div>
+                                <div class="transfer_payment_fields"></div>
+                            </div>
                             <div class="border-bottom border-top text-start py-3 my-3">
                                 <div class="mb-2 row align-items-center">
                                     <div class="col-auto col-sm-2 text-end">應繳金額新台幣：</div>
                                     <div class="col ps-0">新台幣<span class="total_amount paid_amount fs-5 fw-bold"></span></div>
                                 </div>
-                                <div class="mb-2 row align-items-center">
+                                <div class="paid_date_row mb-2 row align-items-center d-none">
                                     <div class="col-auto col-sm-2 text-end">繳費期限：</div>
                                     <div class="paid_date col ps-0"></div>
                                 </div>

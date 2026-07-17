@@ -69,7 +69,7 @@ namespace EtheriT.Coker.Application.BackgroundJob
 						addFlowSize(flowSizes, id, orgName, logFilePath, fileDate);
 					}
 				}
-				DeleteOldLogs(logFilePath, TimeSpan.FromDays(1)); //刪除所有紀錄
+				// Log 保留與刪除統一由 LogCleanupWorking 處理，避免流量統計工作提前刪除。
 			}
 			if (flowSizes.Any())
 			{

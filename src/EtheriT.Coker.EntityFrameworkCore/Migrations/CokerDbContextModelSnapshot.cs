@@ -5069,8 +5069,17 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("ProdName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<long?>("ProductId")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
+
+                    b.Property<string>("S1Title")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("S2Title")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Ser_No")
                         .HasColumnType("int");

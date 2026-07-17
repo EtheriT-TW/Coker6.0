@@ -21,6 +21,10 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 "ProductBackgroundTaskCleanup",
                 job => job.CleanupExpiredFiles(),
                 Cron.Daily(3));
+            _recurringJobManager.AddOrUpdate<LogCleanupWorking>(
+                "LogCleanup",
+                job => job.CleanupExpiredLogs(),
+                Cron.Daily(4));
             _recurringJobManager.RemoveIfExists("FlowSizes"); //暫時移除該工作
             //_recurringJobManager.AddOrUpdate<FlowSizesWorking>("FlowSizes", job => job.FlowSizeCollection(), Cron.Daily(17, 00));
         }

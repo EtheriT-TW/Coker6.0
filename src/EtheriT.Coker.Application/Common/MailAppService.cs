@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using DevExpress.Charts.Native;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.StoreSet;
@@ -24,6 +25,7 @@ namespace EtheriT.Coker.Application.Common
         private readonly IMapper mapper;
         private readonly StringHandler stringHandler;
         private readonly IStoreSetAppService storeSetAppService;
+        private readonly IUploadPathResolver uploadPathResolver;
         private readonly IConfiguration Configuration;
 
         public MailAppService(
@@ -32,6 +34,7 @@ namespace EtheriT.Coker.Application.Common
             IMapper mapper,
             StringHandler stringHandler,
             IStoreSetAppService storeSetAppService,
+            IUploadPathResolver uploadPathResolver,
             IConfiguration Configuration
         )
         {
@@ -40,6 +43,7 @@ namespace EtheriT.Coker.Application.Common
             this.mapper = mapper;
             this.stringHandler = stringHandler;
             this.storeSetAppService = storeSetAppService;
+            this.uploadPathResolver = uploadPathResolver;
             this.Configuration = Configuration;
         }
         public async Task<ResponseMessageDto> sendMail(SenderDto dto)
@@ -249,7 +253,7 @@ namespace EtheriT.Coker.Application.Common
                 }
                 if (enableLog)
                 {
-                    var logDir = Path.Combine(AppContext.BaseDirectory, "Logs", "mail");
+                    var logDir = uploadPathResolver.GetPhysicalPath(OrgName, Path.Combine("logs", "mail"));
                     System.IO.Directory.CreateDirectory(logDir);
                     var logFile = Path.Combine(logDir, $"smtp_client_{DateTime.UtcNow:yyyyMMdd}.log");
                     var stream = File.Open(logFile, FileMode.Append, FileAccess.Write, FileShare.Read);

@@ -1331,3 +1331,9 @@ body > .popover.bs-popover-auto.fade {
         font-size: 14px;
     }
 }
+
+/* 匯款資訊外框有 border 與 p-3，補償水平內縮後與收件人／付款資料共用同一格線。 */
+#PaymentData .transfer_payment_fields {
+    margin-right: calc(-1rem - 1px);
+    margin-left: calc(-1rem - 1px);
+}

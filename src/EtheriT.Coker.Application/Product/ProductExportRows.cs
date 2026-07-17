@@ -8,7 +8,8 @@ namespace EtheriT.Coker.Application.Product
         public string Status { get; set; } = "";
         public string Introduction { get; set; } = "";
         public string Description { get; set; } = "";
-        public string Html { get; set; } = "";
+        public string SaveHtml { get; set; } = "";
+        public string SaveCss { get; set; } = "";
         public string Image1 { get; set; } = "";
         public string Image2 { get; set; } = "";
         public string Image3 { get; set; } = "";
@@ -38,6 +39,7 @@ namespace EtheriT.Coker.Application.Product
         public string Spec1 { get; set; } = "";
         public string Spec2Name { get; set; } = "";
         public string Spec2 { get; set; } = "";
+        public string SpecDescription { get; set; } = "";
         public int Stock { get; set; }
         public int Min_Qty { get; set; }
         public int Alert_Qty { get; set; }

@@ -555,7 +555,7 @@
                     <div id="Spec_Frame" class="data_upload mx-2 border rounded position-relative">
                         <ul class="px-1 specList mb-0 border-0">
                             <li class="specHeader">
-                                <div class="spec_img">規格圖片</div>
+                                <div class="spec_img d-none">規格圖片</div>
                                 <div class="serNo">排序</div>
                                 <div class="spec">規格</div>
                                 <div class="price">金額</div>
@@ -564,7 +564,7 @@
                                 <div>可銷售量</div>
                                 <div>最低購買量</div>
                                 <div>銷售警示量</div>
-                                <div class="specDesc"></div>
+                                <div class="specDesc d-none"></div>
                                 <div class="del"></div>
                             </li>
                             <li class="btn_spec_add list-unstyled mt-3 p-1 d-flex justify-content-end">
@@ -593,7 +593,7 @@
 
                 <template id="TemplateSpecification">
                     <li class="spec_list p-1 py-3 mb-3 rounded">
-                        <div class="specImg">
+                        <div class="specImg d-none">
                             <button type="button" class="btn_spec_img_edit form-control border-0 px-1 bg-transparent" title="編輯規格圖片">
                                 <img class="spec_thumb d-none" src="/images/noImg.jpg" />
                                 <i class="fa-regular fa-image spec_img_icon"></i>
@@ -648,7 +648,7 @@
                             </div>
                             <input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product" step="1">
                         </div>
-                        <div class="specDesc">
+                        <div class="specDesc d-none">
                             <button type="button" class="btn_spec_desc_edit form-control border-0 px-1 bg-transparent" title="編輯規格描述">
                                 <i class="fa-regular fa-pen-to-square"></i>
                             </button>

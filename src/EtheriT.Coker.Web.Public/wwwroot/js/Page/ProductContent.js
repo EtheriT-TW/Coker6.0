@@ -422,7 +422,7 @@
             return Array.from(this.specMap.spec1.entries()).map(([id, title]) => ({
                 id,
                 title,
-                enabled: this.stocks.some(x => x.s1id === id && (!this.canShop || x.stock >= x.minQty))
+                enabled: this.stocks.some(x => x.s1id === id && (!this.canShop || x.stock >= x.minQty || this.noStockManagement))
             }));
         }
 
@@ -1699,7 +1699,7 @@
                 const stockAvailable =
                     stock &&
                     !stock.timePrice &&
-                    normalizeNullableInt(stock.stock) >= normalizeNullableInt(stock.minQty, 1);
+                    (this.noStockManagementㄏ || normalizeNullableInt(stock.stock) >= normalizeNullableInt(stock.minQty, 1));
 
                 const isSelectable =
                     hasMultiplePrice &&

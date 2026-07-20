@@ -59,6 +59,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await htmlContentAppService.GetAllComponent(); 
         }
         [HttpGet]
+        public async Task<HtmlContentListOutpotDto> GetComponentsByPurpose(string purposeCode)
+        {
+            return await htmlContentAppService.GetComponentsByPurpose(purposeCode);
+        }
+        [HttpGet]
         public async Task<HtmlContentListOutpotDto> GetComponent(long type) { 
             return await htmlContentAppService.GetComponent(type);
         }

@@ -76,6 +76,14 @@ namespace EtheriT.Coker.Application.Import
             var reg = MiniExcel.Query<ProductImportUpateRegDto>(path, sheetName: "商品", startCell: "A2").ToList();
             var rows = mapper.Map<List<ProductImportDto>>(reg);
             var Techs = MiniExcel.Query<TechCertImportDto>(path, sheetName: "技術證照", startCell: "A2").ToList();
+            foreach (var row in rows)
+            {
+                if (row != null) NormalizeProductImportRow(row);
+            }
+            foreach (var tech in Techs)
+            {
+                if (tech != null) NormalizeTechnicalCertificateRow(tech);
+            }
             try
             {
                 for (int i = 0; i < rows.Count; i++)
@@ -99,6 +107,53 @@ namespace EtheriT.Coker.Application.Import
             catch (Exception ex) { }
 
             return data;
+        }
+        private static void NormalizeProductImportRow(ProductImportDto row)
+        {
+            row.ProdName = CustomDtoMapper.Normalize(row.ProdName);
+            row.Status = CustomDtoMapper.Normalize(row.Status);
+            row.ItemNo = CustomDtoMapper.Normalize(row.ItemNo);
+            row.SubItemNo = CustomDtoMapper.Normalize(row.SubItemNo);
+            row.Visible = CustomDtoMapper.Normalize(row.Visible);
+            row.OnShelf = CustomDtoMapper.Normalize(row.OnShelf);
+            row.Spec1Name = CustomDtoMapper.Normalize(row.Spec1Name);
+            row.Spec1 = CustomDtoMapper.Normalize(row.Spec1);
+            row.Spec2Name = CustomDtoMapper.Normalize(row.Spec2Name);
+            row.Spec2 = CustomDtoMapper.Normalize(row.Spec2);
+            row.RoleName = CustomDtoMapper.Normalize(row.RoleName);
+            row.Tag1 = CustomDtoMapper.Normalize(row.Tag1);
+            row.Tag2 = CustomDtoMapper.Normalize(row.Tag2);
+            row.Tag3 = CustomDtoMapper.Normalize(row.Tag3);
+            row.Tag4 = CustomDtoMapper.Normalize(row.Tag4);
+            row.Tag5 = CustomDtoMapper.Normalize(row.Tag5);
+            row.Tag6 = CustomDtoMapper.Normalize(row.Tag6);
+            row.FileName1 = CustomDtoMapper.Normalize(row.FileName1);
+            row.FileName2 = CustomDtoMapper.Normalize(row.FileName2);
+            row.FileName3 = CustomDtoMapper.Normalize(row.FileName3);
+            row.FileName4 = CustomDtoMapper.Normalize(row.FileName4);
+            row.FileName5 = CustomDtoMapper.Normalize(row.FileName5);
+            row.FileName6 = CustomDtoMapper.Normalize(row.FileName6);
+            row.FileName7 = CustomDtoMapper.Normalize(row.FileName7);
+        }
+
+        private static void NormalizeTechnicalCertificateRow(TechCertImportDto row)
+        {
+            row.ProdName = CustomDtoMapper.Normalize(row.ProdName);
+            row.ItemNo = CustomDtoMapper.Normalize(row.ItemNo);
+            row.Title = CustomDtoMapper.Normalize(row.Title);
+        }
+
+        private static void NormalizeDirectoryRow(DirectoryImportDto row)
+        {
+            row.Level1 = CustomDtoMapper.Normalize(row.Level1);
+            row.Level1RouterName = CustomDtoMapper.Normalize(row.Level1RouterName);
+            row.Level2 = CustomDtoMapper.Normalize(row.Level2);
+            row.Level2RouterName = CustomDtoMapper.Normalize(row.Level2RouterName);
+            row.Level3 = CustomDtoMapper.Normalize(row.Level3);
+            row.Level3RouterName = CustomDtoMapper.Normalize(row.Level3RouterName);
+            row.Tag1 = CustomDtoMapper.Normalize(row.Tag1);
+            row.Tag2 = CustomDtoMapper.Normalize(row.Tag2);
+            row.Tag3 = CustomDtoMapper.Normalize(row.Tag3);
         }
         private PropertyInfo[] GetProps<T>(string keyPrefix) where T : class
         {
@@ -141,6 +196,10 @@ namespace EtheriT.Coker.Application.Import
         public List<DirectoryImportDto> readDirectoryExcel(string path)
         {
             var rows = MiniExcel.Query<DirectoryImportDto>(path, sheetName: "目錄分類", startCell: "A3").ToList();
+            foreach (var row in rows)
+            {
+                if (row != null) NormalizeDirectoryRow(row);
+            }
             return rows;
         }
     }

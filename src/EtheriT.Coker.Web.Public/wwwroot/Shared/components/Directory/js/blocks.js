@@ -6,6 +6,7 @@
     const DirectoryBlocks = (w.DirectoryBlocks = w.DirectoryBlocks || {});
     let pendingExposureIds = [];
     let exposureFlushTimer = null;
+    let menuAccordionSequence = 0;
 
     function isFn(fn) {
         return typeof fn === "function";
@@ -24,21 +25,21 @@
         return title || "";
     }
 
-    function renderMenuAccordionItem(groupId, secItem) {
-        const item = $($("#TemplateAccordionItem").html()).clone();
+    function renderMenuAccordionItem($template, groupId, itemIdPrefix, secItem) {
+        const item = $($template.html()).clone();
 
         item.find(".sectitle").text(secItem.title);
-        item.find(".accordion-header").attr("id", `secheader${secItem.id}`);
+        item.find(".accordion-header").attr("id", `${itemIdPrefix}-header`);
 
         const accordionCollapse = item.find(".accordion-collapse").attr({
-            "aria-labelledby": `secheader${secItem.id}`,
-            "id": `seccollapse${secItem.id}`,
+            "aria-labelledby": `${itemIdPrefix}-header`,
+            "id": `${itemIdPrefix}-collapse`,
             "data-bs-parent": `${groupId}`
         });
 
         item.find(".accordion-button").attr({
-            "data-bs-target": `#seccollapse${secItem.id}`,
-            "aria-controls": `seccollapse${secItem.id}`
+            "data-bs-target": `#${itemIdPrefix}-collapse`,
+            "aria-controls": `${itemIdPrefix}-collapse`
         });
 
         const $body = item.find(".accordion-body");
@@ -114,13 +115,27 @@
         $self.find(".title").text(result.title || "");
 
         const $accordion = $self.find(".accordion");
-        const groupId = `#${$accordion.attr("id")}`;
+        if ($accordion.length === 0) return;
+
+        let accordionId = $accordion.attr("id");
+        if (!accordionId) {
+            menuAccordionSequence += 1;
+            accordionId = `menuAccordion${menuAccordionSequence}`;
+            $accordion.attr("id", accordionId);
+        }
+
+        const groupId = `#${accordionId}`;
+        let $template = $self.find("[data-role='menu-accordion-template'], #TemplateAccordionItem").first();
+        if ($template.length === 0) {
+            $template = $("#TemplateAccordionItem").first();
+        }
 
         $.each(result.children || [], function (index, secItem) {
             $self.find(".title").text(result.title || "");
 
-            if (secItem.children != null) {
-                const item = renderMenuAccordionItem(groupId, secItem);
+            if (secItem.children != null && $template.length > 0) {
+                const itemIdPrefix = `${accordionId}-${secItem.id || index}`;
+                const item = renderMenuAccordionItem($template, groupId, itemIdPrefix, secItem);
                 $accordion.append(item);
             } else {
                 const html = renderMenuSingleLink(secItem);

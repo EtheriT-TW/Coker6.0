@@ -48,6 +48,7 @@ using EtheriT.Coker.Application.Shared.Dto.Webs;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Web.Core.Models;
 using Newtonsoft.Json;
+using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
 
@@ -63,14 +64,20 @@ namespace EtheriT.Coker.Application
             }
             return null;
         }
-        private double ParseProductImportPrice(string? value)
+        private decimal ParseProductImportPrice(string? value)
         {
             var normalized = (value ?? "").Trim();
             if (normalized.Equals("時價", StringComparison.OrdinalIgnoreCase) || normalized == "-1")
                 return -1;
 
+            if (decimal.TryParse(normalized, NumberStyles.Number, CultureInfo.CurrentCulture, out var currentValue)
+                || decimal.TryParse(normalized, NumberStyles.Number, CultureInfo.InvariantCulture, out currentValue))
+            {
+                return currentValue;
+            }
+
             // 保留既有相容行為：無法解析的舊資料仍視為時價。
-            return ParseDouble(normalized) ?? -1;
+            return -1;
         }
         public static string Normalize(string? input)
         {
@@ -299,9 +306,7 @@ namespace EtheriT.Coker.Application
                 .ReverseMap();
             CreateMap<ProductImportUpateRegDto, ProductImportDto>()
                 .ForMember(e => e.ProdName, option => option.MapFrom(p => Normalize(p.ProdName)))
-                .ForMember(e => e.Price, option => option.MapFrom(p => ParseProductImportPrice(p.Price)))
-                .ReverseMap()
-                .ForMember(e => e.ProdName, option => option.MapFrom(p => Normalize(p.ProdName)));
+                .ForMember(e => e.Price, option => option.MapFrom(p => ParseProductImportPrice(p.Price)));
 
 
             //FrontUser

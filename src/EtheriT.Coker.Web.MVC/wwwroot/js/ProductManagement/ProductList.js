@@ -11,11 +11,27 @@ var total_files = [];
 var spec_media_map = {};
 var specMediaModal;
 let importProdPopup = null;
+let productImportTemplateGrid = null;
+let selectedProductImportTemplateId = null;
 var elementReady = false;
 var pendingHashEdit = false;
 
 function ImportProd() {
-    var formData = new FormData($(`[name="fileUploadForm"]`)[0]);
+    const form = $(`[name="fileUploadForm"]`)[0];
+    const fileInput = $(form).find(`[name="files"]`)[0];
+    if (!selectedProductImportTemplateId) {
+        co.sweet.error("請先選擇商品匯入版型。");
+        return;
+    }
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        co.sweet.error("請選擇欲匯入的 Excel 檔案。");
+        return;
+    }
+
+    var formData = new FormData(form);
+    formData.append("templateId", selectedProductImportTemplateId);
+    formData.append("overwriteExisting", $("#overwriteExistingProductPages").is(":checked"));
+    const $submitButton = $("#btnStartProductImport").prop("disabled", true);
     co.Product.AddUp.Import(formData).done(async function (response) {
         importProdPopup.hide();
         try {
@@ -37,13 +53,224 @@ function ImportProd() {
             ? xhr.responseJSON.message
             : "檔案格式錯誤，無法建立匯入任務。";
         co.sweet.error(message);
+    }).always(function () {
+        $submitButton.prop("disabled", false);
     });
+}
+
+function updateProductImportStartButton() {
+    const fileInput = $(`[name="fileUploadForm"] [name="files"]`)[0];
+    const hasFile = !!(fileInput && fileInput.files && fileInput.files.length > 0);
+    $("#btnStartProductImport").prop("disabled", !selectedProductImportTemplateId || !hasFile);
+}
+
+function showProductImportStep(step) {
+    const selectingTemplate = step === 1;
+    $("#productImportStepTemplate").toggleClass("d-none", !selectingTemplate);
+    $("#productImportStepFile").toggleClass("d-none", selectingTemplate);
+    if (importProdPopup) importProdPopup.option("height", selectingTemplate ? 620 : 430);
+    if (selectingTemplate && productImportTemplateGrid) {
+        window.setTimeout(function () {
+            productImportTemplateGrid.updateDimensions();
+        }, 0);
+    }
+}
+
+function goToProductImportFileStep() {
+    if (!selectedProductImportTemplateId) {
+        co.sweet.error("請先選擇商品匯入版型。");
+        return;
+    }
+
+    const selectedRows = productImportTemplateGrid
+        ? productImportTemplateGrid.getSelectedRowsData()
+        : [];
+    $("#selectedProductImportTemplateName").text(
+        selectedRows.length > 0 ? selectedRows[0].title : "已選擇版型"
+    );
+    showProductImportStep(2);
+    updateProductImportStartButton();
+}
+
+function showProductImportImagePreview(title, imageUrl) {
+    if (!imageUrl) return;
+
+    const preview = $("<div>").css({
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        maxHeight: "70vh",
+        overflow: "hidden"
+    });
+    $("<img>").attr({ src: imageUrl, alt: title || "版型預覽" }).css({
+        maxWidth: "100%",
+        maxHeight: "70vh",
+        objectFit: "contain"
+    }).appendTo(preview);
+
+    Swal.fire({
+        title: title || "版型預覽",
+        html: preview[0],
+        width: "min(90vw, 1000px)",
+        showConfirmButton: false,
+        showCloseButton: true
+    });
+}
+
+function normalizeProductImportTemplate(item) {
+    const icon = String(item.icon || item.Icon || "").trim();
+    return {
+        id: item.id !== undefined ? item.id : item.Id,
+        title: item.title || item.Title || "未命名版型",
+        imageUrl: item.img || item.Img || item.imgUrl || item.ImgUrl || item.imageUrl || item.ImageUrl || "",
+        icon: icon.toLowerCase() === "empty" ? "" : icon
+    };
+}
+
+function initializeProductImportTemplateGrid() {
+    const $grid = $("#productImportTemplateGrid");
+    if ($grid.length === 0) return;
+
+    selectedProductImportTemplateId = null;
+    showProductImportStep(1);
+    $("#btnNextProductImportStep").prop("disabled", true);
+    $("#btnStartProductImport").prop("disabled", true);
+    $(`[name="fileUploadForm"]`)[0].reset();
+    $(`[name="fileUploadForm"] [name="files"]`)
+        .off("change.productImport")
+        .on("change.productImport", updateProductImportStartButton);
+
+    if ($grid.hasClass("dx-widget")) {
+        productImportTemplateGrid = $grid.dxDataGrid("instance");
+        productImportTemplateGrid.clearSelection();
+        productImportTemplateGrid.option("dataSource", []);
+    } else {
+        productImportTemplateGrid = $grid.dxDataGrid({
+            dataSource: [],
+            keyExpr: "id",
+            height: 330,
+            showBorders: true,
+            rowAlternationEnabled: true,
+            hoverStateEnabled: true,
+            wordWrapEnabled: true,
+            selection: { mode: "single" },
+            focusedRowEnabled: true,
+            searchPanel: {
+                visible: true,
+                width: 260,
+                placeholder: "搜尋版型名稱"
+            },
+            paging: { pageSize: 8 },
+            pager: {
+                visible: true,
+                showInfo: true,
+                showNavigationButtons: true
+            },
+            noDataText: "尚無商品匯入版型，請先至元件目錄設定元件用途。",
+            columns: [
+                {
+                    caption: "請選擇",
+                    width: 82,
+                    alignment: "center",
+                    allowFiltering: false,
+                    allowSorting: false,
+                    cellTemplate: function (container, options) {
+                        $("<input>").attr({
+                            type: "radio",
+                            name: "productImportTemplateChoice",
+                            "aria-label": "選擇「" + options.data.title + "」版型"
+                        }).prop("checked", options.component.isRowSelected(options.key))
+                            .on("change", function () {
+                                options.component.selectRows([options.key], false);
+                            })
+                            .appendTo(container);
+                    }
+                },
+                {
+                    caption: "預覽",
+                    width: 110,
+                    alignment: "center",
+                    allowFiltering: false,
+                    allowSorting: false,
+                    cellTemplate: function (container, options) {
+                        if (options.data.imageUrl) {
+                            $("<button>").attr({
+                                type: "button",
+                                title: "點擊放大預覽"
+                            }).addClass("btn btn-link border-0 p-0")
+                                .on("click", function (event) {
+                                    event.stopPropagation();
+                                    showProductImportImagePreview(options.data.title, options.data.imageUrl);
+                                })
+                                .append(
+                                    $("<img>").attr({ src: options.data.imageUrl, alt: options.data.title }).css({
+                                        width: "78px",
+                                        height: "52px",
+                                        objectFit: "cover",
+                                        borderRadius: "4px"
+                                    })
+                                ).appendTo(container);
+                        } else if (options.data.icon) {
+                            const icon = options.data.icon;
+                            const $icon = $("<i>").addClass(icon);
+                            const materialClass = icon.match(/\bmaterial-(?:symbols|icons)[\w-]*\b/);
+                            if (materialClass) {
+                                $icon.text(icon.replace(materialClass[0], "").trim());
+                            }
+                            $icon.css("font-size", "28px").appendTo(container);
+                        } else {
+                            $("<span>").text("無預覽").addClass("text-black-50 small").appendTo(container);
+                        }
+                    }
+                },
+                { dataField: "title", caption: "版型名稱", minWidth: 220 }
+            ],
+            onRowClick: function (e) {
+                if (e.rowType === "data") e.component.selectRows([e.key], false);
+            },
+            onRowPrepared: function (e) {
+                if (e.rowType === "data") {
+                    e.rowElement.css({ cursor: "pointer", height: "64px" });
+                }
+            },
+            onCellPrepared: function (e) {
+                if (e.rowType === "data") {
+                    e.cellElement.css("vertical-align", "middle");
+                }
+            },
+            onSelectionChanged: function (e) {
+                const selected = e.selectedRowsData[0];
+                selectedProductImportTemplateId = selected ? selected.id : null;
+                $("#btnNextProductImportStep").prop("disabled", !selectedProductImportTemplateId);
+                e.component.repaint();
+            }
+        }).dxDataGrid("instance");
+    }
+
+    co.HtmlContent.GetComponentsByPurpose("product-import-directory")
+        .done(function (response) {
+            if (!response.success) {
+                co.sweet.error(response.error || "無法取得商品匯入版型。");
+                return;
+            }
+            const templates = (response.list || response.List || []).map(normalizeProductImportTemplate);
+            productImportTemplateGrid.option("dataSource", templates);
+            if (templates.length > 0) {
+                productImportTemplateGrid.selectRows([templates[0].id], false);
+            }
+        })
+        .fail(function () {
+            co.sweet.error("無法取得商品匯入版型。");
+        });
 }
 
 function showImportProdPopup() {
     importProdPopup = $("#importProdPopup").dxPopup("instance");
     importProdPopup.option("contentTemplate", $("#importProdPopup-template"));
     importProdPopup.option("title", "商品匯入");
+    importProdPopup.option("onShown", function () {
+        initializeProductImportTemplateGrid();
+    });
     importProdPopup.show();
 }
 

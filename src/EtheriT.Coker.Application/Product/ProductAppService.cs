@@ -2237,14 +2237,19 @@ namespace EtheriT.Coker.Application.Product
         }
 
         /* Product Import */
-        public async Task<ImportOutputDto> ProdReplace(IList<IFormFile> files)
+        public async Task<ImportOutputDto> ProdReplace(
+            IList<IFormFile> files,
+            long templateId,
+            bool overwriteExisting)
         {
             ProdImportAllDto fileData = await importAppService.ProdReplace(files);
-            return await ImportProductData(fileData, null);
+            return await ImportProductData(fileData, templateId, overwriteExisting, null);
         }
 
         public async Task<ImportOutputDto> ProdReplace(
             string filePath,
+            long templateId,
+            bool overwriteExisting,
             Action<int, string>? reportProgress)
         {
             reportProgress?.Invoke(5, "正在讀取商品匯入檔案");
@@ -2253,7 +2258,7 @@ namespace EtheriT.Coker.Application.Product
             {
                 await using var transaction = await db.Database.BeginTransactionAsync();
                 var fileData = await importAppService.ProdReplace(filePath);
-                var response = await ImportProductData(fileData, reportProgress);
+                var response = await ImportProductData(fileData, templateId, overwriteExisting, reportProgress);
                 if (response.Success)
                     await transaction.CommitAsync();
                 else
@@ -2264,11 +2269,14 @@ namespace EtheriT.Coker.Application.Product
 
         private async Task<ImportOutputDto> ImportProductData(
             ProdImportAllDto fileData,
+            long templateId,
+            bool overwriteExisting,
             Action<int, string>? reportProgress)
         {
             ImportOutputDto response = new ImportOutputDto { ErrorList = new List<ImportMassageItem>() };
             bool productImportFailed = false;
             long WebsiteID = await loginUserData.GetWebsiteId();
+            var importTemplate = await GetProductImportTemplate(templateId, WebsiteID);
             reportProgress?.Invoke(15, "正在驗證商品與會員價格資料");
             if (fileData.Products.Any())
             {
@@ -2308,16 +2316,23 @@ namespace EtheriT.Coker.Application.Product
                 List<string> allTitles = allData.Select(p => p.ProdName).ToList();
                 List<string> allItemNos = allData.Select(p => p.ItemNo).ToList();
                 var updateItems = db.Prods.Where(e => !e.IsDeleted)
-                    .Where(p => string.IsNullOrEmpty(p.ItemNo) ? allTitles.Contains(p.Title) : allItemNos.Contains(p.ItemNo))
+                    .Where(e => e.FK_WebsiteId == WebsiteID)
+                    .Where(p => string.IsNullOrEmpty(p.ItemNo)
+                        ? allTitles.Contains((p.Title ?? "").Trim())
+                        : allItemNos.Contains((p.ItemNo ?? "").Trim()))
                     .Select(s => new { s.Id, s.ItemNo, s.Title }).ToList();
                 ProductImportDto dto = null;
                 for (int i = 0; i < allData.Count; i++)
                 {
                     var el = allData[i];
-                    var item = updateItems.Find(e => string.IsNullOrEmpty(el.ItemNo) ? e.Title == el.ProdName : e.ItemNo == el.ItemNo);
+                    var item = updateItems.Find(e => string.IsNullOrEmpty(el.ItemNo)
+                        ? Norm(e.Title) == Norm(el.ProdName)
+                        : Norm(e.ItemNo) == Norm(el.ItemNo));
                     el.FK_WebsiteId = WebsiteID;
                     if (item != null) el.Id = item.Id;
-                    var preProds = prods.Find(e => string.IsNullOrEmpty(el.ItemNo) ? e.ProdName == el.ProdName : e.ItemNo == el.ItemNo);
+                    var preProds = prods.Find(e => string.IsNullOrEmpty(el.ItemNo)
+                        ? Norm(e.ProdName) == Norm(el.ProdName)
+                        : Norm(e.ItemNo) == Norm(el.ItemNo));
                     if (preProds == null)
                     {
                         dto = el;
@@ -2342,13 +2357,38 @@ namespace EtheriT.Coker.Application.Product
             if (fileData.Directories.Any())
             {
                 reportProgress?.Invoke(88, "正在匯入商品目錄與標籤");
-                await imporDirectories(fileData.Directories);
+                await imporDirectories(fileData.Directories, importTemplate, overwriteExisting);
                 if (!productImportFailed)
                     response.Success = true;
             }
 
             reportProgress?.Invoke(98, "商品匯入處理完成");
             return response;
+        }
+
+        private async Task<Html_Content> GetProductImportTemplate(long templateId, long websiteId)
+        {
+            if (templateId <= 0)
+                throw new InvalidOperationException("請先選擇商品匯入版型。");
+
+            var isSystemUser = await loginUserData.isSystemUser();
+            var template = await db.Html_Contents
+                .Include(e => e.HtmlContentPurposes)
+                    .ThenInclude(e => e.ComponentPurpose)
+                .FirstOrDefaultAsync(e =>
+                    e.Id == templateId
+                    && e.Disp_opt
+                    && (isSystemUser || e.Type != (int)ObjectTypeEnum.自訂 || e.FK_WebsiteId == websiteId)
+                    && e.HtmlContentPurposes.Any(p =>
+                        p.ComponentPurpose.Visible
+                        && p.ComponentPurpose.Code == "product-import-directory"));
+
+            if (template == null)
+                throw new InvalidOperationException("找不到可使用的商品匯入版型，請重新選擇。");
+            if (string.IsNullOrWhiteSpace(template.Html))
+                throw new InvalidOperationException("選擇的商品匯入版型沒有 HTML 內容。");
+
+            return template;
         }
         private async Task importProds(
             List<ProductImportDto> prods,
@@ -2364,7 +2404,10 @@ namespace EtheriT.Coker.Application.Product
             reportProgress?.Invoke(78, "正在整理商品技術證照");
             await importTechs(prods, erroes);
         }
-        private async Task imporDirectories(List<DirectoryImportDto> directories)
+        private async Task imporDirectories(
+            List<DirectoryImportDto> directories,
+            Html_Content importTemplate,
+            bool overwriteExisting)
         {
             try
             {
@@ -2536,146 +2579,102 @@ namespace EtheriT.Coker.Application.Product
                     }
                 }
                 await db.SaveChangesAsync();
-                await createDirectory(menuMap);
+                await createDirectory(menuMap, importTemplate, overwriteExisting);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                throw new InvalidOperationException($"商品目錄匯入失敗：{e.Message}", e);
             }
         }
-        private string getMenuInitHtml(SelectDto dto)
+        private bool TemplateHasMenuDirectory(Html_Content importTemplate)
         {
-            return HttpUtility.HtmlEncode($@"<div class=""container"">
-                <div class=""two_three_block d-flex flex-wrap"">
-                    <div class=""col-3"">
-                        <div data-dirid=""6"" data-diridname=""頁左選單"" class=""menu_directory bg-white"">
-                            <div class=""title custom_h5 fw-bold py-3 px-3""></div>
-                            <div class=""accordion accordion-flush""></div>
-                            <div id=""TemplateAccordionItem"" class=""d-none"">
-                                <div class=""accordion-item border-0 border-bottom"">
-                                    <div class=""accordion-header"">
-                                        <button type=""button"" data-bs-toggle=""collapse"" data-bs-target="""" aria-expanded=""false"" aria-controls="""" class=""accordion-button collapsed custom_h5 sectitle""></button>
-                                    </div>
-                                    <div aria-labelledby="""" class=""accordion-collapse collapse"">
-                                        <div class=""accordion-body p-0""></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class=""col"">
-                        <div class=""custom_h3 my-2 fw-bold"">
-                            <b>
-                                <span>{dto.Name}</span>
-                            </b>
-                        </div>
-                        <div class=""container edit_lock my-0"">
-                            <div data-dirid=""{dto.Id}"" data-diridname=""{dto.Name}"" class=""frame type_change_frame catalog_frame allowedit"">
-                                <div class=""d-flex justify-content-end switch_control allowedit mb-2"">
-                                    <button id=""ig77w"" class=""btn_prod_grid d-flex bg-transparent border-0 align-items-center mx-1 allowedit"">
-                                        <span class=""material-symbols-outlined fs-5 me-1"">grid_on</span>商品圖片
-                                    </button>
-                                    <button id=""i13wzg5"" class=""btn_prod_list d-flex bg-transparent border-0 align-items-center mx-1 text-black-50 allowedit"">
-                                        <span class=""material-symbols-outlined fs-5 me-1"">view_list</span>商品圖文
-                                    </button>
-                                </div>
-                                <div class=""catalog content row row-cols-lg-4 gx-0 rounded-lg bg-light px-2"">
-                                    <div class=""templatecontent d-none"">
-                                        <div class=""template p-2 py-2"">
-                                            <div class=""col bg-white p-2 position-sticky p-1 type4 rounded-lg h-100"">
-                                                <a href="""" title="""" target=""_self"" class=""text-black"">
-                                                    <figure class=""d-flex justify-content-center mb-0 h-100 max-h flex-column"">
-                                                        <div class=""image_frame d-flex flex-grow-1 justify-content-center align-items-center type4-image-frame w-100"">
-                                                            <img src=""/upload/Product/Photo/C656NA.jpg"" alt="""" class=""image gjs-plh-image img-fluid"" />
-                                                        </div>
-                                                        <figcaption class=""w-100 position-relative pb1 type4-caption d-flex flex-column"">
-                                                            <div class=""item-header d-flex"">
-                                                                <div class=""itemNo m-0 p-0 align-itmes-center type4-title d-inline fw-bold"">
-                                                                    {{產品編號}}
-                                                                </div>
-                                                            </div>
-                                                            <div class=""item-title"">
-                                                                <div class=""catalog-number itemNo m-0 p-2 align-itmes-center type4-title d-inline"">
-                                                                    {{產品編號}}
-                                                                </div>
-                                                                <div class=""title m-0 fs-5 align-itmes-center type4-title d-inline fs-6"">
-                                                                </div>
-                                                                <div class=""like-and-share top_line d-none"">
-                                                                    <div class=""btn_favorites bg-transparent border-0 d-none"">
-                                                                        <i class=""fs-5 fa-regular fa-heart"">
-                                                                        </i><span class=""d-none"">關注</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <p class=""description mt-1 overflow-hidden p-2 d-none type2-content"">
-                                                            </p>
-                                                            <div class=""more-btn position-absolute d-flex justify-content-center align-items-center d-none"">
-                                                                <div class=""fas fa-angle-right"">
-                                                                </div>
-                                                            </div>
-                                                            <div class=""date d-flex justify-content-end align-items-center p-2 d-none"">
-                                                            </div>
-                                                            <div class=""more text-end mt-1 d-none"">
-                                                                詳細介紹
-                                                            </div>
-                                                            <div class=""price price-grid mt-auto type2-title d-inline fw-bold fs-7"">{{price}}</div>
-                                                            <div class=""bottom-row d-flex align-text-bottom"">
-                                                                <div class=""tags""></div>
-                                                                <div class=""purchase d-none"">
-                                                                    <div class=""price price-discount me-auto p-2 align-itmes-center type2-title d-none"">
-                                                                        {{min price}}
-                                                                    </div>
-                                                                    <div class=""price normal-price me-auto p-2 align-itmes-center type2-title d-inline fw-bold"">
-                                                                        {{max price}}
-                                                                    </div>
-                                                                    <span class=""cart badge rounded-pill bg-secondary text-white me-auto p-2 px-4 align-itmes-center type2-title d-none fw-normal"">
-                                                                        <i class=""fa-solid fa-cart-shopping fa-inverse""></i>
-                                                                        放入購物車
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        </figcaption>
-                                                    </figure>
-                                                </a>
-                                                <div class=""shareBlock"">
-                                                    <button class=""btn_share bg-transparent border-0"">
-                                                        <i class=""fs-5 fa-solid fa-share"">
-                                                        </i><span class=""d-none"">分享</span>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class=""templatecontent-tag d-none"">
-                                        <span class=""badge rounded-pill bg-light text-secondary fw-normal me-1 px-2"">{{Tag Name}}</span>
-                                    </div>
-                                </div>
-                                <nav aria-label=""Catalog Page"">
-                                    <ul class=""page_btn d-flex justify-content-center my-5 pagination"">
-                                        <li class=""page-item btn_prev"">
-                                            <button class=""page-link text-black"">
-                                                <i class=""fa-solid fa-angle-left""></i>
-                                            </button>
-                                        </li>
-                                        <li class=""page-item btn_next"">
-                                            <button class=""page-link text-black"">
-                                                <i class=""fa-solid fa-angle-right""></i>
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </nav>
-                            </div>
-                        </div>
-                        <!-- Content here -->
-                    </div>
-                </div>
-                <!-- Content here -->
-            </div>");
+            var html = stringHandler.HtmlDecode(importTemplate.Html ?? string.Empty);
+            var document = htmlProcessor.LoadHtml(html);
+            return document.DocumentNode.SelectSingleNode("//*[@data-import-role='menu-directory']") != null
+                || document.DocumentNode.SelectSingleNode("//*[contains(concat(' ', normalize-space(@class), ' '), ' menu_directory ')]") != null;
         }
-        private async Task createDirectory(List<DirectoryArrangeImportDto> menuMap)
+
+        private async Task<Core.Models.Directory> GetOrCreateMenuDirectory(
+            long websiteId,
+            DirectoryArrangeImportDto rootMenu)
+        {
+            var directory = await db.Directory.FirstOrDefaultAsync(e =>
+                !e.IsDeleted
+                && e.FK_WebsiteId == websiteId
+                && e.Type == (int)DirectoryTypeEnum.選單
+                && (e.FK_Mid == rootMenu.Id || (e.FK_Mid == null && e.Title == rootMenu.Name)));
+
+            if (directory != null)
+            {
+                if (directory.FK_Mid == null)
+                {
+                    directory.FK_Mid = rootMenu.Id;
+                    await loginUserData.setOptionParameter(directory);
+                }
+                return directory;
+            }
+
+            directory = new Core.Models.Directory
+            {
+                FK_WebsiteId = websiteId,
+                FK_Mid = rootMenu.Id,
+                Title = rootMenu.Name,
+                Type = (int)DirectoryTypeEnum.選單,
+                Visible = true
+            };
+            db.Directory.Add(directory);
+            await loginUserData.SaveChanges(directory);
+            return directory;
+        }
+
+        private string BuildProductImportMenuHtml(
+            Html_Content importTemplate,
+            Core.Models.Directory? menuDirectory,
+            Core.Models.Directory productDirectory,
+            string pageTitle)
+        {
+            var html = stringHandler.HtmlDecode(importTemplate.Html ?? string.Empty);
+            var document = htmlProcessor.LoadHtml(html);
+
+            var menuNode = document.DocumentNode.SelectSingleNode("//*[@data-import-role='menu-directory']")
+                ?? document.DocumentNode.SelectSingleNode("//*[contains(concat(' ', normalize-space(@class), ' '), ' menu_directory ')]");
+            var productNode = document.DocumentNode.SelectSingleNode("//*[@data-import-role='product-directory']")
+                ?? document.DocumentNode.SelectSingleNode("//*[contains(concat(' ', normalize-space(@class), ' '), ' catalog_frame ')]");
+            var titleNode = document.DocumentNode.SelectSingleNode("//*[@data-edit-key='pageTitle']")
+                ?? document.DocumentNode.SelectSingleNode("//*[@data-import-role='page-title']");
+
+            if (productNode == null)
+                throw new InvalidOperationException("版型缺少商品目錄標記 data-import-role=\"product-directory\"。");
+            if (titleNode == null)
+                throw new InvalidOperationException("版型缺少標題標記 data-edit-key=\"pageTitle\"。");
+            if (menuNode != null && menuDirectory == null)
+                throw new InvalidOperationException("版型包含選單目錄，但無法建立對應的選單目錄。");
+
+            if (menuNode != null && menuDirectory != null)
+            {
+                menuNode.SetAttributeValue("data-dirid", menuDirectory.Id.ToString());
+                menuNode.SetAttributeValue("data-diridname", menuDirectory.Title ?? string.Empty);
+            }
+
+            productNode.SetAttributeValue("data-dirid", productDirectory.Id.ToString());
+            productNode.SetAttributeValue("data-diridname", productDirectory.Title ?? string.Empty);
+
+            var titleValueNode = titleNode.SelectSingleNode(".//span") ?? titleNode;
+            titleValueNode.InnerHtml = HttpUtility.HtmlEncode(pageTitle);
+
+            return stringHandler.HtmlEncode(document.DocumentNode.OuterHtml);
+        }
+
+        private async Task createDirectory(
+            List<DirectoryArrangeImportDto> menuMap,
+            Html_Content importTemplate,
+            bool overwriteExisting,
+            Core.Models.Directory? menuDirectory = null,
+            bool? hasMenuDirectory = null)
         {
             long WebsiteID = await loginUserData.GetWebsiteId();
             long UserID = await loginUserData.GetUserId();
+            hasMenuDirectory ??= TemplateHasMenuDirectory(importTemplate);
             List<string> strings = menuMap.Where(e => !string.IsNullOrEmpty(e.Name)).Select(e => e.Name).ToList();
             List<Core.Models.Directory> Directory = new List<Core.Models.Directory>();
             List<Tag_Associate> associates = new List<Tag_Associate>();
@@ -2692,7 +2691,12 @@ namespace EtheriT.Coker.Application.Product
             for (int i = 0; i < menuMap.Count; i++)
             {
                 var menu = menuMap[i];
-                if (menu.Child.Any()) await createDirectory(menu.Child);
+                var currentMenuDirectory = menuDirectory;
+                if (hasMenuDirectory == true && currentMenuDirectory == null)
+                    currentMenuDirectory = await GetOrCreateMenuDirectory(WebsiteID, menu);
+
+                if (menu.Child.Any())
+                    await createDirectory(menu.Child, importTemplate, overwriteExisting, currentMenuDirectory, hasMenuDirectory);
                 else
                 {
                     var dir = oldDirectory.Where(e => e.Title == menu.Name).FirstOrDefault();
@@ -2727,15 +2731,23 @@ namespace EtheriT.Coker.Application.Product
                         var oldTagBind = TagAssociate.FindAll(e => e.FK_AId == dir.Id && !tagIds.Contains(e.FK_TId)).ToList();
                         for (int j = 0; j < oldTagBind.Count(); j++)
                         {
-                            oldTagBind[i].IsDeleted = true;
-                            await loginUserData.setOptionParameter(oldTagBind[i]);
+                            oldTagBind[j].IsDeleted = true;
+                            await loginUserData.setOptionParameter(oldTagBind[j]);
                         }
                     }
                     var myMenu = webMenu.Where(e => e.Title == menu.Name).FirstOrDefault();
-                    if (myMenu != null && string.IsNullOrEmpty(myMenu.SaveHtml) && !string.IsNullOrEmpty(dir.Title))
+                    if (myMenu != null
+                        && (overwriteExisting || string.IsNullOrEmpty(myMenu.SaveHtml))
+                        && !string.IsNullOrEmpty(dir.Title))
                     {
-                        myMenu.Html = getMenuInitHtml(new SelectDto { Id = dir.Id, Name = dir.Title });
+                        myMenu.Html = BuildProductImportMenuHtml(
+                            importTemplate,
+                            currentMenuDirectory,
+                            dir,
+                            myMenu.Title ?? dir.Title);
                         myMenu.SaveHtml = myMenu.Html;
+                        myMenu.Css = importTemplate.Css ?? string.Empty;
+                        myMenu.SaveCss = myMenu.Css;
                     }
                 }
             }
@@ -2748,29 +2760,35 @@ namespace EtheriT.Coker.Application.Product
             item.Tags = new List<TagGetSelectedDto>();
             if (!string.IsNullOrEmpty(directory.Tag1))
             {
-                var tag1 = Tags.Where(e => e.Title == directory.Tag1).FirstOrDefault();
+                var tag1 = Tags.FirstOrDefault(e => Norm(e.Title) == Norm(directory.Tag1));
                 if (tag1 != null) item.Tags.Add(new TagGetSelectedDto { Id = tag1.Id, Tag_Name = tag1.Title });
             }
             if (!string.IsNullOrEmpty(directory.Tag2))
             {
-                var tag2 = Tags.Where(e => e.Title == directory.Tag2).FirstOrDefault();
+                var tag2 = Tags.FirstOrDefault(e => Norm(e.Title) == Norm(directory.Tag2));
                 if (tag2 != null) item.Tags.Add(new TagGetSelectedDto { Id = tag2.Id, Tag_Name = tag2.Title });
             }
             if (!string.IsNullOrEmpty(directory.Tag3))
             {
-                var tag3 = Tags.Where(e => e.Title == directory.Tag3).FirstOrDefault();
+                var tag3 = Tags.FirstOrDefault(e => Norm(e.Title) == Norm(directory.Tag3));
                 if (tag3 != null) item.Tags.Add(new TagGetSelectedDto { Id = tag3.Id, Tag_Name = tag3.Title });
             }
         }
         private async Task importMenus(long WebsiteID, List<string> manuNames)
         {
+            manuNames = manuNames
+                .Select(CustomDtoMapper.Normalize)
+                .Where(e => !string.IsNullOrEmpty(e))
+                .GroupBy(Norm)
+                .Select(e => e.First())
+                .ToList();
             var menus = await db.WebMenus.Where(e => !e.IsDeleted)
                         .Where(e => e.FK_WebsiteId == WebsiteID)
-                        .Where(e => !string.IsNullOrEmpty(e.Title) && manuNames.Contains(e.Title))
+                        .Where(e => !string.IsNullOrEmpty(e.Title))
                         .ToListAsync();
-            var hasMenusTitle = menus.Select(e => e.Title).ToArray();
+            var hasMenusTitle = menus.Select(e => Norm(e.Title)).ToHashSet();
 
-            var needAddMenus = manuNames.Where(e => !hasMenusTitle.Contains(e)).ToList();
+            var needAddMenus = manuNames.Where(e => !hasMenusTitle.Contains(Norm(e))).ToList();
             List<SelectDto> addMmenus = new List<SelectDto>();
             needAddMenus.ForEach(e =>
             {
@@ -2801,12 +2819,18 @@ namespace EtheriT.Coker.Application.Product
         private async Task importTags(long WebsiteID, List<string> tagNames)
         {
             long userId = await loginUserData.GetUserId();
+            tagNames = tagNames
+                .Select(CustomDtoMapper.Normalize)
+                .Where(e => !string.IsNullOrEmpty(e))
+                .GroupBy(Norm)
+                .Select(e => e.First())
+                .ToList();
             var tags = await db.Tags.Where(e => !e.IsDeleted)
                .Where(e => e.FK_WebsiteId == WebsiteID)
-               .Where(e => !string.IsNullOrEmpty(e.Title) && tagNames.Contains(e.Title))
+               .Where(e => !string.IsNullOrEmpty(e.Title))
                .ToListAsync();
-            var hasTagsTitle = tags.Select(e => e.Title).ToArray();
-            var needAddTagss = tagNames.Where(e => !hasTagsTitle.Contains(e)).ToList();
+            var hasTagsTitle = tags.Select(e => Norm(e.Title)).ToHashSet();
+            var needAddTagss = tagNames.Where(e => !hasTagsTitle.Contains(Norm(e))).ToList();
             List<SelectDto> addTags = new List<SelectDto>();
             needAddTagss.ForEach(e =>
             {
@@ -2885,17 +2909,23 @@ namespace EtheriT.Coker.Application.Product
             TagStr.AddRange(TagStr4);
             TagStr.AddRange(TagStr5);
             TagStr.AddRange(TagStr6);
-            TagStr = TagStr.Where(e => !string.IsNullOrEmpty(e)).GroupBy(e => e).Select(e => e.Key).ToList();
+            TagStr = TagStr
+                .Select(CustomDtoMapper.Normalize)
+                .Where(e => !string.IsNullOrEmpty(e))
+                .GroupBy(Norm)
+                .Select(e => (string?)e.First())
+                .ToList();
 
-            List<string> nowTags = db.Tags.Where(e => e.FK_WebsiteId == WebsiteId)
+            HashSet<string> nowTags = db.Tags.Where(e => e.FK_WebsiteId == WebsiteId)
                                     .Where(e => !e.IsDeleted)
-                                    .Select(e => e.Title).ToList();
+                                    .Select(e => e.Title).ToList()
+                                    .Select(Norm).ToHashSet();
 
-            TagStr = TagStr.FindAll(e => !nowTags.Contains(e ?? ""));
+            TagStr = TagStr.FindAll(e => !nowTags.Contains(Norm(e)));
             List<Core.Models.Tag> addTads = new List<Core.Models.Tag>();
             for (int i = 0; i < TagStr.Count; i++)
             {
-                string? title = TagStr[i];
+                string? title = CustomDtoMapper.Normalize(TagStr[i]);
                 if (!string.IsNullOrEmpty(title))
                 {
                     addTads.Add(new Core.Models.Tag
@@ -2925,7 +2955,7 @@ namespace EtheriT.Coker.Application.Product
             for (int i = 0; i < prods.Count; i++)
             {
                 var item = prods[i];
-                var el = allProd.Find(e => e.Title == item.ProdName && e.ItemNo == item.ItemNo);
+                var el = allProd.Find(e => Norm(e.Title) == Norm(item.ProdName) && Norm(e.ItemNo) == Norm(item.ItemNo));
                 if (el == null)
                 {
                     errors.Add(new ImportMassageItem
@@ -2935,10 +2965,11 @@ namespace EtheriT.Coker.Application.Product
                     });
                     continue;
                 }
-                item.Id = allProd.Find(e => e.Title == item.ProdName && e.ItemNo == item.ItemNo).Id;
+                item.Id = el.Id;
                 var tag = nowTags.FindAll(e =>
                     !string.IsNullOrEmpty(e.Title) &&
-                    new List<string?> { item.Tag1, item.Tag2, item.Tag3, item.Tag4, item.Tag5, item.Tag6 }.Contains(e.Title)
+                    new List<string?> { item.Tag1, item.Tag2, item.Tag3, item.Tag4, item.Tag5, item.Tag6 }
+                        .Any(tagTitle => Norm(tagTitle) == Norm(e.Title))
                 );
                 if (tag != null)
                 {
@@ -3320,7 +3351,7 @@ namespace EtheriT.Coker.Application.Product
         }
         // 唯一鍵 helper
         private static string Norm(string? s)
-     => (s ?? "").Trim().Replace('\u00A0', ' ').ToUpperInvariant();
+            => CustomDtoMapper.Normalize(s).ToUpperInvariant();
 
         private static (string TypeName, string Title) SpecKey(string? typeName, string? title)
             => (Norm(typeName), Norm(title));

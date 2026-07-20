@@ -110,6 +110,49 @@ namespace EtheriT.Coker.Application.HtmlContent
 
             return respose;
         }
+
+        public async Task<HtmlContentListOutpotDto> GetComponentsByPurpose(string purposeCode)
+        {
+            var response = new HtmlContentListOutpotDto { List = new List<HtmlContentDto>() };
+            try
+            {
+                var code = (purposeCode ?? string.Empty).Trim();
+                if (string.IsNullOrEmpty(code))
+                    throw new ArgumentException("請指定元件用途。", nameof(purposeCode));
+
+                var isSystemUser = await loginUserData.isSystemUser();
+                var websiteId = await loginUserData.GetWebsiteId();
+                response.List = await db.Html_Contents
+                    .AsNoTracking()
+                    .Where(e => e.Disp_opt)
+                    .Where(e => isSystemUser || e.Type != (int)ObjectTypeEnum.自訂 || e.FK_WebsiteId == websiteId)
+                    .Where(e => e.HtmlContentPurposes.Any(p =>
+                        p.ComponentPurpose.Visible && p.ComponentPurpose.Code == code))
+                    .OrderBy(e => e.ObjectClassify.SerNo)
+                    .ThenBy(e => e.Ser_no)
+                    .Select(e => new HtmlContentDto
+                    {
+                        Id = e.Id,
+                        Type = e.Type,
+                        TypeName = e.ObjectClassify.Title,
+                        Img = e.Img,
+                        Icon = e.Icon,
+                        Title = e.Title,
+                        Ser_no = e.Ser_no,
+                        Disp_opt = e.Disp_opt
+                    })
+                    .ToListAsync();
+                await PopulateComponentImages(response.List);
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+
+            return response;
+        }
+
         public async Task<HtmlContentListOutpotDto> GetComponent(long type)
         {
             HtmlContentListOutpotDto respose = new HtmlContentListOutpotDto();

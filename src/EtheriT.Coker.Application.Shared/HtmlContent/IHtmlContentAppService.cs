@@ -14,6 +14,7 @@ namespace EtheriT.Coker.Application.Shared.HtmlContent
         public Task<ResponseMessageDto> AddUp(HtmlContentDto dto);
         public Task<JsonResult> GetAllList(int type, DataSourceLoadOptions loadOptions);
         public Task<HtmlContentListOutpotDto> GetAllComponent();
+        public Task<HtmlContentListOutpotDto> GetComponentsByPurpose(string purposeCode);
         public Task<HtmlContentListOutpotDto> GetComponent(long type);
         public Task<HtmlContentDto> GetOne(int id);
         public Task<JsonResult> GetDisplay(long webid, int type, int number);

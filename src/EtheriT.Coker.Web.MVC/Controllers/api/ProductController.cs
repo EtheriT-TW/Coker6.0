@@ -91,10 +91,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await productAppService.PriceDelete(Id);
         }
         [HttpPost]
-        public async Task<IActionResult> ProdReplace(IList<IFormFile> files)
+        public async Task<IActionResult> ProdReplace(
+            IList<IFormFile> files,
+            [FromForm] long templateId,
+            [FromForm] bool overwriteExisting = false)
         {
             if (files.Count != 1)
                 return BadRequest(new { message = "請選擇一個商品 Excel 檔案。" });
+            if (templateId <= 0)
+                return BadRequest(new { message = "請選擇商品匯入版型。" });
 
             var websiteId = await loginUserData.GetWebsiteId();
             var userId = await loginUserData.GetUserId();
@@ -108,7 +113,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 await using var stream = files[0].OpenReadStream();
                 await backgroundTaskService.SaveSourceFileAsync(task.Id, stream, files[0].FileName);
                 var jobId = backgroundJobClient.Enqueue<ProductExportBackgroundJob>(
-                    job => job.RunImport(task.Id));
+                    job => job.RunImport(task.Id, templateId, overwriteExisting));
                 await backgroundTaskService.SetHangfireJobIdAsync(task.Id, jobId);
                 return Accepted(new { taskId = task.Id });
             }

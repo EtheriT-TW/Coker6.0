@@ -47,6 +47,16 @@
                 dataType: "json"
             });
         },
+        GetComponentsByPurpose: function (purposeCode) {
+            return $.ajax({
+                url: "/api/HtmlContent/GetComponentsByPurpose",
+                type: "GET",
+                contentType: "application/json; charset=utf-8",
+                headers: _c.Data.Header,
+                data: { purposeCode: purposeCode },
+                dataType: "json"
+            });
+        },
         GetComponent: function (type) {
             return $.ajax({
                 url: "/api/HtmlContent/GetComponent",

@@ -11,5 +11,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 	public class ProductImportDto: ProductImportUpateDto
 	{
 		public long Id { get; set; } = 0;
+		public decimal Price { get; set; } = 0;
 	}
 }

@@ -35,7 +35,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 		public string? RoleName { get; set; }
 		public long RoleId { get; set; } = 1;
 		public int Bonus { get; set; } = 0;
-		public decimal Price { get; set; } = 0;
 		public string? Image1 { get; set; }
 		public string? Image2 { get; set; }
 		public string? Image3 { get; set; }

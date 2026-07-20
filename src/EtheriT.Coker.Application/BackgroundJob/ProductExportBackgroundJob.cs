@@ -72,7 +72,13 @@ namespace EtheriT.Coker.Application.BackgroundJob
         }
 
         [AutomaticRetry(Attempts = 0)]
-        public async Task RunImport(long taskId)
+        public Task RunImport(long taskId, long templateId)
+        {
+            return RunImport(taskId, templateId, false);
+        }
+
+        [AutomaticRetry(Attempts = 0)]
+        public async Task RunImport(long taskId, long templateId, bool overwriteExisting)
         {
             var task = await backgroundTaskService.GetAsync(taskId)
                 ?? throw new InvalidOperationException("找不到商品匯入任務。");
@@ -90,6 +96,8 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 var lastProgress = -1;
                 var result = await productAppService.ProdReplace(
                     sourcePath,
+                    templateId,
+                    overwriteExisting,
                     (progress, message) =>
                     {
                         if (progress == lastProgress) return;

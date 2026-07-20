@@ -1699,7 +1699,7 @@
                 const stockAvailable =
                     stock &&
                     !stock.timePrice &&
-                    (this.noStockManagementㄏ || normalizeNullableInt(stock.stock) >= normalizeNullableInt(stock.minQty, 1));
+                    (this.noStockManagement || normalizeNullableInt(stock.stock) >= normalizeNullableInt(stock.minQty, 1));
 
                 const isSelectable =
                     hasMultiplePrice &&

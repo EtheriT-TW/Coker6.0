@@ -5,10 +5,12 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
     public static class WebsiteCacheKeys
     {
         public const string Menu = "menu";
+        public const string DirectoryMenu = "directory-menu";
 
         public static readonly HashSet<string> FixedKeys = new(StringComparer.Ordinal)
         {
-            Menu
+            Menu,
+            DirectoryMenu
         };
 
         private static readonly Regex CacheKeyRegex =

@@ -15,11 +15,13 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.Files;
+using EtheriT.Coker.Application.Shared.Dto.JsonObject;
 using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.i18n;
+using EtheriT.Coker.Application.Shared.JsonObject;
 using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Tag;
@@ -33,6 +35,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -55,6 +58,9 @@ namespace EtheriT.Coker.Application.Directory
         private readonly StringHandler stringHandler;
         private readonly IConfiguration configuration;
         private readonly IHtmlProcessor htmlProcessor;
+        private readonly IJsonObjectAppService jsonObjectAppService;
+        private readonly IWebsiteCacheStateAppService websiteCacheStateAppService;
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> DirectoryMenuCacheLocks = new();
         public DirectoryAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -69,7 +75,9 @@ namespace EtheriT.Coker.Application.Directory
             ICustSearchAppService custSearchAppService,
             ITokenAppService tokenAppService,
             IConfiguration configuration,
-            IHtmlProcessor htmlProcessor
+            IHtmlProcessor htmlProcessor,
+            IJsonObjectAppService jsonObjectAppService,
+            IWebsiteCacheStateAppService websiteCacheStateAppService
         )
         {
             this.db = db;
@@ -86,6 +94,8 @@ namespace EtheriT.Coker.Application.Directory
             this.tokenAppService = tokenAppService;
             this.configuration = configuration;
             this.htmlProcessor = htmlProcessor;
+            this.jsonObjectAppService = jsonObjectAppService;
+            this.websiteCacheStateAppService = websiteCacheStateAppService;
         }
         public async Task<ResponseMessageDto> AddUp(DirectoryAddUpDto dto)
         {
@@ -123,6 +133,14 @@ namespace EtheriT.Coker.Application.Directory
                         await loginUserData.SaveChanges(db_d);
                     }
                     else throw new Exception("查無資料");
+                }
+
+                if (asoid.HasValue)
+                {
+                    await jsonObjectAppService.RemoveAsync(
+                        WebsiteID,
+                        WebsiteCacheKeys.DirectoryMenu,
+                        asoid.Value);
                 }
 
                 if (asoid != null && (dto.Type != (int)DirectoryTypeEnum.選單))
@@ -1949,13 +1967,22 @@ namespace EtheriT.Coker.Application.Directory
                 return empty;
             }
 
-            var menuId = await (
-                from e in db.Directory
-                where dto.Ids.Contains(e.Id)
-                   && !e.IsDeleted
-                   && e.FK_WebsiteId == websiteid
-                select e.FK_Mid
-            ).FirstOrDefaultAsync();
+            var directoryRows = await db.Directory
+                .AsNoTracking()
+                .Where(directory => dto.Ids.Contains(directory.Id)
+                    && !directory.IsDeleted
+                    && directory.FK_WebsiteId == websiteid)
+                .Select(directory => new { directory.Id, directory.FK_Mid })
+                .ToListAsync();
+
+            var directoryById = directoryRows.ToDictionary(directory => directory.Id);
+            var directoryId = dto.Ids.FirstOrDefault(directoryById.ContainsKey);
+            if (directoryId <= 0)
+            {
+                return empty;
+            }
+
+            var menuId = directoryById[directoryId].FK_Mid;
 
             if (menuId == null || menuId <= 0)
             {
@@ -1979,14 +2006,122 @@ namespace EtheriT.Coker.Application.Directory
                 return empty;
             }
 
-            var menu = await webMenuApplicationService.GetDisplayOne(new DataIdWebsiteIdDto()
+            // 後台預覽需要包含隱藏選單，不與一般前台快照共用。
+            if (dto.showUnvisible)
             {
-                Id = menuId.Value,
-                WebsiteId = websiteid,
-                showUnvisible = dto.showUnvisible
-            });
+                return await BuildDirectoryMenuAsync(menuId.Value, websiteid, true) ?? empty;
+            }
 
-            return menu ?? empty;
+            var menuVersion = await websiteCacheStateAppService.EnsureVersionByWebsiteIdAsync(
+                websiteid,
+                WebsiteCacheKeys.Menu,
+                1);
+            var cachedMenu = await GetDirectoryMenuSnapshotAsync(websiteid, directoryId, menuVersion);
+            if (cachedMenu != null)
+            {
+                return cachedMenu;
+            }
+
+            var lockKey = $"{websiteid}:{directoryId}";
+            var cacheLock = DirectoryMenuCacheLocks.GetOrAdd(lockKey, _ => new SemaphoreSlim(1, 1));
+            await cacheLock.WaitAsync();
+            try
+            {
+                menuVersion = await websiteCacheStateAppService.EnsureVersionByWebsiteIdAsync(
+                    websiteid,
+                    WebsiteCacheKeys.Menu,
+                    1);
+                cachedMenu = await GetDirectoryMenuSnapshotAsync(websiteid, directoryId, menuVersion);
+                if (cachedMenu != null)
+                {
+                    return cachedMenu;
+                }
+
+                MenuItemDto? menu = null;
+                for (var attempt = 0; attempt < 2; attempt++)
+                {
+                    var buildVersion = await websiteCacheStateAppService.EnsureVersionByWebsiteIdAsync(
+                        websiteid,
+                        WebsiteCacheKeys.Menu,
+                        1);
+                    menu = await BuildDirectoryMenuAsync(menuId.Value, websiteid, false) ?? empty;
+                    var latestVersion = await websiteCacheStateAppService.GetVersionByWebsiteIdAsync(
+                        websiteid,
+                        WebsiteCacheKeys.Menu);
+
+                    if (latestVersion != buildVersion) continue;
+
+                    var latestMenuId = await db.Directory
+                        .AsNoTracking()
+                        .Where(directory => directory.Id == directoryId
+                            && directory.FK_WebsiteId == websiteid
+                            && !directory.IsDeleted)
+                        .Select(directory => directory.FK_Mid)
+                        .FirstOrDefaultAsync();
+                    if (latestMenuId != menuId)
+                    {
+                        return latestMenuId > 0
+                            ? await BuildDirectoryMenuAsync(latestMenuId.Value, websiteid, false) ?? empty
+                            : empty;
+                    }
+
+                    await jsonObjectAppService.AddUp(new JsonObjectAddDto
+                    {
+                        FK_WebsiteId = websiteid,
+                        FK_AId = directoryId,
+                        CacheKey = WebsiteCacheKeys.DirectoryMenu,
+                        CacheVersion = buildVersion,
+                        Json = JsonConvert.SerializeObject(menu)
+                    });
+                    return menu;
+                }
+
+                // 建立期間持續有選單異動時，本次回傳最新查詢結果但不寫入快照。
+                return menu ?? empty;
+            }
+            finally
+            {
+                cacheLock.Release();
+            }
+        }
+
+        private async Task<MenuItemDto?> GetDirectoryMenuSnapshotAsync(
+            long websiteId,
+            long directoryId,
+            long menuVersion)
+        {
+            var snapshot = await db.JsonObjects
+                .AsNoTracking()
+                .Where(item => item.FK_WebsiteId == websiteId
+                    && item.CacheKey == WebsiteCacheKeys.DirectoryMenu
+                    && item.FK_AId == directoryId
+                    && item.Version == menuVersion)
+                .Select(item => item.Json)
+                .FirstOrDefaultAsync();
+
+            if (string.IsNullOrWhiteSpace(snapshot)) return null;
+
+            try
+            {
+                return JsonConvert.DeserializeObject<MenuItemDto>(snapshot);
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        private async Task<MenuItemDto?> BuildDirectoryMenuAsync(
+            long menuId,
+            long websiteId,
+            bool showUnvisible)
+        {
+            return await webMenuApplicationService.GetDisplayOne(new DataIdWebsiteIdDto
+            {
+                Id = menuId,
+                WebsiteId = websiteId,
+                showUnvisible = showUnvisible
+            });
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
@@ -2014,12 +2149,27 @@ namespace EtheriT.Coker.Application.Directory
                                         Id = e.Id,
                                         Title = e.Title,
                                         Description = e.Description,
-                                        Type = ((DirectoryTypeEnum)e.Type).ToString(),
+                                        // 使用 SQL 可轉譯的 CASE 映射，讓 DevExtreme Header Filter
+                                        // 可以直接對 Type 執行 GROUP BY。
+                                        Type = e.Type == (int)DirectoryTypeEnum.商品 ? "商品"
+                                            : e.Type == (int)DirectoryTypeEnum.文章 ? "文章"
+                                            : e.Type == (int)DirectoryTypeEnum.選單 ? "選單"
+                                            : e.Type == (int)DirectoryTypeEnum.廣告 ? "廣告"
+                                            : string.Empty,
                                         Visible = e.Visible,
                                         Items = "",
                                         FK_Mid = e.FK_Mid,
-                                    };
+                    };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+
+                    // Header Filter 會使用 group 請求取得欄位的相異值。
+                    // 此時 output.data 是 DevExtreme 的分組資料，不是 DirectoryGetListDto，
+                    // 必須直接回傳，不能進入下方的資料列補充流程。
+                    if (loadOptions.Group != null && loadOptions.Group.Length > 0)
+                    {
+                        return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                    }
+
                     if (output != null)
                     {
                         foreach (var data in output.data)
@@ -2055,9 +2205,10 @@ namespace EtheriT.Coker.Application.Directory
                 }
                 else throw new Exception("查無目錄資料");
             }
-            catch (Exception e)
+            catch
             {
-
+                // 不再把實際查詢錯誤偽裝成「沒有資料」，讓 API 保留正確錯誤資訊。
+                throw;
             }
 
             return new JsonResult(new List<DirectoryGetListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
@@ -2139,6 +2290,11 @@ namespace EtheriT.Coker.Application.Directory
                     result.DeletionTime = DateTime.Now;
                     result.DeleterUserId = usetId;
                     db.SaveChanges();
+
+                    await jsonObjectAppService.RemoveAsync(
+                        result.FK_WebsiteId,
+                        WebsiteCacheKeys.DirectoryMenu,
+                        result.Id);
 
                     output.Success = tagdeleteresponse.Success;
                 }

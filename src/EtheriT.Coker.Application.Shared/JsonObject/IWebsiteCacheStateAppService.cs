@@ -25,5 +25,6 @@ namespace EtheriT.Coker.Application.Shared.JsonObject
         /// 版本 +1，不存在則建立為 1
         /// </summary>
         public Task<long> TouchAsync(string cacheKey, string orgName = "");
+        public Task<long> TouchByWebsiteIdAsync(long websiteId, string cacheKey);
     }
 }

@@ -633,7 +633,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(t => t.CreationTime).HasDefaultValueSql("getdate()");
                 o.HasOne(f => f.FK_Website).WithMany(w => w.jsonObjects).HasForeignKey(e => e.FK_WebsiteId);
                 o.Property(x => x.CacheKey).HasDefaultValue(WebsiteCacheKeys.Menu);
-                o.HasIndex(x => new { x.FK_WebsiteId, x.CacheKey }).IsUnique();
+                o.HasIndex(x => new { x.FK_WebsiteId, x.CacheKey, x.FK_AId }).IsUnique();
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<WebsiteCacheState>(o =>

@@ -20,6 +20,7 @@ namespace EtheriT.Coker.Application
         public Task<List<FileGetImgDto>> getImgFiles(FileGetImgInputDto dto);
         public Task<List<FileGetImgDto>> getImgsFiles(FileGetImgsInputDto dto);
         public Task<List<string>> getImgFilesById(List<long> Ids, int size);
+        public Task<Dictionary<long, string>> GetImgFileMapByIdAsync(List<long> ids, int size);
         public Task<List<FileGetProdDisplayDto>> getProdFiles(long Pid);
         public Task<List<FileGetArticleDisplayDto>> getArticleFiles(long Aid);
         public Task<List<FileGetDisplayDto>> getAdvertiseFiles(long Aid, int type);

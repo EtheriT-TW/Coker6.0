@@ -7,6 +7,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.Templates;
+using EtheriT.Coker.Application.Shared.JsonObject;
 using EtheriT.Coker.Application.Shared.Templates;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
@@ -36,13 +37,15 @@ namespace EtheriT.Coker.Application
         private readonly IConfiguration configuration;
         private readonly ITokenAppService tokenAppService;
         private readonly IUploadPathResolver uploadPathResolver;
+        private readonly IWebsiteCacheStateAppService websiteCacheStateAppService;
         public FileUploadAppService(
             IOptions<VirtualDirectory> fileAllow,
             LoginUserData loginUserData,
             CokerDbContext db,
             IConfiguration configuration,
             ITokenAppService tokenAppService,
-            IUploadPathResolver uploadPathResolver
+            IUploadPathResolver uploadPathResolver,
+            IWebsiteCacheStateAppService websiteCacheStateAppService
         )
         {
             this.fileAllow = fileAllow.Value.FileAllow;
@@ -51,6 +54,7 @@ namespace EtheriT.Coker.Application
             this.configuration = configuration;
             this.tokenAppService = tokenAppService;
             this.uploadPathResolver = uploadPathResolver;
+            this.websiteCacheStateAppService = websiteCacheStateAppService;
         }
         public async Task<UploadFileOutputDto> uploadTempFiles(IList<IFormFile> files)
         {
@@ -103,7 +107,20 @@ namespace EtheriT.Coker.Application
             {
 
             }
+
+            if (response.Success && IsMenuFileType(type))
+            {
+                var websiteId = await loginUserData.GetWebsiteId();
+                await websiteCacheStateAppService.TouchByWebsiteIdAsync(websiteId, WebsiteCacheKeys.Menu);
+            }
             return response;
+        }
+
+        private static bool IsMenuFileType(int type)
+        {
+            return type == (int)FileBindTypeEnum.選單圖
+                || type == (int)FileBindTypeEnum.選單覆蓋
+                || type == (int)FileBindTypeEnum.選單Icon;
         }
         public async Task<UploadFileOutputDto> uploadMediaFiles(IList<IFormFile> files, int type, long sid, int serno, string page, bool convert)
         {
@@ -525,6 +542,16 @@ namespace EtheriT.Coker.Application
         {
             var imgDtos = await _getLinksByUploadIdsAsync(ids, size);
             return imgDtos.Select(i => i.Link).ToList();
+        }
+        public async Task<Dictionary<long, string>> GetImgFileMapByIdAsync(List<long> ids, int size)
+        {
+            var distinctIds = ids?.Where(id => id > 0).Distinct().ToList() ?? new List<long>();
+            if (distinctIds.Count == 0) return new Dictionary<long, string>();
+
+            var imgDtos = await _getLinksByUploadIdsAsync(distinctIds, size);
+            return imgDtos
+                .GroupBy(image => image.Id)
+                .ToDictionary(group => group.Key, group => group.First().Link);
         }
         private async Task<List<FileGetImgDto>> _getLinksByUploadIdsAsync(
             List<long> uploadIds, int size,
@@ -1113,6 +1140,13 @@ namespace EtheriT.Coker.Application
 
                 if (files != null)
                 {
+                    var invalidatesMenuCache = await db.FileBinds
+                        .AsNoTracking()
+                        .AnyAsync(bind => bind.FK_FileUploadId == files.Id
+                            && !bind.IsDeleted
+                            && (bind.type == (int)FileBindTypeEnum.選單圖
+                                || bind.type == (int)FileBindTypeEnum.選單覆蓋
+                                || bind.type == (int)FileBindTypeEnum.選單Icon));
                     var physicalPath = uploadPathResolver.GetPhysicalPathFromDownloadFileName(
                         orgName,
                         files.DownloadFileName ?? ""
@@ -1126,6 +1160,12 @@ namespace EtheriT.Coker.Application
                     files.IsDeleted = true;
                     response.Success = true;
                     await loginUserData.SaveChanges(files);
+                    if (invalidatesMenuCache)
+                    {
+                        await websiteCacheStateAppService.TouchByWebsiteIdAsync(
+                            files.FK_WebsiteId,
+                            WebsiteCacheKeys.Menu);
+                    }
                 }
                 else throw new Exception("檔案不存在");
             }
@@ -1295,6 +1335,15 @@ namespace EtheriT.Coker.Application
                 response.Error = e.Message;
                 response.Success = false;
                 return response;
+            }
+            finally
+            {
+                if (response.Success && IsMenuFileType(dto.Type))
+                {
+                    await websiteCacheStateAppService.TouchByWebsiteIdAsync(
+                        await loginUserData.GetWebsiteId(),
+                        WebsiteCacheKeys.Menu);
+                }
             }
 
         }

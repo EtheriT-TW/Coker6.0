@@ -76,14 +76,13 @@ namespace EtheriT.Coker.Application
             SiteMapDto response = new SiteMapDto { Success = false };
             try
             {
-                response.Maps = await GetChild(null);
+                response.Maps = await GetEditorMenuTreeAsync();
                 response.Success = true;
             }
             catch (Exception ex)
             {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs("", JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<SiteMapDto> GetDisplayAll(long WebsiteID)
@@ -182,105 +181,174 @@ namespace EtheriT.Coker.Application
 
             return (jsonStr, currentVersion);
         }
-        private async Task<List<MenuItemDto>> GetChild(long? id)
+        private async Task<List<MenuItemDto>> GetEditorMenuTreeAsync()
         {
-            try
+            var websiteId = await loginUserData.GetWebsiteId();
+            var userId = await loginUserData.GetUserId();
+            var roleIds = await loginUserData.GetUserRoleIds();
+            var isSuperUser = await permissionsAppService.IsPowerUserPermissions();
+
+            HashSet<long>? allowedMenuIds = null;
+            if (!isSuperUser)
             {
-                var WebsiteID = await loginUserData.GetWebsiteId();
-                var orgName = await loginUserData.GetWebsiteOrgName();
-                long UserID = await loginUserData.GetUserId();
-                List<long> RoleIds = await loginUserData.GetUserRoleIds();
-                bool isSuperUser = await permissionsAppService.IsPowerUserPermissions();
-                IQueryable<WebMenu> AllMenus = db.WebMenus.Where(m => !m.IsDeleted && m.FK_WebsiteId == WebsiteID && m.FK_TopNodeId == id);
-                if (!isSuperUser)
-                {
-                    var per = await db.PermissionDetail.Where(e => e.FK_WebsiteId == WebsiteID)
-                        .Where(e => e.FK_UserId == UserID || (e.FK_RoleId != null && RoleIds.Contains(e.FK_RoleId.Value)))
-                        .Where(e => e.Type == (int)PermissionDetailsTypeEnum.選單)
-                        .Where(e => e.IsGranted).Select(e => e.FK_TargetId).ToListAsync();
-                    if (per != null && per.Any()) AllMenus = AllMenus.Where(e => per.Contains(e.Id));
-                }
-
-                var menus = await AllMenus
-                            .OrderBy(m => m.SerNO)
-                            .ThenBy(m => m.Id)
-                            .ToListAsync();
-                List<MenuItemDto> result = mapper.Map<List<MenuItemDto>>(menus);
-                var menuIds = result.Select(x => x.Id).ToList();
-
-                var backstagePermissionMenuIds = await db.PermissionDetail
-                    .Where(x => x.FK_WebsiteId == WebsiteID)
-                    .Where(x => x.FK_TargetId!=null && menuIds.Contains(x.FK_TargetId.Value))
-                    .Where(x => x.Type == (int)PermissionDetailsTypeEnum.選單)
-                    .Where(x => x.IsGranted)
-                    .Select(x => x.FK_TargetId)
+                var permittedIds = await db.PermissionDetail
+                    .AsNoTracking()
+                    .Where(permission => permission.FK_WebsiteId == websiteId)
+                    .Where(permission => permission.FK_UserId == userId
+                        || (permission.FK_RoleId != null && roleIds.Contains(permission.FK_RoleId.Value)))
+                    .Where(permission => permission.Type == (int)PermissionDetailsTypeEnum.選單)
+                    .Where(permission => permission.IsGranted && permission.FK_TargetId != null)
+                    .Select(permission => permission.FK_TargetId!.Value)
                     .Distinct()
                     .ToListAsync();
 
-                var frontPermissionMenuIds = await db.PermissionDetail
-                    .Where(x => x.FK_WebsiteId == WebsiteID)
-                    .Where(x => x.FK_TargetId != null && menuIds.Contains(x.FK_TargetId.Value))
-                    .Where(x => x.Type == (int)PermissionDetailsTypeEnum.選單會員) // 對應你前端 RolesDetailsModal 傳入的 type: 4
-                    .Where(x => x.IsGranted)
-                    .Select(x => x.FK_TargetId)
-                    .Distinct()
-                    .ToListAsync();
+                // 沿用既有規則：完全沒有設定權限時顯示全部；有設定時才套用允許清單。
+                if (permittedIds.Count > 0)
+                    allowedMenuIds = permittedIds.ToHashSet();
+            }
 
-                foreach (var m in result)
+            var menuQuery = db.WebMenus
+                .AsNoTracking()
+                .Where(menu => !menu.IsDeleted && menu.FK_WebsiteId == websiteId);
+
+            if (allowedMenuIds != null)
+                menuQuery = menuQuery.Where(menu => allowedMenuIds.Contains(menu.Id));
+
+            // 僅投影編輯器需要的欄位，避免把每一頁的大型 HTML、CSS 與 PageText 載入記憶體。
+            var menuRows = await menuQuery
+                .OrderBy(menu => menu.SerNO)
+                .ThenBy(menu => menu.Id)
+                .Select(menu => new
                 {
-                    m.HasBackstagePermission = backstagePermissionMenuIds.Contains(m.Id);
-                    m.HasFrontPermission = frontPermissionMenuIds.Contains(m.Id);
-                    m.Children = await GetChild(m.Id);
-                    if (m.ImgId != null)
+                    Item = new MenuItemDto
                     {
-                        var data = await fileUploadAppService.getImgFiles(new FileGetImgInputDto()
-                        {
-                            Sid = m.Id,
-                            Type = 2,
-                            Size = 1,
-                        });
-                        if (data != null && data.Any())
-                        {
-                            m.ImgUrl = data[0].Link;
-                            m.ImgName = data[0].Name;
-                        }
-                    }
-                    if (m.OverImgId != null)
-                    {
-                        var data = await fileUploadAppService.getImgFiles(new FileGetImgInputDto()
-                        {
-                            Sid = m.Id,
-                            Type = 3,
-                            Size = 1,
-                        });
-                        if (data != null && data.Any())
-                        {
-                            m.OverImgUrl = data[0].Link;
-                            m.OverImgName = data[0].Name;
-                        }
-                    }
-                    if ((m.icon ?? "").StartsWith("IconId"))
-                    {
-                        var s = m.icon.Split(":");
-                        if (s.Length > 1 && !string.IsNullOrEmpty(s[1]))
-                        {
-                            var data = await fileUploadAppService.getImgFilesById(new List<long> { long.Parse(s[1]) }, 1);
-                            if (data != null && data.Any())
-                            {
-                                m.IconId = m.icon.Split(":")[1];
-                                m.IconUrl = data[0];
-                            }
-                        }
-                        else m.icon = "empty";
-                    }
-                    if (m.Children.Count == 0) m.Children = null;
-                }
-                return result;
-            }
-            catch (Exception ex)
+                        Id = menu.Id,
+                        Title = menu.Title,
+                        SubTitle = menu.SubTitle,
+                        RouterName = menu.RouterName,
+                        PageType = menu.PageType,
+                        Description = menu.Description,
+                        icon = menu.icon,
+                        Visible = menu.Visible,
+                        SerNO = menu.SerNO,
+                        PopularVisible = menu.PopularVisible,
+                        ImgId = menu.ImgId,
+                        OverImgId = menu.OverImgId,
+                        LinkUrl = menu.LinkUrl,
+                        Target = menu.Target,
+                        LanBar = menu.LanBar,
+                        VisibleHeader = menu.VisibleHeader,
+                        VisibleFooter = menu.VisibleFooter,
+                        VisibleTitle = menu.VisibleTitle,
+                        IsFromShelves = !menu.RemovedFromShelves,
+                        FK_TopNodeId = menu.FK_TopNodeId,
+                        FK_RootNodeId = menu.FK_RootNodeId,
+                        FK_WebsiteId = menu.FK_WebsiteId,
+                        ShowToMenu = menu.ShowToMenu,
+                        LastModificationTime = menu.LastModificationTime,
+                        CreationTime = menu.CreationTime
+                    },
+                    HasPageText = menu.PageText != null && menu.PageText != "",
+                    HasMediaHtml = menu.Html != null
+                        && (menu.Html.Contains("<img") || menu.Html.Contains("<iframe") || menu.Html.Contains("<video"))
+                })
+                .ToListAsync();
+
+            var menus = menuRows.Select(row =>
             {
-                throw ex;
+                row.Item.hasContan = row.Item.PageType != PageTypeEnum.結構頁面
+                    && (row.HasPageText || row.HasMediaHtml);
+                return row.Item;
+            }).ToList();
+
+            if (menus.Count == 0) return menus;
+
+            var menuIds = menus.Select(menu => menu.Id).ToList();
+            var permissionRows = await db.PermissionDetail
+                .AsNoTracking()
+                .Where(permission => permission.FK_WebsiteId == websiteId
+                    && permission.FK_TargetId != null
+                    && menuIds.Contains(permission.FK_TargetId.Value)
+                    && permission.IsGranted
+                    && (permission.Type == (int)PermissionDetailsTypeEnum.選單
+                        || permission.Type == (int)PermissionDetailsTypeEnum.選單會員))
+                .Select(permission => new { TargetId = permission.FK_TargetId!.Value, permission.Type })
+                .Distinct()
+                .ToListAsync();
+
+            var backstagePermissionIds = permissionRows
+                .Where(permission => permission.Type == (int)PermissionDetailsTypeEnum.選單)
+                .Select(permission => permission.TargetId)
+                .ToHashSet();
+            var frontPermissionIds = permissionRows
+                .Where(permission => permission.Type == (int)PermissionDetailsTypeEnum.選單會員)
+                .Select(permission => permission.TargetId)
+                .ToHashSet();
+
+            var imageFiles = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
+            {
+                Sid = menuIds,
+                Type = 2,
+                Size = 1
+            });
+            var overImageFiles = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
+            {
+                Sid = menuIds,
+                Type = 3,
+                Size = 1
+            });
+            var imageMap = imageFiles.GroupBy(file => file.Sid).ToDictionary(group => group.Key, group => group.First());
+            var overImageMap = overImageFiles.GroupBy(file => file.Sid).ToDictionary(group => group.Key, group => group.First());
+
+            var iconIdByMenuId = new Dictionary<long, long>();
+            foreach (var menu in menus)
+            {
+                if (!(menu.icon ?? "").StartsWith("IconId", StringComparison.OrdinalIgnoreCase)) continue;
+
+                var iconParts = menu.icon!.Split(':', 2);
+                if (iconParts.Length == 2 && long.TryParse(iconParts[1], out var iconId) && iconId > 0)
+                    iconIdByMenuId[menu.Id] = iconId;
+                else
+                    menu.icon = "empty";
             }
+
+            var iconMap = await fileUploadAppService.GetImgFileMapByIdAsync(iconIdByMenuId.Values.ToList(), 1);
+            foreach (var menu in menus)
+            {
+                menu.HasBackstagePermission = backstagePermissionIds.Contains(menu.Id);
+                menu.HasFrontPermission = frontPermissionIds.Contains(menu.Id);
+
+                if (menu.ImgId != null && imageMap.TryGetValue(menu.Id, out var image))
+                {
+                    menu.ImgUrl = image.Link;
+                    menu.ImgName = image.Name;
+                }
+                if (menu.OverImgId != null && overImageMap.TryGetValue(menu.Id, out var overImage))
+                {
+                    menu.OverImgUrl = overImage.Link;
+                    menu.OverImgName = overImage.Name;
+                }
+                if (iconIdByMenuId.TryGetValue(menu.Id, out var iconId)
+                    && iconMap.TryGetValue(iconId, out var iconUrl))
+                {
+                    menu.IconId = iconId.ToString();
+                    menu.IconUrl = iconUrl;
+                }
+
+                menu.Children = new List<MenuItemDto>();
+            }
+
+            var menuMap = menus.ToDictionary(menu => menu.Id);
+            foreach (var menu in menus)
+            {
+                if (menu.FK_TopNodeId != null && menuMap.TryGetValue(menu.FK_TopNodeId.Value, out var parent))
+                    parent.Children!.Add(menu);
+            }
+
+            foreach (var menu in menus.Where(menu => menu.Children!.Count == 0))
+                menu.Children = null;
+
+            return menus.Where(menu => menu.FK_TopNodeId == null).ToList();
         }
         private async Task<string> GetDisplayChildAndSaveCache(long? id, long WebsiteID)
         {
@@ -331,41 +399,58 @@ namespace EtheriT.Coker.Application
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
-            try
-            {
-                var WebstieId = await loginUserData.GetWebsiteId();
-                var results = await db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == WebstieId).ToListAsync();
-                if (results.Count > 0)
+            var websiteId = await loginUserData.GetWebsiteId();
+            var dataQuery = db.WebMenus
+                .AsNoTracking()
+                .Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId)
+                .OrderBy(e => e.Id)
+                .Select(e => new MenuGetAllListDto
                 {
-                    var outputlist = new List<MenuGetAllListDto>();
-                    for (var i = 0; i < results.Count; i++)
-                    {
-                        MenuGetAllListDto outputdata = mapper.Map(results[i], new MenuGetAllListDto());
-                        var outputdata_child = await this.GetChild(outputdata.Id);
-                        if (outputdata_child.Count > 0)
-                        {
-                            outputdata.Items = "";
-                            for (var j = 0; j < outputdata_child.Count; j++)
-                            {
-                                if (j >= 3)
-                                {
-                                    outputdata.Items += "...";
-                                    break;
-                                }
-                                outputdata.Items += outputdata.Items == "" ? outputdata_child[j].Title : $"、{outputdata_child[j].Title}";
-                            }
-                        }
-                        outputlist.Add(outputdata);
-                    }
-                    var output = DataSourceLoader.Load(outputlist, loadOptions);
-                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-                }
-                return new JsonResult(new List<ArticleListGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-            }
-            catch (Exception ex)
+                    Id = e.Id,
+                    Title = e.Title ?? string.Empty,
+                    Link = e.RouterName ?? string.Empty,
+                    Items = string.Empty
+                });
+
+            // 先讓 DevExtreme 在 SQL 端完成篩選、排序、計數與分頁，避免載入大型 HTML/CSS 欄位。
+            var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+            var pageRows = ((IEnumerable<object>)output.data).Cast<MenuGetAllListDto>().ToList();
+            var pageIds = pageRows.Select(e => e.Id).ToList();
+
+            if (pageIds.Count > 0)
             {
-                throw ex;
+                // 僅查詢當頁選單的直接子選單；一次 SQL 取回，取代逐筆遞迴 GetChild 的 N+1 查詢。
+                var childRows = await db.WebMenus
+                    .AsNoTracking()
+                    .Where(e => !e.IsDeleted
+                        && e.FK_WebsiteId == websiteId
+                        && e.FK_TopNodeId != null
+                        && pageIds.Contains(e.FK_TopNodeId.Value))
+                    .OrderBy(e => e.SerNO)
+                    .ThenBy(e => e.Id)
+                    .Select(e => new
+                    {
+                        ParentId = e.FK_TopNodeId!.Value,
+                        Title = e.Title ?? string.Empty
+                    })
+                    .ToListAsync();
+
+                var childMap = childRows
+                    .GroupBy(e => e.ParentId)
+                    .ToDictionary(
+                        group => group.Key,
+                        group =>
+                        {
+                            var children = group.ToList();
+                            var summary = string.Join("、", children.Take(3).Select(e => e.Title));
+                            return children.Count > 3 ? $"{summary}..." : summary;
+                        });
+
+                foreach (var row in pageRows)
+                    row.Items = childMap.TryGetValue(row.Id, out var items) ? items : string.Empty;
             }
+
+            return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<MenuGetAllListDto> GetSelectData(long Mid)
         {
@@ -376,19 +461,20 @@ namespace EtheriT.Coker.Application
                 if (results != null)
                 {
                     MenuGetAllListDto output = mapper.Map(results, new MenuGetAllListDto());
-                    var outputdata_child = await this.GetChild(output.Id);
-                    if (outputdata_child.Count > 0)
+                    var childTitles = await db.WebMenus
+                        .AsNoTracking()
+                        .Where(menu => !menu.IsDeleted
+                            && menu.FK_WebsiteId == WebstieId
+                            && menu.FK_TopNodeId == output.Id)
+                        .OrderBy(menu => menu.SerNO)
+                        .ThenBy(menu => menu.Id)
+                        .Select(menu => menu.Title ?? string.Empty)
+                        .Take(4)
+                        .ToListAsync();
+                    if (childTitles.Count > 0)
                     {
-                        output.Items = "";
-                        for (var j = 0; j < outputdata_child.Count; j++)
-                        {
-                            if (j >= 3)
-                            {
-                                output.Items += "...";
-                                break;
-                            }
-                            output.Items += output.Items == "" ? outputdata_child[j].Title : $"、{outputdata_child[j].Title}";
-                        }
+                        output.Items = string.Join("、", childTitles.Take(3));
+                        if (childTitles.Count > 3) output.Items += "...";
                     }
                     return output;
                 }

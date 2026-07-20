@@ -11,5 +11,6 @@ namespace EtheriT.Coker.Application.Shared.JsonObject
     public interface IJsonObjectAppService
     {
         public Task<ResponseMessageDto> AddUp(JsonObjectAddDto dto);
+        public Task RemoveAsync(long websiteId, string cacheKey, long? fkAId = null);
     }
 }

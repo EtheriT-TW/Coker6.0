@@ -44,6 +44,7 @@
                                 .RemoteOperations(true)
                                 .ColumnHidingEnabled(true)
                                 .ShowBorders(true)
+                                .HeaderFilter(headerFilter => headerFilter.Visible(true))
                                 .FilterRow(filterRow => filterRow
                                 .Visible(true)
                                 .ApplyFilter(GridApplyFilterMode.Auto)

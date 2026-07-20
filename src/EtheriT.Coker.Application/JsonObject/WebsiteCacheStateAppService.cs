@@ -51,11 +51,16 @@ namespace EtheriT.Coker.Application.JsonObject
             return version;
         }
         public async Task<long> TouchAsync(string cacheKey, string orgName = "") {
+            var websiteId = await loginUserData.GetCommonWebsiteId(orgName);
+            return await TouchByWebsiteIdAsync(websiteId, cacheKey);
+        }
+
+        public async Task<long> TouchByWebsiteIdAsync(long websiteId, string cacheKey)
+        {
             cacheKey = WebsiteCacheKeys.Normalize(cacheKey);
             if (!WebsiteCacheKeys.IsValid(cacheKey))
                 throw new ArgumentException($"不合法的 cacheKey：{cacheKey}", nameof(cacheKey));
 
-            var websiteId = await loginUserData.GetCommonWebsiteId(orgName);
             if (websiteId <= 0)
                 throw new Exception("找不到可用的網站識別");
 

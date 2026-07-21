@@ -2686,6 +2686,54 @@ namespace EtheriT.Coker.Application.Product
             return stringHandler.HtmlEncode(document.DocumentNode.OuterHtml);
         }
 
+        private string UpdateProductImportDirectoryBindings(
+            string? storedHtml,
+            Core.Models.Directory? menuDirectory,
+            Core.Models.Directory productDirectory)
+        {
+            if (string.IsNullOrWhiteSpace(storedHtml))
+                return storedHtml ?? string.Empty;
+
+            var html = stringHandler.HtmlDecode(storedHtml);
+            var document = htmlProcessor.LoadHtml(html);
+            var changed = false;
+
+            var menuNode = document.DocumentNode.SelectSingleNode("//*[@data-import-role='menu-directory']")
+                ?? document.DocumentNode.SelectSingleNode("//*[contains(concat(' ', normalize-space(@class), ' '), ' menu_directory ')]");
+            var productNode = document.DocumentNode.SelectSingleNode("//*[@data-import-role='product-directory']")
+                ?? document.DocumentNode.SelectSingleNode("//*[contains(concat(' ', normalize-space(@class), ' '), ' catalog_frame ')]");
+
+            if (menuNode != null && menuDirectory != null)
+                changed |= SetDirectoryBinding(menuNode, menuDirectory);
+            if (productNode != null)
+                changed |= SetDirectoryBinding(productNode, productDirectory);
+
+            return changed
+                ? stringHandler.HtmlEncode(document.DocumentNode.OuterHtml)
+                : storedHtml;
+
+            static bool SetDirectoryBinding(HtmlAgilityPack.HtmlNode node, Core.Models.Directory directory)
+            {
+                var directoryId = directory.Id.ToString();
+                var directoryName = directory.Title ?? string.Empty;
+                var idChanged = !string.Equals(
+                    node.GetAttributeValue("data-dirid", string.Empty),
+                    directoryId,
+                    StringComparison.Ordinal);
+                var nameChanged = !string.Equals(
+                    node.GetAttributeValue("data-diridname", string.Empty),
+                    directoryName,
+                    StringComparison.Ordinal);
+
+                if (idChanged)
+                    node.SetAttributeValue("data-dirid", directoryId);
+                if (nameChanged)
+                    node.SetAttributeValue("data-diridname", directoryName);
+
+                return idChanged || nameChanged;
+            }
+        }
+
         private async Task createDirectory(
             List<DirectoryArrangeImportDto> menuMap,
             Html_Content importTemplate,
@@ -2757,19 +2805,31 @@ namespace EtheriT.Coker.Application.Product
                         }
                     }
                     var myMenu = webMenu.Where(e => e.Title == menu.Name).FirstOrDefault();
-                    if (myMenu != null
-                        && (overwriteExisting || string.IsNullOrEmpty(myMenu.SaveHtml))
-                        && !string.IsNullOrEmpty(dir.Title))
+                    if (myMenu != null && !string.IsNullOrEmpty(dir.Title))
                     {
-                        myMenu.Html = BuildProductImportMenuHtml(
-                            importTemplate,
-                            currentMenuDirectory,
-                            dir,
-                            myMenu.Title ?? dir.Title);
-                        myMenu.PageText = htmlProcessor.text(stringHandler.HtmlDecode(myMenu.Html));
-                        myMenu.SaveHtml = myMenu.Html;
-                        myMenu.Css = importTemplate.Css ?? string.Empty;
-                        myMenu.SaveCss = myMenu.Css;
+                        if (overwriteExisting || string.IsNullOrEmpty(myMenu.SaveHtml))
+                        {
+                            myMenu.Html = BuildProductImportMenuHtml(
+                                importTemplate,
+                                currentMenuDirectory,
+                                dir,
+                                myMenu.Title ?? dir.Title);
+                            myMenu.PageText = htmlProcessor.text(stringHandler.HtmlDecode(myMenu.Html));
+                            myMenu.SaveHtml = myMenu.Html;
+                            myMenu.Css = importTemplate.Css ?? string.Empty;
+                            myMenu.SaveCss = myMenu.Css;
+                        }
+                        else
+                        {
+                            myMenu.Html = UpdateProductImportDirectoryBindings(
+                                myMenu.Html,
+                                currentMenuDirectory,
+                                dir);
+                            myMenu.SaveHtml = UpdateProductImportDirectoryBindings(
+                                myMenu.SaveHtml,
+                                currentMenuDirectory,
+                                dir);
+                        }
                     }
                 }
             }

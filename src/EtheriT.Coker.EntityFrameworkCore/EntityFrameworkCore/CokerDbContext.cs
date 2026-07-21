@@ -114,6 +114,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<MarketingScopeItem> MarketingScopeItems { get; set; }
         public DbSet<BackgroundTaskRecord> BackgroundTasks { get; set; }
         public DbSet<UserNotification> Notifications { get; set; }
+        public DbSet<PageTextBackfillState> PageTextBackfillStates { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -168,6 +169,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.ToTable("Notifications");
                 o.HasIndex(x => new { x.FK_WebsiteId, x.FK_UserId, x.IsRead });
                 o.HasIndex(x => x.FK_BackgroundTaskId);
+                o.HasQueryFilter(x => !x.IsDeleted);
+            });
+            modelBuilder.Entity<PageTextBackfillState>(o =>
+            {
+                o.ToTable("PageTextBackfillStates");
+                o.HasIndex(x => new { x.FK_WebsiteId, x.ContentType }).IsUnique();
+                o.HasIndex(x => new { x.Status, x.LastModificationTime });
                 o.HasQueryFilter(x => !x.IsDeleted);
             });
             modelBuilder.Entity<UserTagStatistic>(o =>

@@ -24,6 +24,7 @@ using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Specification;
 using EtheriT.Coker.Application.Shared.Tag;
+using EtheriT.Coker.Application.Shared.JsonObject;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Token;
@@ -68,6 +69,7 @@ namespace EtheriT.Coker.Application.Product
         private readonly ImportAppService importAppService;
         private readonly IFrontRoleContextService frontRoleContextService;
         private readonly IProductDisplayPriceService productDisplayPriceService;
+        private readonly IWebsiteCacheStateAppService websiteCacheStateAppService;
         public ProductAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -84,7 +86,8 @@ namespace EtheriT.Coker.Application.Product
             StringHandler stringHandler,
             ImportAppService importAppService,
             IFrontRoleContextService frontRoleContextService,
-            IProductDisplayPriceService productDisplayPriceService
+            IProductDisplayPriceService productDisplayPriceService,
+            IWebsiteCacheStateAppService websiteCacheStateAppService
         )
         {
             this.db = db;
@@ -102,6 +105,7 @@ namespace EtheriT.Coker.Application.Product
             this.htmlProcessor = htmlProcessor;
             this.frontRoleContextService = frontRoleContextService;
             this.productDisplayPriceService = productDisplayPriceService;
+            this.websiteCacheStateAppService = websiteCacheStateAppService;
             this.mapper = mapper;
         }
         /* Add & Update */
@@ -1498,33 +1502,58 @@ namespace EtheriT.Coker.Application.Product
                               SerNo = p.Ser_No,
                               Status = p.Status,
                               StatusName = Enum.GetName(typeof(ProdStatusEnum), (ProdStatusEnum)p.Status) ?? string.Empty,
-                              tags = (from t in db.Tags.Where(e => e.FK_WebsiteId == websiteId)
-                                      join a in db.Tag_Associates.Where(e => !e.IsDeleted)
-                                                   .Where(e => e.FK_AId == p.Id)
-                                                   .Where(e => e.Type == TagAssociateTypeEnum.商品)
-                                          on t.Id equals a.FK_TId
-                                      group t by new { t.Id, t.Title } into g
-                                      select new TagGetSelectedDto
-                                      {
-                                          FK_TId = g.Key.Id,
-                                          Tag_Name = g.Key.Title
-                                      }).ToList(),
-                              MainImage = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                            .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
-                                            .Where(e => e.fileUpload != null
-                                                     && e.fileUpload.FK_WebsiteId == websiteId
-                                                     && e.fileUpload.ContentType.StartsWith("image"))
-                                            .OrderBy(e => e.SerNo)
-                                            .ThenBy(e => e.CreationTime)
-                                            select new DirectoryReleInfoDto
-                                            {
-                                                Link = (f.fileUpload != null
-                                                            ? (f.fileUpload.DownloadFileName ?? "/images/noImg.jpg")
-                                                            : "/images/noImg.jpg")
-                                                        .Replace("upload", isFront? "upload": $"upload/{orgName}")
-                                                        .Replace("//", "/")
-                                            }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
+                              tags = new List<TagGetSelectedDto>(),
+                              MainImage = "/images/noImg.jpg",
                           }).ToList();
+
+                var outputIds = output.Select(x => x.Id).ToList();
+                var tagRows = await (
+                    from associate in db.Tag_Associates.AsNoTracking()
+                    join tag in db.Tags.AsNoTracking() on associate.FK_TId equals tag.Id
+                    where !associate.IsDeleted
+                        && associate.Type == TagAssociateTypeEnum.商品
+                        && outputIds.Contains(associate.FK_AId)
+                        && !tag.IsDeleted
+                        && tag.FK_WebsiteId == websiteId
+                    select new { associate.FK_AId, TagId = tag.Id, tag.Title }
+                ).ToListAsync();
+                var tagMap = tagRows
+                    .GroupBy(x => x.FK_AId)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => group
+                            .GroupBy(x => new { x.TagId, x.Title })
+                            .Select(x => new TagGetSelectedDto
+                            {
+                                FK_TId = x.Key.TagId,
+                                Tag_Name = x.Key.Title
+                            }).ToList());
+
+                var imageRows = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
+                {
+                    Sid = outputIds,
+                    Type = (int)FileBindTypeEnum.產品,
+                    Size = 1
+                });
+                var imageMap = imageRows
+                    .Where(x => !string.IsNullOrWhiteSpace(x.Link))
+                    .GroupBy(x => x.Sid)
+                    .ToDictionary(x => x.Key, x => x.OrderBy(y => y.Id).First().Link);
+
+                var favoriteMap = await db.Favorites.AsNoTracking()
+                    .Where(x => x.UUID == uuid
+                        && outputIds.Contains(x.FK_AssocId)
+                        && x.Type == (int)FavoritesTypeEnum.商品)
+                    .GroupBy(x => x.FK_AssocId)
+                    .Select(x => new { ProductId = x.Key, FavoriteId = x.Min(y => y.Id) })
+                    .ToDictionaryAsync(x => x.ProductId, x => x.FavoriteId);
+
+                foreach (var item in output)
+                {
+                    if (tagMap.TryGetValue(item.Id, out var tags)) item.tags = tags;
+                    if (imageMap.TryGetValue(item.Id, out var image)) item.MainImage = image;
+                    if (favoriteMap.TryGetValue(item.Id, out var favoriteId)) item.FId = favoriteId;
+                }
 
                 // 一次取得所有商品的目錄價格
                 Dictionary<long, DirectoryPriceResultDto> priceMap = new();
@@ -1542,15 +1571,6 @@ namespace EtheriT.Coker.Application.Product
                 for (int i = 0; i < output.Count; i++)
                 {
                     var data = output[i];
-
-                    var favorite = await db.Favorites
-                        .Where(e => e.UUID == uuid
-                                 && e.FK_AssocId == data.Id
-                                 && e.Type == (int)FavoritesTypeEnum.商品)
-                        .FirstOrDefaultAsync();
-
-                    if (favorite != null)
-                        data.FId = favorite.Id;
 
                     if (!showProductPrice)
                     {
@@ -2159,6 +2179,7 @@ namespace EtheriT.Coker.Application.Product
                     importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
                     importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
 
+                    prod.PageText = htmlProcessor.text(importDto.Html ?? string.Empty);
                     prod.Html = stringHandler.HtmlEncode(importDto.Html);
                     prod.Css = importDto.Css;
                     prod.LastModificationTime = DateTime.Now;
@@ -2745,6 +2766,7 @@ namespace EtheriT.Coker.Application.Product
                             currentMenuDirectory,
                             dir,
                             myMenu.Title ?? dir.Title);
+                        myMenu.PageText = htmlProcessor.text(stringHandler.HtmlDecode(myMenu.Html));
                         myMenu.SaveHtml = myMenu.Html;
                         myMenu.Css = importTemplate.Css ?? string.Empty;
                         myMenu.SaveCss = myMenu.Css;
@@ -2754,6 +2776,12 @@ namespace EtheriT.Coker.Application.Product
             ;
             db.Tag_Associates.AddRange(associates);
             await db.SaveChangesAsync();
+            if (associates.Count > 0 || TagAssociate.Any(x => x.IsDeleted))
+            {
+                await websiteCacheStateAppService.TouchByWebsiteIdAsync(
+                    WebsiteID,
+                    WebsiteCacheKeys.DirectoryContent);
+            }
         }
         private async Task addDirectoryToTags(DirectoryImportDto directory, DirectoryArrangeImportDto item, List<Core.Models.Tag> Tags)
         {
@@ -3218,6 +3246,7 @@ namespace EtheriT.Coker.Application.Product
             var editorHtml = stringHandler.ResolveUploadPath(frontHtml, orgName);
             var editorCss = stringHandler.ResolveUploadPath(frontCss, orgName);
 
+            prod.PageText = htmlProcessor.text(frontHtml);
             prod.Html = stringHandler.HtmlEncode(frontHtml);
             prod.Css = frontCss;
             prod.SaveHtml = stringHandler.HtmlEncode(editorHtml);

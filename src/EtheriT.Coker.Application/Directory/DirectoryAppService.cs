@@ -61,6 +61,7 @@ namespace EtheriT.Coker.Application.Directory
         private readonly IJsonObjectAppService jsonObjectAppService;
         private readonly IWebsiteCacheStateAppService websiteCacheStateAppService;
         private static readonly ConcurrentDictionary<string, SemaphoreSlim> DirectoryMenuCacheLocks = new();
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> DirectoryContentCacheLocks = new();
         public DirectoryAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -1669,6 +1670,14 @@ namespace EtheriT.Coker.Application.Directory
                         DirectoryName = d.Title,
                     }).ToList();
 
+            if (db_d.Count > 0
+                && ((DirectoryTypeEnum)db_d[0].Type == DirectoryTypeEnum.商品
+                    || (DirectoryTypeEnum)db_d[0].Type == DirectoryTypeEnum.文章))
+            {
+                return await GetReleInfoFromDirectorySnapshotsAsync(
+                    dto, WebsiteID, siteIds, currentFrontRoleId, db_d);
+            }
+
             if (db_d != null)
             {
                 var tagsData = await db.Tag_Associates
@@ -1948,6 +1957,281 @@ namespace EtheriT.Coker.Application.Directory
                 }
             }
             return output;
+        }
+
+        private async Task<DirectoryReleInfoGetDto> GetReleInfoFromDirectorySnapshotsAsync(
+            DirectoryReleInfoInputDto dto,
+            long websiteId,
+            List<long> siteIds,
+            long? currentFrontRoleId,
+            List<Core.Models.Directory> directories)
+        {
+            var output = new DirectoryReleInfoGetDto
+            {
+                ReleInfos = new List<DirectoryReleInfoDto>()
+            };
+            var directoryType = (DirectoryTypeEnum)directories[0].Type;
+            var candidateIds = new HashSet<long>();
+            var directoryNameByContentId = new Dictionary<long, string>();
+
+            foreach (var directory in directories.Where(x => x.Type == directories[0].Type))
+            {
+                var ids = await GetDirectoryContentCandidateIdsAsync(directory, directoryType, siteIds);
+                foreach (var id in ids)
+                {
+                    candidateIds.Add(id);
+                    directoryNameByContentId.TryAdd(id, directory.Title ?? string.Empty);
+                }
+            }
+
+            if (candidateIds.Count == 0) return output;
+
+            var page = dto.Page.GetValueOrDefault(1);
+            if (page <= 0) page = 1;
+            var showNum = dto.ShowNum.GetValueOrDefault(12);
+            if (showNum <= 0) showNum = candidateIds.Count;
+            var maxLen = dto.MaxLen.GetValueOrDefault();
+            var now = DateTime.Now;
+            List<long> pageIds;
+
+            if (directoryType == DirectoryTypeEnum.商品)
+            {
+                var query = db.Prods.AsNoTracking()
+                    .Where(x => candidateIds.Contains(x.Id))
+                    .Where(x => !x.IsDeleted && x.Visible && !x.RemovedFromShelves)
+                    .Where(x => siteIds.Contains(x.FK_WebsiteId))
+                    .Where(x => x.permanent || (now >= x.StartTime && now <= x.EndTime));
+                query = ApplyFrontProductViewPermission(query, websiteId, currentFrontRoleId);
+
+                var total = await query.CountAsync();
+                output.TotalCount = maxLen > 0 ? Math.Min(total, maxLen) : total;
+                output.TotalPage = showNum > 0
+                    ? (int)Math.Ceiling(output.TotalCount / (double)showNum)
+                    : 0;
+                pageIds = await query
+                    .OrderBy(x => x.Ser_No)
+                    .ThenByDescending(x => x.Status == ProdStatusEnum.新品)
+                    .ThenByDescending(x => x.Status != ProdStatusEnum.售完)
+                    .ThenByDescending(x => x.Status != ProdStatusEnum.停產)
+                    .ThenBy(x => x.ItemNo)
+                    .ThenBy(x => x.Title)
+                    .ThenByDescending(x => x.Id)
+                    .Select(x => x.Id)
+                    .Take(output.TotalCount)
+                    .Skip((page - 1) * showNum)
+                    .Take(showNum)
+                    .ToListAsync();
+
+                var items = await productAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
+                {
+                    Ids = pageIds,
+                    SiteId = websiteId
+                }) ?? new List<DirectoryReleInfoDto>();
+                var itemMap = items.ToDictionary(x => x.Id);
+                var dirIds = string.Join(",", dto.Ids);
+                output.ReleInfos = pageIds
+                    .Where(itemMap.ContainsKey)
+                    .Select(id => itemMap[id])
+                    .ToList();
+                foreach (var item in output.ReleInfos)
+                    item.Link += $"?dirid={dirIds}";
+                return output;
+            }
+
+            var articleQuery = db.Article.AsNoTracking()
+                .Where(x => candidateIds.Contains(x.Id))
+                .Where(x => !x.IsDeleted && x.Visible && !x.RemovedFromShelves)
+                .Where(x => siteIds.Contains(x.FK_WebsiteId))
+                .Where(x => x.permanent || (now >= x.StartTime && now <= x.EndTime));
+            articleQuery = ApplyFrontArticleViewPermission(articleQuery, websiteId, currentFrontRoleId);
+
+            if (!string.IsNullOrEmpty(dto.Facet))
+            {
+                var directory = directories[0];
+                if (directory.FacetType == DirectoryFacetTypeEnum.Year)
+                {
+                    var years = dto.Facet
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => int.TryParse(x.Trim(), out var year)
+                            ? directory.CalendarType == DirectoryCalendarTypeEnum.民國年 ? year + 1911 : year
+                            : 0)
+                        .Where(x => x > 0)
+                        .ToHashSet();
+                    if (years.Count > 0)
+                        articleQuery = articleQuery.Where(x => x.NodeDate.HasValue && years.Contains(x.NodeDate.Value.Year));
+                }
+            }
+
+            var articleTotal = await articleQuery.CountAsync();
+            output.TotalCount = maxLen > 0 ? Math.Min(articleTotal, maxLen) : articleTotal;
+            output.TotalPage = showNum > 0
+                ? (int)Math.Ceiling(output.TotalCount / (double)showNum)
+                : 0;
+
+            // Distance sorting is the exceptional path that must inspect all candidates.
+            if (dto.FindNearest == true)
+            {
+                pageIds = await articleQuery.Select(x => x.Id).ToListAsync();
+            }
+            else
+            {
+                pageIds = await articleQuery
+                    .OrderBy(x => x.SerNO)
+                    .ThenByDescending(x => x.NodeDate)
+                    .ThenByDescending(x => x.Id)
+                    .Select(x => x.Id)
+                    .Take(output.TotalCount)
+                    .Skip((page - 1) * showNum)
+                    .Take(showNum)
+                    .ToListAsync();
+            }
+
+            var articles = await articleAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
+            {
+                Ids = pageIds,
+                Page = dto.FindNearest == true ? page : 1,
+                ShowNum = showNum,
+                SiteId = websiteId,
+                MaxLen = dto.FindNearest == true ? dto.MaxLen : null,
+                Target = dto.Target,
+                FindNearest = dto.FindNearest,
+                Longitude = dto.Longitude,
+                Latitude = dto.Latitude
+            }) ?? new List<DirectoryReleInfoDto>();
+
+            var articleMap = articles.ToDictionary(x => x.Id);
+            output.ReleInfos = dto.FindNearest == true
+                ? articles
+                : pageIds.Where(articleMap.ContainsKey).Select(id => articleMap[id]).ToList();
+            var directoryIds = string.Join(",", dto.Ids);
+            foreach (var item in output.ReleInfos)
+            {
+                if (directoryNameByContentId.TryGetValue(item.Id, out var directoryName))
+                    item.Dirname = directoryName;
+                if (dto.FindNearest != true)
+                    item.Link += $"?dirid={directoryIds}";
+            }
+            return output;
+        }
+
+        private async Task<List<long>> GetDirectoryContentCandidateIdsAsync(
+            Core.Models.Directory directory,
+            DirectoryTypeEnum directoryType,
+            List<long> siteIds)
+        {
+            var version = await websiteCacheStateAppService.EnsureVersionByWebsiteIdAsync(
+                directory.FK_WebsiteId, WebsiteCacheKeys.DirectoryContent, 1);
+            var cached = await GetDirectoryContentSnapshotAsync(directory.Id, directory.FK_WebsiteId, directoryType, version);
+            if (cached != null) return cached;
+
+            var lockKey = $"{directory.FK_WebsiteId}:{directory.Id}";
+            var cacheLock = DirectoryContentCacheLocks.GetOrAdd(lockKey, _ => new SemaphoreSlim(1, 1));
+            await cacheLock.WaitAsync();
+            try
+            {
+                version = await websiteCacheStateAppService.EnsureVersionByWebsiteIdAsync(
+                    directory.FK_WebsiteId, WebsiteCacheKeys.DirectoryContent, 1);
+                cached = await GetDirectoryContentSnapshotAsync(directory.Id, directory.FK_WebsiteId, directoryType, version);
+                if (cached != null) return cached;
+
+                var ids = await BuildDirectoryContentCandidateIdsAsync(directory.Id, directoryType, siteIds);
+                await jsonObjectAppService.AddUp(new JsonObjectAddDto
+                {
+                    FK_WebsiteId = directory.FK_WebsiteId,
+                    FK_AId = directory.Id,
+                    CacheKey = WebsiteCacheKeys.DirectoryContent,
+                    CacheVersion = version,
+                    Json = JsonConvert.SerializeObject(new DirectoryContentSnapshot
+                    {
+                        DirectoryType = directoryType,
+                        ContentIds = ids
+                    })
+                });
+                return ids;
+            }
+            finally
+            {
+                cacheLock.Release();
+            }
+        }
+
+        private async Task<List<long>?> GetDirectoryContentSnapshotAsync(
+            long directoryId,
+            long websiteId,
+            DirectoryTypeEnum directoryType,
+            long version)
+        {
+            var json = await db.JsonObjects.AsNoTracking()
+                .Where(x => x.FK_WebsiteId == websiteId
+                    && x.FK_AId == directoryId
+                    && x.CacheKey == WebsiteCacheKeys.DirectoryContent
+                    && x.Version == version)
+                .Select(x => x.Json)
+                .FirstOrDefaultAsync();
+            if (string.IsNullOrWhiteSpace(json)) return null;
+            try
+            {
+                var snapshot = JsonConvert.DeserializeObject<DirectoryContentSnapshot>(json);
+                return snapshot?.DirectoryType == directoryType ? snapshot.ContentIds : null;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        private async Task<List<long>> BuildDirectoryContentCandidateIdsAsync(
+            long directoryId,
+            DirectoryTypeEnum directoryType,
+            List<long> siteIds)
+        {
+            var associationType = directoryType == DirectoryTypeEnum.商品
+                ? TagAssociateTypeEnum.商品
+                : TagAssociateTypeEnum.文章;
+            var requiredGroups = await db.Tag_Associates.AsNoTracking()
+                .Where(x => !x.IsDeleted && x.Type == TagAssociateTypeEnum.目錄 && x.FK_AId == directoryId)
+                .Where(x => x.Tag != null && !x.Tag.IsDeleted && siteIds.Contains(x.Tag.FK_WebsiteId))
+                .Select(x => new { WebsiteId = x.Tag!.FK_WebsiteId, x.FK_TId })
+                .ToListAsync();
+            var rejectedTagIds = await db.Tag_Associates.AsNoTracking()
+                .Where(x => !x.IsDeleted && x.Type == TagAssociateTypeEnum.目錄拒絕 && x.FK_AId == directoryId)
+                .Select(x => x.FK_TId)
+                .Distinct()
+                .ToListAsync();
+
+            var result = new HashSet<long>();
+            foreach (var group in requiredGroups.GroupBy(x => x.WebsiteId))
+            {
+                var requiredTagIds = group.Select(x => x.FK_TId).Distinct().ToList();
+                if (requiredTagIds.Count == 0) continue;
+                var ids = await db.Tag_Associates.AsNoTracking()
+                    .Where(x => !x.IsDeleted && x.Type == associationType)
+                    .Where(x => requiredTagIds.Contains(x.FK_TId))
+                    .Where(x => x.Tag != null && !x.Tag.IsDeleted && x.Tag.FK_WebsiteId == group.Key)
+                    .GroupBy(x => x.FK_AId)
+                    .Where(x => x.Select(y => y.FK_TId).Distinct().Count() == requiredTagIds.Count)
+                    .Select(x => x.Key)
+                    .ToListAsync();
+                foreach (var id in ids) result.Add(id);
+            }
+
+            if (rejectedTagIds.Count > 0 && result.Count > 0)
+            {
+                var rejectedIds = await db.Tag_Associates.AsNoTracking()
+                    .Where(x => !x.IsDeleted && x.Type == associationType)
+                    .Where(x => result.Contains(x.FK_AId) && rejectedTagIds.Contains(x.FK_TId))
+                    .Select(x => x.FK_AId)
+                    .Distinct()
+                    .ToListAsync();
+                result.ExceptWith(rejectedIds);
+            }
+            return result.ToList();
+        }
+
+        private sealed class DirectoryContentSnapshot
+        {
+            public DirectoryTypeEnum DirectoryType { get; set; }
+            public List<long> ContentIds { get; set; } = new();
         }
         public async Task<MenuItemDto> GetReleMenu(DataIdWebsiteIdDto dto)
         {

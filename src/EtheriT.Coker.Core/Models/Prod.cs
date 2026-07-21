@@ -32,6 +32,8 @@ namespace EtheriT.Coker.Core.Models
         [MaxLength]
         public string? Html { get; set; }
         [MaxLength]
+        public string? PageText { get; set; }
+        [MaxLength]
         public string? Css { get; set; }
         public Website? Website { get; set; }
         public List<Prod_Stock> Prod_Stocks { get; set; }

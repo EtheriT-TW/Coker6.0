@@ -6,11 +6,13 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
     {
         public const string Menu = "menu";
         public const string DirectoryMenu = "directory-menu";
+        public const string DirectoryContent = "directory-content";
 
         public static readonly HashSet<string> FixedKeys = new(StringComparer.Ordinal)
         {
             Menu,
-            DirectoryMenu
+            DirectoryMenu,
+            DirectoryContent
         };
 
         private static readonly Regex CacheKeyRegex =

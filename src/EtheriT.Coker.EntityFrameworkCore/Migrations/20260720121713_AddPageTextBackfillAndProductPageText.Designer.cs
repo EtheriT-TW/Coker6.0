@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260720121713_AddPageTextBackfillAndProductPageText")]
+    partial class AddPageTextBackfillAndProductPageText
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -5484,7 +5487,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             jobID = "E001",
                             key = "prodCatalog",
                             maxlength = 255,
-                            memo = "輸入商品目錄連結，可設定前台購物車(我要再選購)之按鈕。",
+                            memo = "輸入商品目錄連結，以利前台新增返回目錄按鈕。",
                             name = "商品目錄",
                             pattern = "",
                             type = 1

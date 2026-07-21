@@ -339,6 +339,7 @@ builder.Services.AddScoped<IFreightAppService, FreightAppService>();
 builder.Services.AddScoped<IProductAppService, ProductAppService>();
 builder.Services.AddScoped<ProductExportBackgroundJob>();
 builder.Services.AddScoped<BackgroundTaskService>();
+builder.Services.AddScoped<PageTextBackfillJob>();
 builder.Services.AddScoped<IFrontRoleContextService, FrontRoleContextService>();
 builder.Services.AddScoped<IProductDisplayPriceService, ProductDisplayPriceService>();
 builder.Services.AddScoped<IHtmlContentAppService, HtmlContentAppService>();

@@ -7,6 +7,7 @@ using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Tag;
+using EtheriT.Coker.Application.Shared.JsonObject;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -25,17 +26,20 @@ namespace EtheriT.Coker.Application.Tag
         private readonly LoginUserData loginUserData;
         private readonly StringHandler stringHandler;
         private readonly IConfiguration configuration;
+        private readonly IWebsiteCacheStateAppService websiteCacheStateAppService;
         public TagAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             StringHandler stringHandler,
-            IConfiguration configuration
+            IConfiguration configuration,
+            IWebsiteCacheStateAppService websiteCacheStateAppService
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.stringHandler = stringHandler;
             this.configuration = configuration;
+            this.websiteCacheStateAppService = websiteCacheStateAppService;
         }
         public async Task<ResponseMessageDto> TagAddUp(DevExpressDto dto)
         {
@@ -327,6 +331,7 @@ namespace EtheriT.Coker.Application.Tag
                 }
                 db.Tag_Associates.AddRange(TagBindings);
                 await db.SaveChangesAsync();
+                await TouchDirectoryContentByTagIdsAsync(dto.Select(x => x.FK_TId));
                 output.Success = true;
             }
             catch (Exception e)
@@ -493,6 +498,7 @@ namespace EtheriT.Coker.Application.Tag
                     db_ta.DeletionTime = DateTime.Now;
                     db.SaveChanges();
                 }
+                await TouchDirectoryContentByTagIdsAsync(new[] { Id });
 
                 var db_ttgs = await db.Tag_TagGroups.Where(e => e.FK_TId == Id).ToListAsync();
                 foreach (var db_ttg in db_ttgs)
@@ -584,6 +590,7 @@ namespace EtheriT.Coker.Application.Tag
                         db.SaveChanges();
                         output.Success = true;
                     }
+                    await TouchDirectoryContentByTagIdsAsync(db_ta.Select(x => x.FK_TId));
                 }
             }
             catch (Exception e)
@@ -593,6 +600,31 @@ namespace EtheriT.Coker.Application.Tag
             }
 
             return output;
+        }
+
+        private async Task TouchDirectoryContentByTagIdsAsync(IEnumerable<long> tagIds)
+        {
+            var ids = tagIds.Distinct().ToList();
+            if (ids.Count == 0) return;
+
+            var tagWebsiteIds = await db.Tags.AsNoTracking()
+                .Where(x => ids.Contains(x.Id))
+                .Select(x => x.FK_WebsiteId)
+                .Distinct()
+                .ToListAsync();
+            if (tagWebsiteIds.Count == 0) return;
+
+            var parentWebsiteIds = await db.MappingWebsiteRelationship.AsNoTracking()
+                .Where(x => !x.IsDeleted && tagWebsiteIds.Contains(x.Id))
+                .Select(x => x.FatherId)
+                .Distinct()
+                .ToListAsync();
+            foreach (var websiteId in tagWebsiteIds.Concat(parentWebsiteIds).Where(x => x > 0).Distinct())
+            {
+                await websiteCacheStateAppService.TouchByWebsiteIdAsync(
+                    websiteId,
+                    WebsiteCacheKeys.DirectoryContent);
+            }
         }
     }
 }

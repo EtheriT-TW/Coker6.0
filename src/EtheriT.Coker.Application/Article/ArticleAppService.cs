@@ -462,20 +462,30 @@ namespace EtheriT.Coker.Application.Article
                     }
                     result = newresult;
                 }
-                else result = query.ToList();
+                else if (string.IsNullOrEmpty(dto.Target))
+                    result = await query.Skip(skip).Take(dto.ShowNum ?? 12).ToListAsync();
+                else
+                    result = await query.Take(30).ToListAsync();
                 if (string.IsNullOrEmpty(dto.Target))
                 {
-                    articleData = mapper.Map(result, articleData).Skip(skip).Take(dto.ShowNum ?? 12).ToList();
+                    articleData = mapper.Map(result, articleData);
                     if (articleData != null)
                     {
-                        foreach (var data in articleData)
-                        {
-                            var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                        var articleIds = articleData.Select(x => x.Id).ToList();
+                        var imageRows = articleIds.Count == 0
+                            ? new List<FileGetImgDto>()
+                            : await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
                             {
-                                Sid = data.Id,
+                                Sid = articleIds,
                                 Type = (int)FileBindTypeEnum.文章管理,
                                 Size = 3
                             });
+                        var imageMap = imageRows
+                            .Where(x => !string.IsNullOrWhiteSpace(x.Link))
+                            .GroupBy(x => x.Sid)
+                            .ToDictionary(x => x.Key, x => x.OrderBy(y => y.Id).First().Link);
+                        foreach (var data in articleData)
+                        {
                             NewsletterFrameDto? DataJson = JsonConvert.DeserializeObject<NewsletterFrameDto>(data.DataJson ?? "{}");
 
                             var output_data = new DirectoryReleInfoDto();
@@ -485,7 +495,7 @@ namespace EtheriT.Coker.Application.Article
                                 output_data.type = DirectoryTypeEnum.文章;
                                 output_data = mapper.Map(data, output_data);
                                 output_data.Link = $"/article/{data.Id}";
-                                output_data.MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link;
+                                output_data.MainImage = imageMap.TryGetValue(data.Id, out var image) ? image : "";
                                 output_data.NodeDate = data.NodeDate;
                                 output_data.OrgName = website.OrgName;
                                 output_data.Title = ((DataJson != null && DataJson.No != 0) ? $"第{DataJson.No}期 " : "") + output_data.Title;
@@ -868,6 +878,7 @@ namespace EtheriT.Coker.Application.Article
                             var frontHtml = Doc.DocumentNode.OuterHtml;
                             frontHtml = stringHandler.ResolveFrontUploadPath(frontHtml, orgName);
 
+                            article.PageText = htmlProcessor.text(frontHtml);
                             article.Html = stringHandler.HtmlEncode(frontHtml);
                         }
 

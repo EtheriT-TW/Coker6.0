@@ -166,7 +166,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Id = 7,
                     key = "prodCatalog",
                     name = "商品目錄",
-                    memo = "輸入商品目錄連結，以利前台新增返回目錄按鈕。",
+                    memo = "輸入商品目錄連結，可設定前台購物車(我要再選購)之按鈕。",
                     FK_StoreSetGroupId = 2,
                     type = SeoSetDataTypeEnum.text,
                     Level = WebsiteLevelEnum.購物,

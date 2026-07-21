@@ -18,6 +18,7 @@ namespace EtheriT.Coker.Application.FileManagement
     {
         private readonly CokerDbContext _dbContext;
         private readonly long _userId;
+        private readonly string _orgName;
         private readonly string _downloadFilePath;
         private readonly IConfiguration _configuration;
         private Microsoft.AspNetCore.Http.HttpRequest? _httpRequest;
@@ -34,6 +35,7 @@ namespace EtheriT.Coker.Application.FileManagement
         {
             _dbContext = dbContext;
             _userId = userId;
+            _orgName = orgName;
             // _downloadFilePath 不要包含 orgName，需求確認於2025/5/26 by Charles LINE
             _downloadFilePath = $"/upload";
             _configuration = configuration;
@@ -54,6 +56,7 @@ namespace EtheriT.Coker.Application.FileManagement
         {
             _dbContext = dbContext;
             _userId = userId;
+            _orgName = orgName;
             // _downloadFilePath 不要包含 orgName，需求確認於2025/5/26 by Charles LINE
             _downloadFilePath = $"/upload";
             _configuration = configuration;
@@ -67,37 +70,94 @@ namespace EtheriT.Coker.Application.FileManagement
         /// <returns></returns>
         public override IEnumerable<FileSystemItem> GetItems(FileSystemLoadItemOptions options)
         {
-            var items = base.GetItems(options);
+            var items = base.GetItems(options).ToList();
 
             // 從 FileSystemConfiguration.Request 中取得搜尋值
             string searchValue = GetSearchValue();
 
-            var dbFileUploads = _dbContext.FileUploads
-                .AsNoTracking()
-                .Where(f => f.FK_WebsiteId == GetWebsiteId())
+            string currentDirectory = options.Directory?.Path ?? string.Empty;
+            var fileItems = items.Where(item => !item.IsDirectory).ToList();
+            var fileGuids = fileItems
+                .Select(item => Guid.TryParse(Path.GetFileNameWithoutExtension(item.Name), out var guid)
+                    ? (Guid?)guid
+                    : null)
+                .Where(guid => guid.HasValue)
+                .Select(guid => guid!.Value)
+                .Distinct()
                 .ToList();
+            var expectedDownloadPaths = fileItems
+                .Where(item => !Guid.TryParse(Path.GetFileNameWithoutExtension(item.Name), out _))
+                .Select(item => Path.Combine(currentDirectory, item.Name).Replace("\\", "/").TrimStart('/'))
+                .SelectMany(path => new[]
+                {
+                    $"/upload/{path}",
+                    $"/upload/{_orgName}/{path}",
+                    $"\\upload\\{path.Replace('/', '\\')}",
+                    $"\\upload\\{_orgName}\\{path.Replace('/', '\\')}"
+                })
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var websiteId = GetWebsiteId();
+            var dbFileUploads = new List<FileUpload>();
+            if (fileItems.Count > 0 && websiteId > 0)
+            {
+                // SQL Server 單次查詢參數有上限，目錄檔案很多時分批查詢。
+                foreach (var guidBatch in fileGuids.Chunk(500))
+                {
+                    dbFileUploads.AddRange(_dbContext.FileUploads
+                        .AsNoTracking()
+                        .Where(f => f.FK_WebsiteId == websiteId && !f.IsDeleted)
+                        .Where(f => f.FileGuid.HasValue && guidBatch.Contains(f.FileGuid.Value))
+                        .ToList());
+                }
+
+                foreach (var pathBatch in expectedDownloadPaths.Chunk(500))
+                {
+                    dbFileUploads.AddRange(_dbContext.FileUploads
+                        .AsNoTracking()
+                        .Where(f => f.FK_WebsiteId == websiteId && !f.IsDeleted)
+                        .Where(f => f.DownloadFileName != null && pathBatch.Contains(f.DownloadFileName))
+                        .ToList());
+                }
+
+                dbFileUploads = dbFileUploads
+                    .GroupBy(file => file.Id)
+                    .Select(group => group.First())
+                    .ToList();
+            }
+            var uploadsByGuid = dbFileUploads
+                .Where(file => file.FileGuid.HasValue)
+                .GroupBy(file => file.FileGuid!.Value)
+                .ToDictionary(group => group.Key, group => group.First());
+            var uploadsByPath = dbFileUploads
+                .Where(file => !string.IsNullOrWhiteSpace(file.DownloadFileName))
+                .GroupBy(file => NormalizeDownloadPath(file.DownloadFileName!))
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
 
             foreach (var item in items)
             {
                 if (!item.IsDirectory)
                 {
                     // 構建完整的相對路徑來進行精確匹配
-                    string currentDirectory = options.Directory != null ? options.Directory.Path : string.Empty;
                     string itemPath = Path.Combine(currentDirectory, item.Name).Replace("\\", "/");
 
-                    // 確保路徑格式一致以便比較
-                    string downloadPathPrefix = _downloadFilePath.TrimEnd('/');
+                    FileUpload? matchingFileUpload = null;
+                    if (Guid.TryParse(Path.GetFileNameWithoutExtension(item.Name), out var fileGuid))
+                        uploadsByGuid.TryGetValue(fileGuid, out matchingFileUpload);
 
-                    var matchingFileUpload = dbFileUploads.FirstOrDefault(x =>
-                        x.DownloadFileName != null &&
-                        !x.IsDeleted &&
-                        (
-                            // 精確比對完整路徑
-                            x.DownloadFileName.EndsWith("/" + itemPath) ||
-                            // 如果 DownloadFileName 包含下載路徑前綴和完整路徑
-                            (x.DownloadFileName.StartsWith(downloadPathPrefix) &&
-                             x.DownloadFileName.EndsWith(itemPath))
-                        ));
+                    if (matchingFileUpload == null)
+                    {
+                        uploadsByPath.TryGetValue(
+                            NormalizeDownloadPath($"/upload/{itemPath}"),
+                            out matchingFileUpload);
+                        if (matchingFileUpload == null)
+                        {
+                            uploadsByPath.TryGetValue(
+                                NormalizeDownloadPath($"/upload/{_orgName}/{itemPath}"),
+                                out matchingFileUpload);
+                        }
+                    }
                     if (matchingFileUpload != null)
                     {
                         item.CustomFields[nameof(matchingFileUpload.OriginalFileName)] = matchingFileUpload.OriginalFileName;
@@ -109,11 +169,16 @@ namespace EtheriT.Coker.Application.FileManagement
             // 如果有搜尋值，則過濾檔案
             if (!string.IsNullOrEmpty(searchValue))
             {
-                items = FilterItemsBySearchValue(items, searchValue);
+                items = FilterItemsBySearchValue(items, searchValue).ToList();
             }
 
             return items;
-        }        /// <summary>
+        }
+
+        private static string NormalizeDownloadPath(string path)
+            => path.Replace('\\', '/').Trim().TrimEnd('/');
+
+        /// <summary>
         /// 覆寫刪除檔案的方法，將檔案從檔案系統中刪除，並在資料庫中標記為已刪除。
         /// </summary>
         /// <param name="options"></param>

@@ -20,6 +20,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.AccessControl;
@@ -31,6 +32,9 @@ namespace EtheriT.Coker.Application
 {
     public class FileUploadAppService : IFileUploadAppService
     {
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> AtomicFileLocks =
+            new(StringComparer.OrdinalIgnoreCase);
+
         private readonly CokerDbContext db;
         public readonly FileAllow fileAllow;
         private readonly LoginUserData loginUserData;
@@ -133,6 +137,10 @@ namespace EtheriT.Coker.Application
             };
             try
             {
+                var currentWebsiteId = await loginUserData.GetWebsiteId();
+                if (IsWebsiteOwnedFileType(type) && sid != currentWebsiteId)
+                    throw new UnauthorizedAccessException("不可修改其他網站的檔案");
+
                 if (type == (int)FileBindTypeEnum.自訂廣告)
                 {
                     var db_fb = await db.FileBinds.Where(e => e.Sid == sid && e.type == (int)FileBindTypeEnum.自訂廣告 && !e.IsDeleted).FirstOrDefaultAsync();
@@ -160,15 +168,19 @@ namespace EtheriT.Coker.Application
                 }
                 response.Success = true;
 
-                var websiteid = await loginUserData.GetWebsiteId();
+                var websiteid = currentWebsiteId;
                 switch (type)
                 {
                     case (int)FileBindTypeEnum.網站圖示:
-                        var icon_db_website = await db.Websites.Where(e => e.Id == sid).FirstOrDefaultAsync();
+                        var icon_db_website = await db.Websites
+                            .Where(e => e.Id == sid && e.Id == websiteid)
+                            .FirstOrDefaultAsync();
                         if (icon_db_website != null) icon_db_website.Icon = response.Files[0].Path;
                         break;
                     case (int)FileBindTypeEnum.網站Logo:
-                        var logo_db_website = await db.Websites.Where(e => e.Id == sid).FirstOrDefaultAsync();
+                        var logo_db_website = await db.Websites
+                            .Where(e => e.Id == sid && e.Id == websiteid)
+                            .FirstOrDefaultAsync();
                         if (logo_db_website != null) logo_db_website.Logo = response.Files[0].Path;
                         break;
                     case (int)FileBindTypeEnum.選單圖:
@@ -192,6 +204,12 @@ namespace EtheriT.Coker.Application
                 response.ErrorFiles.Add(ex.Message);
                 return response;
             }
+        }
+
+        private static bool IsWebsiteOwnedFileType(int type)
+        {
+            return type == (int)FileBindTypeEnum.網站圖示
+                || type == (int)FileBindTypeEnum.網站Logo;
         }
         public async Task<UploadFileOutputDto> upload360Files(IList<IFormFile> files, int type, long? sid, string page)
         {
@@ -1132,9 +1150,11 @@ namespace EtheriT.Coker.Application
             try
             {
                 string orgName = await loginUserData.GetWebsiteOrgName();
+                long websiteId = await loginUserData.GetWebsiteId();
 
                 var files = await db.FileUploads
                     .Where(e => e.GuidKey == key)
+                    .Where(e => e.FK_WebsiteId == websiteId)
                     .Where(e => !e.IsDeleted)
                     .FirstOrDefaultAsync();
 
@@ -1185,12 +1205,23 @@ namespace EtheriT.Coker.Application
             {
                 long websiteId = await loginUserData.GetWebsiteId();
                 long usetId = await loginUserData.GetUserId();
+                if (IsWebsiteOwnedFileType(dto.Type) && dto.Sid != websiteId)
+                    throw new UnauthorizedAccessException("不可刪除其他網站的檔案");
+
                 if (dto.Fid != null && dto.Fid.Count > 0)
                 {
                     List<FileBind> fafile_other;
                     FileBind? fafile_binds;
                     for (var i = 0; i < dto.Fid.Count; i++)
                     {
+                        var ownedFile = await db.FileUploads
+                            .Where(e => e.Id == dto.Fid[i])
+                            .Where(e => e.FK_WebsiteId == websiteId)
+                            .Where(e => !e.IsDeleted)
+                            .FirstOrDefaultAsync();
+                        if (ownedFile == null)
+                            throw new UnauthorizedAccessException("檔案不屬於目前網站或已不存在");
+
                         fafile_other = await (db.FileBinds.Where(e => e.FK_FileUploadId == dto.Fid[i] && e.type == dto.Type && e.Sid != dto.Sid)).ToListAsync();
                         fafile_binds = await db.FileBinds.Where(e => e.FK_FileUploadId == dto.Fid[i] && e.type == dto.Type && e.Sid == dto.Sid).FirstOrDefaultAsync();
 
@@ -1203,7 +1234,7 @@ namespace EtheriT.Coker.Application
                         }
                         else
                         {
-                            var fafile = await (db.FileUploads.Where(e => e.FK_WebsiteId == websiteId).Where(e => e.Id == dto.Fid[i]).Where(e => !e.IsDeleted).FirstOrDefaultAsync());
+                            var fafile = ownedFile;
                             if (fafile != null)
                             {
                                 if (fafile_binds != null)
@@ -1260,11 +1291,15 @@ namespace EtheriT.Coker.Application
                         switch (dto.Type)
                         {
                             case (int)FileBindTypeEnum.網站圖示:
-                                var website_icon = await db.Websites.Where(e => e.Id == dto.Sid).FirstOrDefaultAsync();
+                                var website_icon = await db.Websites
+                                    .Where(e => e.Id == dto.Sid && e.Id == websiteid)
+                                    .FirstOrDefaultAsync();
                                 if (website_icon != null) website_icon.Icon = null;
                                 break;
                             case (int)FileBindTypeEnum.網站Logo:
-                                var website_logo = await db.Websites.Where(e => e.Id == dto.Sid).FirstOrDefaultAsync();
+                                var website_logo = await db.Websites
+                                    .Where(e => e.Id == dto.Sid && e.Id == websiteid)
+                                    .FirstOrDefaultAsync();
                                 if (website_logo != null) website_logo.Logo = null;
                                 break;
                             case (int)FileBindTypeEnum.選單圖:
@@ -1782,11 +1817,6 @@ namespace EtheriT.Coker.Application
                         var path = asotype == (int)FileBindTypeEnum.網站圖示 ? $"/favicon.ico" : $"/{directory}/{key}.{ext}";
                         if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
                         if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
-                        else if (asotype == (int)FileBindTypeEnum.網站圖示)
-                        {
-                            string fullPath = uploadPathResolver.GetPhysicalPath(orgName, path);
-                            if (File.Exists(fullPath)) File.Delete(fullPath);
-                        }
                         using (var stream = file.OpenReadStream())
                         {
                             string ContentType = file.ContentType;
@@ -1801,8 +1831,13 @@ namespace EtheriT.Coker.Application
                             else
                             {
                                 var physicalPath = uploadPathResolver.GetPhysicalPath(orgName, path);
-                                using (var fileStream = new FileStream(physicalPath, FileMode.Create))
+                                if (asotype == (int)FileBindTypeEnum.網站圖示)
                                 {
+                                    await WriteFileAtomicallyAsync(file, physicalPath);
+                                }
+                                else
+                                {
+                                    using var fileStream = new FileStream(physicalPath, FileMode.Create);
                                     await file.CopyToAsync(fileStream);
                                 }
                             }
@@ -1866,6 +1901,65 @@ namespace EtheriT.Coker.Application
                 }
             }
             else throw new Exception("上傳失敗");
+        }
+
+        private static async Task WriteFileAtomicallyAsync(IFormFile file, string targetPath)
+        {
+            var directory = Path.GetDirectoryName(targetPath)
+                ?? throw new Exception("無法取得網站圖示目錄");
+            System.IO.Directory.CreateDirectory(directory);
+
+            var fileLock = AtomicFileLocks.GetOrAdd(targetPath, _ => new SemaphoreSlim(1, 1));
+            await fileLock.WaitAsync();
+            var tempPath = Path.Combine(directory, $".{Path.GetFileName(targetPath)}.{Guid.NewGuid():N}.tmp");
+            var backupPath = Path.Combine(directory, $".{Path.GetFileName(targetPath)}.{Guid.NewGuid():N}.bak");
+
+            try
+            {
+                await using (var fileStream = new FileStream(
+                    tempPath,
+                    FileMode.CreateNew,
+                    FileAccess.Write,
+                    FileShare.None,
+                    81920,
+                    FileOptions.Asynchronous | FileOptions.WriteThrough))
+                {
+                    await file.CopyToAsync(fileStream);
+                    await fileStream.FlushAsync();
+                }
+
+                if (!File.Exists(tempPath) || new FileInfo(tempPath).Length == 0)
+                    throw new InvalidDataException("網站圖示寫入失敗或檔案內容為空");
+
+                if (File.Exists(targetPath))
+                {
+                    File.Replace(tempPath, targetPath, backupPath, true);
+                    try
+                    {
+                        if (File.Exists(backupPath)) File.Delete(backupPath);
+                    }
+                    catch
+                    {
+                        // 備份清除失敗不影響已完成的原子替換，保留給後續維運清理。
+                    }
+                }
+                else
+                {
+                    File.Move(tempPath, targetPath);
+                }
+            }
+            finally
+            {
+                try
+                {
+                    if (File.Exists(tempPath)) File.Delete(tempPath);
+                }
+                catch
+                {
+                    // 暫存檔清理不應覆蓋真正的上傳結果或原始例外。
+                }
+                fileLock.Release();
+            }
         }
         private bool IsAllowedFileType(string contentType)
         {

@@ -19,18 +19,10 @@ namespace EtheriT.Coker.Application
             if (string.IsNullOrWhiteSpace(orgName))
                 throw new Exception("orgName 不可為空");
 
-            // 前台的 VirtualDirectory:upload 已直接指向單一網站目錄，
-            // 例如 ...\upload\research-tju，不應再次附加 OrgName。
-            if (!string.IsNullOrWhiteSpace(virtualDirectory.Upload))
-            {
-                var siteUploadPath = Path.GetFullPath(virtualDirectory.Upload);
-
-                if (IODirectory.Exists(siteUploadPath))
-                    return siteUploadPath;
-            }
-
             var uploadRoots = virtualDirectory.UploadRoots ?? new Dictionary<string, string>();
 
+            // 後台同時管理多個網站時，必須優先以 OrgName 隔離目錄。
+            // 即使環境設定仍殘留舊版 VirtualDirectory:upload，也不能讓所有網站共用該路徑。
             foreach (var root in uploadRoots.Values)
             {
                 if (string.IsNullOrWhiteSpace(root))
@@ -40,6 +32,16 @@ namespace EtheriT.Coker.Application
 
                 if (IODirectory.Exists(siteRoot))
                     return siteRoot;
+            }
+
+            // 前台為單站應用，VirtualDirectory:upload 已直接指向該網站目錄，
+            // 例如 ...\upload\research-tju；只有未設定 UploadRoots 時才使用此相容設定。
+            if (uploadRoots.Count == 0 && !string.IsNullOrWhiteSpace(virtualDirectory.Upload))
+            {
+                var siteUploadPath = Path.GetFullPath(virtualDirectory.Upload);
+
+                if (IODirectory.Exists(siteUploadPath))
+                    return siteUploadPath;
             }
 
             throw new Exception($"找不到網站 Upload 目錄：{orgName}");

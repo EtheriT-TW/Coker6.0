@@ -68,7 +68,12 @@ namespace EtheriT.Coker.Application.FileManagement
                 System.IO.Directory.CreateDirectory(filePath);
             }
 
-            var customFileSystemProvider = new CustomFileSystemProvider(_thumbnailGenerator.AssignThumbnailUrl,
+            var customFileSystemProvider = new CustomFileSystemProvider(
+                                                                        (fileInfo, item) =>
+                                                                        {
+                                                                            var relativePath = Path.GetRelativePath(filePath, fileInfo.FullName);
+                                                                            _thumbnailGenerator.AssignThumbnailUrl(fileInfo, item, relativePath);
+                                                                        },
                                                                         filePath,
                                                                         _dbContext,
                                                                         orgName,

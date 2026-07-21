@@ -111,7 +111,15 @@
     </div>
 </template>
 
-<Content id="main" class="d-none">
+<Content id="main">
+<coker-safe-inherited-content website-id="@Model.HtmlSanitizeWebsiteId"
+                              parent-content="@Model.ParentSafeHtml"
+                              parent-css="@Model.ParentSafeCss"
+                              parent-source-id="@Model.ParentHtmlSanitizeSourceId"
+                              sanitize-policy="@Model.HtmlSanitizePolicy"
+                              rewrite-upload-paths="@Model.RewriteUploadPaths"
+                              upload-org-name="@Model.UploadOrgName"
+                              upload-parent-org-names="@Model.UploadParentOrgNames">
     <div id="Product" class="container row m-auto my-3">
         <div class="image col-md-6 col-sm-12">
             <div class="container-fluid position-relative">
@@ -272,7 +280,8 @@
 
     <div id="TabContent" class="tab-content container">
         <div id="ProductDescription" class="container tab-pane fade show active" role="tabpanel" aria-labelledby="pills-description" tabindex="0">
-            <Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
+            @* 商品說明由 GetMainDisplayOne 回傳已清洗、已 Decode 的 HTML。 *@
+            <Content></Content>
         </div>
 
         <div id="TechnicalDocuments" class="pro_tc_content container tab-pane fade" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
@@ -283,13 +292,10 @@
             <div class="File_list"></div>
         </div>
     </div>
+</coker-safe-inherited-content>
 </Content>
 <div id="SwitchPage" class="container my-5 justify-content-center">
     <a href="" title="" target="_self" class="btn_prev disabled"><span class="translate">@L.get("Prev")</span></a>
     <a href="" title="@L.get("BackToList")" target="_self" class="btn_list mx-4 mx-sm-5"><span class="translate">@L.get("BackToList")</span></a>
     <a href="" title="" target="_self" class="btn_next disabled"><span class="translate">@L.get("Next")</span></a>
 </div>
-@if (Model.ParentData != null)
-{
-    <Content id="ParentNode" class="d-none">@HttpUtility.HtmlEncode(Model.ParentData.Html)</Content>
-}

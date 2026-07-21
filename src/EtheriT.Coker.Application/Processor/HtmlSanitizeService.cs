@@ -93,6 +93,8 @@ namespace EtheriT.Coker.Application.Processor
             long websiteId,
             HtmlSanitizeSourceType sourceType,
             long sourceId,
+            string html,
+            string css,
             string contentKey = "Default",
             string sanitizePolicy = "PublicHtml")
         {
@@ -107,9 +109,24 @@ namespace EtheriT.Coker.Application.Processor
                 sanitizePolicy
             );
 
-            return state != null &&
-                   state.SanitizeVersion == HtmlSanitizerVersions.PublicHtml &&
-                   !string.IsNullOrWhiteSpace(state.ContentHash);
+            if (state == null ||
+                state.SanitizeVersion != HtmlSanitizerVersions.PublicHtml ||
+                string.IsNullOrWhiteSpace(state.ContentHash))
+            {
+                return false;
+            }
+
+            var currentContentHash = ComputeContentHash(
+                html ?? "",
+                css ?? "",
+                sanitizePolicy,
+                HtmlSanitizerVersions.PublicHtml
+            );
+
+            return CryptographicOperations.FixedTimeEquals(
+                Encoding.UTF8.GetBytes(state.ContentHash),
+                Encoding.UTF8.GetBytes(currentContentHash)
+            );
         }
 
         private async Task<HtmlSanitizeState?> FindStateAsync(
@@ -134,6 +151,7 @@ namespace EtheriT.Coker.Application.Processor
             string contentHash,
             HtmlSanitizeState? state)
         {
+            var isNew = state == null;
             if (state == null)
             {
                 state = new HtmlSanitizeState
@@ -156,7 +174,32 @@ namespace EtheriT.Coker.Application.Processor
                 state.LastModificationTime = DateTime.Now;
             }
 
-            await db.SaveChangesAsync();
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException) when (isNew)
+            {
+                // 舊資料第一次被多個前台 request 同時讀取時，unique index 只允許一筆 state。
+                // 失敗的 request 改讀取先完成的 state，再將它更新成這次清洗結果。
+                db.Entry(state).State = EntityState.Detached;
+
+                var concurrentState = await FindStateAsync(
+                    input.WebsiteId,
+                    input.SourceType,
+                    input.SourceId,
+                    input.ContentKey,
+                    input.SanitizePolicy
+                );
+
+                if (concurrentState == null)
+                    throw;
+
+                concurrentState.SanitizeVersion = version;
+                concurrentState.ContentHash = contentHash;
+                concurrentState.LastModificationTime = DateTime.Now;
+                await db.SaveChangesAsync();
+            }
         }
 
         private static void NormalizeInput(HtmlSanitizeInput input)

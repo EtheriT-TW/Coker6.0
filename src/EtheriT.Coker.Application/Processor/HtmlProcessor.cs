@@ -71,6 +71,30 @@ namespace EtheriT.Coker.Application.Processor
             return string.Join(Environment.NewLine, styleNodes.Select(n => n.InnerHtml?.Trim() ?? ""));
         }
 
+        public string ComposeInheritedHtml(string contentHtml, string? parentHtml)
+        {
+            contentHtml ??= string.Empty;
+            if (string.IsNullOrWhiteSpace(parentHtml)) return contentHtml;
+
+            var parentDocument = LoadHtml(parentHtml);
+            foreach (var node in Find(parentDocument, ".catalog_frame,.noInherit").ToList())
+            {
+                node.Remove();
+            }
+
+            var contentSlot = Find(parentDocument, ".subpage_content").FirstOrDefault();
+            if (contentSlot?.ParentNode == null) return contentHtml;
+
+            var contentDocument = LoadHtml(contentHtml);
+            foreach (var child in contentDocument.DocumentNode.ChildNodes.ToList())
+            {
+                contentSlot.ParentNode.InsertBefore(child, contentSlot);
+            }
+            contentSlot.Remove();
+
+            return ExtractBodyInnerHtml(parentDocument.DocumentNode.OuterHtml);
+        }
+
         public HtmlDocument LoadHtml(string htmlContent)
         {
             var doc = new HtmlDocument();

@@ -10,10 +10,12 @@ using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
 using EtheriT.Coker.Application.Shared.Dto.Favorites;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Import;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.Processor;
 using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
@@ -70,6 +72,7 @@ namespace EtheriT.Coker.Application.Product
         private readonly IFrontRoleContextService frontRoleContextService;
         private readonly IProductDisplayPriceService productDisplayPriceService;
         private readonly IWebsiteCacheStateAppService websiteCacheStateAppService;
+        private readonly IHtmlSanitizeService htmlSanitizeService;
         public ProductAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -87,7 +90,8 @@ namespace EtheriT.Coker.Application.Product
             ImportAppService importAppService,
             IFrontRoleContextService frontRoleContextService,
             IProductDisplayPriceService productDisplayPriceService,
-            IWebsiteCacheStateAppService websiteCacheStateAppService
+            IWebsiteCacheStateAppService websiteCacheStateAppService,
+            IHtmlSanitizeService htmlSanitizeService
         )
         {
             this.db = db;
@@ -106,6 +110,7 @@ namespace EtheriT.Coker.Application.Product
             this.frontRoleContextService = frontRoleContextService;
             this.productDisplayPriceService = productDisplayPriceService;
             this.websiteCacheStateAppService = websiteCacheStateAppService;
+            this.htmlSanitizeService = htmlSanitizeService;
             this.mapper = mapper;
         }
         /* Add & Update */
@@ -1278,13 +1283,15 @@ namespace EtheriT.Coker.Application.Product
 
                 if (db_p != null)
                 {
+                    var sanitized = await EnsureProductDisplayContentSanitizedAsync(db_p);
                     output = new ProdGetMainDisplayDto()
                     {
                         Id = db_p.Id,
                         Title = db_p.Title,
                         Introduction = db_p.Introduction,
                         Description = db_p.Description,
-                        Html = db_p.Html ?? "",
+                        // 前端只能接收此處已清洗、已 Decode 的 HTML，不再自行 htmlDecode。
+                        Html = sanitized.Html,
                         ItemNo = db_p.ItemNo,
                         Status = (int)db_p.Status,
                         NoStockManagement = db_p.NoStockManagement,
@@ -2179,9 +2186,17 @@ namespace EtheriT.Coker.Application.Product
                     importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
                     importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
 
-                    prod.PageText = htmlProcessor.text(importDto.Html ?? string.Empty);
-                    prod.Html = stringHandler.HtmlEncode(importDto.Html);
-                    prod.Css = importDto.Css;
+                    var sanitized = await SanitizeProductPublishedContentAsync(
+                        prod.FK_WebsiteId,
+                        prod.Id,
+                        importDto.Html ?? "",
+                        importDto.Css ?? "",
+                        true
+                    );
+
+                    prod.PageText = htmlProcessor.text(sanitized.Html);
+                    prod.Html = stringHandler.HtmlEncode(sanitized.Html);
+                    prod.Css = sanitized.Css;
                     prod.LastModificationTime = DateTime.Now;
                     prod.LastModifierUserId = userId;
 
@@ -2237,6 +2252,7 @@ namespace EtheriT.Coker.Application.Product
                     result.SiteName = side.Title;
                     if (prod != null && !prod.RemovedFromShelves)
                     {
+                        var sanitized = await EnsureProductDisplayContentSanitizedAsync(prod);
                         result.Id = (int)prod.Id;
                         result.Title = prod.Title;
                         result.Description = !string.IsNullOrEmpty(prod.Description) ? prod.Description :
@@ -2246,7 +2262,8 @@ namespace EtheriT.Coker.Application.Product
                         {
                             result.ImageUrl = images[0].Link;
                         }
-                        result.Css = prod.Css ?? "";
+                        result.Html = stringHandler.HtmlEncode(sanitized.Html);
+                        result.Css = sanitized.Css;
                         result.Html = result.Html == null ? "" : result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
                     }
                 }
@@ -2838,6 +2855,22 @@ namespace EtheriT.Coker.Application.Product
                                 currentMenuDirectory,
                                 dir);
                         }
+
+                        var sanitizedMenu = await htmlSanitizeService.EnsurePublicContentAsync(new HtmlSanitizeInput
+                        {
+                            WebsiteId = myMenu.FK_WebsiteId,
+                            SourceType = HtmlSanitizeSourceType.選單,
+                            SourceId = myMenu.Id,
+                            ContentKey = "Published",
+                            SanitizePolicy = "PublicHtml",
+                            Html = stringHandler.HtmlDecode(myMenu.Html ?? ""),
+                            Css = myMenu.Css ?? "",
+                            Force = true
+                        });
+
+                        myMenu.Html = stringHandler.HtmlEncode(sanitizedMenu.Html);
+                        myMenu.Css = sanitizedMenu.Css;
+                        myMenu.PageText = htmlProcessor.text(sanitizedMenu.Html);
                     }
                 }
             }
@@ -3167,6 +3200,23 @@ namespace EtheriT.Coker.Application.Product
             var products = await UpsertProducts(prods, errors);
             await UpsertStocksAndPricesBatchAsync(products, prods, errors);
             await db.SaveChangesAsync();
+
+            foreach (var product in products)
+            {
+                var sanitized = await SanitizeProductPublishedContentAsync(
+                    product.FK_WebsiteId,
+                    product.Id,
+                    stringHandler.HtmlDecode(product.Html ?? ""),
+                    product.Css ?? "",
+                    true
+                );
+
+                product.Html = stringHandler.HtmlEncode(sanitized.Html);
+                product.Css = sanitized.Css;
+                product.PageText = htmlProcessor.text(sanitized.Html);
+            }
+
+            await db.SaveChangesAsync();
         }
         private async Task<List<Prod>> UpsertProducts(List<ProductImportDto> dtos, List<ImportMassageItem> errors)
         {
@@ -3319,6 +3369,46 @@ namespace EtheriT.Coker.Application.Product
             prod.Css = frontCss;
             prod.SaveHtml = stringHandler.HtmlEncode(editorHtml);
             prod.SaveCss = editorCss;
+        }
+
+        private Task<HtmlSanitizeResult> SanitizeProductPublishedContentAsync(
+            long websiteId,
+            long productId,
+            string html,
+            string css,
+            bool force = false)
+        {
+            return htmlSanitizeService.EnsurePublicContentAsync(new HtmlSanitizeInput
+            {
+                WebsiteId = websiteId,
+                SourceType = HtmlSanitizeSourceType.商品,
+                SourceId = productId,
+                ContentKey = "Published",
+                SanitizePolicy = "PublicHtml",
+                Html = html ?? "",
+                Css = css ?? "",
+                Force = force
+            });
+        }
+
+        private async Task<(string Html, string Css)> EnsureProductDisplayContentSanitizedAsync(Prod product)
+        {
+            var sanitized = await SanitizeProductPublishedContentAsync(
+                product.FK_WebsiteId,
+                product.Id,
+                stringHandler.HtmlDecode(product.Html ?? ""),
+                product.Css ?? ""
+            );
+
+            if (sanitized.WasSanitized)
+            {
+                product.Html = stringHandler.HtmlEncode(sanitized.Html);
+                product.Css = sanitized.Css;
+                product.PageText = htmlProcessor.text(sanitized.Html);
+                await loginUserData.SaveChanges(product);
+            }
+
+            return (sanitized.Html, sanitized.Css);
         }
 
         private async Task InsetProdSpecTypes(List<ProductImportDto> prods)

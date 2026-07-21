@@ -12,6 +12,7 @@ using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
@@ -250,6 +251,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 IsProduction = _env.IsProduction()
             };
             string view;
+            var htmlSanitizeSourceType = HtmlSanitizeSourceType.選單;
             if (new List<string> { "article" }.Contains(key.ToLower()) && long.TryParse(option, out id))
             {
                 option = key;
@@ -273,6 +275,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 switch (option.ToLower())
                 {
                     case "article":
+                        htmlSanitizeSourceType = HtmlSanitizeSourceType.文章;
                         remoteInputDto.FK_WebmenuId = PageData.Id;
                         model.MenuBread = await webMenuApplication.GetMenuBread(PageData.Id);
                         model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto
@@ -330,6 +333,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         break;
                     case "product":
+                        htmlSanitizeSourceType = HtmlSanitizeSourceType.商品;
                         ViewBag.linkMore = model.storeSet.linkMore;
                         if (id != 0)
                         {
@@ -380,6 +384,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         else view = "../Error/NotFound";
                         break;
                     case "techcert":
+                        htmlSanitizeSourceType = HtmlSanitizeSourceType.頁面;
                         remoteInputDto.FK_WebmenuId = PageData.Id;
                         model.MenuBread = await webMenuApplication.GetMenuBread(PageData.Id);
                         model.PageData = await technicalCertificateAppService.GetFrontConten(new TechCertGetFrontContenInputDto { siteId = defaultData.Id, TechCertId = id });
@@ -417,6 +422,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         break;
                     case "privacy":
+                        htmlSanitizeSourceType = HtmlSanitizeSourceType.頁面;
                         model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                         remoteInputDto.FK_WebmenuId = model.PageData.Id;
                         view = "Index";
@@ -516,22 +522,17 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 }
                 if (view.IndexOf("Error/") < 0)
                 {
-                    if (rootSiteId != defaultData.Id && model.PageData != null)
-                    {
-                        model.PageData.Html = stringHandler.HtmlEncode(model.PageData.Html);
-                        model.PageData.Html = Regex.Replace(model.PageData.Html, $"src=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"src=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
-                        model.PageData.Html = Regex.Replace(model.PageData.Html, $"href=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"href=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
-                        model.PageData.Html = Regex.Replace(model.PageData.Html, $"data-pdf-url=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"data-pdf-url=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
-                        model.PageData.Css = (model.PageData.Css ?? "").Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
-                    }
-                    if (rootSiteId != defaultData.Id && model.ParentData != null)
-                    {
-                        model.ParentData.Html = stringHandler.HtmlEncode(model.ParentData.Html);
-                        model.ParentData.Html = model.ParentData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
-                        model.ParentData.Html = model.ParentData.Html.Replace("href=&quot;/upload/", $"href=&quot;/upload/{defaultData.OrgName}/");
-                        model.ParentData.Html = model.ParentData.Html.Replace("data-pdf-url=&quot;/upload/", $"data-pdf-url=&quot;/upload/{defaultData.OrgName}/");
-                        model.ParentData.Css = (model.ParentData.Css ?? "").Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
-                    }
+                    model.SafeHtml = stringHandler.HtmlDecode(model.PageData?.Html ?? "");
+                    model.SafeCss = model.PageData?.Css ?? "";
+                    model.ParentSafeHtml = stringHandler.HtmlDecode(model.ParentData?.Html ?? "");
+                    model.ParentSafeCss = model.ParentData?.Css ?? "";
+                    model.HtmlSanitizeWebsiteId = defaultData.Id;
+                    model.HtmlSanitizeSourceType = htmlSanitizeSourceType;
+                    model.HtmlSanitizeSourceId = model.PageData?.Id ?? 0;
+                    model.ParentHtmlSanitizeSourceId = model.ParentData?.Id ?? 0;
+                    model.RewriteUploadPaths = rootSiteId != defaultData.Id;
+                    model.UploadOrgName = defaultData.OrgName ?? "";
+                    model.UploadParentOrgNames = defaultData.ParntOrgNames ?? "";
                 }
             }
             else
@@ -584,9 +585,16 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var remote = await RemoteAppService.insertRemote(remoteInputDto);
             if(remote!=null && remote.Success) ViewBag.PageKey = remote.Message;
 
-			ViewBag.Css = HttpUtility.HtmlEncode((model.PageData!.Css)??"");
+			var pageCss = model.PageData!.Css ?? "";
+            var parentCss = model.ParentData?.Css ?? "";
+            if (model.RewriteUploadPaths)
+            {
+                pageCss = pageCss.Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
+                parentCss = parentCss.Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
+            }
+            ViewBag.Css = HttpUtility.HtmlEncode(pageCss);
             if (model.ParentData != null)
-				ViewBag.Css += HttpUtility.HtmlEncode(model.ParentData.Css);
+				ViewBag.Css += HttpUtility.HtmlEncode(parentCss);
 
 			if (!string.IsNullOrEmpty(defaultData.Css))
 				ViewBag.Css += HttpUtility.HtmlEncode(defaultData.Css);

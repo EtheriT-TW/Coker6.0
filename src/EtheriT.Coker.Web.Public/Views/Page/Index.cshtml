@@ -116,7 +116,6 @@
             break;
     }
 }
-
 @if (Model.PageData.CurrentUrl == "/Home")
 {
     @if (Model.enterAd.Count > 0)
@@ -161,7 +160,22 @@
     }
 }
 
-<Content id="main" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
+<Content id="main">
+    <coker-safe-html content="@Model.SafeHtml"
+                     css="@Model.SafeCss"
+                     website-id="@Model.HtmlSanitizeWebsiteId"
+                     source-type="@Model.HtmlSanitizeSourceType"
+                     source-id="@Model.HtmlSanitizeSourceId"
+                     content-key="@Model.HtmlSanitizeContentKey"
+                     sanitize-policy="@Model.HtmlSanitizePolicy"
+                     parent-content="@Model.ParentSafeHtml"
+                     parent-css="@Model.ParentSafeCss"
+                     parent-source-id="@Model.ParentHtmlSanitizeSourceId"
+                     content-wrapper-class="@(Model.PageData.PageView == "Article" ? "container isArticle" : "")"
+                     rewrite-upload-paths="@Model.RewriteUploadPaths"
+                     upload-org-name="@Model.UploadOrgName"
+                     upload-parent-org-names="@Model.UploadParentOrgNames"></coker-safe-html>
+</Content>
 @if (ViewBag.ShowSwitchPage && Model.PageData != null && Model.PageData.holdPage == HoldPageNameEnum.Article)
 {
     <div id="SwitchPage" class="container my-5 justify-content-center">
@@ -180,9 +194,4 @@
     {
         <div class="container popular font_small text-end py-2">@L.get("ViewCount")：@Model.PageData.Popular.Value</div>
     }
-}
-
-@if (Model.ParentData != null)
-{
-    <Content id="ParentNode" class="d-none">@HttpUtility.HtmlEncode(Model.ParentData.Html)</Content>
 }

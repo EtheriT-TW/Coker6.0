@@ -15,7 +15,6 @@ function maskUserName(name) {
 
 function ready() {
     const $conten = $("#main");
-    const $parentConten = $("#ParentNode");
     loginModal = $("#LoginModal").length > 0 ? new bootstrap.Modal($("#LoginModal")) : null;
     privacyStatementModal = $("#PrivacyStatementModal").length > 0 ? new bootstrap.Modal($("#PrivacyStatementModal")) : null;
     otherLoginModal = $("#OtherLoginModal").length > 0 ? new bootstrap.Modal($("#OtherLoginModal")) : null;
@@ -58,29 +57,9 @@ function ready() {
     $(".menu-item").on("focus", menuMouseover);
     $(".menu-item").on("blur", menuMouseout);
     if ($conten.length > 0) {
-        let s = $conten.html();
-        let rawText = $conten.text();
-        if (/&amp;(?:lt|gt|quot|apos|#\d+|#x[0-9a-f]+);/i.test(rawText)) s = co.stringManager.ReplaceAndSinge(rawText);
-        else if (/[<>]/.test(s)) s = co.stringManager.htmlEncode(s);
-        else s = rawText;
-        let ele = document.createElement('span');
-        ele.innerHTML = s;
-        if ($parentConten.length > 0 && $parentConten.text().indexOf("subpage_content") >= 0) {
-            let p = Coker.stringManager.ReplaceAndSinge($parentConten.text());
-            let $pe = $('<div>');
-            $pe[0].innerHTML = p;
-            $pe.html($pe.text());
-            $pe.find(".catalog_frame,.noInherit").remove();
-            $pe.find(".subpage_content").replaceWith(ele.textContent || ele.innerText);
-            ele.textContent = $pe.html();
-        }
-        if (location.pathname.toLowerCase().indexOf("/article/") >= 0) $conten.html($(`<div class="container isArticle">`).html(ele.textContent || ele.innerText));
-        else if (location.pathname.toLowerCase().indexOf("/product/") >= 0) $conten.find("#ProductDescription > Content").html("");
-        else $conten.html(ele.textContent || ele.innerText);
-        //if (PageType != "" && typeof PageType === "string") $conten.addClass(PageType);
+        // 主內容的驗證、父選單繼承與組合已由後端 TagHelper 完成。
         $conten.find("[draggable]").removeAttr("draggable");
         if ($conten.find("#CustMain").length > 0) $("#jumpToCenter").attr("href", "#CustMain");
-        $conten.removeClass("d-none");
     }
     $(".editTime,.popular").appendTo($conten);
     $(".backstageType").remove();

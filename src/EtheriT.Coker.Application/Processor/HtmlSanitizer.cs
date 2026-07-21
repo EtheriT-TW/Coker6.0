@@ -95,6 +95,21 @@ namespace EtheriT.Coker.Application.Processor
 
         private void RemoveDisallowedNodes(HtmlDocument doc)
         {
+            var removeWithContent = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "script",
+                "style",
+                "object",
+                "embed",
+                "applet",
+                "svg",
+                "math",
+                "meta",
+                "link",
+                "base",
+                "noscript"
+            };
+
             var nodes = doc.DocumentNode
                 .Descendants()
                 .Where(node =>
@@ -105,6 +120,22 @@ namespace EtheriT.Coker.Application.Processor
 
             foreach (var node in nodes)
             {
+                if (node.ParentNode == null)
+                    continue;
+
+                if (removeWithContent.Contains(node.Name))
+                {
+                    node.Remove();
+                    continue;
+                }
+
+                // 舊版內容可能使用 content / center / font 等非標準或已淘汰標籤。
+                // 一般未知標籤只移除外框並保留子內容，避免首次初始化時整段正文消失。
+                foreach (var child in node.ChildNodes.ToList())
+                {
+                    node.ParentNode.InsertBefore(child, node);
+                }
+
                 node.Remove();
             }
         }

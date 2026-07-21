@@ -16,6 +16,8 @@ namespace EtheriT.Coker.Application.Shared.Processor
             long websiteId,
             HtmlSanitizeSourceType sourceType,
             long sourceId,
+            string html,
+            string css,
             string contentKey = "Default",
             string sanitizePolicy = "PublicHtml"
         );

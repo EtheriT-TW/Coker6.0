@@ -136,12 +136,18 @@
 </div>
 @if (Model.PageData != null && !string.IsNullOrWhiteSpace(Model.PageData.Html))
 {
-    <Content id="main" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
-}
-
-@if (Model.ParentData != null && !string.IsNullOrWhiteSpace(Model.ParentData.Html))
-{
-    <Content id="ParentNode" class="d-none">@HttpUtility.HtmlEncode(Model.ParentData.Html)</Content>
+    <Content id="main">
+        <coker-safe-html content="@Model.SafeHtml"
+                         css="@Model.SafeCss"
+                         website-id="@Model.HtmlSanitizeWebsiteId"
+                         source-type="@Model.HtmlSanitizeSourceType"
+                         source-id="@Model.HtmlSanitizeSourceId"
+                         content-key="@Model.HtmlSanitizeContentKey"
+                         sanitize-policy="@Model.HtmlSanitizePolicy"
+                         parent-content="@Model.ParentSafeHtml"
+                         parent-css="@Model.ParentSafeCss"
+                         parent-source-id="@Model.ParentHtmlSanitizeSourceId"></coker-safe-html>
+    </Content>
 }
 <div class="history container my-4 d-flex flex-wrap justify-content-center justify-content-md-end d-none">
     <a class="bg-white text-center m-1 py-2" href="/@ViewData["OrgName"]/Favorites">

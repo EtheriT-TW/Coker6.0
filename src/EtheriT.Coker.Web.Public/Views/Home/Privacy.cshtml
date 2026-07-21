@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
 <script src="~/Shared/shared.min.js" asp-append-version="true"></script>
-<Content id="main" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
+<Content id="main">@Html.Raw(HttpUtility.HtmlDecode(Model.PageData.Html))</Content>
 @{
     if (Model.PageData.LastModificationTime != null)
     {

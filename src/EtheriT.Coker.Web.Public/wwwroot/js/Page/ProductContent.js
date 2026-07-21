@@ -109,14 +109,6 @@
         return $($(selector).html()).clone();
     }
 
-    function htmlDecode(value) {
-        if (!value) return '';
-        if ($.htmlDecode) return $.htmlDecode(value);
-        const textarea = document.createElement('textarea');
-        textarea.innerHTML = value;
-        return textarea.value;
-    }
-
     function formatNumber(value) {
         return normalizeNullableInt(value).toLocaleString('en-US');
     }
@@ -1288,7 +1280,8 @@
             const html = this.state.product.html;
             const selectors = this.options.selectors;
             if (html && html.trim() !== '') {
-                $(selectors.htmlPanel).removeClass('d-none').html(htmlDecode(html));
+                // API 僅回傳後端已清洗、已 Decode 的發布 HTML。
+                $(selectors.htmlPanel).removeClass('d-none').html(html);
             } else {
                 $('#ProductDescription,#btn_tab .description').remove();
             }

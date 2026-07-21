@@ -9,9 +9,11 @@ using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
 using EtheriT.Coker.Application.Shared.Dto.enumType.WebMenu;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.JsonObject;
+using EtheriT.Coker.Application.Shared.Dto.Processor;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.JsonObject;
 using EtheriT.Coker.Application.Shared.Processor;
@@ -43,6 +45,7 @@ namespace EtheriT.Coker.Application
         private readonly IPermissionsAppService permissionsAppService;
         private readonly IWebsiteCacheStateAppService websiteCacheStateAppService;
         private readonly IHtmlProcessor htmlProcessor;
+        private readonly IHtmlSanitizeService htmlSanitizeService;
         public WebMenuApplication(
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
@@ -54,7 +57,8 @@ namespace EtheriT.Coker.Application
             IPermissionsAppService permissionsAppService,
             IWebsiteCacheStateAppService websiteCacheStateAppService,
             IHtmlProcessor htmlProcessor,
-            StringHandler stringHandler
+            StringHandler stringHandler,
+            IHtmlSanitizeService htmlSanitizeService
         )
         {
             this.db = db;
@@ -69,6 +73,7 @@ namespace EtheriT.Coker.Application
             this.websiteCacheStateAppService = websiteCacheStateAppService;
             this.htmlProcessor = htmlProcessor;
             this.stringHandler = stringHandler;
+            this.htmlSanitizeService = htmlSanitizeService;
 
         }
         public async Task<SiteMapDto> GetAll()
@@ -697,12 +702,11 @@ namespace EtheriT.Coker.Application
                         result.SiteName = side.Title;
                         if (parent != null)
                         {
+                            var sanitized = await EnsureMenuDisplayContentSanitizedAsync(parent);
                             mapper.Map(parent, result);
+                            result.Html = stringHandler.HtmlEncode(sanitized.Html);
+                            result.Css = sanitized.Css;
                             result.LastModificationTime = null;
-                            var _html = stringHandler.HtmlDecode(result.Html);
-                            _html = htmlProcessor.RemoveNode(_html ?? "", ".catalog_frame,.noInherit");
-                            _html = htmlProcessor.ExtractBodyInnerHtml(_html);
-                            result.Html = stringHandler.HtmlEncode(_html);
                             result.CurrentUrl = $"/{parent.RouterName}";
                         }
                     }
@@ -734,7 +738,10 @@ namespace EtheriT.Coker.Application
                     result.SiteName = side.Title;
                     if (menu != null)
                     {
+                        var sanitized = await EnsureMenuDisplayContentSanitizedAsync(menu);
                         mapper.Map(menu, result);
+                        result.Html = stringHandler.HtmlEncode(sanitized.Html);
+                        result.Css = sanitized.Css;
                         result.LastModificationTime = null;
                         result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "").Replace("&lt;content&gt;", "").Replace("&lt;/content&gt;", "");
                         if (string.IsNullOrEmpty(result.Description))
@@ -782,8 +789,18 @@ namespace EtheriT.Coker.Application
 
                     importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
                     importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
-                    menu.PageText = htmlProcessor.text(importDto.Html);
-                    importDto.Html = stringHandler.HtmlEncode(importDto.Html);
+
+                    var sanitized = await SanitizeMenuPublishedContentAsync(
+                        menu.FK_WebsiteId,
+                        menu.Id,
+                        importDto.Html ?? "",
+                        importDto.Css ?? "",
+                        true
+                    );
+
+                    menu.PageText = htmlProcessor.text(sanitized.Html);
+                    importDto.Html = stringHandler.HtmlEncode(sanitized.Html);
+                    importDto.Css = sanitized.Css;
                     mapper.Map(importDto, menu);
                     await loginUserData.SaveChanges(menu);
                     response.Success = true;
@@ -797,6 +814,46 @@ namespace EtheriT.Coker.Application
             }
             await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
+        }
+
+        private Task<HtmlSanitizeResult> SanitizeMenuPublishedContentAsync(
+            long websiteId,
+            long menuId,
+            string html,
+            string css,
+            bool force = false)
+        {
+            return htmlSanitizeService.EnsurePublicContentAsync(new HtmlSanitizeInput
+            {
+                WebsiteId = websiteId,
+                SourceType = HtmlSanitizeSourceType.選單,
+                SourceId = menuId,
+                ContentKey = "Published",
+                SanitizePolicy = "PublicHtml",
+                Html = html ?? "",
+                Css = css ?? "",
+                Force = force
+            });
+        }
+
+        private async Task<(string Html, string Css)> EnsureMenuDisplayContentSanitizedAsync(WebMenu menu)
+        {
+            var sanitized = await SanitizeMenuPublishedContentAsync(
+                menu.FK_WebsiteId,
+                menu.Id,
+                stringHandler.HtmlDecode(menu.Html ?? ""),
+                menu.Css ?? ""
+            );
+
+            if (sanitized.WasSanitized)
+            {
+                menu.Html = stringHandler.HtmlEncode(sanitized.Html);
+                menu.Css = sanitized.Css;
+                menu.PageText = htmlProcessor.text(sanitized.Html);
+                await loginUserData.SaveChanges(menu);
+            }
+
+            return (sanitized.Html, sanitized.Css);
         }
         public async Task<ResponseMessageDto> saveConten(MenuSaveContenDto dto)
         {

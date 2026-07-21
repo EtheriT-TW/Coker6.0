@@ -18,5 +18,6 @@ namespace EtheriT.Coker.Application.Shared.Processor
 		public string ExtractBodyInnerHtml(string html);
         public string text(string html);
 		public string ExtractStyleCss(string html);
+        public string ComposeInheritedHtml(string contentHtml, string? parentHtml);
     }
 }

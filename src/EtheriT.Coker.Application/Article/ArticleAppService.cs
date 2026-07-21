@@ -8,9 +8,11 @@ using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Newsletter;
+using EtheriT.Coker.Application.Shared.Dto.Processor;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Processor;
@@ -42,6 +44,7 @@ namespace EtheriT.Coker.Application.Article
         private readonly ITokenAppService tokenAppService;
         private readonly IHtmlProcessor htmlProcessor;
         private readonly IPermissionsAppService permissionsAppService;
+        private readonly IHtmlSanitizeService htmlSanitizeService;
         public ArticleAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -52,7 +55,8 @@ namespace EtheriT.Coker.Application.Article
             IFileUploadAppService fileUploadAppService,
             ITokenAppService tokenAppService,
             IHtmlProcessor htmlProcessor,
-            IPermissionsAppService permissionsAppService
+            IPermissionsAppService permissionsAppService,
+            IHtmlSanitizeService htmlSanitizeService
         )
         {
             this.db = db;
@@ -65,6 +69,7 @@ namespace EtheriT.Coker.Application.Article
             this.stringHandler = stringHandler;
             this.htmlProcessor = htmlProcessor;
             this.permissionsAppService = permissionsAppService;
+            this.htmlSanitizeService = htmlSanitizeService;
         }
         public async Task<ResponseMessageDto> AddUp(ArticleDto dto)
         {
@@ -672,9 +677,17 @@ namespace EtheriT.Coker.Application.Article
                     importDto.Html = stringHandler.ResolveFrontUploadPath(importDto.Html ?? "", orgName);
                     importDto.Css = stringHandler.ResolveFrontUploadPath(importDto.Css ?? "", orgName);
 
-                    article.Css = importDto.Css;
-                    article.PageText = htmlProcessor.text(importDto.Html);
-                    article.Html = stringHandler.HtmlEncode(importDto.Html);
+                    var sanitized = await SanitizeArticlePublishedContentAsync(
+                        article.FK_WebsiteId,
+                        article.Id,
+                        importDto.Html ?? "",
+                        importDto.Css ?? "",
+                        true
+                    );
+
+                    article.Css = sanitized.Css;
+                    article.PageText = htmlProcessor.text(sanitized.Html);
+                    article.Html = stringHandler.HtmlEncode(sanitized.Html);
                     article.LastModificationTime = DateTime.Now;
                     article.LastModifierUserId = userId;
 
@@ -812,11 +825,12 @@ namespace EtheriT.Coker.Application.Article
                     result.SiteName = side.Title;
                     if (articl != null)
                     {
+                        var sanitized = await EnsureArticleDisplayContentSanitizedAsync(articl);
                         result.Id = (int)articl.Id;
                         result.Title = articl.Title;
                         result.Description = articl.Description;
-                        result.Html = articl.Html;
-                        result.Css = articl.Css;
+                        result.Html = stringHandler.HtmlEncode(sanitized.Html);
+                        result.Css = sanitized.Css;
                         result.Html = result.Html != null ? result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "") : result.Html;
                         result.LastModificationTime = articl.LastModificationTime ?? articl.CreationTime;
                         result.Popular = articl.PopularVisible ? articl.Popular : null;
@@ -878,8 +892,17 @@ namespace EtheriT.Coker.Application.Article
                             var frontHtml = Doc.DocumentNode.OuterHtml;
                             frontHtml = stringHandler.ResolveFrontUploadPath(frontHtml, orgName);
 
-                            article.PageText = htmlProcessor.text(frontHtml);
-                            article.Html = stringHandler.HtmlEncode(frontHtml);
+                            var sanitized = await SanitizeArticlePublishedContentAsync(
+                                article.FK_WebsiteId,
+                                article.Id,
+                                frontHtml,
+                                article.Css ?? "",
+                                true
+                            );
+
+                            article.PageText = htmlProcessor.text(sanitized.Html);
+                            article.Html = stringHandler.HtmlEncode(sanitized.Html);
+                            article.Css = sanitized.Css;
                         }
 
                         await loginUserData.SaveChanges(article);
@@ -895,6 +918,48 @@ namespace EtheriT.Coker.Application.Article
             }
 
             return response;
+        }
+
+        private Task<HtmlSanitizeResult> SanitizeArticlePublishedContentAsync(
+            long websiteId,
+            long articleId,
+            string html,
+            string css,
+            bool force = false)
+        {
+            return htmlSanitizeService.EnsurePublicContentAsync(new HtmlSanitizeInput
+            {
+                WebsiteId = websiteId,
+                SourceType = HtmlSanitizeSourceType.文章,
+                SourceId = articleId,
+                ContentKey = "Published",
+                SanitizePolicy = "PublicHtml",
+                Html = html ?? "",
+                Css = css ?? "",
+                Force = force
+            });
+        }
+
+        private async Task<(string Html, string Css)> EnsureArticleDisplayContentSanitizedAsync(Core.Models.Article article)
+        {
+            var html = stringHandler.HtmlDecode(article.Html ?? "");
+            var css = article.Css ?? "";
+            var sanitized = await SanitizeArticlePublishedContentAsync(
+                article.FK_WebsiteId,
+                article.Id,
+                html,
+                css
+            );
+
+            if (sanitized.WasSanitized)
+            {
+                article.Html = stringHandler.HtmlEncode(sanitized.Html);
+                article.Css = sanitized.Css;
+                article.PageText = htmlProcessor.text(sanitized.Html);
+                await loginUserData.SaveChanges(article);
+            }
+
+            return (sanitized.Html, sanitized.Css);
         }
         void FileInsertNode(List<HtmlNode> FileInsertNode, HtmlDocument Doc, List<FileGetArticleDisplayDto> Files, bool isLogin)
         {

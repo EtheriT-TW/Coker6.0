@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="~/css/Home/Index.min.css" asp-append-version="true" />
 <script src="~/js/Home/Index.min.js" asp-append-version="true"></script>
 
-<Content id="main" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
+<Content id="main">@Html.Raw(HttpUtility.HtmlDecode(Model.PageData.Html))</Content>
 <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>
 
 <!-- Shopping Car -->

@@ -1545,7 +1545,9 @@ namespace EtheriT.Coker.Application.Product
                 var imageMap = imageRows
                     .Where(x => !string.IsNullOrWhiteSpace(x.Link))
                     .GroupBy(x => x.Sid)
-                    .ToDictionary(x => x.Key, x => x.OrderBy(y => y.Id).First().Link);
+                    // getImgsFiles 已依商品、圖片 SerNo、Upload Id 排序；沿用第一張，
+                    // 避免改以 Upload Id 取圖而與商品內頁的後台排序不一致。
+                    .ToDictionary(x => x.Key, x => x.First().Link);
 
                 var favoriteMap = await db.Favorites.AsNoTracking()
                     .Where(x => x.UUID == uuid

@@ -2367,6 +2367,14 @@ namespace EtheriT.Coker.Application.Product
                 {
                     reportProgress?.Invoke(30, "正在匯入商品、規格與價格");
                     await importProds(prods, response.ErrorList, reportProgress);
+                    if (prods.Count > 0)
+                    {
+                        // 商品本身或商品標籤異動都會改變目錄可顯示的商品集合。
+                        // 整批匯入完成後只更新一次版本，讓既有目錄內容快照失效。
+                        await websiteCacheStateAppService.TouchByWebsiteIdAsync(
+                            WebsiteID,
+                            WebsiteCacheKeys.DirectoryContent);
+                    }
                     response.Success = true;
                 }
                 catch (Exception ex)

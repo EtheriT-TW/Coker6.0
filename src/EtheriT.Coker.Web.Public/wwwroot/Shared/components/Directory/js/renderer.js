@@ -300,6 +300,42 @@
         $catalog.children().not(".templatecontent").not(".templatecontent-tag").remove();
     }
 
+    function getLoadingItemCount($catalog) {
+        return $catalog.hasClass("type1") ? 3 : 4;
+    }
+
+    function createLoadingCard($item, loadingText) {
+        const content = createCardContent($item);
+        if (!content.length) return $();
+
+        const $content = $(content);
+
+        $content
+            .addClass("directory-loading-item")
+            .attr("aria-hidden", "true")
+            .removeAttr("data-id data-key");
+
+        $content.find("[id]").removeAttr("id");
+        $content.find("[data-key]").removeAttr("data-key");
+        $content.find("a").removeAttr("href title target rel").attr("tabindex", "-1");
+        $content.find("button, input, select, textarea").prop("disabled", true).attr("tabindex", "-1");
+
+        $content.find(".title").text(loadingText);
+        $content.find(".subtitle, .description, .itemNo, .catalog-number, .date, .more").empty();
+        $content.find(".shareBlock, .btn_fav, .like-and-share, .btn_addToCar, .more-btn, .purchase, .price-grid, .tags, .marketing-labels")
+            .addClass("d-none");
+
+        $content.find(".image_frame")
+            .css("background-image", "url('/images/directory-loading.svg')");
+        $content.find(".image_frame img")
+            .attr({
+                src: "/images/directory-loading.svg",
+                alt: ""
+            });
+
+        return $content;
+    }
+
     function createCardContent($item) {
         const temp = getTemplateHtml($item);
         if (!temp) return $();
@@ -608,6 +644,33 @@
         });
     };
 
+    DirectoryRenderer.showLoading = function ($item) {
+        if (!$item || !$item.length) return;
+
+        const $catalog = getCatalog($item);
+        const loadingText = "載入中…";
+
+        clearCatalogItems($item);
+        resetType4CaptionHeights($item);
+        $catalog.removeClass("empty").attr("aria-busy", "true");
+
+        const itemCount = getLoadingItemCount($catalog);
+        for (let i = 0; i < itemCount; i++) {
+            const $loadingCard = createLoadingCard($item, loadingText);
+            if (!$loadingCard.length) break;
+            $catalog.append($loadingCard);
+        }
+    };
+
+    DirectoryRenderer.hideLoading = function ($item) {
+        if (!$item || !$item.length) return;
+
+        getCatalog($item)
+            .removeAttr("aria-busy")
+            .children(".directory-loading-item")
+            .remove();
+    };
+
     /**
      * 給外部頁面（例如 Member Favorites）使用既有 template 進行渲染
      */
@@ -670,18 +733,26 @@
         });
     };
 
-    DirectoryRenderer.renderCatalogResult = function ($item, option, result) {
-        if (!result) return;
+    DirectoryRenderer.renderCatalogResult = function ($item, option, result, requestId) {
+        if (requestId && $item.data("directoryRequestId") !== requestId) return;
+
+        if (!result) {
+            DirectoryRenderer.hideLoading($item);
+            return;
+        }
 
         if (option.Type == "search") {
             $(".searchCount").text(result.totalCount);
         }
 
         renderPager($item, option, result);
-        clearCatalogItems($item);
         resetType4CaptionHeights($item);
 
         applyLoginSensitiveUi($item, result.releInfos).done(function () {
+            if (requestId && $item.data("directoryRequestId") !== requestId) return;
+
+            clearCatalogItems($item);
+            getCatalog($item).removeAttr("aria-busy");
             renderCatalogItems($item, result.releInfos);
 
             $item.data({

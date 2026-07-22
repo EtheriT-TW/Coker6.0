@@ -469,6 +469,47 @@
     height: 100%;
 }
 
+/* ===== Catalog loading placeholders ===== */
+.type_change_frame .catalog > .directory-loading-item {
+    opacity: 0.58;
+    pointer-events: none;
+    user-select: none;
+    animation: directory-loading-pulse 1.35s ease-in-out infinite;
+}
+
+    .type_change_frame .catalog > .directory-loading-item .image_frame {
+        background-color: #f1f3f5;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: min(55%, 7rem) auto;
+    }
+
+    .type_change_frame .catalog > .directory-loading-item .image_frame img {
+        object-fit: contain;
+        object-position: center;
+    }
+
+    .type_change_frame .catalog > .directory-loading-item .title {
+        color: #6c757d;
+    }
+
+@keyframes directory-loading-pulse {
+    0%, 100% {
+        opacity: 0.48;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .type_change_frame .catalog > .directory-loading-item {
+        opacity: 0.58;
+        animation: none;
+    }
+}
+
 .type_change_frame .catalog.type1 {
     background-color: rgb(248, 249, 250);
     padding: 0.5rem;
@@ -480,11 +521,12 @@
     }
 
         .type_change_frame .catalog.type1 .col.type5 figure figcaption {
-            padding-right: 2.5rem;
+            padding-right: 0;
         }
 
             .type_change_frame .catalog.type1 .col.type5 figure figcaption .item-title {
                 padding: 0.5rem;
+                margin-right: 2.5rem;
             }
 
                 .type_change_frame .catalog.type1 .col.type5 figure figcaption .item-title > div {
@@ -496,13 +538,31 @@
                     display: none;
                 }
 
+            .type_change_frame .catalog.type1 .col.type5 figure figcaption .description {
+                margin-right: 2.5rem;
+            }
+
+            .type_change_frame .catalog.type1 .col.type5 figure figcaption .bottom-row {
+                gap: 0.5rem;
+                min-width: 0;
+            }
+
             .type_change_frame .catalog.type1 .col.type5 figure figcaption .bottom-row .tags {
+                flex: 1 1 auto;
+                min-width: 0;
                 margin-bottom: 0.5rem;
             }
 
             .type_change_frame .catalog.type1 .col.type5 figure figcaption .bottom-row .purchase {
+                flex: 0 0 auto;
                 margin-left: auto;
             }
+
+                .type_change_frame .catalog.type1 .col.type5 figure figcaption .bottom-row .purchase .price {
+                    white-space: nowrap;
+                    word-break: normal;
+                    overflow-wrap: normal;
+                }
 
 .type_change_frame .catalog.type4 .col.type4 figure figcaption .bottom-row .tags {
     overflow: hidden;
@@ -775,6 +835,17 @@
 }
 
 @media (max-width: 576px) {
+    .type_change_frame .catalog.type1 .col.type5 figure .type5-image-frame {
+        align-items: flex-start !important;
+        justify-content: center !important;
+        background-position: center top;
+    }
+
+        .type_change_frame .catalog.type1 .col.type5 figure .type5-image-frame img {
+            margin-top: 0 !important;
+            object-position: center top;
+        }
+
     .type_change_frame .catalog .type4-image-frame {
         height: 150px;
         min-height: 150px;

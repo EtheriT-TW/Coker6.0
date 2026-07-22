@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="120" viewBox="0 0 160 120" role="img" aria-label="載入中">
+  <rect width="160" height="120" rx="8" fill="#f1f3f5"/>
+  <g fill="none" stroke-linecap="round">
+    <circle cx="80" cy="47" r="18" stroke="#d7dce1" stroke-width="5"/>
+    <path d="M80 29a18 18 0 0 1 18 18" stroke="#8b949e" stroke-width="5"/>
+  </g>
+  <text x="80" y="86" fill="#6c757d" font-family="Arial, 'Noto Sans TC', sans-serif" font-size="14" text-anchor="middle">載入中…</text>
+</svg>

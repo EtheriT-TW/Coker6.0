@@ -157,12 +157,33 @@
         $self.find(".catalog>.template").remove();
 
         if (w.DirectoryService && typeof w.DirectoryService.getCatalogData === "function") {
+            const requestId = Number($self.data("directoryRequestId") || 0) + 1;
+            $self.data("directoryRequestId", requestId);
+
+            if (w.DirectoryRenderer && typeof w.DirectoryRenderer.showLoading === "function") {
+                w.DirectoryRenderer.showLoading($self);
+            }
+
             w.DirectoryService.getCatalogData($self, option)
                 .done(function (result) {
+                    if ($self.data("directoryRequestId") !== requestId) return;
+
                     if (w.DirectoryRenderer && typeof w.DirectoryRenderer.renderCatalogResult === "function") {
-                        w.DirectoryRenderer.renderCatalogResult($self, option, result);
+                        w.DirectoryRenderer.renderCatalogResult($self, option, result, requestId);
+                    }
+                })
+                .fail(function (error) {
+                    if ($self.data("directoryRequestId") !== requestId) return;
+
+                    if (w.DirectoryRenderer && typeof w.DirectoryRenderer.hideLoading === "function") {
+                        w.DirectoryRenderer.hideLoading($self);
+                    }
+                    if (w.DirectoryService && typeof w.DirectoryService.handleError === "function") {
+                        w.DirectoryService.handleError(error);
                     }
                 });
+        } else if (w.DirectoryRenderer && typeof w.DirectoryRenderer.hideLoading === "function") {
+            w.DirectoryRenderer.hideLoading($self);
         }
 
         bindCatalogFilterReload($self, page);

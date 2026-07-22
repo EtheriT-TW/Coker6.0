@@ -12,7 +12,9 @@
     const MinOrderForEarnPoints = @Json.Serialize(ViewBag.MinOrderForEarnPoints ?? 0);
     const RewardRatePercent = @Json.Serialize(ViewBag.RewardRatePercent ?? 0);
 </script>
-<link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
+@section Styles {
+    <link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
+}
 <script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()
 <!-- Modal -->

@@ -14,6 +14,7 @@ namespace EtheriT.Coker.Core.Models
         [StringLength(50)] public string Title { get; set; }
         public int ser_no { get; set; }
         public ThirdPartyServiceTypeEnum ServiceType { get; set; }
+        [StringLength(100)] public string? Memo { get; set; }
         public List<ThirdPartyKeypair> ThirdPartyKeypair { get; set; }
         public List<PaymentType> paymentTypes { get; set; }
     }

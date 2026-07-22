@@ -20,6 +20,60 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@Html.Raw(ViewBag.PageTagNameName)</title>
+    <script nonce="@ViewBag.Nonce">
+        document.documentElement.classList.add("coker-prepaint");
+        document.documentElement.setAttribute("aria-busy", "true");
+    </script>
+    <style nonce="@ViewBag.Nonce">
+        html.coker-prepaint::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 2147483646;
+            background: #fff;
+            opacity: 1;
+            transition: opacity 120ms ease-out;
+        }
+
+        html.coker-prepaint::after {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            z-index: 2147483647;
+            width: 2.5rem;
+            height: 2.5rem;
+            margin: -1.25rem 0 0 -1.25rem;
+            border: .25rem solid #e5e5e5;
+            border-top-color: #777;
+            border-radius: 50%;
+            opacity: 1;
+            animation: coker-prepaint-spin .75s linear infinite;
+            transition: opacity 120ms ease-out;
+        }
+
+        html.coker-prepaint.coker-prepaint-ready::before,
+        html.coker-prepaint.coker-prepaint-ready::after {
+            opacity: 0;
+        }
+
+        @@keyframes coker-prepaint-spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @@media (prefers-reduced-motion: reduce) {
+            html.coker-prepaint::after {
+                animation: none;
+            }
+        }
+    </style>
+    <style nonce="@ViewBag.Nonce">
+        @@media (max-width: 767.98px) {
+            .coker-desktop-breadcrumb {
+                display: none !important;
+            }
+        }
+    </style>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/lib/fortawesome/css/all.min.css" />
     <link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" />
@@ -285,7 +339,7 @@
         string VisibleFooter = bool.Parse((ViewData["VisibleFooter"] ?? "true").ToString() ?? "true") ? "" : "d-none";
 
     }
-    <header class="@VisibleHeader">
+    <header class="@VisibleHeader @ViewBag.HeaderLayoutClass @(ViewBag.HasFullBanner == true ? "overlap-banner" : "")">
         @await Component.InvokeAsync(nameof(Header))
     </header>
     <noscript>
@@ -296,6 +350,7 @@
     </noscript>
     <div id="ContainerBody">
         <a accesskey="C" href="javascript:void(0)" class="hide accesskey" title="@L.get("accesskeyCenter")">:::</a>
+        @await RenderSectionAsync("Styles", required: false)
         @RenderBody()
     </div>
     <footer class="footer_pack_up @VisibleFooter">
@@ -642,5 +697,33 @@
     <style id="frameCss" nonce="@ViewBag.Nonce">
         @Html.Raw(HttpUtility.HtmlDecode(ViewBag.Css))
     </style>
+    <script nonce="@ViewBag.Nonce">
+        (() => {
+            const root = document.documentElement;
+            const reveal = () => {
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    root.classList.add("coker-prepaint-ready");
+                    window.setTimeout(() => {
+                        root.classList.remove("coker-prepaint", "coker-prepaint-ready");
+                        root.removeAttribute("aria-busy");
+                    }, 140);
+                }));
+            };
+
+            const stylesheetReady = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+                .map(link => link.sheet
+                    ? Promise.resolve()
+                    : new Promise(resolve => {
+                        link.addEventListener("load", resolve, { once: true });
+                        link.addEventListener("error", resolve, { once: true });
+                    }));
+
+            const fontsReady = document.fonts?.ready ?? Promise.resolve();
+            const resourcesReady = Promise.all([...stylesheetReady, fontsReady]);
+            const timeout = new Promise(resolve => window.setTimeout(resolve, 2000));
+
+            Promise.race([resourcesReady, timeout]).then(reveal, reveal);
+        })();
+    </script>
 </body>
 </html>

@@ -5,21 +5,12 @@
         });
     }
     if (($('.navbar').hasClass('position-fixed') || $('.navbar').hasClass('fixed-top')) && !$(".full-banner").length > 0) {
-        var mega_menu_height = $("nav").css("height");
-        $("body").css("padding-top", mega_menu_height);
-        $(window).resize(function () {
-            var mega_menu_height = $("nav").css("height");
-            $("body").css("padding-top", mega_menu_height);
-            MenuLiSize();
-        });
-        /*setTimeout(function () {
-            if ($('.full-banner').length>0 && (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop) == 0) {
-                // 頁面加載完畢後滾動到目標元素
-                $('html,body').animate({
-                    scrollTop: $('.full-banner').offset().top - 78  // 滾動到目標元素的頂部
-                }, 'smooth');  // 'smooth' 也可以替換成毫秒值，例如 1000 毫秒
-            }
-        }, 500);*/
+        const syncFixedHeaderOffset = function () {
+            $("body").css("padding-top", $("header > nav").first().css("height"));
+        };
+
+        syncFixedHeaderOffset();
+        $(window).off("resize.fixedHeaderOffset").on("resize.fixedHeaderOffset", syncFixedHeaderOffset);
     }
 
     const showNav = document.querySelectorAll('.full-banner');
@@ -61,6 +52,7 @@
     }
 
     MenuLiSize();
+    $(window).off("resize.layout1Menu").on("resize.layout1Menu", MenuLiSize);
 
     moveHiUserToMenu();
 

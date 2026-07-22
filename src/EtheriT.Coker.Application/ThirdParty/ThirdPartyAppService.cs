@@ -59,6 +59,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                              {
                                  Id = s.Id,
                                  Title = s.Title,
+                                 Memo = s.Memo??"",
                                  PaymentTypes = (from p in db.PaymentTypes.Where(e => !e.IsDeleted && e.FK_ThirdPartyId == s.Id)
                                                  join pv in db.PaymentTypesValues.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId)
                                                  on p.Id equals pv.FK_PaymentTypesId into pt

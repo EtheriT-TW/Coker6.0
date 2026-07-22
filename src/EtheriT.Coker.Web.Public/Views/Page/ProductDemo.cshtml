@@ -1,4 +1,4 @@
-﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
 @model PageViewModel
 @{
 	ViewData["SideName"] = Model.PageData.SiteName;
@@ -10,7 +10,9 @@
 	ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
 }
 
-<link rel="stylesheet" href="~/css/Page/Product.css" asp-append-version="true" />
+@section Styles {
+    <link rel="stylesheet" href="~/css/Page/Product.css" asp-append-version="true" />
+}
 <script src="~/js/Page/Product.js" asp-append-version="true"></script>
 
 <div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">

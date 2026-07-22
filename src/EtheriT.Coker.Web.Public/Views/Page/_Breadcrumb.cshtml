@@ -1,0 +1,100 @@
+@using EtheriT.Coker.Application.Shared.Dto.enumType
+@using EtheriT.Coker.Application.Shared.Dto.WebMenu
+@using EtheriT.Coker.Web.Public.Models
+@model PageViewModel
+
+@if (ViewBag.ShowPagePath)
+{
+    switch (Model.PageData.LayoutType)
+    {
+        case 1:
+        case 6:
+        case 7:
+        case 8:
+            <div id="breadcrumb" class="top_title_1 p-3 coker-desktop-breadcrumb">
+                <nav class="bread container">
+                    <ol class="list-unstyled d-flex my-0">
+                        @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
+                        {
+                            if (menu.Link == "")
+                            {
+                                <li class="px-1">@menu.Title</li>
+                            }
+                            else
+                            {
+                                <li class="px-1"><a class="text-decoration-none" href="@menu.Link">@menu.Title</a></li>
+                            }
+                        }
+                    </ol>
+                </nav>
+            </div>
+            break;
+        case 2:
+            if (ViewData["bodyClass"]?.ToString() == "home") break;
+            goto case 3;
+        case 3:
+            if ((Model.MenuBread?.Count ?? 0) > 0 || Model.PageData.VisibleTitle)
+            {
+                <div id="breadcrumb" class="top_title_3 p-3 coker-desktop-breadcrumb">
+                    @if ((Model.MenuBread?.Count ?? 0) > 0 && Model.ParentData?.VisibleHeader == true)
+                    {
+                        <nav class="bread container">
+                            <ol class="list-unstyled d-flex">
+                                @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
+                                {
+                                    if (menu.Link == "")
+                                    {
+                                        <li class="px-1">@menu.Title</li>
+                                    }
+                                    else
+                                    {
+                                        <li class="px-1"><a class="text-decoration-none" href="@menu.Link" title="連結至:@menu.Title">@menu.Title</a></li>
+                                    }
+                                }
+                            </ol>
+                        </nav>
+                    }
+                    @if (Model.PageData.VisibleTitle)
+                    {
+                        <h2 class="title fs-1 fw-bold text-white container">@((Model.MenuBread?.Count ?? 0) > 0 ? Model.MenuBread!.Last().Title : Model.PageData.Title)</h2>
+                    }
+                </div>
+                @if (Model.ParentData?.VisibleTitle == true && Model.PageData.holdPage == HoldPageNameEnum.Article)
+                {
+                    <div class="container">
+                        <h2 class="p-2">@Model.PageData.Title</h2>
+                    </div>
+                }
+            }
+            break;
+        case 4:
+            if ((Model.MenuBread?.Count ?? 0) > 0 && (Model.PageData.VisibleHeader || Model.PageData.VisibleTitle))
+            {
+                <div id="breadcrumb" class="top_title p-3 bg-white container coker-desktop-breadcrumb">
+                    @if (Model.ParentData?.VisibleHeader == true)
+                    {
+                        <nav class="bread container">
+                            <ol class="list-unstyled d-flex">
+                                @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
+                                {
+                                    if (menu.Link == "")
+                                    {
+                                        <li class="px-1">@menu.Title</li>
+                                    }
+                                    else
+                                    {
+                                        <li class="px-1"><a class="text-decoration-none" href="@menu.Link" title="連結至:@menu.Title">@menu.Title</a></li>
+                                    }
+                                }
+                            </ol>
+                        </nav>
+                    }
+                    @if (Model.ParentData?.VisibleTitle == true)
+                    {
+                        <div class="title fs-1 fw-bold text-black container">@Model.PageData.Title</div>
+                    }
+                </div>
+            }
+            break;
+    }
+}

@@ -214,6 +214,18 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     if(ContentConfig!=null) ViewBag.ShowPagePath = ContentConfig.ShowPagePath;
                 }
             }
+            var headerStyleView = defaultData.View;
+            var configuredHeader = template?.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.表頭);
+            if (template != null && configuredHeader != null && !string.IsNullOrWhiteSpace(configuredHeader.ContentConfig))
+            {
+                headerStyleView = template.HeadType switch
+                {
+                    HeadTypeEnum.logo在左選單在右 => "Layout_8",
+                    HeadTypeEnum.logo與Banner重疊 => "Layout_8",
+                    _ => "Layout_7"
+                };
+            }
+            ViewBag.HeaderLayoutClass = headerStyleView == "Layout_1" ? "layout-1-header" : "";
             if (string.IsNullOrEmpty(defaultData.Root) || !defaultData.Root.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
                 var request = HttpContext.Request;
@@ -539,6 +551,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
             {
                 view = "index";
             }
+            ViewBag.HasFullBanner = Regex.IsMatch(
+                $"{model.ParentSafeHtml} {model.SafeHtml}",
+                "class\\s*=\\s*[\"'][^\"']*\\bfull-banner\\b[^\"']*[\"']",
+                RegexOptions.IgnoreCase);
             ViewBag.HasShoppingCar = await webMenuApplication.checkHasShoppingCar(siteId);
             ViewBag.LoginEnable = await webMenuApplication.checkHasMember(siteId);
             ViewBag.RootId = await webMenuApplication.GetRootId(key);
@@ -697,6 +713,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             // 有設定限制，但目前會員角色不在允許清單，拒絕
             return !allowedRoleIds.Contains(userInfo.data.FK_RoleId);
         }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

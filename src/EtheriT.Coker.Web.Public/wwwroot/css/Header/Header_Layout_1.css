@@ -2,6 +2,16 @@
     top: 0;
 }
 
+header.layout-1-header:not(.overlap-banner) {
+    position: sticky;
+    top: 0;
+    z-index: var(--header-navbar-z-index, 1030);
+}
+
+header.layout-1-header:not(.overlap-banner) > nav {
+    position: static !important;
+}
+
 header .image-wh {
     display: none;
 }

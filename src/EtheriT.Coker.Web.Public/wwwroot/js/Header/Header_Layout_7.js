@@ -1,9 +1,5 @@
 ﻿var time = 0;
 function HeaderInit() {
-    const $contain = $("body #main");
-    $("#breadcrumb").prependTo($contain);
-    $("body.home #breadcrumb").remove();
-
     var Mega_Menu = document.getElementById("Offcanvas_Mega_Menu");
     var observer = new MutationObserver(function (mutations) {
         var icon = document.getElementById("menuIcon");

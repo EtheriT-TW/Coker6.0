@@ -45,6 +45,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     ser_no = 500,
                     CreatorUserId = 1,
+                    Memo = "Apple pay 須再跟綠界開通服務，並請洽詢網站平台業務單位加購服務設定。",
                     ServiceType = ThirdPartyServiceTypeEnum.Payment,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }, new ThirdParty

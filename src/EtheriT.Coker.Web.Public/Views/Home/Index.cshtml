@@ -12,7 +12,9 @@
     const local = @Html.Raw(L.getAllJsonString()) ;
 </script>
 @Html.AntiForgeryToken()
-<link rel="stylesheet" href="~/css/Home/Index.min.css" asp-append-version="true" />
+@section Styles {
+    <link rel="stylesheet" href="~/css/Home/Index.min.css" asp-append-version="true" />
+}
 <script src="~/js/Home/Index.min.js" asp-append-version="true"></script>
 
 <Content id="main">@Html.Raw(HttpUtility.HtmlDecode(Model.PageData.Html))</Content>

@@ -1,10 +1,5 @@
 ﻿var time = 0;
 function HeaderInit() {
-    const $main = $("<div class='container'>")
-    const $contain = $("body:not(.home) #main > *");
-    $("#breadcrumb").prependTo($main);
-    $contain.appendTo($main);
-    $("#main").append($main);
     /*Outcome Swiper */
     var outcomeswiper = new Swiper(".outcomeSwiper", {
         a11y: true,

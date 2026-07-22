@@ -1,4 +1,4 @@
-﻿@using EtheriT.Coker.Application.Shared.Dto.enumType
+@using EtheriT.Coker.Application.Shared.Dto.enumType
 @using EtheriT.Coker.Web.Public.Models
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
 @model PageViewModel
@@ -20,7 +20,9 @@
 <script type="text/javascript">
 	const PageKey = "Search";
 </script>
-<link rel="stylesheet" href="~/css/Page/Search.css" asp-append-version="true" />
+@section Styles {
+    <link rel="stylesheet" href="~/css/Page/Search.css" asp-append-version="true" />
+}
 <script src="~/js/Page/Search.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()
 <div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">

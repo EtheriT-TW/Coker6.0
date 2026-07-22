@@ -659,7 +659,7 @@ function HeaderDataSet(result) {
     else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock && result.canRefund) $(".btn_refund").removeClass("d-none");
     else OrderStateChange(oristate)
 
-    if ([1, 3].includes(oristate))
+    if ([1, 2, 3].includes(oristate))
         $(".btn_send_notification").removeClass("d-none");
 
     if (result.bonus == 0) $(".bonusLine").addClass("d-none");

@@ -23,6 +23,10 @@
                     co.Cookie.EffectiveTime = co.Data.Time.DataRetentionLongTime;
                     co.Cookie.Add("LastWebSite", result.message);
                     co.Cookie.EffectiveTime = co.Data.Time.DataRetentionTime;
+                    _c.Data.Header["X-Coker-Website-Id"] = result.message;
+                    const pageUrl = new URL(window.location.href);
+                    pageUrl.searchParams.set("_site", result.message);
+                    history.replaceState(history.state, "", pageUrl.pathname + pageUrl.search + pageUrl.hash);
                 }
                 _dfr.resolve(result);
             });

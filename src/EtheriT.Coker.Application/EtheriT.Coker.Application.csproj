@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="16.1.1" />
+    <PackageReference Include="AutoMapper" Version="16.2.0" />
     <PackageReference Include="DevExpress.Reporting.Core" Version="25.2.8" />
     <PackageReference Include="DevExtreme.AspNet.Core" Version="25.2.8" />
     <PackageReference Include="DevExtreme.AspNet.Data" Version="5.1.0" />
@@ -31,7 +31,7 @@
     <PackageReference Include="SimpleCaptcha" Version="1.0.0" />
     <PackageReference Include="System.Drawing.Common" Version="10.0.9" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.9" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.10" />
   </ItemGroup>
 
   <ItemGroup>

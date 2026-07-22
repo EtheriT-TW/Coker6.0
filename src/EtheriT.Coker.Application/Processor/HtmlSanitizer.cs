@@ -15,6 +15,7 @@ namespace EtheriT.Coker.Application.Processor
             if (string.IsNullOrWhiteSpace(html))
                 return string.Empty;
 
+            html = NormalizeLegacyAttributes(html);
             html = ExtractBodyInnerHtmlIfExists(html);
 
             var doc = new HtmlDocument
@@ -27,10 +28,189 @@ namespace EtheriT.Coker.Application.Processor
             RemoveBackstageNodes(doc);
             RemoveDisallowedNodes(doc);
             SanitizeAttributes(doc);
+            NormalizeStylesheetLinks(doc);
             NormalizeLinks(doc);
             NormalizeIframes(doc);
 
             return doc.DocumentNode.OuterHtml;
+        }
+
+        public string NormalizeLegacyAttributes(string html)
+        {
+            if (string.IsNullOrWhiteSpace(html))
+                return string.Empty;
+
+            var doc = new HtmlDocument
+            {
+                OptionFixNestedTags = true
+            };
+
+            doc.LoadHtml(html);
+
+            var nodes = doc.DocumentNode
+                .Descendants()
+                .Where(node =>
+                    node.NodeType == HtmlNodeType.Element &&
+                    HasClass(node, "YTmodal_frame") &&
+                    (node.Attributes["link"] != null || node.Attributes["yttitle"] != null)
+                )
+                .ToList();
+
+            if (nodes.Count == 0)
+                return html;
+
+            foreach (var node in nodes)
+            {
+                MoveLegacyAttribute(node, "link", "data-link");
+                MoveLegacyAttribute(node, "yttitle", "data-yt-title");
+            }
+
+            return doc.DocumentNode.OuterHtml;
+        }
+
+        public string RepairLegacyPublishedHtml(string publishedHtml, string editorHtml)
+        {
+            publishedHtml = DecodeStoredDocumentMarkup(publishedHtml ?? string.Empty);
+            editorHtml = DecodeStoredDocumentMarkup(editorHtml ?? string.Empty);
+
+            // Do this before checking the sanitize hash. Some content was marked
+            // current by an older flow even though its published HTML still
+            // contains a title element. Removing the node here changes the input
+            // and makes the caller force a sanitize + database update.
+            var repairedHtml = RemoveTitleElements(publishedHtml);
+            repairedHtml = RemoveLegacyTitleText(repairedHtml, editorHtml);
+
+            // v4 removed every link element. Recover only approved stylesheet
+            // links from editor HTML; never copy editor body content.
+            if (editorHtml.IndexOf("<link", StringComparison.OrdinalIgnoreCase) < 0 ||
+                repairedHtml.IndexOf("<link", StringComparison.OrdinalIgnoreCase) >= 0)
+                return repairedHtml;
+
+            var cleanPublishedHtml = SanitizePublicHtml(repairedHtml);
+            var cleanEditorHtml = SanitizePublicHtml(editorHtml);
+            var editorDocument = LoadDocument(cleanEditorHtml);
+            var approvedLinks = editorDocument.DocumentNode
+                .Descendants("link")
+                .ToList();
+
+            if (approvedLinks.Count == 0)
+                return cleanPublishedHtml;
+
+            var publishedDocument = LoadDocument(cleanPublishedHtml);
+            var existingHrefs = new HashSet<string>(
+                publishedDocument.DocumentNode
+                    .Descendants("link")
+                    .Select(link => NormalizeStylesheetHref(link.GetAttributeValue("href", "")))
+                    .Where(href => !string.IsNullOrWhiteSpace(href)),
+                StringComparer.OrdinalIgnoreCase
+            );
+
+            // Prepend in reverse so the editor's stylesheet order remains intact.
+            foreach (var link in approvedLinks.AsEnumerable().Reverse())
+            {
+                var href = NormalizeStylesheetHref(link.GetAttributeValue("href", ""));
+                if (string.IsNullOrWhiteSpace(href) || !existingHrefs.Add(href))
+                    continue;
+
+                publishedDocument.DocumentNode.PrependChild(link.CloneNode(true));
+            }
+
+            return publishedDocument.DocumentNode.OuterHtml;
+        }
+
+        private static string DecodeStoredDocumentMarkup(string html)
+        {
+            // Some legacy SaveHtml values were encoded more than once. Decode
+            // only while an encoded document-level tag is visible, so ordinary
+            // body text such as "&lt;example&gt;" remains escaped.
+            const string encodedDocumentTagPattern =
+                @"&(amp;)*(?:lt|#0*60|#x0*3c);?\s*(?:html|body|head|title|meta|link)\b";
+
+            var decoded = html;
+            for (var index = 0; index < 5; index++)
+            {
+                if (!Regex.IsMatch(decoded, encodedDocumentTagPattern, RegexOptions.IgnoreCase))
+                    break;
+
+                var next = HtmlEntity.DeEntitize(decoded);
+                if (string.Equals(next, decoded, StringComparison.Ordinal))
+                    break;
+
+                decoded = next;
+            }
+
+            return decoded;
+        }
+
+        private static string RemoveTitleElements(string html)
+        {
+            if (html.IndexOf("<title", StringComparison.OrdinalIgnoreCase) < 0)
+                return html;
+
+            var document = LoadDocument(html);
+            var titleNodes = document.DocumentNode
+                .Descendants("title")
+                .ToList();
+
+            if (titleNodes.Count == 0)
+                return html;
+
+            foreach (var titleNode in titleNodes)
+                titleNode.Remove();
+
+            return document.DocumentNode.OuterHtml;
+        }
+
+        private static string RemoveLegacyTitleText(string publishedHtml, string editorHtml)
+        {
+            if (editorHtml.IndexOf("<title", StringComparison.OrdinalIgnoreCase) < 0)
+                return publishedHtml;
+
+            var editorDocument = LoadDocument(editorHtml);
+            var titleTexts = editorDocument.DocumentNode
+                .Descendants("title")
+                .Select(title => NormalizeText(title.InnerText))
+                .Where(title => !string.IsNullOrWhiteSpace(title))
+                .ToHashSet(StringComparer.Ordinal);
+
+            if (titleTexts.Count == 0)
+                return publishedHtml;
+
+            var publishedDocument = LoadDocument(publishedHtml);
+            var orphanTitleNodes = publishedDocument.DocumentNode
+                .DescendantsAndSelf()
+                .Where(node => node.NodeType == HtmlNodeType.Text)
+                .Where(node => IsDocumentLevelText(node, publishedDocument.DocumentNode))
+                .Where(node => titleTexts.Contains(NormalizeText(node.InnerText)))
+                .ToList();
+
+            if (orphanTitleNodes.Count == 0)
+                return publishedHtml;
+
+            foreach (var node in orphanTitleNodes)
+                node.Remove();
+
+            return publishedDocument.DocumentNode.OuterHtml;
+        }
+
+        private static bool IsDocumentLevelText(HtmlNode node, HtmlNode documentNode)
+        {
+            for (var parent = node.ParentNode; parent != null && parent != documentNode; parent = parent.ParentNode)
+            {
+                if (!string.Equals(parent.Name, "html", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(parent.Name, "body", StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private static string NormalizeText(string value)
+        {
+            var decoded = HtmlEntity.DeEntitize(value ?? string.Empty)
+                .Normalize(NormalizationForm.FormKC);
+            decoded = Regex.Replace(decoded, @"\p{Cf}+", string.Empty);
+            return Regex.Replace(decoded, @"\s+", " ").Trim();
         }
 
         public string SanitizePublicCss(string css)
@@ -74,7 +254,15 @@ namespace EtheriT.Coker.Application.Processor
             if (body == null)
                 return html;
 
-            return body.InnerHtml ?? string.Empty;
+            // Some imported legacy documents keep page-specific stylesheets in
+            // head. Preserve only the link candidates here; the normal sanitizer
+            // validates rel, scheme, host and attributes afterwards.
+            var headLinks = doc.DocumentNode
+                .SelectNodes("//head//link")?
+                .Select(link => link.OuterHtml)
+                .ToList() ?? new List<string>();
+
+            return string.Concat(headLinks) + (body.InnerHtml ?? string.Empty);
         }
 
         private void RemoveBackstageNodes(HtmlDocument doc)
@@ -105,9 +293,12 @@ namespace EtheriT.Coker.Application.Processor
                 "svg",
                 "math",
                 "meta",
-                "link",
                 "base",
-                "noscript"
+                "noscript",
+                // 舊版編輯器可能把完整文件的 head/title 一併存入正文。
+                // 這些標籤若只移除外框，頁名會變成正文前方的孤立文字節點。
+                "head",
+                "title"
             };
 
             var nodes = doc.DocumentNode
@@ -432,6 +623,56 @@ namespace EtheriT.Coker.Application.Processor
             return classValue
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries)
                 .Any(c => string.Equals(c, className, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static HtmlDocument LoadDocument(string html)
+        {
+            var document = new HtmlDocument
+            {
+                OptionFixNestedTags = true
+            };
+            document.LoadHtml(html ?? string.Empty);
+            return document;
+        }
+
+        private void NormalizeStylesheetLinks(HtmlDocument doc)
+        {
+            var links = doc.DocumentNode
+                .Descendants("link")
+                .ToList();
+
+            foreach (var link in links)
+            {
+                var relTokens = SplitTokens(link.GetAttributeValue("rel", ""));
+                var isStylesheetOnly = relTokens.Count == 1 && relTokens.Contains("stylesheet");
+                var href = link.GetAttributeValue("href", "");
+
+                if (!isStylesheetOnly || !ExternalStylesheetPolicy.IsAllowedHref(href))
+                {
+                    link.Remove();
+                    continue;
+                }
+
+                // Canonicalize the only supported link relationship.
+                link.SetAttributeValue("rel", "stylesheet");
+            }
+        }
+
+        private static string NormalizeStylesheetHref(string href)
+        {
+            return HtmlEntity.DeEntitize(href ?? string.Empty).Trim();
+        }
+
+        private static void MoveLegacyAttribute(HtmlNode node, string legacyName, string standardName)
+        {
+            var legacyAttribute = node.Attributes[legacyName];
+            if (legacyAttribute == null)
+                return;
+
+            if (node.Attributes[standardName] == null)
+                node.SetAttributeValue(standardName, legacyAttribute.Value ?? string.Empty);
+
+            node.Attributes.Remove(legacyName);
         }
 
         private string NormalizeName(string name)

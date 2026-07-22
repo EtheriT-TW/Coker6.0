@@ -89,6 +89,11 @@ namespace EtheriT.Coker.Application.Processor
             };
         }
 
+        public string RepairLegacyPublishedHtml(string publishedHtml, string editorHtml)
+        {
+            return htmlSanitizer.RepairLegacyPublishedHtml(publishedHtml, editorHtml);
+        }
+
         public async Task<bool> IsCurrentAsync(
             long websiteId,
             HtmlSanitizeSourceType sourceType,

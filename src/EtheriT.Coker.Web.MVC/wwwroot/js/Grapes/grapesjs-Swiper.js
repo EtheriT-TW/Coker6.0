@@ -495,8 +495,8 @@ grapesjs.plugins.add('grapesjs-Swiper', (editor, options) => {
                 removable: true,
                 editable: true,
                 traits: [
-                    { name: 'yttitle', type: 'text', label: '標題', placeholder: '請輸入影片標題' },
-                    { name: 'link', type: 'text', label: '網址', placeholder: '請輸入影片網址(僅支援YT、FB)' },
+                    { name: 'data-yt-title', type: 'text', label: '標題', placeholder: '請輸入影片標題' },
+                    { name: 'data-link', type: 'text', label: '網址', placeholder: '請輸入影片網址(僅支援YT、FB)' },
                     {
                         name: 'thumb', type: 'button',
                         text: "選擇預覽圖片",
@@ -515,15 +515,15 @@ grapesjs.plugins.add('grapesjs-Swiper', (editor, options) => {
                 ]
             }, init() {
 
-                this.on('change:attributes:link', function (component) {
+                this.on('change:attributes:data-link', function (component) {
                     if (typeof (component.getEl()) != "undefined") {
-                        var link = component.getAttributes()["link"];
+                        var link = component.getAttributes()["data-link"];
                         const el = component.getEl();
                         if (link) {
                             const video = getVideoUrl(link);
                             const img = el.querySelector('img');
                             if (link != video.url) {
-                                component.setAttributes({ 'link': video.url });
+                                component.addAttributes({ 'data-link': video.url });
                                 const oldSrc = img ? img.getAttribute("src") : "";
                                 if (oldSrc.startsWith("data:") || oldSrc.startsWith("/images/")) {
                                     if (video.img != "") {
@@ -534,9 +534,9 @@ grapesjs.plugins.add('grapesjs-Swiper', (editor, options) => {
                         }
                     }
                 });
-                this.on('change:attributes:yttitle', function (component) {
+                this.on('change:attributes:data-yt-title', function (component) {
                     if (typeof (component.getEl()) != "undefined") {
-                        var title = component.getAttributes()["yttitle"];
+                        var title = component.getAttributes()["data-yt-title"];
                         if (typeof (title) != "undefined") {
                             const el = component.getEl();
                             const img = el.querySelector('img');
@@ -544,6 +544,21 @@ grapesjs.plugins.add('grapesjs-Swiper', (editor, options) => {
                         }
                     }
                 });
+
+                // 編輯尚未經背景轉換的舊草稿時，載入當下就改為標準 data-* 屬性；
+                // GrapesJS 後續輸出的 HTML 不會再產生 link / yttitle。
+                const attributes = this.getAttributes();
+                const normalizedAttributes = {};
+                if (!attributes["data-link"] && attributes["link"]) {
+                    normalizedAttributes["data-link"] = attributes["link"];
+                }
+                if (!attributes["data-yt-title"] && attributes["yttitle"]) {
+                    normalizedAttributes["data-yt-title"] = attributes["yttitle"];
+                }
+                if (Object.keys(normalizedAttributes).length > 0) {
+                    this.addAttributes(normalizedAttributes);
+                }
+                this.removeAttributes(["link", "yttitle"]);
             }
         }
     });

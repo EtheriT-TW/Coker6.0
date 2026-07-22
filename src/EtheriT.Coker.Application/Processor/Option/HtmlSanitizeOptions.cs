@@ -86,6 +86,7 @@ namespace EtheriT.Coker.Application.Processor.Option
 
             // Link / media
             "a",
+            "link",
             "img",
             "picture",
             "source",
@@ -174,6 +175,17 @@ namespace EtheriT.Coker.Application.Processor.Option
                 "download",
                 "hreflang",
                 "type"
+            },
+
+            ["link"] = new(StringComparer.OrdinalIgnoreCase)
+            {
+                "href",
+                "rel",
+                "type",
+                "media",
+                "integrity",
+                "crossorigin",
+                "referrerpolicy"
             },
 
             ["img"] = new(StringComparer.OrdinalIgnoreCase)

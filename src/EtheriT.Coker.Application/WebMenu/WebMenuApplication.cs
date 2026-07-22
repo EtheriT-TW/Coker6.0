@@ -838,11 +838,23 @@ namespace EtheriT.Coker.Application
 
         private async Task<(string Html, string Css)> EnsureMenuDisplayContentSanitizedAsync(WebMenu menu)
         {
+            var publishedHtml = stringHandler.HtmlDecode(menu.Html ?? "");
+            var restoredHtml = htmlSanitizeService.RepairLegacyPublishedHtml(
+                publishedHtml,
+                stringHandler.HtmlDecode(menu.SaveHtml ?? "")
+            );
+            var repairedLegacyHtml = !string.Equals(
+                publishedHtml,
+                restoredHtml,
+                StringComparison.Ordinal
+            );
+
             var sanitized = await SanitizeMenuPublishedContentAsync(
                 menu.FK_WebsiteId,
                 menu.Id,
-                stringHandler.HtmlDecode(menu.Html ?? ""),
-                menu.Css ?? ""
+                restoredHtml,
+                menu.Css ?? "",
+                repairedLegacyHtml
             );
 
             if (sanitized.WasSanitized)

@@ -22,6 +22,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Advertise
         public int SerNO { get; set; }
         public string? Html { get; set; }
         public string? Css { get; set; }
+        [Newtonsoft.Json.JsonIgnore]
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string? EditorHtml { get; set; }
         public AdvertiseActionType ActionType { get; set; }
         public List<FileGetDisplayDto> FileLink { get; set; }
         public List<TagGetAllDataDto> TagDatas { get; set; }

@@ -1,5 +1,6 @@
 ﻿using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Application;
 using EtheriT.Coker.Web.MVC.Common;
 using EtheriT.Coker.Web.MVC.Startup;
 using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
@@ -23,6 +24,41 @@ namespace EtheriT.Coker.Web.MVC.Middleware
                 context.Request.Path.StartsWithSegments("/api") ||
                 context.Request.Path.StartsWithSegments("/front") ||
                 path.StartsWith("/DXX", StringComparison.OrdinalIgnoreCase);
+
+            // The selected website lives on the shared login token. Bind requests to the
+            // website that was active when this browser tab loaded, so an old tab cannot
+            // silently operate on a website selected by another tab.
+            if (context.User.Identity?.IsAuthenticated == true)
+            {
+                var loginUserData = context.RequestServices.GetRequiredService<LoginUserData>();
+                var currentWebsiteId = await loginUserData.GetWebsiteId();
+
+                if (isApiRequest &&
+                    !context.Request.Path.StartsWithSegments("/api/Website/Exchange") &&
+                    context.Request.Headers.TryGetValue("X-Coker-Website-Id", out var websiteHeader) &&
+                    long.TryParse(websiteHeader.FirstOrDefault(), out var pageWebsiteId) &&
+                    pageWebsiteId != currentWebsiteId)
+                {
+                    context.Response.StatusCode = StatusCodes.Status409Conflict;
+                    context.Response.Headers["X-Coker-Website-Mismatch"] = "true";
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        success = false,
+                        error = "網站已在其他分頁切換，此分頁已停止載入與儲存資料。請重新整理頁面。"
+                    });
+                    return;
+                }
+
+                if (!isApiRequest &&
+                    context.Request.Query.TryGetValue("_site", out var siteQuery) &&
+                    long.TryParse(siteQuery.FirstOrDefault(), out var requestedWebsiteId) &&
+                    requestedWebsiteId != currentWebsiteId)
+                {
+                    var currentPage = context.Request.PathBase + context.Request.Path;
+                    context.Response.Redirect($"{currentPage}?siteChanged=true");
+                    return;
+                }
+            }
 
             if (isApiRequest)
             {

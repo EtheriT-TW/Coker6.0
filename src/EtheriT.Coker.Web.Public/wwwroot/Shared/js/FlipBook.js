@@ -1,89 +1,150 @@
-﻿function FlipBookInit() {
-    var $this = $(".FlipBook");
+let flipBookReadyPromise = null;
+
+function FlipBookInit() {
+    const $flipBook = $(".FlipBook").first();
+    const $flipBookItem = $(".FlipBookItem").first();
+    if ($flipBook.length === 0 || $flipBookItem.length === 0) return Promise.resolve();
+
     const pdfVersion = [{
         version: "pdfjs-4.5.136-dist", ext: "mjs"
     }, {
         version: "pdfjs-2.1.266-dist", ext: "js"
     }];
-    let index = 1;
-    if (!isNaN($(".FlipBookItem").data("type"))) index = parseInt($(".FlipBookItem").data("type"));
+
+    let index = parseInt($flipBookItem.attr("data-type"), 10);
+    if (isNaN(index) || !pdfVersion[index]) index = 1;
+
     const usePdf = pdfVersion[index];
-    $this.addClass("d-none");
+    const pare = /^pdfjs-4/.test(usePdf.version)
+        ? { mode: 4, lName: "#listeners" }
+        : { mode: 3, lName: "_listeners" };
 
-    if (typeof ($this.data("pdf")) == "undefined" || !$this.data("pdf")) {
-        console.log("No PDF file specified for FlipBook");
-        target_pdf = `/lib/pdf-viewer/external/${usePdf.version}/web/compressed.tracemonkey-pldi-09.pdf`;
-    }
-    else {
-        var target_pdf = $this.data('pdf');
+    if (flipBookReadyPromise === null) {
+        $flipBook.addClass("d-none");
+        flipBookReadyPromise = loadFlipBookRuntime($flipBook, usePdf, pare).catch(function (error) {
+            flipBookReadyPromise = null;
+            console.error("FlipBook initialization failed.", error);
+            throw error;
+        });
     }
 
-    var flipbook_container = document.createElement("div");
-
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function () {
-        if (this.readyState == 4) {
-            if (this.status == 200) {
-                flipbook_container.innerHTML = this.responseText;
-            }
-            if (this.status == 404) { flipbook_container.innerHTML = "Page not found."; }
-            $(flipbook_container).find("meta,title,script").remove();
-            const loadJs = [];
-            $.LoadJs(`/lib/pdf-viewer/external/${usePdf.version}/build/pdf.${usePdf.ext}`).done(function () {
-                loadJs.push(...[
-                    $.LoadJs(`/lib/pdf-viewer/external/${usePdf.version}/web/viewer.${usePdf.ext}`),
-                    $.LoadJs(`/lib/pdf-viewer/external/turn.js`),
-                    $.LoadJs(`/lib/pdf-viewer/pdf-turn/pdf-turn.js`)
-                ])
-            });
-            $this.append(flipbook_container);
-            $this.removeClass("d-none");
-            if ($(".FlipBookModal").length > 0) {
-                $.when.apply(null, loadJs).done(function () {
-                    if (/^pdfjs-4/.test(usePdf.version)) FlipBookModalInit({ mode: 4, lName: "#listeners" });
-                    else FlipBookModalInit({ mode: 3, lName: "_listeners" });
-                });
-            }
-        }
-    }
-    xhttp.open("GET", `/lib/pdf-viewer/external/${usePdf.version}/web/viewer.html?file=`, true);
-    xhttp.send();
+    bindFlipBookModal(flipBookReadyPromise);
+    return flipBookReadyPromise;
 }
 
-function FlipBookModalInit(pare) {
-    var $this = $(".FlipBookModal");
-    const modal = bootstrap.Modal.getOrCreateInstance($this[0]);
-    let timer = null;
-    const init = function () {
-        if (typeof bookFlip !== 'undefined' &&
-            typeof (PDFViewerApplication) !== "undefined" && typeof (PDFViewerApplication.eventBus) !== "undefined" && PDFViewerApplication.eventBus != null
-        ) {
-            if (typeof ($(this).data("init")) == "undefined" && !$(this).data("init")) {
-                console.log("bookFlip.init");
-                $(this).data("init", true);
-                PDFViewerApplication.closeModal = function () {
-                    modal.hide();
-                };
-                if (typeof (PDFViewerApplication.initializedPromise) != "undefined") {
-                    PDFViewerApplication.initializedPromise.then(function () {
-                        // 確保 PDF.js 初始化完成後，覆寫 setTitleUsingUrl 方法
-                        PDFViewerApplication.setTitleUsingUrl = function () {
-                            // Do nothing to prevent title change
-                        };
+async function loadFlipBookRuntime($flipBook, usePdf, pare) {
+    const viewerHtml = await loadFlipBookViewerHtml(
+        `/lib/pdf-viewer/external/${usePdf.version}/web/viewer.html?file=`
+    );
+    const flipbookContainer = document.createElement("div");
+    flipbookContainer.innerHTML = viewerHtml;
+    $(flipbookContainer).find("meta,title,script").remove();
 
-                        console.log('PDF.js has been initialized, title change has been disabled.');
-                    });
-                }
-                bookFlip.init(pare);
-            }
-        } else timer = setTimeout(init, 100);
+    // The runtime expects a single viewer DOM. Re-entry must not append a second copy.
+    $flipBook.empty().append(flipbookContainer);
+
+    await loadFlipBookScript(`/lib/pdf-viewer/external/${usePdf.version}/build/pdf.${usePdf.ext}`);
+    await Promise.all([
+        loadFlipBookScript(`/lib/pdf-viewer/external/${usePdf.version}/web/viewer.${usePdf.ext}`),
+        loadFlipBookScript("/lib/pdf-viewer/external/turn.js")
+    ]);
+    await loadFlipBookScript("/lib/pdf-viewer/pdf-turn/pdf-turn.js");
+    await waitForFlipBookRuntime();
+
+    if (typeof PDFViewerApplication.initializedPromise !== "undefined") {
+        await PDFViewerApplication.initializedPromise;
     }
-    timer = setTimeout(init, 100);
-    $this.on('shown.bs.modal', event => {
-        // Button that triggered the modal
-        var button = event.relatedTarget;
-        var target_pdf = button.getAttribute('data-pdf-url');
-        PDFViewerApplication.setInitialView();
-        PDFViewerApplication.open({ url: target_pdf, originalUrl: target_pdf });
+
+    initializeFlipBookModalRuntime(pare);
+    $flipBook.removeClass("d-none");
+}
+
+function loadFlipBookViewerHtml(url) {
+    return new Promise(function (resolve, reject) {
+        const request = new XMLHttpRequest();
+        request.onreadystatechange = function () {
+            if (request.readyState !== 4) return;
+
+            if (request.status >= 200 && request.status < 300) {
+                resolve(request.responseText);
+            } else {
+                reject(new Error(`Unable to load FlipBook viewer (${request.status}).`));
+            }
+        };
+        request.onerror = function () {
+            reject(new Error("Unable to load FlipBook viewer."));
+        };
+        request.open("GET", url, true);
+        request.send();
+    });
+}
+
+function loadFlipBookScript(url) {
+    return Promise.resolve($.LoadJs(url));
+}
+
+function waitForFlipBookRuntime() {
+    const timeout = 15000;
+    const startedAt = Date.now();
+
+    return new Promise(function (resolve, reject) {
+        const check = function () {
+            if (typeof bookFlip !== "undefined" &&
+                typeof PDFViewerApplication !== "undefined" &&
+                PDFViewerApplication.eventBus != null) {
+                resolve();
+                return;
+            }
+
+            if (Date.now() - startedAt >= timeout) {
+                reject(new Error("Timed out while waiting for the FlipBook runtime."));
+                return;
+            }
+
+            setTimeout(check, 100);
+        };
+
+        check();
+    });
+}
+
+function initializeFlipBookModalRuntime(pare) {
+    const $modal = $(".FlipBookModal").first();
+    if ($modal.length === 0 || $modal.data("flipbook-init")) return;
+
+    const modal = bootstrap.Modal.getOrCreateInstance($modal[0]);
+    $modal.data("flipbook-init", true);
+
+    PDFViewerApplication.closeModal = function () {
+        modal.hide();
+    };
+    PDFViewerApplication.setTitleUsingUrl = function () {
+        // Keep the website title when PDF.js opens a document.
+    };
+    bookFlip.init(pare);
+}
+
+function bindFlipBookModal(readyPromise) {
+    const $modal = $(".FlipBookModal").first();
+    if ($modal.length === 0) return;
+
+    $modal.off("shown.bs.modal.flipBook").on("shown.bs.modal.flipBook", async function (event) {
+        const button = event.relatedTarget;
+        const targetPdf = button ? button.getAttribute("data-pdf-url") : null;
+        if (!targetPdf) {
+            console.warn("No PDF file specified for FlipBook.");
+            return;
+        }
+
+        try {
+            await readyPromise;
+            PDFViewerApplication.setInitialView();
+            await Promise.resolve(PDFViewerApplication.open({
+                url: targetPdf,
+                originalUrl: targetPdf
+            }));
+        } catch (error) {
+            console.error("Unable to open FlipBook PDF.", error);
+        }
     });
 }

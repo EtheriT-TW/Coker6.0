@@ -1,15 +1,18 @@
 ﻿@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Header
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
 @inject EtheriT.Coker.Web.MVC.Startup.NavigationProvider NavigationProvider
+@inject EtheriT.Coker.Application.LoginUserData LoginUserData
 <!DOCTYPE html>
 <html lang="zh-tw">
 <head>
 	@{
 		var site = await NavigationProvider.getMenus();
+		var currentWebsiteId = await LoginUserData.GetWebsiteId();
 		var pageName = ViewData["Title"]?.ToString() ?? "";
 		var pageTitle = site.PageTitleMap.TryGetValue(pageName, out var title) ? title: pageName;
 	}
 	<meta charset="utf-8" />
+	<meta name="coker-website-id" content="@currentWebsiteId" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>@pageTitle - EtheriT.Coker.Web.MVC</title>
 	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -28,6 +31,94 @@
 	<script src="/lib/knockout/knockout.min.js" asp-append-version="true"></script>
 	<script src="~/js/vendor.min.js" asp-append-version="true"></script>
 	<script src="~/js/CokerCore.min.js" asp-append-version="true"></script>
+	<script>
+		(function () {
+			const websiteId = document.querySelector('meta[name="coker-website-id"]')?.content;
+			if (!websiteId) return;
+
+			Coker.Data.Header["X-Coker-Website-Id"] = websiteId;
+			const pageUrl = new URL(window.location.href);
+			if (!pageUrl.searchParams.has("_site")) {
+				pageUrl.searchParams.set("_site", websiteId);
+				history.replaceState(history.state, "", pageUrl.pathname + pageUrl.search + pageUrl.hash);
+			}
+
+			// Update the marker before the switcher's callback reloads the page.
+			// This lets the tab that initiated the switch continue on the same screen.
+			const originalExchange = Coker.WebSite.exchange;
+			Coker.WebSite.exchange = function (id) {
+				const request = originalExchange.call(Coker.WebSite, id);
+				request.done(function (result) {
+					if (!result || !result.success) return;
+					Coker.Data.Header["X-Coker-Website-Id"] = result.message;
+					const switchedUrl = new URL(window.location.href);
+					switchedUrl.searchParams.set("_site", result.message);
+					history.replaceState(history.state, "", switchedUrl.pathname + switchedUrl.search + switchedUrl.hash);
+				});
+				return request;
+			};
+
+			$.ajaxPrefilter(function (options) {
+				const requestUrl = new URL(options.url || window.location.href, window.location.origin);
+				if (requestUrl.origin === window.location.origin) {
+					options.headers = options.headers || {};
+					options.headers["X-Coker-Website-Id"] = websiteId;
+				}
+			});
+
+			let mismatchShown = false;
+			function showWebsiteMismatch() {
+				if (mismatchShown) return;
+				mismatchShown = true;
+				const message = "網站已在其他分頁切換，此分頁無法繼續載入或儲存資料。請重新整理頁面。";
+				if (window.Swal) {
+					Swal.fire({ icon: "warning", title: "網站已切換", text: message, confirmButtonText: "重新整理" })
+						.then(function () { window.location.reload(); });
+				} else {
+					alert(message);
+				}
+			}
+
+			$(document).ajaxError(function (_event, xhr) {
+				if (xhr.status === 409 && xhr.getResponseHeader("X-Coker-Website-Mismatch") === "true") {
+					showWebsiteMismatch();
+				}
+			});
+
+			const originalFetch = window.fetch.bind(window);
+			window.fetch = function (input, init) {
+				const requestUrl = new URL(input instanceof Request ? input.url : input, window.location.origin);
+				if (requestUrl.origin === window.location.origin) {
+					init = init || {};
+					init.headers = new Headers(init.headers || (input instanceof Request ? input.headers : undefined));
+					init.headers.set("X-Coker-Website-Id", websiteId);
+				}
+				return originalFetch(input, init).then(function (response) {
+					if (response.status === 409 && response.headers.get("X-Coker-Website-Mismatch") === "true") {
+						showWebsiteMismatch();
+					}
+					return response;
+				});
+			};
+
+			if (pageUrl.searchParams.get("siteChanged") === "true") {
+				// Redirect responses do not receive the URL fragment on the server, and browsers
+				// may carry the old fragment forward. Remove it before page initialization so an
+				// old product id is never loaded under the newly selected website.
+				history.replaceState(history.state, "", pageUrl.pathname);
+				window.addEventListener("load", function () {
+					if (window.Swal) {
+						Swal.fire({
+							icon: "warning",
+							title: "網站已切換",
+							text: "這個分頁屬於切換前的網站，系統已停止載入原網站資料。",
+							confirmButtonText: "確定"
+						});
+					}
+				});
+			}
+		})();
+	</script>
 	@RenderSection("styles", required: false)
 </head>
 <body>

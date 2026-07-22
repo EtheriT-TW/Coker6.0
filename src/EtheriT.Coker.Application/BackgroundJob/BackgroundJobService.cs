@@ -29,6 +29,10 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 "PageTextBackfill",
                 job => job.Run(),
                 Cron.Daily(2));
+            _recurringJobManager.AddOrUpdate<HtmlLegacyAttributeNormalizationJob>(
+                "HtmlLegacyAttributeNormalization",
+                job => job.Run(),
+                Cron.Daily(2, 30));
             _recurringJobManager.RemoveIfExists("FlowSizes"); //暫時移除該工作
             //_recurringJobManager.AddOrUpdate<FlowSizesWorking>("FlowSizes", job => job.FlowSizeCollection(), Cron.Daily(17, 00));
         }

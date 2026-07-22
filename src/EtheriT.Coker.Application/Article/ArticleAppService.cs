@@ -944,11 +944,17 @@ namespace EtheriT.Coker.Application.Article
         {
             var html = stringHandler.HtmlDecode(article.Html ?? "");
             var css = article.Css ?? "";
+            var restoredHtml = htmlSanitizeService.RepairLegacyPublishedHtml(
+                html,
+                stringHandler.HtmlDecode(article.SaveHtml ?? "")
+            );
+            var repairedLegacyHtml = !string.Equals(html, restoredHtml, StringComparison.Ordinal);
             var sanitized = await SanitizeArticlePublishedContentAsync(
                 article.FK_WebsiteId,
                 article.Id,
-                html,
-                css
+                restoredHtml,
+                css,
+                repairedLegacyHtml
             );
 
             if (sanitized.WasSanitized)

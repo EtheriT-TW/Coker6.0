@@ -146,7 +146,9 @@ namespace EtheriT.Coker.Application.Product
                 }
                 else
                 {
-                    var db_p = db.Prods.Where(e => e.Id == dto.Id).FirstOrDefault();
+                    var db_p = db.Prods
+                        .Where(e => e.Id == dto.Id && e.FK_WebsiteId == WebsiteID && !e.IsDeleted)
+                        .FirstOrDefault();
                     if (db_p != null)
                     {
                         var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == db_p.Id).ToListAsync();
@@ -190,6 +192,7 @@ namespace EtheriT.Coker.Application.Product
                         mapper.Map(dto, db_p);
                         await loginUserData.SaveChanges(db_p);
                     }
+                    else throw new Exception("商品不屬於目前網站，可能已在其他分頁切換網站");
                 }
 
                 if (asoid != 0)
@@ -251,10 +254,13 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 var idMappings = new List<StockIdMappingDto>();
+                var websiteId = await loginUserData.GetWebsiteId();
                 var noStockManagement = await db.Prods
-                    .Where(e => e.Id == Pid)
-                    .Select(e => e.NoStockManagement)
+                    .Where(e => e.Id == Pid && e.FK_WebsiteId == websiteId && !e.IsDeleted)
+                    .Select(e => (bool?)e.NoStockManagement)
                     .FirstOrDefaultAsync();
+                if (!noStockManagement.HasValue)
+                    throw new Exception("商品不屬於目前網站，已停止儲存");
                 long usetId = await loginUserData.GetUserId();
                 output.Message = "";
                 for (int i = 0; i < dto.Count; i++)
@@ -267,7 +273,7 @@ namespace EtheriT.Coker.Application.Product
                             FK_Pid = Pid,
                             FK_S1id = item.FK_S1id,
                             FK_S2id = item.FK_S2id,
-                            Stock = noStockManagement ? (int?) null : item.Stock,
+                            Stock = noStockManagement.Value ? (int?) null : item.Stock,
                             PackingPoint = item.PackingPoint,
                             Min_Qty = item.Min_Qty,
                             Alert_Qty = item.Alert_Qty,
@@ -293,7 +299,10 @@ namespace EtheriT.Coker.Application.Product
                     }
                     else
                     {
-                        var db_ps = await db.Prod_Stocks.Include(e => e.Prod).Where(e => e.Id == item.Id).FirstOrDefaultAsync();
+                        var db_ps = await db.Prod_Stocks.Include(e => e.Prod)
+                            .Where(e => e.Id == item.Id && e.FK_Pid == Pid &&
+                                        e.Prod != null && e.Prod.FK_WebsiteId == websiteId)
+                            .FirstOrDefaultAsync();
                         if (db_ps != null)
                         {
                             if (db_ps.Stock == 0 && item.Stock != 0 && db_ps.Prod != null)
@@ -301,7 +310,7 @@ namespace EtheriT.Coker.Application.Product
                                 if (db_ps.Prod.oStatus == null) db_ps.Prod.Status = ProdStatusEnum.一般;
                                 else db_ps.Prod.Status = db_ps.Prod.oStatus.Value;
                             }
-                            db_ps.Stock = noStockManagement ? (int?) null : item.Stock;
+                            db_ps.Stock = noStockManagement.Value ? (int?) null : item.Stock;
                             db_ps.IsTimePrice = item.TimePrice;
                             db_ps.FK_S1id = item.FK_S1id;
                             db_ps.FK_S2id = item.FK_S2id;
@@ -315,6 +324,7 @@ namespace EtheriT.Coker.Application.Product
                             db_ps.LastModificationTime = DateTime.Now;
                             db_ps.LastModifierUserId = usetId;
                         }
+                        else throw new Exception("商品規格不屬於目前網站，已停止儲存");
                     }
 
                     priceresponse = await PriceAddUp(item.Prices);
@@ -444,11 +454,17 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 long usetId = await loginUserData.GetUserId();
+                long websiteId = await loginUserData.GetWebsiteId();
                 if (usetId != 0)
                 {
                     for (int i = 0; i < dto.Count; i++)
                     {
                         var item = dto[i];
+                        var stockBelongsToWebsite = await db.Prod_Stocks
+                            .AnyAsync(e => e.Id == item.FK_PSId && e.Prod != null &&
+                                           e.Prod.FK_WebsiteId == websiteId && !e.Prod.IsDeleted);
+                        if (!stockBelongsToWebsite)
+                            throw new Exception("商品價格不屬於目前網站，已停止儲存");
                         //var allPrice = db.Prod_Prices.Where(e => !e.IsDeleted);
                         //var thePrice = await allPrice
                         //        .Where(e => e.FK_PSId == item.FK_PSId)
@@ -471,7 +487,9 @@ namespace EtheriT.Coker.Application.Product
                         }
                         else if (!item.IsDelete)
                         {
-                            var db_pp = await db.Prod_Prices.Where(e => e.Id == item.Id).FirstOrDefaultAsync();
+                            var db_pp = await db.Prod_Prices
+                                .Where(e => e.Id == item.Id && e.FK_PSId == item.FK_PSId)
+                                .FirstOrDefaultAsync();
 
                             if (db_pp != null)
                             {
@@ -481,6 +499,7 @@ namespace EtheriT.Coker.Application.Product
                                 db_pp.LastModifierUserId = usetId;
                                 db_pp.LastModificationTime = DateTime.Now;
                             }
+                            else throw new Exception("商品價格不屬於目前網站，已停止儲存");
                         }
                         else
                         {
@@ -1048,8 +1067,11 @@ namespace EtheriT.Coker.Application.Product
         {
             try
             {
-                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
-                var db_p = db.Prods.Where(e => e.Id == Id).OrderBy(e => e.Ser_No).FirstOrDefault();
+                var websiteId = await loginUserData.GetWebsiteId();
+                var db_p = await db.Prods
+                    .Where(e => e.Id == Id && e.FK_WebsiteId == websiteId && !e.IsDeleted)
+                    .OrderBy(e => e.Ser_No)
+                    .FirstOrDefaultAsync();
 
                 if (db_p != null)
                 {
@@ -1113,8 +1135,11 @@ namespace EtheriT.Coker.Application.Product
         {
             try
             {
+                var websiteId = await loginUserData.GetWebsiteId();
                 var output = await (from ps in db.Prod_Stocks
-                                    where !ps.IsDeleted && ps.FK_Pid == PId
+                                    join p in db.Prods on ps.FK_Pid equals p.Id
+                                    where !ps.IsDeleted && !p.IsDeleted && ps.FK_Pid == PId &&
+                                          p.FK_WebsiteId == websiteId
                                     orderby ps.Ser_No, ps.Id
                                     select new ProductStockDto
                                     {
@@ -1138,7 +1163,10 @@ namespace EtheriT.Coker.Application.Product
                                     }).ToListAsync();
 
 
-                var db_sp = await db.Prod_Specs.Where(e => !e.IsDeleted).ToListAsync();
+                var db_sp = await db.Prod_Specs
+                    .Where(e => !e.IsDeleted && e.Prod_Spec_Type != null &&
+                                e.Prod_Spec_Type.FK_WebsiteId == websiteId)
+                    .ToListAsync();
 
                 foreach (var item in output)
                 {
@@ -1192,9 +1220,13 @@ namespace EtheriT.Coker.Application.Product
             List<ProductPriceDto> output = new List<ProductPriceDto>();
             try
             {
+                var websiteId = await loginUserData.GetWebsiteId();
                 output = await (from pp in db.Prod_Prices
+                                join ps in db.Prod_Stocks on pp.FK_PSId equals ps.Id
+                                join p in db.Prods on ps.FK_Pid equals p.Id
                                 join r in db.Roles on pp.FK_RId equals r.Id
-                                where pp.FK_PSId == PSId
+                                where pp.FK_PSId == PSId && !p.IsDeleted &&
+                                      p.FK_WebsiteId == websiteId
                                 orderby r.Ser_No, pp.Price descending
                                 select new ProductPriceDto
                                 {
@@ -1721,7 +1753,10 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 long usetId = await loginUserData.GetUserId();
-                var db_p = db.Prods.Where(e => e.Id == Id).FirstOrDefault();
+                long websiteId = await loginUserData.GetWebsiteId();
+                var db_p = db.Prods
+                    .Where(e => e.Id == Id && e.FK_WebsiteId == websiteId && !e.IsDeleted)
+                    .FirstOrDefault();
 
                 if (db_p != null)
                 {
@@ -1812,6 +1847,11 @@ namespace EtheriT.Coker.Application.Product
 
                     db.SaveChanges();
                 }
+                else
+                {
+                    output.Success = false;
+                    output.Error = "商品不屬於目前網站，已停止刪除";
+                }
             }
             catch (Exception e)
             {
@@ -1829,7 +1869,12 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 long usetId = await loginUserData.GetUserId();
-                var db_ps = db.Prod_Stocks.Where(e => e.Id == Id).FirstOrDefault();
+                long websiteId = await loginUserData.GetWebsiteId();
+                var db_ps = db.Prod_Stocks
+                    .Include(e => e.Prod)
+                    .Where(e => e.Id == Id && e.Prod != null &&
+                                e.Prod.FK_WebsiteId == websiteId && !e.Prod.IsDeleted)
+                    .FirstOrDefault();
                 if (db_ps != null)
                 {
                     db_ps.IsDeleted = true;
@@ -1837,21 +1882,22 @@ namespace EtheriT.Coker.Application.Product
                     db_ps.DeleterUserId = usetId;
                     db.SaveChanges();
                     output.Success = true;
-                }
 
-                var db_pp = db.Prod_Prices.Where(e => e.FK_PSId == Id);
-                foreach (var item in db_pp)
-                {
-                    item.IsDeleted = true;
-                    item.DeleterUserId = usetId;
-                    item.DeletionTime = DateTime.Now;
-                }
+                    var db_pp = db.Prod_Prices.Where(e => e.FK_PSId == Id);
+                    foreach (var item in db_pp)
+                    {
+                        item.IsDeleted = true;
+                        item.DeleterUserId = usetId;
+                        item.DeletionTime = DateTime.Now;
+                    }
 
-                await fileUploadAppService.deleteFileById(new FileDeleteDto()
-                {
-                    Sid = Id,
-                    Type = (int)FileBindTypeEnum.產品規格圖,
-                });
+                    await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                    {
+                        Sid = Id,
+                        Type = (int)FileBindTypeEnum.產品規格圖,
+                    });
+                }
+                else output.Error = "商品規格不屬於目前網站，已停止刪除";
             }
             catch (Exception e)
             {
@@ -1869,7 +1915,12 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 long usetId = await loginUserData.GetUserId();
-                var db_pp = db.Prod_Prices.Where(e => e.Id == Id).FirstOrDefault();
+                long websiteId = await loginUserData.GetWebsiteId();
+                var db_pp = (from price in db.Prod_Prices
+                             join stock in db.Prod_Stocks on price.FK_PSId equals stock.Id
+                             join prod in db.Prods on stock.FK_Pid equals prod.Id
+                             where price.Id == Id && prod.FK_WebsiteId == websiteId && !prod.IsDeleted
+                             select price).FirstOrDefault();
                 if (db_pp != null)
                 {
                     db_pp.IsDeleted = true;
@@ -1878,6 +1929,7 @@ namespace EtheriT.Coker.Application.Product
                     db.SaveChanges();
                     output.Success = true;
                 }
+                else output.Error = "商品價格不屬於目前網站，已停止刪除";
             }
             catch (Exception e)
             {
@@ -2177,8 +2229,13 @@ namespace EtheriT.Coker.Application.Product
                     Css = dto.SaveCss
                 };
                 var s = await SaveConten(dto);
+                if (!s.Success)
+                    throw new Exception(s.Error ?? "商品內容儲存失敗");
                 var user = await loginUserData.GetUser();
-                var prod = await db.Prods.FirstOrDefaultAsync(e => e.Id == dto.Id);
+                var websiteId = await loginUserData.GetWebsiteId();
+                var prod = await db.Prods.FirstOrDefaultAsync(e => e.Id == dto.Id &&
+                                                                   e.FK_WebsiteId == websiteId &&
+                                                                   !e.IsDeleted);
                 if (prod != null)
                 {
                     string Orgname = await loginUserData.GetWebsiteOrgName();
@@ -2221,7 +2278,13 @@ namespace EtheriT.Coker.Application.Product
             {
                 dto.SaveHtml = HttpUtility.HtmlEncode(dto.SaveHtml);
                 var user = await loginUserData.GetUser();
-                var prod = await db.Prods.FirstOrDefaultAsync(e => e.Id == dto.Id);
+                var websiteId = await loginUserData.GetWebsiteId();
+                var prod = await db.Prods.FirstOrDefaultAsync(e => e.Id == dto.Id &&
+                                                                   e.FK_WebsiteId == websiteId &&
+                                                                   !e.IsDeleted);
+
+                if (prod == null)
+                    throw new Exception("商品不屬於目前網站，已停止儲存");
 
                 prod.SaveHtml = dto.SaveHtml;
                 prod.SaveCss = dto.SaveCss;
@@ -3395,11 +3458,23 @@ namespace EtheriT.Coker.Application.Product
 
         private async Task<(string Html, string Css)> EnsureProductDisplayContentSanitizedAsync(Prod product)
         {
+            var publishedHtml = stringHandler.HtmlDecode(product.Html ?? "");
+            var restoredHtml = htmlSanitizeService.RepairLegacyPublishedHtml(
+                publishedHtml,
+                stringHandler.HtmlDecode(product.SaveHtml ?? "")
+            );
+            var repairedLegacyHtml = !string.Equals(
+                publishedHtml,
+                restoredHtml,
+                StringComparison.Ordinal
+            );
+
             var sanitized = await SanitizeProductPublishedContentAsync(
                 product.FK_WebsiteId,
                 product.Id,
-                stringHandler.HtmlDecode(product.Html ?? ""),
-                product.Css ?? ""
+                restoredHtml,
+                product.Css ?? "",
+                repairedLegacyHtml
             );
 
             if (sanitized.WasSanitized)

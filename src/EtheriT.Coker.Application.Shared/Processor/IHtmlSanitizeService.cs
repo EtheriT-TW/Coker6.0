@@ -12,6 +12,8 @@ namespace EtheriT.Coker.Application.Shared.Processor
     {
         public Task<HtmlSanitizeResult> EnsurePublicContentAsync(HtmlSanitizeInput input);
 
+        public string RepairLegacyPublishedHtml(string publishedHtml, string editorHtml);
+
         public Task<bool> IsCurrentAsync(
             long websiteId,
             HtmlSanitizeSourceType sourceType,

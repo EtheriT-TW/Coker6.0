@@ -101,7 +101,8 @@ namespace EtheriT.Coker.Application.Templates
                                             WebsiteID,
                                             footerEntity.Id,
                                             html,
-                                            css
+                                            css,
+                                            stringHandler.HtmlDecode(footerEntity.saveHtml ?? "")
                                         );
 
                                         html = sanitized.Html;
@@ -421,8 +422,11 @@ namespace EtheriT.Coker.Application.Templates
     long websiteId,
     long footerTemplateId,
     string html,
-    string css)
+    string css,
+    string editorHtml)
         {
+            var restoredHtml = htmlSanitizeService.RepairLegacyPublishedHtml(html, editorHtml);
+            var repairedLegacyHtml = !string.Equals(html, restoredHtml, StringComparison.Ordinal);
             var sanitizeResult = await htmlSanitizeService.EnsurePublicContentAsync(new HtmlSanitizeInput
             {
                 WebsiteId = websiteId,
@@ -430,9 +434,9 @@ namespace EtheriT.Coker.Application.Templates
                 SourceId = footerTemplateId,
                 ContentKey = "Published",
                 SanitizePolicy = "PublicHtml",
-                Html = html ?? "",
+                Html = restoredHtml,
                 Css = css ?? "",
-                Force = false
+                Force = repairedLegacyHtml
             });
 
             if (!sanitizeResult.WasSanitized)

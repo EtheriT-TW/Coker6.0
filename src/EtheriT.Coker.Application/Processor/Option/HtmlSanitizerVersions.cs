@@ -8,6 +8,6 @@ namespace EtheriT.Coker.Application.Processor.Option
 {
     public static class HtmlSanitizerVersions
     {
-        public const string PublicHtml = "public-html-v2";
+        public const string PublicHtml = "public-html-v5";
     }
 }

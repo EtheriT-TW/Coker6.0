@@ -415,7 +415,8 @@ namespace EtheriT.Coker.Application.Advertise
                                         Target = e.Target,
                                         ActionType = e.ActionType,
                                         Html = e.Html,
-                                        Css = e.Css
+                                        Css = e.Css,
+                                        EditorHtml = e.SaveHtml
                                     })
                                     .Take(number)
                                     .ToListAsync();
@@ -444,7 +445,8 @@ namespace EtheriT.Coker.Application.Advertise
                                             webid,
                                             output[i].Id,
                                             html,
-                                            css
+                                            css,
+                                            stringHandler.HtmlDecode(output[i].EditorHtml ?? "")
                                         );
 
                                         html = sanitized.Html;
@@ -634,8 +636,15 @@ namespace EtheriT.Coker.Application.Advertise
             long websiteId,
             long advertiseId,
             string html,
-            string css)
+            string css,
+            string editorHtml)
         {
+            var restoredHtml = htmlSanitizeService.RepairLegacyPublishedHtml(
+                html,
+                editorHtml
+            );
+            var repairedLegacyHtml = !string.Equals(html, restoredHtml, StringComparison.Ordinal);
+
             var sanitizeResult = await htmlSanitizeService.EnsurePublicContentAsync(new HtmlSanitizeInput
             {
                 WebsiteId = websiteId,
@@ -643,9 +652,9 @@ namespace EtheriT.Coker.Application.Advertise
                 SourceId = advertiseId,
                 ContentKey = "Published",
                 SanitizePolicy = "PublicHtml",
-                Html = html ?? "",
+                Html = restoredHtml,
                 Css = css ?? "",
-                Force = false
+                Force = repairedLegacyHtml
             });
 
             if (!sanitizeResult.WasSanitized)

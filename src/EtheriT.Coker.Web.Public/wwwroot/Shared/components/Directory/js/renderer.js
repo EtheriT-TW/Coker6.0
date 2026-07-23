@@ -201,7 +201,7 @@
 
         $content.find(".title").text(data.title || "");
         $content.find(".subtitle").text(data.subtitle || "");
-        $content.find(".description").html(data.description || "");
+        $content.find(".description").html(data.introduction || data.description || "");
 
         if ($item.hasClass("hover_display_details") && typeof w.OrgName !== "undefined") {
             $content.data("img_link", data.mainImage);

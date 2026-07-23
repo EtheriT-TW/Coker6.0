@@ -1537,6 +1537,7 @@ namespace EtheriT.Coker.Application.Product
                               OrgName = orgName,
                               Link = $"/product/{p.Id}",
                               type = DirectoryTypeEnum.商品,
+                              Introduction = p.Introduction,
                               Description = p.Description,
                               SerNo = p.Ser_No,
                               Status = p.Status,

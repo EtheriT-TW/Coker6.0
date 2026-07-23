@@ -15,6 +15,19 @@
         color: #000;
     }
 
+    /* ===== Pagination ===== */
+    .catalog_frame .pagination .page-link {
+        color: #A52019 !important;
+        border: none;
+        border-radius: 50%;
+        margin-right: 1rem;
+    }
+
+    .catalog_frame .pagination .btn_page.bg-secondary {
+        background-color: #A52019 !important;
+        color: #fff !important;
+    }
+
 .catalog {
     position: relative;
 }
@@ -550,7 +563,6 @@
             .type_change_frame .catalog.type1 .col.type5 figure figcaption .bottom-row .tags {
                 flex: 1 1 auto;
                 min-width: 0;
-                margin-bottom: 0.5rem;
             }
 
             .type_change_frame .catalog.type1 .col.type5 figure figcaption .bottom-row .purchase {
@@ -826,6 +838,51 @@
 }
 
 /* ===== Responsive ===== */
+@media (min-width: 1200px) {
+    .catalog .title {
+        font-weight: 500;
+    }
+
+    .tags .badge {
+        font-size: 0.85rem;
+    }
+
+    .type_change_frame .catalog.type1 .tags .badge {
+        max-width: 10rem;
+    }
+
+    .type_change_frame .catalog.type1 .col.type5 figure figcaption .bottom-row {
+        margin-left: 0.5rem;
+    }
+
+    .type_change_frame .catalog.type1 .col.type5 figure figcaption .description {
+        margin-left: 0.5rem;
+        padding-bottom: 0 !important;
+    }
+
+    .type_change_frame .catalog.type1 .col.type5 figure figcaption .item-title > div {
+        font-size: 1.2rem !important;
+    }
+
+    .type_change_frame .catalog.type4 .price-grid.type2-title {
+        margin-top: auto !important;
+    }
+
+    .type_change_frame .catalog.type4 .bottom-row {
+        margin-top: 0;
+    }
+
+    .type_change_frame .catalog.type1 .col.type5 figure figcaption .bottom-row {
+        order: 2;
+    }
+
+    .type_change_frame .catalog.type1 .col.type5 figure figcaption .marketing-labels {
+        order: 1;
+        padding-top: .5rem;
+        padding-left: 1rem !important;
+    }
+}
+
 @media (max-width: 991.98px) {
     .type_change_frame .catalog .type4-image-frame {
         height: 190px;
@@ -834,10 +891,100 @@
     }
 }
 
+@media (max-width: 767.98px) {
+    /* type1 / type5 橫式卡片改為手機 grid 版型 */
+    .type_change_frame .type1 figure {
+        display: grid !important;
+        grid-template-columns: 100px minmax(0, 1fr);
+        grid-template-areas:
+            "img    title"
+            "desc   desc"
+            "labels labels"
+            "price  price"
+            "tags   tags";
+        column-gap: 0.75rem;
+        align-items: start;
+    }
+
+    .type_change_frame .type1 figcaption,
+    .type_change_frame .type1 .bottom-row {
+        display: contents !important;
+    }
+
+    .type_change_frame .type1 .image_frame {
+        grid-area: img;
+        width: 100%;
+    }
+
+        .type_change_frame .type1 .image_frame .image {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+
+    .type_change_frame .type1 .item-title {
+        grid-area: title;
+        padding-left: 0 !important;
+    }
+
+    .type_change_frame .catalog.type1 .col.type5 figure figcaption .item-title > div {
+        padding-left: 0 !important;
+    }
+
+    .type_change_frame .type1 .description {
+        grid-area: desc;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .type_change_frame .type1 .marketing-labels {
+        grid-area: labels;
+        padding-left: 0.5rem !important;
+        padding-right: 0 !important;
+        margin-top: 0.35rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .type_change_frame .type1 .purchase {
+        grid-area: price;
+        width: 100%;
+    }
+
+    .type_change_frame .type1 .bottom-row .tags {
+        grid-area: tags;
+    }
+
+    .type_change_frame .type1 .item-header,
+    .type_change_frame .type1 .price-grid,
+    .type_change_frame .type1 .bottom-row {
+        grid-column: 1 / -1;
+    }
+
+    .type_change_frame .type1 .tags {
+        flex-wrap: wrap;
+        min-width: 0;
+    }
+
+    .type_change_frame .type1 {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    .type_change_frame .type4-title.title {
+        -webkit-line-clamp: 3;
+    }
+
+    .type_change_frame .type4-title.itemNo {
+        font-size: 0.8rem;
+    }
+}
+
 @media (max-width: 576px) {
     .type_change_frame .catalog.type1 .col.type5 figure .type5-image-frame {
         align-items: flex-start !important;
-        justify-content: center !important;
+        justify-content: unset !important;
         background-position: center top;
     }
 

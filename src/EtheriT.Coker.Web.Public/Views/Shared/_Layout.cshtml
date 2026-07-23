@@ -673,18 +673,88 @@
                     <button type="button" aria-label="Close" data-bs-dismiss="modal" id="idmmf" class="btn-close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="FlipBookLoading d-none" role="status" aria-live="polite" aria-hidden="true">
-                        <button type="button" class="btn-close FlipBookLoadingClose" aria-label="Close" data-bs-dismiss="modal"></button>
-                        <div class="FlipBookLoadingContent">
-                            <div class="FlipBookLoadingSpinner" aria-hidden="true"></div>
-                            <div class="FlipBookLoadingText">PDF 下載中</div>
-                            <div class="FlipBookLoadingProgress" role="progressbar" aria-label="PDF 下載進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                                <div class="FlipBookLoadingProgressBar"></div>
+                    <div class="FlipBookShell">
+                        <div class="FlipBookToolbar">
+                            <div class="FlipBookToolbarStart">
+                                <button type="button" class="FlipBookToolButton FlipBookSidebarToggle" aria-label="開啟頁面清單" title="頁面" aria-expanded="false" aria-controls="FlipBookSidebar">
+                                    <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
+                                        <rect x="3" y="4" width="6" height="7" rx="1"></rect>
+                                        <rect x="3" y="13" width="6" height="7" rx="1"></rect>
+                                        <path d="M12 6h9M12 10h7M12 15h9M12 19h7"></path>
+                                    </svg>
+                                </button>
+                                <a class="FlipBookToolButton FlipBookOpenPdf" target="_blank" rel="noopener" aria-label="在新視窗開啟 PDF" title="開啟 PDF">
+                                    <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
+                                        <path d="M14 3h7v7M21 3l-9 9"></path>
+                                        <path d="M11 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"></path>
+                                    </svg>
+                                </a>
+                                <form class="FlipBookSearch" role="search">
+                                    <label class="visually-hidden" for="FlipBookSearchInput">搜尋 PDF 文字</label>
+                                    <div class="FlipBookSearchField">
+                                        <input id="FlipBookSearchInput" class="FlipBookSearchInput" type="search" placeholder="搜尋 PDF 文字" autocomplete="off" />
+                                        <span class="FlipBookSearchStatus" aria-live="polite"></span>
+                                        <button type="submit" class="FlipBookSearchSubmit" aria-label="搜尋 PDF 文字" title="搜尋">
+                                            <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
+                                                <circle cx="11" cy="11" r="7"></circle>
+                                                <path d="m16.5 16.5 4 4"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <button type="button" class="FlipBookToolButton FlipBookSearchPrevious" aria-label="上一個搜尋結果" title="上一個搜尋結果" disabled>↑</button>
+                                    <button type="button" class="FlipBookToolButton FlipBookSearchNext" aria-label="下一個搜尋結果" title="下一個搜尋結果" disabled>↓</button>
+                                </form>
                             </div>
-                            <div class="FlipBookLoadingPercent">0%</div>
+                            <div class="FlipBookNavigation">
+                                <button type="button" class="FlipBookButton FlipBookPrevious" aria-label="上一頁">‹</button>
+                                <label class="FlipBookPageStatus">
+                                    <span class="visually-hidden">目前頁數</span>
+                                    <input class="FlipBookPageInput" type="number" min="1" value="1" inputmode="numeric" />
+                                    <span aria-hidden="true">/</span>
+                                    <span class="FlipBookPageTotal">0</span>
+                                </label>
+                                <button type="button" class="FlipBookButton FlipBookNext" aria-label="下一頁">›</button>
+                            </div>
+                            <button type="button" class="FlipBookButton FlipBookClose" aria-label="關閉" data-bs-dismiss="modal">×</button>
                         </div>
-                    </div>
-                    <div class="FlipBook">
+                        <div class="FlipBookWorkspace">
+                            <aside id="FlipBookSidebar" class="FlipBookSidebar" aria-label="頁面清單" hidden>
+                                <div class="FlipBookSidebarHeader">
+                                    <strong>頁面</strong>
+                                    <button type="button" class="FlipBookSidebarClose" aria-label="關閉頁面清單">×</button>
+                                </div>
+                                <div class="FlipBookThumbnailList"></div>
+                            </aside>
+                            <div class="FlipBookStage">
+                                <div class="FlipBookLoading d-none" role="status" aria-live="polite" aria-hidden="true">
+                                    <button type="button" class="btn-close FlipBookLoadingClose" aria-label="關閉" data-bs-dismiss="modal"></button>
+                                    <div class="FlipBookLoadingContent">
+                                        <div class="FlipBookLoadingSpinner" aria-hidden="true"></div>
+                                        <div class="FlipBookLoadingText">PDF 下載中</div>
+                                        <div class="FlipBookLoadingProgress" role="progressbar" aria-label="PDF 下載進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                            <div class="FlipBookLoadingProgressBar"></div>
+                                        </div>
+                                        <div class="FlipBookLoadingPercent">0%</div>
+                                    </div>
+                                </div>
+                                <div class="FlipBook" aria-label="電子書"></div>
+                            </div>
+                            <div class="FlipBookZoomControls" aria-label="縮放控制">
+                                <button type="button" class="FlipBookZoomButton FlipBookZoomOut" aria-label="縮小" title="縮小">
+                                    <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
+                                        <circle cx="10.5" cy="10.5" r="6.5"></circle>
+                                        <path d="m15.5 15.5 5 5M7.5 10.5h6"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" class="FlipBookZoomStatus FlipBookZoomReset" aria-label="恢復為 100%" title="恢復為 100%" disabled>100%</button>
+                                <button type="button" class="FlipBookZoomButton FlipBookZoomIn" aria-label="放大" title="放大">
+                                    <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
+                                        <circle cx="10.5" cy="10.5" r="6.5"></circle>
+                                        <path d="m15.5 15.5 5 5M7.5 10.5h6M10.5 7.5v6"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

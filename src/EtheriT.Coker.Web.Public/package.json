@@ -27,7 +27,7 @@
     "masonry-layout": "^4.2.2",
     "merge-stream": "^2.0.0",
     "path": "^0.12.7",
-    "pdf.js": "^0.1.0",
+    "pdfjs-dist": "6.1.200",
     "postcss-url": "^9.0.0",
     "sweetalert2": "^11.22.2",
     "swiper": "^11.2.10",

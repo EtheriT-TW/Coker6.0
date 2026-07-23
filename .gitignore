@@ -366,6 +366,9 @@ FodyWeavers.xsd
 *.min.js
 *.min.js.map
 *.min.css
+
+# Generated from the pinned pdfjs-dist package by the Public project Gulp build.
+src/EtheriT.Coker.Web.Public/wwwroot/lib/pdfjs-dist/
 *.min.css.map
 upload/**/*.*
 **/wwwroot/lib/*/*.*

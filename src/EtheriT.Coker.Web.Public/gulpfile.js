@@ -103,6 +103,26 @@ function fillScriptMappings() {
 	}
 }
 
+function copyStaticAssets(done) {
+	var mappings = bundleConfig.staticMappings || [];
+
+	for (var i = 0; i < mappings.length; i++) {
+		var mapping = mappings[i];
+		var basePath = path.resolve(__dirname, mapping.base);
+		var outputPath = path.resolve(__dirname, mapping.outputFolder);
+		var files = globby.sync(processInputDefinition(mapping.input), { noext: true });
+
+		for (var j = 0; j < files.length; j++) {
+			var relativePath = path.relative(basePath, files[j]);
+			var targetPath = path.join(outputPath, relativePath);
+			fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+			fs.copyFileSync(files[j], targetPath);
+		}
+	}
+
+	if (typeof done === 'function') done();
+}
+
 function createScriptBundles() {
 	var tasks = [];
 	for (var script in scriptEntries) {
@@ -246,6 +266,7 @@ function build() {
 
 	var scriptTasks = createScriptBundles();
 	var styleTasks = createStyleBundles();
+	copyStaticAssets();
 
 	return merge(scriptTasks.concat(styleTasks));
 }
@@ -257,6 +278,7 @@ function buildDev() {
 
 	var scriptTasks = createScriptBundles();
 	var styleTasks = createStyleBundles();
+	copyStaticAssets();
 
 	watchScriptEntries();
 	watchStyleEntries();
@@ -297,3 +319,4 @@ function checkFile(path) {
 
 exports.build = build;
 exports.buildDev = buildDev;
+exports.copyStaticAssets = copyStaticAssets;

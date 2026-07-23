@@ -303,6 +303,16 @@
     margin: 0 !important;
 }
 
+@media (hover: hover) and (pointer: fine) {
+    .FlipBookStage:not(.is-zoomed) .FlipBook {
+        cursor: grab;
+    }
+
+    .FlipBookStage.is-swiping:not(.is-zoomed) .FlipBook {
+        cursor: grabbing;
+    }
+}
+
 .FlipBookZoomControls {
     position: absolute;
     right: .75rem;
@@ -441,15 +451,6 @@
     justify-content: center;
     color: #fff;
     background: rgba(32, 32, 32, .94);
-}
-
-.FlipBookLoadingClose {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    padding: .75rem;
-    background-color: #fff;
-    border-radius: 50%;
 }
 
 .FlipBookLoadingContent {

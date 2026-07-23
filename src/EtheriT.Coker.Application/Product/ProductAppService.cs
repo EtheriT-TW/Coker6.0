@@ -1135,7 +1135,7 @@ namespace EtheriT.Coker.Application.Product
         {
             try
             {
-                var websiteId = await loginUserData.GetWebsiteId();
+                var websiteId = await loginUserData.GetCommonWebsiteId();
                 var output = await (from ps in db.Prod_Stocks
                                     join p in db.Prods on ps.FK_Pid equals p.Id
                                     where !ps.IsDeleted && !p.IsDeleted && ps.FK_Pid == PId &&
@@ -1220,7 +1220,7 @@ namespace EtheriT.Coker.Application.Product
             List<ProductPriceDto> output = new List<ProductPriceDto>();
             try
             {
-                var websiteId = await loginUserData.GetWebsiteId();
+                var websiteId = await loginUserData.GetCommonWebsiteId();
                 output = await (from pp in db.Prod_Prices
                                 join ps in db.Prod_Stocks on pp.FK_PSId equals ps.Id
                                 join p in db.Prods on ps.FK_Pid equals p.Id

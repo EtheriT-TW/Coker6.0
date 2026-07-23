@@ -673,6 +673,17 @@
                     <button type="button" aria-label="Close" data-bs-dismiss="modal" id="idmmf" class="btn-close"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="FlipBookLoading d-none" role="status" aria-live="polite" aria-hidden="true">
+                        <button type="button" class="btn-close FlipBookLoadingClose" aria-label="Close" data-bs-dismiss="modal"></button>
+                        <div class="FlipBookLoadingContent">
+                            <div class="FlipBookLoadingSpinner" aria-hidden="true"></div>
+                            <div class="FlipBookLoadingText">PDF 下載中</div>
+                            <div class="FlipBookLoadingProgress" role="progressbar" aria-label="PDF 下載進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                <div class="FlipBookLoadingProgressBar"></div>
+                            </div>
+                            <div class="FlipBookLoadingPercent">0%</div>
+                        </div>
+                    </div>
                     <div class="FlipBook">
                     </div>
                 </div>

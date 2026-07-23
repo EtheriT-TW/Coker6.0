@@ -70,8 +70,8 @@ class FlipBookController {
             this.setZoom(1);
         });
         this.stageElement.addEventListener("pointerdown", this.onPointerDown);
-        this.stageElement.addEventListener("pointerup", this.onPointerUp);
-        this.stageElement.addEventListener("pointercancel", this.onPointerCancel);
+        window.addEventListener("pointerup", this.onPointerUp);
+        window.addEventListener("pointercancel", this.onPointerCancel);
 
         this.resizeObserver = new ResizeObserver(this.onResize);
         this.resizeObserver.observe(this.stageElement);
@@ -500,9 +500,10 @@ class FlipBookController {
     }
 
     onPointerDown(event) {
+        const isMouse = event.pointerType === "mouse";
         if (
-            event.pointerType !== "touch" ||
             !event.isPrimary ||
+            (isMouse && event.button !== 0) ||
             !this.engine ||
             this.engine.getZoom() > 1
         ) {
@@ -515,20 +516,27 @@ class FlipBookController {
             x: event.clientX,
             y: event.clientY,
             time: performance.now(),
-            page: this.engine.getCurrentPage()
+            page: this.engine.getCurrentPage(),
+            pointerType: event.pointerType
         };
+
+        if (isMouse) {
+            this.stageElement.classList.add("is-swiping");
+        }
     }
 
     onPointerUp(event) {
         const start = this.swipeStart;
         this.swipeStart = null;
+        this.stageElement.classList.remove("is-swiping");
         if (!start || start.pointerId !== event.pointerId || !this.engine) return;
 
         const deltaX = event.clientX - start.x;
         const deltaY = event.clientY - start.y;
         const duration = performance.now() - start.time;
+        const maximumDuration = start.pointerType === "mouse" ? 1200 : 800;
         if (
-            duration > 800 ||
+            duration > maximumDuration ||
             Math.abs(deltaX) < 50 ||
             Math.abs(deltaX) <= Math.abs(deltaY) * 1.2
         ) {
@@ -554,6 +562,7 @@ class FlipBookController {
 
     onPointerCancel() {
         this.swipeStart = null;
+        this.stageElement.classList.remove("is-swiping");
     }
 
     onKeyDown(event) {
@@ -628,6 +637,7 @@ class FlipBookController {
         window.clearTimeout(this.resizeTimer);
         this.searchRequestId++;
         this.swipeStart = null;
+        this.stageElement.classList.remove("is-swiping");
         this.engine?.destroy();
         this.engine = null;
 

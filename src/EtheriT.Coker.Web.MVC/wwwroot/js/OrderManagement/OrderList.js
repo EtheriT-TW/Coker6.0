@@ -521,19 +521,43 @@ function contentReady(e) {
     HashDataEdit();
 }
 function onCellPrepared(e) {
-    if (e.rowType === "data" && e.column.dataField === "State") {
-        var $cell = $(e.cellElement);
-        if (e.value == "已付款") {
-            $cell.addClass("text-bg-success")
-        }
+    if (e.rowType !== "data" || e.column.dataField !== "State") {
+        return;
+    }
+
+    const $cell = $(e.cellElement);
+
+    switch (e.value) {
+        case "待確認":
+            $cell.addClass("order-status-pending");
+            break;
+
+        case "已付款":
+            $cell.addClass("text-bg-success");
+            break;
+
+        case "已出貨":
+            $cell.addClass("order-status-shipped");
+            break;
     }
 }
 function onRowPrepared(e) {
-    if (e.rowType === "data") {
-        let $row = $(e.rowElement);
-        if (e.data.State === "付款失敗" || e.data.State === "已取消") {
-            $row.addClass("isFail");
-        }
+    if (e.rowType !== "data") return;
+
+    const $row = $(e.rowElement);
+
+    switch (e.data.State) {
+        case "已完成":
+            $row.addClass("isCompleted");
+            break;
+
+        case "已取消":
+            $row.addClass("isCancelled");
+            break;
+
+        case "付款失敗":
+            $row.addClass("isPaymentFailed");
+            break;
     }
 }
 function hashChange(e) {

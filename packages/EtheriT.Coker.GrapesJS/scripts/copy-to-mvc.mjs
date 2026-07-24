@@ -1,12 +1,13 @@
-import { mkdirSync, copyFileSync, existsSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { minify } from 'terser';
 
 const packageRoot = resolve(import.meta.dirname, '..');
 
 const sourceFile = resolve(
     packageRoot,
     'dist',
-    'etherit-coker-grapesjs.min.js'
+    'etherit-coker-grapesjs.js'
 );
 
 const targetDir = resolve(
@@ -29,7 +30,22 @@ if (!existsSync(sourceFile)) {
     throw new Error(`[copy-to-mvc] Source file not found: ${sourceFile}`);
 }
 
-mkdirSync(targetDir, { recursive: true });
-copyFileSync(sourceFile, targetFile);
+const sourceCode = readFileSync(sourceFile, 'utf8');
 
-console.log(`[copy-to-mvc] Copied to ${targetFile}`);
+const result = await minify(sourceCode, {
+    module: true,
+    compress: true,
+    mangle: true,
+    format: {
+        comments: false
+    }
+});
+
+if (!result.code) {
+    throw new Error('[copy-to-mvc] Minify failed: output is empty.');
+}
+
+mkdirSync(targetDir, { recursive: true });
+writeFileSync(targetFile, result.code, 'utf8');
+
+console.log(`[copy-to-mvc] Minified and copied to ${targetFile}`);

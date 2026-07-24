@@ -10,6 +10,19 @@ export function registerCokerPlugins(grapesjs, options = {}) {
             options,
             pluginOptions
         };
+
+        editor.Commands.add('etherit:coker:test', {
+            run(ed) {
+                const adapter = options.adapter;
+
+                if (adapter?.ui?.success) {
+                    adapter.ui.success('EtheriT.Coker.GrapesJS plugin loaded.');
+                    return;
+                }
+
+                window.alert('EtheriT.Coker.GrapesJS plugin loaded.');
+            }
+        });
     });
 
     return {

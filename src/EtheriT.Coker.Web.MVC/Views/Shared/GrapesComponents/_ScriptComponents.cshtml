@@ -23,7 +23,10 @@
 <script src="~/js/Grapes/grapesjs-Coker6.min.js" charset="utf-8" asp-append-version="true"></script>
 
 <script type="module">
-    import { createCokerGrapesLibrary } from '/modules/grapesjs/etherit-coker-grapesjs.min.js';
+    import {
+        createCokerGrapesLibrary,
+        registerBasePlugins
+    } from '/modules/grapesjs/etherit-coker-grapesjs.min.js';
 
     window.EtheriTCokerGrapesJS = createCokerGrapesLibrary({
         ui: {
@@ -34,6 +37,12 @@
     });
 
     window.EtheriTCokerGrapesJS.registerPlugins(window.grapesjs);
+
+    const basePlugins = registerBasePlugins(window.grapesjs, {
+        pluginName: 'etherit-coker-base-blocks'
+    });
+
+    window.EtheriTCokerGrapesJS.basePlugins = basePlugins;
 
     console.log('[EtheriT.Coker.GrapesJS] module loaded', window.EtheriTCokerGrapesJS);
 </script>

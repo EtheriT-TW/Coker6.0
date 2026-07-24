@@ -77,7 +77,7 @@ var grapesInit = function (options) {
             }
         },
         plugins: [
-            'gjs-blocks-basic',
+            'etherit-coker-base-blocks',
             'grapesjs-preset-webpage',
             "grapesjs-style-bg",
             'grapesjs-tabs',
@@ -95,7 +95,7 @@ var grapesInit = function (options) {
             'etherit-coker-grapesjs-core'
         ],
         pluginsOpts: {
-            'gjs-blocks-basic': { flexGrid: true },
+            'etherit-coker-base-blocks': { flexGrid: true },
             "grapesjs-table": {},
             'grapesjs-preset-webpage': {
                 modalImportButton: '匯入',

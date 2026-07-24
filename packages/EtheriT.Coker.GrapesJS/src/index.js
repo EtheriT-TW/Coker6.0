@@ -1,8 +1,11 @@
 import { createEditorAdapter } from './core/createEditorAdapter.js';
 import { registerCokerPlugins } from './plugins/registerCokerPlugins.js';
+import { registerBasePlugins } from './core/registerBasePlugins.js';
 
 export { createEditorAdapter };
 export { registerCokerPlugins };
+export { registerBasePlugins };
+
 
 export function createCokerGrapesLibrary(options = {}) {
     const adapter = options.adapter || createEditorAdapter(options);

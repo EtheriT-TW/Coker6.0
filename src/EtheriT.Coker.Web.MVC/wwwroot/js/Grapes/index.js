@@ -91,7 +91,8 @@ var grapesInit = function (options) {
             //'grapesjs-rte-extensions',
             'grapesjs-Coker6',
             'grapesJs-Coker6-Form',
-            'grapesjs-Swiper'
+            'grapesjs-Swiper',
+            'etherit-coker-grapesjs-core'
         ],
         pluginsOpts: {
             'gjs-blocks-basic': { flexGrid: true },

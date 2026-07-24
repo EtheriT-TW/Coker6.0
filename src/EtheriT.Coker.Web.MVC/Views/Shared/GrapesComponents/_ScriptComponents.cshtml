@@ -21,6 +21,23 @@
 <script src="~/js/Grapes/grapesJs-Coker6-Form.min.js" charset="utf-8" asp-append-version="true"></script>
 <script src="~/js/Grapes/grapesjs-Swiper.min.js" charset="utf-8" asp-append-version="true"></script>
 <script src="~/js/Grapes/grapesjs-Coker6.min.js" charset="utf-8" asp-append-version="true"></script>
+
+<script type="module">
+    import { createCokerGrapesLibrary } from '/modules/grapesjs/etherit-coker-grapesjs.min.js';
+
+    window.EtheriTCokerGrapesJS = createCokerGrapesLibrary({
+        ui: {
+            success(message) {
+                console.log('[EtheriT.Coker.GrapesJS]', message);
+            }
+        }
+    });
+
+    window.EtheriTCokerGrapesJS.registerPlugins(window.grapesjs);
+
+    console.log('[EtheriT.Coker.GrapesJS] module loaded', window.EtheriTCokerGrapesJS);
+</script>
+
 <script src="~/js/Grapes/Index.min.js" asp-append-version="true"></script>
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>

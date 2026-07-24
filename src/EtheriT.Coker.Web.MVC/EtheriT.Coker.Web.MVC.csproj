@@ -76,6 +76,7 @@
 		<Folder Include="wwwroot\lib\fortawesome\css\" />
 		<Folder Include="wwwroot\lib\jquery-menu-editor\" />
 		<Folder Include="wwwroot\lib\tui-code\" />
+		<Folder Include="wwwroot\modules\grapesjs\" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Include="appsettings.Local.EPZA.json" />
@@ -182,8 +183,7 @@
 		<ProjectReference Include="..\EtheriT.Coker.EntityFrameworkCore\EtheriT.Coker.EntityFrameworkCore.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<Content Include="..\EtheriT.Coker.Application\Resources\ProductExportTemplates\ProductData.xlsx"
-		         Link="Resources\ProductExportTemplates\ProductData.xlsx">
+		<Content Include="..\EtheriT.Coker.Application\Resources\ProductExportTemplates\ProductData.xlsx" Link="Resources\ProductExportTemplates\ProductData.xlsx">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 		</Content>

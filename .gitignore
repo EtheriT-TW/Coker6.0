@@ -414,3 +414,5 @@ launchSettings.json
 
 # Frontend package build outputs
 packages/*/dist/
+
+!**/wwwroot/modules/**/*.min.js

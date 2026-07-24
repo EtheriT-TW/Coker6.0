@@ -6,7 +6,7 @@ export default defineConfig({
         lib: {
             entry: resolve(__dirname, 'src/index.js'),
             name: 'EtheriTCokerGrapesJS',
-            fileName: 'etherit-coker-grapesjs',
+            fileName: 'etherit-coker-grapesjs.min',
             formats: ['es']
         }
     }

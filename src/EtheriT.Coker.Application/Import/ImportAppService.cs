@@ -73,12 +73,27 @@ namespace EtheriT.Coker.Application.Import
         private List<ProductImportDto> readProdExcel(string path, string orgName)
         {
             List<ProductImportDto> data = new List<ProductImportDto>();
+            var importedColumns = MiniExcel.Query(
+                    path,
+                    useHeaderRow: true,
+                    sheetName: "商品",
+                    startCell: "A2")
+                .Cast<IDictionary<string, object>>()
+                .FirstOrDefault()?
+                .Keys
+                .Where(e => !string.IsNullOrWhiteSpace(e))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase)
+                ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var reg = MiniExcel.Query<ProductImportUpateRegDto>(path, sheetName: "商品", startCell: "A2").ToList();
             var rows = mapper.Map<List<ProductImportDto>>(reg);
             var Techs = MiniExcel.Query<TechCertImportDto>(path, sheetName: "技術證照", startCell: "A2").ToList();
             foreach (var row in rows)
             {
-                if (row != null) NormalizeProductImportRow(row);
+                if (row != null)
+                {
+                    row.ImportedColumns = new HashSet<string>(importedColumns, StringComparer.OrdinalIgnoreCase);
+                    NormalizeProductImportRow(row);
+                }
             }
             foreach (var tech in Techs)
             {

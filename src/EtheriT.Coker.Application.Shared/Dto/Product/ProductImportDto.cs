@@ -12,5 +12,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 	{
 		public long Id { get; set; } = 0;
 		public decimal Price { get; set; } = 0;
+		public HashSet<string> ImportedColumns { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 	}
 }

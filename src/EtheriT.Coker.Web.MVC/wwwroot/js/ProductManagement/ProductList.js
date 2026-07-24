@@ -46,7 +46,11 @@ function ImportProd() {
             if (product_list != null) product_list.component.refresh();
         } catch (error) {
             Swal.close();
-            co.sweet.error(error && error.message ? error.message : "商品匯入失敗。");
+            if (error && Array.isArray(error.importErrors) && error.importErrors.length > 0) {
+                showProductImportErrors(error.importErrors, true);
+            } else {
+                co.sweet.error(error && error.message ? error.message : "商品匯入失敗。");
+            }
         }
     }).fail(function (xhr) {
         var message = xhr.responseJSON && xhr.responseJSON.message
@@ -295,12 +299,12 @@ function getProductImportErrors(resultJson) {
     }
 }
 
-function showProductImportErrors(errors) {
+function showProductImportErrors(errors, importFailed) {
     const popupElement = $("<div>").appendTo(document.body);
     let popupInstance = null;
 
     popupElement.dxPopup({
-        title: "商品匯入完成－需留意資料",
+        title: importFailed ? "商品匯入失敗－請修正 Excel" : "商品匯入完成－需留意資料",
         width: function () { return Math.min($(window).width() * 0.92, 960); },
         height: function () { return Math.min($(window).height() * 0.88, 680); },
         minWidth: 320,
@@ -317,8 +321,10 @@ function showProductImportErrors(errors) {
             });
 
             $("<div>")
-                .css({ marginBottom: "12px", color: "#856404" })
-                .text("匯入已完成，共有 " + errors.length + " 筆資料需要留意。請依下列原因檢查原 Excel 內容。")
+                .css({ marginBottom: "12px", color: importFailed ? "#a94442" : "#856404" })
+                .text(importFailed
+                    ? "匯入已停止，未寫入任何資料。共有 " + errors.length + " 筆錯誤，請修正原 Excel 後重新匯入。"
+                    : "匯入已完成，共有 " + errors.length + " 筆資料需要留意。請依下列原因檢查原 Excel 內容。")
                 .appendTo(contentElement);
 
             const gridElement = $("<div>")
@@ -334,13 +340,13 @@ function showProductImportErrors(errors) {
                 columnAutoWidth: false,
                 columns: [
                     { dataField: "sequence", caption: "序號", width: 70, alignment: "center", allowFiltering: false },
-                    { dataField: "name", caption: "商品名稱", width: "32%" },
+                    { dataField: "name", caption: "資料位置", width: "32%" },
                     { dataField: "description", caption: "需留意原因" }
                 ],
                 searchPanel: {
                     visible: true,
                     width: 240,
-                    placeholder: "搜尋商品或原因"
+                    placeholder: "搜尋資料位置或原因"
                 },
                 paging: { pageSize: 10 },
                 pager: {
@@ -350,15 +356,39 @@ function showProductImportErrors(errors) {
                     showInfo: true,
                     showNavigationButtons: true
                 },
-                export: {
-                    enabled: true,
-                    formats: ["xlsx"],
-                    allowExportSelectedData: false
-                },
-                onExporting: function (e) {
-                    CokerDxGridExport(e, {
-                        fileName: "ProductImportWarnings",
-                        worksheetName: "商品匯入注意清單"
+                onToolbarPreparing: function (e) {
+                    e.toolbarOptions.items.unshift({
+                        location: "after",
+                        locateInMenu: "never",
+                        widget: "dxButton",
+                        options: {
+                            icon: "fa-solid fa-file-excel",
+                            text: importFailed
+                                ? "下載錯誤清單"
+                                : "下載注意清單",
+                            hint: importFailed
+                                ? "將目前商品匯入錯誤下載為 Excel"
+                                : "將目前商品匯入注意事項下載為 Excel",
+                            type: importFailed ? "danger" : "success",
+                            stylingMode: "contained",
+                            elementAttr: {
+                                class: "product-import-error-download"
+                            },
+                            onClick: function () {
+                                CokerDxGridExport({
+                                    component: e.component,
+                                    format: "xlsx",
+                                    cancel: false
+                                }, {
+                                    fileName: importFailed
+                                        ? "ProductImportErrors"
+                                        : "ProductImportWarnings",
+                                    worksheetName: importFailed
+                                        ? "商品匯入錯誤清單"
+                                        : "商品匯入注意清單"
+                                });
+                            }
+                        }
                     });
                 },
                 noDataText: "沒有需留意的資料"
@@ -371,7 +401,8 @@ function showProductImportErrors(errors) {
                 widget: "dxButton",
                 options: {
                     text: "關閉",
-                    type: "default",
+                    type: "normal",
+                    stylingMode: "outlined",
                     onClick: function () { popupInstance.hide(); }
                 }
             }
@@ -457,8 +488,11 @@ async function waitForProductTask(taskId, title) {
         if (progressText) progressText.textContent = progress + "%";
         if (message) message.textContent = status.message || "背景任務處理中…";
 
-        if (status.status === "failed" || status.status === "expired")
-            throw new Error(status.error || status.message || "背景任務失敗");
+        if (status.status === "failed" || status.status === "expired") {
+            const taskError = new Error(status.error || status.message || "背景任務失敗");
+            taskError.importErrors = getProductImportErrors(status.resultJson);
+            throw taskError;
+        }
         if (status.status === "succeeded")
             return status;
     }

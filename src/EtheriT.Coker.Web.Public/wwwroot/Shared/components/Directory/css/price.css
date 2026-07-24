@@ -177,6 +177,27 @@
     max-width: 100%;
 }
 
+/* ===== type1/type5 售價置頂、原價置下 ===== */
+.type_change_frame .type1 .normal-price .sale-price {
+    order: 1;
+}
+
+.type_change_frame .type1 .normal-price .origin-price {
+    order: 2;
+}
+
+/* ===== 手機版 type1：售價橫排靠右 ===== */
+@media (max-width: 767.98px) {
+    .type_change_frame .type1 .normal-price {
+        display: flex;
+        flex-direction: row !important;
+        flex-wrap: nowrap;
+        align-items: baseline;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+}
+
 /* ===== Small screens fallback ===== */
 @media (max-width: 576px) {
     .sale-price,

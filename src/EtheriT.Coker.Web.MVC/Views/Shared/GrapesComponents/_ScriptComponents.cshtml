@@ -25,7 +25,8 @@
 <script type="module">
     import {
         createCokerGrapesLibrary,
-        registerBasePlugins
+        registerBasePlugins,
+        createCokerGrapesEditor
     } from '/modules/grapesjs/etherit-coker-grapesjs.min.js';
 
     window.EtheriTCokerGrapesJS = createCokerGrapesLibrary({
@@ -36,13 +37,15 @@
         }
     });
 
-    window.EtheriTCokerGrapesJS.registerPlugins(window.grapesjs);
-
     const basePlugins = registerBasePlugins(window.grapesjs, {
         pluginName: 'etherit-coker-base-blocks'
     });
 
     window.EtheriTCokerGrapesJS.basePlugins = basePlugins;
+
+    window.EtheriTCokerGrapesJS.createEditorTest = createCokerGrapesEditor;
+
+    window.EtheriTCokerGrapesJS.registerPlugins(window.grapesjs);
 
     console.log('[EtheriT.Coker.GrapesJS] module loaded', window.EtheriTCokerGrapesJS);
 </script>

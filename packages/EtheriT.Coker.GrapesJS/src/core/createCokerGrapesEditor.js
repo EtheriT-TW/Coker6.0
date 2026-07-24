@@ -7,6 +7,7 @@ export function createCokerGrapesEditor(options = {}) {
     const adapter = options.adapter || createEditorAdapter(options);
 
     const externalPlugins = options.externalPlugins || [];
+    const externalPluginFunctions = options.externalPluginFunctions || [];
     const externalPluginsOpts = options.externalPluginsOpts || {};
 
     const editor = grapesjs.init({
@@ -23,6 +24,7 @@ export function createCokerGrapesEditor(options = {}) {
         plugins: [
             baseBlocksPlugin,
             ...externalPlugins,
+            ...externalPluginFunctions,
             cokerCorePlugin
         ],
 

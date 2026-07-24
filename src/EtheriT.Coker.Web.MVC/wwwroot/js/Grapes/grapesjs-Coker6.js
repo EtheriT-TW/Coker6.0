@@ -1,6 +1,4 @@
-﻿var $gjs_select = null;
-
-grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
+﻿function coker6Plugin(editor, options = {}) {
     let settings = {
         save: function () { return false; },
         import: function () { return false; },
@@ -14,6 +12,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
     const categories = editor.BlockManager.getCategories();
     const BlockManager = editor.BlockManager;
     const panelManager = editor.Panels;
+    let $gjs_select = null;
 
     //設定UI文字
     editor.I18n.setMessages({ tw: tw });
@@ -81,7 +80,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
         AssetManager.onSelect((result) => {
             //console.log("result", result)
             var name = result.attributes.name;
-            console.log(result,name);
+            console.log(result, name);
             $gjs_select.addAttributes({ alt: name.substring(0, name.lastIndexOf(".")) });
             $gjs_select = null;
         });
@@ -253,7 +252,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
             }
         },
     });
-    
+
     editor.DomComponents.addType('電子書', {
         isComponent: el => el.classList?.contains('FlipBookItem'),
         model: {
@@ -339,7 +338,7 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
             }
         }
     });
-    
+
     //QA元件
     editor.DomComponents.addType('QA元件', {
         isComponent: el => el.classList?.contains('qa'),
@@ -1223,4 +1222,11 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
      * 指令參考
      * ***********/
     //editor.addComponents('<div id="yui" class="cls">New component</div>');
-});
+}
+
+if (window.grapesjs && window.grapesjs.plugins) {
+    window.grapesjs.plugins.add('grapesjs-Coker6', coker6Plugin);
+}
+
+window.CokerGrapesLegacyPlugins = window.CokerGrapesLegacyPlugins || {};
+window.CokerGrapesLegacyPlugins.coker6Plugin = coker6Plugin;

@@ -1,4 +1,4 @@
-﻿grapesjs.plugins.add('grapesJs-Coker6-Form', (editor, options) => {
+﻿function coker6FormPlugin(editor, options = {}) {
     const bm = editor.BlockManager;
     const domc = editor.DomComponents;
     const tm = editor.TraitManager;
@@ -591,4 +591,11 @@
             ed.runCommand('open-ds-editor');
         }
     });
-});
+}
+
+if (window.grapesjs && window.grapesjs.plugins) {
+    window.grapesjs.plugins.add('grapesJs-Coker6-Form', coker6FormPlugin);
+}
+
+window.CokerGrapesLegacyPlugins = window.CokerGrapesLegacyPlugins || {};
+window.CokerGrapesLegacyPlugins.coker6FormPlugin = coker6FormPlugin;

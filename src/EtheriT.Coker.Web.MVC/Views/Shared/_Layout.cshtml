@@ -105,7 +105,10 @@
 				// Redirect responses do not receive the URL fragment on the server, and browsers
 				// may carry the old fragment forward. Remove it before page initialization so an
 				// old product id is never loaded under the newly selected website.
-				history.replaceState(history.state, "", pageUrl.pathname);
+				pageUrl.searchParams.delete("siteChanged");
+				pageUrl.searchParams.set("_site", websiteId);
+				pageUrl.hash = "";
+				history.replaceState(history.state, "", pageUrl.pathname + pageUrl.search);
 				window.addEventListener("load", function () {
 					if (window.Swal) {
 						Swal.fire({

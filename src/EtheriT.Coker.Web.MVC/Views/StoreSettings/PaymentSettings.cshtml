@@ -61,8 +61,11 @@
                                                 </div>
                                             }
                                         </div>
-                                        <div class="memo">@group.Memo</div>
-                                    </div>
+                                            @if (!string.IsNullOrWhiteSpace(group.Memo))
+                                            {
+                                                <div class="memo">@group.Memo</div>
+                                            }
+                                        </div>
                                 </div>
                             </div>
                         </div>

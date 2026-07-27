@@ -130,3 +130,51 @@ input[type="number"] {
         background: linear-gradient(to right, #fff 5rem, #F0F7FF 5rem);
         cursor: pointer;
     }
+
+.payment-restriction-section {
+    min-height: 58px;
+    padding: .75rem 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: .5rem;
+    background-color: #f8f9fa;
+}
+
+#OpenPaymentRestrictionModal {
+    display: inline-flex;
+    align-items: center;
+}
+
+.payment-restriction-table-wrap {
+    border: 1px solid #dee2e6;
+    border-radius: .5rem;
+}
+
+.payment-restriction-table-wrap thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: #f8f9fa;
+}
+
+.payment-restriction-table-wrap th,
+.payment-restriction-table-wrap td {
+    min-width: 115px;
+    padding: .75rem;
+}
+
+.payment-restriction-table-wrap th:first-child,
+.payment-restriction-table-wrap td:first-child {
+    min-width: 190px;
+}
+
+.payment-restriction-table-wrap .form-control {
+    min-width: 125px;
+}
+
+.payment-restriction-default {
+    line-height: 1.5;
+}
+
+.payment-restriction-inactive {
+    opacity: .65;
+}

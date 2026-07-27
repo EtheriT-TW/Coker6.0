@@ -521,6 +521,8 @@ namespace EtheriT.Coker.Application
             CreateMap<FreightDto, LogisticsSetting>()
                 .ForMember(e => e.Low_Con, option => option.MapFrom(c => c.Low_Con ?? 0))
                 .ForMember(e => e.Dis_Freight, option => option.MapFrom(c => c.Dis_Freight ?? 0))
+                .ForMember(e => e.SupportCashOnDelivery, option => option.Ignore())
+                .ForMember(e => e.LogisticsPaymentRestrictions, option => option.Ignore())
                 .ForMember(e => e.logisticsBoxFees, option => option.Ignore())
                 .ForMember(e => e.MappingLogisticsSettingAndProds, option => option.Ignore());
 
@@ -539,6 +541,7 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.IsDeleted, option => option.Ignore());
 
             CreateMap<LogisticsSetting, FreightDto>()
+                .ForMember(e => e.PaymentRestrictions, option => option.Ignore())
                 .ForMember(e => e.ProdIds, option => option.MapFrom(c =>
                     c.MappingLogisticsSettingAndProds == null
                         ? new List<ProdSelectedDto>()

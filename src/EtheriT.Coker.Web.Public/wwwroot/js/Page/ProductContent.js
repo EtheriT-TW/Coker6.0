@@ -44,11 +44,6 @@
             productSwiperWrapper: '.ProductSwiper > .swiper-wrapper',
             previewSwiper: '.PreviewSwiper',
             previewSwiperWrapper: '.PreviewSwiper > .swiper-wrapper',
-            priceFrame: '.priceframe',
-            options: '.options',
-            quantityInput: '.input_pro_quantity',
-            quantityWrap: '.counter_input',
-            addToCartButton: '.btn_addToCar',
             title: '.pro_title',
             itemNo: '.pro_itemNo',
             introduce: '.introduce',
@@ -73,8 +68,6 @@
             ytVideoSlide: '#TemplateYTVideoSlide',
             previewSlide: '#TemplatePreviewSlide',
             slide3d: '#Template3DSlide',
-            specRadio: '#Template_Spec_Radio',
-            priceItem: '#PriceListTemplate'
         },
         api: {
             clickLog: (pid) => Product.Log.Click(pid),
@@ -95,6 +88,12 @@
         }
     };
 
+    let layoutFactory = null;
+
+    function registerLayout(factory) {
+        layoutFactory = typeof factory === 'function' ? factory : null;
+    }
+
     function toInt(value, fallback = 0) {
         const num = parseInt(value, 10);
         return Number.isNaN(num) ? fallback : num;
@@ -103,6 +102,11 @@
     function normalizeNullableInt(value, fallback = 0) {
         if (value === null || typeof value === 'undefined' || value === '') return fallback;
         return toInt(value, fallback);
+    }
+
+    function readMinQty(stock) {
+        if (!stock) return 1;
+        return Math.max(normalizeNullableInt(stock.min_Qty ?? stock.minQty, 1), 1);
     }
 
     function cloneTemplate(selector) {
@@ -135,6 +139,26 @@
         }
 
         return formatText(defaultText, params);
+    }
+
+    function defaultI18n(key, fallback) {
+        if (window.L && typeof window.L.get === 'function') {
+            const value = window.L.get(key);
+            return value || fallback;
+        }
+
+        if (window.local && typeof window.local === 'object') {
+            const legacyMap = {
+                marketPrice: 'MarketPrice',
+                prodEmpty: 'ProdEmpty'
+            };
+            const legacyKey = legacyMap[key];
+            if (legacyKey && window.local[legacyKey]) {
+                return window.local[legacyKey];
+            }
+        }
+
+        return fallback;
     }
 
     function formatPriceText(price, bonus, withDollar = true) {
@@ -323,6 +347,157 @@
         };
     }
 
+    function isStockAvailable(stock, noStockManagement) {
+        if (noStockManagement) return true;
+        if (!stock) return false;
+        return normalizeNullableInt(stock.stock) >= readMinQty(stock);
+    }
+
+    // 將數量夾到 [最小購買量, 庫存] 區間，並對齊最小購買量的倍數。
+    // noStockManagement 為真時不受庫存上限限制。
+    function clampQuantity(stock, quantity, noStockManagement) {
+        const step = readMinQty(stock);
+        const min = step;
+        let value = normalizeNullableInt(quantity, min);
+
+        value -= value % step;
+        if (value < min) value = min;
+
+        if (!noStockManagement) {
+            const stockCount = normalizeNullableInt(stock && stock.stock);
+            const max = stockCount - (stockCount % step);
+            if (max > 0 && value > max) value = max;
+        }
+
+        if (value === 0) value = min;
+
+        return value;
+    }
+
+    function isLoggedIn(fallback) {
+        if (window.co && co.auth && typeof co.auth.isLoggedIn === 'function') {
+            return co.auth.isLoggedIn();
+        }
+
+        return !!fallback;
+    }
+
+    function createCartPayload(productId, selection) {
+        const safe = selection || {};
+
+        return {
+            FK_Pid: normalizeNullableInt(productId),
+            FK_PriceId: normalizeNullableInt(safe.priceId),
+            FK_S1id: normalizeNullableInt(safe.s1id),
+            FK_S2id: normalizeNullableInt(safe.s2id),
+            Quantity: normalizeNullableInt(safe.quantity)
+        };
+    }
+
+    // 加入購物車前的共用檢查：隱私權 → 未登入紅利價 → 紅利不足
+    // 回傳 false 代表已跳出提示、呼叫端應中止。
+    function runBuyGuard(options) {
+        const t = options.t;
+        const bonus = normalizeNullableInt(options.bonus);
+        const totalBonus = normalizeNullableInt(options.totalBonus);
+        const loggedIn = isLoggedIn(options.isLoginFallback);
+
+        if (localStorage.getItem('AgreePrivacy') == null) {
+            Coker.sweet.warning(
+                t('addCartWarningTitle'),
+                t('addCartNeedPrivacy')
+            );
+            return false;
+        }
+
+        if (!loggedIn && bonus > 0) {
+            Coker.sweet.warning(
+                t('addCartWarningTitle'),
+                '請登入會員',
+                function () {
+                    if (typeof loginModal !== 'undefined' && loginModal && typeof loginModal.show === 'function') {
+                        loginModal.show();
+                    }
+                }
+            );
+            return false;
+        }
+
+        // 已登入但紅利不足（前端先做 UX 提示；後端仍需再驗證）
+        if (loggedIn && bonus > 0 && totalBonus < bonus) {
+            Coker.sweet.warning(
+                t('addCartWarningTitle'),
+                t('bonusInsufficient')
+            );
+            return false;
+        }
+
+        return true;
+    }
+
+    // 送出加入購物車並處理結果；成功後的狀態更新由 onSuccess 交給呼叫端。
+    function submitCart(options) {
+        const t = options.t;
+        const api = options.api || {};
+        const addToCart = typeof api.addToCart === 'function'
+            ? api.addToCart
+            : (payload) => Product.AddUp.Cart(payload);
+        const getCartDropOne = typeof api.getCartDropOne === 'function'
+            ? api.getCartDropOne
+            : (id) => Product.GetOne.Cart(id);
+
+        const request = addToCart(options.payload)
+            .done(function (result) {
+                if (!result || !result.success) {
+                    const error = result && result.error;
+
+                    if (error === '商品庫存不足') {
+                        Coker.sweet.warning(error, result.message, function () {
+                            location.reload(true);
+                        });
+                    } else {
+                        Coker.sweet.error(
+                            t('commonErrorTitle'),
+                            (result && result.message) || t('addCartError'),
+                            null
+                        );
+                    }
+                    return;
+                }
+
+                Coker.sweet.success(t('addCartSuccess'), null, true);
+
+                const type = (result.message || '').substr(0, 1);
+                const id = (result.message || '').substr(1);
+
+                getCartDropOne(id).done(function (drop) {
+                    if (type === 'N') {
+                        if (typeof window.CartDropAdd === 'function') window.CartDropAdd(drop);
+                    } else {
+                        if (typeof window.CartDropUpdate === 'function') window.CartDropUpdate(drop);
+                    }
+                });
+
+                if (typeof options.onSuccess === 'function') {
+                    options.onSuccess(result);
+                }
+            })
+            .fail(function () {
+                Coker.sweet.error(
+                    t('commonErrorTitle'),
+                    t('addCartError'),
+                    null,
+                    true
+                );
+            });
+
+        if (typeof options.onAlways === 'function') {
+            request.always(options.onAlways);
+        }
+
+        return request;
+    }
+
     class ProductSelectionEngine {
         constructor(product, options) {
             this.product = product || { stocks: [] };
@@ -350,7 +525,7 @@
                 s1Title: stock.s1_Title || stock.s1Title || '',
                 s2Title: stock.s2_Title || stock.s2Title || '',
                 stock: normalizeNullableInt(stock.stock),
-                minQty: Math.max(normalizeNullableInt(stock.min_Qty ?? stock.minQty, 1), 1),
+                minQty: readMinQty(stock),
                 timePrice: !!stock.timePrice,
                 suggestPrice: normalizeNullableInt(stock.suggestPrice ?? stock.price),
                 prices: prices.map(p => ({
@@ -501,8 +676,7 @@
             const bonus = normalizeNullableInt(price.bonus);
             if (bonus <= 0) return false;
 
-            const isLoggedIn = co.auth.isLoggedIn();
-            if (!isLoggedIn) return false;
+            if (!isLoggedIn()) return false;
 
             return normalizeNullableInt(this.options.totalBonus) < bonus;
         }
@@ -515,17 +689,7 @@
             const stock = this.getActiveStock();
             if (!stock) return;
 
-            const step = stock.minQty;
-            const min = step;
-            const max = stock.stock - (stock.stock % step);
-            let value = normalizeNullableInt(quantity, min);
-
-            value -= value % step;
-            if (value < min) value = min;
-            if (max > 0 && value > max) value = max;
-            if (value === 0) value = min;
-
-            this.current.quantity = value;
+            this.current.quantity = clampQuantity(stock, quantity);
         }
 
         decreaseStockAfterAdd() {
@@ -545,13 +709,12 @@
         }
 
         buildCartPayload(productId) {
-            return {
-                FK_Pid: normalizeNullableInt(productId),
-                FK_PriceId: normalizeNullableInt(this.current.priceId),
-                FK_S1id: normalizeNullableInt(this.current.s1),
-                FK_S2id: normalizeNullableInt(this.current.s2),
-                Quantity: normalizeNullableInt(this.current.quantity)
-            };
+            return createCartPayload(productId, {
+                priceId: this.current.priceId,
+                s1id: this.current.s1,
+                s2id: this.current.s2,
+                quantity: this.current.quantity
+            });
         }
     }
 
@@ -1067,9 +1230,6 @@
             this.$pageRoot = $(this.options.pageRoot);
             this.$root = this.$pageRoot.find(this.options.selectors.product);
             this.$contentRoot = this.$root.find(this.options.selectors.content);
-            this.$quantityInput = this.$root.find(this.options.selectors.quantityInput);
-            this.$quantityWrap = this.$root.find(this.options.selectors.quantityWrap);
-            this.$addToCartButton = this.$pageRoot.find(this.options.selectors.addToCartButton);
             this.options.totalBonus = normalizeNullableInt(this.options.totalBonus, 0);
             this.options.orderPrice = !!this.options.orderPrice;
             this.state = {
@@ -1080,6 +1240,7 @@
                 productSwiper: null
             };
             this.mediaViewer = new ProductMediaViewer(this.options);
+            this.layout = layoutFactory ? layoutFactory(this) : null;
         }
 
         t(key, fallback, params) {
@@ -1102,46 +1263,6 @@
         }
 
         bindStaticEvents() {
-            const selectors = this.options.selectors;
-
-            this.$pageRoot.off('click.productContent', '.btn_count_plus').on('click.productContent', '.btn_count_plus', () => {
-                const current = normalizeNullableInt(this.$quantityInput.val(), 1);
-                const step = normalizeNullableInt(this.$quantityInput.attr('step'), 1);
-                this.state.selection.setQuantity(current + step);
-                this.renderQuantity();
-            });
-
-            this.$pageRoot.off('click.productContent', '.btn_count_minus').on('click.productContent', '.btn_count_minus', () => {
-                const current = normalizeNullableInt(this.$quantityInput.val(), 1);
-                const step = normalizeNullableInt(this.$quantityInput.attr('step'), 1);
-                this.state.selection.setQuantity(current - step);
-                this.renderQuantity();
-            });
-
-            this.$pageRoot.off('change.productContent', selectors.quantityInput).on('change.productContent', selectors.quantityInput, (e) => {
-                this.state.selection.setQuantity($(e.currentTarget).val());
-                this.renderQuantity();
-            });
-
-            this.$pageRoot.off('click.productContent', selectors.addToCartButton).on('click.productContent', selectors.addToCartButton, () => {
-                this.addToCart();
-            });
-
-            this.$pageRoot.off('change.productContent', 'input[name="S1_Radio"]').on('change.productContent', 'input[name="S1_Radio"]', (e) => {
-                this.state.selection.setSpec(1, $(e.currentTarget).val());
-                this.renderSelectionArea();
-            });
-
-            this.$pageRoot.off('change.productContent', 'input[name="S2_Radio"]').on('change.productContent', 'input[name="S2_Radio"]', (e) => {
-                this.state.selection.setSpec(2, $(e.currentTarget).val());
-                this.renderSelectionArea();
-            });
-
-            this.$pageRoot.off('change.productContent', 'input[name="priceRadio"]').on('change.productContent', 'input[name="priceRadio"]', (e) => {
-                this.state.selection.setPrice($(e.currentTarget).data('priceid'));
-                this.syncButtonState();
-            });
-
             this.$pageRoot.off('click.productContent', '.pro_display').on('click.productContent', '.pro_display', (e) => {
                 const index = normalizeNullableInt($(e.currentTarget).data('index'), -1);
 
@@ -1167,7 +1288,7 @@
             });
 
             this.$pageRoot.off('click.productContent', '.btn_tc').on('click.productContent', '.btn_tc', (e) => {
-                $('#ProductDescription').removeClass('active show');
+                $('#TabContent > .tab-pane').removeClass('active show');
                 $('#TechnicalDocuments').addClass('active show');
                 $('#btn_tab .nav-link').removeClass('active');
                 $('#pills-documents-tab').addClass('active');
@@ -1178,6 +1299,10 @@
                     $('html, body').animate({ scrollTop: $target.offset().top - ($('header > nav').height() || $('header').height() || 0) * 2 }, 0);
                 }
             });
+
+            if (this.layout && typeof this.layout.bindEvents === 'function') {
+                this.layout.bindEvents();
+            }
         }
 
         logClick() {
@@ -1242,7 +1367,11 @@
             this.renderTags();
             this.renderStatus();
             this.renderMedia();
-            this.renderSelectionArea();
+
+            if (this.layout && typeof this.layout.renderSelectionArea === 'function') {
+                this.layout.renderSelectionArea();
+            }
+
             this.initShare();
             this.initFavorite();
             this.initSwitchPage();
@@ -1533,392 +1662,7 @@
                     swiper: this.state.previewSwiper
                 }
             });
-        }
-
-        renderSelectionArea() {
-            this.renderSpecs();
-            this.renderPrices();
-            this.renderQuantity();
-            this.syncButtonState();
-
-            if (typeof this.options.hooks.onSelectionChanged === 'function') {
-                this.options.hooks.onSelectionChanged(this.state.selection, this);
-            }
-        }
-
-        renderSpecs() {
-            const selectors = this.options.selectors;
-            const templates = this.options.templates;
-            const $options = this.$root.find(selectors.options);
-            $options.find('.radio').remove();
-
-            const stocks = this.state.selection.stocks || [];
-            const specInfo = analyzeSpecStructure(stocks);
-
-            if (specInfo.mode === 'none') {
-                return;
-            }
-
-            const spec1Options = this.state.selection.getSpec1Options();
-            const spec2Options = this.state.selection.getSpec2Options(this.state.selection.current.s1);
-
-            if (specInfo.mode === 'double' && spec2Options.length > 0) {
-                const $spec2 = cloneTemplate(templates.specRadio).attr('data-stype', '2');
-                const $control = $spec2.find('.spec_control');
-
-                spec2Options.forEach(item => {
-                    const checked = item.id === this.state.selection.current.s2 ? 'checked' : '';
-                    const disabled = item.enabled ? '' : 'disabled="disabled"';
-                    $control.append(`
-                        <input id="s2_${item.id}" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="${item.id}" ${checked} ${disabled}>
-                    `);
-                    $control.append(`
-                        <label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_${item.id}">
-                            ${item.title}
-                        </label>
-                    `);
-                });
-
-                $options.prepend($spec2);
-            }
-
-            if (specInfo.mode === 'single' || specInfo.mode === 'double') {
-                const $spec1 = cloneTemplate(templates.specRadio).attr('data-stype', '1');
-                const $spec1Control = $spec1.find('.spec_control');
-
-                spec1Options.forEach(item => {
-                    const checked = item.id === this.state.selection.current.s1 ? 'checked' : '';
-                    const disabled = item.enabled ? '' : 'disabled="disabled"';
-                    $spec1Control.append(`
-                        <input id="s1_${item.id}" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="${item.id}" ${checked} ${disabled}>
-                    `);
-                    $spec1Control.append(`
-                        <label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_${item.id}">
-                            ${item.title}
-                        </label>
-                    `);
-                });
-
-                $options.prepend($spec1);
-            }
-        }
-
-        renderPriceBaseMeta(priceOptions) {
-            const $baseMeta = this.$root.find('.price-base-meta');
-            const $suggestPrice = $baseMeta.find('.suggest-price');
-            const $originalPrice = $baseMeta.find('.original-price');
-
-            if (!$baseMeta.length) return;
-
-            const stock = this.state.selection.getActiveStock();
-            const vm = buildPriceBaseViewModel(stock, priceOptions, this, this.state.product);
-
-            let hasMeta = false;
-
-            if (vm.showSuggestPrice) {
-                $suggestPrice
-                    .removeClass('d-none')
-                    .empty()
-                    .append($('<span/>', {
-                        class: 'price-meta-label',
-                        text: vm.suggestPriceLabel
-                    }))
-                    .append($('<span/>', {
-                        class: 'price-meta-value',
-                        text: vm.suggestPriceValue
-                    }));
-
-                hasMeta = true;
-            } else {
-                $suggestPrice.addClass('d-none').empty();
-            }
-
-            if (vm.showOriginalPrice) {
-                $originalPrice
-                    .removeClass('d-none')
-                    .empty()
-                    .append($('<span/>', {
-                        class: 'price-meta-label',
-                        text: vm.originalPriceLabel
-                    }))
-                    .append($('<span/>', {
-                        class: 'price-meta-value',
-                        text: vm.originalPriceValue
-                    }));
-
-                hasMeta = true;
-            } else {
-                $originalPrice.addClass('d-none').empty();
-            }
-
-            $baseMeta.toggleClass('d-none', !hasMeta);
-        }
-
-        renderPrices() {
-            const $priceFrame = this.$root.find(this.options.selectors.priceFrame).empty();
-            const priceOptions = this.state.selection.getPriceOptions();
-            const hasMultiplePrice = priceOptions.length > 1;
-
-            this.renderPriceBaseMeta(priceOptions);
-
-            if (!priceOptions.length) {
-                this.$addToCartButton.addClass('d-none');
-                $priceFrame.addClass('d-none');
-                this.$root.find('.options').addClass('d-none');
-                this.$root.find('.price-base-meta').addClass('d-none');
-                return;
-            }
-
-            $priceFrame.removeClass('d-none');
-            this.$root.find('.options').removeClass('d-none');
-
-            priceOptions.forEach((item, index) => {
-                const $price = cloneTemplate(this.options.templates.priceItem);
-
-                const $input = $price.find('.price-option-input');
-                const $label = $price.find('.price-option-label');
-                const $roleBadge = $price.find('.price-role-badge');
-                const $roleName = $price.find('.price-role-name');
-                const $saleRoleName = $price.find('.sale-role-name');
-                const $salePrice = $price.find('.sale-price');
-                const $sub = $price.find('.price-option-sub');
-                const $badge = $price.find('.price-badge');
-                const $hint = $price.find('.price-hint');
-
-                const id = `price_${item.id || index}`;
-                const stock = item.stock;
-                const vm = buildPriceViewModel(item, stock, this, this.state.product);
-
-                const stockAvailable =
-                    stock &&
-                    !stock.timePrice &&
-                    (this.noStockManagement || normalizeNullableInt(stock.stock) >= normalizeNullableInt(stock.minQty, 1));
-
-                const isSelectable =
-                    hasMultiplePrice &&
-                    stockAvailable &&
-                    this.state.selection.canAddToCart();
-
-                $price.toggleClass('is-multi-price', hasMultiplePrice);
-                $price.toggleClass('is-single-price', !hasMultiplePrice);
-                $price.toggleClass('is-selectable', isSelectable);
-
-                $input
-                    .attr('id', id)
-                    .attr('name', 'priceRadio')
-                    .data('priceid', item.id)
-                    .prop('disabled', !!item.disabled)
-                    .prop('checked', !!item.checked)
-                    .toggleClass('d-none', !isSelectable);
-
-                $label.attr('for', id);
-
-                // multi: 多價格一律使用 price-role-badge 顯示角色名稱
-                if (hasMultiplePrice && vm.showRoleName) {
-                    $roleBadge.removeClass('d-none');
-                    $roleName.text(vm.roleName);
-                    $price.addClass('has-role-badge');
-                } else {
-                    $roleBadge.addClass('d-none');
-                    $roleName.text('');
-                    $price.removeClass('has-role-badge');
-                }
-
-                // single: 只有單價才把角色名稱放在金額前
-                if (!hasMultiplePrice && vm.showRoleName) {
-                    $saleRoleName.removeClass('d-none').text(`${vm.roleName} `);
-                } else {
-                    $saleRoleName.addClass('d-none').text('');
-                }
-
-                // 每一筆價格方案只顯示自己的實際售價
-                $salePrice
-                    .text(vm.saleText)
-                    .removeClass('bonus_lack');
-
-                let hasSub = false;
-
-                if (vm.showBonusLack) {
-                    $badge.removeClass('d-none').text(this.t('bonusInsufficient'));
-                    $salePrice.addClass('bonus_lack');
-                    hasSub = true;
-                } else {
-                    $badge.addClass('d-none').text('');
-                }
-
-                if ($hint.length > 0) {
-                    $hint.addClass('d-none').text('');
-                }
-
-                if (hasSub) {
-                    $sub.removeClass('d-none');
-                } else {
-                    $sub.addClass('d-none');
-                }
-
-                $priceFrame.append($price);
-            });
-        }
-
-        renderQuantity() {
-            const stock = this.state.selection.getActiveStock();
-            if (!stock) return;
-
-            const noStock = this.state.selection.noStockManagement;
-            const min = stock.minQty;
-
-            this.$quantityInput.attr({ min, step: stock.minQty }).val(this.state.selection.current.quantity);
-
-            if (noStock) {
-                this.$quantityInput.removeAttr('max');
-            } else {
-                this.$quantityInput.attr('max', stock.stock - (stock.stock % stock.minQty));
-            }
-
-            if (!noStock && stock.stock < stock.minQty) {
-                this.$quantityWrap.addClass('isEmpty');
-            } else {
-                this.$quantityWrap.removeClass('isEmpty');
-            }
-        }
-
-        syncButtonState() {
-            const stock = this.state.selection.getActiveStock();
-            const canAdd = this.state.selection.canAddToCart();
-            const priceOptions = this.state.selection.getPriceOptions();
-            const selectedPrice = priceOptions.find(
-                x => normalizeNullableInt(x.id) === normalizeNullableInt(this.state.selection.current.priceId)
-            );
-            const isLoggedIn = co.auth.isLoggedIn();
-            const selectedIsBonusLack =
-                isLoggedIn &&
-                !!selectedPrice &&
-                !!selectedPrice.disabled &&
-                normalizeNullableInt(selectedPrice.bonus) > 0;
-
-            this.$addToCartButton.removeClass('close bonus_lack');
-
-            if (!this.options.canShop || !stock || stock.timePrice) {
-                this.$addToCartButton.addClass('close');
-            } else if (!canAdd) {
-                if (selectedIsBonusLack) {
-                    this.$addToCartButton.addClass('bonus_lack');
-                } else {
-                    this.$addToCartButton.addClass('close');
-                }
-            }
-
-            if (!this.options.canShop || !stock) {
-                this.$root.find('.counter').addClass('d-none');
-            } else {
-                this.$root.find('.counter').removeClass('d-none');
-            }
-        }
-
-        addToCart() {
-            if (typeof this.options.hooks.beforeAddToCart === 'function') {
-                const shouldContinue = this.options.hooks.beforeAddToCart(this);
-                if (shouldContinue === false) return;
-            }
-
-            if (localStorage.getItem('AgreePrivacy') == null) {
-                Coker.sweet.warning(
-                    this.t('addCartWarningTitle'),
-                    this.t('addCartNeedPrivacy')
-                );
-                return;
-            }
-
-            const priceOptions = this.state.selection.getPriceOptions();
-            const selectedPrice = priceOptions.find(
-                x => normalizeNullableInt(x.id) === normalizeNullableInt(this.state.selection.current.priceId)
-            );
-            const isLoggedIn = co.auth.isLoggedIn();
-            const selectedBonus = normalizeNullableInt(selectedPrice?.bonus);
-
-            // 未登入且目前選的是紅利價：先要求登入
-            if (!isLoggedIn && selectedBonus > 0) {
-                Coker.sweet.warning(
-                    this.t('addCartWarningTitle'),
-                    '請登入會員',
-                    () => {
-                        if (typeof loginModal !== 'undefined' && loginModal && typeof loginModal.show === 'function') {
-                            loginModal.show();
-                        }
-                    }
-                );
-                return;
-            }
-
-            // 已登入但紅利不足（前端先做 UX 提示；後端仍需再驗證）
-            if (
-                isLoggedIn &&
-                selectedPrice &&
-                normalizeNullableInt(selectedPrice.bonus) > 0 &&
-                normalizeNullableInt(this.options.totalBonus) < normalizeNullableInt(selectedPrice.bonus)
-            ) {
-                Coker.sweet.warning(
-                    this.t('addCartWarningTitle'),
-                    this.t('bonusInsufficient')
-                );
-                return;
-            }
-
-            if (!this.state.selection.canAddToCart()) {
-                Coker.sweet.warning(
-                    this.t('addCartWarningTitle'),
-                    this.t('addCartNeedSelection')
-                );
-                return;
-            }
-
-            const payload = this.state.selection.buildCartPayload(this.state.productId);
-
-            this.options.api.addToCart(payload).done((result) => {
-                if (!result.success) {
-                    if (result.error === '商品庫存不足') {
-                        Coker.sweet.warning(result.error, result.message, function () {
-                            location.reload(true);
-                        });
-                    } else {
-                        Coker.sweet.error(
-                            this.t('commonErrorTitle'),
-                            result.message || this.t('addCartError'),
-                            null
-                        );
-                    }
-                    return;
-                }
-
-                Coker.sweet.success(this.t('addCartSuccess'), null, true);
-
-                const type = (result.message || '').substr(0, 1);
-                const id = (result.message || '').substr(1);
-
-                this.options.api.getCartDropOne(id).done((drop) => {
-                    if (type === 'N') {
-                        if (typeof window.CartDropAdd === 'function') window.CartDropAdd(drop);
-                    } else {
-                        if (typeof window.CartDropUpdate === 'function') window.CartDropUpdate(drop);
-                    }
-                });
-
-                this.state.selection.decreaseStockAfterAdd();
-                this.state.selection.setQuantity(this.state.selection.getActiveStock()?.minQty || 1);
-                this.renderSelectionArea();
-
-                if (typeof this.options.hooks.afterAddToCart === 'function') {
-                    this.options.hooks.afterAddToCart(result, this);
-                }
-            }).fail(() => {
-                Coker.sweet.error(
-                    this.t('commonErrorTitle'),
-                    this.t('addCartError'),
-                    null,
-                    true
-                );
-            });
-        }
+        };
 
         initShare() {
             if (typeof window.ShareBlockInit === 'function') {
@@ -2061,14 +1805,27 @@
 
     window.ProductContentModule = {
         create: createProductContent,
+        registerLayout,
         ProductContentController,
         ProductSelectionEngine,
         ProductMediaViewer,
+        DEFAULT_TEXTS,
+        toInt,
+        normalizeNullableInt,
+        formatNumber,
+        readMinQty,
+        defaultI18n,
+        cloneTemplate,
         formatPriceText,
         buildPriceSummary,
         resolveText,
-        analyzeSpecStructure,
-        buildPriceViewModel
+        isStockAvailable,
+        clampQuantity,
+        isLoggedIn,
+        createCartPayload,
+        runBuyGuard,
+        submitCart,
+        analyzeSpecStructure
     };
 
     window.PageReady = function () {
@@ -2077,25 +1834,7 @@
             canShop: $('.btn_addToCar').length > 0,
             totalBonus: typeof totalBonus !== 'undefined' ? totalBonus : 0,
             orderPrice: typeof orderPrice !== 'undefined' ? orderPrice : false,
-            i18n: function (key, fallback) {
-                if (window.L && typeof window.L.get === 'function') {
-                    const value = window.L.get(key);
-                    return value || fallback;
-                }
-
-                if (window.local && typeof window.local === 'object') {
-                    const legacyMap = {
-                        marketPrice: 'MarketPrice',
-                        prodEmpty: 'ProdEmpty'
-                    };
-                    const legacyKey = legacyMap[key];
-                    if (legacyKey && window.local[legacyKey]) {
-                        return window.local[legacyKey];
-                    }
-                }
-
-                return fallback;
-            }
+            i18n: defaultI18n
         });
     };
 

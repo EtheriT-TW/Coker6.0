@@ -189,6 +189,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var storeMemo = StoreSet.storeSetDetails?.Find(e => e.key == "storeMemo");
             var linkMore = StoreSet.storeSetDetails?.Find(e => e.key == "linkMore");
             var prodCatalog = StoreSet.storeSetDetails?.Find(e => e.key == "prodCatalog");
+            var productPageLayout = StoreSet.storeSetDetails?.Find(e => e.key == "ProductPageLayout");
             var priceOrder = StoreSet.storeSetDetails?.Find(e => e.key == "priceOrder");
             var HasInvoice = string.Join(",", StoreSet.storeSetDetails?.Find(e => e.key == "HasInvoice")?.value ?? Enumerable.Empty<string>()) != "DisabledInvoice";
             var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
@@ -390,7 +391,15 @@ namespace EtheriT.Coker.Web.Public.Controllers
                                     string htmlString = stringHandler.HtmlDecode(model.PageData.Html);
                                     model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
                                 }
-                                view = "ProductContent";
+                                var layoutKey = productPageLayout?.value?.FirstOrDefault();
+                                if(layoutKey != null)
+                                {
+                                    view = $"ProductContent/{layoutKey}";
+                                }
+                                else
+                                {
+                                    view = "ProductContent/Layout_1";
+                                }
                             }
                         }
                         else view = "../Error/NotFound";

@@ -1409,6 +1409,7 @@ namespace EtheriT.Coker.Application.Product
                         foreach (var stock in stockDatas)
                         {
                             stock.Prices = prices.Where(e => e.FK_PSId == stock.Id).ToList();
+                            stock.SpecDescription = storeSetAppService.RenderMarkdownToHtml(stock.SpecDescription);
                         }
 
                         output.Stocks = stockDatas;

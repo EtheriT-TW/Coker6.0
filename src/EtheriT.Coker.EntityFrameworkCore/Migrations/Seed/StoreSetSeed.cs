@@ -496,6 +496,20 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     jobID = "B001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2026, 7, 08, 10, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                },new StoreSet 
+                {
+                    Id = 29,
+                    key = "ProductPageLayout",
+                    name = "商品頁版型",
+                    memo = "設定商品頁面的顯示版型",
+                    FK_StoreSetGroupId = 2,
+                    type = SeoSetDataTypeEnum.radio,
+                    maxlength = null,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "E001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 7, 17, 11, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(
@@ -657,6 +671,25 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                { 
+                    Id = 18,
+                    Key = "Layout_1",
+                    Value = "版型一",
+                    FK_StoreSetId = 29,
+                    IsDeleted = false,
+                    IsDefault = true,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 7, 17, 11, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 19,
+                    Key = "Layout_2",
+                    Value = "版型二",
+                    FK_StoreSetId = 29,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 7, 17, 11, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
         }

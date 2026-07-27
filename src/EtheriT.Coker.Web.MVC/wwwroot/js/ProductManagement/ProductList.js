@@ -1,5 +1,6 @@
 ﻿var $display, $removedFromShelves, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count,
-    $marks, $price, $subItemNo, $stock_number, $packingPoint_number, $alert_number, $min_number, $date, $picker, $permanent, $itemNo, $itemNo_count, $noStockManagement;
+    $marks, $price, $subItemNo, $stock_number, $packingPoint_number, $alert_number, $min_number, $date, $picker, $permanent,
+    $itemNo, $itemNo_count, $noStockManagement;
 var startDate, endDate, keyId, price_tid, temp_psid;
 var specDescModal, $spec_desc_input, $currentSpecDescRow = null;
 var productTagFilter = null;

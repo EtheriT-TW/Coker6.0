@@ -2683,19 +2683,27 @@ namespace EtheriT.Coker.Application.Order
 
                     var mailcss = "*{ font-family: sans-serif; } .text-size1{ font-size: 1rem; line-height: 1.5; } .text-bold { font-weight: bold; } .text-red { color: red; } .text-orange { color: #CC5500; } .info-box{ border: 1px solid #CC5500; padding: 8px 16px 16px; margin: 1rem 0; max-width: 600px; } .section-title{ display: inline-block; font-weight: bold; font-size: 1.05rem; color: #fff; background-color: #CC5500; padding: 4px 10px; margin: 14px 0 10px; } .row{ margin: 4px 0; padding-left: 12px; } .label{ display: inline-block; width: 7.5em; text-align: justify; text-align-last: justify; vertical-align: top; font-weight: bold; color: #555; margin-right: 6px; } .prod-name{ display: inline-block; width: 280px; vertical-align: top; word-break: break-all; } .prod-qty{ display: inline-block; width: 4em; text-align: right; vertical-align: top; }";
 
-                    var sendResult = await mailAppService.sendMail(new SenderDto
-                    {
-                        Recipients = new List<MailUserDataDto>(){
-                    new MailUserDataDto()
-                    {
-                        Name = order_header.Orderer,
-                        Email = order_header.OrdererEmail,
-                    }
-                },
+                    var sendDto = new SenderDto {
+                        Recipients = new List<MailUserDataDto>() {
+                            new MailUserDataDto(){
+                                Name = order_header.Orderer,
+                                Email = order_header.OrdererEmail,
+                            }
+                        },
                         Subject = $"【{Website.Title}】出貨通知(訂單編號：{orderNo})",
                         Body = mailhtml,
                         Css = mailcss,
-                    }, Website.Contact);
+                    };
+
+                    if (!string.IsNullOrEmpty(Website.ContactMail)) {
+                        sendDto.Bcc.Add(new MailUserDataDto
+                        {
+                            Name = !string.IsNullOrEmpty(Website.Contact) ? Website.Contact : "客服信箱",
+                            Email = Website.ContactMail,
+                        });
+                    }
+
+                    var sendResult = await mailAppService.sendMail(sendDto, Website.Contact);
 
                     response = sendResult;
                 }
@@ -2763,19 +2771,27 @@ namespace EtheriT.Coker.Application.Order
 
                     var mailcss = "*{ font-family: sans-serif; } .text-size1{ font-size: 1rem; line-height: 1.5; } .text-bold { font-weight: bold; } .text-red { color: red; } .text-orange { color: #CC5500; } .info-box{ border: 1px solid #CC5500; padding: 8px 16px 16px; margin: 1rem 0; max-width: 600px; } .section-title{ display: inline-block; font-weight: bold; font-size: 1.05rem; color: #fff; background-color: #CC5500; padding: 4px 10px; margin: 14px 0 10px; } .row{ margin: 4px 0; padding-left: 12px; } .label{ display: inline-block; width: 7.5em; text-align: justify; text-align-last: justify; vertical-align: top; font-weight: bold; color: #555; margin-right: 6px; } .prod-name{ display: inline-block; width: 280px; vertical-align: top; word-break: break-all; } .prod-qty{ display: inline-block; width: 4em; text-align: right; vertical-align: top; }";
 
-                    var sendResult = await mailAppService.sendMail(new SenderDto
-                    {
-                        Recipients = new List<MailUserDataDto>(){
-                    new MailUserDataDto()
-                    {
-                        Name = order_header.Orderer,
-                        Email = order_header.OrdererEmail,
-                    }
-                },
+                    var sendDto = new SenderDto{
+                        Recipients = new List<MailUserDataDto>() {
+                            new MailUserDataDto(){
+                                Name = order_header.Orderer,
+                                Email = order_header.OrdererEmail,
+                            }
+                        },
                         Subject = $"【{Website.Title}】更新-物流編號通知單(訂單編號：{orderNo})",
                         Body = mailhtml,
                         Css = mailcss,
-                    }, Website.Contact);
+                    };
+
+                    if (!string.IsNullOrEmpty(Website.ContactMail)) {
+                        sendDto.Bcc.Add(new MailUserDataDto
+                        {
+                            Name = !string.IsNullOrEmpty(Website.Contact) ? Website.Contact : "客服信箱",
+                            Email = Website.ContactMail,
+                        });
+                    }
+
+                    var sendResult = await mailAppService.sendMail(sendDto, Website.Contact);
 
                     response = sendResult;
                 }

@@ -433,6 +433,14 @@ namespace EtheriT.Coker.Application.StoreSet
             if (v.Count == 1 && string.IsNullOrWhiteSpace(v[0])) return false;
             return true;
         }
+
+        public string RenderMarkdownToHtml(string? markdown)
+        {
+            if (string.IsNullOrWhiteSpace(markdown)) return string.Empty;
+            var normalized = NormalizeMarkdownForDisplay(markdown);
+            return Markdown.ToHtml(normalized, _mdPipeline);
+        }
+
         private static string NormalizeMarkdownForDisplay(string text)
         {
             if (string.IsNullOrEmpty(text)) return text;

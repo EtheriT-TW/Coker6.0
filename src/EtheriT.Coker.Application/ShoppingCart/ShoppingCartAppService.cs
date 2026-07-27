@@ -9,6 +9,7 @@ using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
+using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
@@ -28,6 +29,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
         private readonly IMapper mapper;
         private readonly IProductAppService productAppService;
         private readonly IBonusManagementAppService bonusManagementAppService;
+        private readonly IStoreSetAppService storeSetAppService;
         public ShoppingCartAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -35,7 +37,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
             IConfiguration configuration,
             IMapper mapper,
             IProductAppService productAppService,
-            IBonusManagementAppService bonusManagementAppService
+            IBonusManagementAppService bonusManagementAppService,
+            IStoreSetAppService storeSetsAppService
         )
         {
             this.db = db;
@@ -45,6 +48,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             this.mapper = mapper;
             this.productAppService = productAppService;
             this.bonusManagementAppService = bonusManagementAppService;
+            this.storeSetAppService = storeSetsAppService;
         }
         public async Task<ResponseMessageDto> UpdateUUID(Guid UserUUID, Guid TempUUID)
         {
@@ -668,6 +672,13 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     .Where(e => scids.Contains(e.Id))
                     .ToListAsync();
 
+                var layoutSetting = await storeSetAppService.getValues(new Shared.Dto.StoreSet.StoreSetGetValueInput
+                {
+                    key = "ProductPageLayout",
+                    SiteId = WebsiteId
+                });
+                var isLayout2 = layoutSetting?.detailItem?.value?.FirstOrDefault() == "Layout_2";
+
                 foreach (var shoppingCart in shoppingCarts)
                 {
                     var prod_price_id = await db.Prod_Prices.Where(e => e.Id == shoppingCart.FK_PriceId).Select(e => e.Id).FirstOrDefaultAsync();
@@ -733,13 +744,31 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     var pid = prod_stocks?.Prod?.Id;
                     temp_output.PId = pid ?? 0;
 
-                    var imagepath = await (from fu in db.FileUploads
+                    // 規格圖優先：買的是哪個規格就顯示哪個規格的圖
+                    string? imagepath = null;
+
+                    if (isLayout2 && prod_stocks != null)
+                    {
+                        imagepath = await (from fu in db.FileUploads
+                                           join fb in db.FileBinds on fu.Id equals fb.FK_FileUploadId
+                                           where fb.Sid == prod_stocks.Id && fb.type == (int)FileBindTypeEnum.產品規格圖
+                                           where fu.FK_WebsiteId == WebsiteId
+                                           where fu.ContentType.StartsWith("image")
+                                           orderby fb.SerNo, fb.CreationTime
+                                           select fu.DownloadFileName).FirstOrDefaultAsync();
+                    }
+
+                    // 該規格沒設圖 → 退回商品主圖
+                    if (imagepath == null)
+                    {
+                        imagepath = await (from fu in db.FileUploads
                                            join fb in db.FileBinds on fu.Id equals fb.FK_FileUploadId
                                            where fb.Sid == pid && fb.type == (int)FileBindTypeEnum.產品
                                            where fu.FK_WebsiteId == WebsiteId
                                            where fu.ContentType.StartsWith("image")
                                            orderby fb.SerNo, fb.CreationTime
                                            select fu.DownloadFileName).FirstOrDefaultAsync();
+                    }
 
                     temp_output.ImagePath = imagepath?.ToString() ?? "/images/noImg.jpg";
                     if (temp_output.ImagePath != "") temp_output.ImagePath = $"{temp_output.ImagePath}";

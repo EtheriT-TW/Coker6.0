@@ -555,8 +555,9 @@
                     <div id="Spec_Frame" class="data_upload mx-2 border rounded position-relative">
                         <ul class="px-1 specList mb-0 border-0">
                             <li class="specHeader">
-                                <div class="spec_img d-none">規格圖片</div>
                                 <div class="serNo">排序</div>
+                                <div class="spec_img @(((bool)ViewBag.IsLayout2) ? "" : "d-none")">規格圖片</div>
+                                <div class="specd_desc @(((bool)ViewBag.IsLayout2) ? "" : "d-none")">規格說明</div>
                                 <div class="spec">規格</div>
                                 <div class="price">金額</div>
                                 <div class="subItem">子料號</div>
@@ -564,7 +565,6 @@
                                 <div>可銷售量</div>
                                 <div>最低購買量</div>
                                 <div>銷售警示量</div>
-                                <div class="specDesc d-none"></div>
                                 <div class="del"></div>
                             </li>
                             <li class="btn_spec_add list-unstyled mt-3 p-1 d-flex justify-content-end">
@@ -592,18 +592,23 @@
                 </template>
 
                 <template id="TemplateSpecification">
-                    <li class="spec_list p-1 py-3 mb-3 rounded">
-                        <div class="specImg d-none">
-                            <button type="button" class="btn_spec_img_edit form-control border-0 px-1 bg-transparent" title="編輯規格圖片">
-                                <img class="spec_thumb d-none" src="/images/noImg.jpg" />
-                                <i class="fa-regular fa-image spec_img_icon"></i>
-                            </button>
-                        </div>
+                    <li class="spec_list p-1 py-3 mb-3 rounded @(((bool)ViewBag.IsLayout2) ? "" : "spec-optional")">
                         <div class="upload_list">
                             <div>
                                 <span class="chang_ser bg-transparent border-0 form-control fs-4 material-symbols-outlined px-1 py-0" title="變更順序">open_with</span>
                                 <input class="ser_no me-1 form-control rounded text-center" type="number" aria-label="Upload data sort number" title="排序號碼" value="">
                             </div>
+                        </div>
+                        <div class="specImg  @(((bool)ViewBag.IsLayout2) ? "" : "d-none")">
+                            <button type="button" class="btn_spec_img_edit form-control border-0 px-1 bg-transparent" title="編輯規格圖片">
+                                <img class="spec_thumb d-none" src="/images/noImg.jpg" />
+                                <i class="fa-regular fa-image spec_img_icon"></i>
+                            </button>
+                        </div>
+                        <div class="specDesc  @(((bool)ViewBag.IsLayout2) ? "" : "d-none")">
+                            <button type="button" class="btn_spec_desc_edit form-control border-0 px-1 bg-transparent" title="編輯規格描述">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
                         </div>
                         <div class="specs">
                             <div>
@@ -618,7 +623,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="price input-group">
                             <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                                 <span class="material-symbols-outlined me-1 @(Model.PriceOptional ? "" : "required_sign")">attach_money</span>
@@ -647,11 +651,6 @@
                                 <span class="material-symbols-outlined me-1">warning</span>
                             </div>
                             <input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product" step="1">
-                        </div>
-                        <div class="specDesc d-none">
-                            <button type="button" class="btn_spec_desc_edit form-control border-0 px-1 bg-transparent" title="編輯規格描述">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </button>
                         </div>
                         <div class="del">
                             <button class="btn_remove form-control border-0 px-1 bg-transparent" title="移除規格">

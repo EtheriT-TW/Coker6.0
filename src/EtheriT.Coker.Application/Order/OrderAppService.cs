@@ -1970,6 +1970,13 @@ namespace EtheriT.Coker.Application.Order
             var orgName = await loginUserData.GetWebsiteOrgName();
             var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
 
+            var layoutSetting = await storeSetAppService.getValues(new Shared.Dto.StoreSet.StoreSetGetValueInput
+            {
+                key = "ProductPageLayout",
+                SiteId = websiteId
+            });
+            var isLayout2 = layoutSetting?.detailItem?.value?.FirstOrDefault() == "Layout_2";
+
             var details = await (
                 from od in db.Order_Details
                 join sc in db.ShoppingCarts on od.FK_SCId equals sc.Id
@@ -1998,7 +2005,19 @@ namespace EtheriT.Coker.Application.Order
                     Subtotal = (int)Math.Round(sc.Price * sc.Quantity, MidpointRounding.AwayFromZero),
                     SubtotalBonus = (sc.Bonus ?? 0) * sc.Quantity,
 
+                    // 規格圖優先：買的是哪個規格就顯示哪個規格的圖，
+                    // 該規格沒設圖才退回商品主圖，都沒有才用預設圖。
                     ImagePath = (
+                        from f in db.FileBinds.Include(e => e.fileUpload)
+                        where isLayout2
+                              &&f.Sid == sc.FK_PSid
+                              && f.type == (int)FileBindTypeEnum.產品規格圖
+                              && f.fileUpload != null
+                              && (websiteId == 0 || f.fileUpload.FK_WebsiteId == websiteId)
+                              && f.fileUpload.ContentType.StartsWith("image")
+                        orderby f.SerNo, f.CreationTime
+                        select f.fileUpload.DownloadFileName
+                    ).FirstOrDefault() ?? (
                         from f in db.FileBinds.Include(e => e.fileUpload)
                         where f.Sid == sc.ProductId
                               && f.type == (int)FileBindTypeEnum.產品

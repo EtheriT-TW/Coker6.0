@@ -17,5 +17,6 @@ namespace EtheriT.Coker.Application.StoreSet
         public Task<StoreSetResponseMessageDto> getValues(StoreSetGetValueInput dto);
         public Task<StoreSetResponseMessageDto> getGroupStructure(StoreSetGetValueInput dto);
         public Task<ResponseMessageDto> CreateOrUpdate(List<StoreSetDetailOutputDto> datas);
+        string RenderMarkdownToHtml(string? markdown);
     }
 }

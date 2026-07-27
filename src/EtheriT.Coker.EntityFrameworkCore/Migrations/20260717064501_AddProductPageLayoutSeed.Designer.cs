@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260717064501_AddProductPageLayoutSeed")]
+    partial class AddProductPageLayoutSeed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1768,9 +1771,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_WebsiteId", "CacheKey", "FK_AId")
-                        .IsUnique()
-                        .HasFilter("[FK_AId] IS NOT NULL");
+                    b.HasIndex("FK_WebsiteId", "CacheKey")
+                        .IsUnique();
 
                     b.ToTable("JsonObjects");
                 });
@@ -3364,93 +3366,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.ToTable("Order_Logistics");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.PageTextBackfillState", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime?>("CompletionTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTime>("CreationTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
-
-                    b.Property<long>("CreatorUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("DeleterUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("FK_WebsiteId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("FailedCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("FailedIdsJson")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("LastError")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("LastModifierUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("LastProcessedId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("ProcessedCount")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RemainingNullCount")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("StartTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<long>("TargetMaxId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("TotalCount")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FK_WebsiteId", "ContentType")
-                        .IsUnique();
-
-                    b.HasIndex("Status", "LastModificationTime");
-
-                    b.ToTable("PageTextBackfillStates", (string)null);
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.PaymentType", b =>
                 {
                     b.Property<long>("Id")
@@ -4242,9 +4157,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<bool>("NoStockManagement")
                         .HasColumnType("bit");
-
-                    b.Property<string>("PageText")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("RemovedFromShelves")
                         .ValueGeneratedOnAdd()
@@ -5484,7 +5396,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             jobID = "E001",
                             key = "prodCatalog",
                             maxlength = 255,
-                            memo = "輸入商品目錄連結，可設定前台購物車(我要再選購)之按鈕。",
+                            memo = "輸入商品目錄連結，以利前台新增返回目錄按鈕。",
                             name = "商品目錄",
                             pattern = "",
                             type = 1
@@ -6446,10 +6358,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int?>("MaxPay")
                         .HasColumnType("int");
 
-                    b.Property<string>("Memo")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.Property<string>("PaymentUrl")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
@@ -6514,7 +6422,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             IsDeleted = false,
-                            Memo = "Apple pay 須再跟綠界開通服務，並請洽詢網站平台業務單位加購服務設定。",
                             ServiceType = 1,
                             Title = "綠界支付",
                             ser_no = 500

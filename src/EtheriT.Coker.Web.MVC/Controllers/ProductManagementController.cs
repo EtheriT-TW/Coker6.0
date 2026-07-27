@@ -28,7 +28,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             var spec_type = new List<SpecTypeListDto>(await specificationAppService.GetPickTypeList());
             var chackHasAnyItemNo = await productAppService.HasAnyItemNo();
             var storeBuyStatus = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "storeBuyState" });
+            var productPageLayout = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "ProductPageLayout" });
             bool priceOptional = storeBuyStatus.Success && storeBuyStatus.detailItem?.value != null && storeBuyStatus.detailItem.value.Contains("noPayNoShow");
+            bool isLayout2 = productPageLayout.Success && productPageLayout.detailItem?.value != null && productPageLayout.detailItem.value.Contains("Layout_2");
 
             ProductManagementModel model = new ProductManagementModel
             {
@@ -38,6 +40,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                 HasAnyItemNo = chackHasAnyItemNo.Success,
                 PriceOptional = priceOptional
             };
+
+            ViewBag.IsLayout2 = isLayout2;
             return View("ProductList", model);
         }
         public async Task<IActionResult> SaleQuantityStaging() {

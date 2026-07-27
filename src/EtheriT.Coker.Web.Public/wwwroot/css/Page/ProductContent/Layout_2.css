@@ -1,0 +1,281 @@
+﻿/* 版型二：隱藏版型一的價格 / 數量 / 加入購物車 UI
+   （抽共用後這些節點已不再由 JS 填入，這裡保留規則以明確表達「版型二不使用它們」） */
+#Product .priceframe,
+#Product .price-base-meta,
+#Product .options,
+#Product .btn_addToCar {
+    display: none !important;
+}
+
+.spec-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+}
+
+/* ── 電腦版：四欄對齊網格（圖 | 名稱 | 描述 | 方案區）── */
+.spec-card {
+    display: grid;
+    grid-template-columns: 72px 170px minmax(140px, 2fr) auto;
+    align-items: center;
+    column-gap: 1rem;
+    padding: .875rem 0; /* 只留上下間距，左右貼齊 */
+}
+
+    .spec-card:not(:last-child) {
+        border-bottom: 1px solid #e5e5e5;
+    }
+
+/* 名稱與描述直接參與卡片 grid，達成跨列對齊 */
+.spec-body {
+    display: contents;
+}
+
+/* 方案區：一個規格可有多筆價格方案，垂直堆疊。
+   欄寬收成變數，方案列與建議售價共用同一組，改一處兩邊一起動。
+   列距不用 gap，改由 .spec-plan + .spec-plan 控制，
+   這樣「建議售價 ↔ 第一列價格」的距離才能獨立調整。 */
+.spec-actions {
+    --spec-qty-col: 108px;
+    --spec-btn-col: 96px; /* 原 128px，縮 25% */
+    --spec-col-gap: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 不開放購買時沒有數量框與按鈕，兩欄收成 0，建議售價會自動跟著回到最右 */
+.spec-actions-no-buy {
+    --spec-qty-col: 0px;
+    --spec-btn-col: 0px;
+    --spec-col-gap: 0px;
+}
+
+/* 每一列方案：價格 | 數量 | 按鈕。固定寬讓不同規格卡之間仍然對齊 */
+.spec-plan {
+    display: grid;
+    grid-template-columns: minmax(90px, 1fr) var(--spec-qty-col) var(--spec-btn-col);
+    column-gap: var(--spec-col-gap);
+    align-items: center;
+}
+
+    .spec-plan + .spec-plan {
+        margin-top: .375rem;
+    }
+
+.spec-plan-price {
+    text-align: right;
+}
+
+/* 建議售價：整個規格只印一次，金額加刪除線。
+   與 .spec-plan 用同一組欄寬 → 唯一的子元素落在第一欄並靠右，
+   右緣即與 .spec-plan-price 對齊。 */
+.spec-suggest {
+    display: grid;
+    grid-template-columns: minmax(90px, 1fr) var(--spec-qty-col) var(--spec-btn-col);
+    column-gap: var(--spec-col-gap);
+    justify-items: end;
+    line-height: 1.1;
+    margin-bottom: -.5rem; /* 與第一列價格的距離；想遠一點就調大 */
+    font-size: .8125rem;
+    color: #999;
+    white-space: nowrap;
+}
+
+.spec-suggest-label {
+    margin-right: .25rem;
+}
+
+.spec-price {
+    line-height: 1.2;
+}
+
+.spec-plan-badge {
+    display: block;
+    font-size: .75rem;
+    color: #d0021b;
+}
+    .spec-body .copy_btn {
+        justify-self: start;
+        display: flex;
+        background: unset;
+        border: unset;
+    }
+
+        .spec-body .copy_btn .copy-icon {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .spec-body .copy_btn:hover .copy-icon {
+            opacity: 1;
+        }
+
+        .emptyProd {
+            justify-self: center;
+        }
+
+.spec-thumb {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: .375rem;
+    background: #f5f5f5;
+}
+
+/* 顏色寫死在這裡，不用 Bootstrap 的 .text-primary。
+   .text-primary 帶 !important，且頁面編輯器的自訂 CSS（#frameCss）會改寫 primary 色系，
+   掛上去就會被該站的佈景色蓋掉。複製 icon 為子元素，顏色由此繼承。 */
+.spec-name {
+    font-weight: 600;
+    font-size: 1rem;
+    min-width: 0;
+    color: #0d6efd;
+}
+
+.spec-desc {
+    color: #777;
+    font-size: .875rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+    .spec-desc p {
+        margin: 0;
+    }
+
+        .spec-desc p + p {
+            margin-top: .25rem;
+        }
+
+.spec-price {
+    min-width: 90px;
+}
+/* 原本已 text-align:right */
+.spec-qty {
+    min-width: 108px;
+}
+/* 數量框固定寬 */
+.spec-actions .emptyProd {
+    min-width: 108px;
+    text-align: center;
+}
+/* 與數量框同寬，售完列才對齊 */
+/* 加入購物車/已售完 同寬 → 不抖（樣式集中在下方唯一一份 .btn_spec_add） */
+
+/* 多段時段落間才留一點點 */
+
+.spec-price {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #d0021b;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.spec-qty {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: .375rem;
+    overflow: hidden;
+}
+
+.spec-qty-minus, .spec-qty-plus {
+    width: 32px;
+    height: 32px;
+    border: 0;
+    background: #fafafa;
+    cursor: pointer;
+}
+
+    .spec-qty-minus:hover, .spec-qty-plus:hover {
+        background: #f0f0f0;
+    }
+
+.spec-qty-input {
+    width: 44px;
+    height: 32px;
+    text-align: center;
+    border: 0;
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    -moz-appearance: textfield;
+}
+
+    .spec-qty-input::-webkit-outer-spin-button,
+    .spec-qty-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+.btn_spec_add {
+    min-width: var(--spec-btn-col, 96px);
+    padding: .5rem .375rem;
+    font-size: .9375rem;
+    text-align: center;
+    border: 0;
+    border-radius: .375rem;
+    background: #B73925;
+    color: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .2s;
+}
+
+    .btn_spec_add.bg-secondary {
+        cursor:unset;
+    }
+
+    .spec-thumb {
+        cursor: pointer;
+    }
+
+.spec-thumb-empty {
+    cursor: default;
+}
+
+/* ── 手機版（≤576px）：取消 grid 與 contents，回到堆疊卡片 ── */
+@media (max-width: 576px) {
+    .spec-card {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .spec-body {
+        display: flex;
+        flex: 1;
+        min-width: 0;
+        flex-direction: column;
+        gap: .1rem;
+    }
+
+    .spec-actions {
+        width: 100%;
+        margin-top: .5rem;
+    }
+
+    .spec-plan {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+    }
+
+    .spec-plan-price {
+        text-align: left;
+    }
+
+    /* 手機版 .spec-plan 是 flex 不是 grid，建議售價要退回一般區塊靠左 */
+    .spec-suggest {
+        display: block;
+        text-align: left;
+        margin-bottom: .25rem;
+    }
+
+    .spec-body .copy_btn .copy-icon {
+        opacity: 1;
+    }
+}

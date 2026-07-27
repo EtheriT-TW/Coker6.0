@@ -285,8 +285,9 @@ input:disabled + .btn_radio {
     line-height: 3;
 }
 
+    /* 按鈕文字改由 Layout_1.cshtml 的 data-label-* 提供，值來自詞本（@L.get），以支援多語系。 */
     #Product > .content > .btn_addToCar::after {
-        content: '加入購物車';
+        content: attr(data-label-add);
     }
 
     #Product > .content > .btn_addToCar.close,
@@ -297,12 +298,12 @@ input:disabled + .btn_radio {
     }
 
         #Product > .content > .btn_addToCar.close::after {
-            content: '已售完';
+            content: attr(data-label-close);
             opacity: 50%;
         }
 
         #Product > .content > .btn_addToCar.bonus_lack:not(.close)::after {
-            content: '紅利點數不足';
+            content: attr(data-label-bonuslack);
             opacity: 50%;
         }
 

@@ -132,9 +132,9 @@
         const bonusValue = normalizeNullableInt(bonus);
 
         if (bonusValue <= 0) return '$' + formatNumber(money);
-        if (money === 0) return '紅利 ' + formatNumber(bonusValue);
+        if (money === 0) return local.Bonus + ' ' + formatNumber(bonusValue);
 
-        return '$' + formatNumber(money) + ' + 紅利 ' + formatNumber(bonusValue);
+        return '$' + formatNumber(money) + ' + ' + local.Bonus + ' ' + formatNumber(bonusValue);
     }
 
     function specName(stock) {
@@ -191,7 +191,7 @@
                 return;
 
             if (!navigator.clipboard || !window.isSecureContext) {
-                Coker.sweet.error(t('commonErrorTitle', '錯誤'), '此環境不支援複製，請在 HTTPS 下使用', null, true);
+                Coker.sweet.error(local.Error, local.ErrorCopyNotSupported, null, true);
                 return;
             }
 
@@ -200,10 +200,10 @@
                     const $icon = $btn.find('.copy-icon');
                     $icon.text('check');
                     setTimeout(function () { $icon.text('content_copy'); }, COPY_FEEDBACK_MS);
-                    Coker.sweet.success('複製成功', null, false);
+                    Coker.sweet.success(local.CopySuccess, null, false);
                 })
                 .catch(function () {
-                    Coker.sweet.error(t('commonErrorTitle', '錯誤'), '複製失敗', null, true);
+                    Coker.sweet.error(local.Error, local.CopyFailed, null, true);
                 });
         });
     }
@@ -232,11 +232,11 @@
 
         const $priceCell = $('<div class="spec-plan-price"></div>')
             .append($('<span class="spec-price"></span>').text(
-                stock.timePrice ? t('marketPrice') : formatPlanPriceText(price.price, price.bonus)
+                stock.timePrice ? local.MarketPrice : formatPlanPriceText(price.price, price.bonus)
             ));
 
         if (bonusLack) {
-            $priceCell.append($('<span class="spec-plan-badge"></span>').text(t('bonusInsufficient')));
+            $priceCell.append($('<span class="spec-plan-badge"></span>').text(local.BonusInsufficient));
         }
 
         $plan.append($priceCell);
@@ -247,8 +247,8 @@
         if (!options.stockBuyable) {
             if (!options.isFirst) return $plan;
 
-            $plan.append($('<div class="emptyProd"></div>').text(stock.timePrice ? '-' : '商品已售完'));
-            $plan.append('<button type="button" class="btn_spec_add bg-secondary" disabled>加入購物車</button>');
+            $plan.append($('<div class="emptyProd"></div>').text(stock.timePrice ? '-' : local.ProdEmpty));
+            $plan.append($('<button type="button" class="btn_spec_add bg-secondary" disabled></button>').text(local.AddtoCart));
 
             return $plan;
         }
@@ -272,7 +272,7 @@
             ));
         }
 
-        const $btn = $('<button type="button" class="btn_spec_add">加入購物車</button>');
+        const $btn = $('<button type="button" class="btn_spec_add"></button>').text(local.AddtoCart);
         if (bonusLack) $btn.addClass('bg-secondary').prop('disabled', true);
         $plan.append($btn);
 

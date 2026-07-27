@@ -515,7 +515,7 @@ i.fa-chevron-right {
 
 @media only screen and (max-width: 768px) {
     #CenterLine {
-        justify-content: center !important;
+        justify-content: start !important;
     }
 
     .btn_swiper_prev_product,

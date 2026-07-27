@@ -59,7 +59,7 @@
                 }
                 else
                 {
-                    <li class="px-1"><a class="text-decoration-none" href="@menu.Link" title="連結至:@menu.Title">@menu.Title</a></li>
+                    <li class="px-1"><a class="text-decoration-none" href="@menu.Link" title="@(L.get("LinkTo", menu.Title))">@menu.Title</a></li>
                 }
             }
         </ol>
@@ -156,7 +156,7 @@
                     @if (ViewBag.isLogin)
                     {
                         <div class="track text-center position-absolute">
-                            <button class="btn_favorites bg-transparent border-0 p-0" data-bs-toggle="tooltip" title="加入收藏">
+                            <button class="btn_favorites bg-transparent border-0 p-0" data-bs-toggle="tooltip" title="@L.get("AddFavorite")">
                                 <div class="icon_love text-danger"></div>
                             </button>
                         </div>
@@ -176,7 +176,7 @@
             </div>
 
             <div class="pro_tc px-3">
-                <div class="title">標章認證</div>
+                    <div class="title">@L.get("CertificationMark")</div>
                 <ul class="image d-flex flex-wrap"></ul>
             </div>
 
@@ -229,19 +229,19 @@
                 @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
                 {
                     <div class="counter d-flex align-items-center my-2">
-                        <label class="title" for="quantityInput">數量</label>
+                        <label class="title" for="quantityInput">@L.get("Quantity")</label>
                         <div class="counter_input d-flex isEmpty">
                             <div class="quantity">
                                 <button class="btn_count_minus bg-white my-1">
                                     <i class="fa-solid fa-minus"></i>
-                                    <span class="d-none">減少</span>
+                                    <span class="d-none">@L.get("Decrease")</span>
                                 </button>
 
                                 <input id="quantityInput" class="input_pro_quantity text-center my-1" type="number" name="counter" value="1">
 
                                 <button class="btn_count_plus bg-white my-1">
                                     <i class="fa-solid fa-plus"></i>
-                                    <span class="d-none">增加</span>
+                                    <span class="d-none">@L.get("Increase")</span>
                                 </button>
                             </div>
                             <div class="emptyProd">@L.get("ProdEmpty")</div>
@@ -251,7 +251,10 @@
             </div>
             @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
             {
-                <div class="btn_addToCar d-flex mb-2 align-items-center justify-content-center text-white" type="button">
+                <div class="btn_addToCar d-flex mb-2 align-items-center justify-content-center text-white" type="button"
+                     data-label-add="@L.get("AddtoCart")"
+                     data-label-close="@L.get("ProdEmpty")"
+                     data-label-bonuslack="@L.get("BonusInsufficient")">
                     <div class="icon_plus"></div>
                 </div>
             }
@@ -263,11 +266,11 @@
         </div>
     </div>
 
-    <div id="CenterLine" class="container d-flex pt-sm-0 pt-2 flex-wrap flex-sm-row-reverse align-items-center justify-content-center justify-content-sm-between">
-        <div class="shareBlock d-flex align-items-center justify-content-center justify-content-sm-end">
+    <div id="CenterLine" class="container d-flex flex-wrap flex-sm-row-reverse align-items-center justify-content-center justify-content-sm-between">
+            <div class="shareBlock d-none d-lg-flex align-items-center justify-content-center justify-content-sm-end">
             <div>@L.get("Share")：</div>
         </div>
-        <ul id="btn_tab" class="text d-flex pt-2 pt-sm-0 nav nav-pills" role="tablist">
+        <ul id="btn_tab" class="text d-flex nav nav-pills" role="tablist">
             <li class="nav-item description" role="presentation">
                 <button id="pills-description-tab" class="mx-sm-0 nav-link active py-3" data-bs-toggle="pill" data-bs-target="#ProductDescription" type="button" role="tab" aria-controls="pills-description" aria-selected="true">@L.get("ProductDescription")</button>
             </li>
@@ -294,6 +297,11 @@
             <div class="File_list"></div>
         </div>
     </div>
+
+        <div class="container d-flex pt-sm-0 pt-2 flex-wrap flex-sm-row-reverse align-items-center justify-content-center justify-content-sm-between">
+            <div class="shareBlock d-lg-none d-sm-flex mb-5 align-items-center justify-content-center">
+                <div>@L.get("Share")：</div>
+        </div>
 </coker-safe-inherited-content>
 </Content>
 <div id="SwitchPage" class="container my-5 justify-content-center">

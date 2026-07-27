@@ -226,7 +226,7 @@ namespace EtheriT.Coker.Application.Product
                 string GetRoleName(long roleId)
                 {
                     if (roleId == 1 || roleId == 0)
-                        return "非會員";
+                        return L.get("NonMember");
 
                     return roleLevels
                         .Where(e => e.Id == roleId)
@@ -610,7 +610,7 @@ namespace EtheriT.Coker.Application.Product
                 .FirstOrDefault();
 
             if (guestCash != null)
-                return (guestCash.Price, "非會員");
+                return (guestCash.Price, L.get("NonMember"));
 
             var firstFrontRole = roleLevels.Skip(1).FirstOrDefault();
             if (firstFrontRole.Id == 0)

@@ -42,10 +42,10 @@
         const disabled = !!priceItem.disabled;
 
         const itemRoleName = priceItem.roleName || '';
-        const baseRoleName = product.baseRoleName || priceItem.baseRoleName || '非會員';
+        const baseRoleName = product.baseRoleName || priceItem.baseRoleName || local.NonMember;
 
         const saleText = isTimePrice
-            ? controller.t('marketPrice')
+            ? local.MarketPrice
             : formatPriceText(currentPrice, currentBonus);
 
         const showSuggestPrice =
@@ -78,7 +78,7 @@
             showRoleName,
             showSuggestPrice,
             suggestPriceText: showSuggestPrice
-                ? `${controller.t('suggestedPrice')}$${formatNumber(suggestPrice)}`
+                ? `${local.SuggestedPrice}$${formatNumber(suggestPrice)}`
                 : '',
             showOriginalPrice,
             originalPriceText,
@@ -94,7 +94,7 @@
         const baseRoleName =
             product?.baseRoleName ||
             safePrices.map(x => x.baseRoleName).find(x => !!x) ||
-            '非會員';
+            local.NonMember;
 
         const originalPrice = safePrices
             .map(x => normalizeNullableInt(x.oriPrice))
@@ -121,13 +121,13 @@
 
         return {
             showSuggestPrice,
-            suggestPriceLabel: controller.t('suggestedPrice'),
+            suggestPriceLabel: local.SuggestedPrice,
             suggestPriceValue: showSuggestPrice
                 ? `$${formatNumber(suggestPrice)}`
                 : '',
 
             showOriginalPrice,
-            originalPriceLabel: `${baseRoleName}價`,
+            originalPriceLabel: local.RolePriceLabel.format(baseRoleName),
             originalPriceValue: showOriginalPrice
                 ? `$${formatNumber(originalPrice)}`
                 : ''
@@ -343,7 +343,7 @@
                 let hasSub = false;
 
                 if (vm.showBonusLack) {
-                    $badge.removeClass('d-none').text(controller.t('bonusInsufficient'));
+                    $badge.removeClass('d-none').text(local.BonusInsufficient);
                     $salePrice.addClass('bonus_lack');
                     hasSub = true;
                 } else {
@@ -441,8 +441,8 @@
 
             if (!controller.state.selection.canAddToCart()) {
                 Coker.sweet.warning(
-                    t('addCartWarningTitle'),
-                    t('addCartNeedSelection')
+                    local.AlertTitle,
+                    local.AddCartNeedSelection
                 );
                 return;
             }

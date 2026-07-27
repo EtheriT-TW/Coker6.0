@@ -16,6 +16,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using EtheriT.Coker.Application.Shared.i18n;
 using System;
 
 namespace EtheriT.Coker.Application.ShoppingCart
@@ -152,7 +153,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         .FirstOrDefaultAsync();
 
                     if (UUID == Guid.Empty)
-                        throw new Exception("取得Token發生錯誤");
+                        throw new Exception(L.get("TokenError"));
                 }
 
                 var userid = await db.FrontUsers
@@ -166,17 +167,17 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         : (e.FK_Pid == dto.FK_Pid && e.FK_S1id == dto.FK_S1id && e.FK_S2id == dto.FK_S2id));
 
                 if (proStock == null)
-                    throw new Exception("查無商品規格");
+                    throw new Exception(L.get("SpecNotFound"));
 
                 var prod = await db.Prods.FirstOrDefaultAsync(e => e.Id == proStock.FK_Pid && !e.RemovedFromShelves);
-                if(prod == null) throw new Exception("商品已下架");
-                else if(IsCantBuyProdState(prod)) throw new Exception("商品已售完");
+                if(prod == null) throw new Exception(L.get("ProductUnavailable"));
+                else if(IsCantBuyProdState(prod)) throw new Exception(L.get("ProdEmpty"));
 
                 var skipStock = prod.NoStockManagement;
 
                 var currentStock = proStock.Stock ?? 0;
                 if (currentStock <= 0 && !skipStock)
-                    throw new Exception("目前無庫存");
+                    throw new Exception(L.get("OutOfStock"));
 
                 var specIds = new[] { proStock.FK_S1id, proStock.FK_S2id }
                     .Where(id => id.HasValue && id.Value > 0)
@@ -210,7 +211,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 if (dto.Id != null)
                 {
                     sc = await db.ShoppingCarts.FirstOrDefaultAsync(e => e.Id == dto.Id);
-                    if (sc == null) throw new Exception("查無購物車資料");
+                    if (sc == null) throw new Exception((L.get("CartNotFound")));
                 }
                 else
                 {
@@ -246,7 +247,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 if (bonusEnabled && bonus > 0)
                 {
                     if (userid == 0)
-                        throw new Exception("請登入會員");
+                        throw new Exception(L.get("PleaseSignIn"));
 
                     var incrementBonus = bonus * wantQty;
                     var bonusCheck = await CheckCartBonusEnough(UUID, incrementBonus);
@@ -259,7 +260,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 if (sc == null)
                 {
                     if (wantQty > currentStock && !skipStock)
-                        throw new Exception($"可購買上限 {currentStock} 件，無法再加入 {wantQty} 件");
+                        throw new Exception(L.get("CartLimitExceeded", currentStock, wantQty));
 
                     var date = DateTime.Now;
 
@@ -295,7 +296,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     int oQuantity = sc.Quantity;
 
                     if (newTotal > currentStock && !skipStock)
-                        throw new Exception($"可購買上限 {currentStock} 件（購物車已有 {sc.Quantity} 件），無法再加入 {wantQty} 件");
+                        throw new Exception(L.get("CartLimitExceededWithCart", currentStock, sc.Quantity, wantQty));
 
                     sc.Quantity = newTotal;
                     sc.Price = unitPrice;

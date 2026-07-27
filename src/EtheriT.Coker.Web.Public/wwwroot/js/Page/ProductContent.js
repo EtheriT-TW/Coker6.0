@@ -168,8 +168,8 @@
         const money = withDollar ? `$${formatNumber(price)}` : formatNumber(price);
 
         if (bonus > 0) {
-            if (price === 0) return `紅利:${formatNumber(bonus)}`;
-            return `${money} + 紅利:${formatNumber(bonus)}`;
+            if (price === 0) return `${local.Bonus}:${formatNumber(bonus)}`;
+            return `${money} + ${local.Bonus}:${formatNumber(bonus)}`;
         }
 
         return money;
@@ -216,7 +216,7 @@
             })));
 
         if (hasTimePrice && priceCandidates.length === 0) {
-            return resolveText(options, 'marketPrice');
+            return local.MarketPrice;
         }
 
         if (priceCandidates.length === 0) {
@@ -230,7 +230,7 @@
 
         if (hasTimePrice && priceCandidates.length > 0) {
             return options.showRange
-                ? `$${formatNumber(min)} ~ ${resolveText(options, 'marketPrice')}`
+                ? `$${formatNumber(min)} ~ ${local.MarketPrice}`
                 : `$${formatNumber(target)}`;
         }
 
@@ -255,10 +255,10 @@
         const disabled = !!priceItem.disabled;
 
         const itemRoleName = priceItem.roleName || '';
-        const baseRoleName = product.baseRoleName || priceItem.baseRoleName || '非會員';
+        const baseRoleName = product.baseRoleName || priceItem.baseRoleName || local.NonMember;
 
         const saleText = isTimePrice
-            ? controller.t('marketPrice')
+            ? local.MarketPrice
             : formatPriceText(currentPrice, currentBonus);
 
         const showSuggestPrice =
@@ -291,7 +291,7 @@
             showRoleName,
             showSuggestPrice,
             suggestPriceText: showSuggestPrice
-                ? `${controller.t('suggestedPrice')}$${formatNumber(suggestPrice)}`
+                ? `${local.SuggestedPrice}$${formatNumber(suggestPrice)}`
                 : '',
             showOriginalPrice,
             originalPriceText,
@@ -307,7 +307,7 @@
         const baseRoleName =
             product?.baseRoleName ||
             safePrices.map(x => x.baseRoleName).find(x => !!x) ||
-            '非會員';
+            local.NonMember;
 
         const originalPrice = safePrices
             .map(x => normalizeNullableInt(x.oriPrice))
@@ -334,13 +334,13 @@
 
         return {
             showSuggestPrice,
-            suggestPriceLabel: controller.t('suggestedPrice'),
+            suggestPriceLabel: local.SuggestedPrice,
             suggestPriceValue: showSuggestPrice
                 ? `$${formatNumber(suggestPrice)}`
                 : '',
 
             showOriginalPrice,
-            originalPriceLabel: `${baseRoleName}價`,
+            originalPriceLabel: local.RolePriceLabel.format(baseRoleName),
             originalPriceValue: showOriginalPrice
                 ? `$${formatNumber(originalPrice)}`
                 : ''
@@ -404,16 +404,16 @@
 
         if (localStorage.getItem('AgreePrivacy') == null) {
             Coker.sweet.warning(
-                t('addCartWarningTitle'),
-                t('addCartNeedPrivacy')
+                local.AlertTitle,
+                local.AddCartNeedPrivacy
             );
             return false;
         }
 
         if (!loggedIn && bonus > 0) {
             Coker.sweet.warning(
-                t('addCartWarningTitle'),
-                '請登入會員',
+                local.AlertTitle,
+                local.PleaseSignIn,
                 function () {
                     if (typeof loginModal !== 'undefined' && loginModal && typeof loginModal.show === 'function') {
                         loginModal.show();
@@ -426,8 +426,8 @@
         // 已登入但紅利不足（前端先做 UX 提示；後端仍需再驗證）
         if (loggedIn && bonus > 0 && totalBonus < bonus) {
             Coker.sweet.warning(
-                t('addCartWarningTitle'),
-                t('bonusInsufficient')
+                local.AlertTitle,
+                local.BonusInsufficient,
             );
             return false;
         }
@@ -452,20 +452,20 @@
                     const error = result && result.error;
 
                     if (error === '商品庫存不足') {
-                        Coker.sweet.warning(error, result.message, function () {
+                        Coker.sweet.warning(local.StockNotEnough, result.message, function () {
                             location.reload(true);
                         });
                     } else {
                         Coker.sweet.error(
-                            t('commonErrorTitle'),
-                            (result && result.message) || t('addCartError'),
+                            local.Error,
+                            (result && result.message) || local.AddCartError,
                             null
                         );
                     }
                     return;
                 }
 
-                Coker.sweet.success(t('addCartSuccess'), null, true);
+                Coker.sweet.success(local.AddCartSuccess, null, true);
 
                 const type = (result.message || '').substr(0, 1);
                 const id = (result.message || '').substr(1);
@@ -484,8 +484,8 @@
             })
             .fail(function () {
                 Coker.sweet.error(
-                    t('commonErrorTitle'),
-                    t('addCartError'),
+                    local.Error,
+                    local.AddCartError,
                     null,
                     true
                 );
@@ -761,7 +761,7 @@
                     $('<button/>', {
                         type: 'button',
                         class: 'pro-display-dot',
-                        'aria-label': `切換至第 ${index + 1} 張`,
+                        'aria-label': local.GoToSlide.format(index + 1),
                         'data-index': index
                     })
                 );
@@ -1679,9 +1679,9 @@
                 if (check && check.success) {
                     $btn.data('Fid', check.message);
                     $btn.addClass('turn');
-                    $btn.attr('title', this.t('removeFavorite'));
+                    $btn.attr('title', local.RemoveFavorite);
                 } else {
-                    $btn.attr('title', this.t('addFavorite'));
+                    $btn.attr('title', local.AddFavorite);
                 }
             });
 
@@ -1690,8 +1690,8 @@
                     this.options.api.deleteFavorite($btn.data('Fid'))?.done((result) => {
                         if (result.success) {
                             $btn.removeClass('turn');
-                            $btn.attr('title', this.t('addFavorite'));
-                            Coker.sweet.success(this.t('removeFavoriteSuccess'), null, true);
+                            $btn.attr('title', local.AddFavorite);
+                            Coker.sweet.success(local.RemoveFavoriteSuccess, null, true);
                         }
                     });
                 } else {
@@ -1699,8 +1699,8 @@
                         if (favorites.success) {
                             $btn.addClass('turn');
                             $btn.data('Fid', favorites.message);
-                            $btn.attr('title', this.t('removeFavorite'));
-                            Coker.sweet.success(this.t('addFavoriteSuccess'), null, true);
+                            $btn.attr('title', local.RemoveFavorite);
+                            Coker.sweet.success(local.AddFavoriteSuccess, null, true);
                         }
                     });
                 }

@@ -78,7 +78,7 @@
                 }
                 else
                 {
-                    <li class="px-1"><a class="text-decoration-none" href="@menu.Link" title="連結至:@menu.Title">@menu.Title</a></li>
+                    <li class="px-1"><a class="text-decoration-none" href="@menu.Link" title="@(L.get("LinkTo", menu.Title))">@menu.Title</a></li>
                 }
             }
         </ol>
@@ -175,7 +175,7 @@
                     @if (ViewBag.isLogin)
                     {
                         <div class="track text-center position-absolute">
-                            <button class="btn_favorites bg-transparent border-0 p-0" data-bs-toggle="tooltip" title="加入收藏">
+                            <button class="btn_favorites bg-transparent border-0 p-0" data-bs-toggle="tooltip" title="@L.get("AddFavorite")">
                                 <div class="icon_love text-danger"></div>
                             </button>
                         </div>
@@ -195,11 +195,9 @@
             </div>
 
             <div class="pro_tc px-3">
-                <div class="title">標章認證</div>
+                    <div class="title">@L.get("CertificationMark")</div>
                 <ul class="image d-flex flex-wrap"></ul>
             </div>
-
-            <hr class="m-1" data-storeTpe="@ViewBag.storeBuyState" />
             @if (ViewBag.storeBuyState.IndexOf("NoShow") < 0)
             {
                 @* <div class="priceframe  flex-wrap"> *@
@@ -258,7 +256,7 @@
         </div>
         <ul id="btn_tab" class="text d-flex pt-sm-0 nav nav-pills" role="tablist">
             <li class="nav-item spec" role="presentation">
-                <button class="mx-sm-0 nav-link active py-3" data-bs-toggle="pill" data-bs-target="#ProductSpec" type="button" role="tab" aria-selected="true">規格</button>
+                    <button class="mx-sm-0 nav-link active py-3" data-bs-toggle="pill" data-bs-target="#ProductSpec" type="button" role="tab" aria-selected="true">@L.get("Specification")</button>
             </li>
             <li class="nav-item description" role="presentation">
                 <button id="pills-description-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#ProductDescription" type="button" role="tab" aria-controls="pills-description" aria-selected="false">@L.get("ProductDescription")</button>
@@ -288,14 +286,14 @@
         <div id="FileDownload" class="container tab-pane fade" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
             <div class="File_list"></div>
         </div>
-    </div>
+        </div>
+        <div class="shareBlock d-lg-none d-sm-flex mb-5 align-items-center justify-content-center">
+            <div>@L.get("Share")：</div>
+        </div>
     </coker-safe-inherited-content>
 </Content>
 <div id="SwitchPage" class="container mt-5 my-lg-5 justify-content-center">
     <a href="" title="" target="_self" class="btn_prev disabled"><span class="translate">@L.get("Prev")</span></a>
     <a href="" title="@L.get("BackToList")" target="_self" class="btn_list mx-4 mx-sm-5"><span class="translate">@L.get("BackToList")</span></a>
     <a href="" title="" target="_self" class="btn_next disabled"><span class="translate">@L.get("Next")</span></a>
-</div>
-<div class="shareBlock d-lg-none d-sm-flex mb-5 align-items-center justify-content-center">
-    <div>@L.get("Share")：</div>
 </div>

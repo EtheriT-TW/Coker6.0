@@ -214,8 +214,10 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 RequestBody = mapper.Map<ECPayLogisticsCreateCVSRequestDto>(await ECPayExpressRequestBody(ThirdPartyData, ohdata, LogisticsSetting));
 
-                if (LogisticsSetting.SupportCashOnDelivery) RequestBody.CollectionAmount = RequestBody.GoodsAmount;
-                else RequestBody.CollectionAmount = 0;
+                RequestBody.CollectionAmount =
+                    RequestBody.IsCollection == "Y"
+                        ? RequestBody.GoodsAmount
+                        : 0;
 
                 RequestBody.ReceiverStoreID = logistics.CVSStoreID;
                 RequestBody.ReturnStoreID = logistics.CVSStoreID;
@@ -251,7 +253,11 @@ namespace EtheriT.Coker.Application.ThirdParty
                 RequestBody.MerchantTradeDate = DateTimeNow.ToString("yyyy/MM/dd HH:mm:ss");
 
                 var LogisticsType = LogisticsSetting.LogisticsType;
-                RequestBody.IsCollection = LogisticsSetting.SupportCashOnDelivery ? "Y" : "N";
+                var isCashOnDelivery = await db.PaymentTypes
+                    .AnyAsync(x =>
+                        x.Id == ohdata.Payment &&
+                        x.Code == "COD");
+                RequestBody.IsCollection = isCashOnDelivery ? "Y" : "N";
 
                 switch ((int)LogisticsType)
                 {

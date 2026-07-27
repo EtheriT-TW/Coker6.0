@@ -149,6 +149,7 @@
         "wwwroot/view-resources/ShoppingCart/shopping-cart.forms.js",
 
         "wwwroot/view-resources/ShoppingCart/shopping-cart.payment.core.js",
+        "wwwroot/view-resources/ShoppingCart/shopping-cart.payment.availability.js",
         "wwwroot/view-resources/ShoppingCart/shopping-cart.payment.redirect.js",
         "wwwroot/view-resources/ShoppingCart/shopping-cart.payment.ecpay.js",
         "wwwroot/view-resources/ShoppingCart/shopping-cart.payment.linepay.js",

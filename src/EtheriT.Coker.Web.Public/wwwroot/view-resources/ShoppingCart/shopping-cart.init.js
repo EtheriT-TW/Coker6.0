@@ -156,14 +156,12 @@
                         //商品數量變更這邊沒有動到 先移除
                         var $checkedShipping = $("[name='RadioShipping']:checked");
 
-                        if ($checkedShipping.length > 0) {
-                            var this_SupportCashOnDelivery = String($checkedShipping.attr("data-support-cash-on-delivery")).toLowerCase() == "true";
-                            S.SupportCashOnDelivery = this_SupportCashOnDelivery;
+                        if ($checkedShipping.length > 0 && cart.Payment.Availability) {
+                            cart.Payment.Availability.refresh(
+                                cart.Payment.Core.getActivePaymentValue()
+                            );
 
                             // 從綠界超商地圖返回時，restoreOrderForm() 會負責在資料恢復完成後重載金流。
-                            if (!S.SupportCashOnDelivery && !S.isRestoringECPayLogistics) {
-                                cart.Payment.Core.reloadActiveEmbeddedProvider();
-                            }
                         }
                     }
                     break;

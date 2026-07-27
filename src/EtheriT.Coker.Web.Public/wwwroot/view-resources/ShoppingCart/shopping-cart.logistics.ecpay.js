@@ -23,10 +23,15 @@
 
         var $form = $("form#ecpayLogisticsForm");
         var selectedCartIds = cart.Items.getSelectedCartIds();
+        var selectedPaymentValue = cart.Payment.Core.getActivePaymentValue();
+        var $selectedPayment = $('#RadioPayment input[name="RadioPayment"][value="' +
+            selectedPaymentValue + '"]');
+        var isCollection = String($selectedPayment.attr("data-code") || "")
+            .toUpperCase() === "COD";
 
         $form.find('input[name="LogisticsSubType"]').val($btn.data('subtype'));
         $form.find('input[name="SCIds"]').val(JSON.stringify(selectedCartIds));
-        $form.find('input[name="IsCollection"]').val($btn.data("support-cash-on-delivery") == "True" ? "Y" : "N");
+        $form.find('input[name="IsCollection"]').val(isCollection ? "Y" : "N");
 
         // 注意：客戶綠界帳號 / 平台綠界帳號的判斷不在這支 JS 寫死。
         // 這裡沿用既有 ecpayLogisticsForm；表單 action / hidden 欄位由後端輸出時決定。

@@ -741,12 +741,15 @@
         code: "ECPay",
         type: "embedded",
         thirdPartyId: S.ECPAY_THIRD_PARTY_ID,
+        isAvailable: function () {
+            return S.ECPayAvailable === true;
+        },
         init: function () {
             if ($("#ECPayPayment").length === 0) {
                 return;
             }
 
-            S.HasECPay = true;
+            S.HasECPay = false;
             S.ECPayMonitor = true;
             S.SupportApplePay = CanUseApplePay();
             ECPay.initialize($("#ECPayPayment").data("server-type"), 1, function (errMsg) {
@@ -760,7 +763,7 @@
 
                 var $ecpayRadio = GetECPayEntryRadio();
 
-                if ($ecpayRadio.length) {
+                if ($ecpayRadio.length && S.ECPayAvailable) {
                     $ecpayRadio.prop("checked", true);
                     $ecpayRadio.closest(".form-check").prevAll(".form-check").first().find(".payment_display").addClass("last");
                 }

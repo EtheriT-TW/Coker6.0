@@ -7,7 +7,7 @@ var shipping = null, payment = null;
 
 var ShippingForms, PaymentForms, OrdererForms, RecipientForms, InvoiceForms, InvoicePersonalTypeForms;
 var OrdererOpen = false, RecipientOpen = false, InvoiceOpen = false;
-var shipMethodsChosen = false, payMethodsChosen = false, OrdererFilled = true, RecipientFilled = true, InvoiceFilled = true, SupportCashOnDelivery;
+var shipMethodsChosen = false, payMethodsChosen = false, OrdererFilled = true, RecipientFilled = true, InvoiceFilled = true;
 var $Orderer_TWzipcode, $Recipient_TWzipcode, $Invoice_TWzipcode;
 var $orderer_name, $orderer_sex, $orderer_email, $orderer_cellphone, $orderer_telphone_area, $orderer_telphone, $orderer_telphone_ext, $orderer_address_city, $orderer_address_town, $orderer_address;
 var $recipient_name, $recipient_sex, $recipient_email, $recipient_cellphone, $recipient_telphone_area, $recipient_telphone, $recipient_telphone_ext, $recipient_address_city, $recipient_address_town, $recipient_address, $remark;
@@ -219,12 +219,7 @@ function PageReady() {
                     //商品數量變更這邊沒有動到 先移除
                     //if (datachange && HasECPay) {
                     if (HasECPay) {
-                        var this_SupportCashOnDelivery = $("[name='RadioShipping']:checked").attr("data-support-cash-on-delivery").toLowerCase() == "true";
-                        SupportCashOnDelivery = this_SupportCashOnDelivery;
-                        if (!SupportCashOnDelivery) {
-                            ECPaymentChange();
-                            //datachange = false;
-                        }
+                        ECPaymentChange();
                     }
                 }
                 break;
@@ -1916,110 +1911,17 @@ function RadioShipping() {
     var newamount = $(".summary-amount.total_amount").first().text();
     var isAmountChanged = oldamount != newamount;
 
-    var this_SupportCashOnDelivery = $this.attr("data-support-cash-on-delivery").toLowerCase() == "true";
-    var isSupportCashOnDeliveryChanged = SupportCashOnDelivery != this_SupportCashOnDelivery;
-    SupportCashOnDelivery = this_SupportCashOnDelivery;
-
-    if (!this_SupportCashOnDelivery && (isAmountChanged || isSupportCashOnDeliveryChanged) && HasECPay) ECPaymentChange();
-    else if (isSupportCashOnDeliveryChanged) {
-        $("#ECPayPayment").empty();
-        ConfigurePaymentOptions(null);
-    }
+    if (isAmountChanged && HasECPay) ECPaymentChange();
     MarkECPayDirty();
 }
 // 付款方式顯示的項目調整
 // 付款方式顯示的項目調整
 function ConfigurePaymentOptions(val) {
-    var $CheckedShipping = $('input[name="RadioShipping"]:checked');
-    if ($CheckedShipping.length == 0) return;
-
-    var canCashOnDelivery =
-        $CheckedShipping.attr("data-support-cash-on-delivery").toLowerCase() === "true";
-
-    $("#RadioPayment > .form-check").addClass("d-none");
-    $(".noPaymentWarning").addClass("d-none");
-    $(".ecpayWarning").removeClass("d-none");
-    $("#RadioPayment input:radio").prop("checked", false);
-    $("#RadioPayment > .form-check > .payment_display").removeClass("checked first last");
-
-    if (canCashOnDelivery) {
-        $(".ecpayWarning").addClass("d-none");
-
-        var $codPayment = $("#RadioPayment input[value='28']");
-
-        if ($codPayment.length) {
-            $codPayment.prop("checked", true);
-
-            var $formCheck = $codPayment.closest(".form-check");
-            $formCheck.removeClass("d-none");
-            $formCheck.find(".payment_display").addClass("checked first last");
-        } else {
-            var $warning = $(".noPaymentWarning");
-
-            if (!$warning.length) {
-                $warning = $("<div>", {
-                    class: "noPaymentWarning",
-                    text: "店家尚未設定對應的付款方式"
-                }).appendTo("#RadioPayment");
-            }
-
-            $warning.removeClass("d-none");
-        }
-
-        $(".ecpay_loading").addClass("d-none");
-        return;
+    if (window.ShoppingCart &&
+        window.ShoppingCart.Payment &&
+        window.ShoppingCart.Payment.Availability) {
+        window.ShoppingCart.Payment.Availability.apply(val);
     }
-
-    var showpayment = false;
-
-    if (!HasECPay || ECPayReady) {
-        showpayment = true;
-    }
-
-    if (!showpayment) {
-        $("#RadioPayment .form-check input[value='28']").closest(".form-check").addClass("d-none");
-        return;
-    }
-
-    var $list = $("#RadioPayment > .form-check");
-
-    // 先顯示所有付款方式
-    $list.removeClass("d-none");
-
-    // 非貨到付款情境，不顯示貨到付款
-    $list.has("input[value='28']").addClass("d-none");
-
-    // 綠界付款項目由 #ECPayPayment SDK 顯示，不應該在 RadioPayment 清單中顯示
-    $list
-        .has('input[name="RadioPayment"][data-third-party-id="' + ECPAY_THIRD_PARTY_ID + '"]')
-        .addClass("d-none");
-
-    $(".ecpayWarning").addClass("d-none");
-
-    var $targetInput = $();
-
-    if (val != null && val !== "") {
-        $targetInput = $('#RadioPayment input[name="RadioPayment"][value="' + val + '"]');
-    }
-
-    var $targetFormCheck = $targetInput.closest(".form-check");
-
-    // 如果 val 是綠界付款，允許它維持 checked，但它本身仍然隱藏。
-    // 真正顯示的是 #ECPayPayment 的 SDK UI。
-    if ($targetInput.length && IsPaymentRadioECPay($targetInput)) {
-        updatePaymentRadioUI($targetFormCheck);
-    } else {
-        // 一般付款方式：如果 val 不存在，或 val 對應到隱藏項，就改選第一個可見付款方式
-        if (!$targetFormCheck.length || $targetFormCheck.hasClass("d-none")) {
-            $targetFormCheck = $("#RadioPayment > .form-check:not(.d-none)").first();
-        }
-
-        if ($targetFormCheck.length) {
-            updatePaymentRadioUI($targetFormCheck);
-        }
-    }
-
-    $(".ecpay_loading").addClass("d-none");
 }
 function GetCheckedPaymentRadio() {
     return $('#RadioPayment input[name="RadioPayment"]:checked');
@@ -2139,7 +2041,7 @@ function ECPaymentChange() {
     var dataReady = AllDataGet(false);
     Step3Monitor();
 
-    if (!dataReady || SupportCashOnDelivery) {
+    if (!dataReady) {
         if (ECPayReady) {
             ECPayReady = false;
             ECPayOrderSnapshot = "";

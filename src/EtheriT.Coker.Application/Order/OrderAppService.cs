@@ -24,6 +24,7 @@ using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
 using EtheriT.Coker.Application.Shared.Dto.Token;
 using EtheriT.Coker.Application.Shared.Order;
+using EtheriT.Coker.Application.Shared.Payment;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Token;
@@ -60,6 +61,7 @@ namespace EtheriT.Coker.Application.Order
         private readonly IBonusManagementAppService bonusManagementAppService;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly ICheckoutDiscountService checkoutDiscountService;
+        private readonly IPaymentAvailabilityService paymentAvailabilityService;
         private readonly IMapper mapper;
         private readonly StringHandler stringHandler;
         public OrderAppService(
@@ -74,6 +76,7 @@ namespace EtheriT.Coker.Application.Order
             IConfiguration configuration,
             IFileUploadAppService fileUploadAppService,
             ICheckoutDiscountService checkoutDiscountService,
+            IPaymentAvailabilityService paymentAvailabilityService,
             IMapper mapper,
             StringHandler stringHandler
         )
@@ -89,6 +92,7 @@ namespace EtheriT.Coker.Application.Order
             this.bonusManagementAppService = bonusManagementAppService;
             this.fileUploadAppService = fileUploadAppService;
             this.checkoutDiscountService = checkoutDiscountService;
+            this.paymentAvailabilityService = paymentAvailabilityService;
             this.mapper = mapper;
             this.stringHandler = stringHandler;
 
@@ -208,6 +212,19 @@ namespace EtheriT.Coker.Application.Order
 
                 //  暫存訂單也要重算金額，但不能扣庫存 / 不能把購物車標成已下單 / 不能扣紅利
                 detailResult = await BuildDetailSectionAsync(dto, userId, currentUuid, now, previewOnly: isTemp);
+
+                if (!isTemp)
+                {
+                    var payableAmount =
+                        detailResult.Subtotal +
+                        detailResult.Freight;
+
+                    await paymentAvailabilityService.ValidateAsync(
+                        websiteId,
+                        dto.Shipping,
+                        dto.Payment,
+                        payableAmount);
+                }
 
                 Order_Header header = null!;
                 var strategy = db.Database.CreateExecutionStrategy();

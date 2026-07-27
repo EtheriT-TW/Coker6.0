@@ -715,7 +715,6 @@
                                                data-disfreight="@(freight.Dis_Freight)"
                                                data-isdefault="@freight.Set_Default"
                                                data-boxfees='@Html.Raw(boxFeesJson)'
-                                               data-support-cash-on-delivery="@freight.SupportCashOnDelivery"
                                                @check
                                                required>
                                         <label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
@@ -726,7 +725,6 @@
                                                    class="btn_getmap bg-transparent border-0 ms-1 text-decoration-underline"
                                                    value="選擇門市"
                                                    data-subtype="@freight.LogisticsSubType"
-                                                   data-support-cash-on-delivery="@freight.SupportCashOnDelivery"
                                                    title="選擇門市">
                                         }
 
@@ -839,6 +837,7 @@
                                            data-minamount="@payment.MinAmount"
                                            value="@payment.Id"
                                            data-third-party-id="@payment.FK_ThirdPartyId"
+                                           data-code="@payment.Code"
                                            required
                                            data-title="@payment.Title">
 

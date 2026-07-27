@@ -594,14 +594,6 @@ namespace EtheriT.Coker.Application
                 .ForMember(d => d.LogisticsSubType, m => m.Ignore())
                 .ForMember(d => d.Describe, m => m.Ignore())
                 .ForMember(d => d.LogisticsBoxFees, m => m.MapFrom(s => s.logisticsBoxFees))
-                .ForMember(
-                    d => d.SupportCashOnDelivery,
-                    m => m.MapFrom(s =>
-                        ((int)s.LogisticsType >= 8 && (int)s.LogisticsType <= 15)
-                            ? s.SupportCashOnDelivery
-                            : true
-                    )
-                )
                 .AfterMap((src, dest) =>
                 {
                     dest.Describe = DisplayTextFormatter.Freight(

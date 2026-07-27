@@ -39,93 +39,21 @@
 
         S.freight = S.ori_freight;
 
-        var oldamount = $(".summary-amount.total_amount").first().text();
         cart.Pricing.TotalCount();
-        var newamount = $(".summary-amount.total_amount").first().text();
-        var isAmountChanged = oldamount != newamount;
-
-        var this_SupportCashOnDelivery = $this.attr("data-support-cash-on-delivery").toLowerCase() == "true";
-        var isSupportCashOnDeliveryChanged = S.SupportCashOnDelivery != this_SupportCashOnDelivery;
-        S.SupportCashOnDelivery = this_SupportCashOnDelivery;
-
-        var shouldRefreshEmbeddedPayment =
-            isAmountChanged ||
-            isSupportCashOnDeliveryChanged;
-
-        if (shouldRefreshEmbeddedPayment) {
-            cart.Payment.Core.onAmountChanged();
-            cart.Payment.Core.reloadActiveEmbeddedProvider();
-        }
+        cart.Payment.Core.onAmountChanged();
     }
     function ConfigurePaymentOptions(val) {
         var $CheckedShipping = $('input[name="RadioShipping"]:checked');
         if ($CheckedShipping.length == 0) return;
 
-        var canCashOnDelivery =
-            $CheckedShipping.attr("data-support-cash-on-delivery").toLowerCase() === "true";
+        if (!cart.Payment.Availability) return;
 
-        // 必須在取消 radio 前保留原本選取值。
-        // ECPay 尚未 ready 時，reloadActiveEmbeddedProvider()
-        // 仍需要靠這個 radio 找到 active provider。
-        var selectedPaymentValue =
-            val != null && val !== ""
-                ? String(val)
-                : String(cart.Payment.Core.GetCheckedPaymentValue() || "");
-
-        $("#RadioPayment > .form-check").addClass("d-none");
-        $(".noPaymentWarning").addClass("d-none");
-        $(".ecpayWarning").removeClass("d-none");
-        $("#RadioPayment input:radio").prop("checked", false);
-        $("#RadioPayment > .form-check > .payment_display").removeClass("checked first last");
-
-        var $list = $("#RadioPayment > .form-check");
-
-        // 先顯示所有付款方式
-        $list.removeClass("d-none");
-
-        // 非貨到付款情境，不顯示貨到付款
-        var $codPayment = $("#radio_payment_COD");
-        var $codFormCheck = $codPayment.closest(".form-check");
-
-        if (canCashOnDelivery) {
-            $codFormCheck.removeClass("d-none");
-        } else {
-            $codFormCheck.addClass("d-none");
+        if (!S.PaymentAvailabilityLoaded) {
+            cart.Payment.Availability.refresh(val);
+            return;
         }
 
-        $list.each(function () {
-            var $formCheck = $(this);
-            var $input = $formCheck.find('input[name="RadioPayment"]').first();
-
-            if (cart.Payment.Core.isEmbeddedPaymentRadio($input)) {
-                $formCheck.addClass("d-none");
-            }
-        });
-
-        $(".ecpayWarning").addClass("d-none");
-
-        var $targetInput = $();
-
-        if (selectedPaymentValue !== "") {
-            $targetInput = $(`#RadioPayment input[name="RadioPayment"][value="${selectedPaymentValue}"]`);
-        }
-
-        var $targetFormCheck = $targetInput.closest(".form-check");
-
-        // 如果 val 是 embedded 付款，允許它維持 checked，但 radio 本身仍然隱藏。
-        // 真正顯示的是 provider 自己的付款 UI。
-        if ($targetInput.length && cart.Payment.Core.isEmbeddedPaymentRadio($targetInput)) {
-            cart.Payment.Core.updatePaymentRadioUI($targetFormCheck);
-        } else {
-            // 一般付款方式：如果 val 不存在，或 val 對應到隱藏項，就改選第一個可見付款方式
-            if (!$targetFormCheck.length || $targetFormCheck.hasClass("d-none")) {
-                $targetFormCheck = $("#RadioPayment > .form-check:not(.d-none)").first();
-            }
-
-            if ($targetFormCheck.length) {
-                cart.Payment.Core.updatePaymentRadioUI($targetFormCheck);
-            }
-        }
+        cart.Payment.Availability.apply(val);
     }
     function getSelectedShippingMeta() {
         var $selected = $("[name='RadioShipping']:checked");

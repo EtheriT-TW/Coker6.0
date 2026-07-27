@@ -18,7 +18,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Freight
         public bool GetMap { get; set; }
         public string LogisticsSubType { get; set; }
         public string CVSStoreID { get; set; }
-        public bool SupportCashOnDelivery { get; set; }
         public List<LogisticsBoxFeeDisplayDto> LogisticsBoxFees { get; set; } = new();
     }
 }

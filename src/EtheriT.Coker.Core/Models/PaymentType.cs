@@ -13,9 +13,9 @@ namespace EtheriT.Coker.Core.Models
         // 排序
         public int SerNo { get; set; }
         // 允許的最低金額
-        public int MinAmount { get; set; } = 1;
+        public decimal MinAmount { get; set; } = 1;
         // 允許的上限金額
-        public int? MaxAmount { get; set; }
+        public decimal? MaxAmount { get; set; }
         // Icon
         public string Icons { get; set; }
         // 是否允許退款

@@ -91,7 +91,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                 scale: 2,
                 nullable: true);
 
-            // 舊欄位為 false 代表該物流設定不支援一般貨到付款。
+            // SupportCashOnDelivery 只適用於綠界超商物流（LogisticsType 8～15）。
+            // 舊欄位為 false 代表該綠界物流設定不支援一般貨到付款。
             // 新規則未設定時預設開放，因此只需搬移 false 的設定。
             migrationBuilder.Sql(
                 """
@@ -119,6 +120,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     NULL
                 FROM [LogisticsSettings] AS [logistics]
                 WHERE [logistics].[IsDeleted] = 0
+                  AND [logistics].[LogisticsType] BETWEEN 8 AND 15
                   AND [logistics].[SupportCashOnDelivery] = 0
                   AND NOT EXISTS
                   (
@@ -703,6 +705,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                 INNER JOIN [LogisticsSettings] AS [logistics]
                     ON [logistics].[Id] = [restriction].[FK_LogisticsSettingId]
                 WHERE [restriction].[FK_PaymentTypeId] = 28
+                  AND [logistics].[LogisticsType] BETWEEN 8 AND 15
                   AND [logistics].[SupportCashOnDelivery] = 0;
                 """);
 

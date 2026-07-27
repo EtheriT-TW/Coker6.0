@@ -65,19 +65,39 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     connectSrc = $"'self' {backstageHost} *.google.com *.google-analytics.com *.googleapis.com *.googleadservices.com https://ad.doubleclick.net https://stats.g.doubleclick.net https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://remotejs.com wss://remotejs.com";
                 }
 
+                var scriptSrc = AppendAdditionalSources(
+                    $"'self' '{selfInline}' *.google.com *.googletagmanager.com *.googleadservices.com *.googleapis.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com translate.google.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com www.instagram.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://applepay.cdn-apple.com logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw glogistics.ecpay.com.tw https://cdn.jsdelivr.net",
+                    "AdditionalScripts");
+                var styleSrc = AppendAdditionalSources(
+                    $"'self' '{selfInline}' {ExternalStylesheetPolicy.CspSourceExpression}",
+                    "AdditionalStyles");
+                var fontSrc = AppendAdditionalSources(
+                    "'self' data: fonts.gstatic.com cdnjs.cloudflare.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://applepay.cdn-apple.com logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw",
+                    "AdditionalFonts");
+                var imageSrc = AppendAdditionalSources(
+                    "'self' *.ezsale.tw *.facebook.com https://static.xx.fbcdn.net https://usage.trackjs.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.gstatic.com *.googleapis.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com i.imgur.com lh3.googleusercontent.com cdn.discordapp.com githubusercontent.com images.unsplash.com cdn.pixabay.com res.cloudinary.com scaleflex.cloudimg.io data: blob: https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw",
+                    "AdditionalImages");
+                var frameSrc = AppendAdditionalSources(
+                    "'self' *.ezsale.tw *.google.com *.google.com.tw *.youtube.com *.youtube-nocookie.com *.facebook.com *.instagram.com *.googletagmanager.com *.doubleclick.net v.qq.com https://applepay.cdn-apple.com/",
+                    "AdditionalFrames");
+                connectSrc = AppendAdditionalSources(connectSrc, "AdditionalConnections");
+                var frameAncestors = AppendAdditionalSources(
+                    "'self' *.ezsale.tw",
+                    "AdditionalFrameAncestors");
+
                 // 將 nonce 存入 HttpContext.Items
 
                 // 添加 CSP(內容限制) header
                 // google 翻譯 script-src、style-src要加上 'unsafe-inline' 目前還找不到解決方案 
                 context.Response.Headers["Content-Security-Policy"] =
                     $"default-src 'self';" +
-                    $"script-src 'self' '{selfInline}' *.google.com *.googletagmanager.com *.googleadservices.com *.googleapis.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com translate.google.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com www.instagram.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://applepay.cdn-apple.com logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw glogistics.ecpay.com.tw https://cdn.jsdelivr.net; " +
-                    $"style-src 'self' '{selfInline}' {ExternalStylesheetPolicy.CspSourceExpression}; " +
-                    $"font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://applepay.cdn-apple.com logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw;  " +
-                    $"img-src 'self' *.ezsale.tw *.facebook.com https://static.xx.fbcdn.net https://usage.trackjs.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.gstatic.com *.googleapis.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com i.imgur.com lh3.googleusercontent.com cdn.discordapp.com githubusercontent.com images.unsplash.com cdn.pixabay.com res.cloudinary.com scaleflex.cloudimg.io data: blob:  https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw  logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw; " +
-                    $"frame-src 'self' *.ezsale.tw *.google.com *.google.com.tw *.youtube.com *.youtube-nocookie.com *.facebook.com *.instagram.com *.googletagmanager.com *.doubleclick.net v.qq.com https://applepay.cdn-apple.com/;" +
+                    $"script-src {scriptSrc}; " +
+                    $"style-src {styleSrc}; " +
+                    $"font-src {fontSrc}; " +
+                    $"img-src {imageSrc}; " +
+                    $"frame-src {frameSrc};" +
                     $"connect-src {connectSrc};" +
-                    $"frame-ancestors 'self' *.ezsale.tw;";
+                    $"frame-ancestors {frameAncestors};";
                 //cache 限制設定
                 context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private";
                 //Pragma 為http 1.0以下使用，以上已被 Cache-Control取代
@@ -117,6 +137,29 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     await context.Response.WriteAsync(modifiedBody);
                 }
             }
+        }
+
+        private string AppendAdditionalSources(string currentSources, string settingName)
+        {
+            var additionalSources = _configuration
+                .GetSection($"ContentSecurityPolicy:{settingName}")
+                .GetChildren()
+                .Select(item => item.Value?.Trim())
+                .Where(IsValidAdditionalSource)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+
+            return string.Join(" ", new[] { currentSources }.Concat(additionalSources!));
+        }
+
+        private static bool IsValidAdditionalSource(string? source)
+        {
+            if (string.IsNullOrWhiteSpace(source))
+            {
+                return false;
+            }
+
+            // 每一筆只能是一個來源，避免設定值透過分號或空白插入其他 CSP 規則。
+            return source.IndexOfAny([';', ',', '\r', '\n', '\t', ' ']) < 0;
         }
     }
 }

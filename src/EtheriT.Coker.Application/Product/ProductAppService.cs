@@ -2381,6 +2381,14 @@ namespace EtheriT.Coker.Application.Product
             ImportOutputDto response = new ImportOutputDto { ErrorList = new List<ImportMassageItem>() };
             bool productImportFailed = false;
             long WebsiteID = await loginUserData.GetWebsiteId();
+            if (fileData.Directories.Any())
+            {
+                var directoryValidation = await ValidateDirectoryImportStructureAsync(fileData.Directories, WebsiteID);
+                response.ErrorList.AddRange(directoryValidation.Errors);
+                fileData.Directories = fileData.Directories
+                    .Where((_, index) => !directoryValidation.InvalidRowIndexes.Contains(index))
+                    .ToList();
+            }
             var importTemplate = await GetProductImportTemplate(templateId, WebsiteID);
             reportProgress?.Invoke(15, "正在驗證商品與會員價格資料");
             if (fileData.Products.Any())
@@ -2477,6 +2485,241 @@ namespace EtheriT.Coker.Application.Product
 
             reportProgress?.Invoke(98, "商品匯入處理完成");
             return response;
+        }
+
+        private async Task<(List<ImportMassageItem> Errors, HashSet<int> InvalidRowIndexes)> ValidateDirectoryImportStructureAsync(
+            List<DirectoryImportDto> directories,
+            long websiteId)
+        {
+            var errors = new List<ImportMassageItem>();
+            var invalidRowIndexes = new HashSet<int>();
+            var errorKeys = new HashSet<string>();
+            var existingMenus = await db.WebMenus.AsNoTracking()
+                .Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId)
+                .ToListAsync();
+            var routerTitles = new Dictionary<string, string>();
+            var parentByChild = new Dictionary<string, (string ParentKey, int RowIndex, int Level)>();
+            var edges = new Dictionary<string, HashSet<string>>();
+            var labels = new Dictionary<string, string>();
+
+            void AddError(int rowIndex, string message)
+            {
+                var key = $"{rowIndex}:{message}";
+                if (!errorKeys.Add(key))
+                    return;
+
+                if (rowIndex >= 0)
+                    invalidRowIndexes.Add(rowIndex);
+
+                // 目錄分頁的第一筆資料位於 Excel 第 4 列：
+                // rowIndex = 0 代表 Excel 第 4 列。
+                const int directoryFirstDataRow = 4;
+
+                var excelRowNumber = rowIndex >= 0
+                    ? rowIndex + directoryFirstDataRow
+                    : 0;
+
+                errors.Add(new ImportMassageItem
+                {
+                    Name = rowIndex >= 0
+                        ? $"目錄分頁第 {excelRowNumber} 列"
+                        : "目錄分類結構",
+
+                    Description = rowIndex >= 0
+                    ? $"{message} 這一列的目錄尚未建立。"
+                    : message
+                });
+            }
+
+            static bool IsRouterCharacterAllowed(char value)
+                => char.IsLetterOrDigit(value) || value is '-' or '.' or '_' or '~';
+
+            static string GetTitleColumn(int level)
+            {
+                return level switch
+                {
+                    1 => "A",
+                    2 => "C",
+                    3 => "E",
+                    _ => ""
+                };
+            }
+
+            static string GetRouterColumn(int level)
+            {
+                return level switch
+                {
+                    1 => "B",
+                    2 => "D",
+                    3 => "F",
+                    _ => ""
+                };
+            }
+
+            static int GetExcelRowNumber(int rowIndex)
+            {
+                const int directoryFirstDataRow = 4;
+                return rowIndex + directoryFirstDataRow;
+            }
+
+            for (var rowIndex = 0; rowIndex < directories.Count; rowIndex++)
+            {
+                var row = directories[rowIndex];
+                var levels = new[]
+                {
+                    (Level: 1, Title: (row.Level1 ?? string.Empty).Trim(), Router: (row.Level1RouterName ?? string.Empty).Trim()),
+                    (Level: 2, Title: (row.Level2 ?? string.Empty).Trim(), Router: (row.Level2RouterName ?? string.Empty).Trim()),
+                    (Level: 3, Title: (row.Level3 ?? string.Empty).Trim(), Router: (row.Level3RouterName ?? string.Empty).Trim())
+                };
+
+                if (levels[1].Title.Length > 0 && levels[0].Title.Length == 0)
+                    AddError(rowIndex, "第二層選單有資料，但第一層選單為空白。");
+                if (levels[2].Title.Length > 0 && levels[1].Title.Length == 0)
+                    AddError(rowIndex, "第三層選單有資料，但第二層選單為空白。");
+
+                var pathNodes = new List<(
+                    string Key,
+                    string Label,
+                    int Level,
+                    string Title,
+                    string Router
+                )>();
+                var rowRouterTitles = new Dictionary<string, string>();
+                foreach (var level in levels.Where(e => e.Title.Length > 0))
+                {
+                    if (level.Router.Length > 0)
+                    {
+                        var invalidCharacters = level.Router
+                            .Where(value => !IsRouterCharacterAllowed(value))
+                            .Distinct()
+                            .Select(value => char.IsWhiteSpace(value) ? "空白" : $"「{value}」")
+                            .ToList();
+                        if (invalidCharacters.Count > 0)
+                        {
+                            AddError(rowIndex,
+                                $"第 {level.Level} 層 RouterName「{level.Router}」包含網址路徑不允許的字元：{string.Join("、", invalidCharacters)}。只允許中英文字母、數字及 - . _ ~。");
+                        }
+
+                        var normalizedRouter = Norm(level.Router);
+                        if ((routerTitles.TryGetValue(normalizedRouter, out var previousTitle)
+                                || rowRouterTitles.TryGetValue(normalizedRouter, out previousTitle))
+                            && Norm(previousTitle) != Norm(level.Title))
+                        {
+                            AddError(rowIndex,
+                                $"第 {level.Level} 層 RouterName「{level.Router}」已被選單「{previousTitle}」使用，不能再指定給「{level.Title}」。");
+                        }
+                        else
+                        {
+                            rowRouterTitles[normalizedRouter] = level.Title;
+                        }
+                    }
+
+                    var existing = FindMenuByRouterOrTitle(existingMenus, level.Title, level.Router);
+                    var key = existing != null
+                        ? $"id:{existing.Id}"
+                        : level.Router.Length > 0 ? $"router:{Norm(level.Router)}" : $"title:{Norm(level.Title)}";
+                    var label = level.Router.Length > 0 ? $"{level.Title} ({level.Router})" : level.Title;
+                    labels[key] = label;
+                    pathNodes.Add((
+                        Key: key,
+                        Label: label,
+                        Level: level.Level,
+                        Title: level.Title,
+                        Router: level.Router
+                    ));
+                }
+
+                var duplicateNode = pathNodes.GroupBy(e => e.Key).FirstOrDefault(e => e.Count() > 1);
+                if (duplicateNode != null)
+                    AddError(rowIndex, $"選單「{duplicateNode.First().Label}」不能放在自己底下，請檢查各層 RouterName 是否重複。");
+
+                var rowEdges = pathNodes.Skip(1)
+                    .Select((child, index) => (
+                        Parent: pathNodes[index],
+                        Child: child
+                    ))
+                    .ToList();
+
+                foreach (var edge in rowEdges)
+                {
+                    if (parentByChild.TryGetValue(
+                            edge.Child.Key,
+                            out var previousLocation)
+                        && previousLocation.ParentKey != edge.Parent.Key)
+                    {
+                        var previousExcelRow =
+                            GetExcelRowNumber(previousLocation.RowIndex);
+
+                        var currentExcelRow =
+                            GetExcelRowNumber(rowIndex);
+
+                        var previousTitleCell =
+                            $"{GetTitleColumn(previousLocation.Level)}{previousExcelRow}";
+
+                        var currentTitleCell =
+                            $"{GetTitleColumn(edge.Child.Level)}{currentExcelRow}";
+
+                        var previousRouterCell =
+                            $"{GetRouterColumn(previousLocation.Level)}{previousExcelRow}";
+
+                        var currentRouterCell =
+                            $"{GetRouterColumn(edge.Child.Level)}{currentExcelRow}";
+
+                        AddError(
+                            rowIndex,
+                            $"「目錄分類」工作表的 {currentRouterCell} 與 "
+                            + $"{previousRouterCell} 使用了相同的 RouterName"
+                            + $"「{edge.Child.Router}」，但兩筆資料分別位於"
+                            + $"「{labels[previousLocation.ParentKey]}」與"
+                            + $"「{edge.Parent.Label}」兩個不同分類中。"
+                            + $"請保留 {previousTitleCell}、{previousRouterCell} 的內容，"
+                            + $"並將 {currentTitleCell} 的選單名稱及 "
+                            + $"{currentRouterCell} 的 RouterName 改成不重複的內容。");
+                    }
+                }
+
+                if (invalidRowIndexes.Contains(rowIndex))
+                    continue;
+
+                foreach (var routerTitle in rowRouterTitles)
+                    routerTitles[routerTitle.Key] = routerTitle.Value;
+                for (var index = 1; index < pathNodes.Count; index++)
+                {
+                    var parent = pathNodes[index - 1];
+                    var child = pathNodes[index];
+                    parentByChild[child.Key] = (
+                        ParentKey: parent.Key,
+                        RowIndex: rowIndex,
+                        Level: child.Level
+                    );
+
+                    if (!edges.TryGetValue(parent.Key, out var children))
+                        edges[parent.Key] = children = new HashSet<string>();
+                    children.Add(child.Key);
+                }
+            }
+
+            var states = new Dictionary<string, int>();
+            bool HasCycle(string node)
+            {
+                if (states.TryGetValue(node, out var state)) return state == 1;
+                states[node] = 1;
+                if (edges.TryGetValue(node, out var children) && children.Any(HasCycle)) return true;
+                states[node] = 2;
+                return false;
+            }
+
+            foreach (var node in edges.Keys)
+            {
+                if (HasCycle(node))
+                {
+                    invalidRowIndexes.UnionWith(Enumerable.Range(0, directories.Count));
+                    AddError(-1, "多筆選單結構共同形成循環，為避免寫入錯誤父層，本次目錄分類已全部略過；商品資料仍會繼續匯入。");
+                    break;
+                }
+            }
+
+            return (errors, invalidRowIndexes);
         }
 
         private async Task<Html_Content> GetProductImportTemplate(long templateId, long websiteId)
@@ -3270,6 +3513,16 @@ namespace EtheriT.Coker.Application.Product
 
             foreach (var product in products)
             {
+                var source = prods.FirstOrDefault(e => e.Id == product.Id)
+                    ?? prods.FirstOrDefault(e => Norm(e.ItemNo) == Norm(product.ItemNo)
+                        && Norm(e.ProdName) == Norm(product.Title));
+                if (source != null
+                    && source.Id != 0
+                    && !HasImportedColumn(source, nameof(source.SaveHtml))
+                    && !HasImportedColumn(source, nameof(source.Html))
+                    && !HasImportedColumn(source, nameof(source.SaveCss)))
+                    continue;
+
                 var sanitized = await SanitizeProductPublishedContentAsync(
                     product.FK_WebsiteId,
                     product.Id,
@@ -3308,7 +3561,45 @@ namespace EtheriT.Coker.Application.Product
                     else // 更新
                     {
                         prod = await db.Prods.FirstAsync(p => p.Id == dto.Id);
+                        var originalTitle = prod.Title;
+                        var originalItemNo = prod.ItemNo;
+                        var originalDescription = prod.Description;
+                        var originalIntroduction = prod.Introduction;
+                        var originalStatus = prod.Status;
+                        var originalStartTime = prod.StartTime;
+                        var originalEndTime = prod.EndTime;
+                        var originalPermanent = prod.permanent;
+                        var originalVisible = prod.Visible;
+                        var originalRemovedFromShelves = prod.RemovedFromShelves;
+                        var originalHtml = prod.Html;
+                        var originalSaveHtml = prod.SaveHtml;
+                        var originalPageText = prod.PageText;
+                        var originalCss = prod.Css;
+                        var originalSaveCss = prod.SaveCss;
                         mapper.Map(dto, prod);
+                        if (!HasImportedColumn(dto, nameof(dto.ProdName))) prod.Title = originalTitle;
+                        if (!HasImportedColumn(dto, nameof(dto.ItemNo))) prod.ItemNo = originalItemNo;
+                        if (!HasImportedColumn(dto, nameof(dto.Description))) prod.Description = originalDescription;
+                        if (!HasImportedColumn(dto, nameof(dto.Introduction))) prod.Introduction = originalIntroduction;
+                        if (!HasImportedColumn(dto, nameof(dto.Status))) prod.Status = originalStatus;
+                        if (!HasImportedColumn(dto, nameof(dto.StartTime))) prod.StartTime = originalStartTime;
+                        if (!HasImportedColumn(dto, nameof(dto.EndTime))) prod.EndTime = originalEndTime;
+                        if (!HasImportedColumn(dto, nameof(dto.StartTime))
+                            && !HasImportedColumn(dto, nameof(dto.EndTime))) prod.permanent = originalPermanent;
+                        if (!HasImportedColumn(dto, nameof(dto.Visible))) prod.Visible = originalVisible;
+                        if (!HasImportedColumn(dto, nameof(dto.OnShelf))) prod.RemovedFromShelves = originalRemovedFromShelves;
+                        if (!HasImportedColumn(dto, nameof(dto.SaveHtml))
+                            && !HasImportedColumn(dto, nameof(dto.Html)))
+                        {
+                            prod.Html = originalHtml;
+                            prod.SaveHtml = originalSaveHtml;
+                            prod.PageText = originalPageText;
+                        }
+                        if (!HasImportedColumn(dto, nameof(dto.SaveCss)))
+                        {
+                            prod.Css = originalCss;
+                            prod.SaveCss = originalSaveCss;
+                        }
                         prod.LastModifierUserId = userId;
                         prod.LastModificationTime = DateTime.Now;
                     }
@@ -3317,10 +3608,13 @@ namespace EtheriT.Coker.Application.Product
                     ApplyProductDisplaySettings(dto, prod, errors);
 
                     ApplyImportedProductContent(dto, prod, orgName);
-                    if (Enum.TryParse(dto.Status, out ProdStatusEnum statusType))
-                        prod.Status = statusType;
-                    else
-                        prod.Status = 0;
+                    if (dto.Id == 0 || HasImportedColumn(dto, nameof(dto.Status)))
+                    {
+                        if (Enum.TryParse(dto.Status, out ProdStatusEnum statusType))
+                            prod.Status = statusType;
+                        else
+                            prod.Status = 0;
+                    }
 
                     results.Add(prod);
                 }
@@ -3338,28 +3632,30 @@ namespace EtheriT.Coker.Application.Product
             Prod prod,
             List<ImportMassageItem> errors)
         {
-            // 上下架日期任一未填，視為永久顯示；兩者皆填才使用排程。
-            prod.permanent = !dto.StartTime.HasValue || !dto.EndTime.HasValue;
-            if (prod.permanent)
+            var isNew = dto.Id == 0;
+            var hasStartTime = isNew || HasImportedColumn(dto, nameof(dto.StartTime));
+            var hasEndTime = isNew || HasImportedColumn(dto, nameof(dto.EndTime));
+            if (hasStartTime) prod.StartTime = dto.StartTime;
+            if (hasEndTime) prod.EndTime = dto.EndTime;
+            if (hasStartTime || hasEndTime)
             {
-                prod.StartTime = null;
-                prod.EndTime = null;
+                prod.permanent = !prod.StartTime.HasValue || !prod.EndTime.HasValue;
+                if (prod.permanent)
+                {
+                    prod.StartTime = null;
+                    prod.EndTime = null;
+                }
             }
 
-            ApplyImportFlag(
-                dto.Visible,
-                value => prod.Visible = value,
-                dto.ProdName,
-                "顯示",
-                errors);
+            if (isNew || HasImportedColumn(dto, nameof(dto.Visible)))
+                ApplyImportFlag(dto.Visible, value => prod.Visible = value, dto.ProdName, "顯示", errors);
 
-            ApplyImportFlag(
-                dto.OnShelf,
-                value => prod.RemovedFromShelves = !value,
-                dto.ProdName,
-                "上架",
-                errors);
+            if (isNew || HasImportedColumn(dto, nameof(dto.OnShelf)))
+                ApplyImportFlag(dto.OnShelf, value => prod.RemovedFromShelves = !value, dto.ProdName, "上架", errors);
         }
+
+        private static bool HasImportedColumn(ProductImportDto dto, string columnName)
+            => dto.ImportedColumns.Count == 0 || dto.ImportedColumns.Contains(columnName);
 
         private static void ApplyImportFlag(
             string? rawValue,
@@ -3418,6 +3714,12 @@ namespace EtheriT.Coker.Application.Product
 
         private void ApplyImportedProductContent(ProductImportDto dto, Prod prod, string orgName)
         {
+            var isNew = dto.Id == 0;
+            var hasHtml = HasImportedColumn(dto, nameof(dto.SaveHtml))
+                || HasImportedColumn(dto, nameof(dto.Html));
+            var hasCss = HasImportedColumn(dto, nameof(dto.SaveCss));
+            if (!isNew && !hasHtml && !hasCss) return;
+
             // SaveHtml 是新版欄位；Html 僅供舊版 Excel 相容。
             var hasEditorHtml = !string.IsNullOrWhiteSpace(dto.SaveHtml);
             var importedHtml = hasEditorHtml ? dto.SaveHtml! : dto.Html ?? "";
@@ -3427,15 +3729,23 @@ namespace EtheriT.Coker.Application.Product
             if (!hasEditorHtml)
                 frontHtml = NormalizeHtml(frontHtml);
 
-            var frontCss = stringHandler.ResolveFrontUploadPath(dto.SaveCss ?? "", orgName);
+            var frontCss = hasCss || isNew
+                ? stringHandler.ResolveFrontUploadPath(dto.SaveCss ?? "", orgName)
+                : prod.Css ?? "";
             var editorHtml = stringHandler.ResolveUploadPath(frontHtml, orgName);
             var editorCss = stringHandler.ResolveUploadPath(frontCss, orgName);
 
-            prod.PageText = htmlProcessor.text(frontHtml);
-            prod.Html = stringHandler.HtmlEncode(frontHtml);
-            prod.Css = frontCss;
-            prod.SaveHtml = stringHandler.HtmlEncode(editorHtml);
-            prod.SaveCss = editorCss;
+            if (hasHtml || isNew)
+            {
+                prod.PageText = htmlProcessor.text(frontHtml);
+                prod.Html = stringHandler.HtmlEncode(frontHtml);
+                prod.SaveHtml = stringHandler.HtmlEncode(editorHtml);
+            }
+            if (hasCss || isNew)
+            {
+                prod.Css = frontCss;
+                prod.SaveCss = editorCss;
+            }
         }
 
         private Task<HtmlSanitizeResult> SanitizeProductPublishedContentAsync(
@@ -3767,20 +4077,23 @@ namespace EtheriT.Coker.Application.Product
                         else
                         {
                             // 更新既有規格欄位
-                            stockEntity.Stock = s.Stock;
-                            stockEntity.Min_Qty = s.Min_Qty;
-                            stockEntity.Alert_Qty = s.Alert_Qty;
-                            stockEntity.SubItemNo = s.SubItemNo;
-                            stockEntity.SpecDescription = s.SpecDescription;
+                            if (HasImportedColumn(dto, nameof(dto.Stock))) stockEntity.Stock = s.Stock;
+                            if (HasImportedColumn(dto, nameof(dto.Min_Qty))) stockEntity.Min_Qty = s.Min_Qty;
+                            if (HasImportedColumn(dto, nameof(dto.Alert_Qty))) stockEntity.Alert_Qty = s.Alert_Qty;
+                            if (HasImportedColumn(dto, nameof(dto.SubItemNo))) stockEntity.SubItemNo = s.SubItemNo;
+                            if (HasImportedColumn(dto, nameof(dto.SpecDescription))) stockEntity.SpecDescription = s.SpecDescription;
                         }
 
+                        var isNewStock = stockEntity.Id == 0;
                         // 詢價（不刪舊價；只標記並把通用價歸零）
-                        var isTimePrice = s.TimePrice || s.Price < 0;
-                        stockEntity.IsTimePrice = isTimePrice;
-                        stockEntity.Price = s.SuggestPrice;
+                        var hasPrice = HasImportedColumn(dto, nameof(dto.Price));
+                        var isTimePrice = hasPrice ? s.TimePrice || s.Price < 0 : stockEntity.IsTimePrice;
+                        if (hasPrice || isNewStock) stockEntity.IsTimePrice = isTimePrice;
+                        if (HasImportedColumn(dto, nameof(dto.SuggestPrice)) || isNewStock)
+                            stockEntity.Price = s.SuggestPrice;
 
                         // 詢價就不處理角色價
-                        if (isTimePrice) continue;
+                        if (isTimePrice || (!hasPrice && !isNewStock)) continue;
 
                         // 角色價：同 (roleId, bonusKey) 最後一筆覆蓋；Bonus 必為整數
                         var roleBonusMap = new Dictionary<(long roleId, int bonusKey), ProductPriceDto>();

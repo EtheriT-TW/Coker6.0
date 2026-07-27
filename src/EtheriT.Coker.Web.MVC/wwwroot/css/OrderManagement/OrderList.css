@@ -7,9 +7,40 @@
     color: var(--colors-red-text);
 }
 
-#OrderListDx tr.isFail {
-    color: #afafaf;
+/* 已完成：正常結案，降低注意力但保留正向語意 */
+#OrderListDx tr.isCompleted {
+    color: #68756d;
+    background-color: #eef4f0;
+}
+
+/* 已取消：資料失效，使用中性灰階 */
+#OrderListDx tr.isCancelled {
+    color: #a0a4a8;
     background-color: var(--bs-secondary-bg-subtle);
+}
+
+/* 付款失敗：異常結束，保留警示語意 */
+#OrderListDx tr.isPaymentFailed {
+    color: #a06a6a;
+    background-color: #f7eeee;
+}
+
+    #OrderListDx tr.isCompleted .dx-link,
+    #OrderListDx tr.isCancelled .dx-link,
+    #OrderListDx tr.isPaymentFailed .dx-link {
+        color: var(--bs-primary);
+    }
+
+#OrderListDx .order-status-pending {
+    color: #664d03;
+    background-color: #fff3cd;
+    font-weight: 500;
+}
+
+#OrderListDx .order-status-shipped {
+    color: #084298;
+    background-color: #cfe2ff;
+    font-weight: 500;
 }
 
 /* Order List */
@@ -26,10 +57,10 @@
     min-width: 0;
 }
 
-.tracking_number:disabled {
-    background-color: var(--bs-secondary-bg-subtle);
-    color: var(--bs-secondary-text);
-}
+    .tracking_number:disabled {
+        background-color: var(--bs-secondary-bg-subtle);
+        color: var(--bs-secondary-text);
+    }
 /* Order Details */
 #OrderDetails {
     height: fit-content;
@@ -67,6 +98,7 @@
 .pro_quantity::before {
     content: "\00d7";
 }
+
 .order_redeemBonus:before {
     content: "-";
     margin-right: 2px;
@@ -86,7 +118,7 @@
     }
 
     #OrderData #SystemMemo > .order_systemMemos {
-        margin-top:0.5rem;
+        margin-top: 0.5rem;
         width: 100%;
     }
 

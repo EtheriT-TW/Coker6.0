@@ -280,8 +280,8 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (output.Any())
                 {
-                    const int defaultMax = 20000;
-                    const int defaultMin = 31;
+                    const decimal defaultMax = 20000;
+                    const decimal defaultMin = 31;
 
                     var ecpayItems = output
                         .Where(x => x.Code?.ToLower().Contains("ecpay") == true)
@@ -293,13 +293,13 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                     if (ecpayItems.Any())
                     {
-                        int maxAmount = ecpayItems
+                        decimal maxAmount = ecpayItems
                             .Where(x => x.MaxAmount.HasValue)
                             .Select(x => x.MaxAmount.Value)
                             .DefaultIfEmpty(defaultMax)
                             .Max();
 
-                        int minAmount = ecpayItems
+                        decimal minAmount = ecpayItems
                             .Select(x => x.MinAmount)
                             .DefaultIfEmpty(defaultMin)
                             .Min();

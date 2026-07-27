@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727043629_Update_LogisticsPaymentRestriction")]
+    partial class Update_LogisticsPaymentRestriction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -6309,20 +6312,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             name = "最高折抵上限",
                             pattern = "",
                             type = 8
-                        },
-                        new
-                        {
-                            Id = 29L,
-                            CreationTime = new DateTime(2026, 7, 17, 11, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetGroupId = 2L,
-                            IsDeleted = false,
-                            jobID = "E001",
-                            key = "ProductPageLayout",
-                            memo = "設定商品頁面的顯示版型",
-                            name = "商品頁版型",
-                            pattern = "",
-                            type = 3
                         });
                 });
 
@@ -8270,28 +8259,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             Key = "MobileCarrier",
                             Value = "手機載具"
-                        },
-                        new
-                        {
-                            Id = 18L,
-                            CreationTime = new DateTime(2026, 7, 17, 11, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetId = 29L,
-                            IsDefault = true,
-                            IsDeleted = false,
-                            Key = "Layout_1",
-                            Value = "版型一"
-                        },
-                        new
-                        {
-                            Id = 19L,
-                            CreationTime = new DateTime(2026, 7, 17, 11, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetId = 29L,
-                            IsDefault = false,
-                            IsDeleted = false,
-                            Key = "Layout_2",
-                            Value = "版型二"
                         });
                 });
 

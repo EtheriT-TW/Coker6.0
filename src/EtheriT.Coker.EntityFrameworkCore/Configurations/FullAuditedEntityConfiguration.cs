@@ -16,6 +16,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Configurations
         {
             builder.Property(e => e.CreationTime).HasDefaultValueSql("GETDATE()");
             builder.Property(e => e.IsDeleted).HasDefaultValue(false);
+            builder.HasQueryFilter("SoftDeletionFilter", e => !e.IsDeleted);
         }
     }
 }

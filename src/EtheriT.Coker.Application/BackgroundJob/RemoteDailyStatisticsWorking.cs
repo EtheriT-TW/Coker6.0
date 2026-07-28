@@ -10,6 +10,8 @@ namespace EtheriT.Coker.Application.BackgroundJob
 {
     public sealed class RemoteDailyStatisticsWorking
     {
+        private const int CurrentAggregationVersion = 1;
+
         private readonly CokerDbContext db;
         private readonly RemoteAnalyticsOptions options;
         private readonly ILogger<RemoteDailyStatisticsWorking> logger;
@@ -28,6 +30,7 @@ namespace EtheriT.Coker.Application.BackgroundJob
         [DisableConcurrentExecution(3600)]
         public async Task AggregateNextDay()
         {
+            var today = DateTime.Today;
             var latestClosedDate = DateTime.Today.AddDays(-1);
             var earliestRemoteTime = await db.Remotes
                 .AsNoTracking()
@@ -42,6 +45,12 @@ namespace EtheriT.Coker.Application.BackgroundJob
             }
 
             var earliestDate = earliestRemoteTime.Value.Date;
+            var todaySourceRows = await AggregateDate(today, markComplete: false);
+            logger.LogInformation(
+                "Current Remote daily statistics refreshed. StatisticDate={StatisticDate}, SourceRows={SourceRows}",
+                today,
+                todaySourceRows);
+
             if (earliestDate > latestClosedDate)
             {
                 logger.LogInformation("Remote daily aggregation skipped because no closed day is available.");
@@ -52,7 +61,8 @@ namespace EtheriT.Coker.Application.BackgroundJob
                     .AsNoTracking()
                     .Where(run =>
                         run.StatisticDate >= earliestDate
-                        && run.StatisticDate <= latestClosedDate)
+                        && run.StatisticDate <= latestClosedDate
+                        && run.AggregationVersion == CurrentAggregationVersion)
                     .Select(run => run.StatisticDate)
                     .ToListAsync())
                 .Select(date => date.Date)
@@ -76,14 +86,14 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 return;
             }
 
-            var sourceRows = await AggregateDate(targetDate.Value);
+            var sourceRows = await AggregateDate(targetDate.Value, markComplete: true);
             logger.LogInformation(
                 "Remote daily aggregation completed. StatisticDate={StatisticDate}, SourceRows={SourceRows}",
                 targetDate.Value,
                 sourceRows);
         }
 
-        private async Task<long> AggregateDate(DateTime statisticDate)
+        private async Task<long> AggregateDate(DateTime statisticDate, bool markComplete)
         {
             const string commandText =
                 """
@@ -178,7 +188,10 @@ namespace EtheriT.Coker.Application.BackgroundJob
                     COUNT_BIG(DISTINCT CASE
                         WHEN [source].[IsEffective] = 1 THEN [source].[VisitorIdentifier]
                     END),
-                    SUM(CONVERT(bigint, [source].[VisibleSeconds])),
+                    SUM(CONVERT(bigint, CASE
+                        WHEN [source].[IsEffective] = 1 THEN [source].[VisibleSeconds]
+                        ELSE 0
+                    END)),
                     @AggregatedAt
                 FROM [Source] AS [source]
                 GROUP BY [source].[FK_WebsiteId];
@@ -256,7 +269,10 @@ namespace EtheriT.Coker.Application.BackgroundJob
                     COUNT_BIG(DISTINCT CASE
                         WHEN [source].[IsEffective] = 1 THEN [source].[VisitorIdentifier]
                     END),
-                    SUM(CONVERT(bigint, [source].[VisibleSeconds])),
+                    SUM(CONVERT(bigint, CASE
+                        WHEN [source].[IsEffective] = 1 THEN [source].[VisibleSeconds]
+                        ELSE 0
+                    END)),
                     @AggregatedAt
                 FROM [Source] AS [source]
                 GROUP BY
@@ -266,27 +282,33 @@ namespace EtheriT.Coker.Application.BackgroundJob
                     [source].[FK_ProdId],
                     [source].[FK_TechCertId];
 
-                UPDATE [run]
-                SET
-                    [run].[SourceRows] = @SourceRows,
-                    [run].[CompletedAt] = @AggregatedAt
-                FROM [dbo].[RemoteDailyAggregationRuns] AS [run]
-                WHERE [run].[StatisticDate] = @StatisticDate;
-
-                IF @@ROWCOUNT = 0
+                IF @MarkComplete = CAST(1 AS bit)
                 BEGIN
-                    INSERT INTO [dbo].[RemoteDailyAggregationRuns]
-                    (
-                        [StatisticDate],
-                        [SourceRows],
-                        [CompletedAt]
-                    )
-                    VALUES
-                    (
-                        @StatisticDate,
-                        @SourceRows,
-                        @AggregatedAt
-                    );
+                    UPDATE [run]
+                    SET
+                        [run].[SourceRows] = @SourceRows,
+                        [run].[AggregationVersion] = @AggregationVersion,
+                        [run].[CompletedAt] = @AggregatedAt
+                    FROM [dbo].[RemoteDailyAggregationRuns] AS [run]
+                    WHERE [run].[StatisticDate] = @StatisticDate;
+
+                    IF @@ROWCOUNT = 0
+                    BEGIN
+                        INSERT INTO [dbo].[RemoteDailyAggregationRuns]
+                        (
+                            [StatisticDate],
+                            [AggregationVersion],
+                            [SourceRows],
+                            [CompletedAt]
+                        )
+                        VALUES
+                        (
+                            @StatisticDate,
+                            @AggregationVersion,
+                            @SourceRows,
+                            @AggregatedAt
+                        );
+                    END;
                 END;
 
                 ;WITH [Popular] AS
@@ -378,6 +400,16 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 dateParameter.ParameterName = "@StatisticDate";
                 dateParameter.Value = statisticDate.Date;
                 command.Parameters.Add(dateParameter);
+
+                var markCompleteParameter = command.CreateParameter();
+                markCompleteParameter.ParameterName = "@MarkComplete";
+                markCompleteParameter.Value = markComplete;
+                command.Parameters.Add(markCompleteParameter);
+
+                var versionParameter = command.CreateParameter();
+                versionParameter.ParameterName = "@AggregationVersion";
+                versionParameter.Value = CurrentAggregationVersion;
+                command.Parameters.Add(versionParameter);
 
                 var result = await command.ExecuteScalarAsync();
                 return result == null || result == DBNull.Value

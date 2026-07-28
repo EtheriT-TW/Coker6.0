@@ -212,60 +212,40 @@ namespace EtheriT.Coker.Application.Remote
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
-            long siteId = await loginUserData.GetWebsiteId();
-            var query = from r in db.Remotes.AsNoTracking()
-                        where r.FK_WebsiteId == siteId
-                        join a in db.Article.Where(e => !e.IsDeleted) on r.FK_ArticleId equals a.Id into articles
-                        from article in articles.DefaultIfEmpty()
-                        join p in db.Prods.Where(e => !e.IsDeleted) on r.FK_ProdId equals p.Id into products
-                        from product in products.DefaultIfEmpty()
-                        join m in db.WebMenus.Where(e => !e.IsDeleted) on r.FK_WebmenuId equals m.Id into menus
-                        from menu in menus.DefaultIfEmpty()
-                        join t in db.TechnicalCertificates.Where(e => !e.IsDeleted) on r.FK_TechCertId equals t.Id into certs
-                        from cert in certs.DefaultIfEmpty()
-                        select new
-                        {
-                            r.ExecutionTime.Date,
-                            PageType = article != null ? "文章" :
-                                       product != null ? "商品" :
-                                       cert != null ? "標章認證" :
-                                       menu != null ? "選單" : "其他",
-                            Title = article != null ? article.Title :
-                                    product != null ? product.Title :
-                                    cert != null ? cert.Title :
-                                    menu != null ? menu.Title : "其他",
-                            UserIdentifier = r.FK_UserId.HasValue
-                                ? "user:" + r.FK_UserId.Value.ToString()
-                                : r.UUID != Guid.Empty
-                                    ? "uuid:" + r.UUID.ToString()
-                                    : "ip:" + (r.ClientIpAddress ?? string.Empty),
-                            r.TimeOnPage
-                        };
-
-            // 保持 IQueryable，讓分組、統計、排序及分頁都在資料庫執行。
-            var statistics = query
-                .GroupBy(r => new { r.Date, r.PageType, r.Title })
-                .Select(g => new
+            var siteId = await loginUserData.GetWebsiteId();
+            var result =
+                from statistic in db.RemoteDailyStatistics.AsNoTracking()
+                where statistic.FK_WebsiteId == siteId
+                   && statistic.Scope == 1
+                join articleData in db.Article.IgnoreQueryFilters().AsNoTracking()
+                    on statistic.FK_ArticleId equals articleData.Id into articles
+                from article in articles.DefaultIfEmpty()
+                join productData in db.Prods.IgnoreQueryFilters().AsNoTracking()
+                    on statistic.FK_ProdId equals productData.Id into products
+                from product in products.DefaultIfEmpty()
+                join menuData in db.WebMenus.IgnoreQueryFilters().AsNoTracking()
+                    on statistic.FK_WebmenuId equals menuData.Id into menus
+                from menu in menus.DefaultIfEmpty()
+                join certificateData in db.TechnicalCertificates.IgnoreQueryFilters().AsNoTracking()
+                    on statistic.FK_TechCertId equals certificateData.Id into certificates
+                from certificate in certificates.DefaultIfEmpty()
+                select new RemoteListOtputDto
                 {
-                    date = g.Key.Date,
-                    type = g.Key.PageType,
-                    name = g.Key.Title,
-                    count = g.LongCount(),
-                    MemCount = g.Select(r => r.UserIdentifier).Distinct().LongCount(),
-                    TotalTimeOnPage = g.Sum(r => (long)r.TimeOnPage)
-                });
-
-            var result = statistics.Select(s => new RemoteListOtputDto
-                {
-                    date = s.date,
-                    type = s.type,
-                    name = s.name,
-                    count = s.count,
-                    MemCount = s.MemCount,
-                    TotalTimeOnPagePerTime = s.MemCount > 0
-                        ? (double)s.TotalTimeOnPage / s.MemCount
+                    date = statistic.StatisticDate,
+                    type = statistic.FK_ArticleId > 0 ? "文章" :
+                           statistic.FK_ProdId > 0 ? "商品" :
+                           statistic.FK_TechCertId > 0 ? "標章認證" :
+                           statistic.FK_WebmenuId > 0 ? "選單" : "其他",
+                    name = article != null ? article.Title ?? "未命名文章" :
+                           product != null ? product.Title :
+                           certificate != null ? certificate.Title :
+                           menu != null ? menu.Title ?? "未命名選單" : "已刪除內容",
+                    count = statistic.EffectiveViews,
+                    MemCount = statistic.EffectiveUniqueVisitors,
+                    TotalTimeOnPagePerTime = statistic.EffectiveUniqueVisitors > 0
+                        ? (double)statistic.TotalVisibleSeconds / statistic.EffectiveUniqueVisitors
                         : 0
-                });
+                };
 
             if (loadOptions.Sort == null)
             {
@@ -283,29 +263,18 @@ namespace EtheriT.Coker.Application.Remote
         //從資料庫撈使用者紀錄
         public async Task<JsonResult> GetPageList(DataSourceLoadOptions loadOptions)
         {
-            long siteId = await loginUserData.GetWebsiteId();
-            var query = db.Remotes
-                    .AsNoTracking()
-                    .Where(e => e.FK_WebsiteId == siteId)
-                    .Join(db.WebMenus.AsNoTracking().Where(e => e.FK_WebsiteId == siteId && !e.IsDeleted),
-                          d => d.FK_WebmenuId,
-                          m => m.Id,
-                          (d, m) => new
-                          {
-                              d.ExecutionTime.Date,
-                              UserIdentifier = d.FK_UserId.HasValue
-                                  ? "user:" + d.FK_UserId.Value.ToString()
-                                  : d.UUID != Guid.Empty
-                                      ? "uuid:" + d.UUID.ToString()
-                                      : "ip:" + (d.ClientIpAddress ?? string.Empty)
-                          })
-                    .GroupBy(d => d.Date)
-                    .Select(g => new RemoteListOtputDto
-                    {
-                        date = g.Key.Date,
-                        count = g.LongCount(),   // 人次
-                        MemCount = g.Select(d => d.UserIdentifier).Distinct().LongCount() // 人數
-                    });
+            var siteId = await loginUserData.GetWebsiteId();
+            var query = db.RemoteDailyStatistics
+                .AsNoTracking()
+                .Where(statistic =>
+                    statistic.FK_WebsiteId == siteId
+                    && statistic.Scope == 0)
+                .Select(statistic => new RemoteListOtputDto
+                {
+                    date = statistic.StatisticDate,
+                    count = statistic.EffectiveViews,
+                    MemCount = statistic.EffectiveUniqueVisitors
+                });
             if (loadOptions.Sort == null)
             {
                 var Sort = new List<SortingInfo>{new SortingInfo
@@ -322,93 +291,78 @@ namespace EtheriT.Coker.Application.Remote
 
         public async Task<ResponseMessageDto> GetRemoteCount(GetRemoteCountInputDto dto)
         {
-            ResponseMessageDto response = new ResponseMessageDto();
-            long siteId = await loginUserData.GetWebsiteId();
-            var data =
-                from d in db.Remotes //使用者瀏覽紀錄
-                join m in db.WebMenus.Where(e => e.FK_WebsiteId == siteId && !e.IsDeleted) on d.FK_WebmenuId equals m.Id
-                where d.ExecutionTime.Date >= dto.StartDate && d.ExecutionTime.Date < dto.EndDate
+            var siteId = await loginUserData.GetWebsiteId();
+            var data = await db.RemoteDailyStatistics
+                .AsNoTracking()
+                .Where(statistic =>
+                    statistic.FK_WebsiteId == siteId
+                    && statistic.Scope == 0
+                    && statistic.StatisticDate >= dto.StartDate.Date
+                    && statistic.StatisticDate < dto.EndDate)
+                .OrderBy(statistic => statistic.StatisticDate)
+                .Select(statistic => new RemoteListOtputDto
+                {
+                    date = statistic.StatisticDate,
+                    count = statistic.EffectiveViews,
+                    MemCount = statistic.EffectiveUniqueVisitors
+                })
+                .ToListAsync();
 
-                group d by new
-                {
-                    d.ExecutionTime.Date,
-                    d.ClientIpAddress
-                } into g
-                select new
-                {
-                    g.Key.Date,
-                    count = g.Count(),
-                };
-            if (data != null)
+            return new ResponseMessageDto
             {
-                var dataQuery = from d in data
-                                group d by new
-                                {
-                                    d.Date,
-                                } into d
-                                select new RemoteListOtputDto
-                                {
-                                    date = d.Key.Date,//時間
-                                    count = d.Where(e => e.Date == d.Key.Date).Sum(e => e.count),//人次
-                                    MemCount = d.Count(),  //人數
-                                };
-                response.Object = new GetRemoteCountOutputDto
+                Success = true,
+                Object = new GetRemoteCountOutputDto
                 {
-                    remoteListOtputDtos = await dataQuery.ToListAsync()
-                };
-                response.Success = true;
-                //取日期跟時間
-                return response;
-            }
-            else throw new Exception("查無資料");
+                    remoteListOtputDtos = data
+                }
+            };
         }
         public async Task<ResponseMessageDto> GetTotalRemoteCount()
         {
-            ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                long siteId = await loginUserData.GetWebsiteId();
-                var first = db.Remotes.Include(r => r.WebMenu)
-                    .Where(r => r.WebMenu.FK_WebsiteId == siteId)
-                    .OrderBy(r => r.ExecutionTime).FirstOrDefault();
+                var siteId = await loginUserData.GetWebsiteId();
+                var siteStatistics = db.RemoteDailyStatistics
+                    .AsNoTracking()
+                    .Where(statistic =>
+                        statistic.FK_WebsiteId == siteId
+                        && statistic.Scope == 0);
 
-                var result = db.Remotes.Include(r => r.WebMenu)
-                    .Where(r => r.WebMenu.FK_WebsiteId == siteId)
-                    .GroupBy(r => new
+                var result = await siteStatistics
+                    .GroupBy(_ => 1)
+                    .Select(group => new
                     {
-                        r.ExecutionTime.Date,
-                        UserIdentifier = r.UUID == Guid.Empty ? r.ClientIpAddress : r.UUID.ToString()
+                        FirstDate = group.Min(statistic => statistic.StatisticDate),
+                        AllCount = group.Sum(statistic => statistic.EffectiveViews),
+                        AllMemCount = group.Sum(statistic => statistic.EffectiveUniqueVisitors)
                     })
-                    .Select(g => new
-                    {
-                        g.Key.UserIdentifier,
-                        VisitCount = g.Count()  // 當日每個使用者的瀏覽次數
-                    }).GroupBy(r => 1)  // 將所有結果分組為一個組
-                    .Select(g => new
-                    {
-                        AllCount = g.Sum(r => r.VisitCount),  // 總瀏覽人次
-                        AllMemCount = g.Count()  // 總人數
-                    })
-                    .FirstOrDefault();  // 取得最終統計結果
+                    .FirstOrDefaultAsync();
+
                 var output = new GetRemoteCountOutputDto
                 {
                     remoteListOtputDtos = new List<RemoteListOtputDto> { new RemoteListOtputDto
                     {
-                        date = first == null ? DateTime.Now : first.ExecutionTime,
+                        date = result?.FirstDate ?? DateTime.Today,
                         count = 0,
                         MemCount = 0
                     }},
-                    AllCount = result?.AllCount??0,  // 總瀏覽人次
-                    AllMemCount = result?.AllMemCount ?? 0 // 總人數
+                    AllCount = result?.AllCount ?? 0,
+                    AllMemCount = result?.AllMemCount ?? 0
                 };
-                response.Object = output;
-                response.Success = true;
+                return new ResponseMessageDto
+                {
+                    Object = output,
+                    Success = true
+                };
             }
             catch (Exception ex)
             {
-                response.Error = ex.Message;
+                return new ResponseMessageDto
+                {
+                    Error = ex.Message,
+                    Success = false
+                };
             }
-            return response;
         }
     };
 }

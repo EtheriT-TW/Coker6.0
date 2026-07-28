@@ -1,346 +1,247 @@
-﻿var PageReady = function () {
-    const $bars = $("#chart-bars")
-    var remote = $bars.data("remotes"); //後端寫好的全站瀏覽人次
-    var ctx = document.getElementById("chart-bars").getContext("2d");
-    co.Picker.Init($("#InputDate"), { timePicker: false, startDate: moment().subtract(6, 'days').toDate(), endDate: moment().toDate() });
-    thousandSign(document.querySelector(".totle-sum-count"));
-    thousandSign(document.querySelector(".totle-sum-mem-count"));
-    thousandSign(document.querySelector(".dateRange-sum-count"));
-    thousandSign(document.querySelector(".dateRange-sum-mem-count"));
-    function thousandSign(totleCountElem) {
-        const totalMemCount = parseInt(totleCountElem.textContent.replace(/,/g, ''), 10);// 去除原有的千分符并转换为数字
-        totleCountElem.textContent = co.String.thousandSign(totalMemCount);// 将数字进行千分位处理
-    }
-    function updateChart(dates, counts, memCounts) {
-        const chart = Chart.getChart("chart-bars"); // 找到已有的圖表對象
-        if (chart) {
-            chart.data.labels = dates; // 更新X軸日期資料
-            chart.data.datasets[0].data = counts; // 更新Y軸人次資料
-            chart.data.datasets[1].data = memCounts; // 更新Y軸人數資料
-            chart.update(); // 重新渲染圖表
-        } else {
-            console.error('Chart instance not found');
-        }
-        const totalVisits = co.String.thousandSign(counts.reduce((sum, value) => sum + value, 0));
-        const totalMembers = co.String.thousandSign(memCounts.reduce((sum, value) => sum + value, 0));
-        document.querySelector(".dateRange-sum-mem-count").textContent = totalMembers;
-        document.querySelector(".dateRange-sum-count").textContent = totalVisits;
-    }
-    $("#InputDate").on("change", function () {
-        const selectedDates = $('#InputDate').val(); // 獲取選擇的日期範圍
-        const datesArray = selectedDates.split('~');
-        const startDate = new Date(datesArray[0]);
-        const endDate = new Date(datesArray[1]);
-        co.Remote.GetRemoteCount({ StartDate: startDate, EndDate: endDate }).done(function (result) {
-            // result 包含 remoteItem, remoteMemCount 和 dateItem
-            var remoteItems = result.websitesRemotesCount;
-            var remoteMemCounts = result.websitesRemotesMemCount;
-            var dateItems = result.websitesRemotesDate;
+var PageReady = function () {
+    "use strict";
 
-            updateChart(dateItems, remoteItems, remoteMemCounts);
-        });
-    });
-    new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels: remote.WebsitesRemotesDate, //X軸日期資料來源
-            datasets: [{
-                label: "人次",
-                tension: 0.4,
-                borderWidth: 0, //長條圖的外框粗細
-                borderRadius: 4,
-                borderSkipped: false,
-                backgroundColor: "rgba(255, 255, 255, 1)",
-                data: remote.WebsitesRemotesCount, //Y軸數量資料來源
-                maxBarThickness: 25 //長條圖粗細
-            }, {
-                label: "人數",
-                tension: 0.4,
-                borderWidth: 0,
-                borderRadius: 4,
-                borderSkipped: false,
-                backgroundColor: "#fea11d", //"rgba(255, 0, 0, .8)",
-                data: remote.WebsitesRemotesMemCount,
-                maxBarThickness: 20
-            }],
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    labels: {
-                        generateLabels: function (chart) {
-                            const original = Chart.defaults.plugins.legend.labels.generateLabels;
-                            const labels = original.apply(this, [chart]);
+    var trafficChart = null;
 
-                            // Apply different colors for each dataset
-                            labels.forEach(function (label, i) {
-                                if (i === 0) {
-                                    label.fontColor = "rgba(255, 255, 255, 1)"; // 人次的顏色
-                                } else if (i === 1) {
-                                    label.fontColor = "#ffe2c7"; // 人數的顏色
-                                }
-                            });
-                            return labels;
+    function number(value) {
+        return co.String.thousandSign(Number(value) || 0);
+    }
+
+    function text(value, fallback) {
+        return value == null || value === "" ? fallback : String(value);
+    }
+
+    function formatDate(value, includeTime) {
+        var date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "";
+
+        var options = includeTime
+            ? { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }
+            : { month: "2-digit", day: "2-digit" };
+
+        return new Intl.DateTimeFormat("zh-TW", options).format(date);
+    }
+
+    function showEmpty($target, message) {
+        $("<div>")
+            .addClass("dashboard-empty")
+            .text(message)
+            .appendTo($target.empty());
+    }
+
+    function showError($loading, message) {
+        $loading
+            .addClass("dashboard-error")
+            .text(message)
+            .show();
+    }
+
+    function refreshOnlineVisitors() {
+        if (document.hidden) return;
+
+        $.get("/api/Remote/GetOnlineVisitorCount")
+            .done(function (result) {
+                $(".online-visitor-count").text(number(result.onlineVisitors));
+            });
+    }
+
+    function loadSystemOverview() {
+        $.get("/api/Dashboard/GetSystemOverview")
+            .done(function (result) {
+                $(".storage-size").text(text(result.storageSize, "無法取得"));
+                $(".storage-updated-at").text(text(result.storageUpdatedAt, "無法取得"));
+                $(".month-flow-size").text(text(result.monthFlowSize, "無法取得"));
+                $(".month-flow-range").text(text(result.monthRange, "無法取得"));
+            })
+            .fail(function () {
+                $(".storage-size, .month-flow-size").text("載入失敗");
+                $(".storage-updated-at, .month-flow-range").text("請稍後重新整理");
+            });
+    }
+
+    function loadTraffic() {
+        var $loading = $(".traffic-loading");
+
+        $.get("/api/Dashboard/GetTraffic", { days: 7 })
+            .done(function (result) {
+                var items = result.items || [];
+                var canvas = document.getElementById("dashboard-traffic-chart");
+                if (!canvas) return;
+
+                if (trafficChart) trafficChart.destroy();
+                trafficChart = new Chart(canvas.getContext("2d"), {
+                    type: "bar",
+                    data: {
+                        labels: items.map(function (item) { return formatDate(item.date, false); }),
+                        datasets: [
+                            {
+                                label: "有效瀏覽人次",
+                                data: items.map(function (item) { return item.pageViews || 0; }),
+                                backgroundColor: "rgba(26, 115, 232, 0.82)",
+                                borderRadius: 5,
+                                maxBarThickness: 34
+                            },
+                            {
+                                label: "不重複訪客",
+                                data: items.map(function (item) { return item.visitors || 0; }),
+                                backgroundColor: "rgba(102, 187, 106, 0.82)",
+                                borderRadius: 5,
+                                maxBarThickness: 28
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { intersect: false, mode: "index" },
+                        plugins: {
+                            legend: { position: "bottom" }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { precision: 0 },
+                                grid: { color: "rgba(0, 0, 0, 0.06)" }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
                         }
                     }
-                }
-            },
-            interaction: {
-                intersect: false,
-                mode: 'index',
-            },
-            scales: {
-                y: {
-                    grid: {
-                        drawBorder: false,
-                        display: true,
-                        drawOnChartArea: true,
-                        drawTicks: false,
-                        borderDash: [5, 5],
-                        color: 'rgba(255, 255, 255, .2)'
-                    },
-                    ticks: {
-                        suggestedMin: 0,
-                        suggestedMax: 500,
-                        beginAtZero: true,
-                        padding: 10,
-                        font: {
-                            size: 14,
-                            weight: 300,
-                            family: "Roboto",
-                            style: 'normal',
-                            lineHeight: 2
-                        },
-                        color: "#fff"
-                    },
-                },
-                x: {
-                    grid: {
-                        drawBorder: false,
-                        display: true,
-                        drawOnChartArea: true,
-                        drawTicks: false,
-                        borderDash: [5, 5],
-                        color: 'rgba(255, 255, 255, .2)'
-                    },
-                    ticks: {
-                        display: true,
-                        color: '#f8f9fa',
-                        padding: 10,
-                        font: {
-                            size: 14,
-                            weight: 300,
-                            family: "Roboto",
-                            style: 'normal',
-                            lineHeight: 2
-                        },
-                    }
-                },
-            },
-        },
-    });
-    /*var ctx2 = document.getElementById("chart-line").getContext("2d");
+                });
 
-    new Chart(ctx2, {
-        type: "line",
-        data: {
-            labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-            datasets: [{
-                label: "Mobile apps",
-                tension: 0,
-                borderWidth: 0,
-                pointRadius: 5,
-                pointBackgroundColor: "rgba(255, 255, 255, .8)",
-                pointBorderColor: "transparent",
-                borderColor: "rgba(255, 255, 255, .8)",
-                borderColor: "rgba(255, 255, 255, .8)",
-                borderWidth: 4,
-                backgroundColor: "transparent",
-                fill: true,
-                data: [50, 40, 300, 320, 500, 350, 200, 230, 500],
-                maxBarThickness: 6
-
-            }],
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false,
-                }
-            },
-            interaction: {
-                intersect: false,
-                mode: 'index',
-            },
-            scales: {
-                y: {
-                    grid: {
-                        drawBorder: false,
-                        display: true,
-                        drawOnChartArea: true,
-                        drawTicks: false,
-                        borderDash: [5, 5],
-                        color: 'rgba(255, 255, 255, .2)'
-                    },
-                    ticks: {
-                        display: true,
-                        color: '#f8f9fa',
-                        padding: 10,
-                        font: {
-                            size: 14,
-                            weight: 300,
-                            family: "Roboto",
-                            style: 'normal',
-                            lineHeight: 2
-                        },
-                    }
-                },
-                x: {
-                    grid: {
-                        drawBorder: false,
-                        display: false,
-                        drawOnChartArea: false,
-                        drawTicks: false,
-                        borderDash: [5, 5]
-                    },
-                    ticks: {
-                        display: true,
-                        color: '#f8f9fa',
-                        padding: 10,
-                        font: {
-                            size: 14,
-                            weight: 300,
-                            family: "Roboto",
-                            style: 'normal',
-                            lineHeight: 2
-                        },
-                    }
-                },
-            },
-        },
-    });
-
-    var ctx3 = document.getElementById("chart-line-tasks").getContext("2d");
-
-    new Chart(ctx3, {
-        type: "line",
-        data: {
-            labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-            datasets: [{
-                label: "Mobile apps",
-                tension: 0,
-                borderWidth: 0,
-                pointRadius: 5,
-                pointBackgroundColor: "rgba(255, 255, 255, .8)",
-                pointBorderColor: "transparent",
-                borderColor: "rgba(255, 255, 255, .8)",
-                borderWidth: 4,
-                backgroundColor: "transparent",
-                fill: true,
-                data: [50, 40, 300, 220, 500, 250, 400, 230, 500],
-                maxBarThickness: 6
-
-            }],
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false,
-                }
-            },
-            interaction: {
-                intersect: false,
-                mode: 'index',
-            },
-            scales: {
-                y: {
-                    grid: {
-                        drawBorder: false,
-                        display: true,
-                        drawOnChartArea: true,
-                        drawTicks: false,
-                        borderDash: [5, 5],
-                        color: 'rgba(255, 255, 255, .2)'
-                    },
-                    ticks: {
-                        display: true,
-                        padding: 10,
-                        color: '#f8f9fa',
-                        font: {
-                            size: 14,
-                            weight: 300,
-                            family: "Roboto",
-                            style: 'normal',
-                            lineHeight: 2
-                        },
-                    }
-                },
-                x: {
-                    grid: {
-                        drawBorder: false,
-                        display: false,
-                        drawOnChartArea: false,
-                        drawTicks: false,
-                        borderDash: [5, 5]
-                    },
-                    ticks: {
-                        display: true,
-                        color: '#f8f9fa',
-                        padding: 10,
-                        font: {
-                            size: 14,
-                            weight: 300,
-                            family: "Roboto",
-                            style: 'normal',
-                            lineHeight: 2
-                        },
-                    }
-                },
-            },
-        },
-    });*/
-}
-$(document).ready(function () {
-    /*$('#sendData').on('click', function () {
-        const selectedDates = $('#InputDate').val(); // 獲取選擇的日期範圍
-        console.log('Selected Dates:', selectedDates); // 確認值是否存在
-
-        if (selectedDates) {
-            $.ajax({
-                url: '/Dashboard/ProcessDateRange',
-                method: 'POST', // 使用 POST 請求
-                data: { datetimes: selectedDates },
-                success: function (response) {
-                    console.log('Server Response:', response);
-                    console.log("時間"+response.websitesRemotesDate);
-                    // 根據需要更新 UI 或執行其他操作
-                    //updateChart(response.WebsitesRemotesDate, response.WebsitesRemotesCount, response.WebsitesRemotesMemCount);
-                },
-                error: function (xhr, status, error) {
-                    console.error('AJAX Error:', status, error);
-                }
+                $(".traffic-updated-at").text("更新：" + formatDate(result.updatedAt, true));
+                $loading.hide();
+            })
+            .fail(function () {
+                showError($loading, "流量資料載入失敗");
             });
-        } else {
-            alert('請選擇日期範圍');
+    }
+
+    function loadPopularPages() {
+        var $loading = $(".popular-pages-loading");
+        var $list = $(".popular-page-list");
+
+        $.get("/api/Dashboard/GetPopularPages", { take: 5 })
+            .done(function (items) {
+                $list.empty();
+                if (!items || items.length === 0) {
+                    showEmpty($list, "今天尚無有效瀏覽資料");
+                } else {
+                    items.forEach(function (item, index) {
+                        var $row = $("<div>").addClass("popular-page-item");
+                        $("<div>").addClass("popular-page-rank").text(index + 1).appendTo($row);
+
+                        var $content = $("<div>").addClass("popular-page-content").appendTo($row);
+                        $("<div>").addClass("popular-page-title").text(text(item.title, "未命名頁面")).appendTo($content);
+                        $("<div>")
+                            .addClass("popular-page-meta")
+                            .text(text(item.contentType, "頁面") + "・" + number(item.visitors) + " 位訪客")
+                            .appendTo($content);
+
+                        $("<div>")
+                            .addClass("popular-page-views")
+                            .text(number(item.views))
+                            .attr("title", "有效瀏覽人次")
+                            .appendTo($row);
+
+                        $row.appendTo($list);
+                    });
+                }
+                $loading.hide();
+            })
+            .fail(function () {
+                showError($loading, "熱門頁面載入失敗");
+            });
+    }
+
+    function statusBadge(label, count, className) {
+        return $("<span>")
+            .addClass("contact-status-badge " + className)
+            .text(label + " " + number(count));
+    }
+
+    function renderContactForms(forms) {
+        var $summary = $(".contact-form-summary").empty();
+        if (!forms || forms.length === 0) {
+            showEmpty($summary, "目前尚無表單提交資料");
+            return;
         }
-    });*/
-    //更新統計表
-    function updateChart(dates, counts, memCounts) {
-        const chart = Chart.getChart("chart-bars"); // 找到已有的圖表對象
-        if (chart) {
-            chart.data.labels = dates; // 更新X軸日期資料
-            chart.data.datasets[0].data = counts; // 更新Y軸人次資料
-            chart.data.datasets[1].data = memCounts; // 更新Y軸人數資料
-            chart.update(); // 重新渲染圖表
-        } else {
-            console.error('Chart instance not found');
+
+        forms.forEach(function (form) {
+            var $row = $("<div>").addClass("contact-form-row");
+            $("<div>").addClass("contact-form-name").text(text(form.name, "未命名表單")).appendTo($row);
+
+            var $statuses = $("<div>").addClass("contact-form-statuses").appendTo($row);
+            statusBadge("未處理", form.pendingCount, "is-pending").appendTo($statuses);
+            statusBadge("處理中", form.processingCount, "is-processing").appendTo($statuses);
+            statusBadge("已回覆", form.repliedCount, "is-replied").appendTo($statuses);
+            statusBadge("已完成", form.completedCount, "is-completed").appendTo($statuses);
+            $row.appendTo($summary);
+        });
+    }
+
+    function statusClass(status) {
+        switch (status) {
+            case "未處理": return "is-pending";
+            case "處理中": return "is-processing";
+            case "已回覆": return "is-replied";
+            case "已完成": return "is-completed";
+            default: return "is-muted";
         }
     }
-});
+
+    function renderRecentContacts(items) {
+        var $list = $(".recent-contact-list").empty();
+        if (!items || items.length === 0) {
+            showEmpty($list, "目前尚無表單提交資料");
+            return;
+        }
+
+        items.forEach(function (item) {
+            var $link = $("<a>")
+                .addClass("recent-contact-item text-reset text-decoration-none")
+                .attr("href", "/ContentManagement/ContactUs#" + item.id);
+
+            var $top = $("<div>").addClass("recent-contact-top").appendTo($link);
+            $("<div>").addClass("recent-contact-form").text(text(item.formName, "未命名表單")).appendTo($top);
+            $("<span>")
+                .addClass("contact-status-badge " + statusClass(item.status))
+                .text(text(item.status, "未知"))
+                .appendTo($top);
+
+            $("<div>")
+                .addClass("recent-contact-meta")
+                .text(text(item.userName, "未填寫姓名") + "・" + formatDate(item.creationTime, true))
+                .appendTo($link);
+
+            $link.appendTo($list);
+        });
+    }
+
+    function loadContacts() {
+        var $summaryLoading = $(".contact-summary-loading");
+        var $recentLoading = $(".recent-contacts-loading");
+
+        $.get("/api/Dashboard/GetContacts", { take: 5 })
+            .done(function (result) {
+                $(".pending-contact-count").text(number(result.pendingCount));
+                renderContactForms(result.forms);
+                renderRecentContacts(result.recent);
+                $summaryLoading.hide();
+                $recentLoading.hide();
+            })
+            .fail(function () {
+                $(".pending-contact-count").text("--");
+                showError($summaryLoading, "表單統計載入失敗");
+                showError($recentLoading, "最近提交載入失敗");
+            });
+    }
+
+    loadSystemOverview();
+    refreshOnlineVisitors();
+    loadTraffic();
+    loadPopularPages();
+    loadContacts();
+    window.setInterval(refreshOnlineVisitors, 30000);
+};

@@ -595,6 +595,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasIndex(f => f.State);
                 o.HasIndex(f => f.ExecutionTime);
                 o.HasIndex(f => f.UUID);
+                o.HasIndex(f => new { f.FK_WebsiteId, f.LastHeartbeatAt })
+                    .HasDatabaseName("IX_Remotes_FK_WebsiteId_LastHeartbeatAt_Online")
+                    .HasFilter("[LastHeartbeatAt] IS NOT NULL AND [TrackingEventId] IS NOT NULL")
+                    .IncludeProperties(f => new
+                    {
+                        f.TrackingEventId,
+                        f.FK_UserId,
+                        f.UUID,
+                        f.IsEngaged
+                    });
                 o.HasIndex(f => f.TrackingEventId)
                     .IsUnique()
                     .HasFilter("[TrackingEventId] IS NOT NULL");
@@ -645,6 +655,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Contact>(o =>
             {
                 o.HasOne(f => f.WebMenu).WithMany(w => w.Contacts).HasForeignKey(e => e.FK_WebMenuId);
+                o.HasIndex(e => e.FK_WebMenuId)
+                    .HasDatabaseName("IX_Contacts_FK_WebMenuId");
+                o.HasIndex(e => new { e.FK_WebMenuId, e.Status, e.CreationTime })
+                    .HasDatabaseName("IX_Contacts_FK_WebMenuId_Status_CreationTime_Active")
+                    .HasFilter("[IsDeleted] = 0")
+                    .IncludeProperties(e => new { e.Name, e.UserName });
             });
 
             modelBuilder.Entity<HtmlSanitizeState>(o =>

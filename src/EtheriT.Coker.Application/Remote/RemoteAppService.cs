@@ -364,5 +364,45 @@ namespace EtheriT.Coker.Application.Remote
                 };
             }
         }
+
+        public async Task<OnlineVisitorCountOutputDto> GetOnlineVisitorCount()
+        {
+            var siteId = await loginUserData.GetWebsiteId();
+            var cutoff = DateTime.Now.AddMinutes(-2);
+            var emptyUuid = Guid.Empty;
+
+            return await db.Database
+                .SqlQuery<OnlineVisitorCountOutputDto>(
+                    $"""
+                    SELECT
+                        COUNT_BIG(*) AS [OnlineVisitors],
+                        GETDATE() AS [CalculatedAt]
+                    FROM
+                    (
+                        SELECT
+                            CASE
+                                WHEN [remote].[FK_UserId] IS NOT NULL
+                                    THEN CONCAT('user:', CONVERT(varchar(20), [remote].[FK_UserId]))
+                                ELSE CONCAT('uuid:', CONVERT(varchar(36), [remote].[UUID]))
+                            END AS [VisitorIdentifier]
+                        FROM [dbo].[Remotes] AS [remote]
+                        WHERE [remote].[FK_WebsiteId] = {siteId}
+                          AND [remote].[TrackingEventId] IS NOT NULL
+                          AND [remote].[LastHeartbeatAt] >= {cutoff}
+                          AND
+                          (
+                              [remote].[FK_UserId] IS NOT NULL
+                              OR [remote].[UUID] <> {emptyUuid}
+                          )
+                        GROUP BY
+                            CASE
+                                WHEN [remote].[FK_UserId] IS NOT NULL
+                                    THEN CONCAT('user:', CONVERT(varchar(20), [remote].[FK_UserId]))
+                                ELSE CONCAT('uuid:', CONVERT(varchar(36), [remote].[UUID]))
+                            END
+                    ) AS [visitor]
+                    """)
+                .SingleAsync();
+        }
     };
 }

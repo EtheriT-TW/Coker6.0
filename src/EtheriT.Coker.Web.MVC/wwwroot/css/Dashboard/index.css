@@ -998,3 +998,192 @@ p,
 #width-auto {
     flex: auto;
 }
+
+.dashboard .dashboard-kpi {
+    min-height: 150px;
+}
+
+.dashboard .dashboard-kpi .card-footer {
+    margin-top: auto;
+}
+
+.dashboard .dashboard-panel {
+    min-height: 390px;
+}
+
+.dashboard-chart {
+    position: relative;
+    height: 300px;
+}
+
+.dashboard-loading,
+.dashboard-empty {
+    color: #7b809a;
+    font-size: 0.875rem;
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+.dashboard-error {
+    color: #e53935;
+}
+
+.popular-page-item,
+.contact-form-row,
+.recent-contact-item {
+    align-items: center;
+    border-bottom: 1px solid #edf0f5;
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.85rem 0;
+}
+
+.popular-page-item:last-child,
+.contact-form-row:last-child,
+.recent-contact-item:last-child {
+    border-bottom: 0;
+}
+
+.popular-page-rank {
+    align-items: center;
+    background: #e8f1fe;
+    border-radius: 50%;
+    color: #1a73e8;
+    display: flex;
+    flex: 0 0 30px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    height: 30px;
+    justify-content: center;
+}
+
+.popular-page-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.popular-page-title,
+.contact-form-name,
+.recent-contact-form {
+    color: #344767;
+    font-size: 0.9rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.popular-page-title,
+.recent-contact-form {
+    white-space: nowrap;
+}
+
+.popular-page-meta,
+.recent-contact-meta {
+    color: #7b809a;
+    font-size: 0.75rem;
+    margin-top: 0.2rem;
+}
+
+.popular-page-views {
+    color: #344767;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.contact-form-row {
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.contact-form-summary {
+    max-height: 430px;
+    overflow-y: auto;
+    padding-right: 0.35rem;
+}
+
+.contact-form-name {
+    flex: 1 1 45%;
+    white-space: normal;
+}
+
+.contact-form-statuses {
+    display: flex;
+    flex: 1 1 55%;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: flex-end;
+}
+
+.contact-status-badge {
+    border-radius: 999px;
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.28rem 0.55rem;
+    white-space: nowrap;
+}
+
+.contact-status-badge.is-pending {
+    background: #fde8e7;
+    color: #d32f2f;
+}
+
+.contact-status-badge.is-processing {
+    background: #fff3df;
+    color: #ef8600;
+}
+
+.contact-status-badge.is-replied {
+    background: #e8f1fe;
+    color: #1a73e8;
+}
+
+.contact-status-badge.is-completed {
+    background: #e7f6ea;
+    color: #2e7d32;
+}
+
+.contact-status-badge.is-muted {
+    background: #eceff3;
+    color: #667085;
+}
+
+.recent-contact-item {
+    align-items: stretch;
+    display: block;
+    transition: background-color 0.15s ease;
+}
+
+.recent-contact-item:hover {
+    background: #f8f9fb;
+}
+
+.recent-contact-top {
+    align-items: center;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+}
+
+.recent-contact-form {
+    flex: 1;
+}
+
+@media (max-width: 767.98px) {
+    .dashboard .dashboard-panel {
+        min-height: auto;
+    }
+
+    .dashboard-chart {
+        height: 260px;
+    }
+
+    .contact-form-row {
+        display: block;
+    }
+
+    .contact-form-statuses {
+        justify-content: flex-start;
+        margin-top: 0.65rem;
+    }
+}

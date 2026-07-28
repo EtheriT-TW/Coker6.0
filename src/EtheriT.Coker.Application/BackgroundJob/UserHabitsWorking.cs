@@ -92,6 +92,7 @@ namespace EtheriT.Coker.Application.BackgroundJob
                     }
                 }
                 tag.Remote.State = RemoteStateEnum.已完成;
+                tag.Remote.HabitsProcessedAt = currentDateTime;
             }
             db.UserTagStatistics.AddRange(UserTagStatisticAdds);
             db.SaveChanges();

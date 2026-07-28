@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Core.Models
 	public class Remote
 	{
 		public long Id { get; set; }
+		public Guid? TrackingEventId { get; set; }
 		public Guid UUID { get; set; }
 		public long FK_WebsiteId { get; set; }
 		public long? FK_UserId { get; set; }
@@ -22,7 +23,14 @@ namespace EtheriT.Coker.Core.Models
         public DateTime ExecutionTime { get; set; }
 		public DateTime LeaveTime { get; set; }
 		public DateTime LastStatComputedAt { get; set; }
+		public DateTime? LastHeartbeatAt { get; set; }
+		public DateTime? EngagedAt { get; set; }
+		public DateTime? AnalyticsAggregatedAt { get; set; }
+		public DateTime? HabitsProcessedAt { get; set; }
 		public RemoteStateEnum State { get; set; }
+		public RemoteTrafficQualityEnum? TrafficQuality { get; set; }
+		public bool? IsEngaged { get; set; }
+		public bool? HasInteraction { get; set; }
 		public int TimeOnPage { get; set; }
         [StringLength(64)]
 		public string? ClientIpAddress { get; set; }

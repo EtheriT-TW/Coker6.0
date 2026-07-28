@@ -585,6 +585,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasIndex(f => f.State);
                 o.HasIndex(f => f.ExecutionTime);
                 o.HasIndex(f => f.UUID);
+                o.HasIndex(f => f.TrackingEventId)
+                    .IsUnique()
+                    .HasFilter("[TrackingEventId] IS NOT NULL");
                 o.Property(f => f.State).HasDefaultValue(RemoteStateEnum.未處理);
             });
             modelBuilder.Entity<NotFoundImage>(o =>

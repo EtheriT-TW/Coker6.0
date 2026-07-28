@@ -38,6 +38,7 @@ using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Templates;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Web.Public.Models;
+using EtheriT.Coker.Web.Public.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -65,7 +66,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly ICustSearchAppService custSearchAppService;
         private readonly IStoreSetAppService storeSetAppService;
         private readonly IHttpContextAccessor httpContextAccessor;
-        private readonly IRemoteAppService RemoteAppService;
         private readonly ITechnicalCertificateAppService technicalCertificateAppService;
         private readonly ITokenAppService tokenAppService;
         private readonly IAdvertiseAppService advertiseAppService;
@@ -76,6 +76,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IBonusManagementAppService bonusManagementAppService;
         private readonly StringHandler stringHandler;
         private readonly LoginUserData loginUserData;
+        private readonly RemoteTrackingTokenService remoteTrackingTokenService;
         private readonly IWebHostEnvironment _env;
 
         public PageController(
@@ -91,7 +92,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IStoreSetAppService storeSetAppService,
             ICustSearchAppService custSearchAppService,
             IHttpContextAccessor httpContextAccessor,
-            IRemoteAppService RemoteAppService,
             ITechnicalCertificateAppService technicalCertificateAppService,
             IAdvertiseAppService advertiseAppService,
             ITokenAppService tokenAppService,
@@ -102,6 +102,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IPermissionsAppService permissionsAppService,
             StringHandler stringHandler,
             LoginUserData loginUserData,
+            RemoteTrackingTokenService remoteTrackingTokenService,
             IWebHostEnvironment env
         )
         {
@@ -118,7 +119,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.storeSetAppService = storeSetAppService;
             this.custSearchAppService = custSearchAppService;
             this.httpContextAccessor = httpContextAccessor;
-            this.RemoteAppService = RemoteAppService;
             this.technicalCertificateAppService = technicalCertificateAppService;
             this.tokenAppService = tokenAppService;
             this.advertiseAppService = advertiseAppService;
@@ -128,6 +128,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.permissionsAppService = permissionsAppService;
             this.bonusManagementAppService = bonusManagementAppService;
             this.loginUserData = loginUserData;
+            this.remoteTrackingTokenService = remoteTrackingTokenService;
             this._env = env;
         }
         private bool UseLegacyPathHandling(string website, string key, string option)
@@ -607,8 +608,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 ViewBag.LoginEnable = false;
             }
 
-            var remote = await RemoteAppService.insertRemote(remoteInputDto);
-            if(remote!=null && remote.Success) ViewBag.PageKey = remote.Message;
+            ViewBag.RemoteTrackingToken = remoteTrackingTokenService.Protect(remoteInputDto);
 
 			var pageCss = model.PageData!.Css ?? "";
             var parentCss = model.ParentData?.Css ?? "";

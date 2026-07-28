@@ -238,6 +238,9 @@ builder.Services.AddDbContext<CokerDbContext>(item =>
     item.UseSqlServer(configuration.GetConnectionString("Default"), sqlServerOptionsAction: sqlOptions =>
     {
         sqlOptions.EnableRetryOnFailure();
+        var migrationCommandTimeout = configuration.GetValue<int?>("DatabaseMigrationCommandTimeout");
+        if (migrationCommandTimeout.HasValue)
+            sqlOptions.CommandTimeout(migrationCommandTimeout.Value);
     })
 );
 
@@ -307,6 +310,7 @@ builder.Services.AddScoped<IHtmlSanitizer, HtmlSanitizer>();
 builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<CustomDtoMapper>();});
 builder.Services.AddScoped<IMarketingAppService, MarketingAppService>();
 builder.Services.AddScoped<ICheckoutDiscountService, CheckoutDiscountService>();
+builder.Services.AddSingleton<RemoteTrackingTokenService>();
 
 builder.Services.AddSingleton<JumpRedirectCache>();
 

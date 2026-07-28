@@ -415,6 +415,9 @@ builder.Services.AddDbContext<CokerDbContext>(options =>
             sqlServerOptionsAction: sqlOptions =>
             {
                 sqlOptions.EnableRetryOnFailure();
+                var migrationCommandTimeout = configuration.GetValue<int?>("DatabaseMigrationCommandTimeout");
+                if (migrationCommandTimeout.HasValue)
+                    sqlOptions.CommandTimeout(migrationCommandTimeout.Value);
             }
         );
     }

@@ -24,83 +24,196 @@ using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Core.Models;
-using Microsoft.Extensions.Caching.Memory;
-using EtheriT.Coker.Application.Shared.Dto.UserHabits;
+using Microsoft.Data.SqlClient;
 
 namespace EtheriT.Coker.Application.Remote
 {
     public class RemoteAppService : IRemoteAppService
     {
+        private const int MinimumVisibleSeconds = 2;
+        private const int EngagementSeconds = 10;
+        private const int MaximumTrackedSeconds = 5 * 60;
+
+        private static readonly string[] BotKeywords =
+        {
+            "googlebot", "bingbot", "baiduspider", "yandexbot", "duckduckbot",
+            "applebot", "petalbot", "semrushbot", "ahrefsbot", "dotbot",
+            "mj12bot", "gptbot", "oai-searchbot", "claudebot", "perplexitybot",
+            "bytespider", "facebookexternalhit", "discordbot", "telegrambot",
+            "slackbot", "uptimerobot", "crawler", "slurp", "headlesschrome",
+            "phantomjs", "python-requests", "curl/", "wget/"
+        };
+
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
-        private readonly StringHandler stringHandler;
         private readonly ITokenAppService tokenAppService;
         private readonly IHttpContextAccessor httpContextAccessor;
-        private readonly IMemoryCache memoryCache;
         private readonly IMapper mapper;
         public RemoteAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
-            StringHandler stringHandler,
             ITokenAppService tokenAppService,
             IMapper mapper,
-            IMemoryCache memoryCache,
             IHttpContextAccessor httpContextAccessor
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
-            this.stringHandler = stringHandler;
             this.mapper = mapper;
             this.httpContextAccessor = httpContextAccessor;
             this.tokenAppService = tokenAppService;
-            this.memoryCache = memoryCache;
         }
-        public async Task<ResponseMessageDto> insertRemote(RemoteInputDto dto)
+
+        public async Task CollectRemoteTracking(RemoteInputDto page, RemoteTrackingCollectDto tracking)
         {
-            ResponseMessageDto response = new ResponseMessageDto();
-            try
+            if (tracking.EventId == Guid.Empty || tracking.VisibleSeconds < MinimumVisibleSeconds)
+                return;
+
+            var browserInfo = httpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString();
+            if (IsKnownBot(browserInfo))
+                return;
+
+            var visibleSeconds = Math.Clamp(
+                tracking.VisibleSeconds,
+                MinimumVisibleSeconds,
+                MaximumTrackedSeconds);
+
+            var remote = await db.Remotes
+                .SingleOrDefaultAsync(e => e.TrackingEventId == tracking.EventId);
+
+            if (remote == null)
             {
-                Core.Models.Remote r = mapper.Map<Core.Models.Remote>(dto);
-                if (httpContextAccessor.HttpContext != null)
-                    r.BrowserInfo = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].ToString();
-                List<string> botKeywords = new List<string> {
-                    "Googlebot", "Bingbot", "AhrefsBot", "ImagesiftBot", "DotBot", "SemrushBot", "PetalBot", "OAI-SearchBot",
-                    "Applebot", "CCBot", "MJ12bot", "AdsBot-Google", "Slurp","perplexitybot", "coccocbot","https://openai.com/bot","GPTBot",
-                    "YandexBot","Google-Read-Aloud","DataForSeoBot","ClaudeBot", "facebookexternalhit", "line-poker", "UptimeRobot","ZoominfoBot",
-                    "KStandBot","ZoominfoBot","reurl-bot","BacklinksExtendedBot","serpstatbot","Qwantbot","Slackbot","SMTBot","aiHitBot","BLEXBot",
-                    "TelegramBot","trendictionbot","INETDEX-BOT","Spider_Bot","msnbot","Facebot","http://yandex.com/bots","2ip bot","SpringserveBot",
-                    "DuckDuckBot","wpbot","SurdotlyBot","Discordbot","bot.html","bitlybot","adsbot.html","WellKnownBot","Orbbot","Timpibot","YodaoBot",
-                    "org_bot","AliyunSecBot","RU_Bot","/bot/","/bots","/robots","BitSightBot","MixrankBot","StorygizeBot","StorygizeBot","Dcard-link-preview-bot",
-                    "Baidu-YunGuanCe-Bot","domainsbot","robot","Bravebot","DuckDuckGo-Favicons-Bot","Sansanbot"
-                };
-                if (string.IsNullOrEmpty(r.BrowserInfo) || botKeywords.Any(bot => r.BrowserInfo.Contains(bot)))
+                remote = mapper.Map<Core.Models.Remote>(page);
+                remote.TrackingEventId = tracking.EventId;
+                remote.BrowserInfo = browserInfo;
+                remote.ClientIpAddress = loginUserData.GetClientIP();
+                remote.UUID = await tokenAppService.GetUUID();
+                remote.ExecutionTime = DateTime.Now;
+                remote.LeaveTime = remote.ExecutionTime;
+                remote.LastHeartbeatAt = remote.ExecutionTime;
+                remote.State = RemoteStateEnum.資料不完整;
+                remote.TrafficQuality = RemoteTrafficQualityEnum.前端已確認;
+                remote.IsEngaged = false;
+                remote.TimeOnPage = visibleSeconds;
+                remote.HasInteraction = tracking.HasInteraction;
+                db.Remotes.Add(remote);
+
+                try
                 {
-                    throw new Exception("不接受機器人訪問");
+                    await db.SaveChangesAsync();
                 }
-                r.ClientIpAddress = loginUserData.GetClientIP();
-                r.UUID = await tokenAppService.GetUUID();
-                db.Add(r);
-                await db.SaveChangesAsync();
-                string PageKey = stringHandler.RandonCode(RandomStringType.數字加英文大小寫, 8);
-                memoryCache.Set($"RemoteId-{PageKey}-{r.UUID}", r.Id, new MemoryCacheEntryOptions
+                catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
                 {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1), // 最多存活 1 小時
-                    SlidingExpiration = TimeSpan.FromMinutes(10) // 每次訪問後延長 10 分鐘
-                });
-                response.Message = PageKey;
-                response.Success = true;
+                    db.ChangeTracker.Clear();
+                    remote = await db.Remotes
+                        .SingleOrDefaultAsync(e => e.TrackingEventId == tracking.EventId);
+                    if (remote == null)
+                        throw;
+                }
             }
-            catch (Exception ex)
+
+            if (!MatchesPage(remote, page))
+                return;
+
+            var now = DateTime.Now;
+            var becameEngaged = remote.IsEngaged != true
+                && (visibleSeconds >= EngagementSeconds || tracking.HasInteraction);
+
+            remote.TimeOnPage = Math.Max(remote.TimeOnPage, visibleSeconds);
+            remote.LeaveTime = now;
+            remote.LastHeartbeatAt = now;
+            remote.HasInteraction = remote.HasInteraction == true || tracking.HasInteraction;
+
+            if (becameEngaged)
             {
-                response.Error = ex.Message;
+                remote.IsEngaged = true;
+                remote.EngagedAt = now;
+                remote.State = RemoteStateEnum.未處理;
+                remote.TrafficQuality = RemoteTrafficQualityEnum.有效互動;
+                await AddActivityTagsAsync(remote);
             }
-            return response;
+
+            await db.SaveChangesAsync();
+        }
+
+        private static bool IsKnownBot(string? browserInfo)
+        {
+            if (string.IsNullOrWhiteSpace(browserInfo))
+                return true;
+
+            var normalized = browserInfo.ToLowerInvariant();
+            return BotKeywords.Any(normalized.Contains);
+        }
+
+        private static bool MatchesPage(Core.Models.Remote remote, RemoteInputDto page)
+        {
+            return remote.FK_WebsiteId == page.FK_WebsiteId
+                && remote.FK_WebmenuId == page.FK_WebmenuId
+                && remote.FK_ArticleId == page.FK_ArticleId
+                && remote.FK_ProdId == page.FK_ProdId
+                && remote.FK_TechCertId == page.FK_TechCertId;
+        }
+
+        private static bool IsUniqueConstraintViolation(DbUpdateException exception)
+        {
+            return exception.InnerException is SqlException sqlException
+                && (sqlException.Number == 2601 || sqlException.Number == 2627);
+        }
+
+        private async Task AddActivityTagsAsync(Core.Models.Remote remote)
+        {
+            IQueryable<Tag_Associate> tagQuery;
+            if (remote.FK_ProdId.HasValue)
+            {
+                tagQuery = db.Tag_Associates.Where(e =>
+                    e.FK_AId == remote.FK_ProdId.Value
+                    && e.Type == TagAssociateTypeEnum.商品);
+            }
+            else if (remote.FK_ArticleId.HasValue)
+            {
+                tagQuery = db.Tag_Associates.Where(e =>
+                    e.FK_AId == remote.FK_ArticleId.Value
+                    && e.Type == TagAssociateTypeEnum.文章);
+            }
+            else
+            {
+                return;
+            }
+
+            var tagIds = await tagQuery.Select(e => e.FK_TId).Distinct().ToListAsync();
+            if (tagIds.Count == 0)
+                return;
+
+            var timeOnPageMinutes = remote.TimeOnPage / 60.0;
+            var tags = new List<UserActivityTags>();
+
+            foreach (var tagId in tagIds)
+            {
+                var lastActivityTime = await db.UserActivityTags
+                    .AsNoTracking()
+                    .Where(e => e.FK_TId == tagId && e.Remote.UUID == remote.UUID)
+                    .OrderByDescending(e => e.CreateTime)
+                    .Select(e => (DateTime?)e.CreateTime)
+                    .FirstOrDefaultAsync();
+
+                var timeDecayFactor = lastActivityTime.HasValue
+                    ? Math.Exp(-0.1 * (DateTime.Now - lastActivityTime.Value).TotalDays)
+                    : 0.1;
+
+                tags.Add(new UserActivityTags
+                {
+                    FK_TId = tagId,
+                    FK_RemoteId = remote.Id,
+                    Weight = (float)(0.5 * Math.Pow(1 + timeDecayFactor, timeOnPageMinutes))
+                });
+            }
+
+            db.UserActivityTags.AddRange(tags);
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
             long siteId = await loginUserData.GetWebsiteId();
-            var query = from r in db.Remotes
+            var query = from r in db.Remotes.AsNoTracking()
                         where r.FK_WebsiteId == siteId
                         join a in db.Article.Where(e => !e.IsDeleted) on r.FK_ArticleId equals a.Id into articles
                         from article in articles.DefaultIfEmpty()
@@ -121,37 +234,38 @@ namespace EtheriT.Coker.Application.Remote
                                     product != null ? product.Title :
                                     cert != null ? cert.Title :
                                     menu != null ? menu.Title : "其他",
-                            r.FK_UserId,
-                            r.UUID,
+                            UserIdentifier = r.FK_UserId.HasValue
+                                ? "user:" + r.FK_UserId.Value.ToString()
+                                : r.UUID != Guid.Empty
+                                    ? "uuid:" + r.UUID.ToString()
+                                    : "ip:" + (r.ClientIpAddress ?? string.Empty),
                             r.TimeOnPage
                         };
 
-            // **讓 EF Core 先查詢所有數據**
-            var rawData = await query.ToListAsync();
-
-            // **記憶體中分組 & 計算**
-            var result = rawData
+            // 保持 IQueryable，讓分組、統計、排序及分頁都在資料庫執行。
+            var statistics = query
                 .GroupBy(r => new { r.Date, r.PageType, r.Title })
-                .Select(g =>
+                .Select(g => new
                 {
-                    int uniqueUserCount = g.Select(r => r.FK_UserId)
-                                           .Concat(g.Select(r => (long?)r.UUID.GetHashCode()))
-                                           .Distinct()
-                                           .Count();  // **計算不重複的用戶數**
+                    date = g.Key.Date,
+                    type = g.Key.PageType,
+                    name = g.Key.Title,
+                    count = g.LongCount(),
+                    MemCount = g.Select(r => r.UserIdentifier).Distinct().LongCount(),
+                    TotalTimeOnPage = g.Sum(r => (long)r.TimeOnPage)
+                });
 
-                    return new RemoteListOtputDto
-                    {
-                        date = g.Key.Date,
-                        type = g.Key.PageType,
-                        name = g.Key.Title,
-                        count = g.Count(),  // **總瀏覽次數**
-                        MemCount = uniqueUserCount,  // **不重複的用戶數**
-                        TotalTimeOnPagePerTime = uniqueUserCount > 0
-                            ? (double)g.Sum(r => r.TimeOnPage) / uniqueUserCount  // **每個人平均停留時間**
-                            : 0  // **避免除以 0**
-                    };
-                })
-                .ToList();
+            var result = statistics.Select(s => new RemoteListOtputDto
+                {
+                    date = s.date,
+                    type = s.type,
+                    name = s.name,
+                    count = s.count,
+                    MemCount = s.MemCount,
+                    TotalTimeOnPagePerTime = s.MemCount > 0
+                        ? (double)s.TotalTimeOnPage / s.MemCount
+                        : 0
+                });
 
             if (loadOptions.Sort == null)
             {
@@ -163,7 +277,7 @@ namespace EtheriT.Coker.Application.Remote
                 loadOptions.Sort = Sort.ToArray();
             }
 
-            var output = DataSourceLoader.Load(result, loadOptions);
+            var output = await DataSourceLoader.LoadAsync(result, loadOptions);
             return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         //從資料庫撈使用者紀錄
@@ -171,21 +285,26 @@ namespace EtheriT.Coker.Application.Remote
         {
             long siteId = await loginUserData.GetWebsiteId();
             var query = db.Remotes
+                    .AsNoTracking()
                     .Where(e => e.FK_WebsiteId == siteId)
-                    .Join(db.WebMenus.Where(e => e.FK_WebsiteId == siteId && !e.IsDeleted),
+                    .Join(db.WebMenus.AsNoTracking().Where(e => e.FK_WebsiteId == siteId && !e.IsDeleted),
                           d => d.FK_WebmenuId,
                           m => m.Id,
                           (d, m) => new
                           {
                               d.ExecutionTime.Date,
-                              UserIdentifier = d.UUID == Guid.Empty ? d.ClientIpAddress : d.UUID.ToString()
+                              UserIdentifier = d.FK_UserId.HasValue
+                                  ? "user:" + d.FK_UserId.Value.ToString()
+                                  : d.UUID != Guid.Empty
+                                      ? "uuid:" + d.UUID.ToString()
+                                      : "ip:" + (d.ClientIpAddress ?? string.Empty)
                           })
                     .GroupBy(d => d.Date)
                     .Select(g => new RemoteListOtputDto
                     {
                         date = g.Key.Date,
-                        count = g.Count(),   // 人次
-                        MemCount = g.Select(d => d.UserIdentifier).Distinct().Count() // 人數
+                        count = g.LongCount(),   // 人次
+                        MemCount = g.Select(d => d.UserIdentifier).Distinct().LongCount() // 人數
                     });
             if (loadOptions.Sort == null)
             {
@@ -196,7 +315,7 @@ namespace EtheriT.Coker.Application.Remote
                     } };
                 loadOptions.Sort = Sort.ToArray();
             }
-            var output = DataSourceLoader.Load(query, loadOptions);
+            var output = await DataSourceLoader.LoadAsync(query, loadOptions);
             //取日期跟時間
             return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
@@ -290,72 +409,6 @@ namespace EtheriT.Coker.Application.Remote
                 response.Error = ex.Message;
             }
             return response;
-        }
-        public async Task UpdateRemoteTime(SetTrackTimeDto dto)
-        {
-            Guid UUID = await tokenAppService.GetUUID();
-            long id = memoryCache.Get<long>($"RemoteId-{dto.PageKey}-{UUID}");
-            int maxspan = 5 * 60;
-            if (id != 0)
-            {
-                var remote = await db.Remotes.Where(e => e.Id == id).FirstOrDefaultAsync();
-                if (remote != null)
-                {
-                    remote.LeaveTime = DateTime.Now;
-                    remote.TimeOnPage += (int)Math.Round(dto.TimeSpan / 1000.0);
-                    remote.TimeOnPage = Math.Min(remote.TimeOnPage, maxspan);
-                    remote.State = RemoteStateEnum.未處理;
-                    remote.UUID = UUID;
-                    db.SaveChanges();
-
-                    List<UserActivityTags>? tags = new List<UserActivityTags>();
-                    double TimeOnPage = remote.TimeOnPage / 60.0;
-                    if (!remote.FK_ProdId.IsNullOrEmpty())
-                    {
-                        tags = (from t in db.Tag_Associates.Where(e => e.FK_AId == remote.FK_ProdId && e.Type == TagAssociateTypeEnum.商品)
-                                select new UserActivityTags
-                                {
-                                    FK_TId = t.FK_TId,
-                                    FK_RemoteId = id,
-                                    Weight = (float)(0.5 * Math.Pow(1 + 0.1, TimeOnPage))
-                                }).ToList();
-                    }
-                    else if (!remote.FK_ArticleId.IsNullOrEmpty())
-                    {
-                        tags = (from t in db.Tag_Associates.Where(e => e.FK_AId == remote.FK_ArticleId && e.Type == TagAssociateTypeEnum.文章)
-                                select new UserActivityTags
-                                {
-                                    FK_TId = t.FK_TId,
-                                    FK_RemoteId = id,
-                                    Weight = (float)(0.5 * Math.Pow(1 + 0.1, TimeOnPage))
-                                }).ToList();
-                    }
-                    if (tags.Any())
-                    {
-                        List<UserActivityTags> AddUserActivityTags = new List<UserActivityTags>();
-                        tags.ForEach(e =>
-                        {
-                            double daysSinceLastInteraction = 0;
-                            var last = db.UserActivityTags.Include(u => u.Remote).Where(u => u.FK_TId == e.FK_TId && u.Remote.UUID == UUID).OrderByDescending(u => u.CreateTime).FirstOrDefault();
-                            if (last != null)
-                            {
-                                daysSinceLastInteraction = (DateTime.Now - last.CreateTime).TotalDays;
-                                double timeDecayFactor = Math.Exp(-0.1 * daysSinceLastInteraction);
-                                e.Weight = (float)(0.5 * Math.Pow(1 + timeDecayFactor, TimeOnPage));
-                            }
-                            var item = db.UserActivityTags.Where(u => u.FK_RemoteId == e.FK_RemoteId && u.FK_TId == e.FK_TId).FirstOrDefault();
-                            if (item != null)
-                            {
-                                item.Weight = e.Weight;
-                            }
-                            else AddUserActivityTags.Add(e);
-                        });
-                        db.UserActivityTags.AddRange(AddUserActivityTags);
-                        db.SaveChanges();
-                    }
-                }
-            }
-
         }
     };
 }

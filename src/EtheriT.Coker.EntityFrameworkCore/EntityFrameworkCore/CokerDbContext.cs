@@ -143,6 +143,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasIndex(x => new { x.UUID, x.IsDeleted }).IsUnique();
                 o.HasOne(f => f.User).WithMany(u => u.frontUsers).HasForeignKey(f => f.FK_User);
             });
+            modelBuilder.Entity<MappingOldNewUUID>(o =>
+            {
+                o.HasIndex(x => new { x.TempUUID, x.UserUUID });
+            });
             modelBuilder.Entity<UserActivityTags>(o =>
             {
                 o.Property(e => e.CreateTime).HasDefaultValueSql("getdate()");
@@ -221,6 +225,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Token>(o =>
             {
                 o.Property(t => t.id).HasDefaultValueSql("newid()").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+                o.HasIndex(t => new { t.EndTime, t.id })
+                    .HasFilter("[EndTime] IS NOT NULL");
                 o.HasMany(t => t.ShoppingCarts).WithMany(l => l.Tokens).UsingEntity<Dictionary<string, object>>(
                    "TokenMapShoppingCarts", // 這是中間表的名稱
                    j => j
@@ -408,6 +414,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                     .HasForeignKey(f => f.FK_PSid)
                     .OnDelete(DeleteBehavior.NoAction);
                 o.HasOne(u => u.Prod_Price).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_PriceId).OnDelete(DeleteBehavior.SetNull);
+                o.HasIndex(f => new { f.FK_Tid, f.IsOrder });
             });
             modelBuilder.Entity<Order_Header>(o =>
             {
@@ -547,6 +554,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<AuditLog>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.AuditLogs).HasForeignKey(f => f.FK_WebsiteId);
+                o.HasIndex(f => f.ExecutionTime);
             });
             modelBuilder.Entity<MappingCompanyAndWebsites>(o =>
             {

@@ -17,6 +17,21 @@
         });
     }
 
+    function reloadAvailableEmbeddedProviders() {
+        var requests = [];
+
+        cart.Payment.Core.getProvidersByType("embedded").forEach(function (provider) {
+            if (typeof provider.reload !== "function") return;
+
+            var request = provider.reload();
+            if (request && typeof request.always === "function") {
+                requests.push(request);
+            }
+        });
+
+        return requests;
+    }
+
     function ensureNoPaymentWarning() {
         var $warning = $("#RadioPayment .noPaymentWarning");
 
@@ -153,8 +168,8 @@
             S.PaymentAvailabilityLoaded = true;
             apply(preferredPaymentValue);
 
-            if (S.ECPayAvailable && !S.isRestoringECPayLogistics) {
-                cart.Payment.Core.reloadActiveEmbeddedProvider();
+            if (!S.isRestoringECPayLogistics) {
+                reloadAvailableEmbeddedProviders();
             }
         });
 

@@ -67,7 +67,7 @@
             });
     }
     function ECPaymentChange() {
-        if (!S.ECPayMonitor || !S.HasECPay) {
+        if (!S.ECPayMonitor || !S.HasECPay || !S.ECPayInit) {
             return;
         }
 

@@ -493,6 +493,12 @@ namespace EtheriT.Coker.Application.Freight
                     continue;
                 }
 
+                if (!input.IsEnabled)
+                {
+                    input.OverrideMinAmount = null;
+                    input.OverrideMaxAmount = null;
+                }
+
                 if (input.OverrideMinAmount < 0 || input.OverrideMaxAmount < 0)
                     throw new Exception("付款金額限制不可小於 0。");
 

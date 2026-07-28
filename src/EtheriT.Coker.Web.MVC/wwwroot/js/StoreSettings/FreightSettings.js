@@ -212,7 +212,14 @@
                 .off("change.freight", ".payment-enabled-switch")
                 .on("change.freight", ".payment-enabled-switch", function () {
                     var row = self.getPaymentRestrictionDraftRow($(this).closest("tr").data("payment-id"));
-                    if (row) row.isEnabled = $(this).is(":checked");
+                    if (!row) return;
+
+                    row.isEnabled = $(this).is(":checked");
+                    if (!row.isEnabled) {
+                        row.overrideMinAmount = null;
+                        row.overrideMaxAmount = null;
+                    }
+                    self.renderPaymentRestrictionRows();
                 })
                 .off("input.freight", ".payment-amount-input")
                 .on("input.freight", ".payment-amount-input", function () {
@@ -514,7 +521,8 @@
                     var defaultStatus = row.defaultIsEnabled
                         ? '<span class="badge bg-success">允許</span>'
                         : '<span class="badge bg-danger">停用</span>';
-                    var disabled = row.isCustomized ? "" : " disabled";
+                    var customDisabled = row.isCustomized ? "" : " disabled";
+                    var amountDisabled = row.isCustomized && row.isEnabled ? "" : " disabled";
                     var maxPlaceholder = row.paymentTypeMaxAmount == null
                         ? "沿用付款設定：無上限"
                         : "沿用付款設定：" + Number(row.paymentTypeMaxAmount).toLocaleString("zh-TW");
@@ -542,7 +550,7 @@
                                     <input class="form-check-input payment-enabled-switch"
                                            type="checkbox"
                                            ${row.isEnabled ? "checked" : ""}
-                                           ${disabled}>
+                                           ${customDisabled}>
                                 </div>
                             </td>
                             <td>
@@ -553,7 +561,7 @@
                                        data-field="overrideMinAmount"
                                        value="${row.overrideMinAmount ?? ""}"
                                        placeholder="沿用付款設定：${Number(row.paymentTypeMinAmount).toLocaleString("zh-TW")}"
-                                       ${disabled}>
+                                       ${amountDisabled}>
                             </td>
                             <td>
                                 <input class="form-control form-control-sm payment-amount-input"
@@ -563,7 +571,7 @@
                                        data-field="overrideMaxAmount"
                                        value="${row.overrideMaxAmount ?? ""}"
                                        placeholder="${maxPlaceholder}"
-                                       ${disabled}>
+                                       ${amountDisabled}>
                             </td>
                         </tr>`;
                 }).join(""));
@@ -594,7 +602,7 @@
             var warnings = [];
 
             for (var row of (this.paymentRestrictionsDraft || [])) {
-                if (!row.isCustomized) continue;
+                if (!row.isCustomized || !row.isEnabled) continue;
 
                 this.updatePaymentRestrictionEffectiveValues(row);
 
@@ -684,8 +692,8 @@
                     PaymentTypeId: row.paymentTypeId,
                     IsCustomized: row.isCustomized,
                     IsEnabled: row.isEnabled,
-                    OverrideMinAmount: row.isCustomized ? row.overrideMinAmount : null,
-                    OverrideMaxAmount: row.isCustomized ? row.overrideMaxAmount : null
+                    OverrideMinAmount: row.isCustomized && row.isEnabled ? row.overrideMinAmount : null,
+                    OverrideMaxAmount: row.isCustomized && row.isEnabled ? row.overrideMaxAmount : null
                 };
             });
         },
@@ -711,6 +719,7 @@
                 this.$discountFreightType.removeAttr("disabled");
 
                 if (discountType != null) {
+                    this.$lowCon.removeAttr("disabled");
                     this.$dFreight.removeAttr("disabled");
 
                     if (discountType === 1) {
@@ -721,6 +730,7 @@
                         this.$dFreight.attr("placeholder", "");
                     }
                 } else {
+                    this.$lowCon.val("").attr("disabled", "disabled");
                     this.$dFreight.val("").attr("disabled", "disabled").attr("placeholder", "不套用折抵運費");
                 }
                 return;
@@ -741,7 +751,6 @@
                 this.$logisticsPriceSection.removeClass("d-none");
 
                 this.$freight.val("").attr("disabled", "disabled");
-                this.$lowCon.removeAttr("disabled");
 
                 this.applyDiscountFreightTypeUI();
                 this.handleLowConRule();
@@ -753,7 +762,6 @@
                 this.$logisticsPriceSection.removeClass("d-none");
 
                 this.$freight.removeAttr("disabled");
-                this.$lowCon.removeAttr("disabled");
 
                 this.applyDiscountFreightTypeUI();
                 this.handleLowConRule();
@@ -779,22 +787,8 @@
 
         handleLowConRule: function () {
             const freightType = this.getCurrentFreightType();
-            const lowCon = Number(this.$lowCon.val() || 0);
-            const discountType = this.getDiscountFreightTypeValue();
 
             if (freightType !== 2 && freightType !== 3) return;
-
-            if (lowCon <= 0) {
-                this.$discountFreightType.val("");
-                this.$dFreight.val("");
-                this.$dFreight.attr("disabled", "disabled");
-                this.applyDiscountFreightTypeUI();
-                return;
-            }
-
-            if (discountType == null) {
-                this.$discountFreightType.val("1");
-            }
 
             this.applyDiscountFreightTypeUI();
         },
@@ -808,18 +802,21 @@
 
             if (freightType !== 2 && freightType !== 3) {
                 payload.DiscountFreightType = null;
+                payload.Low_Con = 0;
                 payload.Dis_Freight = 0;
                 return payload;
             }
 
             if (lowCon <= 0) {
                 payload.DiscountFreightType = null;
+                payload.Low_Con = 0;
                 payload.Dis_Freight = 0;
                 return payload;
             }
 
             if (!payload.DiscountFreightType) {
                 payload.DiscountFreightType = null;
+                payload.Low_Con = 0;
                 payload.Dis_Freight = 0;
                 return payload;
             }
@@ -836,14 +833,24 @@
         validateDiscountFreightRelation: function (showMessage) {
             const freightType = this.getCurrentFreightType();
             const freight = Number(this.$freight.val() || 0);
+            const lowCon = Number(this.$lowCon.val() || 0);
             const disFreight = Number(this.$dFreight.val() || 0);
             const discountType = this.getDiscountFreightTypeValue();
 
             this.$freight.removeClass("is-invalid");
+            this.$lowCon.removeClass("is-invalid");
             this.$dFreight.removeClass("is-invalid");
 
             if (freightType !== 2 && freightType !== 3) {
                 return true;
+            }
+
+            if (discountType != null && lowCon <= 0) {
+                this.$lowCon.addClass("is-invalid");
+                if (showMessage) {
+                    Coker.sweet.error("錯誤", "套用折抵運費時，折抵低消必須大於 0。", null, true);
+                }
+                return false;
             }
 
             if (disFreight < 0) {

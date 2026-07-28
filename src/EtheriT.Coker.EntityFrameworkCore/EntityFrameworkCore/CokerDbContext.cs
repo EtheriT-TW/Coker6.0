@@ -253,7 +253,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Order_Details>(o =>
             {
                 o.HasOne(u => u.Order_Header).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_OId);
-                o.HasOne(u => u.ShoppingCart).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_SCId);
+                o.HasOne(u => u.ShoppingCart)
+                    .WithMany(u => u.Order_Details)
+                    .HasForeignKey(f => f.FK_SCId)
+                    .OnDelete(DeleteBehavior.NoAction);
             });
             modelBuilder.Entity<LogisticsSetting>(o =>
             {
@@ -322,7 +325,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Prod>(o =>
             {
-                o.HasOne(u => u.Website).WithMany(u => u.Prods).HasForeignKey(f => f.FK_WebsiteId);
+                // Keep this relationship aligned with the production constraint.
+                // Cascade would create two delete paths from Websites through
+                // Prods and LogisticsSettings to MappingLogisticsSettingAndProd.
+                o.HasOne(u => u.Website)
+                    .WithMany(u => u.Prods)
+                    .HasForeignKey(f => f.FK_WebsiteId)
+                    .OnDelete(DeleteBehavior.NoAction);
                 o.HasIndex(u => u.Title);
                 o.Property(p => p.Visible).HasDefaultValue(true);
                 o.Property(p => p.RemovedFromShelves).HasDefaultValue(false);
@@ -336,7 +345,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Prod_Log>(o =>
             {
-                o.HasOne(u => u.Prod).WithMany(u => u.Prod_Logs).HasForeignKey(f => f.FK_Pid);
+                o.HasOne(u => u.Prod)
+                    .WithMany(u => u.Prod_Logs)
+                    .HasForeignKey(f => f.FK_Pid)
+                    .OnDelete(DeleteBehavior.NoAction);
                 o.Property(e => e.CreationTime).HasDefaultValueSql("getdate()");
             });
             modelBuilder.Entity<Bonus>(o =>
@@ -368,21 +380,33 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Prod_Spec>(o =>
             {
-                o.HasOne(u => u.Prod_Spec_Type).WithMany(u => u.Prod_Specs).HasForeignKey(f => f.FK_Tid);
+                o.HasOne(u => u.Prod_Spec_Type)
+                    .WithMany(u => u.Prod_Specs)
+                    .HasForeignKey(f => f.FK_Tid)
+                    .OnDelete(DeleteBehavior.NoAction);
             });
             modelBuilder.Entity<Prod_Spec_Type>(o =>
             {
-                o.HasOne(u => u.Website).WithMany(u => u.Prod_Spec_Types).HasForeignKey(f => f.FK_WebsiteId);
+                o.HasOne(u => u.Website)
+                    .WithMany(u => u.Prod_Spec_Types)
+                    .HasForeignKey(f => f.FK_WebsiteId)
+                    .OnDelete(DeleteBehavior.NoAction);
             });
             modelBuilder.Entity<Prod_Stock>(o =>
             {
-                o.HasOne(u => u.Prod).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_Pid).OnDelete(DeleteBehavior.Cascade);
+                o.HasOne(u => u.Prod)
+                    .WithMany(u => u.Prod_Stocks)
+                    .HasForeignKey(f => f.FK_Pid)
+                    .OnDelete(DeleteBehavior.NoAction);
                 o.Property(p => p.IsTimePrice).HasDefaultValue(false);
                 o.Property(p => p.PackingPoint).HasDefaultValue(1);
             });
             modelBuilder.Entity<ShoppingCart>(o =>
             {
-                o.HasOne(u => u.Prod_Stock).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_PSid);
+                o.HasOne(u => u.Prod_Stock)
+                    .WithMany(u => u.ShoppingCarts)
+                    .HasForeignKey(f => f.FK_PSid)
+                    .OnDelete(DeleteBehavior.NoAction);
                 o.HasOne(u => u.Prod_Price).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_PriceId).OnDelete(DeleteBehavior.SetNull);
             });
             modelBuilder.Entity<Order_Header>(o =>
@@ -426,7 +450,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Prod_Price>(o =>
             {
-                o.HasOne(u => u.Prod_Stock).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_PSId).OnDelete(DeleteBehavior.Cascade);
+                o.HasOne(u => u.Prod_Stock)
+                    .WithMany(u => u.Prod_Prices)
+                    .HasForeignKey(f => f.FK_PSId)
+                    .OnDelete(DeleteBehavior.NoAction);
                 o.HasOne(u => u.Role).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_RId);
             });
             modelBuilder.Entity<Role>(o =>

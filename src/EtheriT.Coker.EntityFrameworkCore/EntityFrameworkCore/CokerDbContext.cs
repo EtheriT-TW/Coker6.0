@@ -90,6 +90,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Permissions> Permissions { get; set; }
         public DbSet<PermissionDetail> PermissionDetail { get; set; }
         public DbSet<Remote> Remotes { get; set; }
+        public DbSet<RemoteDailyStatistic> RemoteDailyStatistics { get; set; }
+        public DbSet<RemoteDailyAggregationRun> RemoteDailyAggregationRuns { get; set; }
         public DbSet<NotFoundImage> NotFoundImage { get; set; }
         public DbSet<Core.Models.JsonObject> JsonObjects { get; set; }
         public DbSet<Contact> Contacts { get; set; }
@@ -597,6 +599,29 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                     .IsUnique()
                     .HasFilter("[TrackingEventId] IS NOT NULL");
                 o.Property(f => f.State).HasDefaultValue(RemoteStateEnum.未處理);
+            });
+            modelBuilder.Entity<RemoteDailyStatistic>(o =>
+            {
+                o.Property(f => f.StatisticDate).HasColumnType("date");
+                o.HasIndex(f => new
+                {
+                    f.StatisticDate,
+                    f.FK_WebsiteId,
+                    f.Scope,
+                    f.FK_WebmenuId,
+                    f.FK_ArticleId,
+                    f.FK_ProdId,
+                    f.FK_TechCertId
+                }).IsUnique();
+                o.HasIndex(f => new { f.FK_WebsiteId, f.StatisticDate, f.Scope });
+                o.HasIndex(f => new { f.FK_WebmenuId, f.StatisticDate });
+                o.HasIndex(f => new { f.FK_ArticleId, f.StatisticDate });
+                o.HasIndex(f => new { f.FK_ProdId, f.StatisticDate });
+            });
+            modelBuilder.Entity<RemoteDailyAggregationRun>(o =>
+            {
+                o.Property(f => f.StatisticDate).HasColumnType("date");
+                o.HasIndex(f => f.StatisticDate).IsUnique();
             });
             modelBuilder.Entity<NotFoundImage>(o =>
             {

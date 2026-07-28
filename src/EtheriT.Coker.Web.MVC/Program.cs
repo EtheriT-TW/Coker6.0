@@ -388,6 +388,9 @@ builder.Services.AddScoped<LogCleanupWorking>();
 builder.Services.AddScoped<DatabaseRetentionWorking>();
 builder.Services.Configure<DatabaseRetentionOptions>(
     builder.Configuration.GetSection("DatabaseRetention"));
+builder.Services.AddScoped<RemoteDailyStatisticsWorking>();
+builder.Services.Configure<RemoteAnalyticsOptions>(
+    builder.Configuration.GetSection("RemoteAnalytics"));
 builder.Services.AddScoped<IBonusManagementAppService, BonusManagementAppService>();
 builder.Services.AddScoped<IFileManagementAppService, FileManagementAppService>();
 builder.Services.Configure<AuthenticationSettings>(builder.Configuration.GetSection("Authentication"));

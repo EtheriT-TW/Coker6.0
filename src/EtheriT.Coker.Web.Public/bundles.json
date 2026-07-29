@@ -52,6 +52,7 @@
         "wwwroot/Shared/js/AnchorPoint.js",
         "wwwroot/Shared/js/Activity.js",
         "wwwroot/Shared/js/BGCanvas.js",
+        "wwwroot/Shared/js/CategoryFilter.js",
         "wwwroot/Shared/js/DefineModule.js",
         "wwwroot/Shared/js/DirectoryFacet.js",
         "wwwroot/Shared/components/Directory/js/service.js",

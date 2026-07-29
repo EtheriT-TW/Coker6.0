@@ -107,6 +107,7 @@ function AnchorPointAsideInit($root) {
             );
         }
         AnchorPointSelectRebind($directory);
+        AnchorPointIconInit($directory);
     });
     // 2) 點擊高亮：用事件委派，選單被重建後仍然有效
     $(document)
@@ -202,3 +203,25 @@ function AnchorPointSpyInit() {
         return result;
     };
 })();
+
+var ANCHOR_ICON_CLASS = "anchor_icon";
+
+/* 依 .anchor_title 的 data-anchor-icon 在目錄項目前插入圖示 */
+function AnchorPointIconInit($directory) {
+    $directory.find('a[href^="#"]').each(function () {
+        var $link = $(this);
+        var $box = $link.children("div").first();
+        if ($box.length === 0 || $box.children("." + ANCHOR_ICON_CLASS).length > 0) return;
+
+        var target = document.getElementById($link.attr("href").slice(1));
+        var icon = target ? target.getAttribute("data-anchor-icon") : "";
+        if (!icon) return;
+
+        $box.prepend(
+            $("<span>")
+                .addClass("material-symbols-outlined " + ANCHOR_ICON_CLASS)
+                .attr("aria-hidden", "true")
+                .text(icon)
+        );
+    });
+}

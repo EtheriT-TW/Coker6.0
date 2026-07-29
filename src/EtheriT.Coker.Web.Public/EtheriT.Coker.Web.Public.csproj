@@ -165,7 +165,6 @@
 		<None Include="wwwroot\Shared\js\BGCanvas.js" />
 		<None Include="wwwroot\Shared\js\Contact.js" />
 		<None Include="wwwroot\Shared\js\CShare.js" />
-		<None Include="wwwroot\Shared\js\FlipBook.js" />
 		<None Include="wwwroot\Shared\js\Flipdown.js" />
 		<None Include="wwwroot\Shared\js\Frame.js" />
 		<None Include="wwwroot\Shared\js\GetLatLng.js" />

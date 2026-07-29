@@ -16,6 +16,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         [HttpGet]
         public async Task<SiteMapDto> GetAll()
         {
+            return await GetMainMenu();
+        }
+
+        [HttpGet]
+        public async Task<SiteMapDto> GetMainMenu()
+        {
             return await webMenuApplication.GetSiteMap();
         }
     }

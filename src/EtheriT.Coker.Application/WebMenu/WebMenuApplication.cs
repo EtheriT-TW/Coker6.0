@@ -115,6 +115,7 @@ namespace EtheriT.Coker.Application
                 var siteId = loginUserData.GetFrontWebsiteId();
                 var child = loginUserData.GetFrontChildOrgName();
                 response = await GetDisplayAll(siteId);
+                response.Maps = FilterMainMenuItems(response.Maps);
                 if (child != null && child.Any())
                 {
                     child.ForEach(item =>
@@ -130,7 +131,7 @@ namespace EtheriT.Coker.Application
                             if (website != null)
                             {
                                 var map = await GetDisplayAll(website.Id);
-                                e.Children = map.Success ? map.Maps : null;
+                                e.Children = map.Success ? FilterMainMenuItems(map.Maps) : null;
                             }
                         }
                     }
@@ -142,6 +143,26 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
+
+        private static List<MenuItemDto> FilterMainMenuItems(IEnumerable<MenuItemDto>? items)
+        {
+            if (items == null) return new List<MenuItemDto>();
+
+            return items
+                .Where(item => item.Visible
+                    && item.IsFromShelves
+                    && item.ShowToMenu
+                    && (item.PageType == PageTypeEnum.一般頁面
+                        || item.PageType == PageTypeEnum.結構頁面))
+                .Select(item =>
+                {
+                    var children = FilterMainMenuItems(item.Children);
+                    item.Children = children.Count > 0 ? children : null;
+                    return item;
+                })
+                .ToList();
+        }
+
         public async Task CheckDisplayAll(long WebsiteID)
         {
             try

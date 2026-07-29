@@ -119,7 +119,8 @@
         "wwwroot/js/Coker/coker.api.tags.js",
         "wwwroot/js/Coker/coker.api.thirdparty.js",
         "wwwroot/js/Coker/coker.api.token.js",
-        "wwwroot/js/Coker/coker.api.user.js"
+        "wwwroot/js/Coker/coker.api.user.js",
+        "wwwroot/js/Coker/coker.api.webMenu.js"
       ]
     },
     {

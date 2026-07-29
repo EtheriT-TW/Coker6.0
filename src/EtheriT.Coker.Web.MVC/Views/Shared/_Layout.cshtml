@@ -38,7 +38,8 @@
 
 			Coker.Data.Header["X-Coker-Website-Id"] = websiteId;
 			const pageUrl = new URL(window.location.href);
-			if (!pageUrl.searchParams.has("_site")) {
+			const pageWebsiteId = Number(pageUrl.searchParams.get("_site"));
+			if (!Number.isInteger(pageWebsiteId) || pageWebsiteId <= 0) {
 				pageUrl.searchParams.set("_site", websiteId);
 				history.replaceState(history.state, "", pageUrl.pathname + pageUrl.search + pageUrl.hash);
 			}

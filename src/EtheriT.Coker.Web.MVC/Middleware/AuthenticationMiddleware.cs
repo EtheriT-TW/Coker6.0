@@ -46,6 +46,7 @@ namespace EtheriT.Coker.Web.MVC.Middleware
                     !context.Request.Path.StartsWithSegments("/api/Website/Exchange") &&
                     context.Request.Headers.TryGetValue("X-Coker-Website-Id", out var websiteHeader) &&
                     long.TryParse(websiteHeader.FirstOrDefault(), out var pageWebsiteId) &&
+                    pageWebsiteId > 0 &&
                     pageWebsiteId != currentWebsiteId)
                 {
                     context.Response.StatusCode = StatusCodes.Status409Conflict;
@@ -61,6 +62,7 @@ namespace EtheriT.Coker.Web.MVC.Middleware
                 if (!isApiRequest &&
                     context.Request.Query.TryGetValue("_site", out var siteQuery) &&
                     long.TryParse(siteQuery.FirstOrDefault(), out var requestedWebsiteId) &&
+                    requestedWebsiteId > 0 &&
                     requestedWebsiteId != currentWebsiteId)
                 {
                     var currentPage = context.Request.PathBase + context.Request.Path;

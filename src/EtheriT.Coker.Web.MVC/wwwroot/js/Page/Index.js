@@ -117,6 +117,7 @@
         },
         on: {
             ready: function () {
+                syncPopularDisplay();
                 co.WebMesnus.GetPageTypeList().done(function (result) {
                     if (!result.success) {
                         co.sweet.error(result.error);
@@ -151,6 +152,7 @@
                 ImageUploadModalDataInsert($("#ImageUpload"), $("#ImageUpload").siblings("#imgId").val(), $("#ImageUpload").siblings("#imgUrl").val(), $("#ImageUpload").siblings("#imgName").val())
                 $("#OverImageUpload").ImageUploadModalClear();
                 ImageUploadModalDataInsert($("#OverImageUpload"), $("#OverImageUpload").siblings("#overImgId").val(), $("#OverImageUpload").siblings("#overImgUrl").val(), $("#OverImageUpload").siblings("#overImgName").val());
+                syncPopularDisplay();
                 updatePageTypeUi();
             },
             del: function (data) {
@@ -608,6 +610,8 @@
             $("#btnRefresh,#btnAdd").removeClass("d-none");
             $("#btnUpdate").addClass("d-none");
             $("#btnRefresh").trigger("click");
+            $("#popular").val(0);
+            syncPopularDisplay();
             $("#myEditor .editItem").removeClass("editItem");
             updateMenuEditorAddTitle();
             $("#MenuEditorForm>.card-header>a").addClass("d-none");
@@ -631,6 +635,14 @@
         console.log(`"${this.replace(/[-]{3}[\w]{2,4}$/g,"")}"`);
     });*/
 }
+
+function syncPopularDisplay() {
+    const value = Number($("#popular").val() || 0);
+    $("#popularDisplay").text(
+        Number.isFinite(value) ? value.toLocaleString("zh-TW") : "0"
+    );
+}
+
 function updateMenuEditorAddTitle() {
     const $editItem = $("#myEditor").find("li.editItem").first();
     const $selected = $("#myEditor").find("li.selectItem").first();

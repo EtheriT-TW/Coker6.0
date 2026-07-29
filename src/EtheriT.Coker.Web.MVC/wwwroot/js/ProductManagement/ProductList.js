@@ -1,6 +1,7 @@
 ﻿var $display, $removedFromShelves, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count,
     $marks, $price, $subItemNo, $stock_number, $packingPoint_number, $alert_number, $min_number, $date, $picker, $permanent,
     $itemNo, $itemNo_count, $noStockManagement;
+var $popularVisible;
 var startDate, endDate, keyId, price_tid, temp_psid;
 var specDescModal, $spec_desc_input, $currentSpecDescRow = null;
 var productTagFilter = null;
@@ -943,6 +944,7 @@ function ElementInit() {
     $itemNo = $("#InputItemNo");
     $itemNo_count = $("#ProductForm .itemNo .itemNo_count");
     $display = $(`#ProductForm [name="Visible"]`);
+    $popularVisible = $(`#ProductForm [name="PopularVisible"]`);
     $removedFromShelves = $(`#ProductForm [name="RemovedFromShelves"]`);
     $noStockManagement = $("#NoStockManagement");
 
@@ -1046,6 +1048,7 @@ function FormDataClear() {
     keyId = 0;
     $removedFromShelves.prop("checked", false);
     $display.prop("checked", false);
+    $popularVisible.prop("checked", true);
     $name.val("");
     $name_count.text(0);
     $itemNo.val("");
@@ -1194,6 +1197,7 @@ function FormDataSet(result) {
     disp_opt = result.disp_Opt;
     $removedFromShelves.prop("checked", !result.removedFromShelves);
     $display.prop("checked", result.visible);
+    $popularVisible.prop("checked", result.popularVisible);
     $noStockManagement.prop("checked", result.noStockManagement);
     $noStockManagement.prop("checked", result.noStockManagement);
     $noStockManagement.trigger("change");
@@ -2080,6 +2084,7 @@ function AddUp(success_text, error_text, target) {
             Title: $name.val(),
             ItemNo: $itemNo.val(),
             Visible: $display.is(":checked"),
+            PopularVisible: $popularVisible.is(":checked"),
             RemovedFromShelves: !$removedFromShelves.is(":checked"),
             NoStockManagement: $noStockManagement.is(":checked"),
             Ser_No: $("#SortCheck").is(":checked") ? $(`[name="serNo"]`).val() : 500,

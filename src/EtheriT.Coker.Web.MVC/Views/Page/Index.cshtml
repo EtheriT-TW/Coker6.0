@@ -196,8 +196,14 @@
                             </div>
                         </div>
                         <div class="form-group form-check">
-                            <label for="Popular">人氣值</label>
-                            <input type="text" id="popular" name="popular" class="form-control item-menu" readonly>
+                            <label for="popularDisplay">人氣值</label>
+                            <div class="form-control bg-light d-flex align-items-center justify-content-between"
+                                 aria-describedby="popularHelp">
+                                <output id="popularDisplay" class="fw-bold" aria-live="polite">0</output>
+                                <span class="badge text-bg-secondary">系統統計・唯讀</span>
+                            </div>
+                            <input type="hidden" id="popular" name="popular" value="0">
+                            <small id="popularHelp" class="form-text text-light">由每日瀏覽統計自動更新，無法手動修改</small>
                         </div>
                         <div class="form-group form-check">
                             <label for="Description">描述</label>

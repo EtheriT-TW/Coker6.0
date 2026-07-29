@@ -23,6 +23,7 @@ namespace EtheriT.Coker.Application.Dto
         public string? IconImage { get; set; }
         public bool Visible { get; set; }
         public int SerNO { get; set; }
+        public int Popular { get; set; }
         public bool PopularVisible { get; set; }
         public long? ImgId { get; set; }
         public string? ImgUrl { get; set; }

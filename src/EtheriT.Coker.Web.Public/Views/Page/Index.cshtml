@@ -126,7 +126,7 @@
     {
         <div class="container editTime font_small text-end">@L.get("LastModifiedTime")：@Model.PageData.LastModificationTime.Value.ToString("yyyy/MM/dd HH:mm:ss")</div>
     }
-    if (Model.PageData.Popular != null && Model.PageData.Popular > 0)
+    if (Model.PageData.PopularVisible && Model.PageData.Popular is > 0)
     {
         <div class="container popular font_small text-end py-2">@L.get("ViewCount")：@Model.PageData.Popular.Value</div>
     }

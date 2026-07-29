@@ -2332,6 +2332,8 @@ namespace EtheriT.Coker.Application.Product
                         result.Html = stringHandler.HtmlEncode(sanitized.Html);
                         result.Css = sanitized.Css;
                         result.Html = result.Html == null ? "" : result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
+                        result.PopularVisible = prod.PopularVisible;
+                        result.Popular = prod.PopularVisible ? prod.Popular : null;
                     }
                 }
             }

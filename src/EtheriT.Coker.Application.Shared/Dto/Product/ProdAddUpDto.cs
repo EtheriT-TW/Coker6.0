@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public string Title { get; set; }
         public string ItemNo { get; set; }
         public bool Visible { get; set; }
+        public bool PopularVisible { get; set; }
         public bool RemovedFromShelves {  get; set; }
         public int Ser_No { get; set; }
         public ProdStatusEnum status { get; set; }

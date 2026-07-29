@@ -257,6 +257,7 @@ namespace EtheriT.Coker.Application
                         icon = menu.icon,
                         Visible = menu.Visible,
                         SerNO = menu.SerNO,
+                        Popular = menu.Popular,
                         PopularVisible = menu.PopularVisible,
                         ImgId = menu.ImgId,
                         OverImgId = menu.OverImgId,

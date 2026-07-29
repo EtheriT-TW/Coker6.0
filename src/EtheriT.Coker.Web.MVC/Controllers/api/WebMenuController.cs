@@ -26,6 +26,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await webMenuApplication.GetAll();
         }
+        [HttpGet]
+        [Authorize]
+        public async Task<SiteMapDto> GetMainMenu()
+        {
+            return await webMenuApplication.GetAll();
+        }
         [HttpPost]
         [Authorize]
         public async Task<ResponseMessageDto> CreateOrEdit(MenuItemDto dto)

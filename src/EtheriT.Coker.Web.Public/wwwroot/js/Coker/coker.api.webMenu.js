@@ -6,7 +6,7 @@
     Coker.extend({
         WebMenu: {
             getMainMenu: function () {
-                return Coker.api.get("/api/WebMenu/GetMainMenu/", null, { auth: false });
+                return Coker.api.get("/api/WebMenu/GetMainMenu/");
             }
         }
     });

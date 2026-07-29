@@ -26,6 +26,7 @@ namespace EtheriT.Coker.Core.Models
         public ProdStatusEnum Status { get; set; }
         public ProdStatusEnum? oStatus { get; set; }
         public int Popular { get; set; } = 0;
+        public bool PopularVisible { get; set; } = true;
         public int? Clicks { get; set; }
         public string? SaveHtml { get; set; }
         [MaxLength]

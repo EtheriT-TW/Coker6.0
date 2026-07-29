@@ -1,0 +1,184 @@
+@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
+@{
+    var articleOnly = Convert.ToBoolean(ViewData["ArticleOnly"] ?? false);
+}
+
+<div id="ArticleContent" class="card py-2 border-0 d-none">
+    <div class="card-header d-flex justify-content-between">
+        <div class="fw-bold fs-5 d-flex align-items-center">
+            <button class="btn_back d-flex bg-transparent border-0 align-items-center">
+                <span class="material-symbols-outlined">
+                    keyboard_backspace
+                </span>
+            </button>
+            <div class="lh-lg">@(articleOnly ? "編輯文章" : "返回文章目錄")</div>
+        </div>
+        <div class="d-flex">
+            <a href="" class="px-3 py-1 linkToFront" target="_blank" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="前台瀏覽">
+                <i class="material-symbols-outlined">
+                    captive_portal
+                </i>
+            </a>
+            <a class="btn btn-warning btn_permission_details border-0 d-flex align-items-center me-3 text-decoration-none" href="#" role="button">
+                <span class="material-symbols-outlined me-1">security</span>瀏覽權限
+            </a>
+            <button class="btn_done btn-primary border-0 px-3 py-1 text-white me-3 btn" form="ArticletForm">儲　存</button>
+            <button class="btn_to_canvas btn-success border-0 px-3 py-1 text-white d-flex align-items-center btn" form="ArticletForm">
+                進階編輯<span class="material-symbols-outlined ms-1">palette</span>
+            </button>
+        </div>
+    </div>
+
+    <form id="ArticletForm" class="card-body needs-validation">
+        <input name="id" type="hidden" value="0" />
+        <input name="fK_WebsiteId" type="hidden" />
+        <div class="d-flex align-self-center mb-3 justify-content-between flex-wrap-reverse flex-md-nowrap">
+            <div id="ImageUpload" name="ImageUpload" data-form-type="images" data-image-type="6" data-image-size="3" data-target="id" class="d-flex justify-content-center image_upload" data-issinge="true" data-needcompress="false">
+                @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadModal" })
+            </div>
+            <div class="d-flex align-items-center flex-wrap justify-content-end gap-2">
+                <input type="checkbox" id="ArticletFormVisible" class="selectedItem" name="visible" value="true" />
+                <label for="ArticletFormVisible" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上">
+                    <span class="material-symbols-outlined fs-2">visibility</span>
+                    <span class="material-symbols-outlined fs-2">visibility_off</span>
+                </label>
+                <input type="checkbox" id="ArticletFormpoPularVisible" class="selectedItem" name="popularVisible" value="true" />
+                <label for="ArticletFormpoPularVisible" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示人氣值">
+                    <span class="material-symbols-outlined fs-2">group</span>
+                    <span class="material-symbols-outlined fs-2">group_off</span>
+                </label>
+                <div class="article-popular-count d-flex align-items-center border rounded px-2"
+                     data-bs-toggle="tooltip"
+                     data-bs-placement="left"
+                     data-bs-title="目前文章人氣值">
+                    <span class="material-symbols-outlined me-1">monitoring</span>
+                    <span class="text-nowrap">人氣值：</span>
+                    <strong id="ArticlePopularValue">0</strong>
+                </div>
+                <input id="RemovedFromShelves" type="checkbox" name="removedFromShelves" class="selectedItem" checked value="true" />
+                <label for="RemovedFromShelves" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="上架">
+                    <span class="material-symbols-outlined fs-2">open_in_new</span>
+                    <span class="material-symbols-outlined fs-2">open_in_new_off</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="title border mb-3 p-2 rounded">
+            <div class="d-flex justify-content-between w-100">
+                <span class="input-group-text bg-transparent border-0 p-0 required_all">標題</span>
+                <div class="count l-150">0</div>
+            </div>
+            <textarea name="title" class="form-control border-0" aria-label="With textarea" maxlength="150" placeholder="輸入文章標題" required></textarea>
+        </div>
+        <div class="subtitle input-group mb-3">
+            <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">子標題</div>
+            <input name="subtitle" class="form-control rounded" type="text" aria-label="Input Subtitle">
+        </div>
+        <div class="date input-group mb-3">
+            <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                <span class="material-symbols-outlined me-1">calendar_today</span>發布日期
+            </div>
+            <input id="NodeDate" name="nodeDate" data-form-type="date" class="form-control rounded" type="text" aria-label="Input Duration of Product" pattern="[1-9]\d{3}/\d{2}/\d{2}" autocomplete="off">
+        </div>
+
+        <div class="describe border mb-3 p-2 rounded">
+            <div class="d-flex justify-content-between w-100">
+                <span class="input-group-text bg-transparent border-0 p-0">描述</span>
+                <div class="count">0</div>
+            </div>
+            <textarea name="description" class="form-control border-0" aria-label="With textarea" maxlength="300" placeholder="輸入文章描述"></textarea>
+        </div>
+
+        <div class="tag input-group mb-3" name="tagSelected" data-form-type="tags">
+            <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                <span class="material-symbols-outlined me-1">alternate_email</span>標籤
+            </div>
+            <input class="form-control rounded text-start InputTag" name="tagDatas" type="button" aria-label="Input Tag" data-bs-toggle="modal" data-bs-target="#TagModal">
+        </div>
+
+        <template id="TemplateArticleFile">
+            <div class="data_upload row mx-0 border rounded mb-3 p-3 position-relative" data-uploadtype="5">
+                <ul class="col-12 p-0 overflow-auto mb-0">
+                    <li class="btn_upload_add border mb-1 p-1 shadow-sm">
+                        <button class="bg-transparent border-0 d-flex justify-content-center p-0 w-100" title="新增檔案">
+                            <span class="icon poiter material-symbols-outlined">add</span>
+                        </button>
+                    </li>
+                </ul>
+                <div class="preview_frame col-12 border p-2 mb-2 d-none">
+                    <div class="default_frame h-100 d-none d-flex justify-content-center align-items-center"><span>點選 + 號新增檔案</span></div>
+                    <div class="upload_frame custom-file-container"></div>
+                </div>
+                <div class="position-absolute upload_title bg-white">檔案下載</div>
+                <div class="position-absolute upload_warning bg-white">已上鎖檔案不可解鎖</div>
+            </div>
+        </template>
+
+        <template id="TemplateUploadList">
+            <li class="upload_list d-flex align-items-center border bg-white shadow-sm px-2 py-1 gap-2 mb-1">
+                <div class="serNoTool gap-2">
+                    <span class="icon move material-symbols-outlined" title="變更順序">open_with</span>
+                    <input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="" step="1">
+                </div>
+                <input class="name rounded border flex-grow-1" type="text" aria-label="File Name" name="name" title="檔案名稱" value="" autocomplete="off">
+                <span class="size"></span>
+                <button class="btn_preview d-flex bg-transparent border-0 p-0 text-info" title="預覽檔案">
+                    <span class="material-symbols-outlined">search</span>
+                </button>
+                <label class="d-flex visible" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示" data-bs-container="body">
+                    <input type="checkbox" class="selectedItem input_visible" name="" value="true" />
+                    <span class="material-symbols-outlined" title="是否顯示">visibility</span>
+                    <span class="material-symbols-outlined" title="是否顯示">visibility_off</span>
+                </label>
+                <button class="btn_lock d-flex bg-transparent border-0 p-0" title="是否加密">
+                    <span class="icon poiter lock material-symbols-outlined">lock</span>
+                    <span class="icon poiter unlock material-symbols-outlined">lock_open_right</span>
+                </button>
+                <button class="btn_remove d-flex bg-transparent border-0 p-0" title="移除檔案">
+                    <span class="icon poiter material-symbols-outlined">delete</span>
+                </button>
+            </li>
+        </template>
+
+        <div id="ArticleFileAreas"></div>
+
+        <details id="ArticleAdvancedSettings" class="article-advanced-settings border rounded mb-3">
+            <summary class="d-flex align-items-center p-3">
+                <span class="material-symbols-outlined me-2">tune</span>
+                <span class="fw-bold">進階設定</span>
+                <span class="text-muted small ms-2">上架期間、經緯度與自訂排序</span>
+                <span class="advanced-expand-icon material-symbols-outlined ms-auto">expand_more</span>
+            </summary>
+            <div class="border-top p-3">
+                <div class="date input-group mb-3">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>設定上架日期
+                    </div>
+                    <input id="InputDate" name="startEndDate" data-form-type="date_range" data-start="startTime" data-end="endTime" class="form-control rounded" type="text" aria-label="Input Duration of Product" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
+                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up me-4">
+                        <input id="PermanentCheck" name="permanent" data-form-type="disabled" data-target="InputDate" class="form-check-input" type="checkbox" checked value="true">
+                        <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
+                    </div>
+                </div>
+
+                <div class="lnglat input-group">
+                    <span class="input-group-text bg-white">經緯度</span>
+                    <input name="longitude" type="number" aria-label="Longitude" class="longitude form-control" min="-180" max="180" step="0.0000001" placeholder="經度">
+                    <input name="latitude" type="number" aria-label="Latitude" class="latitude form-control" min="-90" max="90" step="0.0000001" placeholder="緯度">
+                </div>
+                <div class="form-text mb-3">經度介於 -180～180，緯度介於 -90～90，最多輸入至小數第 7 位</div>
+
+                <div class="sort input-group mb-0">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
+                    </div>
+                    <input id="ArticleSerNO" class="form-control rounded" name="serNO" type="number" aria-label="Input Sort of Article" disabled="disabled" required>
+                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up me-4">
+                        <input id="ArticleSortCheck" class="form-check-input" name="sortCheckbox" data-form-type="disabled" data-direct="reverse" data-value="500" data-target="ArticleSerNO" type="checkbox" value="false">
+                        <label class="form-check-label fs-6 pe-2" for="ArticleSortCheck">自訂排序</label>
+                    </div>
+                </div>
+            </div>
+        </details>
+    </form>
+</div>

@@ -2,6 +2,7 @@
     $marks, $price, $subItemNo, $stock_number, $packingPoint_number, $alert_number, $min_number, $date, $picker, $permanent,
     $itemNo, $itemNo_count, $noStockManagement;
 var $popularVisible;
+var $popularValue;
 var startDate, endDate, keyId, price_tid, temp_psid;
 var specDescModal, $spec_desc_input, $currentSpecDescRow = null;
 var productTagFilter = null;
@@ -945,6 +946,7 @@ function ElementInit() {
     $itemNo_count = $("#ProductForm .itemNo .itemNo_count");
     $display = $(`#ProductForm [name="Visible"]`);
     $popularVisible = $(`#ProductForm [name="PopularVisible"]`);
+    $popularValue = $("#ProductPopularValue");
     $removedFromShelves = $(`#ProductForm [name="RemovedFromShelves"]`);
     $noStockManagement = $("#NoStockManagement");
 
@@ -1049,6 +1051,7 @@ function FormDataClear() {
     $removedFromShelves.prop("checked", false);
     $display.prop("checked", false);
     $popularVisible.prop("checked", true);
+    $popularValue.text("0");
     $name.val("");
     $name_count.text(0);
     $itemNo.val("");
@@ -1198,6 +1201,7 @@ function FormDataSet(result) {
     $removedFromShelves.prop("checked", !result.removedFromShelves);
     $display.prop("checked", result.visible);
     $popularVisible.prop("checked", result.popularVisible);
+    $popularValue.text(Number(result.popular ?? result.Popular ?? 0).toLocaleString("zh-TW"));
     $noStockManagement.prop("checked", result.noStockManagement);
     $noStockManagement.prop("checked", result.noStockManagement);
     $noStockManagement.trigger("change");

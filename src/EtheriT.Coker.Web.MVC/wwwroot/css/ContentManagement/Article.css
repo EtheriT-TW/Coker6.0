@@ -59,6 +59,33 @@ textarea.h300 {
 #ArticleContent .date > input {
     padding-left: 9.5rem;
 }
+
+#ArticleContent .article-popular-count {
+    min-height: 2.25rem;
+    background-color: #fff;
+}
+
+#ArticleContent .article-advanced-settings {
+    background-color: #fff;
+}
+
+#ArticleContent .article-advanced-settings > summary {
+    cursor: pointer;
+    list-style: none;
+    background-color: var(--color-gray-bg-dark);
+}
+
+#ArticleContent .article-advanced-settings > summary::-webkit-details-marker {
+    display: none;
+}
+
+#ArticleContent .article-advanced-settings .advanced-expand-icon {
+    transition: transform .2s ease;
+}
+
+#ArticleContent .article-advanced-settings[open] .advanced-expand-icon {
+    transform: rotate(180deg);
+}
 /*
 #ArticleContent > form .image_upload > div {
     width: fit-content;

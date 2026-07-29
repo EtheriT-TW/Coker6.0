@@ -40,6 +40,11 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 job => job.AggregateNextDay(),
                 "5,20,35,50 * * * *",
                 new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
+            _recurringJobManager.AddOrUpdate<RemoteRetentionWorking>(
+                "RemoteRetentionCleanup",
+                job => job.CleanupAggregatedRemotes(),
+                Cron.Hourly(0),
+                new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
             _recurringJobManager.AddOrUpdate<PageTextBackfillJob>(
                 "PageTextBackfill",
                 job => job.Run(),

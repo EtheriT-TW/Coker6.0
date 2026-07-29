@@ -8,8 +8,12 @@
 @using EtheriT.Coker.Web.MVC.Common
 @using EtheriT.Coker.Web.MVC.Extensions
 @{
-    ViewData["Title"] = "Directory";
-    var canUseFacet = Context.HasPermission(CokerContextKeys.DirectoryFacet);
+    var articleOnly = Convert.ToBoolean(ViewData["ArticleOnly"] ?? false);
+    var articleListUrl = articleOnly
+        ? "/api/Article/GetAllList"
+        : "/api/Directory/GetDirectoryDetailList";
+    ViewData["Title"] = articleOnly ? "Article" : "Directory";
+    var canUseFacet = !articleOnly && Context.HasPermission(CokerContextKeys.DirectoryFacet);
 }
 
 <link rel="stylesheet" href="~/css/ContentManagement/Directory.min.css" asp-append-version="true" />
@@ -18,14 +22,20 @@
     await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
     var perm = Context.GetPermission();
 }
-<script src="~/js/ContentManagement/DirectoryFacet.min.js" asp-append-version="true"></script>
-<script src="~/js/ContentManagement/Directory.min.js" asp-append-version="true"></script>
+<script type="module"
+        data-init-function="ContentManagementDirectoryPageReady"
+        src="~/js/ContentManagement/Directory.min.js"
+        asp-append-version="true"></script>
 @Html.AntiForgeryToken()
-<div class="">
+<div id="ContentManagementWorkspace" data-article-only="@articleOnly.ToString().ToLowerInvariant()">
     <div id="TopLine" class="py-2 px-4">
         <div class="d-flex">
-            <div class="title fw-bold fs-3">目錄管理</div>
-            <a class="btn btn-primary text-decoration-none align-self-center" href="#" role="button">返回選單</a>
+            <div class="title fw-bold fs-3">@(articleOnly ? "文章管理" : "目錄管理")</div>
+            <a class="btn btn-primary text-decoration-none align-self-center @(articleOnly ? "d-none" : "")"
+               data-role="workspace-back"
+               data-default-text="返回選單"
+               href="#"
+               role="button">返回選單</a>
         </div>
     </div>
     @await Component.InvokeAsync(nameof(Modal), new { dispaly = "TagSelectModal" })
@@ -156,7 +166,7 @@
             </form>
         </div>
 
-        <div id="DirectoryCanvas" class="card border-0 d-none">
+        <div id="HtmlCanvas" class="card border-0 d-none">
             <div id="gjs"></div>
         </div>
 
@@ -164,7 +174,7 @@
             <div class="articles d-none">
                 <div class="card-body position-relative">
                     <div class="d-flex position-absolute z-index-up">
-                        <button class="btn_back border btn-outline-light text-black d-flex p-1 rounded text-decoration-none">
+                        <button class="btn_back border btn-outline-light text-black d-flex p-1 rounded text-decoration-none @(articleOnly ? "d-none" : "")">
                             <span class="material-symbols-outlined">arrow_back</span>
                         </button>
                         <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded text-decoration-none ml-3">
@@ -174,7 +184,7 @@
                     @(
                                     Html.DevExtreme().DataGrid<DirectoryReleInfoDto>()
                                         .DataSource(d => d.RemoteController().Key("Id")
-                                        .LoadUrl("/api/Directory/GetDirectoryDetailList").LoadMethod("Get")
+                                        .LoadUrl(articleListUrl).LoadMethod("Get")
                                         .LoadParams(new
                                         {
                                             id = new JS("GetDirectoryId"),
@@ -203,10 +213,13 @@
                                             c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90);
                                             c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90);
                                             c.AddFor(e => e.Title).Caption("標題");
+                                            c.Add().DataField("Tags").Caption("標籤").Visible(articleOnly).MinWidth(150);
                                             c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90);
                                             c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(false);
                                             c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(false);
-                                            c.AddFor(e => e.SerNo).Caption("排序").Width(90);
+                                            c.Add().DataField(articleOnly ? "SerNO" : "SerNo").Caption("排序").Width(90);
+                                            c.Add().DataField("Popular").Caption("人氣值").Visible(articleOnly).Width(90);
+                                            c.Add().DataField("PopularVisible").Caption("顯示人氣值").Visible(articleOnly).Width(120);
                                             c.AddFor(e => e.LastModificationTime).SortOrder(SortOrder.Desc).Format("yyyy/MM/dd HH:mm").Caption("最後編輯日期").Width(160);
                                             c.Add()
                                             .Type(GridCommandColumnType.Buttons)
@@ -214,10 +227,17 @@
                                             {
                                                 b.Add().Name("edit").Visible(perm.CanUpdate).OnClick("editArticlesButtonClicked");
                                                 b.Add().Icon("palette").Visible(perm.CanUpdate).Name("edit").OnClick("paletteArticlesButtonClicked");
-                                                b.Add()
-                                                    .Name("delete")
-                                                    .Visible(new JS("function(e) { return " + perm.CanRemove.ToString().ToLower() + " && e.row && e.row.data && e.row.data.CanEdit === true; }"))
-                                                    .OnClick("deleteArticlesButtonClicked");
+                                                if (articleOnly)
+                                                {
+                                                    b.Add().Name("delete").Visible(perm.CanRemove).OnClick("deleteArticlesButtonClicked");
+                                                }
+                                                else
+                                                {
+                                                    b.Add()
+                                                        .Name("delete")
+                                                        .Visible(new JS("function(e) { return " + perm.CanRemove.ToString().ToLower() + " && e.row && e.row.data && e.row.data.CanEdit === true; }"))
+                                                        .OnClick("deleteArticlesButtonClicked");
+                                                }
                                             });
                                         })
                                         .ColumnAutoWidth(true)
@@ -242,154 +262,7 @@
             <div class="menus d-none"></div>
         </div>
 
-        <div id="ArticleContent" class="card py-2 border-0 d-none">
-            <div class="card-header d-flex justify-content-between">
-                <div class="fw-bold fs-5 d-flex align-items-center">
-                    <button class="btn_back d-flex bg-transparent border-0 align-items-center">
-                        <span class="material-symbols-outlined">
-                            keyboard_backspace
-                        </span>
-                    </button>
-                    <div class="lh-lg">返回文章目錄</div>
-                </div>
-                <div class="d-flex">
-                    <a href="" class="px-3 py-1 linkToFront" target="_blank" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="前台瀏覽">
-                        <i class="material-symbols-outlined">
-                            captive_portal
-                        </i>
-                    </a>
-                    <a class="btn btn-warning btn_permission_details border-0 d-flex align-items-center me-3 text-decoration-none" href="#" role="button">
-                        <span class="material-symbols-outlined me-1">security</span>瀏覽權限
-                    </a>
-                    <button class="btn_done btn-primary border-0 px-3 py-1 text-white me-3  btn" form="ArticletForm">儲　存</button>
-                    <button class="btn_to_canvas btn-success border-0 px-3 py-1 text-white d-flex align-items-center  btn" form="ArticletForm">
-                        進階編輯<span class="material-symbols-outlined ms-1">palette</span>
-                    </button>
-                </div>
-            </div>
-
-            <form id="ArticletForm" class="card-body needs-validation">
-                <input name="id" type="hidden" value="0" />
-                <input name="fK_WebsiteId" type="hidden" />
-                <div class="d-flex align-self-center mb-3 justify-content-between flex-wrap-reverse flex-md-nowrap">
-                    <div id="ImageUpload" name="ImageUpload" data-form-type="images" data-image-type="6" data-image-size="3" data-target="id" class="d-flex justify-content-center image_upload" data-issinge="true" data-needcompress="false">
-                        @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadModal" })
-                    </div>
-                    <div class="d-flex">
-                        <input type="checkbox" id="ArticletFormVisible" class="selectedItem" name="visible" value="true" />
-                        <label for="ArticletFormVisible" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上">
-                            <span class="material-symbols-outlined fs-2">visibility</span>
-                            <span class="material-symbols-outlined fs-2">visibility_off</span>
-                        </label>
-                        <input type="checkbox" id="ArticletFormpoPularVisible" class="selectedItem" name="popularVisible" value="true" />
-                        <label for="ArticletFormpoPularVisible" class="mx-3" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示人氣值">
-                            <span class="material-symbols-outlined fs-2">group</span>
-                            <span class="material-symbols-outlined fs-2">group_off</span>
-                        </label>
-                        <input id="RemovedFromShelves" type="checkbox" name="removedFromShelves" class="selectedItem" checked value="true" />
-                        <label for="RemovedFromShelves" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="上架">
-                            <span class="material-symbols-outlined fs-2">open_in_new</span>
-                            <span class="material-symbols-outlined fs-2">open_in_new_off</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="title border mb-3 p-2 rounded">
-                    <div class="d-flex justify-content-between w-100">
-                        <span class="input-group-text bg-transparent border-0 p-0 required_all">標題</span>
-                        <div class="count">0</div>
-                    </div>
-                    <textarea name="title" class="form-control border-0" aria-label="With textarea" maxlength="50" placeholder="輸入文章標題" required></textarea>
-                </div>
-                <div class="date input-group mb-3">
-                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-                        <span class="material-symbols-outlined me-1">calendar_today</span>發布日期
-                    </div>
-                    <input id="NodeDate" name="nodeDate" data-form-type="date" class="form-control rounded" type="text" aria-label="Input Duration of Product" pattern="[1-9]\d{3}/\d{2}/\d{2}" autocomplete="off">
-                </div>
-
-                <div class="date input-group mb-3">
-                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-                        <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>設定上架日期
-                    </div>
-                    <input id="InputDate" name="startEndDate" data-form-type="date_range" data-start="startTime" data-end="endTime" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
-                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up me-4">
-                        <input id="PermanentCheck" name="permanent" data-form-type="disabled" data-target="InputDate" class="form-check-input" type="checkbox" checked value="true">
-                        <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
-                    </div>
-                </div>
-
-                <div class="describe border mb-3 p-2 rounded">
-                    <div class="d-flex justify-content-between w-100">
-                        <span class="input-group-text bg-transparent border-0 p-0">描述</span>
-                        <div class="count">0</div>
-                    </div>
-                    <textarea name="description" class="form-control border-0" aria-label="With textarea" maxlength="300" placeholder="輸入文章描述"></textarea>
-                </div>
-
-                <div class="tag input-group mb-3" name="tagSelected" data-form-type="tags">
-                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-                        <span class="material-symbols-outlined me-1">alternate_email</span>標籤
-                    </div>
-                    <input class="form-control rounded text-start InputTag" name="tagDatas" type="button" aria-label="Input Tag" data-bs-toggle="modal" data-bs-target="#TagModal">
-                </div>
-
-                <div class="sort input-group mb-3">
-                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-                        <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
-                    </div>
-                    <input id="ArticleSerNO" class="form-control rounded" name="serNO" type="number" aria-label="Input Sort of Article" disabled="disabled" required>
-                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up me-4">
-                        <input id="ArticleSortCheck" class="form-check-input" name="sortCheckbox" data-form-type="disabled" data-direct="reverse" data-value="500" data-target="ArticleSerNO" type="checkbox" value="false">
-                        <label class="form-check-label fs-6 pe-2" for="ArticleSortCheck">自訂排序</label>
-                    </div>
-                </div>
-
-                <template id="TemplateArticleFile">
-                    <div class="data_upload row mx-0 border rounded mb-3 p-3 position-relative" data-uploadtype="5">
-                        <ul class="col-12 p-0 overflow-auto mb-0">
-                            <li class="btn_upload_add border mb-1 p-1 shadow-sm">
-                                <button class="bg-transparent border-0 d-flex justify-content-center p-0 w-100" title="新增檔案">
-                                    <span class="icon poiter  material-symbols-outlined">add</span>
-                                </button>
-                            </li>
-                        </ul>
-                        <div class="preview_frame col-12 border p-2 mb-2 d-none">
-                            <div class="default_frame h-100 d-none d-flex justify-content-center align-items-center"><span>點選 + 號新增檔案</span></div>
-                            <div class="upload_frame custom-file-container"></div>
-                        </div>
-                        <div class="position-absolute upload_title bg-white">檔案下載</div>
-                        <div class="position-absolute upload_warning bg-white">已上鎖檔案不可解鎖</div>
-                    </div>
-                </template>
-
-                <template id="TemplateUploadList">
-                    <li class="upload_list d-flex align-items-center border bg-white shadow-sm px-2 py-1 gap-2 mb-1">
-                        <div class="serNoTool gap-2 ">
-                            <span class="icon move material-symbols-outlined" title="變更順序">open_with</span>
-                            <input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="" step="1">
-                        </div>
-                        <input class="name rounded border flex-grow-1" type="text" aria-label="File Name" name="name" title="檔案名稱" value="" autocomplete="off">
-                        <span class="size"></span>
-                        <button class="btn_preview d-flex bg-transparent border-0 p-0 text-info" title="預覽檔案">
-                            <span class="material-symbols-outlined">search</span>
-                        </button>
-                        <label class="d-flex visible" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示" data-bs-container="body">
-                            <input type="checkbox" class="selectedItem input_visible" name="" value="true" />
-                            <span class="material-symbols-outlined" title="是否顯示">visibility</span>
-                            <span class="material-symbols-outlined" title="是否顯示">visibility_off</span>
-                        </label>
-                        <button class="btn_lock d-flex bg-transparent border-0 p-0" title="是否加密">
-                            <span class="icon poiter lock material-symbols-outlined">lock</span>
-                            <span class="icon poiter unlock material-symbols-outlined">lock_open_right</span>
-                        </button>
-                        <button class="btn_remove d-flex bg-transparent border-0 p-0" title="移除檔案">
-                            <span class="icon poiter  material-symbols-outlined">delete</span>
-                        </button>
-                    </li>
-                </template>
-            </form>
-        </div>
+        @await Html.PartialAsync("_ArticleContent")
     </div>
 
 </div>

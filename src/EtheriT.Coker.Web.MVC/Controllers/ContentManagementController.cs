@@ -21,7 +21,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         }
         public IActionResult Article()
         {
-            return View("Article");
+            ViewData["ArticleOnly"] = true;
+            return View("Directory");
         }
         public IActionResult Marquee()
         {

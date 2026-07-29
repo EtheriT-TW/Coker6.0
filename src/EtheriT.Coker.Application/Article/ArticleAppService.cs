@@ -177,6 +177,7 @@ namespace EtheriT.Coker.Application.Article
                                                EndTime = e.EndTime,
                                                permanent = e.permanent,
                                                NodeDate = e.NodeDate,
+                                               LastModificationTime = e.LastModificationTime ?? e.CreationTime,
                                            }).ToListAsync();
                     var output = DataSourceLoader.Load(dataQuery, loadOptions);
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
@@ -346,6 +347,7 @@ namespace EtheriT.Coker.Application.Article
                         Latitude = result.Latitude,
                         Visible = result.Visible,
                         SerNO = result.SerNO,
+                        Popular = result.Popular,
                         PopularVisible = result.PopularVisible,
                         TagDatas = new List<TagGetSelectedDto>(),
                         StartTime = result.StartTime,

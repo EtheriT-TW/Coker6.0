@@ -8,6 +8,9 @@ namespace EtheriT.Coker.Application.Configuration
         public int TokenBatchSize { get; set; } = 1_000;
         public int TokenMaxRowsPerRun { get; set; } = 20_000;
         public int OrphanCartMaxRowsPerRun { get; set; } = 5_000;
+        public int RemoteRetentionDays { get; set; } = 90;
+        public int RemoteBatchSize { get; set; } = 2_000;
+        public int RemoteMaxRowsPerRun { get; set; } = 50_000;
         public int CommandTimeoutSeconds { get; set; } = 120;
     }
 }

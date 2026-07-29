@@ -10,7 +10,7 @@ namespace EtheriT.Coker.Application.BackgroundJob
 {
     public sealed class RemoteDailyStatisticsWorking
     {
-        private const int CurrentAggregationVersion = 1;
+        internal const int CurrentAggregationVersion = 1;
 
         private readonly CokerDbContext db;
         private readonly RemoteAnalyticsOptions options;

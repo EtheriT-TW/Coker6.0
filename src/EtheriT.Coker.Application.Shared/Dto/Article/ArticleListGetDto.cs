@@ -31,5 +31,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
         public DateTime? EndTime { get; set; }
         public bool permanent { get; set; }
         public string Tags { get; set; }
+        public DateTime? LastModificationTime { get; set; }
     }
 }

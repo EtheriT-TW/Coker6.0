@@ -389,6 +389,7 @@ builder.Services.AddTransient<ITemplatesApplicationService, TemplatesApplication
 builder.Services.AddScoped<UserHabitsWorking>();
 builder.Services.AddScoped<LogCleanupWorking>();
 builder.Services.AddScoped<DatabaseRetentionWorking>();
+builder.Services.AddScoped<RemoteRetentionWorking>();
 builder.Services.Configure<DatabaseRetentionOptions>(
     builder.Configuration.GetSection("DatabaseRetention"));
 builder.Services.AddScoped<RemoteDailyStatisticsWorking>();

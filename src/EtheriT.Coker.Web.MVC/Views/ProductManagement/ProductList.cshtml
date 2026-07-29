@@ -369,8 +369,8 @@
             <form id="ProductForm" class="card-body needs-validation">
                 <div class="row m-0">
                     <div class="col-9 card p-2 me-3">
-                        <div class="row">
-                            <div class="col-3">
+                        <div class="row g-2 align-items-start">
+                            <div class="col-12 col-lg-4 col-xl-3">
                                 <div class="form-check px-1 d-flex align-items-baseline">
                                     <label for="ProdStatus" class="col-6 col-xxl-4 col-xl-5 form-label">商品狀態</label>
                                     <select name="ProdStatus" id="ProdStatus" class="form-select item-menu">
@@ -381,7 +381,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-3">
+                            <div class="col-12 col-lg-4 col-xl-3">
                                 <div class="sort input-group mb-3">
                                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                                         <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
@@ -393,7 +393,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-3">
+                            <div class="col-12 col-lg-4 col-xl-2">
                                 <div class="stock input-group mb-3">
                                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                                         可銷售量
@@ -405,28 +405,36 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col">
-                                <div class="d-flex flex-row-reverse my-1">
-                                    <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
+                            <div class="col-12 col-xl-4">
+                                <div class="d-flex flex-row-reverse flex-nowrap justify-content-start align-items-center gap-1 my-1">
+                                    <div class="flex-shrink-0 align-self-center border-0 btn d-flex pb-0 pt-0">
                                         <input id="RemovedFromShelves" type="checkbox" name="RemovedFromShelves" class="selectedItem" checked value="true" />
                                         <label for="RemovedFromShelves" class="bg-transparent border-0 mb-0 d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="上架中">
                                             <span class="material-symbols-outlined fs-2">open_in_new</span>
                                             <span class="material-symbols-outlined fs-2">open_in_new_off</span>
                                         </label>
                                     </div>
-                                    <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
+                                    <div class="flex-shrink-0 align-self-center border-0 btn d-flex pb-0 pt-0">
                                         <input id="Visible" type="checkbox" name="Visible" class="selectedItem" checked value="true" />
                                         <label for="Visible" class="bg-transparent border-0 mb-0 d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="顯示">
                                             <span class="material-symbols-outlined fs-2">visibility</span>
                                             <span class="material-symbols-outlined fs-2">visibility_off</span>
                                         </label>
                                     </div>
-                                    <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
+                                    <div class="flex-shrink-0 align-self-center border-0 btn d-flex pb-0 pt-0">
                                         <input id="PopularVisible" type="checkbox" name="PopularVisible" class="selectedItem" checked value="true" />
                                         <label for="PopularVisible" class="bg-transparent border-0 mb-0 d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="顯示人氣值">
                                             <span class="material-symbols-outlined fs-2">group</span>
                                             <span class="material-symbols-outlined fs-2">group_off</span>
                                         </label>
+                                    </div>
+                                    <div class="flex-shrink-0 align-self-center border rounded bg-white d-flex align-items-center px-2 py-1"
+                                         data-bs-toggle="tooltip"
+                                         data-bs-placement="left"
+                                         data-bs-title="目前商品人氣值">
+                                        <span class="material-symbols-outlined me-1">monitoring</span>
+                                        <span class="text-nowrap">人氣值：</span>
+                                        <strong id="ProductPopularValue">0</strong>
                                     </div>
                                 </div>
                             </div>

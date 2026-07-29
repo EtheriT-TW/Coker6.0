@@ -10,7 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Remote
     public class GetRemoteCountOutputDto: ResponseObject
     {
         public List<RemoteListOtputDto> remoteListOtputDtos { get; set; }
-        public int AllCount {  get; set; }
-        public int AllMemCount { get; set; }
+        public long AllCount {  get; set; }
+        public long AllMemCount { get; set; }
     }
 }

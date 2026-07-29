@@ -25,6 +25,21 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 "LogCleanup",
                 job => job.CleanupExpiredLogs(),
                 Cron.Daily(4));
+            _recurringJobManager.AddOrUpdate<DatabaseRetentionWorking>(
+                "AuditLogRetentionCleanup",
+                job => job.CleanupAuditLogs(),
+                Cron.Daily(4, 30),
+                new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
+            _recurringJobManager.AddOrUpdate<DatabaseRetentionWorking>(
+                "ExpiredTokenCleanup",
+                job => job.CleanupExpiredTokens(),
+                Cron.Hourly(15),
+                new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
+            _recurringJobManager.AddOrUpdate<RemoteDailyStatisticsWorking>(
+                "RemoteDailyStatistics",
+                job => job.AggregateNextDay(),
+                "5,20,35,50 * * * *",
+                new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
             _recurringJobManager.AddOrUpdate<PageTextBackfillJob>(
                 "PageTextBackfill",
                 job => job.Run(),

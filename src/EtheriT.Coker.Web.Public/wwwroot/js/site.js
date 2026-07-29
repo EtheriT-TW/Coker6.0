@@ -166,48 +166,6 @@ function ready() {
         typeof (HeaderInit) === "function" && HeaderInit();
         typeof (FooterInit) === "function" && FooterInit();
     });
-    let idleTimeout;
-    sessionStorage.setItem('pageLoadTime', Date.now());
-    //監測使用者是否離開畫面
-    const sentTrackTime = function () {
-        if (!sessionStorage.isNullOrEmpty("PageKey")) {
-            // 將停留時間發送到伺服器
-            let timeSpent = Date.now() - parseInt(sessionStorage.getItem('pageLoadTime'));
-            const body = { PageKey: sessionStorage.getItem("PageKey"), TimeSpan: timeSpent };
-            const headers = { type: 'application/json' };
-            const blob = new Blob([JSON.stringify(body)], headers);
-            navigator.sendBeacon("/api/UserStatistic/trackTime", blob);
-            sessionStorage.setItem('pageLoadTime', Date.now());
-        }
-    }
-    function resetIdleTimer() {
-        clearTimeout(idleTimeout);
-        idleTimeout = setTimeout(function () {
-            // 可以選擇將閒置時間重置為零或停止計時
-            sessionStorage.setItem('pageLoadTime', Date.now());
-        }, 300000); // 設定為 5 分鐘
-    }
-
-    window.addEventListener("beforeunload", function () {
-        if (!document.hidden) {
-            sentTrackTime();
-        }
-    });
-    // 監聽用戶的各種互動，例如滑鼠移動、鍵盤按壓等
-    document.addEventListener('mousemove', resetIdleTimer);
-    document.addEventListener('keydown', resetIdleTimer);
-    document.addEventListener('scroll', resetIdleTimer);
-
-
-    // 當用戶切換標籤或最小化時，使用 visibilitychange 事件來處理
-    document.addEventListener("visibilitychange", function () {
-        if (document.hidden) {
-            sentTrackTime();
-        } else {
-            // 重新加載頁面時，重設加載時間
-            sessionStorage.setItem('pageLoadTime', Date.now());
-        }
-    });
 
 
     if (typeof (SearchWord) !== "undefined" && SearchWord !== "") {

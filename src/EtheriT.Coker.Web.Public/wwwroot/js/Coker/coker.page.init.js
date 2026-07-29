@@ -225,6 +225,19 @@
                 }
             },
             {
+                name: "remoteTracking",
+                key: "coker_inited_remoteTracking",
+                test: function ($root) {
+                    return has($root, "body")
+                        && !!w.RemoteTrackingToken
+                        && !!C.RemoteTracking
+                        && isFn(C.RemoteTracking.init);
+                },
+                run: function () {
+                    C.RemoteTracking.init();
+                }
+            },
+            {
                 name: "bgCanvas",
                 key: "coker_inited_bgCanvas",
                 test: function ($root) {

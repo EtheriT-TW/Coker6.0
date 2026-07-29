@@ -1,94 +1,154 @@
-﻿@using DevExtreme.AspNet.Mvc
-@using EtheriT.Coker.Web.MVC.Models.Dacshboard
-@using Newtonsoft.Json
-@model DashboardModel
 @{
-	ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Dashboard";
 }
 <script src="~/lib/chart.js/chart.min.js"></script>
 <script src="~/js/Dashboard/Index.min.js" asp-append-version="true"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-preset-newsletter/index.js"></script>
 <link rel="stylesheet" href="~/css/Dashboard/index.min.css" asp-append-version="true" />
 
-<div class="container-fluid py-4">
-	<div class="row">
-		<div class="col-sm-6 mb-xl-0 mb-4">
-			<div class="card">
-				<div class="card-header p-3 pt-2">
-					<div class="icon icon-lg icon-shape bg-gradient-warning shadow-dark text-center border-radius-xl mt-n4 position-absolute">
-						<i class="material-symbols-outlined opacity-10">storage</i>
-					</div>
-					<div class="text-end pt-1">
-						<p class="text-sm mb-0 text-capitalize">使用空間</p>
-						<h4 class="mb-0">@Model.CalcuateDirectorySize</h4>
-					</div>
-				</div>
-				<hr class="dark horizontal my-0">
-				<div class="card-footer p-3">
-					<p class="mb-0">最後更新日期<span class="text-success text-sm font-weight-bolder">@Model.LastChangDate</span></p>
-				</div>
-			</div>
-		</div>
-		<div class="col-sm-6 mb-xl-0 mb-4">
-			<div class="card">
-				<div class="card-header p-3 pt-2">
-					<div class="icon icon-lg icon-shape bg-gradient-info shadow-primary text-center border-radius-xl mt-n4 position-absolute">
-						<i class="material-symbols-outlined opacity-10">insert_chart</i>
-					</div>
-					<div class="text-end pt-1">
-						<p class="text-sm mb-0 text-capitalize">使用流量</p>
-						<h4 class="mb-0">@Model.MonthTotalFlowSize</h4>
-					</div>
-				</div>
-				<hr class="dark horizontal my-0">
-				<div class="card-footer p-3">
-					<p class="mb-0">當月使用流量<span class="text-success text-sm font-weight-bolder">@Model.ToMonth</span></p>
-				</div>
-			</div>
-		</div>
+<div class="container-fluid py-4 dashboard">
+    <div class="row g-4 dashboard-kpis">
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card dashboard-kpi h-100">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-warning shadow-dark text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-symbols-outlined opacity-10">storage</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0">使用空間</p>
+                        <h4 class="mb-0 storage-size">--</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0" />
+                <div class="card-footer p-3">
+                    <p class="mb-0 text-sm">最後更新：<span class="text-success font-weight-bolder storage-updated-at">載入中</span></p>
+                </div>
+            </div>
+        </div>
 
-		<div class="row mt-4">
-			<div class="col-md-6 mt-4 mb-4 pe-0">
-				<div class="card z-index-2 ">
-					<div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
-						<div class="bg-gradient-info shadow-primary border-radius-lg py-3 pe-1">
-							<div class="chart">
-								<canvas id="chart-bars" class="chart-canvas" height="170" data-Remotes="@JsonConvert.SerializeObject(Model.Remote)"></canvas>
-							</div>
-						</div>
-					</div>
-					<div class="card-body">
-						<div id="width-auto" class="align-content-center mb-3">
-							<h6 class="mb-0 ">全站瀏覽人數</h6>
-						</div>
-						<div class="d-flex">
-							<form method="post" action="/DashboardController/Index" class="flex-grow-1 me-5 date-range">
-								<div class="d-flex align-content-center">
-									<i class="material-symbols-outlined text-sm my-auto me-1">schedule</i>
-									<p class="mb-0">&nbsp;統計區間</p>
-								</div>
-								<div class="date input-group mb-3 w-75">
-									<input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required="">
-								</div>
-							</form>
-							<div class="text-end pt-1 d-flex ">
-								<p class="mb-0 me-3">累計人數：<span class="text-success font-weight-bolder fs-1 dateRange-sum-mem-count">@Model.Remote.SumMemCount</span></p>
-								<p class="mb-0 ">人次：<span class="text-success font-weight-bolder fs-1 dateRange-sum-count">@Model.Remote.SumCount</span></p>
-							</div>
-						</div>
-						<p class="text-sm d-none">Last Campaign Performance</p>
-						<hr class="dark horizontal">
-						<div class="d-flex">
-							<div class="flex-grow-1 align-self-center">
-								<span>統計 @Model.Remote.FirstTime 至今</span>
-							</div>
-							<div class="text-end pt-1 d-flex ">
-								<p class="mb-0 me-3">累計總人數：<span class="text-success totle-sum-mem-count font-weight-bolder fs-1">@Model.Remote.TotleMemCount</span></p>
-								<p class="mb-0 ">總人次：<span class="text-success totle-sum-count font-weight-bolder fs-1">@Model.Remote.TotleCount</span></p>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card dashboard-kpi h-100">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-info shadow-primary text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-symbols-outlined opacity-10">monitoring</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0">本月流量</p>
+                        <h4 class="mb-0 month-flow-size">--</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0" />
+                <div class="card-footer p-3">
+                    <p class="mb-0 text-sm">統計區間：<span class="text-success font-weight-bolder month-flow-range">載入中</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card dashboard-kpi h-100">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-symbols-outlined opacity-10">groups</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0">在線訪客</p>
+                        <h4 class="mb-0 online-visitor-count">--</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0" />
+                <div class="card-footer p-3">
+                    <p class="mb-0 text-sm">最近 2 分鐘仍有瀏覽心跳，每 30 秒更新</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <a class="text-decoration-none text-reset" href="/ContentManagement/ContactUs">
+                <div class="card dashboard-kpi h-100">
+                    <div class="card-header p-3 pt-2">
+                        <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger text-center border-radius-xl mt-n4 position-absolute">
+                            <i class="material-symbols-outlined opacity-10">mark_email_unread</i>
+                        </div>
+                        <div class="text-end pt-1">
+                            <p class="text-sm mb-0">待處理表單</p>
+                            <h4 class="mb-0 pending-contact-count">--</h4>
+                        </div>
+                    </div>
+                    <hr class="dark horizontal my-0" />
+                    <div class="card-footer p-3">
+                        <p class="mb-0 text-sm">尚未開始處理的表單資料</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-12 col-xl-8">
+            <div class="card dashboard-panel h-100">
+                <div class="card-header d-flex align-items-center justify-content-between pb-0">
+                    <div>
+                        <h6 class="mb-1">最近 7 天瀏覽趨勢</h6>
+                        <p class="text-sm text-secondary mb-0">有效瀏覽人次與不重複訪客</p>
+                    </div>
+                    <span class="text-xs text-secondary traffic-updated-at"></span>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="dashboard-chart">
+                        <canvas id="dashboard-traffic-chart"></canvas>
+                    </div>
+                    <div class="dashboard-loading traffic-loading">正在載入流量資料…</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-4">
+            <div class="card dashboard-panel h-100">
+                <div class="card-header d-flex align-items-center justify-content-between pb-0">
+                    <div>
+                        <h6 class="mb-1">本日熱門頁面</h6>
+                        <p class="text-sm text-secondary mb-0">依有效瀏覽次數排序，最多顯示 5 筆</p>
+                    </div>
+                    <span class="material-symbols-outlined text-info">local_fire_department</span>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="popular-page-list"></div>
+                    <div class="dashboard-loading popular-pages-loading">正在載入熱門頁面…</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-12 col-xl-7">
+            <div class="card dashboard-panel h-100">
+                <div class="card-header d-flex align-items-center justify-content-between pb-0">
+                    <div>
+                        <h6 class="mb-1">表單處理狀態</h6>
+                        <p class="text-sm text-secondary mb-0">依實際表單位置分組</p>
+                    </div>
+                    <a class="btn btn-sm btn-outline-primary mb-0" href="/ContentManagement/ContactUs">查看全部</a>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="contact-form-summary"></div>
+                    <div class="dashboard-loading contact-summary-loading">正在載入表單統計…</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-5">
+            <div class="card dashboard-panel h-100">
+                <div class="card-header d-flex align-items-center justify-content-between pb-0">
+                    <div>
+                        <h6 class="mb-1">最近提交資料</h6>
+                        <p class="text-sm text-secondary mb-0">顯示最近 5 筆表單資料</p>
+                    </div>
+                    <span class="material-symbols-outlined text-success">schedule</span>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="recent-contact-list"></div>
+                    <div class="dashboard-loading recent-contacts-loading">正在載入最近提交…</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

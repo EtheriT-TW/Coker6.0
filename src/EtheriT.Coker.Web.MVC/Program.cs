@@ -13,6 +13,7 @@ using EtheriT.Coker.Application.Company;
 using EtheriT.Coker.Application.Configuration;
 using EtheriT.Coker.Application.Contact;
 using EtheriT.Coker.Application.Contact.Export;
+using EtheriT.Coker.Application.Dashboard;
 using EtheriT.Coker.Application.Directory;
 using EtheriT.Coker.Application.FileManagement;
 using EtheriT.Coker.Application.Filters;
@@ -39,6 +40,7 @@ using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Authorization;
 using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Common;
+using EtheriT.Coker.Application.Shared.Dashboard;
 using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion.Auth;
 using EtheriT.Coker.Application.Shared.FileManagement;
@@ -368,6 +370,7 @@ builder.Services.AddScoped<IAuditLogAppService, AuditLogAppService>();
 builder.Services.AddScoped<INewsletterAppService, NewsletterAppService>();
 builder.Services.AddScoped<IPermissionsAppService, PermissionsAppService>();
 builder.Services.AddScoped<IRemoteAppService, RemoteAppService>();
+builder.Services.AddScoped<IDashboardAppService, DashboardAppService>();
 builder.Services.AddScoped<IJsonObjectAppService, JsonObjectAppService>();
 builder.Services.AddScoped<ICaptchaAppService, CaptchaAppService>();
 builder.Services.AddScoped<IContactAppService, ContactAppService>();
@@ -385,6 +388,12 @@ builder.Services.AddTransient<IDashboardAuthorizationFilter, HangfireDashboardAu
 builder.Services.AddTransient<ITemplatesApplicationService, TemplatesApplicationService>();
 builder.Services.AddScoped<UserHabitsWorking>();
 builder.Services.AddScoped<LogCleanupWorking>();
+builder.Services.AddScoped<DatabaseRetentionWorking>();
+builder.Services.Configure<DatabaseRetentionOptions>(
+    builder.Configuration.GetSection("DatabaseRetention"));
+builder.Services.AddScoped<RemoteDailyStatisticsWorking>();
+builder.Services.Configure<RemoteAnalyticsOptions>(
+    builder.Configuration.GetSection("RemoteAnalytics"));
 builder.Services.AddScoped<IBonusManagementAppService, BonusManagementAppService>();
 builder.Services.AddScoped<IFileManagementAppService, FileManagementAppService>();
 builder.Services.Configure<AuthenticationSettings>(builder.Configuration.GetSection("Authentication"));
@@ -415,6 +424,9 @@ builder.Services.AddDbContext<CokerDbContext>(options =>
             sqlServerOptionsAction: sqlOptions =>
             {
                 sqlOptions.EnableRetryOnFailure();
+                var migrationCommandTimeout = configuration.GetValue<int?>("DatabaseMigrationCommandTimeout");
+                if (migrationCommandTimeout.HasValue)
+                    sqlOptions.CommandTimeout(migrationCommandTimeout.Value);
             }
         );
     }

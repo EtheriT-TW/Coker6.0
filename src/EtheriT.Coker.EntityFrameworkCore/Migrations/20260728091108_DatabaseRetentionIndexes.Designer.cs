@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260728091108_DatabaseRetentionIndexes")]
+    partial class DatabaseRetentionIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -869,14 +872,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_WebMenuId")
-                        .HasDatabaseName("IX_Contacts_FK_WebMenuId");
-
-                    b.HasIndex("FK_WebMenuId", "Status", "CreationTime")
-                        .HasDatabaseName("IX_Contacts_FK_WebMenuId_Status_CreationTime_Active")
-                        .HasFilter("[IsDeleted] = 0");
-
-                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("FK_WebMenuId", "Status", "CreationTime"), new[] { "Name", "UserName" });
+                    b.HasIndex("FK_WebMenuId");
 
                     b.ToTable("Contacts");
                 });
@@ -2686,8 +2682,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("TempUUID", "UserUUID");
 
                     b.ToTable("MappingOldNewUUID");
                 });
@@ -4764,9 +4758,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("PageText")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Popular")
-                        .HasColumnType("int");
-
                     b.Property<bool>("RemovedFromShelves")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -4824,7 +4815,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Introduction = "從座圈到噴嘴給您雙重防護\n不用動手全自動科技最體貼\n雙漩洗技術為您實現真乾淨",
                             IsDeleted = false,
                             NoStockManagement = false,
-                            Popular = 0,
                             RemovedFromShelves = false,
                             Ser_No = 500,
                             Status = 0,
@@ -4842,7 +4832,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Introduction = "商品二的第一行介紹\n商品二的第二行介紹",
                             IsDeleted = false,
                             NoStockManagement = false,
-                            Popular = 0,
                             RemovedFromShelves = false,
                             Ser_No = 500,
                             Status = 0,
@@ -4860,7 +4849,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Introduction = "商品三的第一行介紹\n商品二的第二行介紹",
                             IsDeleted = false,
                             NoStockManagement = false,
-                            Popular = 0,
                             RemovedFromShelves = false,
                             Ser_No = 500,
                             Status = 0,
@@ -4878,7 +4866,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Introduction = "最大容水量：11公升\n適用水壓：1~5kgf/㎝²",
                             IsDeleted = false,
                             NoStockManagement = false,
-                            Popular = 0,
                             RemovedFromShelves = false,
                             Ser_No = 500,
                             Status = 0,
@@ -5631,107 +5618,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("UUID");
 
-                    b.HasIndex("FK_WebsiteId", "LastHeartbeatAt")
-                        .HasDatabaseName("IX_Remotes_FK_WebsiteId_LastHeartbeatAt_Online")
-                        .HasFilter("[LastHeartbeatAt] IS NOT NULL AND [TrackingEventId] IS NOT NULL");
-
-                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("FK_WebsiteId", "LastHeartbeatAt"), new[] { "TrackingEventId", "FK_UserId", "UUID", "IsEngaged" });
-
                     b.ToTable("Remotes");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.RemoteDailyAggregationRun", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<int>("AggregationVersion")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CompletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("SourceRows")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("StatisticDate")
-                        .HasColumnType("date");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StatisticDate")
-                        .IsUnique();
-
-                    b.ToTable("RemoteDailyAggregationRuns");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.RemoteDailyStatistic", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("AggregatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("EffectiveUniqueVisitors")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("EffectiveViews")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("FK_ArticleId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("FK_ProdId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("FK_TechCertId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("FK_WebmenuId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("FK_WebsiteId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("LegacyViews")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("PageViews")
-                        .HasColumnType("bigint");
-
-                    b.Property<byte>("Scope")
-                        .HasColumnType("tinyint");
-
-                    b.Property<DateTime>("StatisticDate")
-                        .HasColumnType("date");
-
-                    b.Property<long>("TotalVisibleSeconds")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("UniqueVisitors")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FK_ArticleId", "StatisticDate");
-
-                    b.HasIndex("FK_ProdId", "StatisticDate");
-
-                    b.HasIndex("FK_WebmenuId", "StatisticDate");
-
-                    b.HasIndex("FK_WebsiteId", "StatisticDate", "Scope");
-
-                    b.HasIndex("StatisticDate", "FK_WebsiteId", "Scope", "FK_WebmenuId", "FK_ArticleId", "FK_ProdId", "FK_TechCertId")
-                        .IsUnique();
-
-                    b.ToTable("RemoteDailyStatistics");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Role", b =>

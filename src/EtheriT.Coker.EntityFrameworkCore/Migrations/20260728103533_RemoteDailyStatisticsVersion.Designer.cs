@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260728103533_RemoteDailyStatisticsVersion")]
+    partial class RemoteDailyStatisticsVersion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -869,14 +872,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_WebMenuId")
-                        .HasDatabaseName("IX_Contacts_FK_WebMenuId");
-
-                    b.HasIndex("FK_WebMenuId", "Status", "CreationTime")
-                        .HasDatabaseName("IX_Contacts_FK_WebMenuId_Status_CreationTime_Active")
-                        .HasFilter("[IsDeleted] = 0");
-
-                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("FK_WebMenuId", "Status", "CreationTime"), new[] { "Name", "UserName" });
+                    b.HasIndex("FK_WebMenuId");
 
                     b.ToTable("Contacts");
                 });
@@ -5630,12 +5626,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasFilter("[TrackingEventId] IS NOT NULL");
 
                     b.HasIndex("UUID");
-
-                    b.HasIndex("FK_WebsiteId", "LastHeartbeatAt")
-                        .HasDatabaseName("IX_Remotes_FK_WebsiteId_LastHeartbeatAt_Online")
-                        .HasFilter("[LastHeartbeatAt] IS NOT NULL AND [TrackingEventId] IS NOT NULL");
-
-                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("FK_WebsiteId", "LastHeartbeatAt"), new[] { "TrackingEventId", "FK_UserId", "UUID", "IsEngaged" });
 
                     b.ToTable("Remotes");
                 });

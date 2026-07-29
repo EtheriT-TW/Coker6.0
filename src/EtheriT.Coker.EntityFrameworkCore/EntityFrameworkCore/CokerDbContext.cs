@@ -90,6 +90,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Permissions> Permissions { get; set; }
         public DbSet<PermissionDetail> PermissionDetail { get; set; }
         public DbSet<Remote> Remotes { get; set; }
+        public DbSet<RemoteDailyStatistic> RemoteDailyStatistics { get; set; }
+        public DbSet<RemoteDailyAggregationRun> RemoteDailyAggregationRuns { get; set; }
         public DbSet<NotFoundImage> NotFoundImage { get; set; }
         public DbSet<Core.Models.JsonObject> JsonObjects { get; set; }
         public DbSet<Contact> Contacts { get; set; }
@@ -142,6 +144,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasIndex(x => new { x.UUID, x.IsDeleted }).IsUnique();
                 o.HasOne(f => f.User).WithMany(u => u.frontUsers).HasForeignKey(f => f.FK_User);
+            });
+            modelBuilder.Entity<MappingOldNewUUID>(o =>
+            {
+                o.HasIndex(x => new { x.TempUUID, x.UserUUID });
             });
             modelBuilder.Entity<UserActivityTags>(o =>
             {
@@ -221,6 +227,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Token>(o =>
             {
                 o.Property(t => t.id).HasDefaultValueSql("newid()").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+                o.HasIndex(t => new { t.EndTime, t.id })
+                    .HasFilter("[EndTime] IS NOT NULL");
                 o.HasMany(t => t.ShoppingCarts).WithMany(l => l.Tokens).UsingEntity<Dictionary<string, object>>(
                    "TokenMapShoppingCarts", // 這是中間表的名稱
                    j => j
@@ -408,6 +416,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                     .HasForeignKey(f => f.FK_PSid)
                     .OnDelete(DeleteBehavior.NoAction);
                 o.HasOne(u => u.Prod_Price).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_PriceId).OnDelete(DeleteBehavior.SetNull);
+                o.HasIndex(f => new { f.FK_Tid, f.IsOrder });
             });
             modelBuilder.Entity<Order_Header>(o =>
             {
@@ -547,6 +556,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<AuditLog>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.AuditLogs).HasForeignKey(f => f.FK_WebsiteId);
+                o.HasIndex(f => f.ExecutionTime);
             });
             modelBuilder.Entity<MappingCompanyAndWebsites>(o =>
             {
@@ -585,7 +595,43 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasIndex(f => f.State);
                 o.HasIndex(f => f.ExecutionTime);
                 o.HasIndex(f => f.UUID);
+                o.HasIndex(f => new { f.FK_WebsiteId, f.LastHeartbeatAt })
+                    .HasDatabaseName("IX_Remotes_FK_WebsiteId_LastHeartbeatAt_Online")
+                    .HasFilter("[LastHeartbeatAt] IS NOT NULL AND [TrackingEventId] IS NOT NULL")
+                    .IncludeProperties(f => new
+                    {
+                        f.TrackingEventId,
+                        f.FK_UserId,
+                        f.UUID,
+                        f.IsEngaged
+                    });
+                o.HasIndex(f => f.TrackingEventId)
+                    .IsUnique()
+                    .HasFilter("[TrackingEventId] IS NOT NULL");
                 o.Property(f => f.State).HasDefaultValue(RemoteStateEnum.未處理);
+            });
+            modelBuilder.Entity<RemoteDailyStatistic>(o =>
+            {
+                o.Property(f => f.StatisticDate).HasColumnType("date");
+                o.HasIndex(f => new
+                {
+                    f.StatisticDate,
+                    f.FK_WebsiteId,
+                    f.Scope,
+                    f.FK_WebmenuId,
+                    f.FK_ArticleId,
+                    f.FK_ProdId,
+                    f.FK_TechCertId
+                }).IsUnique();
+                o.HasIndex(f => new { f.FK_WebsiteId, f.StatisticDate, f.Scope });
+                o.HasIndex(f => new { f.FK_WebmenuId, f.StatisticDate });
+                o.HasIndex(f => new { f.FK_ArticleId, f.StatisticDate });
+                o.HasIndex(f => new { f.FK_ProdId, f.StatisticDate });
+            });
+            modelBuilder.Entity<RemoteDailyAggregationRun>(o =>
+            {
+                o.Property(f => f.StatisticDate).HasColumnType("date");
+                o.HasIndex(f => f.StatisticDate).IsUnique();
             });
             modelBuilder.Entity<NotFoundImage>(o =>
             {
@@ -609,6 +655,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Contact>(o =>
             {
                 o.HasOne(f => f.WebMenu).WithMany(w => w.Contacts).HasForeignKey(e => e.FK_WebMenuId);
+                o.HasIndex(e => e.FK_WebMenuId)
+                    .HasDatabaseName("IX_Contacts_FK_WebMenuId");
+                o.HasIndex(e => new { e.FK_WebMenuId, e.Status, e.CreationTime })
+                    .HasDatabaseName("IX_Contacts_FK_WebMenuId_Status_CreationTime_Active")
+                    .HasFilter("[IsDeleted] = 0")
+                    .IncludeProperties(e => new { e.Name, e.UserName });
             });
 
             modelBuilder.Entity<HtmlSanitizeState>(o =>

@@ -164,7 +164,7 @@
             window.OrgName = OrgName;
             window.PageKey = PageKey;
             window.RemoteTrackingToken = RemoteTrackingToken;
-            window.onload = function () {
+            window.onload = function() {
                 ready();
             }
             const originalAppendChild = Element.prototype.appendChild;
@@ -172,7 +172,7 @@
             const nonce = document.querySelector('meta[name="csp-nonce"]').getAttribute('content');
 
             // 覆寫 appendChild 方法
-            Element.prototype.appendChild = function (child) {
+            Element.prototype.appendChild = function(child) {
                 // child 是否為 undefined
                 if (child) {
                     // 檢查是否為 <script> 或 <style> 元素
@@ -187,7 +187,7 @@
             };
 
             // 覆寫 insertBefore 方法
-            Node.prototype.insertBefore = function (newNode, referenceNode) {
+            Node.prototype.insertBefore = function(newNode, referenceNode) {
                 // 檢查插入的節點是否為 script 或 style
                 if (newNode.tagName === 'SCRIPT' || newNode.tagName === 'STYLE') {
                     // 添加 nonce 屬性
@@ -254,14 +254,14 @@
                 // 用 capture 階段是必要的：Google 自己的 handler 綁在 select 上，收到空值時會把
                 // 值重設回目前語系，若等到冒泡階段才讀 value 就永遠判斷不到「選了原語言」。
                 // 但清 cookie 仍要排到它之後（setTimeout），否則會被它重新寫回。
-                document.addEventListener('change', function (e) {
+                document.addEventListener('change', function(e) {
                     const combo = e.target;
                     if (!combo || !combo.classList || !combo.classList.contains('goog-te-combo')) return;
                     if (combo.value) return;   // 選的是翻譯語系，交給 Google 處理
                     setTimeout(restoreOriginalLanguage, 0);
                 }, true);
 
-                document.addEventListener('change', function (e) {
+                document.addEventListener('change', function(e) {
                     if (e.target && e.target.classList && e.target.classList.contains('goog-te-combo')) {
                         triggerResize();
                     }
@@ -355,15 +355,26 @@
                 function getTranslateLang() {
                     const m = document.cookie.match(/(?:^|;\s*)googtrans=([^;]*)/);
                     if (!m) return '';
-                    return decodeURIComponent(m[1]).split('/')[2] || '';
+                    const parts = decodeURIComponent(m[1]).split('/').filter(Boolean);
+                    return parts[parts.length - 1] || '';   // /zh-TW/zh-CN 和 /zh-CN 都取目標語系
+                }
+
+                function clearCookieAllDomains(name) {
+                    const expire = 'expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+                    const parts = location.hostname.split('.');
+                    const domains = [''];
+                    for (let i = 0; i <= parts.length - 2; i++) {
+                        const d = parts.slice(i).join('.');
+                        domains.push(d, '.' + d);
+                    }
+                    domains.forEach(d => {
+                        document.cookie = `${name}=; ${expire}${d ? `; domain=${d}` : ''}`;
+                    });
                 }
 
                 function clearTranslateCookie() {
-                    const expire = 'expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-                    const host = location.hostname;
-                    document.cookie = `googtrans=; ${expire}`;
-                    document.cookie = `googtrans=; ${expire}; domain=${host}`;
-                    document.cookie = `googtrans=; ${expire}; domain=.${host}`;
+                    clearCookieAllDomains('googtrans');
+                    clearCookieAllDomains('googtransopt');   // 這行才是第 2 點
                 }
 
                 function restoreOriginalLanguage() {
@@ -474,7 +485,7 @@
                 function observeComboOptions() {
                     const container = document.getElementById('google_translate_element');
                     if (!container) return;
-                    const mo = new MutationObserver(function () {
+                    const mo = new MutationObserver(function() {
                         const combo = container.querySelector('select.goog-te-combo');
                         if (combo) ensureOriginalOption(combo);
                     });
@@ -520,7 +531,7 @@
                     btn.dataset.toggleText = lang.text;
                     host.appendChild(btn);
 
-                    btn.addEventListener('click', function () {
+                    btn.addEventListener('click', function() {
                         if (currentTranslateLang === lang.code) {   // 已翻譯 → 回原文
                             restoreOriginalLanguage();
                             return;
@@ -551,7 +562,7 @@
     {
         <!-- Google Tag Manager -->
         <script nonce="@ViewBag.Nonce">
-                (function (w, d, s, l, i) {
+                (function(w, d, s, l, i) {
                     w[l] = w[l] || []; w[l].push({
                         'gtm.start':
                             new Date().getTime(), event: 'gtm.js'

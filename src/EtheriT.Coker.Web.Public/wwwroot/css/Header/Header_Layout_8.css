@@ -195,6 +195,9 @@ header {
 #translate_switch {
     display: none;
 }
+body {
+    top: 0 !important;
+}
 
 /* Button Car Dropdown */
 #btn_car_dropdown > i.open {

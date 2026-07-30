@@ -10,6 +10,7 @@ var directory_list;
 var DirectorytForms;
 var $DirectorytTags;
 var articleOnly = false;
+var hashPage;
 
 function PageReady() {
     articleOnly = $("#ContentManagementWorkspace").data("article-only") === true;
@@ -33,16 +34,106 @@ function PageReady() {
             DirectoryId = Number(id || 0);
             DirectoryType = type || "Articles";
         },
-        backToDirectoryList: BackToList
+        backToDirectoryList: BackToList,
+        navigate: navigate
     });
 
-    if ("onhashchange" in window) {
-        window.onhashchange = hashChange;
-    } else {
-        setInterval(HashDataEdit, 1000);
+    hashPage = Coker.HashPage.create({
+        root: "#ContentManagementWorkspace",
+        defaultHash: articleOnly ? "Articles_0" : "List",
+        listHash: "List",
+        newHash: "0",
+        listPageKey: "DirectoryList",
+        contentPageKey: "DirectoryContent",
+        useStack: true,
+        parseState: parseRoute,
+        onChange: enterRoute
+    });
+}
+
+function navigate(hash) {
+    if (hashPage) {
+        hashPage.setHash(hash);
+        return;
     }
 
-    HashDataEdit();
+    window.location.hash = hash;
+}
+
+function parseRoute(hash) {
+    var articleRoute = ArticleManager.parseRoute(hash);
+    if (articleRoute) return articleRoute;
+
+    var value = String(hash || "").trim();
+    if (!value || value.toLowerCase() === "list") {
+        return {
+            raw: "List",
+            mode: "directory-list",
+            pageKey: "DirectoryList",
+            title: "目錄管理"
+        };
+    }
+
+    if (value === "0" || value.toLowerCase() === "new") {
+        return {
+            raw: value,
+            mode: "directory-new",
+            pageKey: "DirectoryContent",
+            title: "新增目錄",
+            directoryId: 0
+        };
+    }
+
+    if (/^\d+$/.test(value)) {
+        return {
+            raw: value,
+            mode: "directory-edit",
+            pageKey: "DirectoryContent",
+            title: "編輯目錄",
+            directoryId: parseInt(value, 10)
+        };
+    }
+
+    return {
+        raw: articleOnly ? "Articles_0" : "List",
+        mode: articleOnly ? "article-list" : "directory-list",
+        pageKey: articleOnly ? "ArticleList" : "DirectoryList",
+        title: articleOnly ? "文章管理" : "目錄管理",
+        scope: articleOnly ? "article" : "directory",
+        directoryId: 0,
+        articleId: 0
+    };
+}
+
+function enterRoute(route) {
+    if (route.scope === "article") {
+        ArticleManager.enterRoute(route);
+        return;
+    }
+
+    switch (route.mode) {
+        case "directory-new":
+            keyId = 0;
+            DirectoryId = 0;
+            FormDataClear();
+            MoveToContent();
+            break;
+        case "directory-edit":
+            MoveToContent();
+            co.Directory.Get(route.directoryId).done(function (result) {
+                if (result != null) {
+                    DirectoryId = result.id;
+                    FormDataSet(result);
+                } else {
+                    BackToList();
+                }
+            });
+            break;
+        case "directory-list":
+        default:
+            ShowDirectoryList();
+            break;
+    }
 }
 
 function DirectoryElementInit() {
@@ -74,22 +165,16 @@ function DirectoryEventsInit() {
         }
     });
 
-    Array.from(DirectorytForms).forEach(function (form) {
-        form.addEventListener("submit", function (event) {
-            event.preventDefault();
-            if (!form.checkValidity()) {
-                event.stopPropagation();
-            } else {
-                Coker.sweet.confirm(
-                    "即將儲存",
-                    "儲存後將顯示於安排的位置",
-                    "儲存",
-                    "取消",
-                    function () { AddUp("已成功儲存", "儲存發生未知錯誤"); }
-                );
+    co.Form.init("DirectorytForm", function () {
+        return co.Form.confirmSubmit({
+            title: "即將儲存",
+            text: "儲存後將顯示於安排的位置",
+            confirmButtonText: "儲存",
+            cancelButtonText: "取消",
+            onConfirm: function () {
+                return AddUp("已成功儲存", "儲存發生未知錯誤");
             }
-            form.classList.add("was-validated");
-        }, false);
+        });
     });
 
     $("#DirectoryContent .btn_back").on("click", function () {
@@ -101,7 +186,7 @@ function DirectoryEventsInit() {
 
     $("#DirectoryList .btn_add").on("click", function () {
         FormDataClear();
-        window.location.hash = "0";
+        navigate("0");
     });
 
     $(document).on("click", ".btn-open-facet", function (event) {
@@ -123,60 +208,14 @@ function DirectoryEventsInit() {
     });
 }
 
-function hashChange(event) {
-    HashDataEdit();
-    if (event) event.preventDefault();
-}
-
-function HashDataEdit() {
-    var hash = window.location.hash.replace("#", "");
-
-    if (ArticleManager.normalizeLegacyHash(hash)) return;
-
-    if (ArticleManager.canHandleHash(hash)) {
-        ArticleManager.handleHash(hash);
-        return;
-    }
-
-    if (articleOnly) {
-        window.location.hash = "Articles_0";
-        return;
-    }
-
-    if (hash === "") {
-        BackToList();
-        return;
-    }
-
-    if (parseInt(hash) === 0) {
-        keyId = 0;
-        DirectoryId = 0;
-        FormDataClear();
-        MoveToContent();
-        return;
-    }
-
-    if (!isNaN(hash)) {
-        MoveToContent();
-        co.Directory.Get(parseInt(hash)).done(function (result) {
-            if (result != null) {
-                DirectoryId = result.id;
-                FormDataSet(result);
-            } else {
-                window.location.hash = "";
-            }
-        });
-    }
-}
-
 function contentReady(e) {
     directory_list = e;
-    HashDataEdit();
+    if (hashPage) hashPage.refresh();
 }
 
 function editButtonClicked(e) {
     keyId = e.row.key;
-    window.location.hash = String(keyId);
+    navigate(String(keyId));
 }
 
 function reladataButtonClicked(e) {
@@ -196,7 +235,7 @@ function reladataButtonClicked(e) {
     }
 
     if (type === "Articles") {
-        window.location.hash = type + "_" + e.row.key;
+        navigate(type + "_" + e.row.key);
     } else {
         co.sweet.warn("尚未開放", "目前僅文章可編輯查看");
     }
@@ -225,6 +264,7 @@ function deleteButtonClicked(e) {
 }
 
 function FormDataClear() {
+    co.Form.clear("DirectorytForm");
     $DirectorytTags.TagDataClear();
     WebmenuDataClear();
     keyId = 0;
@@ -268,7 +308,7 @@ function AddUp(successText, errorText) {
         menuId = webmenu_list[webmenu_list.length - 1].FK_MId;
     }
 
-    co.Directory.AddUp({
+    return co.Directory.AddUp({
         Id: keyId,
         Title: $title_text.val(),
         Description: $description_text.val(),
@@ -293,15 +333,23 @@ function MoveToContent() {
 
 function BackToList() {
     if (articleOnly) {
-        window.location.hash = "Articles_0";
+        navigate("Articles_0");
         return;
     }
 
+    if (hashPage && hashPage.getHash().toLowerCase() !== "list") {
+        hashPage.goList();
+        return;
+    }
+
+    ShowDirectoryList();
+}
+
+function ShowDirectoryList() {
     $("#pages>.card").addClass("d-none");
     $("#DirectoryList,#TopLine").removeClass("d-none");
     DirectoryId = 0;
     DirectoryType = "n";
-    if (window.location.hash !== "") window.location.hash = "";
 }
 
 window.ContentManagementDirectoryPageReady = PageReady;

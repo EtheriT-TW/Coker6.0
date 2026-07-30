@@ -95,39 +95,55 @@ let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {}
         return String(value ?? "").trim().toLowerCase();
     }
 
+    function bindArticleFileArea($root) {
+        co.File.bindListFile($root, {
+            files: total_files,
+            add: UploadListAdd,
+            clear: UploadPreviewFrameClear,
+            sort: SortChange
+        });
+    }
+
+    function navigate(hash) {
+        if ("function" == typeof articleManagerOptions.navigate) {
+            articleManagerOptions.navigate(hash);
+            return;
+        }
+
+        window.location.hash = hash;
+    }
+
     function BackToList() {
-        if (articleOnly) return DirectoryId = 0, DirectoryType = "Articles", void ("#Articles_0" !== window.location.hash ? window.location.hash = "Articles_0" : MoveToItemList());
+        if (articleOnly) return DirectoryId = 0, DirectoryType = "Articles", void navigate("Articles_0");
         resetWorkspaceBackButton();
         $("#pages>.card").addClass("d-none"), $("#DirectoryList,#TopLine").removeClass("d-none"), 
-        DirectoryId = 0, DirectoryType = "n", window.location.hash = "";
+        DirectoryId = 0, DirectoryType = "n", "function" == typeof articleManagerOptions.backToDirectoryList && articleManagerOptions.backToDirectoryList();
     }
-    function MoveToItemList() {
-        const para = window.location.hash.replace("#", "").split("_");
-        plan = "", $("#pages>.card,#TopLine").addClass("d-none"), $("#DirectoryItemps").removeClass("d-none"), 
+    function MoveToItemList(route) {
+        plan = "", $("#pages>.card,#TopLine").addClass("d-none"), $("#ArticleWorkspace").removeClass("d-none"),
         articleOnly && ($("#TopLine").removeClass("d-none"), $("#TopLine .title").text("文章管理")), 
         resetWorkspaceBackButton(),
-        0 == $(`#DirectoryItemps>.${para[0].toLowerCase()}`).removeClass("d-none").length ? BackToList() : para.length > 1 && !isNaN(para[1]) && (DirectoryId = parseInt(para[1]), 
-        DirectoryType = para[0], "function" == typeof articleManagerOptions.setDirectoryContext && articleManagerOptions.setDirectoryContext(DirectoryId, DirectoryType), 
+        0 == $("#ArticleList").removeClass("d-none").length ? BackToList() : (DirectoryId = Number(route.directoryId || 0),
+        DirectoryType = "Articles", "function" == typeof articleManagerOptions.setDirectoryContext && articleManagerOptions.setDirectoryContext(DirectoryId, DirectoryType),
         $("body").removeClass("grapesEdit"), $(".linkToFront").addClass("d-none"), "Articles" === DirectoryType ? (directoryDatailList.component.refresh(), 
         $(".data_upload").each((function() {
             UploadPreviewFrameClear($(this));
-        })), $(".data_upload > ul > .upload_list").remove(), total_files = [], $(".data_upload").remove()) : BackToList());
+        })), $(".data_upload > ul > .upload_list").remove(), total_files.length = 0, $(".data_upload").remove()) : BackToList());
     }
-    function MoveToItemArticle() {
-        const para = window.location.hash.replace("#", "").split("_");
+    function MoveToItemArticle(route) {
         if ($("#pages>.card,#TopLine").addClass("d-none"), $ArticletTags && "function" == typeof $ArticletTags.TagDataClear && $ArticletTags.TagDataClear(), 
-        para.length > 2 && !isNaN(para[1]) && !isNaN(para[2])) {
-            const id = parseInt(para[2]);
-            switch (DirectoryId = parseInt(para[1]), "function" == typeof articleManagerOptions.setDirectoryContext && articleManagerOptions.setDirectoryContext(DirectoryId, "Articles"), 
-            para[0]) {
-              case "ArticlesEditor":
+        route && Number.isInteger(route.directoryId) && Number.isInteger(route.articleId)) {
+            const id = route.articleId;
+            switch (DirectoryId = route.directoryId, "function" == typeof articleManagerOptions.setDirectoryContext && articleManagerOptions.setDirectoryContext(DirectoryId, "Articles"),
+            route.mode) {
+              case "article-editor":
                 const _dfr = $.Deferred();
-                articleOnly ? ($("#DirectoryItemps").data("dir", {
+                articleOnly ? ($("#ArticleWorkspace").data("dir", {
                     id: 0,
                     title: "全部",
                     tagDatas: []
                 }), _dfr.resolve()) : co.Directory.Get(DirectoryId).done((result => {
-                    $("#DirectoryItemps").data("dir", result), _dfr.resolve();
+                    $("#ArticleWorkspace").data("dir", result), _dfr.resolve();
                 })), co.Form.clear("ArticletForm"), setArticlePopularValue(0), syncAdvancedSettingsVisibility(null), id > 0 ? co.Articles.GetDataOne(id).done((function(result) {
                     null != result ? (ArticletId = result.id, setArticleSaveMode(!0 === result.canSave || !0 === result.CanSave), 
                     result.startEndDate = 0, result.sortCheckbox = 1, result.ImageUpload = 1, $(".linkToFront").removeClass("d-none").attr("href", `${defaultUrl}/${OrgName}/search/article/${result.id}`), 
@@ -138,19 +154,19 @@ let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {}
                             "data-edit-type": area.type,
                             "data-key": area.key.toLowerCase(),
                             "data-label": area.label
-                        }), item_upload_frame.attr("data-upload-id", `${area.key.toLowerCase()}file`), $("#ArticleFileAreas").append(item);
+                        }), item_upload_frame.attr("data-upload-id", `${area.key.toLowerCase()}file`), bindArticleFileArea(item), $("#ArticleFileAreas").append(item);
                     })), co.File.ListFileInit(), co.Form.insertData(result, "#ArticletForm"), setArticlePopularValue(result.popular ?? result.Popular), 
                     syncAdvancedSettingsVisibility(result), $ArticletTags.TagDataSet(result.tagDatas),
                     result.files.forEach((file => {
                         UploadListAdd(file, $(`.data_upload[data-key="${file.areakey.toLowerCase()}"]`));
                     }))) : BackToList();
                 })) : (setArticleSaveMode(!0), _dfr.promise().done((function() {
-                    const directory = $("#DirectoryItemps").data("dir");
+                    const directory = $("#ArticleWorkspace").data("dir");
                     directory && Array.isArray(directory.tagDatas) && $ArticletTags.TagDataSet(directory.tagDatas);
                 }))), $("#ArticleContent").removeClass("d-none");
                 break;
 
-              case "ArticlesEditorView":
+              case "article-canvas":
                 $("#HtmlCanvas,#TopLine").removeClass("d-none"), $("#gjs").data("id", id), 
                 setPage(id);
                 break;
@@ -173,6 +189,7 @@ let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {}
             "data-edit-type": "Files"
         }), $("#ArticleFileAreas").append(item), co.File.ListFileInit()), $target = $("#UselessFileFrame"), 
         isUseLessFile = !0);
+        bindArticleFileArea($target);
         var item, item_name = (item = $($("#TemplateUploadList").html()).clone()).find("input[name='name']"), item_serno = item.find(".ser_no"), item_size = item.find("span.size"), item_btn_preview = item.find(".btn_preview"), item_btn_remove = item.find(".btn_remove"), item_btn_lock = item.find(".btn_lock"), item_visible = item.find("label.visible");
         item_visible.find("input").prop("checked", !0), isUseLessFile && (item.prepend('<select class="form-select form-select-sm area_select" aria-label="AreaKey Select" name="editkey"><option selected disabled value="">請選擇對應區塊</option></select>'), 
         $(".data_upload").not("#UselessFileFrame").each((function() {
@@ -266,8 +283,88 @@ let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {}
         $self.find(".select_frame").removeClass("d-flex"), $self.find(".youtube_preview").empty(), 
         $self.find(".media_preview > div").empty();
     }
-    function canHandleHash(hash) {
-        return /^Articles(?:Editor|EditorView)?_\d+(?:_\d+)?$/.test(hash);
+    function parseRoute(hash) {
+        const value = String(hash || "").trim();
+        let match = /^Articles_(\d+)$/i.exec(value);
+
+        if (match) {
+            return {
+                raw: value,
+                scope: "article",
+                mode: "article-list",
+                pageKey: "ArticleList",
+                title: "文章列表",
+                directoryId: parseInt(match[1], 10),
+                articleId: 0
+            };
+        }
+
+        match = /^ArticlesEditor_(\d+)_(\d+)$/i.exec(value);
+        if (match) {
+            return {
+                raw: value,
+                scope: "article",
+                mode: "article-editor",
+                pageKey: "ArticleEditor",
+                title: parseInt(match[2], 10) > 0 ? "編輯文章" : "新增文章",
+                directoryId: parseInt(match[1], 10),
+                articleId: parseInt(match[2], 10)
+            };
+        }
+
+        match = /^ArticlesEditorView_(\d+)_(\d+)$/i.exec(value);
+        if (match) {
+            return {
+                raw: value,
+                scope: "article",
+                mode: "article-canvas",
+                pageKey: "ArticleCanvas",
+                title: "文章內容編輯",
+                directoryId: parseInt(match[1], 10),
+                articleId: parseInt(match[2], 10)
+            };
+        }
+
+        if (!articleOnly) return null;
+
+        if (!value || value.toLowerCase() === "list") {
+            return {
+                raw: "Articles_0",
+                scope: "article",
+                mode: "article-list",
+                pageKey: "ArticleList",
+                title: "文章管理",
+                directoryId: 0,
+                articleId: 0
+            };
+        }
+
+        match = /^(\d+)-1$/.exec(value);
+        if (match) {
+            return {
+                raw: value,
+                scope: "article",
+                mode: "article-canvas",
+                pageKey: "ArticleCanvas",
+                title: "文章內容編輯",
+                directoryId: 0,
+                articleId: parseInt(match[1], 10)
+            };
+        }
+
+        if (/^\d+$/.test(value)) {
+            return {
+                raw: value,
+                scope: "article",
+                mode: "article-editor",
+                pageKey: "ArticleEditor",
+                title: "編輯文章",
+                directoryId: 0,
+                articleId: parseInt(value, 10)
+            };
+        }
+
+        return null;
     }
     setPage = function(id) {
         $("body").addClass("grapesEdit"), showCanvasBackButton(), editor || (editor = GrapesEditorManager.create("article", {
@@ -322,9 +419,9 @@ let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {}
     }, window.articleRowPrepared = function(e) {
         "data" === e.rowType && e.data && (articleOnly || !0 === e.data.CanEdit || !0 === e.data.CanSave || $(e.rowElement).addClass("article-readonly-row").attr("title", "此文章目前僅能檢視，不能儲存或刪除"));
     }, window.editArticlesButtonClicked = function(e) {
-        window.location.hash = `ArticlesEditor_${DirectoryId}_${e.row.key}`;
+        navigate(`ArticlesEditor_${DirectoryId}_${e.row.key}`);
     }, window.paletteArticlesButtonClicked = function(e) {
-        window.location.hash = `ArticlesEditorView_${DirectoryId}_${e.row.key}`;
+        navigate(`ArticlesEditorView_${DirectoryId}_${e.row.key}`);
     }, window.deleteArticlesButtonClicked = function(e) {
         articleOnly || e && e.row && e.row.data && (!0 === e.row.data.CanEdit || !0 === e.row.data.CanSave) ? Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", (function() {
             co.Articles.Delete(e.row.key).done((function(result) {
@@ -341,19 +438,37 @@ const ArticleManager = {
                     "true" !== form.dataset.advancedValidationBound && (form.addEventListener("invalid", (function(event) {
                         event.target.closest("#ArticleAdvancedSettings") && (document.getElementById("ArticleAdvancedSettings").open = !0);
                     }), !0), form.dataset.advancedValidationBound = "true");
-                    form.addEventListener("submit", (function(event) {
-                        if (event.preventDefault(), !articleCanSave) return event.stopPropagation(), void showArticleReadonlyMessage();
-                        plan = event.submitter && event.submitter.classList.contains("btn_to_canvas") ? "canvas" : "",
-                        form.checkValidity() ? Coker.sweet.confirm("即將儲存", "儲存後將顯示於文章列表", "儲存", "取消", (function() {
+                    co.Form.init(form.getAttribute("id"), function(_formId, context) {
+                        if (!articleCanSave) {
+                            showArticleReadonlyMessage();
+                            return null;
+                        }
+
+                        plan = context.submitter && context.submitter.classList.contains("btn_to_canvas") ? "canvas" : "";
+
+                        return co.Form.confirmSubmit({
+                            title: "即將儲存",
+                            text: "儲存後將顯示於文章列表",
+                            confirmButtonText: "儲存",
+                            cancelButtonText: "取消",
+                            onConfirm: function() {
+                                const saveDeferred = $.Deferred();
                             !function(success_text) {
                                 const data = co.Form.getJson($(ArticletForms).attr("id"));
-                                null != $("#ImageUpload .img_input_frame").data("delectList") && co.File.DeleteFileById({
+                                const pendingRequests = [];
+                                null != $("#ImageUpload .img_input_frame").data("delectList") && pendingRequests.push(wrapRequest(co.File.DeleteFileById({
                                     Sid: data.id,
                                     Type: 6,
                                     Fid: $("#ImageUpload .img_input_frame").data("delectList")
-                                }), co.Articles.AddUp(data).done((result => {
+                                }), {
+                                    action: "圖片刪除",
+                                    areaKey: "ImageUpload",
+                                    fileName: "文章圖片",
+                                    fileId: null,
+                                    tempId: null
+                                })), co.Articles.AddUp(data).done((result => {
                                     co.sweet.loading();
-                                    var requests = [];
+                                    var requests = pendingRequests;
                                     const imageFileData = $("#ImageUpload .img_input").data("file");
                                     if (null != imageFileData && null != imageFileData.File && 0 == imageFileData.id) {
                                         var formData = new FormData;
@@ -446,7 +561,8 @@ const ArticleManager = {
                                                     }
                                                 }
                                             })), errortext.length > 0 ? co.sweet.error("錯誤", errortext.join("<br>")) : co.sweet.success(success_text, null, !0), 
-                                            directoryDatailList.component.refresh(), location.hash = "canvas" == plan ? `ArticlesEditorView_${DirectoryId}_${result.message}` : `Articles_${DirectoryId}`;
+                                            directoryDatailList && directoryDatailList.component.refresh(), navigate("canvas" == plan ? `ArticlesEditorView_${DirectoryId}_${result.message}` : `Articles_${DirectoryId}`),
+                                            saveDeferred.resolve();
                                         }
                                         isFileUploaded || isFileUpdated || isFileDeleted ? co.Articles.RebuildContentWithFiles(parseInt(result.message)).done((function(rebuildResult) {
                                             rebuildResult && !0 === rebuildResult.success || results.push({
@@ -470,22 +586,24 @@ const ArticleManager = {
                                         })) : finishSave(results);
                                     }));
                                 })).fail((function() {
-                                    co.sweet.error("文章儲存發生錯誤");
+                                    co.sweet.error("文章儲存發生錯誤"), saveDeferred.reject();
                                 }));
                             }("已成功儲存");
-                        })) : event.stopPropagation(), form.classList.add("was-validated");
-                    }), !1);
+                                return saveDeferred.promise();
+                            }
+                        });
+                    });
                 })), $("#ArticleContent .btn_back").off("click.articleManager").on("click.articleManager", (function() {
-                    const dir = $("#DirectoryItemps").data("dir") || {
+                    const dir = $("#ArticleWorkspace").data("dir") || {
                         id: 0,
                         title: "全部"
                     }, listTitle = articleOnly ? "全部文章列表" : `${dir.title}文章列表`;
                     Coker.sweet.confirm(`返回${listTitle}`, "資料將不被保存", "確定", "取消", (function() {
-                        directoryDatailList && directoryDatailList.component.refresh(), window.location.hash = `Articles_${articleOnly ? 0 : dir.id}`;
+                        directoryDatailList && directoryDatailList.component.refresh(), navigate(`Articles_${articleOnly ? 0 : dir.id}`);
                     }));
-                })), $("#DirectoryItemps .btn_add").off("click.articleManager").on("click.articleManager", (function() {
-                    window.location.hash = `ArticlesEditor_${DirectoryId}_0`;
-                })), $("#DirectoryItemps .btn_back").off("click.articleManager").on("click.articleManager", (function() {
+                })), $("#ArticleWorkspace .btn_add").off("click.articleManager").on("click.articleManager", (function() {
+                    navigate(`ArticlesEditor_${DirectoryId}_0`);
+                })), $("#ArticleWorkspace .btn_back").off("click.articleManager").on("click.articleManager", (function() {
                     articleOnly || "function" != typeof articleManagerOptions.backToDirectoryList || articleManagerOptions.backToDirectoryList();
                 })), $(".btn_permission_details").off("click.articleManager").on("click.articleManager", (function(event) {
                     event.preventDefault();
@@ -501,17 +619,12 @@ const ArticleManager = {
                     ArticletForms.find(".describe .count").text($(this).val().length);
                 }));
             },
-            normalizeLegacyHash: function(hash) {
-                return !(!articleOnly || ("" === hash ? (window.location.hash = "Articles_0", 0) : /^\d+-1$/.test(hash) ? (window.location.hash = `ArticlesEditorView_0_${parseInt(hash)}`, 
-                0) : !/^\d+$/.test(hash) || (window.location.hash = `ArticlesEditor_0_${hash}`, 
-                0)));
-            },
-            canHandleHash: canHandleHash,
-            handleHash: function(hash) {
-                if (!canHandleHash(hash)) return !1;
-                if (hash.indexOf("Editor") >= 0) return MoveToItemArticle(), !0;
+            parseRoute: parseRoute,
+            enterRoute: function(route) {
+                if (!route || "article" !== route.scope) return !1;
+                if ("article-list" !== route.mode) return MoveToItemArticle(route), !0;
                 const openList = function() {
-                    directoryDatailList ? MoveToItemList() : setTimeout(openList, 50);
+                    directoryDatailList ? MoveToItemList(route) : setTimeout(openList, 50);
                 };
                 return openList(), !0;
             }

@@ -1,14 +1,53 @@
 ﻿Coker.Object.merge(Coker.File, {
-    // 容器有自己的 data("files") 就用它，否則退回全域 total_files（維持既有頁面行為）
+    _defaultFiles: [],
+
+    bindListFile: function ($root, options) {
+        if (!$root || !$root.length) return;
+
+        const settings = options || {};
+        if (Array.isArray(settings.files)) {
+            $root.data("files", settings.files);
+        }
+
+        $root.data("file-handlers", {
+            add: settings.add,
+            clear: settings.clear,
+            sort: settings.sort
+        });
+    },
+
+    invokeListFileHandler: function ($root, name, args) {
+        const handlers = $root && $root.data("file-handlers");
+        const scopedHandler = handlers && handlers[name];
+        const legacyHandlerName = {
+            add: "UploadListAdd",
+            clear: "UploadPreviewFrameClear",
+            sort: "SortChange"
+        }[name];
+        const handler = typeof scopedHandler === "function"
+            ? scopedHandler
+            : window[legacyHandlerName];
+
+        if (typeof handler !== "function") {
+            throw new Error(`ListFile handler is not configured: ${name}`);
+        }
+
+        return handler.apply(null, args || []);
+    },
+
+    // 新模組使用容器綁定的 store；舊頁面仍可使用 window.total_files。
     filesOf: function ($root) {
-        return ($root && $root.data("files")) || total_files;
+        const scopedFiles = $root && $root.data("files");
+        if (Array.isArray(scopedFiles)) return scopedFiles;
+        if (Array.isArray(window.total_files)) return window.total_files;
+        return co.File._defaultFiles;
     },
     ListFileInit: function () {
         co.File.fileUploadWithPreview();
         $(".btn_upload_add > button").on("click", function (e) {
             e.preventDefault();
             var $self = $(this).parents(".data_upload");
-            UploadListAdd(null, $self);
+            co.File.invokeListFileHandler($self, "add", [null, $self]);
             if ($self.data("uploadtype") == 5) {
                 $self.find(".preview_frame>.upload_frame input").trigger("click");
             }
@@ -100,9 +139,9 @@
                         var move = startIndex - newIndex;
                         $ser_no.val(newIndex);
                         if (move < 0) {
-                            SortChange($uploadList, "bigger", ui.item.data("serno"), $ser_no.val());
+                            co.File.invokeListFileHandler(ui.item.parents(".data_upload"), "sort", [$uploadList, "bigger", ui.item.data("serno"), $ser_no.val()]);
                         } else if (move >= 0) {
-                            SortChange($uploadList, "smaller", $ser_no.val(), ui.item.data("serno"));
+                            co.File.invokeListFileHandler(ui.item.parents(".data_upload"), "sort", [$uploadList, "smaller", $ser_no.val(), ui.item.data("serno")]);
                         }
                         ui.item.data("serno", $ser_no.val());
                         ui.item.data("startIndex", newIndex)
@@ -174,15 +213,15 @@
                                             obj["IsDelete"] = false;
                                             obj["Name"] = result.origin.name;
                                             co.File.filesOf($root).push(obj);
-                                            UploadListAdd(obj, $root);
+                                            co.File.invokeListFileHandler($root, "add", [obj, $root]);
                                         }).catch(function (err) {
-                                            UploadPreviewFrameClear($root);
+                                            co.File.invokeListFileHandler($root, "clear", [$root]);
                                             console.log($`發生錯誤：${err}`);
                                             co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
                                         })
 
                                     }).catch(function (err) {
-                                        UploadPreviewFrameClear($root);
+                                        co.File.invokeListFileHandler($root, "clear", [$root]);
                                         console.log($`發生錯誤：${err}`);
                                         co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
                                     })
@@ -222,13 +261,13 @@
                                         co.File.filesOf($root).push(obj);
                                     }).catch(function (err) {
                                         console.log($`發生錯誤：${err}`);
-                                        UploadPreviewFrameClear($root);
+                                        co.File.invokeListFileHandler($root, "clear", [$root]);
                                         co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
                                     })
 
                                 }).catch(function (err) {
                                     console.log($`發生錯誤：${err}`);
-                                    UploadPreviewFrameClear($root);
+                                    co.File.invokeListFileHandler($root, "clear", [$root]);
                                     co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
                                 })
                             })
@@ -262,7 +301,7 @@
 
                             file_num--;
                             temp_files.forEach(function (file) {
-                                UploadListAdd(file, $root);
+                                co.File.invokeListFileHandler($root, "add", [file, $root]);
                             })
                             break;
                         case 5:
@@ -287,8 +326,8 @@
                             })
                             file_num--;
                             temp_files.forEach(function (file, index) {
-                                if (index > 0) UploadListAdd(null, $root);
-                                UploadListAdd(file, $root);
+                                if (index > 0) co.File.invokeListFileHandler($root, "add", [null, $root]);
+                                co.File.invokeListFileHandler($root, "add", [file, $root]);
                             })
                             break;
                     }
@@ -326,7 +365,7 @@
                 var $root = $(this).parents(".data_upload");
                 let file_num = $root.data("file_num");
                 if ($self.data("edit")) {
-                    if ($self.data("serno") < file_num) { SortChange($uploadList, "bigger", $self.data("serno"), file_num); }
+                    if ($self.data("serno") < file_num) { co.File.invokeListFileHandler($root, "sort", [$uploadList, "bigger", $self.data("serno"), file_num]); }
                     var store = co.File.filesOf($root);
                     if (typeof ($self.data("id")) != "undefined") {
                         store.find(item => item["Id"] == $self.data("id"))["IsDelete"] = true;
@@ -337,7 +376,7 @@
                         store.forEach(file => {
                             file["TempId"] = file["TempId"] > tempid ? file["TempId"] - 1 : file["TempId"];
                         })
-                    }                    UploadPreviewFrameClear($root);
+                    }                    co.File.invokeListFileHandler($root, "clear", [$root]);
                     $self.remove();
                     file_num -= 1;
                     $root.data("file_num", file_num);

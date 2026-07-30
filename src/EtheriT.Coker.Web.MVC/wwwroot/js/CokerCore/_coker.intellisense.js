@@ -196,6 +196,9 @@
  * @property {(dto:any)=>AjaxPromise<any>} fileDataChange
  * @property {(key:any)=>AjaxPromise<any>} Delete
  * @property {(dto:any)=>AjaxPromise<any>} DeleteFileById
+ * @property {(root:any, options:{files?:Array<any>,add?:Function,clear?:Function,sort?:Function})=>void} bindListFile
+ * @property {(root:any, name:string, args?:Array<any>)=>any} invokeListFileHandler
+ * @property {(root:any)=>Array<any>} filesOf
  *
  * @property {(elementId:string, opt?:any)=>any} UploadImageInit
  * @property {(elementId:string, opt?:any)=>any} UploadFileInit
@@ -214,6 +217,13 @@
  * --------------------------------------------------------- */
 
 /**
+ * @typedef {Object} CokerFormSubmitContext
+ * @property {SubmitEvent} event
+ * @property {HTMLFormElement} form
+ * @property {HTMLElement|null} submitter
+ */
+
+/**
  * @typedef {Object} CokerFormApi
  * @property {(name:string)=>string} _normalizeFieldName
  * @property {(scope:any)=>any} _resolveScope
@@ -225,7 +235,7 @@
  * @property {(scope?:any)=>void} initNumberFormatter
  * @property {(formId:string, isArrayType?:boolean)=>AnyObject} getJson
  * @property {(fieldsetId:string, isArrayType?:boolean)=>AnyObject} getJsonByFieldset
- * @property {(formId:string, fn?:Function)=>void} init
+ * @property {(formId:string, fn?:(formId:string, context:CokerFormSubmitContext)=>any)=>void} init
  * @property {(formId:string)=>void} clear
  * @property {(formId:string, type?:number)=>FormData} getFileForm
  * @property {(options:{title?:string,text?:string,confirmButtonText?:string,cancelButtonText?:string,onConfirm?:Function})=>JQuery.Promise<any>} confirmSubmit

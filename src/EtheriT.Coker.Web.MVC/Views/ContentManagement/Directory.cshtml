@@ -1,17 +1,13 @@
 ﻿@using DevExtreme.AspNet.Mvc
-@using EtheriT.Coker.Application.Shared.Dto.Article;
 @using EtheriT.Coker.Application.Shared.Dto.Directory
-@using EtheriT.Coker.Application.Shared.Dto.EnterAd
-@using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
+@using EtheriT.Coker.Web.MVC.Models.ContentManagement
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @using EtheriT.Coker.Web.MVC.Startup
 @using EtheriT.Coker.Web.MVC.Common
 @using EtheriT.Coker.Web.MVC.Extensions
 @{
     var articleOnly = Convert.ToBoolean(ViewData["ArticleOnly"] ?? false);
-    var articleListUrl = articleOnly
-        ? "/api/Article/GetAllList"
-        : "/api/Directory/GetDirectoryDetailList";
+    var articleContentModel = new ArticleContentViewModel { ArticleOnly = articleOnly };
     ViewData["Title"] = articleOnly ? "Article" : "Directory";
     var canUseFacet = !articleOnly && Context.HasPermission(CokerContextKeys.DirectoryFacet);
 }
@@ -30,7 +26,7 @@
 <div id="ContentManagementWorkspace" data-article-only="@articleOnly.ToString().ToLowerInvariant()">
     <div id="TopLine" class="py-2 px-4">
         <div class="d-flex">
-            <div class="title fw-bold fs-3">@(articleOnly ? "文章管理" : "目錄管理")</div>
+            <div class="title fw-bold fs-3" data-hash-title>@(articleOnly ? "文章管理" : "目錄管理")</div>
             <a class="btn btn-primary text-decoration-none align-self-center @(articleOnly ? "d-none" : "")"
                data-role="workspace-back"
                data-default-text="返回選單"
@@ -40,7 +36,7 @@
     </div>
     @await Component.InvokeAsync(nameof(Modal), new { dispaly = "TagSelectModal" })
     <div id="pages">
-        <div id="DirectoryList" class="card border-0">
+        <div id="DirectoryList" class="card border-0" data-hash-page="DirectoryList">
             @await Component.InvokeAsync(nameof(Modal), new { dispaly = "PermissionDetailsModal" })
             <div class="card-body position-relative">
                 <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
@@ -102,7 +98,7 @@
                                 )
             </div>
         </div>
-        <div id="DirectoryContent" class="card border-0 d-none">
+        <div id="DirectoryContent" class="card border-0 d-none" data-hash-page="DirectoryContent">
             <div class="card-header d-flex justify-content-between">
                 <div class="fw-bold fs-5 d-flex align-items-center">
                     <button class="btn_back d-flex bg-transparent border-0 align-items-center">
@@ -166,103 +162,7 @@
             </form>
         </div>
 
-        <div id="HtmlCanvas" class="card border-0 d-none">
-            <div id="gjs"></div>
-        </div>
-
-        <div id="DirectoryItemps" class="card border-0 d-none">
-            <div class="articles d-none">
-                <div class="card-body position-relative">
-                    <div class="d-flex position-absolute z-index-up">
-                        <button class="btn_back border btn-outline-light text-black d-flex p-1 rounded text-decoration-none @(articleOnly ? "d-none" : "")">
-                            <span class="material-symbols-outlined">arrow_back</span>
-                        </button>
-                        <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded text-decoration-none ml-3">
-                            <span class="material-symbols-outlined">add</span>
-                        </button>
-                    </div>
-                    @(
-                                    Html.DevExtreme().DataGrid<DirectoryReleInfoDto>()
-                                        .DataSource(d => d.RemoteController().Key("Id")
-                                        .LoadUrl(articleListUrl).LoadMethod("Get")
-                                        .LoadParams(new
-                                        {
-                                            id = new JS("GetDirectoryId"),
-                                            type = new JS("GetDirectoryType")
-                                        })
-                                        )
-                                        .OnContentReady("DirectoryDatailListReady")
-                                        .OnRowPrepared("articleRowPrepared")
-                                        .HeaderFilter(headerFilter => headerFilter.Visible(true))
-                                        .RemoteOperations(true)
-                                        .ColumnHidingEnabled(true)
-                                        .ShowBorders(true)
-                                        .FilterRow(filterRow => filterRow
-                                        .Visible(true)
-                                        .ApplyFilter(GridApplyFilterMode.Auto)
-                                        )
-                                        .SearchPanel(searchPanel => searchPanel
-                                        .Visible(true)
-                                        .Width(480)
-                                        .Placeholder("請輸入要搜尋的資料")
-                                        )
-                                        .ShowRowLines(true)
-                                        .Columns(c =>
-                                        {
-                                            c.AddFor(e => e.Id).Caption("編號").Width(90);
-                                            c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90);
-                                            c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90);
-                                            c.AddFor(e => e.Title).Caption("標題");
-                                            c.Add().DataField("Tags").Caption("標籤").Visible(articleOnly).MinWidth(150);
-                                            c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90);
-                                            c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(false);
-                                            c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(false);
-                                            c.Add().DataField(articleOnly ? "SerNO" : "SerNo").Caption("排序").Width(90);
-                                            c.Add().DataField("Popular").Caption("人氣值").Visible(articleOnly).Width(90);
-                                            c.Add().DataField("PopularVisible").Caption("顯示人氣值").Visible(articleOnly).Width(120);
-                                            c.AddFor(e => e.LastModificationTime).SortOrder(SortOrder.Desc).Format("yyyy/MM/dd HH:mm").Caption("最後編輯日期").Width(160);
-                                            c.Add()
-                                            .Type(GridCommandColumnType.Buttons)
-                                            .Buttons(b =>
-                                            {
-                                                b.Add().Name("edit").Visible(perm.CanUpdate).OnClick("editArticlesButtonClicked");
-                                                b.Add().Icon("palette").Visible(perm.CanUpdate).Name("edit").OnClick("paletteArticlesButtonClicked");
-                                                if (articleOnly)
-                                                {
-                                                    b.Add().Name("delete").Visible(perm.CanRemove).OnClick("deleteArticlesButtonClicked");
-                                                }
-                                                else
-                                                {
-                                                    b.Add()
-                                                        .Name("delete")
-                                                        .Visible(new JS("function(e) { return " + perm.CanRemove.ToString().ToLower() + " && e.row && e.row.data && e.row.data.CanEdit === true; }"))
-                                                        .OnClick("deleteArticlesButtonClicked");
-                                                }
-                                            });
-                                        })
-                                        .ColumnAutoWidth(true)
-                                        .Paging(paging => paging.PageSize(30))
-                                        .Pager(pager =>
-                                        {
-                                            pager.Visible(true);
-                                            pager.ShowPageSizeSelector(true);
-                                            pager.AllowedPageSizes(new[] { 10, 20, 30 });
-                                            pager.ShowInfo(true);
-                                        })
-                                        .Editing(editing =>
-                                        {
-                                            editing.AllowDeleting(true);
-                                            editing.AllowUpdating(true);
-                                            editing.UseIcons(true);
-                                        })
-                                    )
-                </div>
-            </div>
-            <div class="products d-none"></div>
-            <div class="menus d-none"></div>
-        </div>
-
-        @await Html.PartialAsync("_ArticleContent")
+        @await Html.PartialAsync("_ArticleContent", articleContentModel)
     </div>
 
 </div>

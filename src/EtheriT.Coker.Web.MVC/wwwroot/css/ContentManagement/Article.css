@@ -34,6 +34,20 @@ textarea.h300 {
     z-index: 1;
 }
 
+#ArticleWorkspace .article-readonly-row > td {
+    background-color: #fff7e6 !important;
+    color: #8a5a00;
+}
+
+#ArticleWorkspace .article-readonly-row:hover > td {
+    background-color: #ffefc2 !important;
+}
+
+#ArticleWorkspace .article-readonly-row .dx-link-delete,
+#ArticleWorkspace .article-readonly-row .dx-icon-trash {
+    opacity: 0.35;
+}
+
 /* Article Content */
 #ArticleContent .card-header {
     background-color: var(--color-gray-bg-dark);

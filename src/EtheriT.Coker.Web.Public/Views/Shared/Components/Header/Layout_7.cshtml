@@ -46,7 +46,7 @@
 			</div>
 			<div class="icon-search is-block">
 				<div class="icon-search-bg d-flex justify-content-center align-items-center">
-					<a href="/@ViewData["OrgName"]/Search" class="fa-solid fa-search mx-2"></a>
+					<a href="/@ViewData["OrgName"]/Search" class="fa-solid fa-search mx-2 notranslate"></a>
 				</div>
 			</div>
 		</div>
@@ -77,6 +77,7 @@
 						<span class="material-symbols-outlined icon position-absolute">search</span>
 					</div>
 					<div id="google_translate_element"></div>
+					<div id="translate_switch" class="align-items-center gap-1" translate="no"></div>
 					@if (ViewBag.ShoppingEnable?? false && ViewBag.HasShoppingCar ?? false && ViewBag.storeBuyState.IndexOf("noPay") < 0)
 					{
 						<div id="Cart_Dropdown_Parent" class="d-flex px-1">

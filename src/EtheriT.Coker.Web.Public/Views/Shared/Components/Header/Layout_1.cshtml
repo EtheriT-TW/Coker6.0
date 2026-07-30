@@ -202,6 +202,7 @@
                 <span class="text-nowrap ms-2 d-none d-lg-flex">搜尋</span>
             </a>
             <div id="google_translate_element"></div>
+            <div id="translate_switch" class="align-items-center gap-1" translate="no"></div>
             @if ((ViewBag.ShoppingEnable ?? false) && (ViewBag.HasShoppingCar ?? false) && ((ViewBag.storeBuyState ?? "").IndexOf("noPay") < 0))
             {
                 <div id="Cart_Dropdown_Parent" class="d-flex px-1">

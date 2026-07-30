@@ -85,12 +85,35 @@
     <div class="row g-4 mt-1">
         <div class="col-12 col-xl-8">
             <div class="card dashboard-panel h-100">
-                <div class="card-header d-flex align-items-center justify-content-between pb-0">
-                    <div>
-                        <h6 class="mb-1">最近 7 天瀏覽趨勢</h6>
-                        <p class="text-sm text-secondary mb-0">有效瀏覽人次與不重複訪客</p>
+                <div class="card-header dashboard-card-header pb-0">
+                    <div class="dashboard-heading-row">
+                        <div>
+                            <h6 class="mb-1 traffic-title">最近 7 天瀏覽趨勢</h6>
+                            <p class="text-sm text-secondary mb-0">有效瀏覽人次與不重複訪客</p>
+                        </div>
+                        <div class="dashboard-traffic-actions">
+                            <span class="text-xs text-secondary traffic-updated-at"></span>
+                            <div class="dashboard-filter-row" role="group" aria-label="瀏覽趨勢統計區間">
+                                <button type="button" class="dashboard-filter-button traffic-range-button" data-days="1">今日</button>
+                                <button type="button" class="dashboard-filter-button traffic-range-button is-active" data-days="7">近七天</button>
+                                <button type="button" class="dashboard-filter-button traffic-range-button" data-days="30">近 30 天</button>
+                                <button type="button" class="dashboard-filter-button traffic-custom-toggle">自訂區間</button>
+                            </div>
+                        </div>
                     </div>
-                    <span class="text-xs text-secondary traffic-updated-at"></span>
+                    <div class="dashboard-custom-range" hidden>
+                        <label>
+                            <span>開始日期</span>
+                            <input type="date" class="form-control form-control-sm traffic-start-date" />
+                        </label>
+                        <span class="dashboard-date-separator">至</span>
+                        <label>
+                            <span>結束日期</span>
+                            <input type="date" class="form-control form-control-sm traffic-end-date" />
+                        </label>
+                        <button type="button" class="btn btn-sm btn-primary mb-0 traffic-custom-apply">套用</button>
+                        <span class="text-xs text-danger traffic-range-error" role="alert"></span>
+                    </div>
                 </div>
                 <div class="card-body pt-3">
                     <div class="dashboard-chart">
@@ -103,12 +126,20 @@
 
         <div class="col-12 col-xl-4">
             <div class="card dashboard-panel h-100">
-                <div class="card-header d-flex align-items-center justify-content-between pb-0">
-                    <div>
-                        <h6 class="mb-1">本日熱門頁面</h6>
-                        <p class="text-sm text-secondary mb-0">依有效瀏覽次數排序，最多顯示 5 筆</p>
+                <div class="card-header dashboard-card-header pb-0">
+                    <div class="dashboard-heading-row">
+                        <div>
+                            <h6 class="mb-1 popular-pages-title">本日熱門頁面</h6>
+                            <p class="text-sm text-secondary mb-0">依有效瀏覽次數排序，最多顯示 5 筆</p>
+                        </div>
+                        <span class="material-symbols-outlined text-info">local_fire_department</span>
                     </div>
-                    <span class="material-symbols-outlined text-info">local_fire_department</span>
+                    <div class="dashboard-filter-row" role="group" aria-label="熱門頁面統計區間">
+                        <button type="button" class="dashboard-filter-button popular-period-button is-active" data-period="today" data-title="本日">本日</button>
+                        <button type="button" class="dashboard-filter-button popular-period-button" data-period="week" data-title="近七天">近七天</button>
+                        <button type="button" class="dashboard-filter-button popular-period-button" data-period="month" data-title="本月">本月</button>
+                        <button type="button" class="dashboard-filter-button popular-period-button" data-period="year" data-title="今年">今年</button>
+                    </div>
                 </div>
                 <div class="card-body pt-3">
                     <div class="popular-page-list"></div>

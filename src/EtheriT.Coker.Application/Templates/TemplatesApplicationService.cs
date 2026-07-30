@@ -12,8 +12,8 @@ using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
 using EtheriT.Coker.Application.Shared.Dto.Processor;
 using System;
@@ -32,14 +32,13 @@ namespace EtheriT.Coker.Application.Templates
         private readonly LoginUserData loginUserData;
         private readonly StringHandler stringHandler;
         private readonly IMapper mapper;
-        private readonly IConfiguration configuration;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly IHtmlProcessor htmlProcessor;
         private readonly IHtmlSanitizeService htmlSanitizeService;
         public TemplatesApplicationService(
             CokerDbContext db, LoginUserData loginUserData, StringHandler stringHandler,
-            IMapper mapper, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IHtmlProcessor htmlProcessor,
+            IMapper mapper, IHttpContextAccessor httpContextAccessor, IHtmlProcessor htmlProcessor,
             IFileUploadAppService fileUploadAppService, IHtmlSanitizeService htmlSanitizeService
         )
         {
@@ -47,29 +46,30 @@ namespace EtheriT.Coker.Application.Templates
             this.loginUserData = loginUserData;
             this.mapper = mapper;
             this.stringHandler = stringHandler;
-            this.configuration = configuration;
             this.httpContextAccessor = httpContextAccessor;
             this.htmlProcessor = htmlProcessor;
             this.fileUploadAppService = fileUploadAppService;
             this.htmlSanitizeService = htmlSanitizeService;
         }
-        public async Task<TemplatesDto?> GetDefaultTemplatesAsync()
+        public async Task<TemplatesDto?> GetDefaultTemplatesAsync(long? websiteId = null)
         {
             var items = httpContextAccessor.HttpContext?.Items;
-            const string key = "CurrentTemplate";
+            var websiteID = websiteId is > 0
+                ? websiteId.Value
+                : await loginUserData.GetCommonWebsiteId();
+            var key = $"CurrentTemplate:{websiteID}";
             if (items != null && items.ContainsKey(key))
                 return items[key] as TemplatesDto;
 
             var templatesDto = new TemplatesDto();
-            var isFront = configuration.GetValue<long>("WebConfig:SiteId") != 0;
-            var WebsiteID = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
+            var isFront = loginUserData.IsisFront();
             try
             {
-                var website = await db.Websites.FirstOrDefaultAsync(e => e.Id == WebsiteID);
+                var website = await db.Websites.FirstOrDefaultAsync(e => e.Id == websiteID);
                 if (website == null) throw new Exception("找不到網站資料");
                 else if (!new List<int?> { 7, 8 }.Contains(website.LayoutType)) return null;
 
-                var qurry = await db.Templates.Include(e => e.Website).Where(x => x.FK_WebsiteID == WebsiteID && x.Enable).OrderByDescending(e => e.LastModificationTime ?? e.CreationTime).FirstOrDefaultAsync();
+                var qurry = await db.Templates.Include(e => e.Website).Where(x => x.FK_WebsiteID == websiteID && x.Enable).OrderByDescending(e => e.LastModificationTime ?? e.CreationTime).FirstOrDefaultAsync();
                 if (qurry != null)
                 {
                     mapper.Map(qurry, templatesDto);
@@ -98,7 +98,7 @@ namespace EtheriT.Coker.Application.Templates
                                     try
                                     {
                                         var sanitized = await EnsureFooterDisplayContentSanitizedAsync(
-                                            WebsiteID,
+                                            websiteID,
                                             footerEntity.Id,
                                             html,
                                             css,
@@ -116,7 +116,7 @@ namespace EtheriT.Coker.Application.Templates
                                                 Action = "AutoRepairHtmlSanitizeOnReadFailed",
                                                 SourceType = HtmlSanitizeSourceType.頁尾,
                                                 SourceId = footerEntity.Id,
-                                                WebsiteId = WebsiteID
+                                                WebsiteId = websiteID
                                             }),
                                             JsonConvert.SerializeObject(new
                                             {
@@ -143,12 +143,53 @@ namespace EtheriT.Coker.Application.Templates
                 throw new Exception(ex.Message, ex);
             }
         }
+
+        public async Task<GlobalSettingsDto> GetGlobalSettingsForDisplayAsync(long? websiteId = null)
+        {
+            var items = httpContextAccessor.HttpContext?.Items;
+            var websiteID = websiteId is > 0
+                ? websiteId.Value
+                : await loginUserData.GetCommonWebsiteId();
+            var key = $"GlobalSettings:{websiteID}";
+            if (items != null && items.TryGetValue(key, out var cachedSettings))
+                return cachedSettings as GlobalSettingsDto ?? new GlobalSettingsDto();
+
+            var template = await db.Templates
+                .Where(x => x.FK_WebsiteID == websiteID && x.Enable)
+                .OrderByDescending(x => x.LastModificationTime ?? x.CreationTime)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.LayoutConfig
+                })
+                .FirstOrDefaultAsync();
+
+            string? headerContentConfig = null;
+            var supportsConfigurableTemplate = await db.Websites.AnyAsync(x =>
+                x.Id == websiteID &&
+                (x.LayoutType == 7 || x.LayoutType == 8));
+            if (template != null && supportsConfigurableTemplate)
+            {
+                headerContentConfig = await db.TemplateSections
+                    .Where(x => x.FK_TemplateID == template.Id && x.sectionType == SectionTypeEnum.表頭)
+                    .Select(x => x.ContentConfig)
+                    .FirstOrDefaultAsync();
+            }
+
+            var settings = GlobalSettingsResolver.Resolve(
+                template?.LayoutConfig,
+                headerContentConfig);
+
+            if (items != null) items[key] = settings;
+            return settings;
+        }
+
         public async Task<ResponseMessageDto> GetDefaultFooterTemplatesAsync()
         {
             var response = new ResponseMessageDto();
             try
             {
-                var websiteId = await loginUserData.GetWebsiteId();
+                var websiteId = await loginUserData.GetCommonWebsiteId();
                 var templateSections = await db.TemplateSections
                     .Include(x => x.template)
                     .Include(x => x.footerTemplates)
@@ -175,8 +216,11 @@ namespace EtheriT.Coker.Application.Templates
         }
         private async Task<Template> getDefaultTemplate()
         {
-            var websiteId = await loginUserData.GetWebsiteId();
-            var template = await db.Templates.Where(e => e.FK_WebsiteID == websiteId && e.Enable).FirstOrDefaultAsync();
+            var websiteId = await loginUserData.GetCommonWebsiteId();
+            var template = await db.Templates
+                .Where(e => e.FK_WebsiteID == websiteId && e.Enable)
+                .OrderByDescending(e => e.LastModificationTime ?? e.CreationTime)
+                .FirstOrDefaultAsync();
             if (template == null)
             {
                 var web = await db.Websites.FirstOrDefaultAsync(e => e.Id == websiteId);
@@ -244,7 +288,7 @@ namespace EtheriT.Coker.Application.Templates
             var response = new ResponseMessageDto();
             try
             {
-                var websiteId = await loginUserData.GetWebsiteId();
+                var websiteId = await loginUserData.GetCommonWebsiteId();
                 var foot = await db.FooterTemplates
                     .Include(x => x.templateSections)
                     .ThenInclude(x => x.template)
@@ -300,7 +344,7 @@ namespace EtheriT.Coker.Application.Templates
             var response = new ResponseMessageDto();
             try
             {
-                var websiteId = await loginUserData.GetWebsiteId();
+                var websiteId = await loginUserData.GetCommonWebsiteId();
                 var foot = await db.FooterTemplates
                     .Include(x => x.templateSections)
                     .ThenInclude(x => x.template)
@@ -336,6 +380,7 @@ namespace EtheriT.Coker.Application.Templates
                 if (header != null)
                 {
                     var orgName = await loginUserData.GetWebsiteOrgName();
+                    HeaderContentConfigDto? existingConfig = null;
                     header.template.HeadType = dto.HeadType;
                     dto.ContentConfig.Sliders.ForEach(e =>
                     {
@@ -347,10 +392,10 @@ namespace EtheriT.Coker.Application.Templates
 
                     if (!string.IsNullOrEmpty(header.ContentConfig))
                     {
-                        var config = JsonConvert.DeserializeObject<HeaderContentConfigDto>(header.ContentConfig);
-                        if (config != null)
+                        existingConfig = JsonConvert.DeserializeObject<HeaderContentConfigDto>(header.ContentConfig);
+                        if (existingConfig != null)
                         {
-                            foreach (var e in config.Sliders)
+                            foreach (var e in existingConfig.Sliders)
                             {
                                 var isDeleted = !dto.ContentConfig.Sliders.Any(x => x.DesktopImage == e.DesktopImage);
                                 if (!string.IsNullOrEmpty(e.DesktopImage) && !e.DesktopImage.StartsWith("http") && isDeleted)
@@ -368,6 +413,15 @@ namespace EtheriT.Coker.Application.Templates
                             }
                         }
                     }
+
+                    // 這兩個欄位已移至全站設定頁；在前台全面改讀 LayoutConfig 前，
+                    // 保留 Header JSON 既有值，避免儲存版頭時意外改變目前站台行為。
+                    if (existingConfig != null)
+                    {
+                        dto.ContentConfig.ShowMarquee = existingConfig.ShowMarquee;
+                        dto.ContentConfig.ShowPagePath = existingConfig.ShowPagePath;
+                    }
+
                     header.ContentConfig = JsonConvert.SerializeObject(dto.ContentConfig);
                     await loginUserData.SaveChanges(header);
                     response.Success = true;
@@ -384,6 +438,70 @@ namespace EtheriT.Coker.Application.Templates
             }
             return response;
         }
+
+        public async Task<ResponseMessageDto> getGlobalSettings()
+        {
+            var response = new ResponseMessageDto();
+            try
+            {
+                var template = await getDefaultTemplate();
+                var header = await getDefaultTemplateSections(template.Id, SectionTypeEnum.表頭);
+                var settings = GlobalSettingsResolver.Resolve(template.LayoutConfig, header.ContentConfig);
+
+                response.Object = settings;
+                response.Success = true;
+            }
+            catch (Exception e)
+            {
+                response.Error = e.Message;
+            }
+
+            return response;
+        }
+
+        public async Task<ResponseMessageDto> saveGlobalSettings(GlobalSettingsDto dto)
+        {
+            var response = new ResponseMessageDto();
+            try
+            {
+                dto.Visibility ??= new GlobalVisibilitySettingsDto();
+                dto.SchemaVersion = 1;
+
+                var template = await getDefaultTemplate();
+                var storedSettings = string.IsNullOrWhiteSpace(template.LayoutConfig)
+                    ? new JObject()
+                    : JObject.Parse(template.LayoutConfig);
+                var submittedSettings = JObject.FromObject(dto);
+                storedSettings.Merge(submittedSettings, new JsonMergeSettings
+                {
+                    MergeArrayHandling = MergeArrayHandling.Replace
+                });
+
+                template.LayoutConfig = storedSettings.ToString(Formatting.None);
+                var header = await getDefaultTemplateSections(template.Id, SectionTypeEnum.表頭);
+                var headerSettings = string.IsNullOrWhiteSpace(header.ContentConfig)
+                    ? new HeaderContentConfigDto()
+                    : JsonConvert.DeserializeObject<HeaderContentConfigDto>(header.ContentConfig)
+                        ?? new HeaderContentConfigDto();
+                headerSettings.ShowMarquee = dto.Visibility.ShowMarquee;
+                headerSettings.ShowPagePath = dto.Visibility.ShowPagePath;
+                header.ContentConfig = JsonConvert.SerializeObject(headerSettings);
+
+                await loginUserData.SaveChanges(template);
+                response.Success = true;
+            }
+            catch (Exception e)
+            {
+                response.Error = e.Message;
+            }
+            finally
+            {
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            }
+
+            return response;
+        }
+
         public async Task<ResponseMessageDto> getDefaultHeader()
         {
             var response = new ResponseMessageDto();

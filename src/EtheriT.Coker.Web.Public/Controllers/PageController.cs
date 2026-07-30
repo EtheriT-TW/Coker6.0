@@ -197,8 +197,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             List<string> Carrier = StoreSet.storeSetDetails?.Find(e => e.key == "ExtraInviiceCarrier")?.value ?? new List<string>();
 
             var shareImage = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { Sid = siteId, Type = 13 });
-            var template = await templatesApplicationService.GetDefaultTemplatesAsync();
-            ViewBag.ShowPagePath = true;
+            var template = await templatesApplicationService.GetDefaultTemplatesAsync(defaultData.Id);
+            var globalSettings = await templatesApplicationService.GetGlobalSettingsForDisplayAsync(defaultData.Id);
             ViewBag.BackstageUrl = Configuration["BACKSTAGE_URL"] ?? Configuration.GetValue<string>("WebConfig:BackstageUrl");
             ViewBag.OAuthError = TempData["OAuthError"];
             ViewBag.OAuthSuccess = TempData["OAuthSuccess"];
@@ -208,14 +208,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.HasInvoice = HasInvoice;
             ViewBag.Carrier = Carrier;
             ViewBag.BonusEnabled = bonusSetting.BonusEnabled;
-            if (template != null)
-            {
-                var header = template.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.表頭);
-                if (header != null) {
-                    var ContentConfig = JsonConvert.DeserializeObject<HeaderContentConfigDto>(header.ContentConfig);
-                    if(ContentConfig!=null) ViewBag.ShowPagePath = ContentConfig.ShowPagePath;
-                }
-            }
             var headerStyleView = defaultData.View;
             var configuredHeader = template?.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.表頭);
             if (template != null && configuredHeader != null && !string.IsNullOrWhiteSpace(configuredHeader.ContentConfig))
@@ -262,6 +254,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     prodCatalog = (prodCatalog != null && prodCatalog.value != null) ? String.Join(",", prodCatalog.value!) : "",
                     membershipTerms = (membershipTerms != null && membershipTerms.value != null) ? String.Join(",", membershipTerms.value!) : "",
                 },
+                GlobalSettings = globalSettings,
                 IsProduction = _env.IsProduction()
             };
             string view;

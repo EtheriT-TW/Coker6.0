@@ -1,0 +1,46 @@
+@{
+    ViewData["Title"] = "GlobalSettings";
+}
+<script src="~/js/Template/GlobalSettings.min.js" asp-append-version="true"></script>
+
+<form id="globalSettings" name="globalSettings" class="container py-4">
+    <h2 class="mb-4 d-flex justify-content-between">
+        全站設定
+        <button class="btn-primary border-0 px-3 py-1 text-white me-3 btn" type="submit" form="globalSettings">
+            儲　存
+        </button>
+    </h2>
+
+    <div class="card mb-4">
+        <div class="card-header">內容顯示</div>
+        <div class="card-body">
+            <p class="text-muted mb-4">控制全站共用內容是否顯示；個別內容原有的顯示設定仍會保留。</p>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="showMarquee">
+                        <label class="form-check-label" for="showMarquee">顯示跑馬燈</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="showPagePath">
+                        <label class="form-check-label" for="showPagePath">顯示頁面路徑</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="showPopular">
+                        <label class="form-check-label" for="showPopular">顯示人氣值</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="showPublishDate">
+                        <label class="form-check-label" for="showPublishDate">顯示發布日期</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

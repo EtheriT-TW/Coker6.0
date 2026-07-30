@@ -22,11 +22,9 @@
 <script src="~/Shared/shared.min.js" asp-append-version="true"></script>
 <Content id="main">@Html.Raw(HttpUtility.HtmlDecode(Model.PageData.Html))</Content>
 @{
-    if (Model.PageData.LastModificationTime != null)
-    {
-        <div class="container editTime font_small text-end">最後編輯時間：@Model.PageData.LastModificationTime.Value.ToString("yyyy/MM/dd HH:mm:ss")</div>
-    }
-    if (Model.PageData.Popular != null && Model.PageData.Popular > 0)
+    if (Model.GlobalSettings.Visibility.ShowPopular &&
+        Model.PageData.PopularVisible &&
+        Model.PageData.Popular is > 0)
     {
         <div class="container popular font_small text-end py-2">人氣值：@Model.PageData.Popular.Value</div>
     }

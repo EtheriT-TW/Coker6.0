@@ -177,8 +177,6 @@
 
     function loadTemplateSetting(data) {
         const config = data.contentConfig || {};
-        $('#showMarquee').prop('checked', config.showMarquee);
-        $('#showPagePath').prop('checked', config.showPagePath);
         $(`input[name="headType"][value="${data.headType}"]`).prop('checked', true);
         sliders.length = 0;
         (config.sliders || []).forEach(addSlider); // ✅ 只呼叫 addSlider，統一預設邏輯
@@ -190,8 +188,6 @@
         return {
             headType: parseInt($('input[name="headType"]:checked').val()),
             contentConfig: {
-                showMarquee: $('#showMarquee').prop('checked'),
-                showPagePath: $('#showPagePath').prop('checked'),
                 sliders: sliders.map(s => ({
                     title: s.title,
                     subtitle: s.subtitle,

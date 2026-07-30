@@ -80,6 +80,35 @@
                 }
                 return response.json();
             })
+        },
+        getGlobalSettings: function () {
+            return fetch('/api/Template/getGlobalSettings', {
+                method: 'GET',
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    ..._c.Data.Header
+                }
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
+        },
+        saveGlobalSettings: function (data) {
+            return fetch('/api/Template/saveGlobalSettings', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    ..._c.Data.Header
+                },
+                body: JSON.stringify(data)
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
         }
     }
 });

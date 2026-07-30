@@ -5,6 +5,7 @@ using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
+using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 
@@ -43,5 +44,6 @@ namespace EtheriT.Coker.Web.Public.Models
         public List<PaymentTypeItemOutputDto>? paymentModels { get; set; }
         public List<GetMenuBreadDto>? MenuBread { get; set; }
         public StoreSetFrontDto storeSet { get; set; }
+        public GlobalSettingsDto GlobalSettings { get; set; } = new GlobalSettingsDto();
     }
 }

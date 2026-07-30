@@ -11,6 +11,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Dashboard
     public sealed class DashboardTrafficOutputDto
     {
         public List<DashboardTrafficItemDto> Items { get; set; } = new();
+        public string Granularity { get; set; } = "day";
         public DateTime UpdatedAt { get; set; }
     }
 

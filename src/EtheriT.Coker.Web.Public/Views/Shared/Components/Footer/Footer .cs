@@ -634,7 +634,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 			}
             if (footerViewModel.Content==null || !footerViewModel.Content.Any() || string.IsNullOrEmpty(footerViewModel.Content.FirstOrDefault()))
             {
-                var template = await templatesApplicationService.GetDefaultTemplatesAsync();
+                var template = await templatesApplicationService.GetDefaultTemplatesAsync(defaultData.Id);
                 if (template != null)
                 {
                     var footerSection = template.templateSections.Find(e => e.sectionType == SectionTypeEnum.頁尾);

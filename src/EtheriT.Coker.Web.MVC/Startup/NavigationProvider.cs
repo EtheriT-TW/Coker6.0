@@ -358,6 +358,13 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         CollapseId="#Layout",
                         jobItemModels = new List<JobMenu>{
                             new JobMenu{
+                                PageName="GlobalSettings",
+                                Title="全站設定",
+                                Controller="Template",
+                                Action="GlobalSettings",
+                                Icon="tune"
+                            },
+                            new JobMenu{
                                 PageName="HeaderSettings",
                                 Title="版頭設定",
                                 Controller="Template",

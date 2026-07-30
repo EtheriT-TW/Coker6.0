@@ -3,7 +3,7 @@
 @using EtheriT.Coker.Web.Public.Models
 @model PageViewModel
 
-@if (ViewBag.ShowPagePath)
+@if (Model.GlobalSettings.Visibility.ShowPagePath)
 {
     switch (Model.PageData.LayoutType)
     {

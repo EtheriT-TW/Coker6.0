@@ -1016,6 +1016,11 @@ p,
     height: 300px;
 }
 
+#dashboard-traffic-chart {
+    height: 100%;
+    width: 100%;
+}
+
 .dashboard-card-header {
     display: flex;
     flex-direction: column;

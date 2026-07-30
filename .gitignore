@@ -407,3 +407,4 @@ launchSettings.json
 
 # codex
 .codex-*/
+**/devextreme-license.js

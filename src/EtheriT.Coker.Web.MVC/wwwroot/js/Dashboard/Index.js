@@ -99,54 +99,64 @@ var PageReady = function () {
         trafficRequest = $.get("/api/Dashboard/GetTraffic", parameters)
             .done(function (result) {
                 var items = result.items || [];
-                var canvas = document.getElementById("dashboard-traffic-chart");
-                if (!canvas) return;
+                var $chart = $("#dashboard-traffic-chart");
+                if (!$chart.length) return;
 
-                if (trafficChart) trafficChart.destroy();
-                trafficChart = new Chart(canvas.getContext("2d"), {
-                    type: "bar",
-                    data: {
-                        labels: items.map(function (item) {
-                            return result.granularity === "hour"
-                                ? formatHour(item.date)
-                                : formatDate(item.date, false);
-                        }),
-                        datasets: [
-                            {
-                                label: "有效瀏覽人次",
-                                data: items.map(function (item) { return item.pageViews || 0; }),
-                                backgroundColor: "rgba(26, 115, 232, 0.82)",
-                                borderRadius: 5,
-                                maxBarThickness: 34
-                            },
-                            {
-                                label: "不重複訪客",
-                                data: items.map(function (item) { return item.visitors || 0; }),
-                                backgroundColor: "rgba(102, 187, 106, 0.82)",
-                                borderRadius: 5,
-                                maxBarThickness: 28
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        interaction: { intersect: false, mode: "index" },
-                        plugins: {
-                            legend: { position: "bottom" }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: { precision: 0 },
-                                grid: { color: "rgba(0, 0, 0, 0.06)" }
-                            },
-                            x: {
-                                grid: { display: false }
-                            }
-                        }
-                    }
+                var chartData = items.map(function (item) {
+                    return {
+                        argument: result.granularity === "hour"
+                            ? formatHour(item.date)
+                            : formatDate(item.date, false),
+                        pageViews: item.pageViews || 0,
+                        visitors: item.visitors || 0
+                    };
                 });
+
+                if (!trafficChart) {
+                    trafficChart = $chart.dxChart({
+                        dataSource: chartData,
+                        commonSeriesSettings: {
+                            argumentField: "argument",
+                            type: "bar",
+                            hoverMode: "allArgumentPoints"
+                        },
+                        series: [
+                            {
+                                valueField: "pageViews",
+                                name: "有效瀏覽人次",
+                                color: "#4285e7"
+                            },
+                            {
+                                valueField: "visitors",
+                                name: "不重複訪客",
+                                color: "#7fc283"
+                            }
+                        ],
+                        argumentAxis: {
+                            grid: { visible: false },
+                            label: { overlappingBehavior: "stagger" }
+                        },
+                        valueAxis: {
+                            allowDecimals: false,
+                            visualRange: { startValue: 0 },
+                            grid: { opacity: 0.2 }
+                        },
+                        legend: {
+                            horizontalAlignment: "center",
+                            verticalAlignment: "bottom"
+                        },
+                        tooltip: {
+                            enabled: true,
+                            shared: true
+                        },
+                        adaptiveLayout: {
+                            width: 420,
+                            height: 240
+                        }
+                    }).dxChart("instance");
+                } else {
+                    trafficChart.option("dataSource", chartData);
+                }
 
                 $(".traffic-updated-at").text("更新：" + formatDate(result.updatedAt, true));
                 $loading.hide();

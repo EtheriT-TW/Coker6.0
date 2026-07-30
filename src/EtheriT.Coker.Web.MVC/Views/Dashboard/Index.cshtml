@@ -1,7 +1,6 @@
 @{
     ViewData["Title"] = "Dashboard";
 }
-<script src="~/lib/chart.js/chart.min.js"></script>
 <script src="~/js/Dashboard/Index.min.js" asp-append-version="true"></script>
 <link rel="stylesheet" href="~/css/Dashboard/index.min.css" asp-append-version="true" />
 
@@ -117,7 +116,7 @@
                 </div>
                 <div class="card-body pt-3">
                     <div class="dashboard-chart">
-                        <canvas id="dashboard-traffic-chart"></canvas>
+                        <div id="dashboard-traffic-chart"></div>
                     </div>
                     <div class="dashboard-loading traffic-loading">正在載入流量資料…</div>
                 </div>

@@ -135,7 +135,7 @@ namespace EtheriT.Coker.Application.Dashboard
                                 THEN CONCAT('uuid:', CONVERT(varchar(36), [remote].[UUID]))
                             ELSE CONCAT('ip:', ISNULL([remote].[ClientIpAddress], ''))
                         END AS [VisitorIdentifier],
-                        [remote].[LastStatComputedAt]
+                        [remote].[ExecutionTime]
                     FROM [dbo].[Remotes] AS [remote]
                     WHERE [remote].[FK_WebsiteId] = @WebsiteId
                       AND [remote].[ExecutionTime] >= @StartDate
@@ -155,7 +155,7 @@ namespace EtheriT.Coker.Application.Dashboard
                     [source].[StatisticHour],
                     COUNT_BIG(*) AS [EffectiveViews],
                     COUNT_BIG(DISTINCT [source].[VisitorIdentifier]) AS [EffectiveUniqueVisitors],
-                    MAX([source].[LastStatComputedAt]) AS [UpdatedAt]
+                    MAX([source].[ExecutionTime]) AS [UpdatedAt]
                 FROM [EffectiveRemote] AS [source]
                 GROUP BY [source].[StatisticHour]
                 ORDER BY [source].[StatisticHour];

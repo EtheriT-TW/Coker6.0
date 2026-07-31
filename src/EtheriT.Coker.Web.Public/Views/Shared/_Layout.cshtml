@@ -217,7 +217,11 @@
     @if (ViewData["google.translate"] != null && !string.IsNullOrEmpty(ViewData["google.translate"]!.ToString() ?? ""))
     {
         <script nonce="@ViewBag.Nonce">
-                    let isGoogleTranslateInitialized = false;
+                let isGoogleTranslateInitialized = false;
+                let cancelResizeWatch = null;   // 同時間只保留一組觀察，連續切換不會疊加
+                let googleTranslateRetries = 0;
+                const GOOGLE_TRANSLATE_MAX_RETRIES = 10;
+
                 function triggerResize(quietMs = 200, fallbackMs = 1500) {
                     const header = document.querySelector('header'); // 針對 header
                     if (!header) {
@@ -226,13 +230,27 @@
                         return;
                     }
 
+                    if (cancelResizeWatch) cancelResizeWatch();   // 前一輪還沒結束就先收掉
+
                     let timer;
+                    let fallback;
+
+                    const cleanup = () => {
+                        clearTimeout(timer);
+                        clearTimeout(fallback);
+                        try { mo.disconnect(); } catch { }
+                        cancelResizeWatch = null;
+                    };
+
+                    // 安靜期到了、或 fallback 到期，兩條路徑只會真的送出一次 resize
+                    const done = () => {
+                        cleanup();
+                        window.dispatchEvent(new Event('resize'));
+                    };
+
                     const mo = new MutationObserver(() => {
                         clearTimeout(timer);
-                        timer = setTimeout(() => {
-                            mo.disconnect();
-                            window.dispatchEvent(new Event('resize'));
-                        }, quietMs);
+                        timer = setTimeout(done, quietMs);
                     });
 
                     // 只觀察 header 內部
@@ -244,28 +262,16 @@
                     });
 
                     // fallback，最多等 fallbackMs
-                    setTimeout(() => {
-                        try { mo.disconnect(); } catch { }
-                        window.dispatchEvent(new Event('resize'));
-                    }, fallbackMs);
+                    fallback = setTimeout(done, fallbackMs);
+                    cancelResizeWatch = cleanup;
                 }
-                // 選回原語系（空值）：Google 的還原 UI 是頂端 banner，本站以 CSS 隱藏了，
-                // 改用清 cookie + reload 還原，與切換鈕同一套機制。
-                // 用 capture 階段是必要的：Google 自己的 handler 綁在 select 上，收到空值時會把
-                // 值重設回目前語系，若等到冒泡階段才讀 value 就永遠判斷不到「選了原語言」。
-                // 但清 cookie 仍要排到它之後（setTimeout），否則會被它重新寫回。
-                document.addEventListener('change', function(e) {
-                    const combo = e.target;
-                    if (!combo || !combo.classList || !combo.classList.contains('goog-te-combo')) return;
-                    if (combo.value) return;   // 選的是翻譯語系，交給 Google 處理
-                    setTimeout(restoreOriginalLanguage, 0);
-                }, true);
 
                 document.addEventListener('change', function(e) {
                     if (e.target && e.target.classList && e.target.classList.contains('goog-te-combo')) {
                         triggerResize();
                     }
                 });
+
                 function googleTranslateElementInit() {
                     if (isGoogleTranslateInitialized) {
                         console.log("Google Translate is already initialized.");
@@ -275,23 +281,27 @@
                         if (typeof google !== "undefined" && typeof google.translate !== "undefined" && google.translate.TranslateElement) {
                             new google.translate.TranslateElement({
                                 pageLanguage: PAGE_LANG,
-                                includedLanguages: '@ViewData["google.translate"]',
-                                gaTrack: true
+                                includedLanguages: '@ViewData["google.translate"]'
                             }, 'google_translate_element');
 
-                            $('select.goog-te-combo').attr('title', 'translate');
                             isGoogleTranslateInitialized = true;
-                            whenComboReady(buildTranslateSwitch);
-                            observeComboOptions();
+                            whenComboReady(function(combo) {
+                                combo.title = 'translate';
+                                buildTranslateSwitch(combo);
+                            });
                             triggerResize();
+                        } else if (googleTranslateRetries < GOOGLE_TRANSLATE_MAX_RETRIES) {
+                            googleTranslateRetries++;
+                            console.warn("Google Translate API is not ready yet. Retrying... (" + googleTranslateRetries + "/" + GOOGLE_TRANSLATE_MAX_RETRIES + ")");
+                            setTimeout(googleTranslateElementInit, 1000);
                         } else {
-                            console.warn("Google Translate API is not ready yet. Retrying...");
-                            setTimeout(googleTranslateElementInit, 1000); // 每秒重試一次
+                            console.error("Google Translate API 逾時未就緒，翻譯功能停用");
                         }
                     } catch (error) {
                         console.error("Failed to initialize Google Translate:", error);
                     }
                 }
+
 
                 // 動態加載 Google Translate 腳本
                 function loadGoogleTranslateScript() {
@@ -312,9 +322,28 @@
                 }
 
 
-                //預設display none，若需要使用到該站自訂CSS中，將#translate_switch設為display flex即可開啟，若翻譯設定>2時會切換回下拉選單
+                // #translate_switch 預設 display:none，需要的站台在自訂 CSS 設成 display:flex 即可開啟；
+                // 翻譯目標超過 1 種時會自動切換回下拉選單
+                // ViewData["Locale"] 存的是小寫（zh-tw / en），Google 的 option value 是 zh-TW，
+                // 兩邊比對和 combo.value 設定都需要一致的大小寫，統一在這裡正規化
+                function canonLang(code) {
+                    const s = (code || '').trim();
+                    const p = s.split('-');
+                    return p.length > 1 ? p[0].toLowerCase() + '-' + p[1].toUpperCase() : s.toLowerCase();
+                }
+
                 // 與 TranslateElement 的 pageLanguage 共用同一個來源
-                const PAGE_LANG = 'zh-TW';
+                const PAGE_LANG = canonLang('@ViewData["Locale"]') || 'zh-TW';
+
+                // 後台勾選的語系清單。注意頁面語系（例如中文(繁體)）勾選的意義不是翻譯目標，
+                // 而是讓它成為翻譯後可以切回去的選項——Google 原生就支援原地還原。
+                // 沒勾的話翻譯後無路可退，只能靠清 cookie + reload。
+                const INCLUDED_LANGS = '@ViewData["google.translate"]'.split(',').map(canonLang).filter(Boolean);
+                const TARGET_LANGS = INCLUDED_LANGS.filter(c => c !== PAGE_LANG);
+                const CAN_RESTORE_NATIVELY = INCLUDED_LANGS.indexOf(PAGE_LANG) !== -1;
+                if (!CAN_RESTORE_NATIVELY) {
+                    console.warn('後台翻譯設定未勾選 ' + PAGE_LANG + '，回原文將以重新整理處理');
+                }
 
                 // 想顯示語言自稱而不是中文名稱時在這裡覆寫；沒列到的就用 Google 給的名稱
                 const TRANSLATE_LABELS = {
@@ -340,23 +369,36 @@
                     }
                 }
 
-                // 標籤優先序：TRANSLATE_LABELS 覆寫 → Google 提供的名稱 → 頁面語系名稱（空值項）
+                // 標籤優先序：TRANSLATE_LABELS 覆寫 → Google 提供的名稱 → Intl → 語系代碼
                 function getLangLabel(code, googleText) {
                     const key = code || PAGE_LANG;   // 空值代表原文，改用頁面語系代碼去查表
                     if (TRANSLATE_LABELS[key]) return TRANSLATE_LABELS[key];
                     if (!code) return getPageLangLabel();
-                    return (googleText || code).trim();
+                    if (googleText) return googleText.trim();
+                    try {
+                        return new Intl.DisplayNames([PAGE_LANG], { type: 'language' }).of(code) || code;
+                    } catch {
+                        return code;
+                    }
                 }
 
                 // 目前語系（'' 代表原文）。不靠 cookie 即時判斷，避免 Google 寫入延遲
                 let currentTranslateLang = '';
 
-                // 讀 googtrans cookie，格式為 /zh-TW/en
+                function pickTranslateLang(raw, separator) {
+                    const parts = raw.split(separator).filter(Boolean);
+                    const lang = canonLang(parts[parts.length - 1] || '');
+                    return lang === PAGE_LANG ? '' : lang;   // 翻成自己 = 原文
+                }
+
                 function getTranslateLang() {
-                    const m = document.cookie.match(/(?:^|;\s*)googtrans=([^;]*)/);
-                    if (!m) return '';
-                    const parts = decodeURIComponent(m[1]).split('/').filter(Boolean);
-                    return parts[parts.length - 1] || '';   // /zh-TW/zh-CN 和 /zh-CN 都取目標語系
+                    const h = location.hash.match(/googtrans\(([^)]*)\)/);
+                    if (h) return pickTranslateLang(decodeURIComponent(h[1]), '|');
+
+                    const c = document.cookie.match(/(?:^|;\s*)googtrans=([^;]*)/);
+                    if (c) return pickTranslateLang(decodeURIComponent(c[1]), '/');
+
+                    return '';
                 }
 
                 function clearCookieAllDomains(name) {
@@ -377,11 +419,28 @@
                     clearCookieAllDomains('googtransopt');   // 這行才是第 2 點
                 }
 
+                // 後台有勾選頁面語系時，Google 的下拉選單本來就提供「切回頁面語系」，
+                // 那是原地還原、不重整。沒勾才退回清 cookie + reload。
                 function restoreOriginalLanguage() {
-                    clearTranslateCookie();
                     if (location.hash.indexOf('googtrans') !== -1) {
                         history.replaceState(null, '', location.pathname + location.search);
                     }
+
+                    const combo = document.querySelector('select.goog-te-combo');
+                    if (CAN_RESTORE_NATIVELY && combo) {
+                        combo.value = PAGE_LANG;
+                        combo.dispatchEvent(new Event('change', { bubbles: true }));
+                        currentTranslateLang = '';
+                        syncTranslateSwitch();
+
+                        // Google 的 change handler 會把 googtrans 寫成 /zh-TW/zh-TW，
+                        // 要排到它之後才清；不清的話下次載入 Google 仍會照 cookie 跑一輪翻譯流程。
+                        // 這裡不重載頁面，畫面已經由 Google 原地還原完成。
+                        setTimeout(clearTranslateCookie, 0);
+                        return;
+                    }
+
+                    clearTranslateCookie();
                     location.reload();
                 }
 
@@ -407,13 +466,18 @@
                     scope.querySelectorAll(ICON_SELECTOR).forEach(markIcon);
                 }
 
-                // ajax 載入的內容（商品列表等）也要補標記
+                // ajax 載入的內容（商品列表等）也要補標記。
+                // Google 翻譯時會把整頁文字節點包成大量 <font>，那是純文字容器、不可能有 icon
+                // （icon 已標 notranslate，Google 根本不會碰），跳過它可以省下翻譯瞬間
+                // 成千上萬次的 matches + querySelectorAll 子樹掃描
                 function observeNewIcons() {
                     if (!document.body) return;
                     const mo = new MutationObserver(mutations => {
                         for (const m of mutations) {
                             for (const node of m.addedNodes) {
-                                if (node.nodeType === 1) markIconsNoTranslate(node);
+                                if (node.nodeType !== 1) continue;
+                                if (node.nodeName === 'FONT') continue;
+                                markIconsNoTranslate(node);
                             }
                         }
                     });
@@ -435,67 +499,17 @@
                 function whenComboReady(callback, tries = 40) {
                     const combo = document.querySelector('select.goog-te-combo');
                     if (combo && combo.options.length > 1) { callback(combo); return; }
-                    if (tries <= 0) { console.warn('goog-te-combo 未就緒'); return; }
+                    if (tries <= 0) {
+                        // Google 沒載入成功（廣告攔截器、CSP、網路）→ 收掉空容器，靜默降級
+                        console.warn('goog-te-combo 未就緒，翻譯功能停用');
+                        const host = document.getElementById('translate_switch');
+                        if (host) host.classList.add('d-none');
+                        return;
+                    }
                     setTimeout(() => whenComboReady(callback, tries - 1), 250);
                 }
 
-                // 「原語言」那一項沿用 Google 自己的 placeholder 文字，不自行改寫。
-                // 但 Google 在翻譯後會把該 option 移除，屆時就沒有字可取了，所以第一次看到時
-                // 先記下來，並存進 sessionStorage，讓「翻譯狀態下重新載入」也拿得到。
-                const ORIGINAL_OPTION_KEY = 'cokerGoogleTranslatePlaceholder';
-                let originalOptionLabel = null;
-
-                function rememberOriginalOptionLabel(text) {
-                    const label = (text || '').trim();
-                    if (!label) return;
-                    originalOptionLabel = label;
-                    try { sessionStorage.setItem(ORIGINAL_OPTION_KEY, label); } catch { }
-                }
-
-                function getOriginalOptionLabel() {
-                    if (originalOptionLabel) return originalOptionLabel;
-                    try {
-                        const cached = sessionStorage.getItem(ORIGINAL_OPTION_KEY);
-                        if (cached) {
-                            originalOptionLabel = cached;
-                            return cached;
-                        }
-                    } catch { }
-                    return getPageLangLabel();   // 從未見過 Google 的字時的最後保險
-                }
-
-                // 翻譯狀態下 Google 會移除「原語言」選項，還原入口只剩被本站 CSS
-                // 隱藏的頂端 banner，所以自己補一個回去。
-                // 必須是 idempotent：observeComboOptions 會在每次 DOM 變動時呼叫，
-                // 若無條件寫 textContent 會自己觸發下一次變動而無限迴圈。
-                function ensureOriginalOption(combo) {
-                    const blank = combo.querySelector('option[value=""]');
-                    if (blank) {
-                        rememberOriginalOptionLabel(blank.textContent);   // 只記住，不改寫
-                        return;
-                    }
-                    const option = document.createElement('option');
-                    option.value = '';
-                    option.textContent = getOriginalOptionLabel();
-                    combo.insertBefore(option, combo.firstChild);
-                }
-
-                // 下拉選單是原地翻譯、不重整頁面，Google 會在翻譯後重建 select 並移除
-                // 「原語言」選項，所以要持續盯著補回去，而不是只在載入時補一次
-                function observeComboOptions() {
-                    const container = document.getElementById('google_translate_element');
-                    if (!container) return;
-                    const mo = new MutationObserver(function() {
-                        const combo = container.querySelector('select.goog-te-combo');
-                        if (combo) ensureOriginalOption(combo);
-                    });
-                    mo.observe(container, { childList: true, subtree: true });
-                }
-
                 function buildTranslateSwitch(combo) {
-                    // 不論站台有沒有啟用按鈕，都要先修好下拉選單的「原語言」選項
-                    ensureOriginalOption(combo);
-
                     const host = document.getElementById('translate_switch');
                     if (!host) return;
                     if (host.dataset.built) return;
@@ -503,27 +517,36 @@
                     // 站台沒有啟用按鈕（容器仍是 display:none）→ 維持下拉選單
                     if (getComputedStyle(host).display === 'none') return;
 
-                    const dropdown = document.getElementById('google_translate_element');
-                    const langs = Array.from(combo.options).map(o => ({
-                        code: o.value,
-                        text: getLangLabel(o.value, o.textContent)
-                    }));
-                    const realLangs = langs.filter(l => l.code);   // 排除「原文」空值項
-                    if (realLangs.length === 0) return;            // 後台沒設語系就不長出來
-
-                    // 只有「原文 + 1 個翻譯語系」時用切換鈕，其餘退回下拉選單
-                    if (realLangs.length !== 1) {
+                    // 清單來源是後台設定，不是 combo.options。
+                    // Google 的 options 是「從目前狀態可切換過去的語言」，翻譯後會變成
+                    // 「請選擇語言 + 中文(繁體)」，拿它當翻譯目標清單會誤判。
+                                        if (TARGET_LANGS.length === 0) {   // 後台沒設翻譯目標 → 不要留空容器佔位
                         host.classList.add('d-none');
                         return;
                     }
 
+                    // 只有 1 個翻譯目標時用切換鈕，其餘退回下拉選單
+                    if (TARGET_LANGS.length !== 1) {
+                        host.classList.add('d-none');
+                        return;
+                    }
+
+                    const code = TARGET_LANGS[0];
                     host.dataset.built = '1';
+                    const dropdown = document.getElementById('google_translate_element');
                     if (dropdown) dropdown.classList.add('d-none');
-                    buildTranslateToggle(host, combo, realLangs[0]);
+                    buildTranslateToggle(host, { code: code, text: getLangLabel(code, getComboLabel(combo, code)) });
+                }
+
+                // 優先沿用 Google 自己給的語系名稱；翻譯狀態下該 option 不在清單裡就取不到，
+                // 此時由 getLangLabel 退回 Intl.DisplayNames
+                function getComboLabel(combo, code) {
+                    const opt = combo.querySelector('option[value="' + code + '"]');
+                    return opt ? opt.textContent.trim() : '';
                 }
 
                 // 單一目標語系時的切換鈕：文字隨狀態在「目標語系」和「原文」之間翻面
-                function buildTranslateToggle(host, combo, lang) {
+                function buildTranslateToggle(host, lang) {
                     const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'notranslate btn btn-sm btn-outline-secondary border-0 px-2';
@@ -536,6 +559,9 @@
                             restoreOriginalLanguage();
                             return;
                         }
+                        // Google 翻譯後會重建 select，一定要即時查，不能用閉包捕獲的
+                        const combo = document.querySelector('select.goog-te-combo');
+                        if (!combo) return;
                         combo.value = lang.code;
                         combo.dispatchEvent(new Event('change', { bubbles: true }));
                         currentTranslateLang = lang.code;           // 先更新，不等 cookie

@@ -70,12 +70,6 @@
       ]
     },
     {
-      "output": "lib/chart.js/chart.min.js",
-      "input": [
-        "node_modules/chart.js/dist/chart.min.js"
-      ]
-    },
-    {
       "output": "lib/jquery-twzipcode/jquery.twzipcode.min.js",
       "input": [
         "node_modules/jquery-twzipcode/jquery.twzipcode.min.js"

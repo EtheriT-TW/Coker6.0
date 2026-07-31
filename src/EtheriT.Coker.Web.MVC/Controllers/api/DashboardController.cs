@@ -59,9 +59,33 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
 
         [HttpGet]
+        public async Task<IActionResult> GetTrafficHeatmap(int days = 30)
+        {
+            if (days != 7 && days != 30)
+                return BadRequest("時段分析僅支援近 7 天或近 30 天。");
+
+            return Ok(await dashboardAppService.GetTrafficHeatmap(days));
+        }
+
+        [HttpGet]
         public async Task<IActionResult> GetContacts(int take = 5)
         {
             return Ok(await dashboardAppService.GetContacts(take));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCommerceOverview()
+        {
+            return Ok(await dashboardAppService.GetCommerceOverview());
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetOrderTrend(int days = 30)
+        {
+            if (days != 7 && days != 30)
+                return BadRequest("訂單趨勢僅支援近 7 天或近 30 天。");
+
+            return Ok(await dashboardAppService.GetOrderTrend(days));
         }
 
         private static bool TryValidateCustomRange(

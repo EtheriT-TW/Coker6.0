@@ -91,6 +91,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<PermissionDetail> PermissionDetail { get; set; }
         public DbSet<Remote> Remotes { get; set; }
         public DbSet<RemoteDailyStatistic> RemoteDailyStatistics { get; set; }
+        public DbSet<RemoteHourlyStatistic> RemoteHourlyStatistics { get; set; }
         public DbSet<RemoteDailyAggregationRun> RemoteDailyAggregationRuns { get; set; }
         public DbSet<NotFoundImage> NotFoundImage { get; set; }
         public DbSet<Core.Models.JsonObject> JsonObjects { get; set; }
@@ -627,6 +628,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasIndex(f => new { f.FK_WebmenuId, f.StatisticDate });
                 o.HasIndex(f => new { f.FK_ArticleId, f.StatisticDate });
                 o.HasIndex(f => new { f.FK_ProdId, f.StatisticDate });
+            });
+            modelBuilder.Entity<RemoteHourlyStatistic>(o =>
+            {
+                o.Property(f => f.StatisticHour).HasColumnType("datetime2(0)");
+                o.HasIndex(f => new { f.StatisticHour, f.FK_WebsiteId }).IsUnique();
+                o.HasIndex(f => new { f.FK_WebsiteId, f.StatisticHour });
             });
             modelBuilder.Entity<RemoteDailyAggregationRun>(o =>
             {

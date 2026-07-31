@@ -610,6 +610,7 @@
             $("#btnRefresh,#btnAdd").removeClass("d-none");
             $("#btnUpdate").addClass("d-none");
             $("#btnRefresh").trigger("click");
+            updatePageTypeUi();
             $("#popular").val(0);
             syncPopularDisplay();
             $("#myEditor .editItem").removeClass("editItem");

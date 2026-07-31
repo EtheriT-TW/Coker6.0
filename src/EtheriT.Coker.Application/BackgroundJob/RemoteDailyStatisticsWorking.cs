@@ -10,7 +10,7 @@ namespace EtheriT.Coker.Application.BackgroundJob
 {
     public sealed class RemoteDailyStatisticsWorking
     {
-        internal const int CurrentAggregationVersion = 1;
+        internal const int CurrentAggregationVersion = 2;
 
         private readonly CokerDbContext db;
         private readonly RemoteAnalyticsOptions options;
@@ -114,6 +114,84 @@ namespace EtheriT.Coker.Application.BackgroundJob
 
                 DELETE FROM [dbo].[RemoteDailyStatistics]
                 WHERE [StatisticDate] = @StatisticDate;
+
+                DELETE FROM [dbo].[RemoteHourlyStatistics]
+                WHERE [StatisticHour] >= @StatisticDate
+                  AND [StatisticHour] < @NextDate;
+
+                ;WITH [Source] AS
+                (
+                    SELECT
+                        DATEADD(
+                            hour,
+                            DATEDIFF(hour, CONVERT(datetime2, '20000101'), [remote].[ExecutionTime]),
+                            CONVERT(datetime2, '20000101')
+                        ) AS [StatisticHour],
+                        [remote].[FK_WebsiteId],
+                        CASE
+                            WHEN [remote].[FK_UserId] IS NOT NULL
+                                THEN CONCAT('user:', [remote].[FK_UserId])
+                            WHEN [remote].[UUID] <> '00000000-0000-0000-0000-000000000000'
+                                THEN CONCAT('uuid:', CONVERT(varchar(36), [remote].[UUID]))
+                            ELSE CONCAT('ip:', ISNULL([remote].[ClientIpAddress], ''))
+                        END AS [VisitorIdentifier],
+                        CASE
+                            WHEN [remote].[IsEngaged] = CAST(1 AS bit)
+                              OR
+                              (
+                                  [remote].[TrackingEventId] IS NULL
+                                  AND [remote].[TimeOnPage] > 0
+                                  AND [remote].[State] <> 2
+                              )
+                                THEN 1
+                            ELSE 0
+                        END AS [IsEffective],
+                        CASE
+                            WHEN [remote].[TrackingEventId] IS NULL
+                             AND [remote].[TimeOnPage] > 0
+                             AND [remote].[State] <> 2
+                                THEN 1
+                            ELSE 0
+                        END AS [IsLegacy],
+                        CASE
+                            WHEN [remote].[TimeOnPage] > 0 THEN [remote].[TimeOnPage]
+                            ELSE 0
+                        END AS [VisibleSeconds]
+                    FROM [dbo].[Remotes] AS [remote]
+                    WHERE [remote].[ExecutionTime] >= @StatisticDate
+                      AND [remote].[ExecutionTime] < @NextDate
+                )
+                INSERT INTO [dbo].[RemoteHourlyStatistics]
+                (
+                    [StatisticHour],
+                    [FK_WebsiteId],
+                    [PageViews],
+                    [EffectiveViews],
+                    [LegacyViews],
+                    [UniqueVisitors],
+                    [EffectiveUniqueVisitors],
+                    [TotalVisibleSeconds],
+                    [AggregatedAt]
+                )
+                SELECT
+                    [source].[StatisticHour],
+                    [source].[FK_WebsiteId],
+                    COUNT_BIG(*),
+                    SUM(CONVERT(bigint, [source].[IsEffective])),
+                    SUM(CONVERT(bigint, [source].[IsLegacy])),
+                    COUNT_BIG(DISTINCT [source].[VisitorIdentifier]),
+                    COUNT_BIG(DISTINCT CASE
+                        WHEN [source].[IsEffective] = 1 THEN [source].[VisitorIdentifier]
+                    END),
+                    SUM(CONVERT(bigint, CASE
+                        WHEN [source].[IsEffective] = 1 THEN [source].[VisibleSeconds]
+                        ELSE 0
+                    END)),
+                    @AggregatedAt
+                FROM [Source] AS [source]
+                GROUP BY
+                    [source].[StatisticHour],
+                    [source].[FK_WebsiteId];
 
                 ;WITH [Source] AS
                 (

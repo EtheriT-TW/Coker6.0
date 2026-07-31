@@ -2,11 +2,42 @@ var PageReady = function () {
     "use strict";
 
     var trafficChart = null;
+    var trafficHeatmap = null;
+    var orderTrendChart = null;
     var trafficRequest = null;
+    var heatmapRequest = null;
     var popularPagesRequest = null;
+    var orderTrendRequest = null;
+    var weekdayLabels = ["", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"];
 
     function number(value) {
         return co.String.thousandSign(Number(value) || 0);
+    }
+
+    function money(value) {
+        return "NT$ " + number(Math.round(Number(value) || 0));
+    }
+
+    function renderChange($target, current, previous) {
+        current = Number(current) || 0;
+        previous = Number(previous) || 0;
+        $target.removeClass("is-up is-down");
+
+        if (previous === 0) {
+            if (current > 0) {
+                $target.addClass("is-up").text("新增");
+            } else {
+                $target.text("持平");
+            }
+            return;
+        }
+
+        var change = ((current - previous) / previous) * 100;
+        if (change > 0) $target.addClass("is-up");
+        if (change < 0) $target.addClass("is-down");
+        $target.text(
+            (change > 0 ? "+" : "") + change.toFixed(1) + "%"
+        );
     }
 
     function text(value, fallback) {
@@ -217,6 +248,326 @@ var PageReady = function () {
             });
     }
 
+    function refreshOrderInsightsLayout() {
+        var $section = $(".dashboard-order-trend-section");
+        var $visibleColumns = $(".dashboard-order-insight-column").filter(function () {
+            return !this.hidden;
+        });
+
+        $section
+            .toggleClass("has-single-panel", $visibleColumns.length === 1)
+            .prop("hidden", $visibleColumns.length === 0);
+    }
+
+    function loadOrderTrend(days) {
+        var $trendColumn = $(".dashboard-order-trend-column");
+        var $loading = $(".order-trend-loading");
+        $loading
+            .removeClass("dashboard-error")
+            .text("正在載入訂單趨勢…")
+            .show();
+
+        if (orderTrendRequest) orderTrendRequest.abort();
+        orderTrendRequest = $.get("/api/Dashboard/GetOrderTrend", { days: days })
+            .done(function (result) {
+                if (!result.isCommerceEnabled) {
+                    $trendColumn.prop("hidden", true);
+                    refreshOrderInsightsLayout();
+                    return;
+                }
+
+                var chartData = (result.items || []).map(function (item) {
+                    return {
+                        argument: formatDate(item.date, false),
+                        orderCount: item.orderCount || 0,
+                        revenue: Number(item.revenue) || 0
+                    };
+                });
+                var hasTrendData = chartData.some(function (item) {
+                    return item.orderCount > 0;
+                });
+
+                if (!hasTrendData) {
+                    $trendColumn.prop("hidden", true);
+                    $loading.hide();
+                    refreshOrderInsightsLayout();
+                    return;
+                }
+
+                $trendColumn.prop("hidden", false);
+                refreshOrderInsightsLayout();
+
+                var $chart = $("#dashboard-order-trend-chart");
+                if (!$chart.length) return;
+
+                var options = {
+                    dataSource: chartData,
+                    commonSeriesSettings: {
+                        argumentField: "argument",
+                        hoverMode: "allArgumentPoints"
+                    },
+                    series: [
+                        {
+                            type: "line",
+                            valueField: "orderCount",
+                            name: "有效訂單數",
+                            axis: "orderCount",
+                            color: "#4285e7",
+                            point: { visible: days === 7, size: 7 }
+                        },
+                        {
+                            type: "line",
+                            valueField: "revenue",
+                            name: "有效訂單金額",
+                            axis: "revenue",
+                            color: "#43a047",
+                            point: { visible: days === 7, size: 7 }
+                        }
+                    ],
+                    argumentAxis: {
+                        grid: { visible: false },
+                        label: {
+                            overlappingBehavior: days === 30 ? "stagger" : "none"
+                        }
+                    },
+                    valueAxis: [
+                        {
+                            name: "orderCount",
+                            position: "left",
+                            allowDecimals: false,
+                            visualRange: { startValue: 0 },
+                            title: { text: "訂單數" },
+                            grid: { opacity: 0.2 }
+                        },
+                        {
+                            name: "revenue",
+                            position: "right",
+                            visualRange: { startValue: 0 },
+                            title: { text: "訂單金額" },
+                            label: {
+                                customizeText: function () {
+                                    return "NT$ " + number(this.value);
+                                }
+                            },
+                            grid: { visible: false }
+                        }
+                    ],
+                    legend: {
+                        horizontalAlignment: "center",
+                        verticalAlignment: "bottom"
+                    },
+                    tooltip: {
+                        enabled: true,
+                        shared: true
+                    },
+                    adaptiveLayout: {
+                        width: 520,
+                        height: 260
+                    }
+                };
+
+                if (!orderTrendChart) {
+                    orderTrendChart = $chart.dxChart(options).dxChart("instance");
+                } else {
+                    orderTrendChart.option(options);
+                }
+
+                $(".order-trend-title").text("近 " + days + " 天有效訂單趨勢");
+                $(".order-trend-range").text(
+                    formatDate(result.startDate, false) + "－" + formatDate(result.endDate, false)
+                );
+                $loading.hide();
+            })
+            .fail(function (_xhr, status) {
+                if (status === "abort") return;
+                $trendColumn.prop("hidden", false);
+                refreshOrderInsightsLayout();
+                showError($loading, "訂單趨勢載入失敗");
+            })
+            .always(function (_result, status) {
+                if (status !== "abort") orderTrendRequest = null;
+            });
+    }
+
+    function heatmapColor(value, maximum) {
+        if (!maximum || value <= 0) return "#f5f8fc";
+
+        var ratio = Math.min(value / maximum, 1);
+        var alpha = 0.12 + (ratio * 0.82);
+        return "rgba(26, 115, 232, " + alpha.toFixed(3) + ")";
+    }
+
+    function renderRecommendedSlots(items) {
+        var $target = $(".dashboard-recommended-slots").empty();
+        if (!items || items.length === 0) {
+            $("<div>")
+                .addClass("dashboard-heatmap-note")
+                .text("目前尚無足夠資料可顯示熱門瀏覽時段")
+                .appendTo($target);
+            return;
+        }
+
+        var $list = $("<div>").addClass("dashboard-recommendation-list").appendTo($target);
+        items.forEach(function (item, index) {
+            var hour = String(item.hour).padStart(2, "0") + ":00";
+            var nextHour = String((item.hour + 1) % 24).padStart(2, "0") + ":00";
+            var $item = $("<div>").addClass("dashboard-recommendation-item").appendTo($list);
+            $("<span>").addClass("dashboard-recommendation-rank").text(index + 1).appendTo($item);
+
+            var $content = $("<span>").addClass("dashboard-recommendation-content").appendTo($item);
+            $("<strong>")
+                .text(weekdayLabels[item.dayOfWeek] + " " + hour + "－" + nextHour)
+                .appendTo($content);
+            $("<small>")
+                .text("平均 " + Number(item.averageVisitors || 0).toFixed(1)
+                    + " 位訪客・統計 " + item.sampleDays + " 天")
+                .appendTo($content);
+        });
+    }
+
+    function renderTrafficHeatmap(result) {
+        var items = result.items || [];
+        var maximum = items.reduce(function (current, item) {
+            return Math.max(current, Number(item.averageVisitors) || 0);
+        }, 0);
+        var rows = [];
+
+        for (var dayOfWeek = 1; dayOfWeek <= 7; dayOfWeek++) {
+            var cells = {};
+            items
+                .filter(function (item) { return item.dayOfWeek === dayOfWeek; })
+                .forEach(function (item) { cells[item.hour] = item; });
+            rows.push({
+                dayOfWeek: dayOfWeek,
+                dayLabel: weekdayLabels[dayOfWeek],
+                cells: cells
+            });
+        }
+
+        var columns = [{
+            dataField: "dayLabel",
+            caption: "星期／小時",
+            width: 82,
+            fixed: true,
+            allowSorting: false,
+            cssClass: "dashboard-heatmap-weekday"
+        }];
+
+        for (var hour = 0; hour < 24; hour++) {
+            (function (columnHour) {
+                columns.push({
+                    caption: String(columnHour).padStart(2, "0") + "時",
+                    allowSorting: false,
+                    calculateCellValue: function (row) {
+                        var cell = row.cells[columnHour];
+                        return cell ? cell.averageVisitors : 0;
+                    },
+                    cellTemplate: function (container, info) {
+                        var cell = info.data.cells[columnHour] || {
+                            averageVisitors: 0,
+                            averageViews: 0,
+                            totalVisitors: 0,
+                            sampleDays: 0
+                        };
+                        var value = Number(cell.averageVisitors) || 0;
+                        var ratio = maximum ? value / maximum : 0;
+                        var label = cell.sampleDays > 0 ? value.toFixed(1) : "—";
+                        var title = info.data.dayLabel + " "
+                            + String(columnHour).padStart(2, "0") + ":00－"
+                            + String((columnHour + 1) % 24).padStart(2, "0") + ":00"
+                            + "\n平均訪客人數：" + value.toFixed(1)
+                            + "\n平均瀏覽次數：" + Number(cell.averageViews || 0).toFixed(1)
+                            + "\n訪客人數合計：" + number(cell.totalVisitors)
+                            + "\n統計天數：" + cell.sampleDays;
+
+                        $("<div>")
+                            .addClass("dashboard-heatmap-cell")
+                            .css({
+                                backgroundColor: heatmapColor(value, maximum),
+                                color: ratio >= 0.72 ? "#fff" : "#344767"
+                            })
+                            .attr("title", title)
+                            .text(label)
+                            .appendTo(container);
+                    }
+                });
+            })(hour);
+        }
+
+        var options = {
+            dataSource: rows,
+            columns: columns,
+            keyExpr: "dayOfWeek",
+            showBorders: true,
+            showColumnLines: true,
+            showRowLines: true,
+            rowAlternationEnabled: false,
+            hoverStateEnabled: true,
+            allowColumnResizing: false,
+            columnAutoWidth: false,
+            sorting: { mode: "none" },
+            paging: { enabled: false },
+            scrolling: {
+                mode: "standard",
+                showScrollbar: "always",
+                useNative: true
+            },
+            loadPanel: { enabled: false },
+            noDataText: "尚無小時統計資料",
+            onCellPrepared: function (event) {
+                if (event.rowType === "header" && event.columnIndex > 0) {
+                    var hour = event.columnIndex - 1;
+                    event.cellElement.attr(
+                        "title",
+                        String(hour).padStart(2, "0") + ":00－"
+                            + String((hour + 1) % 24).padStart(2, "0") + ":00"
+                    );
+                }
+            }
+        };
+
+        if (!trafficHeatmap) {
+            trafficHeatmap = $("#dashboard-traffic-heatmap")
+                .dxDataGrid(options)
+                .dxDataGrid("instance");
+        } else {
+            trafficHeatmap.option(options);
+        }
+
+        renderRecommendedSlots(result.recommendedSlots);
+    }
+
+    function loadTrafficHeatmap(days) {
+        var $loading = $(".heatmap-loading");
+        var $content = $(".dashboard-heatmap-content");
+        $loading
+            .removeClass("dashboard-error")
+            .text("正在載入訪客時段資料…")
+            .show();
+        $content.hide();
+
+        if (heatmapRequest) heatmapRequest.abort();
+        heatmapRequest = $.get("/api/Dashboard/GetTrafficHeatmap", { days: days })
+            .done(function (result) {
+                renderTrafficHeatmap(result);
+
+                var range = formatDate(result.startDate, false) + "－" + formatDate(result.endDate, false);
+                var summary = range + "・已統計 " + number(result.availableDays) + " 個完整日";
+                if (result.updatedAt) summary += "・更新 " + formatDate(result.updatedAt, true);
+                $(".heatmap-summary").text(summary);
+
+                $content.show();
+                $loading.hide();
+            })
+            .fail(function (_xhr, status) {
+                if (status === "abort") return;
+                showError($loading, "訪客時段資料載入失敗");
+            })
+            .always(function (_result, status) {
+                if (status !== "abort") heatmapRequest = null;
+            });
+    }
+
     function initializeDashboardRanges() {
         var today = new Date();
         var sevenDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
@@ -289,6 +640,18 @@ var PageReady = function () {
             setActiveButton($(".popular-period-button"), $button);
             loadPopularPages($button.data("period"), $button.data("title"));
         });
+
+        $(".heatmap-range-button").on("click", function () {
+            var $button = $(this);
+            setActiveButton($(".heatmap-range-button"), $button);
+            loadTrafficHeatmap(Number($button.data("days")));
+        });
+
+        $(".order-trend-range-button").on("click", function () {
+            var $button = $(this);
+            setActiveButton($(".order-trend-range-button"), $button);
+            loadOrderTrend(Number($button.data("days")));
+        });
     }
 
     function statusBadge(label, count, className) {
@@ -358,9 +721,16 @@ var PageReady = function () {
     function loadContacts() {
         var $summaryLoading = $(".contact-summary-loading");
         var $recentLoading = $(".recent-contacts-loading");
+        var $contactAreas = $(".dashboard-contact-kpi, .dashboard-contact-sections");
 
         $.get("/api/Dashboard/GetContacts", { take: 5 })
             .done(function (result) {
+                if (!result.hasData) {
+                    $contactAreas.prop("hidden", true);
+                    return;
+                }
+
+                $contactAreas.prop("hidden", false);
                 $(".pending-contact-count").text(number(result.pendingCount));
                 renderContactForms(result.forms);
                 renderRecentContacts(result.recent);
@@ -368,16 +738,132 @@ var PageReady = function () {
                 $recentLoading.hide();
             })
             .fail(function () {
-                $(".pending-contact-count").text("--");
-                showError($summaryLoading, "表單統計載入失敗");
-                showError($recentLoading, "最近提交載入失敗");
+                $contactAreas.prop("hidden", true);
             });
     }
 
+    function loadCommerceOverview() {
+        var $commerceKpis = $(".dashboard-commerce-kpis");
+        var $revenueKpis = $(".dashboard-revenue-kpis");
+        var $orderTrendSection = $(".dashboard-order-trend-section");
+        var $orderKpis = $(".dashboard-order-kpi");
+        var $orderInsightColumns = $(".dashboard-order-insight-column");
+
+        $.get("/api/Dashboard/GetCommerceOverview")
+            .done(function (result) {
+                if (!result.isCommerceEnabled) {
+                    if (orderTrendRequest) orderTrendRequest.abort();
+                    $commerceKpis
+                        .add($revenueKpis)
+                        .add($orderTrendSection)
+                        .prop("hidden", true);
+                    $orderInsightColumns.prop("hidden", true);
+                    $commerceKpis.removeClass("has-no-order-data");
+                    return;
+                }
+
+                $(".pending-confirmation-order-count").text(number(result.pendingConfirmationCount));
+                $(".pending-payment-order-count").text(number(result.pendingPaymentCount));
+                $(".awaiting-shipment-order-count").text(number(result.awaitingShipmentCount));
+                $(".shipping-order-count").text(number(result.shippingCount));
+                $(".low-stock-count").text(number(result.lowStockCount));
+                $(".sold-out-product-count").text(number(result.soldOutProductCount));
+                $commerceKpis.prop("hidden", false);
+
+                if (!result.hasOrderData) {
+                    if (orderTrendRequest) orderTrendRequest.abort();
+                    $commerceKpis.addClass("has-no-order-data");
+                    $orderKpis
+                        .add($revenueKpis)
+                        .add($orderTrendSection)
+                        .prop("hidden", true);
+                    $orderInsightColumns.prop("hidden", true);
+                    return;
+                }
+
+                $commerceKpis.removeClass("has-no-order-data");
+                $orderKpis.add($revenueKpis).prop("hidden", false);
+                $(".today-order-amount").text(money(result.todayOrderAmount));
+                $(".yesterday-order-amount").text(money(result.yesterdayOrderAmount));
+                $(".month-order-amount").text(money(result.monthOrderAmount));
+                $(".previous-month-order-amount").text(money(result.previousMonthOrderAmount));
+                $(".today-paid-order-count").text(number(result.todayPaidOrderCount));
+                $(".month-paid-order-count").text(number(result.monthPaidOrderCount));
+                renderChange(
+                    $(".today-order-change"),
+                    result.todayOrderAmount,
+                    result.yesterdayOrderAmount
+                );
+                renderChange(
+                    $(".month-order-change"),
+                    result.monthOrderAmount,
+                    result.previousMonthOrderAmount
+                );
+                renderRecentOrders(result.recentOrders);
+                loadOrderTrend(30);
+            })
+            .fail(function () {
+                $commerceKpis
+                    .add($revenueKpis)
+                    .add($orderTrendSection)
+                    .prop("hidden", true);
+                $orderInsightColumns.prop("hidden", true);
+            });
+    }
+
+    function orderStatusClass(status) {
+        switch (status) {
+            case "待確認": return "is-pending";
+            case "待付款": return "is-payment";
+            case "已付款": return "is-shipment";
+            case "已出貨": return "is-shipping";
+            default: return "is-muted";
+        }
+    }
+
+    function renderRecentOrders(items) {
+        var $list = $(".dashboard-recent-order-list").empty();
+        var $recentOrdersColumn = $(".dashboard-recent-orders-column");
+        if (!items || items.length === 0) {
+            $recentOrdersColumn.prop("hidden", true);
+            refreshOrderInsightsLayout();
+            return;
+        }
+
+        $recentOrdersColumn.prop("hidden", false);
+        refreshOrderInsightsLayout();
+
+        items.forEach(function (item) {
+            var $link = $("<a>")
+                .addClass("dashboard-recent-order-item text-reset text-decoration-none")
+                .attr("href", "/OrderManagement#" + item.id);
+            var $top = $("<div>").addClass("dashboard-recent-order-top").appendTo($link);
+            $("<strong>")
+                .addClass("dashboard-recent-order-number")
+                .text("訂單 #" + item.id)
+                .appendTo($top);
+            $("<span>")
+                .addClass("dashboard-order-status " + orderStatusClass(item.status))
+                .text(text(item.status, "未知"))
+                .appendTo($top);
+
+            var $detail = $("<div>").addClass("dashboard-recent-order-detail").appendTo($link);
+            $("<span>")
+                .text(text(item.orderer, "未填寫訂購人") + "・" + formatDate(item.creationTime, true))
+                .appendTo($detail);
+            $("<strong>")
+                .text(money(item.total))
+                .appendTo($detail);
+            $link.appendTo($list);
+        });
+    }
+
     loadSystemOverview();
+    loadCommerceOverview();
     refreshOnlineVisitors();
     initializeDashboardRanges();
     loadTraffic({ days: 7 }, "最近 7 天瀏覽趨勢");
+    loadTrafficHeatmap(30);
     loadPopularPages("today", "本日");
     loadContacts();
     window.setInterval(refreshOnlineVisitors, 30000);

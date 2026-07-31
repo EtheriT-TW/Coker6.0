@@ -5,8 +5,8 @@
 <link rel="stylesheet" href="~/css/Dashboard/index.min.css" asp-append-version="true" />
 
 <div class="container-fluid py-4 dashboard">
-    <div class="row g-4 dashboard-kpis">
-        <div class="col-12 col-md-6 col-xl-3">
+    <div class="row g-4 dashboard-kpis dashboard-system-kpis">
+        <div class="col-12 col-md-6 col-xl">
             <div class="card dashboard-kpi h-100">
                 <div class="card-header p-3 pt-2">
                     <div class="icon icon-lg icon-shape bg-gradient-warning shadow-dark text-center border-radius-xl mt-n4 position-absolute">
@@ -24,7 +24,7 @@
             </div>
         </div>
 
-        <div class="col-12 col-md-6 col-xl-3">
+        <div class="col-12 col-md-6 col-xl">
             <div class="card dashboard-kpi h-100">
                 <div class="card-header p-3 pt-2">
                     <div class="icon icon-lg icon-shape bg-gradient-info shadow-primary text-center border-radius-xl mt-n4 position-absolute">
@@ -42,7 +42,7 @@
             </div>
         </div>
 
-        <div class="col-12 col-md-6 col-xl-3">
+        <div class="col-12 col-md-6 col-xl">
             <div class="card dashboard-kpi h-100">
                 <div class="card-header p-3 pt-2">
                     <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
@@ -55,12 +55,12 @@
                 </div>
                 <hr class="dark horizontal my-0" />
                 <div class="card-footer p-3">
-                    <p class="mb-0 text-sm">最近 2 分鐘仍有瀏覽心跳，每 30 秒更新</p>
+                    <p class="mb-0 text-sm">最近 2 分鐘內仍在瀏覽網站，每 30 秒更新</p>
                 </div>
             </div>
         </div>
 
-        <div class="col-12 col-md-6 col-xl-3">
+        <div class="col-12 col-md-6 col-xl dashboard-contact-kpi" hidden>
             <a class="text-decoration-none text-reset" href="/ContentManagement/ContactUs">
                 <div class="card dashboard-kpi h-100">
                     <div class="card-header p-3 pt-2">
@@ -81,7 +81,201 @@
         </div>
     </div>
 
-    <div class="row g-4 mt-1">
+    <div class="row g-4 mt-1 dashboard-revenue-kpis" hidden>
+        <div class="col-12 col-lg-6">
+            <div class="card dashboard-revenue-card h-100">
+                <div class="card-body p-4">
+                    <div class="dashboard-revenue-heading">
+                        <div>
+                            <p class="text-sm text-secondary mb-1">本日有效訂單金額</p>
+                            <h3 class="mb-1 today-order-amount">NT$ --</h3>
+                            <span class="text-xs text-secondary">
+                                已付款相關訂單 <strong class="today-paid-order-count text-dark">--</strong> 筆
+                            </span>
+                        </div>
+                        <div class="dashboard-revenue-icon bg-gradient-success">
+                            <i class="material-symbols-outlined">payments</i>
+                        </div>
+                    </div>
+                    <div class="dashboard-revenue-comparison mt-3">
+                        <span class="text-xs text-secondary">
+                            昨日 <strong class="yesterday-order-amount text-dark">NT$ --</strong>
+                        </span>
+                        <span class="dashboard-change-badge today-order-change">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card dashboard-revenue-card h-100">
+                <div class="card-body p-4">
+                    <div class="dashboard-revenue-heading">
+                        <div>
+                            <p class="text-sm text-secondary mb-1">本月有效訂單金額</p>
+                            <h3 class="mb-1 month-order-amount">NT$ --</h3>
+                            <span class="text-xs text-secondary">
+                                已付款相關訂單 <strong class="month-paid-order-count text-dark">--</strong> 筆
+                            </span>
+                        </div>
+                        <div class="dashboard-revenue-icon bg-gradient-info">
+                            <i class="material-symbols-outlined">account_balance_wallet</i>
+                        </div>
+                    </div>
+                    <div class="dashboard-revenue-comparison mt-3">
+                        <span class="text-xs text-secondary">
+                            上月同期 <strong class="previous-month-order-amount text-dark">NT$ --</strong>
+                        </span>
+                        <span class="dashboard-change-badge month-order-change">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1 dashboard-commerce-kpis" hidden>
+        <div class="col-6 col-md-4 col-xl-2 dashboard-order-kpi">
+            <a class="text-decoration-none text-reset" href="/OrderManagement">
+                <div class="card dashboard-kpi dashboard-commerce-kpi h-100">
+                    <div class="card-header p-3">
+                        <div class="dashboard-commerce-icon bg-gradient-warning">
+                            <i class="material-symbols-outlined">assignment_late</i>
+                        </div>
+                        <p class="text-sm text-secondary mb-1 mt-3">待確認訂單</p>
+                        <h4 class="mb-0 pending-confirmation-order-count">--</h4>
+                    </div>
+                    <div class="card-footer px-3 py-2">
+                        <span class="text-xs text-secondary">需要優先確認</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 dashboard-order-kpi">
+            <a class="text-decoration-none text-reset" href="/OrderManagement">
+                <div class="card dashboard-kpi dashboard-commerce-kpi h-100">
+                    <div class="card-header p-3">
+                        <div class="dashboard-commerce-icon bg-gradient-danger">
+                            <i class="material-symbols-outlined">payments</i>
+                        </div>
+                        <p class="text-sm text-secondary mb-1 mt-3">待付款訂單</p>
+                        <h4 class="mb-0 pending-payment-order-count">--</h4>
+                    </div>
+                    <div class="card-footer px-3 py-2">
+                        <span class="text-xs text-secondary">等待付款完成</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 dashboard-order-kpi">
+            <a class="text-decoration-none text-reset" href="/OrderManagement">
+                <div class="card dashboard-kpi dashboard-commerce-kpi h-100">
+                    <div class="card-header p-3">
+                        <div class="dashboard-commerce-icon bg-gradient-info">
+                            <i class="material-symbols-outlined">inventory_2</i>
+                        </div>
+                        <p class="text-sm text-secondary mb-1 mt-3">待出貨訂單</p>
+                        <h4 class="mb-0 awaiting-shipment-order-count">--</h4>
+                    </div>
+                    <div class="card-footer px-3 py-2">
+                        <span class="text-xs text-secondary">已付款待處理</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 dashboard-order-kpi">
+            <a class="text-decoration-none text-reset" href="/OrderManagement">
+                <div class="card dashboard-kpi dashboard-commerce-kpi h-100">
+                    <div class="card-header p-3">
+                        <div class="dashboard-commerce-icon bg-gradient-success">
+                            <i class="material-symbols-outlined">local_shipping</i>
+                        </div>
+                        <p class="text-sm text-secondary mb-1 mt-3">配送中訂單</p>
+                        <h4 class="mb-0 shipping-order-count">--</h4>
+                    </div>
+                    <div class="card-footer px-3 py-2">
+                        <span class="text-xs text-secondary">已出貨未完成</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 dashboard-product-kpi">
+            <a class="text-decoration-none text-reset" href="/ProductManagement/SaleQuantityStaging">
+                <div class="card dashboard-kpi dashboard-commerce-kpi h-100">
+                    <div class="card-header p-3">
+                        <div class="dashboard-commerce-icon bg-gradient-danger">
+                            <i class="material-symbols-outlined">inventory</i>
+                        </div>
+                        <p class="text-sm text-secondary mb-1 mt-3">庫存警示規格</p>
+                        <h4 class="mb-0 low-stock-count">--</h4>
+                    </div>
+                    <div class="card-footer px-3 py-2">
+                        <span class="text-xs text-secondary">已達安全庫存量</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 dashboard-product-kpi">
+            <a class="text-decoration-none text-reset" href="/ProductManagement/ProductList">
+                <div class="card dashboard-kpi dashboard-commerce-kpi h-100">
+                    <div class="card-header p-3">
+                        <div class="dashboard-commerce-icon bg-gradient-dark">
+                            <i class="material-symbols-outlined">production_quantity_limits</i>
+                        </div>
+                        <p class="text-sm text-secondary mb-1 mt-3">已售完商品</p>
+                        <h4 class="mb-0 sold-out-product-count">--</h4>
+                    </div>
+                    <div class="card-footer px-3 py-2">
+                        <span class="text-xs text-secondary">目前前台售完</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1 dashboard-order-trend-section" hidden>
+        <div class="col-12 col-xl-8 dashboard-order-insight-column dashboard-order-trend-column" hidden>
+            <div class="card dashboard-panel dashboard-order-trend-panel h-100">
+                <div class="card-header dashboard-card-header pb-0">
+                    <div class="dashboard-heading-row">
+                        <div>
+                            <h6 class="mb-1 order-trend-title">近 30 天有效訂單趨勢</h6>
+                            <p class="text-sm text-secondary mb-0">排除已取消、付款失敗及暫存訂單・金額包含商品小計與運費</p>
+                        </div>
+                        <div class="dashboard-traffic-actions">
+                            <span class="text-xs text-secondary order-trend-range"></span>
+                            <div class="dashboard-filter-row" role="group" aria-label="有效訂單趨勢區間">
+                                <button type="button" class="dashboard-filter-button order-trend-range-button" data-days="7">近七天</button>
+                                <button type="button" class="dashboard-filter-button order-trend-range-button is-active" data-days="30">近 30 天</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="dashboard-order-trend-chart">
+                        <div id="dashboard-order-trend-chart"></div>
+                    </div>
+                    <div class="dashboard-loading order-trend-loading">正在載入訂單趨勢…</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-4 dashboard-order-insight-column dashboard-recent-orders-column" hidden>
+            <div class="card dashboard-panel dashboard-order-trend-panel h-100">
+                <div class="card-header dashboard-card-header pb-0">
+                    <div class="dashboard-heading-row">
+                        <div>
+                            <h6 class="mb-1">最近未完成訂單</h6>
+                            <p class="text-sm text-secondary mb-0">最新 5 筆仍需追蹤的訂單</p>
+                        </div>
+                        <a class="btn btn-sm btn-outline-primary mb-0" href="/OrderManagement">查看全部</a>
+                    </div>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="dashboard-recent-order-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1 dashboard-traffic-section">
         <div class="col-12 col-xl-8">
             <div class="card dashboard-panel h-100">
                 <div class="card-header dashboard-card-header pb-0">
@@ -148,7 +342,62 @@
         </div>
     </div>
 
-    <div class="row g-4 mt-1">
+    <div class="row g-4 mt-1 dashboard-heatmap-section">
+        <div class="col-12 col-xl-8">
+            <div class="card dashboard-panel dashboard-heatmap-panel h-100">
+                <div class="card-header dashboard-card-header pb-0">
+                    <div class="dashboard-heading-row">
+                        <div>
+                            <h6 class="mb-1">訪客活躍時段</h6>
+                            <p class="text-sm text-secondary mb-0">查看一週中哪些時段的瀏覽人數較多，顏色越深代表越多人瀏覽</p>
+                        </div>
+                        <div class="dashboard-traffic-actions">
+                            <span class="text-xs text-secondary heatmap-summary"></span>
+                            <div class="dashboard-filter-row" role="group" aria-label="訪客活躍時段統計區間">
+                                <button type="button" class="dashboard-filter-button heatmap-range-button" data-days="7">近七天</button>
+                                <button type="button" class="dashboard-filter-button heatmap-range-button is-active" data-days="30">近 30 天</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="dashboard-heatmap-content">
+                        <div class="dashboard-heatmap-scroll">
+                            <div id="dashboard-traffic-heatmap"></div>
+                        </div>
+                        <div class="dashboard-heatmap-legend" aria-label="熱度色階">
+                            <span>較少</span>
+                            <span class="dashboard-heatmap-gradient"></span>
+                            <span>較多</span>
+                            <span class="dashboard-heatmap-unit">平均訪客人數／小時</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-loading heatmap-loading">正在載入訪客時段資料…</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-4">
+            <div class="card dashboard-panel h-100">
+                <div class="card-header dashboard-card-header pb-0">
+                    <div class="dashboard-heading-row">
+                        <div>
+                            <h6 class="mb-1">瀏覽人數最高時段</h6>
+                            <p class="text-sm text-secondary mb-0">依平均訪客人數排序，列出最高的 5 個時段</p>
+                        </div>
+                        <span class="material-symbols-outlined text-info">schedule</span>
+                    </div>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="dashboard-recommended-slots">
+                        <div class="dashboard-loading">正在載入熱門瀏覽時段…</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1 dashboard-contact-sections" hidden>
         <div class="col-12 col-xl-7">
             <div class="card dashboard-panel h-100">
                 <div class="card-header d-flex align-items-center justify-content-between pb-0">

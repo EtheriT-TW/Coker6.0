@@ -30,6 +30,15 @@
             });
     }
 
+    function getAdvertiseTake($el) {
+        const raw = $el.data("maxlen");
+        const take = Number(raw);
+
+        if (!Number.isFinite(take) || take < 1) return 1;
+
+        return Math.min(Math.floor(take), 20);
+    }
+
     function showAdvertiseLoading($el) {
         if (!$el || !$el.length || $el.children(".coker-ad-loading").length) return;
 
@@ -236,20 +245,24 @@
             if (!dirid.length) return;
 
             const directoryKey = dirid.join(",");
+            const take = getAdvertiseTake($self);
+            const loadingKey = `${directoryKey}|${take}`;
 
             if (
-                $self.data("advertiseLoadingKey") === directoryKey ||
-                $self.data("advertiseLoadedKey") === directoryKey
+                $self.data("advertiseLoadingKey") === loadingKey ||
+                $self.data("advertiseLoadedKey") === loadingKey
             ) {
                 return;
             }
 
-            $self.data("advertiseLoadingKey", directoryKey);
+            $self.data("advertiseLoadingKey", loadingKey);
             showAdvertiseLoading($self);
             pendingItems.push({
                 $element: $self,
                 directoryIds: dirid,
-                key: directoryKey
+                key: directoryKey,
+                loadingKey: loadingKey,
+                take: take
             });
 
             if (!seenGroups[directoryKey]) {
@@ -267,7 +280,10 @@
             return;
         }
 
-        const request = w.DirectoryService.getAdvertiseBatchData(groups);
+        const take = pendingItems.reduce(function (max, item) {
+            return Math.max(max, item.take);
+        }, 1);
+        const request = w.DirectoryService.getAdvertiseBatchData(groups, take);
 
         request.done(function (result) {
             const resultByKey = {};
@@ -279,27 +295,37 @@
 
             pendingItems.forEach(function (item) {
                 // Ignore a stale response when the editor changed the directory
-                // association while this batch request was in flight.
-                if (getDirIds(item.$element).join(",") !== item.key) {
-                    hideAdvertiseLoading(item.$element, false);
+                // association or max length while this batch request was in flight.
+                const currentKey = `${getDirIds(item.$element).join(",")}|${getAdvertiseTake(item.$element)}`;
+                if (currentKey !== item.loadingKey) {
+                    if (item.$element.data("advertiseLoadingKey") === item.loadingKey) {
+                        hideAdvertiseLoading(item.$element, false);
+                    }
                     return;
                 }
 
                 if (w.DirectoryBlocks && typeof w.DirectoryBlocks.renderAdvertise === "function") {
-                    w.DirectoryBlocks.renderAdvertise(item.$element, resultByKey[item.key] || []);
+                    w.DirectoryBlocks.renderAdvertise(
+                        item.$element,
+                        (resultByKey[item.key] || []).slice(0, item.take)
+                    );
                 }
 
-                item.$element.data("advertiseLoadedKey", item.key);
+                item.$element.data("advertiseLoadedKey", item.loadingKey);
                 hideAdvertiseLoading(item.$element, true);
             });
         }).fail(function () {
             pendingItems.forEach(function (item) {
-                item.$element.removeData("advertiseLoadedKey");
-                hideAdvertiseLoading(item.$element, false);
+                if (item.$element.data("advertiseLoadingKey") === item.loadingKey) {
+                    item.$element.removeData("advertiseLoadedKey");
+                    hideAdvertiseLoading(item.$element, false);
+                }
             });
         }).always(function () {
             pendingItems.forEach(function (item) {
-                item.$element.removeData("advertiseLoadingKey");
+                if (item.$element.data("advertiseLoadingKey") === item.loadingKey) {
+                    item.$element.removeData("advertiseLoadingKey");
+                }
             });
         });
     }

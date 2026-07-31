@@ -1314,9 +1314,7 @@ function MenuEditor(idSelector, options) {
     });
     $main.on('click', '.btnEdit', function (e) {
         e.preventDefault();
-        itemEditing = $(this).closest('li');
-        editItem(itemEditing);
-        !!settings.on.edit && settings.on.edit();
+        loadAndEditItem($(this).closest('li'), $(this));
     });
 
     $main.on('click', '.btnUp', function (e) {
@@ -1372,6 +1370,60 @@ function MenuEditor(idSelector, options) {
     });
 
     /* PRIVATE METHODS */
+    var editRequestSequence = 0;
+
+    function loadAndEditItem($item, $button) {
+        if ($button.data("edit-loading")) return;
+
+        var requestId = ++editRequestSequence;
+        var completeEdit = function (detail) {
+            if (requestId !== editRequestSequence) return;
+
+            if (detail) {
+                $item.data($.extend({}, $item.data(), detail));
+            }
+
+            itemEditing = $item;
+            editItem(itemEditing);
+            !!settings.on.edit && settings.on.edit(itemEditing.data());
+        };
+
+        if (typeof settings.on.loadEditData !== "function") {
+            completeEdit();
+            return;
+        }
+
+        var request;
+        try {
+            request = settings.on.loadEditData($item.data());
+        } catch (error) {
+            if (typeof settings.on.editLoadError === "function") {
+                settings.on.editLoadError(error, $item.data());
+            }
+            return;
+        }
+
+        $button
+            .data("edit-loading", true)
+            .attr({ "aria-disabled": "true", "aria-busy": "true" })
+            .addClass("disabled");
+
+        $.when(request)
+            .done(completeEdit)
+            .fail(function (error) {
+                if (requestId !== editRequestSequence) return;
+                if (typeof settings.on.editLoadError === "function") {
+                    settings.on.editLoadError(error, $item.data());
+                }
+            })
+            .always(function () {
+                $button
+                    .removeData("edit-loading")
+                    .removeAttr("aria-disabled aria-busy")
+                    .removeClass("disabled");
+            });
+    }
+
     function editItem($item) {
         var data = $item.data();
         const $card = $form.parents(".card");
@@ -1387,7 +1439,7 @@ function MenuEditor(idSelector, options) {
                     $(element).trigger("change");
                     break;
                 default:
-                    switch (element.attr("type").toUpperCase()) {
+                    switch ((element.attr("type") || "").toUpperCase()) {
                         case "RADIO":
                             element.find("[value=" + v + "]").prop("checked", true);
                             break;

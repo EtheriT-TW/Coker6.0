@@ -1,70 +1,11 @@
 ﻿function PageReady() {
     var menuEditor;
-    var pageTypes = [];
-
-    function toBool(value) {
-        return value === true || value === 1 || value === "true";
-    }
-
-    function getPageTypeOption(value) {
-        const pageType = parseInt(value ?? $("#pageType").val(), 10);
-
-        return pageTypes.find(function (item) {
-            return parseInt(item.value, 10) === pageType;
-        }) || null;
-    }
-
-    function getLinkUrlBlock() {
-        const $input = $("#linkUrl");
-
-        if ($("#LinkUrlBlock").length > 0) {
-            return $("#LinkUrlBlock");
-        }
-
-        return $input.closest(".form-group, .mb-3, .col, .row").first();
-    }
-
-    function updatePageTypeUi() {
-        const option = getPageTypeOption();
-        if (!option) return;
-
-        const showRouterName = toBool(option.showRouterName);
-        const showLinkUrl = toBool(option.showLinkUrl);
-
-        const $routerNameBlock = $("#RouterNameBlock");
-        const $routerNameInput = $routerNameBlock.find("input");
-
-        const $linkUrlInput = $("#linkUrl");
-        const $linkUrlBlock = getLinkUrlBlock();
-
-        const $description = $("#PageTypeDescription");
-
-        if ($description.length > 0) {
-            $description.text(option.description || "");
-            $description.toggleClass("d-none", !option.description);
-        }
-
-        $routerNameBlock.toggleClass("d-none", !showRouterName);
-        $linkUrlBlock.toggleClass("d-none", !showLinkUrl);
-
-        if (!showRouterName) {
-            $routerNameInput.val(option.routerName || "");
-        } else {
-            const currentRouterName = ($routerNameInput.val() || "").trim();
-            const isSystemRouterName = pageTypes.some(function (item) {
-                return item.routerName && item.routerName === currentRouterName;
-            });
-
-            if (isSystemRouterName) {
-                $routerNameInput.val("");
-            }
-        }
-
-        if (!showLinkUrl) {
-            $linkUrlInput.val("");
-        }
-    }
     const myOffcanvas = new bootstrap.Offcanvas('#offcanvasSite');
+    const menuForm = new CokerMenuEditorForm({
+        getPageTypes: function () {
+            return co.WebMesnus.GetPageTypeList();
+        }
+    });
     var editor = grapesInit({
         save: function (html, css) {
             var _dfr = $.Deferred();
@@ -117,43 +58,32 @@
         },
         on: {
             ready: function () {
-                syncPopularDisplay();
-                co.WebMesnus.GetPageTypeList().done(function (result) {
-                    if (!result.success) {
-                        co.sweet.error(result.error);
-                        return;
-                    }
-
-                    const $s = $("#pageType");
-                    pageTypes = result.type || [];
-                    $s.empty();
-
-                    $(pageTypes).each(function () {
-                        $s.append(`<option value="${this.value}">${this.key}</option>`);
-                    });
-
-                    $s.off("change.pageType").on("change.pageType", function () {
-                        updatePageTypeUi();
-                    });
-
-                    updatePageTypeUi();
+                menuForm.initialize().fail(function (error) {
+                    co.sweet.error(
+                        "載入失敗",
+                        typeof error === "string" ? error : "無法取得頁面類型"
+                    );
                 });
-                $("#IconImageUpload").ImageUploadModalClear();
-                $("#ImageUpload").ImageUploadModalClear();
-                $("#OverImageUpload").ImageUploadModalClear();
             },
             edit: function () {
-                openEditForm();
-                $("#btnUpdate").removeClass("d-none");
-                $("#btnRefresh,#btnAdd").addClass("d-none");
-                $("#IconImageUpload").ImageUploadModalClear();
-                ImageUploadModalDataInsert($("#IconImageUpload"), $("#IconImageUpload").siblings("#iconId").val(), $("#IconImageUpload").siblings("#iconUrl").val(), "");
-                $("#ImageUpload").ImageUploadModalClear();
-                ImageUploadModalDataInsert($("#ImageUpload"), $("#ImageUpload").siblings("#imgId").val(), $("#ImageUpload").siblings("#imgUrl").val(), $("#ImageUpload").siblings("#imgName").val())
-                $("#OverImageUpload").ImageUploadModalClear();
-                ImageUploadModalDataInsert($("#OverImageUpload"), $("#OverImageUpload").siblings("#overImgId").val(), $("#OverImageUpload").siblings("#overImgUrl").val(), $("#OverImageUpload").siblings("#overImgName").val());
-                syncPopularDisplay();
-                updatePageTypeUi();
+                menuForm.prepareEdit();
+            },
+            loadEditData: function (summary) {
+                return co.WebMesnus.getEditorDetail(summary.id).then(function (result) {
+                    if (!result.success || !result.item) {
+                        return $.Deferred()
+                            .reject(result.error || "無法取得選單資料")
+                            .promise();
+                    }
+
+                    return result.item;
+                });
+            },
+            editLoadError: function (error) {
+                const message = typeof error === "string"
+                    ? error
+                    : error?.responseJSON?.error || error?.statusText || "無法取得選單資料";
+                co.sweet.error("載入失敗", message);
             },
             del: function (data) {
                 if ($("#myEditor>li").length == 0) {
@@ -166,52 +96,7 @@
                 });
             },
             validate: async function (data) {
-                const option = getPageTypeOption(data.pageType);
-
-                if (!option) {
-                    co.sweet.error("資料錯誤", "無法取得頁面類型設定，請重新整理後再試。");
-                    return false;
-                }
-
-                const showRouterName = toBool(option.showRouterName);
-                const showLinkUrl = toBool(option.showLinkUrl);
-
-                if (!showRouterName) {
-                    data.routerName = option.routerName || "";
-                }
-
-                if (!showLinkUrl) {
-                    data.linkUrl = "";
-                }
-
-                if (!showRouterName && !showLinkUrl) {
-                    return true;
-                }
-
-                if (!data.linkUrl && !data.routerName) {
-                    let msg = "【路徑名稱】與【連結】<span class='text-danger font-weight-bold'>必須</span>填寫其中之一";
-                    co.sweet.error("資料錯誤", msg);
-                    return false;
-                }
-
-                if (data.linkUrl && data.routerName) {
-                    let msg = "您同時輸入【路徑名稱】與【連結】。" +
-                        "<br/>儲存後此選單將無法顯示頁面內容，只會直接<span class='text-danger font-weight-bold'>跳轉</span>到指定的連結。<br/>" +
-                        "是否確認要這樣設定？";
-
-                    const ok = await co.sweet.confirmAsync(
-                        "跳頁設定",
-                        msg,
-                        "仍要儲存",
-                        "取消"
-                    );
-
-                    if (!ok) {
-                        return false;
-                    }
-                }
-
-                return true;
+                return await menuForm.validate(data);
             },
             add: async function (cEl) {
                 var data = cEl.data();
@@ -233,7 +118,7 @@
                         data.id = parseInt(result.message);
                         var ico_success = 0, img_success = 0, overimg_success = 0;
 
-                        var $ico_file = $("#IconImageUpload .img_input_frame > .img_input");
+                        var $ico_file = menuForm.getUploadInput("icon");
                         if (typeof ($ico_file.data("file")) != "undefined" && $ico_file.data("file") != null) {
                             var formData = new FormData();
                             formData.append("files", $ico_file.data("file").File);
@@ -246,7 +131,7 @@
                             });
                         } else ico_success = 1;
 
-                        var $file = $("#ImageUpload .img_input_frame > .img_input");
+                        var $file = menuForm.getUploadInput("image");
                         if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null) {
                             var formData = new FormData();
                             formData.append("files", $file.data("file").File);
@@ -259,7 +144,7 @@
                             });
                         } else img_success = 1;
 
-                        var $over_file = $("#OverImageUpload .img_input_frame > .img_input");
+                        var $over_file = menuForm.getUploadInput("overImage");
                         if (typeof ($over_file.data("file")) != "undefined" && $over_file.data("file") != null) {
                             var formData = new FormData();
                             formData.append("files", $over_file.data("file").File);
@@ -274,9 +159,7 @@
 
                         const timmer = function () {
                             if (ico_success != 0 && img_success != 0 && overimg_success != 0) {
-                                $("#IconImageUpload").ImageUploadModalClear();
-                                $("#ImageUpload").ImageUploadModalClear();
-                                $("#OverImageUpload").ImageUploadModalClear();
+                                menuForm.clearUploads();
                                 menuReload(menuEditor, myOffcanvas, function () {
                                     const newId = data.id;
                                     var $target = $("#myEditor").find("li").filter(function () {
@@ -319,7 +202,7 @@
                     else {
                         var iconimg_success = 0, img_success = 0, overimg_success = 0, deliconimg_success = 0, delimg_success = 0, deloverimg_success = 0;
 
-                        var $icon_del_list = $("#IconImageUpload .img_input_frame").data("delectList");
+                        var $icon_del_list = menuForm.getDeleteList("icon");
                         if ($icon_del_list != null) {
                             co.File.DeleteFileById({
                                 sid: data.id,
@@ -333,7 +216,7 @@
                             });
                         } else deliconimg_success = 1
 
-                        var $del_list = $("#ImageUpload .img_input_frame").data("delectList");
+                        var $del_list = menuForm.getDeleteList("image");
                         if ($del_list != null) {
                             co.File.DeleteFileById({
                                 sid: data.id,
@@ -345,7 +228,7 @@
                             });
                         } else delimg_success = 1
 
-                        var $over_del_list = $("#OverImageUpload .img_input_frame").data("delectList");
+                        var $over_del_list = menuForm.getDeleteList("overImage");
                         if ($over_del_list != null) {
                             co.File.DeleteFileById({
                                 sid: data.id,
@@ -359,7 +242,7 @@
                         const del_timmer = function () {
                             if (deliconimg_success != 0 && delimg_success != 0 && deloverimg_success != 0) {
                                 if (deliconimg_success == 1) {
-                                    var $file = $("#IconImageUpload .img_input_frame > .img_input");
+                                    var $file = menuForm.getUploadInput("icon");
                                     if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null && $file.data("file").File != null) {
                                         var formData = new FormData();
                                         formData.append("files", $file.data("file").File);
@@ -374,7 +257,7 @@
                                 } else iconimg_success = -1;
 
                                 if (delimg_success == 1) {
-                                    var $file = $("#ImageUpload .img_input_frame > .img_input");
+                                    var $file = menuForm.getUploadInput("image");
                                     if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null && $file.data("file").File != null) {
                                         var formData = new FormData();
                                         formData.append("files", $file.data("file").File);
@@ -389,7 +272,7 @@
                                 } else img_success = -1;
 
                                 if (deloverimg_success == 1) {
-                                    var $over_file = $("#OverImageUpload .img_input_frame > .img_input");
+                                    var $over_file = menuForm.getUploadInput("overImage");
                                     if (typeof ($over_file.data("file")) != "undefined" && $over_file.data("file") != null && $over_file.data("file").File != null) {
                                         var formData = new FormData();
                                         formData.append("files", $over_file.data("file").File);
@@ -406,9 +289,7 @@
                                 const timmer = function () {
                                     if (iconimg_success == 1 && img_success == 1 && overimg_success == 1) {
                                         menuReload(menuEditor, myOffcanvas);
-                                        $("#IconImageUpload").ImageUploadModalClear();
-                                        $("#ImageUpload").ImageUploadModalClear();
-                                        $("#OverImageUpload").ImageUploadModalClear();
+                                        menuForm.clearUploads();
                                         if (!result.success) co.sweet.error(result.error);
                                         else {
                                             if (iconimg_success == -1 || img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
@@ -592,56 +473,29 @@
                 if (menuEditor) {
                     menuReload(menuEditor, myOffcanvas);
                 }
-            });
+        });
         $('#offcanvasSite').on('show.bs.offcanvas', function () {
-            closeEdit();
+            menuForm.close();
         });
         $('#offcanvasSite').on("click", ".btn-close", function (e) {
             e.preventDefault();
-            if ($("#offcanvasSite.offcanvas-lg").length > 0) closeEdit();
+            if ($("#offcanvasSite.offcanvas-lg").length > 0) menuForm.close();
             else myOffcanvas.hide();
         });
         $("#btnExtend").on("click", function () {
-            $("#IconImageUpload").ImageUploadModalClear();
-            $("#ImageUpload").ImageUploadModalClear();
-            $("#OverImageUpload").ImageUploadModalClear();
-            openEditForm();
-            $('#frmEdit [name="id"]').val(0);
-            $("#btnRefresh,#btnAdd").removeClass("d-none");
-            $("#btnUpdate").addClass("d-none");
-            $("#btnRefresh").trigger("click");
-            updatePageTypeUi();
-            $("#popular").val(0);
-            syncPopularDisplay();
+            menuForm.prepareAdd();
             $("#myEditor .editItem").removeClass("editItem");
             updateMenuEditorAddTitle();
-            $("#MenuEditorForm>.card-header>a").addClass("d-none");
         });
 
         menuReload(menuEditor, myOffcanvas);
     });
-    var openEditForm = function () {
-        if ($('#frmEdit [name="id"]').val() == 0) $("#btnClear").addClass("d-none");
-        $("#offcanvasSite").addClass("offcanvas-lg");
-        $("#MenuEditorForm").removeClass("d-none");
-    }
-    var closeEdit = function () {
-        $("#offcanvasSite").removeClass("offcanvas-lg");
-        $("#MenuEditorForm").addClass("d-none");
-    }
     /*$(".material-symbols-outlined").each(function () {
         console.log(`"${$(this).text().trim()}"`);
     });*/
     /*$($.iconset_fontawesome_6.icons).each(function () {
         console.log(`"${this.replace(/[-]{3}[\w]{2,4}$/g,"")}"`);
     });*/
-}
-
-function syncPopularDisplay() {
-    const value = Number($("#popular").val() || 0);
-    $("#popularDisplay").text(
-        Number.isFinite(value) ? value.toLocaleString("zh-TW") : "0"
-    );
 }
 
 function updateMenuEditorAddTitle() {

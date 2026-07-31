@@ -153,11 +153,22 @@
 
         if ($item.find(".swiper").length > 0) {
             const $swiperWrapper = $item.find(".swiper-wrapper");
+            $swiperWrapper.children('[data-coker-ad-rendered="true"]').remove();
 
             for (let i = 0; i < result.length; i++) {
                 const temp = $($swiperWrapper.find(".templatecontent").html()).clone();
                 const rendered = DirectoryBlocks.insertAdvertiseData(temp, result[i]);
+                rendered.attr("data-coker-ad-rendered", "true");
                 $swiperWrapper.append(rendered);
+            }
+
+            const swiperElement = $item.find(".swiper")[0];
+            if (
+                swiperElement &&
+                swiperElement.swiper &&
+                typeof swiperElement.swiper.update === "function"
+            ) {
+                swiperElement.swiper.update();
             }
         } else {
             $item.find(".File_Frame").each(function (index) {

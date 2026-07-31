@@ -13,7 +13,7 @@ namespace EtheriT.Coker.Application.Shared.Directory
         public Task<DirectoryGetDataDto> GetDataOne(long Id);
         public Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto);
         public Task<MenuItemDto> GetReleMenu(DataIdWebsiteIdDto dto);
-        public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
+        public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, bool includeAdvertise = false);
         public Task<JsonResult> GetAdvertiseList(DataSourceLoadOptions loadOptions);
         public Task<ResponseMessageDto> Delete(long Id);
         public Task<JsonResult> GetDirectoryArticlesList(long id, DataSourceLoadOptions loadOptions);

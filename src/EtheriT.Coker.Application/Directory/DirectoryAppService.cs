@@ -2407,7 +2407,7 @@ namespace EtheriT.Coker.Application.Directory
                 showUnvisible = showUnvisible
             });
         }
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, bool includeAdvertise = false)
         {
             try
             {
@@ -2416,6 +2416,10 @@ namespace EtheriT.Coker.Application.Directory
                 List<long> RoleIds = await loginUserData.GetUserRoleIds();
                 bool isSuperUser = await permissionsAppService.IsPowerUserPermissions();
                 IQueryable<Core.Models.Directory> result = db.Directory.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID);
+                if (!includeAdvertise)
+                {
+                    result = result.Where(e => e.Type != (int)DirectoryTypeEnum.廣告);
+                }
                 if (!isSuperUser)
                 {
                     var per = await db.PermissionDetail.Where(e => e.FK_WebsiteId == WebsiteID)

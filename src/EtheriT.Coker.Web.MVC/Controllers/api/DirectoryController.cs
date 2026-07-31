@@ -61,9 +61,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             }
         }
         [HttpGet]
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, [FromQuery] bool includeAdvertise = false)
         {
-            return await directoryAppService.GetAllList(loadOptions);
+            return await directoryAppService.GetAllList(loadOptions, includeAdvertise);
         }
         public async Task<JsonResult> GetAdvertiseList(DataSourceLoadOptions loadOptions)
         {

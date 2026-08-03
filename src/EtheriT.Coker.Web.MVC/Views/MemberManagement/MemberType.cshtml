@@ -1,5 +1,6 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Article
+@using EtheriT.Coker.Application.Shared.Dto.Member
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @using EtheriT.Coker.Application.Shared.Dto;
 @{
@@ -21,7 +22,7 @@
     <div id="ArticleList" class="card py-2 border-0">
         <div class="card-body position-relative">
             @(
-                Html.DevExtreme().DataGrid<SelectDto>()
+                Html.DevExtreme().DataGrid<MemberRoleSelectDto>()
                     .DataSource(d => d.RemoteController().Key("Id")
                     .LoadUrl("/api/Member/GetDevAllRole").LoadMethod("Get")
                     .InsertUrl("/api/Member/RoleAddUp").InsertMethod("Post")
@@ -47,7 +48,10 @@
                     {
                     c.AddFor(e => e.Id).Caption("編號").Width(90).Alignment(HorizontalAlignment.Center).AllowEditing(false);
                     c.AddFor(e => e.Ser_No).Caption("排序").Width(90).Alignment(HorizontalAlignment.Center).AllowEditing(true);
-                    c.AddFor(e => e.Name).Caption("角色名稱").AllowEditing(true);
+                    c.AddFor(e => e.Name)
+                        .Caption("角色名稱")
+                        .AllowEditing(true)
+                        .CellTemplate(new JS("memberRoleNameCellTemplate"));
                     c.Add()
                     .Type(GridCommandColumnType.Buttons)
                     .Buttons(b =>

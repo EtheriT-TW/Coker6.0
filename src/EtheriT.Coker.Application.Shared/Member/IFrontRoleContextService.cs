@@ -16,5 +16,10 @@ namespace EtheriT.Coker.Application.Shared.Member
         /// 這支保留給少數需要明確指定 UUID 的情境
         /// </summary>
         public Task<FrontRoleContextDto> GetContextByUuidAsync(Guid uuid, string orgName = "");
+
+        /// <summary>
+        /// 取得指定網站的前台角色。舊會員若尚未綁定角色，會補上該網站的預設角色。
+        /// </summary>
+        public Task<long> GetRoleIdAsync(Guid uuid, long websiteId);
     }
 }

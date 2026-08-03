@@ -11,6 +11,7 @@ using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Shared.i18n;
+using EtheriT.Coker.Application.Shared.Member;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Core.Models;
@@ -41,6 +42,7 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly IMapper mapper;
         private readonly MailAppService mailAppService;
         private readonly IMailTemplateAppService mailTemplateAppService;
+        private readonly IFrontRoleContextService frontRoleContextService;
 
         public FrontAccountAppService(
             AccountAppService core,
@@ -56,7 +58,8 @@ namespace EtheriT.Coker.Application.Authorization
             IHostEnvironment env,
             IMapper mapper,
             MailAppService mailAppService,
-            IMailTemplateAppService mailTemplateAppService)
+            IMailTemplateAppService mailTemplateAppService,
+            IFrontRoleContextService frontRoleContextService)
         {
             this.core = core;
             this.registrationService = registrationService;
@@ -72,6 +75,7 @@ namespace EtheriT.Coker.Application.Authorization
             this.mapper = mapper;
             this.mailAppService = mailAppService;
             this.mailTemplateAppService = mailTemplateAppService;
+            this.frontRoleContextService = frontRoleContextService;
         }
 
         public async Task<LoginOutputDto> FrontLogin(FrontLoginInputDto dto)
@@ -243,7 +247,7 @@ namespace EtheriT.Coker.Application.Authorization
             var loginToken = new Core.Models.Token
             {
                 id = id,
-                UserID = user.u.Id,
+                UserID = user.u.FK_User,
                 websiteId = dto.FK_WebsiteId,
                 StartTime = DateTime.Now,
                 EndTime = DateTime.Now.AddMinutes(30),
@@ -437,17 +441,8 @@ namespace EtheriT.Coker.Application.Authorization
                     if (userdata != null)
                     {
                         EditUserDto data = mapper.Map<EditUserDto>(userdata);
-                        data.FK_RoleId = await db.MappingUserAndRoles
-                            .AsNoTracking()
-                            .Include(e => e.Role)
-                            .Where(e => !e.IsDeleted)
-                            .Where(e => e.UUID == userdata.UUID)
-                            .Where(e => e.Role != null)
-                            .Where(e => e.Role!.FK_WebsiteId == websiteid)
-                            .Where(e => e.Role!.Type == RoleTypeEnum.前台)
-                            .Where(e => !e.Role!.IsDeleted)
-                            .Select(e => e.RoleId)
-                            .FirstOrDefaultAsync();
+                        data.FK_RoleId = await frontRoleContextService
+                            .GetRoleIdAsync(userdata.UUID, websiteid);
                         data.Birthday = userdata.Birthday == null ? "" : ((DateTime)userdata.Birthday).ToString("yyyy-MM-dd");
                         UserData.data = data;
                         UserData.Success = true;
@@ -473,16 +468,12 @@ namespace EtheriT.Coker.Application.Authorization
 
                 if (token == null || !token.IsLogin) return "";
 
-                var levelName = await db.MappingUserAndRoles
-                    .AsNoTracking()
-                    .Include(e => e.Role)
-                    .Where(e => !e.IsDeleted)
-                    .Where(e => e.UUID == UUID)
-                    .Where(e => e.Role != null)
-                    .Where(e => e.Role!.FK_WebsiteId == websiteid)
-                    .Where(e => e.Role!.Type == RoleTypeEnum.前台)
-                    .Where(e => !e.Role!.IsDeleted)
-                    .Select(e => e.Role!.Name)
+                var roleId = await frontRoleContextService.GetRoleIdAsync(UUID, websiteid);
+                var levelName = await db.Roles
+                    .Where(e => e.Id == roleId)
+                    .Where(e => e.FK_WebsiteId == websiteid)
+                    .Where(e => e.Type == RoleTypeEnum.前台 && !e.IsDeleted)
+                    .Select(e => e.Name)
                     .FirstOrDefaultAsync();
 
                 return levelName ?? "";

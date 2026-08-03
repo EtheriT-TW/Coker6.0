@@ -32,9 +32,14 @@
 
     function getAdvertiseTake($el) {
         const raw = $el.data("maxlen");
+        if (raw === null || typeof raw === "undefined" || String(raw).trim() === "") {
+            return null;
+        }
+
         const take = Number(raw);
 
-        if (!Number.isFinite(take) || take < 1) return 1;
+        // 舊版未設定最大筆數時會回傳全部符合廣告；0 或無效值也視為未限制。
+        if (!Number.isFinite(take) || take < 1) return null;
 
         return Math.min(Math.floor(take), 20);
     }
@@ -246,7 +251,7 @@
 
             const directoryKey = dirid.join(",");
             const take = getAdvertiseTake($self);
-            const loadingKey = `${directoryKey}|${take}`;
+            const loadingKey = `${directoryKey}|${take === null ? "all" : take}`;
 
             if (
                 $self.data("advertiseLoadingKey") === loadingKey ||
@@ -280,9 +285,16 @@
             return;
         }
 
-        const take = pendingItems.reduce(function (max, item) {
-            return Math.max(max, item.take);
-        }, 1);
+        // DTO 目前是整批共用一個 Take；只要任一元件未限制，就讓 API
+        // 回傳全部，再由有設定 maxlen 的元件各自裁切。
+        const hasUnlimitedItem = pendingItems.some(function (item) {
+            return item.take === null;
+        });
+        const take = hasUnlimitedItem
+            ? null
+            : pendingItems.reduce(function (max, item) {
+                return Math.max(max, item.take);
+            }, 1);
         const request = w.DirectoryService.getAdvertiseBatchData(groups, take);
 
         request.done(function (result) {
@@ -296,7 +308,8 @@
             pendingItems.forEach(function (item) {
                 // Ignore a stale response when the editor changed the directory
                 // association or max length while this batch request was in flight.
-                const currentKey = `${getDirIds(item.$element).join(",")}|${getAdvertiseTake(item.$element)}`;
+                const currentTake = getAdvertiseTake(item.$element);
+                const currentKey = `${getDirIds(item.$element).join(",")}|${currentTake === null ? "all" : currentTake}`;
                 if (currentKey !== item.loadingKey) {
                     if (item.$element.data("advertiseLoadingKey") === item.loadingKey) {
                         hideAdvertiseLoading(item.$element, false);
@@ -305,9 +318,10 @@
                 }
 
                 if (w.DirectoryBlocks && typeof w.DirectoryBlocks.renderAdvertise === "function") {
+                    const advertisements = resultByKey[item.key] || [];
                     w.DirectoryBlocks.renderAdvertise(
                         item.$element,
-                        (resultByKey[item.key] || []).slice(0, item.take)
+                        item.take === null ? advertisements : advertisements.slice(0, item.take)
                     );
                 }
 

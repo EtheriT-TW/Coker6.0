@@ -78,7 +78,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await memberAppService.FrontAddUpdate(dto);
         }
         [HttpGet]
-        public async Task<List<SelectDto>> GetAllRole()
+        public async Task<List<MemberRoleSelectDto>> GetAllRole()
         {
             return await memberAppService.GetAllRole();
         }

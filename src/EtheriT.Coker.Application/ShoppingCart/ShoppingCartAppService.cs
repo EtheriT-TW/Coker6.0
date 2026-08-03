@@ -8,6 +8,7 @@ using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Product;
+using EtheriT.Coker.Application.Shared.Member;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Token;
@@ -31,6 +32,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
         private readonly IProductAppService productAppService;
         private readonly IBonusManagementAppService bonusManagementAppService;
         private readonly IStoreSetAppService storeSetAppService;
+        private readonly IFrontRoleContextService frontRoleContextService;
         public ShoppingCartAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -39,7 +41,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
             IMapper mapper,
             IProductAppService productAppService,
             IBonusManagementAppService bonusManagementAppService,
-            IStoreSetAppService storeSetsAppService
+            IStoreSetAppService storeSetsAppService,
+            IFrontRoleContextService frontRoleContextService
         )
         {
             this.db = db;
@@ -50,6 +53,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             this.productAppService = productAppService;
             this.bonusManagementAppService = bonusManagementAppService;
             this.storeSetAppService = storeSetsAppService;
+            this.frontRoleContextService = frontRoleContextService;
         }
         public async Task<ResponseMessageDto> UpdateUUID(Guid UserUUID, Guid TempUUID)
         {
@@ -659,8 +663,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                 if (Token != null && Token.IsLogin)
                 {
-                    var temp_roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.Id).FirstOrDefaultAsync();
-                    if (temp_roleid != 0) roleid = temp_roleid;
+                    roleid = await frontRoleContextService.GetRoleIdAsync(UUID, WebsiteId);
                 }
 
                 var shoppingCarts = await db.ShoppingCarts

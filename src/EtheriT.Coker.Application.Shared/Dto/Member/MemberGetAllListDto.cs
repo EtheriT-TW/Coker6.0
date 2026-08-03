@@ -18,6 +18,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Member
         public int Bonus { get; set; }
         public decimal? Total { get; set; }
         public long? Level { get; set; }
+        public long? RoleId { get; set; }
         public DateTime CreationTime { get; set; }
 
     }

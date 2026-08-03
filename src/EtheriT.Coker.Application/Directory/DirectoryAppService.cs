@@ -22,6 +22,7 @@ using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.Application.Shared.JsonObject;
+using EtheriT.Coker.Application.Shared.Member;
 using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Tag;
@@ -60,6 +61,7 @@ namespace EtheriT.Coker.Application.Directory
         private readonly IHtmlProcessor htmlProcessor;
         private readonly IJsonObjectAppService jsonObjectAppService;
         private readonly IWebsiteCacheStateAppService websiteCacheStateAppService;
+        private readonly IFrontRoleContextService frontRoleContextService;
         private static readonly ConcurrentDictionary<string, SemaphoreSlim> DirectoryMenuCacheLocks = new();
         private static readonly ConcurrentDictionary<string, SemaphoreSlim> DirectoryContentCacheLocks = new();
         public DirectoryAppService(
@@ -78,7 +80,8 @@ namespace EtheriT.Coker.Application.Directory
             IConfiguration configuration,
             IHtmlProcessor htmlProcessor,
             IJsonObjectAppService jsonObjectAppService,
-            IWebsiteCacheStateAppService websiteCacheStateAppService
+            IWebsiteCacheStateAppService websiteCacheStateAppService,
+            IFrontRoleContextService frontRoleContextService
         )
         {
             this.db = db;
@@ -97,6 +100,7 @@ namespace EtheriT.Coker.Application.Directory
             this.htmlProcessor = htmlProcessor;
             this.jsonObjectAppService = jsonObjectAppService;
             this.websiteCacheStateAppService = websiteCacheStateAppService;
+            this.frontRoleContextService = frontRoleContextService;
         }
         public async Task<ResponseMessageDto> AddUp(DirectoryAddUpDto dto)
         {
@@ -3125,10 +3129,10 @@ namespace EtheriT.Coker.Application.Directory
                             break;
                     }
 
-                    var take = dto?.Take.GetValueOrDefault() ?? 0;
-                    if (take < 1) take = 1;
-                    take = Math.Min(take, 20);
-                    result.Advertisements = groupAdvertisements.Take(take).ToList();
+                    var take = dto?.Take;
+                    result.Advertisements = take.HasValue && take.Value > 0
+                        ? groupAdvertisements.Take(Math.Min(take.Value, 20)).ToList()
+                        : groupAdvertisements;
                 }
 
                 output.Add(result);
@@ -3753,26 +3757,7 @@ namespace EtheriT.Coker.Application.Directory
             try
             {
                 var uuid = await tokenAppService.GetUUID();
-
-                if (uuid != Guid.Empty)
-                {
-                    var roleId = await db.MappingUserAndRoles
-                        .AsNoTracking()
-                        .Include(e => e.Role)
-                        .Where(e => !e.IsDeleted)
-                        .Where(e => e.UUID == uuid)
-                        .Where(e => e.Role != null)
-                        .Where(e => e.Role!.FK_WebsiteId == websiteId)
-                        .Where(e => e.Role!.Type == RoleTypeEnum.前台)
-                        .Where(e => !e.Role!.IsDeleted)
-                        .Select(e => (long?)e.RoleId)
-                        .FirstOrDefaultAsync();
-
-                    if (roleId != null && roleId > 0)
-                    {
-                        return roleId;
-                    }
-                }
+                return await frontRoleContextService.GetRoleIdAsync(uuid, websiteId);
             }
             catch
             {

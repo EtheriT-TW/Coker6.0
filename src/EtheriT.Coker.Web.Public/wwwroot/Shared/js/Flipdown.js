@@ -1,4 +1,4 @@
-﻿const FlipTimer = function () {
+﻿window.FlipTimer = function () {
     let list = [];
     if (typeof window.FlipDown !== "function") {
         list.push($.LoadJs("/lib/flipdown/flipdown.min.js"));

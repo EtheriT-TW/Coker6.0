@@ -1253,8 +1253,7 @@ namespace EtheriT.Coker.Application.Product
 
                 var role_level = await db.Roles.Where(e => e.Type == RoleTypeEnum.前台 && e.FK_WebsiteId == WebsiteId).OrderBy(e => e.Ser_No).Select(e => e.Id).ToListAsync();
                 role_level.Insert(0, 1);
-                var roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
-                if (roleid == 0) roleid = 1;
+                var roleid = await frontRoleContextService.GetRoleIdAsync(UUID, WebsiteId);
                 var role_index = role_level.IndexOf(roleid);
 
                 foreach (var stockid in PSIds)

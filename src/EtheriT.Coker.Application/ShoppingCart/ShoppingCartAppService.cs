@@ -61,44 +61,36 @@ namespace EtheriT.Coker.Application.ShoppingCart
             try
             {
                 var userid = await db.FrontUsers.Where(e => e.UUID == UserUUID).Select(e => e.FK_User).FirstOrDefaultAsync();
-                var oldsc = await db.ShoppingCarts.Where(e => e.UUID == TempUUID && e.IsOrder).ToListAsync();
-                var tempsc = await db.ShoppingCarts.Where(e => e.UUID == TempUUID && !e.IsOrder).ToListAsync();
-                var usersc = await db.ShoppingCarts.Where(e => e.UUID == UserUUID && !e.IsOrder).ToListAsync();
+                // 登入只合併尚未結帳的購物車。已成立訂單必須保留原下單者 UUID。
+                var tempsc = await db.ShoppingCarts
+                    .Where(e => e.UUID == TempUUID && !e.IsOrder && !e.IsDeleted)
+                    .ToListAsync();
+                var usersc = await db.ShoppingCarts
+                    .Where(e => e.UUID == UserUUID && !e.IsOrder && !e.IsDeleted)
+                    .ToListAsync();
                 var timenow = DateTime.Now;
-                if (oldsc.Any())
-                {
-                    for (var i = 0; i < oldsc.Count; i++)
-                    {
-                        oldsc[i].UUID = UserUUID;
-                        oldsc[i].FK_Uid = userid ?? 0;
-                        oldsc[i].LastModifierUserId = userid ?? 0;
-                        oldsc[i].LastModificationTime = timenow;
-                    }
-                }
                 if (tempsc.Any())
                 {
-                    for (var i = 0; i < tempsc.Count; i++)
+                    foreach (var tempCart in tempsc)
                     {
-                        tempsc[i].UUID = UserUUID;
-                        tempsc[i].FK_Uid = userid ?? 0;
-                        tempsc[i].LastModifierUserId = userid ?? 0;
-                        tempsc[i].LastModificationTime = timenow;
-                    }
-                    if (usersc.Any())
-                    {
-                        for (var i = 0; i < tempsc.Count; i++)
+                        var userCart = usersc.FirstOrDefault(e => e.FK_PSid == tempCart.FK_PSid);
+                        if (userCart != null)
                         {
-                            if (usersc.Find(e => e.FK_PSid == tempsc[i].FK_PSid) != null)
-                            {
-                                usersc[usersc.FindIndex(e => e.FK_PSid == tempsc[i].FK_PSid)].Quantity += tempsc[i].Quantity;
-                                usersc[i].LastModifierUserId = userid ?? 0;
-                                usersc[i].LastModificationTime = timenow;
-                                tempsc[i].IsDeleted = true;
-                                tempsc[i].DeletionTime = timenow;
-                            }
+                            userCart.Quantity += tempCart.Quantity;
+                            userCart.LastModifierUserId = userid ?? 0;
+                            userCart.LastModificationTime = timenow;
+                            tempCart.IsDeleted = true;
+                            tempCart.DeletionTime = timenow;
+                            continue;
                         }
+
+                        tempCart.UUID = UserUUID;
+                        tempCart.FK_Uid = userid ?? 0;
+                        tempCart.LastModifierUserId = userid ?? 0;
+                        tempCart.LastModificationTime = timenow;
                     }
-                    db.SaveChanges();
+
+                    await db.SaveChangesAsync();
                 }
                 response.Success = true;
             }

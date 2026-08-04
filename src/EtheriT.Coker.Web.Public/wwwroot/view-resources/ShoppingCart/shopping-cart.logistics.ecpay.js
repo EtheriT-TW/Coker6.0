@@ -16,8 +16,9 @@
 
     function openMap() {
         var $btn = $(this);
-        var $radio = $btn.prev('input[name="RadioShipping"]');
+        var $radio = $btn.closest(".shipping-option-row").find('input[name="RadioShipping"]');
         $radio.prop('checked', true);
+        cart.Shipping.UpdateRecipientAddressRequirement();
 
         saveOrderFormBeforeRedirect();
 
@@ -172,14 +173,18 @@
     function restoreRecipientForm(data, formData) {
         var recipientType = data.RecipientType || data.recipientType;
 
+        if (recipientType === "choose" && cart.Recipients) {
+            cart.Recipients.Apply(formData, false);
+            return;
+        }
+
         if (recipientType !== "edit") return;
 
-        $('[name="RecipientRadio"][value="edit"]').prop("checked", true);
-        cart.Forms.RecipientRadio();
+        $('[name="RecipientRadio"][value="edit"]').prop("checked", true).trigger("change");
 
         var recipientAddress = formData.recipientAddress || "";
 
-        co.Form.insertData(formData, "#RecipientForm");
+        co.Form.insertData(formData, "#Form_Recipient");
         setAddressTail("#RecipientInputAddress", recipientAddress);
 
         co.Zipcode.setData({

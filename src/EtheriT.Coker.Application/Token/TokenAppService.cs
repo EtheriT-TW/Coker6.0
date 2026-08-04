@@ -87,17 +87,43 @@ namespace EtheriT.Coker.Application.Token
                         var oidRefreshToken = await RefreshTokens.FirstOrDefaultAsync();
                         if (RefreshToken != null)
                         {
-                            var uuid = db.MappingOldNewUUID.Where(e => e.TempUUID == RefreshToken.UUID).Select(e => e.UserUUID).FirstOrDefault();
-                            var frontUser = await db.FrontUsers.Include(e => e.Websites).Where(e => e.UUID == uuid && e.Websites.Any(s => s.FK_WebsiteId == websiteId)).FirstOrDefaultAsync();
+                            var uuid = await db.MappingOldNewUUID
+                                .Where(e => e.TempUUID == RefreshToken.UUID && !e.IsDeleted)
+                                .Select(e => e.UserUUID)
+                                .FirstOrDefaultAsync();
+                            if (uuid == Guid.Empty) uuid = RefreshToken.UUID;
+
+                            var frontUser = await db.FrontUsers
+                                .Include(e => e.Websites)
+                                .FirstOrDefaultAsync(e =>
+                                    e.UUID == uuid &&
+                                    e.Status == (int)UserStatusEnum.開通 &&
+                                    !e.IsDeleted &&
+                                    e.Websites.Any(s =>
+                                        s.FK_WebsiteId == websiteId &&
+                                        !s.IsDeleted));
                             if (frontUser != null)
                             {
                                 var useraccount = frontUser.Account == null ? frontUser.Email : frontUser.Account;
                                 tokenItem = await NewToken(useraccount, RefreshToken.UUID, frontUser?.Id);
                                 output.name = frontUser?.Name;
                             }
-                            else tokenItem = await NewToken(null, RefreshToken?.UUID);
+                            else
+                            {
+                                // 會員已停權、刪除或已不屬於本站時，不可用舊 RefreshToken 恢復登入。
+                                RefreshToken.EndTime = date;
+                                await db.SaveChangesAsync();
+                                tokenItem = await NewToken();
+                            }
                         }
-                        else tokenItem = await NewToken(null, oidRefreshToken?.UUID);
+                        else
+                        {
+                            // 已登入會員的 RefreshToken 失效後，改發全新的訪客 UUID，
+                            // 避免訪客 Token 繼續攜帶原會員 UUID 而取得會員角色。
+                            tokenItem = oidRefreshToken?.UserID == null
+                                ? await NewToken(null, oidRefreshToken?.UUID)
+                                : await NewToken();
+                        }
                     }
                     else tokenItem = await NewToken();
                 }
@@ -200,7 +226,10 @@ namespace EtheriT.Coker.Application.Token
                         .FirstOrDefaultAsync(e =>
                             e.UUID == userUuid &&
                             e.Status == (int)UserStatusEnum.開通 &&
-                            e.Websites.Any(w => w.FK_WebsiteId == websiteId));
+                            !e.IsDeleted &&
+                            e.Websites.Any(w =>
+                                w.FK_WebsiteId == websiteId &&
+                                !w.IsDeleted));
 
                     if (frontUser == null)
                         throw new SecurityTokenException("使用者不屬於目前網站");

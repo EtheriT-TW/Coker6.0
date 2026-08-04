@@ -6,6 +6,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class RecipientsController : Controller
     {
         private readonly IRecipientsAppService recipientsAppService;
@@ -19,5 +20,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             return await recipientsAppService.GetAllList(loadOptions);
         }
+
+        [HttpGet]
+        public async Task<List<EtheriT.Coker.Application.Shared.Dto.Recipients.RecipientsDto>> GetCheckoutList()
+        {
+            return await recipientsAppService.GetCheckoutList();
+        }
+
     }
 }

@@ -441,6 +441,7 @@ function ElementInit() {
     $recipient_cellphone = $(".recipient_cellphone")
     $recipient_telphone = $(".recipient_telphone")
     $recipient_address = $(".recipient_address")
+    $recipient_address_label = $(".recipient_address_label")
     $recipient_email = $(".recipient_email");
 
     /* Order */
@@ -496,6 +497,7 @@ function FormDataClear() {
     $recipient_cellphone.text("")
     $recipient_telphone.text("")
     $recipient_address.text("")
+    $recipient_address_label.text("地　　址：")
     $recipient_email.text("")
 
     $orderer_name.text("")
@@ -705,7 +707,45 @@ function HeaderDataSet(result) {
     $recipient_cellphone.text(result.recipientCellPhone)
     var re_telIndex = result.recipientTelePhone.indexOf("-", 5)
     $recipient_telphone.text(result.recipientTelePhone.substr(re_telIndex + 1).length > 0 ? result.recipientTelePhone : result.recipientTelePhone.substr(0, re_telIndex))
-    $recipient_address.text(result.recipientAddress)
+    var cvsStoreID = result.cvsStoreID || result.cvsStoreId || "";
+    var cvsStoreName = result.cvsStoreName || "";
+    var cvsAddress = result.cvsAddress || "";
+    var hasCvsStore = cvsStoreID || cvsStoreName || cvsAddress;
+
+    // 舊訂單可能只有「超商-門市名稱(門市地址)」寫在收件地址中。
+    if (!hasCvsStore && result.recipientAddress) {
+        var addressText = result.recipientAddress;
+        var addressStart = addressText.lastIndexOf("(");
+        var addressEnd = addressText.lastIndexOf(")");
+        var storeSeparator = addressText.lastIndexOf("-", addressStart);
+        var logisticsName = storeSeparator > 0 ? addressText.substring(0, storeSeparator).toLowerCase() : "";
+        var isCvsAddress = /7-eleven|7-11|全家|萊爾富|ok/.test(logisticsName);
+
+        if (isCvsAddress && addressStart > storeSeparator && addressEnd > addressStart) {
+            cvsStoreName = addressText.substring(storeSeparator + 1, addressStart);
+            cvsAddress = addressText.substring(addressStart + 1, addressEnd);
+            hasCvsStore = true;
+        }
+    }
+
+    if (hasCvsStore) {
+        $recipient_address_label.text("取貨門市：");
+        $recipient_address.empty();
+
+        var storeTitle = cvsStoreName || "未提供門市名稱";
+        if (cvsStoreID) storeTitle += `（門市編號：${cvsStoreID}）`;
+        $("<div>").text(storeTitle).appendTo($recipient_address);
+
+        if (cvsAddress) {
+            $("<div>")
+                .addClass("small text-muted")
+                .text(cvsAddress)
+                .appendTo($recipient_address);
+        }
+    } else {
+        $recipient_address_label.text("地　　址：");
+        $recipient_address.text(result.recipientAddress);
+    }
     $recipient_email.text(result.recipientEmail)
 
     $orderer_name.text(result.orderer)

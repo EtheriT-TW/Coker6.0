@@ -22,116 +22,27 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-0">
-                <h5 id="staticBackdropLabel" class="modal-title fw-bold">選擇收件地址清單</h5>
+                <h5 id="staticBackdropLabel" class="modal-title fw-bold">選擇常用收件與配送資訊</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                @* @(Html.DevExtreme().DataGrid<RecipientsDto>()
-                .DataSource(d => d.RemoteController().Key("Id")
-                .LoadUrl("/api/Recipients/GetAllList").LoadMethod("Get")
-                )
-                .ID("RecipientsList")
-                .Selection(s =>
-                s.Mode(SelectionMode.Single).ShowCheckBoxesMode(GridSelectionShowCheckBoxesMode.Always)
-                )
-                .RemoteOperations(true)
-                .ColumnHidingEnabled(false)
-                .ShowBorders(true)
-                .FilterRow(filterRow => filterRow
-                .Visible(true)
-                .ApplyFilter(GridApplyFilterMode.Auto)
-                )
-                .SearchPanel(searchPanel => searchPanel
-                .Visible(true)
-                .Placeholder("請輸入要搜尋的資料")
-                )
-                .Editing(editing =>
-                {
-                editing.Mode(GridEditMode.Row);
-                editing.AllowDeleting(true);
-                editing.UseIcons(true);
-                })
-                .Columns(c =>
-                {
-                c.AddFor(e => e.Id).Caption("編號").Visible(false).AllowEditing(false).SortOrder(SortOrder.Desc);
-                c.AddFor(e => e.Name).Caption("姓名").AllowEditing(false);
-                c.AddFor(e => e.Email).Caption("電子郵件").AllowEditing(false);
-                c.AddFor(e => e.Address).Caption("地址").AllowEditing(false);
-                c.AddFor(e => e.TelePhone).Caption("行動電話").AllowEditing(false);
-                c.AddFor(e => e.CellPhone).Caption("聯絡電話").AllowEditing(false);
-                c.Add()
-                .Type(GridCommandColumnType.Buttons)
-                .Buttons(b =>
-                {
-                b.Add().Name("delete").OnClick("RecipientsList_DeleteButtonClicked");
-                });
-                })
-                .Toolbar(toolbar =>
-                {
-                toolbar.Items(i =>
-                {
-                i.Add()
-                .Name(DataGridToolbarItem.SearchPanel)
-                .ShowText(ToolbarItemShowTextMode.Always)
-                .Location(ToolbarItemLocation.After);
-                });
-                })
-                //.OnSelectionChanged("RecipientsList_SelectChange")
-                .OnContentReady("RecipientsList_ContentReady")
-                .Paging(paging => paging.PageSize(10))
-                ) *@
-                @* <table class="table">
-                <thead>
-                <tr>
-                <th scope="col" class="fw-normal">選擇</th>
-                <th scope="col" class="fw-normal">姓名</th>
-                <th scope="col" class="fw-normal">郵遞區號</th>
-                <th scope="col" class="fw-normal">地址</th>
-                <th scope="col" class="fw-normal">聯絡電話</th>
-                <th scope="col" class="fw-normal">行動電話</th>
-                <th scope="col" class="fw-normal">刪除</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                <th scope="row" class="fw-normal">
-                <label class="d-none" for="radio_recipient1">選擇</label>
-                <input id="radio_recipient1" class="form-check-input" type="radio" name="RecipientDataRadio" checked>
-                </th>
-                <td class="fw-normal">姓○</td>
-                <td class="fw-normal">806</td>
-                <td class="fw-normal">地址資料***</td>
-                <td class="fw-normal">07-1234***</td>
-                <td class="fw-normal">0912-******</td>
-                <td class="fw-normal">
-                <button type="button" class="btn_delete_recipient bg-transparent border-0">
-                <i class="fa-solid fa-xmark"></i>
-                <span class="d-none">送出</span>
-                </button>
-                </td>
-                </tr>
-                <tr>
-                <th scope="row" class="fw-normal">
-                <label class="d-none" for="radio_recipient2">選擇</label>
-                <input id="radio_recipient2" class="form-check-input" type="radio" name="RecipientDataRadio">
-                </th>
-                <td class="fw-normal">姓○</td>
-                <td class="fw-normal">806</td>
-                <td class="fw-normal">地址資料***</td>
-                <td class="fw-normal">07-1234***</td>
-                <td class="fw-normal">0912-******</td>
-                <td class="fw-normal">
-                <button type="button" class="btn_delete_recipient bg-transparent border-0">
-                <i class="fa-solid fa-xmark"></i>
-                <span class="d-none">送出</span>
-                </button>
-                </td>
-                </tr>
-                </tbody>
-                </table> *@
+                <div id="RecipientsListLoading" class="py-4 text-muted" role="status">正在讀取常用收件資訊……</div>
+                <div id="RecipientsListError" class="recipient-list-message d-none" role="alert">
+                    <div class="fw-bold mb-2">暫時無法讀取常用收件資訊</div>
+                    <div class="small mb-3 recipient-list-error-detail"></div>
+                    <button type="button" class="recipient-modal-button recipient-modal-button-secondary btn_recipient_retry">重新讀取</button>
+                </div>
+                <div id="RecipientsListEmpty" class="py-4 d-none">
+                    <div class="recipient-empty-icon" aria-hidden="true">＋</div>
+                    <div class="recipient-empty-title fw-bold fs-5 mb-2">目前沒有常用收件資訊</div>
+                    <div class="recipient-empty-description small text-muted mb-4">先新增收件人與配送方式，下次結帳就能直接選用。</div>
+                    <button type="button" class="recipient-modal-button recipient-modal-button-primary btn_recipient_new" data-bs-dismiss="modal">新增第一筆收件資訊</button>
+                </div>
+                <div id="RecipientsCardList" class="recipient-card-list text-start"></div>
             </div>
-            <div class="modal-footer justify-content-center border-0">
-                <button type="button" class="text-white border-0 px-5 py-1" data-bs-dismiss="modal">確定</button>
+            <div class="modal-footer justify-content-between border-0">
+                <button type="button" class="recipient-modal-button recipient-modal-button-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="recipient-modal-button recipient-modal-button-primary btn_recipient_new" data-bs-dismiss="modal">＋ 新增收件資訊</button>
             </div>
         </div>
     </div>
@@ -472,48 +383,75 @@
                         </form>
                     </div>
 
-                    <div id="RecipientForm">
-                        <div class="title px-3 py-2 my-3 d-flex align-items-center">
-                            <div class="fs-5 text-end">收件人資料</div>
-                            <ul class="d-flex flex-wrap text-start mb-0">
-                                <li class="form-check mb-0 ms-3">
-                                    <input id="radio_recipient_order" class="form-check-input" type="radio" name="RecipientRadio" value="order" checked>
-                                    <label class="form-check-label" for="radio_recipient_order">同訂購人資訊</label>
-                                </li>
-                                <li class="form-check mb-0 ms-3">
-                                    <input id="radio_recipient_edit" class="form-check-input" type="radio" name="RecipientRadio" value="edit">
-                                    <label class="form-check-label" for="radio_recipient_edit">輸入收件人資料</label>
-                                </li>
-                                @if (ViewBag.LoginEnable)
-                                {
-                                    @if (ViewBag.isLogin)
-                                    {
-                                        <li class="form-check mb-0 ms-3 d-none">
-                                            <input id="radio_recipient_choose" class="form-check-input" type="radio" name="RecipientRadio" value="choose" data-bs-toggle="modal" data-bs-target="#RecipientModal">
-                                            <label class="form-check-label" for="radio_recipient_choose">選擇收件人</label>
-                                        </li>
-                                    }
-                                }
-                            </ul>
+                    <div id="RecipientForm" class="recipient-delivery-panel">
+                        <div class="recipient-panel-heading d-flex align-items-center">
+                            <div>
+                                <div class="fs-5">收件與配送資訊</div>
+                                <div class="small text-muted">在同一區完成收件人、配送方式與取貨地點</div>
+                            </div>
+                        </div>
+
+                        <div class="recipient-substep px-3 px-sm-5">選擇本次收件資訊</div>
+                        <div class="recipient-source-options px-3 px-sm-5" role="radiogroup" aria-label="選擇收件人資料來源">
+                            <label class="recipient-source-option is-selected" for="radio_recipient_order">
+                                <input id="radio_recipient_order" class="form-check-input" type="radio" name="RecipientRadio" value="order" checked>
+                                <span>
+                                    <strong>同訂購人</strong>
+                                    <small>直接使用訂購人的姓名、電話與地址</small>
+                                </span>
+                            </label>
+
+                            @if (ViewBag.LoginEnable && ViewBag.isLogin)
+                            {
+                                <input id="radio_recipient_choose" class="d-none" type="radio" name="RecipientRadio" value="choose">
+                                <button id="btn_recipient_choose"
+                                        type="button"
+                                        class="recipient-source-option text-start"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#RecipientModal">
+                                    <span class="recipient-source-indicator" aria-hidden="true"></span>
+                                    <span>
+                                        <strong>常用收件</strong>
+                                        <small>一併套用已儲存的收件人與配送方式</small>
+                                    </span>
+                                </button>
+                            }
+
+                            <label class="recipient-source-option" for="radio_recipient_edit">
+                                <input id="radio_recipient_edit" class="form-check-input" type="radio" name="RecipientRadio" value="edit">
+                                <span>
+                                    <strong>新增／<br class="recipient-adjust-break">調整收件</strong>
+                                    <small>新增資料，或沿用目前資料後再調整</small>
+                                </span>
+                            </label>
+
+                            <div id="RecipientActivePanel" class="recipient-active-panel" aria-live="polite"></div>
                         </div>
 
                         <div class="default_data d-none">
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-                                <div data-key="recipient" class="col text-start ps-0"></div>
+                            <div class="recipient-summary-row">
+                                <div class="recipient-summary-label">姓名</div>
+                                <div data-key="recipient" class="recipient-summary-value"></div>
                             </div>
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
-                                <div data-key="recipientEmail" class="col text-start ps-0"></div>
+                            <div class="recipient-summary-row">
+                                <div class="recipient-summary-label">電子郵件</div>
+                                <div data-key="recipientEmail" class="recipient-summary-value"></div>
                             </div>
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
-                                <div data-key="recipientCellPhone" class="col text-start ps-0"></div>
+                            <div class="recipient-summary-row">
+                                <div class="recipient-summary-label">手機號碼</div>
+                                <div data-key="recipientCellPhone" class="recipient-summary-value"></div>
                             </div>
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                <div data-key="recipientAddress" class="col text-start ps-0"></div>
+                            <div class="recipient-summary-row">
+                                <div class="recipient-display-address-label recipient-summary-label">收件地址</div>
+                                <div data-key="recipientAddress" class="recipient-summary-value"></div>
                             </div>
+                        </div>
+
+                        <div class="recipient-copy-actions d-none">
+                            <button id="btn_copy_recipient" type="button" class="recipient-copy-button">
+                                以這份資料另作調整
+                            </button>
+                            <span class="small text-muted">只調整本次收件資訊，不會修改原本的訂購人或常用資料。</span>
                         </div>
 
                         <form id="Form_Recipient" class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
@@ -618,8 +556,7 @@
                                         </form>
                                     }
                                     <!-- 發票另寄（通常不需要額外輸入，寄送選擇會在第三個 block） -->
-                                    <div class="invoice-row personal-sub text-muted" data-personal="paper">
-                                        <div class="invoice-label"></div>
+                                    <div class="invoice-row personal-sub text-muted invoice-paper-note" data-personal="paper">
                                         <div class="invoice-fields">
                                             已選擇「紙本發票」，請於下方選擇發票寄送對象。
                                         </div>
@@ -686,13 +623,14 @@
                             </div>
                         </div>
                     }
-                    <div class="title px-3 py-2 my-3 d-flex align-items-center">
-                        <div class="fs-5 text-end">運送方式　</div>
-                    </div>
+                    <section id="ShippingSection" aria-labelledby="ShippingSectionTitle">
+                        <div class="recipient-shipping-heading">
+                            <div id="ShippingSectionTitle" class="recipient-substep">配送方式與取貨地點</div>
+                        </div>
 
-                    <form id="RadioShipping" class="px-4 px-sm-5 mb-3 shipping needs-validation" method="post" novalidate>
+                        <form id="RadioShipping" class="px-2 px-sm-4 mb-3 shipping needs-validation" method="post" novalidate>
                         <input type="hidden" name="authentiity_token" value="@Model.token" />
-                        <div class="row gx-0">
+                        <div class="shipping-option-list">
                             @if (Model.freightModels.Count > 0)
                             {
                                 var has_invalid = false;
@@ -701,44 +639,57 @@
                                     var check = freight.Set_Default ? "checked" : "";
                                     var boxFeesJson = System.Text.Json.JsonSerializer.Serialize(freight.LogisticsBoxFees ?? new List<LogisticsBoxFeeDisplayDto>());
 
-                                    <div class="form-check text-start col-12 col-sm-3 my-2">
-                                        <input id="FreeShip_@freight.Id"
-                                               class="form-check-input"
-                                               type="radio"
-                                               name="RadioShipping"
-                                               value="@freight.Id"
-                                               data-freight-status-type="@freight.FreightStatusType"
-                                               data-freight-type="@((int)freight.FreightType)"
-                                               data-discount-freight-type="@(freight.DiscountFreightType.HasValue ? ((int)freight.DiscountFreightType.Value).ToString() : "")"
-                                               data-freight="@(freight.Freight)"
-                                               data-lowcon="@(freight.Low_Con)"
-                                               data-disfreight="@(freight.Dis_Freight)"
-                                               data-isdefault="@freight.Set_Default"
-                                               data-boxfees='@Html.Raw(boxFeesJson)'
-                                               @check
-                                               required>
-                                        <label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
+                                    <div class="shipping-option-row @(freight.GetMap ? "has-cvs" : "")">
+                                        <div class="shipping-choice form-check text-start">
+                                            <input id="FreeShip_@freight.Id"
+                                                   class="form-check-input"
+                                                   type="radio"
+                                                   name="RadioShipping"
+                                                   value="@freight.Id"
+                                                   data-freight-status-type="@freight.FreightStatusType"
+                                                   data-freight-type="@((int)freight.FreightType)"
+                                                   data-discount-freight-type="@(freight.DiscountFreightType.HasValue ? ((int)freight.DiscountFreightType.Value).ToString() : "")"
+                                                   data-freight="@(freight.Freight)"
+                                                   data-lowcon="@(freight.Low_Con)"
+                                                   data-disfreight="@(freight.Dis_Freight)"
+                                                   data-isdefault="@freight.Set_Default"
+                                                   data-boxfees='@Html.Raw(boxFeesJson)'
+                                                   data-is-cvs="@freight.GetMap"
+                                                   data-logistics-type="@((int)freight.LogisticsType)"
+                                                   @check
+                                                   required>
+                                            <label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
+
+                                            @{
+                                                if (!has_invalid)
+                                                {
+                                                    <div class="invalid-feedback">請選擇運送方式</div>
+                                                    has_invalid = true;
+                                                }
+                                            }
+                                        </div>
+
+                                        <div class="text-start freight-describe">
+                                            @freight.Describe
+                                        </div>
 
                                         @if (freight.GetMap)
                                         {
-                                            <input type="button"
-                                                   class="btn_getmap bg-transparent border-0 ms-1 text-decoration-underline"
-                                                   value="選擇門市"
-                                                   data-subtype="@freight.LogisticsSubType"
-                                                   title="選擇門市">
+                                            <div class="cvs-store-picker">
+                                                <input type="button"
+                                                       class="btn_getmap cvs-store-button"
+                                                       value="請選擇取貨門市"
+                                                       data-subtype="@freight.LogisticsSubType"
+                                                       aria-describedby="CvsStoreStatus_@freight.Id"
+                                                       title="選擇取貨門市">
+                                                <div id="CvsStoreStatus_@freight.Id"
+                                                     class="cvs-store-status @(freight.Set_Default ? "is-missing" : "d-none")"
+                                                     role="status"
+                                                     aria-live="polite">
+                                                    尚未選擇門市，完成後才能選擇付款方式
+                                                </div>
+                                            </div>
                                         }
-
-                                        @{
-                                            if (!has_invalid)
-                                            {
-                                                <div class="invalid-feedback">請選擇運送方式</div>
-                                                has_invalid = true;
-                                            }
-                                        }
-                                    </div>
-
-                                    <div class="text-start freight-describe col-12 col-sm-9 my-2">
-                                        @freight.Describe
                                     </div>
                                 }
                             }
@@ -747,13 +698,14 @@
                                 <div class="noshipping">店家尚未設定運費方式</div>
                             }
                         </div>
-                    </form>
+                        </form>
 
-                    <form id="ecpayLogisticsForm" method="get" action="/api/ThirdParty/ECPayLogisticsGetMap" class="d-none">
-                        <input type="hidden" name="SCIds" />
-                        <input type="hidden" name="LogisticsSubType" />
-                        <input type="hidden" name="IsCollection" />
-                    </form>
+                        <form id="ecpayLogisticsForm" method="get" action="/api/ThirdParty/ECPayLogisticsGetMap" class="d-none">
+                            <input type="hidden" name="SCIds" />
+                            <input type="hidden" name="LogisticsSubType" />
+                            <input type="hidden" name="IsCollection" />
+                        </form>
+                    </section>
 
                     <div class="priceline priceline-step3 px-3 pe-sm-5 col-12 col-md-7 offset-md-5">
                         <div class="summary-main-row">
@@ -812,21 +764,18 @@
                         </div>
                     </div>
 
-                    <div class="title px-3 py-2 my-3 d-flex align-items-center">
-                        <div class="fs-5 text-end">付款方式　</div>
-                        @if (Model.paymentModels.Find(e => e.Code == "ECPay") != null)
-                        {
-                            <div class="ecpayWarning text-danger px-5">請先完整填寫資料，才能選擇付款方式</div>
-                        }
+                    <div class="title payment-section-title px-3 py-2 my-3">
+                        <div class="fs-5">付款方式</div>
                     </div>
                     @* <form id="RadioPayment" class="px-4 px-sm-5 text-start border-bottom mb-4 pb-4 needs-validation" method="post" novalidate> *@
                     <form id="RadioPayment" class="px-4 px-sm-5 text-start border-bottom mb-4 pb-4">
                         <input type="hidden" name="authentiity_token" value="@Model.token" />
+                        <div class="checkoutValidationWarning d-none" role="alert"></div>
                         @if (Model.paymentModels.Count > 0)
                         {
                             @foreach (var payment in Model.paymentModels ?? new List<PaymentTypeItemOutputDto>())
                             {
-                                var isECPay = payment.Code == "ECPay";
+                                var isECPay = payment.Code == "ECPay" || payment.FK_ThirdPartyId == 4;
 
                                 <div class="form-check text-start m-0 p-0 @(isECPay ? "d-none" : "")">
                                     <input id="radio_payment_@payment.Code"
@@ -859,7 +808,7 @@
                                 </div>
                             }
 
-                            @if (Model.paymentModels.Any(e => e.Code == "ECPay"))
+                            @if (Model.paymentModels.Any(e => e.Code == "ECPay" || e.FK_ThirdPartyId == 4))
                             {
                                 <div class="ecpay_loading text-start col-12 col-sm-3 my-2 py-2 d-none">
                                     支付方式載入中......

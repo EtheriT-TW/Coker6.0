@@ -225,6 +225,35 @@ input[type="number"] {
     margin-top: 1rem;
 }
 
+.invoice-paper-note {
+    justify-content: flex-start;
+    text-align: left;
+}
+
+.invoice-paper-note .invoice-fields {
+    width: 100%;
+    text-align: left;
+}
+
+.recipient-adjust-break {
+    display: none;
+}
+
+.checkoutValidationWarning {
+    margin: 0 0 1rem;
+    padding: .75rem 1rem;
+    border: 1px solid #f1b8bd;
+    border-radius: .35rem;
+    background: #fff5f5;
+    color: #b02a37;
+    line-height: 1.6;
+    text-align: left;
+}
+
+.checkoutValidationWarning button {
+    margin-left: .4rem;
+}
+
 /* Step1 */
 #Step1 > .card-body > .list_title {
     padding: 0 6rem 1rem 2.5rem;
@@ -427,13 +456,30 @@ input[type="number"] {
 
 #RadioPayment .paymenticon {
     height: 1.5rem;
+    max-width: 35%;
+    object-fit: contain;
 }
 
 #RadioPayment .payment_display {
+    min-width: 0;
+    gap: .75rem;
     cursor: pointer;
     padding: 18px 16px;
     border: 1px solid #dcdcdc;
     border-bottom: none;
+}
+
+#RadioPayment .payment_display > div,
+#RadioPayment .paymenttitle {
+    min-width: 0;
+}
+
+#RadioPayment .paymenttitle {
+    overflow-wrap: anywhere;
+}
+
+.payment-section-title {
+    text-align: left;
 }
 
     #RadioPayment .payment_display.first {
@@ -1330,6 +1376,671 @@ body > .popover.bs-popover-auto.fade {
     .form-floating > label {
         font-size: 14px;
     }
+}
+
+/* Convenience-store pickup selection state */
+.recipient-source-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .75rem;
+    margin-top: .65rem;
+    margin-bottom: 1rem;
+}
+
+.recipient-delivery-panel {
+    margin: 1rem 1rem 1.5rem;
+    overflow: hidden;
+    border: 1px solid #cfd8d3;
+    border-radius: .65rem;
+    background: #fff;
+}
+
+.recipient-panel-heading {
+    margin: 0 0 1rem !important;
+    padding: .85rem 1rem !important;
+    border-bottom: 1px solid #dce5e0;
+    background: var(--gray-bg-light);
+    text-align: left;
+}
+
+.recipient-delivery-panel #ShippingSection {
+    margin-top: 0;
+    border-top: 0;
+    background: transparent;
+}
+
+.recipient-shipping-heading {
+    margin: 0 0 .5rem !important;
+    padding: .35rem 1rem .75rem !important;
+    background: transparent;
+    text-align: left;
+}
+
+.recipient-active-panel {
+    grid-column: 1 / -1;
+    margin: 0 0 .35rem;
+    padding: 1rem 0 .25rem;
+    overflow: hidden;
+    border: 1px solid #cfe3d7;
+    border-left: 4px solid #167748;
+    border-radius: .45rem;
+    background: #f8fcfa;
+}
+
+.recipient-active-panel > .default_data {
+    padding: .25rem 1rem .75rem;
+}
+
+.recipient-summary-row {
+    display: grid;
+    grid-template-columns: 6rem minmax(0, 1fr);
+    gap: .5rem;
+    align-items: start;
+    line-height: 1.55;
+}
+
+.recipient-summary-label {
+    color: #3f4844;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.recipient-summary-label::after {
+    content: "：";
+}
+
+.recipient-summary-value {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-align: left;
+}
+
+.recipient-substep {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    color: #2f3b35;
+    font-weight: 600;
+}
+
+.recipient-substep > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.55rem;
+    height: 1.55rem;
+    border-radius: 50%;
+    background: #167748;
+    color: #fff;
+    font-size: .8rem;
+}
+
+.recipient-copy-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem .75rem;
+    padding: 0 1rem .75rem;
+    text-align: left;
+}
+
+.recipient-copy-actions > .text-muted {
+    text-align: left;
+}
+
+.recipient-copy-actions.d-none {
+    display: none;
+}
+
+.recipient-copy-button,
+.modal .recipient-modal-button {
+    min-height: 2.6rem;
+    padding: .55rem 1.1rem;
+    border-radius: .35rem;
+    font-weight: 600;
+    line-height: 1.35;
+    cursor: pointer;
+}
+
+.recipient-copy-button {
+    border: 1px solid #167748 !important;
+    background: #fff !important;
+    color: #146c43 !important;
+}
+
+.modal .recipient-modal-button-primary {
+    border: 1px solid #167748 !important;
+    background: #167748 !important;
+    color: #fff !important;
+}
+
+.recipient-copy-button:hover,
+.recipient-copy-button:focus-visible,
+.modal .recipient-modal-button-primary:hover,
+.modal .recipient-modal-button-primary:focus-visible {
+    border-color: #105c37 !important;
+    background: #105c37 !important;
+    color: #fff !important;
+}
+
+.modal .recipient-modal-button-secondary {
+    border: 1px solid #6c757d !important;
+    background: #fff !important;
+    color: #495057 !important;
+}
+
+.modal .recipient-modal-button-secondary:hover,
+.modal .recipient-modal-button-secondary:focus-visible {
+    background: #f1f3f5 !important;
+    color: #212529 !important;
+}
+
+.recipient-list-message {
+    padding: 1.25rem;
+    border: 1px solid #e3b341;
+    border-radius: .5rem;
+    background: #fff9e8;
+    color: #664d03;
+    text-align: center;
+}
+
+.recipient-empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    margin-bottom: 1rem;
+    border-radius: 50%;
+    background: #e8f5ed;
+    color: #167748;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.recipient-source-option {
+    display: flex;
+    align-items: flex-start;
+    gap: .65rem;
+    min-height: 4rem;
+    margin: 0;
+    padding: .8rem .9rem;
+    border: 1px solid #d6d6d6;
+    border-radius: .5rem;
+    background: #fff;
+    color: #333;
+    text-align: left;
+    cursor: pointer;
+}
+
+button.recipient-source-option {
+    font: inherit;
+}
+
+.recipient-source-option:hover,
+.recipient-source-option:focus-visible {
+    border-color: #198754;
+    box-shadow: 0 0 0 .18rem rgba(25, 135, 84, .12);
+    outline: none;
+}
+
+.recipient-source-option.is-selected {
+    border: 2px solid #198754;
+    background: #f2faf5;
+}
+
+.recipient-source-option .form-check-input,
+.recipient-source-indicator {
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+    margin-top: .15rem;
+    border: 1px solid #999;
+    border-radius: 50%;
+}
+
+.recipient-source-option.is-selected .recipient-source-indicator {
+    border: .3rem solid #198754;
+    background: #fff;
+}
+
+.recipient-source-option span:not(.recipient-source-indicator) {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.recipient-source-option small {
+    margin-top: .2rem;
+    color: #777;
+    line-height: 1.4;
+}
+
+.recipient-card-list {
+    display: grid;
+    gap: .75rem;
+}
+
+.recipient-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: .4rem 1rem;
+    padding: .9rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: .5rem;
+    background: #fff;
+}
+
+.recipient-card:hover {
+    border-color: #198754;
+}
+
+.recipient-card-details {
+    min-width: 0;
+}
+
+.recipient-card-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .45rem;
+}
+
+.recipient-logistics-badge {
+    display: inline-block;
+    padding: .15rem .45rem;
+    border-radius: 999px;
+    background: #e8f5ed;
+    color: #146c43;
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.recipient-use-button {
+    min-height: 2.35rem;
+    padding: .4rem .75rem;
+    border: 1px solid #167748 !important;
+    border-radius: .35rem;
+    background: #fff !important;
+    color: #146c43 !important;
+    font-weight: 600;
+}
+
+.recipient-use-button:hover,
+.recipient-use-button:focus-visible {
+    background: #167748 !important;
+    color: #fff !important;
+}
+
+.recipient-card-address {
+    overflow-wrap: anywhere;
+}
+
+.shipping-option-list {
+    display: grid;
+}
+
+.shipping-option-row {
+    display: grid;
+    grid-template-columns: minmax(14rem, 1fr) minmax(12rem, .8fr) minmax(10rem, 16rem);
+    align-items: center;
+    gap: .5rem 1rem;
+    padding: .8rem 0;
+    border-bottom: 1px solid #dfe8e3;
+}
+
+.shipping-option-row:last-child {
+    border-bottom: 0;
+}
+
+.shipping-option-row .shipping-choice {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.shipping-option-row.has-cvs .cvs-store-picker {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+}
+
+.shipping-option-row .freight-describe,
+.shipping-option-row.has-cvs .freight-describe {
+    grid-column: 2;
+    grid-row: 1;
+    padding-left: 0;
+    text-align: left;
+}
+
+.shipping-choice {
+    min-width: 0;
+    margin: 0;
+}
+
+.freight-describe {
+    color: #444;
+    line-height: 1.5;
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .recipient-delivery-panel {
+        margin-right: 0;
+        margin-left: 0;
+    }
+
+    .recipient-source-options {
+        gap: .5rem;
+        padding-right: .75rem !important;
+        padding-left: .75rem !important;
+    }
+
+    .recipient-source-option {
+        padding-right: .65rem;
+        padding-left: .65rem;
+    }
+
+    #Form_Recipient,
+    #RadioShipping {
+        padding-right: .75rem !important;
+        padding-left: .75rem !important;
+    }
+
+    .shipping-option-row {
+        grid-template-columns: minmax(0, 1fr) minmax(7.5rem, .7fr) minmax(7rem, 9rem);
+        gap: .5rem;
+    }
+
+    .shipping-option-row .shipping-choice,
+    .shipping-option-row .freight-describe,
+    .shipping-option-row.has-cvs .freight-describe,
+    .shipping-option-row.has-cvs .cvs-store-picker {
+        min-width: 0;
+    }
+
+    .shipping-option-row.has-cvs .cvs-store-picker {
+        width: 100%;
+        max-width: 9rem;
+    }
+
+    .shipping-choice .form-check-label,
+    .freight-describe {
+        overflow-wrap: anywhere;
+    }
+}
+
+@media (max-width: 767.98px) {
+    #RadioPayment {
+        min-width: 0;
+        padding-right: .75rem !important;
+        padding-left: .75rem !important;
+        overflow-x: hidden;
+        overflow-x: clip;
+    }
+
+    #RadioPayment .payment_display {
+        align-items: flex-start;
+        padding: .9rem .75rem;
+    }
+
+    #ECPayPayment,
+    #ECPayPayment .ecpay-pay-list-wrap,
+    #ECPayPayment .ecpay-pay-list,
+    #ECPayPayment .ecpay-pay-list > li {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    #ECPayPayment .ecpay-pay-check,
+    #ECPayPayment .ecpay-pay-check > *,
+    #ECPayPayment .ecpay-pay-check label,
+    #ECPayPayment .epc-txt {
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    #ECPayPayment .ecpay-pay-check,
+    #ECPayPayment .ecpay-pay-check label,
+    #ECPayPayment .epc-txt {
+        flex-wrap: wrap;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+    }
+
+    #ECPayPayment input,
+    #ECPayPayment select {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    #ECPayPayment img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .recipient-delivery-panel {
+        margin: .5rem 0 1rem;
+        border-right: 0;
+        border-left: 0;
+        border-radius: 0;
+    }
+
+    .recipient-panel-heading {
+        margin-bottom: .5rem !important;
+        padding: .65rem .75rem !important;
+    }
+
+    .recipient-shipping-heading {
+        margin-bottom: .15rem !important;
+        padding: .25rem .5rem .4rem !important;
+    }
+
+    .recipient-active-panel {
+        margin-left: 0;
+        padding-top: .5rem;
+        border-right: 0;
+        border-bottom: 0;
+        border-radius: 0;
+    }
+
+    .recipient-source-options {
+        gap: .4rem;
+        margin-top: .4rem;
+        margin-bottom: .5rem;
+        padding-right: .75rem !important;
+        padding-left: .75rem !important;
+    }
+
+    .recipient-source-option {
+        align-items: center;
+        justify-content: flex-start;
+        min-height: 3rem;
+        padding: .55rem .35rem;
+        text-align: left !important;
+    }
+
+    .recipient-source-option > span:not(.recipient-source-indicator) {
+        justify-content: center;
+        align-self: stretch;
+    }
+
+    .recipient-source-option small {
+        display: none;
+    }
+
+    .recipient-source-option .form-check-input,
+    .recipient-source-indicator {
+        width: .9rem;
+        height: .9rem;
+        margin-top: 0;
+    }
+
+    .recipient-source-option {
+        min-height: auto;
+    }
+
+    .recipient-card {
+        grid-template-columns: 1fr;
+    }
+
+    #RadioShipping {
+        margin-bottom: .5rem !important;
+        padding-right: .5rem !important;
+        padding-left: .5rem !important;
+    }
+
+    .shipping-option-row,
+    .shipping-option-row.has-cvs {
+        grid-template-columns: minmax(0, 1fr);
+        gap: .25rem;
+        padding: .65rem .25rem;
+    }
+
+    .shipping-option-row .shipping-choice,
+    .shipping-option-row.has-cvs .shipping-choice {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .shipping-option-row .freight-describe,
+    .shipping-option-row.has-cvs .freight-describe {
+        grid-column: 1;
+        grid-row: 2;
+        padding-left: 1.45rem;
+        color: #454b48;
+        font-size: .9rem;
+    }
+
+    .shipping-option-row.has-cvs .cvs-store-picker {
+        grid-column: 1;
+        grid-row: 3;
+        justify-self: start;
+        margin-top: .25rem;
+        margin-left: 1.45rem;
+        padding-left: 0;
+        width: calc(100% - 1.45rem);
+        max-width: 16rem;
+    }
+
+    #Form_Recipient {
+        padding-right: .5rem !important;
+        padding-left: .5rem !important;
+    }
+
+    .recipient-copy-actions {
+        align-items: flex-start;
+        flex-direction: column;
+        padding-right: .75rem !important;
+        padding-left: .75rem !important;
+    }
+
+    .recipient-copy-actions > .text-muted {
+        width: 100%;
+    }
+
+    .recipient-adjust-break {
+        display: block;
+    }
+
+    .invoice-paper-note {
+        display: block;
+        margin-top: .75rem;
+    }
+
+    .checkoutValidationWarning {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        padding: .65rem .75rem;
+    }
+
+    .checkoutValidationWarning button {
+        display: block;
+        margin: .3rem 0 0;
+    }
+
+    .recipient-active-panel > .default_data {
+        padding-right: .75rem;
+        padding-left: .75rem;
+    }
+
+    .recipient-summary-row {
+        grid-template-columns: 5.25rem minmax(0, 1fr);
+        gap: .35rem;
+    }
+}
+
+.cvs-store-picker {
+    width: 100%;
+    max-width: 16rem;
+}
+
+.cvs-store-button {
+    width: 100%;
+    min-height: 2.5rem;
+    padding: .45rem .75rem;
+    border: 1px solid #198754;
+    border-radius: .35rem;
+    background: #fff;
+    color: #146c43;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+}
+
+.cvs-store-button:hover,
+.cvs-store-button:focus-visible {
+    background: #eef8f2;
+    box-shadow: 0 0 0 .2rem rgba(25, 135, 84, .16);
+    outline: none;
+}
+
+.cvs-store-button.is-missing {
+    border: 2px solid #dc3545;
+    background: #fff5f5;
+    color: #b02a37;
+}
+
+.cvs-store-button.is-missing:hover,
+.cvs-store-button.is-missing:focus-visible {
+    background: #ffe8ea;
+    box-shadow: 0 0 0 .2rem rgba(220, 53, 69, .18);
+}
+
+.cvs-store-button.is-complete {
+    background: #eef8f2;
+}
+
+.cvs-store-status {
+    margin-top: .35rem;
+    font-size: .875rem;
+    line-height: 1.45;
+}
+
+.cvs-store-status.is-missing {
+    color: #b02a37;
+    font-weight: 600;
+}
+
+.cvs-store-status.is-missing::before {
+    content: "！";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-right: .25rem;
+    border-radius: 50%;
+    background: #dc3545;
+    color: #fff;
+    font-size: .75rem;
+}
+
+.cvs-store-status.is-complete {
+    color: #146c43;
 }
 
 /* 匯款資訊外框有 border 與 p-3，補償水平內縮後與收件人／付款資料共用同一格線。 */

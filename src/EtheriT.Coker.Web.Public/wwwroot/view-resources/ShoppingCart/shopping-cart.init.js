@@ -125,8 +125,11 @@
                         for (var i = 0; i < select_cart_data.length; i++) {
                             var $select_input = $('input[data-subtype="' + select_cart_data[i].logisticsSubType + '"]');
                             if ($select_input.length > 0) {
-                                $select_input.val(select_cart_data[i].cvsStoreName);
-                                var $radio = $select_input.siblings('input[name="RadioShipping"]');
+                                var $radio = $select_input
+                                    .closest(".shipping-option-row")
+                                    .find('input[name="RadioShipping"]');
+                                if (!$radio.length) continue;
+
                                 $radio.prop('checked', true);
                                 $radio.attr({
                                     "data-cvsstoreid": select_cart_data[i].cvsStoreID,
@@ -270,6 +273,7 @@
         });
 
         cart.Forms.ElementInit();
+        if (cart.Recipients) cart.Recipients.Init();
 
         $("#OrdererForm :input, #RecipientForm :input, #InvoiceForm :input, #Form_Invoice :input, #Form_InvoicePersonalType :input")
             .not("[name='RadioShipping']")
@@ -306,7 +310,7 @@
         S.ShippingForms = $('#RadioShipping');
         S.PaymentForms = $('#RadioPayment');
         S.OrdererForms = $('#OrdererForm > form');
-        S.RecipientForms = $('#RecipientForm > form');
+        S.RecipientForms = $('#Form_Recipient');
         S.InvoiceForms = $('#Form_Invoice');
         S.InvoicePersonalTypeForms = $('#Form_InvoicePersonalType');
 
@@ -334,11 +338,9 @@
                 $inputs.each(function () {
                     const $input = $(this);
                     const id = Number($input.val());
-                    const $formCheck = $input.closest('.form-check');
-                    const $describe = $formCheck.next('.freight-describe');
+                    const $optionRow = $input.closest('.shipping-option-row');
                     const isTarget = (id === fid);
-                    $formCheck.toggleClass('d-none', !isTarget);
-                    $describe.toggleClass('d-none', !isTarget);
+                    $optionRow.toggleClass('d-none', !isTarget);
                     $input.prop('checked', isTarget);
                 });
 
@@ -350,12 +352,10 @@
                 $inputs.each(function () {
                     const $input = $(this);
                     const statusType = Number($input.data('freight-status-type')) || 0;
-                    const $formCheck = $input.closest('.form-check');
-                    const $describe = $formCheck.next('.freight-describe');
+                    const $optionRow = $input.closest('.shipping-option-row');
                     const isSpecial = (statusType === 2); // 特殊運費
 
-                    $formCheck.toggleClass('d-none', isSpecial);
-                    $describe.toggleClass('d-none', isSpecial);
+                    $optionRow.toggleClass('d-none', isSpecial);
 
                     // 若原本選到特殊項目 → 取消選取
                     if (isSpecial && $input.is(':checked')) {
@@ -367,7 +367,7 @@
                 const $checked = $('[name="RadioShipping"]:checked');
                 if ($checked.length === 0) {
                     const $firstVisible = $inputs.filter(function () {
-                        return !$(this).closest('.form-check').hasClass('d-none');
+                        return !$(this).closest('.shipping-option-row').hasClass('d-none');
                     }).first();
                     if ($firstVisible.length) {
                         $firstVisible.prop('checked', true);
@@ -380,8 +380,8 @@
         }
 
         $(".btn_checkout").on("click", function () {
-            cart.Payment.Core.setProvidersMonitorByType("embedded", false);
             cart.Payment.Core.Step3Monitor();
+            S.shipMethodsChosen = S.shipMethodsChosen && cart.Shipping.HasSelectedCvsStore();
             if (!S.OrdererFilled) {
                 if (!S.OrdererOpen) cart.Forms.OrdererEdit(true);
                 Coker.sweet.warning("請注意", "請確實填寫訂購人資料！", null);
@@ -390,7 +390,11 @@
             } else if (!S.InvoiceFilled) {
                 Coker.sweet.warning("請注意", "請確實填寫發票寄送資料！", null);
             } else if (!S.shipMethodsChosen) {
-                Coker.sweet.warning("請注意", "請選擇運送方式！", null);
+                if (cart.Shipping.IsCvsShippingSelected() && !cart.Shipping.HasSelectedCvsStore()) {
+                    Coker.sweet.warning("請注意", "請先選擇超商取貨門市！", null);
+                } else {
+                    Coker.sweet.warning("請注意", "請選擇運送方式！", null);
+                }
             } else if (!S.payMethodsChosen && !cart.Payment.Core.hasProvidersByType("embedded")) {
                 Coker.sweet.warning("請注意", "請選擇付款方式！", null);
             } else {
@@ -409,6 +413,7 @@
                         null
                     );
                 } else {
+                    cart.Payment.Core.setProvidersMonitorByType("embedded", false);
                     Coker.sweet.custom("info", "是否確定結帳？", "點選確認進入付款流程", "是，開始付款", function () {
                         cart.Order.OrderHeaderAdd();
                     }, "否", function () {

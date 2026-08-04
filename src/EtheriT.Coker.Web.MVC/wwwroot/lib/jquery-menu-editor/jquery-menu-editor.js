@@ -1837,7 +1837,6 @@ function MenuEditor(idSelector, options) {
                 var $new = $('#' + _cssEscape(self._editingDomId), $main);
                 if ($new.length) {
                     itemEditing = $new.addClass('editItem');
-                    editItem(itemEditing); // 讓右側表單拿到最新 data
                 }
             }
 

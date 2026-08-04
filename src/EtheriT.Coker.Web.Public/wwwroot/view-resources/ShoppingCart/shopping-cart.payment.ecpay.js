@@ -7,6 +7,7 @@
     cart.Payment.ECPay = cart.Payment.ECPay || {};
     var ecpaySelectionObserver = null;
     var isClearingECPaySelection = false;
+    var ecpayRequestVersion = 0;
 
     function GetECPayEntryRadio() {
         return $('#RadioPayment input[name="RadioPayment"][data-third-party-id="' + S.ECPAY_THIRD_PARTY_ID + '"]').first();
@@ -67,14 +68,9 @@
             });
     }
     function ECPaymentChange() {
-        if (!S.ECPayMonitor || !S.HasECPay || !S.ECPayInit) {
+        if (!S.ECPayMonitor) {
             return;
         }
-
-        var selectedPaymentBeforeSync = cart.Payment.Core.GetCheckedPaymentValue();
-        var restorePaymentAfterSync = IsECPaySelected()
-            ? GetECPayEntryValue()
-            : selectedPaymentBeforeSync;
 
         cart.Pricing.TotalCount();
 
@@ -83,18 +79,38 @@
         var selectedOrderDetails = GetSelectedOrderDetails();
 
         if (!dataReady || selectedOrderDetails.length === 0) {
-            if (S.ECPayReady) {
-                S.ECPayReady = false;
-                S.ECPayOrderSnapshot = "";
-            }
+            ecpayRequestVersion += 1;
+            S.ECPayChanging = false;
+
+            S.ECPayReady = false;
+            S.ECPayOrderSnapshot = "";
 
             $("#RadioPayment > .form-check").addClass("d-none");
             $(".noPaymentWarning").addClass("d-none");
-            $(".ecpayWarning").removeClass("d-none");
             $(".ecpay_loading").addClass("d-none");
+            $("#ECPayPayment").empty();
+            cart.CheckoutValidation.RefreshDisplay();
 
             return;
         }
+
+        // 缺漏提示必須先於綠界的可用性與初始化狀態判斷。
+        // 否則資料不完整時，付款項目被隱藏了，提示也會一起沒有機會顯示。
+        $(".checkoutValidationWarning").addClass("d-none");
+
+        if (!S.HasECPay) {
+            return;
+        }
+
+        if (!S.ECPayInit) {
+            $(".ecpay_loading").removeClass("d-none").text("付款模組載入中...");
+            return;
+        }
+
+        var selectedPaymentBeforeSync = cart.Payment.Core.GetCheckedPaymentValue();
+        var restorePaymentAfterSync = IsECPaySelected()
+            ? GetECPayEntryValue()
+            : selectedPaymentBeforeSync;
 
         S.order_header_data.OrderDetails = selectedOrderDetails;
 
@@ -110,13 +126,20 @@
 
         S.ECPayChanging = true;
         S.ECPayReady = false;
+        var requestVersion = ++ecpayRequestVersion;
 
         $(".ecpay_loading").removeClass("d-none").text("付款模組載入中...");
+        $(".checkoutValidationWarning").addClass("d-none");
         $("#RadioPayment > .form-check").addClass("d-none");
         $("#ECPayPayment").empty();
 
         var timeout = 0;
         var checkInterval = setInterval(function () {
+            if (requestVersion !== ecpayRequestVersion) {
+                clearInterval(checkInterval);
+                return;
+            }
+
             if (S.ECPayInit !== true) {
                 timeout += 100;
                 if (timeout >= 10000) {
@@ -130,6 +153,8 @@
             clearInterval(checkInterval);
             Coker.ThirdParty.ECPayGetToken(S.order_header_data)
                 .done(function (result) {
+                    if (requestVersion !== ecpayRequestVersion) return;
+
                     if (!result.success) {
                         S.ECPayChanging = false;
                         S.ECPayReady = false;
@@ -140,6 +165,8 @@
                     var message = result.message.split(",");
                     S.order_header_data.orderId = message[0];
                     ECPay.createPayment(message[1], ECPay.Language.zhTW, function (errMsg) {
+                        if (requestVersion !== ecpayRequestVersion) return;
+
                         if (errMsg != null) {
                             S.ECPayChanging = false;
                             S.ECPayReady = false;
@@ -226,6 +253,8 @@
                     }, "V2");
                 })
                 .fail(function () {
+                    if (requestVersion !== ecpayRequestVersion) return;
+
                     S.ECPayChanging = false;
                     S.ECPayReady = false;
                     $(".ecpay_loading").text("串接綠界發生錯誤，請稍後嘗試");

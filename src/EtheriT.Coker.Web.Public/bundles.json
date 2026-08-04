@@ -151,6 +151,8 @@
         "wwwroot/view-resources/ShoppingCart/shopping-cart.marketing.js",
         "wwwroot/view-resources/ShoppingCart/shopping-cart.pricing.js",
         "wwwroot/view-resources/ShoppingCart/shopping-cart.forms.js",
+        "wwwroot/view-resources/ShoppingCart/shopping-cart.recipients.js",
+        "wwwroot/view-resources/ShoppingCart/shopping-cart.validation.js",
 
         "wwwroot/view-resources/ShoppingCart/shopping-cart.payment.core.js",
         "wwwroot/view-resources/ShoppingCart/shopping-cart.payment.availability.js",

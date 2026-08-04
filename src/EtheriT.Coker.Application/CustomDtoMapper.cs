@@ -178,9 +178,17 @@ namespace EtheriT.Coker.Application
             CreateMap<SiteMapDto, WebMenu>().ReverseMap();
 
             CreateMap<MenuItemDto, WebMenu>()
+                .ForMember(d => d.Id, o => o.Ignore())
+                .ForMember(d => d.FK_WebsiteId, o => o.Ignore())
+                .ForMember(d => d.CreationTime, o => o.Ignore())
+                .ForMember(d => d.LastModificationTime, o => o.Ignore())
                 .ForMember(d => d.Popular, o => o.Ignore())
                 .ForMember(d => d.RemovedFromShelves, o => o.MapFrom(s => !s.IsFromShelves))
                 .ReverseMap()
+                .ForMember(d => d.Id, o => o.MapFrom(s => s.Id))
+                .ForMember(d => d.FK_WebsiteId, o => o.MapFrom(s => s.FK_WebsiteId))
+                .ForMember(d => d.CreationTime, o => o.MapFrom(s => s.CreationTime))
+                .ForMember(d => d.LastModificationTime, o => o.MapFrom(s => s.LastModificationTime))
                 .ForMember(d => d.Popular, o => o.MapFrom(s => s.Popular))
                 .ForMember(d => d.IsFromShelves, o => o.MapFrom(s => !s.RemovedFromShelves))
                 .ForMember(d => d.OrgName, o => o.MapFrom(s => s.Website != null ? s.Website.OrgName : null))

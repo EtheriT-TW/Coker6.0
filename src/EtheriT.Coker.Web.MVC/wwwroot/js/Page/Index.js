@@ -6,6 +6,29 @@
             return co.WebMesnus.GetPageTypeList();
         }
     });
+
+    function reopenMenuItem(id) {
+        const targetId = String(id);
+        const $target = $("#myEditor").find("li").filter(function () {
+            const itemId = $(this).data("id") ?? $(this).data("Id");
+            return String(itemId) === targetId;
+        }).first();
+
+        if (!$target.length) return;
+
+        $target.parents("li").each(function () {
+            const $parent = $(this);
+            const $opener = $parent.find(".sortableListsOpener").first();
+            if ($parent.hasClass("sortableListsClosed") && $opener.length) {
+                $opener.trigger("mousedown");
+            }
+        });
+
+        $("#myEditor").find("li.selectItem").removeClass("selectItem");
+        $target.addClass("selectItem");
+        $target.find(".btnEdit").first().trigger("click");
+    }
+
     var editor = grapesInit({
         save: function (html, css) {
             var _dfr = $.Deferred();
@@ -161,26 +184,7 @@
                             if (ico_success != 0 && img_success != 0 && overimg_success != 0) {
                                 menuForm.clearUploads();
                                 menuReload(menuEditor, myOffcanvas, function () {
-                                    const newId = data.id;
-                                    var $target = $("#myEditor").find("li").filter(function () {
-                                        var d = $(this).data();
-                                        return d.id === newId || d.Id === newId;
-                                    }).first();
-
-                                    if ($target.length) {
-                                        const $parents = $target.parents("li");
-                                        if ($parents.length) {
-                                            $parents.each(function () {
-                                                const $opener = $(this).find(".sortableListsOpener").first();
-                                                if ($(this).hasClass("sortableListsClosed") && $opener.length) {
-                                                    $opener.trigger("mousedown");
-                                                } 
-                                            });
-                                        }
-                                        $("#myEditor").find("li.selectItem").removeClass("selectItem");
-                                        $target.addClass("selectItem");
-                                        $target.find(".btnEdit").first().trigger("click");
-                                    }
+                                    reopenMenuItem(data.id);
                                 });
                                 if (!result.success) co.sweet.error(result.error);
                                 else {
@@ -287,14 +291,13 @@
                                 } else overimg_success = -1;
 
                                 const timmer = function () {
-                                    if (iconimg_success == 1 && img_success == 1 && overimg_success == 1) {
-                                        menuReload(menuEditor, myOffcanvas);
+                                    if (iconimg_success != 0 && img_success != 0 && overimg_success != 0) {
                                         menuForm.clearUploads();
-                                        if (!result.success) co.sweet.error(result.error);
-                                        else {
-                                            if (iconimg_success == -1 || img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
-                                            else co.sweet.success("儲存成功");
-                                        }
+                                        menuReload(menuEditor, myOffcanvas, function () {
+                                            reopenMenuItem(data.id);
+                                        });
+                                        if (iconimg_success == -1 || img_success == -1 || overimg_success == -1) co.sweet.error("圖片上傳失敗");
+                                        else co.sweet.success("儲存成功");
                                     } else setTimeout(timmer, 100);
                                 }
                                 setTimeout(timmer, 100);

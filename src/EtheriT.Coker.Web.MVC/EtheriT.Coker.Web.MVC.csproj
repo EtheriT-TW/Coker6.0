@@ -148,6 +148,9 @@
 		<None Include="wwwroot\js\devextreme\*.js.bak" />
 	</ItemGroup>
 	<ItemGroup>
+	  <None Remove="wwwroot\js\CokerCore\MenuEditorForm.min.js" />
+	</ItemGroup>
+	<ItemGroup>
 		<PackageReference Include="AspNet.Security.OAuth.Apple" Version="10.0.0" />
 		<PackageReference Include="AspNet.Security.OAuth.Instagram" Version="10.0.0" />
 		<PackageReference Include="AspNet.Security.OAuth.Line" Version="10.0.0" />
@@ -186,6 +189,7 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 		</Content>
+		<Content Include="wwwroot\js\CokerCore\MenuEditorForm.min.js" />
 		<Content Update="appsettings.Local.json">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Content>

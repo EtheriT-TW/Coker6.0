@@ -15,6 +15,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string RecipientCellPhone { get; set; }
         public string RecipientAddress { get; set; }
         public string RecipientEmail { get; set; }
+        public string? CVSStoreID { get; set; }
+        public string? CVSStoreName { get; set; }
+        public string? CVSAddress { get; set; }
         public InvoiceTypeEnum? InvoiceType { get; set; }
         public string? Carrier { get; set; }
         public string? InvoiceTypeTitle { get; set; }

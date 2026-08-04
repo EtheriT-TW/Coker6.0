@@ -18,6 +18,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.Order;
+using EtheriT.Coker.Application.Shared.Dto.Recipients;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
@@ -25,6 +26,7 @@ using EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto;
 using EtheriT.Coker.Application.Shared.Dto.Token;
 using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.Payment;
+using EtheriT.Coker.Application.Shared.Recipients;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Token;
@@ -62,6 +64,7 @@ namespace EtheriT.Coker.Application.Order
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly ICheckoutDiscountService checkoutDiscountService;
         private readonly IPaymentAvailabilityService paymentAvailabilityService;
+        private readonly IRecipientsAppService recipientsAppService;
         private readonly IMapper mapper;
         private readonly StringHandler stringHandler;
         public OrderAppService(
@@ -77,6 +80,7 @@ namespace EtheriT.Coker.Application.Order
             IFileUploadAppService fileUploadAppService,
             ICheckoutDiscountService checkoutDiscountService,
             IPaymentAvailabilityService paymentAvailabilityService,
+            IRecipientsAppService recipientsAppService,
             IMapper mapper,
             StringHandler stringHandler
         )
@@ -93,6 +97,7 @@ namespace EtheriT.Coker.Application.Order
             this.fileUploadAppService = fileUploadAppService;
             this.checkoutDiscountService = checkoutDiscountService;
             this.paymentAvailabilityService = paymentAvailabilityService;
+            this.recipientsAppService = recipientsAppService;
             this.mapper = mapper;
             this.stringHandler = stringHandler;
 
@@ -184,6 +189,9 @@ namespace EtheriT.Coker.Application.Order
 
             try
             {
+                if (dto == null)
+                    throw new Exception("訂單資料不可為空，請重新整理後再試。");
+
                 // === 共用 context ===
                 var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
                 token = await tokenAppService.CheckToken(null) ?? throw new Exception("查無Token");
@@ -193,10 +201,27 @@ namespace EtheriT.Coker.Application.Order
                 uuid = await tokenAppService.GetUUID();
                 var currentUuid = uuid.Value;
                 var now = DateTime.Now;
+                var refreshToken = token.RefreshToken ?? Guid.Empty;
                 var userId = await db.Tokens
                         .Where(e => e.id == token.RefreshToken)
                         .Select(e => e.UserID)
                         .FirstOrDefaultAsync();
+
+                if (dto.OrderId == null)
+                {
+                    dto.OrderId = await FindReusableTempOrderIdAsync(
+                        websiteId,
+                        currentUuid,
+                        refreshToken,
+                        now);
+                }
+
+                RecipientsDto? completedOrderRecipient = null;
+                if (!isTemp)
+                {
+                    var shippingType = await ValidateFormalOrderCompletenessAsync(dto, websiteId);
+                    completedOrderRecipient = BuildCompletedOrderRecipient(dto, shippingType);
+                }
 
                 var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
                 var bonusEnabled = bonusSetting?.BonusEnabled == true;
@@ -242,6 +267,9 @@ namespace EtheriT.Coker.Application.Order
                     await tx.CommitAsync();
                 });
 
+                if (!isTemp && token.IsLogin && completedOrderRecipient != null)
+                    await TrySyncCompletedOrderRecipientAsync(completedOrderRecipient, websiteId, currentUuid, header.Id);
+
                 await FillPaymentMessageAndSendMailAsync(dto, websiteId, header!, output);
 
                 output.Success = true;
@@ -254,6 +282,220 @@ namespace EtheriT.Coker.Application.Order
 
             return output;
         }
+
+        private async Task<long?> FindReusableTempOrderIdAsync(
+            long websiteId,
+            Guid uuid,
+            Guid refreshToken,
+            DateTime now)
+        {
+            if (refreshToken == Guid.Empty)
+                return null;
+
+            var latestFormalOrderId = await db.Order_Headers
+                .AsNoTracking()
+                .Where(e =>
+                    e.FK_WebsiteId == websiteId &&
+                    e.FK_UUID == uuid &&
+                    e.Fk_Tid == refreshToken &&
+                    !e.IsTemp &&
+                    !e.IsDeleted)
+                .Select(e => (long?)e.Id)
+                .MaxAsync() ?? 0;
+
+            var reusableAfter = now.AddMinutes(-30);
+
+            return await db.Order_Headers
+                .AsNoTracking()
+                .Where(e =>
+                    e.FK_WebsiteId == websiteId &&
+                    e.FK_UUID == uuid &&
+                    e.Fk_Tid == refreshToken &&
+                    e.IsTemp &&
+                    !e.IsDeleted &&
+                    e.Id > latestFormalOrderId &&
+                    e.CreationTime >= reusableAfter)
+                .OrderByDescending(e => e.Id)
+                .Select(e => (long?)e.Id)
+                .FirstOrDefaultAsync();
+        }
+
+        private async Task<ShippingTypeEnum> ValidateFormalOrderCompletenessAsync(OrderHeaderAddDto dto, long websiteId)
+        {
+            var missing = new List<string>();
+
+            if (dto.OrderDetails == null || dto.OrderDetails.Count == 0)
+                missing.Add("訂購商品");
+
+            if (string.IsNullOrWhiteSpace(dto.Orderer))
+                missing.Add("訂購人姓名");
+            if (string.IsNullOrWhiteSpace(dto.OrdererEmail))
+                missing.Add("訂購人 Email");
+            else if (!System.Net.Mail.MailAddress.TryCreate(dto.OrdererEmail.Trim(), out _))
+                throw new Exception("訂購人 Email 格式不正確。");
+            if (string.IsNullOrWhiteSpace(dto.OrdererCellPhone))
+                missing.Add("訂購人手機號碼");
+            else if (!System.Text.RegularExpressions.Regex.IsMatch(dto.OrdererCellPhone.Trim(), @"^09\d{8}$"))
+                throw new Exception("訂購人手機號碼格式不正確，請輸入 09 開頭的 10 碼手機號碼。");
+            if (string.IsNullOrWhiteSpace(dto.OrdererAddress))
+                missing.Add("訂購人地址");
+
+            if (string.IsNullOrWhiteSpace(dto.Recipient))
+                missing.Add("收件人姓名");
+            if (string.IsNullOrWhiteSpace(dto.RecipientCellPhone))
+                missing.Add("收件人手機號碼");
+            else if (!System.Text.RegularExpressions.Regex.IsMatch(dto.RecipientCellPhone.Trim(), @"^09\d{8}$"))
+                throw new Exception("收件人手機號碼格式不正確，請輸入 09 開頭的 10 碼手機號碼。");
+            if (!string.IsNullOrWhiteSpace(dto.RecipientEmail) &&
+                !System.Net.Mail.MailAddress.TryCreate(dto.RecipientEmail.Trim(), out _))
+                throw new Exception("收件人 Email 格式不正確。");
+
+            if (dto.Payment <= 0)
+                missing.Add("付款方式");
+            if (dto.Shipping <= 0)
+                missing.Add("配送方式");
+
+            if (missing.Count > 0)
+                throw new Exception($"訂單資料尚未完成：{string.Join("、", missing)}。");
+
+            var shipping = await db.LogisticsSettings
+                .AsNoTracking()
+                .Where(e => e.Id == dto.Shipping && e.FK_WebsiteId == websiteId && !e.IsDeleted)
+                .Select(e => new { e.Id, e.LogisticsType })
+                .FirstOrDefaultAsync();
+
+            if (shipping == null)
+                throw new Exception("選擇的配送方式不存在或不屬於目前網站，請重新選擇。");
+
+            if (IsCvsShippingType(shipping.LogisticsType))
+            {
+                var missingStoreData = new List<string>();
+                if (string.IsNullOrWhiteSpace(dto.CVSStoreID)) missingStoreData.Add("門市代號");
+                if (string.IsNullOrWhiteSpace(dto.CVSStoreName)) missingStoreData.Add("門市名稱");
+                if (string.IsNullOrWhiteSpace(dto.CVSAddress)) missingStoreData.Add("門市地址");
+
+                if (missingStoreData.Count > 0)
+                    throw new Exception($"超商取貨資料尚未完成：{string.Join("、", missingStoreData)}。請重新選擇取貨門市。");
+            }
+            else if (string.IsNullOrWhiteSpace(dto.RecipientAddress))
+            {
+                throw new Exception("請填寫收件人地址後再成立訂單。");
+            }
+
+            return shipping.LogisticsType;
+        }
+
+        private static RecipientsDto BuildCompletedOrderRecipient(
+            OrderHeaderAddDto dto,
+            ShippingTypeEnum shippingType)
+        {
+            var isCvs = IsCvsShippingType(shippingType);
+
+            return new RecipientsDto
+            {
+                Name = dto.Recipient.Trim(),
+                Email = dto.RecipientEmail?.Trim() ?? string.Empty,
+                Address = dto.RecipientAddress?.Trim() ?? string.Empty,
+                ZipCode = dto.RecipientZipCode?.Trim() ?? string.Empty,
+                CellPhone = dto.RecipientCellPhone.Trim(),
+                TelePhone = dto.RecipientTelePhone?.Trim() ?? string.Empty,
+                Sex = dto.RecipientSex ?? SexEnum.其他,
+                LogisticsType = shippingType,
+                CVSStoreID = isCvs ? dto.CVSStoreID?.Trim() ?? string.Empty : string.Empty,
+                CVSStoreName = isCvs ? dto.CVSStoreName?.Trim() ?? string.Empty : string.Empty,
+                CVSAddress = isCvs ? dto.CVSAddress?.Trim() ?? string.Empty : string.Empty,
+                CVSTelephone = isCvs ? dto.CVSTelephone?.Trim() ?? string.Empty : string.Empty,
+                CVSOutSide = isCvs ? dto.CVSOutSide?.Trim() ?? string.Empty : string.Empty
+            };
+        }
+
+        private async Task TrySyncCompletedOrderRecipientAsync(
+            RecipientsDto recipient,
+            long websiteId,
+            Guid uuid,
+            long orderId)
+        {
+            try
+            {
+                var isWebsiteMember = await (
+                    from frontUser in db.FrontUsers
+                    join mapping in db.MappingFrontUserAndWebsite on frontUser.Id equals mapping.FK_UserId
+                    where frontUser.UUID == uuid &&
+                          mapping.FK_WebsiteId == websiteId &&
+                          !frontUser.IsDeleted &&
+                          !mapping.IsDeleted
+                    select frontUser.Id)
+                    .AnyAsync();
+
+                if (!isWebsiteMember)
+                    return;
+
+                var result = await recipientsAppService.SaveCheckoutRecipient(recipient);
+                if (!result.Success)
+                {
+                    await WriteCompletedOrderRecipientSyncFailureLogAsync(
+                        websiteId,
+                        orderId,
+                        uuid,
+                        result.Message ?? result.Error ?? "常用收件資訊同步失敗",
+                        null);
+                }
+            }
+            catch (Exception ex)
+            {
+                await WriteCompletedOrderRecipientSyncFailureLogAsync(
+                    websiteId,
+                    orderId,
+                    uuid,
+                    ex.Message,
+                    ex);
+            }
+        }
+
+        private async Task WriteCompletedOrderRecipientSyncFailureLogAsync(
+            long websiteId,
+            long orderId,
+            Guid uuid,
+            string error,
+            Exception? ex)
+        {
+            try
+            {
+                await loginUserData.SetLogs(
+                    0,
+                    websiteId,
+                    "OrderRecipientSyncFail",
+                    JsonConvert.SerializeObject(new
+                    {
+                        OrderId = orderId,
+                        UUID = uuid,
+                        Error = error,
+                        Exception = ex == null ? null : GetFullExceptionMessage(ex)
+                    }));
+            }
+            catch
+            {
+                // 常用收件同步與記錄失敗都不能回滾已成立的訂單。
+            }
+        }
+
+        private static bool IsCvsShippingType(ShippingTypeEnum logisticsType)
+        {
+            return logisticsType is
+                ShippingTypeEnum.OK取貨 or
+                ShippingTypeEnum.全家取貨 or
+                ShippingTypeEnum.Seven取貨 or
+                ShippingTypeEnum.萊爾富取貨 or
+                ShippingTypeEnum.綠界_大宗寄倉_全家 or
+                ShippingTypeEnum.綠界_大宗寄倉_711超商 or
+                ShippingTypeEnum.綠界_大宗寄倉_711冷凍店取 or
+                ShippingTypeEnum.綠界_大宗寄倉_萊爾富 or
+                ShippingTypeEnum.綠界_門市寄取_全家 or
+                ShippingTypeEnum.綠界_門市寄取_711超商 or
+                ShippingTypeEnum.綠界_門市寄取_萊爾富 or
+                ShippingTypeEnum.綠界_門市寄取_OK超商;
+        }
+
         private static string GetFullExceptionMessage(Exception ex)
         {
             var messages = new List<string>();
@@ -574,35 +816,26 @@ namespace EtheriT.Coker.Application.Order
         {
             Order_Header? oh;
             ShippingTypeEnum? LogisticsSubType = await db.LogisticsSettings
-                    .Where(e => e.Id == dto.Shipping)
+                    .Where(e => e.Id == dto.Shipping && e.FK_WebsiteId == websiteId && !e.IsDeleted)
                     .Select(e => (ShippingTypeEnum?)e.LogisticsType)
                     .FirstOrDefaultAsync();
 
-            var cvsTypes = new HashSet<ShippingTypeEnum>
-                {
-                    ShippingTypeEnum.OK取貨,
-                    ShippingTypeEnum.全家取貨,
-                    ShippingTypeEnum.Seven取貨,
-                    ShippingTypeEnum.萊爾富取貨,
-                    ShippingTypeEnum.綠界_大宗寄倉_全家,
-                    ShippingTypeEnum.綠界_大宗寄倉_711超商,
-                    ShippingTypeEnum.綠界_大宗寄倉_711冷凍店取,
-                    ShippingTypeEnum.綠界_大宗寄倉_萊爾富,
-                    ShippingTypeEnum.綠界_門市寄取_全家,
-                    ShippingTypeEnum.綠界_門市寄取_711超商,
-                    ShippingTypeEnum.綠界_門市寄取_萊爾富,
-                    ShippingTypeEnum.綠界_門市寄取_OK超商
-                };
-
-            var IsCVSStore = LogisticsSubType != null && cvsTypes.Contains(LogisticsSubType.Value);
+            var IsCVSStore = LogisticsSubType != null && IsCvsShippingType(LogisticsSubType.Value);
 
             if (IsCVSStore)
                 dto.RecipientAddress = $"{GetCVSType((ShippingTypeEnum)LogisticsSubType)}-{dto.CVSStoreName}({dto.CVSAddress})";
 
             if (dto.OrderId != null)
             {
+                Guid refreshToken = token.RefreshToken ?? Guid.Empty;
                 oh = await db.Order_Headers
-                    .FirstOrDefaultAsync(e => e.Id == dto.OrderId && e.IsTemp);
+                    .FirstOrDefaultAsync(e =>
+                        e.Id == dto.OrderId &&
+                        e.FK_WebsiteId == websiteId &&
+                        e.FK_UUID == uuid &&
+                        e.Fk_Tid == refreshToken &&
+                        e.IsTemp &&
+                        !e.IsDeleted);
 
                 if (oh == null)
                     throw new Exception("找不到對應的暫存訂單。");
@@ -689,39 +922,6 @@ namespace EtheriT.Coker.Application.Order
                     throw new Exception($"新增訂單主檔儲存失敗：{GetFullExceptionMessage(ex)}", ex);
                 }
 
-                if (LogisticsSubType != null &&
-                    (LogisticsSubType == ShippingTypeEnum.綠界_中華郵政 ||
-                     LogisticsSubType == ShippingTypeEnum.綠界_黑貓 ||
-                     IsCVSStore))
-                {
-                    Order_Logistics ohlo = new Order_Logistics();
-
-                    ohlo.FK_OhId = oh.Id;
-                    ohlo.LogisticsSubType = GetLogisticsSubType((ShippingTypeEnum)LogisticsSubType);
-
-                    if (IsCVSStore) ohlo.LogisticsType = "CVS";
-                    else ohlo.LogisticsType = "HOME";
-
-                    ohlo.CreatorUserId = userId ?? 0;
-                    ohlo.CreationTime = now;
-
-                    ohlo.CVSStoreID = dto.CVSStoreID;
-                    ohlo.CVSStoreName = dto.CVSStoreName;
-                    ohlo.CVSAddress = dto.CVSAddress;
-                    ohlo.CVSTelephone = dto.CVSTelephone;
-                    ohlo.CVSOutSide = dto.CVSOutSide;
-
-                    db.Order_Logistics.Add(ohlo);
-                    try
-                    {
-                        await db.SaveChangesAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception($"新增訂單物流儲存失敗：{GetFullExceptionMessage(ex)}", ex);
-                    }
-                }
-
                 if (detailResult != null)
                 {
                     ApplyDetailResultToHeader(oh, detailResult);
@@ -777,8 +977,78 @@ namespace EtheriT.Coker.Application.Order
                 }
             }
 
+            await UpsertOrderLogisticsAsync(
+                oh,
+                dto,
+                LogisticsSubType,
+                IsCVSStore,
+                userId,
+                now);
+
             return oh;
         }
+
+        private async Task UpsertOrderLogisticsAsync(
+            Order_Header header,
+            OrderHeaderAddDto dto,
+            ShippingTypeEnum? logisticsSubType,
+            bool isCvsStore,
+            long? userId,
+            DateTime now)
+        {
+            var requiresLogisticsRecord = logisticsSubType != null &&
+                (logisticsSubType == ShippingTypeEnum.綠界_中華郵政 ||
+                 logisticsSubType == ShippingTypeEnum.綠界_黑貓 ||
+                 isCvsStore);
+
+            if (!requiresLogisticsRecord)
+                return;
+
+            var orderLogistics = await db.Order_Logistics
+                .Where(e => e.FK_OhId == header.Id && !e.IsDeleted)
+                .OrderByDescending(e => e.Id)
+                .FirstOrDefaultAsync();
+
+            if (orderLogistics == null)
+            {
+                orderLogistics = new Order_Logistics
+                {
+                    FK_OhId = header.Id,
+                    CreatorUserId = userId ?? 0,
+                    CreationTime = now
+                };
+                db.Order_Logistics.Add(orderLogistics);
+            }
+
+            orderLogistics.LogisticsSubType = GetLogisticsSubType(logisticsSubType!.Value);
+            orderLogistics.LogisticsType = isCvsStore ? "CVS" : "HOME";
+            orderLogistics.CVSStoreID = isCvsStore ? dto.CVSStoreID : null;
+            orderLogistics.CVSStoreName = isCvsStore ? dto.CVSStoreName : null;
+            orderLogistics.CVSAddress = isCvsStore ? dto.CVSAddress : null;
+            orderLogistics.CVSTelephone = isCvsStore ? dto.CVSTelephone : null;
+            orderLogistics.CVSOutSide = isCvsStore ? dto.CVSOutSide : null;
+
+            try
+            {
+                await db.SaveChangesAsync();
+
+                var persisted = await db.Order_Logistics
+                    .AsNoTracking()
+                    .AnyAsync(e =>
+                        e.FK_OhId == header.Id &&
+                        !e.IsDeleted &&
+                        e.LogisticsType == orderLogistics.LogisticsType &&
+                        (!isCvsStore || e.CVSStoreID == dto.CVSStoreID));
+
+                if (!persisted)
+                    throw new Exception("訂單物流資料寫入後無法讀回，請勿重複付款並聯絡管理員。");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"訂單物流儲存失敗：{GetFullExceptionMessage(ex)}", ex);
+            }
+        }
+
         private static void ApplyBoxMemoToHeader(Order_Header oh, DetailBuildResult? detailResult)
         {
             if (detailResult == null)
@@ -1217,11 +1487,22 @@ namespace EtheriT.Coker.Application.Order
         {
             try
             {
-                var result = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
+                var result = await db.Order_Headers
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(e =>
+                        e.Id == id &&
+                        e.FK_WebsiteId == WebsiteId &&
+                        !e.IsDeleted);
 
                 if (result != null)
                 {
+                    var orderLogistics = await db.Order_Logistics
+                        .AsNoTracking()
+                        .Where(e => e.FK_OhId == result.Id && !e.IsDeleted)
+                        .OrderByDescending(e => e.Id)
+                        .FirstOrDefaultAsync();
+
                     string ship_text = "";
                     if (result.Shipping == 0)
                     {
@@ -1245,6 +1526,9 @@ namespace EtheriT.Coker.Application.Order
                         RecipientCellPhone = result.RecipientCellPhone,
                         RecipientAddress = result.RecipientAddress.Replace(" ", ""),
                         RecipientEmail = result.RecipientEmail,
+                        CVSStoreID = orderLogistics?.CVSStoreID,
+                        CVSStoreName = orderLogistics?.CVSStoreName,
+                        CVSAddress = orderLogistics?.CVSAddress,
                         InvoiceRecipient = result.InvoiceRecipient,
                         InvoiceTitle = result.InvoiceTitle,
                         InvoiceType = result.InvoiceType,
@@ -1333,12 +1617,21 @@ namespace EtheriT.Coker.Application.Order
                         if (checktoken.IsLogin)
                         {
                             Guid UUID = await tokenAppService.GetUUID();
-                            var uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID).Select(e => e.TempUUID).ToListAsync();
-                            uuids.Add(UUID);
                             var timeago = DateTime.Now.AddMinutes(-15);
-                            order_headers = await db.Order_Headers.Where(e => ohids.Contains(e.Id) && uuids.Contains(e.FK_UUID) && (e.CreationTime > timeago || e.RepayDate > timeago)).ToListAsync();
+                            order_headers = await db.Order_Headers
+                                .Where(e =>
+                                    ohids.Contains(e.Id) &&
+                                    e.FK_UUID == UUID &&
+                                    e.FK_WebsiteId == WebsiteId &&
+                                    (e.CreationTime > timeago || e.RepayDate > timeago))
+                                .ToListAsync();
                         }
-                        else order_headers = await db.Order_Headers.Where(e => ohids.Contains(e.Id) && e.Fk_Tid == checktoken.RefreshToken).ToListAsync();
+                        else order_headers = await db.Order_Headers
+                            .Where(e =>
+                                ohids.Contains(e.Id) &&
+                                e.Fk_Tid == checktoken.RefreshToken &&
+                                e.FK_WebsiteId == WebsiteId)
+                            .ToListAsync();
                     }
                     else throw new Exception("查無Token資料");
                 }
@@ -1690,18 +1983,13 @@ namespace EtheriT.Coker.Application.Order
                     throw new Exception("訂單編號錯誤");
 
                 var uuid = await tokenAppService.GetUUID();
-
-                var uuids = await db.MappingOldNewUUID
-                    .Where(e => e.UserUUID == uuid && e.TempUUID != Guid.Empty)
-                    .Select(e => e.TempUUID)
-                    .ToListAsync();
-
-                uuids.Add(uuid);
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
 
                 var order = await db.Order_Headers
                     .FirstOrDefaultAsync(e =>
                         e.Id == dto.ohid &&
-                        uuids.Contains(e.FK_UUID) &&
+                        e.FK_UUID == uuid &&
+                        e.FK_WebsiteId == websiteId &&
                         !e.IsTemp &&
                         !e.IsDeleted);
 
@@ -1735,10 +2023,16 @@ namespace EtheriT.Coker.Application.Order
 
             try
             {
+                var uuid = await tokenAppService.GetUUID();
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
                 var oldscids = await (from sc in db.ShoppingCarts
                                       join od in db.Order_Details on sc.Id equals od.FK_SCId
                                       join oh in db.Order_Headers on od.FK_OId equals oh.Id
-                                      where oh.Id == ohid
+                                      where oh.Id == ohid &&
+                                            oh.FK_UUID == uuid &&
+                                            oh.FK_WebsiteId == websiteId &&
+                                            !oh.IsTemp &&
+                                            !oh.IsDeleted
                                       select sc.Id).ToListAsync();
                 if (oldscids.Any())
                 {
@@ -1760,7 +2054,7 @@ namespace EtheriT.Coker.Application.Order
 
             try
             {
-                var orderHeaders = await GetHeaderDisplay(new List<long> { ohid }, false);
+                var orderHeaders = await GetHeaderDisplay(new List<long> { ohid }, true);
                 if (!orderHeaders.Any())
                     throw new Exception("查無訂單資訊");
 
@@ -1825,12 +2119,14 @@ namespace EtheriT.Coker.Application.Order
 
             try
             {
-                var uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID && e.TempUUID != Guid.Empty).Select(e => e.TempUUID).ToListAsync();
-                uuids.Add(UUID);
-                if (uuids.Any())
+                if (UUID != Guid.Empty)
                 {
                     var order_headers = await db.Order_Headers
-                        .Where(e => uuids.Contains(e.FK_UUID) && !e.IsTemp)
+                        .Where(e =>
+                            e.FK_UUID == UUID &&
+                            e.FK_WebsiteId == WebsiteId &&
+                            !e.IsTemp &&
+                            !e.IsDeleted)
                         .OrderByDescending(e => e.CreationTime).ToListAsync();
 
                     response.Page_Total = (int)Math.Ceiling(order_headers.Count / 8.0);

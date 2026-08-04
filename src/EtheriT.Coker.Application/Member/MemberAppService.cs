@@ -136,12 +136,8 @@ namespace EtheriT.Coker.Application.Member
                     Total = (
                         from order in db.Order_Headers
                         where order.State == OrderStatusEnum.已完成 &&
-                              (
-                                  (from m in db.MappingOldNewUUID
-                                   where m.UserUUID == f.UUID
-                                   select m.TempUUID).Contains(order.FK_UUID)
-                                  || order.FK_UUID == f.UUID
-                              )
+                              order.FK_WebsiteId == websiteId &&
+                              order.FK_UUID == f.UUID
                         select order
                     ).Sum(x => x.Subtotal - x.Discount + x.Freight),
                     Bonus = 0
@@ -432,6 +428,11 @@ namespace EtheriT.Coker.Application.Member
 
                 mapper.Map(dto, result);
 
+                if (result.Status != (int)UserStatusEnum.開通)
+                {
+                    await InvalidateFrontUserTokensAsync(result.UUID, websiteId);
+                }
+
                 if (dto.RoleId != null && dto.RoleId != 0)
                 {
                     var targetRole = await db.Roles
@@ -660,6 +661,31 @@ namespace EtheriT.Coker.Application.Member
 
             }
             return output;
+        }
+
+        private async Task InvalidateFrontUserTokensAsync(Guid frontUserUuid, long websiteId)
+        {
+            if (frontUserUuid == Guid.Empty) return;
+
+            var tokenUuids = await db.MappingOldNewUUID
+                .Where(e => e.UserUUID == frontUserUuid && !e.IsDeleted)
+                .Select(e => e.TempUUID)
+                .ToListAsync();
+            tokenUuids.Add(frontUserUuid);
+
+            var now = DateTime.Now;
+            var activeTokens = await db.Tokens
+                .Where(e =>
+                    e.websiteId == websiteId &&
+                    tokenUuids.Contains(e.UUID) &&
+                    e.EndTime != null &&
+                    e.EndTime > now)
+                .ToListAsync();
+
+            foreach (var token in activeTokens)
+            {
+                token.EndTime = now;
+            }
         }
         public async Task<JsonResult> GetDevAllRole(DataSourceLoadOptions loadOptions)
         {

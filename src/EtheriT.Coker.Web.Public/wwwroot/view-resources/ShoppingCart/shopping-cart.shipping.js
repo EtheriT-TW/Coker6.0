@@ -17,6 +17,83 @@
 
         S.buy_step_swiper.update();
     }
+    function UpdateRecipientAddressRequirement() {
+        var $selected = $("[name='RadioShipping']:checked");
+        var isCvs = String($selected.attr("data-is-cvs") || "").toLowerCase() === "true";
+        var $addressBlock = $("#Recipient_TWzipcode");
+        var $addressFields = $addressBlock.find("select, #RecipientInputAddress");
+
+        $addressBlock.toggleClass("d-none", isCvs);
+        $addressFields.prop("required", !isCvs);
+        UpdateCvsStoreSelectionDisplay();
+
+        if (S.buy_step_swiper) {
+            S.buy_step_swiper.update();
+        }
+    }
+    function IsCvsShippingSelected() {
+        var $selected = $("[name='RadioShipping']:checked");
+        return $selected.length > 0 &&
+            String($selected.attr("data-is-cvs") || "").toLowerCase() === "true";
+    }
+    function HasSelectedCvsStore() {
+        if (!IsCvsShippingSelected()) return true;
+
+        var $selected = $("[name='RadioShipping']:checked");
+        return $.trim($selected.attr("data-cvsstoreid") || "") !== "" &&
+            $.trim($selected.attr("data-cvsstorename") || "") !== "" &&
+            $.trim($selected.attr("data-cvsaddress") || "") !== "";
+    }
+    function UpdateCvsStoreSelectionDisplay() {
+        $("[name='RadioShipping']").filter(function () {
+            return String($(this).attr("data-is-cvs") || "").toLowerCase() === "true";
+        }).each(function () {
+            var $radio = $(this);
+            var $picker = $radio.closest(".shipping-option-row").find(".cvs-store-picker").first();
+            var $button = $picker.find(".btn_getmap").first();
+            var $status = $picker.find(".cvs-store-status").first();
+            var isSelected = $radio.prop("checked");
+            var storeName = $.trim($radio.attr("data-cvsstorename") || "");
+            var storeAddress = $.trim($radio.attr("data-cvsaddress") || "");
+            var hasStore = $.trim($radio.attr("data-cvsstoreid") || "") !== "" &&
+                storeName !== "" && storeAddress !== "";
+
+            $picker.toggleClass("is-selected", isSelected);
+            $button.removeClass("is-missing is-complete").removeAttr("aria-invalid");
+            $status.removeClass("is-missing is-complete");
+
+            if (!isSelected) {
+                $button.val("選擇取貨門市").attr("title", "選擇取貨門市");
+                $status.addClass("d-none").empty();
+                return;
+            }
+
+            $status.removeClass("d-none");
+            if (!hasStore) {
+                $button.val("請選擇取貨門市")
+                    .addClass("is-missing")
+                    .attr("aria-invalid", "true");
+                $status.addClass("is-missing")
+                    .text("尚未選擇門市，完成後才能選擇付款方式");
+                return;
+            }
+
+            var storeButtonText = /門市$/.test(storeName) ? storeName : storeName + "門市";
+            $button.val(storeButtonText)
+                .attr("title", "變更取貨門市：" + storeName)
+                .addClass("is-complete");
+            $status.addClass("d-none is-complete").empty();
+        });
+
+        if (cart.Recipients && typeof cart.Recipients.RefreshDisplay === "function") {
+            cart.Recipients.RefreshDisplay();
+        }
+    }
+    function GetCvsStoreSelectionTarget() {
+        var $selected = $("[name='RadioShipping']:checked");
+        var $button = $selected.closest(".shipping-option-row").find(".btn_getmap").first();
+        return $button.length ? $button[0] : $selected[0];
+    }
     function RadioShipping() {
         var $this = $("[name='RadioShipping']:checked");
 
@@ -39,6 +116,7 @@
 
         S.freight = S.ori_freight;
 
+        UpdateRecipientAddressRequirement();
         cart.Pricing.TotalCount();
         cart.Payment.Core.onAmountChanged();
     }
@@ -355,6 +433,11 @@
     Object.assign(cart.Shipping, {
         Step2Monitor: Step2Monitor,
         RadioShipping: RadioShipping,
+        UpdateRecipientAddressRequirement: UpdateRecipientAddressRequirement,
+        UpdateCvsStoreSelectionDisplay: UpdateCvsStoreSelectionDisplay,
+        IsCvsShippingSelected: IsCvsShippingSelected,
+        HasSelectedCvsStore: HasSelectedCvsStore,
+        GetCvsStoreSelectionTarget: GetCvsStoreSelectionTarget,
         ConfigurePaymentOptions: ConfigurePaymentOptions,
         getSelectedShippingMeta: getSelectedShippingMeta,
         calculateDiscountTargetFreight: calculateDiscountTargetFreight,

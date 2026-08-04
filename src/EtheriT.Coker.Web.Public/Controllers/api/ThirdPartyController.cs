@@ -210,6 +210,15 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
 
                 ECPayLogisticsMapRequestDto RequestBody = await ecPayLogisticsAppService.ECPayLogisticsGetMapRequestBody(SCIds, LogisticsSubType, IsCollection);
 
+                // 綠界門市地圖完成後會由瀏覽器 POST 到 ServerReplyURL。
+                // 本機開發時若仍使用 Website.DefaultUrl，使用者會被帶到正式站，
+                // 因此 loopback 請求保留目前的 scheme、host 與 port。
+                if (IsLoopbackHost(Request.Host.Host))
+                {
+                    RequestBody.ServerReplyURL =
+                        $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/ThirdParty/ECPayLogisticsGetMapResponse";
+                }
+
                 return Content(GenerateAutoPostForm(actionUrl, RequestBody), "text/html");
             }
             catch (Exception ex)
@@ -227,6 +236,13 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             if (string.IsNullOrWhiteSpace(redirectUrl)) return Content("1|OK");
 
             return LocalRedirect(redirectUrl);
+        }
+
+        private static bool IsLoopbackHost(string host)
+        {
+            if (string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase)) return true;
+
+            return IPAddress.TryParse(host, out var address) && IPAddress.IsLoopback(address);
         }
         [HttpPost]
         public async Task<ResponseMessageDto> HandleThirdPartyLogistics(HandleThirdPartyLogisticsDto dto)

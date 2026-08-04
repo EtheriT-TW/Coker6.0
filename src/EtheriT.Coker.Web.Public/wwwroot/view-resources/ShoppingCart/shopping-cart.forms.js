@@ -14,7 +14,7 @@
 
         /* 寄件者資訊 */
         S.$orderer_name = $("#OrdererInputName");
-        S.$orderer_sex = $("input[name=OrdererRadioGender]");
+        S.$orderer_sex = $("input[name=ordererSex]");
         S.$orderer_email = $("#OrdererInputMail");
         S.$orderer_cellphone = $("#OrdererInputCellPhone");
         S.$orderer_telphone_area = $("#OrdererInputTelPhoneArea");
@@ -27,7 +27,7 @@
         /* 收件者資訊 */
         S.$recipient_radio = $("input[name=RecipientRadio]");
         S.$recipient_name = $("#RecipientInputName");
-        S.$recipient_sex = $("input[name=RecipientRadioGender]");
+        S.$recipient_sex = $("input[name=recipientSex]");
         S.$recipient_email = $("#RecipientInputMail");
         S.$recipient_cellphone = $("#RecipientInputCellPhone");
         S.$recipient_telphone_area = $("#RecipientInputTelPhoneArea");
@@ -111,23 +111,23 @@
         S.recipient_data = {};
 
         if (value == "edit") {
-            $("#RecipientForm > .default_data").addClass("d-none");
-            $("#RecipientForm > form").removeClass("d-none");
+            $("#RecipientActivePanel > .default_data").addClass("d-none");
+            $("#Form_Recipient").removeClass("d-none");
             S.RecipientOpen = true;
             S.RecipientFilled = false;
             cart.Forms.RecipientFormClear();
         } else if (value == "order") {
-            $("#RecipientForm > .default_data").addClass("d-none");
-            $("#RecipientForm > form").addClass("d-none");
+            $("#Form_Recipient").addClass("d-none");
             S.RecipientOpen = false;
             S.RecipientFilled = true;
             cart.Forms.RecipientSameOrderer();
         } else {
-            $("#RecipientForm > .default_data").addClass("d-none");
-            $("#RecipientForm > form").addClass("d-none");
+            $("#RecipientActivePanel > .default_data").addClass("d-none");
+            $("#Form_Recipient").addClass("d-none");
             S.RecipientOpen = false;
             S.RecipientFilled = true;
         }
+        cart.Shipping.UpdateRecipientAddressRequirement();
         cart.Payment.Core.onAmountChanged();
         cart.Payment.Core.reloadActiveEmbeddedProvider();
         S.buy_step_swiper.update();
@@ -153,6 +153,15 @@
                 S.recipient_data[key.replace("orderer", "recipient")] = S.order_data[key];
             }
         }
+
+        if ($("[name='RecipientRadio']:checked").val() === "order") {
+            cart.Utils.ShoppingCartDataInsert(S.recipient_data, $("#RecipientActivePanel > .default_data"));
+            $("#RecipientActivePanel > .default_data").removeClass("d-none");
+            if (cart.Recipients && typeof cart.Recipients.RefreshDisplay === "function") {
+                cart.Recipients.RefreshDisplay();
+            }
+        }
+
     }
     function InvoiceRadio() {
         S.invoice_data = {}
@@ -298,6 +307,7 @@
     }
     function RecipientDataGet() {
         var checkform = false;
+        delete S.order_header_data.recipientId;
 
         switch ($(`[name="RecipientRadio"]:checked`).val()) {
             case "order":
@@ -312,11 +322,20 @@
                 var district = S.recipient_data.district ? `${S.recipient_data.district} ` : "";
                 S.recipient_data.recipientZipCode = S.recipient_data.zipcode ? `${S.recipient_data.zipcode}` : "";
                 S.recipient_data.recipientAddress = `${country}${district}${S.recipient_data.recipientAddress}`;
+                var recipientTelephone = S.recipient_data.recipientTelePhone || "";
                 S.recipient_data.recipientTelePhone = "";
-                if (S.recipient_data.recipientTelePhone != "" && S.recipient_data.zone != "") {
-                    S.recipient_data.recipientTelePhone = `${S.recipient_data.zone}-${S.recipient_data.recipientTelePhone}` + (S.recipient_data.ext == "" ? "" : `-${S.recipient_data.ext}`);
+                if (recipientTelephone != "" && S.recipient_data.zone != "") {
+                    S.recipient_data.recipientTelePhone = `${S.recipient_data.zone}-${recipientTelephone}` + (S.recipient_data.ext == "" ? "" : `-${S.recipient_data.ext}`);
                 }
                 checkform = true;
+                break;
+            case "choose":
+                if (!S.recipient_data ||
+                    !Number(S.recipient_data.recipientId || 0) ||
+                    !$.trim(S.recipient_data.recipient || "") ||
+                    !$.trim(S.recipient_data.recipientCellPhone || "")) {
+                    return false;
+                }
                 break;
         }
 
@@ -401,6 +420,11 @@
         if (!cart.Forms.InvoiceDataGet()) {
             checksuccess = false;
             if (EnableWarning) Coker.sweet.warning("請注意", "請確實填寫發票資料！", null);
+        }
+
+        if (!cart.Shipping.HasSelectedCvsStore()) {
+            checksuccess = false;
+            if (EnableWarning) Coker.sweet.warning("請注意", "請先選擇超商取貨門市！", null);
         }
 
         return checksuccess;

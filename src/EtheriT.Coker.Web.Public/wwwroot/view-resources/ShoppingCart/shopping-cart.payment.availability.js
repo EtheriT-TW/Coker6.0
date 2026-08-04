@@ -138,9 +138,13 @@
             S.ECPayAvailable;
 
         ensureNoPaymentWarning().toggleClass("d-none", hasAvailablePayment);
-        $(".ecpayWarning").toggleClass("d-none", hasAvailablePayment);
 
         cart.Payment.Core.RadioPayment();
+
+        if (cart.CheckoutValidation &&
+            typeof cart.CheckoutValidation.RefreshDisplay === "function") {
+            cart.CheckoutValidation.RefreshDisplay();
+        }
 
         if (S.buy_step_swiper) S.buy_step_swiper.update();
     }

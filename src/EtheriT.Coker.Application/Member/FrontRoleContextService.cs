@@ -120,6 +120,8 @@ namespace EtheriT.Coker.Application.Member
                     on user.Id equals websiteMap.FK_UserId
                 where user.UUID == uuid
                     && websiteMap.FK_WebsiteId == websiteId
+                    && user.Status == (int)UserStatusEnum.開通
+                    && !user.IsDeleted
                     && !websiteMap.IsDeleted
                 select user
             ).FirstOrDefaultAsync();

@@ -10,16 +10,37 @@
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">選擇標籤</h5>
+                <h5 class="modal-title" id="exampleModalLabel">選擇商品</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="bg-white p-3">
+                    <div class="prod-modal-filter-panel mb-3">
+                        <div class="prod-modal-tag-filter">
+                            <label class="form-label fw-bold mb-1" for="ProdModalTagFilter">商品標籤</label>
+                            <div id="ProdModalTagFilter"></div>
+                        </div>
+
+                        <div class="form-check form-switch prod-modal-availability-filter">
+                            <input id="ProdModalExcludeUnavailable" class="form-check-input" type="checkbox" role="switch" checked>
+                            <label class="form-check-label" for="ProdModalExcludeUnavailable">隱藏售完、下架及庫存為 0 的商品</label>
+                        </div>
+
+                        <button id="ProdModalFilterClear" type="button" class="btn btn-outline-secondary">
+                            <span class="material-symbols-outlined" aria-hidden="true">filter_alt_off</span>
+                            清除篩選
+                        </button>
+                    </div>
                     @(
                         Html.DevExtreme().DataGrid<ProductSelectGetAllListDto>()
                             .DataSource(d => d.RemoteController().Key("Id")
                             .LoadUrl("/api/Product/GetAllList").LoadMethod("Get")
-                            .LoadParams(new { pids = new JS("ProdListModalApi.loadParams.pids") })
+                            .LoadParams(new
+                            {
+                                pids = new JS("ProdListModalApi.loadParams.pids"),
+                                tagIds = new JS("ProdListModalApi.loadParams.tagIds"),
+                                excludeUnavailable = new JS("ProdListModalApi.loadParams.excludeUnavailable")
+                            })
                         )
                         .ID("devProdListModalGrid")
                         .Selection(s =>
@@ -54,7 +75,36 @@
                                                 src="<%- data.MinsizeImage || '/images/noImg.jpg' %>"
                                                 alt="<%- data.Title || '' %>" />
                                     </text>);
-                            c.AddFor(e => e.TagNames).AllowSearch(false).AllowFiltering(false).AllowSorting(false).Caption("標籤名稱");
+                            c.AddFor(e => e.ProductStatusName).Caption("商品狀態").Width(125).AllowSearch(false).AllowFiltering(false)
+                                .CellTemplate(@<text>
+                                    <div class="prod-modal-status-cell">
+                                        <span class="prod-modal-status-badge"><%- data.ProductStatusName || '-' %></span>
+                                        <small><%- data.SaleStateName || '' %></small>
+                                    </div>
+                                </text>);
+                            c.AddFor(e => e.StockDisplay).Caption("庫存").Width(95).Alignment(HorizontalAlignment.Center)
+                                .AllowSearch(false).AllowFiltering(false).AllowSorting(false);
+                            c.AddFor(e => e.TagNames).AllowSearch(false).AllowFiltering(false).AllowSorting(false).Caption("標籤名稱")
+                                .CellTemplate(@<text>
+                                    <%
+                                        var tagText = data.TagNames || "";
+                                        var tags = tagText ? tagText.split("、") : [];
+                                        if (tags.length === 0) {
+                                    %>
+                                        <span class="text-muted">-</span>
+                                    <% } else { %>
+                                        <div class="prod-modal-tag-list">
+                                            <% tags.forEach(function(tag) { %>
+                                                <button type="button"
+                                                        class="prod-modal-tag-badge"
+                                                        data-tag-name="<%- tag %>"
+                                                        title="依此標籤過濾">
+                                                    <%- tag %>
+                                                </button>
+                                            <% }); %>
+                                        </div>
+                                    <% } %>
+                                </text>);
                         })
                         .Toolbar(toolbar =>
                         {

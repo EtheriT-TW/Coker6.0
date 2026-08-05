@@ -7,6 +7,7 @@
         public const string BonusPermission = "BonusPermission";
         public const string ContactUsExported = "ContactUsExported";
         public const string DirectoryFacet = "DirectoryFacet";
+        public const string ProdAddition = "ProdAddition";
         public const string NavigationSite = "NavigationSite";
     }
 }

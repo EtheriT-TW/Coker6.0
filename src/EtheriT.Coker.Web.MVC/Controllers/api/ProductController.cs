@@ -51,9 +51,13 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await productAppService.PriceAddUp(dto);
         }
         [HttpGet]
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, [FromQuery] string? pids = null, string? tagIds = null)
+        public async Task<JsonResult> GetAllList(
+            DataSourceLoadOptions loadOptions,
+            [FromQuery] string? pids = null,
+            string? tagIds = null,
+            bool excludeUnavailable = false)
         {
-            return await productAppService.GetAllList(loadOptions, pids, tagIds);
+            return await productAppService.GetAllList(loadOptions, pids, tagIds, excludeUnavailable);
         }
         [HttpGet]
         public async Task<JsonResult> SaleQuantityStaging(DataSourceLoadOptions loadOptions)

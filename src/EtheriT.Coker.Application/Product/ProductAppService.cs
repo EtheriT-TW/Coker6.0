@@ -886,7 +886,11 @@ namespace EtheriT.Coker.Application.Product
             return response;
         }
         /* Get Data */
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? pids, string? tagIds)
+        public async Task<JsonResult> GetAllList(
+            DataSourceLoadOptions loadOptions,
+            string? pids,
+            string? tagIds,
+            bool excludeUnavailable = false)
         {
             try
             {
@@ -894,14 +898,27 @@ namespace EtheriT.Coker.Application.Product
                 var selectedIds = stringHandler.ParseCsvIds(pids);
                 var selectedTagIds = stringHandler.ParseCsvIds(tagIds);
                 // 只取必要欄位，避免撈太肥
-                var baseQuery = db.Prods
-                    .Where(p => p.FK_WebsiteId == webid && !p.IsDeleted)
+                var productQuery = db.Prods
+                    .Where(p => p.FK_WebsiteId == webid && !p.IsDeleted);
+
+                if (excludeUnavailable)
+                {
+                    productQuery = productQuery.Where(p =>
+                        selectedIds.Contains(p.Id) ||
+                        (p.Status != ProdStatusEnum.售完 &&
+                         !p.RemovedFromShelves &&
+                         (p.NoStockManagement || p.Prod_Stocks.Any(s => !s.IsDeleted && (s.Stock ?? 0) > 0))));
+                }
+
+                var baseQuery = productQuery
                     .Select(p => new ProductListBase
                     {
                         Id = p.Id,
                         Title = p.Title,
                         Visible = p.Visible,
                         RemovedFromShelves = p.RemovedFromShelves,
+                        NoStockManagement = p.NoStockManagement,
+                        ProductStatus = p.Status,
                         Ser_No = p.Ser_No,
                         ItemNo = p.ItemNo,
                         StartTime = p.StartTime,
@@ -978,6 +995,18 @@ namespace EtheriT.Coker.Application.Product
 
                 var priceMap = priceAgg.ToDictionary(x => x.ProdId);
 
+                var stockMap = await db.Prod_Stocks
+                    .AsNoTracking()
+                    .Where(s => !s.IsDeleted && pageIds.Contains(s.FK_Pid))
+                    .GroupBy(s => s.FK_Pid)
+                    .Select(g => new
+                    {
+                        ProdId = g.Key,
+                        StockQuantity = g.Sum(s => s.Stock ?? 0),
+                        AlertQuantity = g.Sum(s => s.Alert_Qty ?? 0)
+                    })
+                    .ToDictionaryAsync(x => x.ProdId);
+
                 string L_MarketPrice = L.get("MarketPrice");
 
                 var finalRows = pageRows.Select(p =>
@@ -1001,6 +1030,19 @@ namespace EtheriT.Coker.Application.Product
 
                     imageMap.TryGetValue(p.Id, out var imgPath);
                     tagMap.TryGetValue(p.Id, out var tagsText);
+                    stockMap.TryGetValue(p.Id, out var stockInfo);
+                    var stockQuantity = stockInfo?.StockQuantity ?? 0;
+                    var alertQuantity = stockInfo?.AlertQuantity ?? 0;
+
+                    var saleStateName = p.RemovedFromShelves
+                        ? "下架"
+                        : p.ProductStatus == ProdStatusEnum.售完
+                            ? "售完"
+                            : !p.Visible
+                                ? "隱藏"
+                                : !p.NoStockManagement && stockQuantity <= 0
+                                    ? "庫存為 0"
+                                    : "可銷售";
 
                     return new ProductSelectGetAllListDto
                     {
@@ -1008,6 +1050,14 @@ namespace EtheriT.Coker.Application.Product
                         Title = p.Title,
                         Visible = p.Visible,
                         Available = !p.RemovedFromShelves,
+                        RemovedFromShelves = p.RemovedFromShelves,
+                        NoStockManagement = p.NoStockManagement,
+                        ProductStatus = (int)p.ProductStatus,
+                        ProductStatusName = p.ProductStatus.ToString(),
+                        SaleStateName = saleStateName,
+                        StockQuantity = p.NoStockManagement ? null : stockQuantity,
+                        AlertQuantity = p.NoStockManagement ? null : alertQuantity,
+                        StockDisplay = p.NoStockManagement ? "不限庫存" : stockQuantity.ToString("N0"),
                         Ser_No = p.Ser_No,
                         ItemNo = p.ItemNo ?? "",
                         Price = priceText,
@@ -1229,13 +1279,14 @@ namespace EtheriT.Coker.Application.Product
                                       p.FK_WebsiteId == websiteId
                                 orderby r.Ser_No, pp.Price descending
                                 select new ProductPriceDto
-                                {
-                                    Id = pp.Id,
-                                    FK_PSId = pp.FK_PSId,
-                                    FK_RId = pp.FK_RId,
-                                    Price = pp.Price,
-                                    Bonus = pp.Bonus ?? 0,
-                                }).ToListAsync();
+                                 {
+                                     Id = pp.Id,
+                                     FK_PSId = pp.FK_PSId,
+                                     FK_RId = pp.FK_RId,
+                                     Price = pp.Price,
+                                     Bonus = pp.Bonus ?? 0,
+                                     RoleName = r.Name,
+                                 }).ToListAsync();
             }
             catch (Exception e)
             {

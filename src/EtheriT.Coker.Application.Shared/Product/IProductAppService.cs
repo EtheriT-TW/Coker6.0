@@ -20,7 +20,7 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ResponseMessageDto> StockAddUp(long Pid, List<ProductStockDto> dto);
         public Task<ResponseMessageDto> StockBatchSet(List<StockBatchSetDto> dto);
         public Task<ResponseMessageDto> PriceAddUp(List<ProductPriceDto> dto);
-        public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? pids, string? tagIds);
+        public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? pids, string? tagIds, bool excludeUnavailable = false);
         public Task<JsonResult> SaleQuantityStaging(DataSourceLoadOptions loadOptions);
         public Task<ProdGetDataDto> GetProdDataOne(long Id);
         public Task<List<ProductStockDto>> GetStockDataAll(long PId);

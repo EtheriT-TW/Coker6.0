@@ -114,6 +114,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<MarketingRule> MarketingRules { get; set; }
         public DbSet<MarketingCondition> MarketingConditions { get; set; }
         public DbSet<MarketingReward> MarketingRewards { get; set; }
+        public DbSet<MarketingRewardItem> MarketingRewardItems { get; set; }
         public DbSet<MarketingScopeItem> MarketingScopeItems { get; set; }
         public DbSet<BackgroundTaskRecord> BackgroundTasks { get; set; }
         public DbSet<UserNotification> Notifications { get; set; }
@@ -788,10 +789,53 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(x => x.MaxDiscountAmount)
                     .HasColumnType("decimal(18,2)");
 
+                o.Property(x => x.SelectionQuantityPerQualification)
+                    .HasDefaultValue(1);
+
                 o.HasIndex(x => x.FK_MarketingRuleId)
                     .IsUnique()
                     .HasFilter("[IsDeleted] = 0");
 
+            });
+
+            modelBuilder.Entity<MarketingRewardItem>(o =>
+            {
+                o.HasOne(x => x.MarketingReward)
+                    .WithMany(x => x.Items)
+                    .HasForeignKey(x => x.FK_MarketingRewardId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                o.HasOne(x => x.ProdStock)
+                    .WithMany()
+                    .HasForeignKey(x => x.FK_ProdStockId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                o.Property(x => x.OfferPrice)
+                    .HasColumnType("decimal(18,2)");
+
+                o.Property(x => x.MaxQuantityPerOrder)
+                    .HasDefaultValue(1);
+
+                o.Property(x => x.Enabled)
+                    .HasDefaultValue(true);
+
+                o.Property(x => x.SortOrder)
+                    .HasDefaultValue(0);
+
+                o.HasIndex(x => new
+                {
+                    x.FK_MarketingRewardId,
+                    x.FK_ProdStockId
+                })
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0");
+
+                o.HasIndex(x => new
+                {
+                    x.FK_MarketingRewardId,
+                    x.Enabled,
+                    x.SortOrder
+                });
             });
 
             modelBuilder.Entity<MarketingScopeItem>(o =>
@@ -800,6 +844,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                     .WithMany(x => x.ScopeItems)
                     .HasForeignKey(x => x.FK_MarketingRuleId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                o.Property(x => x.RequiredQuantityPerQualification)
+                    .HasDefaultValue(1);
 
                 o.HasIndex(x => new
                 {

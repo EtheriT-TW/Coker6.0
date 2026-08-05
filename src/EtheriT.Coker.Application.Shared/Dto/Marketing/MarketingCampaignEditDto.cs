@@ -28,6 +28,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.Marketing
 
         public MarketingRuleTypeEnum RuleType { get; set; }
 
+        public MarketingConditionTypeEnum ConditionType { get; set; } = MarketingConditionTypeEnum.OrderAmount;
+
+        public MarketingScopeTypeEnum ScopeType { get; set; } = MarketingScopeTypeEnum.AllOrder;
+
         public decimal? MinAmount { get; set; }
 
         public decimal? DiscountAmount { get; set; }
@@ -35,5 +39,13 @@ namespace EtheriT.Coker.Application.Shared.Dto.Marketing
         public decimal? DiscountPercent { get; set; }
 
         public decimal? MaxDiscountAmount { get; set; }
+
+        public int SelectionQuantityPerQualification { get; set; } = 1;
+
+        public int? MaxSelectionQuantityPerOrder { get; set; }
+
+        public List<MarketingScopeItemEditDto> ScopeItems { get; set; } = new();
+
+        public List<MarketingRewardItemEditDto> RewardItems { get; set; } = new();
     }
 }

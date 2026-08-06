@@ -86,6 +86,12 @@ namespace EtheriT.Coker.Application.Marketing
                         .Select(r => r.Condition.MinAmount)
                         .FirstOrDefault(),
 
+                    MinQuantity = x.Rules
+                        .Where(r => r.Enabled)
+                        .OrderBy(r => r.SortOrder)
+                        .Select(r => r.Condition.MinQuantity)
+                        .FirstOrDefault(),
+
                     DiscountAmount = x.Rules
                         .Where(r => r.Enabled)
                         .OrderBy(r => r.SortOrder)
@@ -164,6 +170,16 @@ namespace EtheriT.Coker.Application.Marketing
             dto.ConditionType = rule?.Condition?.ConditionType ?? MarketingConditionTypeEnum.OrderAmount;
             dto.ScopeType = rule?.ScopeType ?? MarketingScopeTypeEnum.AllOrder;
             dto.MinAmount = rule?.Condition?.MinAmount;
+            dto.MinQuantity = rule?.Condition?.MinQuantity;
+            if (!dto.MinQuantity.HasValue &&
+                rule?.Condition?.ConditionType == MarketingConditionTypeEnum.BuySpecificProduct)
+            {
+                dto.MinQuantity = rule.ScopeItems
+                    .Where(x => !x.IsDeleted)
+                    .OrderBy(x => x.Id)
+                    .Select(x => (int?)x.RequiredQuantityPerQualification)
+                    .FirstOrDefault() ?? 1;
+            }
             dto.DiscountAmount = rule?.Reward?.DiscountAmount;
             dto.DiscountPercent = rule?.Reward?.DiscountPercent;
             dto.MaxDiscountAmount = rule?.Reward?.MaxDiscountAmount;
@@ -235,6 +251,18 @@ namespace EtheriT.Coker.Application.Marketing
                     .Select(x => x.FK_ProdStockId)
                     .Distinct()
                     .ToList() ?? new List<long>();
+                var rewardSpecIds = rule.Reward?.Items
+                    .Where(x => x.Enabled)
+                    .SelectMany(x => new[] { x.ProdStock.FK_S1id, x.ProdStock.FK_S2id })
+                    .Where(x => x.HasValue && x.Value > 0)
+                    .Select(x => x!.Value)
+                    .Distinct()
+                    .ToList() ?? new List<long>();
+                var rewardSpecNames = rewardSpecIds.Any()
+                    ? await db.Prod_Specs.AsNoTracking()
+                        .Where(x => rewardSpecIds.Contains(x.Id))
+                        .ToDictionaryAsync(x => x.Id, x => x.Title)
+                    : new Dictionary<long, string>();
                 var rewardCashPrices = await db.Prod_Prices
                     .AsNoTracking()
                     .Where(x => rewardStockIds.Contains(x.FK_PSId) && !x.IsDeleted &&
@@ -266,7 +294,7 @@ namespace EtheriT.Coker.Application.Marketing
                             ProductId = x.ProdStock.FK_Pid,
                             ProductStockId = x.FK_ProdStockId,
                             ProductName = x.ProdStock.Prod?.Title ?? $"商品 #{x.ProdStock.FK_Pid}",
-                            StockName = BuildStockName(x.ProdStock),
+                            StockName = BuildStockName(x.ProdStock, rewardSpecNames),
                             Sku = x.ProdStock.SubItemNo ?? string.Empty,
                             OriginalPrice = originalPrice,
                             ProductStatus = x.ProdStock.Prod == null ? 0 : (int)x.ProdStock.Prod.Status,
@@ -323,6 +351,17 @@ namespace EtheriT.Coker.Application.Marketing
                     if (campaign == null)
                     {
                         throw new Exception("找不到行銷活動資料，或您沒有權限編輯此活動。");
+                    }
+
+                    var existingRule = campaign.Rules
+                        .Where(x => !x.IsDeleted && x.Enabled)
+                        .OrderBy(x => x.SortOrder)
+                        .FirstOrDefault();
+                    if (campaign.Status != MarketingDisplayStatusEnum.草稿 &&
+                        existingRule != null &&
+                        !IsSameRuleMode(existingRule, input))
+                    {
+                        throw new Exception("非草稿活動不可變更優惠類型；如需其他類型，請新增活動。");
                     }
 
                     mapper.Map(input, campaign);
@@ -429,10 +468,12 @@ namespace EtheriT.Coker.Application.Marketing
                     .Include(x => x.Rules)
                         .ThenInclude(x => x.Condition)
                     .Include(x => x.Rules)
+                        .ThenInclude(x => x.ScopeItems)
+                    .Include(x => x.Rules)
                         .ThenInclude(x => x.Reward)
                             .ThenInclude(x => x.Items)
-                    .Include(x => x.Rules)
-                        .ThenInclude(x => x.ScopeItems)
+                                .ThenInclude(x => x.ProdStock)
+                                    .ThenInclude(x => x.Prod)
                     .FirstOrDefaultAsync(x => x.Id == id && x.FK_WebsiteId == websiteId);
 
                 if (campaign == null)
@@ -551,10 +592,14 @@ namespace EtheriT.Coker.Application.Marketing
                     .Include(x => x.Rules)
                         .ThenInclude(x => x.Condition)
                     .Include(x => x.Rules)
+                        .ThenInclude(x => x.ScopeItems)
+                    .Include(x => x.Rules)
                         .ThenInclude(x => x.Reward)
+                            .ThenInclude(x => x.Items)
+                                .ThenInclude(x => x.ProdStock)
+                                    .ThenInclude(x => x.Prod)
                     .Where(x => !x.IsDeleted)
                     .Where(x => x.FK_WebsiteId == websiteId)
-                    .Where(x => x.CampaignType == MarketingCampaignTypeEnum.滿額優惠)
                     .Where(x => x.Status == MarketingDisplayStatusEnum.活動中)
                     .Where(x => x.StartTime <= now)
                     .Where(x => x.NeverEnd || (x.EndTime.HasValue && x.EndTime.Value >= now))
@@ -564,6 +609,52 @@ namespace EtheriT.Coker.Application.Marketing
                     .ToListAsync();
 
                 var output = new CartMarketingCampaignsDto();
+
+                var addOnRules = campaigns
+                    .SelectMany(x => x.Rules)
+                    .Where(x => !x.IsDeleted && x.Enabled &&
+                                x.RuleType == MarketingRuleTypeEnum.AddOnPurchase &&
+                                x.Condition != null && !x.Condition.IsDeleted &&
+                                (x.Condition.ConditionType == MarketingConditionTypeEnum.OrderAmount ||
+                                 x.Condition.ConditionType == MarketingConditionTypeEnum.ScopeAmount ||
+                                 x.Condition.ConditionType == MarketingConditionTypeEnum.ScopeQuantity ||
+                                 x.Condition.ConditionType == MarketingConditionTypeEnum.BuySpecificProduct) &&
+                                x.Reward != null && !x.Reward.IsDeleted)
+                    .ToList();
+                var rewardStockIds = addOnRules
+                    .SelectMany(x => x.Reward.Items)
+                    .Where(x => !x.IsDeleted && x.Enabled)
+                    .Select(x => x.FK_ProdStockId)
+                    .Distinct()
+                    .ToList();
+                var rewardProductIds = addOnRules
+                    .SelectMany(x => x.Reward.Items)
+                    .Where(x => !x.IsDeleted && x.Enabled && x.ProdStock?.Prod != null)
+                    .Select(x => x.ProdStock.FK_Pid)
+                    .Distinct()
+                    .ToList();
+                var imageMap = await fileUploadAppService.GetMinImageMapAsync(rewardProductIds);
+                var rewardPrices = await db.Prod_Prices.AsNoTracking()
+                    .Where(x => rewardStockIds.Contains(x.FK_PSId) && !x.IsDeleted &&
+                                (x.Bonus ?? 0) == 0 && x.Price.HasValue)
+                    .Select(x => new { StockId = x.FK_PSId, RoleId = x.FK_RId, Price = x.Price!.Value })
+                    .ToListAsync();
+                var originalPriceMap = rewardPrices
+                    .GroupBy(x => x.StockId)
+                    .ToDictionary(x => x.Key, x => x.OrderBy(y => y.RoleId is 0 or 1 ? 0 : 1)
+                        .ThenBy(y => y.RoleId).Select(y => y.Price).First());
+                var specIds = addOnRules
+                    .SelectMany(x => x.Reward.Items)
+                    .Where(x => !x.IsDeleted && x.Enabled && x.ProdStock != null)
+                    .SelectMany(x => new[] { x.ProdStock.FK_S1id, x.ProdStock.FK_S2id })
+                    .Where(x => x.HasValue && x.Value > 0)
+                    .Select(x => x!.Value)
+                    .Distinct()
+                    .ToList();
+                var specNames = specIds.Any()
+                    ? await db.Prod_Specs.AsNoTracking().Where(x => specIds.Contains(x.Id))
+                        .ToDictionaryAsync(x => x.Id, x => x.Title)
+                    : new Dictionary<long, string>();
 
                 foreach (var campaign in campaigns)
                 {
@@ -592,9 +683,9 @@ namespace EtheriT.Coker.Application.Marketing
                         .ToList();
 
                     if (!rules.Any())
-                        continue;
+                        rules = new List<CartMarketingRuleDto>();
 
-                    output.OrderDiscounts.Add(new CartMarketingCampaignDto
+                    if (rules.Any()) output.OrderDiscounts.Add(new CartMarketingCampaignDto
                     {
                         Id = campaign.Id,
                         Name = campaign.Name,
@@ -604,6 +695,57 @@ namespace EtheriT.Coker.Application.Marketing
                         Repeatable = campaign.Repeatable,
                         Rules = rules
                     });
+
+                    foreach (var rule in campaign.Rules.Where(x => addOnRules.Contains(x)).OrderBy(x => x.SortOrder))
+                    {
+                        var rewardItems = rule.Reward.Items
+                            .Where(x => !x.IsDeleted && x.Enabled && x.ProdStock != null && !x.ProdStock.IsDeleted &&
+                                        x.ProdStock.Prod != null && !x.ProdStock.Prod.IsDeleted &&
+                                        x.ProdStock.Prod.Visible && !x.ProdStock.Prod.RemovedFromShelves &&
+                                        (x.ProdStock.Prod.NoStockManagement || (x.ProdStock.Stock ?? 0) > 0))
+                            .OrderBy(x => x.SortOrder).ThenBy(x => x.Id)
+                            .Select(x =>
+                            {
+                                imageMap.TryGetValue(x.ProdStock.FK_Pid, out var imageUrl);
+                                return new ProductAddOnRewardItemDto
+                                {
+                                    RewardItemId = x.Id,
+                                    ProductId = x.ProdStock.FK_Pid,
+                                    ProductStockId = x.FK_ProdStockId,
+                                    ProductName = x.ProdStock.Prod.Title,
+                                    StockName = BuildStockName(x.ProdStock, specNames),
+                                    ImageUrl = imageUrl ?? "/images/noImg.jpg",
+                                    OriginalPrice = originalPriceMap.TryGetValue(x.FK_ProdStockId, out var price) ? price : x.ProdStock.Price,
+                                    OfferPrice = x.OfferPrice,
+                                    MaxQuantityPerOrder = Math.Max(x.MaxQuantityPerOrder, 1),
+                                    StockQuantity = x.ProdStock.Prod.NoStockManagement ? null : x.ProdStock.Stock,
+                                    NoStockManagement = x.ProdStock.Prod.NoStockManagement
+                                };
+                            }).ToList();
+
+                        var isQuantityCondition = rule.Condition.ConditionType == MarketingConditionTypeEnum.ScopeQuantity ||
+                                                  rule.Condition.ConditionType == MarketingConditionTypeEnum.BuySpecificProduct;
+                        if (!rewardItems.Any() ||
+                            (isQuantityCondition && (!rule.Condition.MinQuantity.HasValue || rule.Condition.MinQuantity <= 0)) ||
+                            (!isQuantityCondition && (!rule.Condition.MinAmount.HasValue || rule.Condition.MinAmount <= 0)))
+                            continue;
+
+                        output.AddOnCampaigns.Add(new CartAddOnCampaignDto
+                        {
+                            CampaignId = campaign.Id,
+                            RuleId = rule.Id,
+                            Name = campaign.Name,
+                            Description = campaign.Description,
+                            ConditionType = rule.Condition.ConditionType,
+                            MinAmount = rule.Condition.MinAmount ?? 0,
+                            RequiredQuantity = Math.Max(rule.Condition.MinQuantity ?? 1, 1),
+                            Repeatable = campaign.Repeatable,
+                            SelectionQuantityPerQualification = Math.Max(rule.Reward.SelectionQuantityPerQualification, 1),
+                            ScopeProductIds = rule.ScopeItems.Where(x => !x.IsDeleted && x.TargetType == MarketingScopeTargetTypeEnum.Product)
+                                .Select(x => x.TargetId).Distinct().ToList(),
+                            RewardItems = rewardItems
+                        });
+                    }
                 }
 
                 return new ResponseMessageDto
@@ -655,6 +797,182 @@ namespace EtheriT.Coker.Application.Marketing
             rule.Reward.MaxSelectionQuantityPerOrder = null;
         }
 
+        public async Task<ResponseMessageDto> GetProductAddOnCampaigns(long productId)
+        {
+            try
+            {
+                var websiteId = await loginUserData.GetCommonWebsiteId();
+                var now = DateTime.Now;
+
+                var campaigns = await db.MarketingCampaigns
+                    .AsNoTracking()
+                    .Include(x => x.Rules)
+                        .ThenInclude(x => x.Condition)
+                    .Include(x => x.Rules)
+                        .ThenInclude(x => x.ScopeItems)
+                    .Include(x => x.Rules)
+                        .ThenInclude(x => x.Reward)
+                            .ThenInclude(x => x.Items)
+                                .ThenInclude(x => x.ProdStock)
+                                    .ThenInclude(x => x.Prod)
+                    .Where(x => !x.IsDeleted && x.FK_WebsiteId == websiteId)
+                    .Where(x => x.Status == MarketingDisplayStatusEnum.活動中)
+                    .Where(x => x.StartTime <= now)
+                    .Where(x => x.NeverEnd || (x.EndTime.HasValue && x.EndTime.Value >= now))
+                    .Where(x => x.Rules.Any(r =>
+                        !r.IsDeleted && r.Enabled &&
+                        r.RuleType == MarketingRuleTypeEnum.AddOnPurchase &&
+                        r.ScopeItems.Any(s => !s.IsDeleted &&
+                            s.TargetType == MarketingScopeTargetTypeEnum.Product &&
+                            s.TargetId == productId)))
+                    .OrderBy(x => x.Priority)
+                    .ThenBy(x => x.Id)
+                    .ToListAsync();
+
+                var rewardStockIds = campaigns
+                    .SelectMany(x => x.Rules)
+                    .Where(x => !x.IsDeleted && x.Enabled && x.Reward != null && !x.Reward.IsDeleted)
+                    .SelectMany(x => x.Reward.Items)
+                    .Where(x => !x.IsDeleted && x.Enabled)
+                    .Select(x => x.FK_ProdStockId)
+                    .Distinct()
+                    .ToList();
+                var rewardProductIds = campaigns
+                    .SelectMany(x => x.Rules)
+                    .Where(x => !x.IsDeleted && x.Enabled && x.Reward != null && !x.Reward.IsDeleted)
+                    .SelectMany(x => x.Reward.Items)
+                    .Where(x => !x.IsDeleted && x.Enabled && x.ProdStock?.Prod != null)
+                    .Select(x => x.ProdStock.FK_Pid)
+                    .Distinct()
+                    .ToList();
+                var imageMap = await fileUploadAppService.GetMinImageMapAsync(rewardProductIds);
+                var cashPrices = await db.Prod_Prices
+                    .AsNoTracking()
+                    .Where(x => rewardStockIds.Contains(x.FK_PSId) && !x.IsDeleted &&
+                                (x.Bonus ?? 0) == 0 && x.Price.HasValue)
+                    .Select(x => new { StockId = x.FK_PSId, RoleId = x.FK_RId, Price = x.Price!.Value })
+                    .ToListAsync();
+                var originalPriceMap = cashPrices
+                    .GroupBy(x => x.StockId)
+                    .ToDictionary(
+                        x => x.Key,
+                        x => x.OrderBy(y => y.RoleId is 0 or 1 ? 0 : 1)
+                              .ThenBy(y => y.RoleId)
+                              .Select(y => y.Price)
+                              .First());
+                var rewardSpecIds = campaigns
+                    .SelectMany(x => x.Rules)
+                    .Where(x => !x.IsDeleted && x.Enabled && x.Reward != null && !x.Reward.IsDeleted)
+                    .SelectMany(x => x.Reward.Items)
+                    .Where(x => !x.IsDeleted && x.Enabled)
+                    .SelectMany(x => new[] { x.ProdStock.FK_S1id, x.ProdStock.FK_S2id })
+                    .Where(x => x.HasValue && x.Value > 0)
+                    .Select(x => x!.Value)
+                    .Distinct()
+                    .ToList();
+                var rewardSpecNames = rewardSpecIds.Any()
+                    ? await db.Prod_Specs.AsNoTracking()
+                        .Where(x => rewardSpecIds.Contains(x.Id))
+                        .ToDictionaryAsync(x => x.Id, x => x.Title)
+                    : new Dictionary<long, string>();
+
+                var output = new List<ProductAddOnCampaignDto>();
+                foreach (var campaign in campaigns)
+                {
+                    foreach (var rule in campaign.Rules
+                                 .Where(x => !x.IsDeleted && x.Enabled &&
+                                             x.RuleType == MarketingRuleTypeEnum.AddOnPurchase &&
+                                             x.Condition != null && !x.Condition.IsDeleted &&
+                                             x.Reward != null && !x.Reward.IsDeleted)
+                                 .OrderBy(x => x.SortOrder))
+                    {
+                        if (!rule.ScopeItems.Any(x => !x.IsDeleted &&
+                                x.TargetType == MarketingScopeTargetTypeEnum.Product &&
+                                x.TargetId == productId))
+                        {
+                            continue;
+                        }
+
+                        var items = rule.Reward.Items
+                            .Where(x => !x.IsDeleted && x.Enabled &&
+                                        x.ProdStock != null && !x.ProdStock.IsDeleted &&
+                                        x.ProdStock.Prod != null && !x.ProdStock.Prod.IsDeleted &&
+                                        x.ProdStock.Prod.Visible && !x.ProdStock.Prod.RemovedFromShelves &&
+                                        (x.ProdStock.Prod.NoStockManagement || (x.ProdStock.Stock ?? 0) > 0))
+                            .OrderBy(x => x.SortOrder)
+                            .ThenBy(x => x.Id)
+                            .Select(x =>
+                            {
+                                imageMap.TryGetValue(x.ProdStock.FK_Pid, out var imageUrl);
+                                return new ProductAddOnRewardItemDto
+                                {
+                                    RewardItemId = x.Id,
+                                    ProductId = x.ProdStock.FK_Pid,
+                                    ProductStockId = x.FK_ProdStockId,
+                                    ProductName = x.ProdStock.Prod!.Title,
+                                    StockName = BuildStockName(x.ProdStock, rewardSpecNames),
+                                    ImageUrl = imageUrl ?? "/images/noImg.jpg",
+                                    OriginalPrice = originalPriceMap.TryGetValue(x.FK_ProdStockId, out var price)
+                                        ? price
+                                        : x.ProdStock.Price,
+                                    OfferPrice = x.OfferPrice,
+                                    MaxQuantityPerOrder = Math.Max(x.MaxQuantityPerOrder, 1),
+                                    StockQuantity = x.ProdStock.Prod.NoStockManagement ? null : x.ProdStock.Stock,
+                                    NoStockManagement = x.ProdStock.Prod.NoStockManagement
+                                };
+                            })
+                            .ToList();
+
+                        if (!items.Any())
+                            continue;
+
+                        output.Add(new ProductAddOnCampaignDto
+                        {
+                            CampaignId = campaign.Id,
+                            Name = campaign.Name,
+                            Description = campaign.Description,
+                            RequiredQuantity = Math.Max(rule.Condition.MinQuantity ?? 1, 1),
+                            SelectionQuantityPerQualification = Math.Max(rule.Reward.SelectionQuantityPerQualification, 1),
+                            Repeatable = campaign.Repeatable,
+                            RewardItems = items
+                        });
+                    }
+                }
+
+                return new ResponseMessageDto { Success = true, Object = output };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseMessageDto
+                {
+                    Success = false,
+                    Message = "取得商品加價購活動發生錯誤。",
+                    Error = ex.Message
+                };
+            }
+        }
+
+        private static bool IsSameRuleMode(MarketingRule existingRule, MarketingCampaignEditDto input)
+        {
+            if (existingRule.RuleType != input.RuleType)
+                return false;
+
+            if (existingRule.RuleType != MarketingRuleTypeEnum.AddOnPurchase)
+                return true;
+
+            var existingCondition = NormalizeAddOnCondition(existingRule.Condition?.ConditionType
+                ?? MarketingConditionTypeEnum.OrderAmount);
+            var inputCondition = NormalizeAddOnCondition(input.ConditionType);
+            return existingCondition == inputCondition;
+        }
+
+        private static MarketingConditionTypeEnum NormalizeAddOnCondition(MarketingConditionTypeEnum conditionType)
+        {
+            return conditionType == MarketingConditionTypeEnum.BuySpecificProduct
+                ? MarketingConditionTypeEnum.ScopeQuantity
+                : conditionType;
+        }
+
         private static void ApplyAddOnRule(MarketingCampaignEditDto input, MarketingRule rule)
         {
             rule.RuleType = MarketingRuleTypeEnum.AddOnPurchase;
@@ -667,15 +985,19 @@ namespace EtheriT.Coker.Application.Marketing
                                        input.ConditionType == MarketingConditionTypeEnum.ScopeAmount
                 ? input.MinAmount
                 : null;
-            rule.Condition.MinQuantity = null;
-            rule.Condition.OnlyScopeItems = input.ConditionType == MarketingConditionTypeEnum.ScopeAmount;
+            rule.Condition.MinQuantity = input.ConditionType == MarketingConditionTypeEnum.ScopeQuantity ||
+                                         input.ConditionType == MarketingConditionTypeEnum.BuySpecificProduct
+                ? input.MinQuantity
+                : null;
+            rule.Condition.OnlyScopeItems = input.ConditionType == MarketingConditionTypeEnum.ScopeAmount ||
+                                            input.ConditionType == MarketingConditionTypeEnum.ScopeQuantity;
             rule.Condition.ExcludeDiscountedItems = false;
 
             rule.Reward.DiscountAmount = null;
             rule.Reward.DiscountPercent = null;
             rule.Reward.MaxDiscountAmount = null;
             rule.Reward.SelectionQuantityPerQualification = input.SelectionQuantityPerQualification;
-            rule.Reward.MaxSelectionQuantityPerOrder = input.MaxSelectionQuantityPerOrder;
+            rule.Reward.MaxSelectionQuantityPerOrder = null;
         }
 
         private async Task SyncScopeItemsAsync(
@@ -734,9 +1056,7 @@ namespace EtheriT.Coker.Application.Marketing
                     rule.ScopeItems.Add(entity);
                 }
 
-                entity.RequiredQuantityPerQualification = input.ConditionType == MarketingConditionTypeEnum.BuySpecificProduct
-                    ? item.RequiredQuantityPerQualification
-                    : 1;
+                entity.RequiredQuantityPerQualification = 1;
             }
         }
 
@@ -801,8 +1121,16 @@ namespace EtheriT.Coker.Application.Marketing
             }
         }
 
-        private static string BuildStockName(Prod_Stock stock)
+        private static string BuildStockName(Prod_Stock stock, IReadOnlyDictionary<long, string>? specNames = null)
         {
+            var names = new[] { stock.FK_S1id, stock.FK_S2id }
+                .Where(x => x.HasValue && x.Value > 0)
+                .Select(x => specNames != null && specNames.TryGetValue(x!.Value, out var name) ? name : null)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToList();
+            if (names.Any())
+                return string.Join(" / ", names);
+
             if (!string.IsNullOrWhiteSpace(stock.SpecDescription))
                 return stock.SpecDescription;
 
@@ -853,6 +1181,7 @@ namespace EtheriT.Coker.Application.Marketing
                 {
                     MarketingConditionTypeEnum.OrderAmount,
                     MarketingConditionTypeEnum.ScopeAmount,
+                    MarketingConditionTypeEnum.ScopeQuantity,
                     MarketingConditionTypeEnum.BuySpecificProduct
                 };
 
@@ -863,6 +1192,11 @@ namespace EtheriT.Coker.Application.Marketing
                      input.ConditionType == MarketingConditionTypeEnum.ScopeAmount) &&
                     (input.MinAmount == null || input.MinAmount <= 0))
                     return "請輸入滿額門檻。";
+
+                if ((input.ConditionType == MarketingConditionTypeEnum.ScopeQuantity ||
+                     input.ConditionType == MarketingConditionTypeEnum.BuySpecificProduct) &&
+                    (input.MinQuantity == null || input.MinQuantity <= 0))
+                    return "請輸入指定商品合計購買件數。";
 
                 if (input.ConditionType != MarketingConditionTypeEnum.OrderAmount && input.ScopeItems.Count == 0)
                     return "請至少選擇一項指定商品。";
@@ -876,16 +1210,8 @@ namespace EtheriT.Coker.Application.Marketing
                     .Any(x => x.Count() > 1))
                     return "指定商品不可重複。";
 
-                if (input.ConditionType == MarketingConditionTypeEnum.BuySpecificProduct &&
-                    input.ScopeItems.Any(x => x.RequiredQuantityPerQualification <= 0))
-                    return "指定商品的資格所需數量必須大於 0。";
-
                 if (input.SelectionQuantityPerQualification <= 0)
                     return "每次資格可選數量必須大於 0。";
-
-                if (input.MaxSelectionQuantityPerOrder.HasValue &&
-                    input.MaxSelectionQuantityPerOrder.Value < input.SelectionQuantityPerQualification)
-                    return "單筆訂單總上限不可小於每次資格可選數量。";
 
                 if (input.RewardItems.Count == 0)
                     return "請至少設定一項加價購或贈品商品。";

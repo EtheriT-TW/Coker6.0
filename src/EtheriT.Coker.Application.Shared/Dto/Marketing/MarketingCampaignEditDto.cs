@@ -34,6 +34,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Marketing
 
         public decimal? MinAmount { get; set; }
 
+        public int? MinQuantity { get; set; }
+
         public decimal? DiscountAmount { get; set; }
 
         public decimal? DiscountPercent { get; set; }

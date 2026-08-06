@@ -62,9 +62,10 @@ function ShoppingCartDataClear($self) {
         }
     });
 }
-function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas) {
+function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas, options) {
     $Frame.empty();
     $CollapseFrame.empty();
+    options = options || {};
 
     $.each(datas || [], function (index, data) {
         var $html = $($Template.html()).clone();
@@ -160,11 +161,21 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas) {
             }
         });
 
+        if (typeof options.decorateItem === "function") {
+            options.decorateItem($html, data, index);
+        }
+
+        var $target = index === 0 ? $Frame : $CollapseFrame;
+        if (typeof options.beforeItem === "function") {
+            var $before = options.beforeItem(data, index);
+            if ($before && $before.length) $target.append($before);
+        }
+
         if (index === 0) {
-            $Frame.append($html);
+            $target.append($html);
         } else {
             $(".btn_view_list").removeClass("d-none");
-            $CollapseFrame.append($html);
+            $target.append($html);
         }
     });
 }

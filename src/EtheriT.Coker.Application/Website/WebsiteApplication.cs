@@ -20,6 +20,8 @@ using System.Linq;
 using EtheriT.Coker.Application.Authorization;
 using System.Xml.Linq;
 using Hangfire.Storage;
+using EtheriT.Coker.Application.Shared.Authorization;
+using EtheriT.Coker.Application.Shared.Dto.enumType.OAuth;
 
 namespace EtheriT.Coker.Application
 {
@@ -32,13 +34,15 @@ namespace EtheriT.Coker.Application
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly IConfiguration Configuration;
         private readonly IMapper mapper;
+        private readonly ICookieManagerAppService cookieManager;
         public WebsiteApplication(
             CokerDbContext db,
             LoginUserData loginUserData,
             IConfiguration Configuration,
             IHttpContextAccessor httpContextAccessor,
             IFileUploadAppService fileUploadAppService,
-            IMapper mapper
+            IMapper mapper,
+            ICookieManagerAppService cookieManager
         )
         {
             this.db = db;
@@ -47,6 +51,7 @@ namespace EtheriT.Coker.Application
             this.Configuration = Configuration;
             this.fileUploadAppService = fileUploadAppService;
             this.mapper = mapper;
+            this.cookieManager = cookieManager;
             ApplicationName = "Website";
 
         }
@@ -333,7 +338,11 @@ namespace EtheriT.Coker.Application
                     {
                         token.websiteId = dto.Id;
                         responseMessageDto.Message = dto.Id.ToString();
-                        db.SaveChanges();
+                        await db.SaveChangesAsync();
+                        cookieManager.Set(
+                            "LastWebSite",
+                            dto.Id.ToString(),
+                            CookiePurposeEnum.LastWebsite);
                         responseMessageDto.Success = true;
                     }
                     else throw new Exception("金鑰失效");

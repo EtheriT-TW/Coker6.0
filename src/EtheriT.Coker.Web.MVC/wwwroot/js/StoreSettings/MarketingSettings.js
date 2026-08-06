@@ -10,6 +10,7 @@
     const CONDITION = {
         orderAmount: 1,
         scopeAmount: 2,
+        scopeQuantity: 4,
         buySpecificProduct: 5
     };
 
@@ -50,6 +51,14 @@
         return Number.isFinite(number) ? number : 0;
     }
 
+    function summarizeProductNames(items, propertyName, emptyText) {
+        if (!items.length) return emptyText;
+        const names = items.slice(0, 2).map(x => `「${x[propertyName]}」`);
+        return items.length > 2
+            ? `${names.join("、")}等 ${items.length} 項商品`
+            : names.join("、");
+    }
+
     const MarketingPage = {
         formId: "MarketingForm",
         pageRootSelector: "#MarketingPageRoot",
@@ -64,6 +73,9 @@
         rewardItemKeySeed: 0,
         canUseProdAddition: false,
         productModalReady: false,
+        offerPreviewSwiper: null,
+        isRuleModeLocked: false,
+        repeatableWasCustomized: false,
 
         init: function () {
             if (this.isInitialized) return;
@@ -93,8 +105,10 @@
             this.$maxDiscountAmount = $("#InputMaxDiscountAmount");
             this.$minAmount = $("#InputMinAmount");
             this.$addOnMinAmount = $("#InputAddOnMinAmount");
+            this.$addOnMinQuantity = $("#InputAddOnMinQuantity");
             this.$scopeProductSection = $(".scopeProductSection");
             this.$addOnAmountSection = $("#AddOnAmountSection");
+            this.$addOnQuantitySection = $("#AddOnQuantitySection");
             this.$repeatable = $("#CheckRepeatable");
             this.$repeatableSection = $(".repeatableSection");
         },
@@ -141,7 +155,15 @@
             });
 
             this.$ruleMode.off("change.marketing").on("change.marketing", function () {
+                if (self.keyId === 0 && !self.repeatableWasCustomized) {
+                    self.$repeatable.prop("checked", self.isAddOnMode());
+                }
                 self.applyRuleModeUI();
+            });
+
+            this.$repeatable.off("change.marketingPreview").on("change.marketingPreview", function () {
+                if (self.keyId === 0) self.repeatableWasCustomized = true;
+                self.renderOfferPreview();
             });
 
             $(".marketing-rule-card").off("click.marketingRuleCard").on("click.marketingRuleCard", function (e) {
@@ -170,12 +192,6 @@
                     const selector = $(this).attr("data-open-product-picker");
                     if (window.ProdListModalApi) window.ProdListModalApi.open(selector);
                 })
-                .off("input.marketingScope", "[data-scope-quantity]")
-                .on("input.marketingScope", "[data-scope-quantity]", function () {
-                    const productId = Number($(this).attr("data-scope-quantity"));
-                    const item = self.scopeItems.find(x => x.targetId === productId);
-                    if (item) item.requiredQuantityPerQualification = parseNumber($(this).val());
-                })
                 .off("click.marketingScopeRemove", "[data-remove-scope]")
                 .on("click.marketingScopeRemove", "[data-remove-scope]", function () {
                     self.removeScopeProduct(Number($(this).attr("data-remove-scope")));
@@ -201,7 +217,7 @@
                     self.removeRewardProduct($(this).attr("data-remove-reward"));
                 });
 
-            $("#InputSelectionQuantity, #InputMaxSelectionQuantity, #InputAddOnMinAmount")
+            $("#InputSelectionQuantity, #InputAddOnMinAmount, #InputAddOnMinQuantity")
                 .off("input.marketingPreview")
                 .on("input.marketingPreview", function () { self.renderOfferPreview(); });
         },
@@ -500,7 +516,6 @@
         },
 
         renderScopeRows: function () {
-            const needsQuantity = this.getRuleMode() === "product-addon";
             const self = this;
             const html = this.scopeItems.map(function (item) {
                 return `<div class="marketing-product-row">
@@ -517,13 +532,6 @@
                             <span class="material-symbols-outlined" aria-hidden="true">delete</span>
                         </button>
                     </div>
-                    ${needsQuantity ? `<div class="marketing-scope-fields">
-                        <label class="marketing-inline-field">每次資格需購買
-                            <input class="form-control form-control-sm" type="number" min="1"
-                                value="${item.requiredQuantityPerQualification || 1}"
-                                data-scope-quantity="${item.targetId}"> 件
-                        </label>
-                    </div>` : ""}
                 </div>`;
             }).join("");
 
@@ -685,27 +693,107 @@
 
         renderOfferPreview: function () {
             const $preview = $("#MarketingOfferPreview");
-            if (!this.isAddOnMode() || !this.rewardItems.length) {
+            const $summary = $("#MarketingActivitySummary");
+
+            if (this.offerPreviewSwiper) {
+                this.offerPreviewSwiper.destroy(true, true);
+                this.offerPreviewSwiper = null;
+            }
+
+            if (!this.isAddOnMode()) {
                 $preview.empty().addClass("d-none");
+                $summary.addClass("d-none");
                 return;
             }
 
-            const gifts = this.rewardItems.filter(x => Number(x.offerPrice) === 0).length;
-            const addOns = this.rewardItems.length - gifts;
             const selection = parseNumber($("#InputSelectionQuantity").val()) || 1;
             const mode = this.getRuleMode();
+            const conditionQuantity = parseNumber(this.$addOnMinQuantity.val());
+            const conditionAmount = parseNumber(this.$addOnMinAmount.val());
+            const scopeSummary = summarizeProductNames(this.scopeItems, "targetName", "尚未選擇指定商品");
+            const rewardSummary = summarizeProductNames(this.rewardItems, "productName", "右側優惠商品");
             let conditionText = "";
 
-            if (mode === "product-addon") conditionText = `購買指定商品達設定件數，可選 ${selection} 件優惠商品`;
-            if (mode === "order-amount-addon") conditionText = `整筆訂單滿 NT$ ${formatMoney(this.$addOnMinAmount.val())}，可選 ${selection} 件優惠商品`;
-            if (mode === "scope-amount-addon") conditionText = `指定商品有效小計滿 NT$ ${formatMoney(this.$addOnMinAmount.val())}，可選 ${selection} 件優惠商品`;
+            $("#SelectionQuantityHelp").text("每取得一次資格，可選擇的優惠商品總件數。");
 
-            $preview.removeClass("d-none").html(`<div class="marketing-preview-label">前台效果預覽</div>
-                <div class="marketing-preview-content">
-                    <span class="marketing-preview-tag">優惠選購</span>
-                    <strong>${escapeHtml(conditionText)}</strong>
-                    <span>${gifts ? `${gifts} 項贈品` : ""}${gifts && addOns ? "、" : ""}${addOns ? `${addOns} 項加價購` : ""}</span>
+            if (mode === "product-addon") {
+                const quantity = conditionQuantity || 1;
+                conditionText = `${scopeSummary}任選合計 ${quantity} 件，即取得一次資格；每次可從 ${rewardSummary} 中選擇 ${selection} 件。`;
+            }
+            if (mode === "order-amount-addon") conditionText = `整筆訂單滿 NT$ ${formatMoney(conditionAmount)}，即取得一次資格；每次可從 ${rewardSummary} 中選擇 ${selection} 件。`;
+            if (mode === "scope-amount-addon") conditionText = `${scopeSummary}的有效小計滿 NT$ ${formatMoney(conditionAmount)}，即取得一次資格；每次可從 ${rewardSummary} 中選擇 ${selection} 件。`;
+
+            const repeatText = this.$repeatable.prop("checked") ? "購買達倍數時可重複取得資格" : "每筆訂單僅取得一次資格";
+            const hasCompleteCondition = mode === "product-addon"
+                ? this.scopeItems.length > 0 && conditionQuantity > 0
+                : mode === "scope-amount-addon"
+                    ? this.scopeItems.length > 0 && conditionAmount > 0
+                    : conditionAmount > 0;
+            const canShowSummary = hasCompleteCondition && this.rewardItems.length > 0;
+            $("#MarketingActivitySummaryText").text(canShowSummary ? `${conditionText} ${repeatText}。` : "");
+            $summary.toggleClass("d-none", !canShowSummary);
+
+            const previewItems = this.rewardItems.map(function (item) {
+                const isGift = Number(item.offerPrice) === 0;
+                const priceHtml = isGift
+                    ? '<span class="marketing-storefront-price is-gift">免費贈送</span>'
+                    : `<span class="marketing-storefront-price">NT$ ${formatMoney(item.offerPrice)}</span>`;
+                const originalPriceHtml = !isGift && Number(item.originalPrice) > Number(item.offerPrice)
+                    ? `<del>原價 NT$ ${formatMoney(item.originalPrice)}</del>` : "";
+
+                return `<div class="swiper-slide">
+                  <div class="marketing-storefront-item">
+                    <div class="marketing-storefront-image">
+                        <img src="${escapeHtml(item.imageUrl || "/images/noImg.jpg")}" alt="">
+                        <span>${isGift ? "贈品" : "加價購"}</span>
+                    </div>
+                    <div class="marketing-storefront-item-copy">
+                        <strong>${escapeHtml(item.productName)}</strong>
+                        ${item.stockName ? `<small>${escapeHtml(item.stockName)}</small>` : ""}
+                        <div>${priceHtml}${originalPriceHtml}</div>
+                    </div>
+                    <div class="marketing-storefront-select"><span class="material-symbols-outlined" aria-hidden="true">radio_button_unchecked</span>選擇</div>
+                  </div>
+                </div>`;
+            }).join("");
+
+            const rewardContent = previewItems
+                ? `<div class="swiper marketing-storefront-swiper">
+                    <div class="swiper-wrapper">${previewItems}</div>
+                    <div class="swiper-button-prev"></div>
+                    <div class="swiper-button-next"></div>
+                   </div>`
+                : '<div class="marketing-storefront-empty">新增優惠商品後，這裡會模擬顧客可選擇的商品畫面。</div>';
+
+            $preview.removeClass("d-none").html(`<div class="marketing-preview-label">前台效果預覽（示意）</div>
+                <div class="marketing-storefront-preview">
+                    <div class="marketing-storefront-heading">
+                        <span class="marketing-preview-tag">優惠選購</span>
+                        <div>
+                            <strong>您已符合優惠資格</strong>
+                            <small>每取得一次資格，可選 ${selection} 件優惠商品</small>
+                        </div>
+                    </div>
+                    ${rewardContent}
                 </div>`);
+
+            const swiperElement = $preview.find(".marketing-storefront-swiper")[0];
+            if (swiperElement && window.Swiper) {
+                this.offerPreviewSwiper = new window.Swiper(swiperElement, {
+                    slidesPerView: 1.2,
+                    spaceBetween: 12,
+                    watchOverflow: true,
+                    navigation: {
+                        prevEl: swiperElement.querySelector(".swiper-button-prev"),
+                        nextEl: swiperElement.querySelector(".swiper-button-next")
+                    },
+                    breakpoints: {
+                        576: { slidesPerView: 2.2 },
+                        992: { slidesPerView: 3.2 },
+                        1400: { slidesPerView: 4.2 }
+                    }
+                });
+            }
         },
 
         syncModalStates: function () {
@@ -801,6 +889,7 @@
         onEnterNew: function () {
             this.keyId = 0;
             this.clearFormState();
+            this.setRuleModeLocked(false);
             this.applyNewFormDefaults();
             this.applyNeverEndUI();
             this.applyRuleModeUI();
@@ -821,13 +910,14 @@
             this.$discountPercent.val("9");
             this.$maxDiscountAmount.val("");
             this.$addOnMinAmount.val("1000");
+            this.$addOnMinQuantity.val("1");
             $("#InputSelectionQuantity").val("1");
-            $("#InputMaxSelectionQuantity").val("1");
             this.refreshNumberFormats();
         },
 
         onEnterEdit: function (id) {
             const self = this;
+            this.setRuleModeLocked(false);
             if (!id) {
                 if (this.hashPage) this.hashPage.goList();
                 return;
@@ -851,6 +941,8 @@
 
         clearFormState: function () {
             this.keyId = 0;
+            this.repeatableWasCustomized = false;
+            this.setRuleModeLocked(false);
             this.scopeItems = [];
             this.rewardItems = [];
             this.rewardItemKeySeed = 0;
@@ -861,8 +953,8 @@
             this.$discountPercent.val("").removeAttr("required");
             this.$maxDiscountAmount.val("");
             this.$addOnMinAmount.val("");
+            this.$addOnMinQuantity.val("1");
             $("#InputSelectionQuantity").val("1");
-            $("#InputMaxSelectionQuantity").val("");
             this.renderScopeRows();
             this.renderRewardRows();
             this.applyNeverEndUI();
@@ -895,10 +987,12 @@
             const ruleType = Number(valueOf(result, "ruleType", "RuleType", RULE.amountDiscount));
             const conditionType = Number(valueOf(result, "conditionType", "ConditionType", CONDITION.orderAmount));
             $("input[name='RuleMode'][value='" + this.modeFromRule(ruleType, conditionType) + "']").prop("checked", true);
+            const campaignStatus = Number(valueOf(result, "status", "Status", 0));
+            this.setRuleModeLocked(campaignStatus !== 0);
 
             this.$addOnMinAmount.val(valueOf(result, "minAmount", "MinAmount", ""));
+            this.$addOnMinQuantity.val(valueOf(result, "minQuantity", "MinQuantity", 1));
             $("#InputSelectionQuantity").val(valueOf(result, "selectionQuantityPerQualification", "SelectionQuantityPerQualification", 1));
-            $("#InputMaxSelectionQuantity").val(valueOf(result, "maxSelectionQuantityPerOrder", "MaxSelectionQuantityPerOrder", ""));
             this.refreshNumberFormats();
 
             const scopeRows = valueOf(result, "scopeItems", "ScopeItems", []);
@@ -972,9 +1066,31 @@
         modeFromRule: function (ruleType, conditionType) {
             if (ruleType === RULE.percentDiscount) return "percent-discount";
             if (ruleType !== RULE.addOnPurchase) return "amount-discount";
-            if (conditionType === CONDITION.buySpecificProduct) return "product-addon";
+            if (conditionType === CONDITION.scopeQuantity || conditionType === CONDITION.buySpecificProduct) return "product-addon";
             if (conditionType === CONDITION.scopeAmount) return "scope-amount-addon";
             return "order-amount-addon";
+        },
+
+        setRuleModeLocked: function (locked) {
+            this.isRuleModeLocked = locked === true;
+            this.$ruleMode.prop("disabled", this.isRuleModeLocked);
+            $("#RuleTypeLockHint").toggleClass("d-none", !this.isRuleModeLocked);
+            this.applyRuleTypeVisualState();
+        },
+
+        applyRuleTypeVisualState: function () {
+            const selectedMode = this.getRuleMode();
+            const hasSelection = this.$ruleMode.filter(":checked").length > 0;
+
+            $(".marketing-rule-card").each((_, element) => {
+                const $card = $(element);
+                const isSelected = $card.find("input[name='RuleMode']").val() === selectedMode;
+                $card
+                    .toggleClass("is-rule-selected", hasSelection && isSelected)
+                    .toggleClass("is-rule-muted", hasSelection && !isSelected && !this.isRuleModeLocked)
+                    .toggleClass("is-rule-locked", this.isRuleModeLocked && isSelected)
+                    .toggleClass("d-none", this.isRuleModeLocked && !isSelected);
+            });
         },
 
         applyRuleModeUI: function () {
@@ -982,11 +1098,13 @@
             const isAddOn = this.isAddOnMode();
             const needsScope = mode === "product-addon" || mode === "scope-amount-addon";
             const needsAmount = mode === "order-amount-addon" || mode === "scope-amount-addon";
+            const needsQuantity = mode === "product-addon";
 
             this.$discountSettings.toggleClass("d-none", isAddOn);
             this.$addOnSettings.toggleClass("d-none", !isAddOn);
             this.$scopeProductSection.toggleClass("d-none", !needsScope);
             this.$addOnAmountSection.toggleClass("d-none", !needsAmount);
+            this.$addOnQuantitySection.toggleClass("d-none", !needsQuantity);
             $(".marketing-option-grid").toggleClass("is-addon", isAddOn);
             $("#CanStackSection").toggleClass("d-none", isAddOn);
             if (isAddOn) $("#CheckCanStack").prop("checked", true);
@@ -998,6 +1116,7 @@
             this.$discountAmount.prop("required", mode === "amount-discount");
             this.$discountPercent.prop("required", mode === "percent-discount");
             this.$addOnMinAmount.prop("required", needsAmount);
+            this.$addOnMinQuantity.prop("required", needsQuantity);
 
             this.$repeatableSection.toggleClass("d-none", mode === "percent-discount");
             if (mode === "percent-discount") this.$repeatable.prop("checked", false);
@@ -1014,7 +1133,7 @@
             }
 
             if (mode === "product-addon") {
-                $("#AddOnConditionTitle").text("指定商品購買條件");
+                $("#AddOnConditionTitle").text("指定商品任選滿件條件");
             } else if (mode === "scope-amount-addon") {
                 $("#AddOnConditionTitle").text("指定商品金額條件");
             } else if (mode === "order-amount-addon") {
@@ -1031,6 +1150,7 @@
 
             this.renderScopeRows();
             this.renderOfferPreview();
+            this.applyRuleTypeVisualState();
         },
 
         applyNeverEndUI: function () {
@@ -1053,7 +1173,7 @@
 
             if (mode === "percent-discount") ruleType = RULE.percentDiscount;
             if (isAddOn) ruleType = RULE.addOnPurchase;
-            if (mode === "product-addon") conditionType = CONDITION.buySpecificProduct;
+            if (mode === "product-addon") conditionType = CONDITION.scopeQuantity;
             if (mode === "scope-amount-addon") conditionType = CONDITION.scopeAmount;
 
             return {
@@ -1071,22 +1191,25 @@
                 RuleType: ruleType,
                 ConditionType: conditionType,
                 ScopeType: conditionType === CONDITION.orderAmount ? SCOPE.allOrder : SCOPE.specificProducts,
-                MinAmount: isAddOn ? (conditionType === CONDITION.buySpecificProduct ? null : parseNumber(this.$addOnMinAmount.val())) : parseNumber(form.MinAmount),
+                MinAmount: isAddOn
+                    ? (conditionType === CONDITION.orderAmount || conditionType === CONDITION.scopeAmount
+                        ? parseNumber(this.$addOnMinAmount.val()) : null)
+                    : parseNumber(form.MinAmount),
+                MinQuantity: conditionType === CONDITION.scopeQuantity
+                    ? parseNumber(this.$addOnMinQuantity.val()) : null,
                 DiscountAmount: ruleType === RULE.amountDiscount ? Number(form.DiscountAmount || 0) : null,
                 DiscountPercent: ruleType === RULE.percentDiscount ? this.normalizeDiscountPercentForSave(form.DiscountPercent) : null,
                 MaxDiscountAmount: ruleType === RULE.percentDiscount && form.MaxDiscountAmount !== "" && form.MaxDiscountAmount != null
                     ? Number(form.MaxDiscountAmount || 0) : null,
                 SelectionQuantityPerQualification: isAddOn ? parseNumber($("#InputSelectionQuantity").val()) : 1,
-                MaxSelectionQuantityPerOrder: isAddOn && $("#InputMaxSelectionQuantity").val() !== ""
-                    ? parseNumber($("#InputMaxSelectionQuantity").val()) : null,
+                MaxSelectionQuantityPerOrder: null,
                 ScopeItems: isAddOn && conditionType !== CONDITION.orderAmount
                     ? this.scopeItems.map(x => ({
                         Id: x.id || 0,
                         TargetType: TARGET.product,
                         TargetId: x.targetId,
                         TargetName: x.targetName,
-                        RequiredQuantityPerQualification: conditionType === CONDITION.buySpecificProduct
-                            ? Number(x.requiredQuantityPerQualification || 0) : 1
+                        RequiredQuantityPerQualification: 1
                     })) : [],
                 RewardItems: isAddOn ? this.rewardItems.map(function (x, index) {
                     return {
@@ -1129,15 +1252,16 @@
             }
 
             if (payload.RuleType === RULE.addOnPurchase) {
-                if (payload.ConditionType !== CONDITION.buySpecificProduct && (!payload.MinAmount || payload.MinAmount <= 0)) {
+                if ((payload.ConditionType === CONDITION.orderAmount || payload.ConditionType === CONDITION.scopeAmount) &&
+                    (!payload.MinAmount || payload.MinAmount <= 0)) {
                     return this.showValidationError("滿額門檻必須大於 0。");
+                }
+                if (payload.ConditionType === CONDITION.scopeQuantity &&
+                    (!payload.MinQuantity || payload.MinQuantity <= 0)) {
+                    return this.showValidationError("指定商品合計購買件數必須大於 0。");
                 }
                 if (payload.ConditionType !== CONDITION.orderAmount && !payload.ScopeItems.length) {
                     return this.showValidationError("請至少選擇一項指定商品。");
-                }
-                if (payload.ConditionType === CONDITION.buySpecificProduct &&
-                    payload.ScopeItems.some(x => x.RequiredQuantityPerQualification <= 0)) {
-                    return this.showValidationError("指定商品的資格所需數量必須大於 0。");
                 }
                 if (!payload.RewardItems.length) return this.showValidationError("請至少設定一項加價購或贈品商品。");
                 if (payload.RewardItems.some(x => x.ProductStockId <= 0 || x.OfferPrice < 0 || x.MaxQuantityPerOrder <= 0)) {
@@ -1147,10 +1271,6 @@
                     return this.showValidationError("相同商品規格不可重複設定。");
                 }
                 if (payload.SelectionQuantityPerQualification <= 0) return this.showValidationError("每次資格可選件數必須大於 0。");
-                if (payload.MaxSelectionQuantityPerOrder != null &&
-                    payload.MaxSelectionQuantityPerOrder < payload.SelectionQuantityPerQualification) {
-                    return this.showValidationError("單筆訂單總上限不可小於每次資格可選件數。");
-                }
             }
 
             return true;
@@ -1264,6 +1384,7 @@
         const ruleType = Number(rowData.ruleType ?? rowData.RuleType);
         const conditionType = Number(rowData.conditionType ?? rowData.ConditionType);
         const minAmount = rowData.minAmount ?? rowData.MinAmount;
+        const minQuantity = Number(rowData.minQuantity ?? rowData.MinQuantity ?? 0);
         const discountAmount = rowData.discountAmount ?? rowData.DiscountAmount;
         const discountPercent = rowData.discountPercent ?? rowData.DiscountPercent;
         const rewardItemCount = Number(rowData.rewardItemCount ?? rowData.RewardItemCount ?? 0);
@@ -1275,6 +1396,7 @@
         if (ruleType === RULE.percentDiscount) return `滿 ${amountText} 打 ${formatMarketingDiscountPercent(discountPercent)} 折`;
         if (ruleType === RULE.addOnPurchase) {
             let condition = "訂單滿額加價購／贈品";
+            if (conditionType === CONDITION.scopeQuantity) condition = `指定商品任選滿 ${minQuantity} 件加價購／贈品`;
             if (conditionType === CONDITION.buySpecificProduct) condition = "指定商品加價購／贈品";
             if (conditionType === CONDITION.scopeAmount) condition = "指定商品滿額加價購／贈品";
             const price = minOfferPrice === 0 && maxOfferPrice === 0

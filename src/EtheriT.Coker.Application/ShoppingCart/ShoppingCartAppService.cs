@@ -4,6 +4,7 @@ using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.BonusManagement;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Marketing;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
@@ -132,10 +133,31 @@ namespace EtheriT.Coker.Application.ShoppingCart
             ShoppingCartAddUpDto dto,
             Core.Models.ShoppingCart? sourceOrderSnapshot = null)
         {
+            var rewardSelections = dto.RewardSelections?
+                .Where(x => x.CampaignId > 0 && x.RewardItemId > 0 && x.Quantity > 0)
+                .ToList() ?? new List<ShoppingCartRewardSelectionDto>();
+
+            if (!rewardSelections.Any())
+                return await ExecuteAddUpInternal(dto, sourceOrderSnapshot, rewardSelections);
+
+            var strategy = db.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(() =>
+                ExecuteAddUpInternal(dto, sourceOrderSnapshot, rewardSelections));
+        }
+
+        private async Task<ResponseMessageDto> ExecuteAddUpInternal(
+            ShoppingCartAddUpDto dto,
+            Core.Models.ShoppingCart? sourceOrderSnapshot,
+            List<ShoppingCartRewardSelectionDto> rewardSelections)
+        {
             ResponseMessageDto response = new ResponseMessageDto() { Success = false };
+            Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? transaction = null;
 
             try
             {
+                if (rewardSelections.Any())
+                    transaction = await db.Database.BeginTransactionAsync();
+
                 Guid UUID = await tokenAppService.GetUUID();
                 var token = await tokenAppService.CheckToken(null);
                 if (token.RefreshToken == null)
@@ -215,6 +237,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         e.UUID == UUID &&
                         e.FK_PSid == proStock.Id &&
                         e.FK_PriceId == dto.FK_PriceId &&
+                        !e.IsAdditional &&
                         !e.IsOrder);
                 }
 
@@ -253,6 +276,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 }
                 // ===== 紅利檢查結束 =====
 
+                var isNewCart = sc == null;
                 if (sc == null)
                 {
                     if (wantQty > currentStock && !skipStock)
@@ -283,8 +307,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                     db.ShoppingCarts.Add(sc);
                     LogCartEventAsync(proStock.FK_Pid, userid, UUID, LogActionEnum.加入購物車, 0, wantQty);
-                    db.SaveChanges();
-                    response.Message = "N" + sc.Id.ToString();
                 }
                 else
                 {
@@ -323,18 +345,334 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                     LogCartEventAsync(proStock.FK_Pid, userid, UUID, LogActionEnum.加入購物車, oQuantity, newTotal);
 
-                    await db.SaveChangesAsync();
-                    response.Message = "U" + sc.Id.ToString();
                 }
+
+                var operation = isNewCart ? "N" : "U";
+                await db.SaveChangesAsync();
+                response.Message = operation + sc.Id;
+
+                if (rewardSelections.Any())
+                {
+                    response.Object = await AddMarketingRewardItemsAsync(
+                        UUID,
+                        userid,
+                        prod.FK_WebsiteId,
+                        proStock.FK_Pid,
+                        rewardSelections);
+                    await db.SaveChangesAsync();
+                }
+
+                if (transaction != null)
+                    await transaction.CommitAsync();
 
                 response.Success = true;
             }
             catch (Exception ex)
             {
+                if (transaction != null)
+                    await transaction.RollbackAsync();
                 response.Error = "Error";
                 response.Message = ex.Message;
             }
+            finally
+            {
+                if (transaction != null)
+                    await transaction.DisposeAsync();
+            }
 
+            return response;
+        }
+
+        private async Task<List<long>> AddMarketingRewardItemsAsync(
+            Guid uuid,
+            long userId,
+            long websiteId,
+            long purchasedProductId,
+            List<ShoppingCartRewardSelectionDto> selections)
+        {
+            var now = DateTime.Now;
+            var campaignIds = selections.Select(x => x.CampaignId).Distinct().ToList();
+            var campaigns = await db.MarketingCampaigns
+                .Include(x => x.Rules)
+                    .ThenInclude(x => x.Condition)
+                .Include(x => x.Rules)
+                    .ThenInclude(x => x.ScopeItems)
+                .Include(x => x.Rules)
+                    .ThenInclude(x => x.Reward)
+                        .ThenInclude(x => x.Items)
+                            .ThenInclude(x => x.ProdStock)
+                                .ThenInclude(x => x.Prod)
+                .Where(x => campaignIds.Contains(x.Id) && !x.IsDeleted && x.FK_WebsiteId == websiteId)
+                .Where(x => x.Status == MarketingDisplayStatusEnum.活動中 && x.StartTime <= now)
+                .Where(x => x.NeverEnd || (x.EndTime.HasValue && x.EndTime.Value >= now))
+                .ToListAsync();
+
+            if (campaigns.Count != campaignIds.Count)
+                throw new Exception("部分加價購活動已失效，請重新整理商品頁後再試。");
+
+            var currentCarts = await db.ShoppingCarts
+                .Include(x => x.Prod_Stock)
+                .Where(x => x.UUID == uuid && !x.IsOrder && !x.IsDeleted)
+                .ToListAsync();
+            var affectedCartIds = new List<long>();
+
+            foreach (var campaignId in campaignIds)
+            {
+                var campaign = campaigns.Single(x => x.Id == campaignId);
+                var campaignSelections = selections.Where(x => x.CampaignId == campaignId).ToList();
+                var rule = campaign.Rules
+                    .Where(x => !x.IsDeleted && x.Enabled &&
+                                x.RuleType == MarketingRuleTypeEnum.AddOnPurchase &&
+                                x.Condition != null && !x.Condition.IsDeleted &&
+                                x.Reward != null && !x.Reward.IsDeleted)
+                    .OrderBy(x => x.SortOrder)
+                    .FirstOrDefault();
+
+                if (rule == null)
+                    throw new Exception("加價購活動規則已失效，請重新整理商品頁後再試。");
+
+                var scopeProductIds = rule.ScopeItems
+                    .Where(x => !x.IsDeleted && x.TargetType == MarketingScopeTargetTypeEnum.Product)
+                    .Select(x => x.TargetId)
+                    .Distinct()
+                    .ToHashSet();
+                if (!scopeProductIds.Contains(purchasedProductId))
+                    throw new Exception("目前商品不適用此加價購活動。");
+
+                var requiredQuantity = Math.Max(rule.Condition.MinQuantity ?? 1, 1);
+                var qualifyingQuantity = currentCarts
+                    .Where(x => !x.IsAdditional && x.Prod_Stock != null &&
+                                scopeProductIds.Contains(x.Prod_Stock.FK_Pid))
+                    .Sum(x => x.Quantity);
+                var qualificationCount = campaign.Repeatable
+                    ? qualifyingQuantity / requiredQuantity
+                    : qualifyingQuantity >= requiredQuantity ? 1 : 0;
+                var allowance = qualificationCount * Math.Max(rule.Reward.SelectionQuantityPerQualification, 1);
+                if (allowance <= 0)
+                    throw new Exception($"尚未達到「{campaign.Name}」的加價購條件。");
+
+                var activeRewardItems = rule.Reward.Items
+                    .Where(x => !x.IsDeleted && x.Enabled && x.ProdStock != null && !x.ProdStock.IsDeleted &&
+                                x.ProdStock.Prod != null && !x.ProdStock.Prod.IsDeleted &&
+                                x.ProdStock.Prod.Visible && !x.ProdStock.Prod.RemovedFromShelves)
+                    .ToDictionary(x => x.Id);
+                if (campaignSelections.Any(x => !activeRewardItems.ContainsKey(x.RewardItemId)))
+                    throw new Exception("選取的加價購商品已失效，請重新選擇。");
+
+                var rewardStockIds = activeRewardItems.Values.Select(x => x.FK_ProdStockId).ToHashSet();
+                var existingRewardQuantity = currentCarts
+                    .Where(x => x.IsAdditional && rewardStockIds.Contains(x.FK_PSid))
+                    .Sum(x => x.Quantity);
+                var requestedQuantity = campaignSelections.Sum(x => x.Quantity);
+                if (existingRewardQuantity + requestedQuantity > allowance)
+                    throw new Exception($"「{campaign.Name}」目前最多可選 {allowance} 件優惠商品。");
+
+                foreach (var selection in campaignSelections)
+                {
+                    var rewardItem = activeRewardItems[selection.RewardItemId];
+                    var stock = rewardItem.ProdStock;
+                    var existingItemQuantity = currentCarts
+                        .Where(x => x.IsAdditional && x.FK_PSid == stock.Id)
+                        .Sum(x => x.Quantity);
+                    var itemLimit = Math.Max(rewardItem.MaxQuantityPerOrder, 1) *
+                                    (campaign.Repeatable ? qualificationCount : 1);
+                    if (existingItemQuantity + selection.Quantity > itemLimit)
+                        throw new Exception($"「{stock.Prod!.Title}」超過此活動可選上限。");
+                    if (!stock.Prod.NoStockManagement && (stock.Stock ?? 0) < existingItemQuantity + selection.Quantity)
+                        throw new Exception($"「{stock.Prod.Title}」庫存不足。");
+
+                    var cart = currentCarts.FirstOrDefault(x =>
+                        x.IsAdditional && x.FK_PSid == stock.Id && x.Price == rewardItem.OfferPrice);
+                    if (cart == null)
+                    {
+                        var specIds = new[] { stock.FK_S1id, stock.FK_S2id }
+                            .Where(x => x.HasValue && x.Value > 0)
+                            .Select(x => x!.Value)
+                            .Distinct()
+                            .ToList();
+                        var specTitles = specIds.Any()
+                            ? await db.Prod_Specs.Where(x => specIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.Title)
+                            : new Dictionary<long, string>();
+                        cart = new Core.Models.ShoppingCart
+                        {
+                            FK_PSid = stock.Id,
+                            FK_PriceId = null,
+                            Price = rewardItem.OfferPrice,
+                            Bonus = 0,
+                            Quantity = selection.Quantity,
+                            FK_Tid = currentCarts.Select(x => x.FK_Tid).FirstOrDefault(),
+                            FK_Uid = userId,
+                            UUID = uuid,
+                            Ser_No = 500,
+                            FK_S1id = stock.FK_S1id,
+                            FK_S2id = stock.FK_S2id,
+                            ProductId = stock.FK_Pid,
+                            ProdName = stock.Prod.Title,
+                            S1Title = stock.FK_S1id.HasValue && specTitles.TryGetValue(stock.FK_S1id.Value, out var s1) ? s1 : null,
+                            S2Title = stock.FK_S2id.HasValue && specTitles.TryGetValue(stock.FK_S2id.Value, out var s2) ? s2 : null,
+                            IsAdditional = true,
+                            CreatorUserId = userId,
+                            CreationTime = now
+                        };
+                        db.ShoppingCarts.Add(cart);
+                        currentCarts.Add(cart);
+                    }
+                    else
+                    {
+                        cart.Quantity += selection.Quantity;
+                        cart.LastModifierUserId = userId;
+                        cart.LastModificationTime = now;
+                    }
+
+                    await db.SaveChangesAsync();
+                    affectedCartIds.Add(cart.Id);
+                }
+            }
+
+            return affectedCartIds.Distinct().ToList();
+        }
+
+        public async Task<ResponseMessageDto> UpdateAddOnSelections(ShoppingCartAddOnSelectionUpdateDto dto)
+        {
+            var response = new ResponseMessageDto();
+            try
+            {
+                var uuid = await tokenAppService.GetUUID();
+                var websiteId = await loginUserData.GetCommonWebsiteId();
+                var now = DateTime.Now;
+
+                var campaign = await db.MarketingCampaigns
+                    .Include(x => x.Rules).ThenInclude(x => x.Condition)
+                    .Include(x => x.Rules).ThenInclude(x => x.ScopeItems)
+                    .Include(x => x.Rules).ThenInclude(x => x.Reward).ThenInclude(x => x.Items)
+                        .ThenInclude(x => x.ProdStock).ThenInclude(x => x.Prod)
+                    .FirstOrDefaultAsync(x => x.Id == dto.CampaignId && x.FK_WebsiteId == websiteId &&
+                        !x.IsDeleted && x.Status == MarketingDisplayStatusEnum.活動中 && x.StartTime <= now &&
+                        (x.NeverEnd || (x.EndTime.HasValue && x.EndTime.Value >= now)));
+                var rule = campaign?.Rules.FirstOrDefault(x => x.Id == dto.RuleId && !x.IsDeleted && x.Enabled &&
+                    x.RuleType == MarketingRuleTypeEnum.AddOnPurchase && x.Condition != null && !x.Condition.IsDeleted &&
+                    x.Reward != null && !x.Reward.IsDeleted);
+                if (campaign == null || rule == null)
+                    throw new Exception("加價購活動已失效，請重新整理購物車後再試。");
+
+                var carts = await db.ShoppingCarts
+                    .Include(x => x.Prod_Stock)
+                    .Where(x => x.UUID == uuid && !x.IsOrder && !x.IsDeleted)
+                    .OrderBy(x => x.CreationTime)
+                    .ToListAsync();
+                var baseCarts = carts.Where(x => !x.IsAdditional && x.Prod_Stock != null).ToList();
+                var scopeProductIds = rule.ScopeItems
+                    .Where(x => !x.IsDeleted && x.TargetType == MarketingScopeTargetTypeEnum.Product)
+                    .Select(x => x.TargetId).Distinct().ToHashSet();
+
+                var conditionType = rule.Condition.ConditionType;
+                var qualificationCount = 0;
+                if (conditionType == MarketingConditionTypeEnum.ScopeQuantity ||
+                    conditionType == MarketingConditionTypeEnum.BuySpecificProduct)
+                {
+                    var requiredQuantity = Math.Max(rule.Condition.MinQuantity ?? 1, 1);
+                    var quantity = baseCarts.Where(x => scopeProductIds.Contains(x.Prod_Stock!.FK_Pid)).Sum(x => x.Quantity);
+                    qualificationCount = campaign.Repeatable ? quantity / requiredQuantity : quantity >= requiredQuantity ? 1 : 0;
+                }
+                else if (conditionType == MarketingConditionTypeEnum.OrderAmount ||
+                         conditionType == MarketingConditionTypeEnum.ScopeAmount)
+                {
+                    var requiredAmount = Math.Max(rule.Condition.MinAmount ?? 0, 0);
+                    var amount = baseCarts
+                        .Where(x => conditionType != MarketingConditionTypeEnum.ScopeAmount || scopeProductIds.Contains(x.Prod_Stock!.FK_Pid))
+                        .Sum(x => x.Price * x.Quantity);
+                    qualificationCount = requiredAmount > 0
+                        ? campaign.Repeatable ? (int)Math.Floor(amount / requiredAmount) : amount >= requiredAmount ? 1 : 0
+                        : 0;
+                }
+
+                var allowance = qualificationCount * Math.Max(rule.Reward.SelectionQuantityPerQualification, 1);
+                var desired = (dto.Selections ?? new List<ShoppingCartRewardSelectionDto>())
+                    .Where(x => x.Quantity > 0)
+                    .GroupBy(x => x.RewardItemId)
+                    .ToDictionary(x => x.Key, x => x.Sum(y => y.Quantity));
+                if (desired.Values.Sum() > allowance)
+                    throw new Exception($"「{campaign.Name}」目前最多可選 {allowance} 件優惠商品。");
+
+                var activeItems = rule.Reward.Items
+                    .Where(x => !x.IsDeleted && x.Enabled && x.ProdStock != null && !x.ProdStock.IsDeleted &&
+                        x.ProdStock.Prod != null && !x.ProdStock.Prod.IsDeleted && x.ProdStock.Prod.Visible &&
+                        !x.ProdStock.Prod.RemovedFromShelves)
+                    .ToDictionary(x => x.Id);
+                if (desired.Keys.Any(x => !activeItems.ContainsKey(x)))
+                    throw new Exception("選取的優惠商品已失效，請重新選擇。");
+
+                var userId = await db.FrontUsers.Where(x => x.UUID == uuid).Select(x => x.FK_User).FirstOrDefaultAsync() ?? 0;
+                foreach (var pair in activeItems)
+                {
+                    var rewardItem = pair.Value;
+                    var wanted = desired.TryGetValue(pair.Key, out var qty) ? qty : 0;
+                    var itemLimit = Math.Max(rewardItem.MaxQuantityPerOrder, 1) *
+                        (campaign.Repeatable ? Math.Max(qualificationCount, 1) : 1);
+                    if (wanted > itemLimit)
+                        throw new Exception($"「{rewardItem.ProdStock!.Prod!.Title}」超過此活動可選上限。");
+                    if (!rewardItem.ProdStock.Prod.NoStockManagement && (rewardItem.ProdStock.Stock ?? 0) < wanted)
+                        throw new Exception($"「{rewardItem.ProdStock.Prod.Title}」庫存不足。");
+
+                    var matching = carts.Where(x => x.IsAdditional && x.FK_PSid == rewardItem.FK_ProdStockId &&
+                        x.Price == rewardItem.OfferPrice).ToList();
+                    var cart = matching.FirstOrDefault();
+                    foreach (var duplicate in matching.Skip(1))
+                    {
+                        duplicate.IsDeleted = true;
+                        duplicate.DeletionTime = now;
+                        duplicate.DeleterUserId = userId;
+                    }
+
+                    if (wanted <= 0)
+                    {
+                        if (cart != null)
+                        {
+                            cart.IsDeleted = true;
+                            cart.DeletionTime = now;
+                            cart.DeleterUserId = userId;
+                        }
+                        continue;
+                    }
+
+                    if (cart == null)
+                    {
+                        var stock = rewardItem.ProdStock;
+                        var specIds = new[] { stock.FK_S1id, stock.FK_S2id }.Where(x => x.HasValue && x.Value > 0)
+                            .Select(x => x!.Value).Distinct().ToList();
+                        var specTitles = specIds.Any()
+                            ? await db.Prod_Specs.Where(x => specIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.Title)
+                            : new Dictionary<long, string>();
+                        cart = new Core.Models.ShoppingCart
+                        {
+                            FK_PSid = stock.Id, FK_PriceId = null, Price = rewardItem.OfferPrice, Bonus = 0,
+                            Quantity = wanted, FK_Tid = baseCarts.Select(x => x.FK_Tid).FirstOrDefault(),
+                            FK_Uid = userId, UUID = uuid, Ser_No = 500, FK_S1id = stock.FK_S1id,
+                            FK_S2id = stock.FK_S2id, ProductId = stock.FK_Pid, ProdName = stock.Prod.Title,
+                            S1Title = stock.FK_S1id.HasValue && specTitles.TryGetValue(stock.FK_S1id.Value, out var s1) ? s1 : null,
+                            S2Title = stock.FK_S2id.HasValue && specTitles.TryGetValue(stock.FK_S2id.Value, out var s2) ? s2 : null,
+                            IsAdditional = true, CreatorUserId = userId, CreationTime = now
+                        };
+                        db.ShoppingCarts.Add(cart);
+                    }
+                    else
+                    {
+                        cart.Quantity = wanted;
+                        cart.LastModifierUserId = userId;
+                        cart.LastModificationTime = now;
+                    }
+                }
+
+                await db.SaveChangesAsync();
+                response.Success = true;
+                response.Message = "優惠商品已更新。";
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Error = "AddOnSelectionUpdateFailed";
+                response.Message = ex.Message;
+            }
             return response;
         }
         private bool IsCantBuyProdState(Prod prod) {
@@ -488,6 +826,15 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         itemResult.Success = false;
                         itemResult.Error = "InvalidQuantity";
                         itemResult.Message = "數量不可小於 0。";
+                        response.Success = false;
+                        continue;
+                    }
+
+                    if (sc.IsAdditional && requested > original)
+                    {
+                        itemResult.Success = false;
+                        itemResult.Error = "AdditionalQuantityLocked";
+                        itemResult.Message = "加價購／贈品數量須回到商品頁依活動資格選取。";
                         response.Success = false;
                         continue;
                     }
@@ -678,7 +1025,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 foreach (var shoppingCart in shoppingCarts)
                 {
                     var prod_price_id = await db.Prod_Prices.Where(e => e.Id == shoppingCart.FK_PriceId).Select(e => e.Id).FirstOrDefaultAsync();
-                    if (prod_price_id == 0)
+                    if (!shoppingCart.IsAdditional && prod_price_id == 0)
                     {
                         var prices_data = await productAppService.GetPriceDataAll(shoppingCart.FK_PSid);
                         shoppingCart.FK_PriceId = prices_data[0].Id;
@@ -713,6 +1060,9 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     temp_output.OldPrice = shoppingCart.Price;
                     temp_output.DynamicPrice = prod_stocks?.Price ?? 0;
                     temp_output.OldBonus = shoppingCart.Bonus ?? 0;
+                    temp_output.IsAdditional = shoppingCart.IsAdditional;
+                    if (shoppingCart.IsAdditional)
+                        temp_output.PriceLabel = shoppingCart.Price <= 0 ? "贈品" : "加價購";
 
                     temp_output.Title = prods?.Title ?? "";
                     if (shoppingCart.IsOrder)
@@ -808,7 +1158,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     decimal currentPrice = temp_output.OldPrice;
                     int currentBonus = shoppingCart.Bonus ?? 0;
 
-                    if (prices.Any() && prod_price != null)
+                    if (!shoppingCart.IsAdditional && prices.Any() && prod_price != null)
                     {
                         var temp_price = prices
                             .FirstOrDefault(e => e.Id == prod_price.Id)

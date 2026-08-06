@@ -11,7 +11,9 @@
 <input id="MarketingCanUseProdAddition"
        type="hidden"
        value="@canUseProdAddition.ToString().ToLowerInvariant()" />
+<link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/StoreSettings/MarketingSettings.min.css" asp-append-version="true" />
+<script src="~/lib/swiper/swiper-bundle.min.js" asp-append-version="true"></script>
 <script src="~/js/StoreSettings/MarketingSettings.min.js" asp-append-version="true"></script>
 
 <div>
@@ -115,11 +117,6 @@
                     </ul>
                 </div>
 
-                <div class="marketing-input-legend" role="note">
-                    <span class="marketing-input-swatch" aria-hidden="true"></span>
-                    <span><strong>淡黃色欄位可輸入或選擇</strong>，紅色星號為必填；灰色欄位代表目前停用。</span>
-                </div>
-
                 <div class="marketing-section">
                     <div class="marketing-section-title">基本資料</div>
 
@@ -177,8 +174,8 @@
                                 <div class="form-check marketing-rule-card">
                                     <input id="RuleProductAddOn" class="form-check-input" type="radio" name="RuleMode" value="product-addon" required>
                                     <label class="form-check-label" for="RuleProductAddOn">
-                                        <span class="fw-bold">指定商品加價購／贈品</span>
-                                        <small class="d-block text-muted">購買指定商品達件數，可選優惠商品</small>
+                                        <span class="fw-bold">指定商品滿件加價購／贈品</span>
+                                        <small class="d-block text-muted">指定商品任選合計達件數，可選優惠商品</small>
                                     </label>
                                 </div>
 
@@ -198,6 +195,10 @@
                                     </label>
                                 </div>
                             }
+                        </div>
+                        <div id="RuleTypeLockHint" class="marketing-rule-lock-hint d-none">
+                            <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+                            此活動已離開草稿狀態。為保留活動成效分析的一致性，優惠類型不可變更；如需其他類型，請新增活動。
                         </div>
                     </div>
 
@@ -269,6 +270,17 @@
                                     <div id="ScopeProductRows" class="marketing-item-list"></div>
                                 </div>
 
+                                <div id="AddOnQuantitySection" class="marketing-compact-setting marketing-condition-quantity-setting mt-3 d-none">
+                                    <div class="marketing-compact-setting-row">
+                                        <label class="form-label required_sign mb-0" for="InputAddOnMinQuantity">每次資格需合計購買件數</label>
+                                        <div class="input-group marketing-quantity-input">
+                                            <input id="InputAddOnMinQuantity" class="form-control" type="number" min="1" value="1" data-form-type="number">
+                                            <span class="input-group-text">件</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-text">上方指定商品可混搭計算；合計達此件數即可取得一次資格。</div>
+                                </div>
+
                                 <div id="AddOnAmountSection" class="mt-3 d-none">
                                     <label id="AddOnAmountLabel" class="form-label required_sign" for="InputAddOnMinAmount">滿額門檻</label>
                                     <div class="input-group">
@@ -278,11 +290,6 @@
                                     <div id="AddOnAmountHelp" class="form-text"></div>
                                 </div>
 
-                                <div class="marketing-panel-setting mt-3">
-                                    <label class="form-label required_sign" for="InputSelectionQuantity">每次資格可選件數</label>
-                                    <input id="InputSelectionQuantity" class="form-control" type="number" min="1" value="1" data-form-type="number">
-                                    <div class="form-text">優惠商品池為 N，此欄位即 N 選 M 的 M。</div>
-                                </div>
                             </section>
 
                             <section class="marketing-config-panel marketing-reward-panel">
@@ -296,12 +303,27 @@
                                 <div id="RewardProductRows" class="marketing-item-list"></div>
                                 <div id="RewardProductEmpty" class="marketing-empty-state">尚未設定優惠商品</div>
 
-                                <div class="marketing-panel-setting mt-3">
-                                    <label class="form-label" for="InputMaxSelectionQuantity">單筆訂單總上限</label>
-                                    <input id="InputMaxSelectionQuantity" class="form-control" type="number" min="1" value="1" data-form-type="number">
-                                    <div class="form-text">預設 1 件；仍受每項商品上限限制。</div>
+                                <div class="marketing-reward-limit-grid mt-3">
+                                    <div class="marketing-compact-setting">
+                                        <div class="marketing-compact-setting-row">
+                                            <label class="form-label required_sign mb-0" for="InputSelectionQuantity">每次資格可選件數</label>
+                                            <div class="input-group marketing-quantity-input">
+                                                <input id="InputSelectionQuantity" class="form-control" type="number" min="1" value="1" data-form-type="number">
+                                                <span class="input-group-text">件</span>
+                                            </div>
+                                        </div>
+                                        <div id="SelectionQuantityHelp" class="form-text">取得一次資格後，可從優惠商品中選擇 1 件。</div>
+                                    </div>
                                 </div>
                             </section>
+                        </div>
+
+                        <div id="MarketingActivitySummary" class="marketing-activity-summary d-none">
+                            <span class="material-symbols-outlined" aria-hidden="true">summarize</span>
+                            <div>
+                                <strong>活動概要</strong>
+                                <div id="MarketingActivitySummaryText"></div>
+                            </div>
                         </div>
 
                         <div id="MarketingOfferPreview" class="marketing-offer-preview"></div>

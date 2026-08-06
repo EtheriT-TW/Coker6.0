@@ -478,6 +478,22 @@
                     }
                 });
 
+                const rewardCartIds = result && (result.object || result.Object);
+                if (Array.isArray(rewardCartIds)) {
+                    rewardCartIds.forEach(function (rewardCartId) {
+                        getCartDropOne(rewardCartId).done(function (drop) {
+                            const exists = $('#Car_Dropdown > ul > li').filter(function () {
+                                return normalizeNullableInt($(this).data('scid')) === normalizeNullableInt(rewardCartId);
+                            }).length > 0;
+                            if (exists) {
+                                if (typeof window.CartDropUpdate === 'function') window.CartDropUpdate(drop);
+                            } else if (typeof window.CartDropAdd === 'function') {
+                                window.CartDropAdd(drop);
+                            }
+                        });
+                    });
+                }
+
                 if (typeof options.onSuccess === 'function') {
                     options.onSuccess(result);
                 }

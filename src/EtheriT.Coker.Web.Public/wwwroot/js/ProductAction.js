@@ -117,15 +117,56 @@
 function CartDropInit() {
     Product.GetAll.Cart().done(function (result) {
         if (result.length > 0) {
+            result.sort(function (left, right) {
+                return Number(left.isAdditional === true) - Number(right.isAdditional === true);
+            });
             for (var i = 0; i < result.length; i++) {
                 CartDropAdd(result[i])
             }
         }
     })
 }
+
+function CartDropPosition() {
+    var button = document.getElementById("btn_car_dropdown");
+    var menu = document.getElementById("Car_Dropdown");
+    if (!button || !menu || !menu.classList.contains("show")) return;
+
+    var buttonRect = button.getBoundingClientRect();
+    var menuWidth = Math.min(menu.offsetWidth || 280, window.innerWidth - 16);
+    var left = buttonRect.left;
+
+    if (left + menuWidth > window.innerWidth - 8) {
+        left = buttonRect.right - menuWidth;
+    }
+
+    left = Math.max(8, Math.min(left, window.innerWidth - menuWidth - 8));
+    menu.style.setProperty("--cart-dropdown-left", `${left}px`);
+    menu.style.setProperty("--cart-dropdown-top", `${buttonRect.bottom + 8}px`);
+    menu.style.setProperty("--cart-dropdown-available-height", `${Math.max(window.innerHeight - buttonRect.bottom - 16, 160)}px`);
+    menu.classList.add("cart-dropdown--positioned");
+}
+
+$(document)
+    .off("shown.bs.dropdown.cartPosition", "#btn_car_dropdown")
+    .on("shown.bs.dropdown.cartPosition", "#btn_car_dropdown", CartDropPosition);
+$(window)
+    .off("resize.cartPosition scroll.cartPosition")
+    .on("resize.cartPosition scroll.cartPosition", CartDropPosition);
+
 function CartDropAdd(result) {
     var $template = $($("#Template_Car_Dropdown").html()).clone();
     if (!result.available) $template.addClass("unavailable");
+    if (result.isAdditional === true) {
+        $template.addClass("cart-item--additional");
+        $template.find("figcaption").prepend(
+            $("<span></span>")
+                .addClass("cart-item__type-badge")
+                .text(result.priceLabel || "加價購")
+        );
+    } else {
+        $template.addClass("cart-item--primary");
+    }
     $template = HeaderDataInsert($template, result)
     $template.data("scid", result.scId);
     $template.find(".btn_cart_delete").on("click", function () {
@@ -135,7 +176,14 @@ function CartDropAdd(result) {
         });
     });
 
-    $("#Car_Dropdown > ul").append($template);
+    var $cartList = $("#Car_Dropdown > ul");
+    if (result.isAdditional === true) {
+        $cartList.append($template);
+    } else {
+        var $firstAdditional = $cartList.children(".cart-item--additional").first();
+        if ($firstAdditional.length) $template.insertBefore($firstAdditional);
+        else $cartList.append($template);
+    }
 
     var car_num = $("#Car_Badge").text() == "" ? 1 : parseInt($("#Car_Badge").text()) + 1;
     $("#Car_Badge").text(car_num.toString());

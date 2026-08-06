@@ -384,6 +384,10 @@
             } else {
                 $quantityWrap.removeClass('isEmpty');
             }
+
+            if (window.ProductAddOnPurchase && typeof window.ProductAddOnPurchase.updateQuantity === 'function') {
+                window.ProductAddOnPurchase.updateQuantity(controller.state.selection.current.quantity);
+            }
         }
 
         function syncButtonState() {
@@ -447,14 +451,23 @@
                 return;
             }
 
+            let payload = controller.state.selection.buildCartPayload(controller.state.productId);
+            if (window.ProductAddOnPurchase && typeof window.ProductAddOnPurchase.applyToPayload === 'function') {
+                payload = window.ProductAddOnPurchase.applyToPayload(
+                    payload,
+                    controller.state.selection.current.quantity
+                );
+            }
+
             submitCart({
                 t: t,
                 api: controller.options.api,
-                payload: controller.state.selection.buildCartPayload(controller.state.productId),
+                payload: payload,
                 onSuccess: function (result) {
                     controller.state.selection.decreaseStockAfterAdd();
                     controller.state.selection.setQuantity(controller.state.selection.getActiveStock()?.minQty || 1);
                     renderSelectionArea();
+                    if (window.ProductAddOnPurchase) window.ProductAddOnPurchase.reset();
 
                     if (typeof controller.options.hooks.afterAddToCart === 'function') {
                         controller.options.hooks.afterAddToCart(result, controller);

@@ -66,6 +66,15 @@ function updateGroupSelectedSubtotal($group) {
     $group.find('.js-group-subtotal').attr('data-subtotal', sum).text(`$${sum.toLocaleString()}`);
     cart.Items.syncHeaderCheckbox($group);
 }
+function syncAdditionalSelection($group) {
+    const hasSelectedPrimary = $group
+        .find('li.purchase_item:not(.cart-additional-item) input[name="buyItems"]:enabled:checked')
+        .length > 0;
+
+    $group.find('li.cart-additional-item input[name="buyItems"]:enabled')
+        .prop('checked', hasSelectedPrimary);
+    $group.toggleClass('has-selected-primary', hasSelectedPrimary);
+}
 function clearOtherGroupsExcept($group) {
     $('.purchase_group').not($group).each(function () {
         const $g = $(this);
@@ -128,7 +137,26 @@ function renderCartGroups(result) {
         const $groupItems = $group.find('.group_items');
 
         // 塞入該組 items（沿用你原有 CartListAdd，但改讓它可以指定容器）
-        items.forEach(row => {
+        const orderedItems = items.slice().sort(function (a, b) {
+            return Number(a.isAdditional === true) - Number(b.isAdditional === true);
+        });
+        let additionalDividerAdded = false;
+        const appendAdditionalSection = function () {
+            if (additionalDividerAdded) return;
+            $groupItems.append(
+                '<li class="cart-additional-section-label js-cart-addon-group-action d-none" data-group-id="' + meta.id + '">' +
+                '<span><i class="fa-solid fa-turn-down me-2"></i>附屬優惠商品</span>' +
+                '<span class="cart-additional-section-actions">' +
+                '<small>會隨本組主要商品一併結帳</small>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger js-open-cart-addons">' +
+                '<i class="fa-solid fa-plus me-1"></i>補選／調整</button></span></li>'
+            );
+            additionalDividerAdded = true;
+        };
+        orderedItems.forEach(row => {
+            if (row.isAdditional === true && !additionalDividerAdded) {
+                appendAdditionalSection();
+            }
             var originalPrice = row.oldPrice != null ? row.oldPrice : row.price;
             var currentPrice = row.price != null ? row.price : 0;
 
@@ -143,6 +171,7 @@ function renderCartGroups(result) {
             row.__groupId = meta.id;
             cart.Items.CartListAdd(row, $groupItems);
         });
+        appendAdditionalSection();
 
 
         // 初始化本組已選小計/件數
@@ -200,11 +229,15 @@ function CartInit(result) {
             $firstGroup.find('.js-group-check').prop('checked', false);
         }
 
+        cart.Items.syncAdditionalSelection($firstGroup);
         cart.Items.updateGroupSelectedSubtotal($firstGroup);
         cart.Pricing.TotalCount();
         cart.Pricing.updateNextStepByBonus();
         cart.Payment.Core.onAmountChanged();
         cart.Payment.Core.reloadActiveEmbeddedProvider();
+        if (cart.Marketing && typeof cart.Marketing.loadCartMarketingCampaigns === 'function') {
+            cart.Marketing.loadCartMarketingCampaigns();
+        }
     }
 }
 function CartListAdd(data, $container) {
@@ -213,9 +246,16 @@ function CartListAdd(data, $container) {
 
         if (exists != null) {
             data.price = exists.Price;
+            exists.PId = data.pId;
+            exists.PSId = data.psId;
+            exists.IsAdditional = data.isAdditional === true;
+            exists.Quantity = data.quantity;
         } else {
             var obj = {};
             obj['Id'] = data.scId;
+            obj['PId'] = data.pId;
+            obj['PSId'] = data.psId;
+            obj['IsAdditional'] = data.isAdditional === true;
             obj['Price'] = data.price;
             obj['OriginalPrice'] = data.originalPriceInCart ?? data.price;
             obj['Quantity'] = data.quantity;
@@ -244,6 +284,20 @@ function CartListAdd(data, $container) {
     $template.data("scId", data.scId);
     $template.attr('data-group-id', groupId);
     $template = cart.Items.CartListInsert($template, data);
+
+    if (data.isAdditional === true) {
+        $template.addClass("cart-additional-item").attr("data-additional", "true");
+        $template.find('.pro_name').first().before(
+            '<span class="cart-additional-badge"><i class="fa-solid fa-link me-1"></i>附屬優惠品</span>'
+        );
+        $template.find('input[name="buyItems"]')
+            .addClass('cart-additional-check')
+            .attr({ tabindex: '-1', 'aria-hidden': 'true' });
+        $template.find('.pro_quantity').prop('readonly', true).attr('aria-label', '附屬優惠品數量');
+        $template.find('.btn_count_plus').attr('title', '補選或調整優惠商品');
+    } else {
+        $template.addClass("cart-primary-item");
+    }
 
     var validationCode = data.validationCode || data.ValidationCode || '';
 
@@ -286,6 +340,10 @@ function CartListAdd(data, $container) {
 
     $template.find(".btn_count_plus").on("click", function () {
         if ($template.hasClass("cart-item-error")) return;
+        if ($template.hasClass("cart-additional-item")) {
+            $template.closest('.purchase_group').find('.js-open-cart-addons').first().trigger('click');
+            return;
+        }
 
         var $self_bro = $(this).siblings(".pro_quantity");
         const $group = $template.closest('.purchase_group');
@@ -659,6 +717,13 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
             syncGroupAndTotal();
             CartDropReset(scid, quantity);
             cart.Payment.Core.onAmountChanged();
+            if (entry && entry.IsAdditional !== true && cart.Marketing && typeof cart.Marketing.loadCartMarketingCampaigns === 'function') {
+                cart.Marketing.loadCartMarketingCampaigns().always(function () {
+                    if (typeof cart.Marketing.requireProductAddOnAdjustment === 'function') {
+                        cart.Marketing.requireProductAddOnAdjustment();
+                    }
+                });
+            }
             return;
         }
 
@@ -694,6 +759,7 @@ function CartDelete(self, id, success, error) {
                 $group.remove();
             } else {
                 $group.find('[data-field="count"]').text(`${remainingCount} 件`);
+                cart.Items.syncAdditionalSelection($group);
                 cart.Items.updateGroupSelectedSubtotal($group);
             }
         }
@@ -810,6 +876,7 @@ function ValidateCartOnInit() {
         CartListAdd: CartListAdd,
         refreshHasProds: refreshHasProds,
         CartListInsert: CartListInsert,
+        syncAdditionalSelection: syncAdditionalSelection,
         CartQuantityUpdate: CartQuantityUpdate,
         CartDelete: CartDelete,
         getSelectedCartIds: getSelectedCartIds,

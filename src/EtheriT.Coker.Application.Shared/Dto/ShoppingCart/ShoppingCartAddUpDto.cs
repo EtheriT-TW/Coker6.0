@@ -11,5 +11,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public long? FK_S1id { get; set; }
         public long? FK_S2id { get; set; }
         public int Quantity { get; set; }
+        public List<ShoppingCartRewardSelectionDto> RewardSelections { get; set; } = new();
     }
 }

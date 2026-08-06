@@ -75,6 +75,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
 
         [HttpPost]
+        public async Task<ResponseMessageDto> UpdateAddOnSelections(ShoppingCartAddOnSelectionUpdateDto dto)
+        {
+            return await shoppingCartAppService.UpdateAddOnSelections(dto);
+        }
+
+        [HttpPost]
         public async Task<List<PaymentAvailabilityItemDto>> GetAvailablePayments(
             PaymentAvailabilityQueryDto dto)
         {

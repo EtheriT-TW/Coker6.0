@@ -167,7 +167,6 @@ var PreLoader;
     $("#switchApp .switch").on("click", function () {
         co.WebSite.exchange($(".active-app").first().data("id")).done(function (result) {
             if (result.success) {
-                co.Cookie.Add("LastWebSite", result.message);
                 const switchedUrl = new URL(window.location.href);
                 switchedUrl.searchParams.set("_site", result.message);
                 switchedUrl.searchParams.set("siteChanged", "true");

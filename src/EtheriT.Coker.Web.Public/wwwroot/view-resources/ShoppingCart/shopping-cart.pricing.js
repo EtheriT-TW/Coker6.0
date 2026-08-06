@@ -6,25 +6,33 @@
     cart.Pricing = cart.Pricing || {};
 
 function computeSelectedSubtotal() {
-    let sum = 0, bonus = 0;
+    let sum = 0, bonus = 0, discountEligibleSum = 0;
     $('.purchase_group li.purchase_item input[name="buyItems"]:checked').each(function () {
         const $li = $(this).closest('li.purchase_item');
         const $sub = $li.find('[data-key="subtotal"]');
         sum += Number($sub.data('subtotal') || 0);
         bonus += Number($sub.data('subtotal_bonus') || 0);
+        const scId = Number($li.data('scId'));
+        const stateItem = (S.shopping_cart_data || []).find(function (item) { return Number(item.Id) === scId; });
+        if (!stateItem || stateItem.IsAdditional !== true) {
+            discountEligibleSum += Number($sub.data('subtotal') || 0);
+        }
     });
-    return { sum, bonus };
+    return { sum, bonus, discountEligibleSum };
 }
 function TotalCount() {
-    const { sum, bonus } = cart.Pricing.computeSelectedSubtotal();
+    const { sum, bonus, discountEligibleSum } = cart.Pricing.computeSelectedSubtotal();
+    const rewardAmount = cart.Marketing && typeof cart.Marketing.refreshRewardCampaigns === "function"
+        ? Number(cart.Marketing.refreshRewardCampaigns() || 0)
+        : 0;
 
     // 商品原始小計
-    S.subtotal = Number(sum || 0);
+    S.subtotal = Number(sum || 0) + rewardAmount;
     S.order_data.bonus = Number(bonus || 0);
 
     // 行銷活動折扣：只影響畫面試算，不作為正式訂單依據
     var marketingDiscountResult = cart.Marketing && typeof cart.Marketing.calculateOrderDiscount === "function"
-        ? cart.Marketing.calculateOrderDiscount(S.subtotal)
+        ? cart.Marketing.calculateOrderDiscount(Number(discountEligibleSum || 0))
         : { discountAmount: 0, memo: "" };
 
     var marketingDiscount = Number(marketingDiscountResult.discountAmount || 0);

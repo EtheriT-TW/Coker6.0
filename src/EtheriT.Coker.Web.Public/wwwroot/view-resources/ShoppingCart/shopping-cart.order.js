@@ -52,6 +52,9 @@
             }
 
             S.order_header_data.OrderDetails = S.order_header_data.OrderDetails.filter(e => ids.includes(e.Id));
+            S.order_header_data.RewardSelections = cart.Marketing && typeof cart.Marketing.getRewardSelections === "function"
+                ? cart.Marketing.getRewardSelections()
+                : [];
             S.order_header_data.remark = S.$remark.val();
 
             if (typeof (S.order_header_data.remark) == "undefined" || S.order_header_data.remark == "") {

@@ -1411,8 +1411,10 @@ namespace EtheriT.Coker.Application
             if (prodIds == null || prodIds.Count == 0)
                 return new Dictionary<long, string>();
 
-            long webid = await loginUserData.GetWebsiteId();
-            string orgName = await loginUserData.GetWebsiteOrgName();
+            // 後台由登入身分取得網站；Public 專案則必須由 WebConfig 取得前台網站。
+            // 使用 Common 版本可同時涵蓋兩種情境，避免匿名前台取得 websiteId=0 而全部回傳 noImg。
+            long webid = await loginUserData.GetCommonWebsiteId();
+            string orgName = await loginUserData.GetWebsiteOrgName(webid);
 
             // 把「網站邊界」綁死在查詢裡，避免跨站撈圖
             var siteProdIds =

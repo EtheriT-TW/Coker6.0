@@ -146,6 +146,9 @@
             <div class="container-fluid position-relative">
                 <div class="ProductSwiper swiper">
                     <div class="swiper-wrapper">
+                        <div class="swiper-slide product-media-loading">
+                            <img class="pro_display img-fluid" src="~/images/directory-loading.svg" alt="商品圖片載入中" />
+                        </div>
                     </div>
                 </div>
                 <button class="btn_swiper_prev_product rounded-circle border-0 text-white position-absolute start-0 opacity-50"><i class="fa-solid fa-chevron-left fs-3"></i></button>
@@ -272,6 +275,10 @@
 
     <div id="TabContent" class="tab-content container">
         <div id="ProductSpec" class="container tab-pane fade show active" role="tabpanel" tabindex="0">
+            @if (shoppingEnable && hasShoppingCar && storeBuyState.IndexOf("noPay") < 0)
+            {
+                <partial name="_ProductAddOnPurchase" />
+            }
             <div class="spec-list mt-3"></div>
         </div>
         <div id="ProductDescription" class="container tab-pane fade" role="tabpanel" aria-labelledby="pills-description" tabindex="0">

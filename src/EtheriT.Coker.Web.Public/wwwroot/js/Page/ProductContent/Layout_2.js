@@ -166,18 +166,23 @@
 
     function submitAddToCart($btn, stock, price, qty) {
         const $card = $btn.closest('.spec-card');
+        let payload = buildCartPayload(stock, price, qty);
+        if (window.ProductAddOnPurchase && typeof window.ProductAddOnPurchase.applyToPayload === 'function') {
+            payload = window.ProductAddOnPurchase.applyToPayload(payload, qty);
+        }
 
         $btn.prop('disabled', true);
 
         submitCart({
             t: t,
-            payload: buildCartPayload(stock, price, qty),
+            payload: payload,
             onSuccess: function () {
                 if (!renderContext.noStockManagement) {
                     stock.stock = Math.max(normalizeNullableInt(stock.stock) - qty, 0);
                 }
 
                 refreshRow($card);
+                if (window.ProductAddOnPurchase) window.ProductAddOnPurchase.reset();
             },
             onAlways: function () { $btn.prop('disabled', false); }
         });
@@ -355,7 +360,9 @@
         const step = readMinQty(stock);
         const current = normalizeNullableInt($input.val(), step);
 
-        $input.val(clampQuantity(stock, current + direction * step, $card.data('noStockManagement') === true));
+        const quantity = clampQuantity(stock, current + direction * step, $card.data('noStockManagement') === true);
+        $input.val(quantity);
+        if (window.ProductAddOnPurchase) window.ProductAddOnPurchase.updateQuantity(quantity);
     }
 
     function bindQtyStepper($container) {
@@ -371,7 +378,9 @@
             const $input = $(this);
             const $card = $input.closest('.spec-card');
 
-            $input.val(clampQuantity($card.data('stock'), $input.val(), $card.data('noStockManagement') === true));
+            const quantity = clampQuantity($card.data('stock'), $input.val(), $card.data('noStockManagement') === true);
+            $input.val(quantity);
+            if (window.ProductAddOnPurchase) window.ProductAddOnPurchase.updateQuantity(quantity);
         });
     }
 

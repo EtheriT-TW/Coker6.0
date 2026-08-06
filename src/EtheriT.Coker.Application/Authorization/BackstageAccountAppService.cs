@@ -141,6 +141,10 @@ namespace EtheriT.Coker.Application.Authorization
                 output.Secret = token.id;
                 output.EndDateTime = endDateTime;
                 output.Success = true;
+                cookieManager.Set(
+                    "LastWebSite",
+                    websiteId.Value.ToString(),
+                    CookiePurposeEnum.LastWebsite);
             }
             catch (Exception e)
             {

@@ -1,6 +1,7 @@
 ﻿
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Order
 {
@@ -47,5 +48,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? CVSTelephone { get; set; }
         public string? CVSOutSide { get; set; }
         public List<OrderDetailAddDto> OrderDetails { get; set; }
+        public List<ShoppingCartRewardSelectionDto> RewardSelections { get; set; } = new();
     }
 }

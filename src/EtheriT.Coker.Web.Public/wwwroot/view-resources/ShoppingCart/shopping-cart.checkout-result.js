@@ -93,9 +93,64 @@
         cart.CheckoutResult.toggleStep4InvoiceDisplay(header);
         cart.CheckoutResult.toggleStep4PaymentDisplay(header);
 
-        cart.Utils.TemplateDataInsert($("#Purchase"), $("#CollapsePurchase"), $("#Template_Purchase_Details"), details);
+        cart.CheckoutResult.renderPurchaseDetails(details);
 
         S.buy_step_swiper.update();
+    }
+    function renderPurchaseDetails(details) {
+        details = Array.isArray(details) ? details : [];
+        var primaryDetails = details.filter(function (item) {
+            return cart.Utils.getValueIgnoreCase(item, "isAdditional") !== true;
+        });
+        var additionalDetails = details.filter(function (item) {
+            return cart.Utils.getValueIgnoreCase(item, "isAdditional") === true;
+        }).sort(function (left, right) {
+            var leftParent = String(cart.Utils.getValueIgnoreCase(left, "additionalParentLabel") || "本筆訂單");
+            var rightParent = String(cart.Utils.getValueIgnoreCase(right, "additionalParentLabel") || "本筆訂單");
+            return leftParent.localeCompare(rightParent, "zh-Hant");
+        });
+        var orderedDetails = primaryDetails.concat(additionalDetails);
+        var lastParentLabel = null;
+
+        cart.Utils.TemplateDataInsert(
+            $("#Purchase"),
+            $("#CollapsePurchase"),
+            $("#Template_Purchase_Details"),
+            orderedDetails,
+            {
+                beforeItem: function (item) {
+                    if (cart.Utils.getValueIgnoreCase(item, "isAdditional") !== true) return null;
+
+                    var parentLabel = String(
+                        cart.Utils.getValueIgnoreCase(item, "additionalParentLabel") || "本筆訂單"
+                    );
+                    if (parentLabel === lastParentLabel) return null;
+                    lastParentLabel = parentLabel;
+
+                    var $heading = $('<li class="step4-additional-heading"></li>');
+                    $heading.append('<i class="fa-solid fa-turn-down" aria-hidden="true"></i>');
+                    var $text = $('<span></span>');
+                    $text.append('<strong>附屬優惠商品</strong>');
+                    $text.append(
+                        $('<small></small>').text(
+                            parentLabel === "本筆訂單"
+                                ? "本筆訂單符合活動後一併成立"
+                                : '隨「' + parentLabel + '」一併成立'
+                        )
+                    );
+                    $heading.append($text);
+                    return $heading;
+                },
+                decorateItem: function ($item, item) {
+                    if (cart.Utils.getValueIgnoreCase(item, "isAdditional") !== true) return;
+
+                    $item.addClass("step4-additional-item");
+                    $item.find(".pro_name").before(
+                        '<span class="step4-additional-badge"><i class="fa-solid fa-link me-1" aria-hidden="true"></i>加價購／贈品</span>'
+                    );
+                }
+            }
+        );
     }
     function toggleStep4EndlineDisplay(header) {
         header = header || {};
@@ -339,6 +394,7 @@
         hashChange: hashChange,
         GetOrderPage: GetOrderPage,
         SuccessPageDataInsert: SuccessPageDataInsert,
+        renderPurchaseDetails: renderPurchaseDetails,
         toggleStep4EndlineDisplay: toggleStep4EndlineDisplay,
         toggleStep4InvoiceDisplay: toggleStep4InvoiceDisplay,
         toggleStep4PaymentDisplay: toggleStep4PaymentDisplay,

@@ -6,6 +6,12 @@
     cart.Init = cart.Init || {};
 
     function PageReady() {
+        // Bootstrap Modal 不應留在 Swiper 的 transform 容器內，否則底部按鈕可能被遮罩攔截。
+        var $addOnModal = $('#CartProductAddOnModal');
+        if ($addOnModal.length && !$addOnModal.parent().is('body')) {
+            $addOnModal.appendTo(document.body);
+        }
+
         $('#RadioPayment .payment_display').on("click", function () {
             cart.Payment.Core.updatePaymentRadioUI($(this).closest('.form-check'));
             cart.Payment.Core.RadioPayment();
@@ -28,23 +34,37 @@
             $group.find('.js-group-check').prop('indeterminate', false);
 
             $validItems.prop('checked', checked);
+            cart.Items.syncAdditionalSelection($group);
 
             cart.Items.updateGroupSelectedSubtotal($group);
             cart.Pricing.TotalCount();
             cart.Pricing.updateNextStepByBonus();
             cart.Payment.Core.onAmountChanged();
+            if (cart.Marketing && typeof cart.Marketing.refreshProductAddOnPrompt === 'function') {
+                cart.Marketing.refreshProductAddOnPrompt();
+            }
         });
 
         // 單一品項
         $(document).on('change', '.purchase_group li.purchase_item input[name="buyItems"]', function () {
             const $group = $(this).closest('.purchase_group');
 
+            if ($(this).closest('.purchase_item').hasClass('cart-additional-item')) {
+                cart.Items.syncAdditionalSelection($group);
+                return;
+            }
+
             if (this.checked) cart.Items.clearOtherGroupsExcept($group); // 互斥：勾任何一個品項就清其他組
+
+            cart.Items.syncAdditionalSelection($group);
 
             cart.Items.updateGroupSelectedSubtotal($group);
             cart.Pricing.TotalCount();
             cart.Pricing.updateNextStepByBonus();
             cart.Payment.Core.onAmountChanged();
+            if (cart.Marketing && typeof cart.Marketing.refreshProductAddOnPrompt === 'function') {
+                cart.Marketing.refreshProductAddOnPrompt();
+            }
         });
 
         cart.Payment.Core.initAll();
@@ -73,6 +93,19 @@
                 prevEl: ".btn_swiper_prev_buystep",
             }
         });
+
+        var nextStepButton = document.querySelector('.btn_swiper_next_buystep');
+        if (nextStepButton && nextStepButton.dataset.marketingValidationBound !== 'true') {
+            nextStepButton.dataset.marketingValidationBound = 'true';
+            nextStepButton.addEventListener('click', function (event) {
+                if (!S.buy_step_swiper || S.buy_step_swiper.activeIndex !== 0) return;
+                if (cart.Marketing && typeof cart.Marketing.validateProductAddOnBeforeNext === 'function' &&
+                    !cart.Marketing.validateProductAddOnBeforeNext()) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            }, true);
+        }
 
         S.buy_step_swiper.on('slideChangeTransitionEnd', function () {
             if (S.gotop_switch) {

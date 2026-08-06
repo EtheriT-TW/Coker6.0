@@ -56,22 +56,8 @@
                 return;
             }
 
-            const lastWebSite = co.Cookie.Get("LastWebSite");
-
-            // LastWebSite 應該是網站 ID，不應該是 /Account/Index
-            // 如果不是數字，就不要拿來 exchange，直接回 returnUrl
-            if (!lastWebSite || isNaN(lastWebSite)) {
-                location.href = returnUrl;
-                return;
-            }
-
-            co.WebSite.exchange(lastWebSite).done(function (exchangeResult) {
-                if (exchangeResult.success) {
-                    location.href = returnUrl;
-                } else {
-                    location.href = co.Data.DefauleUrl || "/";
-                }
-            });
+            // Login API 已依後端的 HttpOnly LastWebSite Cookie 選定網站。
+            location.href = returnUrl;
         });
     });
 

@@ -83,6 +83,7 @@
         $panel.append($(".recipient-copy-actions"));
         $panel.append($("#Form_Recipient"));
         $panel.append($("#ShippingSection"));
+        $panel.append($("#Form_Memo"));
     }
 
     function PrepareActivePanel() {

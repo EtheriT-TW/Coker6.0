@@ -127,6 +127,9 @@
             <div class="container-fluid position-relative">
                 <div class="ProductSwiper swiper">
                     <div class="swiper-wrapper">
+                        <div class="swiper-slide product-media-loading">
+                            <img class="pro_display img-fluid" src="~/images/directory-loading.svg" alt="商品圖片載入中" />
+                        </div>
                     </div>
                 </div>
                 <button class="btn_swiper_prev_product rounded-circle border-0 text-white position-absolute start-0 opacity-50"><i class="fa-solid fa-chevron-left fs-3"></i></button>
@@ -249,6 +252,10 @@
                     </div>
                 }
             </div>
+            @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+            {
+                <partial name="_ProductAddOnPurchase" />
+            }
             @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
             {
                 <div class="btn_addToCar d-flex mb-2 align-items-center justify-content-center text-white" type="button"

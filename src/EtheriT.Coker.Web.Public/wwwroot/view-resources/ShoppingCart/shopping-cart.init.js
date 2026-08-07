@@ -81,6 +81,7 @@
             enabled: false,
             allowTouchMove: false,
             simulateTouch: false,
+            returnFocus: false,
             pagination: {
                 el: ".swiper_pagination > .swiper_pagination_buystep",
                 clickable: true,
@@ -413,6 +414,7 @@
         }
 
         $(".btn_checkout").on("click", function () {
+            this.blur();
             cart.Payment.Core.Step3Monitor();
             S.shipMethodsChosen = S.shipMethodsChosen && cart.Shipping.HasSelectedCvsStore();
             if (!S.OrdererFilled) {

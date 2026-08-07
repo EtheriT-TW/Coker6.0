@@ -572,7 +572,17 @@
                 $('.js-save-cart-addons').prop('disabled', false);
                 return;
             }
-            window.location.reload();
+            cart.Items.ReloadCartDisplay().done(function () {
+                S.productAddOnDrafts = null;
+                var modalElement = document.getElementById('CartProductAddOnModal');
+                if (modalElement) bootstrap.Modal.getOrCreateInstance(modalElement).hide();
+                $('.js-save-cart-addons').prop('disabled', false);
+                Coker.sweet.success('優惠商品已更新', null, true);
+            }).fail(function () {
+                $('.cart-addon-modal-summary').text('優惠商品已儲存，但畫面更新失敗，請重新整理後確認。');
+                $('.js-save-cart-addons').prop('disabled', false);
+                Coker.sweet.warning('畫面更新失敗', '優惠商品已儲存，請重新整理購物車確認。', null, true);
+            });
         }).fail(function () {
             $('.cart-addon-modal-summary').text('無法更新，請稍後再試。');
             Coker.sweet.error('無法更新優惠商品', '請稍後再試。', null, true);

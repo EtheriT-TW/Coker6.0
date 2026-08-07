@@ -20,6 +20,7 @@ namespace EtheriT.Coker.Core.Models
         public int? Bonus { get; set; }
         public int? PriceType { get; set; }
         public bool IsAdditional { get; set; }
+        public long? FK_MarketingRewardItemId { get; set; }
         public int Ser_No { get; set; }
         // 是否已結帳
         public bool IsOrder { get; set; }
@@ -38,5 +39,6 @@ namespace EtheriT.Coker.Core.Models
         public Prod_Stock Prod_Stock { get; set; }
         public Prod_Price? Prod_Price { get; set; }
         public List<Order_Details> Order_Details { get; set; }
+        public virtual MarketingRewardItem? MarketingRewardItem { get; set; }
     }
 }

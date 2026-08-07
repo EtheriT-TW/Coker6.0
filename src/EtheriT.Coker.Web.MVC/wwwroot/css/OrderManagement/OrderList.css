@@ -99,6 +99,124 @@
     content: "\00d7";
 }
 
+/* ========================================
+   Order Details - Marketing Add-ons
+   ======================================== */
+
+/* 商品型加價購：
+   緊接所屬主商品，以縮排表示 parent-child */
+#OrderDetails .purchase_item.product-additional-item {
+    width: calc(100% - 2rem);
+    margin-left: 2rem;
+    padding-left: 0.75rem;
+    border-left: 3px solid #e6a2ad;
+    background: linear-gradient( 90deg, #fff5f6 0%, rgba(255, 250, 251, 0.35) 75%, transparent 100% );
+}
+
+
+    /* 商品型加價購圖片稍小，
+   進一步強化主商品 / 子商品層級 */
+    #OrderDetails .purchase_item.product-additional-item .pro_image {
+        width: 82%;
+        margin: auto;
+        display: block;
+    }
+
+
+/* 訂單型優惠：
+   不附屬任何單一商品，因此與一般商品同寬、不縮排 */
+#OrderDetails .purchase_item.order-additional-item {
+    width: 100%;
+    margin-left: 0;
+    padding-left: 2rem;
+    border-left: 0;
+    background: linear-gradient( 90deg, #fff8f9 0%, rgba(255, 250, 251, 0.18) 75%, transparent 100% );
+}
+
+
+    /* 訂單型優惠圖片維持正式商品尺寸 */
+    #OrderDetails .purchase_item.order-additional-item .pro_image {
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        object-fit:cover;
+    }
+
+
+/* 優惠商品標籤 */
+#OrderDetails .order-additional-badge {
+    display: table;
+    width: fit-content;
+    margin-bottom: 0.25rem;
+    padding: 0.1rem 0.48rem;
+    border-radius: 999px;
+    background: #fbe1e5;
+    color: #bd3048;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+
+/* 訂單層級優惠標題 */
+#OrderDetails .order-additional-heading {
+    list-style: none;
+    margin-top: 0.75rem;
+    padding: 0.65rem 1rem;
+    border-top: 1px solid #dee2e6;
+    border-bottom: 1px solid #f2d9dd;
+    background: #fff8f9;
+    color: #a63b4d;
+}
+
+    #OrderDetails .order-additional-heading strong,
+    #OrderDetails .order-additional-heading small {
+        display: block;
+    }
+
+    #OrderDetails .order-additional-heading strong {
+        font-size: 0.9rem;
+    }
+
+    #OrderDetails .order-additional-heading small {
+        margin-top: 0.12rem;
+        color: #806c70;
+        font-size: 0.78rem;
+        font-weight: normal;
+    }
+
+
+/* 商品型優惠結束後，下一個正式商品前恢復完整分界 */
+#OrderDetails
+.purchase_item.product-additional-item + .purchase_item.primary-order-item {
+    border-top: 1px solid #dee2e6;
+}
+
+#OrderDetails .purchase_item.primary-order-item img {
+    aspect-ratio: 4 / 3;
+    object-fit:cover;
+}
+
+
+/* 手機版縮排縮小 */
+@media (max-width: 767.98px) {
+
+    #OrderDetails .purchase_item.product-additional-item {
+        width: calc(100% - 0.75rem);
+        margin-left: 0.75rem;
+        padding-left: 0.45rem;
+    }
+
+    #OrderDetails .purchase_item.order-additional-item {
+        width: 100%;
+        margin-left: 0;
+        padding-left: 0;
+    }
+
+    #OrderDetails .order-additional-heading {
+        padding: 0.6rem 0.75rem;
+    }
+}
+
 .order_redeemBonus:before {
     content: "-";
     margin-right: 2px;

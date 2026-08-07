@@ -417,6 +417,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                     .WithMany(u => u.ShoppingCarts)
                     .HasForeignKey(f => f.FK_PSid)
                     .OnDelete(DeleteBehavior.NoAction);
+
+                o.HasOne(u => u.MarketingRewardItem)
+                    .WithMany(u => u.ShoppingCarts)
+                    .HasForeignKey(f => f.FK_MarketingRewardItemId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
                 o.HasOne(u => u.Prod_Price).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_PriceId).OnDelete(DeleteBehavior.SetNull);
                 o.HasIndex(f => new { f.FK_Tid, f.IsOrder });
             });

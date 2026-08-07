@@ -52,7 +52,7 @@
             Password: $("#password").val()
         }).done(function (result) {
             if (!result.success) {
-                alert(result.error);
+                co.sweet.error("登入失敗", result.error || "帳號或密碼不正確，請重新確認。");
                 return;
             }
 

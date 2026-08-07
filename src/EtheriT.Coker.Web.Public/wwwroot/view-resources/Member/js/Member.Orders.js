@@ -199,7 +199,24 @@
                         C.Order.Reorder($this.data("ohid")).done(function (result) {
                             if (result.success) {
                                 var ohidStr = ("000000000" + result.message).substring(String(result.message).length);
-                                w.location.href = "/" + w.OrgName + "/ShoppingCar?reorder" + ohidStr;
+                                var redirectToCart = function () {
+                                    w.location.href = "/" + w.OrgName + "/ShoppingCar?reorder" + ohidStr;
+                                };
+                                var reorderInfo = result.object || result.Object || {};
+                                var skippedQuantity = Number(
+                                    reorderInfo.skippedAdditionalQuantity ||
+                                    reorderInfo.SkippedAdditionalQuantity || 0
+                                );
+
+                                if (skippedQuantity > 0) {
+                                    C.sweet.warning(
+                                        "部分優惠商品未加入",
+                                        "原訂單有 " + skippedQuantity + " 件加價購／贈品，目前活動已關閉、失效或資格不足，因此只重新加入可購買的商品。",
+                                        redirectToCart
+                                    );
+                                } else {
+                                    redirectToCart();
+                                }
                             } else {
                                 C.sweet.warning("商品庫存不足", result.message, null);
                             }
@@ -219,10 +236,77 @@
             },
 
             renderDetails: function (frame, orderDetails) {
-                $.each(orderDetails, function (index, detail) {
+                orderDetails = Array.isArray(orderDetails) ? orderDetails : [];
+                // 後端已依主商品／訂單滿額來源排序，前端保留 API 順序。
+                var orderedDetails = orderDetails.slice();
+                var $list = frame.find(".list-group");
+                var orderAdditionalHeadingAdded = false;
+
+                $.each(orderedDetails, function (index, detail) {
                     if (detail == null) return;
 
-                    var listFrame = $($("#Template_Order_Details_List").html()).clone();
+                    var isAdditional = detail.isAdditional === true;
+
+                    var parentLabel = String(
+                        detail.additionalParentLabel || ""
+                    ).trim();
+
+                    var isOrderLevelAdditional =
+                        isAdditional &&
+                        parentLabel === "本筆訂單";
+
+                    // 訂單層級優惠才需要獨立標題。
+                    // 商品型加價購直接靠「緊接主商品 + 縮排」表達關係。
+                    if (isOrderLevelAdditional && !orderAdditionalHeadingAdded) {
+                        orderAdditionalHeadingAdded = true;
+
+                        var $heading = $(
+                            '<li class="list-group-item member-order-additional-heading"></li>'
+                        );
+
+                        var $headingText = $("<span></span>");
+
+                        $headingText.append(
+                            "<strong>訂單優惠商品</strong>"
+                        );
+
+                        $headingText.append(
+                            $("<small></small>").text(
+                                "本筆訂單符合優惠活動條件"
+                            )
+                        );
+
+                        $heading.append($headingText);
+                        $list.append($heading);
+                    }
+
+                    var listFrame = $(
+                        $("#Template_Order_Details_List").html()
+                    ).clone();
+
+                    if (isAdditional) {
+                        if (isOrderLevelAdditional) {
+                            // 訂單滿額／滿件優惠：
+                            // 不附屬任何單一商品，因此不縮排。
+                            listFrame
+                                .addClass("member-order-additional-item")
+                                .removeClass("member-additional-item");
+                        }
+                        else {
+                            // 商品型加價購：
+                            // 緊接主商品並縮排。
+                            listFrame
+                                .addClass("member-additional-item")
+                                .removeClass("member-order-additional-item");
+                        }
+
+                        listFrame.find(".title").before(
+                            '<span class="member-additional-badge">' +
+                            '<i class="fa-solid fa-link me-1" aria-hidden="true"></i>' +
+                            '加價購／贈品' +
+                            '</span>'
+                        );
+                    }
 
                     listFrame.find("a").attr({
                         href: "/" + w.OrgName + "/Member/product/" + detail.pId,
@@ -259,7 +343,7 @@
                         ? (detailBonus > 0 ? detailSubtotal.toLocaleString() + "<br />紅利：" + detailBonusSubtotal.toLocaleString() : detailSubtotal.toLocaleString())
                         : "紅利：" + detailBonusSubtotal.toLocaleString());
 
-                    frame.find(".list-group").append(listFrame);
+                    $list.append(listFrame);
                 });
             },
 

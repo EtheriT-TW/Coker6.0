@@ -583,14 +583,90 @@ function HashDataEdit() {
                     //keyId = order_header.id;
                     HeaderDataInsert(order_header)
 
-                    var order_details = result[0].orderDetails;
-                    var temp = $("#Template_Purchase_List").data("temp") || $($("#Template_Purchase_List").html()).clone();
-                    if (!!!$("#Template_Purchase_List").data("temp")) $("#Template_Purchase_List").data("temp", temp);
-                    $("#OrderDetails > .card-body > .purchase_list").empty();
+                    var order_details = Array.isArray(result[0].orderDetails)
+                        ? result[0].orderDetails
+                        : [];
+
+                    var temp =
+                        $("#Template_Purchase_List").data("temp") ||
+                        $($("#Template_Purchase_List").html()).clone();
+
+                    if (!!!$("#Template_Purchase_List").data("temp")) {
+                        $("#Template_Purchase_List").data("temp", temp);
+                    }
+
+                    var $purchaseList =
+                        $("#OrderDetails > .card-body > .purchase_list");
+
+                    $purchaseList.empty();
+
+                    var orderAdditionalHeadingAdded = false;
+
                     $.each(order_details, function (index, data) {
+
+                        var isAdditional = data.isAdditional === true;
+
+                        var parentLabel = String(
+                            data.additionalParentLabel || ""
+                        ).trim();
+
+                        var isOrderLevelAdditional =
+                            isAdditional &&
+                            parentLabel === "本筆訂單";
+
+                        // ==============================
+                        // 訂單層級優惠
+                        // ==============================
+                        if (
+                            isOrderLevelAdditional &&
+                            !orderAdditionalHeadingAdded
+                        ) {
+                            orderAdditionalHeadingAdded = true;
+
+                            $purchaseList.append(
+                                '<li class="order-additional-heading">' +
+                                '<strong>訂單優惠商品</strong>' +
+                                '<small>本筆訂單符合優惠活動條件</small>' +
+                                '</li>'
+                            );
+                        }
+
                         var frame = $(temp).clone();
+
                         frame = DataInsert(data, frame);
-                        $("#OrderDetails > .card-body > .purchase_list").append(frame)
+
+                        // ==============================
+                        // 優惠商品樣式分類
+                        // ==============================
+                        if (isAdditional) {
+
+                            if (isOrderLevelAdditional) {
+                                // 訂單滿額 / 滿件優惠
+                                // 不附屬任何單一商品，因此不縮排
+                                frame
+                                    .addClass("order-additional-item")
+                                    .removeClass("product-additional-item");
+                            }
+                            else {
+                                // 指定商品型加價購
+                                // 後端已排序在主商品後面，直接縮排表示 parent-child
+                                frame
+                                    .addClass("product-additional-item")
+                                    .removeClass("order-additional-item");
+                            }
+
+                            frame.find(".pro_name").before(
+                                '<span class="order-additional-badge">' +
+                                '<i class="fa-solid fa-link me-1" aria-hidden="true"></i>' +
+                                '加價購／贈品' +
+                                '</span>'
+                            );
+                        }
+                        else {
+                            frame.addClass("primary-order-item");
+                        }
+
+                        $purchaseList.append(frame);
                     });
 
                     MoveToContent();

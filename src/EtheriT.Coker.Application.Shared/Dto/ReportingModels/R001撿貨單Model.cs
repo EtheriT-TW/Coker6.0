@@ -33,6 +33,10 @@
             public decimal 商品折扣 { get; set; }
             public int 商品數量 { get; set; }
             public string 商品小計 { get; set; }
+            public long 商品Id { get; set; }
+            public bool IsAdditional { get; set; }
+            public long? FK_MarketingRewardItemId { get; set; }
+            public bool IsOrderLevelAdditional { get; set; }
         }
     }
 }

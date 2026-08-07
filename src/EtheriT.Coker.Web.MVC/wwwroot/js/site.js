@@ -165,15 +165,11 @@ var PreLoader;
         }
     });
     $("#switchApp .switch").on("click", function () {
-        co.WebSite.exchange($(".active-app").first().data("id")).done(function (result) {
-            if (result.success) {
-                const switchedUrl = new URL(window.location.href);
-                switchedUrl.searchParams.set("_site", result.message);
-                switchedUrl.searchParams.set("siteChanged", "true");
-                switchedUrl.hash = "";
-                location.replace(switchedUrl.pathname + switchedUrl.search);
-            }
-        });
+        const $selectedWebsite = $("#switchApp .active-app").first();
+        const websiteId = $selectedWebsite.data("id");
+        const websiteName = $selectedWebsite.find("[data-key='name']").text().trim();
+
+        co.WebSite.exchange(websiteId, websiteName);
     });
     a.fn.setAsideMode = function () {
         if (localStorage.getItem("asideMode") === null) {

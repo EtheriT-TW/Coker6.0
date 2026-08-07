@@ -96,21 +96,30 @@
         cart.CheckoutResult.renderPurchaseDetails(details);
 
         S.buy_step_swiper.update();
+        S.buy_step_swiper.updateAutoHeight(0);
+
+        requestAnimationFrame(function () {
+            S.buy_step_swiper.updateAutoHeight(0);
+            S.buy_step_swiper.updateAutoHeight(0);
+        });
     }
     function renderPurchaseDetails(details) {
         details = Array.isArray(details) ? details : [];
-        var primaryDetails = details.filter(function (item) {
-            return cart.Utils.getValueIgnoreCase(item, "isAdditional") !== true;
-        });
-        var additionalDetails = details.filter(function (item) {
-            return cart.Utils.getValueIgnoreCase(item, "isAdditional") === true;
-        }).sort(function (left, right) {
-            var leftParent = String(cart.Utils.getValueIgnoreCase(left, "additionalParentLabel") || "本筆訂單");
-            var rightParent = String(cart.Utils.getValueIgnoreCase(right, "additionalParentLabel") || "本筆訂單");
-            return leftParent.localeCompare(rightParent, "zh-Hant");
-        });
-        var orderedDetails = primaryDetails.concat(additionalDetails);
-        var lastParentLabel = null;
+
+        // 後端已依主商品／訂單優惠來源排序，前端保留 API 順序。
+        var orderedDetails = details.slice();
+        var lastAdditionalGroupKey = null;
+
+        function getAdditionalParentInfo(item) {
+            var parentLabel = String(
+                cart.Utils.getValueIgnoreCase(item, "additionalParentLabel") || ""
+            ).trim();
+
+            return {
+                parentLabel: parentLabel,
+                isOrderLevel: parentLabel === "本筆訂單"
+            };
+        }
 
         cart.Utils.TemplateDataInsert(
             $("#Purchase"),
@@ -119,34 +128,105 @@
             orderedDetails,
             {
                 beforeItem: function (item) {
-                    if (cart.Utils.getValueIgnoreCase(item, "isAdditional") !== true) return null;
+                    var isAdditional =
+                        cart.Utils.getValueIgnoreCase(item, "isAdditional") === true;
 
-                    var parentLabel = String(
-                        cart.Utils.getValueIgnoreCase(item, "additionalParentLabel") || "本筆訂單"
+                    if (!isAdditional) {
+                        lastAdditionalGroupKey = null;
+                        return null;
+                    }
+
+                    var parentInfo = getAdditionalParentInfo(item);
+                    var parentLabel = parentInfo.parentLabel;
+                    var isOrderLevel = parentInfo.isOrderLevel;
+
+                    var groupKey = isOrderLevel
+                        ? "__ORDER_LEVEL__"
+                        : "__PRODUCT__:" + parentLabel;
+
+                    if (groupKey === lastAdditionalGroupKey)
+                        return null;
+
+                    lastAdditionalGroupKey = groupKey;
+
+                    // =========================
+                    // 訂單層級優惠
+                    // =========================
+                    if (isOrderLevel) {
+                        var $heading = $(
+                            '<li class="step4-order-additional-heading"></li>'
+                        );
+
+                        var $text = $("<span></span>");
+
+                        $text.append(
+                            "<strong>訂單優惠商品</strong>"
+                        );
+
+                        $text.append(
+                            $("<small></small>").text(
+                                "本筆訂單符合優惠活動條件"
+                            )
+                        );
+
+                        $heading.append($text);
+
+                        return $heading;
+                    }
+
+                    // =========================
+                    // 指定商品型優惠
+                    // =========================
+                    var $heading = $(
+                        '<li class="step4-additional-heading"></li>'
                     );
-                    if (parentLabel === lastParentLabel) return null;
-                    lastParentLabel = parentLabel;
 
-                    var $heading = $('<li class="step4-additional-heading"></li>');
-                    $heading.append('<i class="fa-solid fa-turn-down" aria-hidden="true"></i>');
-                    var $text = $('<span></span>');
-                    $text.append('<strong>附屬優惠商品</strong>');
+                    $heading.append(
+                        '<i class="fa-solid fa-turn-down" aria-hidden="true"></i>'
+                    );
+
+                    var $text = $("<span></span>");
+
                     $text.append(
-                        $('<small></small>').text(
-                            parentLabel === "本筆訂單"
-                                ? "本筆訂單符合活動後一併成立"
-                                : '隨「' + parentLabel + '」一併成立'
+                        "<strong>附屬優惠商品</strong>"
+                    );
+
+                    $text.append(
+                        $("<small></small>").text(
+                            '隨「' + parentLabel + '」一併成立'
                         )
                     );
+
                     $heading.append($text);
+
                     return $heading;
                 },
-                decorateItem: function ($item, item) {
-                    if (cart.Utils.getValueIgnoreCase(item, "isAdditional") !== true) return;
 
-                    $item.addClass("step4-additional-item");
+                decorateItem: function ($item, item) {
+                    var isAdditional =
+                        cart.Utils.getValueIgnoreCase(item, "isAdditional") === true;
+
+                    if (!isAdditional)
+                        return;
+
+                    var parentInfo = getAdditionalParentInfo(item);
+
+                    if (parentInfo.isOrderLevel) {
+                        $item
+                            .addClass("step4-order-additional-item")
+                            .removeClass("step4-additional-item");
+                    }
+                    else {
+                        $item
+                            .addClass("step4-additional-item")
+                            .removeClass("step4-order-additional-item");
+                    }
+
                     $item.find(".pro_name").before(
-                        '<span class="step4-additional-badge"><i class="fa-solid fa-link me-1" aria-hidden="true"></i>加價購／贈品</span>'
+                        '<span class="step4-additional-badge">' +
+                        '<i class="fa-solid fa-link me-1" aria-hidden="true"></i>' +
+                        "加價購／贈品" +
+                        "</span>"
                     );
                 }
             }
@@ -278,6 +358,12 @@
     function OrderSuccess(result) {
         var noticeDeferred = $.Deferred();
 
+        if (document.activeElement &&
+            document.activeElement !== document.body &&
+            typeof document.activeElement.blur === "function") {
+            document.activeElement.blur();
+        }
+
         var message = result.message.split(",");
         var order_header_id = message[1];
         S.step4PaidDateHtml = message.length > 3 ? (message[3] || "") : "";
@@ -294,8 +380,8 @@
             .text("訂單已成立，訂單明細載入中，請稍候...");
 
         S.buy_step_swiper.enable();
-        S.buy_step_swiper.slideNext();
-        S.buy_step_swiper.update();
+        S.buy_step_swiper.slideNext(0);
+        S.buy_step_swiper.updateAutoHeight(0);
         S.buy_step_swiper.disable();
 
         Coker.sweet.processing(
@@ -320,6 +406,12 @@
                     .text("訂單已成立，但訂單明細載入失敗，請至會員管理歷史訂單中確認。");
             })
             .always(function () {
+                if (document.activeElement &&
+                    document.activeElement !== document.body &&
+                    typeof document.activeElement.blur === "function") {
+                    document.activeElement.blur();
+                }
+
                 Coker.sweet.close();
 
                 cart.CheckoutResult.ShowOrderSuccessNotice(result, function () {

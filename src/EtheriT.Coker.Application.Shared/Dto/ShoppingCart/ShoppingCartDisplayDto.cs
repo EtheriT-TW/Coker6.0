@@ -40,6 +40,11 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public string? CVSOutSide { get; set; }
         public bool NoStockManagement { get; set; }
         public bool IsAdditional { get; set; }
+        public long? FK_MarketingRewardItemId { get; set; }
+        /// <summary>
+        /// 訂單快照中的加價購／贈品所依附的主商品。
+        /// </summary>
+        public string? AdditionalParentLabel { get; set; }
         public FreightGetAllListDto? Freight { get; set; }
     }
 }

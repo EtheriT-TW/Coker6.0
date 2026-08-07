@@ -41,5 +41,7 @@ namespace EtheriT.Coker.Core.Models
         /// 前台顯示順序，數字越小越前面。
         /// </summary>
         public int SortOrder { get; set; }
+
+        public ICollection<ShoppingCart> ShoppingCarts { get; set; } = new List<ShoppingCart>();
     }
 }

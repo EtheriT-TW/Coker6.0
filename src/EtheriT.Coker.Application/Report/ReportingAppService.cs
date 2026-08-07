@@ -1,13 +1,9 @@
 ﻿using EtheriT.Coker.Application.Shared.Reporting;
 using EtheriT.Coker.Application.Shared.Dto.ReportingModels;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.Application.Marketing;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Marketing;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 
 namespace EtheriT.Coker.Application.Report
 {
@@ -31,6 +27,109 @@ namespace EtheriT.Coker.Application.Report
                     .Where(x => x.Id == id && x.FK_WebsiteId == siteId).FirstOrDefault();
                 if (order != null)
                 {
+                    var detailItems = order.Order_Details
+                        .Where(x => x.ShoppingCart != null)
+                        .Select(x => new R001撿貨單Model.訂單明細Item
+                        {
+                            商品Id = x.ShoppingCart!.ProductId ?? 0,
+                            IsAdditional = x.ShoppingCart.IsAdditional,
+                            FK_MarketingRewardItemId =
+                                x.ShoppingCart.FK_MarketingRewardItemId,
+
+                            商品名稱 = x.ShoppingCart.ProdName ?? "",
+
+                            商品規格 =
+                                string.IsNullOrWhiteSpace(x.ShoppingCart.S1Title) &&
+                                string.IsNullOrWhiteSpace(x.ShoppingCart.S2Title)
+                                    ? "無"
+                                    : !string.IsNullOrWhiteSpace(x.ShoppingCart.S1Title) &&
+                                      !string.IsNullOrWhiteSpace(x.ShoppingCart.S2Title)
+                                        ? $"{x.ShoppingCart.S1Title} / {x.ShoppingCart.S2Title}"
+                                        : x.ShoppingCart.S1Title ??
+                                          x.ShoppingCart.S2Title ??
+                                          "無",
+
+                            商品單價 =
+                                x.ShoppingCart.Price == 0 &&
+                                (x.ShoppingCart.Bonus ?? 0) > 0
+                                    ? $"紅利：{x.ShoppingCart.Bonus ?? 0}"
+                                    : x.ShoppingCart.Price.ToString("$#,##0")
+                                      + ((x.ShoppingCart.Bonus ?? 0) > 0
+                                          ? $"\n紅利：{x.ShoppingCart.Bonus ?? 0}"
+                                          : ""),
+
+                            商品紅利 = x.ShoppingCart.Bonus ?? 0,
+
+                            商品金額 = x.ShoppingCart.Price,
+
+                            商品數量 = x.ShoppingCart.Quantity,
+
+                            商品小計 =
+                                x.ShoppingCart.Price == 0 &&
+                                (x.ShoppingCart.Bonus ?? 0) > 0
+                                    ? $"紅利：{(x.ShoppingCart.Bonus ?? 0) *
+                                                x.ShoppingCart.Quantity}"
+                                    : (x.ShoppingCart.Price *
+                                       x.ShoppingCart.Quantity).ToString("$#,##0")
+                                      + ((x.ShoppingCart.Bonus ?? 0) > 0
+                                          ? $"\n紅利：{(x.ShoppingCart.Bonus ?? 0) *
+                                                      x.ShoppingCart.Quantity}"
+                                          : ""),
+
+                            商品折扣 = 0
+                        })
+                        .ToList();
+                    var rewardInfos =
+                        await MarketingCartOrdering.LoadRewardInfosAsync(
+                            db,
+                            detailItems.Select(x => x.FK_MarketingRewardItemId)
+                        );
+
+                    // 判斷訂單層級 / 商品層級優惠
+                    foreach (var item in detailItems.Where(x => x.IsAdditional))
+                    {
+                        if (!item.FK_MarketingRewardItemId.HasValue)
+                            continue;
+
+                        if (!rewardInfos.TryGetValue(
+                                item.FK_MarketingRewardItemId.Value,
+                                out var rewardInfo))
+                            continue;
+
+                        item.IsOrderLevelAdditional =
+                            rewardInfo.ConditionType ==
+                                MarketingConditionTypeEnum.OrderAmount ||
+                            rewardInfo.ConditionType ==
+                                MarketingConditionTypeEnum.OrderQuantity;
+                    }
+
+                    // 跟購物車 / 訂單顯示使用相同排序規則
+                    detailItems = MarketingCartOrdering.Sort(
+                        detailItems,
+                        x => x.IsAdditional,
+                        x => x.商品Id,
+                        x => x.FK_MarketingRewardItemId,
+                        rewardInfos
+                    );
+
+                    // 組出撿貨單實際要顯示的文字
+                    foreach (var item in detailItems)
+                    {
+                        if (!item.IsAdditional)
+                            continue;
+
+                        if (item.IsOrderLevelAdditional)
+                        {
+                            item.商品名稱 =
+                                $"【訂單優惠】 {item.商品名稱}";
+                        }
+                        else
+                        {
+                            item.商品名稱 =
+                                $"↳ 加價購／贈品　{item.商品名稱}";
+                        }
+                    }
+
                     r001 = new R001撿貨單Model
                     {
                         列印時間 = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"),
@@ -57,38 +156,7 @@ namespace EtheriT.Coker.Application.Report
                         )}",
                         優惠券折抵 = 0,
                         送貨方式 = order.LogisticsSetting.Title,
-                        訂單明細 = (from x in order.Order_Details
-                                where x.ShoppingCart != null
-                                select new R001撿貨單Model.訂單明細Item
-                                {
-                                    商品名稱 = x.ShoppingCart.ProdName ?? "",
-                                    商品規格 = string.IsNullOrWhiteSpace(x.ShoppingCart.S1Title) && string.IsNullOrWhiteSpace(x.ShoppingCart.S2Title)
-                                    ? "無"
-                                    : !string.IsNullOrWhiteSpace(x.ShoppingCart.S1Title) && !string.IsNullOrWhiteSpace(x.ShoppingCart.S2Title)
-                                        ? $"{x.ShoppingCart.S1Title} / {x.ShoppingCart.S2Title}"
-                                        : x.ShoppingCart.S1Title ?? x.ShoppingCart.S2Title,
-                                    商品單價 = (
-                                    (x.ShoppingCart.Price == 0 && (x.ShoppingCart.Bonus ?? 0) > 0)
-                                        ? $"紅利：{(x.ShoppingCart.Bonus ?? 0)}"
-                                        : (
-                                            x.ShoppingCart.Price.ToString("$#,##0")
-                                            + (((x.ShoppingCart.Bonus ?? 0) > 0) ? $"\n紅利：{(x.ShoppingCart.Bonus ?? 0)}" : "")
-                                        )
-                                    ),
-                                    商品紅利 = x.ShoppingCart.Bonus ?? 0,
-                                    商品金額 = x.ShoppingCart.Price,
-                                    商品數量 = x.ShoppingCart.Quantity,
-                                    商品小計 = (
-                                        (x.ShoppingCart.Price == 0 && (x.ShoppingCart.Bonus ?? 0) > 0)
-                                            ? $"紅利：{((x.ShoppingCart.Bonus ?? 0) * x.ShoppingCart.Quantity)}"
-                                            : (
-                                                (x.ShoppingCart.Price * x.ShoppingCart.Quantity).ToString("$#,##0")
-                                                + (((x.ShoppingCart.Bonus ?? 0) > 0) ? $"\n紅利：{((x.ShoppingCart.Bonus ?? 0) * x.ShoppingCart.Quantity)}" : "")
-                                            )
-                                    ),
-                                    商品折扣 = 0,
-                                }
-                        ).ToList()
+                        訂單明細 = detailItems
                     };
                     r001.合計 = r001.訂單明細.Sum(x =>
                     {

@@ -16,6 +16,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public int Quantity { get; set; }
         public decimal Subtotal { get; set; }
         public bool IsAdditional { get; set; }
+        public long? FK_MarketingRewardItemId { get; set; }
         /// <summary>
         /// 加價購／贈品所依附的主商品；訂單滿額活動則顯示「本筆訂單」。
         /// </summary>

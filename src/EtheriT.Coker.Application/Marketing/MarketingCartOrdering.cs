@@ -69,6 +69,7 @@ namespace EtheriT.Coker.Application.Marketing
                 var sourceId = rewardItemId(additional.Item);
                 if (!sourceId.HasValue || !rewardInfos.TryGetValue(sourceId.Value, out var info) ||
                     info.ConditionType == MarketingConditionTypeEnum.OrderAmount ||
+                    info.ConditionType == MarketingConditionTypeEnum.ScopeAmount ||
                     info.ConditionType == MarketingConditionTypeEnum.OrderQuantity)
                 {
                     trailing.Add((additional.Item, additional.Index));
@@ -91,6 +92,52 @@ namespace EtheriT.Coker.Application.Marketing
                 {
                     group = new List<(T Item, int Index)>();
                     anchored[anchor.Value] = group;
+                }
+                group.Add((additional.Item, additional.Index));
+            }
+
+            var result = new List<T>(items.Count);
+            for (var index = 0; index < primaryItems.Count; index++)
+            {
+                result.Add(primaryItems[index].Item);
+                if (anchored.TryGetValue(index, out var group))
+                    result.AddRange(group.OrderBy(x => x.Index).Select(x => x.Item));
+            }
+            result.AddRange(trailing.OrderBy(x => x.Index).Select(x => x.Item));
+            return result;
+        }
+
+        public static List<T> SortByParentSnapshot<T>(
+            IReadOnlyList<T> items,
+            Func<T, bool> isAdditional,
+            Func<T, long> itemId,
+            Func<T, long?> parentItemId)
+        {
+            var primaryItems = items
+                .Select((item, index) => new { Item = item, Index = index })
+                .Where(x => !isAdditional(x.Item))
+                .ToList();
+            var primaryIndexes = primaryItems
+                .Select((x, index) => new { Id = itemId(x.Item), Index = index })
+                .ToDictionary(x => x.Id, x => x.Index);
+            var anchored = new Dictionary<int, List<(T Item, int Index)>>();
+            var trailing = new List<(T Item, int Index)>();
+
+            foreach (var additional in items
+                .Select((item, index) => new { Item = item, Index = index })
+                .Where(x => isAdditional(x.Item)))
+            {
+                var parentId = parentItemId(additional.Item);
+                if (!parentId.HasValue || !primaryIndexes.TryGetValue(parentId.Value, out var anchor))
+                {
+                    trailing.Add((additional.Item, additional.Index));
+                    continue;
+                }
+
+                if (!anchored.TryGetValue(anchor, out var group))
+                {
+                    group = new List<(T Item, int Index)>();
+                    anchored[anchor] = group;
                 }
                 group.Add((additional.Item, additional.Index));
             }

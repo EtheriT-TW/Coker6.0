@@ -26,6 +26,11 @@ namespace EtheriT.Coker.Application.Shared.Dto.Marketing
 
         public bool Repeatable { get; set; }
 
+        /// <summary>
+        /// 管理者已確認此活動可能與其他期間重疊的自動折扣同時生效。
+        /// </summary>
+        public bool StackingConflictConfirmed { get; set; }
+
         public MarketingRuleTypeEnum RuleType { get; set; }
 
         public MarketingConditionTypeEnum ConditionType { get; set; } = MarketingConditionTypeEnum.OrderAmount;

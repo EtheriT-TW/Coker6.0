@@ -160,7 +160,7 @@
                         var $text = $("<span></span>");
 
                         $text.append(
-                            "<strong>訂單優惠商品</strong>"
+                            "<strong>訂單加價購／贈品</strong>"
                         );
 
                         $text.append(
@@ -188,7 +188,7 @@
                     var $text = $("<span></span>");
 
                     $text.append(
-                        "<strong>附屬優惠商品</strong>"
+                        "<strong>加價購／贈品</strong>"
                     );
 
                     $text.append(
@@ -244,14 +244,59 @@
         $("#Step4 .bonusDiscionLine").toggleClass("d-none", redeemBonus <= 0);
         $("#Step4 .bonusUseTotalLine").toggleClass("d-none", totalBonus <= 0);
 
-        $("#Step4 .step4MarketingDiscountLine").toggleClass("d-none", discount <= 0);
-        $("#Step4 .step4MarketingDiscount").text(discount > 0 ? discount.toLocaleString() : "");
+        renderStep4DiscountBreakdown(header, discount);
 
         // Step4 運費是費用列，0 元也要顯示
         var freightText = String(cart.Utils.getValueIgnoreCase(header, "freight") ?? "");
         if (freightText !== "") {
             $("#Step4 .shipping_fee").text(cart.Utils.toNumberValue(freightText).toLocaleString());
         }
+    }
+
+    function renderStep4DiscountBreakdown(header, discount) {
+        var $container = $("#Step4 .step4MarketingDiscountLines");
+        var breakdown = cart.Utils.getValueIgnoreCase(header, "discountBreakdown") || {};
+        var items = cart.Utils.getValueIgnoreCase(breakdown, "items");
+        var eligibleAmount = cart.Utils.toNumberValue(
+            cart.Utils.getValueIgnoreCase(breakdown, "eligibleProductAmount")
+        );
+        var productAmount = cart.Utils.toNumberValue(
+            cart.Utils.getValueIgnoreCase(header, "productSubtotal")
+        );
+        var showGeneralProductAmount = eligibleAmount > 0 && productAmount > eligibleAmount;
+
+        $("#Step4 .step4GeneralProductAmountLine")
+            .toggleClass("d-none", !showGeneralProductAmount);
+        $("#Step4 .step4GeneralProductAmount").text(
+            showGeneralProductAmount ? eligibleAmount.toLocaleString() : ""
+        );
+
+        if (!Array.isArray(items) || !items.length) {
+            items = discount > 0
+                ? [{ name: "", discountAmount: discount, appliedTimes: 1 }]
+                : [];
+        }
+
+        var html = items.filter(function (item) {
+            return cart.Utils.toNumberValue(cart.Utils.getValueIgnoreCase(item, "discountAmount")) > 0;
+        }).map(function (item) {
+            var name = String(cart.Utils.getValueIgnoreCase(item, "name") || "");
+            var amount = cart.Utils.toNumberValue(cart.Utils.getValueIgnoreCase(item, "discountAmount"));
+            var times = cart.Utils.toNumberValue(cart.Utils.getValueIgnoreCase(item, "appliedTimes"));
+            var repeatText = times > 1 ? "，套用 " + times + " 次" : "";
+            var label = name ? escapeHtml(name) + repeatText : "活動折扣";
+
+            return '<div class="py-2 d-flex justify-content-end text-end step4MarketingDiscountLine">' +
+                '<div>' + label + '</div>' +
+                '<div class="step4MarketingDiscount col-4 price-negative price">' + amount.toLocaleString() + '</div>' +
+                '</div>';
+        }).join("");
+
+        $container.html(html).toggleClass("d-none", !html);
+    }
+
+    function escapeHtml(value) {
+        return $("<div>").text(value == null ? "" : String(value)).html();
     }
     function toggleStep4InvoiceDisplay(header) {
         header = header || {};

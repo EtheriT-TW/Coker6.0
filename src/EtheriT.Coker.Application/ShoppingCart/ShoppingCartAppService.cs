@@ -429,6 +429,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     .Where(x => !x.IsDeleted && x.Enabled &&
                                 x.RuleType == MarketingRuleTypeEnum.AddOnPurchase &&
                                 x.Condition != null && !x.Condition.IsDeleted &&
+                                (x.Condition.ConditionType == MarketingConditionTypeEnum.ScopeQuantity ||
+                                 x.Condition.ConditionType == MarketingConditionTypeEnum.BuySpecificProduct) &&
                                 x.Reward != null && !x.Reward.IsDeleted)
                     .OrderBy(x => x.SortOrder)
                     .FirstOrDefault();
@@ -571,6 +573,9 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     x.Reward != null && !x.Reward.IsDeleted);
                 if (campaign == null || rule == null)
                     throw new Exception("加價購活動已失效，請重新整理購物車後再試。");
+                if (rule.Condition.ConditionType != MarketingConditionTypeEnum.ScopeQuantity &&
+                    rule.Condition.ConditionType != MarketingConditionTypeEnum.BuySpecificProduct)
+                    throw new Exception("滿額加價購／贈品應於購物車滿額優惠區選取。");
 
                 var carts = await db.ShoppingCarts
                     .Include(x => x.Prod_Stock)
@@ -582,26 +587,10 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     .Where(x => !x.IsDeleted && x.TargetType == MarketingScopeTargetTypeEnum.Product)
                     .Select(x => x.TargetId).Distinct().ToHashSet();
 
-                var conditionType = rule.Condition.ConditionType;
                 var qualificationCount = 0;
-                if (conditionType == MarketingConditionTypeEnum.ScopeQuantity ||
-                    conditionType == MarketingConditionTypeEnum.BuySpecificProduct)
-                {
-                    var requiredQuantity = Math.Max(rule.Condition.MinQuantity ?? 1, 1);
-                    var quantity = baseCarts.Where(x => scopeProductIds.Contains(x.Prod_Stock!.FK_Pid)).Sum(x => x.Quantity);
-                    qualificationCount = campaign.Repeatable ? quantity / requiredQuantity : quantity >= requiredQuantity ? 1 : 0;
-                }
-                else if (conditionType == MarketingConditionTypeEnum.OrderAmount ||
-                         conditionType == MarketingConditionTypeEnum.ScopeAmount)
-                {
-                    var requiredAmount = Math.Max(rule.Condition.MinAmount ?? 0, 0);
-                    var amount = baseCarts
-                        .Where(x => conditionType != MarketingConditionTypeEnum.ScopeAmount || scopeProductIds.Contains(x.Prod_Stock!.FK_Pid))
-                        .Sum(x => x.Price * x.Quantity);
-                    qualificationCount = requiredAmount > 0
-                        ? campaign.Repeatable ? (int)Math.Floor(amount / requiredAmount) : amount >= requiredAmount ? 1 : 0
-                        : 0;
-                }
+                var requiredQuantity = Math.Max(rule.Condition.MinQuantity ?? 1, 1);
+                var quantity = baseCarts.Where(x => scopeProductIds.Contains(x.Prod_Stock!.FK_Pid)).Sum(x => x.Quantity);
+                qualificationCount = campaign.Repeatable ? quantity / requiredQuantity : quantity >= requiredQuantity ? 1 : 0;
 
                 var allowance = qualificationCount * Math.Max(rule.Reward.SelectionQuantityPerQualification, 1);
                 var desired = (dto.Selections ?? new List<ShoppingCartRewardSelectionDto>())

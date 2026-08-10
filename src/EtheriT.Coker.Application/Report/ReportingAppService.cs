@@ -35,6 +35,9 @@ namespace EtheriT.Coker.Application.Report
                             IsAdditional = x.ShoppingCart.IsAdditional,
                             FK_MarketingRewardItemId =
                                 x.ShoppingCart.FK_MarketingRewardItemId,
+                            ShoppingCartId = x.ShoppingCart.Id,
+                            AdditionalParentShoppingCartId = x.ShoppingCart.AdditionalParentShoppingCartId,
+                            AdditionalParentLabel = x.ShoppingCart.AdditionalParentLabel,
 
                             商品名稱 = x.ShoppingCart.ProdName ?? "",
 
@@ -79,38 +82,50 @@ namespace EtheriT.Coker.Application.Report
                             商品折扣 = 0
                         })
                         .ToList();
-                    var rewardInfos =
-                        await MarketingCartOrdering.LoadRewardInfosAsync(
+                    var additionalItems = detailItems.Where(x => x.IsAdditional).ToList();
+                    var hasCompleteSnapshots = additionalItems.All(x =>
+                        !string.IsNullOrWhiteSpace(x.AdditionalParentLabel));
+
+                    if (hasCompleteSnapshots)
+                    {
+                        foreach (var item in additionalItems)
+                            item.IsOrderLevelAdditional = !item.AdditionalParentShoppingCartId.HasValue;
+
+                        detailItems = MarketingCartOrdering.SortByParentSnapshot(
+                            detailItems,
+                            x => x.IsAdditional,
+                            x => x.ShoppingCartId,
+                            x => x.AdditionalParentShoppingCartId
+                        );
+                    }
+                    else
+                    {
+                        // 舊訂單沒有歸屬快照時，才依歷史活動資料相容推算。
+                        var rewardInfos = await MarketingCartOrdering.LoadRewardInfosAsync(
                             db,
                             detailItems.Select(x => x.FK_MarketingRewardItemId)
                         );
 
-                    // 判斷訂單層級 / 商品層級優惠
-                    foreach (var item in detailItems.Where(x => x.IsAdditional))
-                    {
-                        if (!item.FK_MarketingRewardItemId.HasValue)
-                            continue;
+                        foreach (var item in additionalItems)
+                        {
+                            if (!item.FK_MarketingRewardItemId.HasValue ||
+                                !rewardInfos.TryGetValue(item.FK_MarketingRewardItemId.Value, out var rewardInfo))
+                                continue;
 
-                        if (!rewardInfos.TryGetValue(
-                                item.FK_MarketingRewardItemId.Value,
-                                out var rewardInfo))
-                            continue;
+                            item.IsOrderLevelAdditional =
+                                rewardInfo.ConditionType == MarketingConditionTypeEnum.OrderAmount ||
+                                rewardInfo.ConditionType == MarketingConditionTypeEnum.OrderQuantity ||
+                                rewardInfo.ConditionType == MarketingConditionTypeEnum.ScopeAmount;
+                        }
 
-                        item.IsOrderLevelAdditional =
-                            rewardInfo.ConditionType ==
-                                MarketingConditionTypeEnum.OrderAmount ||
-                            rewardInfo.ConditionType ==
-                                MarketingConditionTypeEnum.OrderQuantity;
+                        detailItems = MarketingCartOrdering.Sort(
+                            detailItems,
+                            x => x.IsAdditional,
+                            x => x.商品Id,
+                            x => x.FK_MarketingRewardItemId,
+                            rewardInfos
+                        );
                     }
-
-                    // 跟購物車 / 訂單顯示使用相同排序規則
-                    detailItems = MarketingCartOrdering.Sort(
-                        detailItems,
-                        x => x.IsAdditional,
-                        x => x.商品Id,
-                        x => x.FK_MarketingRewardItemId,
-                        rewardInfos
-                    );
 
                     // 組出撿貨單實際要顯示的文字
                     foreach (var item in detailItems)

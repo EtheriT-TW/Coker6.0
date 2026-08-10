@@ -1,6 +1,11 @@
 ﻿$(function () {
     $("#submitButton").on("click", function () {
         var form = $("#bonusSettingsForm").dxForm("instance");
+        var validationResult = form.validate();
+        if (!validationResult.isValid) {
+            return;
+        }
+
         var formData = form.option("formData");
 
         $.ajax({

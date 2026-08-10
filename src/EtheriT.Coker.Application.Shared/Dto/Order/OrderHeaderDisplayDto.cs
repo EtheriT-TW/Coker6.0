@@ -8,6 +8,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public int? OldSubtotal { get; set; }
         public string Subtotal { get; set; }
         public string Discount { get; set; }
+        public OrderDiscountBreakdownDto? DiscountBreakdown { get; set; }
         public string Bonus { get; set; }
         public string CouponId { get; set; }
         public string Service_Charge { get; set; }

@@ -35,13 +35,25 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                var message = ModelState.Values
+                    .SelectMany(x => x.Errors)
+                    .Select(x => x.ErrorMessage)
+                    .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? "設定資料格式錯誤";
+                return BadRequest(new { success = false, message });
             }
 
             try
             {
                 // 呼叫 Service 層方法來更新設定
-                await _bonusManagementAppService.SaveSetting(model);
+                var result = await _bonusManagementAppService.SaveSetting(model);
+                if (!result.Success)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = result.Error ?? result.Message ?? "設定更新失敗"
+                    });
+                }
                 return Ok(new { success = true, message = "設定已成功更新" });
             }
             catch (Exception ex)

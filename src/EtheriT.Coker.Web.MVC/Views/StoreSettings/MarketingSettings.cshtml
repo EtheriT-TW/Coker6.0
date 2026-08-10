@@ -63,8 +63,29 @@
                             .AllowFiltering(false)
                             .AllowSorting(false);
                         c.AddFor(e => e.Status).Caption("狀態").Width(100);
-                        c.AddFor(e => e.StartTime).Caption("開始時間").DataType(GridColumnDataType.DateTime).Format("yyyy/MM/dd HH:mm").Width(160).AllowHeaderFiltering(false);
-                        c.AddFor(e => e.EndTime).Caption("結束時間").DataType(GridColumnDataType.DateTime).Format("yyyy/MM/dd HH:mm").Width(160).AllowHeaderFiltering(false);
+                        c.Add().Name("ActivityTime")
+                            .Caption("活動時間")
+                            .CalculateCellValue("marketingActivityTimeCellValue")
+                            .Width(240)
+                            .AllowHeaderFiltering(false)
+                            .AllowFiltering(false)
+                            .AllowSorting(false);
+                        c.Add().Name("RepeatableDisplay")
+                            .Caption("重複套用")
+                            .CalculateCellValue("marketingRepeatableCellValue")
+                            .Width(85)
+                            .Alignment(HorizontalAlignment.Center)
+                            .AllowHeaderFiltering(false)
+                            .AllowFiltering(false)
+                            .AllowSorting(false);
+                        c.Add().Name("CanStackDisplay")
+                            .Caption("優惠併用")
+                            .CalculateCellValue("marketingCanStackCellValue")
+                            .Width(85)
+                            .Alignment(HorizontalAlignment.Center)
+                            .AllowHeaderFiltering(false)
+                            .AllowFiltering(false)
+                            .AllowSorting(false);
                         c.Add()
                             .Type(GridCommandColumnType.Buttons)
                             .Buttons(b =>
@@ -336,7 +357,7 @@
                                 <span class="material-symbols-outlined marketing-option-icon" aria-hidden="true">layers</span>
                                 <span class="marketing-option-copy">
                                     <strong>允許與其他優惠併用</strong>
-                                    <small>開啟後，此折扣可和其他可併用優惠一起套用，可能產生累計折扣。</small>
+                                    <small>預設關閉。開啟後，此折扣可和其他期間重疊且允許併用的優惠一起套用，可能產生累計折扣；儲存時會再次提醒。</small>
                                 </span>
                                 <span class="marketing-option-toggle" aria-hidden="true">
                                     <span class="material-symbols-outlined toggle-off">toggle_off</span>

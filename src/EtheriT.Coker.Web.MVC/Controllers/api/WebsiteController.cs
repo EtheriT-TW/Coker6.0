@@ -23,6 +23,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await websiteApplication.GetPageAll(page);
         }
+        [HttpGet]
+        public async Task<List<WebsDto>> GetSwitcherAll()
+        {
+            return await websiteApplication.GetSwitcherAll();
+        }
         [HttpPost]
         public async Task<ResponseMessageDto> Exchange(WebExchangeDto dto)
         {

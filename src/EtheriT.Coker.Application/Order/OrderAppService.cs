@@ -824,7 +824,13 @@ namespace EtheriT.Coker.Application.Order
 
                     if (canRedeem && remainingBonus > 0)
                     {
-                        var bonusDiscount = Math.Floor(subtotal * bonusSetting.MaxRedemptionPercent.Value / 100);
+                        var percentageDiscountLimit = Math.Round(
+                            subtotal * bonusSetting.MaxRedemptionPercent.Value / 100,
+                            MidpointRounding.AwayFromZero);
+                        var bonusDiscount = bonusSetting.MaximumDiscount.HasValue &&
+                                            bonusSetting.MaximumDiscount.Value > 0
+                            ? Math.Min(percentageDiscountLimit, bonusSetting.MaximumDiscount.Value)
+                            : percentageDiscountLimit;
 
                         redeemBonus = (int)Math.Min(bonusDiscount, remainingBonus);
 
@@ -849,7 +855,10 @@ namespace EtheriT.Coker.Application.Order
                 StockDict = stockDict,
                 Subtotal = (int)Math.Round(subtotal, MidpointRounding.AwayFromZero),
                 Discount = checkoutDiscount,
-                DiscountMemo = discountResult.Memo,
+                DiscountBreakdownJson = SerializeDiscountBreakdown(
+                    discountResult,
+                    productSubtotalBeforeDiscount
+                ),
                 TotalBonus = (int)Math.Round(totalBonus, MidpointRounding.AwayFromZero),
                 Freight = freightResult.Freight,
                 PackingPointTotal = freightResult.PackingPointTotal,
@@ -868,6 +877,8 @@ namespace EtheriT.Coker.Application.Order
             var baseCarts = selectedCarts.Where(x => !x.IsAdditional).ToList();
             if (!baseCarts.Any())
                 throw new Exception("加價購／贈品不可單獨結帳，請一併選擇符合活動資格的主要商品。");
+
+            var parentSpecTitles = await LoadCartSpecTitlesAsync(baseCarts);
 
             var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
             var additionalStockIds = additionalCarts.Select(x => x.FK_PSid).Distinct().ToList();
@@ -992,6 +1003,17 @@ namespace EtheriT.Coker.Application.Order
                 }
             }
 
+            foreach (var match in matched)
+            {
+                var parentSnapshot = BuildAdditionalParentSnapshot(
+                    match.Rule,
+                    baseCarts,
+                    parentSpecTitles
+                );
+                match.Cart.AdditionalParentShoppingCartId = parentSnapshot.ParentShoppingCartId;
+                match.Cart.AdditionalParentLabel = parentSnapshot.Label;
+            }
+
             return matched.ToDictionary(x => x.Cart.Id, x => x.Item.OfferPrice);
         }
 
@@ -1034,6 +1056,7 @@ namespace EtheriT.Coker.Application.Order
                             (x.NeverEnd || (x.EndTime.HasValue && x.EndTime.Value >= now)))
                 .ToDictionary(x => x.Id);
             var baseCarts = selectedCarts.Where(x => !x.IsAdditional).ToList();
+            var parentSpecTitles = await LoadCartSpecTitlesAsync(baseCarts);
             var result = new List<Coker.Core.Models.ShoppingCart>();
 
             foreach (var selectionGroup in selections.GroupBy(x => new { x.CampaignId, x.RuleId }))
@@ -1069,8 +1092,19 @@ namespace EtheriT.Coker.Application.Order
                 var qualificationCount = campaign.Repeatable
                     ? Math.Max(1, (int)Math.Floor(qualifyingAmount / minAmount))
                     : 1;
+                var parentSnapshot = BuildAdditionalParentSnapshot(
+                    rule,
+                    baseCarts,
+                    parentSpecTitles
+                );
                 var totalAllowance = qualificationCount * Math.Max(rule.Reward.SelectionQuantityPerQualification, 1);
-                if (selectionGroup.Sum(x => x.Quantity) > totalAllowance)
+                var existingRuleQuantity = selectedCarts
+                    .Where(x => x.IsAdditional && rule.Reward.Items.Any(item =>
+                        x.FK_MarketingRewardItemId.HasValue
+                            ? item.Id == x.FK_MarketingRewardItemId.Value
+                            : item.FK_ProdStockId == x.FK_PSid && item.OfferPrice == x.Price))
+                    .Sum(x => x.Quantity);
+                if (existingRuleQuantity + selectionGroup.Sum(x => x.Quantity) > totalAllowance)
                     throw new Exception($"「{campaign.Name}」最多可選 {totalAllowance} 件優惠商品。");
 
                 foreach (var selection in selectionGroup)
@@ -1084,7 +1118,13 @@ namespace EtheriT.Coker.Application.Order
 
                     var itemLimit = Math.Max(rewardItem.MaxQuantityPerOrder, 1) *
                         (campaign.Repeatable ? qualificationCount : 1);
-                    if (selection.Quantity > itemLimit)
+                    var existingItemQuantity = selectedCarts
+                        .Where(x => x.IsAdditional &&
+                            (x.FK_MarketingRewardItemId.HasValue
+                                ? x.FK_MarketingRewardItemId.Value == rewardItem.Id
+                                : x.FK_PSid == rewardItem.FK_ProdStockId && x.Price == rewardItem.OfferPrice))
+                        .Sum(x => x.Quantity);
+                    if (existingItemQuantity + selection.Quantity > itemLimit)
                         throw new Exception($"「{rewardItem.ProdStock.Prod.Title}」最多可選 {itemLimit} 件。");
 
                     var alreadySelected = selectedCarts.Concat(result)
@@ -1108,6 +1148,8 @@ namespace EtheriT.Coker.Application.Order
                         Bonus = 0,
                         IsAdditional = true,
                         FK_MarketingRewardItemId = rewardItem.Id,
+                        AdditionalParentShoppingCartId = parentSnapshot.ParentShoppingCartId,
+                        AdditionalParentLabel = parentSnapshot.Label,
                         IsOrder = !previewOnly,
                         ProductId = rewardItem.ProdStock.FK_Pid,
                         ProdName = rewardItem.ProdStock.Prod.Title,
@@ -1123,6 +1165,79 @@ namespace EtheriT.Coker.Application.Order
             }
 
             return result;
+        }
+
+        private async Task<Dictionary<long, string>> LoadCartSpecTitlesAsync(
+            IEnumerable<Coker.Core.Models.ShoppingCart> carts)
+        {
+            var specIds = carts
+                .SelectMany(x => new[]
+                {
+                    x.Prod_Stock?.FK_S1id ?? x.FK_S1id,
+                    x.Prod_Stock?.FK_S2id ?? x.FK_S2id
+                })
+                .Where(x => x.HasValue && x.Value > 0)
+                .Select(x => x!.Value)
+                .Distinct()
+                .ToList();
+
+            return specIds.Any()
+                ? await db.Prod_Specs
+                    .IgnoreQueryFilters()
+                    .Where(x => specIds.Contains(x.Id))
+                    .ToDictionaryAsync(x => x.Id, x => x.Title)
+                : new Dictionary<long, string>();
+        }
+
+        private static (long? ParentShoppingCartId, string Label) BuildAdditionalParentSnapshot(
+            Core.Models.MarketingRule rule,
+            IReadOnlyList<Coker.Core.Models.ShoppingCart> baseCarts,
+            IReadOnlyDictionary<long, string> specTitles)
+        {
+            var conditionType = rule.Condition?.ConditionType;
+            if (conditionType == MarketingConditionTypeEnum.OrderAmount ||
+                conditionType == MarketingConditionTypeEnum.OrderQuantity ||
+                conditionType == MarketingConditionTypeEnum.ScopeAmount)
+            {
+                return (null, "本筆訂單");
+            }
+
+            var scopeProductIds = rule.ScopeItems
+                .Where(x => !x.IsDeleted && x.TargetType == MarketingScopeTargetTypeEnum.Product)
+                .Select(x => x.TargetId)
+                .ToHashSet();
+            var parents = baseCarts
+                .Where(x => x.Prod_Stock != null && scopeProductIds.Contains(x.Prod_Stock.FK_Pid))
+                .ToList();
+
+            if (!parents.Any())
+                return (null, "本筆訂單");
+
+            var label = string.Join("、", parents
+                .Select(x => FormatShoppingCartProductLabel(x, specTitles))
+                .Distinct());
+            return (parents.Last().Id, label);
+        }
+
+        private static string FormatShoppingCartProductLabel(
+            Coker.Core.Models.ShoppingCart cart,
+            IReadOnlyDictionary<long, string> specTitles)
+        {
+            var productName = cart.Prod_Stock?.Prod?.Title ?? cart.ProdName ?? "商品";
+            var specIds = new[]
+            {
+                cart.Prod_Stock?.FK_S1id ?? cart.FK_S1id,
+                cart.Prod_Stock?.FK_S2id ?? cart.FK_S2id
+            };
+            var specifications = specIds
+                .Where(x => x.HasValue && specTitles.ContainsKey(x.Value))
+                .Select(x => specTitles[x!.Value])
+                .Where(x => !string.IsNullOrWhiteSpace(x));
+            var specification = string.Join("、", specifications);
+
+            return string.IsNullOrWhiteSpace(specification)
+                ? productName
+                : $"{productName}（{specification}）";
         }
         private async Task<Order_Header> BuildHeaderSectionAsync(
             OrderHeaderAddDto dto,
@@ -1379,11 +1494,6 @@ namespace EtheriT.Coker.Application.Order
 
             var memoParts = new List<string>();
 
-            if (!string.IsNullOrWhiteSpace(detailResult.DiscountMemo))
-            {
-                memoParts.Add(detailResult.DiscountMemo);
-            }
-
             if (detailResult.BoxUsages != null && detailResult.BoxUsages.Any())
             {
                 var boxMemo = string.Join("、", detailResult.BoxUsages
@@ -1403,8 +1513,106 @@ namespace EtheriT.Coker.Application.Order
             // 暫存單與正式單都要覆寫金額
             oh.Subtotal = detailResult.Subtotal;
             oh.Discount = detailResult.Discount;
+            oh.DiscountBreakdownJson = detailResult.DiscountBreakdownJson;
             oh.Bonus = detailResult.TotalBonus;
             oh.Freight = detailResult.Freight;
+        }
+
+        private static string? SerializeDiscountBreakdown(
+            CheckoutDiscountResultDto discountResult,
+            decimal productAmount)
+        {
+            var appliedDiscounts = discountResult.AppliedDiscounts
+                .Where(x => x.DiscountAmount > 0)
+                .ToList();
+
+            var hasAdditionalProductAmount =
+                discountResult.EligibleProductAmount > 0 &&
+                productAmount > discountResult.EligibleProductAmount;
+
+            if (!appliedDiscounts.Any() && !hasAdditionalProductAmount)
+                return null;
+
+            var snapshot = new OrderDiscountBreakdownDto
+            {
+                Version = 1,
+                EligibleProductAmount = discountResult.EligibleProductAmount,
+                TotalDiscountAmount = appliedDiscounts.Sum(x => x.DiscountAmount),
+                Items = appliedDiscounts.Select(x => new OrderDiscountBreakdownItemDto
+                {
+                    SourceType = x.SourceType,
+                    CampaignId = x.CampaignId,
+                    RuleId = x.RuleId,
+                    CouponId = x.CouponId,
+                    Name = x.Name,
+                    CampaignType = x.CampaignType,
+                    RuleType = x.RuleType,
+                    ThresholdAmount = x.ThresholdAmount,
+                    BaseAmount = x.BaseAmount,
+                    DiscountAmount = x.DiscountAmount,
+                    AppliedTimes = x.AppliedTimes
+                }).ToList()
+            };
+
+            return JsonConvert.SerializeObject(snapshot, Formatting.None);
+        }
+
+        private static OrderDiscountBreakdownDto? DeserializeDiscountBreakdown(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                return null;
+
+            try
+            {
+                var snapshot = JsonConvert.DeserializeObject<OrderDiscountBreakdownDto>(json);
+                return snapshot != null &&
+                    (snapshot.EligibleProductAmount > 0 || snapshot.Items?.Any() == true)
+                        ? snapshot
+                        : null;
+            }
+            catch (JsonException)
+            {
+                // 舊訂單或損壞的快照仍可使用 Order_Header.Discount 顯示折扣合計。
+                return null;
+            }
+        }
+
+        private static string BuildDiscountBreakdownMailRows(string? json)
+        {
+            var snapshot = DeserializeDiscountBreakdown(json);
+            if (snapshot == null)
+                return "";
+
+            return string.Join("", snapshot.Items.Select(item =>
+            {
+                var name = System.Net.WebUtility.HtmlEncode(
+                    string.IsNullOrWhiteSpace(item.Name) ? "活動折扣" : item.Name
+                );
+                var repeatText = item.AppliedTimes > 1
+                    ? $"（套用 {item.AppliedTimes} 次）"
+                    : "";
+
+                return $@"<tr>
+                    <td colspan='6' class='text-end'>{name}{repeatText}
+                    <span class='text-red ms-1'>-{item.DiscountAmount.ToString("$#,##0")}</span></td>
+                </tr>";
+            }));
+        }
+
+        private static string BuildEligibleProductAmountMailRow(string? json, decimal productAmount)
+        {
+            var snapshot = DeserializeDiscountBreakdown(json);
+            if (snapshot == null ||
+                snapshot.EligibleProductAmount <= 0 ||
+                productAmount <= snapshot.EligibleProductAmount)
+            {
+                return "";
+            }
+
+            return $@"<tr>
+                <td colspan='6' class='text-end'>一般商品金額（不含加價購）
+                <span class='ms-1 text-size1_25'>{snapshot.EligibleProductAmount.ToString("$#,##0")}</span></td>
+            </tr>";
         }
 
         private string GetCVSType(ShippingTypeEnum type)
@@ -1867,6 +2075,7 @@ namespace EtheriT.Coker.Application.Order
                         Subtotal = result.Subtotal,
                         Total = result.Subtotal + result.Freight,
                         Discount = result.Discount,
+                        DiscountBreakdown = DeserializeDiscountBreakdown(result.DiscountBreakdownJson),
                         Bonus = result.Bonus,
                         GetBonus = result.GetBonus,
                         CouponId = result.CouponId,
@@ -1969,6 +2178,7 @@ namespace EtheriT.Coker.Application.Order
 
                     temp_output.Subtotal = order_header.Subtotal.ToString("#,##0");
                     temp_output.Discount = (order_header.Discount ?? 0).ToString("#,##0");
+                    temp_output.DiscountBreakdown = DeserializeDiscountBreakdown(order_header.DiscountBreakdownJson);
                     temp_output.Bonus = (order_header.Bonus ?? 0).ToString("#,##0");
                     temp_output.GetBonus = (order_header.GetBonus ?? 0).ToString("#,##0");
                     temp_output.CouponId = order_header.CouponId?.ToString() ?? "";
@@ -2092,6 +2302,7 @@ namespace EtheriT.Coker.Application.Order
                 Subtotal = detail.Subtotal,
                 IsAdditional = detail.IsAdditional,
                 FK_MarketingRewardItemId = detail.FK_MarketingRewardItemId,
+                AdditionalParentShoppingCartId = detail.AdditionalParentShoppingCartId,
                 AdditionalParentLabel = detail.AdditionalParentLabel
             }).ToList();
         }
@@ -2640,6 +2851,8 @@ namespace EtheriT.Coker.Application.Order
                     Quantity = sc.Quantity,
                     IsAdditional = sc.IsAdditional,
                     FK_MarketingRewardItemId = sc.FK_MarketingRewardItemId,
+                    AdditionalParentShoppingCartId = sc.AdditionalParentShoppingCartId,
+                    AdditionalParentLabel = sc.AdditionalParentLabel,
 
                     Subtotal = (int)Math.Round(sc.Price * sc.Quantity, MidpointRounding.AwayFromZero),
                     SubtotalBonus = (sc.Bonus ?? 0) * sc.Quantity,
@@ -2685,15 +2898,11 @@ namespace EtheriT.Coker.Application.Order
             }
 
             await FillAdditionalParentLabelsAsync(ohid, websiteId, details);
-            var rewardInfos = await MarketingCartOrdering.LoadRewardInfosAsync(
-                db,
-                details.Select(x => x.FK_MarketingRewardItemId));
-            return MarketingCartOrdering.Sort(
+            return MarketingCartOrdering.SortByParentSnapshot(
                 details,
                 x => x.IsAdditional,
-                x => x.ProdId,
-                x => x.FK_MarketingRewardItemId,
-                rewardInfos);
+                x => x.SCId,
+                x => x.AdditionalParentShoppingCartId);
         }
 
         private async Task FillAdditionalParentLabelsAsync(
@@ -2701,7 +2910,9 @@ namespace EtheriT.Coker.Application.Order
             long websiteId,
             List<OrderDetailDisplayDto> details)
         {
-            var additionalDetails = details.Where(x => x.IsAdditional).ToList();
+            var additionalDetails = details
+                .Where(x => x.IsAdditional && string.IsNullOrWhiteSpace(x.AdditionalParentLabel))
+                .ToList();
             var primaryDetails = details.Where(x => !x.IsAdditional).ToList();
             if (!additionalDetails.Any() || !primaryDetails.Any())
                 return;
@@ -2735,6 +2946,7 @@ namespace EtheriT.Coker.Application.Order
             {
                 string? bestLabel = null;
                 long? bestRewardItemId = additional.FK_MarketingRewardItemId;
+                long? bestParentShoppingCartId = null;
                 var bestScore = int.MinValue;
 
                 foreach (var campaign in campaigns)
@@ -2761,7 +2973,8 @@ namespace EtheriT.Coker.Application.Order
                         var score = activeAtOrderTime ? 1000 : 0;
 
                         if (conditionType == MarketingConditionTypeEnum.OrderAmount ||
-                            conditionType == MarketingConditionTypeEnum.OrderQuantity)
+                            conditionType == MarketingConditionTypeEnum.OrderQuantity ||
+                            conditionType == MarketingConditionTypeEnum.ScopeAmount)
                         {
                             label = "本筆訂單";
                             score += 10;
@@ -2772,8 +2985,10 @@ namespace EtheriT.Coker.Application.Order
                                 .Where(x => x.TargetType == MarketingScopeTargetTypeEnum.Product)
                                 .Select(x => x.TargetId)
                                 .ToHashSet();
-                            var parents = primaryDetails
+                            var matchingParents = primaryDetails
                                 .Where(x => scopeProductIds.Contains(x.ProdId))
+                                .ToList();
+                            var parents = matchingParents
                                 .Select(FormatOrderProductLabel)
                                 .Distinct()
                                 .ToList();
@@ -2791,11 +3006,22 @@ namespace EtheriT.Coker.Application.Order
                             bestScore = score;
                             bestLabel = label;
                             bestRewardItemId = matchedRewardItem.Id;
+                            bestParentShoppingCartId = conditionType == MarketingConditionTypeEnum.OrderAmount ||
+                                conditionType == MarketingConditionTypeEnum.OrderQuantity ||
+                                conditionType == MarketingConditionTypeEnum.ScopeAmount
+                                    ? null
+                                    : primaryDetails
+                                        .Where(x => rule.ScopeItems.Any(scope =>
+                                            scope.TargetType == MarketingScopeTargetTypeEnum.Product &&
+                                            scope.TargetId == x.ProdId))
+                                        .Select(x => (long?)x.SCId)
+                                        .LastOrDefault();
                         }
                     }
                 }
 
                 additional.AdditionalParentLabel = bestLabel ?? "本筆訂單";
+                additional.AdditionalParentShoppingCartId = bestParentShoppingCartId;
                 // 舊訂單沒有保存 FK，僅在輸出 DTO 上補上推測結果，供標示與排序使用。
                 additional.FK_MarketingRewardItemId ??= bestRewardItemId;
             }
@@ -3259,7 +3485,7 @@ namespace EtheriT.Coker.Application.Order
                                 DetailsTable += """
                                     <tr class='order-additional-heading'>
                                         <td colspan='6'>
-                                            <strong>訂單優惠商品</strong>
+                                            <strong>訂單加價購／贈品</strong>
                                             <span class='additional-heading-note'>
                                                 本筆訂單符合優惠活動條件
                                             </span>
@@ -3364,6 +3590,7 @@ namespace EtheriT.Coker.Application.Order
                  <tr>
                     <td colspan='6' class='text-end text-bold'>商品金額<span class='ms-1 text-size1_25'>{productAmount.ToString("$#,##0")}</span></td>
                 </tr>
+                {BuildEligibleProductAmountMailRow(order_header.DiscountBreakdownJson, productAmount)}
                 {(
                     discountAmount > 0 ?
                     $@"<tr>
@@ -3371,6 +3598,7 @@ namespace EtheriT.Coker.Application.Order
                     </tr>" :
                     ""
                 )}
+                {BuildDiscountBreakdownMailRows(order_header.DiscountBreakdownJson)}
                 {(
                     redeemBonus > 0 ?
                     $@"<tr>
@@ -4255,8 +4483,24 @@ namespace EtheriT.Coker.Application.Order
                     foreach (var data in order_details)
                     {
                         var Specification = data.S1Title != "" ? data.S2Title != "" ? $"{data.S1Title}、{data.S2Title}" : data.S1Title : "";
+                        var productTitle = System.Net.WebUtility.HtmlEncode(data.Title);
+                        var parentLabel = string.IsNullOrWhiteSpace(data.AdditionalParentLabel)
+                            ? "本筆訂單"
+                            : data.AdditionalParentLabel.Trim();
+                        var additionalLabel = "";
+
+                        if (data.IsAdditional)
+                        {
+                            additionalLabel = string.Equals(parentLabel, "本筆訂單", StringComparison.Ordinal)
+                                ? "<span style='color:#c62828;font-weight:bold;'>【訂單加價購／贈品】</span> "
+                                : $"<span style='color:#c62828;font-weight:bold;'>【加價購／贈品】</span> {productTitle}<br/><small>隨 {System.Net.WebUtility.HtmlEncode(parentLabel)} 一併結帳</small>";
+
+                            if (!string.Equals(parentLabel, "本筆訂單", StringComparison.Ordinal))
+                                productTitle = "";
+                        }
+
                         DetailsTable += $"<tr>" +
-                                                        $"<td  colspan='2'>{data.Title}</td>" +
+                                                        $"<td colspan='2'>{additionalLabel}{productTitle}</td>" +
                                                         $"<td style='text-align: center;'>{Specification}</td>" +
                                                         $"<td style='text-align: right;'>{(
                                                             data.Price > 0 ?
@@ -4278,6 +4522,33 @@ namespace EtheriT.Coker.Application.Order
                                                         $"</tr>";
                     }
                     DetailsTable += "</tbody></table>";
+
+                    var productAmount = order_details.Sum(x => x.Price * x.Quantity);
+                    var productBonus = order_details.Sum(x => (x.BonusPrice ?? 0) * x.Quantity);
+                    var totalBonus = order_header.Bonus ?? 0;
+                    var redeemBonus = Math.Max(totalBonus - productBonus, 0);
+                    var discountAmount = order_header.Discount ?? 0;
+                    var SummaryTable = $@"<table>
+                        <tbody>
+                            <tr>
+                                <td colspan='6' style='text-align:right;font-weight:bold;'>商品金額　{productAmount.ToString("$#,##0")}</td>
+                            </tr>
+                            {BuildEligibleProductAmountMailRow(order_header.DiscountBreakdownJson, productAmount)}
+                            {(discountAmount > 0
+                                ? $"<tr><td colspan='6' style='text-align:right;font-weight:bold;'>活動折扣　-{discountAmount.ToString("$#,##0")}</td></tr>"
+                                : "")}
+                            {BuildDiscountBreakdownMailRows(order_header.DiscountBreakdownJson)}
+                            {(redeemBonus > 0
+                                ? $"<tr><td colspan='6' style='text-align:right;font-weight:bold;'>紅利折抵　-{redeemBonus.ToString("#,##0")}點</td></tr>"
+                                : "")}
+                            <tr>
+                                <td colspan='6' style='text-align:right;font-weight:bold;'>運費　{order_header.Freight.ToString("$#,##0")}</td>
+                            </tr>
+                            <tr>
+                                <td colspan='6' style='text-align:right;font-weight:bold;'>總計　{(order_header.Freight + order_header.Subtotal).ToString("$#,##0")}</td>
+                            </tr>
+                        </tbody>
+                    </table>";
 
                     var mailhtml = $@"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>
                                                             <br/>
@@ -4306,6 +4577,7 @@ namespace EtheriT.Coker.Application.Order
                                                             </table>
                                                             <br/>
                                                             {DetailsTable}
+                                                            {SummaryTable}
                                                             <br/>
                                                              {Remind}
                                                             <br/>

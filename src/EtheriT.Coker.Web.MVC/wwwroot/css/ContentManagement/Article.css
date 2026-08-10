@@ -26,6 +26,10 @@ textarea.h300 {
     height: 300px;
 }
 /* Article List */
+#ArticleWorkspace {
+    container-type: inline-size;
+}
+
 .btn_back {
     color: #4E565A;
 }
@@ -46,6 +50,20 @@ textarea.h300 {
 #ArticleWorkspace .article-readonly-row .dx-link-delete,
 #ArticleWorkspace .article-readonly-row .dx-icon-trash {
     opacity: 0.35;
+}
+
+#ArticleWorkspace .article-title-column {
+    overflow: hidden;
+}
+
+#ArticleWorkspace .article-title-text {
+    display: inline-block;
+    width: max-content;
+    max-width: 100%;
+    max-width: 50cqw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Article Content */

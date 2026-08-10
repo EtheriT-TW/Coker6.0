@@ -30,6 +30,12 @@ function TotalCount() {
     S.subtotal = Number(sum || 0) + rewardAmount;
     S.order_data.bonus = Number(bonus || 0);
 
+    var showGeneralProductAmount = S.subtotal > Number(discountEligibleSum || 0);
+    $(".generalProductAmountLine").toggleClass("d-none", !showGeneralProductAmount);
+    $(".generalProductAmount").text(showGeneralProductAmount
+        ? Number(discountEligibleSum || 0).toLocaleString()
+        : "");
+
     // 行銷活動折扣：只影響畫面試算，不作為正式訂單依據
     var marketingDiscountResult = cart.Marketing && typeof cart.Marketing.calculateOrderDiscount === "function"
         ? cart.Marketing.calculateOrderDiscount(Number(discountEligibleSum || 0))
@@ -79,6 +85,11 @@ function TotalCount() {
     const $redeemRuleText = $(".bonusRedeemRuleText");
 
     const redeemEnabled = (MinOrderForRedemption > 0 && MaxRedemptionPercent > 0);
+    const maximumDiscountAmount = Number(MaximumDiscount);
+    const hasMaximumDiscount = MaximumDiscount != null && maximumDiscountAmount > 0;
+    const redemptionLimitText = hasMaximumDiscount
+        ? `最高 ${MaxRedemptionPercent}% 且單筆上限 $${maximumDiscountAmount.toLocaleString()}`
+        : `最高 ${MaxRedemptionPercent}%`;
 
     let allBonus = Number(bonus || 0);
     let redeemAmount = 0;
@@ -101,7 +112,7 @@ function TotalCount() {
             const diff = MinOrderForRedemption - payableSubtotal;
 
             $redeemRuleText.text(
-                `再消費 $${diff.toLocaleString()} 可使用紅利折抵（最高 ${MaxRedemptionPercent}%）`
+                `再消費 $${diff.toLocaleString()} 可使用紅利折抵（${redemptionLimitText}）`
             );
 
             $bonusRuleLine.removeClass("d-none");
@@ -110,7 +121,10 @@ function TotalCount() {
         // 已達門檻
         else {
 
-            const cap = Math.floor(payableSubtotal * MaxRedemptionPercent / 100);
+            const percentageCap = Math.round(payableSubtotal * MaxRedemptionPercent / 100);
+            const cap = hasMaximumDiscount
+                ? Math.floor(Math.min(percentageCap, maximumDiscountAmount))
+                : percentageCap;
             const memberBonusAmount = Math.max(0, (totalBonus || 0) - bonus);
 
             redeemAmount = Math.min(cap, memberBonusAmount);
@@ -122,7 +136,7 @@ function TotalCount() {
 
                 // label 覆蓋
                 $bonusDisconLine.find(".summary-label")
-                    .text(`本單可使用紅利折抵（最高 ${MaxRedemptionPercent}%）`);
+                    .text(`本單可使用紅利折抵（${redemptionLimitText}）`);
 
                 // 金額
                 $bonusDisconLine.find(".bonusDiscion")

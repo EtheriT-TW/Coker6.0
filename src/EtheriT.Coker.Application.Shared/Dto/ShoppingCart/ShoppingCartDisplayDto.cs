@@ -41,6 +41,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public bool NoStockManagement { get; set; }
         public bool IsAdditional { get; set; }
         public long? FK_MarketingRewardItemId { get; set; }
+        public long? AdditionalParentShoppingCartId { get; set; }
         /// <summary>
         /// 訂單快照中的加價購／贈品所依附的主商品。
         /// </summary>

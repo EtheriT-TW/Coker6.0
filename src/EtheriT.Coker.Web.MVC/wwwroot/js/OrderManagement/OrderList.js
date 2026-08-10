@@ -329,8 +329,40 @@ function ToggleOrderBonusLines(data) {
     $(".bonusDiscionLine").toggleClass("d-none", redeemBonus <= 0);
     $(".bonusUseTotalLine").toggleClass("d-none", totalBonus <= 0);
     $(".discountLine").toggleClass("d-none", discount <= 0);
+
+    const breakdown = data.discountBreakdown || {};
+    const discountItems = Array.isArray(breakdown.items) ? breakdown.items : [];
+    const $discountRows = $(".order_discountBreakdown").empty();
+    const eligibleAmount = Number(breakdown.eligibleProductAmount || 0);
+    const productAmount = Number(String(data.productSubtotal || "0").replaceAll(",", ""));
+    const showGeneralProductAmount = eligibleAmount > 0 && productAmount > eligibleAmount;
+
+    $(".generalProductAmountLine").toggleClass("d-none", !showGeneralProductAmount);
+    $(".order_generalProductAmount").text(
+        showGeneralProductAmount ? eligibleAmount.toLocaleString() : ""
+    );
+
+    discountItems.forEach(function (item) {
+        const amount = Number(item.discountAmount || 0);
+        if (amount <= 0) return;
+
+        const repeatText = Number(item.appliedTimes || 0) > 1
+            ? `（套用 ${item.appliedTimes} 次）`
+            : "";
+        const $row = $("<div>", { "class": "d-flex small text-secondary" });
+        $("<div>", { "class": "col" })
+            .text(`${item.name || "活動折扣"}${repeatText}`)
+            .appendTo($row);
+        $("<div>", { "class": "col-4 col-sm-2 text-end" })
+            .text(`-$${amount.toLocaleString()}`)
+            .appendTo($row);
+        $discountRows.append($row);
+    });
 }
 function updateOrder(onSuccess) {
+    co.sweet.loading("儲存中，請稍後。");
+    $btn_save.prop("disabled", true);
+
     co.Order.UpdateStatus({ Id: keyId, Status: $order_status.val(), Memo: $memo_block.val(), TrackingNumber: $tracking_number.val() }).done(function (result) {
         if (result.success) {
             var msg = "儲存成功";
@@ -368,6 +400,10 @@ function updateOrder(onSuccess) {
             order_list.component.refresh();
         }
         else co.sweet.error("儲存失敗", result.error);
+    }).fail(function () {
+        co.sweet.error("儲存失敗", "連線異常，請稍後再試。");
+    }).always(function () {
+        $btn_save.prop("disabled", false);
     });
 }
 function lockLogistics() {
@@ -575,8 +611,13 @@ function HashDataEdit() {
         if (window.currentHash != window.location.hash) {
             var hash = window.location.hash.replace("#", "");
             var ohids = `${hash}`;
-            co.Order.GetDisplay(ohids).done(function (result) {
+            var hasOrderData = false;
+
+            co.sweet.loading("訂單明細載入中，請稍後。");
+
+            var displayRequest = co.Order.GetDisplay(ohids).done(function (result) {
                 if (result.length > 0) {
+                    hasOrderData = true;
                     var order_header = result[0].orderHeader;
                     // 如果是貨到付款 待付款可以取消
                     if ([7, 8, 9, 10].includes(order_header.paymentCode)) isCashOnDelivery = true;
@@ -625,7 +666,7 @@ function HashDataEdit() {
 
                             $purchaseList.append(
                                 '<li class="order-additional-heading">' +
-                                '<strong>訂單優惠商品</strong>' +
+                                '<strong>訂單加價購／贈品</strong>' +
                                 '<small>本筆訂單符合優惠活動條件</small>' +
                                 '</li>'
                             );
@@ -668,13 +709,11 @@ function HashDataEdit() {
 
                         $purchaseList.append(frame);
                     });
-
-                    MoveToContent();
                 } else {
                     window.location.hash = ""
                 }
             });
-            co.Order.GetHeaderOld(parseInt(hash)).done(function (result) {
+            var headerRequest = co.Order.GetHeaderOld(parseInt(hash)).done(function (result) {
                 if (result != null) {
                     FormDataClear();
                     keyId = result.id;
@@ -683,6 +722,19 @@ function HashDataEdit() {
                     //window.location.hash = ""
                 }
             });
+
+            $.when(displayRequest, headerRequest)
+                .done(function () {
+                    if (hasOrderData) {
+                        window.currentHash = window.location.hash;
+                        MoveToContent();
+                    }
+                    co.sweet.closeLoading();
+                })
+                .fail(function () {
+                    window.location.hash = "";
+                    co.sweet.error("訂單明細載入失敗", "請稍後再試。");
+                });
         }
     } else {
         BackToList();
@@ -691,7 +743,6 @@ function HashDataEdit() {
 function editButtonClicked(e) {
     keyId = e.row.key;
     window.location.hash = keyId
-    MoveToContent();
 }
 function HeaderDataInsert(data) {
     DataInsert(data, $("#OrderDetails"));
@@ -963,6 +1014,7 @@ function MoveToContent() {
 }
 function BackToList() {
     isCashOnDelivery = false;
+    window.currentHash = "";
     $("#OrderList").removeClass("d-none");
     $("#OrderContent").addClass("d-none");
     $("#PrintR001").addClass("d-none");

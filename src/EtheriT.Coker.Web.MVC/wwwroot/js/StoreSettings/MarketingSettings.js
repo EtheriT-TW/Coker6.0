@@ -76,6 +76,7 @@
         offerPreviewSwiper: null,
         isRuleModeLocked: false,
         repeatableWasCustomized: false,
+        canStackWasCustomized: false,
 
         init: function () {
             if (this.isInitialized) return;
@@ -109,6 +110,7 @@
             this.$scopeProductSection = $(".scopeProductSection");
             this.$addOnAmountSection = $("#AddOnAmountSection");
             this.$addOnQuantitySection = $("#AddOnQuantitySection");
+            this.$canStack = $("#CheckCanStack");
             this.$repeatable = $("#CheckRepeatable");
             this.$repeatableSection = $(".repeatableSection");
         },
@@ -158,7 +160,14 @@
                 if (self.keyId === 0 && !self.repeatableWasCustomized) {
                     self.$repeatable.prop("checked", self.isAddOnMode());
                 }
+                if (self.keyId === 0 && !self.canStackWasCustomized) {
+                    self.$canStack.prop("checked", self.isAddOnMode());
+                }
                 self.applyRuleModeUI();
+            });
+
+            this.$canStack.off("change.marketing").on("change.marketing", function () {
+                if (self.keyId === 0) self.canStackWasCustomized = true;
             });
 
             this.$repeatable.off("change.marketingPreview").on("change.marketingPreview", function () {
@@ -902,7 +911,7 @@
             $("#InputStartTime").val(this.toDateTimeLocal(new Date()));
             this.$neverEnd.prop("checked", true);
             this.$endTime.val("");
-            $("#CheckCanStack").prop("checked", true);
+            $("#CheckCanStack").prop("checked", false);
             $("#CheckRepeatable").prop("checked", false);
 
             this.$minAmount.val("1000");
@@ -942,6 +951,7 @@
         clearFormState: function () {
             this.keyId = 0;
             this.repeatableWasCustomized = false;
+            this.canStackWasCustomized = false;
             this.setRuleModeLocked(false);
             this.scopeItems = [];
             this.rewardItems = [];
@@ -1188,6 +1198,7 @@
                 Priority: Number(form.Priority || 0),
                 CanStack: isAddOn || form.CanStack === true,
                 Repeatable: mode !== "percent-discount" && form.Repeatable === true,
+                StackingConflictConfirmed: false,
                 RuleType: ruleType,
                 ConditionType: conditionType,
                 ScopeType: conditionType === CONDITION.orderAmount ? SCOPE.allOrder : SCOPE.specificProducts,
@@ -1286,9 +1297,20 @@
             if (!this.validatePayload(payload)) return Promise.reject();
             const self = this;
 
+            return this.savePayload(payload).catch(function (err) {
+                self.handleRequestError(err, "儲存行銷活動發生錯誤");
+            });
+        },
+
+        savePayload: function (payload) {
+            const self = this;
             return co.Marketing.AddUp(payload).then(function (res) {
                 if (res && (res.success === false || res.Success === false)) {
-                    throw new Error(res.error || res.Error || res.message || res.Message || "儲存失敗");
+                    const errorCode = res.error || res.Error;
+                    if (errorCode === "MarketingStackingConfirmationRequired") {
+                        return self.confirmStackingConflict(payload, res);
+                    }
+                    throw new Error(errorCode || res.message || res.Message || "儲存失敗");
                 }
                 Coker.sweet.success((res && (res.message || res.Message)) || "行銷活動儲存成功", null, true);
                 setTimeout(function () {
@@ -1296,7 +1318,38 @@
                     self.reloadGrid();
                 }, 300);
             }).catch(function (err) {
-                self.handleRequestError(err, "儲存行銷活動發生錯誤");
+                const result = err?.result || err?.responseJSON || {};
+                const errorCode = result.error || result.Error;
+                if (errorCode === "MarketingStackingConfirmationRequired") {
+                    return self.confirmStackingConflict(payload, result);
+                }
+                throw err;
+            });
+        },
+
+        confirmStackingConflict: function (payload, result) {
+            const self = this;
+            const conflicts = valueOf(result, "object", "Object", []);
+            const names = conflicts.map(function (item) {
+                return `<li>${escapeHtml(valueOf(item, "name", "Name", "未命名活動"))}</li>`;
+            }).join("");
+            const message =
+                "目前有下列期間重疊的滿額優惠也允許併用：" +
+                `<ul class="text-start mt-3 mb-3">${names}</ul>` +
+                "這些活動啟用後，同一張訂單可能同時套用多組折扣。請確認這是預期的設定。";
+
+            return new Promise(function (resolve, reject) {
+                Coker.sweet.confirm(
+                    "確認重複抵扣設定",
+                    message,
+                    "確認並儲存",
+                    "返回調整",
+                    function () {
+                        payload.StackingConflictConfirmed = true;
+                        self.savePayload(payload).then(resolve).catch(reject);
+                    },
+                    function () { resolve(false); }
+                );
             });
         },
 
@@ -1373,11 +1426,41 @@
         return percent % 10 === 0 ? (percent / 10).toString() : percent.toString();
     }
 
+    function formatMarketingDateTime(value) {
+        if (!value) return "";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "";
+        const pad = number => String(number).padStart(2, "0");
+        return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ` +
+            `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
     window.MarketingSettingsPageReady = function () { MarketingPage.init(); };
     window.PageReady = window.MarketingSettingsPageReady;
     window.marketingContentReady = function (e) { MarketingPage.onGridContentReady(e); };
     window.marketingEditButtonClicked = function (e) { MarketingPage.onEditClick(e); };
     window.marketingDeleteButtonClicked = function (e) { MarketingPage.onDeleteClick(e); };
+
+    window.marketingActivityTimeCellValue = function (rowData) {
+        if (!rowData) return "";
+        const start = formatMarketingDateTime(rowData.startTime ?? rowData.StartTime);
+        const end = formatMarketingDateTime(rowData.endTime ?? rowData.EndTime);
+        const neverEnd = (rowData.neverEnd ?? rowData.NeverEnd) === true;
+        if (!start) return "未設定活動時間";
+        return `${start} ～ ${neverEnd ? "永久" : (end || "未設定結束時間")}`;
+    };
+
+    window.marketingRepeatableCellValue = function (rowData) {
+        if (!rowData) return "";
+        return (rowData.repeatable ?? rowData.Repeatable) === true ? "是" : "否";
+    };
+
+    window.marketingCanStackCellValue = function (rowData) {
+        if (!rowData) return "";
+        const ruleType = Number(rowData.ruleType ?? rowData.RuleType);
+        if (ruleType === RULE.addOnPurchase) return "—";
+        return (rowData.canStack ?? rowData.CanStack) === true ? "是" : "否";
+    };
 
     window.marketingRuleSummaryCellValue = function (rowData) {
         if (!rowData) return "";

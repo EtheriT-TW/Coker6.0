@@ -36,6 +36,9 @@
             public long 商品Id { get; set; }
             public bool IsAdditional { get; set; }
             public long? FK_MarketingRewardItemId { get; set; }
+            public long ShoppingCartId { get; set; }
+            public long? AdditionalParentShoppingCartId { get; set; }
+            public string? AdditionalParentLabel { get; set; }
             public bool IsOrderLevelAdditional { get; set; }
         }
     }

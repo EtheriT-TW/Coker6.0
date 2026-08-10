@@ -15,6 +15,11 @@
                 }
             });
         },
+        closeLoading: function () {
+            if (Swal.isLoading()) {
+                Swal.close();
+            }
+        },
         success: function (text, action, autoclose) {
             var closetime = false;
             if (autoclose) { closetime = Coker.sweet.config.timeout }

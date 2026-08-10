@@ -577,6 +577,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
 
                         ViewBag.MinOrderForRedemption = bonusSetting.MinOrderForRedemption; // 消費滿額開始紅利折抵
                         ViewBag.MaxRedemptionPercent = bonusSetting.MaxRedemptionPercent; // 折抵比例(%)
+                        ViewBag.MaximumDiscount = bonusSetting.MaximumDiscount; // 單筆訂單紅利折抵上限，空值表示無限制
                         ViewBag.MinOrderForEarnPoints = bonusSetting.MinOrderForEarnPoints; // 消費買額可獲得紅利
                         ViewBag.RewardRatePercent = bonusSetting.RewardRatePercent; // 回饋比例
                     }

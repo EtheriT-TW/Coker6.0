@@ -51,6 +51,7 @@ namespace EtheriT.Coker.Core.Models
         public DateTime? CompletedDate { get; set; }
         public decimal Subtotal { get; set; }
         public decimal? Discount { get; set; }
+        public string? DiscountBreakdownJson { get; set; }
         public int? Bonus { get; set; }
         public int? GetBonus { get; set; }
         public long? CouponId { get; set; }

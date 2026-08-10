@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,6 +27,12 @@ namespace EtheriT.Coker.Application.Shared.Dto.BonusManagement
         /// 最高抵扣% (達到啟動紅利扣抵條件後，每次最高抵扣%)
         /// </summary>
         public decimal? MaxRedemptionPercent { get; set; }
+
+        /// <summary>
+        /// 單筆訂單紅利折抵上限
+        /// </summary>
+        [Range(typeof(decimal), "1", "99999999", ErrorMessage = "最高折抵上限必須大於 0，或留空表示沒有限制")]
+        public decimal? MaximumDiscount { get; set; }
 
         /// <summary>
         /// 消費滿額條件 (當次消費滿額X元可啟動獲得數紅利)

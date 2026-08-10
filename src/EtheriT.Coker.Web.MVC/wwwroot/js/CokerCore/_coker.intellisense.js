@@ -538,6 +538,7 @@
  * @typedef {Object} CokerSweetApi
  * @property {CokerSweetConfig} config
  * @property {()=>void} loading
+ * @property {()=>void} closeLoading
  * @property {(html:string, onOk?:Function, autoClose?:boolean)=>void} success
  * @property {(title:string, html:string, onOk?:Function, autoClose?:boolean)=>void} error
  * @property {(title:string, html:string, okText:string, cancelText:string, onOk?:Function, onCancel?:Function)=>void} confirm

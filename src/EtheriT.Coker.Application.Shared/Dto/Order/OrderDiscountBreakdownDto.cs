@@ -1,8 +1,19 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Marketing;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Marketing;
 
-namespace EtheriT.Coker.Application.Shared.Dto.Marketing
+namespace EtheriT.Coker.Application.Shared.Dto.Order
 {
-    public class CheckoutDiscountAppliedDto
+    public class OrderDiscountBreakdownDto
+    {
+        public int Version { get; set; } = 1;
+
+        public decimal EligibleProductAmount { get; set; }
+
+        public decimal TotalDiscountAmount { get; set; }
+
+        public List<OrderDiscountBreakdownItemDto> Items { get; set; } = new();
+    }
+
+    public class OrderDiscountBreakdownItemDto
     {
         public CheckoutDiscountSourceTypeEnum SourceType { get; set; }
 
@@ -18,14 +29,12 @@ namespace EtheriT.Coker.Application.Shared.Dto.Marketing
 
         public MarketingRuleTypeEnum? RuleType { get; set; }
 
-        public decimal BaseAmount { get; set; }
-
         public decimal ThresholdAmount { get; set; }
+
+        public decimal BaseAmount { get; set; }
 
         public decimal DiscountAmount { get; set; }
 
         public int AppliedTimes { get; set; }
-
-        public string DisplayText { get; set; } = "";
     }
 }

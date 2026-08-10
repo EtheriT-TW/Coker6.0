@@ -334,6 +334,48 @@ namespace EtheriT.Coker.Application.Marketing
 
                 var websiteId = await loginUserData.GetWebsiteId();
 
+                var isOrderDiscount = input.RuleType == MarketingRuleTypeEnum.AmountDiscount ||
+                                      input.RuleType == MarketingRuleTypeEnum.PercentDiscount;
+                if (isOrderDiscount &&
+                    input.Status != MarketingDisplayStatusEnum.已結束 &&
+                    input.Status != MarketingDisplayStatusEnum.已關閉 &&
+                    input.CanStack &&
+                    !input.StackingConflictConfirmed)
+                {
+                    var inputEndTime = input.NeverEnd || !input.EndTime.HasValue
+                        ? DateTime.MaxValue
+                        : input.EndTime.Value;
+                    var stackingConflicts = await db.MarketingCampaigns
+                        .AsNoTracking()
+                        .Where(x => !x.IsDeleted && x.Id != input.Id && x.FK_WebsiteId == websiteId)
+                        .Where(x => x.CampaignType == MarketingCampaignTypeEnum.滿額優惠 &&
+                                    x.Status != MarketingDisplayStatusEnum.已結束 &&
+                                    x.Status != MarketingDisplayStatusEnum.已關閉 &&
+                                    x.CanStack)
+                        .Where(x => x.StartTime <= inputEndTime &&
+                                    (x.NeverEnd || !x.EndTime.HasValue || x.EndTime.Value >= input.StartTime))
+                        .OrderBy(x => x.Priority)
+                        .ThenBy(x => x.StartTime)
+                        .Select(x => new
+                        {
+                            x.Id,
+                            x.Name,
+                            x.StartTime,
+                            x.EndTime,
+                            x.NeverEnd
+                        })
+                        .ToListAsync();
+
+                    if (stackingConflicts.Any())
+                    {
+                        response.Success = false;
+                        response.Error = "MarketingStackingConfirmationRequired";
+                        response.Message = "相同期間已有可併用的滿額優惠，啟用後可能重複抵扣，確認後才會儲存。";
+                        response.Object = stackingConflicts;
+                        return response;
+                    }
+                }
+
                 MarketingCampaign? campaign;
 
                 if (input.Id > 0)
@@ -822,6 +864,9 @@ namespace EtheriT.Coker.Application.Marketing
                     .Where(x => x.Rules.Any(r =>
                         !r.IsDeleted && r.Enabled &&
                         r.RuleType == MarketingRuleTypeEnum.AddOnPurchase &&
+                        r.Condition != null && !r.Condition.IsDeleted &&
+                        (r.Condition.ConditionType == MarketingConditionTypeEnum.ScopeQuantity ||
+                         r.Condition.ConditionType == MarketingConditionTypeEnum.BuySpecificProduct) &&
                         r.ScopeItems.Any(s => !s.IsDeleted &&
                             s.TargetType == MarketingScopeTargetTypeEnum.Product &&
                             s.TargetId == productId)))
@@ -883,6 +928,8 @@ namespace EtheriT.Coker.Application.Marketing
                                  .Where(x => !x.IsDeleted && x.Enabled &&
                                              x.RuleType == MarketingRuleTypeEnum.AddOnPurchase &&
                                              x.Condition != null && !x.Condition.IsDeleted &&
+                                             (x.Condition.ConditionType == MarketingConditionTypeEnum.ScopeQuantity ||
+                                              x.Condition.ConditionType == MarketingConditionTypeEnum.BuySpecificProduct) &&
                                              x.Reward != null && !x.Reward.IsDeleted)
                                  .OrderBy(x => x.SortOrder))
                     {

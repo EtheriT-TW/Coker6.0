@@ -8,3 +8,110 @@
     .btn_page button.focus {
         background-color: #e9ecef;
     }
+
+#switchApp .website-search-panel {
+    max-width: 100%;
+}
+
+#switchApp .website-result-count {
+    display: block;
+    margin-top: .5rem;
+    text-align: right;
+}
+
+#switchApp .webitem {
+    position: relative;
+}
+
+#switchApp .website-pin {
+    position: absolute;
+    top: .45rem;
+    right: .45rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    color: #495057;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    opacity: .18;
+    transition: color .15s ease, background-color .15s ease, opacity .15s ease;
+}
+
+#switchApp .website-pin .material-symbols-outlined {
+    transform: rotate(45deg);
+    transform-origin: center;
+}
+
+#switchApp .webitem:hover .website-pin,
+#switchApp .website-pin:focus-visible {
+    background-color: rgba(233, 236, 239, .85);
+    opacity: .6;
+}
+
+#switchApp .website-pin.is-pinned {
+    color: #006fae;
+    opacity: .9;
+}
+
+#switchApp .website-pin.is-pinned:hover,
+#switchApp .website-pin.is-pinned:focus-visible {
+    opacity: 1;
+}
+
+#switchApp .app-switcher .card .app-selected {
+    right: auto;
+    left: 8px;
+}
+
+#switchApp .website-no-result-icon {
+    display: block;
+    margin-bottom: .5rem;
+    font-size: 2.5rem;
+}
+
+#switchApp .page_btn {
+    flex-wrap: wrap;
+    gap: .25rem;
+}
+
+#switchApp .page_btn .page-link {
+    min-width: 2.25rem;
+    color: #495057;
+    background-color: #fff;
+    border-color: #dee2e6;
+    border-radius: .25rem;
+}
+
+#switchApp .page_btn .page-link:hover {
+    color: #005b8f;
+    background-color: #f2f6f8;
+    border-color: #b8c4ca;
+}
+
+#switchApp .page_btn .page-item.active .page-link {
+    color: #fff;
+    background-color: #006fae;
+    border-color: #006fae;
+}
+
+#switchApp .page_btn .page-item.active .page-link:hover {
+    color: #fff;
+    background-color: #005b8f;
+    border-color: #005b8f;
+}
+
+#switchApp .page_btn .page-link:disabled {
+    color: #adb5bd;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    opacity: 1;
+}
+
+#switchApp .page_btn .page-link:focus-visible {
+    box-shadow: 0 0 0 .2rem rgba(0, 111, 174, .2);
+}

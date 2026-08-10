@@ -170,7 +170,7 @@ function renderCartGroups(result) {
 
                 '<span>' +
                 '<i class="fa-solid fa-turn-down me-2"></i>' +
-                '附屬優惠商品' +
+                '加價購／贈品' +
                 '</span>' +
 
                 '<span class="cart-additional-section-actions">' +
@@ -190,7 +190,7 @@ function renderCartGroups(result) {
             $groupItems.append(
                 '<li class="cart-order-additional-section-label">' +
                 '<span>' +
-                '<strong>訂單優惠商品</strong>' +
+                '<strong>訂單加價購／贈品</strong>' +
                 '<small>本筆購物車符合優惠活動條件</small>' +
                 '</span>' +
                 '</li>'

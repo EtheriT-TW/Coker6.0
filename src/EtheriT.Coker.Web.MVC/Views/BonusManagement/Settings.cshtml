@@ -34,7 +34,12 @@
             // 群組2：紅利扣抵基本設定
             items.AddGroup()
                 .Caption("紅利扣抵基本設定")
-                .ColCount(2)
+                .ColCount(3)
+                .ColCountByScreen(columns => columns
+                    .Lg(3)
+                    .Md(3)
+                    .Sm(2)
+                    .Xs(1))
                 .Items(groupItems =>
                 {
                     groupItems.AddSimpleFor(m => m.MinOrderForRedemption)
@@ -56,6 +61,24 @@
                             .Format("#,##0.#")
                             .ShowSpinButtons(true))
                         .HelpText(Model.MaxRedemptionPercentHelpText);
+
+                    groupItems.AddSimpleFor(m => m.MaximumDiscount)
+                        .Label(l => l.Text("最高折抵上限(元)")
+                                     .Alignment(HorizontalAlignment.Right))
+                        .Editor(e => e.NumberBox()
+                            .Min(1)
+                            .Max(99999999)
+                            .Format("#,##0")
+                            .ShowSpinButtons(true)
+                            .ShowClearButton(true))
+                        .ValidationRules(rules =>
+                        {
+                            rules.AddRange()
+                                .Min(1)
+                                .Max(99999999)
+                                .Message("最高折抵上限必須大於 0，或留空表示沒有限制");
+                        })
+                        .HelpText(Model.MaximumDiscountHelpText);
                 });
 
             // 群組3：紅利回饋設定

@@ -117,9 +117,6 @@
 function CartDropInit() {
     Product.GetAll.Cart().done(function (result) {
         if (result.length > 0) {
-            result.sort(function (left, right) {
-                return Number(left.isAdditional === true) - Number(right.isAdditional === true);
-            });
             for (var i = 0; i < result.length; i++) {
                 CartDropAdd(result[i])
             }
@@ -176,14 +173,9 @@ function CartDropAdd(result) {
         });
     });
 
-    var $cartList = $("#Car_Dropdown > ul");
-    if (result.isAdditional === true) {
-        $cartList.append($template);
-    } else {
-        var $firstAdditional = $cartList.children(".cart-item--additional").first();
-        if ($firstAdditional.length) $template.insertBefore($firstAdditional);
-        else $cartList.append($template);
-    }
+    // GetAll 已由後端依「主商品 → 對應優惠商品」排序；新加入購物車的項目也應
+    // 保留加入順序，避免再把所有主要商品插到優惠商品之前。
+    $("#Car_Dropdown > ul").append($template);
 
     var car_num = $("#Car_Badge").text() == "" ? 1 : parseInt($("#Car_Badge").text()) + 1;
     $("#Car_Badge").text(car_num.toString());
@@ -215,15 +207,24 @@ function CartDropReset(scid, quantity) {
     });
 }
 function CartDropDelete(self, id, success, error) {
-    self.remove();
-    Product.Delete.Cart(id).done(function () {
-        Coker.sweet.success(success, null, true);
-        var car_num = parseInt($("#Car_Badge").text()) - 1;
-        $("#Car_Badge").text(car_num.toString());
-        if (parseInt($("#Car_Badge").text()) == 0) {
-            CartClear();
+    Product.Delete.Cart(id).done(function (result) {
+        if (!result || result.success !== true) {
+            Coker.sweet.error("錯誤", (result && result.error) || error, null, true);
+            return;
         }
 
+        var responseData = result.object || result.Object || {};
+        var removedCartIds = responseData.removedCartIds || responseData.RemovedCartIds || [];
+        var removedIdSet = new Set([Number(id)].concat(removedCartIds.map(Number)));
+
+        removedIdSet.forEach(function (cartId) {
+            CartDropReset(cartId, 0);
+        });
+
+        Coker.sweet.success(result.message || success, null, true);
+        if (parseInt($("#Car_Badge").text()) <= 0) {
+            CartClear();
+        }
     }).fail(function () {
         Coker.sweet.error("錯誤", error, null, true);
     })

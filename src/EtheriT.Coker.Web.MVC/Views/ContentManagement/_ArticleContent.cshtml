@@ -52,18 +52,25 @@
                     .ShowRowLines(true)
                     .Columns(c =>
                     {
-                        c.AddFor(e => e.Id).Caption("編號").Width(90);
-                        c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90);
-                        c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90);
-                        c.AddFor(e => e.Title).Caption("標題");
-                        c.Add().DataField("Tags").Caption("標籤").Visible(Model.ArticleOnly).MinWidth(150);
-                        c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90);
+                        c.AddFor(e => e.Id).Caption("編號").Width(90).HidingPriority(9);
+                        c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90).HidingPriority(8);
+                        c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90).HidingPriority(7);
+                        c.AddFor(e => e.Title)
+                            .Caption("標題")
+                            .MinWidth(150)
+                            .AllowHiding(false)
+                            .CssClass("article-title-column")
+                            .CellTemplate(@<text>
+                                <span class="article-title-text" title="<%- data.Title || '' %>"><%- data.Title || '' %></span>
+                            </text>);
+                        c.Add().DataField("Tags").Caption("標籤").Visible(Model.ArticleOnly).MinWidth(150).HidingPriority(6);
+                        c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90).HidingPriority(5);
                         c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(false);
                         c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(false);
-                        c.Add().DataField(Model.ArticleOnly ? "SerNO" : "SerNo").Caption("排序").Width(90);
-                        c.Add().DataField("Popular").Caption("人氣值").Visible(Model.ArticleOnly).Width(90);
-                        c.Add().DataField("PopularVisible").Caption("顯示人氣值").Visible(Model.ArticleOnly).Width(120);
-                        c.AddFor(e => e.LastModificationTime).SortOrder(SortOrder.Desc).Format("yyyy/MM/dd HH:mm").Caption("最後編輯日期").Width(160);
+                        c.Add().DataField(Model.ArticleOnly ? "SerNO" : "SerNo").Caption("排序").Width(90).HidingPriority(4);
+                        c.Add().DataField("Popular").Caption("人氣值").Visible(Model.ArticleOnly).Width(90).HidingPriority(3);
+                        c.Add().DataField("PopularVisible").Caption("顯示人氣值").Visible(Model.ArticleOnly).Width(120).HidingPriority(2);
+                        c.AddFor(e => e.LastModificationTime).SortOrder(SortOrder.Desc).Format("yyyy/MM/dd HH:mm").Caption("最後編輯日期").Width(160).HidingPriority(1);
                         c.Add()
                             .Type(GridCommandColumnType.Buttons)
                             .Buttons(b =>

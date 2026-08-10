@@ -90,33 +90,47 @@ namespace EtheriT.Coker.Application.Authorization
 
                 if (!await loginUserData.CheckedWebSiteId(user.Id, bindId))
                 {
-                    var isSystemUser = await db.MappingUserAndRoles
-                        .Include(m => m.Role)
-                        .AnyAsync(m =>
-                            m.UserId == user.Id &&
-                            m.Role != null &&
-                            m.Role.Type == RoleTypeEnum.系統維護);
-
-                    if (isSystemUser)
+                    var preferredWebsiteId = dto.PreferredWebsiteIds?
+                        .Where(e => string.Equals(
+                            e.Key,
+                            user.Account,
+                            StringComparison.OrdinalIgnoreCase))
+                        .Select(e => e.Value)
+                        .FirstOrDefault() ?? 0;
+                    if (await loginUserData.CheckedWebSiteId(user.Id, preferredWebsiteId))
                     {
-                        bindId = await db.Websites
-                            .Where(w => !w.IsDeleted)
-                            .OrderBy(w => w.Id)
-                            .Select(w => w.Id)
-                            .FirstOrDefaultAsync();
-                        if (bindId <= 0)
-                            throw new Exception("此帳號沒有可用的管理站台");
+                        bindId = preferredWebsiteId;
                     }
                     else
                     {
-                        var defaultWeb = await db.MappingUserAndWebsites
-                            .Where(e => !e.IsDeleted && e.UserId == user.Id)
-                            .OrderByDescending(e => e.WebsiteId)
-                            .FirstOrDefaultAsync();
-                        if (defaultWeb == null)
-                            throw new Exception("無可管理的網站");
+                        var isSystemUser = await db.MappingUserAndRoles
+                            .Include(m => m.Role)
+                            .AnyAsync(m =>
+                                m.UserId == user.Id &&
+                                m.Role != null &&
+                                m.Role.Type == RoleTypeEnum.系統維護);
 
-                        bindId = defaultWeb.WebsiteId;
+                        if (isSystemUser)
+                        {
+                            bindId = await db.Websites
+                                .Where(w => !w.IsDeleted)
+                                .OrderBy(w => w.Id)
+                                .Select(w => w.Id)
+                                .FirstOrDefaultAsync();
+                            if (bindId <= 0)
+                                throw new Exception("此帳號沒有可用的管理站台");
+                        }
+                        else
+                        {
+                            var defaultWeb = await db.MappingUserAndWebsites
+                                .Where(e => !e.IsDeleted && e.UserId == user.Id)
+                                .OrderByDescending(e => e.WebsiteId)
+                                .FirstOrDefaultAsync();
+                            if (defaultWeb == null)
+                                throw new Exception("無可管理的網站");
+
+                            bindId = defaultWeb.WebsiteId;
+                        }
                     }
                 }
                 websiteId = bindId;

@@ -30,6 +30,11 @@ namespace EtheriT.Coker.Application.Shared.Dto.BonusManagement
         public decimal? MaxRedemptionPercent { get; set; }
 
         /// <summary>
+        /// 單筆訂單紅利折抵上限
+        /// </summary>
+        public decimal? MaximumDiscount { get; set; }
+
+        /// <summary>
         /// 消費滿額條件 (當次消費滿額X元可啟動獲得數紅利)
         /// </summary>
         public decimal? MinOrderForEarnPoints { get; set; }

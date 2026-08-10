@@ -31,6 +31,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                 SignupBonusPoints = bonusSettingData.SignupBonusPoints,
                 MinOrderForRedemption = bonusSettingData.MinOrderForRedemption,
                 MaxRedemptionPercent = bonusSettingData.MaxRedemptionPercent,
+                MaximumDiscount = bonusSettingData.MaximumDiscount,
                 MinOrderForEarnPoints = bonusSettingData.MinOrderForEarnPoints,
                 RewardRatePercent = bonusSettingData.RewardRatePercent,
                 RewardPointsExpireDays = bonusSettingData.RewardPointsExpireDays,
@@ -39,6 +40,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                 SignupBonusPointsHelpText = bonusSettingHelpText.SignupBonusPointsHelpText,
                 MinOrderForRedemptionHelpText = bonusSettingHelpText.MinOrderForRedemptionHelpText,
                 MaxRedemptionPercentHelpText = bonusSettingHelpText.MaxRedemptionPercentHelpText,
+                MaximumDiscountHelpText = bonusSettingHelpText.MaximumDiscountHelpText,
                 MinOrderForEarnPointsHelpText = bonusSettingHelpText.MinOrderForEarnPointsHelpText,
                 RewardRatePercentHelpText = bonusSettingHelpText.RewardRatePercentHelpText,
                 RewardPointsExpireDaysHelpText = bonusSettingHelpText.RewardPointsExpireDaysHelpText

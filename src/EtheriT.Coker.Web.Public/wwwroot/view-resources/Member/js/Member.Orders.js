@@ -10,13 +10,26 @@
 
         MemberPage.Orders = {
             loadPage: function (number) {
+                var $pane = $(MemberPage.Selectors.orderPane);
+                var $pageBtn = $pane.find(".page_btn");
+                var $noData = $pane.find(".nodata");
+                var $content = $pane.find(".content");
+                var $loading = $pane.find(".order-loading");
+                var requestId = ($pane.data("orderRequestId") || 0) + 1;
+
+                $pane.data("orderRequestId", requestId).attr("aria-busy", "true");
+                $pageBtn.addClass("d-none");
+                $noData.addClass("d-none");
+                $content.empty();
+                $loading.removeClass("d-none").attr("aria-hidden", "false");
+
                 C.Order.GetHistoryOrder(number).done(function (result) {
-                    var $pane = $(MemberPage.Selectors.orderPane);
-                    var $pageBtn = $pane.find(".page_btn");
-                    var $noData = $pane.find(".nodata");
+                    if ($pane.data("orderRequestId") !== requestId) return;
 
                     if (result.success && result.orderData != null && result.orderData.length > 0) {
                         if (result.page_Total > 1) {
+                            $pageBtn.removeClass("d-none");
+
                             if (!$pageBtn.data("init")) {
                                 MemberPage.Pagination.init($pageBtn, result.page_Total, "order");
                             }
@@ -30,6 +43,11 @@
                     } else {
                         $noData.removeClass("d-none");
                     }
+                }).always(function () {
+                    if ($pane.data("orderRequestId") !== requestId) return;
+
+                    $loading.addClass("d-none").attr("aria-hidden", "true");
+                    $pane.removeAttr("aria-busy");
                 });
             },
 
@@ -267,7 +285,7 @@
                         var $headingText = $("<span></span>");
 
                         $headingText.append(
-                            "<strong>訂單優惠商品</strong>"
+                            "<strong>訂單加價購／贈品</strong>"
                         );
 
                         $headingText.append(
@@ -375,6 +393,35 @@
                 } else {
                     frame.find(".collapse .discount_summary_row").remove();
                 }
+
+                var breakdown = orderHeader.discountBreakdown || {};
+                var discountItems = Array.isArray(breakdown.items) ? breakdown.items : [];
+                var $discountRows = frame.find(".collapse .discount_breakdown_rows").empty();
+                var eligibleAmount = Number(breakdown.eligibleProductAmount || 0);
+                var showGeneralProductAmount = eligibleAmount > 0 && productAmount > eligibleAmount;
+
+                frame.find(".collapse .general_product_amount_row")
+                    .toggleClass("d-none", !showGeneralProductAmount);
+                frame.find(".collapse .header_generalProductAmount").text(
+                    showGeneralProductAmount ? C.util.string.thousandSign(eligibleAmount) : ""
+                );
+
+                discountItems.forEach(function (item) {
+                    var amount = Number(item.discountAmount || 0);
+                    if (amount <= 0) return;
+
+                    var repeatText = Number(item.appliedTimes || 0) > 1
+                        ? "（套用 " + item.appliedTimes + " 次）"
+                        : "";
+                    var $row = $("<div>", { "class": "row text-secondary small" });
+                    $("<div>", { "class": "col-10 text-end" })
+                        .text((item.name || "活動折扣") + repeatText)
+                        .appendTo($row);
+                    $("<div>", { "class": "col-2 text-end" })
+                        .text("-$" + C.util.string.thousandSign(amount))
+                        .appendTo($row);
+                    $discountRows.append($row);
+                });
 
                 frame.find(".collapse .header_invoiceTypeTitle").text(orderHeader.invoiceTypeTitle || "未提供");
                 frame.find(".collapse .header_shipping").text(orderHeader.shipping || "未提供");

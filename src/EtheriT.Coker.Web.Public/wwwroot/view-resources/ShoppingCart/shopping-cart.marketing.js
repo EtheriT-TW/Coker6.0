@@ -76,7 +76,8 @@
             ruleId: null,
             campaignName: "",
             discountAmount: 0,
-            memo: ""
+            memo: "",
+            appliedDiscounts: []
         };
 
         if (subtotal <= 0) {
@@ -91,6 +92,7 @@
             return emptyResult;
         }
 
+        var candidates = [];
         for (var i = 0; i < campaigns.length; i++) {
             var campaign = campaigns[i];
             var rules = getValue(campaign, "rules") || [];
@@ -100,12 +102,96 @@
                 var discount = calculateRuleDiscount(campaign, rule, subtotal);
 
                 if (discount && discount.discountAmount > 0) {
-                    return discount;
+                    discount.canStack = getValue(campaign, "canStack") === true;
+                    discount.priority = Number(getValue(campaign, "priority") || 0);
+                    discount.sequence = candidates.length;
+                    candidates.push(discount);
                 }
             }
         }
 
-        return emptyResult;
+        var selected = selectBestDiscountCombination(candidates, subtotal);
+        if (!selected.length) return emptyResult;
+
+        selected.sort(compareDiscountOrder);
+        var remaining = subtotal;
+        selected.forEach(function (discount) {
+            discount.baseAmount = remaining;
+
+            if (discount.ruleType === 2) {
+                discount.discountAmount = Math.floor(remaining * (100 - discount.discountPercent) / 100);
+                if (discount.maxDiscountAmount > 0) {
+                    discount.discountAmount = Math.min(discount.discountAmount, discount.maxDiscountAmount);
+                }
+            }
+
+            discount.discountAmount = Math.max(0, Math.min(Number(discount.discountAmount || 0), remaining));
+            remaining -= discount.discountAmount;
+            discount.memo = discount.appliedTimes > 1
+                ? "行銷活動：" + discount.campaignName + "，折抵 " + discount.discountAmount.toLocaleString() + " 元，套用 " + discount.appliedTimes + " 次"
+                : "行銷活動：" + discount.campaignName + "，折抵 " + discount.discountAmount.toLocaleString() + " 元";
+        });
+        selected = selected.filter(function (discount) { return discount.discountAmount > 0; });
+        if (!selected.length) return emptyResult;
+
+        return {
+            applied: true,
+            campaignId: selected[0].campaignId,
+            ruleId: selected[0].ruleId,
+            campaignName: selected.map(function (x) { return x.campaignName; }).join("、"),
+            discountAmount: selected.reduce(function (sum, x) { return sum + x.discountAmount; }, 0),
+            memo: selected.map(function (x) { return x.memo; }).join("；"),
+            appliedDiscounts: selected
+        };
+    }
+
+    function selectBestDiscountCombination(candidates, subtotal) {
+        if (!candidates.length) return [];
+        var combinations = [];
+        var stackable = candidates.filter(function (x) { return x.canStack; });
+        if (stackable.length) combinations.push(stackable);
+        candidates.filter(function (x) { return !x.canStack; }).forEach(function (candidate) {
+            combinations.push([candidate]);
+        });
+
+        combinations.sort(function (left, right) {
+            var leftTotal = calculateCombinationDiscount(left, subtotal);
+            var rightTotal = calculateCombinationDiscount(right, subtotal);
+            if (leftTotal !== rightTotal) return rightTotal - leftTotal;
+            var leftPriority = Math.min.apply(null, left.map(function (x) { return x.priority; }));
+            var rightPriority = Math.min.apply(null, right.map(function (x) { return x.priority; }));
+            if (leftPriority !== rightPriority) return leftPriority - rightPriority;
+            var leftSequence = Math.min.apply(null, left.map(function (x) { return x.sequence; }));
+            var rightSequence = Math.min.apply(null, right.map(function (x) { return x.sequence; }));
+            return leftSequence - rightSequence;
+        });
+        return combinations[0].slice();
+    }
+
+    function compareDiscountOrder(left, right) {
+        if (left.minAmount !== right.minAmount) return left.minAmount - right.minAmount;
+        if (left.priority !== right.priority) return left.priority - right.priority;
+        return left.sequence - right.sequence;
+    }
+
+    function calculateCombinationDiscount(discounts, subtotal) {
+        var remaining = subtotal;
+
+        discounts.slice().sort(compareDiscountOrder).forEach(function (discount) {
+            var amount = Number(discount.discountAmount || 0);
+
+            if (discount.ruleType === 2) {
+                amount = Math.floor(remaining * (100 - discount.discountPercent) / 100);
+                if (discount.maxDiscountAmount > 0) {
+                    amount = Math.min(amount, discount.maxDiscountAmount);
+                }
+            }
+
+            amount = Math.max(0, Math.min(amount, remaining));
+            remaining -= amount;
+        });
+
+        return subtotal - remaining;
     }
 
     function calculateRuleDiscount(campaign, rule, subtotal) {
@@ -177,7 +263,12 @@
             ruleId: getValue(rule, "id") || null,
             campaignName: campaignName,
             discountAmount: discount,
-            memo: memo
+            memo: memo,
+            appliedTimes: appliedTimes,
+            ruleType: ruleType,
+            minAmount: minAmount,
+            discountPercent: Number(getValue(rule, "discountPercent") || 0),
+            maxDiscountAmount: Number(getValue(rule, "maxDiscountAmount") || 0)
         };
     }
 
@@ -185,34 +276,47 @@
         discountResult = discountResult || {};
 
         var discount = Number(discountResult.discountAmount || 0);
-        var campaignName = discountResult.campaignName || "";
 
         S.marketingDiscount = discount;
         S.marketingDiscountMemo = discountResult.memo || "";
 
-        var $line = $(".marketingDiscountLine");
-        var $value = $(".marketingDiscount");
-        var $name = $(".marketingDiscountName");
+        var $containers = $(".marketingDiscountLines");
 
-        if (!$line.length) {
+        if (!$containers.length) {
             return;
         }
 
-        if (discount > 0) {
-            $line.removeClass("d-none");
-            $value.text(discount.toLocaleString());
+        var appliedDiscounts = Array.isArray(discountResult.appliedDiscounts)
+            ? discountResult.appliedDiscounts.filter(function (item) {
+                return Number(item && item.discountAmount || 0) > 0;
+            })
+            : [];
 
-            if ($name.length) {
-                $name.text(campaignName ? "（" + campaignName + "）" : "");
-            }
-        } else {
-            $line.addClass("d-none");
-            $value.text("");
-
-            if ($name.length) {
-                $name.text("");
-            }
+        // 相容尚未提供折扣明細的舊回傳格式。
+        if (!appliedDiscounts.length && discount > 0) {
+            appliedDiscounts.push({
+                campaignName: discountResult.campaignName || "",
+                discountAmount: discount
+            });
         }
+
+        if (!appliedDiscounts.length) {
+            $containers.empty().addClass("d-none");
+            return;
+        }
+
+        var html = appliedDiscounts.map(function (item) {
+            var campaignName = item.campaignName || "";
+            var amount = Number(item.discountAmount || 0);
+            var label = campaignName ? escapeHtml(campaignName) : "活動折扣";
+
+            return '<div class="summary-main-row marketingDiscountLine">' +
+                '<div class="summary-label">' + label + '</div>' +
+                '<div class="summary-amount price-negative">$' + amount.toLocaleString() + '</div>' +
+                '</div>';
+        }).join("");
+
+        $containers.html(html).removeClass("d-none");
     }
 
     function getSelectedBaseItems() {

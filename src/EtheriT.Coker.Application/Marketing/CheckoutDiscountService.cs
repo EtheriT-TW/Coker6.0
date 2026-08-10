@@ -9,6 +9,17 @@ namespace EtheriT.Coker.Application.Marketing
 {
     public class CheckoutDiscountService : ICheckoutDiscountService
     {
+        private sealed class DiscountCandidate
+        {
+            public CheckoutDiscountAppliedDto Discount { get; init; } = new();
+            public bool CanStack { get; init; }
+            public int Priority { get; init; }
+            public int Sequence { get; init; }
+            public decimal MinAmount { get; init; }
+            public decimal DiscountPercent { get; init; }
+            public decimal MaxDiscountAmount { get; init; }
+        }
+
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
         private readonly IConfiguration configuration;
@@ -41,6 +52,8 @@ namespace EtheriT.Coker.Application.Marketing
                 if (productSubtotal <= 0)
                     return result;
 
+                result.EligibleProductAmount = productSubtotal;
+
                 var marketingDiscounts = await CalculateMarketingCampaignDiscountsAsync(
                     websiteId,
                     input,
@@ -48,20 +61,39 @@ namespace EtheriT.Coker.Application.Marketing
                     now
                 );
 
-                foreach (var discount in marketingDiscounts)
+                var selectedDiscounts = SelectBestDiscountCombination(marketingDiscounts, productSubtotal);
+                if (selectedDiscounts.Any())
                 {
-                    result.AppliedDiscounts.Add(discount);
-                }
+                    selectedDiscounts = OrderDiscounts(selectedDiscounts).ToList();
+                    var remainingAmount = productSubtotal;
+                    foreach (var candidate in selectedDiscounts)
+                    {
+                        var discount = candidate.Discount;
+                        discount.BaseAmount = remainingAmount;
 
-                // 第一階段先只支援不疊加：取第一筆
-                // 未來 CanStack 開始支援時，這裡改成套用策略。
-                if (result.AppliedDiscounts.Any())
-                {
-                    var selected = result.AppliedDiscounts.First();
+                        if (discount.RuleType == MarketingRuleTypeEnum.PercentDiscount)
+                        {
+                            discount.DiscountAmount = Math.Floor(
+                                remainingAmount * (100 - candidate.DiscountPercent) / 100
+                            );
 
-                    result.AppliedDiscounts = new List<CheckoutDiscountAppliedDto> { selected };
-                    result.TotalDiscountAmount = selected.DiscountAmount;
-                    result.Memo = selected.DisplayText;
+                            if (candidate.MaxDiscountAmount > 0)
+                                discount.DiscountAmount = Math.Min(discount.DiscountAmount, candidate.MaxDiscountAmount);
+                        }
+
+                        discount.DiscountAmount = Math.Max(0, Math.Min(discount.DiscountAmount, remainingAmount));
+                        remainingAmount -= discount.DiscountAmount;
+                        discount.DisplayText = discount.AppliedTimes > 1
+                            ? $"行銷優惠：{discount.Name}，本次折抵 {discount.DiscountAmount:#,##0} 元，套用 {discount.AppliedTimes} 次"
+                            : $"行銷優惠：{discount.Name}，本次折抵 {discount.DiscountAmount:#,##0} 元";
+                    }
+
+                    result.AppliedDiscounts = selectedDiscounts
+                        .Select(x => x.Discount)
+                        .Where(x => x.DiscountAmount > 0)
+                        .ToList();
+                    result.TotalDiscountAmount = result.AppliedDiscounts.Sum(x => x.DiscountAmount);
+                    result.Memo = string.Join("；", result.AppliedDiscounts.Select(x => x.DisplayText));
                 }
 
                 result.TotalDiscountAmount = Math.Max(0, result.TotalDiscountAmount);
@@ -75,13 +107,71 @@ namespace EtheriT.Coker.Application.Marketing
             }
         }
 
-        private async Task<List<CheckoutDiscountAppliedDto>> CalculateMarketingCampaignDiscountsAsync(
+        private static List<DiscountCandidate> SelectBestDiscountCombination(
+            IReadOnlyList<DiscountCandidate> candidates,
+            decimal productSubtotal)
+        {
+            if (!candidates.Any())
+                return new List<DiscountCandidate>();
+
+            var combinations = new List<List<DiscountCandidate>>();
+            var stackable = candidates.Where(x => x.CanStack).ToList();
+            if (stackable.Any())
+                combinations.Add(stackable);
+
+            combinations.AddRange(candidates
+                .Where(x => !x.CanStack)
+                .Select(x => new List<DiscountCandidate> { x }));
+
+            return combinations
+                .OrderByDescending(x => CalculateCombinationDiscount(x, productSubtotal))
+                .ThenBy(x => x.Min(y => y.Priority))
+                .ThenBy(x => x.Min(y => y.Sequence))
+                .First();
+        }
+
+        private static IOrderedEnumerable<DiscountCandidate> OrderDiscounts(
+            IEnumerable<DiscountCandidate> discounts)
+        {
+            return discounts
+                .OrderBy(x => x.MinAmount)
+                .ThenBy(x => x.Priority)
+                .ThenBy(x => x.Sequence);
+        }
+
+        private static decimal CalculateCombinationDiscount(
+            IEnumerable<DiscountCandidate> discounts,
+            decimal productSubtotal)
+        {
+            var remainingAmount = productSubtotal;
+
+            foreach (var candidate in OrderDiscounts(discounts))
+            {
+                var amount = candidate.Discount.DiscountAmount;
+
+                if (candidate.Discount.RuleType == MarketingRuleTypeEnum.PercentDiscount)
+                {
+                    amount = Math.Floor(remainingAmount * (100 - candidate.DiscountPercent) / 100);
+
+                    if (candidate.MaxDiscountAmount > 0)
+                        amount = Math.Min(amount, candidate.MaxDiscountAmount);
+                }
+
+                amount = Math.Max(0, Math.Min(amount, remainingAmount));
+                remainingAmount -= amount;
+            }
+
+            return productSubtotal - remainingAmount;
+        }
+
+        private async Task<List<DiscountCandidate>> CalculateMarketingCampaignDiscountsAsync(
             long websiteId,
             CheckoutDiscountInputDto input,
             decimal productSubtotal,
             DateTime now)
         {
-            var output = new List<CheckoutDiscountAppliedDto>();
+            var output = new List<DiscountCandidate>();
+            var sequence = 0;
 
             var campaigns = await db.MarketingCampaigns
                 .AsNoTracking()
@@ -121,7 +211,18 @@ namespace EtheriT.Coker.Application.Marketing
                     var discount = CalculateOrderAmountRule(campaign, rule, productSubtotal);
 
                     if (discount != null && discount.DiscountAmount > 0)
-                        output.Add(discount);
+                    {
+                        output.Add(new DiscountCandidate
+                        {
+                            Discount = discount,
+                            CanStack = campaign.CanStack,
+                            Priority = campaign.Priority,
+                            Sequence = sequence++,
+                            MinAmount = rule.Condition?.MinAmount ?? 0,
+                            DiscountPercent = rule.Reward?.DiscountPercent ?? 0,
+                            MaxDiscountAmount = rule.Reward?.MaxDiscountAmount ?? 0
+                        });
+                    }
                 }
             }
 
@@ -192,6 +293,7 @@ namespace EtheriT.Coker.Application.Marketing
                 CampaignType = campaign.CampaignType,
                 RuleType = rule.RuleType,
                 BaseAmount = productSubtotal,
+                ThresholdAmount = minAmount,
                 DiscountAmount = discount,
                 AppliedTimes = appliedTimes,
                 DisplayText = displayText

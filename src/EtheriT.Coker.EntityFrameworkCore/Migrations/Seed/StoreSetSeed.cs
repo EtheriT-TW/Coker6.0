@@ -487,7 +487,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Id = 28,
                     key = "MaximumDiscount",
                     name = "最高折抵上限",
-                    memo = "單筆訂單紅利抵扣上限",
+                    memo = "單筆訂單紅利抵扣上限，如無須限制可不輸入",
                     FK_StoreSetGroupId = 6,
                     type = SeoSetDataTypeEnum.number,
                     maxlength = 8,

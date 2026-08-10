@@ -9,6 +9,7 @@
 <script nonce="@ViewBag.Nonce">
     const MinOrderForRedemption = @Json.Serialize(ViewBag.MinOrderForRedemption ?? 0);
     const MaxRedemptionPercent = @Json.Serialize(ViewBag.MaxRedemptionPercent ?? 0);
+    const MaximumDiscount = @Json.Serialize(ViewBag.MaximumDiscount);
     const MinOrderForEarnPoints = @Json.Serialize(ViewBag.MinOrderForEarnPoints ?? 0);
     const RewardRatePercent = @Json.Serialize(ViewBag.RewardRatePercent ?? 0);
 </script>
@@ -253,14 +254,12 @@
                                 </div>
                             </div>
 
-                            <div class="summary-main-row marketingDiscountLine d-none">
-                                <div class="summary-label">
-                                    活動折扣<span class="marketingDiscountName"></span>
-                                </div>
-                                <div class="summary-amount price-negative">
-                                    $<span class="marketingDiscount"></span>
-                                </div>
+                            <div class="summary-main-row generalProductAmountLine d-none">
+                                <div class="summary-label">一般商品金額（不含加價購）</div>
+                                <div class="summary-amount generalProductAmount price"></div>
                             </div>
+
+                            <div class="marketingDiscountLines d-none"></div>
 
                             <div class="summary-main-row bonusDiscionLine d-none">
                                 <div class="summary-label">紅利折抵</div>
@@ -762,14 +761,12 @@
                             </div>
                         </div>
 
-                        <div class="summary-main-row marketingDiscountLine d-none">
-                            <div class="summary-label">
-                                活動折扣<span class="marketingDiscountName"></span>
-                            </div>
-                            <div class="summary-amount price-negative">
-                                $<span class="marketingDiscount"></span>
-                            </div>
+                        <div class="summary-main-row generalProductAmountLine d-none">
+                            <div class="summary-label">一般商品金額（不含加價購）</div>
+                            <div class="summary-amount generalProductAmount price"></div>
                         </div>
+
+                        <div class="marketingDiscountLines d-none"></div>
 
                         <div class="summary-main-row bonusDiscionLine d-none">
                             <div class="summary-label">紅利折抵</div>
@@ -966,10 +963,12 @@
                                 <div data-key="productSubtotal" class="subtotal col-4 price">0</div>
                             </div>
 
-                            <div class="py-2 d-flex justify-content-end text-end step4MarketingDiscountLine d-none">
-                                <div>活動折扣</div>
-                                <div class="step4MarketingDiscount col-4 price-negative price">0</div>
+                            <div class="py-2 d-flex justify-content-end text-end step4GeneralProductAmountLine d-none">
+                                <div>一般商品金額（不含加價購）</div>
+                                <div class="step4GeneralProductAmount col-4 price">0</div>
                             </div>
+
+                            <div class="step4MarketingDiscountLines d-none"></div>
 
                             <div class="py-2 d-flex justify-content-end text-end productBonusLine d-none">
                                 <div>商品紅利</div>

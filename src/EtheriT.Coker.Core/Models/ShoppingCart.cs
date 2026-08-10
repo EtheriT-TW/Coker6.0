@@ -21,6 +21,8 @@ namespace EtheriT.Coker.Core.Models
         public int? PriceType { get; set; }
         public bool IsAdditional { get; set; }
         public long? FK_MarketingRewardItemId { get; set; }
+        public long? AdditionalParentShoppingCartId { get; set; }
+        public string? AdditionalParentLabel { get; set; }
         public int Ser_No { get; set; }
         // 是否已結帳
         public bool IsOrder { get; set; }

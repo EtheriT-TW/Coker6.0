@@ -265,6 +265,91 @@ namespace EtheriT.Coker.Application
             }
             else return new WebsPageDto();
         }
+        [Authorize]
+        public async Task<List<WebsDto>> GetSwitcherAll()
+        {
+            ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
+            string name = user.Identity?.Name;
+            bool isysUser = await loginUserData.isSystemUser();
+
+            IQueryable<WebsDto> query;
+            if (isysUser)
+            {
+                query = from w in db.Websites
+                        select new WebsDto
+                        {
+                            Id = w.Id,
+                            Name = w.Title,
+                            OrgName = w.OrgName,
+                            Description = w.Description ?? "",
+                            Images = w.Icon ?? "/favicon.ico",
+                            DefaultUrl = w.DefaultUrl ?? ""
+                        };
+            }
+            else
+            {
+                query = from w in db.Websites
+                        join bind in db.MappingUserAndWebsites on w.Id equals bind.WebsiteId
+                        join u in db.Users on bind.UserId equals u.Id
+                        where u.Account == name
+                        select new WebsDto
+                        {
+                            Id = w.Id,
+                            Name = w.Title,
+                            OrgName = w.OrgName,
+                            Description = w.Description ?? "",
+                            Images = w.Icon ?? "/favicon.ico",
+                            DefaultUrl = w.DefaultUrl ?? ""
+                        };
+            }
+
+            var output = await query.ToListAsync();
+            if (!output.Any()) return output;
+
+            if (output.Count > 12) output = output.OrderByDescending(e => e.Id).ToList();
+
+            var websiteIds = output.Select(e => e.Id).ToList();
+            var companyMappings = await db.MappingCompanyAndWebsites
+                .Where(e => websiteIds.Contains(e.FK_WebsiteId))
+                .Where(e => e.Company != null)
+                .Select(e => new
+                {
+                    WebsiteId = e.FK_WebsiteId,
+                    CompanyName = e.Company!.Name
+                })
+                .ToListAsync();
+
+            var companyNamesByWebsite = companyMappings
+                .Where(e => !string.IsNullOrWhiteSpace(e.CompanyName))
+                .GroupBy(e => e.WebsiteId)
+                .ToDictionary(
+                    e => e.Key,
+                    e => e.Select(x => x.CompanyName).Distinct().ToList());
+
+            long siteId = await loginUserData.GetWebsiteId();
+            if (siteId == 0)
+            {
+                siteId = output.First().Id;
+                await Exchange(new WebExchangeDto { Id = siteId });
+            }
+
+            foreach (var website in output)
+            {
+                if (!string.IsNullOrEmpty(website.Images)
+                    && !string.IsNullOrEmpty(website.OrgName)
+                    && !website.Images.Contains(website.OrgName))
+                {
+                    website.Images = website.Images.Replace("/upload/", $"/upload/{website.OrgName}/");
+                }
+
+                if (companyNamesByWebsite.TryGetValue(website.Id, out var companyNames))
+                    website.CompanyNames = companyNames;
+
+                website.Check = website.Id == siteId;
+            }
+
+            return output;
+        }
         public async Task<List<WebsiteDataDto>> GetAllData(long SiteId)
         {
             var issubsite = await (from w in db.MappingWebsiteRelationship

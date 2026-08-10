@@ -10,5 +10,6 @@ namespace EtheriT.Coker.Application.Authorizaion.Dto
     {
         public string UserName { get; set; }
         public string Password { get; set; }
+        public Dictionary<string, long>? PreferredWebsiteIds { get; set; }
     }
 }

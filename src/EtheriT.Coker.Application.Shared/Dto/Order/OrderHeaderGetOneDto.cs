@@ -37,6 +37,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public decimal Subtotal { get; set; }
         public decimal Total { get; set; }
         public decimal? Discount { get; set; }
+        public OrderDiscountBreakdownDto? DiscountBreakdown { get; set; }
         public int? Bonus { get; set; }
         public int? GetBonus { get; set; }
         public long? CouponId { get; set; }

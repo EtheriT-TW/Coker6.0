@@ -5,6 +5,10 @@
 
     const DirectoryRenderer = (w.DirectoryRenderer = w.DirectoryRenderer || {});
 
+    const MONTH_NAMES_EN = [
+        "Jan.", "Feb.", "Mar.", "Apr.", "May", "Jun.",
+        "Jul.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."]
+
     function isFn(fn) {
         return typeof fn === "function";
     }
@@ -249,6 +253,7 @@
             const noteDate = new Date(data.nodeDate);
             const year = noteDate.getFullYear();
             const month = String(noteDate.getMonth() + 1).padStart(2, "0");
+            const monthEN = MONTH_NAMES_EN[noteDate.getMonth()] || "";
             const day = String(noteDate.getDate()).padStart(2, "0");
 
             $content.find(".date").text(`${year}/${month}/${day}`);
@@ -256,6 +261,7 @@
             $content.find(".date-monthyear").text(`${month}/${year}`);
             $content.find(".date-day").text(`${day}`);
             $content.find(".date-month-number").text(`${month}`);
+            $content.find(".date-month-number-en").text(`${monthEN}`);
             $content.find(".date-year").text(`${year}`);
         } else {
             $content.find(".date,.date-month,date-monthyear,date-day").each(function (i, e) {

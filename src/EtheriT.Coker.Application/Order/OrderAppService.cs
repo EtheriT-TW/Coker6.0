@@ -1583,7 +1583,12 @@ namespace EtheriT.Coker.Application.Order
             if (snapshot == null)
                 return "";
 
-            return string.Join("", snapshot.Items.Select(item =>
+            var items = snapshot.Items
+                .Where(item => item.DiscountAmount > 0)
+                .ToList();
+            var isSingleItem = items.Count == 1;
+
+            return string.Join("", items.Select(item =>
             {
                 var name = System.Net.WebUtility.HtmlEncode(
                     string.IsNullOrWhiteSpace(item.Name) ? "活動折扣" : item.Name
@@ -1591,12 +1596,25 @@ namespace EtheriT.Coker.Application.Order
                 var repeatText = item.AppliedTimes > 1
                     ? $"（套用 {item.AppliedTimes} 次）"
                     : "";
+                var rowClass = isSingleItem ? "text-end text-bold" : "text-end";
+                var amountClass = isSingleItem
+                    ? "text-red ms-1 text-size1_25"
+                    : "text-red ms-1";
 
                 return $@"<tr>
-                    <td colspan='6' class='text-end'>{name}{repeatText}
-                    <span class='text-red ms-1'>-{item.DiscountAmount.ToString("$#,##0")}</span></td>
+                    <td colspan='6' class='{rowClass}'>{name}{repeatText}
+                    <span class='{amountClass}'>-{item.DiscountAmount.ToString("$#,##0")}</span></td>
                 </tr>";
             }));
+        }
+
+        private static bool ShouldShowDiscountTotal(string? json)
+        {
+            var snapshot = DeserializeDiscountBreakdown(json);
+            var itemCount = snapshot?.Items?.Count(item => item.DiscountAmount > 0) ?? 0;
+
+            // 舊訂單沒有明細快照時仍顯示折扣總額；只有一筆明細時則避免重複顯示。
+            return itemCount != 1;
         }
 
         private static string BuildEligibleProductAmountMailRow(string? json, decimal productAmount)
@@ -3592,7 +3610,7 @@ namespace EtheriT.Coker.Application.Order
                 </tr>
                 {BuildEligibleProductAmountMailRow(order_header.DiscountBreakdownJson, productAmount)}
                 {(
-                    discountAmount > 0 ?
+                    discountAmount > 0 && ShouldShowDiscountTotal(order_header.DiscountBreakdownJson) ?
                     $@"<tr>
                         <td colspan='6' class='text-end text-bold'>活動折扣<span class='text-red ms-1 text-size1_25'>-{discountAmount.ToString("$#,##0")}</span></td>
                     </tr>" :
@@ -4534,7 +4552,7 @@ namespace EtheriT.Coker.Application.Order
                                 <td colspan='6' style='text-align:right;font-weight:bold;'>商品金額　{productAmount.ToString("$#,##0")}</td>
                             </tr>
                             {BuildEligibleProductAmountMailRow(order_header.DiscountBreakdownJson, productAmount)}
-                            {(discountAmount > 0
+                            {(discountAmount > 0 && ShouldShowDiscountTotal(order_header.DiscountBreakdownJson)
                                 ? $"<tr><td colspan='6' style='text-align:right;font-weight:bold;'>活動折扣　-{discountAmount.ToString("$#,##0")}</td></tr>"
                                 : "")}
                             {BuildDiscountBreakdownMailRows(order_header.DiscountBreakdownJson)}

@@ -396,6 +396,9 @@
 
                 var breakdown = orderHeader.discountBreakdown || {};
                 var discountItems = Array.isArray(breakdown.items) ? breakdown.items : [];
+                var validDiscountItems = discountItems.filter(function (item) {
+                    return Number(item.discountAmount || 0) > 0;
+                });
                 var $discountRows = frame.find(".collapse .discount_breakdown_rows").empty();
                 var eligibleAmount = Number(breakdown.eligibleProductAmount || 0);
                 var showGeneralProductAmount = eligibleAmount > 0 && productAmount > eligibleAmount;
@@ -406,19 +409,30 @@
                     showGeneralProductAmount ? C.util.string.thousandSign(eligibleAmount) : ""
                 );
 
-                discountItems.forEach(function (item) {
+                if (validDiscountItems.length === 1) {
+                    frame.find(".collapse .discount_summary_row").remove();
+                }
+
+                validDiscountItems.forEach(function (item) {
                     var amount = Number(item.discountAmount || 0);
                     if (amount <= 0) return;
 
                     var repeatText = Number(item.appliedTimes || 0) > 1
                         ? "（套用 " + item.appliedTimes + " 次）"
                         : "";
-                    var $row = $("<div>", { "class": "row text-secondary small" });
+                    var isSingleDiscount = validDiscountItems.length === 1;
+                    var $row = $("<div>", {
+                        "class": isSingleDiscount ? "row" : "row text-secondary small"
+                    });
                     $("<div>", { "class": "col-10 text-end" })
                         .text((item.name || "活動折扣") + repeatText)
                         .appendTo($row);
-                    $("<div>", { "class": "col-2 text-end" })
-                        .text("-$" + C.util.string.thousandSign(amount))
+                    $("<div>", {
+                        "class": isSingleDiscount
+                            ? "col-2 text-end price-negative"
+                            : "col-2 text-end"
+                    })
+                        .text((isSingleDiscount ? "$" : "-$") + C.util.string.thousandSign(amount))
                         .appendTo($row);
                     $discountRows.append($row);
                 });

@@ -328,10 +328,12 @@ function ToggleOrderBonusLines(data) {
     $(".productBonusLine").toggleClass("d-none", productBonus <= 0);
     $(".bonusDiscionLine").toggleClass("d-none", redeemBonus <= 0);
     $(".bonusUseTotalLine").toggleClass("d-none", totalBonus <= 0);
-    $(".discountLine").toggleClass("d-none", discount <= 0);
-
     const breakdown = data.discountBreakdown || {};
     const discountItems = Array.isArray(breakdown.items) ? breakdown.items : [];
+    const validDiscountItems = discountItems.filter(function (item) {
+        return Number(item.discountAmount || 0) > 0;
+    });
+    $(".discountLine").toggleClass("d-none", discount <= 0 || validDiscountItems.length === 1);
     const $discountRows = $(".order_discountBreakdown").empty();
     const eligibleAmount = Number(breakdown.eligibleProductAmount || 0);
     const productAmount = Number(String(data.productSubtotal || "0").replaceAll(",", ""));
@@ -342,18 +344,25 @@ function ToggleOrderBonusLines(data) {
         showGeneralProductAmount ? eligibleAmount.toLocaleString() : ""
     );
 
-    discountItems.forEach(function (item) {
+    validDiscountItems.forEach(function (item) {
         const amount = Number(item.discountAmount || 0);
         if (amount <= 0) return;
 
         const repeatText = Number(item.appliedTimes || 0) > 1
             ? `（套用 ${item.appliedTimes} 次）`
             : "";
-        const $row = $("<div>", { "class": "d-flex small text-secondary" });
-        $("<div>", { "class": "col" })
+        const isSingleDiscount = validDiscountItems.length === 1;
+        const $row = $("<div>", {
+            "class": isSingleDiscount ? "d-flex" : "d-flex small text-secondary"
+        });
+        $("<div>", { "class": isSingleDiscount ? "col fw-bold" : "col" })
             .text(`${item.name || "活動折扣"}${repeatText}`)
             .appendTo($row);
-        $("<div>", { "class": "col-4 col-sm-2 text-end" })
+        $("<div>", {
+            "class": isSingleDiscount
+                ? "col-4 col-sm-2 text-end color_red_number"
+                : "col-4 col-sm-2 text-end"
+        })
             .text(`-$${amount.toLocaleString()}`)
             .appendTo($row);
         $discountRows.append($row);

@@ -983,10 +983,20 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 var shoppingcart = await db.ShoppingCarts.Where(e => e.Id == id && e.IsOrder == isorder).FirstOrDefaultAsync();
                 if (shoppingcart != null)
                 {
-                    var temp_output = await GetDisplay(new List<long> { shoppingcart.Id });
-                    if (temp_output.Any())
+                    // 加價購資格必須連同同一台購物車內的主商品一起判斷。
+                    // 若只傳入剛新增的加價購品項，GetDisplay 會因找不到符合條件的
+                    // 主商品而暫時判定活動失效，直到重新整理改走 GetAll 才恢復正常。
+                    var displayIds = isorder
+                        ? new List<long> { shoppingcart.Id }
+                        : await db.ShoppingCarts
+                            .Where(e => e.UUID == shoppingcart.UUID && !e.IsOrder)
+                            .Select(e => e.Id)
+                            .ToListAsync();
+                    var temp_output = await GetDisplay(displayIds);
+                    var requestedItem = temp_output.FirstOrDefault(e => e.SCId == shoppingcart.Id);
+                    if (requestedItem != null)
                     {
-                        output = temp_output[0];
+                        output = requestedItem;
                     }
                     else throw new Exception("查無購物車資料");
                 }

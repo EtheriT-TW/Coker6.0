@@ -16,7 +16,7 @@
         if ($.isNumeric(window.location.search.substring(1))) {
             S.isCheckout = true;
             var ohid = parseInt(window.location.search.substring(1));
-            Coker.Order.GetAllData(ohid, true).done(function (results) {
+            Coker.Order.GetAllData(ohid).done(function (results) {
                 if (results.length > 0) {
                     var result = results[0];
                     $("#Step4 > .card-header > .order_number").text(window.location.search.substring(1));
@@ -413,10 +413,20 @@
         var order_header_id = message[1];
         S.step4PaidDateHtml = message.length > 3 ? (message[3] || "") : "";
 
+        var parsedOrderId = parseInt(order_header_id, 10);
+        var orderNumber = String(parsedOrderId).padStart(9, "0");
+        if (parsedOrderId > 0 && window.history && typeof window.history.replaceState === "function") {
+            window.history.replaceState(
+                { checkoutComplete: true },
+                document.title,
+                window.location.pathname + "?" + encodeURIComponent(orderNumber)
+            );
+        }
+
         CartClear();
 
         $("#Step4 > .card-header > .order_number")
-            .text(("000000000" + order_header_id).substring(order_header_id.length));
+            .text(orderNumber);
 
         $("#Step4 > .card-body .pruchase_content .order_time")
             .text(`訂單成立時間：${message[2]}`);
@@ -434,7 +444,7 @@
             "正在載入訂單明細，請稍候..."
         );
 
-        Coker.Order.GetAllData(order_header_id, true)
+        Coker.Order.GetAllData(order_header_id)
             .done(function (results) {
                 if (results && results.length > 0) {
                     cart.CheckoutResult.SuccessPageDataInsert(results[0]);

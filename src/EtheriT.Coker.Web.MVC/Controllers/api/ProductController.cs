@@ -98,7 +98,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<IActionResult> ProdReplace(
             IList<IFormFile> files,
             [FromForm] long templateId,
-            [FromForm] bool overwriteExisting = false)
+            [FromForm] bool overwriteExisting = false,
+            [FromForm] bool allowDuplicateMenuTitles = false)
         {
             if (files.Count != 1)
                 return BadRequest(new { message = "請選擇一個商品 Excel 檔案。" });
@@ -117,7 +118,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 await using var stream = files[0].OpenReadStream();
                 await backgroundTaskService.SaveSourceFileAsync(task.Id, stream, files[0].FileName);
                 var jobId = backgroundJobClient.Enqueue<ProductExportBackgroundJob>(
-                    job => job.RunImport(task.Id, templateId, overwriteExisting));
+                    job => job.RunImport(task.Id, templateId, overwriteExisting, allowDuplicateMenuTitles));
                 await backgroundTaskService.SetHangfireJobIdAsync(task.Id, jobId);
                 return Accepted(new { taskId = task.Id });
             }

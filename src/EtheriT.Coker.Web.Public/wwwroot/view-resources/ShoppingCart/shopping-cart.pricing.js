@@ -84,6 +84,18 @@ function TotalCount() {
     const $bonusRuleLine = $(".bonusRuleLine");
     const $redeemRuleText = $(".bonusRedeemRuleText");
 
+    function splitParentheticalDetail($elements, mainClass, detailClass) {
+        $elements.each(function () {
+            const $element = $(this);
+            const parts = $element.text().match(/^(.*?)(\uFF08.*\uFF09)$/);
+            if (parts) {
+                $element.empty()
+                    .append($("<span></span>").addClass(mainClass).text(parts[1]))
+                    .append($("<span></span>").addClass(detailClass).text(parts[2]));
+            }
+        });
+    }
+
     const redeemEnabled = (MinOrderForRedemption > 0 && MaxRedemptionPercent > 0);
     const maximumDiscountAmount = Number(MaximumDiscount);
     const hasMaximumDiscount = MaximumDiscount != null && maximumDiscountAmount > 0;
@@ -116,6 +128,8 @@ function TotalCount() {
             );
 
             $bonusRuleLine.removeClass("d-none");
+
+            splitParentheticalDetail($redeemRuleText, "bonus-rule-main", "bonus-rule-detail");
         }
 
         // 已達門檻
@@ -137,6 +151,11 @@ function TotalCount() {
                 // label 覆蓋
                 $bonusDisconLine.find(".summary-label")
                     .text(`本單可使用紅利折抵（${redemptionLimitText}）`);
+                splitParentheticalDetail(
+                    $bonusDisconLine.find(".summary-label"),
+                    "summary-label-main",
+                    "summary-label-detail"
+                );
 
                 // 金額
                 $bonusDisconLine.find(".bonusDiscion")

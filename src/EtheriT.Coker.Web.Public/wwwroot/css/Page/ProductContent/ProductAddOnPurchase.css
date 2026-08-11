@@ -109,7 +109,14 @@
 }
 
 .product-addon__stock-name { min-height: 1.25rem; color: #6c757d; font-size: .78rem; }
-.product-addon__price-row { flex-wrap: nowrap; white-space: nowrap; }
+.product-addon__price-row {
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: .15rem .5rem;
+    margin-top: auto;
+}
 .product-addon__offer { color: var(--addon-accent); font-size: .95rem; font-weight: 800; white-space: nowrap; }
 .product-addon__original { color: #8a929b; font-size: .72rem; text-decoration: line-through; white-space: nowrap; }
 

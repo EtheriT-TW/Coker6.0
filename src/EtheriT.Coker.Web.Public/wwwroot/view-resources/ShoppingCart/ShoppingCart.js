@@ -737,7 +737,7 @@ function GetOrderPage() {
     if ($.isNumeric(window.location.search.substring(1))) {
         isCheckout = true;
         var ohid = parseInt(window.location.search.substring(1));
-        Coker.Order.GetAllData(ohid, true).done(function (results) {
+        Coker.Order.GetAllData(ohid).done(function (results) {
             if (results.length > 0) {
                 var result = results[0];
                 $("#Step4 > .card-header > .order_number").text(window.location.search.substring(1));
@@ -2883,7 +2883,7 @@ function OrderSuccess(result) {
         "正在載入訂單明細，請稍候..."
     );
 
-    Coker.Order.GetAllData(order_header_id, true)
+    Coker.Order.GetAllData(order_header_id)
         .done(function (results) {
             if (results && results.length > 0) {
                 SuccessPageDataInsert(results[0]);

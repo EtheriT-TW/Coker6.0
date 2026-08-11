@@ -334,7 +334,7 @@
  * @property {(data:any)=>JQuery.jqXHR<any>} FrontUserUpdate
  * @property {(id:number)=>JQuery.jqXHR<any>} GetHeader
  * @property {(id:number)=>JQuery.jqXHR<any>} GetDetails
- * @property {(ohid:number, check?:any)=>JQuery.jqXHR<any>} GetAllData
+ * @property {(ohid:number)=>JQuery.jqXHR<any>} GetAllData
  * @property {(ohid:number)=>JQuery.jqXHR<any>} GetReorder
  * @property {()=>JQuery.jqXHR<any>} GetPaymentTypeEnum
  * @property {(data:any)=>JQuery.jqXHR<any>} CheckStock

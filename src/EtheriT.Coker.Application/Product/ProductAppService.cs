@@ -11,6 +11,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
+using EtheriT.Coker.Application.Shared.Dto.enumType.WebMenu;
 using EtheriT.Coker.Application.Shared.Dto.Favorites;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Import;
@@ -2399,8 +2400,22 @@ namespace EtheriT.Coker.Application.Product
             long templateId,
             bool overwriteExisting)
         {
+            return await ProdReplace(files, templateId, overwriteExisting, false);
+        }
+
+        public async Task<ImportOutputDto> ProdReplace(
+            IList<IFormFile> files,
+            long templateId,
+            bool overwriteExisting,
+            bool allowDuplicateMenuTitles)
+        {
             ProdImportAllDto fileData = await importAppService.ProdReplace(files);
-            return await ImportProductData(fileData, templateId, overwriteExisting, null);
+            return await ImportProductData(
+                fileData,
+                templateId,
+                overwriteExisting,
+                allowDuplicateMenuTitles,
+                null);
         }
 
         public async Task<ImportOutputDto> ProdReplace(
@@ -2409,13 +2424,33 @@ namespace EtheriT.Coker.Application.Product
             bool overwriteExisting,
             Action<int, string>? reportProgress)
         {
+            return await ProdReplace(
+                filePath,
+                templateId,
+                overwriteExisting,
+                false,
+                reportProgress);
+        }
+
+        public async Task<ImportOutputDto> ProdReplace(
+            string filePath,
+            long templateId,
+            bool overwriteExisting,
+            bool allowDuplicateMenuTitles,
+            Action<int, string>? reportProgress)
+        {
             reportProgress?.Invoke(5, "正在讀取商品匯入檔案");
             var strategy = db.Database.CreateExecutionStrategy();
             return await strategy.ExecuteAsync(async () =>
             {
                 await using var transaction = await db.Database.BeginTransactionAsync();
                 var fileData = await importAppService.ProdReplace(filePath);
-                var response = await ImportProductData(fileData, templateId, overwriteExisting, reportProgress);
+                var response = await ImportProductData(
+                    fileData,
+                    templateId,
+                    overwriteExisting,
+                    allowDuplicateMenuTitles,
+                    reportProgress);
                 if (response.Success)
                     await transaction.CommitAsync();
                 else
@@ -2428,6 +2463,7 @@ namespace EtheriT.Coker.Application.Product
             ProdImportAllDto fileData,
             long templateId,
             bool overwriteExisting,
+            bool allowDuplicateMenuTitles,
             Action<int, string>? reportProgress)
         {
             ImportOutputDto response = new ImportOutputDto { ErrorList = new List<ImportMassageItem>() };
@@ -2435,7 +2471,10 @@ namespace EtheriT.Coker.Application.Product
             long WebsiteID = await loginUserData.GetWebsiteId();
             if (fileData.Directories.Any())
             {
-                var directoryValidation = await ValidateDirectoryImportStructureAsync(fileData.Directories, WebsiteID);
+                var directoryValidation = await ValidateDirectoryImportStructureAsync(
+                    fileData.Directories,
+                    WebsiteID,
+                    allowDuplicateMenuTitles);
                 response.ErrorList.AddRange(directoryValidation.Errors);
                 fileData.Directories = fileData.Directories
                     .Where((_, index) => !directoryValidation.InvalidRowIndexes.Contains(index))
@@ -2530,7 +2569,11 @@ namespace EtheriT.Coker.Application.Product
             if (fileData.Directories.Any())
             {
                 reportProgress?.Invoke(88, "正在匯入商品目錄與標籤");
-                await imporDirectories(fileData.Directories, importTemplate, overwriteExisting);
+                await imporDirectories(
+                    fileData.Directories,
+                    importTemplate,
+                    overwriteExisting,
+                    allowDuplicateMenuTitles);
                 if (!productImportFailed)
                     response.Success = true;
             }
@@ -2541,7 +2584,8 @@ namespace EtheriT.Coker.Application.Product
 
         private async Task<(List<ImportMassageItem> Errors, HashSet<int> InvalidRowIndexes)> ValidateDirectoryImportStructureAsync(
             List<DirectoryImportDto> directories,
-            long websiteId)
+            long websiteId,
+            bool allowDuplicateMenuTitles)
         {
             var errors = new List<ImportMassageItem>();
             var invalidRowIndexes = new HashSet<int>();
@@ -2550,7 +2594,15 @@ namespace EtheriT.Coker.Application.Product
                 .Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId)
                 .ToListAsync();
             var routerTitles = new Dictionary<string, string>();
-            var parentByChild = new Dictionary<string, (string ParentKey, int RowIndex, int Level)>();
+            var parentByChild = new Dictionary<string, (
+                string ParentKey,
+                int RowIndex,
+                int Level,
+                string Title,
+                string Router,
+                string ExistingTitle,
+                string ExistingRouter
+            )>();
             var edges = new Dictionary<string, HashSet<string>>();
             var labels = new Dictionary<string, string>();
 
@@ -2634,7 +2686,9 @@ namespace EtheriT.Coker.Application.Product
                     string Label,
                     int Level,
                     string Title,
-                    string Router
+                    string Router,
+                    string ExistingTitle,
+                    string ExistingRouter
                 )>();
                 var rowRouterTitles = new Dictionary<string, string>();
                 foreach (var level in levels.Where(e => e.Title.Length > 0))
@@ -2666,7 +2720,11 @@ namespace EtheriT.Coker.Application.Product
                         }
                     }
 
-                    var existing = FindMenuByRouterOrTitle(existingMenus, level.Title, level.Router);
+                    var existing = FindMenuByRouterOrTitle(
+                        existingMenus,
+                        level.Title,
+                        level.Router,
+                        useTitleFallback: !allowDuplicateMenuTitles);
                     var key = existing != null
                         ? $"id:{existing.Id}"
                         : level.Router.Length > 0 ? $"router:{Norm(level.Router)}" : $"title:{Norm(level.Title)}";
@@ -2677,7 +2735,9 @@ namespace EtheriT.Coker.Application.Product
                         Label: label,
                         Level: level.Level,
                         Title: level.Title,
-                        Router: level.Router
+                        Router: level.Router,
+                        ExistingTitle: existing?.Title ?? string.Empty,
+                        ExistingRouter: existing?.RouterName ?? string.Empty
                     ));
                 }
 
@@ -2717,16 +2777,62 @@ namespace EtheriT.Coker.Application.Product
                         var currentRouterCell =
                             $"{GetRouterColumn(edge.Child.Level)}{currentExcelRow}";
 
-                        AddError(
-                            rowIndex,
-                            $"「目錄分類」工作表的 {currentRouterCell} 與 "
-                            + $"{previousRouterCell} 使用了相同的 RouterName"
-                            + $"「{edge.Child.Router}」，但兩筆資料分別位於"
-                            + $"「{labels[previousLocation.ParentKey]}」與"
-                            + $"「{edge.Parent.Label}」兩個不同分類中。"
-                            + $"請保留 {previousTitleCell}、{previousRouterCell} 的內容，"
-                            + $"並將 {currentTitleCell} 的選單名稱及 "
-                            + $"{currentRouterCell} 的 RouterName 改成不重複的內容。");
+                        if (edge.Child.Key.StartsWith("id:", StringComparison.Ordinal))
+                        {
+                            var existingTitle = string.IsNullOrEmpty(edge.Child.ExistingTitle)
+                                ? previousLocation.ExistingTitle
+                                : edge.Child.ExistingTitle;
+                            var existingRouter = string.IsNullOrEmpty(edge.Child.ExistingRouter)
+                                ? previousLocation.ExistingRouter
+                                : edge.Child.ExistingRouter;
+                            var existingMenu = string.IsNullOrEmpty(existingRouter)
+                                ? $"「{existingTitle}」"
+                                : $"「{existingTitle}」（RouterName：{existingRouter}）";
+                            var previousParent = labels[previousLocation.ParentKey];
+                            var currentParent = edge.Parent.Label;
+
+                            AddError(
+                                rowIndex,
+                                $"「目錄分類」工作表第 {previousExcelRow} 列的 "
+                                + $"{previousTitleCell}「{previousLocation.Title}」、"
+                                + $"{previousRouterCell}「{previousLocation.Router}」，與第 {currentExcelRow} 列的 "
+                                + $"{currentTitleCell}「{edge.Child.Title}」、"
+                                + $"{currentRouterCell}「{edge.Child.Router}」內容雖不相同，"
+                                + $"但匯入時都對應到後台現有選單{existingMenu}。"
+                                + $"同一個選單不能同時放在「{previousParent}」與「{currentParent}」兩個分類中。"
+                                + $"若要保留在「{previousParent}」，請刪除第 {currentExcelRow} 列；"
+                                + $"若要搬移到「{currentParent}」，請刪除第 {previousExcelRow} 列；"
+                                + $"若兩個分類都要保留，請將 {currentTitleCell} 的選單名稱及 "
+                                + $"{currentRouterCell} 的 RouterName 都改成後台尚未使用的新值。");
+                        }
+                        else if (edge.Child.Key.StartsWith("router:", StringComparison.Ordinal))
+                        {
+                            AddError(
+                                rowIndex,
+                                $"「目錄分類」工作表的 {currentRouterCell} 與 "
+                                + $"{previousRouterCell} 使用了相同的 RouterName"
+                                + $"「{edge.Child.Router}」，但兩筆資料分別位於"
+                                + $"「{labels[previousLocation.ParentKey]}」與"
+                                + $"「{edge.Parent.Label}」兩個不同分類中。"
+                                + $"若要保留前一個分類，請刪除第 {currentExcelRow} 列；"
+                                + $"若要搬移到目前分類，請刪除第 {previousExcelRow} 列；"
+                                + $"若兩個分類都要保留，請將 {currentTitleCell} 的選單名稱及 "
+                                + $"{currentRouterCell} 的 RouterName 改成不重複的內容。");
+                        }
+                        else
+                        {
+                            AddError(
+                                rowIndex,
+                                $"「目錄分類」工作表的 {currentTitleCell} 與 "
+                                + $"{previousTitleCell} 使用了相同的選單名稱"
+                                + $"「{edge.Child.Title}」，但兩筆資料分別位於"
+                                + $"「{labels[previousLocation.ParentKey]}」與"
+                                + $"「{edge.Parent.Label}」兩個不同分類中。"
+                                + $"若要保留前一個分類，請刪除第 {currentExcelRow} 列；"
+                                + $"若要搬移到目前分類，請刪除第 {previousExcelRow} 列；"
+                                + $"若兩個分類都要保留，請將 {currentTitleCell} 的選單名稱及 "
+                                + $"{currentRouterCell} 的 RouterName 改成不重複的內容。");
+                        }
                     }
                 }
 
@@ -2742,7 +2848,11 @@ namespace EtheriT.Coker.Application.Product
                     parentByChild[child.Key] = (
                         ParentKey: parent.Key,
                         RowIndex: rowIndex,
-                        Level: child.Level
+                        Level: child.Level,
+                        Title: child.Title,
+                        Router: child.Router,
+                        ExistingTitle: child.ExistingTitle,
+                        ExistingRouter: child.ExistingRouter
                     );
 
                     if (!edges.TryGetValue(parent.Key, out var children))
@@ -2815,16 +2925,12 @@ namespace EtheriT.Coker.Application.Product
         private async Task imporDirectories(
             List<DirectoryImportDto> directories,
             Html_Content importTemplate,
-            bool overwriteExisting)
+            bool overwriteExisting,
+            bool allowDuplicateMenuTitles)
         {
             try
             {
                 long WebsiteID = await loginUserData.GetWebsiteId();
-                List<string> manuNames = new List<string>();
-                manuNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Level1)).Select(e => (e.Level1 ?? "").Trim()).ToList());
-                manuNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Level2)).Select(e => (e.Level2 ?? "").Trim()).ToList());
-                manuNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Level3)).Select(e => (e.Level3 ?? "").Trim()).ToList());
-
                 List<string> tagNames = new List<string>();
                 tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag1)).Select(e => (e.Tag1 ?? "").Trim()).ToList());
                 tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag2)).Select(e => (e.Tag2 ?? "").Trim()).ToList());
@@ -2854,12 +2960,15 @@ namespace EtheriT.Coker.Application.Product
                 var existingMenus = await db.WebMenus
                     .Where(e => !e.IsDeleted && e.FK_WebsiteId == WebsiteID)
                     .ToListAsync();
-                var missingMenuTitles = menuRequests
-                    .Where(e => FindMenuByRouterOrTitle(existingMenus, e.Title, e.RouterName) == null)
-                    .Select(e => e.Title)
+                var missingMenuRequests = menuRequests
+                    .Where(e => FindMenuByRouterOrTitle(
+                        existingMenus,
+                        e.Title,
+                        e.RouterName,
+                        useTitleFallback: !allowDuplicateMenuTitles) == null)
                     .ToList();
 
-                await importMenus(WebsiteID, missingMenuTitles);
+                await importMenus(WebsiteID, missingMenuRequests);
                 await importTags(WebsiteID, tagNames);
 
                 var menus = await db.WebMenus
@@ -2868,7 +2977,11 @@ namespace EtheriT.Coker.Application.Product
 
                 foreach (var request in menuRequests.Where(e => !string.IsNullOrEmpty(e.RouterName)))
                 {
-                    var menu = FindMenuByRouterOrTitle(menus, request.Title, request.RouterName);
+                    var menu = FindMenuByRouterOrTitle(
+                        menus,
+                        request.Title,
+                        request.RouterName,
+                        useTitleFallback: !allowDuplicateMenuTitles);
                     var routerIsUsed = menus.Any(e => e.Id != menu?.Id && Norm(e.RouterName) == Norm(request.RouterName));
                     if (menu != null && !routerIsUsed)
                         menu.RouterName = request.RouterName;
@@ -2889,7 +3002,11 @@ namespace EtheriT.Coker.Application.Product
                             : Norm(e.Name) == Norm(directory.Level1));
                     if (string.IsNullOrEmpty(directory.Level1)) break;
 
-                    var menu = FindMenuByRouterOrTitle(menus, directory.Level1, directory.Level1RouterName);
+                    var menu = FindMenuByRouterOrTitle(
+                        menus,
+                        directory.Level1,
+                        directory.Level1RouterName,
+                        useTitleFallback: !allowDuplicateMenuTitles);
                     if (menu == null) break;
 
                     if (item == null)
@@ -2905,7 +3022,11 @@ namespace EtheriT.Coker.Application.Product
                     else item.Id = menu.Id;
 
                     if (string.IsNullOrEmpty(directory.Level2)) continue;
-                    var menu2 = FindMenuByRouterOrTitle(menus, directory.Level2, directory.Level2RouterName);
+                    var menu2 = FindMenuByRouterOrTitle(
+                        menus,
+                        directory.Level2,
+                        directory.Level2RouterName,
+                        useTitleFallback: !allowDuplicateMenuTitles);
                     if (menu2 != null)
                     {
                         menu2.FK_TopNodeId = menu.Id;
@@ -2930,7 +3051,11 @@ namespace EtheriT.Coker.Application.Product
                             }
                             else
                             {
-                                var menu3 = FindMenuByRouterOrTitle(menus, directory.Level3, directory.Level3RouterName);
+                                var menu3 = FindMenuByRouterOrTitle(
+                                    menus,
+                                    directory.Level3,
+                                    directory.Level3RouterName,
+                                    useTitleFallback: !allowDuplicateMenuTitles);
                                 if (menu3 != null)
                                 {
                                     menu3.FK_TopNodeId = menu2.Id;
@@ -2961,7 +3086,11 @@ namespace EtheriT.Coker.Application.Product
                             }
                             else
                             {
-                                var menu3 = FindMenuByRouterOrTitle(menus, directory.Level3, directory.Level3RouterName);
+                                var menu3 = FindMenuByRouterOrTitle(
+                                    menus,
+                                    directory.Level3,
+                                    directory.Level3RouterName,
+                                    useTitleFallback: !allowDuplicateMenuTitles);
                                 if (menu3 != null)
                                 {
                                     menu3.FK_TopNodeId = menu2.Id;
@@ -3191,7 +3320,7 @@ namespace EtheriT.Coker.Application.Product
                             await loginUserData.setOptionParameter(oldTagBind[j]);
                         }
                     }
-                    var myMenu = webMenu.Where(e => e.Title == menu.Name).FirstOrDefault();
+                    var myMenu = webMenu.FirstOrDefault(e => e.Id == menu.Id);
                     if (myMenu != null && !string.IsNullOrEmpty(dir.Title))
                     {
                         if (overwriteExisting || string.IsNullOrEmpty(myMenu.SaveHtml))
@@ -3265,40 +3394,54 @@ namespace EtheriT.Coker.Application.Product
                 if (tag3 != null) item.Tags.Add(new TagGetSelectedDto { Id = tag3.Id, Tag_Name = tag3.Title });
             }
         }
-        private async Task importMenus(long WebsiteID, List<string> manuNames)
+        private async Task importMenus(
+            long WebsiteID,
+            List<(string Title, string RouterName)> menuRequests)
         {
-            manuNames = manuNames
-                .Select(CustomDtoMapper.Normalize)
-                .Where(e => !string.IsNullOrEmpty(e))
-                .GroupBy(Norm)
-                .Select(e => e.First())
-                .ToList();
-            var menus = await db.WebMenus.Where(e => !e.IsDeleted)
-                        .Where(e => e.FK_WebsiteId == WebsiteID)
-                        .Where(e => !string.IsNullOrEmpty(e.Title))
-                        .ToListAsync();
-            var hasMenusTitle = menus.Select(e => Norm(e.Title)).ToHashSet();
+            if (menuRequests.Count == 0) return;
 
-            var needAddMenus = manuNames.Where(e => !hasMenusTitle.Contains(Norm(e))).ToList();
-            List<SelectDto> addMmenus = new List<SelectDto>();
-            needAddMenus.ForEach(e =>
+            var userId = await loginUserData.GetUserId();
+            var newMenus = menuRequests.Select(request => new WebMenu
             {
-                if (!addMmenus.Exists(m => m.Name == e))
-                    addMmenus.Add(new SelectDto { Name = e });
-            });
-            await webMenuApplication.insertMenus(addMmenus);
+                Title = request.Title,
+                RouterName = string.IsNullOrEmpty(request.RouterName)
+                    ? request.Title
+                    : request.RouterName,
+                Visible = true,
+                SerNO = 500,
+                Popular = 0,
+                PageType = PageTypeEnum.一般頁面,
+                icon = "empty",
+                PopularVisible = false,
+                LanBar = false,
+                FK_WebsiteId = WebsiteID,
+                CreationTime = DateTime.Now,
+                CreatorUserId = userId,
+                IsDeleted = false,
+                VisibleFooter = true,
+                VisibleHeader = true,
+                VisibleTitle = true,
+                ShowToMenu = true,
+                RemovedFromShelves = false
+            }).ToList();
+
+            db.WebMenus.AddRange(newMenus);
+            await db.SaveChangesAsync();
+            await websiteCacheStateAppService.TouchAsync(WebsiteCacheKeys.Menu);
         }
 
         private static WebMenu? FindMenuByRouterOrTitle(
             IReadOnlyList<WebMenu> menus,
             string? title,
-            string? routerName)
+            string? routerName,
+            bool useTitleFallback = true)
         {
             var normalizedRouter = Norm(routerName);
             if (!string.IsNullOrEmpty(normalizedRouter))
             {
                 var byRouter = menus.FirstOrDefault(e => Norm(e.RouterName) == normalizedRouter);
                 if (byRouter != null) return byRouter;
+                if (!useTitleFallback) return null;
             }
 
             var normalizedTitle = Norm(title);

@@ -2161,10 +2161,10 @@ namespace EtheriT.Coker.Application.Order
                     var checktoken = await tokenAppService.CheckToken(null);
                     if (checktoken != null)
                     {
+                        var timeago = DateTime.Now.AddHours(-1);
                         if (checktoken.IsLogin)
                         {
                             Guid UUID = await tokenAppService.GetUUID();
-                            var timeago = DateTime.Now.AddMinutes(-15);
                             order_headers = await db.Order_Headers
                                 .Where(e =>
                                     ohids.Contains(e.Id) &&
@@ -2177,7 +2177,8 @@ namespace EtheriT.Coker.Application.Order
                             .Where(e =>
                                 ohids.Contains(e.Id) &&
                                 e.Fk_Tid == checktoken.RefreshToken &&
-                                e.FK_WebsiteId == WebsiteId)
+                                e.FK_WebsiteId == WebsiteId &&
+                                (e.CreationTime > timeago || e.RepayDate > timeago))
                             .ToListAsync();
                     }
                     else throw new Exception("查無Token資料");

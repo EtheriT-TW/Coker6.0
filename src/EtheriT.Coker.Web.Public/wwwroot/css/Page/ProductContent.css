@@ -518,6 +518,10 @@ i.fa-chevron-right {
         justify-content: start !important;
     }
 
+    #SwitchPage.container {
+        padding: 1rem 0;
+    }
+
     .btn_swiper_prev_product,
     .btn_swiper_next_product {
         display: none !important;
@@ -569,6 +573,17 @@ i.fa-chevron-right {
     #Product {
         padding-right: 12px;
         padding-left: 12px;
+    }
+
+    #Product > .image,
+    #Product > .content {
+        padding-right: 0;
+        padding-left: 0;
+    }
+
+    #Product > .image > .container-fluid {
+        padding-right: 0;
+        padding-left: 0;
     }
 
     .btn_swiper_prev_product {

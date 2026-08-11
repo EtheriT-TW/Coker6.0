@@ -244,7 +244,7 @@
                     </div>
                     <div class="cart-summary-section">
                         <div class="cart-summary-gap" aria-hidden="true"></div>
-                        <div class="priceline priceline-step1 pe-sm-5 col-12 col-md-7 offset-md-5">
+                        <div class="priceline priceline-step1 pe-lg-5 col-12 col-lg-7 offset-lg-5">
                             <div class="summary-main-row">
                                 <div class="summary-label">商品金額</div>
                                 <div class="summary-amount dual-price">
@@ -255,7 +255,10 @@
                             </div>
 
                             <div class="summary-main-row generalProductAmountLine d-none">
-                                <div class="summary-label">一般商品金額（不含加價購）</div>
+                                <div class="summary-label">
+                                    <span>一般商品金額</span>
+                                    <span class="summary-label-detail">（不含加價購）</span>
+                                </div>
                                 <div class="summary-amount generalProductAmount price"></div>
                             </div>
 
@@ -762,7 +765,10 @@
                         </div>
 
                         <div class="summary-main-row generalProductAmountLine d-none">
-                            <div class="summary-label">一般商品金額（不含加價購）</div>
+                            <div class="summary-label">
+                                <span>一般商品金額</span>
+                                <span class="summary-label-detail">（不含加價購）</span>
+                            </div>
                             <div class="summary-amount generalProductAmount price"></div>
                         </div>
 
@@ -936,7 +942,7 @@
                                         </div>
                                     </a>
 
-                                    <div class="col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center">
+                                    <div class="step4-item-price col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center">
                                         <div data-key="price" class="pro_unit"></div>
                                         <div data-key="bonus" class="pro_bonus"></div>
                                     </div>
@@ -951,7 +957,7 @@
                             </li>
                         </template>
 
-                        <div class="d-flex justify-content-center">
+                        <div class="d-flex justify-content-center mt-3">
                             <button class="btn_view_list border-0 rounded-pill fs-5 px-5 py-2 d-none" type="button" data-bs-toggle="collapse" data-bs-target="#CollapsePurchase" aria-expanded="false" aria-controls="CollapsePurchase">
                                 查看購物清單
                             </button>
@@ -964,7 +970,10 @@
                             </div>
 
                             <div class="py-2 d-flex justify-content-end text-end step4GeneralProductAmountLine d-none">
-                                <div>一般商品金額（不含加價購）</div>
+                                <div>
+                                    <span>一般商品金額</span>
+                                    <span class="summary-label-detail">（不含加價購）</span>
+                                </div>
                                 <div class="step4GeneralProductAmount col-4 price">0</div>
                             </div>
 
@@ -1133,8 +1142,8 @@
                             </div>
                             <div class="border-bottom border-top text-start py-3 my-3">
                                 <div class="mb-2 row align-items-center">
-                                    <div class="col-auto col-sm-2 text-end">應繳金額新台幣：</div>
-                                    <div class="col ps-0">新台幣<span class="total_amount paid_amount fs-5 fw-bold"></span></div>
+                                    <div class="col-auto col-sm-2 text-end">應繳金額：</div>
+                                    <div class="col ps-0"><span class="total_amount paid_amount fs-5 fw-bold"></span></div>
                                 </div>
                                 <div class="paid_date_row mb-2 row align-items-center d-none">
                                     <div class="col-auto col-sm-2 text-end">繳費期限：</div>

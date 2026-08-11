@@ -470,7 +470,9 @@
                 const type = (result.message || '').substr(0, 1);
                 const id = (result.message || '').substr(1);
 
-                getCartDropOne(id).done(function (drop) {
+                // 迷你購物車以 append 更新項目，因此必須先完成主商品，再依序處理
+                // 加價購商品；若同時送出請求，回應較快的加價購會被排到主商品前面。
+                let cartDropRequest = getCartDropOne(id).done(function (drop) {
                     if (type === 'N') {
                         if (typeof window.CartDropAdd === 'function') window.CartDropAdd(drop);
                     } else {
@@ -481,15 +483,17 @@
                 const rewardCartIds = result && (result.object || result.Object);
                 if (Array.isArray(rewardCartIds)) {
                     rewardCartIds.forEach(function (rewardCartId) {
-                        getCartDropOne(rewardCartId).done(function (drop) {
-                            const exists = $('#Car_Dropdown > ul > li').filter(function () {
-                                return normalizeNullableInt($(this).data('scid')) === normalizeNullableInt(rewardCartId);
-                            }).length > 0;
-                            if (exists) {
-                                if (typeof window.CartDropUpdate === 'function') window.CartDropUpdate(drop);
-                            } else if (typeof window.CartDropAdd === 'function') {
-                                window.CartDropAdd(drop);
-                            }
+                        cartDropRequest = cartDropRequest.then(function () {
+                            return getCartDropOne(rewardCartId).done(function (drop) {
+                                const exists = $('#Car_Dropdown > ul > li').filter(function () {
+                                    return normalizeNullableInt($(this).data('scid')) === normalizeNullableInt(rewardCartId);
+                                }).length > 0;
+                                if (exists) {
+                                    if (typeof window.CartDropUpdate === 'function') window.CartDropUpdate(drop);
+                                } else if (typeof window.CartDropAdd === 'function') {
+                                    window.CartDropAdd(drop);
+                                }
+                            });
                         });
                     });
                 }

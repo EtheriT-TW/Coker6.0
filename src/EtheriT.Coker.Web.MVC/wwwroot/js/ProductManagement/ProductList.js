@@ -19,8 +19,23 @@ let selectedProductImportTemplateId = null;
 var elementReady = false;
 var pendingHashEdit = false;
 
+function getCurrentProductImportForm() {
+    if (importProdPopup && typeof importProdPopup.content === "function") {
+        const popupForm = $(importProdPopup.content()).find(`form[name="fileUploadForm"]`)[0];
+        if (popupForm) return popupForm;
+    }
+
+    return $(`form[name="fileUploadForm"]:visible`)[0]
+        || $(`form[name="fileUploadForm"]`)[0]
+        || null;
+}
+
 function ImportProd() {
-    const form = $(`[name="fileUploadForm"]`)[0];
+    const form = getCurrentProductImportForm();
+    if (!form) {
+        co.sweet.error("找不到目前的商品匯入表單，請關閉視窗後重新開啟。");
+        return;
+    }
     const fileInput = $(form).find(`[name="files"]`)[0];
     if (!selectedProductImportTemplateId) {
         co.sweet.error("請先選擇商品匯入版型。");
@@ -66,7 +81,8 @@ function ImportProd() {
 }
 
 function updateProductImportStartButton() {
-    const fileInput = $(`[name="fileUploadForm"] [name="files"]`)[0];
+    const form = getCurrentProductImportForm();
+    const fileInput = form ? $(form).find(`[name="files"]`)[0] : null;
     const hasFile = !!(fileInput && fileInput.files && fileInput.files.length > 0);
     $("#btnStartProductImport").prop("disabled", !selectedProductImportTemplateId || !hasFile);
 }
@@ -75,7 +91,7 @@ function showProductImportStep(step) {
     const selectingTemplate = step === 1;
     $("#productImportStepTemplate").toggleClass("d-none", !selectingTemplate);
     $("#productImportStepFile").toggleClass("d-none", selectingTemplate);
-    if (importProdPopup) importProdPopup.option("height", selectingTemplate ? 620 : 430);
+    if (importProdPopup) importProdPopup.option("height", selectingTemplate ? 620 : 520);
     if (selectingTemplate && productImportTemplateGrid) {
         window.setTimeout(function () {
             productImportTemplateGrid.updateDimensions();
@@ -142,8 +158,9 @@ function initializeProductImportTemplateGrid() {
     showProductImportStep(1);
     $("#btnNextProductImportStep").prop("disabled", true);
     $("#btnStartProductImport").prop("disabled", true);
-    $(`[name="fileUploadForm"]`)[0].reset();
-    $(`[name="fileUploadForm"] [name="files"]`)
+    const form = getCurrentProductImportForm();
+    if (form) form.reset();
+    $(form).find(`[name="files"]`)
         .off("change.productImport")
         .on("change.productImport", updateProductImportStartButton);
 

@@ -9,8 +9,7 @@
         item: ".side-floating-item",
         expandTrigger: ".side-floating-expand-trigger",
         panel: "[data-side-floating-panel]",
-        close: ".side-floating-close",
-        goTop: "#btn_gotop"
+        close: ".side-floating-close"
     };
 
     function init(root) {
@@ -44,11 +43,7 @@
             .off("click.sideFloatingGoTop", SELECTORS.goTop)
             .on("click.sideFloatingGoTop", SELECTORS.goTop, function (event) {
                 event.preventDefault();
-                if (typeof window.scrollTo === "function") {
-                    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-                } else {
-                    $("html, body").stop(true).animate({ scrollTop: 0 }, 300);
-                }
+                $("html, body").stop(true).animate({ scrollTop: 0 }, 300);
             });
 
         $root
@@ -179,19 +174,12 @@
         return window.innerHeight || document.documentElement.clientHeight || 0;
     }
 
-    function bindGoTop() {
-        $(document)
-            .off("click.sideFloatingGoTop", SELECTORS.goTop)
-            .on("click.sideFloatingGoTop", SELECTORS.goTop, function (event) {
-                event.preventDefault();
-                $("html, body").animate({ scrollTop: 0 }, 0);
-            });
-    }
-
-    bindGoTop();
-
     window.SideFloating = {
         init: init
     };
+
+    $(function () {
+        init(SELECTORS.root);
+    });
 
 })(window, jQuery, window.co || window.Coker);

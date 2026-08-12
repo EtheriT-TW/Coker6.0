@@ -8,7 +8,8 @@
         item: ".side-floating-item",
         expandTrigger: ".side-floating-expand-trigger",
         panel: "[data-side-floating-panel]",
-        close: ".side-floating-close"
+        close: ".side-floating-close",
+        goTop: "#btn_gotop"
     };
 
     function init(root) {
@@ -151,6 +152,17 @@
 
         return window.innerHeight || document.documentElement.clientHeight || 0;
     }
+
+    function bindGoTop() {
+        $(document)
+            .off("click.sideFloatingGoTop", SELECTORS.goTop)
+            .on("click.sideFloatingGoTop", SELECTORS.goTop, function (event) {
+                event.preventDefault();
+                $("html, body").animate({ scrollTop: 0 }, 0);
+            });
+    }
+
+    bindGoTop();
 
     window.SideFloating = {
         init: init

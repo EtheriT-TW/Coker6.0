@@ -318,7 +318,7 @@
 
 /* ===== Type Change Frame ===== */
 .type_change_frame > .catalog .box-shadow {
-    box-shadow: 2px 3px 5px rgba(50,50,50,0.3);
+    box-shadow: 2px 3px 5px rgba(73, 73, 73, 0.2);
     height: 100%;
     padding: 10px;
 }

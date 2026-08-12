@@ -920,7 +920,7 @@
                     <div class="btn_cookie_reject m-2 p-1 px-4 rounded-2 text-center">@L.get("reject")</div>
                 </div>
             </div>
-            @if (ViewBag.option != "product")
+            @if (ViewBag.IsProductDetail != true)
             {
                 <div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
                     @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ShoppingCarModal" })
@@ -1065,6 +1065,8 @@
         <script src="~/lib/aos/aos.js"></script>
         <script src="~/Shared/Coker.min.js" asp-append-version="true"></script>
         <script src="~/Shared/shared.min.js" asp-append-version="true"></script>
+        <script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
+        <script src="~/js/Modal/ShoppingCarModal.min.js" asp-append-version="true"></script>
         <script defer src="/lib/jscloudimage360/js-cloudimage-360-view.min.js" asp-append-version="true"></script>
         <script src="~/js/site.min.js" asp-append-version="true"></script>
         @await RenderSectionAsync("Scripts", required: false)

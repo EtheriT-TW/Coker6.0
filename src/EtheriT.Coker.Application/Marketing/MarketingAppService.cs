@@ -675,7 +675,23 @@ namespace EtheriT.Coker.Application.Marketing
                     .Select(x => x.ProdStock.FK_Pid)
                     .Distinct()
                     .ToList();
-                var imageMap = await fileUploadAppService.GetMinImageMapAsync(rewardProductIds);
+                var scopeProductIds = addOnRules
+                    .SelectMany(x => x.ScopeItems)
+                    .Where(x => !x.IsDeleted && x.TargetType == MarketingScopeTargetTypeEnum.Product)
+                    .Select(x => x.TargetId)
+                    .Distinct()
+                    .ToList();
+                var imageMap = await fileUploadAppService.GetMinImageMapAsync(
+                    rewardProductIds.Concat(scopeProductIds).Distinct().ToList());
+                var scopeProductMap = await db.Prods.AsNoTracking()
+                    .Where(x => scopeProductIds.Contains(x.Id) && x.FK_WebsiteId == websiteId && !x.IsDeleted)
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.Title,
+                        Available = x.Visible && !x.RemovedFromShelves
+                    })
+                    .ToDictionaryAsync(x => x.Id);
                 var rewardPrices = await db.Prod_Prices.AsNoTracking()
                     .Where(x => rewardStockIds.Contains(x.FK_PSId) && !x.IsDeleted &&
                                 (x.Bonus ?? 0) == 0 && x.Price.HasValue)
@@ -785,6 +801,23 @@ namespace EtheriT.Coker.Application.Marketing
                             SelectionQuantityPerQualification = Math.Max(rule.Reward.SelectionQuantityPerQualification, 1),
                             ScopeProductIds = rule.ScopeItems.Where(x => !x.IsDeleted && x.TargetType == MarketingScopeTargetTypeEnum.Product)
                                 .Select(x => x.TargetId).Distinct().ToList(),
+                            ScopeProducts = rule.ScopeItems
+                                .Where(x => !x.IsDeleted && x.TargetType == MarketingScopeTargetTypeEnum.Product)
+                                .Select(x => x.TargetId)
+                                .Distinct()
+                                .Select(productId =>
+                                {
+                                    scopeProductMap.TryGetValue(productId, out var product);
+                                    imageMap.TryGetValue(productId, out var imageUrl);
+                                    return new CartAddOnScopeProductDto
+                                    {
+                                        ProductId = productId,
+                                        ProductName = product?.Title ?? $"商品 #{productId}",
+                                        ImageUrl = imageUrl ?? "/images/noImg.jpg",
+                                        Available = product?.Available ?? false
+                                    };
+                                })
+                                .ToList(),
                             RewardItems = rewardItems
                         });
                     }
@@ -1265,7 +1298,11 @@ namespace EtheriT.Coker.Application.Marketing
 
                 if (input.RewardItems.Any(x =>
                         x.ProductStockId <= 0 || x.OfferPrice < 0 || x.MaxQuantityPerOrder <= 0))
-                    return "優惠商品的規格、活動價或數量上限格式錯誤。";
+                    return "優惠商品的規格、活動價或每次資格可買件數格式錯誤。";
+
+                if (input.RewardItems.Any(x =>
+                        x.MaxQuantityPerOrder > input.SelectionQuantityPerQualification))
+                    return "優惠商品的「每次資格可買」不可大於活動的「每次資格可選件數」。";
 
                 if (input.RewardItems.GroupBy(x => x.ProductStockId).Any(x => x.Count() > 1))
                     return "相同商品規格不可重複設定。";

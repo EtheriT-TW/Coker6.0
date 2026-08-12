@@ -81,6 +81,16 @@
     color: #687780;
 }
 
+.prod-modal-product-name {
+    display: -webkit-box;
+    overflow: hidden;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
 .prod-modal-tag-list {
     display: flex;
     flex-wrap: wrap;
@@ -88,6 +98,7 @@
 }
 
 .prod-modal-tag-badge {
+    max-width: 100%;
     padding: .2rem .55rem;
     border: 1px solid #9eb9d4;
     border-radius: 999px;
@@ -95,6 +106,9 @@
     color: #175a9c;
     font-size: .78rem;
     line-height: 1.25;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    text-align: left;
     cursor: pointer;
 }
 

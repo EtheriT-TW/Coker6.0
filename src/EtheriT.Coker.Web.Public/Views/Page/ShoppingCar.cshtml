@@ -71,7 +71,7 @@
         <div>買過商品<span class="fw-bold">3</span>件</div>
     </a>
 </div>
-<div id="BuyStepSwiper" class="container pt-5 pb-4 mt-4 position-relative">
+<div id="BuyStepSwiper" class="container pt-3 pb-4 mt-2 position-relative">
     @if (ViewBag.LoginEnable != null && ViewBag.LoginEnable && !ViewBag.isLogin)
     {
         <div id="memberLogin" class="container my-5">
@@ -82,7 +82,17 @@
         </div>
     }
 
-    <div class="swiper shadow-lg mt-5">
+    <div class="swiper_pagination">
+        <div class="swiper_pagination_buystep"></div>
+
+        <div class="step_name d-flex text-center justify-content-between p-0">
+            <div class="">購物車</div>
+            <div class="">填寫資料</div>
+            <div class="">完成訂購</div>
+        </div>
+    </div>
+
+    <div class="swiper shadow-lg mt-3">
         <div class="swiper-wrapper">
             <div id="Step1" class="card text-center swiper-slide">
                 <div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
@@ -159,7 +169,7 @@
                                 </a>
                                 <div class="js-cart-item-message d-lg-none col-12 text-start"></div>
 
-                                <div class="cart-item-price col-12 col-lg-4 fw-bold align-self-center text-start text-lg-center">
+                                <div class="cart-item-price col-12 col-lg-4 fw-bold align-self-center text-start text-lg-center" aria-label="單價">
                                     <div data-key="oldPrice" data-type="price" class="pro_old_unit fw-light text-decoration-line-through d-none"></div>
                                     <div data-key="price" data-type="price" class="pro_unit cart-price-block">
                                         <div class="cart-price-main"></div>
@@ -181,7 +191,7 @@
                                     </button>
                                 </div>
 
-                                <div data-key="subtotal" data-type="price" class="pro_subtotal col-4 fw-bold fs-5 d-none cart-price-block" data-subtotal="">
+                                <div data-key="subtotal" data-type="price" class="pro_subtotal col-4 fw-bold fs-5 d-none cart-price-block" data-subtotal="" aria-label="小計">
                                     <div class="cart-price-main"></div>
                                     <div class="cart-price-bonus d-none"></div>
                                 </div>
@@ -237,7 +247,7 @@
                                 <div class="modal-footer cart-addon-modal-footer">
                                     <span class="cart-addon-modal-summary me-auto"></span>
                                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
-                                    <button type="button" class="btn btn-danger js-save-cart-addons" onclick="window.ShoppingCart.Marketing.saveProductAddOnDrafts(); return false;">儲存優惠商品</button>
+                                    <button type="button" class="btn btn-danger js-save-cart-addons">儲存優惠商品</button>
                                 </div>
                             </div>
                         </div>
@@ -1163,17 +1173,6 @@
         </div>
     </div>
 
-    <div class="swiper_pagination container position-absolute position-relative">
-        <div class="centerline position-absolute container"><hr class="opacity-100" /></div>
-
-        <div class="swiper_pagination_buystep position-absolute"></div>
-
-        <div class="step_name position-absolute container d-flex text-center justify-content-between p-0">
-            <div class="">購物車</div>
-            <div class="">填寫資料</div>
-            <div class="">完成訂購</div>
-        </div>
-    </div>
 </div>
 
 

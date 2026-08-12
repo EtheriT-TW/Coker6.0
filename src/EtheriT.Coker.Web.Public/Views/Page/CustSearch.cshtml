@@ -1,8 +1,6 @@
 ﻿@using System.Web;
-@using EtheriT.Coker.Application.Shared.Dto.WebMenu
-@using EtheriT.Coker.Application.Shared.Dto.enumType
+@using EtheriT.Coker.Application.Shared.Dto.Search
 @using EtheriT.Coker.Web.Public.Models
-@using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
 @using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
 @section Styles {
@@ -37,7 +35,7 @@
             string placeholder = string.Empty;
             switch (Model.SearchPalameter.SearchId)
             {
-                case 3:
+                case SearchTargetIds.Product:
                     placeholder = L.get("SearchProdPlaceholder");
                     break;
                 default:
@@ -58,50 +56,6 @@
             <ul class="search-suggestions d-none"></ul>
         </div>
     </div>
-    <div class="container d-flex justify-content-center my-4 d-none">
-        <div class="search-frame d-flex">
-            <div class="theme d-flex justify-content-center align-items-center">
-                廠商園區
-            </div>
-            <div class="vice-theme d-flex justify-content-strat align-items-center">
-                <div class="option">
-                    <lable class="d-flex justify-content-center align-items-center">
-                        <input type="checkbox" value="" title="顯示所有結果" />
-                        全部
-                    </lable>
-                </div>
-                <div class="option">
-                    <lable class="d-flex justify-content-center align-items-center">
-                        <input type="checkbox" value="" title="顯示智慧應用" />
-                        智慧應用(30)
-                    </lable>
-                </div>
-                <div class="option">
-                    <lable class="d-flex justify-content-center align-items-center">
-                        <input type="checkbox" value="" title="顯示智慧應用" />
-                        智慧應用(30)
-                    </lable>
-                </div>
-                <div class="option">
-                    <lable class="d-flex justify-content-center align-items-center">
-                        <input type="checkbox" value="" title="顯示智慧應用" />
-                        智慧應用(30)
-                    </lable>
-                </div>
-                <div class="option">
-                    <lable class="d-flex justify-content-center align-items-center">
-                        <input type="checkbox" value="" title="顯示智慧應用" />
-                        智慧應用(30)
-                    </lable>
-                </div>
-                <div class="option">
-                    <lable class="d-flex justify-content-center align-items-center">
-                        <input type="checkbox" value="" title="顯示其它結果" />其他(10)
-                    </lable>
-                </div>
-            </div>
-        </div>
-    </div>
     <div id="Search_Title" class="container d-flex justify-content-center my-4" role="status" aria-live="polite" aria-atomic="true">
         <p>
             @Html.Raw(string.Format(L.get("FindDescription"), $@"<span class=""px-1 searchText"">{@Model.SearchPalameter.SearchText}</span>", $@"<span class=""px-1 searchCount"">0</span>"))
@@ -118,7 +72,7 @@
                 </a>
                 <ul class="dropdown-menu"></ul>
                 <template id="filterDirTypeTemp">
-                    <li><a class="dropdown-item" href="#">Action</a></li>
+                    <li><a class="dropdown-item" href="#"></a></li>
                 </template>
             </div>
             <h3 class="title">@L.get("AdvancedFilter")</h3>
@@ -127,15 +81,7 @@
         <div id="Search_Result" class="col px-0">
             <div class="catalog_frame type_change_frame" data-type="search" data-ShowNum="24" data-dirid="@Model.SearchPalameter.SearchId" data-search-text="@Model.SearchPalameter.SearchText">
                 <div class="d-flex justify-content-end switch_control text-black-50">
-                    <div class="justify-content-center align-items-center d-none">
-                        <p>
-                            發布日期
-                        </p>
-                        <input type="date" name="startDate" title="起始日期" class="text-black-50" />
-                        <p class="px-2 fs-3"> ~ </p>
-                        <input type="date" name="endDate" title="結束日期" class="text-black-50" />
-                    </div>
-                    @if (Model.SearchPalameter.SearchId == 3)
+                    @if (Model.SearchPalameter.SearchId == SearchTargetIds.Product)
                     {
                         <button class="btn_filter_grid bg-transparent border-0 align-items-center mx-1 d-flex d-md-none" value="過濾">
                             <i class="fas fa-search fs-5 me-1"></i>過濾
@@ -155,15 +101,14 @@
                     <div class="templatecontent d-none">
                         <div class="template p-2 py-2">
                             <div class="col bg-white p-2 position-sticky p-1 type4 rounded-lg h-100">
-                                <a href="/lcb/Apro_1/product/2" title="" target="_self" class="text-black">
+                                <a href="#" title="" target="_self" class="text-black">
                                     <figure class="d-flex justify-content-center mb-0 h-100 max-h flex-column">
                                         <div class="image_frame d-flex flex-grow-1 justify-content-center align-items-center type4-image-frame w-100">
-                                            <img src="/upload/logo.png" alt="" class="image gjs-plh-image img-fluid" />
+                                            <img alt="" class="image gjs-plh-image img-fluid" />
                                         </div>
                                         <figcaption class="w-100 position-relative pb1 type4-caption d-flex flex-column">
                                             <div class="item-header d-flex">
                                                 <div class="itemNo m-0 p-0 align-itmes-center type4-title d-inline fw-bold">
-                                                    {{產品編號}}
                                                 </div>
                                             </div>
                                             <div class="item-title">
@@ -193,10 +138,8 @@
                                                 </div>
                                                 <div class="purchase d-none">
                                                     <div class="price price-discount me-auto p-2 align-itmes-center type2-title d-none">
-                                                        {{min price}}
                                                     </div>
                                                     <div class="price normal-price me-auto p-2 align-itmes-center type2-title fw-bold">
-                                                        {{max price}}
                                                     </div>
                                                     <span class="cart badge rounded-pill bg-secondary text-white me-auto p-2 px-4 align-itmes-center type2-title d-none fw-normal">
                                                         <i class="fa-solid fa-cart-shopping fa-inverse">
@@ -217,7 +160,7 @@
                         </div>
                     </div>
                     <div class="templatecontent-tag d-none">
-                        <span class="badge rounded-pill bg-light text-secondary fw-normal me-1 px-2">{{Tag Name}}</span>
+                        <span class="badge rounded-pill bg-light text-secondary fw-normal me-1 px-2"></span>
                     </div>
                 </div>
                 <nav aria-label="Page">

@@ -341,6 +341,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         break;
                     case "product":
                         htmlSanitizeSourceType = HtmlSanitizeSourceType.商品;
+                        ViewBag.IsProductDetail = true;
                         ViewBag.linkMore = model.storeSet.linkMore;
                         if (id != 0)
                         {
@@ -453,12 +454,16 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             model.PageData.Title = L.get("SiteSearch");
                             model.SearchPalameter = new FrontSearchPalameterDro
                             {
-                                SearchId = id,
+                                SearchId = SearchTargetIds.Normalize(id),
                                 SearchText = search ?? "",
                                 Class = await custSearchAppService.GetSearchList(defaultData.Id)
                             };
-                            if (model.SearchPalameter.Class.Exists(e => e.Id == 3) && model.SearchPalameter.SearchId == 0 && string.IsNullOrEmpty(option))
-                                model.SearchPalameter.SearchId = 3;
+                            if (model.SearchPalameter.SearchId == SearchTargetIds.Default)
+                            {
+                                model.SearchPalameter.SearchId = model.SearchPalameter.Class.Exists(e => e.Id == SearchTargetIds.Product)
+                                    ? SearchTargetIds.Product
+                                    : SearchTargetIds.Article;
+                            }
                             view = "CustSearch";
 
                             ViewBag.RouterName = "Search";

@@ -110,18 +110,21 @@ button.side-floating-trigger {
 
 /* Bottom floating buttons */
 #Floating_Bottom {
-    z-index: 2;
+    z-index: 1031;
     will-change: transform;
 }
 
 #btn_gotop {
     display: block;
     opacity: 0;
+    pointer-events: none;
+    cursor: pointer;
     transition: opacity 0.25s ease-in-out;
 }
 
     #btn_gotop.show {
         opacity: 1;
+        pointer-events: auto;
         width: var(--sideFloat-width);
     }
 

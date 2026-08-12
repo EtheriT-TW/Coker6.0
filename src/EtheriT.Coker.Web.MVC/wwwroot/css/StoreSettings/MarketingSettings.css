@@ -327,6 +327,59 @@ input[type="number"] {
     margin-bottom: 0;
 }
 
+.marketing-batch-price-panel {
+    margin-bottom: 1rem;
+    padding: .8rem;
+    border: 1px solid #e2c9cf;
+    border-radius: .6rem;
+    background: #fff8fa;
+}
+
+.marketing-batch-price-copy {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    margin-bottom: .65rem;
+}
+
+.marketing-batch-price-copy small,
+.marketing-batch-price-feedback,
+.marketing-field-help {
+    color: #6f777d;
+    font-size: .78rem;
+    font-weight: 400;
+}
+
+.marketing-batch-price-controls {
+    display: grid;
+    grid-template-columns: auto minmax(160px, 1fr) auto minmax(130px, .65fr) auto;
+    gap: .5rem;
+    align-items: center;
+}
+
+.marketing-batch-price-controls > label {
+    margin: 0;
+    color: #5d676d;
+    font-size: .82rem;
+    white-space: nowrap;
+}
+
+.marketing-batch-price-value {
+    min-width: 0;
+}
+
+.marketing-batch-price-feedback {
+    min-height: 1.2em;
+    margin-top: .45rem;
+    color: #a12d43;
+}
+
+.marketing-field-help {
+    display: block;
+    margin-top: .25rem;
+    line-height: 1.35;
+}
+
 #AddOnAmountSection {
     margin-bottom: 1rem;
 }
@@ -391,6 +444,16 @@ input[type="number"] {
 .marketing-price-reference {
     font-size: .82rem;
     color: #5d676d;
+}
+
+@media (max-width: 991.98px) {
+    .marketing-batch-price-controls {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .marketing-batch-price-controls > button {
+        grid-column: 1 / -1;
+    }
 }
 
 .marketing-price-reference {
@@ -552,7 +615,8 @@ input[type="number"] {
 }
 
 .marketing-remove-button,
-.marketing-copy-button {
+.marketing-copy-button,
+.marketing-product-link {
     width: 38px;
     height: 38px;
     display: inline-flex;
@@ -564,12 +628,25 @@ input[type="number"] {
     border-radius: 50%;
     background: #fff5f6;
     color: #c6293b;
+    text-decoration: none;
 }
 
 .marketing-copy-button {
     border-color: #9db9d6;
     background: #f1f7ff;
     color: #1769b0;
+}
+
+.marketing-product-link.is-admin {
+    border-color: #9db9d6;
+    background: #f1f7ff;
+    color: #1769b0;
+}
+
+.marketing-product-link.is-front {
+    border-color: #9fc9ae;
+    background: #f2fbf5;
+    color: #267647;
 }
 
 .marketing-remove-button:hover,
@@ -586,6 +663,20 @@ input[type="number"] {
     color: #fff;
 }
 
+.marketing-product-link.is-admin:hover,
+.marketing-product-link.is-admin:focus-visible {
+    border-color: #1769b0;
+    background: #1769b0;
+    color: #fff;
+}
+
+.marketing-product-link.is-front:hover,
+.marketing-product-link.is-front:focus-visible {
+    border-color: #267647;
+    background: #267647;
+    color: #fff;
+}
+
 .marketing-copy-button:disabled {
     border-color: #d6dde3;
     background: #f4f6f7;
@@ -594,7 +685,8 @@ input[type="number"] {
 }
 
 .marketing-remove-button .material-symbols-outlined,
-.marketing-copy-button .material-symbols-outlined {
+.marketing-copy-button .material-symbols-outlined,
+.marketing-product-link .material-symbols-outlined {
     font-size: 1.25rem;
 }
 

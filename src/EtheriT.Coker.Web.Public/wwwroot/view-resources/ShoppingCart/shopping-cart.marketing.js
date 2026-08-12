@@ -345,6 +345,19 @@
         });
     }
 
+    function getBaseItemAmount(item) {
+        var cartId = Number(item.Id || 0);
+        var $cartItem = $('.purchase_item').filter(function () {
+            return Number($(this).data('scId')) === cartId;
+        }).first();
+        var $subtotal = $cartItem.find('[data-key="subtotal"]').first();
+        if ($subtotal.length) {
+            var displayedSubtotal = Number($subtotal.data('subtotal'));
+            if (Number.isFinite(displayedSubtotal)) return displayedSubtotal;
+        }
+        return Number(item.Price || 0) * Number(item.Quantity || 0);
+    }
+
     function getCampaignQualification(campaign, baseItems) {
         var conditionType = Number(getValue(campaign, "conditionType") || 0);
         var scopeIds = (getValue(campaign, "scopeProductIds") || []).map(Number);
@@ -356,7 +369,7 @@
         }, 0);
         var amount = baseItems.reduce(function (sum, item) {
             if (conditionType === 2 && !scopeIds.includes(Number(item.PId))) return sum;
-            return sum + Number(item.Price || 0) * Number(item.Quantity || 0);
+            return sum + getBaseItemAmount(item);
         }, 0);
         var qualified = isQuantityCondition
             ? quantity >= requiredQuantity
@@ -412,6 +425,28 @@
         });
     }
 
+    function getRewardItemLimit(campaign, item, qualification) {
+        var itemLimit = Math.max(1, Number(getValue(item, "maxQuantityPerOrder") || 1));
+        if (getValue(campaign, "repeatable")) itemLimit *= Math.max(1, qualification.times);
+        var stock = getValue(item, "stockQuantity");
+        if (!getValue(item, "noStockManagement") && stock != null) {
+            itemLimit = Math.min(itemLimit, Math.max(0, Number(stock) || 0));
+        }
+        return itemLimit;
+    }
+
+    function autoSelectSingleGift(campaign, qualification) {
+        if (!qualification.qualified || qualification.allowance <= 0) return;
+        var items = getValue(campaign, "rewardItems") || [];
+        if (items.length !== 1 || Number(getValue(items[0], "offerPrice") || 0) > 0) return;
+
+        var item = items[0];
+        var key = selectionKey(campaign, item);
+        if (S.marketingRewardManualSelections && S.marketingRewardManualSelections[key]) return;
+        var quantity = Math.min(qualification.allowance, getRewardItemLimit(campaign, item, qualification));
+        if (quantity > 0) S.marketingRewardSelections[key] = quantity;
+    }
+
     function escapeHtml(value) {
         return $("<div>").text(value == null ? "" : String(value)).html();
     }
@@ -447,6 +482,64 @@
             '</article>';
     }
 
+    function renderScopeProducts(campaign, qualified) {
+        var products = getValue(campaign, "scopeProducts") || [];
+        if (!products.length) return "";
+
+        var cards = products.map(function (product) {
+            var productId = Number(getValue(product, "productId") || 0);
+            var available = getValue(product, "available") === true;
+            return '<div class="swiper-slide"><article class="cart-scope-product' + (available ? '' : ' is-unavailable') + '"' +
+                (available ? ' role="button" tabindex="0"' +
+                    ' data-quick-cart-product-id="' + productId + '"' +
+                    ' data-quick-cart-product-name="' + escapeHtml(getValue(product, "productName")) + '"' +
+                    ' data-quick-cart-image-url="' + escapeHtml(getValue(product, "imageUrl") || "/images/noImg.jpg") + '"' : '') + '>' +
+                '<img src="' + escapeHtml(getValue(product, "imageUrl") || "/images/noImg.jpg") + '" alt="" loading="lazy">' +
+                '<span><strong>' + escapeHtml(getValue(product, "productName")) + '</strong>' +
+                '<small>' + (available ? '可加入購物車累計活動' : '目前無法購買') + '</small></span>' +
+                (available ? '<button type="button" class="cart-scope-product-buy">' +
+                    '<i class="fa-solid fa-cart-plus" aria-hidden="true"></i><span>快速選購</span></button>' : '') +
+                '</article></div>';
+        }).join("");
+
+        var collapsed = qualified === true;
+        return '<div class="cart-scope-products' + (collapsed ? ' is-collapsed' : ' is-expanded') + '"><div class="cart-scope-products-header">' +
+            '<div><strong>選購指定商品</strong><small>' + (collapsed
+                ? '已達活動門檻，仍可展開加購或更換商品'
+                : '不離開購物車，加入後會立即重新計算活動資格') + '</small></div>' +
+            '<button type="button" class="cart-scope-toggle" aria-expanded="' + (!collapsed) + '">' +
+            '<span>' + (collapsed ? '展開選購' : '收合') + '</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button></div>' +
+            '<div class="cart-scope-products-body"' + (collapsed ? ' hidden' : '') + '>' +
+            '<div class="cart-scope-product-nav"><button type="button" class="cart-scope-prev" aria-label="上一組指定商品"><i class="fa-solid fa-chevron-left"></i></button>' +
+            '<button type="button" class="cart-scope-next" aria-label="下一組指定商品"><i class="fa-solid fa-chevron-right"></i></button></div>' +
+            '<div class="cart-scope-product-swiper swiper"><div class="swiper-wrapper">' + cards + '</div></div></div></div>';
+    }
+
+    function initScopeProductSwiper($section) {
+        if (typeof window.Swiper !== "function" || $section.data('scopeSwiper') ||
+            $section.find('.cart-scope-products-body').prop('hidden')) return;
+        var swiper = new window.Swiper($section.find('.cart-scope-product-swiper').get(0), {
+            slidesPerView: 'auto',
+            spaceBetween: 10,
+            watchOverflow: true,
+            navigation: {
+                prevEl: $section.find('.cart-scope-prev').get(0),
+                nextEl: $section.find('.cart-scope-next').get(0)
+            }
+        });
+        $section.data('scopeSwiper', swiper);
+        S.scopeProductSwipers.push(swiper);
+    }
+
+    function initScopeProductSwipers($root) {
+        (S.scopeProductSwipers || []).forEach(function (swiper) { if (swiper && swiper.destroy) swiper.destroy(true, true); });
+        S.scopeProductSwipers = [];
+        if (typeof window.Swiper !== "function") return;
+        $root.find('.cart-scope-products').each(function () {
+            initScopeProductSwiper($(this));
+        });
+    }
+
     function renderRewardCampaigns(campaignsWithStatus) {
         var $root = $("#CartMarketingRewards");
         if (!$root.length) return;
@@ -462,21 +555,25 @@
             var selected = getCampaignSelectedQuantity(campaign);
             totalSelected += selected;
             var conditionName = Number(getValue(campaign, "conditionType")) === 2 ? "指定商品合計" : "本次訂單";
+            var hideZeroScopeStatus = !q.qualified && Number(getValue(campaign, "conditionType")) === 2 && q.amount <= 0;
             var status = q.qualified
                 ? '已符合資格，可選 <strong>' + q.allowance + '</strong> 件，目前已選 <strong>' + selected + '</strong> 件'
-                : conditionName + '再買 <strong>NT$ ' + q.shortage.toLocaleString() + '</strong> 即可選購';
+                : hideZeroScopeStatus ? '' : conditionName + '目前 <strong>NT$ ' + q.amount.toLocaleString() + '</strong>，再買 <strong>NT$ ' + q.shortage.toLocaleString() + '</strong> 即可選購';
             var items = (getValue(campaign, "rewardItems") || []).map(function (item) {
                 return renderRewardItem(campaign, item, q, selected);
             }).join("");
+            var scopeProducts = Number(getValue(campaign, "conditionType")) === 2
+                ? renderScopeProducts(campaign, q.qualified) : "";
 
             return '<section class="cart-marketing-campaign' + (q.qualified ? ' is-qualified' : '') + '">' +
                 '<div class="cart-campaign-header"><div><h4>' + escapeHtml(getValue(campaign, "name")) + '</h4>' +
-                '<p>' + status + '</p></div><span class="cart-campaign-threshold">' + conditionName + '滿 NT$ ' + q.minAmount.toLocaleString() + '</span></div>' +
-                '<div class="cart-reward-track">' + items + '</div></section>';
+                (status ? '<p>' + status + '</p>' : '') + '</div><span class="cart-campaign-threshold">' + conditionName + '滿 NT$ ' + q.minAmount.toLocaleString() + '</span></div>' +
+                scopeProducts + '<div class="cart-reward-track">' + items + '</div></section>';
         }).join("");
 
         $root.removeClass("d-none");
         $root.find(".cart-marketing-campaign-list").html(html);
+        initScopeProductSwipers($root);
         $root.find(".cart-marketing-selected-summary").text(totalSelected > 0 ? "已選 " + totalSelected + " 件" : "優惠品需自行選取");
     }
 
@@ -497,9 +594,13 @@
         Object.keys(S.marketingRewardSelections || {}).forEach(function (key) {
             if (!validKeys.has(key)) delete S.marketingRewardSelections[key];
         });
+        Object.keys(S.marketingRewardManualSelections || {}).forEach(function (key) {
+            if (!validKeys.has(key)) delete S.marketingRewardManualSelections[key];
+        });
         var status = campaigns.map(function (campaign) {
             var qualification = getCampaignQualification(campaign, baseItems);
             clampSelections(campaign, qualification);
+            autoSelectSingleGift(campaign, qualification);
             return { campaign: campaign, qualification: qualification };
         });
 
@@ -554,9 +655,19 @@
         if (!force && S.productAddOnDrafts) return;
         S.productAddOnDrafts = {};
         getProductAddOnCampaigns().forEach(function (campaign) {
-            (getValue(campaign, "rewardItems") || []).forEach(function (item) {
+            var items = getValue(campaign, "rewardItems") || [];
+            items.forEach(function (item) {
                 S.productAddOnDrafts[selectionKey(campaign, item)] = getPersistedRewardQuantity(item);
             });
+            var qualification = getCampaignQualification(campaign, getModalBaseItems());
+            if (qualification.qualified && items.length === 1 &&
+                Number(getValue(items[0], 'offerPrice') || 0) <= 0 &&
+                Number(S.productAddOnDrafts[selectionKey(campaign, items[0])] || 0) === 0) {
+                S.productAddOnDrafts[selectionKey(campaign, items[0])] = Math.min(
+                    qualification.allowance,
+                    getRewardItemLimit(campaign, items[0], qualification)
+                );
+            }
         });
     }
 
@@ -590,8 +701,8 @@
             '<div class="cart-reward-spec">' + escapeHtml(getValue(item, "stockName")) + '</div>' +
             '<div class="cart-reward-price"><strong>' + (offerPrice <= 0 ? '免費' : 'NT$ ' + offerPrice.toLocaleString()) + '</strong>' +
             (originalPrice > 0 ? '<span class="cart-reward-original">原價 NT$ ' + originalPrice.toLocaleString() + '</span>' : '') + '</div></div>' +
-            '<div class="cart-reward-quantity"><button type="button" class="js-product-addon-minus" onclick="window.ShoppingCart.Marketing.changeProductAddOnDraft(\'' + key + '\', -1); return false;"' + (selected ? '' : ' disabled') + '>−</button>' +
-            '<span>' + quantity + '</span><button type="button" class="js-product-addon-plus" onclick="window.ShoppingCart.Marketing.changeProductAddOnDraft(\'' + key + '\', 1); return false;"' + (canIncrease ? '' : ' disabled') + '>＋</button></div></article>';
+            '<div class="cart-reward-quantity"><button type="button" class="js-product-addon-minus" aria-label="減少"' + (selected ? '' : ' disabled') + '>−</button>' +
+            '<span>' + quantity + '</span><button type="button" class="js-product-addon-plus" aria-label="增加"' + (canIncrease ? '' : ' disabled') + '>＋</button></div></article>';
     }
 
     function renderProductAddOnModal(message) {
@@ -685,7 +796,7 @@
             }).fail(function () {
                 $('.cart-addon-modal-summary').text('優惠商品已儲存，但畫面更新失敗，請重新整理後確認。');
                 $('.js-save-cart-addons').prop('disabled', false);
-                Coker.sweet.warning('畫面更新失敗', '優惠商品已儲存，請重新整理購物車確認。', null, true);
+                Coker.sweet.error('畫面更新失敗', '優惠商品已儲存，請重新整理購物車確認。', null, true);
             });
         }).fail(function () {
             $('.cart-addon-modal-summary').text('無法更新，請稍後再試。');
@@ -706,8 +817,93 @@
         return invalid;
     }
 
+    function hasUnselectedAvailableFreeReward(campaign, qualification) {
+        var productAddOn = isProductAddOnCampaign(campaign);
+        return (getValue(campaign, 'rewardItems') || []).some(function (item) {
+            if (Number(getValue(item, 'offerPrice') || 0) > 0) return false;
+            var selected = productAddOn
+                ? getPersistedRewardQuantity(item)
+                : Number(S.marketingRewardSelections[selectionKey(campaign, item)] || 0);
+            return selected < getRewardItemLimit(campaign, item, qualification);
+        });
+    }
+
+    function getUnclaimedGiftCampaigns() {
+        var baseItems = getSelectedBaseItems();
+        return (S.marketingCampaigns && S.marketingCampaigns.addOnCampaigns || []).filter(function (campaign) {
+            var type = Number(getValue(campaign, 'conditionType') || 0);
+            if (![1, 2, 4, 5].includes(type)) return false;
+            var qualification = getCampaignQualification(campaign, baseItems);
+            if (!qualification.qualified || qualification.allowance <= 0 ||
+                !hasUnselectedAvailableFreeReward(campaign, qualification)) return false;
+
+            var selected = isProductAddOnCampaign(campaign)
+                ? (getValue(campaign, 'rewardItems') || []).reduce(function (sum, item) {
+                    return sum + getPersistedRewardQuantity(item);
+                }, 0)
+                : getCampaignSelectedQuantity(campaign);
+            return selected < qualification.allowance;
+        });
+    }
+
+    function focusUnclaimedGiftCampaigns(campaigns) {
+        var productAddOnCampaign = campaigns.find(isProductAddOnCampaign);
+        if (productAddOnCampaign) {
+            openProductAddOnModal('還有可領取的贈品尚未選擇', [campaignKey(productAddOnCampaign)]);
+            return;
+        }
+        var root = document.getElementById('CartMarketingRewards');
+        if (root) root.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function confirmGiftAbandonment() {
+        if (S.skipGiftAbandonWarningOnce) {
+            S.skipGiftAbandonWarningOnce = false;
+            return true;
+        }
+
+        var campaigns = getUnclaimedGiftCampaigns();
+        if (!campaigns.length) return true;
+        if (S.giftAbandonWarningOpen) return false;
+
+        var continueToNextStep = function () {
+            S.skipGiftAbandonWarningOnce = true;
+            var nextButton = document.querySelector('.btn_swiper_next_buystep');
+            if (nextButton) nextButton.click();
+        };
+        var returnToGifts = function () { focusUnclaimedGiftCampaigns(campaigns); };
+        var message = campaigns.length > 1
+            ? '目前有 ' + campaigns.length + ' 組贈品尚未領取，確定要放棄並進入下一步嗎？'
+            : '目前還有贈品尚未領取，確定要放棄並進入下一步嗎？';
+
+        if (typeof window.Swal !== 'undefined' && typeof window.Swal.fire === 'function') {
+            S.giftAbandonWarningOpen = true;
+            window.Swal.fire({
+                icon: 'warning',
+                title: '還有贈品尚未選取',
+                text: message,
+                showCancelButton: true,
+                confirmButtonText: '放棄贈品並繼續',
+                cancelButtonText: '返回選擇贈品',
+                reverseButtons: true,
+                focusCancel: true,
+                returnFocus: false
+            }).then(function (result) {
+                S.giftAbandonWarningOpen = false;
+                if (result.isConfirmed) continueToNextStep();
+                else window.requestAnimationFrame(returnToGifts);
+            });
+            return false;
+        }
+
+        if (window.confirm(message)) return true;
+        returnToGifts();
+        return false;
+    }
+
     function validateProductAddOnBeforeNext() {
-        return !requireProductAddOnAdjustment();
+        if (requireProductAddOnAdjustment()) return false;
+        return confirmGiftAbandonment();
     }
 
     function refreshProductAddOnPrompt() {
@@ -750,6 +946,31 @@
         changeProductAddOnDraft(key, Number(S.productAddOnDrafts[key] || 0) > 0
             ? -Number(S.productAddOnDrafts[key]) : 1);
     });
+    $(document).on('click', '.js-product-addon-minus, .js-product-addon-plus', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        var key = $(this).closest('.cart-addon-modal-card').attr('data-product-selection-key');
+        changeProductAddOnDraft(key, $(this).hasClass('js-product-addon-plus') ? 1 : -1);
+    });
+    $(document).on('click', '.js-save-cart-addons', function (event) {
+        event.preventDefault();
+        saveProductAddOnDrafts();
+    });
+    $(document).on('click', '.cart-scope-toggle', function () {
+        var $button = $(this);
+        var $section = $button.closest('.cart-scope-products');
+        var $body = $section.find('.cart-scope-products-body').first();
+        var expanded = $button.attr('aria-expanded') === 'true';
+        $button.attr('aria-expanded', String(!expanded));
+        $button.find('span').text(expanded ? '展開選購' : '收合');
+        $body.prop('hidden', expanded);
+        $section.toggleClass('is-expanded', !expanded).toggleClass('is-collapsed', expanded);
+        if (!expanded) initScopeProductSwiper($section);
+        if (S.buy_step_swiper) {
+            S.buy_step_swiper.update();
+            S.buy_step_swiper.updateAutoHeight(200);
+        }
+    });
     function changeRewardQuantity(key, delta) {
         var parts = String(key || "").split(":").map(Number);
         var campaigns = S.marketingCampaigns && S.marketingCampaigns.addOnCampaigns || [];
@@ -769,6 +990,8 @@
             (getValue(campaign, "repeatable") ? Math.max(1, q.times) : 1);
         var next = Math.max(0, current + delta);
         if (delta > 0 && (selected >= q.allowance || next > itemLimit)) return;
+        S.marketingRewardManualSelections = S.marketingRewardManualSelections || {};
+        S.marketingRewardManualSelections[key] = true;
         if (next > 0) S.marketingRewardSelections[key] = next;
         else delete S.marketingRewardSelections[key];
         cart.Pricing.TotalCount();
@@ -790,6 +1013,13 @@
         var key = $(this).attr("data-selection-key");
         changeRewardQuantity(key, Number(S.marketingRewardSelections[key] || 0) > 0 ? -Number(S.marketingRewardSelections[key]) : 1);
     });
+    $(document).off("productQuickCart:added.shoppingCart")
+        .on("productQuickCart:added.shoppingCart", function () {
+            if (!cart.Items || typeof cart.Items.ReloadCartDisplay !== "function") return;
+            cart.Items.ReloadCartDisplay().done(function () {
+                loadCartMarketingCampaigns();
+            });
+        });
     $(document).on("keydown", ".cart-reward-card", function (event) {
         if (event.key === "Enter" || event.key === " ") { event.preventDefault(); $(this).trigger("click"); }
     });

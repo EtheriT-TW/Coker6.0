@@ -5,6 +5,7 @@
 
     const SELECTORS = {
         root: "#Floating_Center",
+        goTop: "#btn_gotop",
         item: ".side-floating-item",
         expandTrigger: ".side-floating-expand-trigger",
         panel: "[data-side-floating-panel]",
@@ -33,9 +34,22 @@
         $root.data("side-floating-init", true);
 
         bindEvents($root);
+        bindViewportEvents();
+        updateVisibility();
     }
 
     function bindEvents($root) {
+        $(document)
+            .off("click.sideFloatingGoTop", SELECTORS.goTop)
+            .on("click.sideFloatingGoTop", SELECTORS.goTop, function (event) {
+                event.preventDefault();
+                if (typeof window.scrollTo === "function") {
+                    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+                } else {
+                    $("html, body").stop(true).animate({ scrollTop: 0 }, 300);
+                }
+            });
+
         $root
             .off("click.sideFloatingExpand", SELECTORS.expandTrigger)
             .on("click.sideFloatingExpand", SELECTORS.expandTrigger, function (event) {
@@ -59,6 +73,18 @@
                 const $panel = $(this).closest(SELECTORS.panel);
                 closePanel($panel);
             });
+    }
+
+    function bindViewportEvents() {
+        $(window)
+            .off("scroll.sideFloating resize.sideFloating")
+            .on("scroll.sideFloating resize.sideFloating", updateVisibility);
+    }
+
+    function updateVisibility() {
+        const shouldShow = (window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0) > 350;
+        $(SELECTORS.goTop).toggleClass("show", shouldShow);
+        $(SELECTORS.root).toggleClass("show", shouldShow);
     }
 
     function togglePanel($root, $trigger, $panel) {

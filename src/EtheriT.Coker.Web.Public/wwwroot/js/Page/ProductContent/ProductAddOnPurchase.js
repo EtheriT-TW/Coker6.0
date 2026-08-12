@@ -101,7 +101,7 @@
         });
 
         const total = Array.from(state.selected.values()).reduce((sum, x) => sum + x.quantity, 0);
-        $root().find('.product-addon__selection-summary').text(total > 0 ? `已選 ${total} 件` : '可不選');
+        $root().find('.product-addon__selection-summary').text(total > 0 ? `已選 ${total} 件` : '');
     }
 
     function itemCard(campaign, item) {
@@ -150,18 +150,43 @@
             $header.append($('<span class="product-addon__hint"></span>').text(`任選滿 ${required} 件，可選 ${selectable} 件`));
             $campaign.append($header, '<div class="product-addon__rule"></div>');
 
-            const $swiper = $('<div class="product-addon__swiper swiper"><div class="swiper-wrapper"></div></div>');
+            const $swiper = $(
+                '<div class="product-addon__swiper swiper">' +
+                    '<div class="swiper-wrapper"></div>' +
+                    '<button type="button" class="product-addon__nav product-addon__nav--prev" aria-label="上一組優惠商品">' +
+                        '<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>' +
+                    '</button>' +
+                    '<button type="button" class="product-addon__nav product-addon__nav--next" aria-label="下一組優惠商品">' +
+                        '<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>' +
+                    '</button>' +
+                    '<div class="product-addon__pagination swiper-pagination" aria-label="優惠商品分頁"></div>' +
+                '</div>');
             const $wrapper = $swiper.find('.swiper-wrapper');
             (read(campaign, 'rewardItems', 'RewardItems') || []).forEach(item => $wrapper.append(itemCard(campaign, item)));
             $campaign.append($swiper);
             $container.append($campaign);
 
             if (typeof window.Swiper === 'function') {
-                state.swipers.push(new window.Swiper($swiper.get(0), {
+                const swiper = new window.Swiper($swiper.get(0), {
                     slidesPerView: 'auto',
                     spaceBetween: 12,
-                    watchOverflow: true
-                }));
+                    watchOverflow: true,
+                    a11y: true,
+                    navigation: {
+                        prevEl: $swiper.find('.product-addon__nav--prev').get(0),
+                        nextEl: $swiper.find('.product-addon__nav--next').get(0)
+                    },
+                    pagination: {
+                        el: $swiper.find('.product-addon__pagination').get(0),
+                        clickable: true
+                    },
+                    on: {
+                        lock: function () { $swiper.addClass('is-locked'); },
+                        unlock: function () { $swiper.removeClass('is-locked'); }
+                    }
+                });
+                $swiper.toggleClass('is-locked', swiper.isLocked === true);
+                state.swipers.push(swiper);
             }
         });
 

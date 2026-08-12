@@ -182,6 +182,22 @@
         };
 
         if ($content.length > 0) {
+            if ($content.attr("data-directory-clickable-card") === "true") {
+                $content.attr({ role: "link", tabindex: "0", "data-directory-href": linkData.path });
+                $content.off("click.directoryCard keydown.directoryCard")
+                    .on("click.directoryCard", function (event) {
+                        if ($(event.target).closest("button, .btn_addToCar, .btn_fav, .shareBlock, .tags, a").length) return;
+                        w.location.href = linkData.path;
+                    })
+                    .on("keydown.directoryCard", function (event) {
+                        if (event.key !== "Enter" && event.key !== " ") return;
+                        if ($(event.target).closest("button, .btn_addToCar, .btn_fav, .shareBlock, .tags, a").length) return;
+                        event.preventDefault();
+                        w.location.href = linkData.path;
+                    });
+                return;
+            }
+
             if ($content[0].tagName === "A") {
                 $content.attr(attrs);
             } else {
@@ -345,7 +361,22 @@
     function createCardContent($item) {
         const temp = getTemplateHtml($item);
         if (!temp) return $();
-        return $(temp).clone();
+        const $content = $(temp).clone();
+
+        // 商品圖卡的舊模板可能以 <a> 作為根節點，並把購買按鈕包在裡面。
+        // 這是無效的互動元素巢狀，瀏覽器會優先執行連結而吃掉按鈕事件。
+        if ($content.length === 1 && $content.is("a") && $content.find(".btn_addToCar, button").length) {
+            const $card = $("<div>").attr("data-directory-clickable-card", "true");
+            Array.from($content[0].attributes || []).forEach(function (attribute) {
+                if (!["href", "target", "rel"].includes(attribute.name.toLowerCase())) {
+                    $card.attr(attribute.name, attribute.value);
+                }
+            });
+            $card.append($content.contents());
+            return $card;
+        }
+
+        return $content;
     }
 
     function appendCard($item, content, data) {

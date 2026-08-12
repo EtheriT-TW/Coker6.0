@@ -330,6 +330,15 @@ namespace EtheriT.Coker.Application.Directory
             long searchId = (dto.Ids != null && dto.Ids.Count > 0) ? dto.Ids[0] : 0;
             long websiteId = (dto.SiteId == null || dto.SiteId == 0) ? await loginUserData.GetWebsiteId() : dto.SiteId.Value;
 
+            searchId = SearchTargetIds.Normalize(searchId);
+            if (searchId == SearchTargetIds.Default)
+            {
+                bool hasProducts = await db.Prods
+                    .AsNoTracking()
+                    .AnyAsync(e => e.FK_WebsiteId == websiteId && !e.IsDeleted && !e.RemovedFromShelves);
+                searchId = hasProducts ? SearchTargetIds.Product : SearchTargetIds.Article;
+            }
+
             var output = new DirectoryReleInfoGetDto
             {
                 ReleInfos = new List<DirectoryReleInfoDto>(),
@@ -370,8 +379,12 @@ namespace EtheriT.Coker.Application.Directory
 
             switch (searchId)
             {
-                case 3:
+                case SearchTargetIds.Product:
                     includeProd = true;
+                    break;
+
+                case SearchTargetIds.Article:
+                    includeArticle = true;
                     break;
 
                 case 1:
@@ -379,14 +392,14 @@ namespace EtheriT.Coker.Application.Directory
                     includeArticle = true;
                     break;
 
-                default: // 0 或其他：預設搜尋選單 + 文章
+                default: // 第二階段實作正數 CustSearch.Id 前，先沿用舊的全站搜尋行為。
                     includeMenu = true;
                     includeArticle = true;
                     break;
             }
             bool hasAnyFilter = HasAnyEffectiveFilter(dto);
 
-            if (hasAnyFilter || (searchId == 0 && dto.DirectoryType > 0))
+            if (hasAnyFilter || (searchId == SearchTargetIds.Article && dto.DirectoryType > 0))
             {
                 includeMenu = false;
             }

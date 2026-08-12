@@ -717,6 +717,12 @@
     width: 100%;
 }
 
+/* 商品連結為整張卡片時，快速選購按鈕必須位於其命中區域上方。 */
+.type4 .btn_addToCar {
+    z-index: 3;
+    pointer-events: auto;
+}
+
 .type5 .btn_addToCar {
     padding: 0.5rem 0rem;
     position: relative;

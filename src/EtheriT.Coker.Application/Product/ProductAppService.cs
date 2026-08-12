@@ -1215,6 +1215,7 @@ namespace EtheriT.Coker.Application.Product
 
 
                 var db_sp = await db.Prod_Specs
+                    .Include(e => e.Prod_Spec_Type)
                     .Where(e => !e.IsDeleted && e.Prod_Spec_Type != null &&
                                 e.Prod_Spec_Type.FK_WebsiteId == websiteId)
                     .ToListAsync();
@@ -1223,10 +1224,14 @@ namespace EtheriT.Coker.Application.Product
                 {
                     if (db_sp.Count > 0)                // ← guard 縮小到只包「規格名稱查找」
                     {
-                        item.FK_ST1id = item.FK_S1id is > 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id)?.FK_Tid ?? 0 : 0;
-                        item.S1_Title = item.FK_S1id is > 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id)?.Title ?? "" : "";
-                        item.FK_ST2id = item.FK_S2id is > 0 ? db_sp.Find(spec => spec.Id == item.FK_S2id)?.FK_Tid ?? 0 : 0;
-                        item.S2_Title = item.FK_S2id is > 0 ? db_sp.Find(spec => spec.Id == item.FK_S2id)?.Title ?? "" : "";
+                        var spec1 = item.FK_S1id is > 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id) : null;
+                        var spec2 = item.FK_S2id is > 0 ? db_sp.Find(spec => spec.Id == item.FK_S2id) : null;
+                        item.FK_ST1id = spec1?.FK_Tid ?? 0;
+                        item.S1_Name = spec1?.Prod_Spec_Type?.Type ?? "";
+                        item.S1_Title = spec1?.Title ?? "";
+                        item.FK_ST2id = spec2?.FK_Tid ?? 0;
+                        item.S2_Name = spec2?.Prod_Spec_Type?.Type ?? "";
+                        item.S2_Title = spec2?.Title ?? "";
                     }
 
                     item.Prices = await this.GetPriceDataAll(item.Id);                       // ← 一定會執行
@@ -2040,7 +2045,9 @@ namespace EtheriT.Coker.Application.Product
                 var db_p = await db.Prods.Where(e => e.Id == id && e.FK_WebsiteId == websiteId)
                     .Where(e => !e.IsDeleted && (e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now < e.EndTime)))
                     .FirstOrDefaultAsync();
-                var db_ps = db.Prod_Stocks.Where(e => e.Id == db_p.Id).FirstOrDefault();
+                var db_ps = db.Prod_Stocks.Where(e => e.FK_Pid == db_p.Id && !e.IsDeleted)
+                    .OrderBy(e => e.Price)
+                    .FirstOrDefault();
 
                 if (db_p != null && db_ps != null)
                 {

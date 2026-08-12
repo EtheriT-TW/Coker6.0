@@ -442,10 +442,6 @@ function ready() {
 
     //$(".btn_favorites").on("click", AddFavorites);
 
-    window.onscroll = function () {
-        scrollFunction();
-    };
-
     var insertdata_string = $(location).attr('search').substring(1, $(location).attr('search').length).split('&');
     var insertdata = {};
     $.each(insertdata_string, function (index, value) {
@@ -657,15 +653,6 @@ function SiteElementInit() {
     $InputResetVCode = $("#InputResetVCode");
     $ResetImgCaptcha = $('#ResetImgCaptcha');
     ResetForms = $('#ResetForm');
-}
-function scrollFunction() {
-    if (document.body.scrollTop > 350 || document.documentElement.scrollTop > 350) {
-        $("#btn_gotop").addClass("show");
-        $("#Floating_Center").addClass("show");
-    } else {
-        $("#btn_gotop").removeClass("show");
-        $("#Floating_Center").removeClass("show");
-    }
 }
 function cookie_accept(isnew) {
     if (isnew) {

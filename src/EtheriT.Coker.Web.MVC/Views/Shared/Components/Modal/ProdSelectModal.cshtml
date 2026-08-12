@@ -65,7 +65,12 @@
                         .Columns(c =>
                         {
                             c.AddFor(e => e.IsSelected).Caption("是否勾選").Visible(false).AllowEditing(false).SortOrder(SortOrder.Desc);
-                            c.AddFor(e => e.Title).Caption("商品名稱").Width(150).AllowEditing(false);
+                            c.AddFor(e => e.Title).Caption("商品名稱").Width(300).AllowEditing(false)
+                                .CellTemplate(@<text>
+                                    <div class="prod-modal-product-name" title="<%- data.Title || '' %>">
+                                        <%- data.Title || '-' %>
+                                    </div>
+                                </text>);
                             c.AddFor(e => e.MinsizeImage).Caption("圖片").Width(84).Alignment(HorizontalAlignment.Center)
                                 .AllowSearch(false).AllowFiltering(false).AllowSorting(false)
                                 .CellTemplate(
@@ -84,7 +89,7 @@
                                 </text>);
                             c.AddFor(e => e.StockDisplay).Caption("庫存").Width(95).Alignment(HorizontalAlignment.Center)
                                 .AllowSearch(false).AllowFiltering(false).AllowSorting(false);
-                            c.AddFor(e => e.TagNames).AllowSearch(false).AllowFiltering(false).AllowSorting(false).Caption("標籤名稱")
+                            c.AddFor(e => e.TagNames).Width(340).AllowSearch(false).AllowFiltering(false).AllowSorting(false).Caption("標籤名稱")
                                 .CellTemplate(@<text>
                                     <%
                                         var tagText = data.TagNames || "";

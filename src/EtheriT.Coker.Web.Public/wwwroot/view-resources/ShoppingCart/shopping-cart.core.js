@@ -18,6 +18,7 @@
         marketingDiscountMemo: "",
         marketingCampaigns: null,
         marketingRewardSelections: {},
+        marketingRewardManualSelections: {},
         marketingRewardAmount: 0,
         productAddOnDrafts: null,
         ori_freight: undefined,

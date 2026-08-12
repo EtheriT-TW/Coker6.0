@@ -136,61 +136,84 @@ input[type="number"] {
 
 /* Swiper Pagination */
 #BuyStepSwiper > .swiper_pagination {
-    top: 0;
+    position: relative;
+    top: auto;
+    right: auto;
     bottom: auto;
-    left: 50%;
-    transform: translate(-50%, 0px);
+    left: auto;
+    width: 100%;
+    min-height: 5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: none;
 }
 
     #BuyStepSwiper > .swiper_pagination > .swiper_pagination_buystep {
+        position: relative;
+        flex: 0 0 2rem;
         width: 50vw;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        margin: auto;
+        height: 2rem;
+        top: auto;
+        left: auto;
+        transform: none;
+        margin: 0;
         display: flex;
+        align-items: center;
         justify-content: space-between;
     }
 
+        #BuyStepSwiper > .swiper_pagination > .swiper_pagination_buystep::before {
+            position: absolute;
+            z-index: 0;
+            top: 50%;
+            right: 1rem;
+            left: 1rem;
+            height: 1px;
+            transform: translateY(-50%);
+            background: var(--black-text);
+            content: "";
+            pointer-events: none;
+        }
+
         #BuyStepSwiper > .swiper_pagination > .swiper_pagination_buystep > .swiper-pagination-bullet {
+            position: relative;
+            z-index: 1;
+            flex: 0 0 2rem;
+            box-sizing: border-box;
             opacity: 1;
             width: 2rem;
             height: 2rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             font-size: 1rem;
             font-weight: bold;
             text-align: center;
-            line-height: 2rem;
+            line-height: 1;
             color: var(--black-text);
             background: white;
+            border: 1px solid #eeeeee;
             margin: 0;
         }
 
         #BuyStepSwiper > .swiper_pagination > .swiper_pagination_buystep > .swiper-pagination-bullet-active {
             color: white;
             background: var(--red-main);
+            border-color: var(--red-main);
         }
 
         #BuyStepSwiper > .swiper_pagination > .swiper_pagination_buystep > .swiper-pagination-bullet:last-child {
             pointer-events: none;
         }
 
-    #BuyStepSwiper > .swiper_pagination > .centerline {
-        width: 50vw;
-        top: calc(50% + 1rem);
-        left: 50%;
-        transform: translate(-50%, -50%);
-        pointer-events: none;
-    }
-
-        #BuyStepSwiper > .swiper_pagination > .centerline > hr {
-            color: var(--black-text);
-        }
-
     #BuyStepSwiper > .swiper_pagination > .step_name {
+        position: static;
+        flex: 0 0 auto;
         width: calc(50vw + 2rem);
-        top: calc(50% + 3.5rem);
-        left: 50%;
-        transform: translate(-50%, -50%);
+        max-width: none;
+        margin-top: 12px;
+        transform: none;
         cursor: default;
     }
 
@@ -284,6 +307,216 @@ input[type="number"] {
 
 .cart-marketing-campaign.is-qualified .cart-campaign-header p {
     color: #198754;
+}
+
+.cart-scope-products {
+    margin-top: .85rem;
+    padding: .75rem;
+    border: 1px solid #ecd8dc;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.cart-scope-products-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.cart-scope-products-body {
+    position: relative;
+    margin-top: .65rem;
+}
+
+.cart-scope-products-body[hidden] {
+    display: none !important;
+}
+
+.cart-scope-products-header > div:first-child {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.cart-scope-products-header strong {
+    color: #634f54;
+    font-size: .88rem;
+}
+
+.cart-scope-products-header small {
+    color: #8b7479;
+    font-size: .75rem;
+}
+
+.cart-scope-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    flex: 0 0 auto;
+    padding: .35rem .65rem;
+    border: 1px solid #ddb8bf;
+    border-radius: 999px;
+    color: #b72f45;
+    font-size: .78rem;
+    background: #fff;
+}
+
+.cart-scope-toggle:hover,
+.cart-scope-toggle:focus-visible {
+    color: #fff;
+    background: #d9485f;
+}
+
+.cart-scope-toggle i {
+    transition: transform .2s ease;
+}
+
+.cart-scope-toggle[aria-expanded="true"] i {
+    transform: rotate(180deg);
+}
+
+.cart-scope-product-swiper {
+    width: 100%;
+    overflow: hidden;
+}
+
+.cart-scope-product-swiper .swiper-slide {
+    display: flex;
+    width: clamp(190px, 22vw, 240px);
+    height: auto;
+}
+
+.cart-scope-product-swiper .swiper-wrapper {
+    align-items: stretch;
+}
+
+.cart-scope-product-nav {
+    display: flex;
+    justify-content: flex-end;
+    gap: .35rem;
+    flex: 0 0 auto;
+    margin-bottom: .5rem;
+}
+
+.cart-scope-product-nav button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid #ddb8bf;
+    border-radius: 50%;
+    color: #b72f45;
+    background: #fff;
+}
+
+.cart-scope-product-nav button:hover,
+.cart-scope-product-nav button:focus-visible {
+    color: #fff;
+    background: #d9485f;
+}
+
+.cart-scope-product-nav button.swiper-button-disabled {
+    opacity: .3;
+    pointer-events: none;
+}
+
+.cart-scope-product-nav button.swiper-button-lock {
+    display: none;
+}
+
+.cart-scope-product {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: .6rem;
+    height: 100%;
+    min-width: 0;
+    width: 100%;
+    padding: .55rem;
+    border: 1px solid #eadfe1;
+    border-radius: 8px;
+    color: #343a40;
+    background: #fffafb;
+    cursor: pointer;
+}
+
+.cart-scope-product:hover,
+.cart-scope-product:focus-visible {
+    border-color: #d9485f;
+    color: #b72f45;
+}
+
+.cart-scope-product img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+.cart-scope-product span,
+.cart-scope-product strong {
+    min-width: 0;
+}
+
+.cart-scope-product > span {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
+.cart-scope-product strong {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    min-height: 2.7em;
+    font-size: .82rem;
+    line-height: 1.35;
+}
+
+.cart-scope-product small {
+    display: block;
+    margin-top: .15rem;
+    color: #8b7479;
+    font-size: .72rem;
+}
+
+@media (max-width: 575px) {
+    .cart-scope-product-swiper .swiper-slide {
+        width: min(76vw, 230px);
+    }
+}
+
+.cart-scope-product-buy {
+    grid-column: 1 / -1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    width: 100%;
+    margin-top: auto;
+    min-height: 2rem;
+    padding: .35rem .65rem;
+    border: 0;
+    border-radius: 6px;
+    color: #fff;
+    background: #c2384f;
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.cart-scope-product-buy:hover,
+.cart-scope-product-buy:focus-visible {
+    background: #a7273c;
+}
+
+.cart-scope-product.is-unavailable {
+    opacity: .55;
+    pointer-events: none;
 }
 
 .cart-reward-track {
@@ -1647,7 +1880,7 @@ body > .popover.bs-popover-auto.fade {
 @media only screen and (max-width: 1072px) {
 }
 
-@media only screen and (min-width: 577px) and (max-width: 991.98px) {
+@media only screen and (min-width: 768px) and (max-width: 991.98px) {
     .cart-reward-card {
         grid-template-columns: 64px minmax(0, 1fr);
         gap: .5rem;
@@ -1754,6 +1987,24 @@ body > .popover.bs-popover-auto.fade {
         white-space: nowrap;
     }
 
+    #Step1 .purchase_item > .content > .cart-item-price::before,
+    #Step1 .purchase_item > .content > .pro_subtotal::before {
+        display: block;
+        margin-bottom: .1rem;
+        color: var(--gray-text);
+        font-size: .72rem;
+        font-weight: 400;
+        line-height: 1;
+    }
+
+    #Step1 .purchase_item > .content > .cart-item-price::before {
+        content: "單價";
+    }
+
+    #Step1 .purchase_item > .content > .pro_subtotal::before {
+        content: "小計";
+    }
+
     #Step1 .purchase_item.cart-additional-item > .content > .cart-item-price,
     #Step1 .purchase_item.cart-additional-item > .content > .cart-item-price .pro_unit {
         font-size: .9rem;
@@ -1779,6 +2030,8 @@ body > .popover.bs-popover-auto.fade {
 
     #Step1 .purchase_item > .content > .pro_subtotal {
         grid-column: 3;
+        flex-direction: column;
+        align-items: flex-end;
         width: auto !important;
         max-width: none !important;
         padding: 0 !important;
@@ -1805,6 +2058,63 @@ body > .popover.bs-popover-auto.fade {
 
     #Step1 .purchase_item > .content > .js-stock-error {
         display: block;
+    }
+}
+
+/* 992px - 1199px 仍是桌機欄位，但內容寬度不足以容納 Bootstrap
+   預設的數量控制尺寸。改用明確格線，避免單價、數量與小計互相疊住。 */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    #Step1 .purchase_item > .content {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) 5.75rem minmax(4.75rem, auto);
+        column-gap: .75rem;
+        align-items: center;
+        overflow: visible !important;
+    }
+
+    #Step1 .purchase_item > .content > .cart-item-price,
+    #Step1 .purchase_item > .content > .counter_input,
+    #Step1 .purchase_item > .content > .pro_subtotal {
+        width: auto !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        white-space: nowrap;
+    }
+
+    #Step1 .purchase_item > .content > .cart-item-price {
+        grid-column: 1;
+        min-width: 0;
+        font-size: .875rem;
+    }
+
+    #Step1 .purchase_item.cart-additional-item > .content > .cart-item-price .cart-price-main {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    #Step1 .purchase_item > .content > .counter_input {
+        grid-column: 2;
+        justify-content: center !important;
+    }
+
+    #Step1 .purchase_item > .content > .counter_input > button {
+        flex: 0 0 1.75rem;
+        width: 1.75rem !important;
+        height: 2rem !important;
+    }
+
+    #Step1 .purchase_item > .content > .counter_input > input {
+        flex: 0 0 2.25rem;
+        width: 2.25rem !important;
+        min-width: 0;
+        height: 2rem !important;
+    }
+
+    #Step1 .purchase_item > .content > .pro_subtotal {
+        grid-column: 3;
+        justify-content: flex-end !important;
+        font-size: 1rem !important;
     }
 }
 
@@ -1850,8 +2160,8 @@ body > .popover.bs-popover-auto.fade {
     }
 }
 
-@media only screen and (max-width: 576px) {
-    #BuyStepSwiper > .swiper_pagination > .swiper_pagination_buystep, #BuyStepSwiper > .swiper_pagination > .centerline {
+@media only screen and (max-width: 767.98px) {
+    #BuyStepSwiper > .swiper_pagination > .swiper_pagination_buystep {
         width: 90vw;
     }
 
@@ -1893,8 +2203,27 @@ body > .popover.bs-popover-auto.fade {
     }
 
     #Step1 .purchase_item .cart-item-price {
+        display: flex;
+        align-items: baseline;
+        gap: .45rem;
         margin-top: 0;
         margin-bottom: 0;
+    }
+
+    #Step1 .purchase_item .cart-item-price::before,
+    #Step1 .purchase_item > .content > .pro_subtotal::before {
+        flex: 0 0 auto;
+        color: var(--gray-text);
+        font-size: .8rem;
+        font-weight: 400;
+    }
+
+    #Step1 .purchase_item .cart-item-price::before {
+        content: "單價：";
+    }
+
+    #Step1 .purchase_item > .content > .pro_subtotal::before {
+        content: "小計：";
     }
 
     #Step1 .purchase_item .counter_input button,
@@ -2048,6 +2377,15 @@ body > .popover.bs-popover-auto.fade {
         justify-content: center;
         row-gap: .3rem;
         overflow: hidden !important;
+    }
+
+    #Step1 .purchase_item > .content > a.pro_link,
+    #Step1 .purchase_item .pro_detail,
+    #Step1 .purchase_item .pro_specification {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
     }
 
     #Step1 .purchase_item .pro_name {

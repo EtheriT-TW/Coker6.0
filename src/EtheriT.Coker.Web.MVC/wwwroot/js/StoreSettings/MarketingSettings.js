@@ -211,11 +211,15 @@
                 })
                 .off("input.marketingReward", "[data-reward-field]")
                 .on("input.marketingReward", "[data-reward-field]", function () {
+                    const field = $(this).attr("data-reward-field");
                     self.updateRewardField(
                         $(this).attr("data-reward-key"),
-                        $(this).attr("data-reward-field"),
+                        field,
                         $(this).val()
                     );
+                    if (field === "maxQuantityPerOrder") {
+                        self.validateRewardItemLimitInput(this, true);
+                    }
                 })
                 .off("click.marketingRewardDuplicate", "[data-duplicate-reward]")
                 .on("click.marketingRewardDuplicate", "[data-duplicate-reward]", function () {
@@ -226,9 +230,20 @@
                     self.removeRewardProduct($(this).attr("data-remove-reward"));
                 });
 
+            $("#RewardBatchPriceMode")
+                .off("change.marketingBatchPrice")
+                .on("change.marketingBatchPrice", function () { self.updateBatchPriceUI(); });
+
+            $("#ApplyRewardBatchPrice")
+                .off("click.marketingBatchPrice")
+                .on("click.marketingBatchPrice", function () { self.applyBatchOfferPrices(); });
+
             $("#InputSelectionQuantity, #InputAddOnMinAmount, #InputAddOnMinQuantity")
                 .off("input.marketingPreview")
-                .on("input.marketingPreview", function () { self.renderOfferPreview(); });
+                .on("input.marketingPreview", function () {
+                    if (this.id === "InputSelectionQuantity") self.syncRewardItemLimitInputs();
+                    self.renderOfferPreview();
+                });
         },
 
         waitForProductModal: function (attempt) {
@@ -524,6 +539,16 @@
             });
         },
 
+        getProductAdminUrl: function (productId) {
+            return `/ProductManagement/ProductList#${encodeURIComponent(productId)}`;
+        },
+
+        getProductFrontUrl: function (productId) {
+            const rootUrl = typeof defaultUrl === "string" ? defaultUrl.replace(/\/+$/, "") : "";
+            const websiteOrgName = typeof OrgName === "string" ? OrgName.replace(/^\/+|\/+$/g, "") : "";
+            return `${rootUrl}/${encodeURIComponent(websiteOrgName)}/search/product/${encodeURIComponent(productId)}`;
+        },
+
         renderScopeRows: function () {
             const self = this;
             const html = this.scopeItems.map(function (item) {
@@ -537,9 +562,19 @@
                                 ${self.renderProductMeta(item)}
                             </div>
                         </div>
-                        <button type="button" class="marketing-remove-button" data-remove-scope="${item.targetId}" title="移除商品" aria-label="移除 ${escapeHtml(item.targetName)}">
-                            <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-                        </button>
+                        <div class="marketing-product-actions">
+                            <a class="marketing-product-link is-admin" href="${escapeHtml(self.getProductAdminUrl(item.targetId))}"
+                                target="_blank" rel="noopener" title="前往後台商品管理" aria-label="前往後台管理 ${escapeHtml(item.targetName)}">
+                                <span class="material-symbols-outlined" aria-hidden="true">edit_square</span>
+                            </a>
+                            <a class="marketing-product-link is-front" href="${escapeHtml(self.getProductFrontUrl(item.targetId))}"
+                                target="_blank" rel="noopener" title="查看前台商品" aria-label="查看前台商品 ${escapeHtml(item.targetName)}">
+                                <span class="material-symbols-outlined" aria-hidden="true">storefront</span>
+                            </a>
+                            <button type="button" class="marketing-remove-button" data-remove-scope="${item.targetId}" title="移除商品" aria-label="移除 ${escapeHtml(item.targetName)}">
+                                <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                            </button>
+                        </div>
                     </div>
                 </div>`;
             }).join("");
@@ -550,6 +585,7 @@
 
         renderRewardRows: function () {
             const self = this;
+            const selectionLimit = Math.max(parseNumber($("#InputSelectionQuantity").val()), 1);
             const html = this.rewardItems.map(function (item) {
                 const usedStockIds = new Set(self.rewardItems
                     .filter(x => x.productId === item.productId)
@@ -574,6 +610,10 @@
                             </div>
                         </div>
                         <div class="marketing-product-actions">
+                            <a class="marketing-product-link is-admin" href="${escapeHtml(self.getProductAdminUrl(item.productId))}"
+                                target="_blank" rel="noopener" title="前往後台商品管理" aria-label="前往後台管理 ${escapeHtml(item.productName)}">
+                                <span class="material-symbols-outlined" aria-hidden="true">edit_square</span>
+                            </a>
                             <button type="button" class="marketing-copy-button" data-duplicate-reward="${item.clientKey}"
                                 title="${canDuplicate ? "複製並選擇其他規格" : "所有規格都已加入活動"}"
                                 aria-label="複製 ${escapeHtml(item.productName)} 的其他規格"${canDuplicate ? "" : " disabled"}>
@@ -596,9 +636,9 @@
                                     data-reward-key="${item.clientKey}" data-reward-field="offerPrice">
                             </div>
                         </label>
-                        <label>單品上限
+                        <label>每次資格可買
                             <div class="input-group input-group-sm">
-                                <input class="form-control" type="number" min="1" value="${item.maxQuantityPerOrder}"
+                                <input class="form-control" type="number" min="1" max="${selectionLimit}" value="${item.maxQuantityPerOrder}"
                                     data-reward-key="${item.clientKey}" data-reward-field="maxQuantityPerOrder">
                                 <span class="input-group-text">件</span>
                             </div>
@@ -609,8 +649,151 @@
 
             $("#RewardProductRows").html(html);
             $("#RewardProductEmpty").toggleClass("d-none", this.rewardItems.length > 0);
+            this.refreshBatchPriceBaseOptions();
             this.refreshNumberFormats("#RewardProductRows");
             this.renderOfferPreview();
+        },
+
+        syncRewardItemLimitInputs: function () {
+            const selectionLimit = Math.max(parseNumber($("#InputSelectionQuantity").val()), 1);
+            const self = this;
+            let hasReported = false;
+            $("#RewardProductRows [data-reward-field='maxQuantityPerOrder']")
+                .attr("max", selectionLimit)
+                .each(function () {
+                    const isValid = self.validateRewardItemLimitInput(this, !hasReported);
+                    if (!isValid) hasReported = true;
+                });
+        },
+
+        validateRewardItemLimitInput: function (input, shouldReport) {
+            const selectionLimit = Math.max(parseNumber($("#InputSelectionQuantity").val()), 1);
+            const value = parseNumber($(input).val());
+            const isInvalid = value > selectionLimit;
+            const message = isInvalid
+                ? `每次資格可買不可超過每次資格可選件數（目前為 ${selectionLimit} 件）。`
+                : "";
+
+            input.setCustomValidity(message);
+            $(input).toggleClass("is-invalid", isInvalid);
+            if (isInvalid && shouldReport && typeof input.reportValidity === "function") {
+                input.reportValidity();
+            }
+            return !isInvalid;
+        },
+
+        refreshBatchPriceBaseOptions: function () {
+            const $select = $("#RewardBatchPriceMode");
+            if (!$select.length) return;
+
+            const current = String($select.val() || "fixed");
+            const roleNames = new Map();
+            let originalRoleName = "";
+            this.rewardItems.forEach(function (item) {
+                (item.prices || []).forEach(function (price) {
+                    const roleId = Number(price.roleId || 0);
+                    if (Number(price.bonus || 0) !== 0) return;
+                    if (roleId <= 1) {
+                        if (!originalRoleName) originalRoleName = price.roleName || "非會員";
+                        return;
+                    }
+                    roleNames.set(roleId, price.roleName || `角色 ${roleId} 價`);
+                });
+            });
+
+            const options = [
+                '<option value="fixed">全部固定金額</option>',
+                `<option value="original">${escapeHtml(originalRoleName || "原價")}（原價）打折</option>`
+            ];
+            Array.from(roleNames.entries())
+                .sort(function (a, b) { return String(a[1]).localeCompare(String(b[1]), "zh-Hant"); })
+                .forEach(function (entry) {
+                    options.push(`<option value="role:${entry[0]}">${escapeHtml(entry[1])}打折</option>`);
+                });
+            options.push('<option value="suggested">建議售價打折</option>');
+
+            $select.html(options.join(""));
+            $select.val($select.find(`option[value="${current}"]`).length ? current : "fixed");
+            $("#RewardBatchPricePanel").toggleClass("d-none", this.rewardItems.length === 0);
+            this.updateBatchPriceUI();
+        },
+
+        updateBatchPriceUI: function () {
+            const isFixed = $("#RewardBatchPriceMode").val() === "fixed";
+            const $value = $("#RewardBatchPriceValue");
+            $("#RewardBatchPriceValueLabel").text(isFixed ? "活動價" : "折扣折數");
+            $("#RewardBatchPriceUnit").text(isFixed ? "NT$" : "折");
+            $value.attr({
+                min: isFixed ? "0" : "1",
+                step: isFixed ? "1" : "1",
+                placeholder: isFixed ? "請輸入金額" : "例如 9 或 90（九折）"
+            });
+            if (isFixed) $value.removeAttr("max");
+            else $value.attr("max", "99");
+            $("#RewardBatchPriceFeedback").text("");
+        },
+
+        getBatchPriceBase: function (item, mode) {
+            if (mode === "original") {
+                const originalPrice = (item.prices || []).find(function (candidate) {
+                    const roleId = Number(candidate.roleId || 0);
+                    return roleId <= 1 && Number(candidate.bonus || 0) === 0;
+                });
+                return originalPrice ? Number(originalPrice.price || 0) : Number(item.originalPrice || 0);
+            }
+            if (mode === "suggested") return Number(item.suggestPrice || 0);
+            if (mode.indexOf("role:") === 0) {
+                const roleId = Number(mode.split(":")[1] || 0);
+                const price = (item.prices || []).find(function (candidate) {
+                    return Number(candidate.roleId || 0) === roleId && Number(candidate.bonus || 0) === 0;
+                });
+                return price ? Number(price.price || 0) : 0;
+            }
+            return 0;
+        },
+
+        applyBatchOfferPrices: function () {
+            if (!this.rewardItems.length) {
+                Coker.sweet.error("提醒", "請先加入要設定的優惠商品。", null, true);
+                return;
+            }
+
+            const mode = String($("#RewardBatchPriceMode").val() || "fixed");
+            const rawValue = String($("#RewardBatchPriceValue").val() || "").trim();
+            const value = Number(rawValue);
+            const discountPercent = mode === "fixed" ? null : this.normalizeDiscountPercentForSave(value);
+            if (!rawValue || !Number.isFinite(value) || value < 0 ||
+                (mode !== "fixed" && (!Number.isInteger(value) || discountPercent === null))) {
+                Coker.sweet.error("批次價格格式不正確", mode === "fixed"
+                    ? "請輸入大於或等於 0 的金額。"
+                    : "請輸入 1 到 99 的整數，例如 9 或 90 表示九折，85 表示八五折。", null, true);
+                return;
+            }
+
+            let applied = 0;
+            let skipped = 0;
+            this.rewardItems.forEach(item => {
+                let offerPrice = value;
+                if (mode !== "fixed") {
+                    const basePrice = this.getBatchPriceBase(item, mode);
+                    if (!(basePrice > 0)) {
+                        skipped += 1;
+                        return;
+                    }
+                    offerPrice = Math.round(basePrice * discountPercent / 100);
+                }
+                item.offerPrice = Math.max(0, offerPrice);
+                item.offerPriceCustomized = true;
+                applied += 1;
+            });
+
+            if (!applied) {
+                Coker.sweet.error("無法套用批次價格", "所有商品都沒有選定的價格基準。", null, true);
+                return;
+            }
+
+            this.renderRewardRows();
+            $("#RewardBatchPriceFeedback").text(`已套用 ${applied} 項${skipped ? `，略過 ${skipped} 項無此價格基準的商品` : ""}。`);
         },
 
         renderPriceReferences: function (item) {
@@ -1275,13 +1458,16 @@
                     return this.showValidationError("請至少選擇一項指定商品。");
                 }
                 if (!payload.RewardItems.length) return this.showValidationError("請至少設定一項加價購或贈品商品。");
+                if (payload.SelectionQuantityPerQualification <= 0) return this.showValidationError("每次資格可選件數必須大於 0。");
                 if (payload.RewardItems.some(x => x.ProductStockId <= 0 || x.OfferPrice < 0 || x.MaxQuantityPerOrder <= 0)) {
-                    return this.showValidationError("請確認每項優惠商品的規格、活動價及單筆上限。");
+                    return this.showValidationError("請確認每項優惠商品的規格、活動價及每次資格可買件數。");
+                }
+                if (payload.RewardItems.some(x => x.MaxQuantityPerOrder > payload.SelectionQuantityPerQualification)) {
+                    return this.showValidationError("優惠商品的「每次資格可買」不可大於活動的「每次資格可選件數」。");
                 }
                 if (new Set(payload.RewardItems.map(x => x.ProductStockId)).size !== payload.RewardItems.length) {
                     return this.showValidationError("相同商品規格不可重複設定。");
                 }
-                if (payload.SelectionQuantityPerQualification <= 0) return this.showValidationError("每次資格可選件數必須大於 0。");
             }
 
             return true;

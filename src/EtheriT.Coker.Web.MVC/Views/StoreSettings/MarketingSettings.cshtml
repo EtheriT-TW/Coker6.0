@@ -321,6 +321,23 @@
                                     </button>
                                 </div>
                                 <textarea id="RewardProductPicker" class="form-control marketing-product-picker d-none" rows="2" readonly data-marketing-picker="reward"></textarea>
+                                <div id="RewardBatchPricePanel" class="marketing-batch-price-panel d-none">
+                                    <div class="marketing-batch-price-copy">
+                                        <strong>批次設定活動價</strong>
+                                        <small>可全部設為固定金額，或依下方「價格參考」的非會員、會員層級或建議售價打折。</small>
+                                    </div>
+                                    <div class="marketing-batch-price-controls">
+                                        <label for="RewardBatchPriceMode">套用方式</label>
+                                        <select id="RewardBatchPriceMode" class="form-select form-select-sm"></select>
+                                        <label id="RewardBatchPriceValueLabel" for="RewardBatchPriceValue">活動價</label>
+                                        <div class="input-group input-group-sm marketing-batch-price-value">
+                                            <input id="RewardBatchPriceValue" class="form-control" type="number" min="0" step="1" placeholder="請輸入金額">
+                                            <span id="RewardBatchPriceUnit" class="input-group-text">NT$</span>
+                                        </div>
+                                        <button id="ApplyRewardBatchPrice" type="button" class="btn btn-sm btn-outline-danger">套用到全部</button>
+                                    </div>
+                                    <div id="RewardBatchPriceFeedback" class="marketing-batch-price-feedback" aria-live="polite"></div>
+                                </div>
                                 <div id="RewardProductRows" class="marketing-item-list"></div>
                                 <div id="RewardProductEmpty" class="marketing-empty-state">尚未設定優惠商品</div>
 

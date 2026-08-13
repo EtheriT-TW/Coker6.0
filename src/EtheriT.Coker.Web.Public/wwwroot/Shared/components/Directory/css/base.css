@@ -316,6 +316,15 @@
         top: 0;
     }
 
+.accordion-button:has(img){
+    padding:0;
+}
+
+.accordion-button::after{
+    margin-left:unset;
+    position:absolute;
+    right:5%;
+}
 /* ===== Type Change Frame ===== */
 .type_change_frame > .catalog .box-shadow {
     box-shadow: 2px 3px 5px rgba(73, 73, 73, 0.2);

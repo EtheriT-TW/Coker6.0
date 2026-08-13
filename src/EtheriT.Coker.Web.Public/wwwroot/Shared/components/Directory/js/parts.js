@@ -71,7 +71,7 @@
     };
 
     // =========================
-    // Buy Button（完全不動）
+    // Buy Button（開啟快速加入購物車）
     // =========================
     DirectoryParts.applyBuyButton = function ($item, content, data, path) {
         const $content = $(content);
@@ -99,11 +99,12 @@
         if ($content.find(".btn_addToCar").length > 0) {
             $content.find(".btn_addToCar").removeClass("d-none");
         } else {
-            const html = '<div class="btn_addToCar"><button type="button">瀏覽商品</button></div>';
+            const html = '<div class="btn_addToCar"><button type="button">加入購物車</button></div>';
             $content.find("div").first().find("a").first().after(html);
         }
 
         const $buyButton = $content.find(".btn_addToCar").first();
+        $buyButton.find("button").text("加入購物車");
         const $wrappingLink = $buyButton.closest("a");
         if ($wrappingLink.length && !$wrappingLink.is($content)) {
             $buyButton.insertAfter($wrappingLink);

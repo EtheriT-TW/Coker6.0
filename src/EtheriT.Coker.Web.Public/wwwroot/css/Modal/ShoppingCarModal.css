@@ -233,6 +233,22 @@ input:checked + .btn_radio {
     background-color: var(--red-main);
 }
 
+.quick-cart-unavailable {
+    grid-column: 2 / 5;
+    border: 0 !important;
+    padding-left: 0 !important;
+    color: var(--red-main);
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-align: left;
+}
+
+.buy_line > .counter > button:disabled,
+.buy_line > .btn_addToCar:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
     .buy_line > .btn_addToCar > div::before {
         font-family: 'Font Awesome 6 Free';
         font-weight: 400;

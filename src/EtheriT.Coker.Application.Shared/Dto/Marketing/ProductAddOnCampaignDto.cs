@@ -8,6 +8,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Marketing
         public int RequiredQuantity { get; set; } = 1;
         public int SelectionQuantityPerQualification { get; set; } = 1;
         public bool Repeatable { get; set; }
+        public List<long> ScopeProductIds { get; set; } = new();
         public List<ProductAddOnRewardItemDto> RewardItems { get; set; } = new();
     }
 

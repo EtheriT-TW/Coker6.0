@@ -12,7 +12,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         Running = 1,
         Succeeded = 2,
         Failed = 3,
-        Expired = 4
+        Expired = 4,
+        AwaitingConfirmation = 5
     }
 
     public enum NotificationTypeEnum

@@ -16,8 +16,41 @@ var specMediaModal;
 let importProdPopup = null;
 let productImportTemplateGrid = null;
 let selectedProductImportTemplateId = null;
+let pendingProductImportTaskId = null;
+let pendingProductImportAnalysis = null;
+let productImportAnalysisErrorGrid = null;
+let productImportAnalysisErrorRows = [];
+let pendingProductImportIgnoredRows = [];
+let productImportConfirmInProgress = false;
 var elementReady = false;
 var pendingHashEdit = false;
+var lastProductImportInfoLoaded = false;
+
+async function loadLastProductImportInfo(forceReload) {
+    if (lastProductImportInfoLoaded && !forceReload) return;
+    lastProductImportInfoLoaded = true;
+    try {
+        const response = await fetch("/api/Product/GetLastProductImport", {
+            method: "GET",
+            headers: _c.Data.Header,
+            credentials: "same-origin",
+            cache: "no-store"
+        });
+        if (!response.ok) throw new Error("無法取得最後匯入時間");
+        const result = await response.json();
+        const $info = $("#LastProductImportInfo").removeClass("d-none");
+        if (!result.hasImport || !result.completionTime) {
+            $info.text("商品資料尚無成功匯入紀錄。");
+            return;
+        }
+        const completionTime = new Date(result.completionTime);
+        $info.text("最後成功匯入：" + completionTime.toLocaleString("zh-TW", { hour12: false }));
+        if (result.message) $info.attr("title", result.message);
+    } catch (error) {
+        lastProductImportInfoLoaded = false;
+        console.error(error);
+    }
+}
 
 function getCurrentProductImportForm() {
     if (importProdPopup && typeof importProdPopup.content === "function") {
@@ -48,22 +81,29 @@ function ImportProd() {
 
     var formData = new FormData(form);
     formData.append("templateId", selectedProductImportTemplateId);
-    formData.append("overwriteExisting", $("#overwriteExistingProductPages").is(":checked"));
     const $submitButton = $("#btnStartProductImport").prop("disabled", true);
+    importProdPopup.hide();
+    Swal.fire({
+        title: "正在掃描商品匯入檔",
+        html: "<div style=\"margin-bottom:12px;\">正在上傳檔案並建立掃描任務…</div>",
+        allowOutsideClick: false,
+        allowEscapeKey: true,
+        showCloseButton: true,
+        showConfirmButton: false,
+        didOpen: function () { Swal.showLoading(); }
+    });
     co.Product.AddUp.Import(formData).done(async function (response) {
-        importProdPopup.hide();
         try {
-            const status = await waitForProductTask(response.taskId, "商品匯入中");
+            const status = await waitForProductTask(response.taskId, "正在掃描商品匯入檔");
             Swal.close();
-            const importErrors = getProductImportErrors(status.resultJson);
-            if (importErrors.length > 0) {
-                showProductImportErrors(importErrors);
-            } else {
-                co.sweet.success(status.message || "商品匯入成功。");
-            }
-            if (product_list != null) product_list.component.refresh();
+            pendingProductImportTaskId = response.taskId;
+            pendingProductImportAnalysis = parseProductImportAnalysis(status.resultJson);
+            renderProductImportAnalysis(pendingProductImportAnalysis);
+            showProductImportStep(3);
+            importProdPopup.show();
         } catch (error) {
             Swal.close();
+            importProdPopup.show();
             if (error && Array.isArray(error.importErrors) && error.importErrors.length > 0) {
                 showProductImportErrors(error.importErrors, true);
             } else {
@@ -71,6 +111,8 @@ function ImportProd() {
             }
         }
     }).fail(function (xhr) {
+        Swal.close();
+        importProdPopup.show();
         var message = xhr.responseJSON && xhr.responseJSON.message
             ? xhr.responseJSON.message
             : "檔案格式錯誤，無法建立匯入任務。";
@@ -89,9 +131,14 @@ function updateProductImportStartButton() {
 
 function showProductImportStep(step) {
     const selectingTemplate = step === 1;
+    const selectingFile = step === 2;
+    const confirming = step === 3;
     $("#productImportStepTemplate").toggleClass("d-none", !selectingTemplate);
-    $("#productImportStepFile").toggleClass("d-none", selectingTemplate);
-    if (importProdPopup) importProdPopup.option("height", selectingTemplate ? 620 : 520);
+    $("#productImportStepFile").toggleClass("d-none", !selectingFile);
+    $("#productImportStepConfirm")
+        .toggleClass("d-none", !confirming)
+        .toggleClass("d-flex", confirming);
+    if (importProdPopup) importProdPopup.option("height", selectingTemplate ? 620 : (confirming ? 720 : 420));
     if (selectingTemplate && productImportTemplateGrid) {
         window.setTimeout(function () {
             productImportTemplateGrid.updateDimensions();
@@ -155,6 +202,11 @@ function initializeProductImportTemplateGrid() {
     if ($grid.length === 0) return;
 
     selectedProductImportTemplateId = null;
+    pendingProductImportTaskId = null;
+    pendingProductImportAnalysis = null;
+    productImportAnalysisErrorRows = [];
+    pendingProductImportIgnoredRows = [];
+    productImportConfirmInProgress = false;
     showProductImportStep(1);
     $("#btnNextProductImportStep").prop("disabled", true);
     $("#btnStartProductImport").prop("disabled", true);
@@ -289,42 +341,652 @@ function initializeProductImportTemplateGrid() {
 }
 
 function showImportProdPopup() {
+    pendingProductImportTaskId = null;
+    pendingProductImportAnalysis = null;
+    pendingProductImportIgnoredRows = [];
+    productImportAnalysisErrorGrid = null;
+    productImportAnalysisErrorRows = [];
+    productImportConfirmInProgress = false;
     importProdPopup = $("#importProdPopup").dxPopup("instance");
     importProdPopup.option("contentTemplate", $("#importProdPopup-template"));
-    importProdPopup.option("title", "商品匯入");
+    importProdPopup.option("title", "商品資料匯入");
     importProdPopup.option("onShown", function () {
-        initializeProductImportTemplateGrid();
+        if (!pendingProductImportTaskId) initializeProductImportTemplateGrid();
     });
     importProdPopup.show();
 }
 
+function parseProductImportAnalysis(resultJson) {
+    if (!resultJson) return { canImport: false, errors: [], differences: [], summary: null };
+    const result = typeof resultJson === "string" ? JSON.parse(resultJson) : resultJson;
+    return {
+        canImport: result.CanImport !== undefined ? result.CanImport : result.canImport,
+        errors: result.Errors || result.errors || [],
+        differences: result.Differences || result.differences || [],
+        summary: result.Summary || result.summary || null
+    };
+}
+
+function getAnalysisValue(item, pascalName, camelName) {
+    return item && item[pascalName] !== undefined ? item[pascalName] : (item ? item[camelName] : "");
+}
+
+function getVisibleCharacter(character) {
+    const visibleCharacters = {
+        " ": { text: "␠", name: "半形空白", code: "U+0020" },
+        "\u00a0": { text: "⍽", name: "不換行空白", code: "U+00A0" },
+        "\u3000": { text: "□", name: "全形空白", code: "U+3000" },
+        "\t": { text: "⇥", name: "Tab", code: "U+0009" },
+        "\r": { text: "↵", name: "CR 換行", code: "U+000D" },
+        "\n": { text: "↵", name: "LF 換行", code: "U+000A" },
+        "\u200b": { text: "[ZWSP]", name: "零寬空白", code: "U+200B" },
+        "\u200c": { text: "[ZWNJ]", name: "零寬非連字元", code: "U+200C" },
+        "\u200d": { text: "[ZWJ]", name: "零寬連字元", code: "U+200D" },
+        "\ufeff": { text: "[BOM]", name: "BOM／零寬不換行空白", code: "U+FEFF" }
+    };
+    if (visibleCharacters[character]) return visibleCharacters[character];
+    const codePoint = character.codePointAt(0).toString(16).toUpperCase().padStart(4, "0");
+    return { text: character, name: "字元", code: "U+" + codePoint };
+}
+
+function getCharacterDiff(leftValue, rightValue) {
+    const left = Array.from(leftValue || "");
+    const right = Array.from(rightValue || "");
+    let prefixLength = 0;
+    while (prefixLength < left.length
+        && prefixLength < right.length
+        && left[prefixLength] === right[prefixLength]) {
+        prefixLength++;
+    }
+    let suffixLength = 0;
+    while (suffixLength < left.length - prefixLength
+        && suffixLength < right.length - prefixLength
+        && left[left.length - 1 - suffixLength] === right[right.length - 1 - suffixLength]) {
+        suffixLength++;
+    }
+    const leftChanged = left.map(function (_, index) {
+        return index >= prefixLength && index < left.length - suffixLength;
+    });
+    const rightChanged = right.map(function (_, index) {
+        return index >= prefixLength && index < right.length - suffixLength;
+    });
+    return { left: left, right: right, leftChanged: leftChanged, rightChanged: rightChanged };
+}
+
+function getTextSimilarity(leftValue, rightValue) {
+    const left = Array.from((leftValue || "").toLocaleLowerCase().replace(/\s+/g, " ").trim());
+    const right = Array.from((rightValue || "").toLocaleLowerCase().replace(/\s+/g, " ").trim());
+    if (left.length === 0 || right.length === 0) return left.length === right.length ? 1 : 0;
+    let previous = new Array(right.length + 1).fill(0);
+    for (let leftIndex = 1; leftIndex <= left.length; leftIndex++) {
+        const current = new Array(right.length + 1).fill(0);
+        for (let rightIndex = 1; rightIndex <= right.length; rightIndex++) {
+            current[rightIndex] = left[leftIndex - 1] === right[rightIndex - 1]
+                ? previous[rightIndex - 1] + 1
+                : Math.max(previous[rightIndex], current[rightIndex - 1]);
+        }
+        previous = current;
+    }
+    return (2 * previous[right.length]) / (left.length + right.length);
+}
+
+function appendMarkedCharacters($container, characters, changedCharacters) {
+    let unchangedText = "";
+    let changedText = "";
+    let changedDetails = [];
+    function flushUnchangedText() {
+        if (!unchangedText) return;
+        $container.append(document.createTextNode(unchangedText));
+        unchangedText = "";
+    }
+    function flushChangedText() {
+        if (!changedText) return;
+        $("<mark>")
+            .addClass("px-1 rounded bg-warning text-dark")
+            .attr("title", "差異區段；包含：" + changedDetails.filter(function (item, index, items) {
+                return items.indexOf(item) === index;
+            }).join("、"))
+            .text(changedText)
+            .appendTo($container);
+        changedText = "";
+        changedDetails = [];
+    }
+    characters.forEach(function (character, index) {
+        if (!changedCharacters[index]) {
+            flushChangedText();
+            unchangedText += character;
+            return;
+        }
+        flushUnchangedText();
+        const visible = getVisibleCharacter(character);
+        changedText += visible.text;
+        changedDetails.push(visible.name + "（" + visible.code + "）");
+    });
+    flushChangedText();
+    flushUnchangedText();
+    if (characters.length === 0) {
+        $("<mark>").addClass("px-1 rounded bg-warning text-dark").text("[空字串]").appendTo($container);
+    }
+}
+
+function appendCharacterComparison($container, leftLabel, leftValue, rightLabel, rightValue) {
+    const shouldMarkDifference = getTextSimilarity(leftValue, rightValue) >= 0.55;
+    const difference = shouldMarkDifference ? getCharacterDiff(leftValue, rightValue) : null;
+    const $left = $("<div>").addClass("mb-1").appendTo($container);
+    $("<span>").addClass("fw-bold me-1").text(leftLabel + "：").appendTo($left);
+    if (shouldMarkDifference) {
+        appendMarkedCharacters($left, difference.left, difference.leftChanged);
+    } else {
+        $left.append(document.createTextNode(leftValue || "[空字串]"));
+    }
+    const $right = $("<div>").appendTo($container);
+    $("<span>").addClass("fw-bold me-1").text(rightLabel + "：").appendTo($right);
+    if (shouldMarkDifference) {
+        appendMarkedCharacters($right, difference.right, difference.rightChanged);
+    } else {
+        $right.append(document.createTextNode(rightValue || "[空字串]"));
+        $("<div>")
+            .addClass("text-muted mt-1")
+            .text("兩側內容差異較大，直接顯示完整內容，不標示個別字元。")
+            .appendTo($container);
+    }
+}
+
+function appendExcelConflictComparisons($container, comparisonValues) {
+    const groupedValues = [];
+    (comparisonValues || []).forEach(function (item) {
+        const value = getAnalysisValue(item, "Value", "value") || "";
+        const label = getAnalysisValue(item, "Label", "label") || "內容";
+        const rowNumber = Number(getAnalysisValue(item, "RowNumber", "rowNumber"));
+        let group = groupedValues.find(function (entry) {
+            return entry.value === value && entry.label === label;
+        });
+        if (!group) {
+            group = { value: value, label: label, rowNumbers: [] };
+            groupedValues.push(group);
+        }
+        if (rowNumber > 0 && group.rowNumbers.indexOf(rowNumber) < 0) group.rowNumbers.push(rowNumber);
+    });
+    if (groupedValues.length < 2) return;
+
+    const reference = groupedValues[0];
+    groupedValues.slice(1).forEach(function (other, index) {
+        const $comparison = $("<div>")
+            .addClass("mt-2 pt-2 border-top small")
+            .appendTo($container);
+        appendCharacterComparison(
+            $comparison,
+            "第 " + reference.rowNumbers.sort(function (a, b) { return a - b; }).join("、") + " 列 " + reference.label,
+            reference.value,
+            "第 " + other.rowNumbers.sort(function (a, b) { return a - b; }).join("、") + " 列 " + other.label,
+            other.value);
+    });
+}
+
+function renderProductImportAnalysis(analysis) {
+    const $summary = $("#productImportAnalysisSummary").empty();
+    const $content = $("#productImportAnalysisContent").empty();
+    appendProductImportSummary($summary, analysis.summary);
+    if (pendingProductImportIgnoredRows.length > 0) {
+        $("<div>").addClass("alert alert-secondary py-2")
+            .text("目前已選擇忽略 " + pendingProductImportIgnoredRows.length + " 個 Excel 資料列；這些列不會正式匯入。")
+            .appendTo($summary);
+    }
+
+    const errors = analysis.errors || [];
+    const differences = analysis.differences || [];
+    if (errors.length > 0) {
+        $("<div>").addClass("alert alert-danger py-2")
+            .text("Excel 內有 " + errors.length + " 筆資料衝突。請修正後重新掃描；若確認不匯入衝突所涉及的整列資料，也可以選取『忽略』後繼續。")
+            .appendTo($content);
+        const gridData = errors.map(function (item, errorIndex) {
+            const rowNumbers = getAnalysisValue(item, "RowNumbers", "rowNumbers") || [];
+            const sortedRows = rowNumbers.slice().sort(function (a, b) { return a - b; });
+            return {
+                id: "error:" + errorIndex,
+                sheet: getAnalysisValue(item, "Sheet", "sheet") || "-",
+                rowNumbers: sortedRows,
+                rowsText: sortedRows.length === 0
+                    ? "-"
+                    : sortedRows.join("、") + (sortedRows.length > 1 ? "（共 " + sortedRows.length + " 列）" : ""),
+                name: getAnalysisValue(item, "Name", "name") || "資料衝突",
+                description: getAnalysisValue(item, "Description", "description") || "-",
+                comparisonValues: getAnalysisValue(item, "ComparisonValues", "comparisonValues") || [],
+                canIgnore: !!getAnalysisValue(item, "CanIgnore", "canIgnore") && sortedRows.length > 0,
+                ignore: false
+            };
+        });
+        // 額外保存完整資料集合，避免 DevExpress 分頁後只取得目前載入的頁面。
+        productImportAnalysisErrorRows = gridData;
+        const $grid = $("<div>").addClass("mb-3").appendTo($content);
+        productImportAnalysisErrorGrid = $grid.dxDataGrid({
+            dataSource: gridData,
+            keyExpr: "id",
+            height: 330,
+            showBorders: true,
+            rowAlternationEnabled: true,
+            wordWrapEnabled: true,
+            filterRow: { visible: true },
+            searchPanel: { visible: true, width: 240, placeholder: "搜尋工作表、列號或原因" },
+            paging: { pageSize: 10 },
+            pager: {
+                visible: true,
+                showPageSizeSelector: true,
+                allowedPageSizes: [10, 20, 50],
+                showInfo: true,
+                showNavigationButtons: true
+            },
+            columns: [
+                { dataField: "sheet", caption: "工作表", width: 100 },
+                { dataField: "rowsText", caption: "Excel 列號", width: 120 },
+                { dataField: "name", caption: "資料位置", width: 250 },
+                {
+                    dataField: "description",
+                    caption: "衝突原因與字元差異",
+                    cellTemplate: function (container, options) {
+                        $("<div>").text(options.data.description).appendTo(container);
+                        appendExcelConflictComparisons($(container), options.data.comparisonValues);
+                    }
+                },
+                {
+                    dataField: "ignore",
+                    caption: "忽略此組",
+                    width: 100,
+                    alignment: "center",
+                    allowFiltering: false,
+                    cellTemplate: function (container, options) {
+                        $("<div>").dxCheckBox({
+                            value: options.data.ignore,
+                            disabled: !options.data.canIgnore,
+                            hint: options.data.canIgnore
+                                ? "勾選後，此組衝突涉及的所有 Excel 資料列都不會匯入"
+                                : "此結構錯誤不可忽略，必須修改 Excel",
+                            onValueChanged: function (e) {
+                                options.data.ignore = e.value;
+                                updateProductImportConfirmButton();
+                            }
+                        }).appendTo(container);
+                    }
+                }
+            ],
+            onRowPrepared: function (e) {
+                if (e.rowType === "data" && !e.data.canIgnore) e.rowElement.css("background", "#f8d7da");
+            },
+            onToolbarPreparing: function (e) {
+                e.toolbarOptions.items.unshift({
+                    location: "after",
+                    widget: "dxButton",
+                    options: {
+                        text: "全部標記忽略",
+                        hint: "將所有可忽略的 Excel 衝突列標記為不匯入",
+                        onClick: function () {
+                            productImportAnalysisErrorRows.forEach(function (row) {
+                                if (row.canIgnore) row.ignore = true;
+                            });
+                            e.component.repaint();
+                            updateProductImportConfirmButton();
+                        }
+                    }
+                });
+                e.toolbarOptions.items.unshift({
+                    location: "after",
+                    widget: "dxButton",
+                    options: {
+                        icon: "fa-solid fa-file-excel",
+                        text: "下載衝突清單",
+                        onClick: function () {
+                            CokerDxGridExport({ component: e.component, format: "xlsx", cancel: false }, {
+                                fileName: "ProductImportScanErrors",
+                                worksheetName: "商品匯入掃描衝突"
+                            });
+                        }
+                    }
+                });
+            }
+            }).dxDataGrid("instance");
+        $("<div>").addClass("form-text mb-3")
+            .text("每筆代表一組衝突，Excel 列號會列出該組涉及的所有資料列；只有內容相近時才以黃色標示差異區段，內容差異較大時會直接顯示完整值。勾選「忽略此組」後，該組涉及的列不會寫入商品、目錄或技術證照。必須處理全部衝突後才能繼續。")
+            .appendTo($content);
+    } else {
+        productImportAnalysisErrorRows = [];
+    }
+
+    if (differences.length > 0) {
+        const $differenceAlert = $("<div>").addClass("alert alert-warning py-2")
+            .appendTo($content);
+        const optionDefinitions = [
+            { code: "product-name", id: "confirmOverwriteProductNames", text: "允許以 Excel 更新既有商品名稱", showDetails: true },
+            { code: "product-spec", id: "confirmOverwriteProductSpecs", text: "允許以 Excel 更新 SubItemNo 對應的既有規格", showDetails: true },
+            { code: "product-price", id: "confirmOverwriteProductPrices", text: "允許以 Excel 更新既有商品價格", showDetails: true },
+            { code: "technical-certificate", id: "confirmOverwriteTechnicalCertificates", text: "允許以 Excel 覆蓋既有技術證照內容", showDetails: true },
+            { code: "duplicate-menu-title", id: "confirmAllowDuplicateMenuTitles", text: "RouterName 不同時，允許建立同名選單", showDetails: true },
+            { code: "menu-parent", id: "confirmOverwriteMenuParents", text: "允許依 Excel 搬移既有選單父層", showDetails: true },
+            {
+                code: "directory-page",
+                id: "confirmOverwriteDirectoryPages",
+                text: "將版型重新套用到本次涉及的既有商品目錄頁",
+                helpText: "未勾選時會完整保留既有目錄頁；只有勾選後才會重新套用版型。",
+                countsAsUnresolved: false,
+                showDetails: false
+            }
+        ];
+        const renderedOptions = [];
+        optionDefinitions.forEach(function (option) {
+            const count = differences.filter(function (item) {
+                return getAnalysisValue(item, "Code", "code") === option.code;
+            }).length;
+            if (count === 0) return;
+            const $check = $("<div>").addClass("form-check mb-2").appendTo($content);
+            const $input = $("<input>")
+                .attr({ type: "checkbox", id: option.id })
+                .addClass("form-check-input")
+                .appendTo($check);
+            $("<label>").attr("for", option.id).addClass("form-check-label fw-bold")
+                .text(option.text + "（" + count + " 筆）")
+                .appendTo($check);
+            if (option.helpText) {
+                $("<div>").addClass("form-text").text(option.helpText).appendTo($check);
+            }
+            renderedOptions.push({ definition: option, count: count, input: $input });
+        });
+
+        const differenceDisplayDefinitions = {
+            "product-name": {
+                type: "商品名稱不同",
+                existingLabel: "資料庫商品名稱",
+                excelLabel: "Excel 商品名稱",
+                markCharacters: true
+            },
+            "product-spec": {
+                type: "同一 SubItemNo 的規格不同",
+                existingLabel: "資料庫規格",
+                excelLabel: "Excel 規格",
+                markCharacters: true
+            },
+            "product-price": {
+                type: "商品價格異動",
+                existingLabel: "目前價格",
+                excelLabel: "匯入後價格",
+                markCharacters: false
+            },
+            "technical-certificate": {
+                type: "技術證照內容不同",
+                existingLabel: "資料庫證照內容",
+                excelLabel: "Excel 證照內容",
+                markCharacters: true
+            },
+            "duplicate-menu-title": {
+                type: "選單名稱相同，但 RouterName 不同",
+                existingLabel: "現有 RouterName",
+                excelLabel: "Excel RouterName",
+                markCharacters: true
+            },
+            "menu-parent": {
+                type: "選單所在父層不同",
+                existingLabel: "目前父層",
+                excelLabel: "Excel 指定父層",
+                markCharacters: false
+            },
+            "directory-page": {
+                type: "既有目錄頁已有內容，版型可能被重新套用",
+                existingLabel: "目前目錄頁",
+                excelLabel: "授權後的動作",
+                markCharacters: false
+            }
+        };
+        const $details = $("<div>").addClass("mt-3").appendTo($content);
+        differences.forEach(function (item) {
+            const code = getAnalysisValue(item, "Code", "code");
+            const option = optionDefinitions.find(function (definition) { return definition.code === code; });
+            if (!option || !option.showDetails) return;
+            const display = differenceDisplayDefinitions[code] || {
+                type: "資料內容不同",
+                existingLabel: "現有資料",
+                excelLabel: "Excel",
+                markCharacters: false
+            };
+            const existingValue = getAnalysisValue(item, "ExistingValue", "existingValue") || "[空白]";
+            const excelValue = getAnalysisValue(item, "ExcelValue", "excelValue") || "[空白]";
+            const $row = $("<div>")
+                .addClass("border rounded p-2 mb-2 product-import-difference-detail")
+                .attr("data-difference-code", code)
+                .appendTo($details);
+            $("<div>").addClass("fw-bold")
+                .text("[" + getAnalysisValue(item, "Sheet", "sheet") + "] " + getAnalysisValue(item, "Name", "name"))
+                .appendTo($row);
+            $("<div>")
+                .addClass("text-danger fw-bold my-1")
+                .text("差異類型：" + display.type)
+                .appendTo($row);
+            if (display.markCharacters) {
+                appendCharacterComparison(
+                    $row,
+                    display.existingLabel,
+                    existingValue,
+                    display.excelLabel,
+                    excelValue);
+            } else {
+                $("<div>").append(
+                    $("<span>").addClass("fw-bold me-1").text(display.existingLabel + "："),
+                    document.createTextNode(existingValue)
+                ).appendTo($row);
+                $("<div>").append(
+                    $("<span>").addClass("fw-bold me-1").text(display.excelLabel + "："),
+                    document.createTextNode(excelValue)
+                ).appendTo($row);
+            }
+            $("<div>").addClass("text-muted small")
+                .text(getAnalysisValue(item, "Description", "description") || "")
+                .appendTo($row);
+        });
+
+        function updateDifferenceDisplay() {
+            let unauthorizedCount = 0;
+            let visibleDetailCount = 0;
+            renderedOptions.forEach(function (option) {
+                const authorized = option.input.is(":checked");
+                if (!authorized && option.definition.countsAsUnresolved !== false)
+                    unauthorizedCount += option.count;
+                if (!authorized && option.definition.showDetails) visibleDetailCount += option.count;
+                $details.find('[data-difference-code="' + option.definition.code + '"]')
+                    .toggle(!authorized);
+            });
+            $differenceAlert
+                .toggle(unauthorizedCount > 0)
+                .text(unauthorizedCount > 0
+                    ? "尚有 " + unauthorizedCount + " 筆更新未授權；未勾選的項目會保留資料庫現況。"
+                    : "所有列出的更新皆已授權。正式匯入時會依勾選項目處理。");
+            $details.toggle(visibleDetailCount > 0);
+        }
+        renderedOptions.forEach(function (option) {
+            option.input.on("change", updateDifferenceDisplay);
+        });
+        updateDifferenceDisplay();
+    } else if (errors.length === 0) {
+        $("<div>").addClass("alert alert-success py-2")
+            .text("匯入檔掃描完成，沒有 Excel 衝突或資料庫差異，可以直接匯入。")
+            .appendTo($content);
+    }
+
+    updateProductImportConfirmButton();
+}
+
+function updateProductImportConfirmButton() {
+    if (!pendingProductImportAnalysis) return;
+    if (productImportConfirmInProgress) {
+        $("#btnConfirmProductImport").prop("disabled", true);
+        return;
+    }
+    const errors = pendingProductImportAnalysis.errors || [];
+    if (errors.length === 0) {
+        $("#btnConfirmProductImport").prop("disabled", false);
+        return;
+    }
+    const hasNonIgnorable = errors.some(function (item) {
+        return !getAnalysisValue(item, "CanIgnore", "canIgnore");
+    });
+    const allIgnorableRowsHandled = productImportAnalysisErrorRows
+        .filter(function (row) { return row.canIgnore; })
+        .every(function (row) { return row.ignore; });
+    $("#btnConfirmProductImport").prop("disabled", hasNonIgnorable || !allIgnorableRowsHandled);
+}
+
+async function confirmProductImport() {
+    if (!pendingProductImportTaskId
+        || !pendingProductImportAnalysis
+        || productImportConfirmInProgress) return;
+    productImportConfirmInProgress = true;
+    const $button = $("#btnConfirmProductImport")
+        .prop("disabled", true)
+        .text("正在啟動匯入…");
+    let confirmationPopupHidden = false;
+    try {
+        const selectedIgnoredRows = productImportAnalysisErrorRows
+            .filter(function (error) { return error.canIgnore && error.ignore; })
+            .reduce(function (rows, error) {
+                error.rowNumbers.forEach(function (rowNumber) {
+                    rows.push({ sheet: error.sheet, rowNumber: rowNumber });
+                });
+                return rows;
+            }, []);
+        const ignoredRows = pendingProductImportIgnoredRows.concat(selectedIgnoredRows)
+            .filter(function (row, index, rows) {
+                return rows.findIndex(function (item) {
+                    return item.sheet === row.sheet && item.rowNumber === row.rowNumber;
+                }) === index;
+            });
+        const response = await fetch("/api/Product/ConfirmProductImport", {
+            method: "POST",
+            headers: Object.assign({}, _c.Data.Header, { "Content-Type": "application/json" }),
+            credentials: "same-origin",
+            body: JSON.stringify({
+                taskId: pendingProductImportTaskId,
+                templateId: selectedProductImportTemplateId,
+                overwriteExistingProductNames: $("#confirmOverwriteProductNames").is(":checked"),
+                overwriteExistingSpecs: $("#confirmOverwriteProductSpecs").is(":checked"),
+                overwriteExistingPrices: $("#confirmOverwriteProductPrices").is(":checked"),
+                overwriteExistingTechnicalCertificates: $("#confirmOverwriteTechnicalCertificates").is(":checked"),
+                allowDuplicateMenuTitles: $("#confirmAllowDuplicateMenuTitles").is(":checked"),
+                overwriteExistingMenuParents: $("#confirmOverwriteMenuParents").is(":checked"),
+                overwriteExistingDirectoryPages: $("#confirmOverwriteDirectoryPages").is(":checked"),
+                ignoredRows: ignoredRows
+            })
+        });
+        if (!response.ok) {
+            const errorResult = await response.json().catch(function () { return {}; });
+            if (errorResult.analysis) {
+                pendingProductImportIgnoredRows = ignoredRows;
+                pendingProductImportAnalysis = {
+                    canImport: errorResult.analysis.CanImport !== undefined
+                        ? errorResult.analysis.CanImport
+                        : errorResult.analysis.canImport,
+                    errors: errorResult.analysis.Errors || errorResult.analysis.errors || [],
+                    differences: errorResult.analysis.Differences || errorResult.analysis.differences || [],
+                    summary: errorResult.analysis.Summary || errorResult.analysis.summary || null
+                };
+                renderProductImportAnalysis(pendingProductImportAnalysis);
+                $("#productImportAnalysisContent").scrollTop(0);
+                co.sweet.warn(errorResult.message || "仍有 Excel 衝突，請繼續處理。");
+                return;
+            }
+            throw new Error(errorResult.message || "無法確認商品匯入");
+        }
+        const responseData = await response.json();
+        // DevExtreme Popup 的層級高於 SweetAlert；先關閉確認視窗，
+        // 等隱藏動畫結束後再顯示正式匯入進度，避免進度被蓋住。
+        importProdPopup.hide();
+        confirmationPopupHidden = true;
+        await new Promise(function (resolve) { window.setTimeout(resolve, 250); });
+        const status = await waitForProductTask(responseData.taskId, "商品正式匯入中");
+        Swal.close();
+        const importResult = getProductImportResult(status.resultJson);
+        showProductImportErrors(importResult.errors, false, importResult.summary);
+        if (product_list != null) product_list.component.refresh();
+        loadLastProductImportInfo(true);
+    } catch (error) {
+        Swal.close();
+        if (!confirmationPopupHidden) importProdPopup.show();
+        co.sweet.error(error && error.message ? error.message : "商品匯入失敗。");
+    } finally {
+        productImportConfirmInProgress = false;
+        $button.text("確認並開始匯入");
+        updateProductImportConfirmButton();
+    }
+}
+
 function getProductImportErrors(resultJson) {
-    if (!resultJson) return [];
+    return getProductImportResult(resultJson).errors;
+}
+
+function getProductImportResult(resultJson) {
+    const emptyResult = { errors: [], summary: null };
+    if (!resultJson) return emptyResult;
 
     try {
         const result = typeof resultJson === "string" ? JSON.parse(resultJson) : resultJson;
         const errors = result.Errors || result.errors || [];
-        if (!Array.isArray(errors)) return [];
+        const summary = result.Summary || result.summary || null;
+        if (!Array.isArray(errors)) return { errors: [], summary: summary };
 
-        return errors.map(function (item, index) {
-            return {
-                sequence: index + 1,
-                name: item.Name || item.name || "-",
-                description: item.Description || item.description || "-"
-            };
-        });
+        return {
+            errors: errors.map(function (item, index) {
+                return {
+                    sequence: index + 1,
+                    name: item.Name || item.name || "-",
+                    description: item.Description || item.description || "-"
+                };
+            }),
+            summary: summary
+        };
     } catch (error) {
         console.error("Unable to parse product import result.", error);
-        return [];
+        return emptyResult;
     }
 }
 
-function showProductImportErrors(errors, importFailed) {
+function getImportSummaryValue(summary, pascalName, camelName) {
+    if (!summary) return 0;
+    return Number(summary[pascalName] !== undefined ? summary[pascalName] : summary[camelName]) || 0;
+}
+
+function appendProductImportSummary(contentElement, summary) {
+    if (!summary) return;
+
+    const detectedScopes = summary.DetectedUpdateScopes || summary.detectedUpdateScopes || [];
+
+    const productText = "匯入檔 " + getImportSummaryValue(summary, "ProductRowCount", "productRowCount")
+        + " 列，實際商品 " + getImportSummaryValue(summary, "ProductCount", "productCount")
+        + " 隻；新增 " + getImportSummaryValue(summary, "ProductAddedCount", "productAddedCount")
+        + "、更新 " + getImportSummaryValue(summary, "ProductUpdatedCount", "productUpdatedCount")
+        + "；現有商品 " + getImportSummaryValue(summary, "ProductBeforeCount", "productBeforeCount")
+        + " → " + getImportSummaryValue(summary, "ProductAfterCount", "productAfterCount") + " 隻";
+    const menuText = "匯入檔 " + getImportSummaryValue(summary, "DirectoryRowCount", "directoryRowCount")
+        + " 列目錄，涉及選單 " + getImportSummaryValue(summary, "MenuCount", "menuCount")
+        + " 個；新增 " + getImportSummaryValue(summary, "MenuAddedCount", "menuAddedCount")
+        + "、沿用既有 " + getImportSummaryValue(summary, "MenuExistingCount", "menuExistingCount")
+        + "；現有選單 " + getImportSummaryValue(summary, "MenuBeforeCount", "menuBeforeCount")
+        + " → " + getImportSummaryValue(summary, "MenuAfterCount", "menuAfterCount") + " 個";
+
+    const summaryBox = $("<div>")
+        .css({ padding: "12px 14px", marginBottom: "12px", background: "#f5f8fb", border: "1px solid #d9e2ec", borderRadius: "6px" })
+        .appendTo(contentElement);
+    $("<div>").css({ fontWeight: 600, marginBottom: "6px" }).text("匯入小總結").appendTo(summaryBox);
+    $("<div>")
+        .append(
+            $("<span>").addClass("fw-bold").text("本次更新範圍："),
+            document.createTextNode(detectedScopes.length > 0 ? detectedScopes.join("、") : "未偵測到可更新欄位")
+        )
+        .appendTo(summaryBox);
+    $("<div>").css({ marginTop: "4px" }).text("商品：" + productText).appendTo(summaryBox);
+    $("<div>").css({ marginTop: "4px" }).text("選單：" + menuText).appendTo(summaryBox);
+}
+
+function showProductImportErrors(errors, importFailed, summary) {
     const popupElement = $("<div>").appendTo(document.body);
     let popupInstance = null;
 
     popupElement.dxPopup({
-        title: importFailed ? "商品匯入失敗－請修正 Excel" : "商品匯入完成－需留意資料",
+        title: importFailed ? "商品匯入失敗－請修正 Excel" : (errors.length > 0 ? "商品匯入完成－需留意資料" : "商品匯入完成"),
         width: function () { return Math.min($(window).width() * 0.92, 960); },
         height: function () { return Math.min($(window).height() * 0.88, 680); },
         minWidth: 320,
@@ -340,16 +1002,25 @@ function showProductImportErrors(errors, importFailed) {
                 height: "100%"
             });
 
+            if (!importFailed) appendProductImportSummary(contentElement, summary);
+
             $("<div>")
                 .css({ marginBottom: "12px", color: importFailed ? "#a94442" : "#856404" })
                 .text(importFailed
                     ? "匯入已停止，未寫入任何資料。共有 " + errors.length + " 筆錯誤，請修正原 Excel 後重新匯入。"
-                    : "匯入已完成，共有 " + errors.length + " 筆資料需要留意。請依下列原因檢查原 Excel 內容。")
+                    : (errors.length > 0
+                        ? "匯入已完成，共有 " + errors.length + " 筆資料需要留意。請依下列原因檢查原 Excel 內容。"
+                        : "匯入已完成，沒有需要留意的資料。"))
                 .appendTo(contentElement);
 
             const gridElement = $("<div>")
                 .css({ flex: "1 1 auto", minHeight: 0 })
                 .appendTo(contentElement);
+
+            if (errors.length === 0) {
+                gridElement.hide();
+                return;
+            }
 
             gridElement.dxDataGrid({
                 dataSource: errors,
@@ -440,16 +1111,31 @@ function showProductImportErrors(errors, importFailed) {
 async function exportProd(e) {
     if (exportProd.isProcessing) return;
 
+    const versionResult = await Swal.fire({
+        title: "選擇商品匯出版本",
+        text: "選擇版本後會立即開始製作匯出檔。",
+        icon: "question",
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: "完整商品資料",
+        denyButtonText: "價格／庫存簡易版",
+        cancelButtonText: "取消",
+        reverseButtons: true
+    });
+    if (!versionResult.isConfirmed && !versionResult.isDenied) return;
+    const exportVersion = versionResult.isConfirmed ? "full" : "price";
+
     exportProd.isProcessing = true;
     const button = e && e.component ? e.component : null;
     if (button) button.option("disabled", true);
 
     try {
-        const startResponse = await fetch("/api/Product/StartProductExport", {
+        const startResponse = await fetch(
+            "/api/Product/StartProductExport?version=" + encodeURIComponent(exportVersion), {
             method: "POST",
             headers: _c.Data.Header,
             credentials: "same-origin"
-        });
+            });
         if (!startResponse.ok) {
             const errorResult = await startResponse.json().catch(function () { return {}; });
             throw new Error(errorResult.message || "無法建立商品匯出任務");
@@ -510,10 +1196,12 @@ async function waitForProductTask(taskId, title) {
 
         if (status.status === "failed" || status.status === "expired") {
             const taskError = new Error(status.error || status.message || "背景任務失敗");
-            taskError.importErrors = getProductImportErrors(status.resultJson);
+            const importResult = getProductImportResult(status.resultJson);
+            taskError.importErrors = importResult.errors;
+            taskError.importSummary = importResult.summary;
             throw taskError;
         }
-        if (status.status === "succeeded")
+        if (status.status === "succeeded" || status.status === "awaitingconfirmation")
             return status;
     }
 }
@@ -550,7 +1238,7 @@ function toolbarPreparing(e) {
             widget: "dxButton",
             options: {
                 icon: "fa-solid fa-file-arrow-up",
-                text: "商品匯入",
+                text: "商品資料匯入",
                 stylingMode: "outlined",
                 onClick: showImportProdPopup
             }
@@ -1106,6 +1794,7 @@ function FormDataClear() {
 }
 function contentReady(e) {
     product_list = e;
+    loadLastProductImportInfo(false);
 
     if (!elementReady) {
         pendingHashEdit = true;

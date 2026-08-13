@@ -21,6 +21,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public string? SuggestPrice { get; set; }
         public bool IsTimePrice { get; set; }
         public bool NoStockManagement { get; set; }
+        /// <summary>依商品狀態與上下架設定判斷是否允許購買。</summary>
+        public bool CanPurchase { get; set; }
+        public string? PurchaseUnavailableReason { get; set; }
         public string? PriceDisplayText { get; set; }
         public string? BaseRoleName { get; set; }
         public string? CurrentRoleName { get; set; }

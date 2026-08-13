@@ -385,22 +385,36 @@ namespace EtheriT.Coker.Application
             long WebsiteID = await loginUserData.GetWebsiteId();
             long userId = await loginUserData.GetUserId();
             var filesName = dto.Select(o => o.mediaLink).ToList();
-            var allFile = db.FileUploads
+            var allFile = await db.FileUploads
                             .Where(e => e.FK_WebsiteId == WebsiteID)
                             .Where(e => !e.IsDeleted)
-                            .Where(f => filesName.Contains(f.DownloadFileName)).ToList();
+                            .Where(f => filesName.Contains(f.DownloadFileName))
+                            .ToListAsync();
+            var fileByName = allFile
+                .Where(e => !string.IsNullOrEmpty(e.DownloadFileName))
+                .GroupBy(e => e.DownloadFileName!)
+                .ToDictionary(e => e.Key, e => e.First());
+            var fileIds = allFile.Select(e => e.Id).ToList();
+            var sideIds = dto.Select(e => e.SId).Distinct().ToList();
+            var bindTypes = dto.Select(e => (int)e.Type).Distinct().ToList();
+            var existingBinds = await db.FileBinds
+                .Where(e => !e.IsDeleted
+                    && e.FK_FileUploadId.HasValue
+                    && fileIds.Contains(e.FK_FileUploadId.Value)
+                    && sideIds.Contains(e.Sid)
+                    && bindTypes.Contains(e.type))
+                .ToListAsync();
+            var bindByKey = existingBinds
+                .GroupBy(e => (e.FK_FileUploadId!.Value, e.Sid, e.type))
+                .ToDictionary(e => e.Key, e => e.First());
             List<FileBind> FileBinds = new List<FileBind>();
             foreach (var file in dto)
             {
-                long Id = allFile.Find(d => d.DownloadFileName == file.mediaLink).Id;
-                var myFileBind = db.FileBinds
-                        .Where(e => e.FK_FileUploadId == Id)
-                        .Where(e => !e.IsDeleted)
-                        .Where(e => e.Sid == file.SId)
-                        .Where(e => e.type == (int)file.Type)
-                        .FirstOrDefault();
-                var hasBind = FileBinds.Find(e => e.FK_FileUploadId == Id && e.Sid == file.SId && e.type == (int)file.Type);
-                if (myFileBind == null && hasBind == null)
+                if (!fileByName.TryGetValue(file.mediaLink, out var uploadedFile))
+                    continue;
+                var key = (uploadedFile.Id, file.SId, (int)file.Type);
+                bindByKey.TryGetValue(key, out var myFileBind);
+                if (myFileBind == null)
                 {
                     FileBind fb = new FileBind
                     {
@@ -411,17 +425,18 @@ namespace EtheriT.Coker.Application
                         num = 1,
                         SerNo = file.SerNo,
                         MediaLink = file.mediaLink,
-                        FK_FileUploadId = Id,
+                        FK_FileUploadId = uploadedFile.Id,
                         CreatorUserId = userId,
                         CreationTime = DateTime.Now,
                     };
                     FileBinds.Add(fb);
+                    bindByKey[key] = fb;
                 }
                 else if (myFileBind != null)
                 {
                     myFileBind.SerNo = file.SerNo;
                     myFileBind.Name = string.IsNullOrEmpty(file.Name) ? file.mediaLink : file.Name;
-                    myFileBind.FK_FileUploadId = Id;
+                    myFileBind.FK_FileUploadId = uploadedFile.Id;
                     myFileBind.MediaLink = file.mediaLink;
                     myFileBind.LastModifierUserId = userId;
                     myFileBind.LastModificationTime = DateTime.Now;

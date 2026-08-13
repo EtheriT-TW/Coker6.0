@@ -63,7 +63,12 @@
                             .CellTemplate(@<text>
                                 <span class="article-title-text" title="<%- data.Title || '' %>"><%- data.Title || '' %></span>
                             </text>);
-                        c.Add().DataField("Tags").Caption("標籤").Visible(Model.ArticleOnly).MinWidth(150).HidingPriority(6);
+                        c.Add()
+                            .DataField("Tags")
+                            .Caption("標籤")
+                            .Visible(Model.ArticleOnly)
+                            .Width(150)
+                            .AllowHiding(false);
                         c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90).HidingPriority(5);
                         c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(false);
                         c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(false);

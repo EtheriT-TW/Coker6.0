@@ -348,9 +348,7 @@
     }
 
     function isStockAvailable(stock, noStockManagement) {
-        if (noStockManagement) return true;
-        if (!stock) return false;
-        return normalizeNullableInt(stock.stock) >= readMinQty(stock);
+        return !!stock && stock.canPurchase === true;
     }
 
     // 將數量夾到 [最小購買量, 庫存] 區間，並對齊最小購買量的倍數。
@@ -364,9 +362,10 @@
         if (value < min) value = min;
 
         if (!noStockManagement) {
-            const stockCount = normalizeNullableInt(stock && stock.stock);
-            const max = stockCount - (stockCount % step);
-            if (max > 0 && value > max) value = max;
+            const max = normalizeNullableInt(stock && stock.maxPurchaseQuantity);
+            // max === 0 代表目前沒有任何可銷售數量，不可把它當成「無上限」。
+            if (max <= 0) return 0;
+            if (value > max) value = max;
         }
 
         if (value === 0) value = min;
@@ -546,6 +545,11 @@
                 s2Title: stock.s2_Title || stock.s2Title || '',
                 stock: normalizeNullableInt(stock.stock),
                 minQty: readMinQty(stock),
+                canPurchase: typeof stock.canPurchase === 'boolean' ? stock.canPurchase : null,
+                maxPurchaseQuantity: stock.maxPurchaseQuantity == null
+                    ? null
+                    : normalizeNullableInt(stock.maxPurchaseQuantity),
+                purchaseUnavailableReason: stock.purchaseUnavailableReason || '',
                 timePrice: !!stock.timePrice,
                 suggestPrice: normalizeNullableInt(stock.suggestPrice ?? stock.price),
                 prices: prices.map(p => ({
@@ -584,7 +588,7 @@
         bootstrap() {
             if (this.stocks.length === 0) return;
 
-            const firstAvailable = this.stocks.find(x => !this.canShop || this.noStockManagement || x.stock >= x.minQty) || this.stocks[0];
+            const firstAvailable = this.stocks.find(x => !this.canShop || x.canPurchase === true) || this.stocks[0];
 
             if (this.specMode === 'none') {
                 this.current.s1 = 0;
@@ -601,7 +605,9 @@
             if (activeStock && activeStock.prices.length > 0) {
                 const firstEnabledPrice = activeStock.prices.find(p => !this.isBonusLack(p)) || activeStock.prices[0];
                 this.current.priceId = firstEnabledPrice.id;
-                this.current.quantity = activeStock.minQty;
+                this.current.quantity = isStockAvailable(activeStock, this.noStockManagement)
+                    ? activeStock.minQty
+                    : 0;
             }
         }
 
@@ -609,7 +615,7 @@
             return Array.from(this.specMap.spec1.entries()).map(([id, title]) => ({
                 id,
                 title,
-                enabled: this.stocks.some(x => x.s1id === id && (!this.canShop || x.stock >= x.minQty || this.noStockManagement))
+                enabled: this.stocks.some(x => x.s1id === id && (!this.canShop || x.canPurchase === true))
             }));
         }
 
@@ -619,7 +625,7 @@
                 .map(x => ({
                     id: x.s2id,
                     title: x.s2Title,
-                    enabled: !this.canShop || this.noStockManagement || x.stock >= x.minQty
+                    enabled: !this.canShop || x.canPurchase === true
                 }))
                 .filter(x => x.id > 0)
                 .filter((item, index, array) => array.findIndex(x => x.id === item.id) === index);
@@ -649,7 +655,9 @@
             if (activeStock) {
                 const enabledPrice = activeStock.prices.find(p => !this.isBonusLack(p)) || activeStock.prices[0] || null;
                 this.current.priceId = enabledPrice ? enabledPrice.id : null;
-                this.current.quantity = activeStock.minQty;
+                this.current.quantity = isStockAvailable(activeStock, this.noStockManagement)
+                    ? activeStock.minQty
+                    : 0;
             }
         }
 
@@ -709,21 +717,15 @@
             const stock = this.getActiveStock();
             if (!stock) return;
 
-            this.current.quantity = clampQuantity(stock, quantity);
-        }
-
-        decreaseStockAfterAdd() {
-            const stock = this.getActiveStock();
-            if (!stock) return;
-            stock.stock = Math.max(stock.stock - normalizeNullableInt(this.current.quantity), 0);
+            this.current.quantity = clampQuantity(stock, quantity, this.noStockManagement);
         }
 
         canAddToCart() {
             const stock = this.getActiveStock();
             if (!this.canShop) return false;
+            if (this.product.canPurchase === false) return false;
             if (!stock) return false;
-            if (stock.timePrice) return false;
-            if (stock.stock < stock.minQty && !this.noStockManagement) return false;
+            if (stock.canPurchase !== true) return false;
             if (!this.current.priceId) return false;
             return true;
         }
@@ -1356,12 +1358,6 @@
             const selectors = this.options.selectors;
             const $root = this.$root;
             const $content = this.$contentRoot;
-
-            if (result.status == 2) {
-                this.options.canShop = false;
-                this.state.selection.canShop = false;
-                result.stocks?.forEach(stock => { stock.stock = 0; });
-            }
 
             $content.find(selectors.title).text(result.title || '');
             $content.find(selectors.itemNo).text(result.itemNo || '');

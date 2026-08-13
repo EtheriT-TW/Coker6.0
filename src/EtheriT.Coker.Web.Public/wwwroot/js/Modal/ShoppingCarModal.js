@@ -1,4 +1,5 @@
 ﻿var $modal, $input_quantity
+var $purchase_status, $quantity_controls
 var modal_hass1 = false, modal_hass2 = false, modal_s1, modal_s2
 var modal_price_list = []
 var modal_s1_list = [], modal_s2_list = [], modal_price_list = []
@@ -25,7 +26,11 @@ function ShoppingCarModalInit() {
     })
 
     $modal.find(".btn_count_plus").on('click', function () {
-        $input_quantity.val(parseInt($input_quantity.val()) + modal_quantity_step);
+        var max = Number($input_quantity.attr("max"));
+        var next = Number($input_quantity.val() || 0) + modal_quantity_step;
+        if (!$input_quantity.prop("disabled") && (!Number.isFinite(max) || next <= max)) {
+            $input_quantity.val(next);
+        }
     });
 
     $modal.find(".btn_count_minus").on('click', function () {
@@ -64,6 +69,8 @@ function ModalElementInit() {
     $pro_introduction = $content.find(".introduction");
     $pro_price = $content.find(".ori_price");
     $pro_discount = $content.find(".discount");
+    $purchase_status = $content.find(".quick-cart-unavailable");
+    $quantity_controls = $content.find(".btn_count_minus, .input_pro_quantity, .btn_count_plus");
 
     $options = $content.find(".options");
 }
@@ -76,6 +83,8 @@ function DataClear() {
     $pro_price.addClass("d-none");
     $pro_price.text("");
     $pro_discount.text("");
+    $purchase_status.addClass("d-none").text("");
+    $quantity_controls.removeClass("d-none");
     $content.find(".tag").empty().addClass("d-none");
     $options.children(".radio").remove();
     modal_hass1 = false;
@@ -90,6 +99,9 @@ function DataClear() {
     modal_product_data = null;
     modal_quantity_step = 1;
     modal_default_image = "";
+    $input_quantity.prop("disabled", false).removeAttr("max").val(1);
+    $modal.find(".btn_count_minus, .btn_count_plus").prop("disabled", false);
+    $modal.find(".btn_addToCar").removeClass("close").prop("disabled", false);
 }
 
 function ModalSetLoading(isLoading, message) {
@@ -117,15 +129,13 @@ function ModalDefaultSet() {
         modal_stock_list = Array.isArray(product.stocks) ? product.stocks : [];
         modal_product_data = product;
         if (!modal_stock_list.length) {
-            $pro_discount.text("目前無可購買規格");
-            $modal.find(".btn_addToCar").addClass("close");
+            ModalSetPriceDisplay(null, product);
+            $input_quantity.val(0).attr("max", 0);
+            ModalSetPurchaseAvailability(false, product.purchaseUnavailableReason || "已售完");
             return;
         }
 
-        var first = modal_stock_list.find(function (stock) {
-            var minQty = Math.max(Number(stock.min_Qty || 1), 1);
-            return (product.noStockManagement || Number(stock.stock || 0) >= minQty) && Array.isArray(stock.prices) && stock.prices.length;
-        }) || modal_stock_list[0];
+        var first = modal_stock_list.find(function (stock) { return stock.canPurchase === true; }) || modal_stock_list[0];
         modal_s1 = Number(first.fK_S1id || 0);
         modal_s2 = Number(first.fK_S2id || 0);
         ModalBuildSpecGroup(1, modal_stock_list);
@@ -162,6 +172,7 @@ function ModalBuildSpecGroup(type, stocks) {
         $input.prop("checked", value.id === Number(type === 1 ? modal_s1 : modal_s2)).on("change", ModalSpecRadio);
         $control.append($input, $label);
     });
+
     $options.prepend($group);
 }
 
@@ -171,6 +182,40 @@ function ModalFormatPrice(price) {
     if (cash <= 0 && bonus > 0) return "紅利 " + bonus.toLocaleString("en-US") + " 點";
     var text = "NT$ " + cash.toLocaleString("en-US");
     return bonus > 0 ? text + " + 紅利 " + bonus.toLocaleString("en-US") + " 點" : text;
+}
+
+function ModalSetPriceDisplay(stock, product) {
+    if (stock && stock.timePrice) {
+        $pro_discount.text(product.priceDisplayText || "時價");
+        return [];
+    }
+
+    var prices = stock && Array.isArray(stock.prices) ? stock.prices : [];
+    if (prices.length) {
+        $pro_discount.text(ModalFormatPrice(prices[0]));
+        return prices;
+    }
+
+    if (product.priceDisplayText) {
+        $pro_discount.text(product.priceDisplayText);
+    } else if (product.price != null && product.price !== "") {
+        $pro_discount.text("NT$ " + Number(product.price).toLocaleString("en-US"));
+    } else {
+        $pro_discount.text("目前無售價資訊");
+    }
+    return prices;
+}
+
+function ModalSetPurchaseAvailability(canPurchase, reason) {
+    $quantity_controls.toggleClass("d-none", !canPurchase);
+    $purchase_status
+        .toggleClass("d-none", canPurchase)
+        .text(canPurchase ? "" : (reason || "已售完"));
+    $input_quantity.prop("disabled", !canPurchase);
+    $modal.find(".btn_count_minus, .btn_count_plus").prop("disabled", !canPurchase);
+    $modal.find(".btn_addToCar")
+        .toggleClass("close", !canPurchase)
+        .prop("disabled", !canPurchase);
 }
 
 function ModalRefreshImage(stock) {
@@ -197,24 +242,28 @@ function ModalRefreshSelection(product) {
     $input_quantity.attr({ min: modal_quantity_step, step: modal_quantity_step }).val(modal_quantity_step);
     ModalRefreshImage(stock);
 
-    if (stock.timePrice) {
+    if (stock.canPurchase !== true) {
         modal_price_id = null;
-        $pro_discount.text(product.priceDisplayText || "時價");
-        $modal.find(".btn_addToCar").addClass("close");
+        ModalSetPriceDisplay(stock, product);
+        $input_quantity.val(0).attr("max", 0);
+        ModalSetPurchaseAvailability(false,
+            stock.purchaseUnavailableReason || product.purchaseUnavailableReason || "已售完");
         return;
     }
 
-    var prices = Array.isArray(stock.prices) ? stock.prices : [];
+    ModalSetPurchaseAvailability(true);
+    if (stock.maxPurchaseQuantity == null) $input_quantity.removeAttr("max");
+    else $input_quantity.attr("max", Number(stock.maxPurchaseQuantity));
+
+    var prices = ModalSetPriceDisplay(stock, product);
     if (!prices.length) {
         modal_price_id = null;
-        $pro_discount.text(product.price ? "NT$ " + product.price : "目前無可購買價格");
-        $modal.find(".btn_addToCar").addClass("close");
+        ModalSetPurchaseAvailability(false, stock.purchaseUnavailableReason || "目前無法購買");
         return;
     }
 
     modal_price_id = Number(prices[0].id || 0);
-    $pro_discount.text(ModalFormatPrice(prices[0]));
-    $modal.find(".btn_addToCar").removeClass("close");
+    $modal.find(".btn_addToCar").removeClass("close").prop("disabled", false);
 
     if (prices.length > 1) {
         var $group = $($("#Modal_Template_Spec_Radio").html()).clone().addClass("modal-price-options");
@@ -241,7 +290,9 @@ function ModalSpecRadio() {
     if (type === 2) modal_s2 = Number($(this).val());
 
     if (type === 1) {
-        var validS2 = modal_stock_list.filter(function (stock) { return Number(stock.fK_S1id || 0) === modal_s1; });
+        var validS2 = modal_stock_list.filter(function (stock) {
+            return Number(stock.fK_S1id || 0) === modal_s1;
+        });
         var currentValid = validS2.some(function (stock) { return Number(stock.fK_S2id || 0) === Number(modal_s2 || 0); });
         if (!currentValid && validS2.length) {
             modal_s2 = Number(validS2[0].fK_S2id || 0);
@@ -259,6 +310,16 @@ function AddToCart() {
     if (!localStorage.getItem("AgreePrivacy")) {
         Coker.sweet.error("請注意", "若要進行商品選購，請先同意隱私權政策", null);
     } else {
+        var selectedStock = modal_stock_list.find(function (stock) {
+            return Number(stock.fK_S1id || 0) === Number(modal_s1 || 0)
+                && Number(stock.fK_S2id || 0) === Number(modal_s2 || 0);
+        });
+        if (!modal_product_data || modal_product_data.canPurchase === false || !selectedStock || selectedStock.canPurchase !== true) {
+            Coker.sweet.error("請注意", (selectedStock && selectedStock.purchaseUnavailableReason)
+                || (modal_product_data && modal_product_data.purchaseUnavailableReason)
+                || "此商品目前無法購買", null, false);
+            return;
+        }
         if (modal_s1 != null && modal_s2 != null) {
             Product.AddUp.Cart({
                 FK_Pid: $modal.data("pid"),

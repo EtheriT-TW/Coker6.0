@@ -28,6 +28,7 @@ using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Specification;
 using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Shared.JsonObject;
+using EtheriT.Coker.Core.Product;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Token;
@@ -533,7 +534,17 @@ namespace EtheriT.Coker.Application.Product
         public async Task<byte[]> ExportProductData(
             long websiteId,
             Action<int, string>? reportProgress)
+            => await ExportProductData(websiteId, "full", reportProgress);
+
+        public async Task<byte[]> ExportProductData(
+            long websiteId,
+            string exportVersion,
+            Action<int, string>? reportProgress)
         {
+            var priceAndStockOnly = string.Equals(
+                exportVersion,
+                "price",
+                StringComparison.OrdinalIgnoreCase);
             reportProgress?.Invoke(5, "正在讀取商品資料");
             var orgName = await loginUserData.GetWebsiteOrgName();
             var products = await db.Prods
@@ -582,21 +593,25 @@ namespace EtheriT.Coker.Application.Product
                 .Where(e => e.FK_WebsiteId == websiteId && e.Type == RoleTypeEnum.前台 && !e.IsDeleted)
                 .ToDictionaryAsync(e => e.Id, e => e.Name ?? "");
 
-            reportProgress?.Invoke(22, "正在讀取商品標籤");
-            var tagRows = await (
-                from associate in db.Tag_Associates.AsNoTracking()
-                join tag in db.Tags.AsNoTracking() on associate.FK_TId equals tag.Id
-                where associate.Type == TagAssociateTypeEnum.商品
-                    && !associate.IsDeleted
-                    && !tag.IsDeleted
-                    && tag.FK_WebsiteId == websiteId
-                    && productIds.Contains(associate.FK_AId)
-                orderby tag.Title
-                select new { ProductId = associate.FK_AId, tag.Title }
-            ).ToListAsync();
-            var productTagMap = tagRows
-                .GroupBy(e => e.ProductId)
-                .ToDictionary(e => e.Key, e => e.Select(x => x.Title).Distinct().Take(6).ToArray());
+            var productTagMap = new Dictionary<long, string[]>();
+            if (!priceAndStockOnly)
+            {
+                reportProgress?.Invoke(22, "正在讀取商品標籤");
+                var tagRows = await (
+                    from associate in db.Tag_Associates.AsNoTracking()
+                    join tag in db.Tags.AsNoTracking() on associate.FK_TId equals tag.Id
+                    where associate.Type == TagAssociateTypeEnum.商品
+                        && !associate.IsDeleted
+                        && !tag.IsDeleted
+                        && tag.FK_WebsiteId == websiteId
+                        && productIds.Contains(associate.FK_AId)
+                    orderby tag.Title
+                    select new { ProductId = associate.FK_AId, tag.Title }
+                ).ToListAsync();
+                productTagMap = tagRows
+                    .GroupBy(e => e.ProductId)
+                    .ToDictionary(e => e.Key, e => e.Select(x => x.Title).Distinct().Take(6).ToArray());
+            }
 
             var productRows = new List<ProductExportRow>();
             for (var productIndex = 0; productIndex < products.Count; productIndex++)
@@ -609,16 +624,20 @@ namespace EtheriT.Coker.Application.Product
                     productProgress,
                     $"正在整理商品資料（{productIndex + 1}/{products.Count}）");
 
-                var multimedia = (await fileUploadAppService.getProdMultimedia(product.Id, 1))
-                    .OrderBy(e => e.SerNo)
-                    .ThenBy(e => e.Id)
-                    .Take(7)
-                    .ToList();
-                var files = (await fileUploadAppService.getProdFiles(product.Id))
-                    .OrderBy(e => e.SerNo)
-                    .ThenBy(e => e.Id)
-                    .Take(7)
-                    .ToList();
+                var multimedia = priceAndStockOnly
+                    ? new List<FileGetProdDisplayDto>()
+                    : (await fileUploadAppService.getProdMultimedia(product.Id, 1))
+                        .OrderBy(e => e.SerNo)
+                        .ThenBy(e => e.Id)
+                        .Take(7)
+                        .ToList();
+                var files = priceAndStockOnly
+                    ? new List<FileGetProdDisplayDto>()
+                    : (await fileUploadAppService.getProdFiles(product.Id))
+                        .OrderBy(e => e.SerNo)
+                        .ThenBy(e => e.Id)
+                        .Take(7)
+                        .ToList();
                 productTagMap.TryGetValue(product.Id, out var tags);
 
                 var productStocks = stocks.Where(e => e.FK_Pid == product.Id).ToList();
@@ -706,15 +725,19 @@ namespace EtheriT.Coker.Application.Product
                 }
             }
 
-            reportProgress?.Invoke(82, "正在整理技術證照");
-            var techRows = await BuildTechCertExportRows(websiteId, products);
-            reportProgress?.Invoke(88, "正在整理目錄分類");
-            var directoryRows = await BuildDirectoryExportRows(websiteId);
+            reportProgress?.Invoke(82, priceAndStockOnly ? "正在整理價格與庫存資料" : "正在整理技術證照");
+            var techRows = priceAndStockOnly
+                ? new List<TechCertExportRow>()
+                : await BuildTechCertExportRows(websiteId, products);
+            reportProgress?.Invoke(88, priceAndStockOnly ? "正在準備簡易匯出範本" : "正在整理目錄分類");
+            var directoryRows = priceAndStockOnly
+                ? new List<DirectoryExportRow>()
+                : await BuildDirectoryExportRows(websiteId);
             var templatePath = Path.Combine(
                 AppContext.BaseDirectory,
                 "Resources",
                 "ProductExportTemplates",
-                "ProductData.xlsx"
+                priceAndStockOnly ? "ProductPriceData.xlsx" : "ProductData.xlsx"
             );
             if (!System.IO.File.Exists(templatePath))
                 throw new FileNotFoundException("找不到商品匯出範本。", templatePath);
@@ -1367,7 +1390,11 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
-                var db_p = db.Prods.Where(e => e.Id == Id).OrderBy(e => e.Ser_No).FirstOrDefault();
+                var purchaseCheckTime = DateTime.Now;
+                var db_p = db.Prods
+                    .Where(e => e.Id == Id && e.FK_WebsiteId == websiteId && !e.IsDeleted)
+                    .OrderBy(e => e.Ser_No)
+                    .FirstOrDefault();
 
                 if (db_p != null)
                 {
@@ -1384,6 +1411,8 @@ namespace EtheriT.Coker.Application.Product
                         Status = (int)db_p.Status,
                         NoStockManagement = db_p.NoStockManagement,
                         StatusName = db_p.Status.ToString(),
+                        CanPurchase = ProductPurchasePolicy.CanPurchaseProduct(db_p, purchaseCheckTime),
+                        PurchaseUnavailableReason = ProductPurchasePolicy.GetProductUnavailableReason(db_p, purchaseCheckTime),
                         TagDatas = new List<TagGetSelectedDto>(),
                         TechCertDatas = new List<TechCertDisplayDto>(),
                         Stocks = new List<ProductStockDto>(),
@@ -1461,11 +1490,22 @@ namespace EtheriT.Coker.Application.Product
                     if (stockDatas != null)
                     {
                         var prices = await productDisplayPriceService.GetDisplayPricesByStockAsync(stockDatas.Select(e => e.Id).ToList(), roleContext);
+                        var stockIds = stockDatas.Select(x => x.Id).ToList();
+                        var stockEntities = await db.Prod_Stocks
+                            .Where(x => stockIds.Contains(x.Id))
+                            .ToDictionaryAsync(x => x.Id);
 
                         foreach (var stock in stockDatas)
                         {
                             stock.Prices = prices.Where(e => e.FK_PSId == stock.Id).ToList();
                             stock.SpecDescription = storeSetAppService.RenderMarkdownToHtml(stock.SpecDescription);
+                            if (stockEntities.TryGetValue(stock.Id, out var stockEntity))
+                            {
+                                var hasPrice = stock.Prices.Any();
+                                stock.MaxPurchaseQuantity = ProductPurchasePolicy.GetMaxPurchaseQuantity(db_p, stockEntity);
+                                stock.CanPurchase = ProductPurchasePolicy.CanPurchaseStock(db_p, stockEntity, hasPrice, purchaseCheckTime);
+                                stock.PurchaseUnavailableReason = ProductPurchasePolicy.GetStockUnavailableReason(db_p, stockEntity, hasPrice, purchaseCheckTime);
+                            }
                         }
 
                         output.Stocks = stockDatas;
@@ -2422,6 +2462,11 @@ namespace EtheriT.Coker.Application.Product
                 templateId,
                 overwriteExisting,
                 allowDuplicateMenuTitles,
+                true,
+                true,
+                true,
+                true,
+                true,
                 null);
         }
 
@@ -2436,6 +2481,12 @@ namespace EtheriT.Coker.Application.Product
                 templateId,
                 overwriteExisting,
                 false,
+                true,
+                true,
+                true,
+                true,
+                true,
+                new List<ProductImportIgnoredRowDto>(),
                 reportProgress);
         }
 
@@ -2446,17 +2497,50 @@ namespace EtheriT.Coker.Application.Product
             bool allowDuplicateMenuTitles,
             Action<int, string>? reportProgress)
         {
+            return await ProdReplace(
+                filePath,
+                templateId,
+                overwriteExisting,
+                allowDuplicateMenuTitles,
+                true,
+                true,
+                true,
+                true,
+                true,
+                new List<ProductImportIgnoredRowDto>(),
+                reportProgress);
+        }
+
+        public async Task<ImportOutputDto> ProdReplace(
+            string filePath,
+            long templateId,
+            bool overwriteExisting,
+            bool allowDuplicateMenuTitles,
+            bool overwriteExistingMenuParents,
+            bool overwriteExistingProductNames,
+            bool overwriteExistingSpecs,
+            bool overwriteExistingPrices,
+            bool overwriteExistingTechnicalCertificates,
+            List<ProductImportIgnoredRowDto> ignoredRows,
+            Action<int, string>? reportProgress)
+        {
             reportProgress?.Invoke(5, "正在讀取商品匯入檔案");
             var strategy = db.Database.CreateExecutionStrategy();
             return await strategy.ExecuteAsync(async () =>
             {
                 await using var transaction = await db.Database.BeginTransactionAsync();
                 var fileData = await importAppService.ProdReplace(filePath);
+                ApplyIgnoredProductImportRows(fileData, ignoredRows);
                 var response = await ImportProductData(
                     fileData,
                     templateId,
                     overwriteExisting,
                     allowDuplicateMenuTitles,
+                    overwriteExistingMenuParents,
+                    overwriteExistingProductNames,
+                    overwriteExistingSpecs,
+                    overwriteExistingPrices,
+                    overwriteExistingTechnicalCertificates,
                     reportProgress);
                 if (response.Success)
                     await transaction.CommitAsync();
@@ -2466,16 +2550,511 @@ namespace EtheriT.Coker.Application.Product
             });
         }
 
+        private static void ApplyIgnoredProductImportRows(
+            ProdImportAllDto fileData,
+            List<ProductImportIgnoredRowDto>? ignoredRows)
+        {
+            if (ignoredRows == null || ignoredRows.Count == 0) return;
+            var ignored = ignoredRows
+                .GroupBy(e => e.Sheet, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    e => e.Key,
+                    e => e.Select(row => row.RowNumber).ToHashSet(),
+                    StringComparer.OrdinalIgnoreCase);
+
+            if (ignored.TryGetValue("商品", out var productRows))
+                fileData.Products = fileData.Products.Where(e => !productRows.Contains(e.SourceRowNumber)).ToList();
+            if (ignored.TryGetValue("目錄分類", out var directoryRows))
+                fileData.Directories = fileData.Directories.Where(e => !directoryRows.Contains(e.SourceRowNumber)).ToList();
+            if (ignored.TryGetValue("技術證照", out var techRows))
+            {
+                fileData.TechnicalCertificates = fileData.TechnicalCertificates
+                    .Where(e => !techRows.Contains(e.SourceRowNumber)).ToList();
+                var retainedTechKeys = fileData.TechnicalCertificates
+                    .Select(e => $"{Norm(e.ItemNo)}|{Norm(e.ProdName)}|{Norm(e.Title)}")
+                    .ToHashSet();
+                foreach (var product in fileData.Products)
+                    product.Techs = product.Techs?.Where(tech => retainedTechKeys.Contains(
+                        $"{Norm(product.ItemNo)}|{Norm(product.ProdName)}|{Norm(tech.Title)}")).ToList();
+            }
+        }
+
+        public async Task<ProductImportAnalysisDto> AnalyzeProductImport(
+            string filePath,
+            long templateId,
+            List<ProductImportIgnoredRowDto> ignoredRows,
+            Action<int, string>? reportProgress)
+        {
+            reportProgress?.Invoke(5, "正在讀取三個商品匯入工作表");
+            var fileData = await importAppService.ProdReplace(filePath);
+            ApplyIgnoredProductImportRows(fileData, ignoredRows);
+            var websiteId = await loginUserData.GetWebsiteId();
+            _ = await GetProductImportTemplate(templateId, websiteId);
+            var result = new ProductImportAnalysisDto();
+            result.Summary.DetectedUpdateScopes = GetDetectedProductImportScopes(fileData);
+            result.Summary.ProductRowCount = fileData.Products.Count(e => !string.IsNullOrWhiteSpace(e.ProdName));
+            result.Summary.DirectoryRowCount = fileData.Directories.Count;
+            result.Summary.MenuCount = CountDirectoryMenuRequests(fileData.Directories);
+            result.Summary.ProductBeforeCount = await db.Prods.AsNoTracking()
+                .CountAsync(e => !e.IsDeleted && e.FK_WebsiteId == websiteId);
+            result.Summary.MenuBeforeCount = await db.WebMenus.AsNoTracking()
+                .CountAsync(e => !e.IsDeleted && e.FK_WebsiteId == websiteId);
+
+            reportProgress?.Invoke(25, "正在檢查商品工作表");
+            var productRows = fileData.Products
+                .Where(e => !string.IsNullOrWhiteSpace(e.ProdName))
+                .ToList();
+            result.Summary.ProductCount = productRows
+                .GroupBy(e => string.IsNullOrWhiteSpace(e.ItemNo)
+                    ? $"title:{Norm(e.ProdName)}"
+                    : $"item:{Norm(e.ItemNo)}")
+                .Count();
+            var productNameConflictItemNos = productRows
+                .Where(e => !string.IsNullOrWhiteSpace(e.ItemNo))
+                .GroupBy(e => Norm(e.ItemNo))
+                .Where(group => group
+                    .Select(e => Norm(e.ProdName))
+                    .Where(e => !string.IsNullOrWhiteSpace(e))
+                    .Distinct()
+                    .Count() > 1)
+                .Select(group => group.Key)
+                .ToHashSet();
+            result.Errors.AddRange(ValidateProductImportConflicts(productRows));
+            var frontRoles = await db.Roles.AsNoTracking()
+                .Where(e => e.FK_WebsiteId == websiteId
+                    && e.Type == RoleTypeEnum.前台
+                    && !e.IsDeleted)
+                .Select(e => new { e.Id, e.Name })
+                .ToListAsync();
+            var frontRoleKeys = frontRoles.Select(e => Norm(e.Name)).ToHashSet();
+            var frontRoleMap = frontRoles
+                .GroupBy(e => Norm(e.Name))
+                .ToDictionary(e => e.Key, e => e.Last().Id);
+            foreach (var invalidRoleGroup in productRows
+                .Where(e => !string.IsNullOrWhiteSpace(e.RoleName)
+                    && Norm(e.RoleName) != Norm("非會員")
+                    && !frontRoleKeys.Contains(Norm(e.RoleName)))
+                .GroupBy(e => Norm(e.RoleName)))
+            {
+                var invalidRole = invalidRoleGroup.First();
+                result.Errors.Add(new ImportMassageItem
+                {
+                    Name = $"商品會員價格：{invalidRole.RoleName}",
+                    Description = "找不到對應的前台會員身分，請修正 Excel 或先建立會員身分。",
+                    Sheet = "商品",
+                    RowNumbers = invalidRoleGroup
+                        .Select(e => e.SourceRowNumber)
+                        .Distinct()
+                        .OrderBy(e => e)
+                        .ToList(),
+                    CanIgnore = true
+                });
+            }
+
+            var itemNos = productRows
+                .Where(e => !string.IsNullOrWhiteSpace(e.ItemNo))
+                .Select(e => e.ItemNo)
+                .Distinct()
+                .ToList();
+            var productTitlesWithoutItemNo = productRows
+                .Where(e => string.IsNullOrWhiteSpace(e.ItemNo))
+                .Select(e => e.ProdName)
+                .Distinct()
+                .ToList();
+            var existingProducts = await db.Prods.AsNoTracking()
+                .Where(e => !e.IsDeleted
+                    && e.FK_WebsiteId == websiteId
+                    && ((!string.IsNullOrEmpty(e.ItemNo) && itemNos.Contains(e.ItemNo))
+                        || (string.IsNullOrEmpty(e.ItemNo) && productTitlesWithoutItemNo.Contains(e.Title))))
+                .Select(e => new { e.Id, e.ItemNo, e.Title })
+                .ToListAsync();
+            result.Summary.ProductUpdatedCount = productRows
+                .Where(e => existingProducts.Any(p => string.IsNullOrWhiteSpace(e.ItemNo)
+                    ? string.IsNullOrWhiteSpace(p.ItemNo) && Norm(p.Title) == Norm(e.ProdName)
+                    : Norm(p.ItemNo) == Norm(e.ItemNo)))
+                .GroupBy(e => string.IsNullOrWhiteSpace(e.ItemNo)
+                    ? $"title:{Norm(e.ProdName)}"
+                    : $"item:{Norm(e.ItemNo)}")
+                .Count();
+            result.Summary.ProductAddedCount = Math.Max(
+                0,
+                result.Summary.ProductCount - result.Summary.ProductUpdatedCount);
+            foreach (var product in productRows
+                .Where(e => !string.IsNullOrWhiteSpace(e.ItemNo)
+                    && !productNameConflictItemNos.Contains(Norm(e.ItemNo)))
+                .GroupBy(e => Norm(e.ItemNo))
+                .Select(e => e.First()))
+            {
+                var existing = existingProducts.FirstOrDefault(e => Norm(e.ItemNo) == Norm(product.ItemNo));
+                if (existing != null && Norm(existing.Title) != Norm(product.ProdName))
+                {
+                    result.Differences.Add(new ProductImportDifferenceDto
+                    {
+                        Code = ProductImportDifferenceCodes.ProductName,
+                        Sheet = "商品",
+                        Name = $"ItemNo：{product.ItemNo}",
+                        ExistingValue = existing.Title ?? string.Empty,
+                        ExcelValue = product.ProdName,
+                        Description = "商品名稱不同，可保留現有名稱或授權以 Excel 更名。"
+                    });
+                }
+            }
+
+            var productIds = existingProducts.Select(e => e.Id).ToList();
+            var existingStocks = await db.Prod_Stocks.AsNoTracking()
+                .Where(e => !e.IsDeleted
+                    && productIds.Contains(e.FK_Pid))
+                .Select(e => new { e.Id, e.FK_Pid, e.SubItemNo, e.FK_S1id, e.FK_S2id, e.Price, e.IsTimePrice })
+                .ToListAsync();
+            var specIds = existingStocks
+                .SelectMany(e => new[] { e.FK_S1id, e.FK_S2id })
+                .Where(e => e.HasValue)
+                .Select(e => e!.Value)
+                .Distinct()
+                .ToList();
+            var existingSpecs = await db.Prod_Specs.AsNoTracking()
+                .Include(e => e.Prod_Spec_Type)
+                .Where(e => specIds.Contains(e.Id))
+                .ToDictionaryAsync(
+                    e => e.Id,
+                    e => new { Type = e.Prod_Spec_Type != null ? e.Prod_Spec_Type.Type : string.Empty, e.Title });
+            string DescribeExistingSpecLocal(long? spec1Id, long? spec2Id)
+            {
+                var values = new List<string>();
+                if (spec1Id.HasValue && existingSpecs.TryGetValue(spec1Id.Value, out var spec1))
+                    values.Add(string.IsNullOrWhiteSpace(spec1.Type) ? spec1.Title : $"{spec1.Type}：{spec1.Title}");
+                if (spec2Id.HasValue && existingSpecs.TryGetValue(spec2Id.Value, out var spec2))
+                    values.Add(string.IsNullOrWhiteSpace(spec2.Type) ? spec2.Title : $"{spec2.Type}：{spec2.Title}");
+                return values.Count == 0 ? "無規格" : string.Join("／", values);
+            }
+            foreach (var row in productRows.Where(e => !string.IsNullOrWhiteSpace(e.SubItemNo)))
+            {
+                var existingProduct = existingProducts.FirstOrDefault(e => Norm(e.ItemNo) == Norm(row.ItemNo));
+                if (existingProduct == null) continue;
+                var stock = existingStocks.FirstOrDefault(e => e.FK_Pid == existingProduct.Id
+                    && Norm(e.SubItemNo) == Norm(row.SubItemNo));
+                if (stock == null) continue;
+
+                var existingSpec = DescribeExistingSpecLocal(stock.FK_S1id, stock.FK_S2id);
+                var excelSpec = DescribeProductImportSpec(row);
+                if (Norm(existingSpec) != Norm(excelSpec))
+                {
+                    result.Differences.Add(new ProductImportDifferenceDto
+                    {
+                        Code = ProductImportDifferenceCodes.ProductSpec,
+                        Sheet = "商品",
+                        Name = $"ItemNo：{row.ItemNo}／SubItemNo：{row.SubItemNo}",
+                        ExistingValue = existingSpec,
+                        ExcelValue = excelSpec,
+                        Description = "同一規格編號的規格不同，可保留現有規格或授權以 Excel 更新。"
+                    });
+                }
+            }
+
+            var existingStockIds = existingStocks.Select(e => e.Id).ToList();
+            var existingPrices = await db.Prod_Prices.AsNoTracking()
+                .Where(e => !e.IsDeleted && existingStockIds.Contains(e.FK_PSId))
+                .Select(e => new { e.Id, e.FK_PSId, e.FK_RId, e.Bonus, e.Price })
+                .ToListAsync();
+            foreach (var row in productRows.Where(e =>
+                HasImportedColumn(e, nameof(e.Price))
+                || HasImportedColumn(e, nameof(e.SuggestPrice))))
+            {
+                var existingProduct = existingProducts.FirstOrDefault(e => string.IsNullOrWhiteSpace(row.ItemNo)
+                    ? string.IsNullOrWhiteSpace(e.ItemNo) && Norm(e.Title) == Norm(row.ProdName)
+                    : Norm(e.ItemNo) == Norm(row.ItemNo));
+                if (existingProduct == null) continue;
+
+                var stock = !string.IsNullOrWhiteSpace(row.SubItemNo)
+                    ? existingStocks.FirstOrDefault(e => e.FK_Pid == existingProduct.Id
+                        && Norm(e.SubItemNo) == Norm(row.SubItemNo))
+                    : existingStocks.FirstOrDefault(e => e.FK_Pid == existingProduct.Id
+                        && Norm(DescribeExistingSpecLocal(e.FK_S1id, e.FK_S2id)) == Norm(DescribeProductImportSpec(row)));
+                if (stock == null) continue;
+
+                var existingValues = new List<string>();
+                var excelValues = new List<string>();
+                if (HasImportedColumn(row, nameof(row.Price)))
+                {
+                    var roleName = string.IsNullOrWhiteSpace(row.RoleName) ? "非會員" : row.RoleName.Trim();
+                    var roleId = Norm(roleName) == Norm("非會員")
+                        ? 1
+                        : frontRoleMap.GetValueOrDefault(Norm(roleName));
+                    if (roleId > 0)
+                    {
+                        var currentPrice = existingPrices
+                            .Where(e => e.FK_PSId == stock.Id
+                                && e.FK_RId == roleId
+                                && (int)(e.Bonus ?? 0) == row.Bonus)
+                            .OrderByDescending(e => e.Id)
+                            .FirstOrDefault();
+                        var excelIsTimePrice = row.Price < 0;
+                        var priceChanged = excelIsTimePrice != stock.IsTimePrice
+                            || (!excelIsTimePrice && (currentPrice == null || currentPrice.Price != row.Price));
+                        if (priceChanged)
+                        {
+                            existingValues.Add(stock.IsTimePrice
+                                ? $"{roleName}：時價"
+                                : $"{roleName}／紅利 {row.Bonus}：{(currentPrice == null ? "尚無價格" : $"${currentPrice.Price:N0}")}");
+                            excelValues.Add(excelIsTimePrice
+                                ? $"{roleName}：時價"
+                                : $"{roleName}／紅利 {row.Bonus}：${row.Price:N0}");
+                        }
+                    }
+                }
+                if (HasImportedColumn(row, nameof(row.SuggestPrice))
+                    && stock.Price != row.SuggestPrice)
+                {
+                    existingValues.Add($"建議售價：${stock.Price:N0}");
+                    excelValues.Add($"建議售價：${row.SuggestPrice:N0}");
+                }
+                if (existingValues.Count == 0) continue;
+
+                result.Differences.Add(new ProductImportDifferenceDto
+                {
+                    Code = ProductImportDifferenceCodes.ProductPrice,
+                    Sheet = "商品",
+                    Name = $"Excel 第 {row.SourceRowNumber} 列／ItemNo：{row.ItemNo}／SubItemNo：{row.SubItemNo}",
+                    ExistingValue = string.Join("；", existingValues),
+                    ExcelValue = string.Join("；", excelValues),
+                    Description = "價格不同；未授權時保留資料庫價格，授權後才以 Excel 更新。"
+                });
+            }
+
+            reportProgress?.Invoke(50, "正在檢查目錄分類工作表");
+            var directoryValidation = await ValidateDirectoryImportStructureAsync(
+                fileData.Directories,
+                websiteId,
+                true);
+            result.Errors.AddRange(directoryValidation.Errors);
+            foreach (var titleGroup in GetDirectoryMenuRequests(fileData.Directories)
+                .GroupBy(e => Norm(e.Title)))
+            {
+                var routers = titleGroup
+                    .Select(e => Norm(e.RouterName))
+                    .Distinct()
+                    .ToList();
+                if (routers.Count > 1)
+                {
+                    result.Errors.Add(new ImportMassageItem
+                    {
+                        Name = $"目錄分類：{titleGroup.First().Title}",
+                        Description = $"Excel 內相同選單名稱使用不同 RouterName：{string.Join("、", titleGroup.Select(e => string.IsNullOrWhiteSpace(e.RouterName) ? "(空白)" : e.RouterName).Distinct())}。",
+                        Sheet = "目錄分類",
+                        RowNumbers = fileData.Directories
+                            .Where(row => new[] { row.Level1, row.Level2, row.Level3 }.Any(title => Norm(title) == titleGroup.Key))
+                            .Select(row => row.SourceRowNumber).Distinct().OrderBy(e => e).ToList(),
+                        CanIgnore = true
+                    });
+                }
+            }
+            var menus = await db.WebMenus.AsNoTracking()
+                .Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId)
+                .ToListAsync();
+            result.Summary.MenuExistingCount = GetDirectoryMenuRequests(fileData.Directories)
+                .Count(request => FindMenuByRouterOrTitle(
+                    menus,
+                    request.Title,
+                    request.RouterName,
+                    true) != null);
+            result.Summary.MenuAddedCount = Math.Max(
+                0,
+                result.Summary.MenuCount - result.Summary.MenuExistingCount);
+            result.Summary.ProductAfterCount = result.Summary.ProductBeforeCount + result.Summary.ProductAddedCount;
+            result.Summary.MenuAfterCount = result.Summary.MenuBeforeCount + result.Summary.MenuAddedCount;
+            foreach (var row in fileData.Directories)
+            {
+                var level1 = FindMenuByRouterOrTitle(menus, row.Level1, row.Level1RouterName, true);
+                var level2 = FindMenuByRouterOrTitle(menus, row.Level2, row.Level2RouterName, true);
+                var level3 = FindMenuByRouterOrTitle(menus, row.Level3, row.Level3RouterName, true);
+                if (level1 != null && level2 != null
+                    && level2.FK_TopNodeId != level1.Id)
+                {
+                    var currentParent = menus.FirstOrDefault(e => e.Id == level2.FK_TopNodeId);
+                    result.Differences.Add(new ProductImportDifferenceDto
+                    {
+                        Code = ProductImportDifferenceCodes.MenuParent,
+                        Sheet = "目錄分類",
+                        Name = level2.Title ?? row.Level2 ?? string.Empty,
+                        ExistingValue = currentParent?.Title ?? "無父層",
+                        ExcelValue = level1.Title ?? row.Level1,
+                        Description = "選單父層不同，可保留現有位置或授權依 Excel 搬移。"
+                    });
+                }
+                if (level2 != null && level3 != null
+                    && level3.FK_TopNodeId != level2.Id)
+                {
+                    var currentParent = menus.FirstOrDefault(e => e.Id == level3.FK_TopNodeId);
+                    result.Differences.Add(new ProductImportDifferenceDto
+                    {
+                        Code = ProductImportDifferenceCodes.MenuParent,
+                        Sheet = "目錄分類",
+                        Name = level3.Title ?? row.Level3 ?? string.Empty,
+                        ExistingValue = currentParent?.Title ?? "無父層",
+                        ExcelValue = level2.Title ?? row.Level2 ?? string.Empty,
+                        Description = "選單父層不同，可保留現有位置或授權依 Excel 搬移。"
+                    });
+                }
+            }
+            foreach (var request in GetDirectoryMenuRequests(fileData.Directories))
+            {
+                if (string.IsNullOrWhiteSpace(request.RouterName)) continue;
+                var sameTitle = menus.FirstOrDefault(e => Norm(e.Title) == Norm(request.Title));
+                if (sameTitle != null && Norm(sameTitle.RouterName) != Norm(request.RouterName))
+                {
+                    result.Differences.Add(new ProductImportDifferenceDto
+                    {
+                        Code = ProductImportDifferenceCodes.DuplicateMenuTitle,
+                        Sheet = "目錄分類",
+                        Name = request.Title,
+                        ExistingValue = sameTitle.RouterName,
+                        ExcelValue = request.RouterName,
+                        Description = "選單名稱相同但 RouterName 不同，可沿用既有選單或授權建立同名選單。"
+                    });
+                }
+            }
+
+            var leafRequests = GetLeafDirectoryMenuRequests(fileData.Directories);
+            foreach (var request in leafRequests)
+            {
+                var menu = FindMenuByRouterOrTitle(
+                    menus,
+                    request.Title,
+                    request.RouterName,
+                    useTitleFallback: string.IsNullOrWhiteSpace(request.RouterName));
+                if (menu != null && !string.IsNullOrWhiteSpace(menu.SaveHtml))
+                {
+                    result.Differences.Add(new ProductImportDifferenceDto
+                    {
+                        Code = ProductImportDifferenceCodes.DirectoryPage,
+                        Sheet = "目錄分類",
+                        Name = string.IsNullOrWhiteSpace(request.RouterName)
+                            ? request.Title
+                            : $"{request.Title}（{request.RouterName}）",
+                        ExistingValue = "已有頁面內容",
+                        ExcelValue = "套用本次選擇的版型",
+                        Description = "差異原因：此目錄已經有頁面內容。這不是名稱、RouterName 或父層位置衝突；可保留現有目錄頁，或授權以本次選擇的版型重新產生頁面。"
+                    });
+                }
+            }
+
+            reportProgress?.Invoke(72, "正在檢查技術證照工作表");
+            var productKeys = productRows
+                .Select(e => $"{Norm(e.ItemNo)}|{Norm(e.ProdName)}")
+                .ToHashSet();
+            foreach (var tech in fileData.TechnicalCertificates)
+            {
+                if (!productKeys.Contains($"{Norm(tech.ItemNo)}|{Norm(tech.ProdName)}"))
+                {
+                    result.Errors.Add(new ImportMassageItem
+                    {
+                        Name = $"技術證照：{tech.Title}",
+                        Description = $"找不到對應商品 ItemNo「{tech.ItemNo}」／商品名稱「{tech.ProdName}」。",
+                        Sheet = "技術證照",
+                        RowNumbers = new List<int> { tech.SourceRowNumber },
+                        CanIgnore = true
+                    });
+                }
+            }
+            foreach (var techGroup in fileData.TechnicalCertificates
+                .Where(e => !string.IsNullOrWhiteSpace(e.Title))
+                .GroupBy(e => Norm(e.Title)))
+            {
+                var values = techGroup
+                    .GroupBy(e => $"{Norm(e.Description)}|{Norm(e.Image1)}|{e.Ser_no}")
+                    .ToList();
+                if (values.Count > 1)
+                {
+                    result.Errors.Add(new ImportMassageItem
+                    {
+                        Name = $"技術證照：{techGroup.First().Title}",
+                        Description = "Excel 內相同證照名稱對應到不同圖片、說明或排序。",
+                        Sheet = "技術證照",
+                        RowNumbers = techGroup.Select(e => e.SourceRowNumber).Distinct().OrderBy(e => e).ToList(),
+                        CanIgnore = true
+                    });
+                }
+            }
+            var techTitles = fileData.TechnicalCertificates
+                .Select(e => e.Title)
+                .Where(e => !string.IsNullOrWhiteSpace(e))
+                .Distinct()
+                .ToList();
+            var currentTechs = await db.TechnicalCertificates.AsNoTracking()
+                .Where(e => !e.IsDeleted
+                    && e.FK_WebsiteId == websiteId
+                    && techTitles.Contains(e.Title))
+                .ToListAsync();
+            foreach (var tech in fileData.TechnicalCertificates.GroupBy(e => Norm(e.Title)).Select(e => e.First()))
+            {
+                var current = currentTechs.FirstOrDefault(e => Norm(e.Title) == Norm(tech.Title));
+                if (current == null) continue;
+                if (Norm(current.Description) != Norm(tech.Description)
+                    || current.Ser_no != tech.Ser_no
+                    || (!string.IsNullOrWhiteSpace(tech.Image1) && Norm(current.Img) != Norm(tech.Image1)))
+                {
+                    result.Differences.Add(new ProductImportDifferenceDto
+                    {
+                        Code = ProductImportDifferenceCodes.TechnicalCertificate,
+                        Sheet = "技術證照",
+                        Name = tech.Title,
+                        ExistingValue = $"說明：{current.Description}／排序：{current.Ser_no}",
+                        ExcelValue = $"說明：{tech.Description}／排序：{tech.Ser_no}",
+                        Description = "證照內容不同，可保留現有內容或授權以 Excel 覆蓋。"
+                    });
+                }
+            }
+
+            result.Errors = result.Errors
+                .GroupBy(e => $"{e.Name}|{e.Description}")
+                .Select(group =>
+                {
+                    var first = group.First();
+                    first.RowNumbers = group
+                        .SelectMany(e => e.RowNumbers ?? new List<int>())
+                        .Distinct()
+                        .OrderBy(e => e)
+                        .ToList();
+                    first.ComparisonValues = group
+                        .SelectMany(e => e.ComparisonValues ?? new List<ImportMassageComparisonValue>())
+                        .GroupBy(e => new { e.RowNumber, e.Label, e.Value })
+                        .Select(e => e.First())
+                        .OrderBy(e => e.RowNumber)
+                        .ToList();
+                    first.CanIgnore = group.All(e => e.CanIgnore);
+                    return first;
+                })
+                .ToList();
+            result.Differences = result.Differences
+                .GroupBy(e => $"{e.Code}|{e.Name}|{e.ExistingValue}|{e.ExcelValue}")
+                .Select(e => e.First())
+                .ToList();
+            reportProgress?.Invoke(95, "商品匯入檔掃描完成");
+            return result;
+        }
+
         private async Task<ImportOutputDto> ImportProductData(
             ProdImportAllDto fileData,
             long templateId,
             bool overwriteExisting,
             bool allowDuplicateMenuTitles,
+            bool overwriteExistingMenuParents,
+            bool overwriteExistingProductNames,
+            bool overwriteExistingSpecs,
+            bool overwriteExistingPrices,
+            bool overwriteExistingTechnicalCertificates,
             Action<int, string>? reportProgress)
         {
             ImportOutputDto response = new ImportOutputDto { ErrorList = new List<ImportMassageItem>() };
             bool productImportFailed = false;
             long WebsiteID = await loginUserData.GetWebsiteId();
+            response.Summary.DetectedUpdateScopes = GetDetectedProductImportScopes(fileData);
+            response.Summary.ProductBeforeCount = await db.Prods.AsNoTracking()
+                .CountAsync(e => !e.IsDeleted && e.FK_WebsiteId == WebsiteID);
+            response.Summary.MenuBeforeCount = await db.WebMenus.AsNoTracking()
+                .CountAsync(e => !e.IsDeleted && e.FK_WebsiteId == WebsiteID);
+            response.Summary.ProductRowCount = fileData.Products.Count(e => !string.IsNullOrWhiteSpace(e.ProdName));
+            response.Summary.DirectoryRowCount = fileData.Directories.Count;
             if (fileData.Directories.Any())
             {
                 var directoryValidation = await ValidateDirectoryImportStructureAsync(
@@ -2487,11 +3066,14 @@ namespace EtheriT.Coker.Application.Product
                     .Where((_, index) => !directoryValidation.InvalidRowIndexes.Contains(index))
                     .ToList();
             }
+            response.Summary.DirectoryRowCount = fileData.Directories.Count;
+            response.Summary.MenuCount = CountDirectoryMenuRequests(fileData.Directories);
             var importTemplate = await GetProductImportTemplate(templateId, WebsiteID);
             reportProgress?.Invoke(15, "正在驗證商品與會員價格資料");
             if (fileData.Products.Any())
             {
                 List<ProductImportDto> allData = fileData.Products.FindAll(e => !string.IsNullOrEmpty(e.ProdName));
+                response.ErrorList.AddRange(ValidateProductImportConflicts(allData));
                 var frontRoles = await db.Roles
                     .AsNoTracking()
                     .Where(e => e.FK_WebsiteId == WebsiteID && e.Type == RoleTypeEnum.前台 && !e.IsDeleted)
@@ -2553,10 +3135,23 @@ namespace EtheriT.Coker.Application.Product
                     else dto = preProds;
                     if (dto != null && dto.stocks != null) dto.stocks.Add(mapper.Map<ProductStockDto>(el));
                 }
+                response.Summary.ProductCount = prods.Count;
+                response.Summary.ProductAddedCount = prods.Count(e => e.Id == 0);
+                response.Summary.ProductUpdatedCount = prods.Count(e => e.Id != 0);
                 try
                 {
                     reportProgress?.Invoke(30, "正在匯入商品、規格與價格");
-                    await importProds(prods, response.ErrorList, reportProgress);
+                    var productCounts = await importProds(
+                        prods,
+                        response.ErrorList,
+                        overwriteExistingProductNames,
+                        overwriteExistingSpecs,
+                        overwriteExistingPrices,
+                        overwriteExistingTechnicalCertificates,
+                        fileData.TechnicalCertificates.Count > 0,
+                        reportProgress);
+                    response.Summary.ProductAddedCount = productCounts.AddedCount;
+                    response.Summary.ProductUpdatedCount = productCounts.UpdatedCount;
                     if (prods.Count > 0)
                     {
                         // 商品本身或商品標籤異動都會改變目錄可顯示的商品集合。
@@ -2580,13 +3175,252 @@ namespace EtheriT.Coker.Application.Product
                     fileData.Directories,
                     importTemplate,
                     overwriteExisting,
-                    allowDuplicateMenuTitles);
+                    allowDuplicateMenuTitles,
+                    overwriteExistingMenuParents);
                 if (!productImportFailed)
                     response.Success = true;
             }
 
+            response.Summary.ProductAfterCount = await db.Prods.AsNoTracking()
+                .CountAsync(e => !e.IsDeleted && e.FK_WebsiteId == WebsiteID);
+            response.Summary.MenuAfterCount = await db.WebMenus.AsNoTracking()
+                .CountAsync(e => !e.IsDeleted && e.FK_WebsiteId == WebsiteID);
+            response.Summary.MenuAddedCount = Math.Max(
+                0,
+                response.Summary.MenuAfterCount - response.Summary.MenuBeforeCount);
+            response.Summary.MenuExistingCount = Math.Max(
+                0,
+                response.Summary.MenuCount - response.Summary.MenuAddedCount);
             reportProgress?.Invoke(98, "商品匯入處理完成");
             return response;
+        }
+
+        private static List<string> GetDetectedProductImportScopes(ProdImportAllDto fileData)
+        {
+            var columns = fileData.Products
+                .SelectMany(e => e.ImportedColumns)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var scopes = new List<string>();
+
+            bool HasAny(params string[] names) => names.Any(columns.Contains);
+
+            if (HasAny(
+                nameof(ProductImportDto.ItemNo), nameof(ProductImportDto.ProdName),
+                nameof(ProductImportDto.Status), nameof(ProductImportDto.Introduction),
+                nameof(ProductImportDto.Description), nameof(ProductImportDto.SaveHtml),
+                nameof(ProductImportDto.Html), nameof(ProductImportDto.SaveCss),
+                nameof(ProductImportDto.StartTime), nameof(ProductImportDto.EndTime),
+                nameof(ProductImportDto.Visible), nameof(ProductImportDto.OnShelf),
+                nameof(ProductImportDto.Tag1), nameof(ProductImportDto.Tag2),
+                nameof(ProductImportDto.Tag3), nameof(ProductImportDto.Tag4),
+                nameof(ProductImportDto.Tag5), nameof(ProductImportDto.Tag6)))
+                scopes.Add("商品基本資料");
+
+            if (HasAny(
+                nameof(ProductImportDto.SubItemNo), nameof(ProductImportDto.Spec1Name),
+                nameof(ProductImportDto.Spec1), nameof(ProductImportDto.Spec2Name),
+                nameof(ProductImportDto.Spec2), nameof(ProductImportDto.SpecDescription)))
+                scopes.Add("規格");
+
+            if (HasAny(
+                nameof(ProductImportDto.Stock), nameof(ProductImportDto.Min_Qty),
+                nameof(ProductImportDto.Alert_Qty)))
+                scopes.Add("庫存");
+
+            if (HasAny(
+                nameof(ProductImportDto.RoleName), nameof(ProductImportDto.Price),
+                nameof(ProductImportDto.Bonus), nameof(ProductImportDto.SuggestPrice)))
+                scopes.Add("價格");
+
+            if (fileData.Directories.Count > 0)
+                scopes.Add("目錄／選單");
+            if (fileData.TechnicalCertificates.Count > 0)
+                scopes.Add("技術證照");
+
+            return scopes;
+        }
+
+        private static List<ImportMassageItem> ValidateProductImportConflicts(
+            List<ProductImportDto> products)
+        {
+            var warnings = new List<ImportMassageItem>();
+            var itemNoGroups = products
+                .Where(e => !string.IsNullOrWhiteSpace(e.ItemNo))
+                .GroupBy(e => Norm(e.ItemNo));
+
+            foreach (var group in itemNoGroups)
+            {
+                var names = group
+                    .Select(e => e.ProdName)
+                    .Where(e => !string.IsNullOrWhiteSpace(e))
+                    .GroupBy(Norm)
+                    .Select(e => e.First())
+                    .ToList();
+                var itemNo = group.First().ItemNo;
+                if (names.Count > 1)
+                {
+                    var importDetails = group
+                        .Select(e => $"匯入商品名稱「{e.ProdName}」")
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                    warnings.Add(new ImportMassageItem
+                    {
+                        Name = $"商品衝突－ItemNo：{itemNo}",
+                        Description = $"相同 ItemNo 對應到不同商品名稱：{string.Join("；", importDetails)}。請確認 ItemNo 或商品名稱是否正確。",
+                        Sheet = "商品",
+                        RowNumbers = group.Select(e => e.SourceRowNumber).Distinct().OrderBy(e => e).ToList(),
+                        ComparisonValues = group
+                            .GroupBy(e => new { e.SourceRowNumber, e.ProdName })
+                            .Select(e => new ImportMassageComparisonValue
+                            {
+                                RowNumber = e.Key.SourceRowNumber,
+                                Label = "商品名稱",
+                                Value = e.Key.ProdName ?? string.Empty
+                            })
+                            .OrderBy(e => e.RowNumber)
+                            .ToList(),
+                        CanIgnore = true
+                    });
+                }
+
+                var subItemGroups = group
+                    .Where(e => !string.IsNullOrWhiteSpace(e.SubItemNo))
+                    .GroupBy(e => Norm(e.SubItemNo));
+                foreach (var subItemGroup in subItemGroups)
+                {
+                    var specs = subItemGroup
+                        .GroupBy(ProductImportSpecKey)
+                        .Select(e => DescribeProductImportSpec(e.First()))
+                        .ToList();
+                    if (specs.Count <= 1)
+                        continue;
+
+                    warnings.Add(new ImportMassageItem
+                    {
+                        Name = $"規格編號衝突－ItemNo：{itemNo}／SubItemNo：{subItemGroup.First().SubItemNo}",
+                        Description = $"相同 SubItemNo 對應到不同規格：{string.Join("；", specs)}。請確認規格內容或 SubItemNo 是否正確。",
+                        Sheet = "商品",
+                        RowNumbers = subItemGroup.Select(e => e.SourceRowNumber).Distinct().OrderBy(e => e).ToList(),
+                        ComparisonValues = subItemGroup
+                            .Select(e => new ImportMassageComparisonValue
+                            {
+                                RowNumber = e.SourceRowNumber,
+                                Label = "規格",
+                                Value = DescribeProductImportSpec(e)
+                            })
+                            .OrderBy(e => e.RowNumber)
+                            .ToList(),
+                        CanIgnore = true
+                    });
+                }
+
+                var duplicateSpecs = group
+                    .GroupBy(ProductImportSpecKey)
+                    .Select(specGroup => new
+                    {
+                        Rows = specGroup,
+                        DuplicatePriceKeys = specGroup
+                            .GroupBy(ProductImportPriceKey)
+                            .Where(priceGroup => priceGroup.Count() > 1)
+                            .ToList()
+                    })
+                    .Where(e => e.DuplicatePriceKeys.Count > 0);
+                foreach (var duplicateSpec in duplicateSpecs)
+                {
+                    var first = duplicateSpec.Rows.First();
+                    var duplicateCount = duplicateSpec.DuplicatePriceKeys.Sum(e => e.Count() - 1);
+                    warnings.Add(new ImportMassageItem
+                    {
+                        Name = $"規格重複－ItemNo：{itemNo}",
+                        Description = $"規格「{DescribeProductImportSpec(first)}」有 {duplicateCount} 筆重複資料（相同會員身分與紅利條件）。請保留一筆或確認價格資料是否正確。",
+                        Sheet = "商品",
+                        RowNumbers = duplicateSpec.DuplicatePriceKeys
+                            .SelectMany(e => e.Select(row => row.SourceRowNumber))
+                            .Distinct().OrderBy(e => e).ToList(),
+                        CanIgnore = true
+                    });
+                }
+            }
+
+            return warnings;
+        }
+
+        private static string ProductImportSpecKey(ProductImportDto product)
+            => string.Join("|", new[]
+            {
+                Norm(product.Spec1Name),
+                Norm(product.Spec1),
+                Norm(product.Spec2Name),
+                Norm(product.Spec2)
+            });
+
+        private static string ProductImportPriceKey(ProductImportDto product)
+            => $"{Norm(product.RoleName)}|{product.Bonus}";
+
+        private static string DescribeProductImportSpec(ProductImportDto product)
+        {
+            var specs = new[]
+            {
+                (Name: product.Spec1Name, Value: product.Spec1),
+                (Name: product.Spec2Name, Value: product.Spec2)
+            }
+            .Where(e => !string.IsNullOrWhiteSpace(e.Name) || !string.IsNullOrWhiteSpace(e.Value))
+            .Select(e => string.IsNullOrWhiteSpace(e.Name)
+                ? (e.Value ?? string.Empty)
+                : $"{e.Name}：{e.Value}")
+            .ToList();
+
+            return specs.Count == 0 ? "無規格" : string.Join("／", specs);
+        }
+
+        private static int CountDirectoryMenuRequests(List<DirectoryImportDto> directories)
+            => GetDirectoryMenuRequests(directories).Count;
+
+        private static List<(string Title, string RouterName)> GetDirectoryMenuRequests(
+            List<DirectoryImportDto> directories)
+        {
+            var requests = new Dictionary<string, (string Title, string RouterName)>();
+
+            void Add(string? title, string? routerName)
+            {
+                if (string.IsNullOrWhiteSpace(title))
+                    return;
+
+                var key = string.IsNullOrWhiteSpace(routerName)
+                    ? $"title:{Norm(title)}"
+                    : $"router:{Norm(routerName)}";
+                requests[key] = (title.Trim(), (routerName ?? string.Empty).Trim());
+            }
+
+            foreach (var directory in directories)
+            {
+                Add(directory.Level1, directory.Level1RouterName);
+                Add(directory.Level2, directory.Level2RouterName);
+                Add(directory.Level3, directory.Level3RouterName);
+            }
+
+            return requests.Values.ToList();
+        }
+
+        private static List<(string Title, string RouterName)> GetLeafDirectoryMenuRequests(
+            List<DirectoryImportDto> directories)
+        {
+            var requests = new Dictionary<string, (string Title, string RouterName)>();
+            foreach (var row in directories)
+            {
+                var title = !string.IsNullOrWhiteSpace(row.Level3)
+                    ? row.Level3
+                    : !string.IsNullOrWhiteSpace(row.Level2) ? row.Level2 : row.Level1;
+                var routerName = !string.IsNullOrWhiteSpace(row.Level3)
+                    ? row.Level3RouterName
+                    : !string.IsNullOrWhiteSpace(row.Level2) ? row.Level2RouterName : row.Level1RouterName;
+                if (string.IsNullOrWhiteSpace(title)) continue;
+                var key = string.IsNullOrWhiteSpace(routerName)
+                    ? $"title:{Norm(title)}"
+                    : $"router:{Norm(routerName)}";
+                requests[key] = (title.Trim(), (routerName ?? string.Empty).Trim());
+            }
+            return requests.Values.ToList();
         }
 
         private async Task<(List<ImportMassageItem> Errors, HashSet<int> InvalidRowIndexes)> ValidateDirectoryImportStructureAsync(
@@ -2638,7 +3472,12 @@ namespace EtheriT.Coker.Application.Product
 
                     Description = rowIndex >= 0
                     ? $"{message} 這一列的目錄尚未建立。"
-                    : message
+                    : message,
+                    Sheet = "目錄分類",
+                    RowNumbers = rowIndex >= 0
+                        ? new List<int> { excelRowNumber }
+                        : new List<int>(),
+                    CanIgnore = rowIndex >= 0
                 });
             }
 
@@ -2915,25 +3754,68 @@ namespace EtheriT.Coker.Application.Product
 
             return template;
         }
-        private async Task importProds(
+        private async Task<(int AddedCount, int UpdatedCount)> importProds(
             List<ProductImportDto> prods,
             List<ImportMassageItem> erroes,
+            bool overwriteExistingProductNames,
+            bool overwriteExistingSpecs,
+            bool overwriteExistingPrices,
+            bool overwriteExistingTechnicalCertificates,
+            bool hasTechnicalCertificateRows,
             Action<int, string>? reportProgress)
         {
             reportProgress?.Invoke(35, "正在寫入商品、規格與價格");
-            await InsertOrUpdateProd(prods, erroes);
-            reportProgress?.Invoke(55, "正在整理商品圖片與附件");
-            await ImportProdMediaLinks(prods, erroes);
-            reportProgress?.Invoke(68, "正在整理商品標籤");
-            await ImportProdTags(prods, erroes);
-            reportProgress?.Invoke(78, "正在整理商品技術證照");
-            await importTechs(prods, erroes);
+            var counts = await InsertOrUpdateProd(
+                prods,
+                erroes,
+                overwriteExistingProductNames,
+                overwriteExistingSpecs,
+                overwriteExistingPrices);
+            var hasMediaColumns = HasAnyImportedProductColumn(
+                prods,
+                nameof(ProductImportDto.Image1), nameof(ProductImportDto.Image2),
+                nameof(ProductImportDto.Image3), nameof(ProductImportDto.Image4),
+                nameof(ProductImportDto.Image5), nameof(ProductImportDto.Image6),
+                nameof(ProductImportDto.Image7), nameof(ProductImportDto.File1),
+                nameof(ProductImportDto.File2), nameof(ProductImportDto.File3),
+                nameof(ProductImportDto.File4), nameof(ProductImportDto.File5),
+                nameof(ProductImportDto.File6), nameof(ProductImportDto.File7));
+            reportProgress?.Invoke(55, hasMediaColumns
+                ? "正在整理商品圖片與附件"
+                : "Excel 未包含圖片與附件，已略過");
+            if (hasMediaColumns)
+                await ImportProdMediaLinks(prods, erroes);
+
+            var hasTagColumns = HasAnyImportedProductColumn(
+                prods,
+                nameof(ProductImportDto.Tag1), nameof(ProductImportDto.Tag2),
+                nameof(ProductImportDto.Tag3), nameof(ProductImportDto.Tag4),
+                nameof(ProductImportDto.Tag5), nameof(ProductImportDto.Tag6));
+            reportProgress?.Invoke(68, hasTagColumns
+                ? "正在整理商品標籤"
+                : "Excel 未包含商品標籤，已略過");
+            if (hasTagColumns)
+                await ImportProdTags(prods, erroes);
+
+            reportProgress?.Invoke(78, hasTechnicalCertificateRows
+                ? "正在整理商品技術證照"
+                : "Excel 未包含技術證照資料，已略過");
+            if (hasTechnicalCertificateRows)
+                await importTechs(prods, erroes, overwriteExistingTechnicalCertificates);
+            return counts;
         }
+
+        private static bool HasAnyImportedProductColumn(
+            IEnumerable<ProductImportDto> products,
+            params string[] columnNames)
+            => products.Any(product => product.ImportedColumns.Count == 0
+                || columnNames.Any(product.ImportedColumns.Contains));
         private async Task imporDirectories(
             List<DirectoryImportDto> directories,
             Html_Content importTemplate,
             bool overwriteExisting,
-            bool allowDuplicateMenuTitles)
+            bool allowDuplicateMenuTitles,
+            bool overwriteExistingMenuParents)
         {
             try
             {
@@ -2967,6 +3849,7 @@ namespace EtheriT.Coker.Application.Product
                 var existingMenus = await db.WebMenus
                     .Where(e => !e.IsDeleted && e.FK_WebsiteId == WebsiteID)
                     .ToListAsync();
+                var existingMenuIds = existingMenus.Select(e => e.Id).ToHashSet();
                 var missingMenuRequests = menuRequests
                     .Where(e => FindMenuByRouterOrTitle(
                         existingMenus,
@@ -3036,8 +3919,11 @@ namespace EtheriT.Coker.Application.Product
                         useTitleFallback: !allowDuplicateMenuTitles);
                     if (menu2 != null)
                     {
-                        menu2.FK_TopNodeId = menu.Id;
-                        menu2.FK_RootNodeId = menu.Id;
+                        if (overwriteExistingMenuParents || !existingMenuIds.Contains(menu2.Id))
+                        {
+                            menu2.FK_TopNodeId = menu.Id;
+                            menu2.FK_RootNodeId = menu.Id;
+                        }
                         DirectoryArrangeImportDto? item2 = item.Child.Find(e =>
                             !string.IsNullOrEmpty(directory.Level2RouterName)
                                 ? Norm(e.RouterName) == Norm(directory.Level2RouterName)
@@ -3065,8 +3951,11 @@ namespace EtheriT.Coker.Application.Product
                                     useTitleFallback: !allowDuplicateMenuTitles);
                                 if (menu3 != null)
                                 {
-                                    menu3.FK_TopNodeId = menu2.Id;
-                                    menu3.FK_RootNodeId = menu.Id;
+                                    if (overwriteExistingMenuParents || !existingMenuIds.Contains(menu3.Id))
+                                    {
+                                        menu3.FK_TopNodeId = menu2.Id;
+                                        menu3.FK_RootNodeId = menu.Id;
+                                    }
                                     DirectoryArrangeImportDto? item3 = item2.Child.Find(e =>
                                         !string.IsNullOrEmpty(directory.Level3RouterName)
                                             ? Norm(e.RouterName) == Norm(directory.Level3RouterName)
@@ -3100,8 +3989,11 @@ namespace EtheriT.Coker.Application.Product
                                     useTitleFallback: !allowDuplicateMenuTitles);
                                 if (menu3 != null)
                                 {
-                                    menu3.FK_TopNodeId = menu2.Id;
-                                    menu3.FK_RootNodeId = menu.Id;
+                                    if (overwriteExistingMenuParents || !existingMenuIds.Contains(menu3.Id))
+                                    {
+                                        menu3.FK_TopNodeId = menu2.Id;
+                                        menu3.FK_RootNodeId = menu.Id;
+                                    }
                                     DirectoryArrangeImportDto? item3 = item2.Child.Find(e =>
                                         !string.IsNullOrEmpty(directory.Level3RouterName)
                                             ? Norm(e.RouterName) == Norm(directory.Level3RouterName)
@@ -3490,13 +4382,27 @@ namespace EtheriT.Coker.Application.Product
             db.Tags.AddRange(newTags);
             db.SaveChanges();
         }
-        private async Task importTechs(List<ProductImportDto> prods, List<ImportMassageItem> errors)
+        private async Task importTechs(
+            List<ProductImportDto> prods,
+            List<ImportMassageItem> errors,
+            bool overwriteExistingTechnicalCertificates)
         {
             List<TechCertDto> allTech = new List<TechCertDto>();
             for (int i = 0; i < prods.Count; i++)
             {
                 var prod = prods[i];
                 if (prod.Techs != null) allTech.AddRange(prod.Techs);
+            }
+            if (!overwriteExistingTechnicalCertificates && allTech.Count > 0)
+            {
+                var existingTitles = await db.TechnicalCertificates.AsNoTracking()
+                    .Where(e => !e.IsDeleted)
+                    .Select(e => e.Title)
+                    .ToListAsync();
+                var existingTitleKeys = existingTitles.Select(Norm).ToHashSet();
+                allTech = allTech
+                    .Where(e => !existingTitleKeys.Contains(Norm(e.Title)))
+                    .ToList();
             }
             await technicalCertificateAppService.AddAll(allTech);
             await importProdTech(prods, errors);
@@ -3596,7 +4502,8 @@ namespace EtheriT.Coker.Application.Product
             for (int i = 0; i < prods.Count; i++)
             {
                 var item = prods[i];
-                var el = allProd.Find(e => Norm(e.Title) == Norm(item.ProdName) && Norm(e.ItemNo) == Norm(item.ItemNo));
+                var el = allProd.Find(e => item.Id != 0 && e.Id == item.Id)
+                    ?? allProd.Find(e => Norm(e.Title) == Norm(item.ProdName) && Norm(e.ItemNo) == Norm(item.ItemNo));
                 if (el == null)
                 {
                     errors.Add(new ImportMassageItem
@@ -3649,7 +4556,10 @@ namespace EtheriT.Coker.Application.Product
             var fileProds = db.Prods.Where(e => !e.IsDeleted).Where(e => ProdStr.Contains(e.Title)).ToList();
             foreach (var prod in prods)
             {
-                var myProd = fileProds.Where(e => e.Title == prod.ProdName && e.ItemNo == prod.ItemNo).FirstOrDefault();
+                var myProd = prod.Id != 0
+                    ? db.Prods.Local.FirstOrDefault(e => e.Id == prod.Id)
+                        ?? db.Prods.FirstOrDefault(e => e.Id == prod.Id)
+                    : fileProds.FirstOrDefault(e => e.Title == prod.ProdName && e.ItemNo == prod.ItemNo);
                 if (myProd != null)
                 {
                     List<string?> fileName =
@@ -3679,7 +4589,10 @@ namespace EtheriT.Coker.Application.Product
             var fileProds = db.Prods.Where(e => !e.IsDeleted).Where(e => ProdStr.Contains(e.Title)).ToList();
             foreach (var prod in prods)
             {
-                var myProd = fileProds.Where(e => e.Title == prod.ProdName && e.ItemNo == prod.ItemNo).FirstOrDefault();
+                var myProd = prod.Id != 0
+                    ? db.Prods.Local.FirstOrDefault(e => e.Id == prod.Id)
+                        ?? db.Prods.FirstOrDefault(e => e.Id == prod.Id)
+                    : fileProds.FirstOrDefault(e => e.Title == prod.ProdName && e.ItemNo == prod.ItemNo);
                 if (myProd != null)
                 {
                     string?[] fileLinks = { prod.File1, prod.File2, prod.File3, prod.File4, prod.File5, prod.File6, prod.File7 };
@@ -3702,15 +4615,21 @@ namespace EtheriT.Coker.Application.Product
             }
             await fileUploadAppService.uploadImageLink(importDtos);
         }
-        private async Task InsertOrUpdateProd(List<ProductImportDto> prods, List<ImportMassageItem> errors)
+        private async Task<(int AddedCount, int UpdatedCount)> InsertOrUpdateProd(
+            List<ProductImportDto> prods,
+            List<ImportMassageItem> errors,
+            bool overwriteExistingProductNames,
+            bool overwriteExistingSpecs,
+            bool overwriteExistingPrices)
         {
             List<ProductImportDto> AddProds = prods.FindAll(e => e.Id == 0);
             List<ProductImportDto> Prods = prods.FindAll(e => e.Id != 0);
-            await InsetProdSpecTypes(prods);
-            await InsetProdSpec(prods);
+            await InsetProdSpecTypes(prods, overwriteExistingSpecs);
+            await InsetProdSpec(prods, overwriteExistingSpecs);
 
-            var products = await UpsertProducts(prods, errors);
-            await UpsertStocksAndPricesBatchAsync(products, prods, errors);
+            var upsertResult = await UpsertProducts(prods, errors, overwriteExistingProductNames);
+            var products = upsertResult.Products;
+            await UpsertStocksAndPricesBatchAsync(products, prods, errors, overwriteExistingSpecs, overwriteExistingPrices);
             await db.SaveChangesAsync();
 
             foreach (var product in products)
@@ -3739,12 +4658,18 @@ namespace EtheriT.Coker.Application.Product
             }
 
             await db.SaveChangesAsync();
+            return (upsertResult.AddedCount, upsertResult.UpdatedCount);
         }
-        private async Task<List<Prod>> UpsertProducts(List<ProductImportDto> dtos, List<ImportMassageItem> errors)
+        private async Task<(List<Prod> Products, int AddedCount, int UpdatedCount)> UpsertProducts(
+            List<ProductImportDto> dtos,
+            List<ImportMassageItem> errors,
+            bool overwriteExistingProductNames)
         {
             long userId = await loginUserData.GetUserId();
             string orgName = await loginUserData.GetWebsiteOrgName();
             var results = new List<Prod>();
+            var addedCount = 0;
+            var updatedCount = 0;
 
             foreach (var dto in dtos)
             {
@@ -3779,7 +4704,9 @@ namespace EtheriT.Coker.Application.Product
                         var originalCss = prod.Css;
                         var originalSaveCss = prod.SaveCss;
                         mapper.Map(dto, prod);
-                        if (!HasImportedColumn(dto, nameof(dto.ProdName))) prod.Title = originalTitle;
+                        if (!overwriteExistingProductNames
+                            || !HasImportedColumn(dto, nameof(dto.ProdName)))
+                            prod.Title = originalTitle;
                         if (!HasImportedColumn(dto, nameof(dto.ItemNo))) prod.ItemNo = originalItemNo;
                         if (!HasImportedColumn(dto, nameof(dto.Description))) prod.Description = originalDescription;
                         if (!HasImportedColumn(dto, nameof(dto.Introduction))) prod.Introduction = originalIntroduction;
@@ -3819,6 +4746,10 @@ namespace EtheriT.Coker.Application.Product
                     }
 
                     results.Add(prod);
+                    if (dto.Id == 0)
+                        addedCount++;
+                    else
+                        updatedCount++;
                 }
                 catch (Exception ex)
                 {
@@ -3826,7 +4757,7 @@ namespace EtheriT.Coker.Application.Product
                 }
             }
 
-            return results;
+            return (results, addedCount, updatedCount);
         }
 
         private static void ApplyProductDisplaySettings(
@@ -4002,7 +4933,9 @@ namespace EtheriT.Coker.Application.Product
             return (sanitized.Html, sanitized.Css);
         }
 
-        private async Task InsetProdSpecTypes(List<ProductImportDto> prods)
+        private async Task InsetProdSpecTypes(
+            List<ProductImportDto> prods,
+            bool overwriteExistingSpecs)
         {
             if (prods.Count == 0) return;
             long userId = await loginUserData.GetUserId();
@@ -4011,14 +4944,28 @@ namespace EtheriT.Coker.Application.Product
                                     .Where(e => !e.IsDeleted)
                                     .Where(e => e.FK_WebsiteId == prods[0].FK_WebsiteId)
                                     .Select(e => e.Type).ToList();
+            var existingProductIds = prods.Where(e => e.Id != 0).Select(e => e.Id).Distinct().ToList();
+            var existingSubItemKeys = overwriteExistingSpecs
+                ? new HashSet<string>()
+                : (await db.Prod_Stocks.AsNoTracking()
+                    .Where(e => !e.IsDeleted
+                        && !string.IsNullOrEmpty(e.SubItemNo)
+                        && existingProductIds.Contains(e.FK_Pid))
+                    .Select(e => new { e.FK_Pid, e.SubItemNo })
+                    .ToListAsync())
+                    .Select(e => $"{e.FK_Pid}|{Norm(e.SubItemNo)}")
+                    .ToHashSet();
             List<Prod_Spec_Type> news = new List<Prod_Spec_Type>();
             for (int i = 0; i < prods.Count; i++)
             {
                 var items = prods[i];
                 if (items.stocks != null)
                 {
-                    var Adds1 = items.stocks.FindAll(e => !ProdSpecTitleList.Contains(e.S1_Name ?? "")).Select(e => e.S1_Name).ToList();
-                    var Adds2 = items.stocks.FindAll(e => !ProdSpecTitleList.Contains(e.S2_Name ?? "")).Select(e => e.S2_Name).ToList();
+                    var importableStocks = items.stocks
+                        .Where(e => !existingSubItemKeys.Contains($"{items.Id}|{Norm(e.SubItemNo)}"))
+                        .ToList();
+                    var Adds1 = importableStocks.FindAll(e => !ProdSpecTitleList.Contains(e.S1_Name ?? "")).Select(e => e.S1_Name).ToList();
+                    var Adds2 = importableStocks.FindAll(e => !ProdSpecTitleList.Contains(e.S2_Name ?? "")).Select(e => e.S2_Name).ToList();
                     Adds1.AddRange(Adds2);
 
                     var allAdds = Adds1.GroupBy(o => o ?? "").Select(o => o.Key).ToList();
@@ -4054,7 +5001,9 @@ namespace EtheriT.Coker.Application.Product
             db.Prod_Spec_Types.AddRange(news);
             await db.SaveChangesAsync();
         }
-        private async Task InsetProdSpec(List<ProductImportDto> prods)
+        private async Task InsetProdSpec(
+            List<ProductImportDto> prods,
+            bool overwriteExistingSpecs)
         {
             long userId = await loginUserData.GetUserId();
             long websiteId = await loginUserData.GetWebsiteId();
@@ -4078,10 +5027,23 @@ namespace EtheriT.Coker.Application.Product
                 .ToHashSet();
 
             var requestedSpecs = new List<(string? TypeName, string? Title)>();
+            var existingProductIds = prods.Where(e => e.Id != 0).Select(e => e.Id).Distinct().ToList();
+            var existingSubItemKeys = overwriteExistingSpecs
+                ? new HashSet<string>()
+                : (await db.Prod_Stocks.AsNoTracking()
+                    .Where(e => !e.IsDeleted
+                        && !string.IsNullOrEmpty(e.SubItemNo)
+                        && existingProductIds.Contains(e.FK_Pid))
+                    .Select(e => new { e.FK_Pid, e.SubItemNo })
+                    .ToListAsync())
+                    .Select(e => $"{e.FK_Pid}|{Norm(e.SubItemNo)}")
+                    .ToHashSet();
             foreach (var product in prods)
             {
                 foreach (var stock in product.stocks ?? new List<ProductStockDto>())
                 {
+                    if (existingSubItemKeys.Contains($"{product.Id}|{Norm(stock.SubItemNo)}"))
+                        continue;
                     requestedSpecs.Add((stock.S1_Name, stock.S1_Title));
                     requestedSpecs.Add((stock.S2_Name, stock.S2_Title));
                 }
@@ -4149,7 +5111,9 @@ namespace EtheriT.Coker.Application.Product
         private async Task UpsertStocksAndPricesBatchAsync(
             List<Prod> items,                      // 追蹤中的新/舊商品（未必已 Save）
             List<ProductImportDto> prods,          // 對應的 Excel DTO
-            List<ImportMassageItem> errors)
+            List<ImportMassageItem> errors,
+            bool overwriteExistingSpecs,
+            bool overwriteExistingPrices)
         {
             if (items == null || items.Count == 0) return;
 
@@ -4234,11 +5198,33 @@ namespace EtheriT.Coker.Application.Product
 
                         Prod_Stock? stockEntity = null;
 
-                        // ① 既有商品 → 優先用 (pid,s1,s2) 從 DB 快取找
+                        // ① 有 SubItemNo 時優先視為穩定識別；否則才以規格組合尋找。
                         if (prod.Id != 0)
                         {
                             var key = StockKey(prod.Id, s1, s2);
-                            stockDictByPid.TryGetValue(key, out stockEntity);
+                            if (!string.IsNullOrWhiteSpace(s.SubItemNo))
+                            {
+                                var sameSubItemNo = dbStocks.FirstOrDefault(e =>
+                                    e.FK_Pid == prod.Id
+                                    && Norm(e.SubItemNo) == Norm(s.SubItemNo));
+                                if (sameSubItemNo != null)
+                                {
+                                    if (overwriteExistingSpecs)
+                                    {
+                                        sameSubItemNo.FK_S1id = s1;
+                                        sameSubItemNo.FK_S2id = s2;
+                                        stockEntity = sameSubItemNo;
+                                        stockDictByPid[key] = sameSubItemNo;
+                                    }
+                                    else
+                                    {
+                                        // 未授權變更規格時，沿用該 SubItemNo 目前的既有規格。
+                                        stockEntity = sameSubItemNo;
+                                    }
+                                }
+                            }
+                            if (stockEntity == null)
+                                stockDictByPid.TryGetValue(key, out stockEntity);
                         }
 
                         // ② 追蹤中的本地集合（新商品或剛新建的規格）
@@ -4289,9 +5275,20 @@ namespace EtheriT.Coker.Application.Product
                         var isNewStock = stockEntity.Id == 0;
                         // 詢價（不刪舊價；只標記並把通用價歸零）
                         var hasPrice = HasImportedColumn(dto, nameof(dto.Price));
-                        var isTimePrice = hasPrice ? s.TimePrice || s.Price < 0 : stockEntity.IsTimePrice;
-                        if (hasPrice || isNewStock) stockEntity.IsTimePrice = isTimePrice;
-                        if (HasImportedColumn(dto, nameof(dto.SuggestPrice)) || isNewStock)
+                        var requestedIsTimePrice = hasPrice ? s.TimePrice || s.Price < 0 : stockEntity.IsTimePrice;
+                        if (!isNewStock
+                            && hasPrice
+                            && !overwriteExistingPrices
+                            && requestedIsTimePrice != stockEntity.IsTimePrice)
+                            continue;
+                        var isTimePrice = !isNewStock && !overwriteExistingPrices
+                            ? stockEntity.IsTimePrice
+                            : requestedIsTimePrice;
+                        if ((hasPrice && (isNewStock || overwriteExistingPrices)) || isNewStock)
+                            stockEntity.IsTimePrice = isTimePrice;
+                        if ((HasImportedColumn(dto, nameof(dto.SuggestPrice))
+                                && (isNewStock || overwriteExistingPrices))
+                            || isNewStock)
                             stockEntity.Price = s.SuggestPrice;
 
                         // 詢價就不處理角色價
@@ -4322,15 +5319,19 @@ namespace EtheriT.Coker.Application.Product
                         foreach (var ((roleId, bonusKey), dtoPrice) in roleBonusMap)
                         {
                             Prod_Price? entity = null;
+                            var isNewPrice = false;
 
                             if (stockEntity.Id != 0)
                             {
                                 // ✅ 既有規格：用 (psId, roleId, bonusKey) 查 DB 快取
                                 if (!priceDict.TryGetValue((stockEntity.Id, roleId, bonusKey), out entity))
                                 {
+                                    if (!overwriteExistingPrices)
+                                        continue;
                                     entity = new Prod_Price { FK_PSId = stockEntity.Id, FK_RId = roleId };
                                     db.Prod_Prices.Add(entity);
                                     priceDict[(stockEntity.Id, roleId, bonusKey)] = entity;
+                                    isNewPrice = true;
                                 }
                             }
                             else
@@ -4348,9 +5349,12 @@ namespace EtheriT.Coker.Application.Product
                                     db.Prod_Prices.Add(entity);
                                     // 保險起見把兩邊關聯都維護好（避免某些情況下未自動 fixup）
                                     stockEntity.Prod_Prices.Add(entity);
+                                    isNewPrice = true;
                                 }
                             }
 
+                            if (!isNewPrice && !overwriteExistingPrices)
+                                continue;
                             // 金額可為浮點：若實體欄位是 decimal，這裡轉型；若是 double 就直接指定
                             entity.Price = dtoPrice.Price ?? 0;
                             entity.Bonus = bonusKey;

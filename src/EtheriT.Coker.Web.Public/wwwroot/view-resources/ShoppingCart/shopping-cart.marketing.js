@@ -336,13 +336,10 @@
     }
 
     function getGroupBaseItems(groupId) {
-        if (groupId == null || groupId === '') return getCartBaseItems();
-        var cartIds = $('.purchase_group[data-group-id="' + groupId + '"] .cart-primary-item').map(function () {
-            return Number($(this).data('scId'));
-        }).get();
-        return getCartBaseItems().filter(function (item) {
-            return cartIds.includes(Number(item.Id));
-        });
+        // 「指定商品任選滿件」是整筆訂單的混搭資格，不能依物流群組拆開計算。
+        // 優先採用目前勾選結帳的商品；尚未建立勾選狀態時才退回整台購物車。
+        var selectedItems = getSelectedBaseItems();
+        return selectedItems.length > 0 ? selectedItems : getCartBaseItems();
     }
 
     function getBaseItemAmount(item) {

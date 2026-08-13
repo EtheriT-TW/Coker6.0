@@ -416,7 +416,8 @@
                 }
             }
 
-            if (!controller.options.canShop || !stock) {
+            const stockUnavailable = stock && stock.canPurchase !== true;
+            if (!controller.options.canShop || !stock || stock.timePrice || stockUnavailable) {
                 $root.find(SELECTORS.counter).addClass('d-none');
             } else {
                 $root.find(SELECTORS.counter).removeClass('d-none');
@@ -464,9 +465,7 @@
                 api: controller.options.api,
                 payload: payload,
                 onSuccess: function (result) {
-                    controller.state.selection.decreaseStockAfterAdd();
-                    controller.state.selection.setQuantity(controller.state.selection.getActiveStock()?.minQty || 1);
-                    renderSelectionArea();
+                    controller.load();
                     if (window.ProductAddOnPurchase) window.ProductAddOnPurchase.reset();
 
                     if (typeof controller.options.hooks.afterAddToCart === 'function') {

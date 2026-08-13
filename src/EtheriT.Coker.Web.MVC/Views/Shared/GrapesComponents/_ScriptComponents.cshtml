@@ -1,29 +1,91 @@
 ﻿<!--導入grapesjs-->
+@inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider FileVersionProvider
+@{
+    var grapesScriptPaths = new[]
+    {
+        "~/lib/grapesjs/grapes.min.js",
+        "~/lib/grapesjs/plugin/grapesjs-preset-webpage/index.js",
+        "~/lib/grapesjs/plugin/grapesjs-blocks-basic/index.js",
+        "~/lib/grapesjs/plugin/grapesjs-style-bg/grapesjs-style-bg.min.js",
+        "~/lib/grapesjs/plugin/grapesjs-tabs/grapesjs-tabs.min.js",
+        "~/lib/grapesjs/plugin/grapesjs-blocks-table/grapesjs-blocks-table.min.js",
+        "~/lib/grapesjs/plugin/grapesjs-custom-code/index.js",
+        "~/lib/grapesjs/plugin/grapesjs-tui-image-editor/index.js",
+        "~/lib/grapesjs/plugin/grapesjs-parser-postcss/index.js",
+        "~/lib/grapesjs/plugin/grapesjs-plugin-ckeditor/index.js",
+        "~/lib/grapesjs/plugin/grapesjs-rte-extensions/grapesjs-rte-extensions.min.js",
+        "~/lib/grapesjs/plugin/grapesjs-preset-newsletter/index.js",
+        "~/js/Grapes/locale/tw.min.js",
+        "~/js/Grapes/grapesJs-Coker6-Form.min.js",
+        "~/js/Grapes/grapesjs-Swiper.min.js",
+        "~/js/Grapes/grapesjs-Coker6.min.js",
+        "~/js/Grapes/Index.min.js",
+        "~/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js",
+        "~/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js"
+    };
+    var versionedGrapesScripts = grapesScriptPaths
+        .Select(path => FileVersionProvider.AddFileVersionToPath(Context.Request.PathBase, Url.Content(path)))
+        .ToArray();
+}
 <link rel="stylesheet" href="~/lib/grapesjs/css/grapes.min.css" asp-append-version="true">
 <link rel="stylesheet" href="~/css/Grapes/GrapesOutsiteCss.min.css" asp-append-version="true">
 <link rel="stylesheet" href="~/css/Grapes/GrapesJs-Coker6-Form.min.css" asp-append-version="true">
 <link href="~/lib/grapesjs/plugin/grapesjs-rte-extensions/grapesjs-rte-extensions.min.css" rel="stylesheet" asp-append-version="true">
-<script src="~/lib/grapesjs/grapes.min.js" asp-append-version="true"></script>
-<script src="~/lib/grapesjs/plugin/grapesjs-preset-webpage/index.js" asp-append-version="true"></script>
-<script src="~/lib/grapesjs/plugin/grapesjs-blocks-basic/index.js" asp-append-version="true"></script>
-<script src="~/lib/grapesjs/plugin/grapesjs-style-bg/grapesjs-style-bg.min.js" asp-append-version="true"></script>
-<script src="~/lib/grapesjs/plugin/grapesjs-tabs/grapesjs-tabs.min.js" asp-append-version="true"></script>
-<script src="~/lib/grapesjs/plugin/grapesjs-blocks-table/grapesjs-blocks-table.min.js" asp-append-version="true"></script>
-<script src="~/lib/grapesjs/plugin/grapesjs-custom-code/index.js" asp-append-version="true"></script>
-<script src="~/lib/grapesjs/plugin/grapesjs-tui-image-editor/index.js" asp-append-version="true"></script>
-<script src="~/lib/grapesjs/plugin/grapesjs-parser-postcss/index.js" asp-append-version="true"></script>
-<script src="~/lib/grapesjs/plugin/grapesjs-plugin-ckeditor/index.js" asp-append-version="true"></script>
-<script src="~/lib/grapesjs/plugin/grapesjs-rte-extensions/grapesjs-rte-extensions.min.js" asp-append-version="true"></script>
-<!--<script src="/lib/ckeditor5/ckeditor.js"></script>-->
-<!--<script src="/lib/grapesjs/plugin/grapesjs-plugin-ckeditor5/grapesjs-plugin-ckeditor5.min.js"></script>-->
-<script src="~/lib/grapesjs/plugin/grapesjs-preset-newsletter/index.js" asp-append-version="true"></script>
-<script src="~/js/Grapes/locale/tw.min.js" asp-append-version="true"></script>
-<script src="~/js/Grapes/grapesJs-Coker6-Form.min.js" charset="utf-8" asp-append-version="true"></script>
-<script src="~/js/Grapes/grapesjs-Swiper.min.js" charset="utf-8" asp-append-version="true"></script>
-<script src="~/js/Grapes/grapesjs-Coker6.min.js" charset="utf-8" asp-append-version="true"></script>
-<script src="~/js/Grapes/Index.min.js" asp-append-version="true"></script>
-<script type="text/javascript" src="~/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
-<script type="text/javascript" src="~/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
+<script>
+    window.CokerGrapesReady = (async function () {
+        const sources = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(versionedGrapesScripts));
+
+        function loadScript(source, retry) {
+            return new Promise(function (resolve, reject) {
+                const script = document.createElement("script");
+                const separator = source.indexOf("?") >= 0 ? "&" : "?";
+                let completed = false;
+                const timeoutId = window.setTimeout(function () {
+                    if (completed) return;
+                    completed = true;
+                    script.remove();
+                    reject(new Error("GrapesJS 資源載入逾時：" + source));
+                }, 12000);
+                script.src = retry ? source + separator + "grapesRetry=" + Date.now() : source;
+                script.async = false;
+                script.charset = "utf-8";
+                script.onload = function () {
+                    if (completed) return;
+                    completed = true;
+                    window.clearTimeout(timeoutId);
+                    resolve();
+                };
+                script.onerror = function () {
+                    if (completed) return;
+                    completed = true;
+                    window.clearTimeout(timeoutId);
+                    script.remove();
+                    reject(new Error("GrapesJS 資源載入失敗：" + source));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        for (let index = 0; index < sources.length; index += 1) {
+            const source = sources[index];
+            try {
+                await loadScript(source, false);
+                if (index === 0 && typeof window.grapesjs === "undefined") {
+                    throw new Error("GrapesJS 主程式回應內容無效。");
+                }
+            } catch (firstError) {
+                await loadScript(source, true);
+                if (index === 0 && typeof window.grapesjs === "undefined") {
+                    throw new Error("GrapesJS 主程式重試後仍無法使用。");
+                }
+            }
+        }
+
+        if (typeof window.grapesjs === "undefined") {
+            throw new Error("GrapesJS 主程式載入完成後仍無法使用。");
+        }
+    })();
+</script>
 @{
     await Html.RenderPartialAsync(@"GrapesComponents\_SwiperModal");
     await Html.RenderPartialAsync(@"GrapesComponents\_PopupDirectory");

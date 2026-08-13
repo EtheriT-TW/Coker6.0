@@ -189,6 +189,10 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 		</Content>
+		<Content Include="..\EtheriT.Coker.Application\Resources\ProductExportTemplates\ProductPriceData.xlsx" Link="Resources\ProductExportTemplates\ProductPriceData.xlsx">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
 		<Content Include="wwwroot\js\CokerCore\MenuEditorForm.min.js" />
 		<Content Update="appsettings.Local.json">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>

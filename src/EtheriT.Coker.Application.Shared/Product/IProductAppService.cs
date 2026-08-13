@@ -42,8 +42,11 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ImportOutputDto> ProdReplace(IList<IFormFile> files, long templateId, bool overwriteExisting, bool allowDuplicateMenuTitles);
         public Task<ImportOutputDto> ProdReplace(string filePath, long templateId, bool overwriteExisting, System.Action<int, string>? reportProgress);
         public Task<ImportOutputDto> ProdReplace(string filePath, long templateId, bool overwriteExisting, bool allowDuplicateMenuTitles, System.Action<int, string>? reportProgress);
+        public Task<ImportOutputDto> ProdReplace(string filePath, long templateId, bool overwriteExisting, bool allowDuplicateMenuTitles, bool overwriteExistingMenuParents, bool overwriteExistingProductNames, bool overwriteExistingSpecs, bool overwriteExistingPrices, bool overwriteExistingTechnicalCertificates, List<ProductImportIgnoredRowDto> ignoredRows, System.Action<int, string>? reportProgress);
+        public Task<ProductImportAnalysisDto> AnalyzeProductImport(string filePath, long templateId, List<ProductImportIgnoredRowDto> ignoredRows, System.Action<int, string>? reportProgress);
         public Task<byte[]> ExportProductData();
         public Task<byte[]> ExportProductData(long websiteId, System.Action<int, string>? reportProgress);
+        public Task<byte[]> ExportProductData(long websiteId, string exportVersion, System.Action<int, string>? reportProgress);
         public Task<GetProdContenDto> GetConten(SearchIDDto dto);
         public Task<ResponseMessageDto> ImportConten(ProdSaveContenDto dto);
         public Task<ResponseMessageDto> SaveConten(ProdSaveContenDto dto);

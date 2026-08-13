@@ -1014,6 +1014,11 @@ namespace EtheriT.Coker.Application.Marketing
                             RequiredQuantity = Math.Max(rule.Condition.MinQuantity ?? 1, 1),
                             SelectionQuantityPerQualification = Math.Max(rule.Reward.SelectionQuantityPerQualification, 1),
                             Repeatable = campaign.Repeatable,
+                            ScopeProductIds = rule.ScopeItems
+                                .Where(x => !x.IsDeleted && x.TargetType == MarketingScopeTargetTypeEnum.Product)
+                                .Select(x => x.TargetId)
+                                .Distinct()
+                                .ToList(),
                             RewardItems = items
                         });
                     }

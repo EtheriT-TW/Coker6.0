@@ -26,6 +26,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public int? Min_Qty { get; set; }
         public int? Alert_Qty { get; set; }
         public bool TimePrice { get; set; }
+        /// <summary>共用的規格購買狀態，前台各入口不可再自行重算。</summary>
+        public bool CanPurchase { get; set; }
+        public int? MaxPurchaseQuantity { get; set; }
+        public string? PurchaseUnavailableReason { get; set; }
         public decimal SuggestPrice { get; set; }
         public long TempPSid { get; set; }   // 前端暫存規格識別，存檔後回傳 id 對照用
         public List<FileGetProdDisplayDto> Multimedia { get; set; } = new();   // 規格圖（讀取時帶出）

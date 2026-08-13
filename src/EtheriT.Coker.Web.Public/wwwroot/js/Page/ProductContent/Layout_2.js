@@ -177,11 +177,9 @@
             t: t,
             payload: payload,
             onSuccess: function () {
-                if (!renderContext.noStockManagement) {
-                    stock.stock = Math.max(normalizeNullableInt(stock.stock) - qty, 0);
+                if (window.productContentPage && typeof window.productContentPage.load === 'function') {
+                    window.productContentPage.load();
                 }
-
-                refreshRow($card);
                 if (window.ProductAddOnPurchase) window.ProductAddOnPurchase.reset();
             },
             onAlways: function () { $btn.prop('disabled', false); }

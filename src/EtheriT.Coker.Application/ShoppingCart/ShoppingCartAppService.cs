@@ -14,6 +14,7 @@ using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.Core.Product;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Core.Models;
 using Microsoft.EntityFrameworkCore;
@@ -194,14 +195,11 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                 var prod = await db.Prods.FirstOrDefaultAsync(e => e.Id == proStock.FK_Pid && !e.RemovedFromShelves);
                 if(prod == null) throw new Exception(L.get("ProductUnavailable"));
-                else if(IsCantBuyProdState(prod)) throw new Exception(L.get("ProdEmpty"));
+                else if(!ProductPurchasePolicy.CanPurchaseProduct(prod)) throw new Exception(L.get("ProdEmpty"));
 
                 var skipStock = prod.NoStockManagement;
 
                 var currentStock = proStock.Stock ?? 0;
-                if (currentStock <= 0 && !skipStock)
-                    throw new Exception(L.get("OutOfStock"));
-
                 var specIds = new[] { proStock.FK_S1id, proStock.FK_S2id }
                     .Where(id => id.HasValue && id.Value > 0)
                     .Select(id => id!.Value)
@@ -255,7 +253,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 if (dto.FK_PriceId != null)
                 {
                     prodPrice = await db.Prod_Prices
-                        .FirstOrDefaultAsync(e => e.Id == dto.FK_PriceId);
+                        .FirstOrDefaultAsync(e => e.Id == dto.FK_PriceId && e.FK_PSId == proStock.Id);
 
                     if (prodPrice != null)
                     {
@@ -263,6 +261,10 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         bonus = prodPrice.Bonus ?? 0;
                     }
                 }
+
+                // 最終寫入購物車仍使用與商品介面相同的共用規則驗證，避免繞過前端。
+                if (!ProductPurchasePolicy.CanPurchaseStock(prod, proStock, prodPrice != null))
+                    throw new Exception(L.get("ProductUnavailable"));
 
                 // ===== 紅利檢查：有使用紅利時，必須登入且整個購物車紅利足夠 =====
                 var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
@@ -687,9 +689,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
             }
             return response;
         }
-        private bool IsCantBuyProdState(Prod prod) {
-            return !(prod.Status != ProdStatusEnum.售完 && prod.Status != ProdStatusEnum.停產 && !prod.RemovedFromShelves);
-        }
         public async Task<bool> checkBonusCanUse(Guid uuid, List<OrderDetailAddDto> OrderDetails)
         {
             var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
@@ -1065,9 +1064,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     var temp_output = mapper.Map<ShoppingCartDisplayDto>(shoppingCart);
                     var date_now = DateTime.Now;
 
-                    temp_output.Available = prods.Visible
-                        && !IsCantBuyProdState(prods)
-                        && (prods.permanent || (date_now > prods.StartTime && date_now < prods.EndTime));
+                    temp_output.Available = ProductPurchasePolicy.CanPurchaseProduct(prods, date_now);
                     temp_output.Stock = prod_stocks?.Stock ?? 0;
                     temp_output.NoStockManagement = prods?.NoStockManagement == true;
 

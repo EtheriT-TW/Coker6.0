@@ -62,6 +62,30 @@ namespace EtheriT.Coker.Application.BackgroundJob
             }
         }
 
+        public async Task<(DateTime? CompletionTime, string? Message)> GetLatestSuccessfulProductImportAsync(long websiteId)
+        {
+            await using var db = CreateDb();
+            var auditLog = await db.AuditLogs
+                .AsNoTracking()
+                .Where(e => e.FK_WebsiteId == websiteId
+                    && e.ServiceName == "ProductImport"
+                    && e.MethodName == "Completed")
+                .OrderByDescending(e => e.ExecutionTime)
+                .FirstOrDefaultAsync();
+            if (auditLog != null)
+                return (auditLog.ExecutionTime, auditLog.ReturnValue);
+
+            var task = await db.BackgroundTasks
+                .AsNoTracking()
+                .Where(e => e.FK_WebsiteId == websiteId
+                    && e.Type == BackgroundTaskTypeEnum.ProductImport
+                    && e.Status == BackgroundTaskStatusEnum.Succeeded
+                    && e.CompletionTime.HasValue)
+                .OrderByDescending(e => e.CompletionTime)
+                .FirstOrDefaultAsync();
+            return (task?.CompletionTime, task?.Message);
+        }
+
         public async Task SetHangfireJobIdAsync(long taskId, string jobId)
         {
             await using var db = CreateDb();
@@ -69,6 +93,44 @@ namespace EtheriT.Coker.Application.BackgroundJob
             task.HangfireJobId = jobId;
             task.LastModificationTime = DateTime.Now;
             await db.SaveChangesAsync();
+        }
+
+        public async Task SetAwaitingConfirmationAsync(long taskId, string resultJson)
+        {
+            await using var db = CreateDb();
+            var task = await db.BackgroundTasks.FirstAsync(x => x.Id == taskId);
+            task.Status = BackgroundTaskStatusEnum.AwaitingConfirmation;
+            task.Progress = 100;
+            task.Message = "掃描完成，請確認匯入差異。";
+            task.ResultJson = resultJson;
+            task.ActiveKey = null;
+            task.CompletionTime = null;
+            task.LastModificationTime = DateTime.Now;
+            await db.SaveChangesAsync();
+        }
+
+        public async Task QueueConfirmedImportAsync(long taskId)
+        {
+            await using var db = CreateDb();
+            var task = await db.BackgroundTasks.FirstAsync(x => x.Id == taskId);
+            if (task.Status != BackgroundTaskStatusEnum.AwaitingConfirmation)
+                throw new InvalidOperationException("此商品匯入任務目前不在等待確認狀態。");
+
+            task.Status = BackgroundTaskStatusEnum.Queued;
+            task.Progress = 0;
+            task.Message = "已確認，等待正式匯入。";
+            task.Error = null;
+            task.ResultJson = null;
+            task.ActiveKey = $"product-data:{task.FK_WebsiteId}";
+            task.LastModificationTime = DateTime.Now;
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                throw new BackgroundTaskConflictException("目前有其他商品匯入或匯出任務正在處理，請稍後再確認。");
+            }
         }
 
         public async Task<BackgroundTaskRecord?> GetAsync(long taskId)
@@ -175,6 +237,20 @@ namespace EtheriT.Coker.Application.BackgroundJob
             task.CompletionTime = DateTime.Now;
             task.LastModificationTime = DateTime.Now;
 
+            if (task.Type == BackgroundTaskTypeEnum.ProductImport)
+            {
+                db.AuditLogs.Add(new Core.Models.AuditLog
+                {
+                    FK_WebsiteId = task.FK_WebsiteId,
+                    UserId = task.FK_UserId,
+                    ServiceName = "ProductImport",
+                    MethodName = "Completed",
+                    ExecutionTime = task.CompletionTime.Value,
+                    Parameters = $"BackgroundTaskId={task.Id}",
+                    ReturnValue = message
+                });
+            }
+
             db.Notifications.Add(new UserNotification
             {
                 FK_WebsiteId = task.FK_WebsiteId,
@@ -256,7 +332,9 @@ namespace EtheriT.Coker.Application.BackgroundJob
 
             var tasks = await db.BackgroundTasks
                 .Where(x => x.ExpireTime != null && x.ExpireTime <= now)
-                .Where(x => x.Status == BackgroundTaskStatusEnum.Succeeded || x.Status == BackgroundTaskStatusEnum.Failed)
+                .Where(x => x.Status == BackgroundTaskStatusEnum.Succeeded
+                    || x.Status == BackgroundTaskStatusEnum.Failed
+                    || x.Status == BackgroundTaskStatusEnum.AwaitingConfirmation)
                 .ToListAsync();
             if (tasks.Count == 0)
             {

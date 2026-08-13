@@ -230,6 +230,19 @@
                     self.removeRewardProduct($(this).attr("data-remove-reward"));
                 });
 
+            $("#" + this.formId)
+                .off("keydown.marketingEnter")
+                .on("keydown.marketingEnter", function (event) {
+                    if (event.key !== "Enter" || $(event.target).is("textarea")) return;
+
+                    // Enter in the batch-price field applies the price to reward rows only;
+                    // it must not submit and save the entire marketing campaign.
+                    event.preventDefault();
+                    if (event.target.id === "RewardBatchPriceValue") {
+                        self.applyBatchOfferPrices();
+                    }
+                });
+
             $("#RewardBatchPriceMode")
                 .off("change.marketingBatchPrice")
                 .on("change.marketingBatchPrice", function () { self.updateBatchPriceUI(); });

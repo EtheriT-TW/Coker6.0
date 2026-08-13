@@ -60,7 +60,12 @@ textarea.h300 {
     display: inline-block;
     width: max-content;
     max-width: 100%;
-    max-width: 50cqw;
+    /*
+     * Reserve room for the article metadata on smaller screens. At wider
+     * sizes the title can still use up to half of the workspace; around a
+     * 13-inch laptop it shrinks before DevExtreme hides the tag column.
+     */
+    max-width: clamp(150px, calc(100cqw - 700px), 50cqw);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

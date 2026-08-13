@@ -6,6 +6,7 @@
     const state = {
         campaigns: [],
         selected: new Map(),
+        cartItems: [],
         purchaseQuantity: 1,
         swipers: []
     };
@@ -23,16 +24,28 @@
             : purchaseQuantity >= required ? 1 : 0;
     }
 
+    function qualifyingQuantity(campaign, purchaseQuantity) {
+        const scopeIds = (read(campaign, 'scopeProductIds', 'ScopeProductIds') || []).map(number);
+        const quantityInCart = state.cartItems.reduce((sum, item) => {
+            const productId = number(read(item, 'pId', 'PId'));
+            const isAdditional = read(item, 'isAdditional', 'IsAdditional') === true;
+            return !isAdditional && scopeIds.includes(productId)
+                ? sum + number(read(item, 'quantity', 'Quantity'))
+                : sum;
+        }, 0);
+        return quantityInCart + Math.max(number(purchaseQuantity), 0);
+    }
+
     function campaignLimit(campaign, purchaseQuantity) {
         const perQualification = Math.max(number(read(campaign, 'selectionQuantityPerQualification', 'SelectionQuantityPerQualification')), 1);
-        return qualificationCount(campaign, purchaseQuantity) * perQualification;
+        return qualificationCount(campaign, qualifyingQuantity(campaign, purchaseQuantity)) * perQualification;
     }
 
     function itemLimit(campaign, $card, purchaseQuantity) {
         const configuredLimit = Math.max(number($card.data('maxQuantity')), 1);
         const repeatable = read(campaign, 'repeatable', 'Repeatable') === true;
         return repeatable
-            ? configuredLimit * qualificationCount(campaign, purchaseQuantity)
+            ? configuredLimit * qualificationCount(campaign, qualifyingQuantity(campaign, purchaseQuantity))
             : configuredLimit;
     }
 
@@ -64,6 +77,7 @@
         state.campaigns.forEach(campaign => {
             const campaignId = number(read(campaign, 'campaignId', 'CampaignId'));
             const required = Math.max(number(read(campaign, 'requiredQuantity', 'RequiredQuantity')), 1);
+            const totalQualifyingQuantity = qualifyingQuantity(campaign, state.purchaseQuantity);
             const limit = campaignLimit(campaign, state.purchaseQuantity);
             const selected = selectedForCampaign(campaignId);
             const selectionFull = limit > 0 && selected >= limit;
@@ -71,7 +85,7 @@
             const $rule = $campaign.find('.product-addon__rule');
             $campaign.toggleClass('is-single-choice', limit === 1);
             if (limit > 0) {
-                $rule.text(`已符合資格，可選 ${limit} 件，目前已選 ${selected} 件`)
+                $rule.text(`購物車與本次商品合計 ${totalQualifyingQuantity} 件，可選 ${limit} 件，目前已選 ${selected} 件`)
                     .removeClass('is-waiting').addClass('is-qualified');
             } else {
                 $rule.text(`購買數量達 ${required} 件後，即可選擇優惠商品`)
@@ -259,7 +273,12 @@
                 const campaigns = read(result, 'object', 'Object') || [];
                 if (read(result, 'success', 'Success') !== false && campaigns.length) {
                     state.campaigns = campaigns;
-                    render(campaigns);
+                    const cartRequest = window.Product?.GetAll?.Cart
+                        ? window.Product.GetAll.Cart()
+                        : $.Deferred().resolve([]).promise();
+                    cartRequest
+                        .done(items => { state.cartItems = Array.isArray(items) ? items : []; })
+                        .always(() => render(campaigns));
                 }
             });
     }

@@ -2243,10 +2243,52 @@ namespace EtheriT.Coker.Application.Order
                     temp_output.Shipping = shipping_str1 != "" ? shipping_str3 != "" ? $"{shipping_str1} {shipping_str3}" : $"{shipping_str1}" : "";
 
                     var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == order_header.Id).FirstOrDefaultAsync();
+
                     if (logistics != null)
                     {
+                        if (order_header.CreationTime >= DateTime.Now.AddDays(-14))
+                        {
+                            if (await CheckThirdPartyDataExits()) temp_output.CVSStoreID = logistics.CVSStoreID;
+                        }
                         temp_output.AllPayLogisticsID = logistics.AllPayLogisticsID;
+                        temp_output.CVSAddress = logistics.CVSAddress;
+                        temp_output.CVSOutSide = logistics.CVSOutSide;
+                        temp_output.CVSStoreName = logistics.CVSStoreName;
+                        temp_output.CVSTelephone = logistics.CVSTelephone;
                         if (logistics.LogisticsType == "CVS" && !string.IsNullOrEmpty(logistics.CVSStoreName) && !string.IsNullOrEmpty(logistics.CVSAddress)) temp_output.Shipping += $"　{logistics.CVSStoreName}({logistics.CVSAddress})";
+
+                        if (logistics.LogisticsStatusCode != null && temp_output.State == (int)OrderStatusEnum.已出貨)
+                        {
+                            switch (logistics.LogisticsStatusCode)
+                            {
+                                case "300":
+                                    temp_output.LogisticsStatusStr = "訂單處理中(綠界已收到訂單資料)";
+                                    break;
+                                case "2030":
+                                case "3024":
+                                    temp_output.LogisticsStatusStr = "商品已送至物流中心";
+                                    break;
+                                case "2063":
+                                case "3018":
+                                    temp_output.LogisticsStatusStr = "商品已送達門市";
+                                    break;
+                                case "2067":
+                                case "3022":
+                                    temp_output.LogisticsStatusStr = "消費者成功取件";
+                                    break;
+                                case "2074":
+                                case "3020":
+                                    temp_output.LogisticsStatusStr = "消費者未於7天期限內取件";
+                                    break;
+                                default:
+                                    temp_output.LogisticsStatusStr = "目前狀態未列出，請查詢最新物流狀態";
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            temp_output.LogisticsStatusStr = "";
+                        }
                     }
 
                     temp_output.LogisticsType = ((int)shipping?.LogisticsType);
@@ -5134,6 +5176,34 @@ namespace EtheriT.Coker.Application.Order
             }
 
             return result;
+        }
+        private async Task<bool> CheckThirdPartyDataExits()
+        {
+            try
+            {
+                var WebsiteId = await loginUserData.GetCommonWebsiteId();
+
+                var thirdPartyKeypairValues = await (from tpkv in db.ThirdPartyKeypairValues
+                                                     join tpk in db.ThirdPartyKeypairs on tpkv.FK_ThirdPartyKeypairId equals tpk.Id
+                                                     join tp in db.ThirdParties on tpk.FK_TPid equals tp.Id
+                                                     where tp.Title == "綠界物流"
+                                                     where tpkv.FK_WebsiteId == WebsiteId
+                                                     select new KeyValueDto() { Key = tpk.Code, Value = tpkv.Value }).ToListAsync();
+
+                if (!thirdPartyKeypairValues.Any()) throw new Exception("商家未確實設置綠界物流資料");
+
+                var thirdPartyDict = thirdPartyKeypairValues.ToDictionary(e => e.Key, e => e.Value);
+
+                var requiredKeys = new[] { "MerchantID", "HashKey", "HashIV" };
+
+                if (requiredKeys.Any(key => string.IsNullOrWhiteSpace(thirdPartyDict.GetValueOrDefault(key)))) throw new Exception("商家未確實設置綠界物流資料");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
     }
 }

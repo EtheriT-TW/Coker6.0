@@ -9,7 +9,8 @@ namespace EtheriT.Coker.Application.Shared.ThirdParty
         public Task<ECPayLogisticsMapRequestDto> ECPayLogisticsGetMapRequestBody(string SCIds, string LogisticsSubType, string IsCollection);
         public Task<ResponseMessageDto> ECPayLogisticsGetMapResponse(ECPayLogisticsMapResponseDto ResultResponseData);
         public Task<ResponseMessageDto> ECPayLogisticsExpressCVSCreate(long ohid);
-        public Task<ResponseMessageDto> ECPayLogisticsExpressCreateResponse(Dictionary<string, string> ResultResponseData);
-        public Task<ResponseMessageDto> ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum type, long ohid);
+        public Task<ResponseMessageDto> ECPayLogisticsExpressCreateResponse(ECPayLogisticsCallbackDto dto);
+        public Task<ResponseMessageDto> ECPayLogisticsPrintOrderInfo(ECPayLogisticsPrintOrderInfoEnum type, long ohid);
+        public Task<ResponseMessageDto> ECPayLogisticsTradeInfo(long ohid);
     }
 }

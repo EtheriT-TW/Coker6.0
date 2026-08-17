@@ -134,6 +134,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                     case "CreateLogistics":
                         response = await thirdPartyAppService.HandleThirdPartyLogistics(dto);
                         break;
+                    case "GetTradeInfo":
+                        response = await thirdPartyAppService.HandleThirdPartyLogistics(dto);
+                        break;
                     default:
                         throw new Exception($"查詢動作【{dto.Action}】不支援");
                 }

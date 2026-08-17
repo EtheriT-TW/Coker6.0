@@ -345,6 +345,7 @@ builder.Services.AddScoped<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddScoped<IMemberAppService, MemberAppService>();
 builder.Services.AddScoped<IFreightAppService, FreightAppService>();
 builder.Services.AddScoped<IProductAppService, ProductAppService>();
+builder.Services.AddScoped<IProductImportAppService, ProductImportAppService>();
 builder.Services.AddScoped<ProductExportBackgroundJob>();
 builder.Services.AddScoped<BackgroundTaskService>();
 builder.Services.AddScoped<PageTextBackfillJob>();

@@ -117,6 +117,8 @@ export class ModuleSelect {
         this.modalElement = null;
         this.modal = null;
         this.isInitialized = false;
+        this.isSynchronizingSelection = false;
+        this.hasPendingUserSelectionAction = false;
     }
 
     _createDefaultState() {
@@ -124,6 +126,7 @@ export class ModuleSelect {
             items: [],
             selectedKeys: [],
             selectedRows: [],
+            pendingDeselectedKeys: [],
             text: "無"
         };
     }
@@ -151,13 +154,52 @@ export class ModuleSelect {
     }
 
     _bindModalEvents() {
+        const markUserSelectionAction = (event) => {
+            const eventTarget = event?.target;
+            if (!(eventTarget instanceof Element)) return;
+            if (!eventTarget.closest(this.gridSelector)) return;
+            if (!eventTarget.closest(".dx-command-select")) return;
+
+            this.hasPendingUserSelectionAction = true;
+        };
+
+        this.modalElement.addEventListener("pointerdown", markUserSelectionAction, true);
+        this.modalElement.addEventListener("keydown", (event) => {
+            if (event.key === " " || event.key === "Enter") {
+                markUserSelectionAction(event);
+            }
+        }, true);
+
         this.modalElement.addEventListener("hidden.bs.modal", () => {
             if (!this.targetElement) return;
 
+            this.resetPendingSelection(this.targetElement);
             this.restoreSelectionFromState(this.targetElement).catch(function (err) {
                 console.error(err);
             });
         });
+    }
+
+    getSelectionKey(row) {
+        const rowKey = this.getRowKey(row);
+        if (rowKey !== null && rowKey !== undefined && rowKey !== "") {
+            return rowKey;
+        }
+
+        return this.getStoredKey(row);
+    }
+
+    resetPendingSelection(target) {
+        const el = ensureElement(target);
+        if (!el) return;
+
+        const state = this.getState(el);
+        const activeItems = toArray(state.items).filter(item => !item.IsDeleted);
+
+        state.selectedKeys = uniqueArray(activeItems.map(item => this.getStoredKey(item)));
+        state.selectedRows = activeItems.slice();
+        state.pendingDeselectedKeys = [];
+        state.text = this.buildDisplayText(activeItems) || "無";
     }
 
     _bindSaveButton() {
@@ -178,7 +220,7 @@ export class ModuleSelect {
             });
 
             selectedRows.forEach((row) => {
-                const key = this.getRowKey(row);
+                const key = this.getSelectionKey(row);
                 const exists = currentItems.some(item => this.getStoredKey(item) === key);
 
                 if (!exists) {
@@ -271,12 +313,32 @@ export class ModuleSelect {
             .filter(item => !item.IsDeleted)
             .map(item => this.getStoredKey(item));
 
-        const grid = await this.waitGridInstance();
-        grid.clearSelection();
-
         const keys = uniqueArray(selectedKeys);
-        if (keys.length > 0) {
-            grid.selectRows(keys, false);
+
+        await this.applySelectionKeys(keys);
+    }
+
+    async restorePendingSelection(target) {
+        const el = ensureElement(target);
+        if (!el) return;
+
+        const state = this.getState(el);
+        await this.applySelectionKeys(uniqueArray(state.selectedKeys));
+    }
+
+    async applySelectionKeys(keys) {
+        const grid = await this.waitGridInstance();
+        const selectionKeys = uniqueArray(keys);
+
+        this.isSynchronizingSelection = true;
+        try {
+            if (selectionKeys.length > 0) {
+                await Promise.resolve(grid.selectRows(selectionKeys, false));
+            } else {
+                await Promise.resolve(grid.clearSelection());
+            }
+        } finally {
+            this.isSynchronizingSelection = false;
         }
     }
 
@@ -286,9 +348,16 @@ export class ModuleSelect {
 
         this._ensureInitialized();
         this.setTarget(el);
-        this.getState(el);
+        this.resetPendingSelection(el);
 
         try {
+            const grid = await this.waitGridInstance();
+            this.isSynchronizingSelection = true;
+            try {
+                await Promise.resolve(grid.refresh());
+            } finally {
+                this.isSynchronizingSelection = false;
+            }
             await this.restoreSelectionFromState(el);
         } catch (err) {
             console.error(err);
@@ -307,6 +376,7 @@ export class ModuleSelect {
         state.items = [];
         state.selectedKeys = [];
         state.selectedRows = [];
+        state.pendingDeselectedKeys = [];
         state.text = "無";
 
         this.refreshTargetDisplay(el);
@@ -354,19 +424,17 @@ export class ModuleSelect {
         state.items = items;
         state.selectedKeys = uniqueArray(selectedKeys);
         state.selectedRows = rows;
+        state.pendingDeselectedKeys = [];
         state.text = this.buildDisplayText(rows) || "無";
 
         this.refreshTargetDisplay(el);
 
-        try {
-            const grid = await this.waitGridInstance();
-            grid.clearSelection();
-
-            if (state.selectedKeys.length > 0) {
-                grid.selectRows(state.selectedKeys, false);
+        if (el === this.getTarget() && this.modalElement?.classList.contains("show")) {
+            try {
+                await this.restoreSelectionFromState(el);
+            } catch (err) {
+                console.error(err);
             }
-        } catch (err) {
-            console.error(err);
         }
     }
 
@@ -388,17 +456,64 @@ export class ModuleSelect {
 
     onSelectionChanged(e) {
         const target = this.getTarget();
-        if (!target) return;
+        if (!target || this.isSynchronizingSelection) return;
 
-        const rows = toArray(e?.selectedRowsData);
         const state = this.getState(target);
+        const pendingDeselectedKeys = new Set(toArray(state.pendingDeselectedKeys));
+        const selectedKeys = new Set(toArray(state.selectedKeys));
+        const currentSelectedKeys = toArray(e?.currentSelectedRowKeys);
+        const currentDeselectedKeys = toArray(e?.currentDeselectedRowKeys);
+        const isUserAction = Boolean(e?.event) || this.hasPendingUserSelectionAction;
+        this.hasPendingUserSelectionAction = false;
+
+        // Remote filtering can temporarily report selected rows as deselected because
+        // they are no longer part of the loaded page. Keep committed selections unless
+        // the deselection came from an actual user interaction.
+        toArray(state.items).filter(item => !item.IsDeleted).forEach(item => {
+            const key = this.getStoredKey(item);
+            if (!pendingDeselectedKeys.has(key)) selectedKeys.add(key);
+        });
+
+        // When checking a row after a remote filter, DevExtreme may report the hidden
+        // committed rows in currentDeselectedRowKeys together with the newly selected
+        // row. In that case the action is an addition, not an explicit removal.
+        if (isUserAction && currentSelectedKeys.length === 0) {
+            currentDeselectedKeys.forEach(key => {
+                selectedKeys.delete(key);
+                pendingDeselectedKeys.add(key);
+            });
+        }
+
+        currentSelectedKeys.forEach(key => {
+            selectedKeys.add(key);
+            pendingDeselectedKeys.delete(key);
+        });
+
+        const rowsByKey = new Map();
+        toArray(state.selectedRows).forEach(row => {
+            const key = this.getSelectionKey(row);
+            if (selectedKeys.has(key)) rowsByKey.set(key, row);
+        });
+        toArray(state.items).filter(item => !item.IsDeleted).forEach(item => {
+            const key = this.getStoredKey(item);
+            if (selectedKeys.has(key) && !rowsByKey.has(key)) rowsByKey.set(key, item);
+        });
+        toArray(e?.selectedRowsData).forEach(row => {
+            const key = this.getSelectionKey(row);
+            if (selectedKeys.has(key)) rowsByKey.set(key, row);
+        });
+
+        const rows = Array.from(selectedKeys)
+            .map(key => rowsByKey.get(key))
+            .filter(Boolean);
 
         state.selectedRows = rows;
-        state.selectedKeys = uniqueArray(rows.map(row => this.getRowKey(row)));
+        state.selectedKeys = Array.from(selectedKeys);
+        state.pendingDeselectedKeys = Array.from(pendingDeselectedKeys);
         state.text = this.buildDisplayText(rows) || "無";
 
         if (this.clearButton) {
-            this.clearButton.option("disabled", rows.length === 0);
+            this.clearButton.option("disabled", state.selectedKeys.length === 0);
         }
     }
 
@@ -418,6 +533,9 @@ export class ModuleSelect {
 
         state.selectedKeys = [];
         state.selectedRows = [];
+        state.pendingDeselectedKeys = uniqueArray(
+            toArray(state.items).map(item => this.getStoredKey(item))
+        );
         state.text = "無";
 
         this.refreshTargetDisplay(target);
@@ -450,6 +568,12 @@ export class ModuleSelect {
 
         if (this.onContentReady) {
             this.onContentReady(e, this);
+        }
+
+        if (this.targetElement && this.modalElement?.classList.contains("show")) {
+            this.restorePendingSelection(this.targetElement).catch(function (err) {
+                console.error(err);
+            });
         }
     }
 }

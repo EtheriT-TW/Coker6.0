@@ -77,6 +77,9 @@
         isRuleModeLocked: false,
         repeatableWasCustomized: false,
         canStackWasCustomized: false,
+        batchPricePanelExpanded: false,
+        editRequestVersion: 0,
+        isEditLoading: false,
 
         init: function () {
             if (this.isInitialized) return;
@@ -246,6 +249,12 @@
             $("#RewardBatchPriceMode")
                 .off("change.marketingBatchPrice")
                 .on("change.marketingBatchPrice", function () { self.updateBatchPriceUI(); });
+
+            $("#ToggleRewardBatchPrice")
+                .off("click.marketingBatchPrice")
+                .on("click.marketingBatchPrice", function () {
+                    self.setBatchPricePanelExpanded(!self.batchPricePanelExpanded);
+                });
 
             $("#ApplyRewardBatchPrice")
                 .off("click.marketingBatchPrice")
@@ -727,8 +736,25 @@
 
             $select.html(options.join(""));
             $select.val($select.find(`option[value="${current}"]`).length ? current : "fixed");
-            $("#RewardBatchPricePanel").toggleClass("d-none", this.rewardItems.length === 0);
+            this.syncBatchPricePanel();
             this.updateBatchPriceUI();
+        },
+
+        setBatchPricePanelExpanded: function (expanded) {
+            this.batchPricePanelExpanded = this.rewardItems.length > 0 && expanded === true;
+            this.syncBatchPricePanel();
+        },
+
+        syncBatchPricePanel: function () {
+            const hasRewardItems = this.rewardItems.length > 0;
+            if (!hasRewardItems) this.batchPricePanelExpanded = false;
+
+            $("#ToggleRewardBatchPrice")
+                .toggleClass("d-none", !hasRewardItems)
+                .toggleClass("active", this.batchPricePanelExpanded)
+                .attr("aria-expanded", this.batchPricePanelExpanded ? "true" : "false");
+            $("#RewardBatchPricePanel")
+                .toggleClass("d-none", !hasRewardItems || !this.batchPricePanelExpanded);
         },
 
         updateBatchPriceUI: function () {
@@ -1088,10 +1114,12 @@
         },
 
         onEnterList: function () {
+            this.editRequestVersion += 1;
             this.clearFormState();
         },
 
         onEnterNew: function () {
+            this.editRequestVersion += 1;
             this.keyId = 0;
             this.clearFormState();
             this.setRuleModeLocked(false);
@@ -1128,7 +1156,10 @@
                 return;
             }
 
+            const requestVersion = ++this.editRequestVersion;
+            this.setEditLoading(true);
             co.Marketing.Get(id).then(function (res) {
+                if (requestVersion !== self.editRequestVersion) return null;
                 const data = res.object || res.Object || res;
                 if (!data) throw new Error("讀取行銷活動資料失敗");
                 if (!self.canUseProdAddition && Number(data.ruleType ?? data.RuleType) === RULE.addOnPurchase) {
@@ -1139,12 +1170,26 @@
                 self.keyId = data.id || data.Id || id;
                 return self.fillForm(data);
             }).catch(function (err) {
+                if (requestVersion !== self.editRequestVersion) return;
                 self.handleRequestError(err, "讀取行銷活動資料失敗");
                 if (self.hashPage) self.hashPage.goList();
+            }).finally(function () {
+                if (requestVersion === self.editRequestVersion) self.setEditLoading(false);
             });
         },
 
+        setEditLoading: function (isLoading) {
+            this.isEditLoading = isLoading === true;
+            $("#MarketingEditLoading").toggleClass("d-none", !this.isEditLoading);
+            $("#MarketingForm").toggleClass("d-none", this.isEditLoading);
+            $("#MarketingContent")
+                .attr("aria-busy", this.isEditLoading ? "true" : "false")
+                .find(".btn_done")
+                .prop("disabled", this.isEditLoading);
+        },
+
         clearFormState: function () {
+            this.setEditLoading(false);
             this.keyId = 0;
             this.repeatableWasCustomized = false;
             this.canStackWasCustomized = false;
@@ -1152,6 +1197,7 @@
             this.scopeItems = [];
             this.rewardItems = [];
             this.rewardItemKeySeed = 0;
+            this.batchPricePanelExpanded = false;
             _c.Form.clear(this.formId);
             $("#" + this.formId).removeClass("was-validated");
             $("input[name='Id']").val(0);
@@ -1169,6 +1215,7 @@
 
         fillForm: function (result) {
             const self = this;
+            this.batchPricePanelExpanded = false;
             const flat = {
                 Id: valueOf(result, "id", "Id", 0),
                 Name: valueOf(result, "name", "Name", ""),

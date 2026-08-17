@@ -1009,6 +1009,7 @@ namespace EtheriT.Coker.Application.Marketing
                         output.Add(new ProductAddOnCampaignDto
                         {
                             CampaignId = campaign.Id,
+                            RuleId = rule.Id,
                             Name = campaign.Name,
                             Description = campaign.Description,
                             RequiredQuantity = Math.Max(rule.Condition.MinQuantity ?? 1, 1),

@@ -480,15 +480,17 @@ namespace EtheriT.Coker.Application
                 throw new Exception("資料錯誤");
             }
         }
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, long? mid = null)
         {
             var websiteId = await loginUserData.GetWebsiteId();
             var dataQuery = db.WebMenus
                 .AsNoTracking()
                 .Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId)
-                .OrderBy(e => e.Id)
+                .OrderByDescending(e => mid.HasValue && e.Id == mid.Value)
+                .ThenBy(e => e.Id)
                 .Select(e => new MenuGetAllListDto
                 {
+                    IsSelected = mid.HasValue && e.Id == mid.Value,
                     Id = e.Id,
                     Title = e.Title ?? string.Empty,
                     Link = e.RouterName ?? string.Empty,

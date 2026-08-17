@@ -43,8 +43,23 @@
                         .ShowRowLines(true)
                         .Columns(c =>
                         {
-                            c.AddFor(e => e.Id).Caption("id").Width(50).AllowEditing(false);
-                            c.AddFor(e => e.Name).Caption("商品名稱").AllowEditing(false);
+                            c.AddFor(e => e.Id).Visible(false).AllowEditing(false);
+                            c.AddFor(e => e.ProductId)
+                                .Caption("商品 ID")
+                                .Width(110)
+                                .AllowHiding(false)
+                                .AllowEditing(false);
+                            c.AddFor(e => e.Name)
+                                .Caption("商品名稱")
+                                .AllowEditing(false)
+                                .CellTemplate(@<text>
+                                    <a href="/ProductManagement/ProductList#<%- encodeURIComponent(data.ProductId) %>"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       title="另開視窗編輯此商品">
+                                        <%- data.Name %>
+                                    </a>
+                                </text>);
                             c.AddFor(e => e.Specs).Caption("規格名稱").AllowEditing(false);
                             c.AddFor(e => e.SaleQuantity).Caption("可銷售警示量").AllowEditing(false);
                             c.AddFor(e => e.StockQuantity)

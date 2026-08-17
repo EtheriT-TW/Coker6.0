@@ -3,12 +3,10 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
-using EtheriT.Coker.Application.Shared.Dto.Import;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -38,12 +36,6 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ResponseMessageDto> StockDelete(long Id);
         public Task<ResponseMessageDto> PriceDelete(long Id);
         public Task<ResponseMessageDto> ClickLog(long FK_Pid);
-        public Task<ImportOutputDto> ProdReplace(IList<IFormFile> files, long templateId, bool overwriteExisting);
-        public Task<ImportOutputDto> ProdReplace(IList<IFormFile> files, long templateId, bool overwriteExisting, bool allowDuplicateMenuTitles);
-        public Task<ImportOutputDto> ProdReplace(string filePath, long templateId, bool overwriteExisting, System.Action<int, string>? reportProgress);
-        public Task<ImportOutputDto> ProdReplace(string filePath, long templateId, bool overwriteExisting, bool allowDuplicateMenuTitles, System.Action<int, string>? reportProgress);
-        public Task<ImportOutputDto> ProdReplace(string filePath, long templateId, bool overwriteExisting, bool allowDuplicateMenuTitles, bool overwriteExistingMenuParents, bool overwriteExistingProductNames, bool overwriteExistingSpecs, bool overwriteExistingPrices, bool overwriteExistingTechnicalCertificates, List<ProductImportIgnoredRowDto> ignoredRows, System.Action<int, string>? reportProgress);
-        public Task<ProductImportAnalysisDto> AnalyzeProductImport(string filePath, long templateId, List<ProductImportIgnoredRowDto> ignoredRows, System.Action<int, string>? reportProgress);
         public Task<byte[]> ExportProductData();
         public Task<byte[]> ExportProductData(long websiteId, System.Action<int, string>? reportProgress);
         public Task<byte[]> ExportProductData(long websiteId, string exportVersion, System.Action<int, string>? reportProgress);

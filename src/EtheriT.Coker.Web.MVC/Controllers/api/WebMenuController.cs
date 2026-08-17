@@ -40,9 +40,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpGet]
         [Authorize]
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, [FromQuery] long? mid = null)
         {
-            return await webMenuApplication.GetAllList(loadOptions);
+            return await webMenuApplication.GetAllList(loadOptions, mid);
         }
         [HttpGet]
         [Authorize]

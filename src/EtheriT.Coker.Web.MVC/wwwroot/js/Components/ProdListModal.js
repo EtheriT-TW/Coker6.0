@@ -1,4 +1,4 @@
-﻿import { ModuleSelectManager } from "./ModuleSelect.js";
+﻿import { ModuleSelectManager } from "./ModuleSelect.min.js";
 
 let prodListModalInstance = null;
 let prodModalTagFilter = null;

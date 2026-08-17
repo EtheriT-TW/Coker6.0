@@ -575,6 +575,28 @@ namespace EtheriT.Coker.Application.Product
                 .ToDictionaryAsync(e => e.Id, e => e.Type);
 
             var stockIds = stocks.Select(e => e.Id).ToList();
+            var specImageByStock = new Dictionary<long, string>();
+            if (!priceAndStockOnly && stockIds.Count > 0)
+            {
+                var specImageRows = await (
+                    from bind in db.FileBinds.AsNoTracking()
+                    join file in db.FileUploads.AsNoTracking()
+                        on bind.FK_FileUploadId equals file.Id
+                    where stockIds.Contains(bind.Sid)
+                        && bind.type == (int)FileBindTypeEnum.產品規格圖
+                        && !bind.IsDeleted
+                        && !file.IsDeleted
+                        && file.FK_WebsiteId == websiteId
+                        && file.ContentType != null
+                        && file.ContentType.StartsWith("image/")
+                    orderby bind.SerNo, bind.Id
+                    select new { StockId = bind.Sid, file.DownloadFileName }
+                ).ToListAsync();
+                specImageByStock = specImageRows
+                    .Where(e => !string.IsNullOrWhiteSpace(e.DownloadFileName))
+                    .GroupBy(e => e.StockId)
+                    .ToDictionary(e => e.Key, e => e.First().DownloadFileName!);
+            }
             var allPrices = await db.Prod_Prices
                 .AsNoTracking()
                 .Where(e => stockIds.Contains(e.FK_PSId) && !e.IsDeleted)
@@ -645,6 +667,9 @@ namespace EtheriT.Coker.Application.Product
                     Prod_Spec? spec2 = null;
                     if (stock?.FK_S1id is long spec1Id) specs.TryGetValue(spec1Id, out spec1);
                     if (stock?.FK_S2id is long spec2Id) specs.TryGetValue(spec2Id, out spec2);
+                    var specImage = stock != null
+                        ? specImageByStock.GetValueOrDefault(stock.Id, "")
+                        : "";
 
                     var exportPrices = new List<Prod_Price?>();
                     if (stock != null && !stock.IsTimePrice && pricesByStock.TryGetValue(stock.Id, out var stockPrices))
@@ -694,6 +719,7 @@ namespace EtheriT.Coker.Application.Product
                         Spec1 = spec1?.Title ?? "",
                         Spec2Name = spec2 != null && specTypes.TryGetValue(spec2.FK_Tid, out var spec2Name) ? spec2Name : "",
                         Spec2 = spec2?.Title ?? "",
+                        SpecImage = stringHandler.ResolveFrontUploadPath(specImage, orgName),
                         SpecDescription = stock?.SpecDescription ?? "",
                         Stock = stock?.Stock ?? 0,
                         Min_Qty = stock?.Min_Qty ?? 1,
@@ -708,7 +734,7 @@ namespace EtheriT.Coker.Application.Product
                             ? "0"
                             : stock.IsTimePrice
                                 ? "時價"
-                                : (rolePrice?.Price ?? stock.Price).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                                : (rolePrice?.Price ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture),
                         Bonus = rolePrice?.Bonus ?? 0,
                         Tag1 = GetValue(tags, 0),
                         Tag2 = GetValue(tags, 1),

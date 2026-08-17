@@ -382,9 +382,7 @@ namespace EtheriT.Coker.Application.Product
                     {
                         Code = ProductImportDifferenceCodes.ProductName,
                         Sheet = "商品",
-                        Name = product.ProductId.HasValue
-                            ? $"商品 ID：{product.ProductId}"
-                            : $"ItemNo：{product.ItemNo}",
+                        Name = DescribeProductImportRow(product),
                         ExistingValue = existing.Title ?? string.Empty,
                         ExcelValue = product.ProdName,
                         Description = "商品名稱不同，可保留現有名稱或授權以 Excel 更名。"
@@ -436,7 +434,7 @@ namespace EtheriT.Coker.Application.Product
                     {
                         Code = ProductImportDifferenceCodes.ProductSpec,
                         Sheet = "商品",
-                        Name = $"ItemNo：{row.ItemNo}／SubItemNo：{row.SubItemNo}",
+                        Name = DescribeProductImportRow(row),
                         ExistingValue = existingSpec,
                         ExcelValue = excelSpec,
                         Description = "同一規格編號的規格不同，可保留現有規格或授權以 Excel 更新。"
@@ -484,8 +482,9 @@ namespace EtheriT.Coker.Application.Product
                         var currentPrice = matchingPrices.FirstOrDefault();
                         var excelIsTimePrice = row.Price < 0;
                         var priceChanged = excelIsTimePrice != stock.IsTimePrice
-                            || (!excelIsTimePrice && (currentPrice == null
-                                || matchingPrices.Any(e => e.Price != row.Price)));
+                            || (!excelIsTimePrice
+                                && ((currentPrice == null && row.Price != 0)
+                                    || matchingPrices.Any(e => (e.Price ?? 0) != row.Price)));
                         if (priceChanged)
                         {
                             var currentPriceText = matchingPrices.Count == 0
@@ -516,7 +515,7 @@ namespace EtheriT.Coker.Application.Product
                 {
                     Code = ProductImportDifferenceCodes.ProductPrice,
                     Sheet = "商品",
-                    Name = $"Excel 第 {row.SourceRowNumber} 列／ItemNo：{row.ItemNo}／SubItemNo：{row.SubItemNo}",
+                    Name = DescribeProductImportRow(row),
                     ExistingValue = string.Join("；", existingValues),
                     ExcelValue = string.Join("；", excelValues),
                     Description = "價格不同；未授權時保留資料庫價格，授權後才以 Excel 更新。"
@@ -950,7 +949,8 @@ namespace EtheriT.Coker.Application.Product
             if (HasAny(
                 nameof(ProductImportDto.SubItemNo), nameof(ProductImportDto.Spec1Name),
                 nameof(ProductImportDto.Spec1), nameof(ProductImportDto.Spec2Name),
-                nameof(ProductImportDto.Spec2), nameof(ProductImportDto.SpecDescription)))
+                nameof(ProductImportDto.Spec2), nameof(ProductImportDto.SpecImage),
+                nameof(ProductImportDto.SpecDescription)))
                 scopes.Add("規格");
 
             if (HasAny(
@@ -1581,7 +1581,8 @@ namespace EtheriT.Coker.Application.Product
                 nameof(ProductImportDto.Image1), nameof(ProductImportDto.Image2),
                 nameof(ProductImportDto.Image3), nameof(ProductImportDto.Image4),
                 nameof(ProductImportDto.Image5), nameof(ProductImportDto.Image6),
-                nameof(ProductImportDto.Image7), nameof(ProductImportDto.File1),
+                nameof(ProductImportDto.Image7), nameof(ProductImportDto.SpecImage),
+                nameof(ProductImportDto.File1),
                 nameof(ProductImportDto.File2), nameof(ProductImportDto.File3),
                 nameof(ProductImportDto.File4), nameof(ProductImportDto.File5),
                 nameof(ProductImportDto.File6), nameof(ProductImportDto.File7));
@@ -1589,7 +1590,10 @@ namespace EtheriT.Coker.Application.Product
                 ? "正在整理商品圖片與附件"
                 : "Excel 未包含圖片與附件，已略過");
             if (hasMediaColumns)
+            {
                 await ImportProdMediaLinks(prods, erroes);
+                await ImportProdSpecMediaLinks(prods, erroes);
+            }
 
             var hasTagColumns = HasAnyImportedProductColumn(
                 prods,
@@ -2415,6 +2419,70 @@ namespace EtheriT.Coker.Application.Product
             await fileUploadAppService.uploadImageLink(importDtos);
             await ImportProdDownloadFileLinks(prods, errors);
         }
+        private async Task ImportProdSpecMediaLinks(
+            List<ProductImportDto> prods,
+            List<ImportMassageItem> errors)
+        {
+            var targets = prods
+                .Where(e => e.Id > 0
+                    && HasImportedColumn(e, nameof(e.SpecImage))
+                    && e.stocks != null
+                    && e.stocks.Any(s => !string.IsNullOrWhiteSpace(s.SpecImage)))
+                .ToList();
+            if (targets.Count == 0)
+                return;
+
+            var websiteId = await loginUserData.GetWebsiteId();
+            var productIds = targets.Select(e => e.Id).Distinct().ToList();
+            var stockRows = await (
+                from stock in db.Prod_Stocks.AsNoTracking()
+                join product in db.Prods.AsNoTracking() on stock.FK_Pid equals product.Id
+                where productIds.Contains(stock.FK_Pid)
+                    && product.FK_WebsiteId == websiteId
+                    && !product.IsDeleted
+                    && !stock.IsDeleted
+                select stock
+            ).ToListAsync();
+
+            var importDtos = new List<FileImageImportDto>();
+            foreach (var product in targets)
+            {
+                var candidates = stockRows.Where(e => e.FK_Pid == product.Id).ToList();
+                foreach (var stock in product.stocks!
+                    .Where(e => !string.IsNullOrWhiteSpace(e.SpecImage)))
+                {
+                    Prod_Stock? matchedStock = null;
+                    if (!string.IsNullOrWhiteSpace(stock.SubItemNo))
+                    {
+                        matchedStock = candidates.FirstOrDefault(e =>
+                            Norm(e.SubItemNo) == Norm(stock.SubItemNo));
+                    }
+                    matchedStock ??= candidates.FirstOrDefault(e =>
+                        (e.FK_S1id ?? 0) == (stock.FK_S1id ?? 0)
+                        && (e.FK_S2id ?? 0) == (stock.FK_S2id ?? 0));
+
+                    if (matchedStock == null)
+                    {
+                        errors.Add(new ImportMassageItem
+                        {
+                            Name = product.ProdName,
+                            Description = $"找不到規格圖片對應的規格（SubItemNo：{stock.SubItemNo}），該圖片已略過。"
+                        });
+                        continue;
+                    }
+
+                    importDtos.Add(new FileImageImportDto
+                    {
+                        SId = matchedStock.Id,
+                        Type = FileBindTypeEnum.產品規格圖,
+                        mediaLink = stock.SpecImage!.Trim(),
+                        SerNo = 1
+                    });
+                }
+            }
+
+            await fileUploadAppService.uploadImageLink(importDtos);
+        }
         private async Task ImportProdDownloadFileLinks(List<ProductImportDto> prods, List<ImportMassageItem> errors)
         {
             List<string?> ProdStr = prods.Where(e => !string.IsNullOrEmpty(e.ProdName)).Select(e => e.ProdName).ToList();
@@ -2510,6 +2578,14 @@ namespace EtheriT.Coker.Application.Product
 
             reportProgress?.Invoke(54, "正在完成商品資料儲存");
             await db.SaveChangesAsync();
+            foreach (var product in products)
+            {
+                var source = prods.FirstOrDefault(e => e.Id == product.Id)
+                    ?? prods.FirstOrDefault(e => Norm(e.ItemNo) == Norm(product.ItemNo)
+                        && Norm(e.ProdName) == Norm(product.Title));
+                if (source != null && source.Id == 0)
+                    source.Id = product.Id;
+            }
             return (upsertResult.AddedCount, upsertResult.UpdatedCount);
         }
         private async Task<(List<Prod> Products, int AddedCount, int UpdatedCount)> UpsertProducts(
@@ -2659,6 +2735,21 @@ namespace EtheriT.Coker.Application.Product
 
         private static bool HasImportedColumn(ProductImportDto dto, string columnName)
             => dto.ImportedColumns.Count == 0 || dto.ImportedColumns.Contains(columnName);
+
+        private static string DescribeProductImportRow(ProductImportDto row)
+        {
+            var values = new List<string>();
+            if (row.SourceRowNumber > 0)
+                values.Add($"Excel 第 {row.SourceRowNumber} 列");
+            values.Add($"商品名稱：{row.ProdName}");
+            if (row.ProductId.HasValue)
+                values.Add($"商品 ID：{row.ProductId}");
+            if (!string.IsNullOrWhiteSpace(row.ItemNo))
+                values.Add($"ItemNo：{row.ItemNo}");
+            if (!string.IsNullOrWhiteSpace(row.SubItemNo))
+                values.Add($"SubItemNo：{row.SubItemNo}");
+            return string.Join("／", values);
+        }
 
         private static void ApplyImportFlag(
             string? rawValue,
@@ -3305,19 +3396,8 @@ namespace EtheriT.Coker.Application.Product
                                 $"商品 ID {prod.Id} 的 Excel 價格列沒有可寫入的會員身分，價格未更新。");
                         }
 
-                        // 簡易價格範本沒有建議售價欄；非會員現金價仍同步到庫存基準價，
-                        // 避免不同畫面讀取不同價格來源而顯示舊值。
-                        var primaryCashPrice = roleBonusMap
-                            .FirstOrDefault(x => NormalizeProductPriceRoleId(x.Key.roleId) == 1
-                                && x.Key.bonusKey == 0)
-                            .Value;
-                        if (primaryCashPrice != null
-                            && hasPrice
-                            && (isNewStock || overwriteExistingPrices)
-                            && !HasImportedColumn(dto, nameof(dto.SuggestPrice)))
-                        {
-                            stockEntity.Price = primaryCashPrice.Price ?? 0;
-                        }
+                        // Price 與 SuggestPrice 是獨立欄位。Excel 沒有 SuggestPrice 時，
+                        // 不得用非會員價格回填建議售價，避免兩種價格互相覆寫。
                     }
                 }
                 catch (Exception ex)

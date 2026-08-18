@@ -21,6 +21,23 @@
       ]
     },
     {
+      "output": "js/Page/ProductContent.min.js",
+      "input": [
+        "wwwroot/view-resources/ProductContent/js/core.js",
+        "wwwroot/view-resources/ProductContent/js/selection.js",
+        "wwwroot/view-resources/ProductContent/js/media-viewer.js",
+        "wwwroot/view-resources/ProductContent/js/controller.js",
+        "wwwroot/view-resources/ProductContent/js/navigation.js",
+        "wwwroot/view-resources/ProductContent/js/boot.js"
+      ]
+    },
+    {
+      "output": "js/Page/ProductRewardPreview.min.js",
+      "input": [
+        "wwwroot/view-resources/ProductRewardPreview/ProductRewardPreview.js"
+      ]
+    },
+    {
       "output": "lib/jquery-twzipcode/jquery.twzipcode.min.js",
       "input": [
         "node_modules/jquery-twzipcode/jquery.twzipcode.min.js"
@@ -249,6 +266,12 @@
         "wwwroot/view-resources/Member/css/Member.bonus.css",
         "wwwroot/view-resources/Member/css/Member.rwd.css",
         "wwwroot/view-resources/Member/css/Member.level.css"
+      ]
+    },
+    {
+      "output": "css/Page/ProductRewardPreview.min.css",
+      "input": [
+        "wwwroot/view-resources/ProductRewardPreview/ProductRewardPreview.css"
       ]
     },
     {

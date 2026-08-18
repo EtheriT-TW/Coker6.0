@@ -28,7 +28,6 @@
 		<Content Remove="wwwroot\js\Page\Index.js" />
 		<Content Remove="wwwroot\js\Page\OrderManagement.js" />
 		<Content Remove="wwwroot\js\Page\OrderManagement.min.js" />
-		<Content Remove="wwwroot\js\Page\ProductContent.js" />
 		<Content Remove="wwwroot\js\Page\Search.js" />
 		<Content Remove="wwwroot\Shared\components\Directory\**\*.*" />
 		<Content Remove="wwwroot\Shared\components\ArticleViewer\index.css" />
@@ -140,7 +139,6 @@
 		<None Include="wwwroot\view-resources\**\*.*" />
 		<None Include="wwwroot\Shared\components\Directory\**\*.*" />
 		<None Include="wwwroot\js\Page\Index.js" />
-		<None Include="wwwroot\js\Page\ProductContent.js" />
 		<None Include="wwwroot\js\Page\Search.js" />
 		<None Include="wwwroot\Shared\components\ArticleViewer\index.css" />
 		<None Include="wwwroot\Shared\components\ArticleViewer\Index.js" />
@@ -154,7 +152,6 @@
 		<None Include="wwwroot\Shared\components\Form\css\DynamicForm.css" />
 		<None Include="wwwroot\Shared\components\Form\css\DynamicForm.en.css" />
 		<None Include="wwwroot\Shared\css\Directory.css" />
-		<None Include="wwwroot\Shared\css\FlipBook.css" />
 		<None Include="wwwroot\Shared\css\Flipdown.css" />
 		<None Include="wwwroot\Shared\css\Frame.css" />
 		<None Include="wwwroot\Shared\css\HoverEffect.css" />

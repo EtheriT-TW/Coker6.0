@@ -486,6 +486,7 @@ i.fa-chevron-right {
 /* SwitchPage */
 #SwitchPage {
     display: flex;
+    overflow: visible;
 }
 
     #SwitchPage a {
@@ -512,6 +513,111 @@ i.fa-chevron-right {
         content: "\f105";
         padding-left: 5px;
     }
+
+    #SwitchPage .btn_prev,
+    #SwitchPage .btn_next {
+        position: relative;
+    }
+
+    #SwitchPage .product-switch-preview {
+        position: absolute;
+        bottom: calc(100% + .75rem);
+        z-index: 20;
+        display: grid;
+        grid-template-columns: 5rem minmax(0, 1fr);
+        gap: .75rem;
+        align-items: center;
+        width: min(20rem, calc(100vw - 2rem));
+        min-height: 6rem;
+        padding: .5rem;
+        color: #333;
+        font-family: var(--bs-font-sans-serif, Arial, sans-serif);
+        font-weight: 400;
+        line-height: 1.4;
+        text-align: left;
+        white-space: normal;
+        pointer-events: none;
+        visibility: hidden;
+        opacity: 0;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, .12);
+        border-radius: .25rem;
+        box-shadow: 0 .35rem 1rem rgba(0, 0, 0, .18);
+    }
+
+    #SwitchPage .btn_prev .product-switch-preview {
+        left: 0;
+    }
+
+    #SwitchPage .btn_next .product-switch-preview {
+        right: 0;
+    }
+
+    #SwitchPage .product-switch-preview.is-text-only {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: auto;
+    }
+
+    #SwitchPage .btn_prev:hover .product-switch-preview,
+    #SwitchPage .btn_prev:focus-visible .product-switch-preview,
+    #SwitchPage .btn_next:hover .product-switch-preview,
+    #SwitchPage .btn_next:focus-visible .product-switch-preview {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    #SwitchPage .product-switch-preview__image {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 5rem;
+        height: 5rem;
+        overflow: hidden;
+        background: #f3f3f3;
+    }
+
+        #SwitchPage .product-switch-preview__image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        #SwitchPage .product-switch-preview__image.is-loading::before {
+            content: "";
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid #ddd;
+            border-top-color: #777;
+            border-radius: 50%;
+            animation: product-switch-preview-loading .7s linear infinite;
+        }
+
+        #SwitchPage .product-switch-preview__image.is-empty {
+            display: none;
+        }
+
+    #SwitchPage .product-switch-preview__title {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 4;
+    }
+
+@keyframes product-switch-preview-loading {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media only screen and (max-width: 992px) {
+    #CenterLine {
+        justify-content: start !important;
+    }
+
+    #SwitchPage.container {
+        padding: 1rem 0;
+    }
+}
 
 @media only screen and (max-width: 768px) {
     #CenterLine {

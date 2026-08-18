@@ -3,7 +3,7 @@
     $itemNo, $itemNo_count, $noStockManagement;
 var $popularVisible;
 var $popularValue;
-var startDate, endDate, keyId, price_tid, temp_psid;
+var startDate, endDate, keyId, price_tid, temp_psid, setPage;
 var specDescModal, $spec_desc_input, $currentSpecDescRow = null;
 var productTagFilter = null;
 var productTagOptions = [];
@@ -1253,12 +1253,6 @@ async function PageReady() {
     TechCertListModalInit();
     TagListModalInit();
 
-    elementReady = true;
-
-    if (pendingHashEdit) {
-        pendingHashEdit = false;
-        HashDataEdit();
-    }
     try {
         const LogisticsBoxRequires = await co.LogisticsBox.Requires();
         if (!LogisticsBoxRequires.object) throw new Error("不需要物流箱");
@@ -1313,6 +1307,14 @@ async function PageReady() {
                 co.sweet.error(result.error);
             }
         });
+    }
+
+    // Hash routing may run as soon as the grid is ready. Do not enter the
+    // canvas until both the editor and its page loader have been initialized.
+    elementReady = true;
+    if (pendingHashEdit) {
+        pendingHashEdit = false;
+        HashDataEdit();
     }
 
     // 開啟規格描述 modal（.btn_spec_desc_edit 在樣板內，用 delegated）
@@ -1812,6 +1814,11 @@ function hashChange(e) {
     }
 }
 function HashDataEdit() {
+    if (!elementReady) {
+        pendingHashEdit = true;
+        return;
+    }
+
     FormDataClear();
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
@@ -1855,10 +1862,8 @@ function editButtonClicked(e) {
     window.location.hash = keyId
 }
 function paletteButtonClicked(e) {
-    $("#gjs").data("id", e.row.key);
-    setPage(e.row.key);
-    keyId = e.row.key + "-1";
-    window.location.hash = keyId;
+    keyId = e.row.key;
+    window.location.hash = keyId + "-1";
 }
 function FormDataSet(result) {
     //console.log(result)
@@ -3100,6 +3105,7 @@ function setTotalFile(obj) {
     });
 }
 function MoveToContent() {
+    $("body").removeClass("grapesEdit");
     if (keyId == 0) $("#ProductContent .card-header .titile").text("新增商品")
     else $("#ProductContent .card-header .titile").text("編輯商品")
     $("#ProductForm").removeClass("was-validated");
@@ -3109,15 +3115,17 @@ function MoveToContent() {
     tagContentRefresh();
 }
 function MoveToCanvas() {
+    $("body").addClass("grapesEdit");
     $("#gjs").data("id", keyId);
     setPage(keyId);
-    $("#TopLine > a").removeClass("d-none");
+    $("#TopLine .btn_back").removeClass("d-none");
     $("#ProductList").addClass("d-none");
     $("#ProductContent").addClass("d-none");
     $("#ProductCanvas").removeClass("d-none");
 }
 function BackToList(refresh) {
-    $("#TopLine > a").addClass("d-none");
+    $("body").removeClass("grapesEdit");
+    $("#TopLine .btn_back").addClass("d-none");
     $("#ProductList").removeClass("d-none");
     $("#ProductCanvas").addClass("d-none");
     $("#ProductContent").addClass("d-none");

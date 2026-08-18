@@ -112,13 +112,45 @@
 
         return Number.isFinite(longitude) && Number.isFinite(latitude);
     }
-    function getHashPage() {
-        return location.hash.replace("#", "");
+    function normalizePage(page) {
+        const value = String(page == null ? "" : page).trim();
+        if (!/^\d+$/.test(value)) return "1";
+
+        const number = parseInt(value, 10);
+        return number > 0 ? String(number) : "1";
     }
 
-    function normalizePage(page) {
-        if (isNaN(page) || page === "") return "1";
-        return String(page);
+    function getPageUrl(page) {
+        const normalizedPage = normalizePage(page);
+        const url = new URL(w.location.href);
+
+        // 第一頁使用目錄原始網址，避免 /?Page=1 與原始網址形成重複內容。
+        if (normalizedPage === "1") url.searchParams.delete("Page");
+        else url.searchParams.set("Page", normalizedPage);
+
+        // 相容舊版 #2 連結，但不要把舊頁碼 hash 帶進新的正式網址。
+        if (/^#\d+$/.test(url.hash)) url.hash = "";
+
+        return `${url.pathname}${url.search}${url.hash}`;
+    }
+
+    function getLocationPage() {
+        const url = new URL(w.location.href);
+        const queryPage = url.searchParams.get("Page");
+
+        if (queryPage !== null) return normalizePage(queryPage);
+
+        const legacyHash = (url.hash || "").match(/^#(\d+)$/);
+        if (!legacyHash) return "1";
+
+        const page = normalizePage(legacyHash[1]);
+
+        // 舊網址仍可開啟，載入時以 replaceState 無轉址升級成 ?Page=N。
+        if (w.history && typeof w.history.replaceState === "function") {
+            w.history.replaceState(w.history.state, "", getPageUrl(page));
+        }
+
+        return page;
     }
 
     function buildCatalogOption($self, page) {
@@ -157,13 +189,13 @@
         if (!hasNearestCoordinates($self)) return;
 
         const dirid = getDirIds($self);
-        const hashPage = !!page ? page.toString() : getHashPage();
+        const locationPage = page != null ? page.toString() : getLocationPage();
 
-        if (typeof $self.data("page") !== "undefined" && $self.data("page") === hashPage) {
+        if (typeof $self.data("page") !== "undefined" && $self.data("page") === locationPage) {
             return;
         }
 
-        page = normalizePage(hashPage);
+        page = normalizePage(locationPage);
 
         const option = buildCatalogOption($self, page);
 
@@ -188,6 +220,8 @@
                 })
                 .fail(function (error) {
                     if ($self.data("directoryRequestId") !== requestId) return;
+
+                    $self.removeData("directoryScrollAfterRender");
 
                     if (w.DirectoryRenderer && typeof w.DirectoryRenderer.hideLoading === "function") {
                         w.DirectoryRenderer.hideLoading($self);
@@ -344,18 +378,18 @@
         });
     }
 
-    function bindHashChangeIfNeeded($root) {
+    function bindLocationChangeIfNeeded($root) {
         const dirLength = $root.find(".catalog_frame").filter(function () {
             return canAutoLoadCatalog($(this));
         }).length;
 
         if (dirLength !== 1) return;
 
-        if ("onhashchange" in window) {
-            window.onhashchange = hashChangeDirectory;
-        } else {
-            setInterval(hashChangeDirectory, 1000);
-        }
+        $(w)
+            .off("popstate.directoryPager")
+            .on("popstate.directoryPager", locationChangeDirectory)
+            .off("hashchange.directoryPager")
+            .on("hashchange.directoryPager", locationChangeDirectory);
     }
 
     function DirectoryGetDataInit(root) {
@@ -375,7 +409,7 @@
 
         initMenuDirectories($root);
         initAdvertiseDirectories($root);
-        bindHashChangeIfNeeded($root);
+        bindLocationChangeIfNeeded($root);
     }
 
     function initElemntAndLoadDir($dir, page) {
@@ -400,22 +434,38 @@
         initSingleCatalog($self, page);
     }
 
-    function hashChangeDirectory(e) {
-        if (!!e) {
-            initElemntAndLoadDir();
-            e.preventDefault();
-        } else {
-            console.log("HashChange錯誤");
+    function navigateToPage($item, page) {
+        const normalizedPage = normalizePage(page);
+        const $catalogs = $(document).find(".catalog_frame").filter(function () {
+            return canAutoLoadCatalog($(this));
+        });
+
+        if ($catalogs.length === 1 && w.history && typeof w.history.pushState === "function") {
+            const nextUrl = getPageUrl(normalizedPage);
+            const currentUrl = `${w.location.pathname}${w.location.search}${w.location.hash}`;
+
+            if (nextUrl !== currentUrl) {
+                w.history.pushState({ directoryPage: normalizedPage }, "", nextUrl);
+            }
         }
+
+        initElemntAndLoadDir($item, normalizedPage);
+    }
+
+    function locationChangeDirectory() {
+        initElemntAndLoadDir(null, getLocationPage());
     }
 
     DirectoryBoot.init = DirectoryGetDataInit;
     DirectoryBoot.initElemntAndLoadDir = initElemntAndLoadDir;
-    DirectoryBoot.hashChangeDirectory = hashChangeDirectory;
+    DirectoryBoot.getPageUrl = getPageUrl;
+    DirectoryBoot.navigateToPage = navigateToPage;
+    DirectoryBoot.locationChangeDirectory = locationChangeDirectory;
+    DirectoryBoot.hashChangeDirectory = locationChangeDirectory;
 
     // 舊版相容
     w.DirectoryGetDataInit = DirectoryGetDataInit;
     w.initElemntAndLoadDir = initElemntAndLoadDir;
-    w.hashChangeDirectory = hashChangeDirectory;
+    w.hashChangeDirectory = locationChangeDirectory;
 
 })(window, window.jQuery);

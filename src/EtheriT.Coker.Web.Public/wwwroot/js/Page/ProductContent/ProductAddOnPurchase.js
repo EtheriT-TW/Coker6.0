@@ -8,7 +8,9 @@
         selected: new Map(),
         cartItems: [],
         purchaseQuantity: 1,
-        swipers: []
+        swipers: [],
+        requestToken: 0,
+        campaignRequest: null
     };
 
     const $root = () => $('[data-product-addon]').first();
@@ -170,6 +172,27 @@
         $root().find('.product-addon__selection-summary').text(total > 0 ? `已選 ${total} 件` : '');
     }
 
+    function openPreview($card) {
+        const item = $card.data('addOnItem');
+        if (!item || !window.ProductRewardPreview?.open) return;
+
+        const rewardItemId = number($card.data('rewardItemId'));
+        const offerPrice = Number(read(item, 'offerPrice', 'OfferPrice')) || 0;
+        window.ProductRewardPreview.open({
+            productId: number(read(item, 'productId', 'ProductId')),
+            productName: read(item, 'productName', 'ProductName') || '優惠商品',
+            stockName: read(item, 'stockName', 'StockName') || '',
+            imageUrl: read(item, 'imageUrl', 'ImageUrl') || '/images/noImg.jpg',
+            offerPrice: offerPrice,
+            originalPrice: Number(read(item, 'originalPrice', 'OriginalPrice')) || 0,
+            benefitText: offerPrice <= 0 ? '贈品' : '加價購',
+            selected: state.selected.has(rewardItemId),
+            disabled: $card.hasClass('is-disabled'),
+            cancelText: offerPrice <= 0 ? '取消贈品' : '取消加購',
+            onAction: function () { toggleItem($card); }
+        });
+    }
+
     function itemCard(campaign, item) {
         const campaignId = number(read(campaign, 'campaignId', 'CampaignId'));
         const ruleId = number(read(campaign, 'ruleId', 'RuleId'));
@@ -179,13 +202,18 @@
         const originalPrice = number(read(item, 'originalPrice', 'OriginalPrice'));
         const $card = $('<article class="product-addon__card"></article>')
             .attr('data-reward-item-id', rewardItemId)
+            .attr({
+                role: 'group',
+                'aria-label': `查看 ${read(item, 'productName', 'ProductName') || '優惠商品'} 詳細資訊`
+            })
             .data({
                 campaignId,
                 ruleId,
                 rewardItemId,
                 productStockId,
                 offerPrice,
-                maxQuantity: Math.max(number(read(item, 'maxQuantityPerOrder', 'MaxQuantityPerOrder')), 1)
+                maxQuantity: Math.max(number(read(item, 'maxQuantityPerOrder', 'MaxQuantityPerOrder')), 1),
+                addOnItem: item
             });
 
         const $image = $('<img class="product-addon__image" alt="" loading="lazy" />')
@@ -195,7 +223,9 @@
             });
         $card.append($image);
         $card.append($('<span class="product-addon__benefit-tag"></span>').text(offerPrice === 0 ? '贈品' : '加價購'));
-        $card.append($('<div class="product-addon__product-name"></div>').text(read(item, 'productName', 'ProductName') || '優惠商品'));
+        $card.append($('<div class="product-addon__product-name"></div>')
+            .attr('title', read(item, 'productName', 'ProductName') || '優惠商品')
+            .text(read(item, 'productName', 'ProductName') || '優惠商品'));
         $card.append($('<div class="product-addon__stock-name"></div>').text(read(item, 'stockName', 'StockName') || ''));
 
         const $price = $('<div class="product-addon__price-row"></div>');
@@ -204,6 +234,7 @@
             $price.append($('<span class="product-addon__original"></span>').text(`原價 NT$ ${money(originalPrice)}`));
         }
         $card.append($price);
+        $card.append('<button type="button" class="product-addon__preview-button">查看詳情</button>');
         $card.append('<button type="button" class="product-addon__toggle">選擇</button>');
         $card.append('<div class="product-addon__quantity d-none"><button type="button" class="product-addon__qty-button" data-delta="-1" aria-label="減少">−</button><span class="product-addon__qty-value">1</span><button type="button" class="product-addon__qty-button" data-delta="1" aria-label="增加">＋</button></div>');
 
@@ -271,6 +302,20 @@
         updateState(1);
     }
 
+    function clear() {
+        window.ProductRewardPreview?.close(false);
+        state.swipers.forEach(swiper => swiper?.destroy?.(true, true));
+        state.swipers = [];
+        state.campaigns = [];
+        state.selected.clear();
+        state.cartItems = [];
+        state.purchaseQuantity = 1;
+        $root()
+            .addClass('d-none')
+            .find('.product-addon__campaigns').empty();
+        $root().find('.product-addon__selection-summary').empty();
+    }
+
     function toggleItem($card) {
         if ($card.hasClass('is-disabled')) return;
         const rewardItemId = number($card.data('rewardItemId'));
@@ -327,31 +372,61 @@
         updateState(state.purchaseQuantity);
     }
 
+    function load(productId) {
+        const targetProductId = number(productId);
+        const token = ++state.requestToken;
+
+        if (state.campaignRequest && typeof state.campaignRequest.abort === 'function') {
+            state.campaignRequest.abort();
+        }
+        state.campaignRequest = null;
+        clear();
+
+        if (!targetProductId || !$root().length) return null;
+
+        const request = $.get('/api/Marketing/GetProductAddOnCampaigns', { productId: targetProductId });
+        state.campaignRequest = request;
+        request
+            .done(result => {
+                if (token !== state.requestToken || targetProductId !== number(window.PageId)) return;
+
+                const campaigns = read(result, 'object', 'Object') || [];
+                if (read(result, 'success', 'Success') === false || !campaigns.length) return;
+
+                state.campaigns = campaigns;
+                const cartRequest = window.Product?.GetAll?.Cart
+                    ? window.Product.GetAll.Cart()
+                    : $.Deferred().resolve([]).promise();
+                cartRequest
+                    .done(items => {
+                        if (token !== state.requestToken || targetProductId !== number(window.PageId)) return;
+                        state.cartItems = Array.isArray(items) ? items : [];
+                    })
+                    .always(() => {
+                        if (token !== state.requestToken || targetProductId !== number(window.PageId)) return;
+                        render(campaigns);
+                    });
+            })
+            .always(() => {
+                if (token === state.requestToken) state.campaignRequest = null;
+            });
+
+        return request;
+    }
+
     function init() {
         if (!$root().length || !window.PageId) return;
         $root().on('click', '.product-addon__toggle', function () { toggleItem($(this).closest('.product-addon__card')); });
         $root().on('click', '.product-addon__card', function (event) {
             if ($(event.target).closest('.product-addon__toggle, .product-addon__quantity').length) return;
-            toggleItem($(this));
+            openPreview($(this));
         });
         $root().on('click', '.product-addon__qty-button', function () { changeQuantity($(this).closest('.product-addon__card'), number($(this).data('delta'))); });
         $(document).on('change.productAddon input.productAddon', '.input_pro_quantity, .spec-qty-input', function () { updateState($(this).val()); });
 
-        $.get('/api/Marketing/GetProductAddOnCampaigns', { productId: window.PageId })
-            .done(result => {
-                const campaigns = read(result, 'object', 'Object') || [];
-                if (read(result, 'success', 'Success') !== false && campaigns.length) {
-                    state.campaigns = campaigns;
-                    const cartRequest = window.Product?.GetAll?.Cart
-                        ? window.Product.GetAll.Cart()
-                        : $.Deferred().resolve([]).promise();
-                    cartRequest
-                        .done(items => { state.cartItems = Array.isArray(items) ? items : []; })
-                        .always(() => render(campaigns));
-                }
-            });
+        load(window.PageId);
     }
 
-    window.ProductAddOnPurchase = { applyToPayload, updateQuantity: updateState, reset };
+    window.ProductAddOnPurchase = { applyToPayload, updateQuantity: updateState, reset, load };
     $(init);
 })(window, window.jQuery);

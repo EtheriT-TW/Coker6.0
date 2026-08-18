@@ -616,7 +616,13 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 pageCss = pageCss.Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
                 parentCss = parentCss.Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
             }
-            ViewBag.Css = HttpUtility.HtmlEncode(pageCss);
+            var isProductContentView = view.StartsWith("ProductContent/", StringComparison.OrdinalIgnoreCase);
+            ViewBag.ProductContentCss = isProductContentView
+                ? HttpUtility.HtmlEncode(pageCss)
+                : string.Empty;
+			ViewBag.Css = isProductContentView
+                ? string.Empty
+                : HttpUtility.HtmlEncode(pageCss);
             if (model.ParentData != null)
 				ViewBag.Css += HttpUtility.HtmlEncode(parentCss);
 

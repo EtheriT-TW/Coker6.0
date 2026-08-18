@@ -208,10 +208,24 @@
 
         renderHtmlContent() {
             const html = this.state.product.html;
+            const css = this.state.product.css || '';
             const selectors = this.options.selectors;
             const $panel = this.$pageRoot.find(selectors.htmlPanel);
             const $section = this.$pageRoot.find('#ProductDescription');
             const $tab = this.$pageRoot.find('#btn_tab .description');
+            let styleElement = document.getElementById('productDescriptionCss');
+
+            if (!styleElement) {
+                styleElement = document.createElement('style');
+                styleElement.id = 'productDescriptionCss';
+                const nonce = document.querySelector('meta[name="csp-nonce"]')?.getAttribute('content');
+                if (nonce) styleElement.setAttribute('nonce', nonce);
+                document.head.appendChild(styleElement);
+            }
+            // 首次整頁載入沿用後端已處理 upload 路徑的 CSS；AJAX 換商品時才完整替換。
+            if (this.pendingNavigation || !styleElement.textContent.trim()) {
+                styleElement.textContent = css;
+            }
 
             if (html && html.trim() !== '') {
                 // API 僅回傳後端已清洗、已 Decode 的發布 HTML。
@@ -417,10 +431,12 @@
         initSwipers(smallCount) {
             if (this.state.previewSwiper && this.state.previewSwiper.destroy) {
                 this.state.previewSwiper.destroy(true, true);
+                this.state.previewSwiper = null;
             }
 
             if (this.state.productSwiper && this.state.productSwiper.destroy) {
                 this.state.productSwiper.destroy(true, true);
+                this.state.productSwiper = null;
             }
 
             const previewEl = this.$root.find('.PreviewSwiper').get(0);
@@ -428,6 +444,7 @@
             const prevBtnEl = this.$root.find('.btn_swiper_prev_product').get(0);
             const nextBtnEl = this.$root.find('.btn_swiper_next_product').get(0);
             const scrollbarEl = this.$root.find('.swiper-scrollbar').get(0);
+            const $pagination = this.$root.find('.ProductSwiperPagination');
 
             if (!previewEl || !productEl) return;
 
@@ -437,9 +454,24 @@
                 .find('.PreviewSwiper,.btn_swiper_prev_product,.btn_swiper_next_product')
                 .toggleClass('d-none', shouldHidePreview);
 
+            // 只有一張圖片時，不顯示圖片張數
             if (smallCount <= 1) {
+                $pagination
+                    .empty()
+                    .removeClass(
+                        'swiper-pagination-fraction ' +
+                        'swiper-pagination-horizontal ' +
+                        'swiper-pagination-lock'
+                    )
+                    .addClass('d-none');
+
                 return;
             }
+
+            // 多張圖片時重新顯示
+            $pagination
+                .removeClass('d-none')
+                .empty();
 
             this.state.previewSwiper = new Swiper(previewEl, {
                 a11y: true,
@@ -466,7 +498,7 @@
                     prevEl: prevBtnEl
                 },
                 pagination: {
-                    el: this.$root.find('.ProductSwiperPagination').get(0),
+                    el: $pagination.get(0),
                     type: 'fraction'
                 },
                 breakpoints: {

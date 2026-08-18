@@ -1429,6 +1429,7 @@ namespace EtheriT.Coker.Application.Product
                         Description = db_p.Description,
                         // 前端只能接收此處已清洗、已 Decode 的 HTML，不再自行 htmlDecode。
                         Html = sanitized.Html,
+                        Css = sanitized.Css,
                         ItemNo = db_p.ItemNo,
                         Status = (int)db_p.Status,
                         NoStockManagement = db_p.NoStockManagement,

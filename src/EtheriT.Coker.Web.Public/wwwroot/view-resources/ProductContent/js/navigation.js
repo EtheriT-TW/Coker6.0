@@ -292,10 +292,8 @@
         setMetaContent('meta[property="og:title"]', document.title);
         setMetaContent('meta[property="og:url"]', window.location.href);
         setMetaContent('meta[property="og:description"]', description);
-        if (imageUrl) {
-            setMetaContent('meta[name="twitter:image"]', imageUrl);
-            setMetaContent('meta[property="og:image"]', imageUrl);
-        }
+        setMetaContent('meta[name="twitter:image"]', imageUrl);
+        setMetaContent('meta[property="og:image"]', imageUrl);
 
         const canonical = document.querySelector('link[rel="canonical"]');
         if (canonical) canonical.setAttribute('href', canonicalUrl);

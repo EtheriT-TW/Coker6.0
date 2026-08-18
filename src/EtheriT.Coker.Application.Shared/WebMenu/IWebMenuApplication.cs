@@ -11,7 +11,7 @@ namespace EtheriT.Coker.Application
         public Task<MenuEditorTreeDto> GetAll();
         public Task<SiteMapDto> GetDisplayAll(long WebsiteID);
         public Task<SiteMapDto> GetSiteMap();
-        public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
+        public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, long? mid = null);
         public Task<MenuGetAllListDto> GetSelectData(long Mid);
         public Task<MenuEditorDetailDto> GetEditorDetail(long id);
         public Task<MenuItemDto> GetDisplayOne(DataIdWebsiteIdDto dto);

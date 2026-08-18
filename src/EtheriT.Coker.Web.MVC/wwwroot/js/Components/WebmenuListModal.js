@@ -7,6 +7,13 @@ function WebmenuListModalInit() {
     WebmenuListModalElementInit();
 
     webmenuModal = new bootstrap.Modal(document.getElementById('WebmenuModal'))
+    $webmenu.off("click.webmenuSelectedSort").on("click.webmenuSelectedSort", function () {
+        var selectedKeys = getActiveWebmenuKeys();
+        var grid = getWebmenuListDataGridInstance();
+        $.when(grid.refresh()).done(function () {
+            grid.selectRows(selectedKeys, false);
+        });
+    });
     $("#WebmenuModal").on("hidden.bs.modal", function () {
         var temp_list = [];
         webmenu_list.forEach(function (item) {
@@ -54,6 +61,17 @@ function WebmenuListModalElementInit() {
 
 function getWebmenuListDataGridInstance() {
     return $("#WebmenuList").dxDataGrid("instance");
+}
+
+function getActiveWebmenuKeys() {
+    return webmenu_list
+        .filter(function (item) { return item.IsDeleted == false; })
+        .map(function (item) { return item.FK_MId; });
+}
+
+function getWebmenuSelectSort() {
+    var selectedKeys = getActiveWebmenuKeys();
+    return selectedKeys.length > 0 ? selectedKeys[0] : null;
 }
 
 function WebmenuList_ClearBtnInit(e) {

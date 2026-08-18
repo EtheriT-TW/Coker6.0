@@ -2,6 +2,7 @@ namespace EtheriT.Coker.Application.Product
 {
     internal sealed class ProductExportRow
     {
+        public long ProductId { get; set; }
         public string ItemNo { get; set; } = "";
         public string SubItemNo { get; set; } = "";
         public string ProdName { get; set; } = "";
@@ -39,6 +40,7 @@ namespace EtheriT.Coker.Application.Product
         public string Spec1 { get; set; } = "";
         public string Spec2Name { get; set; } = "";
         public string Spec2 { get; set; } = "";
+        public string SpecImage { get; set; } = "";
         public string SpecDescription { get; set; } = "";
         public int Stock { get; set; }
         public int Min_Qty { get; set; }

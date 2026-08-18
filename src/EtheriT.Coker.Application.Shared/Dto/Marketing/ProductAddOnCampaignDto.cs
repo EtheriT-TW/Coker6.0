@@ -3,6 +3,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Marketing
     public class ProductAddOnCampaignDto
     {
         public long CampaignId { get; set; }
+        public long RuleId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public int RequiredQuantity { get; set; } = 1;

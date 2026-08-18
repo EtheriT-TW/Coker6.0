@@ -62,6 +62,13 @@ $.fn.extend({
         }
         $self.on("click", function () {
             $(myModal).data("target", $self);
+
+            const selectedKeys = getActiveTagKeys($self);
+            getTagListDataGridInstance().done(function (grid) {
+                $.when(grid.refresh()).done(function () {
+                    grid.selectRows(selectedKeys, false);
+                });
+            });
         });
         if (!!!$(myModal).data("isSet")) {
             $(myModal).data("isSet", true)
@@ -244,12 +251,17 @@ function TagDataSet(datas) {
         }
     }, 300);
 }
+function getActiveTagKeys($target) {
+    var targetList = $target && $target.length ? $target.data("tagList") : null;
+    var sourceList = Array.isArray(targetList) ? targetList : tag_list;
+
+    return sourceList
+        .filter(function (item) { return item.IsDeleted == false; })
+        .map(function (item) { return item.FK_TId; });
+}
 function getSelectSort() {
-    if (tag_list.length > 0) {
-        var temp_list = tag_list.filter(e => e.IsDeleted == false).slice();
-        var tag_list_str = temp_list.map(item => item.FK_TId).join(',');
-        return tag_list_str;
-    }
+    const $target = $("#TagModal").data("target");
+    return getActiveTagKeys($target).join(',');
 }
 function TagInitSet(datas) {
     tag_check_list = [];

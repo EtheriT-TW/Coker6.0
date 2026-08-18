@@ -10,15 +10,18 @@ namespace EtheriT.Coker.Application.BackgroundJob
     public sealed class ProductExportBackgroundJob
     {
         private readonly IProductAppService productAppService;
+        private readonly IProductImportAppService productImportAppService;
         private readonly BackgroundTaskService backgroundTaskService;
         private readonly BackgroundOperationContext operationContext;
 
         public ProductExportBackgroundJob(
             IProductAppService productAppService,
+            IProductImportAppService productImportAppService,
             BackgroundTaskService backgroundTaskService,
             BackgroundOperationContext operationContext)
         {
             this.productAppService = productAppService;
+            this.productImportAppService = productImportAppService;
             this.backgroundTaskService = backgroundTaskService;
             this.operationContext = operationContext;
         }
@@ -95,7 +98,7 @@ namespace EtheriT.Coker.Application.BackgroundJob
 
                 var sourcePath = await backgroundTaskService.GetSourcePhysicalPathAsync(taskId);
                 var lastProgress = -1;
-                var analysis = await productAppService.AnalyzeProductImport(
+                var analysis = await productImportAppService.AnalyzeProductImport(
                     sourcePath,
                     templateId,
                     new List<ProductImportIgnoredRowDto>(),
@@ -185,7 +188,7 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 await backgroundTaskService.UpdateProgressAsync(taskId, 2, "伺服器已開始匯入商品");
                 var sourcePath = await backgroundTaskService.GetSourcePhysicalPathAsync(taskId);
                 var lastProgress = -1;
-                var result = await productAppService.ProdReplace(
+                var result = await productImportAppService.ProdReplace(
                     sourcePath,
                     templateId,
                     overwriteExisting,

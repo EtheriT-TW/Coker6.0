@@ -26,17 +26,20 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
     public class ProductController : Controller
     {
         private readonly IProductAppService productAppService;
+        private readonly IProductImportAppService productImportAppService;
         private readonly IBackgroundJobClient backgroundJobClient;
         private readonly LoginUserData loginUserData;
         private readonly BackgroundTaskService backgroundTaskService;
         public ProductController(
             IProductAppService productAppService,
+            IProductImportAppService productImportAppService,
             IBackgroundJobClient backgroundJobClient,
             LoginUserData loginUserData,
             BackgroundTaskService backgroundTaskService
             )
         {
             this.productAppService = productAppService;
+            this.productImportAppService = productImportAppService;
             this.backgroundJobClient = backgroundJobClient;
             this.loginUserData = loginUserData;
             this.backgroundTaskService = backgroundTaskService;
@@ -229,7 +232,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 return BadRequest(new { message = "請先選擇要忽略的 Excel 資料列，或修改檔案後重新掃描。" });
 
             var sourcePath = await backgroundTaskService.GetSourcePhysicalPathAsync(task.Id);
-            var filteredAnalysis = await productAppService.AnalyzeProductImport(
+            var filteredAnalysis = await productImportAppService.AnalyzeProductImport(
                 sourcePath,
                 dto.TemplateId,
                 requestedIgnoredRows,

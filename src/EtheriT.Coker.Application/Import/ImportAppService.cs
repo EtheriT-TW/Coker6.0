@@ -123,6 +123,7 @@ namespace EtheriT.Coker.Application.Import
                             && string.Equals(e.ItemNo, rows[i].ItemNo, StringComparison.OrdinalIgnoreCase));
                         rows[i].Techs = mapper.Map<List<TechCertDto>>(t);
                         pathReplace(rows[i], "Image", "Product", orgName);
+                        pathReplaceValue(rows[i], nameof(ProductImportDto.SpecImage), "Product", orgName);
                         pathReplace(rows[i], "File", "Product/File", orgName);
                         if (rows[i].Techs != null)
                         {
@@ -248,6 +249,33 @@ namespace EtheriT.Coker.Application.Import
 
                 prop.SetValue(dto, path);
             }
+        }
+        private void pathReplaceValue<T>(T dto, string propertyName, string dir, string orgName) where T : class
+        {
+            var prop = typeof(T).GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+            if (prop?.CanRead != true || prop.CanWrite != true || prop.PropertyType != typeof(string))
+                return;
+
+            string? path = prop.GetValue(dto) as string;
+            if (string.IsNullOrWhiteSpace(path))
+                return;
+
+            path = path.Trim();
+            if (path.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            var orgPrefix = $"/upload/{orgName}/";
+            if (!string.IsNullOrWhiteSpace(orgName)
+                && path.StartsWith(orgPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                path = $"/upload/{path.Substring(orgPrefix.Length)}";
+            }
+            else if (!path.StartsWith("/upload/", StringComparison.OrdinalIgnoreCase))
+            {
+                path = $"/upload/{dir}/{path}".Replace("//", "/");
+            }
+
+            prop.SetValue(dto, path);
         }
         public List<DirectoryImportDto> readDirectoryExcel(string path)
         {

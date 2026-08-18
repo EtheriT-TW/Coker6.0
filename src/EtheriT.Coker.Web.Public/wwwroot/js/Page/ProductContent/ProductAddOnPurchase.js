@@ -49,17 +49,63 @@
             : configuredLimit;
     }
 
-    function selectedForCampaign(campaignId) {
+    function sameRule(selection, campaignId, ruleId) {
+        return selection.campaignId === campaignId && selection.ruleId === ruleId;
+    }
+
+    function existingForRule(campaign) {
+        const rewardItems = read(campaign, 'rewardItems', 'RewardItems') || [];
+        const rewardItemIds = rewardItems.map(item => number(read(item, 'rewardItemId', 'RewardItemId')));
+        const legacyRewardKeys = rewardItems.map(item => ({
+            productStockId: number(read(item, 'productStockId', 'ProductStockId')),
+            offerPrice: Number(read(item, 'offerPrice', 'OfferPrice')) || 0
+        }));
+
+        return state.cartItems.reduce((sum, item) => {
+            if (read(item, 'isAdditional', 'IsAdditional') !== true) return sum;
+
+            const rewardItemId = number(
+                item?.fK_MarketingRewardItemId ??
+                item?.fkMarketingRewardItemId ??
+                item?.FK_MarketingRewardItemId);
+            const productStockId = number(read(item, 'psId', 'PSId'));
+            const price = Number(read(item, 'price', 'Price')) || 0;
+            const belongsToRule = rewardItemId > 0
+                ? rewardItemIds.includes(rewardItemId)
+                : legacyRewardKeys.some(key => key.productStockId === productStockId && key.offerPrice === price);
+            return belongsToRule ? sum + number(read(item, 'quantity', 'Quantity')) : sum;
+        }, 0);
+    }
+
+    function existingForItem(rewardItemId, productStockId, offerPrice) {
+        return state.cartItems.reduce((sum, item) => {
+            if (read(item, 'isAdditional', 'IsAdditional') !== true) return sum;
+            const cartRewardItemId = number(
+                item?.fK_MarketingRewardItemId ??
+                item?.fkMarketingRewardItemId ??
+                item?.FK_MarketingRewardItemId);
+            const matches = cartRewardItemId > 0
+                ? cartRewardItemId === rewardItemId
+                : number(read(item, 'psId', 'PSId')) === productStockId &&
+                  (Number(read(item, 'price', 'Price')) || 0) === offerPrice;
+            return matches ? sum + number(read(item, 'quantity', 'Quantity')) : sum;
+        }, 0);
+    }
+
+    function selectedForRule(campaign) {
+        const campaignId = number(read(campaign, 'campaignId', 'CampaignId'));
+        const ruleId = number(read(campaign, 'ruleId', 'RuleId'));
         return Array.from(state.selected.values())
-            .filter(x => x.campaignId === campaignId)
-            .reduce((sum, x) => sum + x.quantity, 0);
+            .filter(x => sameRule(x, campaignId, ruleId))
+            .reduce((sum, x) => sum + x.quantity, existingForRule(campaign));
     }
 
     function trimSelection(campaign, limit) {
         const campaignId = number(read(campaign, 'campaignId', 'CampaignId'));
-        let remaining = limit;
+        const ruleId = number(read(campaign, 'ruleId', 'RuleId'));
+        let remaining = Math.max(limit - existingForRule(campaign), 0);
         Array.from(state.selected.entries())
-            .filter(([, value]) => value.campaignId === campaignId)
+            .filter(([, value]) => sameRule(value, campaignId, ruleId))
             .forEach(([key, value]) => {
                 if (remaining <= 0) {
                     state.selected.delete(key);
@@ -76,12 +122,13 @@
 
         state.campaigns.forEach(campaign => {
             const campaignId = number(read(campaign, 'campaignId', 'CampaignId'));
+            const ruleId = number(read(campaign, 'ruleId', 'RuleId'));
             const required = Math.max(number(read(campaign, 'requiredQuantity', 'RequiredQuantity')), 1);
             const totalQualifyingQuantity = qualifyingQuantity(campaign, state.purchaseQuantity);
             const limit = campaignLimit(campaign, state.purchaseQuantity);
-            const selected = selectedForCampaign(campaignId);
+            const selected = selectedForRule(campaign);
             const selectionFull = limit > 0 && selected >= limit;
-            const $campaign = $root().find(`[data-campaign-id="${campaignId}"]`);
+            const $campaign = $root().find(`[data-campaign-id="${campaignId}"][data-rule-id="${ruleId}"]`);
             const $rule = $campaign.find('.product-addon__rule');
             $campaign.toggleClass('is-single-choice', limit === 1);
             if (limit > 0) {
@@ -95,12 +142,17 @@
             $campaign.find('[data-reward-item-id]').each(function () {
                 const $card = $(this);
                 const rewardItemId = number($card.data('rewardItemId'));
+                const productStockId = number($card.data('productStockId'));
+                const offerPrice = Number($card.data('offerPrice')) || 0;
                 const item = state.selected.get(rewardItemId);
-                const disabled = limit <= 0 || (selectionFull && !item);
-                $card.toggleClass('is-disabled', disabled).toggleClass('is-selected', !!item);
+                const existingQuantity = existingForItem(rewardItemId, productStockId, offerPrice);
+                const itemSelected = !!item || existingQuantity > 0;
+                const itemFull = existingQuantity + (item?.quantity || 0) >= itemLimit(campaign, $card, state.purchaseQuantity);
+                const disabled = limit <= 0 || (selectionFull && !item) || (itemFull && !item);
+                $card.toggleClass('is-disabled', disabled).toggleClass('is-selected', itemSelected);
                 $card.find('.product-addon__toggle')
                     .prop('disabled', disabled)
-                    .text(item ? '已選取' : '選擇');
+                    .text(item ? '已選取' : existingQuantity > 0 ? `購物車已有 ${existingQuantity} 件` : '選擇');
                 const canAdjustQuantity = !!item && limit > 1 && itemLimit(campaign, $card, state.purchaseQuantity) > 1;
                 $card.find('.product-addon__quantity').toggleClass('d-none', !canAdjustQuantity);
                 $card.find('.product-addon__qty-value').text(item?.quantity || 0);
@@ -120,12 +172,21 @@
 
     function itemCard(campaign, item) {
         const campaignId = number(read(campaign, 'campaignId', 'CampaignId'));
+        const ruleId = number(read(campaign, 'ruleId', 'RuleId'));
         const rewardItemId = number(read(item, 'rewardItemId', 'RewardItemId'));
+        const productStockId = number(read(item, 'productStockId', 'ProductStockId'));
         const offerPrice = number(read(item, 'offerPrice', 'OfferPrice'));
         const originalPrice = number(read(item, 'originalPrice', 'OriginalPrice'));
         const $card = $('<article class="product-addon__card"></article>')
             .attr('data-reward-item-id', rewardItemId)
-            .data({ campaignId, rewardItemId, maxQuantity: Math.max(number(read(item, 'maxQuantityPerOrder', 'MaxQuantityPerOrder')), 1) });
+            .data({
+                campaignId,
+                ruleId,
+                rewardItemId,
+                productStockId,
+                offerPrice,
+                maxQuantity: Math.max(number(read(item, 'maxQuantityPerOrder', 'MaxQuantityPerOrder')), 1)
+            });
 
         const $image = $('<img class="product-addon__image" alt="" loading="lazy" />')
             .attr('src', read(item, 'imageUrl', 'ImageUrl') || '/images/noImg.jpg')
@@ -156,9 +217,11 @@
 
         campaigns.forEach(campaign => {
             const campaignId = number(read(campaign, 'campaignId', 'CampaignId'));
+            const ruleId = number(read(campaign, 'ruleId', 'RuleId'));
             const required = Math.max(number(read(campaign, 'requiredQuantity', 'RequiredQuantity')), 1);
             const selectable = Math.max(number(read(campaign, 'selectionQuantityPerQualification', 'SelectionQuantityPerQualification')), 1);
-            const $campaign = $('<div class="product-addon__campaign"></div>').attr('data-campaign-id', campaignId);
+            const $campaign = $('<div class="product-addon__campaign"></div>')
+                .attr({ 'data-campaign-id': campaignId, 'data-rule-id': ruleId });
             const $header = $('<div class="product-addon__campaign-header"></div>');
             $header.append($('<h4 class="product-addon__campaign-name"></h4>').text(read(campaign, 'name', 'Name') || '限定優惠'));
             $header.append($('<span class="product-addon__hint"></span>').text(`任選滿 ${required} 件，可選 ${selectable} 件`));
@@ -212,18 +275,21 @@
         if ($card.hasClass('is-disabled')) return;
         const rewardItemId = number($card.data('rewardItemId'));
         const campaignId = number($card.data('campaignId'));
-        const campaign = state.campaigns.find(x => number(read(x, 'campaignId', 'CampaignId')) === campaignId);
+        const ruleId = number($card.data('ruleId'));
+        const campaign = state.campaigns.find(x =>
+            number(read(x, 'campaignId', 'CampaignId')) === campaignId &&
+            number(read(x, 'ruleId', 'RuleId')) === ruleId);
         if (!campaign) return;
 
         if (state.selected.has(rewardItemId)) {
             state.selected.delete(rewardItemId);
         } else if (campaignLimit(campaign, state.purchaseQuantity) === 1) {
             Array.from(state.selected.entries())
-                .filter(([, value]) => value.campaignId === campaignId)
+                .filter(([, value]) => sameRule(value, campaignId, ruleId))
                 .forEach(([key]) => state.selected.delete(key));
-            state.selected.set(rewardItemId, { campaignId, rewardItemId, quantity: 1 });
-        } else if (selectedForCampaign(campaignId) < campaignLimit(campaign, state.purchaseQuantity)) {
-            state.selected.set(rewardItemId, { campaignId, rewardItemId, quantity: 1 });
+            state.selected.set(rewardItemId, { campaignId, ruleId, rewardItemId, quantity: 1 });
+        } else if (selectedForRule(campaign) < campaignLimit(campaign, state.purchaseQuantity)) {
+            state.selected.set(rewardItemId, { campaignId, ruleId, rewardItemId, quantity: 1 });
         } else {
             Coker.sweet.warning('請注意', '已達本次可選的優惠商品件數。');
         }
@@ -234,10 +300,12 @@
         const rewardItemId = number($card.data('rewardItemId'));
         const selected = state.selected.get(rewardItemId);
         if (!selected) return;
-        const campaign = state.campaigns.find(x => number(read(x, 'campaignId', 'CampaignId')) === selected.campaignId);
+        const campaign = state.campaigns.find(x =>
+            number(read(x, 'campaignId', 'CampaignId')) === selected.campaignId &&
+            number(read(x, 'ruleId', 'RuleId')) === selected.ruleId);
         const maxItem = itemLimit(campaign, $card, state.purchaseQuantity);
         const maxCampaign = campaignLimit(campaign, state.purchaseQuantity);
-        const otherSelected = selectedForCampaign(selected.campaignId) - selected.quantity;
+        const otherSelected = selectedForRule(campaign) - selected.quantity;
         selected.quantity = Math.max(0, Math.min(selected.quantity + delta, maxItem, maxCampaign - otherSelected));
         if (selected.quantity === 0) state.selected.delete(rewardItemId);
         updateState(state.purchaseQuantity);
@@ -247,6 +315,7 @@
         updateState(purchaseQuantity);
         payload.RewardSelections = Array.from(state.selected.values()).map(x => ({
             CampaignId: x.campaignId,
+            RuleId: x.ruleId,
             RewardItemId: x.rewardItemId,
             Quantity: x.quantity
         }));

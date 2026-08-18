@@ -140,7 +140,15 @@ namespace EtheriT.Coker.Application.ShoppingCart
             Core.Models.ShoppingCart? sourceOrderSnapshot = null)
         {
             var rewardSelections = dto.RewardSelections?
-                .Where(x => x.CampaignId > 0 && x.RewardItemId > 0 && x.Quantity > 0)
+                .Where(x => x.CampaignId > 0 && x.RuleId > 0 && x.RewardItemId > 0 && x.Quantity > 0)
+                .GroupBy(x => new { x.CampaignId, x.RuleId, x.RewardItemId })
+                .Select(x => new ShoppingCartRewardSelectionDto
+                {
+                    CampaignId = x.Key.CampaignId,
+                    RuleId = x.Key.RuleId,
+                    RewardItemId = x.Key.RewardItemId,
+                    Quantity = x.Sum(y => y.Quantity)
+                })
                 .ToList() ?? new List<ShoppingCartRewardSelectionDto>();
 
             if (!rewardSelections.Any())
@@ -423,19 +431,19 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 .ToListAsync();
             var affectedCartIds = new List<long>();
 
-            foreach (var campaignId in campaignIds)
+            foreach (var selectionGroup in selections.GroupBy(x => new { x.CampaignId, x.RuleId }))
             {
-                var campaign = campaigns.Single(x => x.Id == campaignId);
-                var campaignSelections = selections.Where(x => x.CampaignId == campaignId).ToList();
+                var campaign = campaigns.Single(x => x.Id == selectionGroup.Key.CampaignId);
+                var campaignSelections = selectionGroup.ToList();
                 var rule = campaign.Rules
                     .Where(x => !x.IsDeleted && x.Enabled &&
+                                x.Id == selectionGroup.Key.RuleId &&
                                 x.RuleType == MarketingRuleTypeEnum.AddOnPurchase &&
                                 x.Condition != null && !x.Condition.IsDeleted &&
                                 (x.Condition.ConditionType == MarketingConditionTypeEnum.ScopeQuantity ||
                                  x.Condition.ConditionType == MarketingConditionTypeEnum.BuySpecificProduct) &&
                                 x.Reward != null && !x.Reward.IsDeleted)
-                    .OrderBy(x => x.SortOrder)
-                    .FirstOrDefault();
+                    .SingleOrDefault();
 
                 if (rule == null)
                     throw new Exception("加價購活動規則已失效，請重新整理商品頁後再試。");
@@ -469,12 +477,12 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     throw new Exception("選取的加價購商品已失效，請重新選擇。");
 
                 var rewardItemIds = activeRewardItems.Keys.ToHashSet();
-                var rewardStockIds = activeRewardItems.Values.Select(x => x.FK_ProdStockId).ToHashSet();
                 var existingRewardQuantity = currentCarts
                     .Where(x => x.IsAdditional &&
                         (x.FK_MarketingRewardItemId.HasValue
                             ? rewardItemIds.Contains(x.FK_MarketingRewardItemId.Value)
-                            : rewardStockIds.Contains(x.FK_PSid)))
+                            : activeRewardItems.Values.Any(item =>
+                                item.FK_ProdStockId == x.FK_PSid && item.OfferPrice == x.Price)))
                     .Sum(x => x.Quantity);
                 var requestedQuantity = campaignSelections.Sum(x => x.Quantity);
                 if (existingRewardQuantity + requestedQuantity > allowance)
@@ -488,6 +496,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         .Where(x => x.IsAdditional &&
                             (x.FK_MarketingRewardItemId == rewardItem.Id ||
                              (!x.FK_MarketingRewardItemId.HasValue && x.FK_PSid == stock.Id)))
+                        .Where(x => x.FK_MarketingRewardItemId.HasValue || x.Price == rewardItem.OfferPrice)
                         .Sum(x => x.Quantity);
                     var itemLimit = Math.Max(rewardItem.MaxQuantityPerOrder, 1) *
                                     (campaign.Repeatable ? qualificationCount : 1);
@@ -500,6 +509,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         .Where(x => x.IsAdditional &&
                             (x.FK_MarketingRewardItemId == rewardItem.Id ||
                              (!x.FK_MarketingRewardItemId.HasValue && x.FK_PSid == stock.Id)))
+                        .Where(x => x.FK_MarketingRewardItemId.HasValue || x.Price == rewardItem.OfferPrice)
                         .OrderBy(x => x.CreationTime)
                         .FirstOrDefault();
                     if (cart == null)

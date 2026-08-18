@@ -1,4 +1,4 @@
-﻿import { ModuleSelectManager } from "./ModuleSelect.js";
+﻿import { ModuleSelectManager } from "./ModuleSelect.min.js";
 
 let prodListModalInstance = null;
 let prodModalTagFilter = null;
@@ -127,7 +127,11 @@ function createInstance() {
         saveButtonSelector: ".btn_prod_save",
 
         getRowKey: function (row) {
-            return row?.Id ?? row?.id ?? null;
+            return row?.FK_ProdId
+                ?? row?.fK_ProdId
+                ?? row?.Id
+                ?? row?.id
+                ?? null;
         },
 
         getRowText: function (row) {

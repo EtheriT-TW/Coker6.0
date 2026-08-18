@@ -466,12 +466,13 @@
             : "";
 
         return '<article class="cart-reward-card' + (selected ? ' is-selected' : '') + (disabled ? ' is-disabled' : '') + '"' +
-            ' data-selection-key="' + key + '" role="button" tabindex="' + (disabled ? '-1' : '0') + '">' +
+            ' data-selection-key="' + key + '" role="button" tabindex="0">' +
             '<span class="cart-reward-check"><i class="fa-solid fa-check"></i></span>' +
             '<div class="cart-reward-image-wrap"><img src="' + escapeHtml(getValue(item, "imageUrl") || "/images/noImg.jpg") + '" alt="" loading="lazy"></div>' +
             '<div class="cart-reward-body"><span class="cart-reward-tag">' + tag + '</span>' +
-            '<div class="cart-reward-name">' + escapeHtml(getValue(item, "productName")) + '</div>' +
+            '<div class="cart-reward-name" title="' + escapeHtml(getValue(item, "productName")) + '">' + escapeHtml(getValue(item, "productName")) + '</div>' +
             '<div class="cart-reward-spec">' + escapeHtml(getValue(item, "stockName")) + '</div>' +
+            '<button type="button" class="cart-reward-preview-button">查看完整名稱</button>' +
             '<div class="cart-reward-price"><strong>' + priceText + '</strong>' + original + '</div></div>' +
             (selected ? '<div class="cart-reward-quantity" aria-label="優惠商品數量">' +
                 '<button type="button" class="js-reward-minus" aria-label="減少">−</button><span>' + quantity + '</span>' +
@@ -690,12 +691,13 @@
         var originalPrice = Number(getValue(item, "originalPrice") || 0);
 
         return '<article class="cart-reward-card cart-addon-modal-card' + (selected ? ' is-selected' : '') +
-            (disabled ? ' is-disabled' : '') + '" data-product-selection-key="' + key + '">' +
+            (disabled ? ' is-disabled' : '') + '" data-product-selection-key="' + key + '" role="button" tabindex="0">' +
             '<span class="cart-reward-check"><i class="fa-solid fa-check"></i></span>' +
             '<div class="cart-reward-image-wrap"><img src="' + escapeHtml(getValue(item, "imageUrl") || "/images/noImg.jpg") + '" alt="" loading="lazy"></div>' +
             '<div class="cart-reward-body"><span class="cart-reward-tag">' + (offerPrice <= 0 ? '贈品' : '加價購') + '</span>' +
-            '<div class="cart-reward-name">' + escapeHtml(getValue(item, "productName")) + '</div>' +
+            '<div class="cart-reward-name" title="' + escapeHtml(getValue(item, "productName")) + '">' + escapeHtml(getValue(item, "productName")) + '</div>' +
             '<div class="cart-reward-spec">' + escapeHtml(getValue(item, "stockName")) + '</div>' +
+            '<button type="button" class="cart-reward-preview-button">查看完整名稱</button>' +
             '<div class="cart-reward-price"><strong>' + (offerPrice <= 0 ? '免費' : 'NT$ ' + offerPrice.toLocaleString()) + '</strong>' +
             (originalPrice > 0 ? '<span class="cart-reward-original">原價 NT$ ' + originalPrice.toLocaleString() + '</span>' : '') + '</div></div>' +
             '<div class="cart-reward-quantity"><button type="button" class="js-product-addon-minus" aria-label="減少"' + (selected ? '' : ' disabled') + '>−</button>' +
@@ -754,6 +756,53 @@
         if (delta > 0 && (getDraftCampaignQuantity(campaign) >= qualification.allowance || next > itemLimit)) return;
         S.productAddOnDrafts[key] = next;
         renderProductAddOnModal();
+    }
+
+    function findRewardContext(key) {
+        var parts = String(key || '').split(':').map(Number);
+        var campaign = (S.marketingCampaigns && S.marketingCampaigns.addOnCampaigns || []).find(function (entry) {
+            return Number(getValue(entry, 'campaignId')) === parts[0] && Number(getValue(entry, 'ruleId')) === parts[1];
+        });
+        if (!campaign) return null;
+        var item = (getValue(campaign, 'rewardItems') || []).find(function (entry) {
+            return Number(getValue(entry, 'rewardItemId')) === parts[2];
+        });
+        return item ? { campaign: campaign, item: item } : null;
+    }
+
+    function openRewardPreview(key, draftMode) {
+        var context = findRewardContext(key);
+        if (!context || !window.ProductRewardPreview || typeof window.ProductRewardPreview.open !== 'function') return;
+
+        var campaign = context.campaign;
+        var item = context.item;
+        var selections = draftMode ? S.productAddOnDrafts || {} : S.marketingRewardSelections || {};
+        var selected = Number(selections[key] || 0) > 0;
+        var baseItems = draftMode ? getModalBaseItems() : getSelectedBaseItems();
+        var qualification = getCampaignQualification(campaign, baseItems);
+        var selectedTotal = draftMode ? getDraftCampaignQuantity(campaign) : getCampaignSelectedQuantity(campaign);
+        var disabled = !qualification.qualified || (!selected && selectedTotal >= qualification.allowance);
+        var offerPrice = Number(getValue(item, 'offerPrice') || 0);
+
+        window.ProductRewardPreview.open({
+            productId: Number(getValue(item, 'productId') || 0),
+            productName: getValue(item, 'productName') || '優惠商品',
+            stockName: getValue(item, 'stockName') || '',
+            imageUrl: getValue(item, 'imageUrl') || '/images/noImg.jpg',
+            offerPrice: offerPrice,
+            originalPrice: Number(getValue(item, 'originalPrice') || 0),
+            benefitText: offerPrice <= 0 ? '贈品' : '加價購',
+            selected: selected,
+            disabled: disabled,
+            cancelText: offerPrice <= 0 ? '取消贈品' : '取消加購',
+            parentModal: draftMode ? '#CartProductAddOnModal' : null,
+            onAction: function () {
+                var source = draftMode ? S.productAddOnDrafts || {} : S.marketingRewardSelections || {};
+                var currentQuantity = Number(source[key] || 0);
+                if (draftMode) changeProductAddOnDraft(key, currentQuantity > 0 ? -currentQuantity : 1);
+                else changeRewardQuantity(key, currentQuantity > 0 ? -currentQuantity : 1);
+            }
+        });
     }
 
     function saveProductAddOnDrafts() {
@@ -937,11 +986,10 @@
         openProductAddOnModal(null, keys, $(this).attr('data-group-id'));
     });
     $(document).on('click', '.cart-addon-modal-card', function (event) {
-        if ($(event.target).closest('.cart-reward-quantity').length || $(this).hasClass('is-disabled')) return;
+        if ($(event.target).closest('.cart-reward-quantity').length) return;
         event.stopImmediatePropagation();
         var key = $(this).attr('data-product-selection-key');
-        changeProductAddOnDraft(key, Number(S.productAddOnDrafts[key] || 0) > 0
-            ? -Number(S.productAddOnDrafts[key]) : 1);
+        openRewardPreview(key, true);
     });
     $(document).on('click', '.js-product-addon-minus, .js-product-addon-plus', function (event) {
         event.preventDefault();
@@ -1006,9 +1054,8 @@
         var productKey = $(this).attr('data-product-selection-key');
         if (productKey) return;
         if ($(event.target).closest(".cart-reward-quantity").length) return;
-        if ($(this).hasClass("is-disabled")) return;
         var key = $(this).attr("data-selection-key");
-        changeRewardQuantity(key, Number(S.marketingRewardSelections[key] || 0) > 0 ? -Number(S.marketingRewardSelections[key]) : 1);
+        openRewardPreview(key, false);
     });
     $(document).off("productQuickCart:added.shoppingCart")
         .on("productQuickCart:added.shoppingCart", function () {

@@ -4,7 +4,9 @@
         const $this = $(share);
         if (typeof ($this.data("init")) == "undefined" || !$this.data("init")) {
             var href = "";
-            if (typeof ($this.data("href")) == "string") {
+            if (typeof ($this.attr("data-href")) == "string") {
+                href = $this.attr("data-href");
+            } else if (typeof ($this.data("href")) == "string") {
                 href = $this.data("href");
             } else href = location.pathname;
             $this.cShare({

@@ -21,6 +21,17 @@
       ]
     },
     {
+      "output": "js/Page/ProductContent.min.js",
+      "input": [
+        "wwwroot/view-resources/ProductContent/js/core.js",
+        "wwwroot/view-resources/ProductContent/js/selection.js",
+        "wwwroot/view-resources/ProductContent/js/media-viewer.js",
+        "wwwroot/view-resources/ProductContent/js/controller.js",
+        "wwwroot/view-resources/ProductContent/js/navigation.js",
+        "wwwroot/view-resources/ProductContent/js/boot.js"
+      ]
+    },
+    {
       "output": "lib/jquery-twzipcode/jquery.twzipcode.min.js",
       "input": [
         "node_modules/jquery-twzipcode/jquery.twzipcode.min.js"

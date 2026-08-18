@@ -3293,7 +3293,8 @@ namespace EtheriT.Coker.Application.Directory
                         if (webmenus != null)
                         {
                             var html = stringHandler.HtmlDecode(webmenus.Html);
-                            var value = htmlProcessor.Find(htmlProcessor.LoadHtml(html), "[data-dirid]").FirstOrDefault().Attr("data-dirid");
+                            var directoryNode = htmlProcessor.Find(htmlProcessor.LoadHtml(html), "[data-dirid]").FirstOrDefault();
+                            var value = directoryNode?.Attr("data-dirid");
                             if (!string.IsNullOrEmpty(value) && long.TryParse(value, out var dirId))
                             {
                                 dto.dirids.Add(dirId);
@@ -3301,104 +3302,53 @@ namespace EtheriT.Coker.Application.Directory
                         }
                     }
 
-                    if (dto.dirids != null)
+                    if (dto.dirids != null && dto.dirids.Count > 0)
                     {
-                        string diridsStr = string.Join(",", dto.dirids);
-                        var tagids = await (from tag in db.Tags
-                                            join tagas in db.Tag_Associates on tag.Id equals tagas.FK_TId
-                                            where tagas.Type == TagAssociateTypeEnum.目錄
-                                            where dto.dirids.Contains(tagas.FK_AId)
-                                            where tag.FK_WebsiteId == WebsiteID
-                                            orderby tagas.Id
-                                            select tag.Id).ToListAsync();
-                        var not_tagids = await (from tag in db.Tags
-                                                join tagas in db.Tag_Associates on tag.Id equals tagas.FK_TId
-                                                where tagas.Type == TagAssociateTypeEnum.目錄拒絕
-                                                where dto.dirids.Contains(tagas.FK_AId)
-                                                where tag.FK_WebsiteId == WebsiteID
-                                                select tag.Id).ToListAsync();
-                        List<KeyValueDto> datas = new List<KeyValueDto>();
-
-                        switch (dto.type)
+                        List<DirectoryFilterDto> filters = new List<DirectoryFilterDto>();
+                        if (!string.IsNullOrWhiteSpace(dto.filters))
                         {
-                            case 1:
-                                var not_tags_pid = await (from p in db.Prods
-                                                          join tagas in db.Tag_Associates on p.Id equals tagas.FK_AId
-                                                          where p.FK_WebsiteId == WebsiteID
-                                                          where tagas.Type == TagAssociateTypeEnum.商品
-                                                          where not_tagids.Contains(tagas.FK_TId)
-                                                          select p.Id).ToListAsync();
-                                var products_tags = await (from p in db.Prods
-                                                           join tagas in db.Tag_Associates on p.Id equals tagas.FK_AId
-                                                           where !not_tags_pid.Contains(p.Id)
-                                                           where p.FK_WebsiteId == WebsiteID
-                                                           where !p.RemovedFromShelves && p.Visible
-                                                           where p.permanent || (DateTime.Now >= p.StartTime && DateTime.Now <= p.EndTime)
-                                                           where tagids.Contains(tagas.FK_TId) && tagas.Type == TagAssociateTypeEnum.商品
-                                                           orderby
-                                                                p.Ser_No, p.Status == ProdStatusEnum.新品 descending,
-                                                                p.Status != ProdStatusEnum.售完 descending, p.Status != ProdStatusEnum.停產 descending,
-                                                                p.ItemNo, p.Title, p.Id descending
-                                                           select new { p, tagas }).ToListAsync();
-
-                                datas = products_tags
-                                    .Select(x => new KeyValueDto()
-                                    {
-                                        Key = x.p.Id.ToString(),
-                                        Value = x.p.Title ?? ""
-                                    }).DistinctBy(x => x.Key).ToList();
-                                break;
-                            case 2:
-                                var not_tags_aid = await (from a in db.Article
-                                                          join tagas in db.Tag_Associates on a.Id equals tagas.FK_AId
-                                                          where a.FK_WebsiteId == WebsiteID
-                                                          where tagas.Type == TagAssociateTypeEnum.文章
-                                                          where not_tagids.Contains(tagas.FK_TId)
-                                                          select a.Id).ToListAsync();
-                                var articles_tags = await (from a in db.Article
-                                                           join tagas in db.Tag_Associates on a.Id equals tagas.FK_AId
-                                                           where !not_tags_aid.Contains(a.Id)
-                                                           where a.Visible
-                                                           where a.FK_WebsiteId == WebsiteID
-                                                           where tagas.Type == TagAssociateTypeEnum.文章 && tagids.Contains(tagas.FK_TId)
-                                                           where a.permanent || (DateTime.Now >= a.StartTime && DateTime.Now <= a.EndTime)
-                                                           orderby a.SerNO, a.NodeDate descending, a.Id descending
-                                                           select new { a, tagas }).ToListAsync();
-                                datas = articles_tags.OrderBy(x => tagids.IndexOf(x.tagas.FK_TId)).Select(x => new KeyValueDto()
-                                {
-                                    Key = x.a.Id.ToString(),
-                                    Value = x.a.Title ?? ""
-                                }).ToList();
-                                break;
+                            filters = JsonConvert.DeserializeObject<List<DirectoryFilterDto>>(dto.filters)
+                                ?? new List<DirectoryFilterDto>();
                         }
 
-                        var index = datas.FindIndex(d => long.Parse(d.Key) == dto.id);
-                        if (index > -1)
+                        // 上一則／下一則必須與前台目錄使用完全相同的成員條件、權限及排序。
+                        // 舊邏輯以「任一目錄標籤符合」查詢，會把缺少其他必要標籤的內容帶進來。
+                        var directoryResult = await GetReleInfo(new DirectoryReleInfoInputDto
                         {
-                            if (index == 0 && datas.Count > 1)
+                            Ids = dto.dirids,
+                            SiteId = WebsiteID,
+                            Page = 1,
+                            ShowNum = -500,
+                            Filters = filters
+                        });
+                        var datas = directoryResult.ReleInfos
+                            .Where(x => dto.type == 1
+                                ? x.type == DirectoryTypeEnum.商品
+                                : x.type == DirectoryTypeEnum.文章)
+                            .Select(x => new KeyValueDto
                             {
-                                var keynext = $"{datas[index + 1].Key}?dirid={diridsStr}";
-                                response.Add(new KeyValueDto());
-                                response.Add(new KeyValueDto() { Key = keynext, Value = datas[index + 1].Value ?? "" });
-                            }
-                            else if (index == 0 && datas.Count == 1)
-                            {
-                                response.Add(new KeyValueDto());
-                                response.Add(new KeyValueDto());
-                            }
-                            else if (index == datas.Count - 1)
-                            {
-                                var keyprev = $"{datas[index - 1].Key}?dirid={diridsStr}";
-                                response.Add(new KeyValueDto() { Key = keyprev, Value = datas[index - 1].Value ?? "" });
-                                response.Add(new KeyValueDto());
-                            }
-                            else
-                            {
-                                var keynext = $"{datas[index + 1].Key}?dirid={diridsStr}";
-                                var keyprev = $"{datas[index - 1].Key}?dirid={diridsStr}";
-                                response.Add(new KeyValueDto() { Key = keyprev, Value = datas[index - 1].Value ?? "" });
-                                response.Add(new KeyValueDto() { Key = keynext, Value = datas[index + 1].Value ?? "" });
-                            }
+                                Key = x.Id.ToString(),
+                                Value = x.Title ?? string.Empty
+                            })
+                            .ToList();
+                        var index = datas.FindIndex(x => x.Key == dto.id.ToString());
+                        if (index >= 0)
+                        {
+                            var diridsStr = string.Join(",", dto.dirids);
+                            response.Add(index > 0
+                                ? new KeyValueDto
+                                {
+                                    Key = $"{datas[index - 1].Key}?dirid={diridsStr}",
+                                    Value = datas[index - 1].Value
+                                }
+                                : new KeyValueDto());
+                            response.Add(index < datas.Count - 1
+                                ? new KeyValueDto
+                                {
+                                    Key = $"{datas[index + 1].Key}?dirid={diridsStr}",
+                                    Value = datas[index + 1].Value
+                                }
+                                : new KeyValueDto());
                         }
                     }
                 }

@@ -447,109 +447,109 @@
         }
     }
 
+    function getPagerUrl(page) {
+        if (w.DirectoryBoot && isFn(w.DirectoryBoot.getPageUrl)) {
+            return w.DirectoryBoot.getPageUrl(page);
+        }
+
+        const url = new URL(w.location.href);
+        if (page === 1) url.searchParams.delete("Page");
+        else url.searchParams.set("Page", page);
+        return `${url.pathname}${url.search}${url.hash}`;
+    }
+
+    function createPagerItem(page, currentPage, title) {
+        const $item = $("<li>", { class: "page-item" });
+
+        if (page === currentPage) {
+            return $item.append($("<span>", {
+                class: "btn_page page-link text-black bg-secondary",
+                "data-page": page,
+                "aria-current": "page"
+            }).text(page));
+        }
+
+        return $item.append($("<a>", {
+            class: "btn_page page-link text-black",
+            href: getPagerUrl(page),
+            title: title,
+            "data-page": page
+        }).text(page));
+    }
+
+    function configureDirectionLink($container, page, rel) {
+        let $control = $container.children("a, button").first();
+
+        if ($control.is("button")) {
+            const $link = $("<a>", {
+                class: $control.attr("class"),
+                title: $control.attr("title"),
+                "aria-label": $control.attr("aria-label")
+            }).html($control.html());
+            $control.replaceWith($link);
+            $control = $link;
+        }
+
+        $control
+            .addClass("btn_page")
+            .attr({ href: getPagerUrl(page), "data-page": page, rel: rel });
+    }
+
     function renderPager($item, option, result) {
-        const dirLength = $(".catalog_frame").length;
         let page = parseInt(option.Page, 10);
         let loadPageRange = 2;
+        const totalPage = Math.max(parseInt(result.totalPage, 10) || 0, 0);
+        const $pager = $item.find(".page_btn");
+        const $nextItem = $pager.children(".btn_next");
 
-        $item.find(".page-item").each(function () {
-            const $self = $(this);
-            if (!$self.hasClass("btn_prev") && !$self.hasClass("btn_next")) {
-                $self.remove();
-            }
-        });
+        $pager.children(".page-item").not(".btn_prev, .btn_next").remove();
+        $pager.toggleClass("d-none", totalPage <= 1);
 
-        if (result.totalPage <= 1) $item.find(".page_btn").addClass("d-none");
-        else $item.find(".page_btn").removeClass("d-none");
-
-        if (page > result.totalPage) page = result.totalPage;
+        if (page > totalPage) page = totalPage;
         else if (page < 1) page = 1;
 
-        if (page == 1) $item.find(".btn_prev").addClass("d-none");
-        else $item.find(".btn_prev").removeClass("d-none");
+        $item.find(".btn_prev").toggleClass("d-none", page <= 1);
+        $item.find(".btn_next").toggleClass("d-none", page >= totalPage);
 
-        if (page == result.totalPage) $item.find(".btn_next").addClass("d-none");
-        else $item.find(".btn_next").removeClass("d-none");
+        configureDirectionLink($item.find(".btn_prev"), Math.max(page - 1, 1), "prev");
+        configureDirectionLink($item.find(".btn_next"), Math.min(page + 1, totalPage), "next");
 
-        if (page == 1 || page == result.totalPage) loadPageRange = 4;
+        if (page === 1 || page === totalPage) loadPageRange = 4;
 
-        for (let i = 1; i <= result.totalPage; i++) {
-            if (i == 1) {
-                if (i == page) {
-                    $item.find(".page_btn").children(".btn_next")
-                        .before(`<li class="page-item"><span class="btn_page page-link text-black bg-secondary" data-page="${i}">1</span></li>`);
-                } else {
-                    $item.find(".page_btn").children(".btn_next")
-                        .before(`<li class="page-item"><button class="btn_page page-link text-black" title="第一頁" data-page="${i}">1</button></li>`);
-                    if (page - loadPageRange - 1 > 0) {
-                        $item.find(".page_btn").children(".btn_next")
-                            .before(`<li class="page-item px-2">...</li>`);
-                    }
+        for (let i = 1; i <= totalPage; i++) {
+            if (i === 1) {
+                createPagerItem(i, page, "第一頁").insertBefore($nextItem);
+                if (i !== page && page - loadPageRange - 1 > 0) {
+                    $("<li>", { class: "page-item px-2", "aria-hidden": "true" }).text("...").insertBefore($nextItem);
                 }
-            } else if (i == result.totalPage) {
-                if (i == page) {
-                    $item.find(".page_btn").children(".btn_next")
-                        .before(`<li class="page-item"><span class="btn_page page-link text-black bg-secondary" data-page="${i}">${result.totalPage}</span></li>`);
-                } else {
-                    if (page + loadPageRange + 1 < result.totalPage) {
-                        $item.find(".page_btn").children(".btn_next")
-                            .before(`<li class="page-item px-2">...</li>`);
-                    }
-                    $item.find(".page_btn").children(".btn_next")
-                        .before(`<li class="page-item"><button class="btn_page page-link text-black" title="最後一頁" data-page="${i}">${result.totalPage}</button></li>`);
+            } else if (i === totalPage) {
+                if (i !== page && page + loadPageRange + 1 < totalPage) {
+                    $("<li>", { class: "page-item px-2", "aria-hidden": "true" }).text("...").insertBefore($nextItem);
                 }
+                createPagerItem(i, page, "最後一頁").insertBefore($nextItem);
             } else if (i >= page - loadPageRange && i <= page + loadPageRange) {
-                if (i == page) {
-                    $item.find(".page_btn").children(".btn_next")
-                        .before(`<li class="page-item"><span class="btn_page page-link text-black bg-secondary" data-page="${i}">${i}</span></li>`);
-                } else {
-                    $item.find(".page_btn").children(".btn_next")
-                        .before(`<li class="page-item"><button class="btn_page page-link text-black" title="移動至第${i}頁" data-page="${i}">${i}</button></li>`);
-                }
+                createPagerItem(i, page, `移動至第${i}頁`).insertBefore($nextItem);
             }
         }
 
-        $(".btn_page").off("click.directoryPager").on("click.directoryPager", function () {
-            const $self = $(this);
+        $pager.off("click.directoryPager").on("click.directoryPager", "a.btn_page", function (event) {
+            // 保留開新分頁、另存連結等瀏覽器原生操作。
+            if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
 
-            if (page != $self.data("page")) {
-                page = $self.data("page");
-                if (dirLength == 1 && w.location.hash != `#${page}`) w.location.hash = `#${page}`;
-                else if (isFn(w.initElemntAndLoadDir)) w.initElemntAndLoadDir($item, page);
+            event.preventDefault();
+            const targetPage = parseInt($(this).attr("data-page"), 10);
+
+            if (targetPage !== page) {
+                // 等新資料完成渲染後再捲動，避免依照舊版面的位置計算。
+                $item.data("directoryScrollAfterRender", true);
+
+                if (w.DirectoryBoot && isFn(w.DirectoryBoot.navigateToPage)) {
+                    w.DirectoryBoot.navigateToPage($item, targetPage);
+                } else if (isFn(w.initElemntAndLoadDir)) {
+                    w.initElemntAndLoadDir($item, targetPage);
+                }
             }
-
-            if (isFn($item.goTo)) $item.goTo();
         });
-
-        if (!$item.data("init")) {
-            $item.find(".btn_prev > button").off("click.directoryPager").on("click.directoryPager", function () {
-                const $self = $(this);
-                page = parseInt($item.data("page"), 10) - 1;
-                $self.data("page", page);
-
-                if (page >= 1) {
-                    if (dirLength == 1 && w.location.hash != `#${page}`) w.location.hash = `#${page}`;
-                    else if (isFn(w.initElemntAndLoadDir)) w.initElemntAndLoadDir($item, $self.data("page"));
-                }
-
-                if (isFn($item.goTo)) $item.goTo();
-            });
-
-            $item.find(".btn_next > button").off("click.directoryPager").on("click.directoryPager", function () {
-                const $self = $(this);
-                page = parseInt($item.data("page"), 10) + 1;
-                $self.data("page", page);
-
-                if (page <= result.totalPage) {
-                    if (dirLength == 1 && w.location.hash != `#${page}`) w.location.hash = `#${page}`;
-                    else if (isFn(w.initElemntAndLoadDir)) w.initElemntAndLoadDir($item, $self.data("page"));
-                }
-
-                if (isFn($item.goTo)) $item.goTo();
-            });
-        }
-
-        $item.data("init", true);
     }
 
     function handleSwiperAfterRender($item) {
@@ -667,6 +667,55 @@
         bindViewTypeChangeEqualizer($item);
         refreshType4CaptionEqualizer($item);
         $item.trigger("catalog:rendered", [{ reason: reason }]);
+        scrollToCatalogAfterRender($item);
+    }
+
+    function getFixedTopOffset() {
+        let offset = 0;
+
+        $("header, nav, .fixed-top, .sticky-top, [data-sticky]").each(function () {
+            const style = w.getComputedStyle(this);
+            if (style.position !== "fixed" && style.position !== "sticky") return;
+
+            const rect = this.getBoundingClientRect();
+            if (rect.height <= 0 || rect.bottom <= 0 || rect.top >= w.innerHeight / 2) return;
+
+            offset = Math.max(offset, rect.bottom);
+        });
+
+        return Math.max(offset, 0);
+    }
+
+    function getCatalogScrollTarget($item) {
+        const $main = $item.closest("#main, main").first();
+
+        // 主內容只有一個目錄時，從 main 開始顯示，保留 breadcrumb 與頁面標題。
+        if ($main.length && $main.find(".catalog_frame").length === 1) {
+            return { $element: $main, spacing: 16 };
+        }
+
+        // 同頁有多個目錄時不拉回整頁頂端，改在該目錄上方預留 4rem。
+        const rootFontSize = parseFloat(w.getComputedStyle(document.documentElement).fontSize) || 16;
+        return { $element: $item, spacing: rootFontSize * 4 };
+    }
+
+    function scrollToCatalogAfterRender($item) {
+        const shouldScroll = $item.data("directoryScrollAfterRender") === true;
+        $item.removeData("directoryScrollAfterRender");
+        if (!shouldScroll) return;
+
+        // 連續兩個 frame：讓卡片、檢視模式與等高處理先完成版面計算。
+        w.requestAnimationFrame(function () {
+            w.requestAnimationFrame(function () {
+                if (!$item.length || !$.contains(document, $item[0])) return;
+
+                const scrollTarget = getCatalogScrollTarget($item);
+                const topSpacing = getFixedTopOffset() + scrollTarget.spacing;
+                const targetTop = Math.max(0, Math.round(scrollTarget.$element.offset().top - topSpacing));
+
+                $("html, body").stop(true).animate({ scrollTop: targetTop }, 200);
+            });
+        });
     }
 
     DirectoryRenderer.renderItemsOnly = function ($item, releInfos) {

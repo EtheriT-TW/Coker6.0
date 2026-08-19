@@ -313,6 +313,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                     case "GetTradeInfo":
                         response = await ecPayLogisticsAppService.ECPayLogisticsTradeInfo(dto.OrderId);
                         break;
+                    case "ReturnCVS":
+                        response = await ecPayLogisticsAppService.ECPayLogisticsCVSReturn(dto.OrderId);
+                        break;
                     default:
                         response.Message = $"查詢動作【{dto.Action}】不支援";
                         break;
@@ -327,6 +330,14 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<IActionResult> ECPayLogisticsExpressCreateResponse(ECPayLogisticsCallbackDto dto)
         {
             await ecPayLogisticsAppService.ECPayLogisticsExpressCreateResponse(dto);
+            return Content("1|OK");
+        }
+        [HttpPost]
+        [AllowAnonymous]
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<IActionResult> ECPayLogisticsCVSReturnResponse(ECPayLogisticsCallbackReverseDto dto)
+        {
+            await ecPayLogisticsAppService.ECPayLogisticsCVSReturnResponse(dto);
             return Content("1|OK");
         }
         private string GenerateAutoPostForm(string actionUrl, object RequestBody)

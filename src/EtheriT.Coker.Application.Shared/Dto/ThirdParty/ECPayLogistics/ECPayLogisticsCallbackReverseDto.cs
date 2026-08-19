@@ -1,7 +1,7 @@
 ﻿
 namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayLogistics
 {
-    public class ECPayReverseLogisticsCallbackDto
+    public class ECPayLogisticsCallbackReverseDto
     {
         public string MerchantID { get; set; }
         public string RtnMerchantTradeNo { get; set; }

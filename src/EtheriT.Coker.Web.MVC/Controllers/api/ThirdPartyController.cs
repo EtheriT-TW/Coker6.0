@@ -132,9 +132,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 switch (dto.Action)
                 {
                     case "CreateLogistics":
-                        response = await thirdPartyAppService.HandleThirdPartyLogistics(dto);
-                        break;
                     case "GetTradeInfo":
+                    case "ReturnCVS":
                         response = await thirdPartyAppService.HandleThirdPartyLogistics(dto);
                         break;
                     default:

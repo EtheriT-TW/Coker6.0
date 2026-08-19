@@ -374,6 +374,9 @@ namespace EtheriT.Coker.Application
             CreateMap<ECPayLogisticsCreateCVSRequestDto, ECPayLogisticsCreateRequestDto>()
                 .ReverseMap();
 
+            CreateMap<ECPayLogisticsReturnRequestDto, ECPayLogisticsReturnFAMIRequestDto>()
+                .ReverseMap();
+
             //ShoppingCart
             CreateMap<Core.Models.ShoppingCart, Core.Models.Prod_Stock>()
                  .ForMember(e => e.Id, option => option.MapFrom(c => c.FK_PSid))

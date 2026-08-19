@@ -45,6 +45,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? CreationTime { get; set; }
         public bool CanRefund { get; set; } = false;
         public int LogisticsType { get; set; }
+        public string? LogisticsStatus { get; set; }
         public string? LogisticsStatusStr { get; set; }
         public string? LogisticsTypeStr { get; set; }
         public string? LogisticsSubTypeStr { get; set; }

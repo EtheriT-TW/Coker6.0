@@ -2257,31 +2257,72 @@ namespace EtheriT.Coker.Application.Order
                         temp_output.CVSTelephone = logistics.CVSTelephone;
                         if (logistics.LogisticsType == "CVS" && !string.IsNullOrEmpty(logistics.CVSStoreName) && !string.IsNullOrEmpty(logistics.CVSAddress)) temp_output.Shipping += $"　{logistics.CVSStoreName}({logistics.CVSAddress})";
 
+                        if (logistics.RtnOrderNo != null) temp_output.LogisticsStatusStr = $"退貨編號：{logistics.RtnOrderNo}<br>";
+
                         if (logistics.LogisticsStatusCode != null && temp_output.State == (int)OrderStatusEnum.已出貨)
                         {
                             switch (logistics.LogisticsStatusCode)
                             {
                                 case "300":
-                                    temp_output.LogisticsStatusStr = "訂單處理中(綠界已收到訂單資料)";
+                                case "310":
+                                case "311":
+                                case "325":
+                                    temp_output.LogisticsStatusStr += "物流狀態：訂單處理中";
                                     break;
                                 case "2030":
+                                case "2041":
                                 case "3024":
-                                    temp_output.LogisticsStatusStr = "商品已送至物流中心";
+                                    temp_output.LogisticsStatusStr += "物流狀態：物流中心理貨中";
                                     break;
                                 case "2063":
+                                case "2073":
+                                case "2098":
                                 case "3018":
-                                    temp_output.LogisticsStatusStr = "商品已送達門市";
+                                case "3029":
+                                    temp_output.LogisticsStatusStr += "物流狀態：已配達取件門市";
                                     break;
                                 case "2067":
                                 case "3022":
-                                    temp_output.LogisticsStatusStr = "消費者成功取件";
+                                    temp_output.LogisticsStatusStr += "物流狀態：消費者成功取件";
+                                    temp_output.LogisticsStatus = "已取件";
                                     break;
+                                case "2065":
                                 case "2074":
                                 case "3020":
-                                    temp_output.LogisticsStatusStr = "消費者未於7天期限內取件";
+                                    temp_output.LogisticsStatusStr += "物流狀態：消費者未於期限內取件";
+                                    break;
+                                case "4001":
+                                    temp_output.LogisticsStatusStr += "物流狀態：消費者已至門市寄件";
+                                    break;
+                                case "2055":
+                                case "2076":
+                                case "2078":
+                                case "3025":
+                                case "4002":
+                                case "7255":
+                                    temp_output.LogisticsStatusStr += "物流狀態：退貨商品已退至物流中心";
+                                    break;
+                                case "2072":
+                                case "2099":
+                                case "3019":
+                                case "3031":
+                                    temp_output.LogisticsStatusStr += "物流狀態：已配達退件門市";
+                                    break;
+                                case "2044":
+                                case "2070":
+                                case "3023":
+                                case "9001":
+                                case "9002":
+                                    temp_output.LogisticsStatusStr += "物流狀態：已取回退回商品";
+                                    break;
+                                case "2075":
+                                case "2077":
+                                case "3021":
+                                case "5004":
+                                    temp_output.LogisticsStatusStr += "物流狀態：退回商品逾期未取，如需了解退貨後續處理方式，請至綠界物流查詢";
                                     break;
                                 default:
-                                    temp_output.LogisticsStatusStr = "目前狀態未列出，請查詢最新物流狀態";
+                                    temp_output.LogisticsStatusStr += "未列出的物流狀態，請至綠界物流查詢";
                                     break;
                             }
                         }

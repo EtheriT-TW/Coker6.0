@@ -34,5 +34,7 @@ namespace EtheriT.Coker.Core.Models
         public string? Specification { get; set; }
         public string? LogisticsStatusCode { get; set; }
         public DateTime? UpdateStatusDate { get; set; }
+        public string? RtnMerchantTradeNo { get; set; }
+        public string? RtnOrderNo { get; set; }
     }
 }

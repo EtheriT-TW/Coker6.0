@@ -12,5 +12,7 @@ namespace EtheriT.Coker.Application.Shared.ThirdParty
         public Task<ResponseMessageDto> ECPayLogisticsExpressCreateResponse(ECPayLogisticsCallbackDto dto);
         public Task<ResponseMessageDto> ECPayLogisticsPrintOrderInfo(ECPayLogisticsPrintOrderInfoEnum type, long ohid);
         public Task<ResponseMessageDto> ECPayLogisticsTradeInfo(long ohid);
+        public Task<ResponseMessageDto> ECPayLogisticsCVSReturn(long ohid);
+        public Task<ResponseMessageDto> ECPayLogisticsCVSReturnResponse(ECPayLogisticsCallbackReverseDto dto);
     }
 }

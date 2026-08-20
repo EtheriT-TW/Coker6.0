@@ -13,6 +13,8 @@
         <div class="tool">
             <button class="btn_createLogistics btn btn-info px-4 py-1 text-white fw-bold fs-5 btn d-none">產生物流訂單</button>
             <button class="btn_printShippingLabel btn btn-info px-4 py-1 text-white fw-bold fs-5 btn d-none">列印託運單</button>
+            <button class="btn_queryLogisticsStatus btn btn-info px-4 py-1 text-white fw-bold fs-5 btn d-none">查看最新物流狀態</button>
+            <button class="btn_CVSReturn btn btn-danger px-4 py-1 text-white fw-bold fs-5 btn d-none">產生退貨編號</button>
             <a id="PrintR001" href="/Remort/R001" target="_blank" class="btn_print text-bg-warning btn border-0 px-4 py-1 text-white fw-bold fs-5 d-none">列印出貨明細</a>
             <button class="btn_reSend btn-success btn px-4 py-1 text-white fw-bold fs-5 btn">重送訂單通知信</button>
             <button class="btn_save btn-primary btn px-4 py-1 text-white fw-bold btn fs-5">儲存</button>
@@ -227,7 +229,7 @@
                             <button class="btn_recheck bg-transparent border-0 text-black-50 px-0 text-decoration-underline d-none" title="點擊重新確認付款狀態">重新確認付款狀態</button>
                             <button class="btn_failReason bg-transparent border-0 opacity-50 px-0 text-decoration-underline text-start d-none" title="點擊查看失敗原因">查看失敗原因</button>
                             <button class="btn_checkrefund bg-transparent border-0 opacity-50 px-0 text-decoration-underline text-start d-none" title="點擊查看退款狀態">查看退款狀態</button>
-
+                            <p class="LogisticsStatusStr d-none"></p>
                             <p class="gray_text mt-3">※訂單狀態改為『已取消』和『付款失敗』後，將不能再對訂單狀態進行修改</p>
                         </div>
                     </div>

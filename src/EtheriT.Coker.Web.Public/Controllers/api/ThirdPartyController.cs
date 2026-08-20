@@ -278,24 +278,24 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                         {
                             case "C2C711":
                                 actionUrl = $"{baseUrl}/Express/PrintUniMartC2COrderInfo";
-                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.UniMart, dto.OrderId);
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfo(ECPayLogisticsPrintOrderInfoEnum.UniMart, dto.OrderId);
                                 break;
                             case "C2CFAMI":
                                 actionUrl = $"{baseUrl}/Express/PrintFAMIC2COrderInfo";
-                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.FAMI, dto.OrderId);
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfo(ECPayLogisticsPrintOrderInfoEnum.FAMI, dto.OrderId);
                                 break;
                             case "C2CHILIFE":
                                 actionUrl = $"{baseUrl}/Express/PrintHILIFEC2COrderInfo";
-                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.HILIFE, dto.OrderId);
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfo(ECPayLogisticsPrintOrderInfoEnum.HILIFE, dto.OrderId);
                                 break;
                             case "C2COKMART":
                                 actionUrl = $"{baseUrl}/Express/PrintOKMARTC2COrderInfo";
-                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.OKMART, dto.OrderId);
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfo(ECPayLogisticsPrintOrderInfoEnum.OKMART, dto.OrderId);
                                 break;
                             case "B2C":
                             case "HOME":
                                 actionUrl = $"{baseUrl}/helper/printTradeDocument";
-                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfoDto(ECPayLogisticsPrintOrderInfoEnum.B2C, dto.OrderId);
+                                RequestBodyResponse = await ecPayLogisticsAppService.ECPayLogisticsPrintOrderInfo(ECPayLogisticsPrintOrderInfoEnum.B2C, dto.OrderId);
                                 break;
                             default:
                                 GetResponse = false;
@@ -310,6 +310,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                             response.Success = true;
                         }
                         break;
+                    case "GetTradeInfo":
+                        response = await ecPayLogisticsAppService.ECPayLogisticsTradeInfo(dto.OrderId);
+                        break;
+                    case "ReturnCVS":
+                        response = await ecPayLogisticsAppService.ECPayLogisticsCVSReturn(dto.OrderId);
+                        break;
                     default:
                         response.Message = $"查詢動作【{dto.Action}】不支援";
                         break;
@@ -321,15 +327,17 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         [HttpPost]
         [AllowAnonymous]
         [Consumes("application/x-www-form-urlencoded")]
-        public async Task<IActionResult> ECPayLogisticsExpressCreateResponse()
+        public async Task<IActionResult> ECPayLogisticsExpressCreateResponse(ECPayLogisticsCallbackDto dto)
         {
-            var data = Request.Form.ToDictionary(
-                x => x.Key,
-                x => x.Value.ToString()
-            );
-
-            await ecPayLogisticsAppService.ECPayLogisticsExpressCreateResponse(data);
-
+            await ecPayLogisticsAppService.ECPayLogisticsExpressCreateResponse(dto);
+            return Content("1|OK");
+        }
+        [HttpPost]
+        [AllowAnonymous]
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<IActionResult> ECPayLogisticsCVSReturnResponse(ECPayLogisticsCallbackReverseDto dto)
+        {
+            await ecPayLogisticsAppService.ECPayLogisticsCVSReturnResponse(dto);
             return Content("1|OK");
         }
         private string GenerateAutoPostForm(string actionUrl, object RequestBody)

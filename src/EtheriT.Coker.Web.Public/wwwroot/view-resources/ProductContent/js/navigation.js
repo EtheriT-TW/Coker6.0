@@ -177,6 +177,226 @@
         });
     };
 
+    Controller.prototype.clearKeyboardNavigation = function (options) {
+        const settings = $.extend({
+            preserveLastPress: true
+        }, options || {});
+
+        if (this.keyboardNavigationTimer) {
+            window.clearInterval(this.keyboardNavigationTimer);
+            this.keyboardNavigationTimer = null;
+        }
+
+        if (this.keyboardNavigationTimeout) {
+            window.clearTimeout(this.keyboardNavigationTimeout);
+            this.keyboardNavigationTimeout = null;
+        }
+
+        this.keyboardNavigationKey = null;
+        this.keyboardNavigationStartedAt = 0;
+        this.keyboardNavigationIsDown = false;
+        this.keyboardNavigationBoundaryIsDown = false;
+        this.keyboardNavigationBoundaryKey = null;
+
+        if (!settings.preserveLastPress) {
+            this.keyboardNavigationLastPress = 0;
+            this.keyboardNavigationLastKey = null;
+        }
+
+        $('.product-keyboard-navigation')
+            .removeClass('show')
+            .remove();
+    };
+
+    Controller.prototype.getKeyboardNavigationLink = function (key) {
+        if (key === 'ArrowLeft') {
+            return this.$pageRoot.find('#SwitchPage .btn_prev').first();
+        }
+
+        if (key === 'ArrowRight') {
+            return this.$pageRoot.find('#SwitchPage .btn_next').first();
+        }
+
+        return $();
+    };
+
+    Controller.prototype.showKeyboardNavigationBoundary = function (key) {
+        $('.product-keyboard-navigation').remove();
+
+        const isPrevious = key === 'ArrowLeft';
+
+        const $notice = $('<div>', {
+            class: 'product-keyboard-navigation ' + (isPrevious ? 'is-prev' : 'is-next'),
+            'aria-hidden': 'true'
+        }).append(
+            $('<div>', {
+                class: 'product-keyboard-navigation__content'
+            }).append(
+                $('<div>', {
+                    class: 'product-keyboard-navigation__direction'
+                }).text(isPrevious ? '上一則' : '下一則'),
+
+                $('<div>', {
+                    class: 'product-keyboard-navigation__title'
+                }).text(isPrevious ? '已經是第一則' : '已經是最後一則')
+            )
+        );
+
+        $('body').append($notice);
+
+        window.requestAnimationFrame(() => {
+            $notice.addClass('show');
+        });
+
+        window.setTimeout(() => {
+            $notice.removeClass('show');
+
+            window.setTimeout(() => {
+                $notice.remove();
+            }, 200);
+        }, 1200);
+    };
+
+    Controller.prototype.showKeyboardNavigation = function ($link, key, remainingSeconds) {
+        let $notice = $('.product-keyboard-navigation');
+
+        if (!$notice.length) {
+            $notice = $('<div>', {
+                class: 'product-keyboard-navigation',
+                'aria-hidden': 'true'
+            }).append(
+                $('<div>', {
+                    class: 'product-keyboard-navigation__image'
+                }),
+                $('<div>', {
+                    class: 'product-keyboard-navigation__content'
+                }).append(
+                    $('<div>', {
+                        class: 'product-keyboard-navigation__direction'
+                    }),
+                    $('<div>', {
+                        class: 'product-keyboard-navigation__countdown'
+                    }),
+                    $('<div>', {
+                        class: 'product-keyboard-navigation__label',
+                        text: '即將前往'
+                    }),
+                    $('<div>', {
+                        class: 'product-keyboard-navigation__title'
+                    })
+                )
+            );
+
+            $('body').append($notice);
+        }
+
+        const isPrevious = key === 'ArrowLeft';
+
+        const title =
+            $link.data('previewTitle') ||
+            $link.attr('title') ||
+            '';
+
+        $notice
+            .removeClass('is-prev is-next')
+            .addClass(isPrevious ? 'is-prev' : 'is-next');
+
+        $notice
+            .find('.product-keyboard-navigation__direction')
+            .text(isPrevious ? '上一則' : '下一則');
+
+        $notice
+            .find('.product-keyboard-navigation__countdown')
+            .text(remainingSeconds);
+
+        $notice
+            .find('.product-keyboard-navigation__title')
+            .text(title);
+
+        window.requestAnimationFrame(() => {
+            $notice.addClass('show');
+        });
+    };
+
+    Controller.prototype.loadKeyboardNavigationPreview = function ($link, key) {
+        if (!$link.length || $link.hasClass('disabled')) return;
+
+        const href = $link.attr('href');
+        if (!href) return;
+
+        const targetUrl = new URL(href, window.location.href);
+        const productId = getProductIdFromUrl(targetUrl);
+
+        if (!productId) return;
+
+        const request = this.getProductDataRequest(productId);
+
+        request.done((product) => {
+            if (!product) return;
+
+            // 已經換方向或結束長按，就不要更新舊提示
+            if (this.keyboardNavigationKey !== key) return;
+
+            const title =
+                product.title ||
+                $link.data('previewTitle') ||
+                $link.attr('title') ||
+                '';
+
+            const imageUrl = getImageUrl(product);
+
+            $link.data('previewTitle', title);
+
+            const $notice = $('.product-keyboard-navigation');
+
+            if (!$notice.length) return;
+
+            $notice
+                .find('.product-keyboard-navigation__title')
+                .text(title);
+
+            const $image = $notice
+                .find('.product-keyboard-navigation__image')
+                .empty()
+                .removeClass('is-empty');
+
+            if (imageUrl) {
+                $('<img>', {
+                    src: imageUrl,
+                    alt: '',
+                    loading: 'eager'
+                })
+                    .on('error', function () {
+                        $image.empty().addClass('is-empty');
+                    })
+                    .appendTo($image);
+            } else {
+                $image.addClass('is-empty');
+            }
+        });
+    };
+
+    Controller.prototype.navigateByKeyboard = function ($link) {
+        if (!$link.length || $link.hasClass('disabled')) return;
+
+        const href = $link.attr('href');
+        if (!href) return;
+
+        const targetUrl = new URL(href, window.location.href);
+        const productId = getProductIdFromUrl(targetUrl);
+
+        if (!productId || targetUrl.origin !== window.location.origin) return;
+
+        this.clearKeyboardNavigation({
+            preserveLastPress: false
+        });
+
+        this.navigateToProduct(productId, targetUrl.href, {
+            pushState: true,
+            scroll: true
+        });
+    };
+
     Controller.prototype.bindNavigation = function () {
         const initialId = Number(this.state.productId);
         const currentState = $.extend({}, window.history.state || {}, { productId: initialId });
@@ -211,6 +431,216 @@
 
             this.navigateToProduct(productId, targetUrl.href, { pushState: false, scroll: false });
         });
+
+        const keyboardHoldDuration = 5000;
+        const keyboardDoublePressDuration = 400;
+
+        $(document)
+            .off('keydown.productKeyboardNavigation')
+            .on('keydown.productKeyboardNavigation', (event) => {
+                if (
+                    event.key !== 'ArrowLeft' &&
+                    event.key !== 'ArrowRight'
+                ) {
+                    return;
+                }
+
+                const target = event.target;
+
+                if (
+                    target &&
+                    (
+                        target.tagName === 'INPUT' ||
+                        target.tagName === 'TEXTAREA' ||
+                        target.tagName === 'SELECT' ||
+                        target.isContentEditable
+                    )
+                ) {
+                    return;
+                }
+
+                const $link = this.getKeyboardNavigationLink(event.key);
+
+                if (!$link.length) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                if ($link.hasClass('disabled') || !$link.attr('href')) {
+                    // 同一顆方向鍵仍持續按住時，不要重複顯示 boundary
+                    if (
+                        this.keyboardNavigationBoundaryIsDown &&
+                        this.keyboardNavigationBoundaryKey === event.key
+                    ) {
+                        return;
+                    }
+
+                    this.keyboardNavigationBoundaryIsDown = true;
+                    this.keyboardNavigationBoundaryKey = event.key;
+
+                    this.showKeyboardNavigationBoundary(event.key);
+
+                    return;
+                }
+
+                
+
+                /*
+                 * 重點：
+                 * 不依賴 event.repeat。
+                 *
+                 * 一旦某個方向鍵已經處於按住狀態，
+                 * 後續所有重複 keydown 全部忽略。
+                 */
+                if (
+                    this.keyboardNavigationIsDown &&
+                    this.keyboardNavigationKey === event.key
+                ) {
+                    return;
+                }
+
+                const now = Date.now();
+
+                /*
+                 * 快速按兩次：
+                 *
+                 * 第一次：
+                 * keydown -> keyup
+                 *
+                 * 第二次：
+                 * 只看 lastKey / lastPress，
+                 * 不看目前正在按住的 keyboardNavigationKey。
+                 */
+                if (
+                    this.keyboardNavigationLastKey === event.key &&
+                    this.keyboardNavigationLastPress &&
+                    now - this.keyboardNavigationLastPress <= keyboardDoublePressDuration
+                ) {
+                    this.keyboardNavigationLastKey = null;
+                    this.keyboardNavigationLastPress = 0;
+
+                    this.navigateByKeyboard($link);
+                    return;
+                }
+
+                /*
+                 * 如果原本正在按另一個方向，
+                 * 先清掉舊的長按狀態。
+                 */
+                this.clearKeyboardNavigation({
+                    preserveLastPress: true
+                });
+
+                this.keyboardNavigationLastKey = event.key;
+                this.keyboardNavigationLastPress = now;
+
+                this.keyboardNavigationKey = event.key;
+                this.keyboardNavigationIsDown = true;
+                this.keyboardNavigationStartedAt = now;
+
+                // 先顯示 5 秒
+                this.showKeyboardNavigation(
+                    $link,
+                    event.key,
+                    5
+                );
+
+                // 非同步抓完整商品標題 + 圖片
+                this.loadKeyboardNavigationPreview(
+                    $link,
+                    event.key
+                );
+
+                /*
+                 * 每 100ms 更新一次，
+                 * 但畫面顯示整數秒：
+                 *
+                 * 5 -> 4 -> 3 -> 2 -> 1 -> 切換
+                 */
+                this.keyboardNavigationTimer = window.setInterval(() => {
+                    if (
+                        !this.keyboardNavigationIsDown ||
+                        this.keyboardNavigationKey !== event.key
+                    ) {
+                        return;
+                    }
+
+                    const elapsed =
+                        Date.now() -
+                        this.keyboardNavigationStartedAt;
+
+                    const remaining = Math.max(
+                        1,
+                        Math.ceil(
+                            (keyboardHoldDuration - elapsed) / 1000
+                        )
+                    );
+
+                    this.showKeyboardNavigation(
+                        $link,
+                        event.key,
+                        remaining
+                    );
+                }, 100);
+
+                /*
+                 * 按滿 5 秒才真正切換。
+                 */
+                this.keyboardNavigationTimeout = window.setTimeout(() => {
+                    if (
+                        !this.keyboardNavigationIsDown ||
+                        this.keyboardNavigationKey !== event.key
+                    ) {
+                        return;
+                    }
+
+                    this.navigateByKeyboard($link);
+
+                }, keyboardHoldDuration);
+            });
+
+        $(document)
+            .off('keyup.productKeyboardNavigation')
+            .on('keyup.productKeyboardNavigation', (event) => {
+                if (
+                    event.key !== 'ArrowLeft' &&
+                    event.key !== 'ArrowRight'
+                ) {
+                    return;
+                }
+
+                // 先清掉 boundary 按住狀態
+                if (
+                    this.keyboardNavigationBoundaryIsDown &&
+                    this.keyboardNavigationBoundaryKey === event.key
+                ) {
+                    this.keyboardNavigationBoundaryIsDown = false;
+                    this.keyboardNavigationBoundaryKey = null;
+
+                    return;
+                }
+
+                // 正常商品切換的長按狀態
+                if (
+                    !this.keyboardNavigationIsDown ||
+                    this.keyboardNavigationKey !== event.key
+                ) {
+                    return;
+                }
+
+                this.clearKeyboardNavigation({
+                    preserveLastPress: true
+                });
+            });
+
+        $(window)
+            .off('blur.productKeyboardNavigation')
+            .on('blur.productKeyboardNavigation', () => {
+                this.clearKeyboardNavigation({
+                    preserveLastPress: false
+                });
+            });
     };
 
     Controller.prototype.navigateToProduct = function (productId, url, options) {
@@ -247,6 +677,9 @@
     };
 
     Controller.prototype.resetProductNavigationState = function () {
+        this.clearKeyboardNavigation({
+            preserveLastPress: false
+        });
         this.$root.attr('aria-busy', 'true');
         this.$pageRoot.find(this.options.selectors.favoritesButton)
             .removeClass('turn')

@@ -9,6 +9,7 @@ var DirectoryType = "n";
 var directory_list;
 var DirectorytForms;
 var $DirectorytTags;
+var $DirectoryReverseTags;
 var articleOnly = false;
 var hashPage;
 
@@ -24,6 +25,7 @@ function PageReady() {
         DirectoryElementInit();
         WebmenuListModalInit();
         $DirectorytTags = DirectorytForms.find(".InputTag").TagListModalInit();
+        $DirectoryReverseTags = DirectorytForms.find(".InputReverseTag").TagListModalInit();
         DirectoryEventsInit();
     }
 
@@ -145,6 +147,7 @@ function DirectoryElementInit() {
     $description_text = $description.children("textarea");
 
     DirectorytForms.find(".tag > input").attr("disabled", "disabled");
+    DirectorytForms.find(".reverse-tag > input").attr("disabled", "disabled");
     DirectorytForms.find(".webmenu > input").attr("disabled", "disabled");
 }
 
@@ -155,12 +158,15 @@ function DirectoryEventsInit() {
             case 2:
                 DirectorytForms.find(".webmenu > input").attr("disabled", "disabled");
                 DirectorytForms.find(".tag > input").removeAttr("disabled");
+                DirectorytForms.find(".reverse-tag > input").removeAttr("disabled");
                 WebmenuDataClear();
                 break;
             case 3:
                 DirectorytForms.find(".tag > input").attr("disabled", "disabled");
+                DirectorytForms.find(".reverse-tag > input").attr("disabled", "disabled");
                 DirectorytForms.find(".webmenu > input").removeAttr("disabled");
                 $DirectorytTags.TagDataClear();
+                $DirectoryReverseTags.TagDataClear();
                 break;
         }
     });
@@ -265,10 +271,15 @@ function deleteButtonClicked(e) {
 
 function FormDataClear() {
     co.Form.clear("DirectorytForm");
+
     $DirectorytTags.TagDataClear();
+    $DirectoryReverseTags.TagDataClear();
+
     WebmenuDataClear();
+
     keyId = 0;
     disp_opt = true;
+
     $btn_display.children("span").text("visibility");
     $bind_type.val(null);
     $title_text.val("");
@@ -287,14 +298,23 @@ function FormDataSet(result) {
         case 2:
             DirectorytForms.find(".webmenu > input").attr("disabled", "disabled");
             DirectorytForms.find(".tag > input").removeAttr("disabled");
+            DirectorytForms.find(".reverse-tag > input").removeAttr("disabled");
+
             $DirectorytTags.TagDataSet(result.tagDatas);
+            $DirectoryReverseTags.TagDataSet(result.reverseTagDatas);
+
             WebmenuDataClear();
             break;
         case 3:
             DirectorytForms.find(".tag > input").attr("disabled", "disabled");
+            DirectorytForms.find(".reverse-tag > input").attr("disabled", "disabled");
+
             DirectorytForms.find(".webmenu > input").removeAttr("disabled");
+
             WebmenuDataSet(result.fK_MId);
+
             $DirectorytTags.TagDataClear();
+            $DirectoryReverseTags.TagDataClear();
             break;
     }
 
@@ -315,6 +335,7 @@ function AddUp(successText, errorText) {
         Type: parseInt($bind_type.val()),
         Visible: disp_opt,
         TagSelected: $DirectorytTags.data("tagList"),
+        ReverseTagSelected: $DirectoryReverseTags.data("tagList"),
         Fk_Mid: menuId
     }).done(function () {
         Coker.sweet.success(successText, null, true);

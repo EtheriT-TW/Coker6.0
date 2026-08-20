@@ -37,6 +37,18 @@
                 data: JSON.stringify(data),
                 dataType: "json"
             });
+        },
+        CartVariant: function (data) {
+            return $.ajax({
+                url: "/api/ShoppingCart/UpdateVariant",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
         }
     },
     GetAll: {

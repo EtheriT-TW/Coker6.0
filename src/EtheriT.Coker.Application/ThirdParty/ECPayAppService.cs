@@ -901,7 +901,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                             payableAmount);
 
                         var availableEcpayPaymentIds = availablePayments
-                            .Where(x => x.ProviderCode == "ECPay")
+                            .Where(x =>
+                                x.ProviderCode == "ECPay" &&
+                                x.IsAvailable)
                             .Select(x => x.Id)
                             .ToList();
 

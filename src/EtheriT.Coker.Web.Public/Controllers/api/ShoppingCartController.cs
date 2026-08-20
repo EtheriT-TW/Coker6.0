@@ -51,6 +51,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return output;
         }
 
+        [HttpPost]
+        public async Task<ResponseMessageDto> UpdateVariant(ShoppingCartVariantUpdateDto dto)
+        {
+            return await shoppingCartAppService.UpdateVariant(dto);
+        }
+
         [HttpGet]
         public async Task<List<ShoppingCartDisplayDto>> GetAll()
         {

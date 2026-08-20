@@ -9,6 +9,11 @@ var modal_quantity_step = 1
 var modal_default_image = ""
 var quickCartOptions = null;
 var shoppingCarModalInitialized = false;
+var quickCartDefaultsApplied = false;
+
+function IsQuickCartEditMode() {
+    return quickCartOptions && quickCartOptions.mode === "edit-cart";
+}
 
 function ShoppingCarModalInit() {
     if (shoppingCarModalInitialized || !document.getElementById('ShoppingCarModal')) return;
@@ -99,9 +104,11 @@ function DataClear() {
     modal_product_data = null;
     modal_quantity_step = 1;
     modal_default_image = "";
+    quickCartDefaultsApplied = false;
     $input_quantity.prop("disabled", false).removeAttr("max").val(1);
     $modal.find(".btn_count_minus, .btn_count_plus").prop("disabled", false);
     $modal.find(".btn_addToCar").removeClass("close").prop("disabled", false);
+    $modal.find(".btn_addToCar > div").text("加入購物車");
 }
 
 function ModalSetLoading(isLoading, message) {
@@ -135,7 +142,14 @@ function ModalDefaultSet() {
             return;
         }
 
-        var first = modal_stock_list.find(function (stock) { return stock.canPurchase === true; }) || modal_stock_list[0];
+        var initialStockId = IsQuickCartEditMode()
+            ? Number(quickCartOptions.productStockId || 0)
+            : 0;
+        var first = modal_stock_list.find(function (stock) {
+            return Number(stock.id || 0) === initialStockId;
+        }) || modal_stock_list.find(function (stock) {
+            return stock.canPurchase === true;
+        }) || modal_stock_list[0];
         modal_s1 = Number(first.fK_S1id || 0);
         modal_s2 = Number(first.fK_S2id || 0);
         ModalBuildSpecGroup(1, modal_stock_list);
@@ -228,6 +242,11 @@ function ModalRefreshImage(stock) {
 }
 
 function ModalRefreshSelection(product) {
+    var desiredQuantity = IsQuickCartEditMode()
+        ? Number(quickCartDefaultsApplied
+            ? $input_quantity.val()
+            : quickCartOptions.quantity || 1)
+        : 0;
     $options.children(".modal-price-options").remove();
     var stock = modal_stock_list.find(function (item) {
         return Number(item.fK_S1id || 0) === Number(modal_s1 || 0) && Number(item.fK_S2id || 0) === Number(modal_s2 || 0);
@@ -255,6 +274,17 @@ function ModalRefreshSelection(product) {
     if (stock.maxPurchaseQuantity == null) $input_quantity.removeAttr("max");
     else $input_quantity.attr("max", Number(stock.maxPurchaseQuantity));
 
+    if (IsQuickCartEditMode()) {
+        var normalizedQuantity = Math.max(
+            modal_quantity_step,
+            Math.ceil(Math.max(desiredQuantity, 1) / modal_quantity_step) * modal_quantity_step
+        );
+        if (stock.maxPurchaseQuantity != null) {
+            normalizedQuantity = Math.min(normalizedQuantity, Number(stock.maxPurchaseQuantity));
+        }
+        $input_quantity.val(normalizedQuantity);
+    }
+
     var prices = ModalSetPriceDisplay(stock, product);
     if (!prices.length) {
         modal_price_id = null;
@@ -262,19 +292,28 @@ function ModalRefreshSelection(product) {
         return;
     }
 
-    modal_price_id = Number(prices[0].id || 0);
+    var preferredPriceId = IsQuickCartEditMode() && !quickCartDefaultsApplied &&
+        Number(stock.id || 0) === Number(quickCartOptions.productStockId || 0)
+        ? Number(quickCartOptions.productPriceId || 0)
+        : 0;
+    var selectedPrice = prices.find(function (price) {
+        return Number(price.id || 0) === preferredPriceId;
+    }) || prices[0];
+
+    modal_price_id = Number(selectedPrice.id || 0);
+    $pro_discount.text(ModalFormatPrice(selectedPrice));
     $modal.find(".btn_addToCar").removeClass("close").prop("disabled", false);
 
     if (prices.length > 1) {
         var $group = $($("#Modal_Template_Spec_Radio").html()).clone().addClass("modal-price-options");
         $group.find(".spec_title").text("價格方案");
         var $control = $group.find(".spec_control");
-        prices.forEach(function (price, index) {
+        prices.forEach(function (price) {
             var inputId = "quick_cart_price_" + price.id;
             var $input = $("<input>", { id: inputId, type: "radio", name: "QuickCartPrice", value: price.id, class: "btn-check", autocomplete: "off" });
             var label = (price.roleName ? price.roleName + " " : "") + ModalFormatPrice(price);
             var $label = $("<label>", { "for": inputId, class: "btn_radio me-2 my-1 px-3 py-1 align-self-center", text: label });
-            $input.prop("checked", index === 0).on("change", function () {
+            $input.prop("checked", Number(price.id || 0) === modal_price_id).on("change", function () {
                 modal_price_id = Number(price.id || 0);
                 $pro_discount.text(ModalFormatPrice(price));
             });
@@ -282,6 +321,8 @@ function ModalRefreshSelection(product) {
         });
         $group.insertBefore($options.find(".buy_line"));
     }
+
+    quickCartDefaultsApplied = true;
 }
 
 function ModalSpecRadio() {
@@ -307,6 +348,11 @@ function ModalSpecRadio() {
 }
 
 function AddToCart() {
+    if (IsQuickCartEditMode()) {
+        UpdateCartVariant();
+        return;
+    }
+
     if (!localStorage.getItem("AgreePrivacy")) {
         Coker.sweet.error("請注意", "若要進行商品選購，請先同意隱私權政策", null);
     } else {
@@ -364,6 +410,60 @@ function AddToCart() {
     }
 }
 
+function UpdateCartVariant() {
+    var selectedStock = modal_stock_list.find(function (stock) {
+        return Number(stock.fK_S1id || 0) === Number(modal_s1 || 0)
+            && Number(stock.fK_S2id || 0) === Number(modal_s2 || 0);
+    });
+
+    if (!selectedStock || selectedStock.canPurchase !== true || !modal_price_id) {
+        Coker.sweet.error(
+            "無法修改商品規格",
+            (selectedStock && selectedStock.purchaseUnavailableReason) || "請選擇可購買的規格與價格方案。",
+            null,
+            false
+        );
+        return;
+    }
+
+    var $saveButton = $modal.find(".btn_addToCar");
+    $saveButton.prop("disabled", true);
+
+    Product.Update.CartVariant({
+        CartId: Number(quickCartOptions.cartId || 0),
+        ProductStockId: Number(selectedStock.id || 0),
+        ProductPriceId: Number(modal_price_id || 0),
+        Quantity: Number($input_quantity.val() || 0)
+    }).done(function (result) {
+        if (!result || result.success !== true) {
+            Coker.sweet.error(
+                "無法修改商品規格",
+                (result && result.message) || "請重新整理購物車後再試。",
+                null,
+                true
+            );
+            $saveButton.prop("disabled", false);
+            return;
+        }
+
+        var detail = {
+            cartId: Number(quickCartOptions.cartId || 0),
+            productId: Number($modal.data("pid") || 0),
+            result: result
+        };
+
+        $(document).trigger("productQuickCart:updated", [detail]);
+        if (quickCartOptions && typeof quickCartOptions.onUpdated === "function") {
+            quickCartOptions.onUpdated(detail);
+        }
+
+        bootstrap.Modal.getOrCreateInstance(document.getElementById("ShoppingCarModal")).hide();
+    }).fail(function () {
+        Coker.sweet.error("無法修改商品規格", "請稍後再試。", null, true);
+        $saveButton.prop("disabled", false);
+    });
+}
+
 window.ProductQuickCart = window.ProductQuickCart || {
     open: function (options) {
         options = typeof options === "object" ? options : { productId: options };
@@ -383,6 +483,9 @@ window.ProductQuickCart = window.ProductQuickCart || {
         $modal.find(".modal-product-link, .btn_learnMore").attr("href", productUrl);
         $modal.find(".modal-left").attr({ "data-product-url": productUrl, role: "link", tabindex: "0" });
         $modal.find(".btn_addToCar").removeClass("close");
+        if (IsQuickCartEditMode()) {
+            $modal.find(".btn_addToCar > div").text("確認修改");
+        }
         ModalDefaultSet();
 
         var modalElement = document.getElementById("ShoppingCarModal");

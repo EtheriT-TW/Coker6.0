@@ -12,8 +12,17 @@
             $addOnModal.appendTo(document.body);
         }
 
-        $('#RadioPayment .payment_display').on("click", function () {
-            cart.Payment.Core.updatePaymentRadioUI($(this).closest('.form-check'));
+        $('#RadioPayment .payment_display').on("click", function (event) {
+            var $formCheck = $(this).closest('.form-check');
+            var $radio = $formCheck.find('input[name="RadioPayment"]').first();
+
+            if ($radio.prop("disabled")) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                return;
+            }
+
+            cart.Payment.Core.updatePaymentRadioUI($formCheck);
             cart.Payment.Core.RadioPayment();
         });
 

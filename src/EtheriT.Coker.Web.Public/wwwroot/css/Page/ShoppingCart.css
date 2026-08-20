@@ -1145,6 +1145,40 @@ input[type="number"] {
     overflow-wrap: anywhere;
 }
 
+#RadioPayment .payment-copy {
+    min-width: 0;
+}
+
+#RadioPayment .payment-unavailable-reason {
+    margin-top: .2rem;
+    color: #8a5a00;
+    line-height: 1.45;
+    white-space: normal;
+}
+
+#RadioPayment .form-check.payment-unavailable .payment_display,
+#RadioPayment .form-check.payment-unavailable .payment_display:hover {
+    cursor: not-allowed;
+    color: #6c757d;
+    background: #f5f5f5;
+    border-color: #dedede;
+    box-shadow: none;
+}
+
+#RadioPayment .form-check.payment-unavailable .paymentradio::before {
+    border-color: #adb5bd;
+    background: #e9ecef;
+}
+
+#RadioPayment .form-check.payment-unavailable .paymenticon {
+    filter: grayscale(1);
+    opacity: .55;
+}
+
+#RadioPayment > .payment-embedded-unavailable {
+    margin-top: .65rem !important;
+}
+
 .payment-section-title {
     text-align: left;
 }
@@ -2407,12 +2441,29 @@ body > .popover.bs-popover-auto.fade {
         font-size: 1rem;
         line-height: 1.25;
         font-weight: 600;
-        white-space: nowrap;
+        white-space: normal;
         overflow: hidden;
-        text-overflow: ellipsis;
-        display: block;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
         margin: 0;
         max-width: 100%;
+    }
+
+    #Step1 .purchase_item .cart-item-edit-variant {
+        margin-top: .25rem;
+        color: #8f2d20;
+        font-size: .8rem;
+        line-height: 1.4;
+        text-decoration: underline;
+        text-underline-offset: .15rem;
+    }
+
+    #Step1 .purchase_item .cart-item-edit-variant::after {
+        content: "›";
+        display: inline-block;
+        margin-left: .25rem;
+        text-decoration: none;
     }
 
     #Step1 .purchase_item .pro_detail {

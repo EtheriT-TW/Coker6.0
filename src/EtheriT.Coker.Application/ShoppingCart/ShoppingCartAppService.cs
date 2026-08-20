@@ -952,6 +952,181 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
             return response;
         }
+
+        public async Task<ResponseMessageDto> UpdateVariant(ShoppingCartVariantUpdateDto dto)
+        {
+            var response = new ResponseMessageDto { Success = false };
+
+            try
+            {
+                var uuid = await tokenAppService.GetUUID();
+                var configuredWebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                var websiteId = configuredWebsiteId != 0
+                    ? configuredWebsiteId
+                    : await loginUserData.GetWebsiteId();
+                var now = DateTime.Now;
+
+                var cart = await db.ShoppingCarts
+                    .Include(x => x.Prod_Stock)
+                    .ThenInclude(x => x.Prod)
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == dto.CartId &&
+                        x.UUID == uuid &&
+                        !x.IsOrder &&
+                        !x.IsDeleted);
+
+                if (cart == null)
+                    throw new Exception("查無購物車資料。");
+                if (cart.IsAdditional)
+                    throw new Exception("加價購／贈品請使用原本的補選／調整功能。");
+
+                var currentProductId = cart.Prod_Stock?.FK_Pid ?? cart.ProductId ?? 0;
+                var targetStock = await db.Prod_Stocks
+                    .Include(x => x.Prod)
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == dto.ProductStockId &&
+                        x.FK_Pid == currentProductId &&
+                        x.Prod != null &&
+                        x.Prod.FK_WebsiteId == websiteId);
+
+                if (targetStock?.Prod == null)
+                    throw new Exception("選擇的規格不屬於此商品。");
+
+                var productDisplay = await productAppService.GetMainDisplayOne(currentProductId);
+                var displayStock = productDisplay?.Stocks?.FirstOrDefault(x => x.Id == targetStock.Id);
+                var displayPrice = displayStock?.Prices?.FirstOrDefault(x => x.Id == dto.ProductPriceId);
+
+                if (productDisplay == null || productDisplay.CanPurchase == false ||
+                    displayStock == null || displayStock.CanPurchase == false ||
+                    displayPrice == null)
+                {
+                    throw new Exception(
+                        displayStock?.PurchaseUnavailableReason ??
+                        productDisplay?.PurchaseUnavailableReason ??
+                        "此商品規格目前無法購買。");
+                }
+
+                var targetPrice = await db.Prod_Prices.FirstOrDefaultAsync(x =>
+                    x.Id == dto.ProductPriceId &&
+                    x.FK_PSId == targetStock.Id &&
+                    !x.IsDeleted);
+
+                if (targetPrice == null ||
+                    !ProductPurchasePolicy.CanPurchaseStock(targetStock.Prod, targetStock, true, now))
+                    throw new Exception("此商品規格或價格方案目前無法購買。");
+
+                var step = Math.Max(targetStock.Min_Qty ?? 1, 1);
+                if (dto.Quantity < step || dto.Quantity % step != 0)
+                    throw new Exception($"此規格須以 {step} 件為單位購買。");
+
+                var existingTarget = await db.ShoppingCarts.FirstOrDefaultAsync(x =>
+                    x.Id != cart.Id &&
+                    x.UUID == uuid &&
+                    !x.IsOrder &&
+                    !x.IsDeleted &&
+                    !x.IsAdditional &&
+                    x.FK_PSid == targetStock.Id &&
+                    x.FK_PriceId == targetPrice.Id);
+                var finalQuantity = dto.Quantity + (existingTarget?.Quantity ?? 0);
+                var maxQuantity = ProductPurchasePolicy.GetMaxPurchaseQuantity(targetStock.Prod, targetStock);
+
+                if (maxQuantity.HasValue && finalQuantity > maxQuantity.Value)
+                    throw new Exception($"此規格目前最多可購買 {maxQuantity.Value} 件，購物車合併後將超過上限。");
+
+                var bonus = targetPrice.Bonus ?? 0;
+                if (bonus > 0)
+                {
+                    var userId = await db.FrontUsers
+                        .Where(x => x.UUID == uuid)
+                        .Select(x => x.FK_User)
+                        .FirstOrDefaultAsync() ?? 0;
+                    var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
+
+                    if (bonusSetting?.BonusEnabled != true)
+                        throw new Exception("目前未開放紅利商品購買。");
+                    if (userId == 0)
+                        throw new Exception("使用紅利價格前請先登入會員。");
+
+                    var bonusData = await bonusManagementAppService
+                        .GetQueryFrontUsersTotalAvaliableBonus(new List<Guid> { uuid });
+                    var availableBonus = bonusData?.FirstOrDefault()?.TotalAvaliableBonus ?? 0;
+                    var excludedIds = new[] { cart.Id, existingTarget?.Id ?? 0 };
+                    var otherCartBonus = await db.ShoppingCarts
+                        .Where(x =>
+                            x.UUID == uuid &&
+                            !x.IsOrder &&
+                            !x.IsDeleted &&
+                            !excludedIds.Contains(x.Id))
+                        .SumAsync(x => (x.Bonus ?? 0) * x.Quantity);
+                    var neededBonus = otherCartBonus + bonus * finalQuantity;
+
+                    if (neededBonus > availableBonus)
+                        throw new Exception($"紅利不足，目前可用 {availableBonus} 點，本次購物車共需 {neededBonus} 點。");
+                }
+
+                var specIds = new[] { targetStock.FK_S1id, targetStock.FK_S2id }
+                    .Where(x => x.HasValue && x.Value > 0)
+                    .Select(x => x!.Value)
+                    .Distinct()
+                    .ToList();
+                var specTitles = specIds.Any()
+                    ? await db.Prod_Specs
+                        .Where(x => specIds.Contains(x.Id))
+                        .ToDictionaryAsync(x => x.Id, x => x.Title)
+                    : new Dictionary<long, string>();
+                var targetCart = existingTarget ?? cart;
+                var originalCartId = cart.Id;
+
+                targetCart.FK_PSid = targetStock.Id;
+                targetCart.FK_PriceId = targetPrice.Id;
+                targetCart.Price = targetPrice.Price ?? 0;
+                targetCart.Bonus = bonus;
+                targetCart.OldQuantity = targetCart.Quantity;
+                targetCart.Quantity = finalQuantity;
+                targetCart.FK_S1id = targetStock.FK_S1id;
+                targetCart.FK_S2id = targetStock.FK_S2id;
+                targetCart.ProductId = targetStock.FK_Pid;
+                targetCart.ProdName = targetStock.Prod.Title;
+                targetCart.S1Title = targetStock.FK_S1id.HasValue &&
+                    specTitles.TryGetValue(targetStock.FK_S1id.Value, out var s1Title)
+                        ? s1Title
+                        : null;
+                targetCart.S2Title = targetStock.FK_S2id.HasValue &&
+                    specTitles.TryGetValue(targetStock.FK_S2id.Value, out var s2Title)
+                        ? s2Title
+                        : null;
+                targetCart.LastModificationTime = now;
+                targetCart.LastModifierUserId = cart.FK_Uid ?? cart.CreatorUserId;
+
+                if (existingTarget != null)
+                {
+                    cart.IsDeleted = true;
+                    cart.DeletionTime = now;
+                    cart.DeleterUserId = cart.FK_Uid ?? cart.CreatorUserId;
+                }
+
+                await db.SaveChangesAsync();
+
+                response.Success = true;
+                response.Message = existingTarget == null
+                    ? "商品規格已更新。"
+                    : "商品規格已更新，並與購物車內相同規格合併。";
+                response.Object = new ShoppingCartVariantUpdateResultDto
+                {
+                    CartId = targetCart.Id,
+                    RemovedCartId = existingTarget == null ? null : originalCartId,
+                    Merged = existingTarget != null
+                };
+            }
+            catch (Exception ex)
+            {
+                response.Error = "CartVariantUpdateFailed";
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
+
         private void LogCartEventAsync(long pid, long? userId, Guid uuid, LogActionEnum action, int before, int after)
         {
             db.Prod_Logs.Add(new Prod_Log

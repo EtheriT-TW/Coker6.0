@@ -115,6 +115,21 @@ function ReloadCartDisplay() {
 
     return deferred.promise();
 }
+function ReloadCartDropdown(items) {
+    if (typeof window.CartDropAdd !== "function") return;
+
+    $("#Car_Dropdown > ul").empty();
+    $("#Car_Badge").text("");
+
+    (items || []).forEach(function (item) {
+        window.CartDropAdd(item);
+    });
+
+    if (!items || items.length === 0) {
+        $("#Car_Dropdown_Null").removeClass("d-none");
+        $("#Car_Dropdown > .btn_car_buy").attr("disabled", "");
+    }
+}
 function groupByFreight(list) {
     return list.reduce((acc, it) => {
         const key = (it.freight && it.freight.id) ? it.freight.id : 0;
@@ -408,6 +423,59 @@ function CartListAdd(data, $container) {
     }
     else {
         $template.addClass("cart-primary-item");
+
+        var openVariantEditor = function (event) {
+            event.preventDefault();
+
+            if (!window.ProductQuickCart ||
+                typeof window.ProductQuickCart.open !== "function") {
+                return;
+            }
+
+            window.ProductQuickCart.open({
+                mode: "edit-cart",
+                cartId: Number(data.scId || 0),
+                productId: Number(data.pId || 0),
+                productStockId: Number(data.psId || 0),
+                productPriceId: Number(data.ppId || 0),
+                quantity: Number(data.quantity || 1),
+                productName: data.title || "",
+                imageUrl: data.imagePath || "/images/noImg.jpg",
+                productUrl: `/${OrgName}/home/product/${data.pId}`,
+                onUpdated: function () {
+                    cart.Items.ReloadCartDisplay().done(function (items) {
+                        ReloadCartDropdown(items);
+                        S.productAddOnDrafts = null;
+                        Coker.sweet.success("商品規格已更新", null, true);
+                    }).fail(function () {
+                        Coker.sweet.error(
+                            "商品已更新",
+                            "畫面更新失敗，請重新整理購物車確認。",
+                            null,
+                            true
+                        );
+                    });
+                }
+            });
+        };
+
+        $template.find("a.pro_link")
+            .removeAttr("target rel")
+            .attr({
+                href: "#",
+                title: `查看或修改：${data.title}`,
+                role: "button"
+            })
+            .on("click", openVariantEditor);
+
+        var $specDetail = $template.find(".content > a.pro_link .pro_detail").first();
+        if (!$specDetail.length) {
+            $specDetail = $template.find(".pro_detail").first();
+        }
+        $("<span>", {
+            class: "cart-item-edit-variant border-0 bg-transparent p-0",
+            text: "查看／修改"
+        }).appendTo($specDetail);
     }
 
     var validationCode = data.validationCode || data.ValidationCode || '';

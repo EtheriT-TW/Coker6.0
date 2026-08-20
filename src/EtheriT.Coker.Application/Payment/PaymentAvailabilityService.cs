@@ -80,12 +80,26 @@ namespace EtheriT.Coker.Application.Payment
                 // fall back to PaymentType, not to the shipping default row.
                 var minAmount = rule?.OverrideMinAmount ?? payment.MinAmount;
                 var maxAmount = rule?.OverrideMaxAmount ?? payment.MaxAmount;
+                var isBelowMinimum = amount < minAmount;
+                var isAboveMaximum = maxAmount.HasValue && amount > maxAmount.Value;
+                var isAvailable = isEnabled && !isBelowMinimum && !isAboveMaximum;
+                var unavailableReasonCode = string.Empty;
+                var unavailableReason = string.Empty;
 
-                if (!isEnabled ||
-                    amount < minAmount ||
-                    (maxAmount.HasValue && amount > maxAmount.Value))
+                if (!isEnabled)
                 {
-                    continue;
+                    unavailableReasonCode = "UnsupportedByLogistics";
+                    unavailableReason = "目前選擇的配送方式不支援此付款方式。";
+                }
+                else if (isBelowMinimum)
+                {
+                    unavailableReasonCode = "BelowMinimumAmount";
+                    unavailableReason = $"此付款方式最低付款金額為 NT${FormatAmount(minAmount)}，目前訂單金額為 NT${FormatAmount(amount)}。";
+                }
+                else if (isAboveMaximum)
+                {
+                    unavailableReasonCode = "ExceedsMaximumAmount";
+                    unavailableReason = $"此付款方式單筆上限為 NT${FormatAmount(maxAmount.Value)}，目前訂單金額為 NT${FormatAmount(amount)}。";
                 }
 
                 var isEcpay = payment.FK_ThirdPartyId == EcpayThirdPartyId;
@@ -106,7 +120,10 @@ namespace EtheriT.Coker.Application.Payment
                             : "Default",
                     RenderMode = isEcpay ? "Embedded" : "Standard",
                     MinAmount = minAmount,
-                    MaxAmount = maxAmount
+                    MaxAmount = maxAmount,
+                    IsAvailable = isAvailable,
+                    UnavailableReasonCode = unavailableReasonCode,
+                    UnavailableReason = unavailableReason
                 });
             }
 
@@ -124,8 +141,17 @@ namespace EtheriT.Coker.Application.Payment
                 logisticsSettingId,
                 amount);
 
-            if (availablePayments.All(x => x.Id != paymentTypeId))
+            if (availablePayments.All(x =>
+                    x.Id != paymentTypeId ||
+                    !x.IsAvailable))
                 throw new Exception("目前的物流方式或訂單金額不支援所選付款方式，請重新選擇。");
+        }
+
+        private static string FormatAmount(decimal amount)
+        {
+            return amount == decimal.Truncate(amount)
+                ? amount.ToString("N0")
+                : amount.ToString("N2");
         }
     }
 }

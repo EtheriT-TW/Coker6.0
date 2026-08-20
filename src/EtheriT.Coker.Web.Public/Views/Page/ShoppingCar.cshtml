@@ -847,6 +847,7 @@
                                            name="RadioPayment"
                                            data-maxamount="@payment.MaxAmount"
                                            data-minamount="@payment.MinAmount"
+                                           data-availability-id="@payment.Id"
                                            value="@payment.Id"
                                            data-third-party-id="@payment.FK_ThirdPartyId"
                                            data-code="@payment.Code"
@@ -858,7 +859,11 @@
                                          data-radioid="radio_payment_@payment.Code">
                                         <div class="d-flex align-items-center">
                                             <span class="paymentradio d-block"></span>
-                                            <div class="paymenttitle">@payment.Title</div>
+                                            <div class="payment-copy">
+                                                <div class="paymenttitle">@payment.Title</div>
+                                                <div class="payment-unavailable-reason small d-none"
+                                                     role="note"></div>
+                                            </div>
                                         </div>
 
                                         @if (!string.IsNullOrWhiteSpace(payment.Icon))

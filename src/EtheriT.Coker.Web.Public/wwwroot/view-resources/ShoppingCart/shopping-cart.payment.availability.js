@@ -13,7 +13,96 @@
 
     function getEcpayPayments(items) {
         return (items || []).filter(function (item) {
-            return item.providerCode === "ECPay" && item.renderMode === "Embedded";
+            return item.providerCode === "ECPay" &&
+                item.renderMode === "Embedded" &&
+                item.isAvailable === true;
+        });
+    }
+
+    function getPaymentById(items, paymentTypeId) {
+        var targetId = String(paymentTypeId || "");
+
+        return (items || []).find(function (item) {
+            return String(item.id) === targetId;
+        }) || null;
+    }
+
+    function updateUnavailableDisplay($formCheck, payment) {
+        var isUnavailable = payment != null && payment.isAvailable !== true;
+        var reason = isUnavailable
+            ? String(payment.unavailableReason || "目前無法使用此付款方式。")
+            : "";
+        var $input = $formCheck.find('input[name="RadioPayment"]').first();
+        var $display = $formCheck.find(".payment_display").first();
+        var $reason = $formCheck.find(".payment-unavailable-reason").first();
+
+        $formCheck.toggleClass("payment-unavailable", isUnavailable);
+        $input.prop("disabled", isUnavailable);
+        $display
+            .attr("aria-disabled", isUnavailable ? "true" : "false")
+            .attr("title", reason);
+        $reason
+            .text(reason)
+            .toggleClass("d-none", !isUnavailable);
+    }
+
+    function renderUnavailableEmbeddedPayments(payments) {
+        $("#RadioPayment > .payment-embedded-unavailable").remove();
+
+        (payments || []).filter(function (item) {
+            return item.renderMode === "Embedded" && item.isAvailable !== true;
+        }).forEach(function (payment) {
+            var $fallback = $("<div>", {
+                class: "form-check text-start m-0 p-0 payment-embedded-unavailable"
+            });
+            var $input = $("<input>", {
+                class: "form-check-input d-none",
+                type: "radio",
+                name: "RadioPayment",
+                value: payment.id,
+                disabled: true
+            })
+                .attr("data-availability-id", payment.id)
+                .attr("data-third-party-id", payment.thirdPartyId || 0)
+                .attr("data-code", payment.code || "")
+                .attr("data-title", payment.title || "");
+            var $display = $("<div>", {
+                class: "payment_display d-flex justify-content-between"
+            });
+            var $content = $("<div>", {
+                class: "d-flex align-items-center"
+            });
+            var $copy = $("<div>", {
+                class: "payment-copy"
+            });
+
+            $("<span>", {
+                class: "paymentradio d-block"
+            }).appendTo($content);
+            $("<div>", {
+                class: "paymenttitle",
+                text: payment.title || "付款方式"
+            }).appendTo($copy);
+            $("<div>", {
+                class: "payment-unavailable-reason small d-none",
+                role: "note"
+            }).appendTo($copy);
+
+            $copy.appendTo($content);
+            $content.appendTo($display);
+
+            if (payment.icon) {
+                $("<img>", {
+                    class: "paymenticon px-1",
+                    src: payment.icon,
+                    alt: payment.title || "付款方式"
+                }).appendTo($display);
+            }
+
+            $fallback.append($input, $display);
+
+            updateUnavailableDisplay($fallback, payment);
+            $fallback.insertBefore("#ECPayPayment");
         });
     }
 
@@ -71,11 +160,14 @@
     }
 
     function apply(preferredPaymentValue) {
-        var available = S.AvailablePayments || [];
+        var payments = S.AvailablePayments || [];
+        var available = payments.filter(function (item) {
+            return item.isAvailable === true;
+        });
         var allowedIds = new Set(available.map(function (item) {
             return String(item.id);
         }));
-        var ecpayPayments = getEcpayPayments(available);
+        var ecpayPayments = getEcpayPayments(payments);
         var selectedValue = preferredPaymentValue != null && preferredPaymentValue !== ""
             ? String(preferredPaymentValue)
             : getSelectedPaymentValue();
@@ -87,10 +179,22 @@
             var $formCheck = $(this);
             var $input = $formCheck.find('input[name="RadioPayment"]').first();
             var isEmbedded = cart.Payment.Core.isEmbeddedPaymentRadio($input);
-            var isAvailable = allowedIds.has(String($input.val()));
+            var availabilityId = $input.attr("data-availability-id") || $input.val();
+            var payment = getPaymentById(payments, availabilityId);
 
-            $formCheck.toggleClass("d-none", isEmbedded || !isAvailable);
+            if (isEmbedded) {
+                // Keep the provider entry radios untouched: the SDK uses the first one
+                // as its selection proxy. Disabled embedded methods are rendered below
+                // as display-only fallback rows instead.
+                $formCheck.addClass("d-none");
+                return;
+            }
+
+            updateUnavailableDisplay($formCheck, payment);
+            $formCheck.toggleClass("d-none", payment == null);
         });
+
+        renderUnavailableEmbeddedPayments(payments);
 
         updateEcpayEntry(ecpayPayments);
 
@@ -106,23 +210,24 @@
         }
 
         var $target = selectedValue
-            ? $('#RadioPayment input[name="RadioPayment"][value="' + selectedValue + '"]')
+            ? $('#RadioPayment > .form-check:not(.payment-embedded-unavailable) input[name="RadioPayment"][value="' + selectedValue + '"]')
             : $();
         var $targetForm = $target.closest(".form-check");
 
         var targetIsEmbedded = $target.length &&
             cart.Payment.Core.isEmbeddedPaymentRadio($target);
         var targetIsAvailable = $target.length && (
-            (targetIsEmbedded && S.ECPayAvailable) ||
+            (targetIsEmbedded && S.ECPayAvailable && ecpayPayments.some(function (item) {
+                return String(item.id) === String($target.val());
+            })) ||
             (!targetIsEmbedded &&
                 !$targetForm.hasClass("d-none") &&
                 allowedIds.has(String($target.val())))
         );
 
         if (!targetIsAvailable) {
-            $target = $("#RadioPayment > .form-check:not(.d-none)")
-                .first()
-                .find('input[name="RadioPayment"]');
+            $target = $('#RadioPayment > .form-check:not(.d-none) input[name="RadioPayment"]:not(:disabled)')
+                .first();
         }
 
         if (!$target.length && S.ECPayAvailable) {
@@ -134,7 +239,7 @@
         }
 
         var hasAvailablePayment =
-            $("#RadioPayment > .form-check:not(.d-none)").length > 0 ||
+            $('#RadioPayment > .form-check:not(.d-none) input[name="RadioPayment"]:not(:disabled)').length > 0 ||
             S.ECPayAvailable;
 
         ensureNoPaymentWarning().toggleClass("d-none", hasAvailablePayment);
@@ -201,7 +306,8 @@
 
     function isAvailable(paymentTypeId) {
         return (S.AvailablePayments || []).some(function (item) {
-            return Number(item.id) === Number(paymentTypeId);
+            return Number(item.id) === Number(paymentTypeId) &&
+                item.isAvailable === true;
         });
     }
 

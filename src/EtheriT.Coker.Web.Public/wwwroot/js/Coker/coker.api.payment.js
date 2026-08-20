@@ -11,7 +11,7 @@
                 return Coker.api.get("/api/ShoppingCart/GetPaymentInfo/", { paytypeid: paytypeid });
             },
 
-            /** 依物流與目前金額取得可用付款方式 */
+            /** 依物流與目前金額取得付款方式及其可用狀態 */
             GetAvailablePayments: function (data) {
                 return Coker.api.post("/api/ShoppingCart/GetAvailablePayments", data);
             },

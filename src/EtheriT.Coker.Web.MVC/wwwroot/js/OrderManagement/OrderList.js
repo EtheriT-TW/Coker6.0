@@ -1068,10 +1068,17 @@ function DataInsert(data, frame) {
                     }
                     break;
                 case "cvsinfo":
-                    if (data.cvsStoreName != null && data.cvsAddress != null) {
+                    if (data.cvsStoreName || data.cvsStoreID || data.cvsAddress) {
                         var $cvsinfo = $("#OrderData > .card-body > .row > .col > .storeinfo");
-                        $cvsinfo.removeClass("d-none")
-                        $cvsinfo.find(".order_cvsinfo").html(`${data.cvsStoreName}<br>${data.cvsAddress}`)
+                        var storeTitle = data.cvsStoreName || "未提供門市名稱";
+                        if (data.cvsStoreID) storeTitle += `（門市編號：${data.cvsStoreID}）`;
+
+                        var $storeContent = $cvsinfo.find(".order_cvsinfo").empty();
+                        $("<div>").text(storeTitle).appendTo($storeContent);
+                        if (data.cvsAddress) {
+                            $("<div>").text(data.cvsAddress).appendTo($storeContent);
+                        }
+                        $cvsinfo.removeClass("d-none");
                     }
                     break;
                 default:

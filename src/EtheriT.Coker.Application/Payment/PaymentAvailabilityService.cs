@@ -121,6 +121,7 @@ namespace EtheriT.Coker.Application.Payment
                     RenderMode = isEcpay ? "Embedded" : "Standard",
                     MinAmount = minAmount,
                     MaxAmount = maxAmount,
+                    CvsStoreSelectionMode = payment.CvsStoreSelectionMode,
                     IsAvailable = isAvailable,
                     UnavailableReasonCode = unavailableReasonCode,
                     UnavailableReason = unavailableReason

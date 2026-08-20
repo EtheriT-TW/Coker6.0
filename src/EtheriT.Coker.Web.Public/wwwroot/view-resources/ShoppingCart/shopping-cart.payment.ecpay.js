@@ -74,7 +74,8 @@
 
         cart.Pricing.TotalCount();
 
-        var dataReady = cart.Forms.AllDataGet(false);
+        // 取貨門市在付款方式之後選擇，載入付款項目時不應被門市必填檢核擋住。
+        var dataReady = cart.Forms.AllDataGet(false, true);
         cart.Payment.Core.Step3Monitor();
         var selectedOrderDetails = GetSelectedOrderDetails();
 
@@ -188,6 +189,7 @@
 
                         cart.Shipping.ConfigurePaymentOptions(paymentValueToRestore);
                         cart.Payment.Core.RadioPayment();
+                        cart.Shipping.UpdateCvsStoreSelectionDisplay();
 
                         // 綠界 SDK 可能在 createPayment 後自動選取第一個付款項目。
                         // 先立刻清一次，再啟動 DOM 監聽，避免 SDK 稍後又補上 active。
@@ -217,6 +219,8 @@
                             $("#RadioPayment .payment_display").first().addClass("first");
                             $prevPayment.addClass("last");
                             cart.Payment.Core.RadioPayment();
+                            S.CvsStoreValidationRequested = false;
+                            cart.Shipping.UpdateCvsStoreSelectionDisplay();
 
                             if ($(".ecpay_loading").hasClass("d-none")) {
                                 $ECPayList.removeClass("first last");

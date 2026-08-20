@@ -1,3 +1,5 @@
+using EtheriT.Coker.Application.Shared.Dto.enumType.Payment;
+
 namespace EtheriT.Coker.Application.Shared.Dto.Payment
 {
     public class PaymentAvailabilityQueryDto
@@ -17,6 +19,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Payment
         public string RenderMode { get; set; } = string.Empty;
         public decimal MinAmount { get; set; }
         public decimal? MaxAmount { get; set; }
+        public CvsStoreSelectionModeEnum CvsStoreSelectionMode { get; set; }
         public bool IsAvailable { get; set; }
         public string UnavailableReasonCode { get; set; } = string.Empty;
         public string UnavailableReason { get; set; } = string.Empty;

@@ -3298,7 +3298,7 @@ button.recipient-source-option {
 
 .shipping-option-row {
     display: grid;
-    grid-template-columns: minmax(14rem, 1fr) minmax(12rem, .8fr) minmax(10rem, 16rem);
+    grid-template-columns: minmax(14rem, 1fr) minmax(12rem, .8fr);
     align-items: center;
     gap: .5rem 1rem;
     padding: .8rem 0;
@@ -3312,12 +3312,6 @@ button.recipient-source-option {
     .shipping-option-row .shipping-choice {
         grid-column: 1;
         grid-row: 1;
-    }
-
-    .shipping-option-row.has-cvs .cvs-store-picker {
-        grid-column: 3;
-        grid-row: 1;
-        justify-self: end;
     }
 
     .shipping-option-row .freight-describe,
@@ -3366,20 +3360,14 @@ button.recipient-source-option {
     }
 
     .shipping-option-row {
-        grid-template-columns: minmax(0, 1fr) minmax(7.5rem, .7fr) minmax(7rem, 9rem);
+        grid-template-columns: minmax(0, 1fr) minmax(7.5rem, .7fr);
         gap: .5rem;
     }
 
         .shipping-option-row .shipping-choice,
         .shipping-option-row .freight-describe,
-        .shipping-option-row.has-cvs .freight-describe,
-        .shipping-option-row.has-cvs .cvs-store-picker {
+        .shipping-option-row.has-cvs .freight-describe {
             min-width: 0;
-        }
-
-        .shipping-option-row.has-cvs .cvs-store-picker {
-            width: 100%;
-            max-width: 9rem;
         }
 
     .shipping-choice .form-check-label,
@@ -3530,17 +3518,6 @@ button.recipient-source-option {
             font-size: .9rem;
         }
 
-        .shipping-option-row.has-cvs .cvs-store-picker {
-            grid-column: 1;
-            grid-row: 3;
-            justify-self: start;
-            margin-top: .25rem;
-            margin-left: 1.45rem;
-            padding-left: 0;
-            width: calc(100% - 1.45rem);
-            max-width: 16rem;
-        }
-
     #Form_Recipient {
         padding-right: .5rem !important;
         padding-left: .5rem !important;
@@ -3592,6 +3569,17 @@ button.recipient-source-option {
 .cvs-store-picker {
     width: 100%;
     max-width: 16rem;
+}
+
+.checkout-cvs-store-section {
+    border-top: 1px solid #dfe8e3;
+    padding-top: 1rem;
+}
+
+.checkout-cvs-store-heading {
+    margin-bottom: .55rem;
+    color: #303b36;
+    font-weight: 600;
 }
 
 .cvs-store-button {
@@ -3657,6 +3645,10 @@ button.recipient-source-option {
 
     .cvs-store-status.is-complete {
         color: #146c43;
+    }
+
+    .cvs-store-status.is-gateway {
+        color: #4f5c56;
     }
 
 /* 匯款資訊外框有 border 與 p-3，補償水平內縮後與收件人／付款資料共用同一格線。 */

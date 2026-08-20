@@ -24,6 +24,8 @@
 
             cart.Payment.Core.updatePaymentRadioUI($formCheck);
             cart.Payment.Core.RadioPayment();
+            S.CvsStoreValidationRequested = false;
+            cart.Shipping.UpdateCvsStoreSelectionDisplay();
         });
 
         // 群組全選（Header）
@@ -118,7 +120,7 @@
         }
 
         S.buy_step_swiper.on('slideChangeTransitionEnd', function () {
-            if (S.gotop_switch) {
+            if (S.gotop_switch && !S.isRestoringECPayLogistics) {
                 window.scrollTo(0, $("#BuyStepSwiper").offset().top - $("#Mega_Menu").height() - 90);
             }
         });
@@ -166,13 +168,12 @@
                         var isdefault = true;
 
                         for (var i = 0; i < select_cart_data.length; i++) {
-                            var $select_input = $('input[data-subtype="' + select_cart_data[i].logisticsSubType + '"]');
-                            if ($select_input.length > 0) {
-                                var $radio = $select_input
-                                    .closest(".shipping-option-row")
-                                    .find('input[name="RadioShipping"]');
-                                if (!$radio.length) continue;
-
+                            var logisticsSubType = String(select_cart_data[i].logisticsSubType || "");
+                            var $radio = $('input[name="RadioShipping"][data-logistics-subtype]').filter(function () {
+                                return String($(this).attr("data-logistics-subtype") || "").toUpperCase() ===
+                                    logisticsSubType.toUpperCase();
+                            }).first();
+                            if ($radio.length > 0) {
                                 $radio.prop('checked', true);
                                 $radio.attr({
                                     "data-cvsstoreid": select_cart_data[i].cvsStoreID,
@@ -435,6 +436,8 @@
                 Coker.sweet.warning("請注意", "請確實填寫發票寄送資料！", null);
             } else if (!S.shipMethodsChosen) {
                 if (cart.Shipping.IsCvsShippingSelected() && !cart.Shipping.HasSelectedCvsStore()) {
+                    S.CvsStoreValidationRequested = true;
+                    cart.Shipping.UpdateCvsStoreSelectionDisplay();
                     Coker.sweet.warning("請注意", "請先選擇超商取貨門市！", null);
                 } else {
                     Coker.sweet.warning("請注意", "請選擇運送方式！", null);
@@ -484,7 +487,11 @@
 
         /* Radio Button */
         $('input[type=radio][name=RadioShipping]').on("change", cart.Shipping.RadioShipping);
-        $('input[type=radio][name=RadioPayment]').on("change", cart.Payment.Core.RadioPayment);
+        $('input[type=radio][name=RadioPayment]').on("change", function () {
+            cart.Payment.Core.RadioPayment();
+            S.CvsStoreValidationRequested = false;
+            cart.Shipping.UpdateCvsStoreSelectionDisplay();
+        });
         $('input[type=radio][name=RecipientRadio]').on("change", cart.Forms.RecipientRadio);
         $('input[type=radio][name=InvoiceRadio]').on("change", cart.Forms.InvoiceRadio);
         $('input[type=radio][name=InvoiceType]').on("change", cart.Forms.InvoiceTypeRadio);

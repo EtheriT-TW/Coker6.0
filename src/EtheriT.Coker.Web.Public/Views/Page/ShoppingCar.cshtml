@@ -708,6 +708,7 @@
                                                    data-boxfees='@Html.Raw(boxFeesJson)'
                                                    data-is-cvs="@freight.GetMap"
                                                    data-logistics-type="@((int)freight.LogisticsType)"
+                                                   data-logistics-subtype="@freight.LogisticsSubType"
                                                    @check
                                                    required>
                                             <label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
@@ -725,23 +726,6 @@
                                             @freight.Describe
                                         </div>
 
-                                        @if (freight.GetMap)
-                                        {
-                                            <div class="cvs-store-picker">
-                                                <input type="button"
-                                                       class="btn_getmap cvs-store-button"
-                                                       value="請選擇取貨門市"
-                                                       data-subtype="@freight.LogisticsSubType"
-                                                       aria-describedby="CvsStoreStatus_@freight.Id"
-                                                       title="選擇取貨門市">
-                                                <div id="CvsStoreStatus_@freight.Id"
-                                                     class="cvs-store-status @(freight.Set_Default ? "is-missing" : "d-none")"
-                                                     role="status"
-                                                     aria-live="polite">
-                                                    尚未選擇門市，完成後才能選擇付款方式
-                                                </div>
-                                            </div>
-                                        }
                                     </div>
                                 }
                             }
@@ -851,6 +835,7 @@
                                            value="@payment.Id"
                                            data-third-party-id="@payment.FK_ThirdPartyId"
                                            data-code="@payment.Code"
+                                           data-cvs-store-selection-mode="@((int)payment.CvsStoreSelectionMode)"
                                            required
                                            data-title="@payment.Title">
 
@@ -891,6 +876,20 @@
                             <div class="nopayment">店家尚未設定付款方式</div>
                         }
                     </form>
+                    <div id="CvsStoreSelection" class="checkout-cvs-store-section d-none px-3 px-sm-4 pb-4">
+                        <div class="checkout-cvs-store-heading">取貨門市</div>
+                        <div class="cvs-store-picker">
+                            <input type="button"
+                                   class="btn_getmap cvs-store-button d-none"
+                                   value="請選擇取貨門市"
+                                   aria-describedby="CvsStoreStatus"
+                                   title="選擇取貨門市">
+                            <div id="CvsStoreStatus"
+                                 class="cvs-store-status"
+                                 role="status"
+                                 aria-live="polite"></div>
+                        </div>
+                    </div>
                     </section>
 
                     <div class="swiper_button mt-4 my-sm-5 row align-items-center justify-content-center">

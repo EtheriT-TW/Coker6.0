@@ -65,6 +65,7 @@
                 .attr("data-availability-id", payment.id)
                 .attr("data-third-party-id", payment.thirdPartyId || 0)
                 .attr("data-code", payment.code || "")
+                .attr("data-cvs-store-selection-mode", payment.cvsStoreSelectionMode || 0)
                 .attr("data-title", payment.title || "");
             var $display = $("<div>", {
                 class: "payment_display d-flex justify-content-between"
@@ -150,6 +151,7 @@
             $entry
                 .val(first.id)
                 .attr("data-code", first.code)
+                .attr("data-cvs-store-selection-mode", first.cvsStoreSelectionMode || 0)
                 .attr("data-minamount", first.minAmount)
                 .attr("data-maxamount", first.maxAmount == null ? "" : first.maxAmount);
         } else {
@@ -245,6 +247,7 @@
         ensureNoPaymentWarning().toggleClass("d-none", hasAvailablePayment);
 
         cart.Payment.Core.RadioPayment();
+        cart.Shipping.UpdateCvsStoreSelectionDisplay();
 
         if (cart.CheckoutValidation &&
             typeof cart.CheckoutValidation.RefreshDisplay === "function") {

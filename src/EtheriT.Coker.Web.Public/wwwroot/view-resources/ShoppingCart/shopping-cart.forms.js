@@ -252,11 +252,12 @@
     function OrderDataGet() {
         var shipping_radio = $(`[name="RadioShipping"]:checked`);
         S.order_header_data.shipping = shipping_radio.val();
-        S.order_header_data.CVSStoreID = shipping_radio.attr("data-cvsstoreid") ?? null;
-        S.order_header_data.CVSStoreName = shipping_radio.attr("data-cvsstorename") ?? null;
-        S.order_header_data.CVSAddress = shipping_radio.attr("data-cvsaddress") ?? null;
-        S.order_header_data.CVSTelephone = shipping_radio.attr("data-cvstelephone") ?? null;
-        S.order_header_data.CVSOutSide = shipping_radio.attr("data-cvsoutside") ?? null;
+        var usesMerchantStore = cart.Shipping.RequiresMerchantCvsStore();
+        S.order_header_data.CVSStoreID = usesMerchantStore ? shipping_radio.attr("data-cvsstoreid") ?? null : null;
+        S.order_header_data.CVSStoreName = usesMerchantStore ? shipping_radio.attr("data-cvsstorename") ?? null : null;
+        S.order_header_data.CVSAddress = usesMerchantStore ? shipping_radio.attr("data-cvsaddress") ?? null : null;
+        S.order_header_data.CVSTelephone = usesMerchantStore ? shipping_radio.attr("data-cvstelephone") ?? null : null;
+        S.order_header_data.CVSOutSide = usesMerchantStore ? shipping_radio.attr("data-cvsoutside") ?? null : null;
 
         var paymentValue = cart.Payment.Core.getActivePaymentValue();
 
@@ -387,7 +388,7 @@
         if (checkform && !cart.Forms.FormCheck(S.InvoiceForms)) return false;
         return true;
     }
-    function AllDataGet(EnableWarning) {
+    function AllDataGet(EnableWarning, SkipCvsStoreValidation) {
         var checksuccess = true;
 
         cart.Payment.Core.RadioPayment();
@@ -422,7 +423,7 @@
             if (EnableWarning) Coker.sweet.warning("請注意", "請確實填寫發票資料！", null);
         }
 
-        if (!cart.Shipping.HasSelectedCvsStore()) {
+        if (!SkipCvsStoreValidation && !cart.Shipping.HasSelectedCvsStore()) {
             checksuccess = false;
             if (EnableWarning) Coker.sweet.warning("請注意", "請先選擇超商取貨門市！", null);
         }

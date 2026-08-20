@@ -39,10 +39,9 @@
 
             var shipping_radio = $(`[name="RadioShipping"]:checked`);
             S.order_header_data.shipping = shipping_radio.val();
-            S.order_header_data.CVSStoreID = shipping_radio.attr("data-cvsstoreid") ?? null;
-
-            var hasBtnGetMap = shipping_radio.closest(".shipping-option-row").find(".btn_getmap").length > 0;
-            if (hasBtnGetMap && S.order_header_data.CVSStoreID == null) {
+            if (!cart.Shipping.HasSelectedCvsStore()) {
+                S.CvsStoreValidationRequested = true;
+                cart.Shipping.UpdateCvsStoreSelectionDisplay();
                 Coker.sweet.warning("請注意", "請選擇取貨門市！", null);
                 return;
             }

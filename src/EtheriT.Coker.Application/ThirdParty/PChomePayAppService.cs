@@ -3,6 +3,7 @@ using DevExpress.CodeParser;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Payment;
 using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
@@ -176,6 +177,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                         var ohdata = await db.Order_Headers.Where(e => e.TransactionId == orderId).FirstOrDefaultAsync();
                         if (ohdata != null)
                         {
+                            var paymentInfo = ExtractPChomePaymentInfo(jsonMessage);
+                            await SyncPChomeCvsStoreAsync(ohdata, paymentInfo);
+
                             switch (jsonMessage["status"]?.ToString())
                             {
                                 case "S":
@@ -264,7 +268,10 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                             GetResponse.EnsureSuccessStatusCode();
                             var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
-                            PChomePayState = JsonConvert.DeserializeObject<PChomePayStateDto>(jsonResponse);
+                            PChomePayState = JsonConvert.DeserializeObject<PChomePayStateDto>(jsonResponse)
+                                ?? throw new Exception("支付連付款狀態格式錯誤。");
+
+                            await SyncPChomeCvsStoreAsync(ohdata, PChomePayState.payment_info);
 
                             var message = "";
                             var return_status = "fail";
@@ -403,6 +410,125 @@ namespace EtheriT.Coker.Application.ThirdParty
                 response.Message = $"{0},{ex.Message}";
             }
             return response;
+        }
+
+        private static PChomePayPaymentInfoDto? ExtractPChomePaymentInfo(JObject message)
+        {
+            var token = message["payment_info"];
+            if (token is JObject paymentInfoObject)
+                return paymentInfoObject.ToObject<PChomePayPaymentInfoDto>();
+            if (token?.Type == JTokenType.String &&
+                !string.IsNullOrWhiteSpace(token.Value<string>()))
+            {
+                try
+                {
+                    return JsonConvert.DeserializeObject<PChomePayPaymentInfoDto>(token.Value<string>()!);
+                }
+                catch (Newtonsoft.Json.JsonException)
+                {
+                    return null;
+                }
+            }
+
+            if (message.ContainsKey("store_id") ||
+                message.ContainsKey("store_name") ||
+                message.ContainsKey("logistic_id"))
+                return message.ToObject<PChomePayPaymentInfoDto>();
+
+            return null;
+        }
+
+        private async Task SyncPChomeCvsStoreAsync(
+            Order_Header order,
+            PChomePayPaymentInfoDto? paymentInfo)
+        {
+            if (paymentInfo == null)
+                return;
+
+            var storeId = paymentInfo.store_id?.Trim();
+            var storeName = paymentInfo.store_name?.Trim();
+            var logisticsId = paymentInfo.logistic_id?.Trim();
+            var receiverName = paymentInfo.receiver_name?.Trim();
+            var receiverMobile = paymentInfo.receiver_mobile?.Trim();
+
+            if (string.IsNullOrWhiteSpace(storeId) &&
+                string.IsNullOrWhiteSpace(storeName))
+                return;
+
+            var paymentSelectsStore = await db.PaymentTypes
+                .AsNoTracking()
+                .AnyAsync(e =>
+                    e.Id == order.Payment &&
+                    !e.IsDeleted &&
+                    e.CvsStoreSelectionMode == CvsStoreSelectionModeEnum.PaymentGateway);
+
+            if (!paymentSelectsStore)
+                return;
+
+            var orderLogistics = await db.Order_Logistics
+                .Where(e => e.FK_OhId == order.Id && !e.IsDeleted)
+                .OrderByDescending(e => e.Id)
+                .FirstOrDefaultAsync();
+
+            if (orderLogistics == null)
+            {
+                orderLogistics = new Order_Logistics
+                {
+                    FK_OhId = order.Id,
+                    LogisticsType = "CVS",
+                    LogisticsSubType = string.Empty,
+                    CreatorUserId = 0,
+                    CreationTime = DateTime.Now
+                };
+                db.Order_Logistics.Add(orderLogistics);
+            }
+
+            orderLogistics.LogisticsType = "CVS";
+            if (!string.IsNullOrWhiteSpace(storeId))
+                orderLogistics.CVSStoreID = storeId;
+            if (!string.IsNullOrWhiteSpace(storeName))
+                orderLogistics.CVSStoreName = storeName;
+            if (!string.IsNullOrWhiteSpace(receiverName))
+            {
+                orderLogistics.ReceiverName = receiverName;
+                order.Recipient = receiverName;
+            }
+            if (!string.IsNullOrWhiteSpace(receiverMobile))
+            {
+                orderLogistics.ReceiverCellPhone = receiverMobile;
+                order.RecipientCellPhone = receiverMobile;
+            }
+
+            var storeDisplay = !string.IsNullOrWhiteSpace(storeName)
+                ? storeName
+                : $"門市代號：{storeId}";
+            if (!string.IsNullOrWhiteSpace(storeId) &&
+                !storeDisplay.Contains(storeId, StringComparison.OrdinalIgnoreCase))
+                storeDisplay += $"（門市代號：{storeId}）";
+
+            order.RecipientAddress = storeDisplay;
+
+            await db.SaveChangesAsync();
+
+            try
+            {
+                await loginUserData.SetLogs(
+                    0,
+                    order.FK_WebsiteId,
+                    $"PChomePayCvsStoreSync：{order.Id:D9}",
+                    JsonConvert.SerializeObject(new
+                    {
+                        LogisticsId = logisticsId,
+                        StoreId = orderLogistics.CVSStoreID,
+                        StoreName = orderLogistics.CVSStoreName,
+                        ReceiverName = orderLogistics.ReceiverName,
+                        ReceiverMobile = orderLogistics.ReceiverCellPhone
+                    }));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"PChomePayCvsStoreSync 記錄失敗：{ex.Message}");
+            }
         }
         public async Task<ResponseMessageDto> PChomePayRefund(long ohid, int? refund)
         {

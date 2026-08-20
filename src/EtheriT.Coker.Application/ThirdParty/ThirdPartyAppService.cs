@@ -276,6 +276,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                         FK_ThirdPartyId = pt.FK_ThirdPartyId,
                                         MaxAmount = pt.MaxAmount,
                                         MinAmount = pt.MinAmount,
+                                        CvsStoreSelectionMode = pt.CvsStoreSelectionMode,
                                     }).ToListAsync();
 
                 if (output.Any())

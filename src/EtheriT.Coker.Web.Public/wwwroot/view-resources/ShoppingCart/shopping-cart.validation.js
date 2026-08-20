@@ -51,6 +51,7 @@
 
         if (!cart.Shipping.HasSelectedCvsStore()) {
             issues.push({
+                code: "CvsStoreMissing",
                 section: "運送方式",
                 field: "取貨門市",
                 target: cart.Shipping.GetCvsStoreSelectionTarget()
@@ -130,13 +131,23 @@
 
     function RefreshDisplay() {
         var details = GetSelectedOrderDetails();
-        var dataReady = cart.Forms.AllDataGet(false);
+        var dataReady = cart.Forms.AllDataGet(false, true);
         var issues = GetIssues();
-        var isValid = dataReady && details.length > 0 && issues.length === 0;
+        var paymentBlockingIssues = issues.filter(function (issue) {
+            return issue.code !== "CvsStoreMissing";
+        });
+        var canChoosePayment = dataReady && details.length > 0 && paymentBlockingIssues.length === 0;
+        var isValid = canChoosePayment && issues.length === 0;
 
         if (isValid) {
             $(".checkoutValidationWarning").addClass("d-none");
             return true;
+        }
+
+        if (canChoosePayment) {
+            // 取貨門市是付款方式之後的下一個動作，不在使用者選金流時提前顯示錯誤。
+            $(".checkoutValidationWarning").addClass("d-none").empty();
+            return false;
         }
 
         $("#RadioPayment > .form-check").addClass("d-none");

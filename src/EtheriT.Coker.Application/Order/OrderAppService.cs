@@ -15,6 +15,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType.Bonus;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Marketing;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Payment;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
@@ -250,8 +251,9 @@ namespace EtheriT.Coker.Application.Order
                 RecipientsDto? completedOrderRecipient = null;
                 if (!isTemp)
                 {
-                    var shippingType = await ValidateFormalOrderCompletenessAsync(dto, websiteId);
-                    completedOrderRecipient = BuildCompletedOrderRecipient(dto, shippingType);
+                    var validation = await ValidateFormalOrderCompletenessAsync(dto, websiteId);
+                    if (!validation.PaymentGatewaySelectsCvsStore)
+                        completedOrderRecipient = BuildCompletedOrderRecipient(dto, validation.ShippingType);
                 }
 
                 var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
@@ -351,7 +353,7 @@ namespace EtheriT.Coker.Application.Order
                 .FirstOrDefaultAsync();
         }
 
-        private async Task<ShippingTypeEnum> ValidateFormalOrderCompletenessAsync(OrderHeaderAddDto dto, long websiteId)
+        private async Task<FormalOrderValidationResult> ValidateFormalOrderCompletenessAsync(OrderHeaderAddDto dto, long websiteId)
         {
             var missing = new List<string>();
 
@@ -398,22 +400,63 @@ namespace EtheriT.Coker.Application.Order
             if (shipping == null)
                 throw new Exception("選擇的配送方式不存在或不屬於目前網站，請重新選擇。");
 
+            var paymentStoreSelectionMode = await (
+                from value in db.PaymentTypesValues.AsNoTracking()
+                join payment in db.PaymentTypes.AsNoTracking()
+                    on value.FK_PaymentTypesId equals payment.Id
+                where value.FK_WebsiteId == websiteId &&
+                      value.Used &&
+                      !value.IsDeleted &&
+                      payment.Id == dto.Payment &&
+                      !payment.IsDeleted
+                select (CvsStoreSelectionModeEnum?)payment.CvsStoreSelectionMode)
+                .FirstOrDefaultAsync();
+
+            if (!paymentStoreSelectionMode.HasValue)
+                throw new Exception("選擇的付款方式不存在或未在目前網站啟用，請重新選擇。");
+
+            var paymentGatewaySelectsCvsStore =
+                paymentStoreSelectionMode == CvsStoreSelectionModeEnum.PaymentGateway;
+
             if (IsCvsShippingType(shipping.LogisticsType))
             {
-                var missingStoreData = new List<string>();
-                if (string.IsNullOrWhiteSpace(dto.CVSStoreID)) missingStoreData.Add("門市代號");
-                if (string.IsNullOrWhiteSpace(dto.CVSStoreName)) missingStoreData.Add("門市名稱");
-                if (string.IsNullOrWhiteSpace(dto.CVSAddress)) missingStoreData.Add("門市地址");
+                if (paymentGatewaySelectsCvsStore)
+                {
+                    dto.CVSStoreID = null;
+                    dto.CVSStoreName = null;
+                    dto.CVSAddress = null;
+                    dto.CVSTelephone = null;
+                    dto.CVSOutSide = null;
+                    dto.RecipientAddress = string.Empty;
+                }
+                else
+                {
+                    var missingStoreData = new List<string>();
+                    if (string.IsNullOrWhiteSpace(dto.CVSStoreID)) missingStoreData.Add("門市代號");
+                    if (string.IsNullOrWhiteSpace(dto.CVSStoreName)) missingStoreData.Add("門市名稱");
+                    if (string.IsNullOrWhiteSpace(dto.CVSAddress)) missingStoreData.Add("門市地址");
 
-                if (missingStoreData.Count > 0)
-                    throw new Exception($"超商取貨資料尚未完成：{string.Join("、", missingStoreData)}。請重新選擇取貨門市。");
+                    if (missingStoreData.Count > 0)
+                        throw new Exception($"超商取貨資料尚未完成：{string.Join("、", missingStoreData)}。請重新選擇取貨門市。");
+                }
             }
             else if (string.IsNullOrWhiteSpace(dto.RecipientAddress))
             {
                 throw new Exception("請填寫收件人地址後再成立訂單。");
             }
 
-            return shipping.LogisticsType;
+            return new FormalOrderValidationResult
+            {
+                ShippingType = shipping.LogisticsType,
+                PaymentGatewaySelectsCvsStore =
+                    IsCvsShippingType(shipping.LogisticsType) && paymentGatewaySelectsCvsStore
+            };
+        }
+
+        private sealed class FormalOrderValidationResult
+        {
+            public ShippingTypeEnum ShippingType { get; set; }
+            public bool PaymentGatewaySelectsCvsStore { get; set; }
         }
 
         private static RecipientsDto BuildCompletedOrderRecipient(
@@ -1257,8 +1300,12 @@ namespace EtheriT.Coker.Application.Order
 
             var IsCVSStore = LogisticsSubType != null && IsCvsShippingType(LogisticsSubType.Value);
 
-            if (IsCVSStore)
+            if (IsCVSStore &&
+                !string.IsNullOrWhiteSpace(dto.CVSStoreName) &&
+                !string.IsNullOrWhiteSpace(dto.CVSAddress))
                 dto.RecipientAddress = $"{GetCVSType((ShippingTypeEnum)LogisticsSubType)}-{dto.CVSStoreName}({dto.CVSAddress})";
+            else if (IsCVSStore)
+                dto.RecipientAddress = string.Empty;
 
             if (dto.OrderId != null)
             {
@@ -2255,7 +2302,17 @@ namespace EtheriT.Coker.Application.Order
                         temp_output.CVSOutSide = logistics.CVSOutSide;
                         temp_output.CVSStoreName = logistics.CVSStoreName;
                         temp_output.CVSTelephone = logistics.CVSTelephone;
-                        if (logistics.LogisticsType == "CVS" && !string.IsNullOrEmpty(logistics.CVSStoreName) && !string.IsNullOrEmpty(logistics.CVSAddress)) temp_output.Shipping += $"　{logistics.CVSStoreName}({logistics.CVSAddress})";
+                        if (logistics.LogisticsType == "CVS" && !string.IsNullOrEmpty(logistics.CVSStoreName))
+                        {
+                            var cvsDetail = !string.IsNullOrEmpty(logistics.CVSAddress)
+                                ? logistics.CVSAddress
+                                : !string.IsNullOrEmpty(logistics.CVSStoreID)
+                                    ? $"門市代號：{logistics.CVSStoreID}"
+                                    : string.Empty;
+                            temp_output.Shipping += string.IsNullOrEmpty(cvsDetail)
+                                ? $"　{logistics.CVSStoreName}"
+                                : $"　{logistics.CVSStoreName}({cvsDetail})";
+                        }
 
                         if (logistics.RtnOrderNo != null) temp_output.LogisticsStatusStr = $"退貨編號：{logistics.RtnOrderNo}<br>";
 

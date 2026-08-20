@@ -142,9 +142,13 @@
         var storeAddress = $.trim($shipping.attr("data-cvsaddress") || "");
 
         if (isCvs) {
-            recipient.recipientAddress = storeName
-                ? storeName + (storeAddress ? "（" + storeAddress + "）" : "")
-                : "尚未選擇取貨門市";
+            if (cart.Shipping.PaymentGatewaySelectsCvsStore()) {
+                recipient.recipientAddress = "將於付款平台選擇取貨門市";
+            } else {
+                recipient.recipientAddress = storeName
+                    ? storeName + (storeAddress ? "（" + storeAddress + "）" : "")
+                    : "尚未選擇取貨門市";
+            }
             $(".recipient-display-address-label").text("取貨門市");
         } else {
             $(".recipient-display-address-label").text("收件地址");

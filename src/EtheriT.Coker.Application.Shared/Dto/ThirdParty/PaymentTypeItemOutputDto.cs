@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using EtheriT.Coker.Application.Shared.Dto.enumType.Payment;
+
 namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty
 {
     public class PaymentTypeItemOutputDto
@@ -16,5 +18,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty
         public long FK_ThirdPartyId { get; set; }
         public decimal MinAmount { get; set; }
         public decimal? MaxAmount { get; set; }
+        public CvsStoreSelectionModeEnum CvsStoreSelectionMode { get; set; }
     }
 }

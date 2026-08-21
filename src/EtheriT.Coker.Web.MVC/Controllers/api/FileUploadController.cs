@@ -75,13 +75,28 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpPost]
         //[ValidateAntiForgeryToken]
-        public async Task<UploadFileOutputDto> upload360Files(IList<IFormFile> files, [FromForm] int type, [FromForm] long? sid)
+        public async Task<UploadFileOutputDto> upload360Files(
+            IList<IFormFile> files,
+            [FromForm] IList<int>? fileIndexes,
+            [FromForm] IList<long>? frameIds,
+            [FromForm] int type,
+            [FromForm] long sid,
+            [FromForm] int serno,
+            [FromForm] long id = 0)
         {
             FileBindTypeEnum s = (FileBindTypeEnum)type;
             switch (s)
             {
                 case FileBindTypeEnum.產品:
-                    return await fileUploadAppService.upload360Files(files, type, (long)sid, "Product");
+                    return await fileUploadAppService.upload360Files(
+                        files,
+                        fileIndexes ?? new List<int>(),
+                        frameIds ?? new List<long>(),
+                        type,
+                        sid,
+                        serno,
+                        id,
+                        "Product");
                 default:
                     return null;
             }
@@ -98,6 +113,22 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                     return await fileUploadAppService.uploadYTLink(dto);
                 default:
                     return null;
+            }
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> uploadExternalVideo([FromForm] FileYTLinkUploadDto dto, IFormFile? thumbnail, [FromForm] bool removeThumbnail = false, [FromForm] string aspectRatio = "auto")
+        {
+            FileBindTypeEnum s = (FileBindTypeEnum)dto.Type;
+            switch (s)
+            {
+                case FileBindTypeEnum.產品:
+                case FileBindTypeEnum.產品規格圖:
+                case FileBindTypeEnum.自訂廣告:
+                    if (fileUploadAppService is FileUploadAppService service)
+                        return await service.uploadExternalVideo(dto, thumbnail, removeThumbnail, aspectRatio);
+                    return new ResponseMessageDto { Success = false, Error = "外嵌影片服務尚未就緒" };
+                default:
+                    return new ResponseMessageDto { Success = false, Error = "不支援的檔案綁定類型" };
             }
         }
         [HttpPost]

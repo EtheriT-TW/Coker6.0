@@ -11,8 +11,23 @@
         readMinQty, cloneTemplate, formatNumber, formatText, resolveText, defaultI18n,
         formatPriceText, analyzeSpecStructure, buildPriceSummary, buildPriceViewModel,
         buildPriceBaseViewModel, isStockAvailable, clampQuantity, isLoggedIn,
-        createCartPayload, runBuyGuard, submitCart, ProductSelectionEngine, ProductMediaViewer
+        createCartPayload, runBuyGuard, submitCart, parseExternalVideo, ProductSelectionEngine, ProductMediaViewer
     } = I;
+
+    function normalizePublicMediaPath(value, orgName) {
+        const path = String(value || '').trim().replace(/\\/g, '/');
+        if (!path || /^(?:https?:|data:|blob:)/i.test(path)) return path;
+
+        const normalizedOrgName = String(orgName || '').trim().replace(/^\/+|\/+$/g, '');
+        if (!normalizedOrgName) return path;
+
+        const orgPrefix = `/upload/${normalizedOrgName}/`;
+        if (path.toLowerCase().startsWith(orgPrefix.toLowerCase())) {
+            return `/upload/${path.substring(orgPrefix.length)}`;
+        }
+
+        return path;
+    }
 
     class ProductContentController {
         constructor(options) {
@@ -28,6 +43,7 @@
                 selection: null,
                 previewSwiper: null,
                 productSwiper: null,
+                navigationHideTimer: null,
                 requestId: 0
             };
             this.mediaViewer = new ProductMediaViewer(this.options);
@@ -344,6 +360,106 @@
             }
         }
 
+        initializeInline360($display, links) {
+            const frames = Array.isArray(links)
+                ? links.filter(link => typeof link === 'string' && link.trim() !== '')
+                : [];
+
+            if (!$display.length || frames.length < 2) return;
+
+            const element = $display.get(0);
+            const state = {
+                frameIndex: 0,
+                pointerId: null,
+                lastX: 0,
+                remainder: 0,
+                moved: false,
+                suppressClickUntil: 0
+            };
+            const pixelsPerFrame = 8;
+
+            const revealNavigation = () => {
+                window.clearTimeout(this.state.navigationHideTimer);
+                this.$root.addClass('show-360-navigation');
+                this.state.navigationHideTimer = window.setTimeout(() => {
+                    this.$root.removeClass('show-360-navigation');
+                }, 4000);
+            };
+
+            const showFrame = (index) => {
+                state.frameIndex = (index + frames.length) % frames.length;
+                element.src = frames[state.frameIndex];
+            };
+
+            frames.slice(1).forEach(src => {
+                const frame = new Image();
+                frame.src = src;
+            });
+
+            $display
+                .addClass('inline_360view')
+                .attr({
+                    draggable: 'false',
+                    role: 'button',
+                    tabindex: '0',
+                    'aria-label': `360° 商品圖，共 ${frames.length} 張影格；左右拖曳可旋轉，點擊可放大`
+                })
+                .off('.inline360')
+                .on('dragstart.inline360', e => e.preventDefault())
+                .on('pointerdown.inline360', (e) => {
+                    const event = e.originalEvent;
+                    if (!event || (event.button != null && event.button !== 0)) return;
+
+                    revealNavigation();
+                    state.pointerId = event.pointerId;
+                    state.lastX = event.clientX;
+                    state.remainder = 0;
+                    state.moved = false;
+                    element.setPointerCapture?.(event.pointerId);
+                    e.stopPropagation();
+                })
+                .on('pointermove.inline360', (e) => {
+                    const event = e.originalEvent;
+                    if (!event || state.pointerId !== event.pointerId) return;
+
+                    const delta = event.clientX - state.lastX;
+                    state.lastX = event.clientX;
+                    state.remainder += delta;
+
+                    const steps = Math.trunc(state.remainder / pixelsPerFrame);
+                    if (steps !== 0) {
+                        state.moved = true;
+                        state.remainder -= steps * pixelsPerFrame;
+                        showFrame(state.frameIndex + steps);
+                    }
+
+                    e.preventDefault();
+                    e.stopPropagation();
+                })
+                .on('pointerup.inline360 pointercancel.inline360', (e) => {
+                    const event = e.originalEvent;
+                    if (!event || state.pointerId !== event.pointerId) return;
+
+                    if (state.moved) state.suppressClickUntil = Date.now() + 300;
+                    element.releasePointerCapture?.(event.pointerId);
+                    state.pointerId = null;
+                    e.stopPropagation();
+                })
+                .on('click.inline360', (e) => {
+                    if (Date.now() <= state.suppressClickUntil) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                    }
+                })
+                .on('keydown.inline360', (e) => {
+                    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+
+                    showFrame(state.frameIndex + (e.key === 'ArrowRight' ? 1 : -1));
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+        }
+
         renderMedia() {
             const result = this.state.product;
             const selectors = this.options.selectors;
@@ -368,26 +484,33 @@
                     });
                 } else if (img.fileType === 4) {
                     $slide = cloneTemplate(templates.ytVideoSlide);
-                    const videoid = (img.name || '').split('&t=')[0];
+                    const externalVideo = parseExternalVideo(img.name);
+                    const thumbnail = img.thumbnail || img.link?.[1] || externalVideo?.thumbnail || '/images/defaultImage/video.jpg';
                     $slide.find('.pro_display').attr({
-                        src: `https://img.youtube.com/vi/${videoid}/hqdefault.jpg`,
+                        src: normalizePublicMediaPath(thumbnail, this.options.orgName),
                         alt: img.name,
                         'data-id': img.id,
                         'data-index': index,
-                        'data-youtube-link': img.name,
-                        'data-display-protype': 'youtube'
+                        'data-external-video': img.name,
+                        'data-display-protype': 'external-video'
                     });
-                } else if (img.fileType === 5) {
+                    $slide.find('.schematic_youtube')
+                        .addClass(`provider-${externalVideo?.provider || 'external'}`)
+                        .find('i').attr('class', externalVideo?.iconClass || 'fa-solid fa-link');
+                } else if (img.fileType === 2) {
                     $slide = cloneTemplate(templates.slide3d);
-                    $slide.find('.pro_display').attr({
-                        src: img.link?.[0] || '',
+                    const links = Array.isArray(img.link) ? img.link : [];
+                    const $display = $slide.find('.pro_display');
+                    $display.attr({
+                        src: links[0] || '',
                         alt: img.name,
                         'data-id': img.id,
                         'data-index': index,
                         'data-display-protype': '360view',
-                        'data-filename-x': img.filenameX || '{index}.jpg',
-                        'data-amount-x': img.amountX || 15
+                        'data-image-list-x': JSON.stringify(links),
+                        'data-amount-x': img.amountX || links.length
                     });
+                    this.initializeInline360($display, links);
                 } else {
                     $slide = cloneTemplate(templates.imageSlide);
                     $slide.find('.pro_display').attr({
@@ -410,8 +533,14 @@
 
                 if (img.fileType === 3) src = '/images/videopreview.jpg';
                 if (img.fileType === 4) {
-                    const videoid = (img.name || '').split('&t=')[0];
-                    src = `https://img.youtube.com/vi/${videoid}/hqdefault.jpg`;
+                    const externalVideo = parseExternalVideo(img.name);
+                    const thumbnail = img.thumbnail || img.link?.[1] || externalVideo?.thumbnail || '/images/defaultImage/video.jpg';
+                    src = normalizePublicMediaPath(thumbnail, this.options.orgName);
+                    $slide.addClass('external-video-preview');
+                    $slide.append($('<span class="external-video-preview__provider"></span>')
+                        .addClass(`provider-${externalVideo?.provider || 'external'}`)
+                        .attr('title', externalVideo?.provider || '外嵌影片')
+                        .append($('<i></i>').attr('class', externalVideo?.iconClass || 'fa-solid fa-link')));
                 }
 
                 $img.attr({
@@ -507,9 +636,26 @@
                 },
                 thumbs: {
                     swiper: this.state.previewSwiper
+                },
+                on: {
+                    init: (swiper) => this.syncInline360Navigation(swiper),
+                    slideChange: (swiper) => this.syncInline360Navigation(swiper)
                 }
             });
         };
+
+        syncInline360Navigation(swiper) {
+            const activeSlide = swiper?.slides?.[swiper.activeIndex];
+            const hasActive360 = !!activeSlide?.querySelector('.inline_360view');
+
+            this.$root.toggleClass('is-360-slide-active', hasActive360);
+
+            if (!hasActive360) {
+                window.clearTimeout(this.state.navigationHideTimer);
+                this.state.navigationHideTimer = null;
+                this.$root.removeClass('show-360-navigation');
+            }
+        }
 
         initShare() {
             if (typeof window.ShareBlockInit === 'function') {

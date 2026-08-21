@@ -373,6 +373,10 @@
             @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
             {
                 <div id="profile-tab-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="profile-tab" tabindex="2">
+                    <div class="alert alert-light border text-secondary small mb-3" role="note">
+                        若有訂單資料或交易憑證需求，建議自行留存；如無法查閱，請聯繫客服協助。
+                    </div>
+
                     <div class="nodata h5 text-center fw-bold d-none">@L.get("EmptyOrderHistory")</div>
 
                     <div class="order-loading text-center text-secondary py-5 d-none" role="status" aria-live="polite" aria-hidden="true">

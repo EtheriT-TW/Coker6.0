@@ -1,6 +1,6 @@
 var DirectoryId = 0, DirectoryType = "n";
 let editor, directoryDatailList, ArticletForms, $ArticletTags, ArticletId, setPage;
-var total_files = [];
+var articleFileManagers = [];
 let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {};
 
     function getWorkspaceBackButton() {
@@ -95,13 +95,89 @@ let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {}
         return String(value ?? "").trim().toLowerCase();
     }
 
-    function bindArticleFileArea($root) {
-        co.File.bindListFile($root, {
-            files: total_files,
-            add: UploadListAdd,
-            clear: UploadPreviewFrameClear,
-            sort: SortChange
+    function getArticleFiles() {
+        return articleFileManagers.flatMap(manager => manager.getFiles());
+    }
+
+    function destroyArticleFileAreas() {
+        articleFileManagers.forEach(manager => manager.destroy());
+        articleFileManagers = [];
+        $("#ArticleFileAreas").empty();
+    }
+
+    function getArticleFileManager($root) {
+        return $root && $root.data("file-list-manager");
+    }
+
+    function renderArticleFileRow($row, file) {
+        if (file.Id !== undefined && file.OriginalSerNo === undefined) {
+            file.OriginalSerNo = file.SerNo;
+            file.OriginalName = file.Name;
+            file.OriginalIsVisible = file.IsVisible !== false;
+            file.OriginalAreaKey = file.AreaKey;
+        }
+        $row.data({
+            oldname: file.OriginalName ?? file.Name,
+            oldserno: file.OriginalSerNo ?? file.SerNo,
+            "old-isvisible": file.OriginalIsVisible ?? (file.IsVisible !== false),
+            "old-editkey": file.OriginalAreaKey ?? file.AreaKey
         });
+
+        if (this.$root.attr("id") !== "UselessFileFrame") return;
+        const $select = $('<select class="form-select form-select-sm area_select" aria-label="AreaKey Select" name="editkey"><option selected disabled value="">請選擇對應區塊</option></select>');
+        articleFileManagers.forEach(manager => {
+            if (manager === this || manager.$root.attr("id") === "UselessFileFrame") return;
+            const label = manager.$root.data("label");
+            $select.append($("<option>", { value: label, text: label }));
+        });
+        $row.prepend($select);
+    }
+
+    function createArticleFileArea($root) {
+        const manager = new Coker.FileListManager($root, {
+            type: Coker.FileListManager.Types.File,
+            template: "#TemplateUploadList",
+            renderItem: renderArticleFileRow
+        });
+        $root.off("blur.articleFileArea").on("blur.articleFileArea", 'input[name="name"]', function () {
+            const $input = $(this);
+            if (!$input.val()) $input.val($input.closest(".upload_list").data("oldname") || "");
+        });
+        articleFileManagers.push(manager);
+        return manager;
+    }
+
+    function createUselessFileArea() {
+        let $root = $("#UselessFileFrame");
+        if ($root.length) return getArticleFileManager($root);
+        $root = $($("#TemplateArticleFile").html()).clone();
+        $root.attr({ id: "UselessFileFrame", "data-edit-type": "Files" });
+        $root.find(".upload_title").text("無對應區塊檔案");
+        $root.find(".upload_frame").attr("data-upload-id", "uselessarticlefile");
+        $("#ArticleFileAreas").append($root);
+        return createArticleFileArea($root);
+    }
+
+    function addArticleFile(file, $target) {
+        const manager = $target && $target.length ? getArticleFileManager($target) : createUselessFileArea();
+        return manager.add(file);
+    }
+
+    function transferArticleFile($select) {
+        const $row = $select.closest(".upload_list");
+        const $sourceRoot = $row.closest(".data_upload");
+        const $targetRoot = $("#ArticleFileAreas .data_upload").filter(function () {
+            return $(this).data("label") === $select.val();
+        }).first();
+        const source = getArticleFileManager($sourceRoot);
+        const target = getArticleFileManager($targetRoot);
+        if (!source || !target) return;
+        source.transferTo($row, target);
+        if ($sourceRoot.attr("id") === "UselessFileFrame" && !$sourceRoot.find(".upload_list").length) {
+            source.destroy();
+            articleFileManagers = articleFileManagers.filter(manager => manager !== source);
+            $sourceRoot.remove();
+        }
     }
 
     function navigate(hash) {
@@ -126,9 +202,7 @@ let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {}
         0 == $("#ArticleList").removeClass("d-none").length ? BackToList() : (DirectoryId = Number(route.directoryId || 0),
         DirectoryType = "Articles", "function" == typeof articleManagerOptions.setDirectoryContext && articleManagerOptions.setDirectoryContext(DirectoryId, DirectoryType),
         $("body").removeClass("grapesEdit"), $(".linkToFront").addClass("d-none"), "Articles" === DirectoryType ? (directoryDatailList.component.refresh(), 
-        $(".data_upload").each((function() {
-            UploadPreviewFrameClear($(this));
-        })), $(".data_upload > ul > .upload_list").remove(), total_files.length = 0, $(".data_upload").remove()) : BackToList());
+        destroyArticleFileAreas()) : BackToList());
     }
     function MoveToItemArticle(route) {
         if ($("#pages>.card,#TopLine").addClass("d-none"), $ArticletTags && "function" == typeof $ArticletTags.TagDataClear && $ArticletTags.TagDataClear(), 
@@ -144,7 +218,7 @@ let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {}
                     tagDatas: []
                 }), _dfr.resolve()) : co.Directory.Get(DirectoryId).done((result => {
                     $("#ArticleWorkspace").data("dir", result), _dfr.resolve();
-                })), co.Form.clear("ArticletForm"), setArticlePopularValue(0), syncAdvancedSettingsVisibility(null), id > 0 ? co.Articles.GetDataOne(id).done((function(result) {
+                })), destroyArticleFileAreas(), co.Form.clear("ArticletForm"), setArticlePopularValue(0), syncAdvancedSettingsVisibility(null), id > 0 ? co.Articles.GetDataOne(id).done((function(result) {
                     null != result ? (ArticletId = result.id, setArticleSaveMode(!0 === result.canSave || !0 === result.CanSave), 
                     result.startEndDate = 0, result.sortCheckbox = 1, result.ImageUpload = 1, $(".linkToFront").removeClass("d-none").attr("href", `${defaultUrl}/${OrgName}/search/article/${result.id}`), 
                     result.fileAreas.length > 0 && result.fileAreas.forEach((function(area) {
@@ -154,11 +228,11 @@ let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {}
                             "data-edit-type": area.type,
                             "data-key": area.key.toLowerCase(),
                             "data-label": area.label
-                        }), item_upload_frame.attr("data-upload-id", `${area.key.toLowerCase()}file`), bindArticleFileArea(item), $("#ArticleFileAreas").append(item);
-                    })), co.File.ListFileInit(), co.Form.insertData(result, "#ArticletForm"), setArticlePopularValue(result.popular ?? result.Popular), 
+                        }), item_upload_frame.attr("data-upload-id", `${area.key.toLowerCase()}file`), $("#ArticleFileAreas").append(item), createArticleFileArea(item);
+                    })), co.Form.insertData(result, "#ArticletForm"), setArticlePopularValue(result.popular ?? result.Popular),
                     syncAdvancedSettingsVisibility(result), $ArticletTags.TagDataSet(result.tagDatas),
                     result.files.forEach((file => {
-                        UploadListAdd(file, $(`.data_upload[data-key="${file.areakey.toLowerCase()}"]`));
+                        addArticleFile(file, $(`#ArticleFileAreas .data_upload[data-key="${file.areakey.toLowerCase()}"]`));
                     }))) : BackToList();
                 })) : (setArticleSaveMode(!0), _dfr.promise().done((function() {
                     const directory = $("#ArticleWorkspace").data("dir");
@@ -180,108 +254,6 @@ let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {}
         retryCount = retryCount || 0, editor && editor.DomComponents && "undefined" != typeof co && co.Grapes && "function" == typeof co.Grapes.setEditor ? callback(editor) : retryCount >= 30 ? co.sweet.error("錯誤", "編輯器尚未初始化完成，請重新進入編輯畫面。") : setTimeout((function() {
             waitGrapesEditorReady(callback, retryCount + 1);
         }), 100);
-    }
-    function UploadListAdd(result, $target) {
-        var isUseLessFile = !1;
-        0 == $target.length && (0 == $("#UselessFileFrame").length && ((item = $($("#TemplateArticleFile").html()).clone()).find(".upload_title").text("無對應區塊檔案 "), 
-        item.attr({
-            Id: "UselessFileFrame",
-            "data-edit-type": "Files"
-        }), $("#ArticleFileAreas").append(item), co.File.ListFileInit()), $target = $("#UselessFileFrame"), 
-        isUseLessFile = !0);
-        bindArticleFileArea($target);
-        var item, item_name = (item = $($("#TemplateUploadList").html()).clone()).find("input[name='name']"), item_serno = item.find(".ser_no"), item_size = item.find("span.size"), item_btn_preview = item.find(".btn_preview"), item_btn_remove = item.find(".btn_remove"), item_btn_lock = item.find(".btn_lock"), item_visible = item.find("label.visible");
-        item_visible.find("input").prop("checked", !0), isUseLessFile && (item.prepend('<select class="form-select form-select-sm area_select" aria-label="AreaKey Select" name="editkey"><option selected disabled value="">請選擇對應區塊</option></select>'), 
-        $(".data_upload").not("#UselessFileFrame").each((function() {
-            var $this = $(this), option = `<option value="${$this.data("label")}">${$this.data("label")}</option>`;
-            item.find("select.area_select").append(option);
-        })), item.find("select.area_select").on("change", (function() {
-            var $this = $(this), $parent = $this.parents("li.upload_list"), $RelatedFrame = $(`.data_upload[data-label="${$this.val()}"]`);
-            UploadListAdd(result, $RelatedFrame), 0 == $parent.siblings("li.upload_list ").length ? $parent.parents(".data_upload").remove() : $parent.remove();
-        })));
-        var tempId = total_files.length;
-        void 0 === file_num && (file_num = 0);
-        var file_num = $target.find("ul > li.upload_list").length;
-        if ($target.find("ul > li").each((function() {
-            var $self = $(this);
-            $self.hasClass("upload_list") && "" == $self.find("input[name='name']").val() && $self.remove();
-        })), null == result) file_num += 1, item.data("tempid", tempId), item.data("serno", file_num), 
-        item_serno.val(file_num), 0 == $target.find(".select_frame").length && void 0 !== $target.data("uploadtype") ? item.data("uploadtype", $target.data("uploadtype")) : item.data("uploadtype", 0), 
-        item.data("edit", !1), item.on("click", (function() {
-            co.File.ListFile($(this));
-        })); else if (void 0 === result.id) item.attr({
-            "data-tempid": result.TempId,
-            "data-serno": file_num,
-            "data-uploadtype": result.Type,
-            "data-oldname": result.Name,
-            "data-edit": !1
-        }), item_name.val(result.Name), item_name.attr("placeholder", result.Name), item_serno.val(file_num), 
-        item_btn_preview.data("priviewUrl", URL.createObjectURL(result.File)), result.File.size < 1024 ? item_size.text(result.File.size + " B") : result.File.size < 1048576 ? item_size.text((result.File.size / 1024).toFixed(1) + " KB") : result.File.size < 1073741824 ? item_size.text((result.File.size / 1048576).toFixed(1) + " MB") : item_size.text((result.File.size / 1073741824).toFixed(1) + " GB"); else {
-            file_num += 1, item.attr({
-                "data-id": result.id,
-                "data-serno": file_num,
-                "data-oldserno": file_num,
-                "data-oldname": result.name,
-                "data-uploadtype": result.fileType,
-                "data-edit": !1,
-                "data-old-isvisible": result.isVisible,
-                "data-old-editkey": result.areakey
-            }), item_serno.val(file_num), item_name.val(result.name), item_name.attr("placeholder", result.name), 
-            item_size.text(result.size), item_btn_preview.data("priviewUrl", result.link[0]), 
-            item_visible.find("input").prop("checked", result.isVisible), result.isEncryption && (item_btn_lock.addClass("lock"), 
-            item_btn_lock.attr({
-                title: "已上鎖檔案不可解鎖",
-                "data-status": "locked"
-            }));
-            var obj = {};
-            obj.Id = result.id, obj.Name = result.name, obj.SerNo = file_num;
-            var link = result.link[0];
-            4 == result.fileType ? obj.File = result.name : obj.File = link, obj.Type = result.fileType, 
-            obj.IsDelete = !1, obj.IsEncryption = result.isEncryption, total_files.push(obj);
-        }
-        item_serno.on("blur", (function() {
-            var $self = $(this), $uploadList = $target.find(".upload_list");
-            $self.val() < 1 ? $self.val(1) : $self.val() > $uploadList.length && $self.val($uploadList.length), 
-            $self.val() != item.data("serno") && ($self.val() > item.data("serno") ? (SortChange($uploadList, "bigger", item.data("serno"), $self.val()), 
-            $("#ProductForm > .data_upload > ul").children("li").eq(parseInt($self.val()) - 1).after(item)) : $self.val() < item.data("serno") && (SortChange($uploadList, "smaller", $self.val(), item.data("serno")), 
-            $("#ProductForm > .data_upload > ul").children("li").eq(parseInt($self.val()) - 1).before(item))), 
-            item.data("serno", $self.val());
-        })), item_name.on("blur", (function() {
-            var $self = $(this);
-            "" == $self.val() && $self.val(item.data("oldname"));
-        })), item_btn_preview.on("click", (function(e) {
-            e.preventDefault(), window.open(item_btn_preview.data("priviewUrl"), "_blank");
-        })), item_btn_lock.on("click", (function(e) {
-            e.preventDefault();
-            var $self = $(this);
-            "locked" == $self.data("status") ? co.sweet.warn("操作無效", "已上鎖檔案不可解鎖。") : $self.toggleClass("lock");
-        })), item_btn_remove.on("click", (function(e) {
-            e.preventDefault();
-            var $self = $(this).parents("li").first(), $uploadList = $target.find(".upload_list"), file_num = $target.find("ul > li.upload_list").length;
-            if (item.data("serno") < file_num && SortChange($uploadList, "bigger", item.data("serno"), file_num), 
-            void 0 !== $self.data("id")) total_files.find((item => item.Id == $self.data("id"))).IsDelete = !0; else if (void 0 !== $self.data("tempid")) {
-                var tempid = $self.data("tempid"), index = total_files.findIndex((item => item.TempId == tempid));
-                index >= 0 && (total_files.splice(index, 1), total_files.forEach((file => {
-                    file.TempId = file.TempId > tempid ? file.TempId - 1 : file.TempId;
-                })));
-            }
-            UploadPreviewFrameClear($target), $self.remove();
-        })), $target.find("ul > .btn_upload_add").before(item), co.File.ListFile(item);
-    }
-    function SortChange($self, change, minindex, maxindex) {
-        $self.each((function() {
-            var $li_self = $(this);
-            "bigger" == change ? $li_self.data("serno") > minindex && $li_self.data("serno") <= maxindex && ($li_self.find(".ser_no").val(parseInt($li_self.data("serno")) - 1), 
-            $li_self.data("serno", $li_self.find(".ser_no").val())) : "smaller" == change && $li_self.data("serno") >= minindex && $li_self.data("serno") < maxindex && ($li_self.find(".ser_no").val(parseInt($li_self.data("serno")) + 1), 
-            $li_self.data("serno", $li_self.find(".ser_no").val()));
-        }));
-    }
-    function UploadPreviewFrameClear($target) {
-        var $self = $target.find(".preview_frame");
-        $self.find(".default_frame").addClass("d-flex"), $self.find(".upload_frame").addClass("d-none"), 
-        $self.find(".media_frame").removeClass("d-flex"), $self.find(".youtube_frame").removeClass("d-flex"), 
-        $self.find(".select_frame").removeClass("d-flex"), $self.find(".youtube_preview").empty(), 
-        $self.find(".media_preview > div").empty();
     }
     function parseRoute(hash) {
         const value = String(hash || "").trim();
@@ -434,6 +406,7 @@ const ArticleManager = {
             init: function(options) {
                 articleManagerOptions = options || {}, articleOnly = !0 === articleManagerOptions.articleOnly, 
                 ArticletForms = $("#ArticletForm"), $ArticletTags = ArticletForms.find(".InputTag").TagListModalInit(), 
+                $("#ArticleFileAreas").off("change.articleFileArea").on("change.articleFileArea", ".area_select", function() { transferArticleFile($(this)); }),
                 Array.from(ArticletForms).forEach((function(form) {
                     "true" !== form.dataset.advancedValidationBound && (form.addEventListener("invalid", (function(event) {
                         event.target.closest("#ArticleAdvancedSettings") && (document.getElementById("ArticleAdvancedSettings").open = !0);
@@ -482,9 +455,10 @@ const ArticleManager = {
                                         }));
                                     }
                                     var isFileUploaded = !1, isFileUpdated = !1, isFileDeleted = !1;
-                                    total_files.length > 0 && ($(".data_upload > ul > li.upload_list").each((function() {
+                                    const articleFiles = getArticleFiles();
+                                    articleFiles.length > 0 && ($("#ArticleFileAreas .data_upload > ul > li.upload_list").each((function() {
                                         var $self = $(this), $parentarea = $self.parents(".data_upload"), data = [];
-                                        if (void 0 !== $self.data("id") ? data = total_files.find((item => $self.data("id") == item.Id)) : void 0 !== $self.data("tempid") && (data = total_files.find((item => $self.data("tempid") == item.TempId))), 
+                                        if (void 0 !== $self.data("id") ? data = articleFiles.find((item => $self.data("id") == item.Id)) : void 0 !== $self.data("tempid") && (data = articleFiles.find((item => $self.data("tempid") == item.TempId))),
                                         void 0 === data.Id || !data.IsEncryption && $self.find(".btn_lock").hasClass("lock")) {
                                             var formData = new FormData;
                                             formData.append("files", data.File), formData.append("areakey", $parentarea.data("key")), 
@@ -500,7 +474,7 @@ const ArticleManager = {
                                                 tempId: void 0 !== $self.data("tempid") ? $self.data("tempid") : null
                                             })), isFileUploaded = !0;
                                         } else {
-                                            var SerNoChange = data.SerNo != Number($self.find(".ser_no").val()), FileNameChange = $self.data("oldname") != $self.find("input[name='name']").val(), IsVisibleChange = $self.data("old-isvisible") != $self.find("label.visible input").prop("checked"), AreaKeyChange = normalizeFileAreaKey($self.data("old-editkey")) !== normalizeFileAreaKey($parentarea.data("key"));
+                                            var SerNoChange = $self.data("oldserno") != Number($self.find(".ser_no").val()), FileNameChange = $self.data("oldname") != $self.find("input[name='name']").val(), IsVisibleChange = $self.data("old-isvisible") != $self.find("label.visible input").prop("checked"), AreaKeyChange = normalizeFileAreaKey($self.data("old-editkey")) !== normalizeFileAreaKey($parentarea.data("key"));
                                             (SerNoChange || FileNameChange || IsVisibleChange || AreaKeyChange) && (requests.push(wrapRequest(co.File.fileDataChange({
                                                 Id: data.Id,
                                                 SId: result.message,
@@ -516,7 +490,7 @@ const ArticleManager = {
                                                 tempId: null
                                             })), isFileUpdated = !0);
                                         }
-                                    })), total_files.forEach((file => {
+                                    })), articleFiles.forEach((file => {
                                         if (void 0 !== file.IsDelete && 1 == file.IsDelete && void 0 !== file.Id) {
                                             var deleteid_list = [];
                                             deleteid_list.push(file.Id), requests.push(wrapRequest(co.File.DeleteFileById({

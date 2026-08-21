@@ -454,8 +454,8 @@
                                 <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久上架</label>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col">
+                        <div class="row product_media_editor_row">
+                            <div class="col product_media_column">
                                 <div id="ProdMedia" class="data_upload row mx-0 border rounded mb-3 p-3 position-relative">
                                     <ul class="col-12 border p-2 overflow-auto mb-0">
                                         <li class="btn_upload_add border mb-1 p-1 shadow-sm">
@@ -487,7 +487,7 @@
                                             <button class="bg-transparent border mb-1 py-1" data-uploadtype="1">圖片</button>
                                             <button class="bg-transparent border mb-1 py-1" data-uploadtype="2">360</button>
                                             <button class="bg-transparent border mb-1 py-1" data-uploadtype="3">影片</button>
-                                            <button class="bg-transparent border mb-1 py-1" data-uploadtype="4">Youtube</button>
+                                            <button class="bg-transparent border mb-1 py-1" data-uploadtype="4">外嵌影片</button>
                                         </div>
 
                                         <div class="upload_frame custom-file-container d-none" data-upload-id="FileUpload"></div>
@@ -502,21 +502,55 @@
                                             </div>
                                         </div>
 
-                                        <div class="youtube_frame d-none flex-column h-100">
-                                            <div class="mb-2">Youtube連結網址</div>
-                                            <div class="input-group mb-3">
-                                                <input class="form-control lh-lg" type="text" value="https://www.youtube.com/watch?v=" aria-label="Youtube link" aria-describedby="BtnConnect">
-                                                <button id="BtnConnect" class="btn btn-outline-secondary px-3" type="button">載入</button>
+                                        <div class="external_video_frame d-none flex-column h-100">
+                                            <div class="mb-2">外嵌影片設定</div>
+                                            <div class="external_video_form mb-3">
+                                                <select class="form-select external_video_provider" aria-label="外嵌影片平台">
+                                                    <option value="youtube">YouTube</option>
+                                                    <option value="facebook">Facebook</option>
+                                                    <option value="instagram">Instagram</option>
+                                                    <option value="threads">Threads</option>
+                                                    <option value="x">X</option>
+                                                </select>
+                                                <input class="form-control external_video_url" type="url" placeholder="貼上公開影片或貼文網址" aria-label="外嵌影片網址">
+                                                <button class="btn btn-outline-secondary px-3 btn_external_video_load" type="button">驗證並載入</button>
                                             </div>
-                                            <div class="youtube_preview flex-grow-1">
-                                                <div class='w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-25 fw-bold'>請輸入正確的Youtube連結</div>
+                                            <div class="external_video_note text-muted mb-2">僅支援平台官方允許嵌入的公開內容；私人、限制嵌入或已刪除內容無法顯示。</div>
+                                            <div class="external_video_validation text-danger small mb-2 d-none"></div>
+                                            <div class="external_video_settings d-none mb-2">
+                                                <label class="external_video_aspect_label">影片比例
+                                                    <select class="form-select form-select-sm external_video_aspect_ratio">
+                                                        <option value="auto">自動判斷</option>
+                                                        <option value="16:9">橫式 16:9</option>
+                                                        <option value="9:16">直式 9:16</option>
+                                                        <option value="1:1">方形 1:1</option>
+                                                        <option value="4:3">傳統 4:3</option>
+                                                    </select>
+                                                </label>
                                             </div>
+                                            <div class="external_video_thumbnail_form d-none mb-2">
+                                                <div class="external_video_thumbnail_heading">
+                                                    <strong>前台輪播封面</strong>
+                                                    <span>顯示於商品主圖與下方縮圖，不影響影片內容</span>
+                                                </div>
+                                                <div class="external_video_thumbnail_body">
+                                                    <img class="external_video_thumbnail_preview" alt="前台輪播封面預覽">
+                                                    <input class="external_video_thumbnail_input d-none" type="file" accept="image/*">
+                                                    <div class="external_video_thumbnail_actions">
+                                                        <button class="btn btn-sm btn-outline-primary btn_external_video_thumbnail" type="button">上傳自訂封面</button>
+                                                        <button class="btn btn-sm btn-outline-secondary btn_external_video_thumbnail_reset d-none" type="button">改用平台預設圖</button>
+                                                        <span class="text-muted small">建議 16:9，最大 10 MB</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="external_video_preview_heading">嵌入內容預覽</div>
+                                            <div class="external_video_preview flex-grow-1"></div>
                                         </div>
                                     </div>
                                     <div class="position-absolute upload_title bg-white">輪播</div>
                                 </div>
                             </div>
-                            <div class="col">
+                            <div class="col product_info_column">
                                 <div class="name border mb-3 p-2 field-gropu rounded">
                                     <div class="d-flex justify-content-between field-header">
                                         <span class="input-group-text border-0 required_all">商品名稱</span>

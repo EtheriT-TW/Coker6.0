@@ -518,12 +518,119 @@
         return request;
     }
 
+    function externalVideoDefaultThumbnail(provider) {
+        const providers = {
+            facebook: { label: 'FACEBOOK', color: '#1877f2' },
+            instagram: { label: 'INSTAGRAM', color: '#c13584' },
+            threads: { label: 'THREADS', color: '#000000' },
+            x: { label: 'X', color: '#000000' }
+        };
+        const config = providers[provider] || { label: 'VIDEO', color: '#5f6368' };
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360"><rect width="640" height="360" fill="${config.color}"/><circle cx="320" cy="160" r="74" fill="none" stroke="#fff" stroke-width="10" opacity=".95"/><path d="M300 119l70 41-70 41z" fill="#fff"/><text x="320" y="290" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="38" font-weight="700">${config.label}</text></svg>`;
+        return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    }
+
+    function parseExternalVideo(value) {
+        const prefix = 'external-video:v1:';
+        const text = String(value || '').trim();
+        let provider = 'youtube';
+        let url = '';
+
+        if (text.indexOf(prefix) === 0) {
+            const remainder = text.substring(prefix.length);
+            const separator = remainder.indexOf(':');
+            if (separator <= 0) return null;
+            provider = remainder.substring(0, separator).toLowerCase();
+            try { url = decodeURIComponent(remainder.substring(separator + 1)); }
+            catch (_) { return null; }
+        } else {
+            const legacy = text.match(/^([\w-]{6,20})(?:&t=(\d+))?$/);
+            if (!legacy) return null;
+            url = `https://www.youtube.com/watch?v=${legacy[1]}${legacy[2] ? `&t=${legacy[2]}s` : ''}`;
+        }
+
+        let parsed;
+        try { parsed = new URL(url); } catch (_) { return null; }
+        if (parsed.protocol !== 'https:') return null;
+
+        if (provider === 'youtube') {
+            const videoId = parsed.searchParams.get('v') || parsed.pathname.split('/').filter(Boolean).pop();
+            if (!videoId) return null;
+            const start = Number(String(parsed.searchParams.get('t') || parsed.searchParams.get('start') || '0').replace(/s$/i, '')) || 0;
+            return {
+                provider,
+                url,
+                embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}${start ? `?start=${start}` : ''}`,
+                thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+                externalId: videoId,
+                iconClass: 'fa-brands fa-youtube'
+            };
+        }
+
+        if (provider === 'facebook') {
+            const reelMatch = parsed.pathname.match(/^\/reel\/(\d+)/i);
+            const watchId = /^\/watch\/?$/i.test(parsed.pathname) ? parsed.searchParams.get('v') : '';
+            return {
+                provider,
+                url,
+                embedUrl: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=${reelMatch ? 420 : 960}`,
+                thumbnail: externalVideoDefaultThumbnail(provider),
+                externalId: reelMatch ? reelMatch[1] : (watchId || ''),
+                isReel: !!reelMatch,
+                iconClass: 'fa-brands fa-facebook'
+            };
+        }
+
+        if (provider === 'instagram') {
+            const match = parsed.pathname.match(/^\/(p|reels?|tv)\/([\w-]+)/i);
+            if (!match) return null;
+            const contentType = match[1].toLowerCase() === 'reels' ? 'reel' : match[1].toLowerCase();
+            return {
+                provider,
+                url,
+                embedUrl: `https://www.instagram.com/${contentType}/${match[2]}/embed/`,
+                thumbnail: externalVideoDefaultThumbnail(provider),
+                externalId: match[2],
+                isReel: contentType === 'reel',
+                iconClass: 'fa-brands fa-instagram'
+            };
+        }
+
+        if (provider === 'threads') {
+            const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
+            const postMatch = parsed.pathname.match(/^\/@[\w.]+\/post\/([\w-]+)/i);
+            const shortMatch = parsed.pathname.match(/^\/t\/([\w-]+)/i);
+            if ((host !== 'threads.com' && host !== 'threads.net') || (!postMatch && !shortMatch)) return null;
+            return {
+                provider,
+                url,
+                thumbnail: externalVideoDefaultThumbnail(provider),
+                externalId: (postMatch && postMatch[1]) || shortMatch[1],
+                iconClass: 'fa-brands fa-threads'
+            };
+        }
+
+        if (provider === 'x') {
+            const match = parsed.pathname.match(/\/status\/(\d+)/i);
+            if (!match) return null;
+            return {
+                provider,
+                url,
+                thumbnail: externalVideoDefaultThumbnail(provider),
+                externalId: match[1],
+                iconClass: 'fa-brands fa-x-twitter'
+            };
+        }
+
+        return null;
+    }
+
     Object.assign(I, {
         DEFAULT_TEXTS, DEFAULTS, registerLayout,
         getLayoutFactory: () => layoutFactory,
         toInt, normalizeNullableInt, readMinQty, cloneTemplate, formatNumber, formatText,
         resolveText, defaultI18n, formatPriceText, analyzeSpecStructure, buildPriceSummary,
         buildPriceViewModel, buildPriceBaseViewModel, isStockAvailable, clampQuantity,
-        isLoggedIn, createCartPayload, runBuyGuard, submitCart
+        isLoggedIn, createCartPayload, runBuyGuard, submitCart, parseExternalVideo
     });
 })(window, window.jQuery);

@@ -36,6 +36,17 @@
                 dataType: "json"
             });
         },
+        UploadExternalVideo: function (formData) {
+            return $.ajax({
+                url: "/api/FileUpload/uploadExternalVideo",
+                type: "POST",
+                data: formData,
+                headers: _c.Data.Header,
+                contentType: false,
+                crossDomain: false,
+                processData: false
+            });
+        },
         getFileList: function (obj) {
             return $.ajax({
                 url: "/api/FileUpload/getFileList",

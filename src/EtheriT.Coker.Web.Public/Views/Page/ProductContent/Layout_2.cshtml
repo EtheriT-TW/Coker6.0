@@ -48,7 +48,7 @@
                      data-drag-speed="120"
                      data-pointer-zoom="2"></div>
                 <video id="Pro_Video" class="pro_video d-none w-100 h-100" controls></video>
-                <iframe id="Pro_Youtube" class="pro_youtube d-none w-100" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <div id="Pro_Youtube" class="pro_youtube pro_external_video d-none w-100"></div>
             </div>
 
             <div class="pro-display-dots d-flex justify-content-center align-items-center gap-2 py-2"></div>
@@ -108,7 +108,7 @@
 
 <template id="TemplateYTVideoSlide">
     <div class="swiper-slide mb-0 d-flex align-items-center justify-content-center position-relative" data-pid="">
-        <img class="pro_display img-fluid" src="" alt="" data-youtube-link="" data-display-protype="youtube" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
+        <img class="pro_display img-fluid" src="" alt="" data-external-video="" data-display-protype="external-video" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
         <div class="schematic_youtube position-absolute"><i class="fa-brands fa-youtube"></i></div>
     </div>
 </template>

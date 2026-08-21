@@ -189,6 +189,7 @@
  * @property {(formData:FormData)=>AjaxPromise<any>} Upload
  * @property {(formData:FormData)=>AjaxPromise<any>} Upload360
  * @property {(dto:any)=>AjaxPromise<any>} UploadYTLink
+ * @property {(formData:FormData)=>AjaxPromise<any>} UploadExternalVideo
  * @property {(dto:{type:any,id:any})=>AjaxPromise<any>} getFileList
  * @property {(dto:any)=>AjaxPromise<any>} getImgFile
  * @property {(aid:number, type:any)=>AjaxPromise<any>} getAdFile
@@ -196,20 +197,11 @@
  * @property {(dto:any)=>AjaxPromise<any>} fileDataChange
  * @property {(key:any)=>AjaxPromise<any>} Delete
  * @property {(dto:any)=>AjaxPromise<any>} DeleteFileById
- * @property {(root:any, options:{files?:Array<any>,add?:Function,clear?:Function,sort?:Function})=>void} bindListFile
- * @property {(root:any, name:string, args?:Array<any>)=>any} invokeListFileHandler
- * @property {(root:any)=>Array<any>} filesOf
- *
  * @property {(elementId:string, opt?:any)=>any} UploadImageInit
  * @property {(elementId:string, opt?:any)=>any} UploadFileInit
  * @property {(elementId:string, opt?:any)=>any} Upload360Init
  * @property {(elementId:string, opt?:any)=>any} UploadVideoInit
  * @property {(elementId:string, opt?:any)=>any} UploadVideoPreviewInit
- *
- * // merged in later via Coker.Object.merge(Coker.File, {...})
- * @property {()=>void} ListFileInit
- * @property {()=>void} fileUploadWithPreview
- * @property {(liJq:any)=>void} ListFile
  */
 
 /* ---------------------------------------------------------
@@ -660,6 +652,7 @@
  * @property {(dto:any)=>Promise<any>} BatchUpdateStatus
  * @property {CokerDirectoryApi} Directory
  * @property {CokerFileApi} File
+ * @property {Function} FileListManager
  * @property {CokerFormApi} Form
  * @property {CokerFreightApi} Freight
  * @property {CokerLogisticsBoxApi} LogisticsBox

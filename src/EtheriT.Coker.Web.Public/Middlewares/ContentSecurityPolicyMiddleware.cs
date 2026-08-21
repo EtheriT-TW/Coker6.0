@@ -66,7 +66,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 }
 
                 var scriptSrc = AppendAdditionalSources(
-                    $"'self' '{selfInline}' *.google.com *.googletagmanager.com *.googleadservices.com *.googleapis.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com translate.google.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com www.instagram.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://applepay.cdn-apple.com logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw glogistics.ecpay.com.tw https://cdn.jsdelivr.net",
+                    $"'self' '{selfInline}' *.google.com *.googletagmanager.com *.googleadservices.com *.googleapis.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com translate.google.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com www.instagram.com platform.twitter.com www.threads.com www.threads.net https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://applepay.cdn-apple.com logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw glogistics.ecpay.com.tw https://cdn.jsdelivr.net",
                     "AdditionalScripts");
                 var styleSrc = AppendAdditionalSources(
                     $"'self' '{selfInline}' {ExternalStylesheetPolicy.CspSourceExpression}",
@@ -75,12 +75,13 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     "'self' data: fonts.gstatic.com cdnjs.cloudflare.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://applepay.cdn-apple.com logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw",
                     "AdditionalFonts");
                 var imageSrc = AppendAdditionalSources(
-                    "'self' *.ezsale.tw *.facebook.com https://static.xx.fbcdn.net https://usage.trackjs.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.gstatic.com *.googleapis.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com i.imgur.com lh3.googleusercontent.com cdn.discordapp.com githubusercontent.com images.unsplash.com cdn.pixabay.com res.cloudinary.com scaleflex.cloudimg.io data: blob: https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw",
+                    "'self' *.ezsale.tw *.facebook.com https://static.xx.fbcdn.net https://usage.trackjs.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.gstatic.com *.googleapis.com *.youtube.com i.ytimg.com *.cdninstagram.com pbs.twimg.com abs.twimg.com ton.twimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com i.imgur.com lh3.googleusercontent.com cdn.discordapp.com githubusercontent.com images.unsplash.com cdn.pixabay.com res.cloudinary.com scaleflex.cloudimg.io data: blob: https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw",
                     "AdditionalImages");
                 var frameSrc = AppendAdditionalSources(
-                    "'self' *.ezsale.tw *.google.com *.google.com.tw *.youtube.com *.youtube-nocookie.com *.facebook.com *.instagram.com *.googletagmanager.com *.doubleclick.net v.qq.com https://applepay.cdn-apple.com/",
+                    "'self' *.ezsale.tw *.google.com *.google.com.tw *.youtube.com *.youtube-nocookie.com *.facebook.com *.instagram.com *.threads.com *.threads.net platform.twitter.com syndication.twitter.com *.googletagmanager.com *.doubleclick.net v.qq.com https://applepay.cdn-apple.com/",
                     "AdditionalFrames");
                 connectSrc = AppendAdditionalSources(connectSrc, "AdditionalConnections");
+                connectSrc += " https://syndication.twitter.com https://www.threads.com https://www.threads.net https://graph.facebook.com https://www.facebook.com";
                 var frameAncestors = AppendAdditionalSources(
                     "'self' *.ezsale.tw",
                     "AdditionalFrameAncestors");

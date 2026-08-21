@@ -128,9 +128,30 @@ input[type="number"] {
     }
 
 /* Member Login */
+#memberLogin {
+    width: calc(100% - 1.5rem);
+    max-width: 40rem;
+    margin: 1rem auto 1.75rem !important;
+    padding: 0 !important;
+}
+
+#memberLogin > div {
+    gap: .75rem;
+    padding: .8rem 1rem !important;
+    justify-content: center !important;
+    background-color: #faf8f5 !important;
+    border: 1px solid #eee9e3;
+    border-radius: .5rem !important;
+}
+
+#memberLogin .member-login-message {
+    line-height: 1.5;
+}
+
 #memberLogin > div > button {
-    border: 1px solid var(--gray-middle);
-    color: var(--gray-text);
+    padding: .3rem .65rem;
+    border: 1px solid var(--red-main);
+    color: var(--red-main);
     white-space: nowrap;
 }
 
@@ -152,7 +173,7 @@ input[type="number"] {
     #BuyStepSwiper > .swiper_pagination > .swiper_pagination_buystep {
         position: relative;
         flex: 0 0 2rem;
-        width: 50vw;
+        width: min(100%, 58rem);
         height: 2rem;
         top: auto;
         left: auto;
@@ -210,8 +231,8 @@ input[type="number"] {
     #BuyStepSwiper > .swiper_pagination > .step_name {
         position: static;
         flex: 0 0 auto;
-        width: calc(50vw + 2rem);
-        max-width: none;
+        width: min(100%, 58rem);
+        max-width: 100%;
         margin-top: 12px;
         transform: none;
         cursor: default;
@@ -2210,12 +2231,43 @@ body > .popover.bs-popover-auto.fade {
 }
 
 @media only screen and (max-width: 767.98px) {
+    #BuyStepSwiper {
+        padding-right: .75rem;
+        padding-left: .75rem;
+    }
+
+    #memberLogin {
+        width: 100%;
+        max-width: none;
+        margin: .75rem auto 1.5rem !important;
+        padding: 0 !important;
+    }
+
+    #memberLogin > div {
+        gap: .75rem;
+        padding: .7rem .75rem !important;
+        justify-content: space-between !important;
+    }
+
+    #memberLogin .member-login-message {
+        flex: 1 1 auto;
+        min-width: 0;
+        font-size: clamp(.82rem, 3.8vw, .9rem);
+        line-height: 1.5;
+        text-align: left;
+    }
+
+    #memberLogin .btn_call_login {
+        flex: 0 0 auto;
+        margin-left: 0 !important;
+    }
+
     #BuyStepSwiper > .swiper_pagination > .swiper_pagination_buystep {
-        width: 90vw;
+        width: 100%;
     }
 
     #BuyStepSwiper > .swiper_pagination > .step_name {
-        width: calc(90vw + 2rem);
+        width: 100%;
     }
 
     #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button > [class*=btn_swiper_] {
@@ -2396,7 +2448,7 @@ body > .popover.bs-popover-auto.fade {
         display: block;
         margin: 0;
         overflow: hidden;
-        align-self: center;
+        align-self: start;
         background-color: #f5f5f5;
     }
 
@@ -2472,7 +2524,7 @@ body > .popover.bs-popover-auto.fade {
     }
 
     #Step1 .purchase_item .pro_unit {
-        color: var(--red-number);
+        color: #000;
         font-size: 1rem;
         font-weight: 700;
         margin: 0;
@@ -2480,7 +2532,10 @@ body > .popover.bs-popover-auto.fade {
     }
 
     /* 數量控制 */
-    #Step1 .purchase_item .counter_input {
+    #Step1 .purchase_item > .content > .counter_input {
+        width: 80% !important;
+        max-width: 80%;
+        flex: 0 0 auto !important;
         justify-content: flex-start !important;
         margin-top: 0;
     }
@@ -2493,7 +2548,8 @@ body > .popover.bs-popover-auto.fade {
         #Step1 .purchase_item .counter_input button {
             width: 2.15rem;
             border-color: #cfcfcf;
-            color: #333;
+            color: var(--gray-text);
+            font-size: 10px;
         }
 
         #Step1 .purchase_item .counter_input input {
@@ -2514,7 +2570,7 @@ body > .popover.bs-popover-auto.fade {
         grid-column: 4;
         position: static !important;
         transform: none !important;
-        align-self: center;
+        align-self: end;
         justify-self: center;
         display: flex !important;
         flex-direction: column;
@@ -2556,6 +2612,24 @@ body > .popover.bs-popover-auto.fade {
         padding: .95rem .75rem 0 !important;
         background: transparent;
         border-top: none !important;
+    }
+
+    /* 手機版金額順序：一般商品金額在上，商品金額在下 */
+    #Step1 .cart-summary-section .priceline-step1 {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #Step1 .cart-summary-section .priceline-step1 > * {
+        order: 3;
+    }
+
+    #Step1 .cart-summary-section .priceline-step1 > .generalProductAmountLine {
+        order: 1;
+    }
+
+    #Step1 .cart-summary-section .priceline-step1 > .productAmountLine {
+        order: 2;
     }
 
     #Step1 .cart-summary-section .summary-main-row,
@@ -2634,8 +2708,8 @@ body > .popover.bs-popover-auto.fade {
     }
 
     #Step1 .purchase_item > .content > .counter_input {
-        width: 100% !important;
-        max-width: 100%;
+        width: 80% !important;
+        max-width: 80%;
         min-width: 0;
     }
 

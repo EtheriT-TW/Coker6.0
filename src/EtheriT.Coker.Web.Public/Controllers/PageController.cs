@@ -585,6 +585,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         ViewBag.MaximumDiscount = bonusSetting.MaximumDiscount; // 單筆訂單紅利折抵上限，空值表示無限制
                         ViewBag.MinOrderForEarnPoints = bonusSetting.MinOrderForEarnPoints; // 消費買額可獲得紅利
                         ViewBag.RewardRatePercent = bonusSetting.RewardRatePercent; // 回饋比例
+                        ViewBag.RewardCalculationType = (int)bonusSetting.RewardCalculationType; // 回饋計算方式
+                        ViewBag.RewardFixedPoints = bonusSetting.RewardFixedPoints; // 固定回饋點數
+                        ViewBag.RewardFixedPointsCumulative = bonusSetting.RewardFixedPointsCumulative; // 固定點數是否累計
                     }
                     if (ViewBag.isLogin)
                     {

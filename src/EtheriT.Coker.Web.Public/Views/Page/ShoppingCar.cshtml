@@ -12,6 +12,9 @@
     const MaximumDiscount = @Json.Serialize(ViewBag.MaximumDiscount);
     const MinOrderForEarnPoints = @Json.Serialize(ViewBag.MinOrderForEarnPoints ?? 0);
     const RewardRatePercent = @Json.Serialize(ViewBag.RewardRatePercent ?? 0);
+    const RewardCalculationType = @Json.Serialize(ViewBag.RewardCalculationType ?? 1);
+    const RewardFixedPoints = @Json.Serialize(ViewBag.RewardFixedPoints ?? 0);
+    const RewardFixedPointsCumulative = @Json.Serialize(ViewBag.RewardFixedPointsCumulative ?? true);
 </script>
 @section Styles {
     <link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
@@ -76,7 +79,7 @@
     {
         <div id="memberLogin" class="container my-5">
             <div class="rounded-1 px-3 py-4 bg-white d-flex align-items-center justify-content-center justify-content-sm-start">
-                <div>購買前登入會員可更方便查詢訂單！</div>
+                <div class="member-login-message">購買前登入會員，方便查詢訂單！</div>
                 <button class="btn_call_login bg-transparent rounded-1 ms-0 ms-sm-3">會員登入</button>
             </div>
         </div>
@@ -256,7 +259,7 @@
                     <div class="cart-summary-section">
                         <div class="cart-summary-gap" aria-hidden="true"></div>
                         <div class="priceline priceline-step1 pe-lg-5 col-12 col-lg-7 offset-lg-5">
-                            <div class="summary-main-row">
+                            <div class="summary-main-row productAmountLine">
                                 <div class="summary-label">商品金額</div>
                                 <div class="summary-amount dual-price">
                                     <span class="bonus-part"><span class="bonus"></span>點</span>

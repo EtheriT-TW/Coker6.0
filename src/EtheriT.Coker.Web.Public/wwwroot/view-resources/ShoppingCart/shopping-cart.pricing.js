@@ -99,9 +99,14 @@ function TotalCount() {
     const redeemEnabled = (MinOrderForRedemption > 0 && MaxRedemptionPercent > 0);
     const maximumDiscountAmount = Number(MaximumDiscount);
     const hasMaximumDiscount = MaximumDiscount != null && maximumDiscountAmount > 0;
-    const redemptionLimitText = hasMaximumDiscount
-        ? `最高 ${MaxRedemptionPercent}% 且單筆上限 $${maximumDiscountAmount.toLocaleString()}`
-        : `最高 ${MaxRedemptionPercent}%`;
+    const allowsFullProductRedemption = Number(MaxRedemptionPercent) >= 100;
+    const redemptionLimitText = allowsFullProductRedemption
+        ? (hasMaximumDiscount
+            ? `單筆折抵上限 $${maximumDiscountAmount.toLocaleString()}`
+            : "商品金額可全額折抵")
+        : (hasMaximumDiscount
+            ? `折抵上限 ${MaxRedemptionPercent}%，單筆上限 $${maximumDiscountAmount.toLocaleString()}`
+            : `折抵上限 ${MaxRedemptionPercent}%`);
 
     let allBonus = Number(bonus || 0);
     let redeemAmount = 0;
@@ -193,9 +198,46 @@ function TotalCount() {
     const $rewardRow = $(".bonusRedeemHintLine");
     const $earnText = $(".bonusEarnHintText");
 
-    const earnEnabled = (MinOrderForEarnPoints > 0 && RewardRatePercent > 0);
+    const fixedPointsReward = Number(RewardCalculationType) === 2 || RewardCalculationType === "FixedPoints";
+    const rewardValue = fixedPointsReward
+        ? Number(RewardFixedPoints || 0)
+        : Number(RewardRatePercent || 0);
+    const earnEnabled = MinOrderForEarnPoints > 0 && rewardValue > 0;
+    // 後端 DetailBuildResult 會先將折抵後商品小計四捨五入為整數，再計算回饋。
+    const rewardEligibleSubtotal = Math.round(payableSubtotal);
+
+    function calculateBonusEarnPoints(eligibleSubtotal) {
+        if (!earnEnabled || eligibleSubtotal < MinOrderForEarnPoints) {
+            return 0;
+        }
+
+        if (!fixedPointsReward) {
+            return Math.floor(eligibleSubtotal * RewardRatePercent / 100);
+        }
+
+        const fixedPoints = Math.floor(Number(RewardFixedPoints || 0));
+        if (fixedPoints <= 0) {
+            return 0;
+        }
+
+        const multiplier = RewardFixedPointsCumulative
+            ? Math.floor(eligibleSubtotal / MinOrderForEarnPoints)
+            : 1;
+
+        return multiplier * fixedPoints;
+    }
 
     function buildBonusEarnRuleText() {
+        if (fixedPointsReward) {
+            if (RewardFixedPointsCumulative) {
+                return `每滿 $${Number(MinOrderForEarnPoints || 0).toLocaleString()}，` +
+                    `贈送 ${Number(RewardFixedPoints || 0).toLocaleString()} 點紅利，運費不計。`;
+            }
+
+            return `商品滿 $${Number(MinOrderForEarnPoints || 0).toLocaleString()}，` +
+                `固定贈送 ${Number(RewardFixedPoints || 0).toLocaleString()} 點紅利，運費不計。`;
+        }
+
         return `商品滿 $${Number(MinOrderForEarnPoints || 0).toLocaleString()}，` +
             `依折抵後商品金額 ${Number(RewardRatePercent || 0).toLocaleString()}% 回饋，運費不計。`;
     }
@@ -203,8 +245,8 @@ function TotalCount() {
     if (!earnEnabled) {
         $rewardRow.addClass("d-none");
         $earnText.text("");
-    } else if (payableSubtotal < MinOrderForEarnPoints) {
-        const diff = MinOrderForEarnPoints - payableSubtotal;
+    } else if (rewardEligibleSubtotal < MinOrderForEarnPoints) {
+        const diff = MinOrderForEarnPoints - rewardEligibleSubtotal;
 
         $rewardRow.removeClass("d-none");
         $earnText.html(
@@ -212,7 +254,7 @@ function TotalCount() {
             `<span class="bonus-earn-rule d-block">${buildBonusEarnRuleText()}</span>`
         );
     } else {
-        const earnPoints = Math.floor(payableSubtotal * RewardRatePercent / 100);
+        const earnPoints = calculateBonusEarnPoints(rewardEligibleSubtotal);
 
         if (earnPoints > 0) {
             $rewardRow.removeClass("d-none");

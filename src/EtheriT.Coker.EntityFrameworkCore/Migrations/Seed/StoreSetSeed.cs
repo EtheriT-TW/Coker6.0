@@ -510,6 +510,50 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     jobID = "E001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2026, 7, 17, 11, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new StoreSet
+                {
+                    Id = 30,
+                    key = "RewardCalculationType",
+                    name = "紅利回饋方式",
+                    memo = "設定消費滿額後依百分比或固定點數贈送紅利",
+                    FK_StoreSetGroupId = 6,
+                    type = SeoSetDataTypeEnum.select,
+                    maxlength = 20,
+                    pattern = "",
+                    IsDeleted = false,
+                    DefaultValue = "Percent",
+                    jobID = "B001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 8, 21, 10, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 31,
+                    key = "RewardFixedPoints",
+                    name = "固定回饋點數",
+                    memo = "消費滿足條件後贈送的固定紅利點數",
+                    FK_StoreSetGroupId = 6,
+                    type = SeoSetDataTypeEnum.number,
+                    maxlength = 8,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "B001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 8, 21, 10, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 32,
+                    key = "RewardFixedPointsCumulative",
+                    name = "固定點數累計贈送",
+                    memo = "固定點數是否按消費門檻倍數累計贈送",
+                    FK_StoreSetGroupId = 6,
+                    type = SeoSetDataTypeEnum.checkBox,
+                    maxlength = 5,
+                    pattern = "",
+                    IsDeleted = false,
+                    DefaultValue = "True",
+                    jobID = "B001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 8, 21, 10, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(

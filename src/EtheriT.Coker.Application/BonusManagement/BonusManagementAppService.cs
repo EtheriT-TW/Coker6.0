@@ -79,6 +79,9 @@ namespace EtheriT.Coker.Application.BonusManagement
                     MaximumDiscount = this.GetBonusSettingValue<decimal>(bonusSettingData, nameof(GetBonusSettingForEditOutput.MaximumDiscount)),
                     MinOrderForEarnPoints = this.GetBonusSettingValue<decimal>(bonusSettingData, nameof(GetBonusSettingForEditOutput.MinOrderForEarnPoints)),
                     RewardRatePercent = this.GetBonusSettingValue<decimal>(bonusSettingData, nameof(GetBonusSettingForEditOutput.RewardRatePercent)),
+                    RewardCalculationType = this.GetBonusSettingValue<BonusRewardCalculationTypeEnum>(bonusSettingData, nameof(GetBonusSettingForEditOutput.RewardCalculationType)) ?? BonusRewardCalculationTypeEnum.Percent,
+                    RewardFixedPoints = this.GetBonusSettingValue<int>(bonusSettingData, nameof(GetBonusSettingForEditOutput.RewardFixedPoints)),
+                    RewardFixedPointsCumulative = this.GetBonusSettingValue<bool>(bonusSettingData, nameof(GetBonusSettingForEditOutput.RewardFixedPointsCumulative)) ?? true,
                     RewardPointsExpireDays = this.GetBonusSettingValue<int>(bonusSettingData, nameof(GetBonusSettingForEditOutput.RewardPointsExpireDays)),
                 };
             }

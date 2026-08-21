@@ -1,10 +1,43 @@
 ﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.enumType.Bonus
 @using EtheriT.Coker.Web.MVC.Models.BonusManagement
 @model EtheriT.Coker.Web.MVC.Models.BonusManagement.SettingsViewModel
 
 @{
     ViewData["Title"] = "BonusSettings";
+    decimal? initialRewardValue = Model.RewardCalculationType == BonusRewardCalculationTypeEnum.FixedPoints
+        ? Model.RewardFixedPoints
+        : Model.RewardRatePercent;
 }
+
+<style>
+    .bonus-reward-value-control {
+        display: flex;
+        align-items: stretch;
+        gap: .375rem;
+    }
+
+    .bonus-reward-value-control > .dx-numberbox {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .bonus-reward-unit-toggle {
+        flex: 0 0 auto;
+    }
+
+    .bonus-reward-unit-toggle .btn {
+        min-width: 2.5rem;
+        font-weight: 600;
+    }
+
+    .bonus-reward-value-help {
+        margin-top: 4px;
+        color: #555;
+        font-style: italic;
+        font-size: .875rem;
+    }
+</style>
 
 @(Html.DevExtreme().Form<SettingsViewModel>()
         .FormData(Model)
@@ -85,8 +118,22 @@
             items.AddGroup()
                 .Caption("紅利回饋設定")
                 .ColCount(2)
+                .ColCountByScreen(columns => columns
+                    .Lg(2)
+                    .Md(2)
+                    .Sm(1)
+                    .Xs(1))
                 .Items(groupItems =>
                 {
+                    groupItems.AddSimpleFor(m => m.RewardCalculationType)
+                        .Visible(false);
+
+                    groupItems.AddSimpleFor(m => m.RewardRatePercent)
+                        .Visible(false);
+
+                    groupItems.AddSimpleFor(m => m.RewardFixedPoints)
+                        .Visible(false);
+
                     groupItems.AddSimpleFor(m => m.MinOrderForEarnPoints)
                         .Label(l => l.Text("購物滿額送，購物滿(元)")
                                      .Alignment(HorizontalAlignment.Right))
@@ -96,16 +143,19 @@
                             .ShowSpinButtons(true))
                         .HelpText(Model.MinOrderForEarnPointsHelpText);
 
-                    groupItems.AddSimpleFor(m => m.RewardRatePercent)
-                        .Label(l => l.Text("贈送回饋金(%)")
+                    groupItems.AddSimple()
+                        .Label(l => l.Text("贈送回饋金")
                                      .Alignment(HorizontalAlignment.Right))
-                        .Editor(e => e.NumberBox()
-                            .Min(0)
-                            .Max(100)
-                            .Step(0.1)
-                            .Format("#,##0.#")
-                            .ShowSpinButtons(true))
-                        .HelpText(Model.RewardRatePercentHelpText);
+                        .Template(new JS("rewardValueEditorTemplate"));
+
+                    groupItems.AddSimpleFor(m => m.RewardFixedPointsCumulative)
+                        .ColSpan(2)
+                        .Label(l => l.Text("累計贈送")
+                                     .Alignment(HorizontalAlignment.Right))
+                        .Editor(e => e.CheckBox()
+                            .ID("RewardFixedPointsCumulativeEditor")
+                            .Text("按消費門檻倍數累計贈送"))
+                        .HelpText("開啟後，例如每滿 1,500 元送 10 點，消費 3,000 元會贈送 20 點");
                 });
 
             // 群組4：有效期限設定
@@ -126,10 +176,152 @@
         })
     )
 
+@using (Html.DevExtreme().NamedTemplate("rewardValueEditorTemplate"))
+{
+    <div class="bonus-reward-value-control">
+        @(Html.DevExtreme().NumberBox()
+            .ID("RewardValueEditor")
+            .Value(initialRewardValue.HasValue ? Convert.ToDouble(initialRewardValue.Value) : null)
+            .Min(0)
+            .Max(100)
+            .Step(0.1)
+            .Format("#,##0.#")
+            .ShowSpinButtons(true)
+            .OnValueChanged("onRewardValueChanged"))
+        <div class="btn-group btn-group-sm bonus-reward-unit-toggle" role="group" aria-label="紅利回饋方式">
+            <button type="button" id="RewardUnitPercent" class="btn btn-outline-secondary" title="按消費金額百分比回饋" aria-label="切換為百分比回饋">%</button>
+            <button type="button" id="RewardUnitFixedPoints" class="btn btn-outline-secondary" title="達到門檻後贈送固定點數" aria-label="切換為固定點數回饋">點</button>
+        </div>
+    </div>
+    <div id="RewardValueHelpText" class="bonus-reward-value-help"></div>
+}
+
 <div class="form-group mt-3">
     <button type="button" id="submitButton" class="btn btn-primary">儲存設定</button>
 </div>
 
 @section scripts {
+    <script>
+        var bonusRewardPercentType = @((int)BonusRewardCalculationTypeEnum.Percent);
+        var bonusRewardFixedPointsType = @((int)BonusRewardCalculationTypeEnum.FixedPoints);
+
+        function normalizeRewardCalculationType(calculationType) {
+            return Number(calculationType) === bonusRewardFixedPointsType || calculationType === "FixedPoints"
+                ? bonusRewardFixedPointsType
+                : bonusRewardPercentType;
+        }
+
+        function getBonusSettingsForm() {
+            return $("#bonusSettingsForm").dxForm("instance");
+        }
+
+        function getCurrentRewardCalculationType() {
+            var form = getBonusSettingsForm();
+            var formData = form ? form.option("formData") : null;
+            return normalizeRewardCalculationType(formData && formData.RewardCalculationType);
+        }
+
+        function updateRewardUnitButton(selector, active) {
+            $(selector)
+                .toggleClass("btn-primary", active)
+                .toggleClass("btn-outline-secondary", !active)
+                .attr("aria-pressed", active ? "true" : "false");
+        }
+
+        function setRewardCalculationEditorState(calculationType) {
+            var form = getBonusSettingsForm();
+            var editor = $("#RewardValueEditor").dxNumberBox("instance");
+            if (!form || !editor) {
+                return;
+            }
+
+            var normalizedType = normalizeRewardCalculationType(calculationType);
+            var isFixedPoints = normalizedType === bonusRewardFixedPointsType;
+            var formData = form.option("formData");
+            var nextValue = isFixedPoints ? formData.RewardFixedPoints : formData.RewardRatePercent;
+
+            form.updateData("RewardCalculationType", normalizedType);
+            editor.option({
+                value: nextValue,
+                min: isFixedPoints ? 1 : 0,
+                max: isFixedPoints ? 99999999 : 100,
+                step: isFixedPoints ? 1 : 0.1,
+                format: isFixedPoints ? "#,##0" : "#,##0.#",
+                showClearButton: isFixedPoints
+            });
+
+            updateRewardUnitButton("#RewardUnitPercent", !isFixedPoints);
+            updateRewardUnitButton("#RewardUnitFixedPoints", isFixedPoints);
+
+            $("#RewardFixedPointsCumulativeEditor")
+                .closest(".dx-field-item")
+                .toggleClass("d-none", !isFixedPoints);
+
+            $("#RewardValueHelpText").text(isFixedPoints
+                ? "達到消費門檻後，每次贈送設定的固定紅利點數"
+                : "消費滿足條件後，依折抵後商品金額的百分比贈送紅利");
+        }
+
+        function switchRewardCalculationType(calculationType) {
+            var form = getBonusSettingsForm();
+            var editor = $("#RewardValueEditor").dxNumberBox("instance");
+            if (!form || !editor) {
+                return;
+            }
+
+            var currentType = getCurrentRewardCalculationType();
+            var currentValue = editor.option("value");
+            form.updateData(
+                currentType === bonusRewardFixedPointsType ? "RewardFixedPoints" : "RewardRatePercent",
+                currentValue
+            );
+
+            setRewardCalculationEditorState(calculationType);
+        }
+
+        function syncCurrentRewardValueToForm() {
+            var form = getBonusSettingsForm();
+            var editor = $("#RewardValueEditor").dxNumberBox("instance");
+            if (!form || !editor) {
+                return;
+            }
+
+            var calculationType = getCurrentRewardCalculationType();
+            form.updateData(
+                calculationType === bonusRewardFixedPointsType ? "RewardFixedPoints" : "RewardRatePercent",
+                editor.option("value")
+            );
+        }
+
+        function onRewardValueChanged(e) {
+            var form = getBonusSettingsForm();
+            if (!form) {
+                return;
+            }
+
+            var calculationType = getCurrentRewardCalculationType();
+            form.updateData(
+                calculationType === bonusRewardFixedPointsType ? "RewardFixedPoints" : "RewardRatePercent",
+                e.value
+            );
+        }
+
+        $(function () {
+            $("#RewardUnitPercent").on("click", function () {
+                switchRewardCalculationType(bonusRewardPercentType);
+            });
+
+            $("#RewardUnitFixedPoints").on("click", function () {
+                switchRewardCalculationType(bonusRewardFixedPointsType);
+            });
+
+            var submitButton = document.getElementById("submitButton");
+            if (submitButton) {
+                submitButton.addEventListener("click", syncCurrentRewardValueToForm, true);
+            }
+
+            setRewardCalculationEditorState(getCurrentRewardCalculationType());
+        });
+    </script>
     <script src="~/js/BonusManagement/Settings.min.js" asp-append-version="true"></script>
 }

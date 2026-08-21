@@ -1282,6 +1282,45 @@ namespace EtheriT.Coker.Application.Order
                 ? productName
                 : $"{productName}（{specification}）";
         }
+
+        private static int CalculateOrderEarnPoints(
+            decimal eligibleSubtotal,
+            GetBonusSettingForEditOutput? bonusSetting)
+        {
+            if (bonusSetting?.BonusEnabled != true || eligibleSubtotal <= 0)
+                return 0;
+
+            var minimumOrderAmount = bonusSetting.MinOrderForEarnPoints ?? 0;
+            if (minimumOrderAmount <= 0 || eligibleSubtotal < minimumOrderAmount)
+                return 0;
+
+            decimal earnPoints;
+            if (bonusSetting.RewardCalculationType == BonusRewardCalculationTypeEnum.FixedPoints)
+            {
+                var fixedPoints = bonusSetting.RewardFixedPoints ?? 0;
+                if (fixedPoints <= 0)
+                    return 0;
+
+                var multiplier = bonusSetting.RewardFixedPointsCumulative
+                    ? Math.Floor(eligibleSubtotal / minimumOrderAmount)
+                    : 1;
+                earnPoints = multiplier * fixedPoints;
+            }
+            else
+            {
+                var rewardRatePercent = bonusSetting.RewardRatePercent ?? 0;
+                if (rewardRatePercent <= 0)
+                    return 0;
+
+                earnPoints = Math.Floor(eligibleSubtotal * rewardRatePercent / 100);
+            }
+
+            if (earnPoints <= 0)
+                return 0;
+
+            return earnPoints >= int.MaxValue ? int.MaxValue : (int)earnPoints;
+        }
+
         private async Task<Order_Header> BuildHeaderSectionAsync(
             OrderHeaderAddDto dto,
             long websiteId,
@@ -1356,21 +1395,10 @@ namespace EtheriT.Coker.Application.Order
                             throw new Exception(bonusResult.Message ?? "紅利點數扣除失敗，無法建立訂單。");
                     }
 
-                    // 只有正式訂單才計算本次回饋紅利
-                    if (!isTemp && bonusEnabled && bonusSetting != null && bonusSetting.RewardRatePercent != null && bonusSetting.RewardRatePercent > 0)
-                    {
-                        var earnPoints = (int)Math.Floor(detailResult.Subtotal * bonusSetting.RewardRatePercent.Value / 100);
-                        oh.GetBonus = earnPoints > 0 ? earnPoints : 0;
-                    }
-                    else if (!isTemp)
-                    {
-                        oh.GetBonus = 0;
-                    }
-                    else
-                    {
-                        // 暫存單不應該有回饋紅利
-                        oh.GetBonus = 0;
-                    }
+                    // 正式訂單依折抵後商品小計計算回饋；暫存單不保留回饋紅利
+                    oh.GetBonus = !isTemp
+                        ? CalculateOrderEarnPoints(detailResult.Subtotal, bonusSetting)
+                        : 0;
 
                     ApplyBoxMemoToHeader(oh, detailResult);
                 }
@@ -1430,21 +1458,10 @@ namespace EtheriT.Coker.Application.Order
                             throw new Exception(bonusResult.Message ?? "紅利點數扣除失敗，無法建立訂單。");
                     }
 
-                    // 只有正式訂單才計算本次回饋紅利
-                    if (!isTemp && bonusEnabled && bonusSetting != null && bonusSetting.RewardRatePercent != null && bonusSetting.RewardRatePercent > 0)
-                    {
-                        var earnPoints = (int)Math.Floor(detailResult.Subtotal * bonusSetting.RewardRatePercent.Value / 100);
-                        oh.GetBonus = earnPoints > 0 ? earnPoints : 0;
-                    }
-                    else if (!isTemp)
-                    {
-                        oh.GetBonus = 0;
-                    }
-                    else
-                    {
-                        // 暫存單不應該有回饋紅利
-                        oh.GetBonus = 0;
-                    }
+                    // 正式訂單依折抵後商品小計計算回饋；暫存單不保留回饋紅利
+                    oh.GetBonus = !isTemp
+                        ? CalculateOrderEarnPoints(detailResult.Subtotal, bonusSetting)
+                        : 0;
 
                     ApplyBoxMemoToHeader(oh, detailResult);
 

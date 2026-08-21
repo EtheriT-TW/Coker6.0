@@ -34,6 +34,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                 MaximumDiscount = bonusSettingData.MaximumDiscount,
                 MinOrderForEarnPoints = bonusSettingData.MinOrderForEarnPoints,
                 RewardRatePercent = bonusSettingData.RewardRatePercent,
+                RewardCalculationType = bonusSettingData.RewardCalculationType,
+                RewardFixedPoints = bonusSettingData.RewardFixedPoints,
+                RewardFixedPointsCumulative = bonusSettingData.RewardFixedPointsCumulative,
                 RewardPointsExpireDays = bonusSettingData.RewardPointsExpireDays,
 
                 // 取得紅利設定說明

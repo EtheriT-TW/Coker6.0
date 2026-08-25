@@ -333,12 +333,16 @@ function CartInit(result) {
 function CartListAdd(data, $container) {
     if (data.quantity > 0) {
         var exists = S.shopping_cart_data.find(e => e.Id == data.scId);
+        var marketingRewardItemId = cart.Utils.getValueIgnoreCase(data, "FK_MarketingRewardItemId");
 
         if (exists != null) {
             data.price = exists.Price;
             exists.PId = data.pId;
             exists.PSId = data.psId;
             exists.IsAdditional = data.isAdditional === true;
+            exists.MarketingRewardItemId = marketingRewardItemId == null
+                ? null
+                : Number(marketingRewardItemId);
             exists.Quantity = data.quantity;
         } else {
             var obj = {};
@@ -346,6 +350,9 @@ function CartListAdd(data, $container) {
             obj['PId'] = data.pId;
             obj['PSId'] = data.psId;
             obj['IsAdditional'] = data.isAdditional === true;
+            obj['MarketingRewardItemId'] = marketingRewardItemId == null
+                ? null
+                : Number(marketingRewardItemId);
             obj['Price'] = data.price;
             obj['OriginalPrice'] = data.originalPriceInCart ?? data.price;
             obj['Quantity'] = data.quantity;
@@ -363,9 +370,13 @@ function CartListAdd(data, $container) {
         }
     }
 
+    var validationCode = data.validationCode || data.ValidationCode || '';
+    var isQuantityShortage = validationCode === "QuantityExceedsStock";
     var max_quantity = data.noStockManagement === true
         ? Infinity
-        : data.quantity + data.stock;
+        : isQuantityShortage
+            ? Number(data.stock || 0)
+            : data.quantity + data.stock;
 
     var item_list_ul = $container || $("#Step1 > .card-body > .purchase_list");
     var $template = $($("#Template_Cart_Details").html()).clone();
@@ -478,12 +489,25 @@ function CartListAdd(data, $container) {
         }).appendTo($specDetail);
     }
 
-    var validationCode = data.validationCode || data.ValidationCode || '';
     var isUnavailable = Number(data.quantity || 0) <= 0 ||
         data.available === false ||
         data.available === "false";
 
-    if (isUnavailable) {
+    if (isQuantityShortage) {
+        $template.addClass("cart-item-stock-shortage");
+        $template.find('input[name="buyItems"]').prop({
+            checked: false,
+            disabled: true
+        });
+        $template.find('.btn_count_plus').prop('disabled', true);
+
+        var $shortageContent = $template.find(".js-cart-item-message");
+        if (!$shortageContent.length) $shortageContent = $template;
+        $shortageContent.append(
+            $('<div class="js-cart-stock-shortage text-danger small mt-1"></div>')
+                .text(data.describe || "目前庫存不足，請先調整數量才可結帳。")
+        );
+    } else if (isUnavailable) {
         $template.addClass("cart-item-error");
         $template.find('input[name="buyItems"]').prop({
             checked: false,
@@ -530,7 +554,8 @@ function CartListAdd(data, $container) {
     });
 
     $template.find(".btn_count_plus").on("click", function () {
-        if ($template.hasClass("cart-item-error")) return;
+        if ($template.hasClass("cart-item-error") ||
+            $template.hasClass("cart-item-stock-shortage")) return;
         if ($template.hasClass("cart-additional-item")) {
             $template.closest('.purchase_group').find('.js-open-cart-addons').first().trigger('click');
             return;
@@ -885,11 +910,18 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
     }).done(function (result) {
         if (result.success) {
             var $li = self.closest('li.purchase_item');
+            var updateItem = result.object?.items?.[0] || result.Object?.Items?.[0];
+            var updateSucceeded = updateItem == null ||
+                updateItem.success === true || updateItem.Success === true;
+            var updateError = updateItem?.error || updateItem?.Error || '';
+            var updatedQuantity = Number(
+                updateItem?.newQuantity ?? updateItem?.NewQuantity ?? quantity
+            );
 
             if (entry) {
                 entry.Price = price;
                 entry.Bonus = bonus;
-                entry.Quantity = quantity;
+                entry.Quantity = updatedQuantity;
                 entry.PackingPoint = Number(entry.PackingPoint || 0);
             }
 
@@ -901,18 +933,41 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
                 $itemCheckbox.prop('disabled', false);
             }
 
-            if (result.object?.items?.[0] && !result.object.items[0].success) {
+            if (!updateSucceeded && updateError === "StockNotEnough" && updatedQuantity < oldQty) {
+                $li.addClass('cart-item-stock-shortage');
+                $li.find('.pro_quantity').val(updatedQuantity);
+                $li.find('.btn_count_plus').prop('disabled', true);
+                $itemCheckbox.prop({ checked: false, disabled: true });
+
+                var $shortageContent = $li.find('.js-cart-item-message');
+                if (!$shortageContent.length) $shortageContent = $li;
+                $li.find('.js-cart-stock-shortage').remove();
+                $('<div class="js-cart-stock-shortage text-danger small mt-1"></div>')
+                    .text(updateItem.message || updateItem.Message || "目前庫存不足，請繼續調整數量。")
+                    .appendTo($shortageContent);
+
+                updateSubtotalAndDisplay(updatedQuantity);
+                syncGroupAndTotal();
+                CartDropReset(scid, updatedQuantity);
+                cart.Payment.Core.onAmountChanged();
+                return;
+            }
+
+            if (!updateSucceeded) {
                 handleUpdateError(
                     "商品數量無法更新",
-                    result.object.items[0].message || "庫存不足，已恢復為原本數量。",
+                    updateItem.message || updateItem.Message || "庫存不足，已恢復為原本數量。",
                     false
                 );
                 return;
             }
 
-            updateSubtotalAndDisplay(quantity);
+            $li.removeClass('cart-item-stock-shortage');
+            $li.find('.js-cart-stock-shortage').remove();
+            $li.find('.btn_count_plus').prop('disabled', false);
+            updateSubtotalAndDisplay(updatedQuantity);
             syncGroupAndTotal();
-            CartDropReset(scid, quantity);
+            CartDropReset(scid, updatedQuantity);
             cart.Payment.Core.onAmountChanged();
             if (entry && entry.IsAdditional !== true && cart.Marketing && typeof cart.Marketing.loadCartMarketingCampaigns === 'function') {
                 cart.Marketing.loadCartMarketingCampaigns().always(function () {
@@ -1085,6 +1140,15 @@ function ValidateCartOnInit() {
             var $itemCheckbox = $li.find('input[name="buyItems"]');
             // 預設先解鎖，避免舊狀態殘留
             $itemCheckbox.prop('disabled', false);
+
+            if (errorCode === "StockNotEnough" &&
+                $li.hasClass('cart-item-stock-shortage')) {
+                $itemCheckbox.prop({ checked: false, disabled: true });
+                $li.find('.btn_count_plus').prop('disabled', true);
+                $li.find('.js-cart-stock-shortage')
+                    .text(msg || '目前庫存不足，請先調整數量才可結帳。');
+                return;
+            }
 
             // ✅ 成功 & 未被後端標記移除 → 不處理
             if (success && !removed) return;

@@ -86,7 +86,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     ohdata.TransactionId = pchomePayResponse.order_id;
                                     if (ohdata.RepayTimes != null) ohdata.RepayDate = DateTime.Now;
                                     ohdata.State = OrderStatusEnum.待付款;
-                                    db.SaveChanges();
+                                    await db.SaveChangesAsync();
                                 }
                                 else
                                 {
@@ -901,7 +901,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                     {
                         if (ohdata.RepayTimes == null) ohdata.RepayTimes = 1;
                         else ohdata.RepayTimes += 1;
-                        db.SaveChanges();
+                        await db.SaveChangesAsync();
                         PaymentBody.order_id = $"{DateTime.Now.ToString("yyyyMMdd")}{oid}-{ohdata.RepayTimes}";
                     }
 
@@ -1007,6 +1007,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
                 Console.WriteLine($"PChomePay=>PChomePayPaymentBody回傳資料：{ex.Message}");
+                throw;
             }
             return PaymentBody;
         }

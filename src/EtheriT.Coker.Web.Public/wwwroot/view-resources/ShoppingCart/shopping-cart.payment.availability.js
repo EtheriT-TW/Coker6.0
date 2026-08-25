@@ -27,6 +27,11 @@
         }) || null;
     }
 
+    function isUnsupportedByLogistics(payment) {
+        return payment != null &&
+            String(payment.unavailableReasonCode || "") === "UnsupportedByLogistics";
+    }
+
     function updateUnavailableDisplay($formCheck, payment) {
         var isUnavailable = payment != null && payment.isAvailable !== true;
         var reason = isUnavailable
@@ -50,7 +55,9 @@
         $("#RadioPayment > .payment-embedded-unavailable").remove();
 
         (payments || []).filter(function (item) {
-            return item.renderMode === "Embedded" && item.isAvailable !== true;
+            return item.renderMode === "Embedded" &&
+                item.isAvailable !== true &&
+                !isUnsupportedByLogistics(item);
         }).forEach(function (payment) {
             var $fallback = $("<div>", {
                 class: "form-check text-start m-0 p-0 payment-embedded-unavailable"
@@ -193,7 +200,10 @@
             }
 
             updateUnavailableDisplay($formCheck, payment);
-            $formCheck.toggleClass("d-none", payment == null);
+            $formCheck.toggleClass(
+                "d-none",
+                payment == null || isUnsupportedByLogistics(payment)
+            );
         });
 
         renderUnavailableEmbeddedPayments(payments);

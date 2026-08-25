@@ -877,6 +877,19 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         if (requested < original)
                         {
                             sc.Quantity = requested;
+                            sc.OldQuantity = original;
+                            sc.LastModificationTime = DateTime.Now;
+                            sc.LastModifierUserId = sc.CreatorUserId;
+                            itemResult.NewQuantity = requested;
+
+                            LogCartEventAsync(
+                                pro_stock.FK_Pid,
+                                sc.FK_Uid,
+                                sc.UUID,
+                                LogActionEnum.購物車數量變更,
+                                original,
+                                requested
+                            );
                         }
                         else
                         {
@@ -1240,8 +1253,12 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     if (!shoppingCart.IsAdditional && prod_price_id == 0)
                     {
                         var prices_data = await productAppService.GetPriceDataAll(shoppingCart.FK_PSid);
-                        shoppingCart.FK_PriceId = prices_data[0].Id;
-                        await db.SaveChangesAsync();
+                        var replacementPrice = prices_data.FirstOrDefault();
+                        if (replacementPrice != null)
+                        {
+                            shoppingCart.FK_PriceId = replacementPrice.Id;
+                            await db.SaveChangesAsync();
+                        }
                     }
 
                     var prod_stocks = shoppingCart.Prod_Stock;
@@ -1265,6 +1282,13 @@ namespace EtheriT.Coker.Application.ShoppingCart
                             temp_output.Available = false;
                             temp_output.ValidationCode = "StockNotEnough";
                             temp_output.Describe = "此商品目前已無庫存，請移除該品項或稍後再試。";
+                        }
+                        else if (shoppingCart.Quantity > temp_output.Stock &&
+                            prods?.NoStockManagement != true)
+                        {
+                            temp_output.ValidationCode = "QuantityExceedsStock";
+                            temp_output.Describe =
+                                $"購物車數量為 {shoppingCart.Quantity} 件，目前僅剩 {temp_output.Stock} 件，請先調整數量才能結帳。";
                         }
 
                         if (shoppingCart.IsAdditional && !validAdditionalCartPrices.ContainsKey(shoppingCart.Id))
@@ -1374,6 +1398,13 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         temp_output.PPId = shoppingCart.FK_PriceId;
                     }
 
+                    if (!shoppingCart.IsAdditional && !prices.Any())
+                    {
+                        temp_output.Available = false;
+                        temp_output.ValidationCode = "PriceUnavailable";
+                        temp_output.Describe = "此商品目前沒有可購買價格，請移除該品項或稍後再試。";
+                    }
+
                     decimal currentPrice = temp_output.OldPrice;
                     int currentBonus = shoppingCart.Bonus ?? 0;
 
@@ -1425,11 +1456,13 @@ namespace EtheriT.Coker.Application.ShoppingCart
                             : currentPrice <= 0 ? "贈品" : "加價購";
                     }
 
-                    var specCheck = shoppingCart.IsOrder || !temp_output.Available
+                    var specCheck = shoppingCart.IsOrder || !temp_output.Available ||
+                        temp_output.ValidationCode == "QuantityExceedsStock"
                         ? new ResponseMessageDto { Success = true }
                         : ApplyCartSpecValidation(shoppingCart, prod_stocks, currentS1Title, currentS2Title);
                     var productTitleChanged = !shoppingCart.IsOrder
                         && temp_output.Available
+                        && temp_output.ValidationCode != "QuantityExceedsStock"
                         && !string.IsNullOrWhiteSpace(shoppingCart.ProdName)
                         && !string.Equals(shoppingCart.ProdName, prods.Title, StringComparison.Ordinal);
                     var specTitleChanged = !specCheck.Success && specCheck.Error == "SpecTitleChanged";
@@ -1647,28 +1680,51 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 {
                     var primaryCarts = oldscs.Where(x => !x.IsAdditional).ToList();
                     var additionalCarts = oldscs.Where(x => x.IsAdditional).ToList();
+                    var unavailablePrimaryCarts = new List<Core.Models.ShoppingCart>();
 
                     // 優惠商品不能再次經過一般 AddUp，否則 IsAdditional 與活動價都會遺失。
                     // 先還原主商品，再依目前仍有效的活動與購物車資格重建優惠商品。
                     foreach (var oldsc in primaryCarts)
                     {
-                        if (oldsc.Prod_Stock.Prod.Status != ProdStatusEnum.售完)
+                        var product = oldsc.Prod_Stock.Prod;
+                        var hasOriginalPrice = oldsc.FK_PriceId.HasValue &&
+                            await db.Prod_Prices.AnyAsync(x =>
+                                x.Id == oldsc.FK_PriceId.Value &&
+                                x.FK_PSId == oldsc.FK_PSid);
+                        var canPurchase = ProductPurchasePolicy.CanPurchaseStock(
+                            product,
+                            oldsc.Prod_Stock,
+                            hasOriginalPrice);
+
+                        if (canPurchase)
                         {
-                            var skipStock = oldsc.Prod_Stock.Prod.NoStockManagement;
-                            if (!oldsc.Prod_Stock.Prod.RemovedFromShelves && (skipStock || oldsc.Prod_Stock.Stock > 0))
+                            var maxQuantity = ProductPurchasePolicy.GetMaxPurchaseQuantity(product, oldsc.Prod_Stock);
+                            if (!maxQuantity.HasValue || oldsc.Quantity <= maxQuantity.Value)
                             {
-                                ShoppingCartAddUpDto newsc = new ShoppingCartAddUpDto();
-                                newsc = mapper.Map<ShoppingCartAddUpDto>(oldsc);
+                                var newsc = mapper.Map<ShoppingCartAddUpDto>(oldsc);
                                 newsc.Id = null;
-                                if (!skipStock && newsc.Quantity > oldsc.Prod_Stock.Stock) newsc.Quantity = (int)oldsc.Prod_Stock.Stock;
-                                else newsc.Quantity = oldsc.Quantity;
+                                newsc.Quantity = oldsc.Quantity;
                                 // 再買一次需保留原訂單快照，購物車才能提示商品或規格已異動。
                                 var temp_response = await AddUpInternal(newsc, oldsc);
                                 if (temp_response.Success) StockAllNull = false;
                                 else throw new Exception(temp_response.Message);
                             }
+                            else
+                            {
+                                // 保留原訂數量，由購物車明確告知庫存不足並要求使用者調整。
+                                unavailablePrimaryCarts.Add(oldsc);
+                            }
+                        }
+                        else
+                        {
+                            unavailablePrimaryCarts.Add(oldsc);
                         }
                     }
+
+                    var restoredUnavailablePrimaryQuantity =
+                        await RestoreUnavailableReorderPrimaryItemsAsync(unavailablePrimaryCarts);
+                    if (restoredUnavailablePrimaryQuantity > 0)
+                        StockAllNull = false;
 
                     if (!StockAllNull)
                     {
@@ -1677,6 +1733,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         output.Success = true;
                         output.Object = new
                         {
+                            UnavailablePrimaryQuantity = restoredUnavailablePrimaryQuantity,
                             RestoredAdditionalQuantity = restoredAdditionalQuantity,
                             SkippedAdditionalQuantity = Math.Max(requestedAdditionalQuantity - restoredAdditionalQuantity, 0)
                         };
@@ -1691,6 +1748,90 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 output.Message = ex.Message;
             }
             return output;
+        }
+
+        private async Task<int> RestoreUnavailableReorderPrimaryItemsAsync(
+            List<Core.Models.ShoppingCart> oldPrimaryCarts)
+        {
+            if (!oldPrimaryCarts.Any())
+                return 0;
+
+            var uuid = await tokenAppService.GetUUID();
+            var token = await tokenAppService.CheckToken(null);
+            if (token.RefreshToken == null)
+                token = await tokenAppService.CreateToken();
+
+            if (uuid == Guid.Empty)
+            {
+                uuid = await db.Tokens
+                    .Where(x => x.id == token.RefreshToken)
+                    .Select(x => x.UUID)
+                    .FirstOrDefaultAsync();
+            }
+
+            if (uuid == Guid.Empty || token.RefreshToken == null)
+                throw new Exception(L.get("TokenError"));
+
+            var userId = await db.FrontUsers
+                .Where(x => x.UUID == uuid)
+                .Select(x => x.FK_User)
+                .FirstOrDefaultAsync() ?? 0;
+            var currentCarts = await db.ShoppingCarts
+                .Where(x => x.UUID == uuid && !x.IsOrder && !x.IsDeleted && !x.IsAdditional)
+                .ToListAsync();
+            var now = DateTime.Now;
+            var restoredQuantity = 0;
+
+            foreach (var oldCart in oldPrimaryCarts)
+            {
+                var currentCart = currentCarts.FirstOrDefault(x =>
+                    x.FK_PSid == oldCart.FK_PSid &&
+                    x.FK_PriceId == oldCart.FK_PriceId);
+
+                if (currentCart == null)
+                {
+                    currentCart = new Core.Models.ShoppingCart
+                    {
+                        FK_Tid = token.RefreshToken.Value,
+                        UUID = uuid,
+                        FK_Uid = userId,
+                        FK_PSid = oldCart.FK_PSid,
+                        FK_PriceId = oldCart.FK_PriceId,
+                        FK_S1id = oldCart.FK_S1id,
+                        FK_S2id = oldCart.FK_S2id,
+                        Quantity = oldCart.Quantity,
+                        Price = oldCart.Price,
+                        Bonus = oldCart.Bonus,
+                        PriceType = oldCart.PriceType,
+                        ProductId = oldCart.ProductId,
+                        ProdName = oldCart.ProdName,
+                        S1Title = oldCart.S1Title,
+                        S2Title = oldCart.S2Title,
+                        Ser_No = 500,
+                        CreatorUserId = userId,
+                        CreationTime = now
+                    };
+                    db.ShoppingCarts.Add(currentCart);
+                    currentCarts.Add(currentCart);
+                }
+                else
+                {
+                    currentCart.Quantity += oldCart.Quantity;
+                    currentCart.ProductId = oldCart.ProductId;
+                    currentCart.ProdName = oldCart.ProdName;
+                    currentCart.FK_S1id = oldCart.FK_S1id;
+                    currentCart.FK_S2id = oldCart.FK_S2id;
+                    currentCart.S1Title = oldCart.S1Title;
+                    currentCart.S2Title = oldCart.S2Title;
+                    currentCart.LastModifierUserId = userId;
+                    currentCart.LastModificationTime = now;
+                }
+
+                restoredQuantity += oldCart.Quantity;
+            }
+
+            await db.SaveChangesAsync();
+            return restoredQuantity;
         }
 
         private async Task<int> RestoreReorderAdditionalItemsAsync(List<Core.Models.ShoppingCart> oldAdditionalCarts)

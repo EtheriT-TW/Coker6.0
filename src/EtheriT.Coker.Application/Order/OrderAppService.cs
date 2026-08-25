@@ -440,9 +440,16 @@ namespace EtheriT.Coker.Application.Order
                         throw new Exception($"超商取貨資料尚未完成：{string.Join("、", missingStoreData)}。請重新選擇取貨門市。");
                 }
             }
-            else if (string.IsNullOrWhiteSpace(dto.RecipientAddress))
+            else
             {
-                throw new Exception("請填寫收件人地址後再成立訂單。");
+                dto.CVSStoreID = null;
+                dto.CVSStoreName = null;
+                dto.CVSAddress = null;
+                dto.CVSTelephone = null;
+                dto.CVSOutSide = null;
+
+                if (string.IsNullOrWhiteSpace(dto.RecipientAddress))
+                    throw new Exception("請填寫收件人地址後再成立訂單。");
             }
 
             return new FormalOrderValidationResult
@@ -568,6 +575,27 @@ namespace EtheriT.Coker.Application.Order
                 ShippingTypeEnum.綠界_門市寄取_711超商 or
                 ShippingTypeEnum.綠界_門市寄取_萊爾富 or
                 ShippingTypeEnum.綠界_門市寄取_OK超商;
+        }
+
+        private static bool RecipientAddressContainsCvsStore(
+            string recipientAddress,
+            Order_Logistics? orderLogistics)
+        {
+            if (orderLogistics == null || string.IsNullOrWhiteSpace(recipientAddress))
+                return false;
+
+            var normalizedAddress = recipientAddress.Replace(" ", "");
+            var storeName = orderLogistics.CVSStoreName?.Replace(" ", "") ?? string.Empty;
+            var storeAddress = orderLogistics.CVSAddress?.Replace(" ", "") ?? string.Empty;
+
+            if (!string.IsNullOrEmpty(storeAddress) &&
+                string.Equals(normalizedAddress, storeAddress, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            return !string.IsNullOrEmpty(storeName) &&
+                !string.IsNullOrEmpty(storeAddress) &&
+                normalizedAddress.Contains(storeName, StringComparison.OrdinalIgnoreCase) &&
+                normalizedAddress.Contains(storeAddress, StringComparison.OrdinalIgnoreCase);
         }
 
         private static string GetFullExceptionMessage(Exception ex)
@@ -1500,13 +1528,35 @@ namespace EtheriT.Coker.Application.Order
                  logisticsSubType == ShippingTypeEnum.綠界_黑貓 ||
                  isCvsStore);
 
-            if (!requiresLogisticsRecord)
-                return;
-
-            var orderLogistics = await db.Order_Logistics
+            var activeLogistics = await db.Order_Logistics
                 .Where(e => e.FK_OhId == header.Id && !e.IsDeleted)
                 .OrderByDescending(e => e.Id)
-                .FirstOrDefaultAsync();
+                .ToListAsync();
+
+            if (!requiresLogisticsRecord)
+            {
+                if (activeLogistics.Count == 0)
+                    return;
+
+                foreach (var staleLogistics in activeLogistics)
+                {
+                    staleLogistics.IsDeleted = true;
+                    staleLogistics.DeletionTime = now;
+                    staleLogistics.DeleterUserId = userId ?? 0;
+                }
+
+                await db.SaveChangesAsync();
+                return;
+            }
+
+            var orderLogistics = activeLogistics.FirstOrDefault();
+
+            foreach (var duplicateLogistics in activeLogistics.Skip(1))
+            {
+                duplicateLogistics.IsDeleted = true;
+                duplicateLogistics.DeletionTime = now;
+                duplicateLogistics.DeleterUserId = userId ?? 0;
+            }
 
             if (orderLogistics == null)
             {
@@ -2114,6 +2164,7 @@ namespace EtheriT.Coker.Application.Order
                         .FirstOrDefaultAsync();
 
                     string ship_text = "";
+                    var isCvsShipping = false;
                     if (result.Shipping == 0)
                     {
                         ship_text = "郵寄掛號";
@@ -2122,6 +2173,17 @@ namespace EtheriT.Coker.Application.Order
                     {
                         var ls = db.LogisticsSettings.Where(e => e.Id == result.Shipping).Select(e => e.LogisticsType).FirstOrDefault();
                         ship_text = ls.ToString().Replace("_", "/").Replace("Seven", "7-11");
+                        isCvsShipping = IsCvsShippingType(ls);
+                    }
+
+                    var recipientAddress = result.RecipientAddress?.Replace(" ", "") ?? string.Empty;
+                    if (!isCvsShipping &&
+                        RecipientAddressContainsCvsStore(recipientAddress, orderLogistics) &&
+                        string.Equals(result.Recipient?.Trim(), result.Orderer?.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(result.RecipientCellPhone?.Trim(), result.OrdererCellPhone?.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                        !string.IsNullOrWhiteSpace(result.OrdererAddress))
+                    {
+                        recipientAddress = result.OrdererAddress.Replace(" ", "");
                     }
 
                     OrderHeaderGetOneDto output = new OrderHeaderGetOneDto()
@@ -2134,11 +2196,11 @@ namespace EtheriT.Coker.Application.Order
                         Recipient = result.Recipient,
                         RecipientTelePhone = result.RecipientTelePhone == null ? "-" : result.RecipientTelePhone,
                         RecipientCellPhone = result.RecipientCellPhone,
-                        RecipientAddress = result.RecipientAddress.Replace(" ", ""),
+                        RecipientAddress = recipientAddress,
                         RecipientEmail = result.RecipientEmail,
-                        CVSStoreID = orderLogistics?.CVSStoreID,
-                        CVSStoreName = orderLogistics?.CVSStoreName,
-                        CVSAddress = orderLogistics?.CVSAddress,
+                        CVSStoreID = isCvsShipping ? orderLogistics?.CVSStoreID : null,
+                        CVSStoreName = isCvsShipping ? orderLogistics?.CVSStoreName : null,
+                        CVSAddress = isCvsShipping ? orderLogistics?.CVSAddress : null,
                         InvoiceRecipient = result.InvoiceRecipient,
                         InvoiceTitle = result.InvoiceTitle,
                         InvoiceType = result.InvoiceType,
@@ -2306,6 +2368,7 @@ namespace EtheriT.Coker.Application.Order
                     var shipping_str3 = (shipping?.LogisticsType ?? ShippingTypeEnum.郵寄掛號).ToString().Replace("_", "/");
                     temp_output.Shipping = shipping_str1 != "" ? shipping_str3 != "" ? $"{shipping_str1} {shipping_str3}" : $"{shipping_str1}" : "";
 
+                    var isCvsShipping = shipping != null && IsCvsShippingType(shipping.LogisticsType);
                     var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == order_header.Id).FirstOrDefaultAsync();
 
                     if (logistics != null)
@@ -2404,6 +2467,16 @@ namespace EtheriT.Coker.Application.Order
                         {
                             temp_output.LogisticsStatusStr = "";
                         }
+                    }
+
+                    if (!isCvsShipping)
+                    {
+                        temp_output.CVSStoreID = null;
+                        temp_output.CVSAddress = null;
+                        temp_output.CVSOutSide = null;
+                        temp_output.CVSStoreName = null;
+                        temp_output.CVSTelephone = null;
+                        temp_output.Shipping = shipping_str1 != "" ? shipping_str3 != "" ? $"{shipping_str1} {shipping_str3}" : $"{shipping_str1}" : "";
                     }
 
                     temp_output.LogisticsType = ((int)shipping?.LogisticsType);
@@ -2776,28 +2849,39 @@ namespace EtheriT.Coker.Application.Order
                 if (!newOrderDetails.Any())
                     throw new Exception("查無再次下訂資訊");
 
-                string BuildReorderKey(long psId, long priceId, bool isAdditional)
+                bool MatchesReorderIdentity(
+                    OrderDetailDisplayDto oldItem,
+                    ShoppingCartDisplayDto newItem)
                 {
-                    return $"{psId}|{priceId}|{isAdditional}";
+                    if (oldItem.ProdStockId != newItem.PSId ||
+                        oldItem.IsAdditional != newItem.IsAdditional)
+                        return false;
+
+                    if (!oldItem.IsAdditional)
+                        return true;
+
+                    // 同一規格可能同時出現於不同加價購活動，有獎勵品項 ID 時必須精準配對。
+                    return !oldItem.FK_MarketingRewardItemId.HasValue ||
+                        !newItem.FK_MarketingRewardItemId.HasValue ||
+                        oldItem.FK_MarketingRewardItemId == newItem.FK_MarketingRewardItemId;
                 }
 
-                var oldMap = oldOrderDetails
-                .GroupBy(x => BuildReorderKey(x.ProdStockId, x.ProdPriceId, x.IsAdditional))
-                .ToDictionary(
-                    g => g.Key,
-                    g => new Queue<OrderDetailDisplayDto>(g)
-                );
-
                 var result = new List<ShoppingCartDisplayDto>();
+                var matchedOldCartIds = new HashSet<long>();
 
                 foreach (var item in newOrderDetails)
                 {
-                    var key = BuildReorderKey(item.PSId, item.PPId ?? 0, item.IsAdditional);
+                    var candidates = oldOrderDetails
+                        .Where(x => !matchedOldCartIds.Contains(x.SCId) && MatchesReorderIdentity(x, item))
+                        .ToList();
+                    var oldItem = candidates.FirstOrDefault(x => x.ProdPriceId == (item.PPId ?? 0))
+                        ?? candidates.FirstOrDefault();
 
-                    if (!oldMap.TryGetValue(key, out var queue) || queue.Count == 0)
+                    // 購物車可能原本已有其他商品，只顯示此次再買一次涉及的品項。
+                    if (oldItem == null)
                         continue;
 
-                    var oldItem = queue.Dequeue();
+                    matchedOldCartIds.Add(oldItem.SCId);
 
                     item.OldPrice = oldItem.Price;
                     item.OldBonus = oldItem.Bonus;
@@ -2934,8 +3018,10 @@ namespace EtheriT.Coker.Application.Order
                 return result;
             }
 
-            // 只有待付款才有等待重新付款的問題
-            if (order.State != OrderStatusEnum.待付款)
+            // 第三方付款首次導轉未完成時可能仍停在待確認，
+            // 待確認與待付款都是尚未收款、可於等待時間後補刷的狀態。
+            if (order.State != OrderStatusEnum.待確認 &&
+                order.State != OrderStatusEnum.待付款)
                 return result;
 
             if (payment?.RepayAfterMinutes == null || payment.RepayAfterMinutes <= 0)
@@ -2975,8 +3061,9 @@ namespace EtheriT.Coker.Application.Order
             if (order.State == OrderStatusEnum.付款失敗)
                 return true;
 
-            // 只有待付款才有「等待一段時間後重新付款」的問題
-            if (order.State != OrderStatusEnum.待付款)
+            // 首次第三方付款導轉未完成時，訂單可能停在待確認。
+            if (order.State != OrderStatusEnum.待確認 &&
+                order.State != OrderStatusEnum.待付款)
                 return false;
 
             // 付款方式沒有設定 RepayAfterMinutes，就不允許待付款逾時補刷

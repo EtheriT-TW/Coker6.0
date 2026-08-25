@@ -642,11 +642,17 @@
     }
 
     function getPersistedRewardQuantity(item) {
+        var rewardItemId = Number(getValue(item, "rewardItemId") || 0);
         var stockId = Number(getValue(item, "productStockId") || 0);
         var offerPrice = Number(getValue(item, "offerPrice") || 0);
         return (S.shopping_cart_data || []).reduce(function (sum, cartItem) {
-            return cartItem.IsAdditional === true && Number(cartItem.PSId) === stockId && Number(cartItem.Price) === offerPrice
-                ? sum + Number(cartItem.Quantity || 0) : sum;
+            if (cartItem.IsAdditional !== true) return sum;
+
+            var persistedRewardItemId = Number(cartItem.MarketingRewardItemId || 0);
+            var matches = persistedRewardItemId > 0
+                ? persistedRewardItemId === rewardItemId
+                : Number(cartItem.PSId) === stockId && Number(cartItem.Price) === offerPrice;
+            return matches ? sum + Number(cartItem.Quantity || 0) : sum;
         }, 0);
     }
 

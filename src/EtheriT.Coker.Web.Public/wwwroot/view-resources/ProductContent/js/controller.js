@@ -531,16 +531,23 @@
                 const $img = $slide.find('img');
                 let src = img.link?.[0] || '';
 
-                if (img.fileType === 3) src = '/images/videopreview.jpg';
+                if (img.fileType === 3) {
+                    src = '/images/videopreview.jpg';
+                    $slide.addClass('video-preview');
+                }
                 if (img.fileType === 4) {
                     const externalVideo = parseExternalVideo(img.name);
                     const thumbnail = img.thumbnail || img.link?.[1] || externalVideo?.thumbnail || '/images/defaultImage/video.jpg';
                     src = normalizePublicMediaPath(thumbnail, this.options.orgName);
-                    $slide.addClass('external-video-preview');
+                    $slide.addClass('video-preview external-video-preview');
                     $slide.append($('<span class="external-video-preview__provider"></span>')
                         .addClass(`provider-${externalVideo?.provider || 'external'}`)
                         .attr('title', externalVideo?.provider || '外嵌影片')
                         .append($('<i></i>').attr('class', externalVideo?.iconClass || 'fa-solid fa-link')));
+                }
+
+                if (img.fileType === 3 || img.fileType === 4) {
+                    $slide.append($('<span class="video-preview__play" aria-hidden="true"></span>'));
                 }
 
                 $img.attr({

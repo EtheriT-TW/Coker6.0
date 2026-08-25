@@ -123,6 +123,16 @@
         var $this = $("[name='RadioShipping']:checked");
         S.CvsStoreValidationRequested = false;
 
+        S.order_header_data = S.order_header_data || {};
+        S.order_header_data.shipping = $this.val();
+        if (!IsCvsShippingSelected()) {
+            S.order_header_data.CVSStoreID = null;
+            S.order_header_data.CVSStoreName = null;
+            S.order_header_data.CVSAddress = null;
+            S.order_header_data.CVSTelephone = null;
+            S.order_header_data.CVSOutSide = null;
+        }
+
         S.ori_freight = Number($this.data("freight") || 0);
         S.low_con = Number($this.data("lowcon") || 0);
         S.disfreight = Number($this.data("disfreight") || 0);

@@ -16,9 +16,9 @@
         {
             <div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap font">
                 <a href="@menu.LinkState.Href"
-                   id="collapse-header-@menu.Title" class="m-0 nav-link p-0 text-nowrap menu-item collapsed @menu.LinkState.CssClass"
-                   data-bs-toggle="collapse" data-bs-target="#collapse-@menu.Title"
-                   aria-expanded="true" aria-controls="collapse-@menu.Title"
+                   id="collapse-header-@menu.Id" class="m-0 nav-link p-0 text-nowrap menu-item collapsed @menu.LinkState.CssClass"
+                   data-bs-toggle="collapse" data-bs-target="#collapse-@menu.Id"
+                   aria-expanded="false" aria-controls="collapse-@menu.Id"
                    role="@menu.LinkState.Role"
                    aria-haspopup="@menu.LinkState.AriaHasPopup" aria-disabled="@menu.LinkState.AriaDisabled" tabindex="@menu.LinkState.TabIndex">
                     @if (string.IsNullOrEmpty(menu.imageUrl))
@@ -44,7 +44,7 @@
                     }
                 </a>
             </div>
-            <div class="content collapse_menus translate-middle-x">
+            <div id="collapse-@menu.Id" class="content collapse_menus translate-middle-x collapse">
                 <ul class="@justifyContent" data-count-theme="@(menu.menuItemModels != null ? menu.menuItemModels.Count() : "0")">
                     @foreach (var secItem in subItems)
                     {

@@ -706,6 +706,35 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         StringEscapeHandling = StringEscapeHandling.EscapeHtml
                     });
             }
+            if (!isHomePage)
+            {
+                var breadcrumbRootUri = new Uri(
+                    model.root.EndsWith("/", StringComparison.Ordinal)
+                        ? model.root
+                        : $"{model.root}/");
+                var breadcrumbCanonicalUrl = BuildCanonicalPageUrl(model);
+                var breadcrumbStructuredData = BuildBreadcrumbStructuredData(
+                    model.MenuBread,
+                    model.PageData.Title,
+                    breadcrumbCanonicalUrl,
+                    breadcrumbRootUri,
+                    new Uri(breadcrumbRootUri, $"{model.orgName}/home").AbsoluteUri,
+                    model.PageData.PageView is "Article" or "Techcert");
+                if (breadcrumbStructuredData != null)
+                {
+                    RemoveNullStructuredDataValues(breadcrumbStructuredData);
+                    ViewBag.BreadcrumbStructuredDataPageType = model.PageData.PageView;
+                    ViewBag.BreadcrumbStructuredDataPageId = model.PageData.Id;
+                    ViewBag.BreadcrumbStructuredDataJson = JsonConvert.SerializeObject(
+                        breadcrumbStructuredData,
+                        Formatting.None,
+                        new JsonSerializerSettings
+                        {
+                            NullValueHandling = NullValueHandling.Ignore,
+                            StringEscapeHandling = StringEscapeHandling.EscapeHtml
+                        });
+                }
+            }
             ViewBag.NoCopy = _env.IsProduction() && NoCopyItem != null && NoCopyItem.value != null && NoCopyItem.value.Count > 0 && NoCopyItem.value[0] == "1" ? "no-right-click" : "";
             ViewData["google.translate"] = model.storeSet.GoogleTranslate;
             ViewData["CurrentUrl"] = model.PageData.CurrentUrl;
@@ -866,6 +895,143 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 ["hasVariant"] = hasVariant
             };
         }
+
+        private static string BuildCanonicalPageUrl(PageViewModel model)
+        {
+            var rootUri = new Uri(
+                model.root.EndsWith("/", StringComparison.Ordinal)
+                    ? model.root
+                    : $"{model.root}/");
+            var pageView = model.PageData?.PageView ?? string.Empty;
+            var relativeUrl = pageView switch
+            {
+                "Article" => $"{model.orgName}/search/article/{model.PageData!.Id}",
+                "Product" => $"{model.orgName}/search/product/{model.PageData!.Id}",
+                "Techcert" => $"{model.orgName}/search/techcert/{model.PageData!.Id}",
+                _ => $"{model.orgName}/{model.PageData?.CurrentUrl?.TrimStart('/') ?? string.Empty}"
+            };
+            return new Uri(rootUri, relativeUrl).AbsoluteUri;
+        }
+
+        private static Dictionary<string, object?>? BuildBreadcrumbStructuredData(
+            List<GetMenuBreadDto>? menuBread,
+            string? currentTitle,
+            string canonicalUrl,
+            Uri rootUri,
+            string homeUrl,
+            bool appendCurrentItem)
+        {
+            if (string.IsNullOrWhiteSpace(currentTitle))
+            {
+                return null;
+            }
+
+            var sourceItems = (menuBread ?? new List<GetMenuBreadDto>())
+                .Where(e => !string.IsNullOrWhiteSpace(e.Title))
+                .ToList();
+            var lastSourceItem = sourceItems.LastOrDefault();
+            var lastIsCurrent = !appendCurrentItem && lastSourceItem != null &&
+                string.Equals(
+                    lastSourceItem.Title.Trim(),
+                    currentTitle.Trim(),
+                    StringComparison.OrdinalIgnoreCase);
+            var listItems = new List<Dictionary<string, object?>>();
+            var homeSourceItem = sourceItems.FirstOrDefault(e =>
+                AreSameBreadcrumbUrls(ResolveBreadcrumbUrl(rootUri, e.Link), homeUrl));
+            listItems.Add(new Dictionary<string, object?>
+            {
+                ["@type"] = "ListItem",
+                ["position"] = 1,
+                ["name"] = string.IsNullOrWhiteSpace(homeSourceItem?.Title)
+                    ? "Home"
+                    : homeSourceItem.Title.Trim(),
+                ["item"] = homeUrl
+            });
+
+            foreach (var sourceItem in sourceItems)
+            {
+                var isCurrent = ReferenceEquals(sourceItem, lastSourceItem) && lastIsCurrent;
+                var itemUrl = isCurrent
+                    ? canonicalUrl
+                    : ResolveBreadcrumbUrl(rootUri, sourceItem.Link);
+
+                if (AreSameBreadcrumbUrls(itemUrl, homeUrl))
+                {
+                    continue;
+                }
+
+                // Google 要求非最後一階具有可導覽 URL；純分類標題沒有連結時保守略過。
+                if (!isCurrent && itemUrl == null)
+                {
+                    continue;
+                }
+
+                listItems.Add(new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = listItems.Count + 1,
+                    ["name"] = sourceItem.Title.Trim(),
+                    ["item"] = itemUrl
+                });
+            }
+
+            if (!lastIsCurrent)
+            {
+                listItems.Add(new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = listItems.Count + 1,
+                    ["name"] = currentTitle.Trim(),
+                    ["item"] = canonicalUrl
+                });
+            }
+
+            if (listItems.Count < 2)
+            {
+                return null;
+            }
+
+            return new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "BreadcrumbList",
+                ["@id"] = $"{canonicalUrl}#breadcrumb",
+                ["itemListElement"] = listItems
+            };
+        }
+
+        private static string? ResolveBreadcrumbUrl(Uri rootUri, string? link)
+        {
+            if (string.IsNullOrWhiteSpace(link) ||
+                link.StartsWith("javascript:", StringComparison.OrdinalIgnoreCase) ||
+                link.StartsWith("#", StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            if (link.StartsWith("/", StringComparison.Ordinal))
+            {
+                return new Uri(rootUri, link.Trim()).AbsoluteUri;
+            }
+
+            if (Uri.TryCreate(link, UriKind.Absolute, out var absoluteUri))
+            {
+                return absoluteUri.Scheme is "http" or "https" &&
+                       string.Equals(absoluteUri.Host, rootUri.Host, StringComparison.OrdinalIgnoreCase)
+                    ? absoluteUri.AbsoluteUri
+                    : null;
+            }
+
+            return new Uri(rootUri, link.Trim()).AbsoluteUri;
+        }
+
+        private static bool AreSameBreadcrumbUrls(string? left, string? right)
+            => !string.IsNullOrWhiteSpace(left) &&
+               !string.IsNullOrWhiteSpace(right) &&
+               string.Equals(
+                   left.TrimEnd('/'),
+                   right.TrimEnd('/'),
+                   StringComparison.OrdinalIgnoreCase);
 
         private static void RemoveNullStructuredDataValues(object? value)
         {

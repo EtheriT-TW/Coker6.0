@@ -272,11 +272,20 @@
             const scriptId = 'product-structured-data';
             const existingScript = document.getElementById(scriptId);
             const renderedProductId = existingScript?.dataset?.productId;
+            const breadcrumbScript = document.getElementById('breadcrumb-structured-data');
+            const breadcrumbPageType = breadcrumbScript?.dataset?.pageType;
+            const breadcrumbPageId = breadcrumbScript?.dataset?.pageId;
 
             // JSON-LD 僅採用伺服器端產生的非會員公開價格。
             // AJAX 切換商品時沒有對應的伺服器 SEO 資料，移除舊商品資料以免內容不一致。
             if (!result || !existingScript || String(result.id) !== String(renderedProductId)) {
                 existingScript?.remove();
+            }
+            if (!result ||
+                !breadcrumbScript ||
+                breadcrumbPageType !== 'Product' ||
+                String(result.id) !== String(breadcrumbPageId)) {
+                breadcrumbScript?.remove();
             }
         }
 

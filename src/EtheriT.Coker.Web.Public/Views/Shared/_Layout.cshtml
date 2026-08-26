@@ -137,6 +137,15 @@
                 data-product-id="@ViewBag.ProductStructuredDataProductId"
                 nonce="@ViewBag.Nonce">@Html.Raw(productStructuredDataJson)</script>
     }
+    @if (ViewBag.BreadcrumbStructuredDataJson is string breadcrumbStructuredDataJson &&
+         !string.IsNullOrWhiteSpace(breadcrumbStructuredDataJson))
+    {
+        <script id="breadcrumb-structured-data"
+                type="application/ld+json"
+                data-page-type="@ViewBag.BreadcrumbStructuredDataPageType"
+                data-page-id="@ViewBag.BreadcrumbStructuredDataPageId"
+                nonce="@ViewBag.Nonce">@Html.Raw(breadcrumbStructuredDataJson)</script>
+    }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     @if (useDevExtreme)

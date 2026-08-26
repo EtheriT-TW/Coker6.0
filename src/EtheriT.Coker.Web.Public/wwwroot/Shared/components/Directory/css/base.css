@@ -866,6 +866,10 @@
         max-width: 10rem;
     }
 
+    .type_change_frame .catalog.type1 .col.type5 .tags .badge{
+        max-width: 19rem;
+    }
+
     .type_change_frame .catalog.type1 .col.type5 figure figcaption .bottom-row {
         margin-left: 0.5rem;
     }

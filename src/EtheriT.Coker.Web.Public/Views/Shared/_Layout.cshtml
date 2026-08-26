@@ -109,11 +109,11 @@
 
     <meta name="author" content="易碩網際科技股份有限公司" />
     <meta name="copyright" content="易碩網際科技股份有限公司" />
-    <meta name="description" content="@Html.Raw(ViewData["Description"])">
+    <meta name="description" content="@ViewData["Description"]">
     <meta itemprop="name" content="@Html.Raw(ViewBag.PageTagNameName)" />
-    <meta itemprop="description" content="@Html.Raw(ViewData["Description"])" />
+    <meta itemprop="description" content="@ViewData["Description"]" />
     <meta name="twitter:title" content="@Html.Raw(ViewBag.PageTagNameName)" />
-    <meta name="twitter:description" content="@Html.Raw(ViewData["Description"])" />
+    <meta name="twitter:description" content="@ViewData["Description"]" />
     @if (!string.IsNullOrEmpty(ViewBag.ImageUrl))
     {
         <meta name="twitter:image" content="@Html.Raw(ViewBag.ImageUrl)">
@@ -122,13 +122,21 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="@(ViewData["OpenGraphUrl"] ?? ViewData["CurrentUrl"])" />
     <meta property="og:site_name" content="@Html.Raw(ViewData["SideName"])" />
-    <meta property="og:description" content="@Html.Raw(ViewData["Description"])" />
+    <meta property="og:description" content="@ViewData["Description"]" />
     @if (!string.IsNullOrEmpty(ViewBag.ImageUrl))
     {
         <meta property="og:image" content="@Html.Raw(ViewBag.ImageUrl)">
     }
     <meta property="og:locale" content="zh-tw" />
     <meta name="csp-nonce" content="@Html.Raw(ViewBag.Nonce)" />
+    @if (ViewBag.ProductStructuredDataJson is string productStructuredDataJson &&
+         !string.IsNullOrWhiteSpace(productStructuredDataJson))
+    {
+        <script id="product-structured-data"
+                type="application/ld+json"
+                data-product-id="@ViewBag.ProductStructuredDataProductId"
+                nonce="@ViewBag.Nonce">@Html.Raw(productStructuredDataJson)</script>
+    }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     @if (useDevExtreme)
@@ -140,6 +148,7 @@
     <style nonce="@ViewBag.Nonce">
             :root {
                 --orgName: @ViewData["OrgName"];
+                --currency-symbol: '@(ViewBag.PriceCurrencySymbol ?? "NT$")';
             }
     </style>
     @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
@@ -163,6 +172,24 @@
             const parsedPageId = Number.parseInt(PageId, 10);
             const OrgName = "@ViewData["OrgName"]";
             const PageKey = "@ViewBag.RouterName";
+            const priceCurrency = Object.freeze({
+                code: @Json.Serialize(ViewBag.PriceCurrencyCode ?? "TWD"),
+                symbol: @Json.Serialize(ViewBag.PriceCurrencySymbol ?? "NT$"),
+                decimalDigits: @Json.Serialize(ViewBag.PriceCurrencyDecimalDigits ?? 0)
+            });
+            const formatMoney = function(value) {
+                const amount = Number(value);
+                if (!Number.isFinite(amount)) {
+                    return "";
+                }
+
+                const locale = document.documentElement.lang || "zh-TW";
+                const formattedAmount = amount.toLocaleString(locale, {
+                    minimumFractionDigits: priceCurrency.decimalDigits,
+                    maximumFractionDigits: priceCurrency.decimalDigits
+                });
+                return `${priceCurrency.symbol}${formattedAmount}`;
+            };
             window.__LOGIN_STATE__ = @(ViewBag.isLogin == true ? "true" : "false");
             window.SiteId = SiteId;
             window.PageId = Number.isNaN(parsedPageId) ? null : parsedPageId;
@@ -171,6 +198,10 @@
             window.orderPrice = orderPrice;
             window.OrgName = OrgName;
             window.PageKey = PageKey;
+            window.CokerCurrency = Object.freeze({
+                ...priceCurrency,
+                format: formatMoney
+            });
             window.RemoteTrackingToken = RemoteTrackingToken;
             window.onload = function() {
                 ready();

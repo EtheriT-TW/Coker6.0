@@ -351,6 +351,44 @@
         return $card;
     }
 
+    function requestedStockId() {
+        const value = new URLSearchParams(window.location.search).get('psid');
+        const stockId = normalizeNullableInt(value, 0);
+        return stockId > 0 ? stockId : null;
+    }
+
+    function activateStockCard($container, $card, updateUrl) {
+        if (!$card || !$card.length) return;
+
+        $container.find('.spec-card')
+            .removeClass('is-selected')
+            .removeAttr('aria-current');
+        $card.addClass('is-selected').attr('aria-current', 'true');
+
+        if (updateUrl && window.productContentPage && typeof window.productContentPage.setVariantUrl === 'function') {
+            window.productContentPage.setVariantUrl($card.attr('data-stock-id'));
+        }
+    }
+
+    function applyRequestedStock($container) {
+        const stockId = requestedStockId();
+        if (!stockId) return;
+
+        const $card = $container.find(`.spec-card[data-stock-id="${stockId}"]`).first();
+        if (!$card.length) return;
+
+        activateStockCard($container, $card, false);
+        window.requestAnimationFrame(() => {
+            $card.get(0)?.scrollIntoView({ block: 'center', behavior: 'auto' });
+        });
+    }
+
+    function bindVariantSelection($container) {
+        $container.on('click focusin', '.spec-card', function () {
+            activateStockCard($container, $(this), true);
+        });
+    }
+
     function stepQuantity($btn, direction) {
         const $input = $btn.siblings('.spec-qty-input');
         const $card = $btn.closest('.spec-card');
@@ -451,11 +489,13 @@
         bindQtyStepper($container);
         bindSpecGallery($container);
         bindAddToCart($container, state);
-        bindCopyName($container)
+        bindCopyName($container);
+        bindVariantSelection($container);
 
         Product.GetOne.ProdMainDisplay(pid)
             .done(result => {
                 render($container, result, state);
+                applyRequestedStock($container);
                 applyImageLayout(result);
             })
             .fail(() => {

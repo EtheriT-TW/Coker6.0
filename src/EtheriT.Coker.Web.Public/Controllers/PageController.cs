@@ -9,6 +9,7 @@ using EtheriT.Coker.Application.Search;
 using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.BonusManagement;
+using EtheriT.Coker.Application.Shared.Currency;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
@@ -45,6 +46,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
@@ -192,6 +194,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var prodCatalog = StoreSet.storeSetDetails?.Find(e => e.key == "prodCatalog");
             var productPageLayout = StoreSet.storeSetDetails?.Find(e => e.key == "ProductPageLayout");
             var priceOrder = StoreSet.storeSetDetails?.Find(e => e.key == "priceOrder");
+            var priceCurrencySetting = StoreSet.storeSetDetails?.Find(e => e.key == "priceCurrency");
+            var priceCurrency = CurrencyCatalog.Resolve(priceCurrencySetting?.value?.FirstOrDefault());
             var HasInvoice = string.Join(",", StoreSet.storeSetDetails?.Find(e => e.key == "HasInvoice")?.value ?? Enumerable.Empty<string>()) != "DisabledInvoice";
             var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
             List<string> Carrier = StoreSet.storeSetDetails?.Find(e => e.key == "ExtraInviiceCarrier")?.value ?? new List<string>();
@@ -202,7 +206,14 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.BackstageUrl = Configuration["BACKSTAGE_URL"] ?? Configuration.GetValue<string>("WebConfig:BackstageUrl");
             ViewBag.OAuthError = TempData["OAuthError"];
             ViewBag.OAuthSuccess = TempData["OAuthSuccess"];
-            ViewBag.priceOrder = priceOrder != null && priceOrder.value != null && priceOrder.value.Any() && priceOrder.value.Contains("LtoH");
+            var orderPriceLowToHigh = priceOrder != null &&
+                priceOrder.value != null &&
+                priceOrder.value.Any() &&
+                priceOrder.value.Contains("LtoH");
+            ViewBag.priceOrder = orderPriceLowToHigh;
+            ViewBag.PriceCurrencyCode = priceCurrency.Code;
+            ViewBag.PriceCurrencySymbol = priceCurrency.Symbol;
+            ViewBag.PriceCurrencyDecimalDigits = priceCurrency.DecimalDigits;
             ViewBag.MemberRegister = !MemberRegister;
             ViewBag.PrivacyPolicy = privacyPolicy != null && privacyPolicy.value != null && privacyPolicy.value.Any() ? string.Join(",", privacyPolicy.value) : "";
             ViewBag.HasInvoice = HasInvoice;
@@ -269,6 +280,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.membershipTerms = model.storeSet.membershipTerms;
             Console.WriteLine($"hasMembershipTerms：{(membershipTerms != null && membershipTerms.value != null)}");
             GetFrontContenOutputDto? PageData =  null;
+            ProductSeoDataDto? productSeoData = null;
             if (string.IsNullOrEmpty(option)) option = "";
             if (!UseLegacyPathHandling(website, key, option))
             {
@@ -386,6 +398,13 @@ namespace EtheriT.Coker.Web.Public.Controllers
                                     string htmlString = stringHandler.HtmlDecode(model.PageData.Html);
                                     model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
                                 }
+                                productSeoData = await productAppService.GetSeoData(
+                                    new ProdGetFrontContenInputDto
+                                    {
+                                        siteId = defaultData.Id,
+                                        prodId = id
+                                    },
+                                    orderPriceLowToHigh);
                                 var layoutKey = productPageLayout?.value?.FirstOrDefault();
                                 if(layoutKey != null)
                                 {
@@ -657,6 +676,47 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 ViewBag.ImageUrl = new Uri(new Uri(model.root), shareImage[0].Link).AbsoluteUri;
             }
             else ViewBag.ImageUrl = string.IsNullOrEmpty(model.PageData.ImageUrl) ? "" : new Uri(new Uri(model.root), model.PageData.ImageUrl).AbsoluteUri;
+            if (isProductPage && productSeoData?.PublicPrice != null)
+            {
+                var rootUri = new Uri(model.root.EndsWith("/", StringComparison.Ordinal) ? model.root : $"{model.root}/");
+                var canonicalUrl = new Uri(
+                    rootUri,
+                    $"{model.orgName}/search/product/{model.PageData.Id}").AbsoluteUri;
+                var productImageUrl = string.IsNullOrWhiteSpace(model.PageData.ImageUrl)
+                    ? null
+                    : new Uri(rootUri, model.PageData.ImageUrl.TrimStart('/')).AbsoluteUri;
+
+                var productStructuredData = new Dictionary<string, object?>
+                {
+                    ["@context"] = "https://schema.org",
+                    ["@type"] = "Product",
+                    ["name"] = productSeoData.Title,
+                    ["url"] = canonicalUrl,
+                    ["description"] = model.PageData.Description,
+                    ["image"] = productImageUrl == null ? null : new[] { productImageUrl },
+                    ["sku"] = string.IsNullOrWhiteSpace(productSeoData.ItemNo) ? null : productSeoData.ItemNo,
+                    ["offers"] = new Dictionary<string, object?>
+                    {
+                        ["@type"] = "Offer",
+                        ["url"] = canonicalUrl,
+                        ["priceCurrency"] = priceCurrency.Code,
+                        ["price"] = productSeoData.PublicPrice.Value.ToString("0.################", CultureInfo.InvariantCulture),
+                        ["availability"] = productSeoData.IsAvailable
+                            ? "https://schema.org/InStock"
+                            : "https://schema.org/OutOfStock"
+                    }
+                };
+
+                ViewBag.ProductStructuredDataProductId = productSeoData.Id;
+                ViewBag.ProductStructuredDataJson = JsonConvert.SerializeObject(
+                    productStructuredData,
+                    Formatting.None,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        StringEscapeHandling = StringEscapeHandling.EscapeHtml
+                    });
+            }
             ViewBag.NoCopy = _env.IsProduction() && NoCopyItem != null && NoCopyItem.value != null && NoCopyItem.value.Count > 0 && NoCopyItem.value[0] == "1" ? "no-right-click" : "";
             ViewData["google.translate"] = model.storeSet.GoogleTranslate;
             ViewData["CurrentUrl"] = model.PageData.CurrentUrl;

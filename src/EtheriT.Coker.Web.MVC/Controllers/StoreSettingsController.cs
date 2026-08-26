@@ -18,7 +18,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             var response = await _storeSetAppService.getAll(new List<long> { 2 });
             response.StoreSetGroupId = 2;
             ViewData["Title"] = "StoreSet";
-            return View("~/Views/SystemManagement/SEO.cshtml", response);
+            return View("Index", response);
         }
         public async Task<IActionResult> PaymentSettings()
         {

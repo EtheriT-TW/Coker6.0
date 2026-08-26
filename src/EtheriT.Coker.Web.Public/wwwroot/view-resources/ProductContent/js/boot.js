@@ -36,6 +36,8 @@
         cloneTemplate,
         formatPriceText,
         buildPriceSummary,
+        buildPriceViewModel,
+        buildPriceBaseViewModel,
         resolveText,
         isStockAvailable,
         clampQuantity,

@@ -1,0 +1,115 @@
+@using EtheriT.Coker.Application.Dto.StoreSet
+@model StoreSetResponseMessageDto
+
+<link rel="stylesheet" href="~/css/StoreSettings/Index.min.css" asp-append-version="true" />
+<script src="~/js/SystemManagement/SEOSetting.min.js" asp-append-version="true"></script>
+
+@{
+    var settings = Model.storeGroups?
+        .SelectMany(group => group.storeSets ?? new List<StoreSetOutputDto>())
+        .ToList() ?? new List<StoreSetOutputDto>();
+
+    var sections = new[]
+    {
+        new
+        {
+            Title = "商品與價格",
+            Description = "管理商品販售方式、幣別、價格排序與商品頁版型。",
+            Keys = new[] { "storeBuyState", "priceCurrency", "priceOrder", "ProductPageLayout" }
+        },
+        new
+        {
+            Title = "商品頁與連結",
+            Description = "設定商品頁延伸連結與購物車返回商品目錄的位置。",
+            Keys = new[] { "linkMore", "prodCatalog" }
+        },
+        new
+        {
+            Title = "結帳與發票",
+            Description = "管理結帳提醒、發票開立及可使用的發票載具。",
+            Keys = new[] { "storeMemo", "HasInvoice", "ExtraInviiceCarrier" }
+        }
+    };
+
+    var classifiedKeys = sections
+        .SelectMany(settingSection => settingSection.Keys)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    var otherSettings = settings
+        .Where(setting => !classifiedKeys.Contains(setting.key))
+        .ToList();
+}
+
+<div id="TopLine" class="d-flex justify-content-between align-items-center mb-3 px-4">
+    <div>
+        <h1 class="title fw-bold fs-3 mb-1">商店設定</h1>
+        <p class="text-muted mb-0">管理商品顯示、價格與結帳相關設定。</p>
+    </div>
+</div>
+
+<div id="StoreSettingsMain" class="px-4 pb-4">
+    @if (!Model.Success)
+    {
+        <div class="alert alert-danger" role="alert">商店設定載入失敗。</div>
+    }
+    else
+    {
+        <form id="StoreSet" class="needs-validation" data-groupid="@Model.StoreSetGroupId" novalidate>
+            @foreach (var settingSection in sections)
+            {
+                var sectionSettings = settingSection.Keys
+                    .Select(key => settings.FirstOrDefault(setting =>
+                        string.Equals(setting.key, key, StringComparison.OrdinalIgnoreCase)))
+                    .Where(setting => setting != null)
+                    .ToList();
+
+                if (sectionSettings.Count == 0)
+                {
+                    continue;
+                }
+
+                <section class="store-settings-section card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <div class="border-bottom pb-3 mb-4">
+                            <h2 class="h5 fw-bold mb-1">@settingSection.Title</h2>
+                            <p class="text-muted mb-0">@settingSection.Description</p>
+                        </div>
+
+                        <div class="row g-4">
+                            @foreach (var setting in sectionSettings)
+                            {
+                                <div class="@(setting!.type == EtheriT.Coker.Application.Shared.Dto.enumType.SeoSetDataTypeEnum.textarea ? "col-12" : "col-12 col-xl-6")">
+                                    <partial name="_SettingField" model="setting" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </section>
+            }
+
+            @if (otherSettings.Count > 0)
+            {
+                <section class="store-settings-section card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <div class="border-bottom pb-3 mb-4">
+                            <h2 class="h5 fw-bold mb-1">其他設定</h2>
+                            <p class="text-muted mb-0">尚未分類的商店設定會自動顯示於此處。</p>
+                        </div>
+
+                        <div class="row g-4">
+                            @foreach (var setting in otherSettings)
+                            {
+                                <div class="@(setting.type == EtheriT.Coker.Application.Shared.Dto.enumType.SeoSetDataTypeEnum.textarea ? "col-12" : "col-12 col-xl-6")">
+                                    <partial name="_SettingField" model="setting" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </section>
+            }
+
+            <div class="store-settings-actions sticky-bottom d-flex justify-content-end py-3">
+                <button class="btn btn-danger px-5" type="submit">儲存設定</button>
+            </div>
+        </form>
+    }
+</div>

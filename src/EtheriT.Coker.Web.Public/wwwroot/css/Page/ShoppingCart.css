@@ -1707,7 +1707,7 @@ input[type="number"] {
 }
 
     #PaymentData > .pay_info > div > div > div > .paid_amount::before {
-        content: 'NT$\00a0';
+        content: var(--currency-symbol, 'NT$') '\00a0';
     }
 
 #PaymentData > .pay_info > div > div > .paid_date > span {

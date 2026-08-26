@@ -23,6 +23,11 @@
     padding: .875rem 0; /* 只留上下間距，左右貼齊 */
 }
 
+.spec-card.is-selected {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
     .spec-card:not(:last-child) {
         border-bottom: 1px solid #e5e5e5;
     }

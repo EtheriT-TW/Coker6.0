@@ -111,4 +111,15 @@
     });
 
     cart.Utils = cart.Utils || {};
+
+    cart.Utils.formatMoney = function (value) {
+        var amount = Number(String(value == null ? 0 : value).replaceAll(",", ""));
+        if (!Number.isFinite(amount)) return "";
+
+        if (window.CokerCurrency && typeof window.CokerCurrency.format === "function") {
+            return window.CokerCurrency.format(amount);
+        }
+
+        return `NT$${amount.toLocaleString()}`;
+    };
 })(window, window.jQuery);

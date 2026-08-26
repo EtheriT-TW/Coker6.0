@@ -29,6 +29,7 @@
                 priceId: null,
                 quantity: 1
             };
+            this.initialStockMatched = false;
             this.bootstrap();
         }
 
@@ -85,17 +86,31 @@
         bootstrap() {
             if (this.stocks.length === 0) return;
 
-            const firstAvailable = this.stocks.find(x => !this.canShop || x.canPurchase === true) || this.stocks[0];
+            const requestedStockId = normalizeNullableInt(this.options.initialStockId, 0);
+            const requestedStock = requestedStockId > 0
+                ? this.stocks.find(stock => stock.id === requestedStockId)
+                : null;
+            this.initialStockMatched = requestedStock != null;
+
+            const firstAvailable = requestedStock
+                || this.stocks.find(x => !this.canShop || x.canPurchase === true)
+                || this.stocks[0];
+
+            this.applyStock(firstAvailable);
+        }
+
+        applyStock(stock) {
+            if (!stock) return false;
 
             if (this.specMode === 'none') {
                 this.current.s1 = 0;
                 this.current.s2 = 0;
             } else if (this.specMode === 'single') {
-                this.current.s1 = firstAvailable.s1id;
+                this.current.s1 = stock.s1id;
                 this.current.s2 = 0;
             } else {
-                this.current.s1 = firstAvailable.s1id;
-                this.current.s2 = firstAvailable.s2id;
+                this.current.s1 = stock.s1id;
+                this.current.s2 = stock.s2id;
             }
 
             const activeStock = this.getActiveStock();
@@ -106,6 +121,14 @@
                     ? activeStock.minQty
                     : 0;
             }
+
+            return activeStock != null;
+        }
+
+        selectStock(stockId) {
+            const normalizedStockId = normalizeNullableInt(stockId, 0);
+            const stock = this.stocks.find(item => item.id === normalizedStockId);
+            return this.applyStock(stock);
         }
 
         getSpec1Options() {

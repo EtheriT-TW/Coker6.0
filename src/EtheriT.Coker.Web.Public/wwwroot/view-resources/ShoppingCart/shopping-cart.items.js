@@ -63,7 +63,7 @@ function updateGroupSelectedSubtotal($group) {
             sum += Number($li.find('[data-key="subtotal"]').data('subtotal') || 0);
         }
     });
-    $group.find('.js-group-subtotal').attr('data-subtotal', sum).text(`$${sum.toLocaleString()}`);
+    $group.find('.js-group-subtotal').attr('data-subtotal', sum).text(sum.toLocaleString());
     cart.Items.syncHeaderCheckbox($group);
 }
 function syncAdditionalSelection($group) {
@@ -80,7 +80,7 @@ function clearOtherGroupsExcept($group) {
         const $g = $(this);
         $g.find('.js-group-check').prop({ checked: false, indeterminate: false });
         $g.find('input[name="buyItems"]').prop('checked', false);
-        $g.find('.js-group-subtotal').attr('data-subtotal', 0).text('$0');
+        $g.find('.js-group-subtotal').attr('data-subtotal', 0).text('0');
         $g.find('.js-selected-count').text(0);
     });
 }
@@ -265,7 +265,7 @@ function renderCartGroups(result) {
             cart.Items.CartListAdd(row, $groupItems);
         });
         // 初始化本組已選小計/件數
-        $group.find('.js-group-subtotal').attr('data-subtotal', 0).text('$0');
+        $group.find('.js-group-subtotal').attr('data-subtotal', 0).text('0');
         $group.find('.js-group-check').prop('indeterminate', false);
         $group.find('.js-selected-count').text(0);
 
@@ -283,8 +283,8 @@ function updateOverallSubtotal() {
     $('#Step1 .purchase_list .purchase_group_header [data-field="subtotal"]').each(function () {
         sum += Number($(this).attr('data-subtotal') || 0);
     });
-    $('#Step1 [data-key="subtotal"].subtotal').text(`$${sum.toLocaleString()}`);
-    $('#Step1 [data-key="total"].subtotal').text(`$${sum.toLocaleString()}`);
+    $('#Step1 [data-key="subtotal"].subtotal').text(sum.toLocaleString());
+    $('#Step1 [data-key="total"].subtotal').text(sum.toLocaleString());
 }
 function CartInit(result) {
     $("#Step1 > .card-body").removeClass("d-none");
@@ -741,12 +741,12 @@ function CartListInsert($frame, data) {
 
                     if (oldBonus > 0) {
                         if (original > 0) {
-                            oldText = `$${original.toLocaleString()} + 紅利${oldBonus.toLocaleString()}`;
+                            oldText = `${cart.Utils.formatMoney(original)} + 紅利${oldBonus.toLocaleString()}`;
                         } else {
                             oldText = `紅利${oldBonus.toLocaleString()}`;
                         }
                     } else {
-                        oldText = `$${original.toLocaleString()}`;
+                        oldText = cart.Utils.formatMoney(original);
                     }
 
                     $self.removeClass("d-none");
@@ -776,7 +776,7 @@ function CartListInsert($frame, data) {
                     var bonus = Number(data.bonus || 0);
 
                     var cashText = unitPrice > 0
-                        ? `$${unitPrice.toLocaleString()}`
+                        ? cart.Utils.formatMoney(unitPrice)
                         : "";
 
                     if (data.priceLabel != null && cashText) {
@@ -795,7 +795,7 @@ function CartListInsert($frame, data) {
                     var sub_bonus = Number(data.bonus || 0) * qty;
 
                     var cashText = sub_price > 0
-                        ? `$${sub_price.toLocaleString()}`
+                        ? cart.Utils.formatMoney(sub_price)
                         : "";
 
                     cart.Pricing.setCartPriceBlock($self, cashText, sub_bonus, "block");
@@ -849,7 +849,7 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
         self.data("subtotal_bonus", sub_bonus);
 
         var cashText = sub_price > 0
-            ? `$${sub_price.toLocaleString()}`
+            ? cart.Utils.formatMoney(sub_price)
             : "";
 
         cart.Pricing.setCartPriceBlock(self, cashText, sub_bonus);

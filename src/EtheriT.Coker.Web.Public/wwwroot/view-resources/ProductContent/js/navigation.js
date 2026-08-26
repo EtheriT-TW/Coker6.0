@@ -647,6 +647,10 @@
         const settings = $.extend({ pushState: true, scroll: true }, options || {});
         if (!productId || String(productId) === String(this.state.productId)) return null;
 
+        const targetUrl = new URL(url, window.location.href);
+        targetUrl.searchParams.delete('psid');
+        url = targetUrl.href;
+
         if (this.pendingRequest && typeof this.pendingRequest.abort === 'function') {
             this.pendingRequest.abort();
         }
@@ -690,7 +694,7 @@
             .removeAttr('aria-label')
             .removeData('previewTitle')
             .children('.product-switch-preview').remove();
-        const shareHref = window.location.pathname;
+        const shareHref = window.location.pathname + window.location.search;
         this.$pageRoot.find('.shareBlock').each(function () {
             const $share = $(this);
             $share.find('a[data-icon]').off().remove();

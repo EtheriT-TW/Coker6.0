@@ -102,10 +102,10 @@ function TotalCount() {
     const allowsFullProductRedemption = Number(MaxRedemptionPercent) >= 100;
     const redemptionLimitText = allowsFullProductRedemption
         ? (hasMaximumDiscount
-            ? `單筆折抵上限 $${maximumDiscountAmount.toLocaleString()}`
+            ? `單筆折抵上限 ${cart.Utils.formatMoney(maximumDiscountAmount)}`
             : "商品金額可全額折抵")
         : (hasMaximumDiscount
-            ? `折抵上限 ${MaxRedemptionPercent}%，單筆上限 $${maximumDiscountAmount.toLocaleString()}`
+            ? `折抵上限 ${MaxRedemptionPercent}%，單筆上限 ${cart.Utils.formatMoney(maximumDiscountAmount)}`
             : `折抵上限 ${MaxRedemptionPercent}%`);
 
     let allBonus = Number(bonus || 0);
@@ -129,7 +129,7 @@ function TotalCount() {
             const diff = MinOrderForRedemption - payableSubtotal;
 
             $redeemRuleText.text(
-                `再消費 $${diff.toLocaleString()} 可使用紅利折抵（${redemptionLimitText}）`
+                `再消費 ${cart.Utils.formatMoney(diff)} 可使用紅利折抵（${redemptionLimitText}）`
             );
 
             $bonusRuleLine.removeClass("d-none");
@@ -230,15 +230,15 @@ function TotalCount() {
     function buildBonusEarnRuleText() {
         if (fixedPointsReward) {
             if (RewardFixedPointsCumulative) {
-                return `每滿 $${Number(MinOrderForEarnPoints || 0).toLocaleString()}，` +
+                return `每滿 ${cart.Utils.formatMoney(MinOrderForEarnPoints)}，` +
                     `贈送 ${Number(RewardFixedPoints || 0).toLocaleString()} 點紅利，運費不計。`;
             }
 
-            return `商品滿 $${Number(MinOrderForEarnPoints || 0).toLocaleString()}，` +
+            return `商品滿 ${cart.Utils.formatMoney(MinOrderForEarnPoints)}，` +
                 `固定贈送 ${Number(RewardFixedPoints || 0).toLocaleString()} 點紅利，運費不計。`;
         }
 
-        return `商品滿 $${Number(MinOrderForEarnPoints || 0).toLocaleString()}，` +
+        return `商品滿 ${cart.Utils.formatMoney(MinOrderForEarnPoints)}，` +
             `依折抵後商品金額 ${Number(RewardRatePercent || 0).toLocaleString()}% 回饋，運費不計。`;
     }
 
@@ -250,7 +250,7 @@ function TotalCount() {
 
         $rewardRow.removeClass("d-none");
         $earnText.html(
-            `<span class="bonus-earn-main">再消費 $${diff.toLocaleString()} 可獲得紅利回饋</span>` +
+            `<span class="bonus-earn-main">再消費 ${cart.Utils.formatMoney(diff)} 可獲得紅利回饋</span>` +
             `<span class="bonus-earn-rule d-block">${buildBonusEarnRuleText()}</span>`
         );
     } else {

@@ -49,6 +49,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.ServiceModel.Channels;
+using System.Text.RegularExpressions;
 using System.Web;
 using static DevExpress.XtraPrinting.Native.ExportOptionsPropertiesNames;
 
@@ -2443,8 +2444,7 @@ namespace EtheriT.Coker.Application.Product
                         var sanitized = await EnsureProductDisplayContentSanitizedAsync(prod);
                         result.Id = (int)prod.Id;
                         result.Title = prod.Title;
-                        result.Description = !string.IsNullOrEmpty(prod.Description) ? prod.Description :
-                                                !string.IsNullOrEmpty(prod.Introduction) ? prod.Introduction : htmlProcessor.text(stringHandler.HtmlDecode(prod.Html));
+                        result.Description = BuildProductSeoDescription(prod);
                         var images = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { Sid = prod.Id, Type = (int)FileBindTypeEnum.產品, Size = 1 });
                         if (images.Count > 0)
                         {
@@ -2462,6 +2462,202 @@ namespace EtheriT.Coker.Application.Product
             {
             }
             return result;
+        }
+
+        public async Task<ProductSeoDataDto?> GetSeoData(
+            ProdGetFrontContenInputDto dto,
+            bool orderLowToHigh)
+        {
+            var websiteId = dto.siteId != 0
+                ? dto.siteId
+                : configuration.GetValue<long>("WebConfig:SiteId");
+            var product = await db.Prods
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e =>
+                    e.Id == dto.prodId &&
+                    e.FK_WebsiteId == websiteId &&
+                    !e.IsDeleted &&
+                    !e.RemovedFromShelves);
+
+            if (product == null)
+            {
+                return null;
+            }
+
+            var now = DateTime.Now;
+            var stocks = await db.Prod_Stocks
+                .AsNoTracking()
+                .Where(e => e.FK_Pid == product.Id && !e.IsDeleted && !e.IsTimePrice)
+                .ToListAsync();
+
+            var stockIds = stocks.Select(e => e.Id).ToList();
+            var publicPrices = stockIds.Count == 0
+                ? new List<Prod_Price>()
+                : await db.Prod_Prices
+                    .AsNoTracking()
+                    .Where(e =>
+                        stockIds.Contains(e.FK_PSId) &&
+                        !e.IsDeleted &&
+                        (e.FK_RId == 1 || e.FK_RId == 0) &&
+                        (e.Bonus ?? 0) == 0 &&
+                        (e.Price ?? 0) > 0)
+                    .ToListAsync();
+
+            var candidates = stocks
+                .Select(stock => new
+                {
+                    Stock = stock,
+                    Price = publicPrices
+                        .Where(e => e.FK_PSId == stock.Id)
+                        .OrderBy(e => e.FK_RId == 1 ? 0 : 1)
+                        .ThenBy(e => e.Price)
+                        .ThenBy(e => e.Id)
+                        .FirstOrDefault()
+                })
+                .Where(e => e.Price?.Price != null)
+                .Select(e => new
+                {
+                    e.Stock,
+                    Price = e.Price!.Price!.Value,
+                    IsAvailable = ProductPurchasePolicy.CanPurchaseStock(
+                        product,
+                        e.Stock,
+                        hasPrice: true,
+                        now)
+                })
+                .ToList();
+
+            // 有可購買規格時，SEO 價格只從可購買規格中選；全部售完時仍保留公開價格並標為 OutOfStock。
+            var availableCandidates = candidates.Where(e => e.IsAvailable).ToList();
+            var priceCandidates = availableCandidates.Count > 0
+                ? availableCandidates
+                : candidates;
+            var selected = orderLowToHigh
+                ? priceCandidates
+                    .OrderBy(e => e.Price)
+                    .ThenBy(e => e.Stock.Ser_No)
+                    .ThenBy(e => e.Stock.Id)
+                    .FirstOrDefault()
+                : priceCandidates
+                    .OrderByDescending(e => e.Price)
+                    .ThenBy(e => e.Stock.Ser_No)
+                    .ThenBy(e => e.Stock.Id)
+                    .FirstOrDefault();
+
+            return new ProductSeoDataDto
+            {
+                Id = product.Id,
+                Title = product.Title ?? string.Empty,
+                ItemNo = product.ItemNo,
+                PublicPrice = selected?.Price,
+                IsAvailable = selected?.IsAvailable == true
+            };
+        }
+
+        private string BuildProductSeoDescription(Prod prod)
+        {
+            var title = NormalizeSeoText(htmlProcessor.text(stringHandler.HtmlDecode(prod.Title ?? "")));
+            var description = NormalizeSeoText(htmlProcessor.text(stringHandler.HtmlDecode(prod.Description ?? "")));
+
+            if (!IsWeakSeoDescription(description, title))
+            {
+                return description;
+            }
+
+            var introduction = NormalizeSeoText(htmlProcessor.text(stringHandler.HtmlDecode(prod.Introduction ?? "")));
+            var parts = new List<string>();
+            AddDistinctSeoPart(parts, title);
+            AddDistinctSeoPart(parts, description);
+            AddDistinctSeoPart(parts, introduction);
+
+            var separator = parts.Any(ContainsCjkText) ? "。" : ". ";
+            var generated = string.Join(separator, parts);
+
+            if (IsWeakSeoDescription(generated, title))
+            {
+                var pageText = NormalizeSeoText(htmlProcessor.text(stringHandler.HtmlDecode(prod.Html ?? "")));
+                AddDistinctSeoPart(parts, pageText);
+                generated = string.Join(separator, parts);
+            }
+
+            return TruncateSeoDescription(generated, 200);
+        }
+
+        private static bool IsWeakSeoDescription(string description, string title)
+        {
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                return true;
+            }
+
+            if (NormalizeSeoComparisonText(description) == NormalizeSeoComparisonText(title))
+            {
+                return true;
+            }
+
+            if (ContainsCjkText(description))
+            {
+                return description.Count(char.IsLetterOrDigit) < 20;
+            }
+
+            return Regex.Matches(
+                description,
+                @"[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*"
+            ).Count < 8;
+        }
+
+        private static bool ContainsCjkText(string value)
+        {
+            return Regex.IsMatch(
+                value ?? "",
+                @"[\u3400-\u4DBF\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF]"
+            );
+        }
+
+        private static string NormalizeSeoText(string value)
+        {
+            return Regex.Replace(value ?? "", @"\s+", " ").Trim();
+        }
+
+        private static string NormalizeSeoComparisonText(string value)
+        {
+            return new string((value ?? "")
+                .Where(char.IsLetterOrDigit)
+                .Select(char.ToLowerInvariant)
+                .ToArray());
+        }
+
+        private static void AddDistinctSeoPart(List<string> parts, string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return;
+            }
+
+            var normalizedValue = NormalizeSeoComparisonText(value);
+            if (parts.Any(part => NormalizeSeoComparisonText(part) == normalizedValue))
+            {
+                return;
+            }
+
+            parts.Add(value.Trim().TrimEnd('。', '.', '，', ',', '；', ';'));
+        }
+
+        private static string TruncateSeoDescription(string value, int maximumLength)
+        {
+            if (string.IsNullOrEmpty(value) || value.Length <= maximumLength)
+            {
+                return value;
+            }
+
+            var truncated = value.Substring(0, maximumLength).TrimEnd();
+            var lastBoundary = truncated.LastIndexOfAny(new[] { ' ', '。', '，', ',', '；', ';' });
+            if (lastBoundary >= maximumLength / 2)
+            {
+                truncated = truncated.Substring(0, lastBoundary).TrimEnd();
+            }
+
+            return truncated;
         }
 
         private Task<HtmlSanitizeResult> SanitizeProductPublishedContentAsync(

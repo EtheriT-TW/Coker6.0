@@ -2527,6 +2527,108 @@ namespace EtheriT.Coker.Application.Product
                 })
                 .ToList();
 
+            var specIds = stocks
+                .SelectMany(e => new long?[] { e.FK_S1id, e.FK_S2id })
+                .Where(e => e.HasValue && e.Value > 0)
+                .Select(e => e!.Value)
+                .Distinct()
+                .ToList();
+            var specOptionMap = new Dictionary<long, ProductSeoVariantOptionDto>();
+            if (specIds.Count > 0)
+            {
+                var specOptionRows = await (
+                    from spec in db.Prod_Specs.AsNoTracking()
+                    join specType in db.Prod_Spec_Types.AsNoTracking()
+                        on spec.FK_Tid equals specType.Id
+                    where specIds.Contains(spec.Id)
+                        && !spec.IsDeleted
+                        && !specType.IsDeleted
+                        && specType.FK_WebsiteId == websiteId
+                    select new
+                    {
+                        spec.Id,
+                        TypeName = specType.Type,
+                        Value = spec.Title,
+                        specType.SeoVariantProperty
+                    })
+                    .ToListAsync();
+                specOptionMap = specOptionRows.ToDictionary(
+                    e => e.Id,
+                    e => new ProductSeoVariantOptionDto
+                    {
+                        TypeName = e.TypeName,
+                        Value = e.Value,
+                        SeoVariantProperty = e.SeoVariantProperty
+                    });
+            }
+
+            var specImageMap = new Dictionary<long, string>();
+            if (stockIds.Count > 0)
+            {
+                var imageRows = await (
+                    from bind in db.FileBinds.AsNoTracking()
+                    join file in db.FileUploads.AsNoTracking()
+                        on bind.FK_FileUploadId equals file.Id
+                    where stockIds.Contains(bind.Sid)
+                        && bind.type == (int)FileBindTypeEnum.產品規格圖
+                        && bind.IsVisible
+                        && !bind.IsDeleted
+                        && !file.IsDeleted
+                        && file.FK_WebsiteId == websiteId
+                        && file.ContentType != null
+                        && file.ContentType.StartsWith("image/")
+                    orderby bind.SerNo, bind.Id
+                    select new
+                    {
+                        StockId = bind.Sid,
+                        bind.MediaLink,
+                        file.DownloadFileName
+                    })
+                    .ToListAsync();
+                var orgName = await loginUserData.GetWebsiteOrgName();
+                specImageMap = imageRows
+                    .Select(e => new
+                    {
+                        e.StockId,
+                        Path = stringHandler.ResolveFrontUploadPath(
+                            string.IsNullOrWhiteSpace(e.MediaLink)
+                                ? e.DownloadFileName ?? string.Empty
+                                : e.MediaLink,
+                            orgName)
+                    })
+                    .Where(e => !string.IsNullOrWhiteSpace(e.Path))
+                    .GroupBy(e => e.StockId)
+                    .ToDictionary(e => e.Key, e => e.First().Path);
+            }
+
+            var variants = new List<ProductSeoVariantDto>();
+            foreach (var candidate in candidates
+                .OrderBy(e => e.Stock.Ser_No)
+                .ThenBy(e => e.Stock.Id))
+            {
+                var options = new List<ProductSeoVariantOptionDto>();
+                if (candidate.Stock.FK_S1id is long spec1Id &&
+                    specOptionMap.TryGetValue(spec1Id, out var spec1Option))
+                {
+                    options.Add(spec1Option);
+                }
+                if (candidate.Stock.FK_S2id is long spec2Id &&
+                    specOptionMap.TryGetValue(spec2Id, out var spec2Option))
+                {
+                    options.Add(spec2Option);
+                }
+
+                variants.Add(new ProductSeoVariantDto
+                {
+                    StockId = candidate.Stock.Id,
+                    SubItemNo = candidate.Stock.SubItemNo,
+                    PublicPrice = candidate.Price,
+                    IsAvailable = candidate.IsAvailable,
+                    ImageUrl = specImageMap.GetValueOrDefault(candidate.Stock.Id),
+                    Options = options
+                });
+            }
+
             // 有可購買規格時，SEO 價格只從可購買規格中選；全部售完時仍保留公開價格並標為 OutOfStock。
             var availableCandidates = candidates.Where(e => e.IsAvailable).ToList();
             var priceCandidates = availableCandidates.Count > 0
@@ -2550,7 +2652,8 @@ namespace EtheriT.Coker.Application.Product
                 Title = product.Title ?? string.Empty,
                 ItemNo = product.ItemNo,
                 PublicPrice = selected?.Price,
-                IsAvailable = selected?.IsAvailable == true
+                IsAvailable = selected?.IsAvailable == true,
+                Variants = variants
             };
         }
 

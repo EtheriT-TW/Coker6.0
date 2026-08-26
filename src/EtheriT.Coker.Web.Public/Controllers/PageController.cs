@@ -13,6 +13,7 @@ using EtheriT.Coker.Application.Shared.Currency;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
 using EtheriT.Coker.Application.Shared.Dto.Files;
@@ -686,26 +687,14 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     ? null
                     : new Uri(rootUri, model.PageData.ImageUrl.TrimStart('/')).AbsoluteUri;
 
-                var productStructuredData = new Dictionary<string, object?>
-                {
-                    ["@context"] = "https://schema.org",
-                    ["@type"] = "Product",
-                    ["name"] = productSeoData.Title,
-                    ["url"] = canonicalUrl,
-                    ["description"] = model.PageData.Description,
-                    ["image"] = productImageUrl == null ? null : new[] { productImageUrl },
-                    ["sku"] = string.IsNullOrWhiteSpace(productSeoData.ItemNo) ? null : productSeoData.ItemNo,
-                    ["offers"] = new Dictionary<string, object?>
-                    {
-                        ["@type"] = "Offer",
-                        ["url"] = canonicalUrl,
-                        ["priceCurrency"] = priceCurrency.Code,
-                        ["price"] = productSeoData.PublicPrice.Value.ToString("0.################", CultureInfo.InvariantCulture),
-                        ["availability"] = productSeoData.IsAvailable
-                            ? "https://schema.org/InStock"
-                            : "https://schema.org/OutOfStock"
-                    }
-                };
+                var productStructuredData = BuildProductStructuredData(
+                    productSeoData,
+                    canonicalUrl,
+                    rootUri,
+                    productImageUrl,
+                    model.PageData.Description,
+                    priceCurrency.Code);
+                RemoveNullStructuredDataValues(productStructuredData);
 
                 ViewBag.ProductStructuredDataProductId = productSeoData.Id;
                 ViewBag.ProductStructuredDataJson = JsonConvert.SerializeObject(
@@ -765,6 +754,304 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     return View(view, model);
             }
         }
+
+        private static Dictionary<string, object?> BuildProductStructuredData(
+            ProductSeoDataDto product,
+            string canonicalUrl,
+            Uri rootUri,
+            string? productImageUrl,
+            string? description,
+            string priceCurrency)
+        {
+            var hasCompleteVariants = product.Variants.Count > 1 &&
+                product.Variants.All(e => e.Options.Count > 0);
+            if (!hasCompleteVariants)
+            {
+                return new Dictionary<string, object?>
+                {
+                    ["@context"] = "https://schema.org",
+                    ["@type"] = "Product",
+                    ["@id"] = $"{canonicalUrl}#product",
+                    ["name"] = product.Title,
+                    ["url"] = canonicalUrl,
+                    ["description"] = description,
+                    ["image"] = productImageUrl == null ? null : new[] { productImageUrl },
+                    ["sku"] = string.IsNullOrWhiteSpace(product.ItemNo) ? null : product.ItemNo,
+                    ["offers"] = BuildProductOffer(
+                        canonicalUrl,
+                        product.PublicPrice!.Value,
+                        product.IsAvailable,
+                        priceCurrency)
+                };
+            }
+
+            var variantSemanticValues = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+            var hasVariant = new List<Dictionary<string, object?>>();
+            foreach (var variant in product.Variants)
+            {
+                var variantUrl = $"{canonicalUrl}?psid={variant.StockId.ToString(CultureInfo.InvariantCulture)}";
+                var optionValues = variant.Options
+                    .Select(e => e.Value?.Trim())
+                    .Where(e => !string.IsNullOrWhiteSpace(e))
+                    .Select(e => e!)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                var optionDescription = string.Join(
+                    "、",
+                    variant.Options
+                        .Where(e => !string.IsNullOrWhiteSpace(e.Value))
+                        .Select(e => string.IsNullOrWhiteSpace(e.TypeName)
+                            ? e.Value.Trim()
+                            : $"{e.TypeName.Trim()}：{e.Value.Trim()}"));
+                var variantImageUrl = ResolveStructuredDataImage(rootUri, variant.ImageUrl) ?? productImageUrl;
+                var variantData = new Dictionary<string, object?>
+                {
+                    ["@type"] = "Product",
+                    ["@id"] = $"{variantUrl}#product",
+                    ["name"] = optionValues.Count == 0
+                        ? product.Title
+                        : $"{product.Title}－{string.Join("／", optionValues)}",
+                    ["url"] = variantUrl,
+                    ["description"] = string.IsNullOrWhiteSpace(optionDescription)
+                        ? description
+                        : string.IsNullOrWhiteSpace(description)
+                            ? optionDescription
+                            : $"{description}；{optionDescription}",
+                    ["image"] = variantImageUrl == null ? null : new[] { variantImageUrl },
+                    ["sku"] = string.IsNullOrWhiteSpace(variant.SubItemNo) ? null : variant.SubItemNo,
+                    ["offers"] = BuildProductOffer(
+                        variantUrl,
+                        variant.PublicPrice,
+                        variant.IsAvailable,
+                        priceCurrency)
+                };
+
+                foreach (var option in variant.Options)
+                {
+                    var semanticProperty = ApplyVariantSemanticProperty(variantData, option);
+                    if (semanticProperty.HasValue)
+                    {
+                        if (!variantSemanticValues.TryGetValue(
+                            semanticProperty.Value.PropertyUrl,
+                            out var values))
+                        {
+                            values = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                            variantSemanticValues[semanticProperty.Value.PropertyUrl] = values;
+                        }
+                        values.Add(semanticProperty.Value.Value);
+                    }
+                }
+
+                hasVariant.Add(variantData);
+            }
+
+            var variesBy = variantSemanticValues
+                .Where(e => e.Value.Count > 1)
+                .Select(e => e.Key)
+                .ToArray();
+
+            return new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "ProductGroup",
+                ["@id"] = $"{canonicalUrl}#product-group",
+                ["name"] = product.Title,
+                ["url"] = canonicalUrl,
+                ["description"] = description,
+                ["image"] = productImageUrl == null ? null : new[] { productImageUrl },
+                ["productGroupID"] = string.IsNullOrWhiteSpace(product.ItemNo)
+                    ? product.Id.ToString(CultureInfo.InvariantCulture)
+                    : product.ItemNo,
+                ["variesBy"] = variesBy.Length == 0 ? null : variesBy,
+                ["hasVariant"] = hasVariant
+            };
+        }
+
+        private static void RemoveNullStructuredDataValues(object? value)
+        {
+            if (value is IDictionary<string, object?> dictionary)
+            {
+                var nullKeys = dictionary
+                    .Where(e => e.Value == null)
+                    .Select(e => e.Key)
+                    .ToList();
+                foreach (var key in nullKeys)
+                {
+                    dictionary.Remove(key);
+                }
+
+                foreach (var child in dictionary.Values)
+                {
+                    RemoveNullStructuredDataValues(child);
+                }
+                return;
+            }
+
+            if (value is System.Collections.IEnumerable items && value is not string)
+            {
+                foreach (var item in items)
+                {
+                    RemoveNullStructuredDataValues(item);
+                }
+            }
+        }
+
+        private static Dictionary<string, object?> BuildProductOffer(
+            string url,
+            decimal price,
+            bool isAvailable,
+            string priceCurrency)
+            => new()
+            {
+                ["@type"] = "Offer",
+                ["url"] = url,
+                ["priceCurrency"] = priceCurrency,
+                ["price"] = price.ToString("0.################", CultureInfo.InvariantCulture),
+                ["availability"] = isAvailable
+                    ? "https://schema.org/InStock"
+                    : "https://schema.org/OutOfStock"
+            };
+
+        private static (string PropertyUrl, string Value)? ApplyVariantSemanticProperty(
+            Dictionary<string, object?> variant,
+            ProductSeoVariantOptionDto option)
+        {
+            var value = option.Value?.Trim();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            var propertyName = option.SeoVariantProperty switch
+            {
+                SeoVariantPropertyEnum.Color => "color",
+                SeoVariantPropertyEnum.Size => "size",
+                SeoVariantPropertyEnum.Material => "material",
+                SeoVariantPropertyEnum.Pattern => "pattern",
+                _ => null
+            };
+            if (propertyName != null)
+            {
+                // 同一變體若誤設兩個相同語意，保留第一個值，避免輸出互相矛盾的資料。
+                if (!variant.ContainsKey(propertyName))
+                {
+                    variant[propertyName] = value;
+                    return ($"https://schema.org/{propertyName}", value);
+                }
+                return null;
+            }
+
+            if (option.SeoVariantProperty == SeoVariantPropertyEnum.SuggestedGender &&
+                TryNormalizeSuggestedGender(value, out var suggestedGender))
+            {
+                GetOrCreateAudience(variant)["suggestedGender"] = suggestedGender;
+                return ("https://schema.org/suggestedGender", suggestedGender);
+            }
+
+            if (option.SeoVariantProperty == SeoVariantPropertyEnum.SuggestedAge &&
+                TryBuildSuggestedAge(value, out var suggestedAge, out var normalizedAge))
+            {
+                GetOrCreateAudience(variant)["suggestedAge"] = suggestedAge;
+                return ("https://schema.org/suggestedAge", normalizedAge);
+            }
+
+            return null;
+        }
+
+        private static Dictionary<string, object?> GetOrCreateAudience(
+            Dictionary<string, object?> variant)
+        {
+            if (variant.TryGetValue("audience", out var existing) &&
+                existing is Dictionary<string, object?> audience)
+            {
+                return audience;
+            }
+
+            audience = new Dictionary<string, object?>
+            {
+                ["@type"] = "PeopleAudience"
+            };
+            variant["audience"] = audience;
+            return audience;
+        }
+
+        private static bool TryNormalizeSuggestedGender(string value, out string normalized)
+        {
+            var key = Regex.Replace(value.Trim().ToLowerInvariant(), @"[\s_\-－]+", string.Empty);
+            normalized = key switch
+            {
+                "male" or "man" or "men" or "男" or "男性" or "男款" => "https://schema.org/Male",
+                "female" or "woman" or "women" or "女" or "女性" or "女款" => "https://schema.org/Female",
+                "unisex" or "中性" or "男女適用" or "男女通用" => "Unisex",
+                _ => string.Empty
+            };
+            return normalized.Length > 0;
+        }
+
+        private static bool TryBuildSuggestedAge(
+            string value,
+            out Dictionary<string, object?> suggestedAge,
+            out string normalizedAge)
+        {
+            var key = Regex.Replace(value.Trim().ToLowerInvariant(), @"[\s_\-－]+", string.Empty);
+            decimal? minValue = null;
+            decimal? maxValue = null;
+            switch (key)
+            {
+                case "newborn":
+                case "新生兒":
+                    minValue = 0m;
+                    maxValue = 0.25m;
+                    break;
+                case "infant":
+                case "嬰兒":
+                    minValue = 0.25m;
+                    maxValue = 1m;
+                    break;
+                case "toddler":
+                case "幼兒":
+                    minValue = 1m;
+                    maxValue = 5m;
+                    break;
+                case "kids":
+                case "kid":
+                case "children":
+                case "兒童":
+                case "孩童":
+                    minValue = 5m;
+                    maxValue = 13m;
+                    break;
+                case "adult":
+                case "成人":
+                    minValue = 13m;
+                    break;
+            }
+
+            suggestedAge = new Dictionary<string, object?>();
+            normalizedAge = string.Empty;
+            if (!minValue.HasValue)
+            {
+                return false;
+            }
+
+            suggestedAge["@type"] = "QuantitativeValue";
+            suggestedAge["minValue"] = minValue.Value;
+            suggestedAge["maxValue"] = maxValue;
+            suggestedAge["unitCode"] = "ANN";
+            normalizedAge = $"{minValue.Value.ToString(CultureInfo.InvariantCulture)}-{maxValue?.ToString(CultureInfo.InvariantCulture) ?? string.Empty}";
+            return true;
+        }
+
+        private static string? ResolveStructuredDataImage(Uri rootUri, string? imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl))
+            {
+                return null;
+            }
+
+            return new Uri(rootUri, imageUrl.Trim()).AbsoluteUri;
+        }
+
         private async Task<bool> IsFrontRoleDeniedAsync(long targetId, PermissionDetailsTypeEnum type)
         {
             var userInfo = await accountAppService.GetFrontUserData();

@@ -1,3 +1,5 @@
+using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
+
 namespace EtheriT.Coker.Application.Shared.Dto.Product
 {
     /// <summary>
@@ -10,5 +12,23 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public string? ItemNo { get; set; }
         public decimal? PublicPrice { get; set; }
         public bool IsAvailable { get; set; }
+        public List<ProductSeoVariantDto> Variants { get; set; } = new();
+    }
+
+    public class ProductSeoVariantDto
+    {
+        public long StockId { get; set; }
+        public string? SubItemNo { get; set; }
+        public decimal PublicPrice { get; set; }
+        public bool IsAvailable { get; set; }
+        public string? ImageUrl { get; set; }
+        public List<ProductSeoVariantOptionDto> Options { get; set; } = new();
+    }
+
+    public class ProductSeoVariantOptionDto
+    {
+        public string TypeName { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+        public SeoVariantPropertyEnum SeoVariantProperty { get; set; }
     }
 }

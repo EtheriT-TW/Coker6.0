@@ -106,7 +106,7 @@ namespace EtheriT.Coker.Application
                 prods.ForEach(p => {
                     Urls.Add(new UrlDto
                     {
-                        loc = $"{siteUrl}/{site.OrgName}/Search/Product/{p.Id}".Replace("//", "/").Replace(":/", "://"),
+                        loc = $"{siteUrl}/{site.OrgName}/search/product/{p.Id}".Replace("//", "/").Replace(":/", "://"),
                         priority = "1.0",
                         lastmod = (p.LastModificationTime ?? p.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
                         changefreq = "monthly"

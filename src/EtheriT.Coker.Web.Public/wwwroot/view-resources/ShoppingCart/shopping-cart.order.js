@@ -130,7 +130,7 @@
             item_subtotal = item.find(`.pro_subtotal > [data-key="subtotal"]`),
             item_subtotal_bonus = item.find(`.pro_subtotal > [data-key="subtotalBonus"]`);
 
-        item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
+        item_link.attr("href", `/${OrgName}/search/product/` + result.pId);
         item_link.attr("title", `連結至：${result.title}(另開新視窗)`);
         item_image.attr("src", result.imagePath.replace(`upload/${OrgName}/`, "upload/"));
         item_name.text(result.title);

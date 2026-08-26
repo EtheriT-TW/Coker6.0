@@ -21,12 +21,22 @@
             <a href="@Model.HomeLink" target="@home_target" title="@home_title" @(rel != null ? $"rel=\"{rel}\"" : "")>
                 @if (string.IsNullOrEmpty(Model.Title))
                 {
-                    <h1>@Model.Title</h1>
+                    @if (Model.UseSiteTitleAsMainHeading)
+                    {
+                        <h1>@Model.Title</h1>
+                    }
+                    else
+                    {
+                        <span>@Model.Title</span>
+                    }
                 }
                 else
                 {
                     <img src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
-                    <h1 class="sr-only">@Model.Title</h1>
+                    @if (Model.UseSiteTitleAsMainHeading)
+                    {
+                        <h1 class="sr-only">@Model.Title</h1>
+                    }
                 }
             </a>
         </div>
@@ -183,12 +193,22 @@
             <a href="@Model.HomeLink" target="@logo_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@logo_title">
                 @if (string.IsNullOrEmpty(Model.Title))
                 {
-                    <h1>@Model.Title</h1>
+                    @if (Model.UseSiteTitleAsMainHeading)
+                    {
+                        <h1>@Model.Title</h1>
+                    }
+                    else
+                    {
+                        <span>@Model.Title</span>
+                    }
                 }
                 else
                 {
                     <img class="" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
-                    <h1 class="d-none">@Model.Title</h1>
+                    @if (Model.UseSiteTitleAsMainHeading)
+                    {
+                        <h1 class="d-none">@Model.Title</h1>
+                    }
                 }
             </a>
         </div>

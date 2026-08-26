@@ -327,7 +327,7 @@
                     }
 
                     listFrame.find("a").attr({
-                        href: "/" + w.OrgName + "/Member/product/" + detail.pId,
+                        href: "/" + w.OrgName + "/search/product/" + detail.pId,
                         title: "連結至：" + detail.title
                     });
 

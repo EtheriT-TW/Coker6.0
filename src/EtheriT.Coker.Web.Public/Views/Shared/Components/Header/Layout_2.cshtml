@@ -11,7 +11,16 @@
             var home_target = Model.HomeTarget == true ? "_blank" : "_self";
             var home_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
         }
-        <a class="navbar-brand" href="@Model.HomeLink" target="@home_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@home_title"><h1>@Model.Title</h1></a>
+        <a class="navbar-brand" href="@Model.HomeLink" target="@home_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@home_title">
+            @if (Model.UseSiteTitleAsMainHeading)
+            {
+                <h1>@Model.Title</h1>
+            }
+            else
+            {
+                <span>@Model.Title</span>
+            }
+        </a>
         <div Id="Offcanvas_Menu" class="collapse navbar-collapse offcanvas offcanvas-start" id="navbarSupportedContent" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
             <a accesskey="U" href="javascript:void(0)" class="hide accesskey" title="上方區域">:::</a>
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">

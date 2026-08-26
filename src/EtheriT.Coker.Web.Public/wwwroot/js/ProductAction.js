@@ -256,7 +256,7 @@ function HeaderDataInsert($frame, data) {
                 case "link":
                     if (data.available) {
                         $self.attr({
-                            href: `/${OrgName}/home/product/${data['pId']}`,
+                            href: `/${OrgName}/search/product/${data['pId']}`,
                             title: `連結至：${data['title']}`
                         });
                     }

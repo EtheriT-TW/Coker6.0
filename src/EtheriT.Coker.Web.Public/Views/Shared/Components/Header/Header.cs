@@ -56,7 +56,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 
             return "#";
         }
-        public async Task<IViewComponentResult> InvokeAsync()
+        public async Task<IViewComponentResult> InvokeAsync(bool useSiteTitleAsMainHeading = true)
         {
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
             List<string> childOrgNames = new List<string>();
@@ -354,6 +354,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                 headerViewModel.LogoImageUrl = website_data[0].Logo?.Replace($"/{website_data[0].OrgName}/", "/");
                 if (string.IsNullOrEmpty(headerViewModel.LogoImageUrl)) headerViewModel.LogoImageUrl = "/upload/logo.svg";
             }
+            headerViewModel.UseSiteTitleAsMainHeading = useSiteTitleAsMainHeading;
             headerViewModel.SearchPath = $"/{website_data[0].OrgName}/Search";
             var view = defaultData.View;
             var templateSections = headerViewModel.templates?.templateSections.Where(e => e.sectionType == SectionTypeEnum.表頭).FirstOrDefault();

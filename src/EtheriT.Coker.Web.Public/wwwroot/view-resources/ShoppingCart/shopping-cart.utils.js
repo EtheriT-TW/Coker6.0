@@ -79,7 +79,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas, options) {
             switch (key) {
                 case "link":
                     $this.attr({
-                        href: `/${OrgName}/Home/product/${getValueIgnoreCase(data, "prodId")}`,
+                        href: `/${OrgName}/search/product/${getValueIgnoreCase(data, "prodId")}`,
                         title: `連結至：${getValueIgnoreCase(data, "title") || ""}(另開新視窗)`
                     });
                     break;

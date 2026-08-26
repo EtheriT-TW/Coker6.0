@@ -120,7 +120,7 @@
     }
     <meta property="og:title" content="@Html.Raw(ViewBag.PageTagNameName)" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="@ViewData["CurrentUrl"]" />
+    <meta property="og:url" content="@(ViewData["OpenGraphUrl"] ?? ViewData["CurrentUrl"])" />
     <meta property="og:site_name" content="@Html.Raw(ViewData["SideName"])" />
     <meta property="og:description" content="@Html.Raw(ViewData["Description"])" />
     @if (!string.IsNullOrEmpty(ViewBag.ImageUrl))
@@ -634,7 +634,13 @@
 
         }
         <header class="@VisibleHeader @ViewBag.HeaderLayoutClass @(ViewBag.HasFullBanner == true ? "overlap-banner" : "")">
-            @await Component.InvokeAsync(nameof(Header))
+            @await Component.InvokeAsync(nameof(Header), new
+            {
+                useSiteTitleAsMainHeading = !string.Equals(
+                    ViewData["PageView"]?.ToString(),
+                    "Product",
+                    StringComparison.OrdinalIgnoreCase)
+            })
         </header>
         <noscript>
             <p id="noscript">

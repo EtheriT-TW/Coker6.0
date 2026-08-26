@@ -452,7 +452,7 @@ function CartListAdd(data, $container) {
                 quantity: Number(data.quantity || 1),
                 productName: data.title || "",
                 imageUrl: data.imagePath || "/images/noImg.jpg",
-                productUrl: `/${OrgName}/home/product/${data.pId}`,
+                productUrl: `/${OrgName}/search/product/${data.pId}`,
                 onUpdated: function () {
                     cart.Items.ReloadCartDisplay().done(function (items) {
                         ReloadCartDropdown(items);
@@ -694,7 +694,7 @@ function CartListInsert($frame, data) {
                     break;
                 case "link":
                     $self.attr({
-                        href: `/${OrgName}/home/product/${data['pId']}`,
+                        href: `/${OrgName}/search/product/${data['pId']}`,
                         title: `連結至：${data['title']}(另開新視窗)`
                     });
                     break;

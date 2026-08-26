@@ -637,7 +637,17 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["PageName"] = model.PageData.Title;
             ViewData["OrgName"] = model.orgName;
             ViewData["Layout"] = model.layout;
-            ViewBag.PageTagNameName = key == "home" ? model.PageData.SiteName : $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
+            var isProductPage = string.Equals(
+                model.PageData.PageView,
+                "Product",
+                StringComparison.OrdinalIgnoreCase);
+            var isHomePage = !isProductPage && string.Equals(
+                key,
+                "home",
+                StringComparison.OrdinalIgnoreCase);
+            ViewBag.PageTagNameName = isHomePage
+                ? model.PageData.SiteName
+                : $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
             ViewBag.PageTagNameName = HttpUtility.HtmlAttributeEncode(ViewBag.PageTagNameName.Trim());
             ViewData["Description"] = model.PageData.Description;
             ViewBag.GA4 = model.storeSet.GA4;
@@ -650,6 +660,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.NoCopy = _env.IsProduction() && NoCopyItem != null && NoCopyItem.value != null && NoCopyItem.value.Count > 0 && NoCopyItem.value[0] == "1" ? "no-right-click" : "";
             ViewData["google.translate"] = model.storeSet.GoogleTranslate;
             ViewData["CurrentUrl"] = model.PageData.CurrentUrl;
+            ViewData["OpenGraphUrl"] = isProductPage
+                ? $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}{Request.QueryString}"
+                : model.PageData.CurrentUrl;
             ViewData["Root"] = model.root;
             ViewData["VisibleHeader"] = model.PageData.VisibleHeader;
             ViewData["VisibleFooter"] = model.PageData.VisibleFooter;

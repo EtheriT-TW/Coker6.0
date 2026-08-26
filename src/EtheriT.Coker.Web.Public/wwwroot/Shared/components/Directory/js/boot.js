@@ -134,6 +134,19 @@
         return `${url.pathname}${url.search}${url.hash}`;
     }
 
+    function syncCanonicalPage(page) {
+        const canonical = document.querySelector('link[rel="canonical"]');
+        if (!canonical || !canonical.href) return;
+
+        const normalizedPage = normalizePage(page);
+        const canonicalUrl = new URL(canonical.href);
+
+        if (normalizedPage === "1") canonicalUrl.searchParams.delete("Page");
+        else canonicalUrl.searchParams.set("Page", normalizedPage);
+
+        canonical.href = canonicalUrl.href;
+    }
+
     function getLocationPage() {
         const url = new URL(w.location.href);
         const queryPage = url.searchParams.get("Page");
@@ -449,11 +462,14 @@
             }
         }
 
+        syncCanonicalPage(normalizedPage);
         initElemntAndLoadDir($item, normalizedPage);
     }
 
     function locationChangeDirectory() {
-        initElemntAndLoadDir(null, getLocationPage());
+        const page = getLocationPage();
+        syncCanonicalPage(page);
+        initElemntAndLoadDir(null, page);
     }
 
     DirectoryBoot.init = DirectoryGetDataInit;

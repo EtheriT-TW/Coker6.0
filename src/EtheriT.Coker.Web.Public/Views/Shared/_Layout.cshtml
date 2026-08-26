@@ -90,21 +90,7 @@
     }
     <link rel="stylesheet" href="~/css/Header/Header.min.css" asp-append-version="true" />
     <link rel="icon" href="/favicon.ico" type="image/x-icon" asp-append-version="true" />
-    @switch (ViewData["PageView"])
-    {
-        case "Article":
-            <link rel="canonical" href="@($"{ViewData["Root"]}/{ViewData["OrgName"]}/search/article/{ViewData["Id"]}")" />
-            break;
-        case "Product":
-            <link rel="canonical" href="@($"{ViewData["Root"]}/{ViewData["OrgName"]}/search/product/{ViewData["Id"]}")" />
-            break;
-        case "Techcert":
-            <link rel="canonical" href="@($"{ViewData["Root"]}/{ViewData["OrgName"]}/search/techcert/{ViewData["Id"]}")" />
-            break;
-        default:
-            <link rel="canonical" href="@($"{ViewData["Root"]}/{ViewData["OrgName"]}{ViewData["CurrentUrl"]}")" />
-            break;
-    }
+    <link rel="canonical" href="@ViewData["CanonicalUrl"]" />
     @await Component.InvokeAsync(nameof(LayoutType))
 
     <meta name="author" content="易碩網際科技股份有限公司" />

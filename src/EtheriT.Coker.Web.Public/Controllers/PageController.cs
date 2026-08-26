@@ -665,6 +665,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 key,
                 "home",
                 StringComparison.OrdinalIgnoreCase);
+            var canonicalPageUrl = BuildCanonicalPageUrl(model);
             ViewBag.PageTagNameName = isHomePage
                 ? model.PageData.SiteName
                 : $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
@@ -680,16 +681,13 @@ namespace EtheriT.Coker.Web.Public.Controllers
             if (isProductPage && productSeoData?.PublicPrice != null)
             {
                 var rootUri = new Uri(model.root.EndsWith("/", StringComparison.Ordinal) ? model.root : $"{model.root}/");
-                var canonicalUrl = new Uri(
-                    rootUri,
-                    $"{model.orgName}/search/product/{model.PageData.Id}").AbsoluteUri;
                 var productImageUrl = string.IsNullOrWhiteSpace(model.PageData.ImageUrl)
                     ? null
                     : new Uri(rootUri, model.PageData.ImageUrl.TrimStart('/')).AbsoluteUri;
 
                 var productStructuredData = BuildProductStructuredData(
                     productSeoData,
-                    canonicalUrl,
+                    canonicalPageUrl,
                     rootUri,
                     productImageUrl,
                     model.PageData.Description,
@@ -712,11 +710,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     model.root.EndsWith("/", StringComparison.Ordinal)
                         ? model.root
                         : $"{model.root}/");
-                var breadcrumbCanonicalUrl = BuildCanonicalPageUrl(model);
                 var breadcrumbStructuredData = BuildBreadcrumbStructuredData(
                     model.MenuBread,
                     model.PageData.Title,
-                    breadcrumbCanonicalUrl,
+                    canonicalPageUrl,
                     breadcrumbRootUri,
                     new Uri(breadcrumbRootUri, $"{model.orgName}/home").AbsoluteUri,
                     model.PageData.PageView is "Article" or "Techcert");
@@ -738,6 +735,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.NoCopy = _env.IsProduction() && NoCopyItem != null && NoCopyItem.value != null && NoCopyItem.value.Count > 0 && NoCopyItem.value[0] == "1" ? "no-right-click" : "";
             ViewData["google.translate"] = model.storeSet.GoogleTranslate;
             ViewData["CurrentUrl"] = model.PageData.CurrentUrl;
+            ViewData["CanonicalUrl"] = canonicalPageUrl;
             ViewData["OpenGraphUrl"] = isProductPage
                 ? $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}{Request.QueryString}"
                 : model.PageData.CurrentUrl;
@@ -805,7 +803,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     ["url"] = canonicalUrl,
                     ["description"] = description,
                     ["image"] = productImageUrl == null ? null : new[] { productImageUrl },
-                    ["sku"] = string.IsNullOrWhiteSpace(product.ItemNo) ? null : product.ItemNo,
+                    ["sku"] = NormalizeStructuredDataSku(product.ItemNo),
                     ["offers"] = BuildProductOffer(
                         canonicalUrl,
                         product.PublicPrice!.Value,
@@ -847,7 +845,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             ? optionDescription
                             : $"{description}；{optionDescription}",
                     ["image"] = variantImageUrl == null ? null : new[] { variantImageUrl },
-                    ["sku"] = string.IsNullOrWhiteSpace(variant.SubItemNo) ? null : variant.SubItemNo,
+                    ["sku"] = NormalizeStructuredDataSku(variant.SubItemNo),
                     ["offers"] = BuildProductOffer(
                         variantUrl,
                         variant.PublicPrice,
@@ -888,15 +886,23 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 ["url"] = canonicalUrl,
                 ["description"] = description,
                 ["image"] = productImageUrl == null ? null : new[] { productImageUrl },
-                ["productGroupID"] = string.IsNullOrWhiteSpace(product.ItemNo)
-                    ? product.Id.ToString(CultureInfo.InvariantCulture)
-                    : product.ItemNo,
+                ["productGroupID"] = $"product-{product.Id.ToString(CultureInfo.InvariantCulture)}",
                 ["variesBy"] = variesBy.Length == 0 ? null : variesBy,
                 ["hasVariant"] = hasVariant
             };
         }
 
-        private static string BuildCanonicalPageUrl(PageViewModel model)
+        private static string? NormalizeStructuredDataSku(string? sku)
+        {
+            if (string.IsNullOrWhiteSpace(sku))
+            {
+                return null;
+            }
+
+            return Regex.Replace(sku.Trim(), @"\s+", "-");
+        }
+
+        private string BuildCanonicalPageUrl(PageViewModel model)
         {
             var rootUri = new Uri(
                 model.root.EndsWith("/", StringComparison.Ordinal)
@@ -910,7 +916,37 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 "Techcert" => $"{model.orgName}/search/techcert/{model.PageData!.Id}",
                 _ => $"{model.orgName}/{model.PageData?.CurrentUrl?.TrimStart('/') ?? string.Empty}"
             };
-            return new Uri(rootUri, relativeUrl).AbsoluteUri;
+            var canonicalUrl = new Uri(rootUri, relativeUrl).AbsoluteUri;
+
+            if (!HasSingleDirectoryCatalog(model.SafeHtml) ||
+                !int.TryParse(
+                    Request.Query["Page"].ToString(),
+                    NumberStyles.None,
+                    CultureInfo.InvariantCulture,
+                    out var pageNumber) ||
+                pageNumber <= 1)
+            {
+                return canonicalUrl;
+            }
+
+            var canonicalUri = new UriBuilder(canonicalUrl)
+            {
+                Query = $"Page={pageNumber.ToString(CultureInfo.InvariantCulture)}"
+            };
+            return canonicalUri.Uri.AbsoluteUri;
+        }
+
+        private static bool HasSingleDirectoryCatalog(string html)
+        {
+            if (string.IsNullOrWhiteSpace(html))
+            {
+                return false;
+            }
+
+            return Regex.Matches(
+                html,
+                @"\bcatalog_frame\b",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant).Count == 1;
         }
 
         private static Dictionary<string, object?>? BuildBreadcrumbStructuredData(
